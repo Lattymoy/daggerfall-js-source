@@ -899,12 +899,13 @@
   {
     "name": "PROF11-pages-masonry-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);   // PROF8: Fishing; PROF11: Masonry",
-    "new": "'carpentry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);   // PROF8: Fishing; PROF11: Masonry",
+    "old": "  masonry: Object.freeze([['Cut Stone, from Rough Stone', 1],",
+    "new": "  stonework: Object.freeze([['Cut Stone, from Rough Stone', 1],",
     "tests": [
-      "test/prof11_client.test.js"
+      "test/prof11_client.test.js",
+      "test/craft3_five.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF11-pages-fortifications-unsaid",
@@ -913,7 +914,9 @@
     "new": "",
     "tests": [
       "test/prof11_client.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "CRAFT3's re-judge (2026-10-07): survives on main too - since SEAT2b built the fortifications no choice is `later: 'SEAT2b'`, so LATER_WORDS.SEAT2b is a word no card reads now; the pins that the Builder and the Fortifier are chosen stand."
   },
   {
     "name": "PROF11-pages-mortar-at-rank-0",
@@ -1154,12 +1157,13 @@
   {
     "name": "PROF11-door-sculptor-unworded",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-sculptor': 'Only a Sculptor carves stone decor - Masonry\\'s choice at 100.',   // PROF11\n",
+    "old": "  'prof-sculptor': 'Only a Sculptor carves stone decor - a Building choice at 100 (Masonry\\'s).',   // PROF11; CRAFT3: the craft's\n",
     "new": "",
     "tests": [
       "test/prof11_service.test.js",
       "test/prof11_client.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF11-svc-work-rank-unasked",

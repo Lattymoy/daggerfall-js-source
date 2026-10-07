@@ -55,7 +55,7 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
 import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
@@ -356,7 +356,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
      *  vouched for). CAP-OFF: the account's day in a craft (`account:<profession>`) closes nothing - there is none. */
     closed(key) { return state.closed.get(key) === dayOf(now()); },
     /** A track as the service last said it (never null: a profession not worked yet is at nothing). */
-    track(profession) { return state.tracks.get(profession) ?? { profession, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
+    /** A track as the service said it - CRAFT3: a discipline's its craft's ('jewelcrafting' the Smithing track). */
+    track(profession) { const p = trackOf(profession); return state.tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
     /** One material's count in the Stores, own and bought (GOLD-MARKET: and `gold`, bought with gold, where held). */
     store(material) { return state.stores.get(material) ?? { material, own: 0, bought: 0 }; },
     /** What a station, a craft or a writ may spend of it - never what gold bought (GOLD-MARKET's wall). BAG1: the Stores'
@@ -858,6 +859,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const from = this.track(profession).specs?.[rank] ?? null;
+      profession = trackOf(profession);   // CRAFT3: asked of the craft's track
       const owner = slot();
       const key = `spec|${owner}|${profession}|${rank}|${spec}|${from ?? ''}`;
       const m = idFor(key, PROF_QUEUE_MS);

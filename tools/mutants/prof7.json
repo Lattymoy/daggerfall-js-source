@@ -1010,12 +1010,12 @@
   {
     "name": "PROF7-pages-hunting-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'fishing', 'logging', 'smithing', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
+    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
     "tests": [
       "test/prof7_client.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF7-pages-smithing-unlocks-swallowed",

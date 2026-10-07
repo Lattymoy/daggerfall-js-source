@@ -14,7 +14,7 @@ import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY, accountRefusalText } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { trees, nodeKey, utcDayOfMs } from '../src/net/nodeLaw.js';
-import { xpForRank, CHOP_ACT, chopsFor, ringBand } from '../src/net/professionLaw.js';
+import { xpForRank, CHOP_ACT, chopsFor, ringBand, trackOf } from '../src/net/professionLaw.js';
 import { recipeById, QUALITY_EFFECTS, TOOL_LIFE, PLANE_ACT, grainAt } from '../src/net/recipeLaw.js';
 import { decorPieceOf } from '../src/net/decorLaw.js';
 import { createChopAct, ringAt, RING_PASS_S } from '../src/systems/chopAct.js';
@@ -65,7 +65,7 @@ test('PROF4 DONE WHEN: DECOR places a crafted table - an Oak felled, its logs sa
   const track = (prof, xp, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec100 = excluded.spec100`).run(mac.id, mac.character, prof, xp, spec100, NOON);
   track('logging', xpForRank(10));
-  track('carpentry', xpForRank(100), 'master-joiner');
+  track('building', xpForRank(100), 'master-joiner');   // PIN MOVED (CRAFT3): a workbench's table reads the Building track (Carpentry's craft) - seeded under the craft's id
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
   const book = createProfBook({ door, storage: memStorage(), character: () => mac.character, now: () => NOON * 1000, sleep: noWait });
   assert.equal((await book.refresh()).ok, true);
@@ -364,11 +364,12 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   const { setPref } = await import('../src/systems/uiPrefs.js');
   setPref('gentleActs', false);
   const held = new Map([['log:oak', 2], ['plank:oak', 7], ['wood:heartwood', 1]]);
-  const tracks = new Map([['carpentry', { profession: 'carpentry', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], ['smithing', { profession: 'smithing', xp: xpForRank(50), rank: 50, specs: { 50: null, 100: null } }]]);
+  // PIN MOVED (CRAFT3): the book holds the ten tracks - Carpentry's is Building's - and `track` maps a discipline through trackOf, as profBook's own does
+  const tracks = new Map([['building', { profession: 'building', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], ['smithing', { profession: 'smithing', xp: xpForRank(50), rank: 50, specs: { 50: null, 100: null } }]]);
   const book = {
     state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: null }, stale: () => false, refresh: async () => ({ ok: true }),
     held: (k) => held.get(k) ?? 0, store: (k) => ({ material: k, own: held.get(k) ?? 0, bought: 0 }),
-    track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
+    track: (p) => tracks.get(trackOf(p)) ?? { profession: trackOf(p), xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
     choose: async () => ({ ok: true }),
   };
   const crafted = [], bought = [], works = [];

@@ -127,20 +127,22 @@
   {
     "name": "AUDIT29-A14-the-smelt-xp-offered",
     "file": "server-account/src/professions.js",
-    "old": "        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${r.xp ?? 'smithing'}'), 0))), ?9, ?10, f, ?12",
+    "old": "        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12",
     "new": "        ?8 + f * ?11, ?9, ?10, f, ?12",
     "tests": [
       "test/audit29_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT29-A7-the-smith-s-rank-unasked",
     "file": "server-account/src/professions.js",
-    "old": "smeltXp(out.tier, count, ranks[r.xp] ?? 0)",
+    "old": "smeltXp(out.tier, count, rank)",
     "new": "smeltXp(out.tier, count)",
     "tests": [
       "test/audit29_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT29-A2-a-change-any-track-s",

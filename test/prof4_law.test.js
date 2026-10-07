@@ -140,7 +140,9 @@ test('PROF4 law: what a craft spends - a Joiner\'s furniture at half the planks 
   assert.deepEqual([carriesMark(r('chair:oak'), 1, 'master-joiner'), carriesMark(r('staff:oak'), 1, 'master-joiner'), carriesMark(r('chair:oak'), 1, null), carriesMark(r('staff:oak'), MASTERWORK, null)], [true, false, false, true]);
   assert.equal(craftCount(r('arrows:north'), 'quartermaster'), 1);
   assert.equal(specOk('carpentry', 100, 'siegewright'), true, 'the sieges\' choice, chosen since SEAT2b part two (PIN MOVED: it waited for them)');
-  assert.equal(SPECIALISATIONS.carpentry[100][0].later, undefined, 'SEAT2b part two (PIN MOVED): the Siegewright chosen since');
+  assert.equal(SPECIALISATIONS.building[100][0].id, 'siegewright');   // PIN MOVED (CRAFT3): SPECIALISATIONS is keyed by track - Carpentry's choices stand first under Building
+  assert.equal(SPECIALISATIONS.building[100][0].later, undefined, 'SEAT2b part two (PIN MOVED): the Siegewright chosen since');   // PIN MOVED (CRAFT3): Building's, Carpentry's craft
+  assert.equal(specOk('building', 100, 'siegewright'), true, 'a discipline\'s choice is its craft\'s track\'s');   // PIN MOVED (CRAFT3): specOk maps 'carpentry' through trackOf to Building
   assert.equal(specOk('carpentry', 100, 'master-joiner'), true);
 });
 

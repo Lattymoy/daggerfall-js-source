@@ -380,10 +380,10 @@ export const REFUSALS = Object.freeze({
   'prof-hunt-high': `Your account has taken all the rare hides a day allows (${HIGH_HIDES_PER_DAY}, across your characters).`,
   'prof-foe': 'No knife takes a hide from that body.',
   'prof-dye': 'That cannot be dyed so.',
-  'prof-sculptor': 'Only a Sculptor carves stone decor - Masonry\'s choice at 100.',   // PROF11
-  'prof-lapidary': 'Only a Lapidary sets a Siege-cracked Gem as a piece\'s gem - Jewelcrafting\'s choice at 100.',   // PROF10
+  'prof-sculptor': 'Only a Sculptor carves stone decor - a Building choice at 100 (Masonry\'s).',   // PROF11; CRAFT3: the craft's
+  'prof-lapidary': 'Only a Lapidary sets a Siege-cracked Gem as a piece\'s gem - a Smithing choice at 100 (Jewelcrafting\'s).',   // PROF10; CRAFT3
   // PROF12: the alchemy station's and the enchanter's refusals
-  'prof-transmuter': 'Only a Transmuter turns one metal into the next - Alchemy\'s choice at 100.',
+  'prof-transmuter': 'Only a Transmuter turns one metal into the next - a Provisioning choice at 100 (Alchemy\'s).',   // CRAFT3
   'bad-brew': 'That cauldron makes no such potion.',
   'bad-piece': 'That is no crafted piece.',
   'prof-no-piece': 'The counting-house knows no such crafted piece - only a piece a crafter made online can be disenchanted.',

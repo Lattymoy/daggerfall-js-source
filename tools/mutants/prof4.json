@@ -363,7 +363,9 @@
     "new": "export const recipeOpen = (r, rank, specs = null) => !!r && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
     "tests": [
       "test/prof4_law.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "CRAFT3's re-judge (2026-10-07): survives on main too - no recipe has been `later` since SEAT2b part two made the Ram Kit, so `!r.later` is a guard kept for the next recipe named before its slice, not a law any recipe reads now."
   },
   {
     "name": "PROF4-plane-wider",
@@ -452,20 +454,22 @@
   {
     "name": "PROF4-saw-smithing-xp",
     "file": "server-account/src/professions.js",
-    "old": "  const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, ranks[r.xp] ?? 0) : 0;",
-    "new": "  const cap = craftXpCap(r.xp ?? 'smithing', ranks);\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, ranks[r.xp ?? 'smithing'] ?? 0);",
+    "old": "  const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0;",
+    "new": "  const cap = craftXpCap(r.xp ?? 'smithing', ranks);\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, rank);",
     "tests": [
       "test/prof4_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF4-craft-as-smith",
     "file": "server-account/src/professions.js",
-    "old": "  const prof = r.profession;\n  const rank = ranks[prof] ?? 0;",
-    "new": "  const prof = 'smithing';\n  const rank = ranks[prof] ?? 0;",
+    "old": "  const prof = r.profession;   // the discipline - a hall's steps are its (seatStepsFor)",
+    "new": "  const prof = 'smithing';   // the discipline - a hall's steps are its (seatStepsFor)",
     "tests": [
       "test/prof4_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF4-ram-kit-asked",
@@ -474,7 +478,9 @@
     "new": "",
     "tests": [
       "test/prof4_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "CRAFT3's re-judge (2026-10-07): survives on main too - no recipe is `later` since SEAT2b part two, so the service's `prof-later` is a guard kept for the next one, not a law any recipe reads now."
   },
   {
     "name": "PROF4-joiner-unread",
@@ -733,12 +739,12 @@
   {
     "name": "PROF4-smithing-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
+    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'building', 'outfitting', 'provisioning', 'enchanting']);",
     "tests": [
       "test/prof4_client.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF4-workbench-no-linen",

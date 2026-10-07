@@ -1646,15 +1646,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // one latch holds every craft and brew (profBook.js _craftBusy), so a station's own word named another's work: the
   // book's refusal says the hands are busy (accountClient.js 'prof-busy')
   const craftStation = (profession) => (profession === 'carpentry'
-    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: 'Carpentry' }
+    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: professionName('carpentry') }   // CRAFT3: each discipline's craft's track - Building's
     : profession === 'outfitting'
       ? { here: () => modes?.loomHere?.() ?? null, a: 'a loom', who: 'tailor', noun: 'loom', kept: LOOM_KEPT_TEXT, xp: 'Outfitting' }
       : profession === 'masonry'   // PROF11: the mason's bench - a General Store's or a home's
-        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: 'Masonry' }
+        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: professionName('masonry') }
         : profession === 'cooking'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee
-          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: 'Cooking' }
+          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: professionName('cooking') }
           : profession === 'jewelcrafting'   // PROF10: the jeweller's bench - a Pawn Shop's or a Gem Store's, or a home's
-            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: 'Jewelcrafting' }
+            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName('jewelcrafting') }
             : { here: () => modes?.forgeHere?.() ?? null, a: 'an anvil', who: 'smith', noun: 'anvil', kept: CRAFT_KEPT_TEXT, xp: 'Smithing' });
   /** AUDIT 32 B3: a balance a counter's purchase answered, told to every book that shows one - the Bank's and the
    *  market's (AUDIT 30 U6's law, which the Stores page's counters never kept: the Market tab read the old one for its
@@ -10575,7 +10575,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const r = await profBook.brew(potion, keys, { fee: f.fee > 0 ? f.fee : 0, seat }, profMintCraft);
           if (!r?.ok) return { ok: false, text: r?.kept ? BREW_KEPT_TEXT : r?.error === 'prof-busy' ? 'Your hands are busy with another craft.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
           const paid = f.fee > 0 && !r.elsewhere;
-          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} Alchemy XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
+          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} ${professionName('alchemy')} XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
         },
         // PROF12: THE ENCHANTING STATION the player stands at (a Mages Guild hall, its fee a piece; a home's), the pack's crafted
         // pieces it may take (in the pack, not worn, bound or locked, no market act kept on them) and a disenchant: the piece

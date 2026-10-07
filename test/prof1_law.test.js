@@ -33,11 +33,12 @@ const names = (list) => list.map(name);
 // after the one they used to name whose month is 1 and whose season is winter, never named by its date.
 const WINTER_DAY = (() => { let d = utcDayOfMs(Date.UTC(2027, 0, 15)); while (!(dayMonth(d) === 1 && daySeason(d) === SEASONS.Winter)) d++; return d; })();
 
-test('PROF1 law: thirteen professions - five that gather, eight that craft, in the tab\'s order (PROF0 3.1)', () => {
-  assert.deepEqual(PROFESSIONS.map((p) => [p.name, p.kind]), [
-    ['Mining', 'gathering'], ['Logging', 'gathering'], ['Herbalism', 'gathering'], ['Hunting', 'gathering'], ['Fishing', 'gathering'],
-    ['Smithing', 'crafting'], ['Outfitting', 'crafting'], ['Carpentry', 'crafting'], ['Masonry', 'crafting'], ['Alchemy', 'crafting'],
-    ['Enchanting', 'crafting'], ['Cooking', 'crafting'], ['Jewelcrafting', 'crafting'],
+test('PROF1 law: ten professions - five that gather, five that craft (CRAFT3: thirteen until eight crafts became five), in the tab\'s order (PROF0 3.1)', () => {
+  // PIN MOVED (CRAFT3): eight crafts became five tracks (Professions-Arc 41.2) - Smithing with Jewelcrafting, Building of Carpentry and Masonry, Outfitting, Provisioning of Alchemy and Cooking, Enchanting
+  assert.deepEqual(PROFESSIONS.map((p) => [p.id, p.name, p.kind]), [
+    ['mining', 'Mining', 'gathering'], ['logging', 'Logging', 'gathering'], ['herbalism', 'Herbalism', 'gathering'], ['hunting', 'Hunting', 'gathering'], ['fishing', 'Fishing', 'gathering'],
+    ['smithing', 'Smithing', 'crafting'], ['building', 'Building', 'crafting'], ['outfitting', 'Outfitting', 'crafting'], ['provisioning', 'Provisioning', 'crafting'],
+    ['enchanting', 'Enchanting', 'crafting'],
   ]);
   assert.equal(professionOfFamily('herbs'), 'herbalism');
   assert.equal(professionOfFamily('food'), 'herbalism', 'the Basket\'s food is Herbalism\'s second harvest (FORAGE0 14.6)');
@@ -58,9 +59,15 @@ test('PROF1 law: ranks 0-100 by 10 x n^2 XP, their five names; tiers by the rank
   assert.equal(writXp(72), 144);
 });
 
-test('PROF1 law: every profession offers two specialisations at 50 and two at 100, the record\'s names; a change is 1,000 Marks and a week, standing from its day (PROF0 3.3)', () => {
+test('PROF1 law: every profession offers two specialisations at 50 and two at 100 (CRAFT3: a merged craft its two disciplines\' four), the record\'s names; a change is 1,000 Marks and a week, standing from its day (PROF0 3.3)', () => {
   assert.deepEqual(Object.keys(SPECIALISATIONS), PROFESSIONS.map((p) => p.id));
-  for (const [p, by] of Object.entries(SPECIALISATIONS)) for (const r of SPEC_RANKS) assert.equal(by[r].length, 2, `${p} at ${r}`);
+  // PIN MOVED (CRAFT3): a track of one discipline offers its own two a rank; a merged craft (Smithing, Building, Provisioning) its two disciplines' four, in the discipline table's order
+  const MERGED = ['smithing', 'building', 'provisioning'];
+  for (const [p, by] of Object.entries(SPECIALISATIONS)) for (const r of SPEC_RANKS) assert.equal(by[r].length, MERGED.includes(p) ? 4 : 2, `${p} at ${r}`);
+  const ids = (p) => SPEC_RANKS.map((r) => SPECIALISATIONS[p][r].map((s) => s.id));
+  assert.deepEqual(ids('smithing'), [['weaponsmith', 'armoursmith', 'gemcutter', 'goldsmith'], ['masterwright', 'quartermaster', 'master-jeweller', 'lapidary']]);   // PIN MOVED (CRAFT3): Smithing's and Jewelcrafting's
+  assert.deepEqual(ids('building'), [['bowyer', 'joiner', 'quarryman', 'builder'], ['siegewright', 'master-joiner', 'fortifier', 'sculptor']]);   // PIN MOVED (CRAFT3): Carpentry's and Masonry's
+  assert.deepEqual(ids('provisioning'), [['brewer', 'distiller', 'cook', 'field-cook'], ['master-alchemist', 'transmuter', 'chef', 'provisioner']]);   // PIN MOVED (CRAFT3): Alchemy's and Cooking's
   assert.deepEqual(SPECIALISATIONS.herbalism[50].map((s) => s.name).concat(SPECIALISATIONS.herbalism[100].map((s) => s.name)), ['Gardener', 'Botanist', 'Seasonal Eye', "Apothecary's Friend"]);
   assert.deepEqual(SPECIALISATIONS.fishing[50].map((s) => s.name), ['Angler', 'Netter']);
   assert.deepEqual(RESPEC, { marks: 1000, days: 7 });

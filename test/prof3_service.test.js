@@ -126,8 +126,9 @@ test('PROF3 service: a craft refused - the rank, the inputs (naming the short on
   assert.deepEqual(s.stores(mac, 'ingot:iron'), [], 'two kits, one ingot');
   assert.equal(readProductRecord(two.body.pieces[1].record).q, -1);
   // the crafter's limit: two crafts past Journeyman hold Smithing at 50
-  s.setXp(mac, xpForRank(60), 'alchemy');
-  s.setXp(mac, xpForRank(60), 'cooking');
+  // PIN MOVED (CRAFT3): Alchemy and Cooking are one track (Provisioning) - the two crafts past Journeyman are Provisioning and Building, seeded under the craft's id
+  s.setXp(mac, xpForRank(60), 'provisioning');
+  s.setXp(mac, xpForRank(60), 'building');
   s.setXp(mac, xpForRank(51) - 50);
   s.give(mac, 'ingot:iron', 'own', 1);
   s.give(mac, 'metal:tin', 'own', 1);

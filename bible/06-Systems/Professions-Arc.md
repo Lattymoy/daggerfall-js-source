@@ -102,6 +102,10 @@ the corpses - FORAGE3), and online the quests' time as a wait (FORAGE4). Foragin
 
 ### 3.1 Thirteen professions
 
+CRAFT3 (41.6, BUILT 2026-10-07): the eight crafts below are eight DISCIPLINES of five crafting tracks now - Smithing
+(Smithing and Jewelcrafting), Building (Carpentry and Masonry), Outfitting, Provisioning (Alchemy and Cooking) and
+Enchanting - ten professions a character holds, with the five that gather.
+
 | Gathering (5) | Crafting (8) |
 |---|---|
 | **Mining** - DFU's metals and gems, the higher ores, stone | **Smithing** - DFU's weapons and metal armour, ingots, repair kits |
@@ -134,12 +138,13 @@ the corpses - FORAGE3), and online the quests' time as a wait (FORAGE4). Foragin
 | Rank needed | 0 | 10 | 25 | 40 | 55 | 70 | 90 |
 
 - **The crafter's limit** - DECIDED: a character may raise at most **two crafts above Journeyman (50)**. Gathering is
-  unlimited. No one character makes everything; trade equips an army.
+  unlimited. CRAFT3 (41.6): two of the five crafts. No one character makes everything; trade equips an army.
 - **Online only** - DECIDED: nothing offline earns profession XP.
 
 ### 3.3 Specialisations
 
-At 50 and again at 100 each profession offers two; the choice is made on the Professions tab. A change costs **1,000
+At 50 and again at 100 each profession offers two; the choice is made on the Professions tab. CRAFT3 (41.6): a merged
+craft offers its two disciplines' - four a rank, one chosen - each acting on its own discipline's work. A change costs **1,000
 Marks** and a week's wait.
 
 | Profession | At 50 | At 100 |
@@ -3611,7 +3616,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   (`audit29`, `audit32`, `bag1`, `fb1001_ground`, `prof1`, `prof2`, `prof7`, `prof8`). FOUND, not this slice's:
   `AUDIT29-A17-motherlode-sense-chosen` survives on main as here (PROF2b moved A17's pins to the Sense chosen as any).
 
-## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07)
+## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07); CRAFT3 - five crafts, as built (BUILT 2026-10-07)
 
 Mac: **"How could we enhance the profession element of the game while reducing complexity and making crafting more
 viable"**; given the five proposals below, **"This is amazing. Lets do it"**. Each is DECIDED (Mac) as a direction; the
@@ -3738,7 +3743,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
 
 - **The law** - `src/net/recipeLaw.js`: every recipe carries its `pattern` (the piece's word whatever it is made of -
   "Longsword", "Chain Cuirass", "Arrows", "Hunter's Stew") and its `madeOf` ("Mithril", "Harpy Feathers", "northern
-  Root Bulb"; "" where a pattern is made one way). `patternOf` is the recipe's `product` (`longsword`, `garment-163`,
+  Root Bulb"; "" where a pattern is made one way). `recipePattern` is the recipe's `product` (`longsword`, `garment-163`,
   `stew`) - FACT, pinned: no product id is two professions'. `patternsOf(list)` groups a list into its patterns, each
   once in the list's order, its materials in theirs.
 - **The first-make 500** - `firstCraftKey` is the pattern AT ITS TIER (`longsword@6`), `firstCraftKin` every recipe of it
@@ -3785,6 +3790,56 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   dead: `audit30` A3, `audit32` P8, `audit_seats_open` ASO-loom-note, `prof10` J7's two, `prof4`'s five, `prof7`'s
   three, `prof9`'s R2-S7 three, and `craft1`'s six R2 rows (one lock for the stations' rows now - patternRows'; the
   workbench's and the loom's standings their raw; a material made from raw unlocked in its box).
+
+### 41.6 CRAFT3 - five crafts, not eight, as built (BUILT 2026-10-07)
+
+- **The law** - `src/net/professionLaw.js`: `PROFESSIONS` is the ten TRACKS a character holds - the five that gather,
+  then Smithing, Building, Outfitting, Provisioning, Enchanting. `DISCIPLINES` the eight crafts as they were, each the
+  craft whose track it reads and raises (Jewelcrafting Smithing's, Carpentry and Masonry Building's, Alchemy and Cooking
+  Provisioning's); `trackOf` the one door (a discipline its craft's, every track its own), `disciplinesOf`,
+  `disciplineName`. DECIDED: THE DISCIPLINES STAY - a recipe's `profession`, a work's `xp`, `more.profession` and
+  `spec.profession` name what the work IS (a Ring is Jewelcrafting's, a cut Masonry's, the Transmuter Alchemy's choice),
+  and a seat's hall still steps a discipline's craft (fortLaw STATION_PROFESSIONS - a Ring at an Apothecary, as before);
+  only the track is the craft's. `professionName` names the track ("+60 Smithing XP" for a Ring). `SPECIALISATIONS` is
+  keyed by track: a merged craft's four a rank are its disciplines' (`OWN_CHOICES`, the record's 3.3 as written), one
+  chosen, each acting on its own discipline's work as it did - every choice's law was already scoped by the recipe's
+  kind or family but one, `masterworkSpec`, which is now (recipeLaw: the Master Jeweller's points on a jewel, the
+  Masterwright's on the smith's work - one track, so either could otherwise reach the other's). `specDiscipline` says
+  whose a choice is. `craftXpCap` counts the five crafts' tracks: two of five past Journeyman.
+- **The merge** - migration `0088_five_crafts.sql`, once: `free_respec` added; a change already in effect folded into
+  its choice; each character's two parents read side by side, the higher one the more XP (equal, the first named:
+  Smithing, Carpentry, Alchemy); the merged track the higher's XP, a rank's choice the higher's where it chose, else the
+  lower's; the change on its way the higher's, else the lower's where its rank's choice is the one kept; a rank FREE
+  (`free_respec` 1 at 50, 2 at 100) where both chose there (the lower's lost) or the lower's change there was dropped (its
+  1,000 Marks were spent - the free change stands in for them); the parents' rows gone, the merged ones in. The crafter's
+  limit holds after it: a merged track is past Journeyman only where a parent was.
+- **The service** - `server-account/src/professions.js`: `trackRow` and `trackView` read the craft's track (`trackView`
+  answers its id, and `free` where a free change stands); a craft, a smelt and its yield's choice, a transmutation's door,
+  the crafter's limit and every XP credit are the craft's (`craft = trackOf(prof)`, `trackOf(r.xp)`); `alchemy.js` the
+  brew's Provisioning; `seatForts.js` the Builder's, the Fortifier's and the Siegewright's Building. `chooseSpec` asks the
+  craft's track of a discipline's name (an older client's 'jewelcrafting'), and the MERGE'S FREE CHANGE: no Marks, in
+  effect at once, a change on its way at that rank replaced, the bit spent - its own `prof_choices` row decides, as the
+  free first choice's does; answered `free`.
+- **The client** - `src/net/profBook.js` `track` answers a discipline with its craft's track; `choose` asks the craft's.
+  `src/ui/profPages.js`: the Professions tab the ten; a merged craft's four cards a rank, each its discipline's name
+  (`prof-of`), a free change said ("Change: free, once"; "Press again: free, in effect at once"); its Unlocks both
+  disciplines' (`unlocksOf` - each named, by tier, a tier's first discipline first); the stations say the craft
+  ("Building 10" at the workbench and the mason's bench, "Smithing 25" at the jeweller's, "Provisioning" at the fire and
+  the alchemy station) and its XP. `src/scenes/world.js` the stations' XP words `professionName` of the discipline.
+- **The four hosts**: `scenes/world.js` wired (the station pages and the crafts' answers are its alone); `worldModes.js`
+  reads Enchanting's discount and the stations through the pages and the book (no track id of its own); `exterior.js`
+  and `dungeonContext.js` read no profession track - none to wire.
+- **As built**: `src/net/professionLaw.js`, `src/net/recipeLaw.js`, `src/net/profBook.js`, `src/ui/profPages.js`,
+  `src/ui/enhancedPlusStyle.js` (`.prof-of`), `src/scenes/world.js`, `server-account/src/professions.js`,
+  `server-account/src/alchemy.js`, `server-account/src/seatForts.js`, `server-account/migrations/0088_five_crafts.sql`.
+  Pinned: `test/craft3_five.test.js` (10) - the done-when through the real Worker (a Silver Ring and an Iron Dagger raise
+  one Smithing, the state ten tracks, one row), the merge as 0088 writes it over the eight tracks as they stood (the
+  higher's XP and choices, the free ranks, the changes on their way kept and dropped, one in effect folded, the limit
+  after it), the law, the free change through the Worker (no Marks, once, the next paid; an older client's discipline
+  name its craft; the limit holding a dish at 50), the service's track reads (source pins), the Professions tab.
+  `tools/mutants/craft3.json`. FOUND by the moved pins: the jeweller's bench still said "Jewelcrafting XP" - its
+  craft's now. PIN MOVED (a discipline's track its craft's; ten professions; four cards a merged rank): the profession
+  suites - `prof1`, `prof2`, `prof3`, `prof4`, `prof9`, `prof10`, `prof11`, `prof12`, `audit29`, `audit30`, `audit32`.
 
 ## Appendix A - a day of a gatherer
 

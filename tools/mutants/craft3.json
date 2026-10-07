@@ -1,0 +1,281 @@
+[
+  {
+    "name": "CRAFT3-law-no-track",
+    "file": "src/net/professionLaw.js",
+    "old": "export const trackOf = (id) => DISCIPLINE_BY_ID.get(id)?.craft ?? id;",
+    "new": "export const trackOf = (id) => id;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-one-parent-choices",
+    "file": "src/net/professionLaw.js",
+    "old": "[r, Object.freeze(of.flatMap((d) => OWN_CHOICES[d][r]))]",
+    "new": "[r, Object.freeze(OWN_CHOICES[of[0]][r])]",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-spec-discipline-unknown",
+    "file": "src/net/professionLaw.js",
+    "old": "export const specDiscipline = (specId) => Object.keys(OWN_CHOICES).find(",
+    "new": "export const specDiscipline = (specId) => [].find(",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-specok-unmapped",
+    "file": "src/net/professionLaw.js",
+    "old": "export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[trackOf(profession)]?.",
+    "new": "export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[profession]?.",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-name-the-discipline",
+    "file": "src/net/professionLaw.js",
+    "old": "export const professionName = (id) => BY_ID.get(trackOf(id))?.name ?? '';",
+    "new": "export const professionName = (id) => BY_ID.get(id)?.name ?? DISCIPLINE_BY_ID.get(id)?.name ?? '';",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-cap-own-unmapped",
+    "file": "src/net/professionLaw.js",
+    "old": "  const own = trackOf(profession);",
+    "new": "  const own = profession;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-law-masterwork-unscoped",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const masterworkSpec = (spec100, r = null) => (r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright');",
+    "new": "export const masterworkSpec = (spec100, r = null) => spec100 === 'masterwright' || spec100 === MASTER_JEWELLER;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-row-unmapped",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(player, character, trackOf(profession)).first();",
+    "new": ".bind(player, character, profession).first();",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-view-unmapped",
+    "file": "server-account/src/professions.js",
+    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
+    "new": "  return { profession, xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-free-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
+    "new": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending };",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-craft-the-discipline",
+    "file": "server-account/src/professions.js",
+    "old": "  const craft = trackOf(prof);   // CRAFT3",
+    "new": "  const craft = prof;   // CRAFT3",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-smelt-the-discipline",
+    "file": "server-account/src/professions.js",
+    "old": "      .bind(player.id, character, rid, cap, nowS, nonce, trackOf(r.xp))] : []),",
+    "new": "      .bind(player.id, character, rid, cap, nowS, nonce, r.xp)] : []),",
+    "tests": [
+      "test/prof11_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-asked-unmapped",
+    "file": "server-account/src/professions.js",
+    "old": "  const profession = trackOf(asked);",
+    "new": "  const profession = asked;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-no-free-change",
+    "file": "server-account/src/professions.js",
+    "old": "  if ((Number(row.free_respec ?? 0) & bit) !== 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-free-kept",
+    "file": "server-account/src/professions.js",
+    "old": "SET ${col} = ?4, free_respec = free_respec & ~?8,",
+    "new": "SET ${col} = ?4, free_respec = free_respec,",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-service-free-later",
+    "file": "server-account/src/professions.js",
+    "old": "    if (made?.n === nonce) return answer({ free: true });",
+    "new": "    if (made?.n === nonce) return answer({});",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-lower-is-higher",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "(a.player IS NOT NULL AND (b.player IS NULL OR a.xp >= b.xp)) AS a_hi",
+    "new": "(a.player IS NOT NULL AND (b.player IS NULL OR a.xp <= b.xp)) AS a_hi",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-tie-the-second",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "(a.player IS NOT NULL AND (b.player IS NULL OR a.xp >= b.xp)) AS a_hi",
+    "new": "(a.player IS NOT NULL AND (b.player IS NULL OR a.xp > b.xp)) AS a_hi",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-lower-choice-lost",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "    COALESCE(hi_s50, lo_s50) AS spec50,",
+    "new": "    hi_s50 AS spec50,",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-both-chose-unfree",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "    (CASE WHEN (hi_s50 IS NOT NULL AND lo_s50 IS NOT NULL) OR (lo_rr = 50 AND NOT lo_kept) THEN 1 ELSE 0 END)",
+    "new": "    (CASE WHEN (lo_rr = 50 AND NOT lo_kept) THEN 1 ELSE 0 END)",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-dropped-unfree",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "      | (CASE WHEN (hi_s100 IS NOT NULL AND lo_s100 IS NOT NULL) OR (lo_rr = 100 AND NOT lo_kept) THEN 2 ELSE 0 END) AS free_respec",
+    "new": "      | (CASE WHEN (hi_s100 IS NOT NULL AND lo_s100 IS NOT NULL) THEN 2 ELSE 0 END) AS free_respec",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-lower-change-never-kept",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "    SELECT *, (hi_rr IS NULL AND lo_rr IS NOT NULL",
+    "new": "    SELECT *, (0 AND lo_rr IS NOT NULL",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-no-fold",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "    AND respec_to IS NOT NULL AND respec_at <= CAST(strftime('%s', 'now') AS INTEGER);",
+    "new": "    AND respec_to IS NOT NULL AND 0;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-parents-kept",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "DELETE FROM prof_tracks WHERE profession IN ('smithing', 'jewelcrafting', 'carpentry', 'masonry', 'alchemy', 'cooking');",
+    "new": "DELETE FROM prof_tracks WHERE profession IN ('smithing', 'carpentry', 'alchemy');",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-merge-higher-xp-lost",
+    "file": "server-account/migrations/0088_five_crafts.sql",
+    "old": "    CASE WHEN a_hi THEN a_xp ELSE b_xp END AS hi_xp,",
+    "new": "    a_xp AS hi_xp,",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-book-unmapped",
+    "file": "src/net/profBook.js",
+    "old": "    track(profession) { const p = trackOf(profession); return state.tracks.get(p)",
+    "new": "    track(profession) { const p = profession; return state.tracks.get(p)",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-page-discipline-unsaid",
+    "file": "src/ui/profPages.js",
+    "old": "      if (two) card.append(el('i', 'prof-of', disciplineName(specDiscipline(s.id))));",
+    "new": "      if (false) card.append(el('i', 'prof-of', disciplineName(specDiscipline(s.id))));",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-page-free-paid",
+    "file": "src/ui/profPages.js",
+    "old": "      const free = t.free?.includes(r) === true;",
+    "new": "      const free = false;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-page-unlocks-one-discipline",
+    "file": "src/ui/profPages.js",
+    "old": "  if (of.length < 2) return UNLOCKS[track] ?? null;",
+    "new": "  if (of.length < 99) return UNLOCKS[track] ?? null;",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-page-unlocks-unsorted",
+    "file": "src/ui/profPages.js",
+    "old": "    .sort((a, b) => a.tier - b.tier || a.i - b.i)",
+    "new": "    .sort((a, b) => a.i - b.i)",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT3-page-building-unpractised",
+    "file": "src/ui/profPages.js",
+    "old": "'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "new": "'logging', 'smithing', 'outfitting', 'provisioning', 'enchanting']);",
+    "tests": [
+      "test/craft3_five.test.js"
+    ]
+  }
+]

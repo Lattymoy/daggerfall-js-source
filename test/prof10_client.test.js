@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY, accountRefusalText } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
-import { xpForRank, JEWEL_FEE } from '../src/net/professionLaw.js';
+import { xpForRank, JEWEL_FEE, trackOf } from '../src/net/professionLaw.js';
 import { recipeById, MASTERWORK, facetWindow, FACET_ACT, QUALITY_EFFECTS } from '../src/net/recipeLaw.js';
 import { mintPiece, mintPieces, craftedText, asMinted, JEWEL_KEPT_TEXT, pieceOfRecipe, jewelItem } from '../src/systems/smithItems.js';
 import { materialLabel } from '../src/systems/profItems.js';
@@ -107,7 +107,8 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
   const mac = await s.registered('Mac');
   const give = (m, qty) => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
-  const track = (xp, spec50 = null, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'jewelcrafting', ?, ?, ?, ?)
+  // PIN MOVED (CRAFT3): a jewel raises and reads the Smithing track - the row seeded is 'smithing'
+  const track = (xp, spec50 = null, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'smithing', ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec50 = excluded.spec50, spec100 = excluded.spec100`).run(mac.id, mac.character, xp, spec50, spec100, NOON);
   track(xpForRank(25));
   give('metal:gold', 1); give('gem:ruby', 1);
@@ -120,18 +121,18 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
     book, name: (k) => materialLabel(k), withdraw: async () => ({ ok: true, text: '' }), jeweller: () => ({ kind: 'shop', fee: JEWEL_FEE }), facetBand: () => 1, purse: () => player.gold,
     craft: async (recipe, opts) => {
       const r = await steered(0x80, () => book.craft(recipe, { ...opts, name: 'Silverthorn', fee: JEWEL_FEE }, (data, kept) => { for (const it of mintPieces(data)) player.items.push(it); paid.push(kept?.fee); }));
-      return { ok: r.ok, text: r.ok ? `${craftedText(mintPieces(r.data))} (+${r.data.xp} Jewelcrafting XP).` : accountRefusalText(r.error) };
+      return { ok: r.ok, text: r.ok ? `${craftedText(mintPieces(r.data))} (+${r.data.xp} Smithing XP).` : accountRefusalText(r.error) };   // PIN MOVED (CRAFT3): the world's words, professionName('jewelcrafting')
     },
   });
   const page = pageOf();
   try {
     assert.match(page.text(), /The Jeweller's Bench/);
-    assert.match(page.text(), /The jeweller's bench - 50 gold a piece\. Jewelcrafting 25 \(Apprentice\)\./);
+    assert.match(page.text(), /The jeweller's bench - 50 gold a piece\. Smithing 25 \(Apprentice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
     page.family('Gold').onclick();
     page.recipe('Gold Ruby Ring').onclick();
     assert.match(page.text(), /Gold Ruby Ring - rank 25Gold 1 \/ 1 \(1 stored\)Ruby 1 \/ 1 \(1 stored\)/);
     assert.match(page.text(), /2,160 enchantment points \(\+20%\)\. The item maker spends them, beside a Masterwork's own enchantment\./);
-    assert.match(page.text(), /Your rank 25, margin 0: Crude 20 \| Standard 60 \| Fine 20\. A clean facet is a step better; 60 Jewelcrafting XP\./);
+    assert.match(page.text(), /Your rank 25, margin 0: Crude 20 \| Standard 60 \| Fine 20\. A clean facet is a step better; 60 Smithing XP\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's
     page.button('Craft').onclick();
     assert.equal(profActUnderWay(), true);
     assert.match(page.text(), /The facet \(Gold Ruby Ring\) - stop the turn where the stone catches the light \(Space\): 5 facets/);
@@ -144,9 +145,9 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
     assert.match(ring.provenance, /^[0-9a-f]{16}$/);
     assert.equal(itemEnchantmentPower(ring), 2160, 'the item maker reads the piece\'s own points');
     assert.equal(itemEnchantmentPower({ group: 'Jewellery', templateIndex: 135 }), 1800, 'a looted Ring its template\'s');
-    assert.equal(book.track('jewelcrafting').xp, xpForRank(25) + 60 + 500);
+    assert.deepEqual([book.track('jewelcrafting').profession, book.track('jewelcrafting').xp, book.track('smithing').xp], ['smithing', xpForRank(25) + 60 + 500, xpForRank(25) + 60 + 500]);   // PIN MOVED (CRAFT3): the Ring credits the Smithing track, asked by either name
     assert.deepEqual([book.held('metal:gold'), book.held('gem:ruby'), paid], [0, 0, [JEWEL_FEE]], 'the fee kept with the craft and paid as it was minted');
-    assert.match(page.text(), /You made a Fine Gold Ruby Ring \(\+560 Jewelcrafting XP\)\./);
+    assert.match(page.text(), /You made a Fine Gold Ruby Ring \(\+560 Smithing XP\)\./);   // PIN MOVED (CRAFT3): the world's words
     // A GEMCUTTER'S: the gem +20%, the ring +30% - listed, and minted again from the market with its hand
     track(xpForRank(50), 'gemcutter');
     give('metal:gold', 1); give('gem:ruby', 1);
@@ -189,16 +190,17 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
 
 // ─── THE PAGE ────────────────────────────────────────────────────────
 
-/** The Stores page over a stub book - the bench where `bench` says, Jewelcrafting at `rank` under `specs`. */
+/** The Stores page over a stub book - the bench where `bench` says, Smithing (Jewelcrafting's track) at `rank` under `specs`. */
 function stubPages({ bench = { kind: 'shop', fee: JEWEL_FEE }, rank = 0, specs = { 50: null, 100: null }, held: heldIn = {}, purse = 1000, over = {} } = {}) {
   resetProfPages();
   setPref('gentleActs', false);
   const held = new Map(Object.entries({ 'metal:silver': 9, 'gem:ruby': 9, ...heldIn }));
-  const tracks = new Map([['jewelcrafting', { profession: 'jewelcrafting', xp: xpForRank(rank), rank, specs }], ['cooking', { profession: 'cooking', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);
+  // PIN MOVED (CRAFT3): the book's tracks are the crafts' - a discipline asked is its craft's (profBook.js track maps through trackOf)
+  const tracks = new Map([['smithing', { profession: 'smithing', xp: xpForRank(rank), rank, specs }], ['provisioning', { profession: 'provisioning', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);
   const book = {
     state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: {}, hunt: { hides: 0, high: 0 } }, stale: () => false, refresh: async () => ({ ok: true }),
     held: (k) => held.get(k) ?? 0, store: (k) => ({ material: k, own: held.get(k) ?? 0, bought: 0 }),
-    track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
+    track: (p) => tracks.get(trackOf(p)) ?? { profession: trackOf(p), xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,   // PIN MOVED (CRAFT3): as the book's
     choose: async () => ({ ok: true }),
   };
   const calls = [];
@@ -287,7 +289,7 @@ test('PROF10 pages: The Jeweller\'s Bench - away, the word; at a Pawn Shop or a 
     page.done();
     stubPages({ bench: { kind: 'home', fee: 0 }, purse: 0 });
     page = pageOf();
-    assert.match(page.text(), /Your jeweller's bench\. Jewelcrafting 0 \(Novice\)\./);
+    assert.match(page.text(), /Your jeweller's bench\. Smithing 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
     page.recipe('Silver Ring').onclick();
     assert.equal(page.button('Craft').disabled, false, 'a home\'s asks no fee');
   } finally { page.done(); setProfessionsPages(null); setPref('gentleActs', false); }
@@ -380,16 +382,26 @@ test('PROF10 pages: Jewelcrafting practised on the Professions page - its four c
   stubPages({ rank: 55, specs: { 50: 'goldsmith', 100: null } });
   const page = pageOf(drawProfessionsPage);
   try {
-    page.buttons().find((b) => b.textContent.startsWith('Jewelcrafting')).onclick();
+    // PIN MOVED (CRAFT3): Jewelcrafting is practised on the Smithing track - the five crafts listed, no Jewelcrafting row
+    const rows = page.buttons().filter((b) => b.className.includes('prof-row')).map((b) => b.querySelector('.prof-name').textContent);
+    assert.deepEqual(rows, ['Mining', 'Logging', 'Herbalism', 'Hunting', 'Fishing', 'Smithing', 'Building', 'Outfitting', 'Provisioning', 'Enchanting']);
+    page.buttons().find((b) => b.textContent.startsWith('Smithing')).onclick();
     page.draw();
     assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
     const cards = page.buttons().filter((b) => b.className.includes('prof-spec'));
-    assert.deepEqual(cards.map((c) => [c.querySelector('b').textContent, c.disabled]),
-      [['Gemcutter', false], ['Goldsmith', true], ['Master Jeweller', true], ['Lapidary', true]], 'the Gemcutter offered (a change), the Goldsmith chosen, the two at 100 shut below it');
-    assert.match(page.text(), /Silver pieces; the Cloth Amuletrank 0/);
-    assert.match(page.text(), /Gold piecesrank 25/);
-    assert.match(page.text(), /Platinum piecesrank 55/);
-    assert.match(page.text(), /The Wand, in Ironwood or Ghostwoodrank 70/);
+    // PIN MOVED (CRAFT3): the track's four a rank, each named its discipline's - Jewelcrafting's four among the smith's
+    assert.deepEqual(cards.map((c) => [c.querySelector('b').textContent, c.querySelector('.prof-of')?.textContent, c.disabled]),
+      [['Weaponsmith', 'Smithing', false], ['Armoursmith', 'Smithing', false], ['Gemcutter', 'Jewelcrafting', false], ['Goldsmith', 'Jewelcrafting', true],
+        ['Masterwright', 'Smithing', true], ['Quartermaster', 'Smithing', true], ['Master Jeweller', 'Jewelcrafting', true], ['Lapidary', 'Jewelcrafting', true]],
+      'the Gemcutter offered (a change, as the smith\'s two), the Goldsmith chosen, the four at 100 shut below it');
+    // PIN MOVED (CRAFT3): the jeweller's ladder among the smith's, each line its discipline's, by the rank it opens at
+    const unlocks = [...page.root().querySelectorAll('.px-stat')].map((r) => [r.querySelector('.k').textContent, r.querySelector('.v').textContent, r.className.includes('prof-locked')]);
+    assert.deepEqual(unlocks.filter(([k]) => k.startsWith('Jewelcrafting: ')), [
+      ['Jewelcrafting: Silver pieces; the Cloth Amulet', 'rank 0', false], ['Jewelcrafting: Gold pieces', 'rank 25', false],
+      ['Jewelcrafting: Platinum pieces', 'rank 55', false], ['Jewelcrafting: The Wand, in Ironwood or Ghostwood', 'rank 70', true],
+    ]);
+    assert.deepEqual(unlocks.map(([k, v]) => `${k.split(':')[0]} ${v}`), ['Smithing rank 0', 'Jewelcrafting rank 0', 'Smithing rank 10', 'Smithing rank 25', 'Jewelcrafting rank 25', 'Smithing rank 40',
+      'Smithing rank 55', 'Jewelcrafting rank 55', 'Smithing rank 70', 'Jewelcrafting rank 70', 'Smithing rank 90'], 'the two ladders in one, by tier, the smith\'s first where they share one');
   } finally { page.done(); setProfessionsPages(null); }
 });
 
@@ -464,7 +476,7 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(m, /if \(decorOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'jeweller'\)\) return \{ kind: 'home', fee: 0 \};/);
   assert.match(m, /if \(hallMemberHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'jeweller'\)\) return \{ kind: 'home', fee: 0 \};/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /: profession === 'jewelcrafting'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null, a: 'a jeweller\\'s bench', who: 'jeweller', noun: 'jeweller\\'s bench', kept: JEWEL_KEPT_TEXT, xp: 'Jewelcrafting' \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word
+  assert.match(w, /: profession === 'jewelcrafting'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null, a: 'a jeweller\\'s bench', who: 'jeweller', noun: 'jeweller\\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName\('jewelcrafting'\) \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word; PIN MOVED (CRAFT3): the XP word the craft's track's
   assert.match(w, /jeweller: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null,/);
   assert.match(w, /facetBand: \(\) => facetBand\(\{ willpower: liveStat\(playerEntity, 'willpower'\), luck: liveStat\(playerEntity, 'luck'\) \}\),/);
   assert.match(w, /craft: async \(recipe, \{ clean, heartwood = false, dye = null, cracked = false \}\) => \{/);
@@ -476,7 +488,7 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(svc, /export async function craftAtAnvil\(ctx, player, env, \{ character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false \} = \{\}\)/);
   assert.match(svc, /if \(crack && !\(takesCracked\(r\) && specs\[100\] === LAPIDARY\)\) return \{ error: 'prof-lapidary' \};/);
   assert.match(svc, /const hand = dishHand\(r, specs\[100\]\) \?\? jewelHand\(r, specs\[50\]\);/);
-  assert.match(svc, /qualityOdds\(rank - r\.rank, \{ masterwright: masterworkSpec\(specs\[100\]\) \}\)/);
+  assert.match(svc, /qualityOdds\(rank - r\.rank, \{ masterwright: masterworkSpec\(specs\[100\], r\) \}\)/);   // PIN MOVED (CRAFT3): the Master Jeweller's points asked of the recipe (a jewel's alone)
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'prof-lapidary': 403,/);
   assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, rid \}/);

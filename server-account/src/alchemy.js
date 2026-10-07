@@ -22,7 +22,7 @@ import {
   asks, shut, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor,
 } from './professions.js';
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice moved below professions.js and marks.js
-import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE } from '../../src/net/professionLaw.js';
+import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE, trackOf } from '../../src/net/professionLaw.js';
 import { FIRST_CRAFT_XP, recipeById, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import {
   potionById, brewSpends, brewCount, potentChance, potentPct, potentAble, brewXp, brewFirstPays, DISTILLER,
@@ -38,7 +38,8 @@ const HERB_RE = /^p[12]:\d+$/;
 async function tracksOf(db, player, character, profession, nowS) {
   const { results: tracks = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player, character).all();
   const ranks = Object.fromEntries(tracks.map((t) => [t.profession, rankOfXp(Number(t.xp))]));
-  return { ranks, rank: ranks[profession] ?? 0, specs: specsAt(tracks.find((t) => t.profession === profession), nowS) };
+  const craft = trackOf(profession);   // CRAFT3: Alchemy's track Provisioning's
+  return { ranks, rank: ranks[craft] ?? 0, specs: specsAt(tracks.find((t) => t.profession === craft), nowS) };
 }
 
 // ─── THE BREW (9.3) ──────────────────────────────────────────────────
@@ -121,7 +122,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
     // laid on when the character has brewed none of the potion
     db.prepare(`INSERT OR IGNORE INTO prof_brews (player, rid, char_id, potion, keys, count, potent, unbruised, steps, xp, first, at, n)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?9,
-        MAX(0, MIN(?10 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = 'alchemy'), 0))),
+        MAX(0, MIN(?10 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf('alchemy')}'), 0))),
         f, ?12, ?13
       FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND char_id = ?2 AND potion = ?4) THEN 1 ELSE 0 END AS f)
       WHERE ${held.join(' AND ')}`).bind(...binds),   // AUDIT PROF-541 B6: `first` only where the first time pays (brewFirstPays), as smeltAtForge's
@@ -136,7 +137,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
     })),
     // the XP the decision credited, under the crafter's limit
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
-      SELECT ?1, ?2, 'alchemy', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6
+      SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6
       ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
       .bind(player.id, character, rid, cap, nowS, nonce),
   ]);

@@ -13,7 +13,7 @@ import { accountProf, SESSION_KEY } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { xpForRank } from '../src/net/professionLaw.js';
 import {
-  RECIPES, recipeById, recipeInputs, patternOf, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, FIRST_CRAFT_XP, craftXp,
+  RECIPES, recipeById, recipeInputs, recipePattern, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, FIRST_CRAFT_XP, craftXp,
   COOKING_RECIPES,
 } from '../src/net/recipeLaw.js';
 import { mintPieces } from '../src/systems/smithItems.js';
@@ -67,9 +67,9 @@ test('CRAFT2 law: a station\'s patterns - the anvil 39 (15 weapons, 18 armour, 5
   assert.deepEqual(patternsOf(station('carpentry', 'arrows'))[0].recipes.map((r) => [r.id, r.madeOf]), [['arrows:north', 'northern Twigs'], ['arrows:south', 'southern Twigs'], ['arrows:harpy', 'Harpy Feathers']]);
   assert.equal(patternsOf(RECIPES).reduce((n, p) => n + p.recipes.length, 0), RECIPES.length, 'every recipe in one pattern');
   const profsOf = new Map();
-  for (const r of RECIPES) profsOf.set(patternOf(r), new Set([...(profsOf.get(patternOf(r)) ?? []), r.profession]));
+  for (const r of RECIPES) profsOf.set(recipePattern(r), new Set([...(profsOf.get(recipePattern(r)) ?? []), r.profession]));
   assert.deepEqual([...profsOf.values()].filter((s) => s.size > 1), [], 'FACT: no product id two professions\'');
-  assert.equal(patternOf(null), null);
+  assert.equal(recipePattern(null), null);
   for (const r of RECIPES) assert.ok(typeof r.pattern === 'string' && r.pattern && typeof r.madeOf === 'string', r.id);
 });
 

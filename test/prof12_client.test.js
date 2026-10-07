@@ -16,7 +16,7 @@ import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY, accountRefusalText } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { realmGoldAct } from '../src/systems/realmSaves.js';   // AUDIT PROF-541 R2-C1
-import { xpForRank, ALCHEMY_FEE, ENCHANT_FEE, stockOf } from '../src/net/professionLaw.js';
+import { xpForRank, ALCHEMY_FEE, ENCHANT_FEE, stockOf, trackOf, professionName } from '../src/net/professionLaw.js';   // CRAFT3: trackOf, professionName
 import { potionById, POTENT, enchantGold, potentChance } from '../src/net/alchemyLaw.js';
 import { FORT_EFFECT_WORDS, STATION_PROFESSIONS } from '../src/net/fortLaw.js';
 import { cookXp } from '../src/net/recipeLaw.js';
@@ -90,7 +90,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     alchemy: () => ({ kind: 'shop', fee: ALCHEMY_FEE }),
     brew: async (potion, keys) => {
       const r = await book.brew(potion, keys, { fee: ALCHEMY_FEE }, mint);
-      return r.ok ? { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} Alchemy XP).` } : { ok: false, text: r.kept ? BREW_KEPT_TEXT : accountRefusalText(r.error) };
+      return r.ok ? { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} ${professionName('alchemy')} XP).` } : { ok: false, text: r.kept ? BREW_KEPT_TEXT : accountRefusalText(r.error) };   // PIN MOVED (CRAFT3): world.js's word - the brew raises Provisioning, Alchemy's craft
     },
     stock: async (key, qty, counter) => { const r = await book.stock(key, qty); return r.ok ? { ok: true, text: `Bought from the ${counter}.` } : { ok: false, text: accountRefusalText(r.error) }; },
     enchanter: () => ({ kind: 'shop', fee: ENCHANT_FEE }),
@@ -104,7 +104,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
   const page = pageOf();
   try {
     assert.match(page.text(), /The Alchemy Station/);
-    assert.match(page.text(), /The alchemist's station - 50 gold a brew\. Alchemy 0 \(Novice\): a potion a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);
+    assert.match(page.text(), /The alchemist's station - 50 gold a brew\. Provisioning 0 \(Novice\): a potion a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
     assert.equal(page.recipe('Healing').textContent, 'Healingwants its ingredients');
     assert.equal(page.recipe('Invisibility').textContent, 'Invisibilityrank 70');
     page.recipe('Healing').onclick();
@@ -117,7 +117,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /A potion a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Alchemy XP, and 500 the first time\./);
+    assert.match(page.text(), /A potion a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning XP, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
@@ -127,20 +127,20 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     assert.deepEqual(paid, [ALCHEMY_FEE], 'the fee kept with the brew and paid as its potion was bottled');
     assert.equal(book.track('alchemy').xp, 520);
     page.draw();
-    assert.match(page.text(), /You brewed a Potion of Healing \(\+520 Alchemy XP\)\./);
+    assert.match(page.text(), /You brewed a Potion of Healing \(\+520 Provisioning XP\)\./);   // PIN MOVED (CRAFT3): the world's word names the track it raised
     // A MASTER ALCHEMIST'S: three potions, Potent at +40%
-    track('alchemy', xpForRank(100), null, 'master-alchemist');
+    track('provisioning', xpForRank(100), null, 'master-alchemist');   // PIN MOVED (CRAFT3): the Master Alchemist stands under Provisioning, Alchemy's craft's track
     for (const k of ['p1:16', 'metal:mercury', 'reagent:troll-blood', 'reagent:elixir-vitae']) give(k, 1);
     assert.equal((await book.refresh({ force: true })).ok, true);
     page.draw();
     page.recipe('Healing').onclick();
-    assert.match(page.text(), /Alchemy 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);
+    assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
     await steered(0x00, async () => { page.button('Brew').onclick(); await settle(_alchemyForTests()); });
     const potent = player.items.find((it) => it.potent === 40);
     assert.deepEqual([potent?.stackCount ?? 1, potent?.value, itemLongName(potent)], [3, 70, 'Potent Potion of Healing'], 'three, stacked apart from the plain one; worth its share more');
     assert.equal(player.items.length, 2, 'the plain and the Potent: two stacks');
     // A RING DISENCHANTED: pressed twice, the Essence the Stores', the piece gone
-    track('jewelcrafting', xpForRank(25));
+    track('smithing', xpForRank(25));   // PIN MOVED (CRAFT3): a Ring's rank read on Smithing, Jewelcrafting's craft's track
     give('metal:gold', 1); give('gem:ruby', 1);
     const made = await s.call('/v1/prof/craft', { character: mac.character, recipe: 'ring:gold:ruby', clean: false, name: 'Mac', rid: 'ring-for-essence-1' }, mac.secret);
     player.items.push({ group: 'Jewellery', templateIndex: 135, provenance: made.body.pieces[0].provenance, recipe: 'ring:gold:ruby', name: 'Gold Ruby Ring', enchantmentPoints: 2160 });
@@ -163,10 +163,11 @@ const _shutForTests = () => { _stubBook.state.open = false; };
 function stubPages({ alchemy = null, enchanter = null, alchemyTrack = { rank: 0, specs: { 50: null, 100: null } }, enchantingTrack = { rank: 0, specs: { 50: null, 100: null } }, held: heldIn = {}, over = {} } = {}) {
   resetProfPages();
   const held = new Map(Object.entries(heldIn));
-  const tracks = new Map([['alchemy', { profession: 'alchemy', xp: xpForRank(alchemyTrack.rank), ...alchemyTrack }], ['enchanting', { profession: 'enchanting', xp: xpForRank(enchantingTrack.rank), ...enchantingTrack }]]);
+  // PIN MOVED (CRAFT3): the stub book as profBook's - its tracks keyed by track ('provisioning' Alchemy's), a discipline asked its craft's
+  const tracks = new Map([['provisioning', { profession: 'provisioning', xp: xpForRank(alchemyTrack.rank), ...alchemyTrack }], ['enchanting', { profession: 'enchanting', xp: xpForRank(enchantingTrack.rank), ...enchantingTrack }]]);
   const book = {
     state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: {}, hunt: { hides: 0, high: 0 } }, stale: () => false, refresh: async () => ({ ok: true }),
-    held: (k) => held.get(k) ?? 0, track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, pendingWithdrawals: 0, pendingCrafts: 0, choose: async () => ({ ok: true }),
+    held: (k) => held.get(k) ?? 0, track: (p) => tracks.get(trackOf(p)) ?? { profession: trackOf(p), xp: 0, rank: 0, specs: { 50: null, 100: null } }, pendingWithdrawals: 0, pendingCrafts: 0, choose: async () => ({ ok: true }),
   };
   const calls = [];
   _stubBook = book;
@@ -189,7 +190,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   const { calls } = stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 50, specs: { 50: 'brewer', 100: null } },
     held: { 'p2:16': 2, 'p1:16': 1, 'reagent:troll-blood': 1, 'reagent:elixir-vitae': 1, 'metal:mercury': 1 } });
   page = pageOf();
-  assert.match(page.text(), /Your alchemy station\. Alchemy 50 \(Journeyman\): 3 potions a brew; Potent 0%/);
+  assert.match(page.text(), /Your alchemy station\. Provisioning 50 \(Journeyman\): 3 potions a brew; Potent 0%/);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
   for (const [name, rank] of [['Stamina', 0], ['Resist Fire', 10], ['Cure Disease', 25], ['Levitation', 40], ['Shadow Form', 55], ['Invisibility', 70], ['Purification', 90]]) {
     assert.equal(page.recipe(name).textContent, `${name}${rank <= 50 ? 'wants its ingredients' : `rank ${rank}`}`, 'open at Journeyman to rank 40, shut above it');
   }
@@ -210,7 +211,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   page.done();
   const { calls: calls2 } = stubPages({ alchemy: { kind: 'shop', fee: ALCHEMY_FEE }, alchemyTrack: { rank: 100, specs: { 50: 'distiller', 100: 'transmuter' } }, held: { 'metal:tin': 3, 'metal:mercury': 1 } });
   page = pageOf();
-  assert.match(page.text(), /Alchemy 100 \(Master\): 3 potions a brew; Potent 30% \(\+25% magnitude or duration\)/, 'Master\'s 20 and a Distiller\'s 10');
+  assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 30% \(\+25% magnitude or duration\)/, 'Master\'s 20 and a Distiller\'s 10');   // PIN MOVED (CRAFT3): Provisioning's rank
   assert.match(page.text(), /metal:copper2 metal:tin \(3\) \+ 1 metal:mercury \(1\)/, 'Tin to Copper, its inputs as the Stores hold them');
   assert.match(page.text(), /metal:silver2 metal:copper \(0\) \+ 1 metal:mercury \(1\)/);
   const go = page.button('Transmute');
@@ -260,14 +261,28 @@ test('PROF12 pages: The Enchanting Station - away, the word; at a Mages Guild ha
 test('PROF12 pages: Alchemy and Enchanting practised on the Professions page - their cards chosen at their ranks, Alchemy\'s unlocks by DFU\'s twenty, how each is practised said', () => {
   stubPages({ alchemyTrack: { rank: 100, specs: { 50: null, 100: null } } });
   const src0 = src('src/ui/profPages.js');
-  assert.match(src0, /'jewelcrafting', 'alchemy', 'enchanting'\]\);/);
+  // PIN MOVED (CRAFT3): PRACTISED is the ten tracks - Alchemy practised as Provisioning's, beside Enchanting
+  assert.match(src0, /const PRACTISED = Object\.freeze\(\['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting'\]\);/);
   const page = pageOf(drawProfessionsPage);
   try {
-    page.buttonStarting('Alchemy').onclick();
+    page.buttonStarting('Provisioning').onclick();   // PIN MOVED (CRAFT3): Alchemy's brewing is the Provisioning track's pane
     page.draw();
     assert.match(page.text(), /Brewer3 potions a brew at Journeyman\./);
-    assert.match(page.text(), /Orc Strength, Stamina, Healing, Water Walkingrank 0/);
-    assert.match(page.text(), /Purificationrank 90/);
+    // PIN MOVED (CRAFT3): a merged craft's four cards a rank, each named for its discipline (prof-of)
+    const cards = [...document.body.querySelectorAll('.prof-specs')].map((c) => [...c.querySelectorAll('.prof-spec')].map((b) => [b.querySelector('b').textContent, b.querySelector('.prof-of')?.textContent ?? null]));
+    assert.deepEqual(cards, [
+      [['Brewer', 'Alchemy'], ['Distiller', 'Alchemy'], ['Cook', 'Cooking'], ['Field Cook', 'Cooking']],
+      [['Master Alchemist', 'Alchemy'], ['Transmuter', 'Alchemy'], ['Chef', 'Cooking'], ['Provisioner', 'Cooking']],
+    ]);
+    assert.match(page.text(), /Alchemy: Orc Strength, Stamina, Healing, Water Walkingrank 0/);   // PIN MOVED (CRAFT3): each unlock its discipline's name
+    assert.match(page.text(), /Alchemy: Purificationrank 90/);   // PIN MOVED (CRAFT3): as above
+    // PIN MOVED (CRAFT3): the Unlocks both disciplines' lines, by the rank each opens at (unlocksOf) - Alchemy's first on a tie
+    assert.deepEqual([...document.body.querySelector('.prof-pane').querySelectorAll('.px-stat')].map((r) => r.textContent), [
+      'Alchemy: Orc Strength, Stamina, Healing, Water Walkingrank 0', 'Cooking: Hunter\'s Stew, Fisherman\'s Supperrank 0',
+      'Alchemy: Resist Fire, Resist Frost, Resist Shock, Restore Powerrank 10', 'Cooking: Orchard Tartrank 10',
+      'Alchemy: Slow Falling, Water Breathing, Cure Disease, Heal Truerank 25', 'Alchemy: Resist Poison, Free Action, Levitationrank 40',
+      'Alchemy: Chameleon Form, Shadow Form, Cure Poisonrank 55', 'Alchemy: Invisibilityrank 70', 'Cooking: Feast of the Hearthrank 70', 'Alchemy: Purificationrank 90',
+    ]);
     assert.match(page.text(), /Brew at an alchemy station/);
     assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
     page.buttonStarting('Enchanting').onclick();
@@ -456,7 +471,7 @@ test('AUDIT PROF12 A3 client (Mac: "Potent lasts longer"): a Potent potion whose
   stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 100, specs: { 50: null, 100: 'master-alchemist' } } });
   const page = pageOf();
   try {
-    assert.match(page.text(), /Alchemy 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);
+    assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
     page.recipe('Resist Fire').onclick();
     assert.match(page.text(), /3 potions a brew\. Potent 20% \(lasts 40% longer\)/);
     page.recipe('Healing').onclick();
@@ -481,11 +496,11 @@ test('AUDIT PROF-541 B3/B4 client: the station\'s Potent chance carries the town
   stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 75, specs: { 50: null, 100: null } }, over: { alchemySteps: () => 2 } });
   const page = pageOf();
   try {
-    assert.match(page.text(), /Alchemy 75 \(Expert\): 2 potions a brew; Potent 30% \(\+25% magnitude or duration\) \(the Apothecary's \+20% with it\)/);
+    assert.match(page.text(), /Provisioning 75 \(Expert\): 2 potions a brew; Potent 30% \(\+25% magnitude or duration\) \(the Apothecary's \+20% with it\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
     page.recipe('Healing').onclick();
     assert.match(page.text(), /2 potions a brew\. Potent 30% \(\+25% magnitude\) - and \+5% for each of its herbs/);
     page.recipe('Cure Disease').onclick();
-    assert.match(page.text(), new RegExp(`2 potions a brew\\. ${POTENT_NONE_LINE.replace(/[()]/g, '\\$&')}\\. \\d+ Alchemy XP`));
+    assert.match(page.text(), new RegExp(`2 potions a brew\\. ${POTENT_NONE_LINE.replace(/[()]/g, '\\$&')}\\. \\d+ Provisioning XP`));   // PIN MOVED (CRAFT3): the XP is Provisioning's
     page.recipe('Purification').onclick();
     assert.match(page.text(), /Potent 30% \(\+25% magnitude\)/, 'Purification\'s magnitude stays Potent');
   } finally { page.done(); setProfessionsPages(null); }

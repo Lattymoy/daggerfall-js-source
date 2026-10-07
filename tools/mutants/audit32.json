@@ -567,22 +567,24 @@
   {
     "name": "AUDIT32-S1-service-always-pays",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, prof,",
-    "new": "nonce, FIRST_CRAFT_XP, prof,",
+    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
+    "new": "nonce, FIRST_CRAFT_XP, craft,",
     "tests": [
       "test/audit32_service.test.js",
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT32-S1-service-pays-inverted",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, prof,",
-    "new": "nonce, firstCraftPays(r) ? 0 : FIRST_CRAFT_XP, prof,",
+    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
+    "new": "nonce, firstCraftPays(r) ? 0 : FIRST_CRAFT_XP, craft,",
     "tests": [
       "test/audit32_service.test.js",
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT32-S1-law-any-counter-input",

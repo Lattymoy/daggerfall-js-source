@@ -548,8 +548,10 @@ export const jewelPoints = (r, templatePoints, hand = null) => Math.floor((Math.
  *  gem - the cracked one stands in for the recipe's, and the piece is the recipe's (its gem the one chosen). */
 export const takesCracked = (r) => !!r && r.kind === 'jewel' && !!r.gem;
 /** The specialisations at 100 that add Masterwork points (MASTERWRIGHT_POINTS): Smithing's Masterwright (3.3) and - PROF10
- *  - Jewelcrafting's Master Jeweller ("jewellery Masterwork chance +5%"). A track stands under its own profession's alone. */
-export const masterworkSpec = (spec100) => spec100 === 'masterwright' || spec100 === MASTER_JEWELLER;
+ *  - Jewelcrafting's Master Jeweller ("jewellery Masterwork chance +5%"). CRAFT3: both are the Smithing track's to
+ *  choose now (one at 100), so each acts on its own discipline's work as it did - the Masterwright's on the smith's, the
+ *  Master Jeweller's on the jeweller's (`r` the recipe; none asked, the smith's). */
+export const masterworkSpec = (spec100, r = null) => (r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright');
 
 // ─── PROF10: THE FACET (PROF0 9.4) ───────────────────────────────────
 
@@ -588,7 +590,7 @@ export const recipeById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? nul
  * product id is two professions'.
  * @param {Recipe|null} r
  */
-export const patternOf = (r) => r?.product ?? null;
+export const recipePattern = (r) => r?.product ?? null;
 /**
  * @typedef {{ id: string, name: string, recipes: readonly Recipe[] }} Pattern
  */

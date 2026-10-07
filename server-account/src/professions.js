@@ -48,7 +48,7 @@ import { CHAR_ID_RE } from './service.js';
 import { MARKS_MAX, utcDay, gatherFindOf } from '../../src/net/marksLaw.js';
 import { renownForXp, RENOWN_XP_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import {
-  PROFESSIONS, isProfession, rankOfXp, tierOpen, harvestXp, writXp, specOk, specsAt, SPEC_RANKS, RESPEC,
+  PROFESSIONS, isProfession, rankOfXp, tierOpen, harvestXp, writXp, specOk, specsAt, SPEC_RANKS, RESPEC, trackOf,   // CRAFT3: a discipline's track its craft's
   STORES_MAX, WITHDRAW_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, HARVEST_LATE_S, HARVEST_EARLY_S,
   PROF_RID_RE, PROF_XP_MAX, profSwitchOf, basketStep, herbKey, professionOfFamily, courtWritCount, COURT_WRITS_PER_DAY,
   glintsMax, smeltRecipe, SMELT_MAX, smeltXp, craftXpCap, DEEP_UNCONFIRMED_PER_DAY,   // CAP-OFF: no day's cap to import
@@ -111,15 +111,21 @@ export const shut = (player, env) => (profOpenFor(player, env) ? null : { error:
 
 // ─── WHAT A CHARACTER HAS ────────────────────────────────────────────
 
-/** A track as the tabs read it: its XP and rank, the specialisations it stands under now, a change on its way. */
+/** A track as the tabs read it: its XP and rank, the specialisations it stands under now, a change on its way. CRAFT3: a
+ *  discipline's is its craft's track (`profession` the craft's - 'jewelcrafting' answers 'smithing'), and `free` the
+ *  ranks a change is free at, once - the merge's (0088's `free_respec`: 1 the choice at 50, 2 at 100), said only where
+ *  there is one. */
 export function trackView(row, profession, nowS) {
   const xp = Number(row?.xp ?? 0);
   const specs = specsAt(row, nowS);
   const pending = row?.respec_to && Number(row.respec_at) > nowS ? { rank: Number(row.respec_rank), to: row.respec_to, at: Number(row.respec_at) } : null;
-  return { profession, xp, rank: rankOfXp(xp), specs, respec: pending };
+  const free = SPEC_RANKS.filter((r) => (Number(row?.free_respec ?? 0) & freeBit(r)) !== 0);
+  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };
 }
+/** CRAFT3: a rank's bit in a track's `free_respec` (0088) - 1 the choice at 50, 2 at 100. */
+export const freeBit = (rank) => (rank === 50 ? 1 : rank === 100 ? 2 : 0);
 export const trackRow = (db, player, character, profession) =>
-  db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?3').bind(player, character, profession).first();
+  db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?3').bind(player, character, trackOf(profession)).first();
 /** A Stores row's origin as a count's name - own, bought (with Drakes) or GOLD-MARKET's gold (bought with gold). */
 const originOf = (o) => (o === 'bought' || o === 'gold' ? o : 'own');
 /** GOLD-MARKET: a Stores count's gold units said only where there are any - a Stores nothing bought with gold keeps the
@@ -653,8 +659,9 @@ export async function harvestNode(ctx, player, env, body = {}) {
  * thought free, made meanwhile (another device, a lost answer), would have been a paid change the player never
  * confirmed; it is refused, `prof-spec-stale`, and nothing is burnt.
  */
-export async function chooseSpec(ctx, player, env, { character, profession, rank, spec, from = null, rid } = {}) {
+export async function chooseSpec(ctx, player, env, { character, profession: asked, rank, spec, from = null, rid } = {}) {
   const { db, nowS, rand } = ctx;
+  const profession = trackOf(asked);   // CRAFT3: a discipline named is its craft's track (an older client's 'jewelcrafting')
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   const answer = async (extra = {}, prof = profession, char = character) => ({ ok: true, ...extra, track: trackView(await trackRow(db, player.id, char, prof), prof, nowS) });
@@ -691,6 +698,31 @@ export async function chooseSpec(ctx, player, env, { character, profession, rank
   }
   const current = specsAt(row, nowS)[rank];
   if (from !== current) return { error: 'prof-spec-stale' };
+  const bit = freeBit(rank);
+  if ((Number(row.free_respec ?? 0) & bit) !== 0) {
+    // CRAFT3 (41.6: "a character who chose under both keeps the higher track's and re-chooses free"): THE MERGE'S FREE
+    // CHANGE - no Marks, in effect at once, once a rank; a change on its way at that rank is this one's to replace. Its
+    // row decides, only while the bit stands; the track takes it by the row's nonce
+    if (current === spec) return answer();   // already so - the bit kept for a change of mind
+    const nonce = mintId(rand);
+    await db.batch([
+      db.prepare(`INSERT OR IGNORE INTO prof_choices (player, rid, char_id, profession, rank, spec, at, n)
+        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
+        WHERE EXISTS (SELECT 1 FROM prof_tracks WHERE player = ?1 AND char_id = ?3 AND profession = ?4 AND (free_respec & ?9) != 0)`)
+        .bind(player.id, rid, character, profession, rank, spec, nowS, nonce, bit),
+      db.prepare(`UPDATE prof_tracks SET ${col} = ?4, free_respec = free_respec & ~?8,
+          respec_rank = CASE WHEN respec_rank = ?9 THEN NULL ELSE respec_rank END,
+          respec_to = CASE WHEN respec_rank = ?9 THEN NULL ELSE respec_to END,
+          respec_at = CASE WHEN respec_rank = ?9 THEN NULL ELSE respec_at END, updated_at = ?5
+        WHERE player = ?1 AND char_id = ?2 AND profession = ?3 AND (free_respec & ?8) != 0
+          AND EXISTS (SELECT 1 FROM prof_choices WHERE player = ?1 AND rid = ?6 AND n = ?7)`)
+        .bind(player.id, character, profession, spec, nowS, rid, nonce, bit, rank),
+    ]);
+    const made = await db.prepare('SELECT n FROM prof_choices WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+    if (made?.n === nonce) return answer({ free: true });
+    if (made) return answer({ repeat: true });
+    return { error: 'prof-spec-stale' };   // spent meanwhile - the client reads the track again
+  }
   if (row.respec_to && Number(row.respec_at) > nowS) return { error: 'prof-respec-pending' };
   if (current === spec) return answer();   // already so
   if (!marksOpenFor(player, env)) return { error: 'marks-closed' };
@@ -954,17 +986,18 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
   // PROF3 (FOUND): a Quartermaster's ingots are two a unit (PROF0 3.3) - the choice was offered and the doubling unbuilt;
   // PROF4: the recipe names its yield a unit and the choice that raises it (a Charcoal Burner's, a Timberwright's too);
   // PROF7: at the rank the choice is made at - a Tanner's at 50
-  const specsHere = r.more ? { [r.more.profession]: specsAt(tracks.find((t) => t.profession === r.more.profession), nowS)[workSpecRank(r)] } : {};
+  // CRAFT3: each read on its discipline's craft's track (a Quarryman's Building, a Transmuter's Provisioning)
+  const specsHere = r.more ? { [r.more.profession]: specsAt(tracks.find((t) => t.profession === trackOf(r.more.profession)), nowS)[workSpecRank(r)] } : {};
   const per = workPer(r, specsHere);
-  const rank = ranks[r.xp] ?? 0;
+  const rank = ranks[trackOf(r.xp)] ?? 0;
   // PROF12: a transmutation is a Transmuter's (3.3: Alchemy's choice at 100) - asked before anything moves
-  if (!workSpecOk(r, r.spec ? specsAt(tracks.find((t) => t.profession === r.spec.profession), nowS) : null)) return { error: 'prof-transmuter' };
+  if (!workSpecOk(r, r.spec ? specsAt(tracks.find((t) => t.profession === trackOf(r.spec.profession)), nowS) : null)) return { error: 'prof-transmuter' };
   if (!workOpen(r, rank)) return { error: 'prof-rank' };   // PROF11: a mason's work asks its tier's rank (Mortar's 10)
   // PROF11: a mason's work's XP is a craft's (recipeLaw masonXp: the rank's tier a unit, a clean chisel's half again) and
   // its first time's 500 (?11, where firstCraftPays) laid on in the decision; every other work's the smelt's
   const act = r.act ? clean === true : false;
   const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;
-  const xp = r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, ranks[r.xp] ?? 0) : 0;   // AUDIT 29 A7: the record's quarter, at the smith's rank
+  const xp = r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0;   // AUDIT 29 A7: the record's quarter, at the smith's rank
   const nonce = mintId(rand);
   // ?1 player ?2 character ?3 rid ?4 recipe ?5 count ?6 out ?7 STORES_MAX ?8 xp ?9 now ?10 nonce ?11 the first time's XP
   // (PROF11: a mason's work's; 0 for every other) ?12 the chisel clean; the inputs ?13 on, two a one
@@ -984,7 +1017,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     // first of a work its 500 laid on (`f`, kept), and its chisel kept
     db.prepare(`INSERT OR IGNORE INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, xp, at, n, first, clean)
       SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * MIN(?5, ${bought}),
-        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${r.xp ?? 'smithing'}'), 0))), ?9, ?10, f, ?12
+        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12
       FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND char_id = ?2 AND recipe = ?4) THEN 1 ELSE 0 END AS f)
       WHERE ${held.join(' AND ')}
         AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?6), 0) + ${per} * ?5 <= ?7`).bind(...binds),
@@ -1001,7 +1034,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     ...(r.xp ? [db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
       SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_smelts WHERE player = ?1 AND rid = ?3 AND n = ?6
       ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
-      .bind(player.id, character, rid, cap, nowS, nonce, r.xp)] : []),
+      .bind(player.id, character, rid, cap, nowS, nonce, trackOf(r.xp))] : []),   // CRAFT3: its craft's track
   ]);
   const made = await db.prepare('SELECT * FROM prof_smelts WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return answer(made);
@@ -1100,21 +1133,22 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
   const { results: tracks = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).all();
   const ranks = Object.fromEntries(tracks.map((t) => [t.profession, rankOfXp(Number(t.xp))]));
-  const prof = r.profession;
-  const rank = ranks[prof] ?? 0;
-  const specs = specsAt(tracks.find((t) => t.profession === prof), nowS);
+  const prof = r.profession;   // the discipline - a hall's steps are its (seatStepsFor)
+  const craft = trackOf(prof);   // CRAFT3: the track it is read and raised on - a Ring's Smithing
+  const rank = ranks[craft] ?? 0;
+  const specs = specsAt(tracks.find((t) => t.profession === craft), nowS);
   if (r.spec && specs[100] !== r.spec) return { error: 'prof-sculptor' };   // PROF11: the stone decor is a Sculptor's (3.3)
   const crack = cracked === true;   // PROF10: a Siege-cracked Gem set as the piece's gem - a Lapidary's (3.3), in a piece that sets one
   if (crack && !(takesCracked(r) && specs[100] === LAPIDARY)) return { error: 'prof-lapidary' };
   if (!recipeOpen(r, rank, specs)) return { error: 'prof-rank' };
-  const cap = craftXpCap(prof, ranks);
+  const cap = craftXpCap(craft, ranks);
   const wood = heartwood === true && takesHeartwood(r);
   const inputs = recipeInputs(r, { heartwood: wood, joiner: specs[50] === 'joiner', cracked: crack });
   // SEAT2b part two: the seat's crafting halls' steps, where the crafter's guild holds the town it crafts in (seatStepsFor)
   // PROF12: and a dish's - the Apothecary's step a dish's XP (recipeLaw cookXp: a clean pan's half again, a step each)
   const halls = takesQuality(r) || r.kind === 'dish' ? await seatStepsFor(db, player.id, character, seat, prof, nowS) : 0;
   const quality = takesQuality(r)
-    ? craftQuality(rollQuality(dice(rand), qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100]) })), qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood }) + halls)
+    ? craftQuality(rollQuality(dice(rand), qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) })), qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood }) + halls)
     : -1;
   // SEAT2b part two (PROF0 4.8: "690 | Ram Kit | Stores (a siege work)"): A SIEGE WORK goes into the crafter's Stores, never
   // the pack - own or bought as its inputs were spent (bought first, as every spend - so bought where any input held a
@@ -1137,7 +1171,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // profession ?15 heartwood ?16 the dye; the inputs ?17 on, two a one
   // PROF9: a dish's XP follows the rank, a clean pan's half again (cookXp); every other craft's its tier's (craftXp)
   const xp = r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank, false);   // PROF12: the Apothecary's steps
-  const binds = [player.id, character, rid, r.id, quality, count, provs[0], provs[1] ?? null, seed, xp, nowS, nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, prof, wood ? 1 : 0, u];
+  const binds = [player.id, character, rid, r.id, quality, count, provs[0], provs[1] ?? null, seed, xp, nowS, nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft, wood ? 1 : 0, u];
   const held = [];
   inputs.forEach((inp, i) => {
     binds.push(inp.key, inp.n);
@@ -1185,7 +1219,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
       SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?6
       ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
-      .bind(player.id, character, rid, cap, nowS, nonce, prof),
+      .bind(player.id, character, rid, cap, nowS, nonce, craft),
   ]);
   const made = await db.prepare('SELECT * FROM prof_crafts WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return craftAnswer(db, player, made, nowS);

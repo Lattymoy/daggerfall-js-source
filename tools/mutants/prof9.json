@@ -1037,12 +1037,12 @@
   {
     "name": "PROF9-pages-cooking-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "'carpentry', 'masonry', 'jewelcrafting', 'alchemy', 'enchanting']);",
+    "old": "  cooking: Object.freeze([['Hunter\\'s Stew, Fisherman\\'s Supper', 1],",
+    "new": "  cookery: Object.freeze([['Hunter\\'s Stew, Fisherman\\'s Supper', 1],",
     "tests": [
       "test/prof9_client.test.js"
     ],
-    "note": "PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF9-pages-feast-unlock-55",
@@ -1339,11 +1339,12 @@
   {
     "name": "AUDIT-PROF-541-K7-steps-unsaid",
     "file": "src/ui/profPages.js",
-    "old": "Cooking XP to a plain dish's ${cookXp(rank, { steps })}",
-    "new": "Cooking XP to a plain dish's ${cookXp(rank)}",
+    "old": "${professionName('cooking')} XP to a plain dish's ${cookXp(rank, { steps })}",
+    "new": "${professionName('cooking')} XP to a plain dish's ${cookXp(rank)}",
     "tests": [
       "test/prof9_client.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT-PROF-541-K7-steps-unread",
