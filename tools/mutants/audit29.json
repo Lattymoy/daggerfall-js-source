@@ -71,8 +71,10 @@
     "new": "(s) => s.id === specId)",
     "tests": [
       "test/audit29_laws.test.js",
-      "test/audit29_service.test.js"
-    ]
+      "test/audit29_service.test.js",
+      "test/craft3_five.test.js"
+    ],
+    "note": "CRAFT3's re-judge: survived on main too - nothing pinned that a choice still `later` (the Trophy Hunter, the Couturier, the Saddler) is refused; pinned in craft3_five's law."
   },
   {
     "name": "AUDIT29-A3-the-account-day-again",
