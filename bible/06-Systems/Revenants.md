@@ -323,6 +323,14 @@ The choice is the owner's (a revenant is its character's memory). The foe record
 does; the hover says it is beaten (`world153`, with REVENANT-WIRE's `nm`). A foe adopted by a peer (the owner's
 death) stands as itself - its owner's judgement goes with the owner - and a foe mid-judgement is never handed over.
 
+**REVENANT-HEIR** (Discord, 2026-10-07: "I got them to Elite Level V and I thought they'd kneel but they just keeled
+over and died"): a revenant is never handed over at all. The handovers (the owner's death, a door out, OW6's walk-away;
+underground, a joiner's own frame) name an heir for every other live foe and none for one carrying a revenant
+(`exteriorFoes.js foesFrame`, `dungeonContext.js ownFrame`). Its record lives in its owner's save alone
+(`revenantById`), so an heir's copy read a plain foe: no last stand, no will, no kneel, a corpse, and the owner's record
+never told. It goes with its owner, as a watchman goes with his own. A party member's killing blow lands at the owner,
+where the record is, and brings its last stand and then its fate there (`test/revenant_fate.test.js`).
+
 ## 16. The audit (2026-10-02, Mac: "Audit everything and ensure perfection")
 
 Five audits - the records and their words, the kill-or-spare flow, the sworn, the UI, the burn and the portals - and
