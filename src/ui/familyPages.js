@@ -60,6 +60,9 @@ export const TREE_ZOOM_STEP = 1.12;
  *   and the Living World running - AUDIT LEGACY II B5)
  * @property {() => boolean} [livingWorld]   whether the Living World runs (its towns are where the line stands)
  * @property {(house:any) => boolean} [markHome]   LEGACY-HOME: make one of the family's houses its home
+ * @property {() => ({region:string, loc:string}|null)} [familySeatHere]   FAMILY-SEAT: the town the one played stands in,
+ *   when the seat may move there (scenes/legacyHost.js familySeatHere), or null
+ * @property {() => {ok:boolean, why?:string}} [moveFamilySeat]   FAMILY-SEAT: the seat moved there
  * @property {() => (string|null)} [choice]   LEGACY-CHOICE: the played character's own answer (`entity.legacyChoice`)
  * @property {() => boolean} [online]   LEGACY-CHOICE: whether the page is the online lane's
  */
@@ -75,10 +78,11 @@ let _pan = null;      // { x, y } - null: centre on the played one at the next d
 let _said = null;     // { ok, text } - the last act's word
 let _armed = null;    // 'switch:<id>' | 'mantle' - a press that asks again before it acts
 let _homeSaid = null; // the House page's word on a home marked (AUDIT LEGACY II U7)
+let _seatSaid = null; // FAMILY-SEAT: the House page's word on the seat (armed: what the second press will do)
 /** A fresh visit: nothing pressed, the tree centred, no word left over. */
-export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; _homeSaid = null; }
+export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; _homeSaid = null; _seatSaid = null; }
 /** AUDIT LEGACY U8: another page or tab pressed - an armed act and its word never wait for the way back. */
-export function disarmFamilyPages() { _said = null; _armed = null; }
+export function disarmFamilyPages() { _said = null; _armed = null; _seatSaid = null; }
 
 export const FAMILY_CSS = `
 .px-sys .fam-wrap { display: flex; gap: 12px; align-items: flex-start; min-height: 360px; }   /* AUDIT LEGACY U6: the tree no taller than its own height - the card scrolls, the tree's tools stay in view */
@@ -549,6 +553,24 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   if (me) fact('Head of the house', fullNameOf(me.given, me.surname));
   if (prov.date && family.founded) fact('Founded', prov.date(family.founded));
   detail.append(g, el('p', 'px-note', modelLine(family.model)));
+  // FAMILY-SEAT (FIELD BUGS 2026-10-07b, afjiz: "the option in the enhanced ui to reset your family seat to a town your
+  // currently in"): the seat is the first town the house stands in, and the player's to move to the town the one played
+  // stands in now - armed by the first press, as a switch is (the heirs are born where the seat is)
+  const here = prov.moveFamilySeat ? prov.familySeatHere?.() ?? null : null;
+  if (here) {
+    const armed = _armed === 'seat';
+    const b = el('button', `act fam-moveseat${armed ? ' primary' : ''}`, armed ? `Yes - make ${here.loc} the family seat` : `Make ${here.loc} the family seat`);
+    b.setAttribute('data-focus', 'fam-act-seat');   // armed, its words change - the keyboard stays on it
+    b.onclick = () => {
+      if (!armed) { _armed = 'seat'; _seatSaid = { ok: true, text: `The house's heirs will be born in ${here.loc}, and its fallen laid to rest there. Press again to move the seat.` }; rerender(); return; }
+      _armed = null;
+      const r = prov.moveFamilySeat();
+      _seatSaid = r.ok ? { ok: true, text: `${here.loc} is your family's seat now.` } : { ok: false, text: r.why ?? 'Not now.' };
+      rerender();
+    };
+    detail.append(b);
+  }
+  if (_seatSaid) { detail.append(liveLine(el, _seatSaid)); if (_armed !== 'seat') _seatSaid = null; }
   // LEGACY-HOME: THE HOMES - every house one of the line holds, the family home among them (where the never-played and
   // the retired live, and where a member saved in it waits), the player's to choose
   detail.append(el('p', 'fam-h', 'The homes'));

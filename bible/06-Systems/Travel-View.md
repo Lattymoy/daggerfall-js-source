@@ -1915,3 +1915,28 @@ done; each is fixed and pinned (`test/wildalertfix.test.js`, `tools/mutants/wild
 Recorded, not changed: the check is the owner's - a peer fast travelling past my foes is seen on DFU's senses (their
 notice of a peer would need the peer's Stealth and journey on the wire).
 
+## CLIMB-TRAVEL - nothing climbs at a journey's pace (FIELD BUGS 2026-10-07b)
+
+Shabalako on the Discord, "Overworld Travel can be used to exploit climbing levelling": *"There are many spots in
+cities where if you keep walking forward into a home can make your character climb and let go of the surface at an
+extremely fast rate, making levelling climbing a joke. An easy fix could be disabling climbing during overworld
+travel."* - and Sahh, of House R'is: *"would also reduce the mortality rate of travellers falling from mountains at
+60x speed"*. `01-Overview/Field-Bugs-2026-10-07b.md`.
+
+The time scale grows the motor's fixed step, never its count (`systems/timeScale.js`): at x60 a step is a second of
+game time, and every climb timer - the classic climb's 0.77 s start and 0.82 s checks, the free climb's start and its
+wall tally - fell due every step or two. Measured on the world host's own motor (motorStats, climbingDeps, parkourDeps;
+Climbing 40, two real seconds walking into a wall): at walking pace one hold and one or two Climbing rolls; at x60 eight
+to ten holds, 59 rolls (the classic climb) or 94 (the free climb), and six or seven falls of more than five metres.
+
+While a journey runs or the keys travel under the view (`scenes/world.js` wildTravelling - the same "fast traveller"
+WILD-ALERT's gate reads), neither climb takes a wall: the motor's `travelling` (`player/motor.js`) is a third thing
+that holds no wall, beside levitation and the saddle - the classic climb's abort ladder (`player/climbing.js`) and the
+free climb's `unheld`, so no walk-in start, no jump's grab, no lower and no mantle, and a hold the journey finds lets
+go. The keys' travel walks at walking pace while the hands hold a wall (TV-WASD's `onFoot`), so a climber is never
+put to a journey's pace by the keys. The four hosts: world.js wired (its one motor, the street's, a building's and a
+dungeon's - worldModes.js drives it indoors); exterior.js builds its own motor and has no travel; dungeonContext.js
+builds no motor.
+
+- **Pinned**: `test/fb1007b_climbtravel.test.js` (4); `tools/mutants/fb1007b.json` (its five CLIMB / ENHANCED / HOST /
+  KEYS records, all dead).

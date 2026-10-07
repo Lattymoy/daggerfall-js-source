@@ -11,8 +11,9 @@
 // room's collider has no ground, and the body falls for good - past the room's walls (single-sided, unseen from
 // outside) into the black, every door and every light out of reach. Warvale (location-17-842) stands GENRAS00, whose
 // houses #1, #2 and #7 are three of the 146 entries of both packs that land so (54 village, 92 city - 2,214 of the
-// 7,317 villages and 405 of the 410 cities hold one), out of 10,309; Daggerfall's own blocks have 18 of 11,452 (the
-// desert blocks' floorless halves). The fix: the landing law takes only a spot it can stand on (enterExit.js
+// 7,317 villages and 405 of the 410 cities hold one), out of 10,309; Daggerfall's own blocks have 16 of 11,452 (the
+// desert blocks' floorless halves; FIELD BUGS 2026-10-07b TOWER-FLOORS stood two more - a library's and a bookshop's
+// rooms, half a shell under the street - on their floors). The fix: the landing law takes only a spot it can stand on (enterExit.js
 // interiorLanding's `standsAt`, the host's standsOnFloor over the room), a room with nowhere to stand is refused in
 // DFU's own words, a room that will not lay out says them as DFU does, and a body below everything a building stands
 // on is stood again at the door (worldModes.js frame()).
@@ -440,7 +441,7 @@ test('VOID-ENTRY: THE FAILSAFE - a body below everything the building stands on 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_ARENA2 = !!ARENA2 && ['BLOCKS.BSA', 'ARCH3D.BSA'].every((f) => existsSync(join(ARENA2, f)));
 
-test('VOID-ENTRY with ARENA2: every building of both packs and of BLOCKS.BSA entered through every exterior door - DFU\'s law stands 146 of the packs\' 10,309 entries over nothing (Warvale\'s GENRAS00 #1, #2, #7, and the nine House2 rooms with no enter marker, among them) and 18 of Daggerfall\'s own 11,452 (16 from a check marker over nothing); the law lands every one of the packs\' on a floor, lands 14 of Daggerfall\'s and refuses 4, and moves no landing DFU made on a floor', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 300000 }, async () => {
+test('VOID-ENTRY with ARENA2: every building of both packs and of BLOCKS.BSA entered through every exterior door - DFU\'s law stands 146 of the packs\' 10,309 entries over nothing (Warvale\'s GENRAS00 #1, #2, #7, and the nine House2 rooms with no enter marker, among them) and 16 of Daggerfall\'s own 11,452, every one from a check marker over nothing (TOWER-FLOORS stood the other two on their floors); the law lands every one of the packs\' on a floor, lands 12 of Daggerfall\'s and refuses 4, and moves no landing DFU made on a floor', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set', timeout: 300000 }, async () => {
   const { BlocksFile } = await import('../src/formats/blocksFile.js');
   const { Arch3dFile } = await import('../src/formats/arch3dFile.js');
   const { patchSeams } = await import('../src/world/arch3dSeams.js');
@@ -530,11 +531,14 @@ test('VOID-ENTRY with ARENA2: every building of both packs and of BLOCKS.BSA ent
       no8: 4, no8DfuVoid: 4, no8LawFloor: 4, noMarker: 0, markerVoid: 0, markerVoidLawFloor: 0, markerVoidRefused: 0 });
     assert.deepEqual(packs['beautiful-cities'], { entries: 7504, dfuVoid: 92, lawVoid: 0, refused: 0, moved: 0, unbuilt: 0,
       no8: 5, no8DfuVoid: 5, no8LawFloor: 5, noMarker: 0, markerVoid: 0, markerVoidLawFloor: 0, markerVoidRefused: 0 });
-    // Daggerfall's own: 18 over nothing, 16 of them from a check marker over nothing (the desert blocks' floorless
-    // halves) - 14 landed, 4 with nowhere to stand refused; two rooms with no marker at all land as DFU lands them
-    assert.deepEqual(classic, { entries: 11452, dfuVoid: 18, lawVoid: 0, refused: 4, moved: 0, unbuilt: 6,
+    // Daggerfall's own: 16 over nothing, every one from a check marker over nothing (the desert blocks' floorless
+    // halves) - 12 landed, 4 with nowhere to stand refused; two rooms with no marker at all land as DFU lands them.
+    // There were 18: LIBRAM00 #7's and BOOKAS00 #8's second doors stood their rooms half a shell under the street
+    // until FIELD BUGS 2026-10-07b TOWER-FLOORS stood their floor models on their storeys
+    assert.deepEqual(classic, { entries: 11452, dfuVoid: 16, lawVoid: 0, refused: 4, moved: 0, unbuilt: 6,
       no8: 2, no8DfuVoid: 0, no8LawFloor: 2, noMarker: 2, markerVoid: 16, markerVoidLawFloor: 12, markerVoidRefused: 4 }, 'the six graveyard records with no interior models are DFU\'s own throw (AssignBlockData)');
     for (const r of [1, 2, 7]) assert.ok(voids.includes(`beautiful-villages:GENRAS00.RMB#${r}`), `Warvale's house #${r}`);
+    for (const k of ['classic:LIBRAM00.RMB#7', 'classic:BOOKAS00.RMB#8']) assert.ok(!voids.includes(k), `TOWER-FLOORS: ${k} lands at its own door`);
     for (const k of ['beautiful-villages:TVRNAS03.RMB#4', 'beautiful-villages:PAWNAM02.RMB#9', 'beautiful-villages:RESIAS02.RMB#5', 'beautiful-cities:DARKAA00.RMB#8']) assert.ok(voids.includes(k), `the House2 design: ${k}`);
   } finally { console.warn = quiet; console.log = logs; }
 });

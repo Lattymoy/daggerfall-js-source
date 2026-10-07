@@ -112,9 +112,10 @@ export const INTERIOR_VOID_DROP = 10;
  * nearest the enter marker, DFU's landing stands 0.75 outside the room
  * over nothing (SetStanding's ray finds no floor, PlayerEnterExit.cs
  * :1240-1254, and the room has no ground): 146 of the 10,309 entries of
- * both packs (Warvale's GENRAS00 #1, #2 and #7), 18 of Daggerfall's own
+ * both packs (Warvale's GENRAS00 #1, #2 and #7), 16 of Daggerfall's own
  * 11,452 (the desert blocks' floorless halves - ALCHAS00/01/03 and their
- * kin). Handed `standsAt`, each of DFU's two arms takes only a spot it
+ * kin; FIELD BUGS 2026-10-07b TOWER-FLOORS stood two more on their floors
+ * - interiorLayout.js FLOOR_MODEL_TYPE). Handed `standsAt`, each of DFU's two arms takes only a spot it
  * stands: the doors in FindClosestInteriorDoor's order (nearest the
  * check first), then the markers in FindClosestEnterMarker's (nearest
  * the exterior door first) - every landing DFU makes on a floor is

@@ -15002,3 +15002,27 @@ whenever it mounts before the card, which made the probe's Escape check a race.
 - **Pinned**: `test/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
   serpent1_auditclient (the serpents slain are a plaque). Re-aimed: inspect1.json INS-gear-out-of-order (the row carries
   its part).
+
+## HOLD-SOLO (2026-10-07, FIELD BUGS 2026-10-07b, nObOdy on the Discord: "Lock privateer's hold. The first dungeon is a tutorial area") - the tutorial dungeon is every character's own
+
+"New players loading in in front of 50 players in a dead dungeon with no enemies ruins the magic. ... I couldnt even get
+gear or experience for my character cause i had to zoom past dead enemies and already open doors to get out and i sure
+as heck don't want to be given stuff i didn't earn by players standing there waiting all day."
+
+Every dungeon's room is keyed by its map id (`net/online.js` roomKeyFor), so every character in Privateer's Hold stood
+in ONE world room, `dungeon:m187853213`: the others' bodies, the room's memory (WORLD1 - the dead stay dead, the doors
+stay open), its simulation (WORLD2), its acts (WORLD3) and its loot (WORLD4), and a trade from anyone there (a peer in
+the room). The tutorial dungeon now keys NO room: `scenes/worldModes.js` roomIdentity marks it `solo` - the location on
+the classic start's own cell, read off the configured Startup.StartCellX/Y as the classic start reads it
+(`systems/startDungeon.js` isStartDungeon, which PH1's online respawn there reads too) - and `scenes/world.js`'s key
+block answers `solo` with null, which the frame's `!key` arm leaves (AUDIT ONLINE D4: a place keyed no room is no room).
+Every shared lane asks `isWorldRoom` of the room it is in, so they go quiet with it; the dungeon is the character's own
+save's, as it is offline. Chat's World, Region, Party and Guild tabs ride the hub and keep talking; the Local tab has
+nobody to hear. The street outside the Hold is the shared world again (its cell's room). The relay is untouched: an
+older client still joins the old room, and only with other older clients.
+
+Of every location in the world, the start cell holds one: Daggerfall's Privateer's Hold (map id 187853213, pixel
+109/158; MAPS.BSA read through the port's own reader).
+
+- **Pinned**: `test/fb1007b_holdsolo.test.js` (4; one gated on ARENA2); `tools/mutants/fb1007b.json` (its five
+  FB1007B-HOLD / START-CELL / PH1 records, all dead). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.

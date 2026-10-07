@@ -173,7 +173,10 @@ export function mergeFacts(mine, other) {
     if (!(mine.houses ??= []).some(same)) mine.houses.push({ ...h });
   }
   if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false) mine.pending = JSON.parse(JSON.stringify(other.pending));
-  if (!mine.seat && other.seat) mine.seat = { ...other.seat };
+  // FAMILY-SEAT (FIELD BUGS 2026-10-07b): a seat the player moved carries when (`at`), and the later move stands -
+  // whichever copy is the base by rev: a stale tab's or device's write carried the old seat back over the move. A seat
+  // neither copy moved is the base's, or the other's when the base has none (the first town noted, as ever)
+  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };
   nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it
   if (!mine.home && other.home) mine.home = { ...other.home };
   mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard

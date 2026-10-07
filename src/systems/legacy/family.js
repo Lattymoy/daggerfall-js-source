@@ -129,7 +129,7 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   realm?:{ sid:string, player:string, char:string, house:any }|null, look?:any
  * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union.
  *   LEGACY7 part four: `look` what the member wore at their newest save (memberLook) - how the world draws them
- * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
+ * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number, at?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
  *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
  *   news?:import('./influence.js').News[] }} Family
@@ -564,7 +564,8 @@ export function readFamily(rec) {
   const maxId = Math.max(...people.map((p) => p.id));
   return {
     v: FAMILY_VERSION, id: rec.id, surname: String(rec.surname ?? ''), model: isModel(rec.model) ? rec.model : MODELS.enduring,
-    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? ''), ...(Number.isInteger(rec.seat.mapId) ? { mapId: rec.seat.mapId } : {}) } : null,
+    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? ''), ...(Number.isInteger(rec.seat.mapId) ? { mapId: rec.seat.mapId } : {}),
+      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,   // FAMILY-SEAT: a seat the player moved, when (legacyHost.js moveFamilySeat)
     rev: Math.max(1, rec.rev | 0), nextId: Math.max(maxId + 1, rec.nextId | 0),   // D4: ids from the record's own counter, never a constant
     currentId: people.some((p) => p.id === rec.currentId) ? rec.currentId : people[0].id,
     founded: Number(rec.founded) || 0, ended: rec.ended == null ? null : Number(rec.ended), people,

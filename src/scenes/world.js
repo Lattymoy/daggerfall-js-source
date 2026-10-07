@@ -5928,7 +5928,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)), parkour: parkourDeps(playerEntity, (l) => townTalk?.say(l), { hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }) });   // CLIMB-NODE: a node under the look, or an act, holds the free climb's walk-in start (the street's, the dungeon's and a building's - one motor)   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), travelling: () => wildTravelling(), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)), parkour: parkourDeps(playerEntity, (l) => townTalk?.say(l), { hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }) });   // CLIMB-NODE: a node under the look, or an act, holds the free climb's walk-in start (the street's, the dungeon's and a building's - one motor); CLIMB-TRAVEL: no climb of either lane while a journey or the keys' travel runs (the thunk runs in the frame, after wildTravelling is declared)   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -22717,6 +22717,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     inWorld: () => legacySettings().familyInWorld && livingWorldOn(),   // LEGACY-HOME; AUDIT LEGACY II B5: in the Living World's towns alone
     livingWorld: () => livingWorldOn(),
     markHome: (h) => !!legacyHost?.markHome(h),
+    familySeatHere: () => legacyHost?.familySeatHere() ?? null,   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): the House page moves the seat
+    moveFamilySeat: () => legacyHost?.moveFamilySeat() ?? { ok: false, why: 'Not here.' },
     choice: () => playerEntity.legacyChoice ?? null,   // LEGACY-CHOICE: why a character has no house
     online: () => isOnlinePage(),
   });
@@ -23948,7 +23950,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
-      key = ident?.private ? privateRoomHere(ident) : roomKeyFor({
+      // HOLD-SOLO (FIELD BUGS 2026-10-07b, nObOdy: "Lock privateer's hold. The first dungeon is a tutorial area"): the
+      // tutorial dungeon keys no room - no one stands in it but its own character, its foes and doors are its save's,
+      // and nobody hands a fresh character what it did not earn; the street outside is the shared world again
+      key = ident?.private ? privateRoomHere(ident) : ident?.solo ? null : roomKeyFor({
         host: 'world', mode,
         mapId: ident?.kind === 'dungeon' ? (ident.mapId ?? null) : (loc?.mapTableData?.mapId ?? null),
         regionIndex: ident?.kind === 'dungeon' ? ident.regionIndex : (loc?.regionIndex ?? -1),
@@ -27120,7 +27125,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // AUDIT OW5 G4: and only while the page has the focus - a key held as the window lost it never sends its keyup, and the
       // clock ran on at the spinner's rate (x10: ten game hours in five real minutes) until the key was tapped again
       moving: TV_MOVE_ACTIONS.some((a) => held(keys, a)) && (typeof document === 'undefined' || document.hasFocus?.() !== false),
-      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe(),
+      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall),   // CLIMB-TRAVEL: hands on a wall walk at walking pace - the keys travel again from the ground
       paused: gamePaused(),
       travels: !!travelControlUI, onRoad: !journey && travelView?.state === 'up' && travellerOnRoad(),   // RATE-LAW: the ground's rate, where the spinner's was
     });

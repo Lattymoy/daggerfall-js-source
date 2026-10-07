@@ -94,7 +94,10 @@ marker; `/unstuck` must be typed), and a building that failed to lay out said no
 nothing of value." (PlayerEnterExit.cs:719-730). Measured by entering every exterior door of every block with the
 player's data: 146 of the packs' 10,309 entries landed over nothing (villages 54 of 2,805, cities 92 of 7,504) -
 Warvale (location 17-842) lays `GENRAS00`, whose houses #1, #2 and #7 all did - and 18 of Daggerfall's own 11,452. The
-lockpicked house was not named, and is matched to this cause by its signs.
+lockpicked house was not named, and is matched to this cause by its signs. [FIELD BUGS 2026-10-07b TOWER-FLOORS: two of
+the 18 were LIBRAM00 #7's and BOOKAS00 #8's second doors, rooms whose floor models (ObjectType 5) stood half a shell
+under the street; stood on their storeys, they land at their own doors, and Daggerfall's own count is 16 -
+`01-Overview/Field-Bugs-2026-10-07b.md`.]
 
 Each of DFU's two arms takes only a spot with a floor under it now, in DFU's own order: the doors nearest the enter
 marker, then the markers nearest the street's door, lifted 1.08 - so no landing DFU makes on a floor moves (0 of
