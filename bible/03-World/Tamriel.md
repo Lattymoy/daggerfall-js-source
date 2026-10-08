@@ -120,7 +120,9 @@ which race TAMRIEL2's byte names at each province's label and each city (CreateC
 disagreement in pixels and kilometres, and how many of the Bay's coast ends the stitch joined. The three authored
 things it corrects: BAY_ORIGIN and PIXELS_PER_PICTURE_UNIT in the frame, the vertices in the geography. It has not yet
 been run on a real ARENA2 (none in the tree, by doctrine): the numbers are the lore map's reading until it is, and this
-page says so.
+page says so. TAMRIEL3 added a fourth step: the trace and the fit the world host makes at boot, run here on the same
+files - the fit's numbers printed beside the authored defaults, the seam measured again on the trace, and
+`tamriel-shots/trace.ppm` (the traced land tinted by province, the sea blue, the fitted Bay's rectangle black).
 
 ## Recorded departures and readings
 
@@ -192,3 +194,90 @@ towns, roads, dungeons or regions - the later use.
   range reads through the overrides, a whole pixel beyond the Bay through the kernel (Skyrim's trees; the Eltheric
   under it), the raster as the same law, the stream's frame and load list, the ring's bytes past the map, the worker's
   word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json` (22: 21 dead, 1 equivalent as recorded - the cache's key, one key a pixel whichever it is).
+
+## TAMRIEL2-WORKER - the freeze on going outside (2026-10-08)
+
+The field, within the hour of the deploy: *"game freezes when I go outside."* The ground beyond the Bay is read by the
+terrain WORKER, whose import graph is pure by law (EV7); TAMRIEL2 had taken two helpers from their "one home" in
+net/ - the gate's PIXEL_M (`net/gateLaw.js`, which imports `net/wire.js`) and the strike's segmentDistance
+(`net/gateStrike.js`) - and through them the worker's bundle grew by twenty modules of the relay's law, and the world
+froze on its first exterior build. The helpers live in pure homes now: `world/segment.js` (the one segment distance,
+which the gate's strike imports too) and the frame's own kilometres a pixel, held to the wire's units by its pin. The
+pin that would have caught it walks the worker's whole graph at any depth and holds every module to world/ and
+formats/ (`test/tamriel2.test.js`); the frame, the geography and the ground are swept for any import of net/.
+
+## TAMRIEL3 - the map from the player's own picture (2026-10-08)
+
+Mac, with the deploy in hand: *"Can we fix the map? It doesnt look like the map thats in daggerfall."* It did not:
+TAMRIEL1's geography was drawn from memory of the lore map, and the lore map is not the one in the box. Daggerfall
+carries its own map of Tamriel - TMAP00I0.IMG, the race screen's picture, and TAMRIEL2.IMG, its picker, whose palette
+index IS the province (CreateCharRaceSelect.cs:30-31,64) - and the port already traces the picker at runtime for the
+chargen's province map (`ui/provinceMap.js`, OVH). So the continent is now TRACED from the player's own two files when
+the world boots, and the Bay's place on that picture is FOUND rather than authored. Nothing of either file ships: the
+trace is made on the player's machine from the player's files, as the chargen's map is, and `?tamrieltrace=off` keeps
+the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice).
+
+- **The trace** (`ui/tamrielTrace.js`, `traceTamrielPicture`). A pixel is LAND of a province where the picker names
+  the province and the painting is not sea - the sea read as the chargen reads it (`provinceMap.js seaIndices`: blue
+  by a clear margin on the palette). A province's land keeps only its pieces that touch no edge of the picture (the
+  picker's generous blob over the parchment border is not land - the chargen's own no-edge clause) unless every piece
+  does (a map painted to its frame), and each at least SPECK_PX (12) pixels (a painted word over the sea is not an
+  island). The Imperial Province, which no race claims, is the inland remainder (`provinceMap.js inlandRemainder`).
+  The two files must share a grid, or the trace is null and the authored shape stands.
+- **The land module** (`world/tamrielLand.js`): the trace installed (`setTamrielTrace`), a chamfer 3-4 distance field
+  to the nearest sea made at install, a version that moves on every install (the ink's and the held map's static key
+  read it), and the two reads everything else asks - `provinceKeyAt` (the trace's by id, the authored rings' else;
+  null at sea and off the grid) and `coastDistanceAt` (the field, bilinear; the authored edges' else). PURE: typed
+  arrays in, answers out, so the terrain worker holds the same module. `PROVINCE_OF_ID` is the picker's law: 1..8 the
+  races in RACE_TEMPLATES order, 9 the Imperial Province.
+- **The fit** (`fitBayToPicture`): the Bay's own land (WOODS.WLD and CLIMATE.PAK through the one water law,
+  `overworldModel.js isWaterPixel`) is laid on the picture's grid at each candidate scale (16..21 Bay pixels a picture
+  pixel, the authored 18.75 among them) and offset (24 picture pixels each way round the authored place), four samples
+  a cell and the majority, and the pair with the greatest FRACTION of cells agreeing wins - a count would favour the
+  smallest scale, which lays the most cells (the pin that found it: `test/tamriel3.test.js`). Deterministic; ~40M
+  compares, once, after the travel art, off the boot's critical path.
+- **The live frame** (`world/tamrielFrame.js`): BAY_ORIGIN and PIXELS_PER_PICTURE_UNIT are the DEFAULTS now; every
+  conversion reads `tamrielFit()` - the fit the host installs (`setTamrielFit`, null or a bad pair the defaults
+  again) - and `tamrielSize()` the picture at the live scale. The raster, the ground, the ink and the held map's frame
+  all move with it.
+- **The ink on the trace** (`ui/tamrielInk.js tracedChains`): the coast is the land mask's pixel edges linked (the
+  Bay's own shore law, `inkMap.js boundarySegments`), the staircase of a 15 km pixel simplified and its corners cut
+  at the picture's own scale; a border runs where two land pixels change province; a province's name hangs at its
+  clearest point (`provinceMap.js labelPoint`), and a province the picture has no land for is not named. The authored
+  cities keep their places where the trace agrees, move up to CITY_SNAP_PX (10) onto their own province's land, and
+  are left off past it (a town the picture puts in the sea is not drawn in the sea); a range's carets stand only on
+  the picture's land; a sea's name on the picture's land is dropped; the rivers stay authored. The model reports
+  `traced` and `version`, and `tamrielInkFor` rebuilds when the version moves.
+- **The ground and the raster** read the land module (`world/tamrielGround.js authoredHeightByte`,
+  `tamrielClimateAt`; `world/tamrielRaster.js` at the live scale) - so with the trace in, the streamed land past the
+  Bay is the picture's land, textured by the picker's province, and the sea where the picture paints sea.
+- **The worker** is handed the trace and the fit once, after the boot (`terrainGenClient.js setTamriel`: copies of
+  the two arrays transferred, the fit beside them; the fallback kernel's own modules set the same way, the ground's
+  cache dropped on both sides). `terrainGenWorker.js` sets its own copies on the `tamriel` message and drops its
+  cache. The worker's graph stays under world/ and formats/ (TAMRIEL2-WORKER's pin walks it).
+- **The host** (`scenes/world.js`): after the travel map's art, `preloadTamrielTrace` reads the two files through
+  ImgFile with the boot's own `fetchBytes` and palette, the fit is made over the composed reads
+  (`maps.getClimateIndex`, `woods.getHeightMapValue` - the Bay's own bytes, after the boot repairs), both go through
+  the client, the stream's frame is reset at the new fit, and the console says what was traced and where the Bay
+  fitted. A missing file or a trace of nothing leaves the authored shape standing and says so.
+
+Not verified against a real ARENA2 here (none in the tree, by doctrine): the fit's search window and the trace's sea
+reading are the picture's expected shape, and the probe's fourth step is how to see them. What the sheet shows
+before the trace lands (a few hundred milliseconds after the world mounts) is the authored continent; the static key
+repaints it the moment the trace is in.
+
+### Pins
+
+`test/tamriel3.test.js` (14): the pieces' connectivity and edge, the race ids; the trace over a synthetic picture
+and picker (a lake the picker claims, the picker's border blob cut, a speck dropped, SPECK_PX kept, the remainder, ink
+over the sea, the shapes refused, a province painted to the frame kept); the preload's file names and the palette
+reader; the distance field's chamfer (the diagonal 4/3 both ways) and install, the version; `provinceKeyAt` and
+`coastDistanceAt` on the trace (the land mask deciding, off the grid not the next row, bilinear) and off it; the fit
+exact over a Bay cut from the fixture (the fraction over the count, the majority under a speckle, candidates off the
+picture skipped), the defaults named; the live frame's every conversion and its defaults; the ground and the raster on
+the trace (the Desert's Hammerfell, the first and last land cell at the live scale); the traced chains (five coast
+rings, one border coast to coast, the labels, the points simplified), `placeCity`'s reach to the pixel and nothing
+snapped on the authored shape; the built model on the trace and its rebuild; the client's post (copies, transferred,
+the cache dropped), the worker's arm, the land module pure; the door; the host's seams by source. Mutants
+`tools/mutants/tamriel3.json` (40: 40 dead).
+

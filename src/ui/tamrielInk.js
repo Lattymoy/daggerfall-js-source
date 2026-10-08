@@ -28,11 +28,16 @@
 // handed in by the window.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt, seaAt, provinceByKey,
+  PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, seaAt, provinceByKey,
 } from '../world/tamrielGeography.js';
-import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, PIXELS_PER_PICTURE_UNIT, tamrielFrameInBay } from '../world/tamrielFrame.js';
+import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamrielFrame.js';
+// TAMRIEL3: the picture's own land where the world host traced it (world/tamrielLand.js) - the coast, the borders and
+// the provinces' places come off the trace, the authored shape stands where there is none
+import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamrielLand.js';
 import { makeNoise, octaveNoise } from './introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName } from './inkMap.js';
+import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments } from './inkMap.js';
+import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
+import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 
 /** @typedef {{ x: number, y: number }} Pt */
 
@@ -243,44 +248,110 @@ function rangeCarets(range, noise) {
   return out;
 }
 
+/** How far (picture pixels) an authored city is moved to stand on its own province's traced land. Past it the city
+ *  is left off the sheet: a town the picture puts in the sea is not drawn in the sea. */
+export const CITY_SNAP_PX = 10;
+
+/** TAMRIEL3: the picture's coast and borders as chains in Bay coordinates - the pixel edges of the land mask
+ *  (inkMap boundarySegments, the Bay's own shore law) linked, the staircase of a 15 km pixel simplified and the
+ *  corners cut at the picture's own scale - and each province's name at its clearest point (provinceMap labelPoint).
+ *  @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace */
+export function tracedChains(trace) {
+  const { w, h, land, province } = trace;
+  const ppu = tamrielFit().ppu;
+  const soften = (chain) => roundCorners(simplifyChain(chain, ppu * 0.75), ppu * 0.5);
+  const toBay = (seg) => seg.map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; });
+  const coast = linkSegments(boundarySegments((x, y) => land[y * w + x] === 1, w, h)).map((c) => soften(toBay(c)));
+  const segs = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!land[i]) continue;
+      if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]);
+      if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);
+    }
+  }
+  const borders = linkSegments(segs).map((c) => soften(toBay(c)));
+  const labels = [];
+  for (const [id, key] of Object.entries(PROVINCE_OF_ID)) {
+    const mask = new Uint8Array(w * h);
+    let n = 0;
+    for (let i = 0; i < mask.length; i++) if (land[i] && province[i] === Number(id)) { mask[i] = 1; n++; }
+    if (!n) continue;
+    const [lx, ly] = labelPoint(mask, w, h);
+    labels.push({ key, px: lx, py: ly });
+  }
+  return { coast, borders, labels };
+}
+
+/** TAMRIEL3: an authored city on the traced land of its own province - where it stands, or the nearest such pixel
+ *  within CITY_SNAP_PX, or null (left off). On the authored shape every city already stands in its province. */
+export function placeCity(city) {
+  const [x, y] = city.at;
+  if (provinceKeyAt(x, y) === city.province) return [x, y];
+  if (!tamrielTrace()) return null;
+  let best = null, bd = CITY_SNAP_PX + 1e-9;
+  for (let dy = -CITY_SNAP_PX; dy <= CITY_SNAP_PX; dy++) {
+    for (let dx = -CITY_SNAP_PX; dx <= CITY_SNAP_PX; dx++) {
+      const d = Math.hypot(dx, dy);
+      if (d >= bd) continue;
+      if (provinceKeyAt(Math.floor(x) + dx + 0.5, Math.floor(y) + dy + 0.5) === city.province) { bd = d; best = [Math.floor(x) + dx + 0.5, Math.floor(y) + dy + 0.5]; }
+    }
+  }
+  return best;
+}
+
 /**
  * THE INK MODEL: everything the painter strokes, in the sheet's (Bay) coordinates, clipped to the outside of the
- * Bay's rectangle and stitched to the Bay's own coast ends. Pure over its inputs.
+ * Bay's rectangle and stitched to the Bay's own coast ends. Pure over its inputs and the land module's state.
  * @param {{ bayCoast?: Pt[][] }} [deps]
  */
 export function buildTamrielInk({ bayCoast = [] } = {}) {
   const rect = { x0: 0, y0: 0, x1: BAY_W, y1: BAY_H };
   const calm = (() => { const [x0, y0] = bayToPicture(0, 0), [x1, y1] = bayToPicture(BAY_W, BAY_H); return { x0, y0, x1, y1 }; })();
   const noise = makeNoise(FRET_SEED);
-  const rings = [closedRing(COAST), ...Object.values(ISLANDS).map((r) => closedRing(r))];
+  const trace = tamrielTrace();
+  const traced = trace ? tracedChains(trace) : null;
   /** @type {Pt[][]} */
   let coast = [];
-  for (const r of rings) for (const c of clipOutsideRect(chainToBay(fretRing(r, calm, noise)), rect)) coast.push(roundCorners(c, 6));
+  if (traced) {
+    for (const c of traced.coast) for (const piece of clipOutsideRect(c, rect)) coast.push(piece);
+  } else {
+    const rings = [closedRing(COAST), ...Object.values(ISLANDS).map((r) => closedRing(r))];
+    for (const r of rings) for (const c of clipOutsideRect(chainToBay(fretRing(r, calm, noise)), rect)) coast.push(roundCorners(c, 6));
+  }
   const ends = bayCoastEnds(bayCoast);
   const stitched = stitchToBay(coast, ends);
   coast = stitched.chains;
   const borders = [];
-  for (const b of Object.values(BORDERS)) for (const c of clipOutsideRect(chainToBay(pts(b.run)), rect)) borders.push(roundCorners(c, 12));
+  if (traced) for (const c of traced.borders) for (const piece of clipOutsideRect(c, rect)) borders.push(piece);
+  else for (const b of Object.values(BORDERS)) for (const c of clipOutsideRect(chainToBay(pts(b.run)), rect)) borders.push(roundCorners(c, 12));
   const rivers = [];
   for (const rv of RIVERS) for (const c of clipOutsideRect(chainToBay(rv.pts.map(([x, y]) => ({ x, y }))), rect)) rivers.push(roundCorners(c, 12));
   const carets = [];
-  for (const rg of MOUNTAIN_RANGES) for (const c of rangeCarets(rg, noise)) { const q = toBay(c); if (!inBay(q.x, q.y)) carets.push({ ...c, x: q.x, y: q.y }); }
-  const provinces = PROVINCES.map((p) => { const [x, y] = pictureToBay(p.label[0], p.label[1]); return { key: p.key, name: p.name, x, y }; });
-  const seas = SEAS.map((s) => { const [x, y] = pictureToBay(s.at[0], s.at[1]); return { name: s.name, x, y }; });
-  const cities = CITIES.map((c) => { const [x, y] = pictureToBay(c.at[0], c.at[1]); return { name: c.name, province: c.province, capital: !!c.capital, x, y }; })
-    .filter((c) => !inBay(c.x, c.y));
+  // the ranges are authored; on the trace a caret stands only where the picture has land
+  for (const rg of MOUNTAIN_RANGES) for (const c of rangeCarets(rg, noise)) { if (traced && !provinceKeyAt(c.x, c.y)) continue; const q = toBay(c); if (!inBay(q.x, q.y)) carets.push({ ...c, x: q.x, y: q.y }); }
+  const provinces = traced
+    ? traced.labels.map((l) => { const p = provinceByKey(l.key); const [x, y] = pictureToBay(l.px, l.py); return { key: l.key, name: p?.name ?? l.key, x, y }; })
+    : PROVINCES.map((p) => { const [x, y] = pictureToBay(p.label[0], p.label[1]); return { key: p.key, name: p.name, x, y }; });
+  const seas = SEAS.map((s) => { const [x, y] = pictureToBay(s.at[0], s.at[1]); return { name: s.name, x, y }; })
+    .filter((s) => !traced || !provinceKeyAt(...bayToPicture(s.x, s.y)));   // a sea's name on the picture's land is left off
+  const cities = CITIES.map((c) => { const at = placeCity(c); if (!at) return null; const [x, y] = pictureToBay(at[0], at[1]); return { name: c.name, province: c.province, capital: !!c.capital, x, y }; })
+    .filter((c) => c && !inBay(c.x, c.y));
   const frame = tamrielFrameInBay();
-  return { coast, borders, rivers, carets, provinces, seas, cities, frame, joined: stitched.joined, bayEnds: ends.length };
+  return { coast, borders, rivers, carets, provinces, seas, cities, frame, joined: stitched.joined, bayEnds: ends.length, traced: !!traced, version: tamrielLandVersion() };
 }
 
-/** ONE model a data set: keyed by the Bay model's own coast array (the window mints one per WOODS buffer). */
+/** ONE model a data set and a trace: keyed by the Bay model's own coast array (the window mints one per WOODS
+ *  buffer), rebuilt when the land module's version moves (TAMRIEL3: the trace lands after the boot, the fit with it). */
 const _inks = new WeakMap();
 const _noBay = { ink: null };
 export function tamrielInkFor(bayModel) {
   const key = bayModel?.coast;
-  if (!key) { if (!_noBay.ink) _noBay.ink = buildTamrielInk(); return _noBay.ink; }
+  const v = tamrielLandVersion();
+  if (!key) { if (!_noBay.ink || _noBay.ink.version !== v) _noBay.ink = buildTamrielInk(); return _noBay.ink; }
   let ink = _inks.get(key);
-  if (!ink) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }
+  if (!ink || ink.version !== v) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }
   return ink;
 }
 
@@ -316,7 +387,7 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   stroke(ink.coast, Math.max(3, s * 1.6), PEN.wash);
   stroke(ink.coast, 1.3, PEN.line);
   // the high ground: the lattice thinned so a caret never lands under its neighbour
-  const unit = s * PIXELS_PER_PICTURE_UNIT * CARET_LATTICE;   // paper px between lattice points
+  const unit = s * tamrielFit().ppu * CARET_LATTICE;   // paper px between lattice points
   const k = Math.max(1, Math.ceil(5 / Math.max(unit, 1e-6)));
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
   ctx.strokeStyle = PEN.relief;
@@ -393,8 +464,8 @@ export function tamrielPlaceAt(mx, my, view, ink = null) {
     if (best) return TAMRIEL_TEXT.city(provinceByKey(best.province)?.name ?? best.province, best.name);
   }
   const [px, py] = bayToPicture(mx, my);
-  const p = provinceAt(px, py);
-  if (p) return TAMRIEL_TEXT.land(p.name);
+  const key = provinceKeyAt(px, py);
+  if (key) return TAMRIEL_TEXT.land(provinceByKey(key)?.name ?? key);
   const sea = seaAt(px, py);
   return sea ? TAMRIEL_TEXT.sea(sea.name) : null;
 }

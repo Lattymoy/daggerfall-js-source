@@ -135,6 +135,7 @@ import { dungeonMap3dOn, tamrielMapOn } from './mapSkin.js';   // EM3-3D: the so
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
 import { tamrielInkFor, paintTamrielInk, tamrielPlaceAt, onContinent } from './tamrielInk.js';
 import { tamrielFrameInBay } from '../world/tamrielFrame.js';
+import { tamrielLandVersion } from '../world/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { NOTE_MAX_CHARACTERS } from '../systems/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -1224,6 +1225,7 @@ export class HeldMapWindow {
         this.deps.wildMask?.() ? 1 : 0,   // WILD1: the open zone inked once it is known (online)
         this._zoneMap ? 1 : 0,   // WILD2: the zone map's own ink
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
+        tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
       ].join('|'),
       paintStatic: (ctx, env) => {
         // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be

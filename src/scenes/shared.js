@@ -862,6 +862,12 @@ export function tamrielLandOn(search) {
   return !!getPref('tamrielLand') && (isOnlinePage(search) || isEnhanced(search));
 }
 
+/** TAMRIEL3: THE TRACE'S KILL DOOR - `?tamrieltrace=off` keeps the authored shape (the continent as TAMRIEL1 drew it)
+ *  where the picture's own trace would stand; no row, a door for a day the trace reads a picture wrong. */
+export function tamrielTraceOn(search) {
+  return pageParam('tamrieltrace', search) !== 'off';
+}
+
 /** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
  *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`
  *  the kill door, offline. The world host reads it once, at its mount. */

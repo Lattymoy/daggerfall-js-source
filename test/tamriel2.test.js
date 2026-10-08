@@ -230,7 +230,7 @@ test('TAMRIEL2 worker: the client says the reader has the continent round it off
   assert.equal(posted[posted.length - 1].tamriel, false, 'a bare reader says so');
   assert.ok(plain);
   const worker = read('src/world/terrainGenWorker.js');
-  assert.match(worker, /import \{ groundWoods \} from '\.\/tamrielGround\.js';/);
+  assert.match(worker, /import \{ groundWoods, dropGroundCache \} from '\.\/tamrielGround\.js';/);   // TAMRIEL3: and the cache dropped when the trace lands
   assert.match(worker, /woods = m\.tamriel \? groundWoods\(w\) : w;/, 'composed on init, as the host composes');
   const ground = read('src/world/tamrielGround.js');
   for (const bad of ['document', 'globalThis.', 'fetch(', 'localStorage', 'getPref']) assert.ok(!ground.includes(bad), `pure: no ${bad}`);
@@ -268,4 +268,28 @@ test('TAMRIEL2 host: the reader is rebound to the composed one at the mount, aft
   assert.match(src, /byteAt: tamrielLand \? \(x, y\) => woods\.getHeightMapValue\(x, y\) : null,/, 'the ring past the map');
   assert.match(src, /restrideGrid\(\{ woods, px: p\.px/, 'the promotion reads the one reader');
   assert.equal((src.match(/tamrielLandOn\(\)/g) ?? []).length, 1, 'read once, at the mount');
+});
+
+// TAMRIEL2-WORKER (2026-10-08, the field: "game freezes when I go outside"): THE WORKER'S WHOLE GRAPH IS PURE. EV7's
+// pin holds the shell's direct imports; the ground beyond the Bay reached net/wire.js and twenty modules with it
+// through two "one home" imports (the gate's PIXEL_M, the strike's segmentDistance) three modules deep, and the
+// terrain worker's bundle went with them. This walks every import the shell reaches and holds all of them to world/
+// and formats/.
+test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, lives under world/ or formats/', () => {
+  const seen = new Set();
+  const walk = (f) => {
+    if (seen.has(f)) return;
+    seen.add(f);
+    const s = read(f);
+    for (const m of s.matchAll(/^(?:import|export)[^'"]*from ['"](\.[^'"]+)['"]/gm)) {
+      const parts = f.split('/'); parts.pop();
+      for (const seg of m[1].split('/')) { if (seg === '..') parts.pop(); else if (seg !== '.') parts.push(seg); }
+      walk(parts.join('/'));
+    }
+  };
+  walk('src/world/terrainGenWorker.js');
+  const outside = [...seen].filter((f) => !/^src\/(world|formats)\//.test(f));
+  assert.deepEqual(outside, [], `the worker reaches ${outside.join(', ')}`);
+  assert.ok(seen.has('src/world/tamrielGround.js') && seen.has('src/world/tamrielGeography.js') && seen.has('src/world/segment.js'), 'the ground, through the pure homes');
+  assert.ok(seen.size > 20 && seen.size < 60, `${seen.size} modules`);
 });

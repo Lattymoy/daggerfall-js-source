@@ -30,11 +30,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { PIXEL_M } from '../net/gateLaw.js';   // the metres a map pixel spans (819.2: MapsFile's 32768 world units at 40 a metre) - ONE home, the gate's law declared it first
-
-/** The metres a map pixel spans - MapsFile's own 32768 world units at 40 a metre (world/streamingWorld.js
- *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS). Measured, not chosen; re-exported from its one home for the frame's readers. */
-export { PIXEL_M };
+/** The kilometres a map pixel spans - MapsFile's own 32768 world units at 40 a metre (world/streamingWorld.js
+ *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS; net/gateLaw.js PIXEL_M, the metres). Measured, not chosen, and held to the
+ *  wire's units by test/tamriel.test.js. Not imported from the gate's law: the terrain worker reads this module, and its
+ *  import graph is pure by law (TAMRIEL2-WORKER: that import dragged net/wire.js and twenty modules into the worker's
+ *  bundle, and the world froze on going outside). */
 /** The authoring grid: Daggerfall's Tamriel picture, 320 x 200 (TMAP00I0.IMG, TAMRIEL2.IMG - ui/provinceMap.js). */
 export const PICTURE_W = 320;
 export const PICTURE_H = 200;
@@ -48,27 +48,41 @@ export const TAMRIEL_H = PICTURE_H * PIXELS_PER_PICTURE_UNIT;   // 3750
 export const BAY_W = MAP_WIDTH;
 export const BAY_H = MAP_HEIGHT;
 /** Where the Bay's pixel (0, 0) stands on the continent's grid, in Tamriel pixels. AUTHORED (header): picture
- *  (45.97, 52.0) - the west coast's notch, under northern High Rock, over Hammerfell's shoulder. The probe corrects it. */
+ *  (45.97, 52.0) - the west coast's notch, under northern High Rock, over Hammerfell's shoulder - and the DEFAULT: at
+ *  boot the fit (world/tamrielLand.js fitBayToPicture, over the player's own picture) replaces it and the scale
+ *  through setTamrielFit, and every conversion below reads the live pair. */
 export const BAY_ORIGIN = Object.freeze({ x: 862, y: 975 });
 
-/** Kilometres a pixel, for anyone saying a distance. */
-export const KM_PER_PIXEL = PIXEL_M / 1000;
+/** TAMRIEL3: THE LIVE FIT - the Bay's origin (Tamriel pixels) and the scale (Bay pixels a picture pixel) every
+ *  conversion reads. The authored defaults until the world host installs the picture's own (the worker is handed the
+ *  same pair). `null` puts the defaults back. */
+let _fit = { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };
+export function setTamrielFit(fit) {
+  _fit = fit && Number.isFinite(fit.ox) && Number.isFinite(fit.oy) && fit.ppu > 0
+    ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu }
+    : { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };
+}
+export const tamrielFit = () => _fit;
+/** The continent's grid at the live scale, Bay pixels. */
+export const tamrielSize = () => ({ w: PICTURE_W * _fit.ppu, h: PICTURE_H * _fit.ppu });
+
+export const KM_PER_PIXEL = 0.8192;
 
 /** A Bay pixel's place on the continent's grid. Fractions allowed: a point, not only a pixel. */
 export function bayToTamriel(x, y) {
-  return [x + BAY_ORIGIN.x, y + BAY_ORIGIN.y];
+  return [x + _fit.ox, y + _fit.oy];
 }
 /** A point of the continent's grid in the Bay's own coordinates (negative west and north of the Bay). */
 export function tamrielToBay(tx, ty) {
-  return [tx - BAY_ORIGIN.x, ty - BAY_ORIGIN.y];
+  return [tx - _fit.ox, ty - _fit.oy];
 }
 /** A picture-grid point (the authoring grid, 320 x 200) in the Bay's coordinates - what the held map draws in. */
 export function pictureToBay(px, py) {
-  return [px * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.x, py * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.y];
+  return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];
 }
 /** A Bay-coordinate point on the picture grid - the inverse of pictureToBay. */
 export function bayToPicture(x, y) {
-  return [(x + BAY_ORIGIN.x) / PIXELS_PER_PICTURE_UNIT, (y + BAY_ORIGIN.y) / PIXELS_PER_PICTURE_UNIT];
+  return [(x + _fit.ox) / _fit.ppu, (y + _fit.oy) / _fit.ppu];
 }
 /** Is a Bay-coordinate point on the Bay's own map - the data's ground, where nothing authored is drawn? */
 export function inBay(x, y) {
@@ -84,7 +98,8 @@ export function bayPictureRect() {
  *  {x0, y0, w, h}, with the Bay at (0, 0)..(BAY_W, BAY_H) inside it. */
 export function tamrielFrameInBay() {
   const [x0, y0] = tamrielToBay(0, 0);
-  return { x0, y0, w: TAMRIEL_W, h: TAMRIEL_H };
+  const { w, h } = tamrielSize();
+  return { x0, y0, w, h };
 }
 /** A length on the grid in kilometres - the continent's width, say. */
 export const pixelsToKm = (px) => px * KM_PER_PIXEL;
