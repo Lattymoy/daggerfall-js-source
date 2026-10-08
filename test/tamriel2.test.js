@@ -31,32 +31,34 @@ import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-/** A WoodsFile's two reads and the two ranges built on them, over a buffer - WoodsFile's own clamps to the letter. */
-function stubWoods(fill = (i) => 10 + (i % 37), large = 3) {
-  const buf = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
-  for (let i = 0; i < buf.length; i++) buf[i] = fill(i);
-  return {
-    heightMapBuffer: buf,
-    getHeightMapValue(x, y) {
-      if (x < 0) x = 0; if (x >= MAP_WIDTH - 1) x = MAP_WIDTH - 1; if (y < 0) y = 0; if (y >= MAP_HEIGHT - 1) y = MAP_HEIGHT - 1;
-      return buf[y * MAP_WIDTH + x];
-    },
-    getHeightMapValuesRange1Dim(x0, y0, dim) {
-      const d = new Uint8Array(dim * dim);
-      for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) d[x + y * dim] = this.getHeightMapValue(x0 + x, y0 + y);
-      return d;
-    },
-    getLargeMapData() { const d = []; for (let i = 0; i < 5; i++) d.push(new Uint8Array(5).fill(large)); return d; },
-    getLargeHeightMapValuesRange(x0, y0, dim) {
-      const side = dim * 3, dst = new Uint8Array(side * side);
-      for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) {
-        const src = this.getLargeMapData(x0 + x, y0 - y);
-        for (let iy = 1; iy < 4; iy++) for (let ix = 1; ix < 4; ix++) dst[(y * 3 + iy - 1) * side + (x * 3 + ix - 1)] = src[ix][4 - iy];
-      }
-      return dst;
-    },
-  };
+/** A WoodsFile's two reads and the two ranges built on them, over a buffer - WoodsFile's own clamps to the letter,
+ *  and on a PROTOTYPE as the real reader's are: the composition is a prototype child, and a copy would lose them. */
+class StubWoods {
+  constructor(fill = (i) => 10 + (i % 37), large = 3) {
+    this.heightMapBuffer = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
+    for (let i = 0; i < this.heightMapBuffer.length; i++) this.heightMapBuffer[i] = fill(i);
+    this._large = large;
+  }
+  getHeightMapValue(x, y) {
+    if (x < 0) x = 0; if (x >= MAP_WIDTH - 1) x = MAP_WIDTH - 1; if (y < 0) y = 0; if (y >= MAP_HEIGHT - 1) y = MAP_HEIGHT - 1;
+    return this.heightMapBuffer[y * MAP_WIDTH + x];
+  }
+  getHeightMapValuesRange1Dim(x0, y0, dim) {
+    const d = new Uint8Array(dim * dim);
+    for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) d[x + y * dim] = this.getHeightMapValue(x0 + x, y0 + y);
+    return d;
+  }
+  getLargeMapData() { const d = []; for (let i = 0; i < 5; i++) d.push(new Uint8Array(5).fill(this._large)); return d; }
+  getLargeHeightMapValuesRange(x0, y0, dim) {
+    const side = dim * 3, dst = new Uint8Array(side * side);
+    for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) {
+      const src = this.getLargeMapData(x0 + x, y0 - y);
+      for (let iy = 1; iy < 4; iy++) for (let ix = 1; ix < 4; ix++) dst[(y * 3 + iy - 1) * side + (x * 3 + ix - 1)] = src[ix][4 - iy];
+    }
+    return dst;
+  }
 }
+const stubWoods = (fill, large) => new StubWoods(fill, large);
 const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 // ── THE GROUND LAW ──────────────────────────────────────────────
@@ -114,6 +116,7 @@ test('TAMRIEL2 composition: THE BAY IS NOT MOVED BY A BYTE - every Bay pixel\'s 
   const g = groundWoods(woods);
   assert.equal(g.heightMapBuffer, woods.heightMapBuffer, 'a prototype child: the buffer is the reader\'s own');
   assert.equal(g.bay, woods); assert.equal(g.isTamrielGround, true);
+  assert.equal(Object.getPrototypeOf(g), woods, 'a child of the reader - a copy would lose the prototype\'s range reads');
   for (const [x, y] of [[0, 0], [1, 1], [2, 2], [500, 250], [999, 499], [998, 0], [0, 498], [999, 0], [0, 499]]) {
     assert.ok(same(generateSamples(woods, x, y), generateSamples(g, x, y)), `pixel ${x},${y} to the bit`);
     const a = kernelTerms(woods, x, y), b = kernelTerms(g, x, y);
