@@ -98,16 +98,11 @@ export function elementalResistanceChance(target, element) {
 /** LR2/RF1: the effect flags the resistance channel names (lootRarity RESIST_ELEMENTS). */
 const RESIST_NAMES = Object.freeze([[EFFECT_FLAGS.Fire, 'fire'], [EFFECT_FLAGS.Frost, 'frost'], [EFFECT_FLAGS.Shock, 'shock'], [EFFECT_FLAGS.Poison, 'poison'], [EFFECT_FLAGS.Magic, 'magic']]);
 
-export function savingThrow(element, effectFlags, target, modifier = 0, rolls = Math.random) {
-  // X1: ELEMENTAL RESISTANCE comes FIRST and is absolute - DFU tests
-  // the resistance flag at the very top of SavingThrow (FH:1442-1452)
-  // and a successful roll returns 0 outright: the effect is resisted
-  // whole, not scaled. Multiple instances on one element STACK their
-  // chances additively (DoConstantEffects re-raises each live effect's
-  // chance onto a cleared slate every frame, EEM:1679-1702), which the
-  // sum below reproduces.
-  const resist = elementalResistanceChance(target, element);
-  if (resist > 0 && Math.floor(rolls() * 100) < resist) return 0;
+/** STATS-RESIST (2026-10-08, the owner: "Resistances on the stat screen please"): the saving throw's chance BEFORE its
+ *  roll - `{ immune, chance }`, the chance 5..95 (100 when immune) - the whole of savingThrow's law but the dice, so the
+ *  Stats page and the throw can never disagree. The Elemental Resistance effects' own chance (elementalResistanceChance)
+ *  is tested ahead of it, apart. */
+export function savingChance(element, effectFlags, target, modifier = 0) {
   let saving = 50;
   let biographyMod = 0;
   const career = target.career ?? {};
@@ -152,11 +147,28 @@ export function savingThrow(element, effectFlags, target, modifier = 0, rolls = 
   // fold comes next), per element the spell carries, in the same slot
   // as the biography's mods.
   saving += entityResistMod(target, RESIST_NAMES.filter(([flag]) => effectFlags & flag).map(([, name]) => name));
-  if (saving >= 100) return 0;
+  if (saving >= 100) return { immune: true, chance: 100 };
   // MagicResist = floor(LIVE willpower / 10) - fortify-aware (audit F9).
   // U10: through the FormulaHelper home, not a fourth inline copy.
   saving += magicResist(liveStat(target, 'willpower'));
   saving = Math.max(5, Math.min(95, saving));
+  return { immune: false, chance: saving };
+}
+
+export function savingThrow(element, effectFlags, target, modifier = 0, rolls = Math.random) {
+  // X1: ELEMENTAL RESISTANCE comes FIRST and is absolute - DFU tests
+  // the resistance flag at the very top of SavingThrow (FH:1442-1452)
+  // and a successful roll returns 0 outright: the effect is resisted
+  // whole, not scaled. Multiple instances on one element STACK their
+  // chances additively (DoConstantEffects re-raises each live effect's
+  // chance onto a cleared slate every frame, EEM:1679-1702), which the
+  // sum below reproduces.
+  const resist = elementalResistanceChance(target, element);
+  if (resist > 0 && Math.floor(rolls() * 100) < resist) return 0;
+  // STATS-RESIST: the chance before the roll is its own function (savingChance), so the Stats page reads the same law
+  const sc = savingChance(element, effectFlags, target, modifier);
+  if (sc.immune) return 0;
+  const saving = sc.chance;
   let percent = 100;
   const roll = 1 + Math.floor(rolls() * 100);   // Dice100.Roll
   if (roll <= saving) {

@@ -225,7 +225,10 @@ export const HALO_PEN = 1.6;
 export const GLYPH_R = Object.freeze({
   city: 6.5, hamlet: 3.5, village: 2.8, temple: 5, cult: 4.5,
   dungeon: 5, graveyard: 3.8, coven: 5, tavern: 3.2, home: 3.2,
+  hall: 5,   // PVPDUNGEONS: a zone hall's arched door, the dungeon's own room
 });
+/** PVPDUNGEONS: a zone hall's ink - an elite hall's deep oxblood, apart from every classic dot's hue. */
+export const HALL_INK = '#7a1f14';
 /** The hand-lettered face the names are inked in. The enhanced skin's
  *  display face (ui/enhancedStyle.js --display), so the map and the
  *  card beside it agree. */
@@ -989,6 +992,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the roads and the tracks
   if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
   if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
+  // laid over the mountains and the roads and under every place, so a town in the fog still reads
+  if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
 
   // the marks - and MAP2's harbour glyph beside a port's, while the mod
   // restricts ship travel to ports (the classic page's ports button
@@ -1014,7 +1020,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);   // MAP-KEY: in its classic dot's hue, where there is a palette
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
   }
   // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
   // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
@@ -1433,6 +1439,21 @@ export function paintGlyph(ctx, kind, x, y, halo = false, ink = PEN.line) {
       ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 4); ctx.lineTo(x - 4, y); ctx.closePath(); ctx.stroke(); return;
     case 'dungeon':
       ctx.moveTo(x, y - 4.5); ctx.lineTo(x + 4, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.stroke(); return;
+    case 'hall': {
+      // PVPDUNGEONS: an arched door in its frame - the dungeon's own footprint (GLYPH_R 5), stroked in the sheet's pen, its
+      // leaf filled light so it reads as a door and not a hole, two planks and a ring
+      const w = 3.4, top = y - 1.2, base = y + 4.2;
+      const arch = () => { ctx.beginPath(); ctx.moveTo(x - w, base); ctx.lineTo(x - w, top); ctx.arc(x, top, w, Math.PI, 0); ctx.lineTo(x + w, base); ctx.closePath(); };
+      arch();
+      if (halo) { ctx.fill(); ctx.stroke(); return; }
+      ctx.save(); ctx.globalAlpha = 0.28; ctx.fill(); ctx.restore();
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - w * 0.36, top - w * 0.55); ctx.lineTo(x - w * 0.36, base); ctx.moveTo(x + w * 0.36, top - w * 0.55); ctx.lineTo(x + w * 0.36, base);
+      ctx.save(); ctx.lineWidth = Math.max(0.8, GLYPH_PEN * 0.6); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(x + w * 0.62, y + 1.6, 0.75, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - w - 1.1, base + 0.2); ctx.lineTo(x + w + 1.1, base + 0.2); ctx.stroke();   // the sill
+      return;
+    }
     case 'graveyard':
       ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3); ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3); ctx.stroke(); return;
     case 'coven':

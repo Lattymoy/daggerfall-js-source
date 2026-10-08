@@ -550,6 +550,9 @@ export class RemotePlayers {
   corpseMarks(toScene = (p) => [p.x, p.y, p.z]) {
     return this._corpses.filter((c) => !c.dead && (c.id || c.acct)).map((c) => ({ id: c.id, acct: c.acct, feet: toScene(c.pose), height: 0.9 }));
   }
+  /** WILD1 (net/wildFight.js): a body in the open zone lies the zone's two minutes - its time moved on to at least `ms`
+   *  from now (the killer's game hears of the death from the body's own offer). */
+  holdCorpse(id, ms) { for (const c of this._corpses) if (!c.dead && id && c.id === id) c.until = Math.max(c.until, this._now() + ms); }
   /** PCORPSE3: is a body already lying for this account (or peer)? */
   hasCorpseOf(acct, id = null) { return this._corpses.some((c) => !c.dead && ((acct && c.acct === acct) || (id && c.id === id))); }
   /** PCORPSE3: the body of a member who got up (a respawn, a rise) - gone. */
@@ -1287,7 +1290,8 @@ export class RemotePlayers {
    *          layer?: any, log?: any, colorOf?: ((id: string) => number[]|null)|null,
    *          blocked?: ((head: number[], id: string) => boolean)|null,
    *          renderer?: any, font?: any, scale?: number, hudScale?: number,
-   *          extra?: ((o: {proj: any, view: any, w: number, h: number, eye: any, rect: any, blocked: any}) => any[])|null}} [opts]
+   *          extra?: ((o: {proj: any, view: any, w: number, h: number, eye: any, rect: any, blocked: any}) => any[])|null,
+   *          mask?: ((p: any) => any)|null}} [opts]   WILD3: `mask` - each name kept, replaced (a tint rides it) or taken
    *   `extra` - NOTICE1: the host's own labels in the names' face and law (a Notice Board's "3 new"), asked with the
    *   face's own pixels and never on a covered frame
    * @returns {number} how many names the frame drew
@@ -1295,9 +1299,16 @@ export class RemotePlayers {
   nameFrame({
     proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null, covered = false,
     layer = null, log = null, colorOf = null, blocked = null,
-    renderer = null, font = null, scale = 1, hudScale = 1, extra = null,
+    renderer = null, font = null, scale = 1, hudScale = 1, extra = null, mask = null,
   } = {}) {
-    const points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);
+    let points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);
+    // WILD3: the host's word on each player's name - kept, put in another's place (the open zone's "Stranger"), or taken
+    if (typeof mask === 'function' && points.length) {
+      points = points.map((p) => { try { return mask(p); } catch { return p; } }).filter(Boolean);
+      // a point the mask tinted wears its tint in both faces, over the social picture's colour
+      const tints = new Map(points.filter((p) => p.tint).map((p) => [p.id, p.tint]));
+      if (tints.size) { const base = colorOf; colorOf = (id) => tints.get(id) ?? base?.(id) ?? null; }
+    }
     if (!covered && typeof extra === 'function') {
       try { points.push(...(extra({ proj, view, w, h, eye, rect, blocked }) ?? [])); } catch { /* a label is never worth the names */ }
     }

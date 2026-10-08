@@ -47,8 +47,8 @@
   {
     "name": "WB5-the-colour-not-the-tiers",
     "file": "src/render/spoilsGlow.js",
-    "old": "      gl.uniform3fv(U.uColor, tierColour(tier));",
-    "new": "      gl.uniform3fv(U.uColor, tierColour('magic'));",
+    "old": "      gl.uniform3fv(U.uColor, Array.isArray(g.colour) && g.colour.length === 3 ? g.colour : tierColour(tier));",
+    "new": "      gl.uniform3fv(U.uColor, Array.isArray(g.colour) && g.colour.length === 3 ? g.colour : tierColour('magic'));",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB5-the-pulse-on-every-tier",
     "file": "src/render/spoilsGlow.js",
-    "old": "      gl.uniform1f(U.uPulse, RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);",
-    "new": "      gl.uniform1f(U.uPulse, 1);",
+    "old": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);",
+    "new": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : 1);",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]

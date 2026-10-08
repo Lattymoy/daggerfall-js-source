@@ -92,8 +92,8 @@
   {
     "name": "ARENA4b-BLOW-SPELL-UNROUTED",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : null,",
-    "new": "    castAtDuel: null,",
+    "old": "    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut",
+    "new": "    castAtDuel: opts.arenaRival ? null : (opts.wildSpellOut",
     "tests": [
       "test/arena4b_blows.test.js"
     ]

@@ -21,6 +21,9 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
+import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { restAilmentLines } from '../systems/restWarning.js';   // REST-WARN
+import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
 import { walkModeOn } from '../player/walkMode.js';   // PADWALK
 import { privateInteriorOf, privateInteriorMatches } from '../net/privateInterior.js';
 import { iilActive, iilInteriorLights, iilDungeonLights, iilTorch, iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL1: Improved Interior Lighting on the classic lane
@@ -2353,7 +2356,7 @@ export function createWorldModes(host) {
       // party would use, and the one key already in the tree that is
       // not a string is the exterior door's bare number.
       if (typeof key !== 'string') return null;
-      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548
+      if (key.startsWith('droppedLoot:')) return { title: interiorDropped.labelFor?.(key) ?? lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548; WILD1: a body's remains by its own name
       return null;
     },
     (key) => interiorTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
@@ -4234,6 +4237,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -4886,6 +4890,9 @@ export function createWorldModes(host) {
       // LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): a temple's Cure Disease priest lifts a curse
       // too - the popup's row in the Reforge's place, on either skin; a dispatch, as a service's is
       lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => (openLift() ? { dispatched: true } : null) : null,
+      // HEAL-CURSE (the owner: "Add a button to the temple services under heal disease named heal curse"): the Cure
+      // Disease priest's second row - the curse's offer as a Yes/No box, its rite paid and done on the Yes
+      healCurse: service === 'CureDisease' ? () => healCurseBox() : null,
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
@@ -4982,6 +4989,25 @@ export function createWorldModes(host) {
   // overrides the building faction for that arm: the coven summons by
   // the WITCH NPC's own factionID (:186), the one summoner whose id is
   // not the hall it stands in.
+  /** HEAL-CURSE: the temple's offer to lift a curse, at this temple's price (systems/healCurse.js) - a box for the popup. */
+  function healCurseBox() {
+    const b = interiorBuilding;
+    const deps = { priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0), quality: b?.quality ?? 10 };
+    const offer = healCurseOffer(playerEntity, deps);
+    const box = (lines, extra = {}) => ({ rows: (Array.isArray(lines) ? lines : [lines]).map((text) => ({ text, center: true })), ...extra });
+    if (offer.kind !== 'offer') return box(healCurseText.none);
+    return box(healCurseText.offer(offer.cost, offer.curse), {
+      buttons: 'YesNo',
+      onYes: () => {
+        const r = healCursePaid(playerEntity, { ...deps, nowMinutes: interiorTicker.ownMinutes, advanceMinutes: (n) => interiorTicker.advance(n) });
+        if (r.kind === 'notEnoughGold') return box(healCurseText.poor(r.cost));
+        if (r.kind !== 'lifted') return box(healCurseText.none);
+        surfacePlayer();
+        host.onCurseLifted?.(r.went);   // the world's own refresh of what the curse changed (the head, the HUD)
+        return box(healCurseText.lifted);
+      },
+    });
+  }
   function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null, summonerFactionId = null }) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
@@ -6791,6 +6817,7 @@ export function createWorldModes(host) {
   async function buyHomeAt(bd, price) {
     const homes = host.onlineHomes;
     if (!homes) return;
+    if (host.wildNoHouse?.()) return;   // PVPDUNGEONS (the owner: "Players cant use banks in zone and cant buy houses")
     // WD3 (AUDIT WD3 O1/O2): a home is a building key, which names a building only in its town's layout - none is bought
     // before the room's layouts of the homes' towns are heard, and a claim refused for its town's layout hears them again
     if (host.homeTownsMissing?.()) { townTalk?.say?.(accountRefusalText('home-towns')); return; }   // AUDIT WD3 B1: a town mod's pack did not load here
@@ -8068,7 +8095,14 @@ export function createWorldModes(host) {
     dungeon: loc.dungeon && { ...loc.dungeon, blocks: loc.dungeon.blocks?.map((b) => ({ ...b })) },
   });
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false, fromLoad = false } = {}) {
-    return gatedTransition((live) => dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad));   // AUDIT 68 X3-transition-build-race
+    return gatedTransition(async (live) => {   // AUDIT 68 X3-transition-build-race
+      // PVPDUNGEONS: the zone's tier rules - the hub's word on my lock is awaited INSIDE the gate (AUDIT 68 X3: awaited
+      // before it, a teleport, a recall or a load during the hub's four seconds did not stale the door, and the dungeon
+      // was built from wherever the world had moved to; a second press now waits its turn instead of racing the first)
+      if (host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad))) return false;
+      if (!live()) return false;   // the world moved during the hub's word: no build at all
+      return dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad);
+    });
   }
   async function dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad = false) {
     // AUDIT 28 W4: SMALLER DUNGEONS - the location that gets BUILT is
@@ -8082,6 +8116,7 @@ export function createWorldModes(host) {
     // Hole in the Bottom of the Ocean's RenameDungeon and WaterizeDungeon, on a Recall into its template) never renames
     // the cache's location or floods its block records.
     const dfLocation = ownDungeonLocation(sized);
+    if (host.wildDungeonElite?.(hit)) { dfLocation.elite = true; dfLocation.wildRing = host.wildHallRing?.() ?? 0; dfLocation.wildEpoch = host.wildHallEpoch?.() ?? 0; }   // PVPDUNGEONS: every open hall of the zone is an elite dungeon - its tier (its foes' strength) and its epoch (its chests) on it
     let _hccLanded = false;   // HCC
     host.onPreTransition?.();   // AUDIT PSCALE1 NET-3: my foes to the players outside, before the door takes me
     host.horseCart?.()?.handlePreTransition({ type: 'ToDungeonInterior', door: hccDoorOf(hit) });   // HCC: OnPreTransition [IL_98f0], before the dismount
@@ -8279,6 +8314,7 @@ export function createWorldModes(host) {
           gateHost: () => host.gateHost?.() ?? null,   // WB11c: the Legion-Lord's host as bodies my blows meet (none but under the trial)
           onHostHit: (hit) => !!host.onHostHit?.(hit),   // WB11c: and the door a blow's number on one leaves through
           arenaRival: () => host.arenaRival?.() ?? null,   // ARENA4: my opponent on a relay's sand as a body my blows meet (none outside such a bout)
+          wildBodies: () => host.wildBodies?.() ?? null, wildStrike: (id, w, sw) => !!host.wildStrike?.(id, w, sw), wildSpellMarks: () => host.wildSpellMarks?.() ?? null, wildSpellOut: (id, sp) => !!host.wildSpellOut?.(id, sp),   // PVPDUNGEON: a fair player of the zone, struck in its dungeons
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(),   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
@@ -11078,8 +11114,15 @@ export function createWorldModes(host) {
       // PARTY-REST28: shared with world.js's own outdoor toggleRest and dungeonContext.js's - see
       // world.js's markPartyRestSpent doc comment for the bug this closes (a rest granted indoors used to
       // leave the granting player's own ready flag stuck true forever, since nothing here ever reset it).
-      host.markPartyRestSpent?.();
-      mountInterior(createRestWindow(interiorRestDeps, ignoreAllocatedBed));
+      // REST-WARN: poisoned or diseased, the rest asks first (systems/restWarning.js)
+      const restNow = () => {
+        if (interiorOverlay?.done) { interiorOverlay = null; interiorWindows.reconcile(null); }
+        host.markPartyRestSpent?.();
+        mountInterior(createRestWindow(interiorRestDeps, ignoreAllocatedBed));
+      };
+      const ail = restAilmentLines(playerEntity);
+      if (ail) { mountInterior(new DecisionBoxWindow({ rows: ail, onYes: restNow })); return; }
+      restNow();
     },
   };
 
@@ -12402,6 +12445,9 @@ export function createWorldModes(host) {
     /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
+    /** WILD1 (net/wildRemains.js): the ground pool of the mode I stand in - a dungeon's or a building's - where a body's
+     *  remains in the open zone stand as piles; null outdoors (the street's is the world host's own). */
+    droppedPool() { return mode === 'dungeon' ? (dungeonCtx?.droppedPool?.() ?? null) : mode === 'interior' ? interiorDropped : null; },
     /** RESURRECT1: the mode's death screen closed IN PLACE - the fallen player rises where they fell, no exit. */
     clearDeath() {
       if (mode === 'dungeon') { dungeonCtx?.clearDeathOverlay?.(); return; }

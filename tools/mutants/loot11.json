@@ -47,8 +47,8 @@
   {
     "name": "LOOT11-pick-off",
     "file": "src/scenes/lootLines.js",
-    "old": "  if (!lootRarityOn() || !Array.isArray(finds) ||",
-    "new": "  if (!Array.isArray(finds) ||",
+    "old": "    if (!rarity) continue;   // OFF IS DFU EXACTLY: with the loot-rarity row off, no find's own line\n",
+    "new": "",
     "tests": [
       "test/loot11_lines.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "LOOT11-pass-off",
     "file": "src/scenes/lootLines.js",
-    "old": "      if (!glow || !lootRarityOn()) return false;",
+    "old": "      if (!glow || (!lootRarityOn() && !_marksLive)) return false;",
     "new": "      if (!glow) return false;",
     "tests": [
       "test/loot11_lines.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "LOOT11-drop-pool-no-finds",
     "file": "src/scenes/droppedLoot.js",
-    "old": "  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => ({ root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own",
+    "old": "  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => (p.wild?.mine ? { root: lootCrown(p.pos, p.size), items: p.items, mark: WILD_MINE_MARK } : { root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own; WILD1: my remains, their own line",
     "new": "  const lootFinds = () => [];",
     "tests": [
       "test/loot11_lines.test.js"

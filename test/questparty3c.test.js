@@ -311,7 +311,7 @@ test('QUEST-PARTY 3c by source: the blow on a party member\'s quest foe goes to 
   assert.match(WM, /applyOwnHit\(id, data\) \{ return mode === 'interior' && interiorFoes \? interiorFoes\.applyHit\(id, data\) : mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyOwnHit\?\.\(id, data\) : false; \},/);
   assert.match(WM, /clearOwnPuppets\(\) \{ interiorFoes\?\.clearPuppets\(\); dungeonCtx\?\.clearOwnPuppets\?\.\(\); \},/);
   assert.match(W, /const m = modes\?\.mode \?\? 'exterior';\n\s*if \(m !== 'interior' && m !== 'dungeon'\) return false;/, 'the own lane streams from a dungeon too');
-  assert.match(W, /onDungeonLeave: \(\) => \{ const n = handOverRoomFoes\(\);/, 'the dungeon\'s door hands my shared quest\'s foes to the party who stay');
+  assert.match(W, /onDungeonLeave: \(\) => \{ if \(_wdunInside\) wdunLeft\(false\); const n = handOverRoomFoes\(\);/, 'the dungeon\'s door hands my shared quest\'s foes to the party who stay');   // PVPDUNGEONS: a zone hall's leaving said first (wdunLeft - its lock and its word, nothing of the room's)
   assert.match(W, /const near = online\?\.room && isWorldRoom\(online\.room\) && online\.ownOk && \(m === 'interior' \|\| m === 'dungeon'\) \? \(peersNear\(\) \?\? \[\]\) : \[\];/);
   assert.match(W, /if \(ids\) modes\?\.pruneOwnOwners\?\.\(ids, now, FOES_STALE_MS\); \}/);
 });

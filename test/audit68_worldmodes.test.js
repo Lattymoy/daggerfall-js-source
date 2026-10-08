@@ -173,6 +173,9 @@ test('AUDIT 68 X3-transition-build-race: every door build is re-validated before
   assert.match(dungeon, /if \(!live\(\)\) \{ abandonContext\(ctx\); return false; \}/, 'and so does the dungeon build');
   assert.match(WM, /async function enterInteriorCore\(hit, entries, restore = null\) \{\s*const link = host\.linkedBankCabin\?\.\(\);\n\s*if \(!hit\.sailingCabin && !restore && link && SHIP_INTERIOR_MAP_IDS\[link\.type\] === questSceneCtx\?\.\(\)\?\.mapId\) return host\.enterLinkedBankCabin\?\.\(\) \?\? false;\n\s*return gatedTransition\(/);
   assert.match(WM, /async function tryEnterDungeon\(hit, entries, \{ preferEnterMarker = false, fromLoad = false \} = \{\}\) \{\s*return gatedTransition\(/);   // MAP-KEEP: and the load's arm rides it
+  // PVPDUNGEONS: the zone's gate - the hub's word, up to four seconds - is asked INSIDE the gated build and the build is
+  // re-validated after it; awaited before the gate (as the zone first landed), a world move during the wait was never heard
+  assert.match(WM, /return gatedTransition\(async \(live\) => \{[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(host\.wildDungeonGate && !\(await host\.wildDungeonGate\(hit, fromLoad\)\)\) return false;\n\s*if \(!live\(\)\) return false;[^\n]*\n\s*return dungeonTransition\(hit, entries, preferEnterMarker, live, fromLoad\);/, 'the zone\'s gate waits inside the transition gate');
   assert.match(slice(WM, 'forceExitToExterior({ cacheScene = true, load = false } = {}) {', 'const wasInside'), /transitionGate\.abort\(\);/, 'the forced exit abandons a pending build');
   const w = rd('src/scenes/world.js');
   assert.match(slice(w, 'async function _teleportToPixel(', 'refreshSeason('), /modes\?\.abortTransition\?\.\(\);/, 'every teleport, travel, recall and load landing moves the world');

@@ -46,7 +46,7 @@ Measured and holding (scratch scripts, nothing kept):
 | ID | Sev | Finding | Outcome |
 |---|---|---|---|
 | A1 | Minor | `landformLiftAt` took a town's lift through its blend only when the town's pixel was built; a load stands its records before their pixels stream in, so a neighbour town's piles, guards and camps took the raw lift at the point (117 m in the air at Old Elyssa's Farm, 90 m under at the Eternal Ascencion of Dibella). The cut residual it named beside ("a cut's few metres") was larger than the page said. | FIXED with lane B's B1 and B2, below. |
-| A2 | Open | OW-MOUNTAINS' open step (`travelRoute.js` openStepBlocked) judges steepness on raw bytes; with the row on, 251 of the 839,697 steps it admits outside the Mountain climate rise over 160 m on the lifted ground (the worst 390 m, about 25 degrees). No failure traced: the slope limit is 70 degrees. (AUDIT LANDFORMS II I5: the ground has no slope limit in the port - the collider stands a body on the floor at any grade - and lane I traced failures on the lifted ground, I1 and I3.) | NAMED (Landforms.md, RESIDUES) - whether it reads `reliefByteHeight` with the row on is Mac's call. |
+| A2 | Open | OW-MOUNTAINS' open step (`travelRoute.js` openStepBlocked) judges steepness on raw bytes; with the row on, 251 of the 839,697 steps it admits outside the Mountain climate rise over 160 m on the lifted ground (the worst 390 m, about 25 degrees). No failure traced: the slope limit is 70 degrees. (AUDIT LANDFORMS II I5: the ground has no slope limit in the port - the collider stands a body on the floor at any grade - and lane I traced failures on the lifted ground, I1 and I3.) | NAMED (Landforms.md, RESIDUES) - whether it reads `reliefByteHeight` with the row on is Mac's call. Moot since 2026-10-08: the owner retired OW-MOUNTAINS in the Wrothgarian zone's merge (MOUNTAINS WALKABLE, `11-Multiplayer/Wild-Zone.md` section 19). |
 | N1 | Nit | Come Sail Away's `Terrain.SampleHeight` still caps the ground at DFU's 1,923.75 m (`unityHeightmapStep`); 0.85% of land samples stand over it, where no boat goes. | NAMED. |
 | N2 | Nit | The knee law holds for the kernel's samples, not after a location's blend: the page's "every tile class ... where they stood" was true before the blend only. | FIXED in code with lane D's D3: the tiles are DFU's own blend's now, so the sentence is true after it too. |
 
@@ -328,7 +328,8 @@ and the whole of `landform45.json` and `landform6.json`: 160, 155 dead, 5 record
   sea (above). What is left on Menevia's rim is DFU's own cliff, and a road's bench across it.
 - C2: whether two builds in one room should be kept apart - a relay change (a ground law in the world hello, or a tag
   in `worldRoom`); no ground slice has done it before.
-- A2: whether OW-MOUNTAINS' steepness should read the lifted ground with the row on.
+- A2: whether OW-MOUNTAINS' steepness should read the lifted ground with the row on. (Moot since 2026-10-08 -
+  MOUNTAINS WALKABLE retired OW-MOUNTAINS, `11-Multiplayer/Wild-Zone.md` section 19.)
 - C7 (AUDIT LANDFORMS III): whether a big town on a steep mountainside should level more of its land - a reach past
   the pixels beside its own, gathered from the 7x7 - or keep the land's own grade a few degrees steeper round it.
 - WATER2's lesson: none of this has been seen on a real GPU by a player - Mac's eye before the merge.

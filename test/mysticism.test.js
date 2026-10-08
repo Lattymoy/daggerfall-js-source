@@ -259,10 +259,16 @@ test('S27: Open and Lock are NOT wired, and the seams are named', () => {
   assert.ok(/actionSystem\.js's `activate\(key\)`/.test(my), 'and names the door seam');
   assert.ok(/interiorContext\.js/.test(my), 'and both ActionSystem owners');
 
-  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/interiorContext.js']) {
-    assert.ok(!/triggerOpen\(|triggerLock\(/.test(read(host)),
-      `${host} does not call the door payload yet - update the record when it does`);
-  }
+  // PVPFIX (PIN MOVED - the owner: "Undeniable Access/lockpicking should actually work on locked crates"): the dungeon
+  // calls Open ONCE, on a crate's own lock in its search - a crate is no ActionSystem door, so the door path never saw
+  // it - the armed spell spent there as at a door; the record says so (mysticism.js's header). Lock: a door's alone
+  const dc = read('src/scenes/dungeonContext.js');
+  assert.ok(/ONE host call - dungeonContext\.js's crate\n\/\/ search \(activateSearchable\)/.test(my), 'the record names the crate arm');
+  assert.equal((dc.match(/triggerOpen\(/g) ?? []).length, 1, 'the dungeon calls the Open payload once - the crate');
+  assert.match(dc, /const armed = doorSpellFor\(playerEntity\);\n\s*if \(armed\?\.kind === 'open'\) \{\n\s*const r = triggerOpen\(\{ currentLockValue: sb\.lock, state: 'end' \}, armed\.holderLevel, \{ castBySkeletonKey: armed\.skeletonKey === true \}\);\n\s*consumeDoorSpell\(playerEntity, 'open'\);/, 'on the crate\'s own lock, the armed spell spent');
+  assert.ok(!/triggerLock\(/.test(dc), 'src/scenes/dungeonContext.js does not call the Lock payload - update the record when it does');
+  assert.ok(!/triggerOpen\(|triggerLock\(/.test(read('src/scenes/interiorContext.js')),
+    'src/scenes/interiorContext.js does not call the door payload yet - update the record when it does');
 });
 
 

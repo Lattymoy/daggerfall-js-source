@@ -4,9 +4,12 @@ import { readFileSync } from 'node:fs';
 import { createComeSailAwayAboard } from '../src/scenes/comeSailAwayAboard.js';
 const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 // Execute the host's actual near-player marker loop with its view dependencies.
-const begin = world.indexOf('    for (const d of online?.drawable?.() ?? []) {');
-const end = world.indexOf('    // TV3: THE REGION', begin);
+// PIN MOVED (THE WROTHGARIAN ZONE): the zone's own loops over the drawable peers stand above this one now, so the
+// loop is found by the block it heads - the last such loop above the region's travellers (TV3)
+const end = world.indexOf('    // TV3: THE REGION');
+const begin = world.lastIndexOf('    for (const d of online?.drawable?.() ?? []) {', end);
 assert.ok(begin > 0 && end > begin);
+assert.ok(world.slice(begin, end).includes('marks.push({ key: `peer:${d.id}`'), 'the slice is the near-player marker loop');
 const loop = world.slice(begin, end);
 function markers(raw, drawn, hidden = new Set()) {
   const _peerMapPoses = new Map();
@@ -24,6 +27,7 @@ function markers(raw, drawn, hidden = new Set()) {
     const player = { pos: [0, 0, 0] }, NAME_RANGE = 60, TV_PEER_HEAD_M = 2;
     const peerRiders = { heightOf: () => 0 }, peerBodies = peerRiders, peerWalkers = peerRiders;
     const isShipMark = () => true, tvBadgeOf = () => null;
+    const _wildStrangerIds = new Set(), WILD_TEXT = { stranger: 'Stranger' }, wildHidesPlayer = () => false;   // WILD1/WILD3: out of the zone - no stranger, no one hidden
     ${loop}
     return marks;
   `)({ drawable: () => raw }, _peerMapPoses, hidden);

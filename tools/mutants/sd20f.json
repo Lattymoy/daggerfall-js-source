@@ -128,8 +128,8 @@
   {
     "name": "SD20F-H10-the-dungeons-door",
     "file": "src/scenes/world.js",
-    "old": "const moved = hour ? sdWayHome() : modes?.unstuck?.();",
-    "new": "const moved = modes?.unstuck?.();",
+    "old": "if (modes?.sdRealmSlot?.() != null) { if (sdWayHome()) say(",
+    "new": "if (modes?.sdRealmSlot?.() != null) { if (modes?.unstuck?.()) say(",
     "tests": [
       "test/sd20f_hosts.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD20F-H10-said-anyway",
     "file": "src/scenes/world.js",
-    "old": "          if (moved || !hour) {",
-    "new": "          if (moved || hour || !hour) {",
+    "old": "{ if (sdWayHome()) say('You find your way back outside.'); return true; }",
+    "new": "{ say(sdWayHome() ? 'You find your way back outside.' : 'There is nowhere to send you from out here.'); return true; }",
     "tests": [
       "test/sd20f_hosts.test.js"
     ]

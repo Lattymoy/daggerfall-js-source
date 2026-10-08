@@ -26,6 +26,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+// The outdoor toggleRest's tail (REST-WARN, the owner: "Poison/Disease warning on rest"): gated, then ONE act - the
+// spend through the shared function and the real window (restNow) - run at once, or, poisoned or diseased, on the
+// warning's Yes once its box has left the slot (the close callback, THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD)
+const REST_OUTDOORS = /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*(?:\/\/[^\n]*\n\s*)*const restNow = \(\) => \{ if \(modes\) markPartyRestSpent\(\); townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\); \};[^\n]*\n\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{ let yes = false; townTalk\.showOverlay\(new DecisionBoxWindow\(\{ rows: ail, onYes: \(\) => \{ yes = true; \} \}\), \(\) => \{ if \(yes\) restNow\(\); \}\); return; \}\s*\n\s*restNow\(\);/;
 
 // ── THE MODE CODE, BOTH WAYS ─────────────────────────────────────────────
 
@@ -176,20 +180,22 @@ test('PARTY-REST2 (extended, per-request: "can this also initiate a rest vote...
 
 test('PARTY-REST2/28: the SAME gate reaches all three hosts - world.js\'s own outdoor toggleRest calls it directly, and it is injected into worldModes.js (as host.partyRestGate) and forwarded again into dungeonContext.js (as opts.partyRestGate) - so a leader resting indoors or underground is gated exactly as one resting outdoors. PARTY-REST28 (2026-09-22, per-request: confirmed by direct testing, in a dungeon - "when we finished resting... it shows 1/2 ready to rest again that shouldnt happen" - the bug this closes): the SAME three-host wiring now ALSO carries markPartyRestSpent, the "spent the moment it is acted on" reset - a rest granted indoors or underground used to leave the granting player\'s own ready flag (and the group\'s cooldown state) stuck true forever, since only world.js\'s own outdoor toggleRest ever reset it (mutants: the gate wired into only one or two of the three; the injection silently dropped on the way through worldModes.js into the dungeon; markPartyRestSpent wired into fewer hosts than partyRestGate itself, or dropped from any one of the three)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
+  // REST-WARN (the owner: "Poison/Disease warning on rest"): the spend and the window are ONE act now (restNow), run at
+  // once or, poisoned or diseased, on the warning's Yes once its box has left the slot - still gated first, spent second
+  assert.match(w, REST_OUTDOORS,
     'the outdoor host: gated, then spent (through the shared function, not its own inline copy), then the real window - in that order');
   assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'the reset itself (REST-OFFLINE1: a no-op with no social clock) - a real function, not an inline block only world.js\'s own toggleRest could reach');
   assert.match(w, /partyRestGate: \(\) => partyRestGate\(\),/, 'handed into createWorldModes as one more host dep, the same door onDungeonLeave and the rest already ride');
   assert.match(w, /markPartyRestSpent: \(\) => markPartyRestSpent\(\),/, 'the reset itself is handed into createWorldModes too, the same way partyRestGate already is');
 
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /const partyRefusal = host\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*host\.markPartyRestSpent\?\.\(\);\s*\n\s*mountInterior\(createRestWindow\(interiorRestDeps, ignoreAllocatedBed\)\);/,   // AUDIT-RR F6: the bed's flag rides through the door
+  assert.match(wm, /const partyRefusal = host\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const restNow = \(\) => \{\s*\n\s*if \(interiorOverlay\?\.done\) \{ interiorOverlay = null; interiorWindows\.reconcile\(null\); \}\s*\n\s*host\.markPartyRestSpent\?\.\(\);\s*\n\s*mountInterior\(createRestWindow\(interiorRestDeps, ignoreAllocatedBed\)\);\s*\n\s*\};\s*\n\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{ mountInterior\(new DecisionBoxWindow\(\{ rows: ail, onYes: restNow \}\)\); return; \}\s*\n\s*restNow\(\);/,   // AUDIT-RR F6: the bed's flag rides through the door; REST-WARN: spent and opened as one act (restNow), at once or on the warning's Yes (its answered box out of the slot first)
     'the interior host: the SAME shape, reading the injected deps rather than a closure of its own - worldModes.js has no `social` to ask directly, and now also actually spends the vote it was granted, not just checks it');
   assert.match(wm, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'and forwarded again into dungeonContext.js\'s own opts, unchanged, so the dungeon does not need a fourth copy of the same wiring');
   assert.match(wm, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/, 'the reset is forwarded into dungeonContext.js\'s own opts the same way partyRestGate itself already is');
 
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.match(dc, /const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*opts\.markPartyRestSpent\?\.\(\);\s*\n\s*activeOverlay = createRestWindow\(_restDeps\);/,
+  assert.match(dc, /const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const restNow = \(\) => \{ opts\.markPartyRestSpent\?\.\(\); activeOverlay = createRestWindow\(_restDeps\); \};\s*\n\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{ activeOverlay = new DecisionBoxWindow\(\{ rows: ail, onYes: restNow \}\); return; \}\s*\n\s*restNow\(\);/,   // REST-WARN: spent and opened as one act (restNow), at once or on the warning's Yes
     'the dungeon host: the same shape a third time, and the same actual spend, not just the gate check');
 });
 
@@ -278,7 +284,7 @@ test('PARTY-REST1d (2026-09-20, per-request: "only the one who initiated the res
 
 test('PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a new rest it tell me vote is still ongoing" - the bug this closed): _partyRestGateRefusedAt is cleared back to -Infinity the moment a rest ACTUALLY STARTS - both when the leader\'s (or a gated follower\'s) own real rest opens, and when a follower\'s mirror starts - so a SECOND rest attempted soon after the first one succeeds is judged on its own fresh situation, never on the first vote\'s already-resolved refusal timestamp (mutants: the reset missing from either site; the reset run BEFORE the refusal check instead of after a successful start, clearing a cooldown that was still legitimately protecting an UNRESOLVED vote)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
+  assert.match(w, REST_OUTDOORS,   // REST-WARN: through restNow, at once or on the warning's Yes
     'the leader/gated-follower\'s own toggleRest: spent (through the shared function - PARTY-REST28) happens AFTER the gate has already cleared, right before the real window opens');
   assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;   \/\/ PARTY-REST2: spent the moment it is acted on - next nap asks again\s*\n\s*\/\/ PARTY-REST2f[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*_partyRestGateRefusedAt = -Infinity;/,
     'the shared reset itself: ready cleared, then (PARTY-REST2f) the cooldown clock cleared too, in that order');
