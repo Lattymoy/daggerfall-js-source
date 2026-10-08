@@ -197,6 +197,31 @@ export function pushAt(from, to, t0, t, lift = 0) {
   return [lerp(from[0], to[0], u), lerp(from[1], to[1], u) + lift * 4 * u * (1 - u), lerp(from[2], to[2], u)];
 }
 
+/** MEASURE (CARDS-TIDY): how long the dealer takes to gather the last hand into the deck before he riffles, and how high
+ *  a gathered card rides. */
+export const GATHER_S = 0.8;
+export const GATHER_LIFT = 0.02;
+
+/**
+ * CARDS-TIDY: a card gathered up from where it lies (`from`, its pose now) into the deck at `to`, face down, over
+ * GATHER_S from `t0` - the last hand swept back to the dealer, never wiped from the cloth.
+ * @param {{from: {pos: number[], yaw: number, roll: number}, to: number[], yaw: number, t0: number}} p
+ */
+export function gatherMotion({ from, to, yaw, t0 }) {
+  const t1 = t0 + GATHER_S;
+  return {
+    t0, t1, rest: to.slice(),
+    at(t) {
+      const u = smooth((t - t0) / GATHER_S);
+      return { pos: [lerp(from.pos[0], to[0], u), lerp(from.pos[1], to[1], u) + GATHER_LIFT * 4 * u * (1 - u), lerp(from.pos[2], to[2], u)], yaw: lerp(from.yaw, yaw, u), roll: lerp(from.roll, Math.PI, u), moving: t < t1 };
+    },
+  };
+}
+
+/** CARDS-TIDY: the squared deck on the cloth - how many plates draw a full deck, and the cards a full deck holds. */
+export const DECK_PLATES = 16;
+export const DECK_CARDS = 52;
+
 /** MEASURE (CARDS3b): the dealer's riffle - its length, the cards in each half, how far the halves part. */
 export const RIFFLE_S = 0.8;
 export const RIFFLE_HALF = 8;

@@ -163,6 +163,7 @@ import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrde
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
+import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, withArenaHonours, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
@@ -1298,6 +1299,23 @@ const service = {
           return json({ ...r, order: key ? await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS }) : null }, 200, origin);
         }
         return json(r, 200, origin);
+      }
+
+      // ═══ CARDS6: A CARD TABLE'S STAKES ══════════════════════════════════
+      //
+      // Tavern-Cards section 23: a realm character's buy-in held here against the service's order, and the relay's cash-out
+      // receipt paid back into the record - each act its own batch, the gold and the row together (cards.js).
+      if (path.startsWith('/v1/cards/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const cctx = { ...ctx, bucket: env.SAVES };
+        const act = {
+          '/v1/cards/stake': async () => stakeCards(cctx, who.player, env, body, await signingKey(env, subtle)),
+          '/v1/cards/cashout': async () => cashoutCards(cctx, who.player, env, body, await gatePublicKey(env, subtle)),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
+        return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
       }
 
       // ═══ PROF5: THE MARKET ══════════════════════════════════════════

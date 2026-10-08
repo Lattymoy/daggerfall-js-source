@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service). Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -112,7 +112,7 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **FACT:** a realm character's gold moves on its save through the service (`net/realmGoldLaw.js`, REALM P2.2, read by
   `server-account/src/realm.js`). **DECIDED: online stakes are escrowed there.** Sitting down moves the buy-in from the
   character to the table; standing up moves the stack back. A stake the service does not hold is a stake nobody can
-  enforce, so a character the service does not keep plays for no gold (a friendly table).
+  enforce, so a character the service does not keep plays for no gold (a friendly table). BUILT: CARDS6 (section 23).
 - **DECIDED: the physics seed travels with the deal** (section 3), so the room sees one picture.
 
 ## 6. The collectible game (the meta game)
@@ -187,7 +187,7 @@ Each ships alone and is verifiable without the next.
 | **CARDS-BAY** SHIPPED | The house deck of the Iliac Bay: the four crowns as the suits, their royals as the courts, their seals as the aces, the Bay's medallion on the back - painted in code, ours (section 21). |
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** SHIPPED | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables (section 17). |
-| **CARDS6** | Online stakes: buy-in and cash-out escrowed by the realm service. |
+| **CARDS6** SHIPPED | Online stakes: buy-in and cash-out escrowed by the realm service (section 23). |
 | **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. |
 | **CARDS8** | The catalog and the art pipeline: the first set of cards, the Card Binder, the starter deck, the deckbuilder window. |
 | **CARDS9** | Collecting: foe drops, tavern packs, quest and boss cards, cards in the trade and the market. |
@@ -575,3 +575,72 @@ Iliac Bay's kingdoms as the suits, and their royals for the courts with the crow
 - **Pins:** `test/cardsbay_faces.test.js` 7 (the crowns, the royals against the game's roll, the pips, every face inked
   and drawn not written, the back, the panel painting with the same painter, no ARENA2 read). Mutants in
   `tools/mutants/auditcards3.json` (BAY-*).
+
+## 22. CARDS-TIDY (2026-10-08): the deck one thing, the frames lighter, the table watched from near it
+
+Mac: **"#2 and cleanup"** - AUDIT CARDS-3's recorded-not-built, done beside CARDS6.
+
+- **The deck is one thing on the cloth** (`world/cardScene.js`, `world/cardMotion.js` `gatherMotion`, `GATHER_S`): a new
+  hand no longer wipes the cloth - the last hand's cards are swept face down to the new dealer's deck place (any still
+  on their way from the hand before simply join it), and only then does he riffle; between the riffle and the hand's
+  end the squared deck lies there (`DECK_PLATES` for a whole deck), thinning card by card as it is dealt. The session's
+  first thought waits the gathering out too.
+- **A room frame names only what changed** (`net/holdemTable.js` `stateDelta`, `STATE_KEYS`; relay `world176`,
+  undeployed, re-hashed in place): the relay keeps, per wake, the last state it told the room of each table and sends
+  the changed fields alone (`delta`); a wake, a table's first frame and a look say it whole. The client lays a delta
+  over the table it knows (`validHoldemOut` checks both the delta's fields and the merge); with none under it, or a
+  merge that is no table, it asks for the whole (`look`).
+- **A table is watched from near it** (section 2): within `CARD_WATCH_M` of its middle the room's frames are laid on its
+  cloth; walked up to, it is asked for (`look`) and laid at once; walked away (past a metre more), let go.
+- **exterior.js**, the dev location scene, has no online room and no save: there the card table is the offline game,
+  and its regulars are names on the panel (the host carries no family layers to seat them). DECIDED: so it stays.
+- **Pins:** in `cards3b_hand`, `cards5_client` and `auditcards3_pins`; mutants `TIDY-*` in `tools/mutants/auditcards3.json`.
+
+## 23. CARDS6 (2026-10-08): gold tables online - the stakes escrowed by the realm service
+
+Mac: **"#2"**. Section 5, DECIDED: "online stakes are escrowed there. Sitting down moves the buy-in from the character
+to the table; standing up moves the stack back." FACT: the relay has no door to the service - the gold goes round by the
+player, the service's word one way and the relay's the other, each signed:
+
+- **THE STAKE** (`server-account/src/cards.js` `stakeCards`, `/v1/cards/stake`; migration 0088 `card_stakes`): a realm
+  character's buy-in (`HOLDEM_STAKE_MIN_BB`..`HOLDEM_STAKE_MAX_BB` big blinds, the tavern's own buy-in by pin) leaves its
+  record (`payFromSave`) and is held as a row, in one batch; the answer is the service's ORDER on it
+  (`net/identityToken.js` `mintStakeOrder`, kind `stake`: the account, the stake's id, the room, the table, the sum, the
+  stakes - a minute's life). A request asked twice is one stake (`rid`).
+- **THE SEAT** (relay `world176`, undeployed, re-hashed in place): a sit carrying a stake order is checked with the key
+  the room already holds (the kind, the account, this room and table and stakes) and its stake SPENT before anything
+  else - one stake, one seat, ever. The first sitter's stake makes the table a GOLD TABLE (`publicView.gold`); every seat
+  at it is staked, and a friendly table seats no stake ('gold table', 'friendly table'). A seat sits with its stake's
+  chips. A sit refused after its stake was spent - a chair taken, a table of other chairs, the gate - hands the whole
+  stake back; an order for another room, table or stakes is spent and handed back ('stake elsewhere'); another account's
+  is refused and left unspent.
+- **THE CASH-OUT** (`net/cardReceipt.js`, `c1`, the relay's fourth signature under GATE_SIGNING_KEY): a staked seat gone
+  from the table - stood up, out of chips, gone from the room - leaves with a receipt for its stack (`stood`, `broke`); a
+  refused sit's and a void's are the whole stake (`refused`, `void`). A leaver folded out of a hand that goes on is cashed
+  out AT ONCE with his stack behind (he can win nothing more, and he is walking out of the room), never again at the
+  hand's end, and his chair is not his to play again ('cashed out'). The table queues what its seats leave with
+  (`t.cashouts`, kept with the table) and the relay signs it before the tables are saved; each receipt is sent to the
+  account's sockets and OWED to it in the room (`cashout:<account>`, a week's worth) until its client says it holds it
+  (`ack`) - told again at every look and sit there.
+- **THE CLAIM** (`cashoutCards`, `/v1/cards/cashout`): the receipt pays the character that staked it, into the region's
+  account it is claimed at (`creditSave`), and turns the row PAID in the same batch - once. A stake handed back whole is
+  the stake, never more or less; a seat leaves with no more than every seat's deepest stake at its stakes; another
+  account's receipt, another character's, an unsigned or rewritten one pay nothing.
+- **A STAKE NEVER SAT** (the sit never sent, its answer lost, the game closed while the service answered): the device
+  keeps its order (`net/cardStakes.js`), and once its minute is past (no room can sit it) hands it to the room it names
+  (`void`) - spent there, the whole of it back in a `void` receipt. A lost stake answer is asked again by the same
+  request: the same stake, no gold held twice.
+- **ON THE DEVICE** (`net/cardStakes.js`, world.js `cardStakes`): the stake is the record's own act (realmSaves.js
+  `realmGoldAct` - the purse checkpointed, the gold held out while asked); the request kept first, the order till the
+  relay sits it; each receipt kept, its stake let go, acked to the room and claimed as the record's act. A cash-out frame
+  is heard on any socket - the room just left included (online.js). The panel: a realm character online sits at the
+  relay's table through a gold buy-in ("The realm is holding your stake..."), the table's note says the realm holds it.
+- **WHAT HOLDS IT TOGETHER**: every chip at a gold table came in as a stake, the law conserves every chip, and each
+  stake comes back exactly once - in the receipt of its seat, its refusal or its void. A receipt never brought leaves its
+  stake held at the service: gold that left the record for the table (a loser's stake is already in the winners'
+  receipts). A player who never returns to a room where a receipt is owed him (he left before its frame reached him)
+  finds it there when he does.
+- **Not yet:** a gold table's stake topped up mid-evening (stand and buy in again); the panel's list of stakes owed in
+  other rooms.
+- **Pins:** `test/cards6_service.test.js` 3 (on the real Worker over SQLite), `test/cards6_relay.test.js` 6 (the fake
+  room), `test/cards6_client.test.js` 4, `test/cards6_law.test.js` 2. `tools/mutants/cards6.json`: 36, all dead.

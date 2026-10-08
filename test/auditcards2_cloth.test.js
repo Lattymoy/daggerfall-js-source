@@ -213,7 +213,7 @@ test('AUDIT CARDS-2 E: the board faces across its row, the stack beside the bet,
       const hand = events.find((e) => e.t === 'hand');
       if (hand) {
         hands++;
-        for (const c of scene.cards) assert.deepEqual(c.motions[0].at(c.motions[0].t0 - 1).pos, pl.seats[hand.button].deal, 'from the button\'s hand');
+        for (const c of scene.cards.filter((x) => x.seat !== -4)) assert.deepEqual(c.motions[0].at(c.motions[0].t0 - 1).pos, pl.seats[hand.button].deal, 'from the button\'s hand');   // CARDS-TIDY: the last hand's, gathered, aside
       }
       if (events.some((e) => e.t === 'street')) {
         const thrown = scene.cards.filter((c) => c.seat === -1 || c.seat === -2);

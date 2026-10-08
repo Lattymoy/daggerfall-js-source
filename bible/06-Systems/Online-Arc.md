@@ -15230,3 +15230,5 @@ AUDIT CARDS-3 (2026-10-08, `01-Overview/Audit-Cards-3.md`; the same row, re-hash
 room; a refused sit moves nothing elsewhere; seats with no socket in the room stood up on the alarm and by an empty
 room's sweep; the room's sits on `holdemSitRoomGate`; a table of other chairs refused; a dropped player's own chair back.
 On the client, the frames restamped on the cloth's clock, and the chair found by the player's own id.
+
+CARDS6 (2026-10-08; the same row, re-hashed in place): GOLD TABLES. A sit may carry the service's stake order (`net/identityToken.js` kind `stake`), which the room checks with the key it holds and spends once; a staked seat's leaving is signed back as a cash-out receipt (`net/cardReceipt.js`, `c1`, GATE_SIGNING_KEY), owed to its account in the room till its `ack`; a stake never sat is `void`ed back. The service holds the stakes (`server-account/src/cards.js`). The whole record is `11-Multiplayer/Tavern-Cards.md` section 23.

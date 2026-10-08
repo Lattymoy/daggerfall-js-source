@@ -258,6 +258,8 @@ export const ROUTES = new Set([
   '/v1/market/read', '/v1/market/list', '/v1/market/buy', '/v1/market/cancel', '/v1/market/order', '/v1/market/fill',
   '/v1/market/unorder', '/v1/market/collect', '/v1/market/report', '/v1/market/remove', '/v1/market/auction', '/v1/market/bid',
   '/v1/market/gold',
+  '/v1/cards/stake',   // CARDS6: a card table's stake held against the realm record
+  '/v1/cards/cashout',   // CARDS6: the relay's cash-out receipt paid back into it
   // HOME-VENDOR: a home's trader's stock, and the region's traders
   '/v1/market/vendor', '/v1/market/vendors', '/v1/market/myvendors',
   // REALM P1: the realm's characters (realm.js). The listing and the five that change one; the save itself rides a

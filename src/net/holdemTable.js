@@ -20,6 +20,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { newHand, act, foldSeat, legalActions, viewFor, timeoutAction, shuffleDeck, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from './cardLaw.js';
+import { STAKE_ID_RE } from './identityToken.js';   // CARDS6: a stake's id, the service's shape
 
 /** MEASURE (CARDS5, section 5's 30 s): a seat's clock - checked if it can be, folded if not, when it runs out. */
 export const HOLDEM_CLOCK_MS = 30000;
@@ -41,14 +42,23 @@ export const HOLDEM_NAME_MAX = 40;
 /** A seat's chips and hand in the room's frame: what anyone at the table may see. */
 const seatView = (s) => (s ? { id: s.id, name: s.name, stack: s.stack, ...(s.leaving ? { leaving: true } : {}) } : null);
 
+/** CARDS6: a gold table's stake, in big blinds - the offline table's own buy-in (systems/cardTableSession.js
+ *  BUY_IN_MIN_BB, BUY_IN_MAX_BB; equal by pin, the relay's bundle never carries the session). */
+export const HOLDEM_STAKE_MIN_BB = 20;
+export const HOLDEM_STAKE_MAX_BB = 100;
+/** CARDS6: the most cash-outs a table keeps waiting for the relay to sign. */
+export const HOLDEM_CASHOUTS_MAX = 64;
+
 /**
- * A new table of `chairs` (2..6) at big blind `bb` (one of HOLDEM_BBS), or null.
- * @param {{chairs: number, bb: number}} p
+ * A new table of `chairs` (2..6) at big blind `bb` (one of HOLDEM_BBS), or null. CARDS6: `gold`, its seats sit with a
+ * stake the service holds (net/identityToken.js stake order) - every seat or none.
+ * @param {{chairs: number, bb: number, gold?: boolean}} p
  */
-export function newTable({ chairs, bb }) {
+export function newTable({ chairs, bb, gold = false }) {
   if (!Number.isInteger(chairs) || chairs < HOLDEM_SEATS_MIN || chairs > HOLDEM_SEATS_MAX || !HOLDEM_BBS.includes(bb)) return null;
   return {
-    chairs, bb, sb: Math.max(1, Math.floor(bb / 2)),
+    chairs, bb, sb: Math.max(1, Math.floor(bb / 2)), gold: !!gold,
+    cashouts: /** @type {{to: string, j: string, s: string, r: number, w: string}[]} */ ([]),   // CARDS6: what staked seats left with, for the relay to sign
     seats: /** @type {any[]} */ (Array.from({ length: chairs }, () => null)),
     hand: /** @type {any} */ (null), handSeats: /** @type {number[]} */ ([]), handNo: 0, button: -1, seed: 0,
     nextDealAt: 0, clockAt: 0, last: /** @type {any} */ (null),
@@ -58,10 +68,43 @@ export function newTable({ chairs, bb }) {
 /** The room's view of the table: the seats, the button, the hand as a spectator sees it, the clock, the last showdown. */
 export function publicView(t) {
   return {
-    chairs: t.chairs, bb: t.bb, sb: t.sb, handNo: t.handNo, button: t.button, seed: t.seed,
+    chairs: t.chairs, bb: t.bb, sb: t.sb, gold: !!t.gold, handNo: t.handNo, button: t.button, seed: t.seed,
     seats: t.seats.map(seatView), handSeats: t.handSeats.slice(),
     hand: t.hand ? viewFor(t.hand, -1) : null, clockAt: t.hand && t.hand.toAct >= 0 ? t.clockAt : 0, last: t.last,
   };
+}
+
+/** CARDS-TIDY: the fields of a table as the room sees it (publicView's), each its own unit of a frame's delta. */
+export const STATE_KEYS = Object.freeze(['chairs', 'bb', 'sb', 'gold', 'handNo', 'button', 'seed', 'seats', 'handSeats', 'hand', 'clockAt', 'last']);
+
+/**
+ * CARDS-TIDY: the relay's half of a room frame's delta - the fields of `state` that differ from `prev` (the last state
+ * this room was told of this table), or null when the room was told none (a first frame, a wake: the whole state goes).
+ * Lane E's measure: nine tenths of a frame was the same table again.
+ * @param {any} prev @param {any} state
+ */
+export function stateDelta(prev, state) {
+  if (!prev) return null;
+  const d = {};
+  for (const k of STATE_KEYS) if (JSON.stringify(prev[k]) !== JSON.stringify(state[k])) d[k] = state[k];
+  return d;
+}
+
+/** CARDS6: a staked seat gone from the table - what it leaves with queued for the relay to sign (`t.cashouts`; kept with
+ *  the table, so a hibernation between the stand and the signature loses nothing). */
+function cashOut(t, seat) {
+  if (!seat?.stake || seat.cashed) return;
+  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });
+  if (t.cashouts.length > HOLDEM_CASHOUTS_MAX) t.cashouts.splice(0, t.cashouts.length - HOLDEM_CASHOUTS_MAX);
+}
+
+/** CARDS6: a staked leaver folded out of a hand that goes on - his stack behind is all he will ever have of it, so it
+ *  is cashed out NOW (he is walking out of the room; at the hand's end he would be told nothing), never twice. */
+function cashOutFolded(t, chair, k) {
+  const seat = t.seats[chair];
+  if (!seat?.stake || seat.cashed || !t.hand || t.handSeats[k] !== chair) return;
+  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: t.hand.seats[k].stack, w: t.hand.seats[k].stack > 0 ? 'stood' : 'broke' });
+  seat.cashed = true;
 }
 
 /** The chair a player sits in at this table, or -1. */
@@ -93,7 +136,7 @@ function after(t, prev, now) {
   events.push(end);
   t.last = end;
   t.seats.forEach((s, i) => {
-    if (s && (s.leaving || s.stack <= 0)) { events.push({ t: 'leave', seat: i, name: s.name, broke: !s.leaving, at: now }); t.seats[i] = null; }
+    if (s && (s.leaving || s.stack <= 0)) { events.push({ t: 'leave', seat: i, name: s.name, broke: s.stack <= 0, at: now }); cashOut(t, s); t.seats[i] = null; }
   });
   t.hand = null;
   t.handSeats = [];
@@ -120,22 +163,27 @@ function deal(t, now, rand32) {
 }
 
 /**
- * A player sits in `chair` with the friendly chips. Answers the messages, or an error word.
- * @param {any} t @param {{id: string, name: string, chair: number, now: number}} p
+ * A player sits in `chair` with the friendly chips - CARDS6: or, at a gold table, with his stake (`{j, sub, amount}`,
+ * the service's order the relay checked). Answers the messages, or an error word.
+ * @param {any} t @param {{id: string, name: string, chair: number, now: number, stake?: {j: string, sub: string, amount: number}|null}} p
  */
-export function sit(t, { id, name, chair, now }) {
+export function sit(t, { id, name, chair, now, stake = null }) {
   if (!Number.isInteger(chair) || chair < 0 || chair >= t.chairs) return 'no such chair';
   // AUDIT CARDS-3 E-N1: a player whose socket dropped mid-hand is folded and marked leaving - back in the room, his sit
-  // keeps his own chair (whichever he names): he plays the next hand, never 'taken' by his own ghost until this one ends
+  // keeps his own chair (whichever he names): he plays the next hand, never 'taken' by his own ghost until this one ends.
+  // CARDS6: at a gold table with the stake his seat already holds (the relay asks no stake of him again)
   const mine = chairOf(t, id);
   if (mine >= 0 && t.seats[mine].leaving) {
+    if (t.seats[mine].cashed) return 'cashed out';   // CARDS6: his stack went home in a receipt - the chair is not his to play again
     delete t.seats[mine].leaving;
     if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);
     return [room(t, [{ t: 'sit', seat: mine, name: t.seats[mine].name, at: now }])];
   }
+  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none
   if (t.seats[chair]) return 'taken';
   if (chairOf(t, id) >= 0) return 'seated';
-  t.seats[chair] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), stack: HOLDEM_CHIPS_BB * t.bb };
+  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';
+  t.seats[chair] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), stack: stake ? stake.amount : HOLDEM_CHIPS_BB * t.bb, ...(stake ? { stake: stake.j, sub: stake.sub } : {}) };
   if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);
   return [room(t, [{ t: 'sit', seat: chair, name: t.seats[chair].name, at: now }])];
 }
@@ -151,14 +199,16 @@ export function stand(t, { id, now }) {
   const k = t.hand ? t.handSeats.indexOf(chair) : -1;
   if (k < 0) {
     const name = t.seats[chair].name;
+    cashOut(t, t.seats[chair]);   // CARDS6
     t.seats[chair] = null;
     return [room(t, [{ t: 'leave', seat: chair, name, broke: false, at: now }])];
   }
   t.seats[chair].leaving = true;
-  if (t.hand.seats[k].folded) return [room(t, [])];
+  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }
   const prev = t.hand;
   t.hand = foldSeat(prev, k);
   const events = [{ t: 'act', seat: chair, type: 'fold', to: null, paid: 0, at: now }, ...after(t, prev, now)];
+  cashOutFolded(t, chair, k);
   return [room(t, events), ...turnOf(t)];
 }
 
@@ -222,9 +272,13 @@ export function tableLook(t, id, now) {
   return out;
 }
 
-const HOLDEM_OPS = Object.freeze(['sit', 'stand', 'act', 'look']);
+const HOLDEM_OPS = Object.freeze(['sit', 'stand', 'act', 'look', 'void', 'ack']);   // CARDS6: a stake never sat given back; a cash-out heard
+/** CARDS6: the longest a stake order (or a receipt's id) may be on the wire. */
+export const HOLDEM_STAKE_MAX = 1024;
 const ACTION_TYPES = Object.freeze(['fold', 'check', 'call', 'raise']);
 const chipsOk = (n) => Number.isSafeInteger(n) && n >= 0;
+const stakeWordOk = (w) => typeof w === 'string' && w.length > 0 && w.length <= HOLDEM_STAKE_MAX;
+const seatOk = (s) => s === null || (s && typeof s.id === 'string' && typeof s.name === 'string' && chipsOk(s.stack));
 
 /**
  * A client's word to the table, checked: `{op, table, chair?, chairs?, bb?, action?}` or null. `sit` names the chair it
@@ -239,8 +293,11 @@ export function validHoldemIn(m) {
     if (!Number.isInteger(m.chair) || m.chair < 0 || m.chair >= HOLDEM_SEATS_MAX) return null;
     if (!Number.isInteger(m.chairs) || m.chairs < HOLDEM_SEATS_MIN || m.chairs > HOLDEM_SEATS_MAX || m.chair >= m.chairs) return null;
     if (!HOLDEM_BBS.includes(m.bb)) return null;
-    return { op: 'sit', table: m.table, chair: m.chair, chairs: m.chairs, bb: m.bb };
+    if (m.stake !== undefined && !stakeWordOk(m.stake)) return null;
+    return { op: 'sit', table: m.table, chair: m.chair, chairs: m.chairs, bb: m.bb, ...(m.stake !== undefined ? { stake: m.stake } : {}) };
   }
+  if (m.op === 'void') return stakeWordOk(m.stake) ? { op: 'void', table: m.table, stake: m.stake } : null;   // CARDS6
+  if (m.op === 'ack') return typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null;   // CARDS6
   if (m.op === 'act') {
     const a = m.action;
     if (!a || typeof a !== 'object' || !ACTION_TYPES.includes(a.type)) return null;
@@ -258,11 +315,20 @@ export function validHoldemIn(m) {
 export function validHoldemOut(m) {
   if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX) return false;
   if (typeof m.error === 'string') return m.error.length <= 40;   // the relay's refusal of a word (a chair taken, not your turn)
+  if (m.cashout !== undefined) return typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX;   // CARDS6: a staked seat's receipt (net/cardReceipt.js reads it)
   if (m.hole) return Number.isInteger(m.hole.handNo) && Array.isArray(m.hole.cards) && m.hole.cards.length === 2 && m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52);
   if (m.turn) return Number.isInteger(m.turn.handNo) && !!m.turn.legal && typeof m.turn.legal === 'object' && Number.isFinite(m.turn.clockAt);
-  if (!Array.isArray(m.events) || m.events.length > 32 || !m.state || typeof m.state !== 'object') return false;
+  if (!Array.isArray(m.events) || m.events.length > 32 || !m.events.every((e) => e && typeof e.t === 'string')) return false;
+  if (m.delta !== undefined) {
+    // CARDS-TIDY: a delta - the changed fields alone, each as the whole state would have it (the client checks the merge)
+    const d = m.delta;
+    if (m.state !== undefined || !d || typeof d !== 'object' || Array.isArray(d) || Object.keys(d).some((k) => !STATE_KEYS.includes(k))) return false;
+    if (d.chairs !== undefined && !(Number.isInteger(d.chairs) && d.chairs >= HOLDEM_SEATS_MIN && d.chairs <= HOLDEM_SEATS_MAX)) return false;
+    if (d.bb !== undefined && !HOLDEM_BBS.includes(d.bb)) return false;
+    return d.seats === undefined || (Array.isArray(d.seats) && d.seats.length <= HOLDEM_SEATS_MAX && d.seats.every(seatOk));
+  }
+  if (!m.state || typeof m.state !== 'object') return false;
   const t = m.state;
   return Number.isInteger(t.chairs) && t.chairs >= HOLDEM_SEATS_MIN && t.chairs <= HOLDEM_SEATS_MAX && Array.isArray(t.seats) && t.seats.length === t.chairs
-    && t.seats.every((s) => s === null || (s && typeof s.id === 'string' && typeof s.name === 'string' && chipsOk(s.stack)))
-    && HOLDEM_BBS.includes(t.bb) && m.events.every((e) => e && typeof e.t === 'string');
+    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb);
 }

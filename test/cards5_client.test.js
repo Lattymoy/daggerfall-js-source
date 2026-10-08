@@ -137,7 +137,7 @@ function fakeRelay() {
 let clockMs = 0;
 const performanceNow = () => clockMs;
 
-function host(relay, id, name, { seats = 4 } = {}) {
+function host(relay, id, name, { seats = 4, pos = [0, 0, 0] } = {}) {
   const doc = fakeDoc();
   const playerEntity = { name, goldPieces: 500, items: [], health: 50 };
   const said = [];
@@ -148,7 +148,7 @@ function host(relay, id, name, { seats = 4 } = {}) {
   const scope = {
     isTavern: () => true, BUILDING_TYPES: { None: 0 },
     cardTableSeats: () => seatList, seatFloorOk: () => true, SEAT_FLOOR_PROBE: 1, nearestFreeSeat, takenSeats,
-    player: { pos: [0, 0, 0], eyeAt: () => [0, 1.6, 0] },
+    player: { pos, eyeAt: () => [0, 1.6, 0] },
     host: { realmAct: null, relock: () => said.push('<relock>'), seatedPeers: peers, cardOnline: { ok: () => true, send: (w) => { const g = me.gate ? me.gate(w) : true; return g === 'in flight' ? true : g && relay.word(id, w); }, id: () => id, welcomes: () => me.welcomes ?? 0 } },
     say: (s) => said.push(s), cam: { yaw: 0, pitch: 0, pos: null },
     getNameBankOfRegion: () => 0, residentName: (seed, bank, g) => `R${seed}:${g}`,
@@ -158,7 +158,7 @@ function host(relay, id, name, { seats = 4 } = {}) {
     deductGold: court.deductGold, addGold: court.addGold, playerEntity,
     CardTableSession: sess.CardTableSession, seatPatrons: sess.seatPatrons, regularsFor: sess.regularsFor, regularsAfter: sess.regularsAfter,
     CardScene: class { constructor(o) { this.o = o; this.places = o.places; this.playerSeat = o.playerSeat; this.events = []; scenes.push(this); } onEvent(e, holeOf) { this.events.push({ e, holes: [holeOf(this.o.playerSeat, 0)] }); } poses() { return { cards: [], chips: [] }; } settledAt() { return 0; } },
-    tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({}), hashSeed: (...x) => x.join(':'),
+    tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({ centre: [0, 0.8, 0], axisYaw: 0, halfLong: 1, halfShort: 0.5 }), hashSeed: (...x) => x.join(':'),
     registerPlayerHurtListener: () => {}, isOnlinePage: () => true,
     mwViewFirstPerson: () => {}, homeTownOf: (b) => b?.townMapId || 0, worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS, performance: { now: performanceNow },
@@ -340,8 +340,8 @@ test('AUDIT CARDS-3 D7 and the host\'s own seams: a newcomer asks for the tables
   // a stand names the table it sat at (never 0)
   bob.api.standFromCardTable();
   assert.ok(!relay.tables.get(1)?.seats.some((x) => x?.id === 'bob' && !x.leaving), 'Bob up from table 1');
-  // a watch of another room is let go
-  ann.api.setCtx({ tables: [], collider: null });
+  // a watch of another room is let go - even where the new room has a table of the same index at hand
+  ann.api.setCtx({ tables: [{ aabb: {} }], collider: null });
   ann.api.cardGameFrame(clockMs + 2);
   assert.equal(ann.api.watches.size, 0, 'another room: every watch let go');
   for (const h of [ann, bob, cat]) h.api.standFromCardTable?.();
@@ -394,4 +394,39 @@ test('AUDIT CARDS-3 E-N3: a player sat down in a regular\'s chair - the chair is
   assert.ok(before.includes(bobX), 'Bob took a chair Ann\'s regulars sat in');
   assert.ok(!chairsOf().includes(bobX), 'no regular drawn in his chair');
   ann.api.standFromCardTable(); bob.api.standFromCardTable();
+});
+
+test('CARDS-TIDY a table is watched from near it: across the room nothing is laid; walked up to, it is asked for and laid; walked away, let go', () => {
+  clockMs = 0;
+  const relay = fakeRelay();
+  const ann = host(relay, 'ann', 'Ann'), bob = host(relay, 'bob', 'Bob');
+  const where = [30, 0, 0];
+  const cat = host(relay, 'cat', 'Cat', { pos: where });
+  cat.api.cardGameFrame(0);   // her visit's looks, from across the room
+  ann.api.sitAtCardTable(0); bob.api.sitAtCardTable(0);
+  relay.advance(HOLDEM_FIRST_MS);
+  cat.api.cardGameFrame(1);
+  assert.equal(cat.api.watches.size, 0, 'across the room: no cloth laid');
+  assert.equal(cat.draws.made, 0, 'not even for a frame');
+  where[0] = 2;   // she walks up
+  cat.api.cardGameFrame(2);
+  assert.ok(cat.api.watches.has(0) && cat.api.watches.get(0).remote.state?.hand, 'near: asked for, and the hand laid at once');
+  where[0] = 30;
+  cat.api.cardGameFrame(3);
+  assert.equal(cat.api.watches.size, 0, 'walked away: let go');
+  assert.equal(cat.draws.made, cat.draws.destroyed);
+  for (const h of [ann, bob]) h.api.standFromCardTable();
+});
+
+test('CARDS-TIDY a table\'s change with no table under it is asked for whole', () => {
+  clockMs = 0;
+  const relay = fakeRelay();
+  const cat = host(relay, 'cat', 'Cat');
+  const words = [];
+  cat.gate = (w) => { words.push(`${w.op}:${w.table}`); return true; };
+  cat.api.cardGameFrame(0);
+  words.length = 0;
+  cat.api.cardOnlineFrame({ t: 'holdem', table: 1, now: 0, events: [], delta: { clockAt: 5 }, at: 0 });
+  cat.api.cardGameFrame(1);
+  assert.deepEqual(words, ['look:1']);
 });

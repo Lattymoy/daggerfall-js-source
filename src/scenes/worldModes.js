@@ -542,13 +542,19 @@ export function createWorldModes(host) {
   const FRIENDLY_CHIPS_BB = 100;
   /** AUDIT CARDS-3 C4: the beat the settled cloth is left to be read before the next hand is dealt. */
   const CARD_CLOTH_REST_MS = 1200;
+  /** CARDS6: the service's refusals of a stake, said. */
+  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', offline: 'The realm did not answer - your stake will be settled when it does.' });
+  /** CARDS-TIDY: a look asked for a table the client lost track of, at most this often. */
+  const CARD_LOOK_AGAIN_MS = 2000;
   /** AUDIT CARDS-3 B1: a sit still pending is said again this often (a new socket, the client's gate, the relay's 'busy'). */
   const CARD_SIT_AGAIN_MS = 1500;
   function openCardGame(seatCount) {
     if (cardGame) closeCardGame();
     const stakes = stakesFor(interiorBuilding?.quality ?? 10);
-    const friendly = !!host.realmAct || isOnlinePage();
-    const buyIn = buyInRange(friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
+    // CARDS6: online, a realm character plays for gold at the relay's table - its stake held by the service (net/cardStakes.js)
+    const goldOnline = !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();
+    const friendly = !goldOnline && (!!host.realmAct || isOnlinePage());
+    const buyIn = buyInRange(goldOnline ? host.cardStakes.purse() ?? 0 : friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
     const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), regulars: null, barks: new Map(), key: cardTableKey(), day: cardDay(), session: null, remote: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer), paintedAt: 0 };   // CARDS3: the draw makes nothing until the first card
     cardGame = game;
     game.hud = createCardTableHud({ onPress: (id, v) => cardPress(game, id, v) });
@@ -556,7 +562,8 @@ export function createWorldModes(host) {
     game.unlisten = cardPointerListen(game);   // CARDS3b: the cursor on the hand and the chips - its listeners the game's, gone with it
     // CARDS5: online, a relay that deals runs this table - the player sits at it with the friendly chips, the room sees
     // it, and the other players at it play him; alone, he may play the regulars instead (the friendly game, below)
-    if (host.cardOnline?.ok?.()) {
+    game.goldOnline = goldOnline;
+    if (host.cardOnline?.ok?.() && !goldOnline) {
       // the game's table first, the word after - the relay's answer may come before the next line runs
       closeCardWatch(cardSeat.table);   // the cloth is the game's now, not a watcher's
       game.remote = new RemoteCardTable({ myId: host.cardOnline.id(), chair: cardSeat.seat });
@@ -573,7 +580,31 @@ export function createWorldModes(host) {
    *  relay's 'busy'); false when the word did not go. */
   function cardSit(g, now) {
     g.sitAt = now + CARD_SIT_AGAIN_MS;
-    return !!host.cardOnline?.send({ op: 'sit', table: g.table, chair: cardSeat.seat, chairs: cardSeatsOf(g.table).length, bb: g.stakes.bb });
+    return !!host.cardOnline?.send({ op: 'sit', table: g.table, chair: cardSeat.seat, chairs: cardSeatsOf(g.table).length, bb: g.stakes.bb, ...(g.stakeWord ? { stake: g.stakeWord } : {}) });   // CARDS6: a gold table's sit carries its stake
+  }
+  /** CARDS6: THE GOLD BUY-IN - the stake asked of the service (the record's act: the purse checkpointed, the gold held out
+   *  of it while asked), then the relay's table sat with the service's order. A game closed while the service answered
+   *  leaves its stake on the device, voided back when this room is next seen (net/cardStakes.js voidable). */
+  async function cardGoldSit(g, amount) {
+    if (g.staking) return;
+    g.staking = true;
+    g.why = null;
+    paintCardGame();
+    const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: cardSeat.table, bb: g.stakes.bb, amount });
+    g.staking = false;
+    if (g !== cardGame || !cardSeat) return;
+    if (!r.ok) { say(CARD_STAKE_REFUSALS[r.error] ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    g.stakeWord = r.stake;
+    g.stakeId = r.id;
+    closeCardWatch(cardSeat.table);
+    g.remote = new RemoteCardTable({ myId: host.cardOnline.id(), chair: cardSeat.seat });
+    g.table = cardSeat.table;
+    g.welcomes = host.cardOnline.welcomes?.() ?? 0;
+    g.scene = cardSceneFor(g.remote);
+    g.phase = 'playing';
+    cardSit(g, performance.now());   // a word the gate kept is said again (cardRemoteFrame), its stake with it
+    say(`You stake ${amount} gold at the table.`);
+    paintCardGame();
   }
   function paintCardGame() {
     const g = cardGame;
@@ -581,7 +612,8 @@ export function createWorldModes(host) {
     const table = g.remote ?? g.session;
     g.paintedAt = performance.now();
     g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
-      online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length } : null }));
+      online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length && !g.goldOnline } : null,
+      gold: !!g.goldOnline, staking: !!g.staking }));   // CARDS6
   }
   function cardPress(game, id, value) {
     if (game !== cardGame) return;   // a press from a panel already gone
@@ -602,6 +634,12 @@ export function createWorldModes(host) {
     }
     if (id === 'deal') {
       if (game.phase !== 'buyin' || !game.buyIn) return;
+      if (game.goldOnline) {   // CARDS6: the relay's gold table - no regulars, the stake the service's
+        game.buyIn = buyInRange(host.cardStakes.purse() ?? 0, game.stakes);
+        if (!game.buyIn) { paintCardGame(); return; }
+        cardGoldSit(game, Math.min(game.buyIn.max, Math.max(game.buyIn.min, Math.floor(Number(value) || 0))));
+        return;
+      }
       if (!cardSeat?.free.length) { say('There is no chair left at this table for a regular.'); return; }   // AUDIT CARDS-3 B11: a regular with no chair
       // AUDIT CARDS-2 M2: the purse read again at the press - deductGold never refuses (it empties the purse and the
       // letters of credit, and answers the shortfall), so a purse that shrank since the seat is asked first
@@ -838,6 +876,8 @@ export function createWorldModes(host) {
     const welcomes = host.cardOnline?.welcomes?.() ?? 0;
     if (welcomes !== g.welcomes) { g.welcomes = welcomes; r.resit(); g.sitAt = now; }
     if (!r.confirmed && !r.lost && now >= (g.sitAt ?? 0)) cardSit(g, now);   // pending: said again (a word the gate or a 'busy' kept)
+    if (r.confirmed && g.stakeId && !g.stakeSeated) { g.stakeSeated = true; host.cardStakes?.seated(g.stakeId); }   // CARDS6: the stake sat
+    if (r.needLook && now >= (g.lookAt ?? 0)) { g.lookAt = now + CARD_LOOK_AGAIN_MS; if (host.cardOnline?.send({ op: 'look', table: g.table })) r.needLook = false; }   // CARDS-TIDY: a delta with no table under it
     const events = r.drain();
     const names = r.state ? r.state.seats.map((x) => x?.name ?? '') : [];
     const you = r.lost?.chair ?? r.playerSeat;   // AUDIT CARDS-3 B7: the drain that stood me up said to me
@@ -877,10 +917,18 @@ export function createWorldModes(host) {
   function closeCardWatches() { for (const i of [...cardWatches.keys()]) closeCardWatch(i); }
   /** A frame from the relay's card table: the seated game's, or a watched one's. */
   function cardOnlineFrame(f) {
+    // CARDS6: a cash-out is gold - kept and claimed wherever the player is now, and the room told it is held
+    if (typeof f?.cashout === 'string') {
+      const j = host.cardStakes?.receive(f.cashout);
+      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(); }
+      return;
+    }
     if (mode !== 'interior' || !interiorCtx || !Number.isInteger(f?.table)) return;
     if (cardGame?.remote && f.table === cardSeat?.table) { cardGame.remote.ingest(f); return; }
     if (cardSeat && f.table === cardSeat.table) return;   // AUDIT CARDS-3 B6/D5: the regulars' game is on this cloth - never a second laid over it
+    if (f.delta && !cardWatches.has(f.table)) { if (!cardLooksDue.includes(f.table)) cardLooksDue.push(f.table); return; }   // CARDS-TIDY: a table's change, and no table to lay it on - asked for whole
     if (!f.state && !cardWatches.has(f.table)) return;   // a hole or a turn is a seat's - nothing to watch
+    if (!cardWatches.has(f.table) && !cardTableNear(f.table, CARD_WATCH_M)) return;   // CARDS-TIDY: a table across the room is not laid out (section 2: a player NEAR a table sees it)
     let w = cardWatches.get(f.table);
     if (!w) {
       const remote = new RemoteCardTable({ myId: null });   // AUDIT CARDS-3 B2: a watcher takes no chair, whoever sits there
@@ -895,12 +943,27 @@ export function createWorldModes(host) {
   // player who walked in mid-hand saw nothing till the next one (up to a seat's clock); each of the room's tables is
   // asked once a visit (`look`), as many a frame as the gate lets go
   let cardLookedCtx = null, cardLooksDue = [];
+  // CARDS-TIDY: A TABLE IS WATCHED FROM NEAR IT (section 2) - within CARD_WATCH_M of its middle, let go past a little more
+  const CARD_WATCH_M = 6, CARD_WATCH_SLACK_M = 1;
+  const cardNearTables = new Set();
+  function cardTableNear(i, m) {
+    const t = interiorCtx?.tables?.[i];
+    if (!t) return false;
+    const c = tableFrame(t).centre;
+    return Math.hypot(player.pos[0] - c[0], player.pos[2] - c[2]) <= m;
+  }
   /** The watched tables' turn of the frame: their events onto their cloths; a table emptied, or of another room, let go. */
   function cardWatchFrame() {
-    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16); }
+    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16); host.cardStakes?.recover().then(() => host.cardStakes.claim()).catch(() => {}); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed
+    // CARDS6: a stake of this room the relay never sat - voided back, a word at a time as the gate lets go
+    const room = host.cardStakes && host.cardOnline?.ok?.() ? host.cardOnline.room?.() : null;
+    if (room) for (const v of host.cardStakes.voidable(room)) { if (!host.cardOnline.send({ op: 'void', table: v.table, stake: v.order })) break; host.cardStakes.voiding(v.id); }
+    // CARDS-TIDY: a table come near is asked for once each approach
+    if (interiorCtx && host.cardOnline?.ok?.()) (interiorCtx.tables ?? []).forEach((_, i) => { const near = cardTableNear(i, CARD_WATCH_M); if (near && !cardNearTables.has(i) && !cardLooksDue.includes(i)) cardLooksDue.push(i); if (near) cardNearTables.add(i); else cardNearTables.delete(i); });
     while (cardLooksDue.length && host.cardOnline?.send({ op: 'look', table: cardLooksDue[0] })) cardLooksDue.shift();
     for (const [i, w] of cardWatches) {
-      if (w.ctx !== interiorCtx) { closeCardWatch(i); continue; }
+      if (w.ctx !== interiorCtx || !cardTableNear(i, CARD_WATCH_M + CARD_WATCH_SLACK_M)) { closeCardWatch(i); continue; }   // CARDS-TIDY: walked away, let go
+      if (w.remote.needLook && !cardLooksDue.includes(i)) { w.remote.needLook = false; cardLooksDue.push(i); }   // CARDS-TIDY
       for (const e of w.remote.drain()) w.scene.onEvent(e, () => -1);
       if (w.remote.state && w.remote.seated === 0 && !w.remote.state.hand) closeCardWatch(i);
     }

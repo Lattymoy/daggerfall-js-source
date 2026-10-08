@@ -101,8 +101,8 @@
   {
     "name": "C3b-deal-during-riffle",
     "file": "src/world/cardScene.js",
-    "old": "      const dealAt = t + RIFFLE_S;",
-    "new": "      const dealAt = t;",
+    "old": "      const dealAt = t + gather + RIFFLE_S;",
+    "new": "      const dealAt = t + gather;",
     "tests": [
       "test/cards3b_hand.test.js",
       "test/cards3_motion.test.js",
@@ -112,8 +112,8 @@
   {
     "name": "C3b-session-no-riffle-wait",
     "file": "src/systems/cardTableSession.js",
-    "old": "settleMs(live.length * 2) + Math.round(RIFFLE_S * 1000));",
-    "new": "settleMs(live.length * 2));",
+    "old": "settleMs(live.length * 2) + Math.round((GATHER_S + RIFFLE_S) * 1000));",
+    "new": "settleMs(live.length * 2) + Math.round(GATHER_S * 1000));",
     "tests": [
       "test/cards3b_hand.test.js",
       "test/cards3_motion.test.js",

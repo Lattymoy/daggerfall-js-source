@@ -172,7 +172,7 @@
   {
     "name": "C5-client-wrong-room",
     "file": "src/net/online.js",
-    "old": "      if (!primary || !validHoldemOut(m)) return;",
+    "old": "      if (!validHoldemOut(m) || (!primary && m.cashout === undefined)) return;",
     "new": "      if (!validHoldemOut(m)) return;",
     "tests": [
       "test/cards5_relay.test.js",

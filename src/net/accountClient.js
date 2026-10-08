@@ -1451,6 +1451,16 @@ export function accountMarket({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) 
   };
 }
 
+/** CARDS6: a card table's stakes' door (server-account/src/cards.js) - a realm character's buy-in held against the
+ *  service's order, and the relay's cash-out receipt paid back into its record. */
+export function accountCards({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    stake: (req) => post('/v1/cards/stake', req),
+    cashout: (req) => post('/v1/cards/cashout', req),
+  };
+}
+
 /** PROF6: the writs' door beside the Court's (server-account/src/writs.js) - a guild writ posted, supplied, withdrawn,
  *  the Officers' budget; a commission posted, fulfilled, cancelled, declined; the guild Stores read and moved. */
 export function accountWrits({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {

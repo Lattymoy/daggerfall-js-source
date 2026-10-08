@@ -20,6 +20,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 
+import { validHoldemOut } from '../net/holdemTable.js';
+
 /** How long ago a hand already under way is told as having been dealt - past every throw and turn on the cloth. */
 export const CATCH_UP_MS = 20000;
 /** AUDIT CARDS-3 B2: the relay's refusals of a sit - the chair asked for is not mine. ('seated' is not one: I sit there.) */
@@ -41,6 +43,7 @@ export class RemoteCardTable {
     this.confirmed = false;   // AUDIT CARDS-3 B2: a table state has shown my id in `chair`
     this.lost = /** @type {{chair: number, why: 'refused'|'broke'|'stood'}|null} */ (null);
     this.said = 0;            // AUDIT CARDS-3 B3: bumped by a refusal - the panel repaints for it, though no event came
+    this.needLook = false;    // CARDS-TIDY: a delta came with no table to lay it on - the whole is to be asked for
   }
 
   /** The chair given up: the sit refused, or the relay stood me up. */
@@ -64,9 +67,18 @@ export class RemoteCardTable {
 
   /**
    * One frame from the relay (online.js onHoldem: the frame and the local clock it arrived at, `at`).
-   * @param {any} f
+   * @param {any} frame
    */
-  ingest(f) {
+  ingest(frame) {
+    let f = frame;
+    // CARDS-TIDY: a room frame names only the fields that changed - laid over the table I was last told; with none to lay
+    // it on (come in mid-hand), or a merge that is no table, the host asks for the whole (`needLook`)
+    if (f.delta) {
+      const merged = this.state ? { ...this.state, ...f.delta } : null;
+      if (!merged || !validHoldemOut({ table: 0, events: [], state: merged })) { this.needLook = true; return; }
+      f = { ...f, state: merged };
+    }
+    if (f.state) this.needLook = false;
     const local = Number.isFinite(f.at) ? f.at : 0;
     const shift = (t) => (Number.isFinite(t) && Number.isFinite(f.now) ? t - f.now + local : local);
     if (typeof f.error === 'string') {

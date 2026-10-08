@@ -136,7 +136,7 @@
   {
     "name": "D-stand-refold",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand.seats[k].folded) return [room(t, [])];\n",
+    "old": "  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }\n",
     "new": "\n",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -312,8 +312,8 @@
   {
     "name": "D-out-stack-any",
     "file": "src/net/holdemTable.js",
-    "old": "typeof s.name === 'string' && chipsOk(s.stack)))",
-    "new": "typeof s.name === 'string'))",
+    "old": "const seatOk = (s) => s === null || (s && typeof s.id === 'string' && typeof s.name === 'string' && chipsOk(s.stack));",
+    "new": "const seatOk = (s) => s === null || (s && typeof s.id === 'string' && typeof s.name === 'string');",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -334,8 +334,8 @@
   {
     "name": "D-out-bb-any",
     "file": "src/net/holdemTable.js",
-    "old": "    && HOLDEM_BBS.includes(t.bb) && m.events.every",
-    "new": "    && m.events.every",
+    "old": "    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb);",
+    "new": "    && t.seats.every(seatOk);",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -400,8 +400,8 @@
   {
     "name": "D-relay-empties-kept",
     "file": "server/src/index.js",
-    "old": "    for (const [k, t] of tables) if (holdemEmpty(t)) tables.delete(k);\n",
-    "new": "\n",
+    "old": "    for (const [k, t] of tables) if (holdemEmpty(t)) { tables.delete(k); this._holdemSaid?.delete(k); }",
+    "new": "    for (const [k, t] of tables) if (false) { tables.delete(k); this._holdemSaid?.delete(k); }",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -422,8 +422,8 @@
   {
     "name": "D-relay-look-silent",
     "file": "server/src/index.js",
-    "old": "    if (m.op === 'look') msgs = t ? holdemLook(t, a.id, now) : [];",
-    "new": "    if (m.op === 'look') msgs = [];",
+    "old": "    if (m.op === 'look') { msgs = t ? holdemLook(t, a.id, now) : []; await",
+    "new": "    if (m.op === 'look') { msgs = []; await",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -820,8 +820,8 @@
   {
     "name": "D-host-watch-ctx-kept",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (w.ctx !== interiorCtx) { closeCardWatch(i); continue; }\n",
-    "new": "\n",
+    "old": "      if (w.ctx !== interiorCtx || !cardTableNear(i, CARD_WATCH_M + CARD_WATCH_SLACK_M)) { closeCardWatch(i); continue; }",
+    "new": "      if (!cardTableNear(i, CARD_WATCH_M + CARD_WATCH_SLACK_M)) { closeCardWatch(i); continue; }",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -1348,8 +1348,8 @@
   {
     "name": "A1-stand-before-sit",
     "file": "server/src/index.js",
-    "old": "      const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now });",
-    "new": "      for (const [k, other] of tables) if (k !== m.table) holdemStand(other, { id: a.id, now });\n      const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now });",
+    "old": "      const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now, stake });",
+    "new": "      for (const [k, other] of tables) if (k !== m.table) holdemStand(other, { id: a.id, now });\n      const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now, stake });",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -1480,7 +1480,7 @@
   {
     "name": "A4-no-room-gate",
     "file": "server/src/index.js",
-    "old": "      if (!gate.pass) { refuse('busy'); return; }",
+    "old": "      if (!gate.pass) { await no('busy'); return; }",
     "new": "      void gate;",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -1524,7 +1524,7 @@
   {
     "name": "A5-any-chairs",
     "file": "server/src/index.js",
-    "old": "      if (t && (t.chairs !== m.chairs || t.bb !== m.bb)) { refuse('table differs'); return; }",
+    "old": "      if (t && (t.chairs !== m.chairs || t.bb !== m.bb)) { await no('table differs'); return; }",
     "new": "      void t;",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -1832,8 +1832,8 @@
   {
     "name": "B11-regulars-chairless",
     "file": "src/scenes/worldModes.js",
-    "old": "regulars: !!cardSeat?.free.length }",
-    "new": "regulars: true }",
+    "old": "regulars: !!cardSeat?.free.length && !g.goldOnline }",
+    "new": "regulars: !g.goldOnline }",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -2472,6 +2472,292 @@
     "file": "src/scenes/worldModes.js",
     "old": "      g.swallowMouse = false;   // a browser that sent no mouse press after the taken pointerdown never eats the next one\n",
     "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-wiped",
+    "file": "src/world/cardScene.js",
+    "old": "      this.cards = left.map((c, i) =>",
+    "new": "      this.cards = [].map((c, i) =>",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-regathered",
+    "file": "src/world/cardScene.js",
+    "old": "      const left = this.cards.filter((c) => c.seat !== -4);",
+    "new": "      const left = this.cards;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-riffle-over-gather",
+    "file": "src/world/cardScene.js",
+    "old": "      this.riffle = { t0: t + gather, at: deckAt, yaw: deckYaw };",
+    "new": "      this.riffle = { t0: t, at: deckAt, yaw: deckYaw };",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-no-pile",
+    "file": "src/world/cardScene.js",
+    "old": "    if (this.deck && !(t >= this.riffle?.t0 && t < this.deck.upTo)) cards.push(...this._deckPile(t));",
+    "new": "    void this.deck;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-pile-never-thins",
+    "file": "src/world/cardScene.js",
+    "old": "Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS)",
+    "new": "DECK_PLATES",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-gathered-forever",
+    "file": "src/world/cardScene.js",
+    "old": "      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue;",
+    "new": "      void c;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-whole-every-frame",
+    "file": "server/src/index.js",
+    "old": "        if (delta) frame = { events: f.events, delta };",
+    "new": "        void delta;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-delta-of-nothing",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (!prev) return null;\n  const d = {};",
+    "new": "  if (!prev) return {};\n  const d = {};",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-delta-unchecked",
+    "file": "src/systems/cardRemoteTable.js",
+    "old": "      if (!merged || !validHoldemOut({ table: 0, events: [], state: merged })) { this.needLook = true; return; }",
+    "new": "      if (!merged) { this.needLook = true; return; }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-delta-any-key",
+    "file": "src/net/holdemTable.js",
+    "old": "|| Object.keys(d).some((k) => !STATE_KEYS.includes(k))) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-never-asks",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (f.delta && !cardWatches.has(f.table)) { if (!cardLooksDue.includes(f.table)) cardLooksDue.push(f.table); return; }",
+    "new": "    if (f.delta && !cardWatches.has(f.table)) return;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-watch-across-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!cardWatches.has(f.table) && !cardTableNear(f.table, CARD_WATCH_M)) return;",
+    "new": "    void CARD_WATCH_M;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/auditcards3_host.test.js",
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards3b_hand.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4b_regulars.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cardsbay_faces.test.js"
+    ]
+  },
+  {
+    "name": "TIDY-approach-unasked",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (near && !cardNearTables.has(i) && !cardLooksDue.includes(i)) cardLooksDue.push(i);",
+    "new": "void near;",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",

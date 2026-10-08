@@ -2627,7 +2627,7 @@ export class OnlineSession {
     } else if (m.t === 'holdem') {
       // CARDS5: THE RELAY'S CARD TABLE - the room's events and the table as it stands, my own hole cards, or my turn;
       // checked by the table's own law, from the room the player stands in only
-      if (!primary || !validHoldemOut(m)) return;
+      if (!validHoldemOut(m) || (!primary && m.cashout === undefined)) return;   // CARDS6: a cash-out from the room just left too - it is gold
       this._deliver('holdem', () => this.onHoldem?.({ ...m, at: now }));
     } else if (m.t === 'roll') {
       // DICE1: A ROLL THE RELAY MADE - checked by the dice's own law (n dice, each 1..m, the total their sum plus k):

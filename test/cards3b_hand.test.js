@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import {
   heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, HELD_LIFT_MAX, HELD_PANEL_GAP_PX, FACE_THE_EYE, HELD_AT, HELD_LEAN_DEG, PEEK_LEAN_DEG, HELD_GAP, PEEK_GAP, STACK_GRAB_M,
 } from '../src/world/cardHand.js';
-import { riffleAt, RIFFLE_S, RIFFLE_HALF, RIFFLE_PART, CARD_T } from '../src/world/cardMotion.js';
+import { riffleAt, RIFFLE_S, RIFFLE_HALF, RIFFLE_PART, CARD_T, GATHER_S, DECK_PLATES } from '../src/world/cardMotion.js';
 import { tablePlaces, CardScene } from '../src/world/cardScene.js';
 import { tableFrame, cardTableSeats } from '../src/world/cardTables.js';
 import { lookAt, trs } from '../src/world/mat4.js';
@@ -127,14 +127,14 @@ test('CARDS3b the scene riffles before it deals, says whose each card is and whe
   assert.ok(Math.min(...scene.cards.map((c) => c.motions[0].t0)) >= 1 + RIFFLE_S, 'the first throw after the riffle');
   assert.equal(scene.poses(1.2, null).cards.filter((c) => !c.id).length, RIFFLE_HALF * 2, 'the riffle on the cloth meanwhile');
   assert.ok(places.seats.every((p) => p.deck && p.deck[1] === 0.8), 'a deck place before each seat, on the cloth');
-  const late = scene.poses(9, null).cards.filter((c) => c.id);
+  const late = scene.poses(9, null).cards.filter((c) => c.id && c.seat >= 0);
   assert.equal(late.length, 6);
   assert.ok(late.every((c) => c.settled && Number.isInteger(c.seat)));
   assert.deepEqual(late.filter((c) => c.seat === 0 && Math.cos(c.roll) > 0.5).map((c) => c.card).sort(), [0, 1], 'the player\'s two, his to hold');
   // the first patron's thought waits the riffle and the deal out
   const s = new CardTableSession({ player: { id: 'you', name: 'You', stack: 500 }, patrons: [{ id: 'patron:0', name: 'Ana', temper: 'tight', stack: 500 }, { id: 'patron:1', name: 'Bors', temper: 'tight', stack: 500 }], stakes: { sb: 5, bb: 10 }, rand32: () => 0, now: 0 });
   s.tick(0);
-  assert.ok(s.thinkUntil >= settleMs(6) + Math.round(RIFFLE_S * 1000));
+  assert.ok(s.thinkUntil >= settleMs(6) + Math.round((GATHER_S + RIFFLE_S) * 1000), 'the gathering, the riffle and the deal');
   // the draw takes a held card's own matrix
   const drawn = [];
   const renderer = { createMesh: (m) => ({ m }), uploadTexture: () => {}, drawMesh: (mesh, matrix) => drawn.push(matrix), destroyMesh: () => {}, releaseTexture: () => {} };
@@ -197,4 +197,33 @@ test('AUDIT CARDS-3 C3: a card picked up or let go blends - the place along the 
     last = m;
   }
   assert.ok(HELD_EASE_S > 0.1 && HELD_EASE_S < 0.5);
+});
+
+test('CARDS-TIDY the deck is one thing on the cloth: the last hand gathered to it, riffled, lying squared while it is dealt and thinning card by card', () => {
+  const table = { aabb: { min: [10, 0, 20], max: [12, 0.8, 21] } };
+  const seats = cardTableSeats(table, () => true);
+  const places = tablePlaces(tableFrame(table), seats, [0, 1, 2]);
+  const scene = new CardScene({ places, playerSeat: 0, tableSeed: 1 });
+  const pile = (t) => scene.poses(t, null).cards.filter((c) => c.seat === -5);
+  scene.onEvent({ t: 'hand', hand: 1, button: 1, seats: [0, 1, 2], at: 1000 }, (s, r) => (s === 0 ? r : -1));
+  assert.equal(pile(1 + 0.1).length, 0, 'the riffle holds the deck');
+  const full = pile(1 + RIFFLE_S + 0.001).length;
+  assert.equal(full, DECK_PLATES, 'squared, the whole deck');
+  assert.ok(pile(9).length < full && pile(9).length >= 1, 'thinner once dealt');
+  const deck = places.seats[1].deck;
+  assert.ok(pile(9).every((c) => Math.hypot(c.pos[0] - deck[0], c.pos[2] - deck[2]) < 1e-9), 'at the dealer\'s deck place');
+  // the next hand: the cloth's cards gathered to the new dealer's deck, never wiped
+  const before = scene.poses(9.9, null).cards.filter((c) => c.seat >= 0).map((c) => c.pos);
+  scene.onEvent({ t: 'hand', hand: 2, button: 2, seats: [0, 1, 2], at: 10000 }, (s, r) => (s === 0 ? r : -1));
+  const gathered = scene.poses(10.0, null).cards.filter((c) => c.seat === -4);
+  assert.equal(scene.poses(10 + GATHER_S * 0.5, null).cards.filter((c) => !c.id).length, 0, 'no riffle while the last hand is gathered');
+  assert.equal(gathered.length, before.length, 'every card of the last hand still on the cloth');
+  const to = places.seats[2].deck;
+  const mid = scene.poses(10 + GATHER_S * 0.99, null).cards.filter((c) => c.seat === -4);
+  assert.ok(mid.every((c) => Math.hypot(c.pos[0] - to[0], c.pos[2] - to[2]) < 0.05), 'swept to the new dealer\'s deck');
+  assert.equal(scene.poses(10 + GATHER_S + 0.01, null).cards.filter((c) => c.seat === -4).length, 0, 'and into it');
+  assert.ok(Math.min(...scene.cards.filter((c) => c.seat >= 0).map((c) => c.motions[0].t0)) >= 10 + GATHER_S + RIFFLE_S, 'riffled after the gathering, dealt after the riffle');
+  // a hand on top of one still gathering: those cards join the deck at once - nothing piles up
+  scene.onEvent({ t: 'hand', hand: 3, button: 0, seats: [0, 1, 2], at: 10100 }, (s, r) => (s === 0 ? r : -1));
+  assert.equal(scene.cards.filter((c) => c.seat === -4).length, 6, 'hand 2\'s six gathered from the dealer\'s hand; hand 1\'s, still on their way, joined the deck');
 });

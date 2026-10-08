@@ -55,7 +55,7 @@ function host({ gold = 5000, online = false, realmAct = null, seats = 4, peers =
     deductGold: court.deductGold, addGold: court.addGold, playerEntity,
     CardTableSession: sess.CardTableSession, seatPatrons: sess.seatPatrons, regularsFor: sess.regularsFor, regularsAfter: sess.regularsAfter,
     CardScene: class { constructor(o) { this.o = o; this.places = o.places; this.playerSeat = o.playerSeat; this.events = []; scenes.push(this); } onEvent(e) { this.events.push(e); } poses() { return { cards: [], chips: [] }; } settledAt() { return 0; } },
-    tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({}), hashSeed: (...x) => x.join(':'),
+    tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({ centre: [0, 0.8, 0], axisYaw: 0, halfLong: 1, halfShort: 0.5 }), hashSeed: (...x) => x.join(':'),
     registerPlayerHurtListener: () => {},
     isOnlinePage: () => online,
     mwViewFirstPerson: () => said.push('<head>'), homeTownOf: (b) => b?.townMapId || 0,

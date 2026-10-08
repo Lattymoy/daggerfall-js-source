@@ -12,7 +12,7 @@
 // through its middle; the burn at the board's head; the muck and the pot either side of the board.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { CARD_W, CARD_L, CARD_T, DEAL_LIFT, DEAL_STAGGER, dealMotion, flipMotion, flipShift, chipDiscs, pushAt, hashSeed, PUSH_S, SCOOP_LIFT, RIFFLE_S, riffleAt } from './cardMotion.js';
+import { CARD_W, CARD_L, CARD_T, DEAL_LIFT, DEAL_STAGGER, dealMotion, flipMotion, flipShift, chipDiscs, pushAt, hashSeed, PUSH_S, SCOOP_LIFT, RIFFLE_S, riffleAt, GATHER_S, gatherMotion, DECK_PLATES, DECK_CARDS } from './cardMotion.js';
 import { SEAT_OUT } from '../player/seatPose.js';
 
 /** MEASURE (CARDS3): the places on the cloth, metres in from a seat's edge of the table. */
@@ -94,6 +94,7 @@ export class CardScene {
     this.lastBets = new Map();   // session seat -> its bet on the street, for the push at the street's end
     this.busyUntil = 0;          // the clock the cloth's last throw or turn ends on - the next street waits for it
     this.riffle = null;          // CARDS3b: the dealer's riffle before the deal - { t0, at, yaw }
+    this.deck = null;            // CARDS-TIDY: the squared deck on the cloth - { at, yaw, from, upTo }
   }
 
   /** The pose a card has at `t` - the motion in force (the last begun). */
@@ -118,7 +119,12 @@ export class CardScene {
   onEvent(e, holeOf) {
     const t = SEC(e.at);
     if (e.t === 'hand') {
-      this.cards = [];
+      // CARDS-TIDY: the last hand is gathered back to the new dealer's deck first (its cards slide there face down and
+      // join it), then he riffles - the cloth is never wiped in one frame
+      const deckAt = this.places.seats[e.button].deck, deckYaw = this.places.seats[e.button].yaw;
+      const left = this.cards.filter((c) => c.seat !== -4);   // cards still on their way from the hand before join the deck now
+      this.cards = left.map((c, i) => ({ ...c, id: `g${e.hand}:${i}`, seat: -4, motions: [...c.motions, gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, DECK_PLATES + i * 0.1), yaw: deckYaw, t0: t })] }));
+      const gather = this.cards.length ? GATHER_S : 0;
       this.pushes = [];
       this.lastBets.clear();
       this.busyUntil = t;
@@ -129,8 +135,9 @@ export class CardScene {
       const n = e.seats.length, btn = e.seats.indexOf(e.button);
       const from = this.places.seats[e.button].deal;
       // CARDS3b: the dealer riffles the deck first; the deal begins when the riffle is done
-      this.riffle = { t0: t, at: this.places.seats[e.button].deck, yaw: this.places.seats[e.button].yaw };
-      const dealAt = t + RIFFLE_S;
+      this.riffle = { t0: t + gather, at: deckAt, yaw: deckYaw };
+      const dealAt = t + gather + RIFFLE_S;
+      this.deck = { at: deckAt, yaw: deckYaw, from: t, upTo: dealAt };   // CARDS-TIDY: the squared deck lies there, but while the riffle holds it
       let order = 0;
       for (let r = 0; r < 2; r++) for (let k = 1; k <= n; k++) {
         const seat = e.seats[(btn + k) % n];
@@ -206,6 +213,14 @@ export class CardScene {
     }
   }
 
+  /** CARDS-TIDY: the deck's plates at `t` - DECK_PLATES for a full deck, fewer as its cards leave the dealer's hand (every
+   *  card of this hand thrown by then), never fewer than one while a card is still to come. */
+  _deckPile(t) {
+    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;
+    const n = Math.max(1, Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS));
+    return Array.from({ length: n }, (_, k) => ({ card: -1, pos: this._rest(this.deck.at, k), yaw: this.deck.yaw, roll: Math.PI, id: `d${this.handNo}:${k}`, seat: -5, settled: true }));
+  }
+
   /** AUDIT CARDS-3 C4: the clock (seconds) the cloth is still until - the last street turned, the hands shown, the pot's
    *  last share home. The next hand waits for it. */
   settledAt() {
@@ -229,11 +244,13 @@ export class CardScene {
   poses(t, view, carried = null) {
     const cards = [];
     for (const c of this.cards) {
+      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue;   // CARDS-TIDY: gathered into the deck
       const p = this._poseOf(c, t);
       if (p.held) continue;   // still in the dealer's hand
       cards.push({ card: c.card, pos: p.pos, yaw: p.yaw, roll: p.roll, id: c.id, seat: c.seat, settled: t >= c.motions[c.motions.length - 1].t1 });   // CARDS3b: whose, and at rest - the player's settled two are his to hold
     }
     if (this.riffle) cards.push(...riffleAt(t, this.riffle.t0, this.riffle.at, this.riffle.yaw));
+    if (this.deck && !(t >= this.riffle?.t0 && t < this.deck.upTo)) cards.push(...this._deckPile(t));   // CARDS-TIDY: the squared deck, thinning as it is dealt
     const chips = [];
     const live = this.pushes.filter((p) => t < p.t0 + PUSH_S);
     // a push is drawn once it begins; a pot share waiting its turn is still in the pot's pile (below)

@@ -13,7 +13,7 @@ import {
   HOLDEM_CLOCK_MS, HOLDEM_GAP_MS, HOLDEM_FIRST_MS, HOLDEM_CHIPS_BB, HOLDEM_BBS, HOLDEM_TABLES_MAX,
 } from '../src/net/holdemTable.js';
 import { TABLE_STAKES } from '../src/systems/cardTableSession.js';
-import { parseClient, relaySupportsHoldem, HOLDEM_RELAY_MIN, RELAY_VERSION } from '../src/net/wire.js';
+import { parseClient, relaySupportsHoldem, HOLDEM_RELAY_MIN, RELAY_VERSION, HOLDEM_FRAME_MAX } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
 const seeded = (seed = 99) => { let x = seed >>> 0; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; return x >>>= 0; }; };
@@ -131,7 +131,7 @@ test('CARDS5 the words both ways: the client\'s checked by the wire, the relay\'
   assert.deepEqual(validHoldemIn({ op: 'act', table: 2, action: { type: 'raise', to: 40, card: 51 } }), { op: 'act', table: 2, action: { type: 'raise', to: 40 } }, 'nothing but the action rides it');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'holdem', op: 'look', table: 3 }), { hasHello: true }), { t: 'holdem', op: 'look', table: 3 });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'holdem', op: 'look', table: 3 }), { hasHello: false }), { error: 'holdem before hello' });
-  assert.deepEqual(parseClient(JSON.stringify({ t: 'holdem', op: 'look', table: 3, pad: 'x'.repeat(300) }), { hasHello: true }), { error: 'frame too large' });
+  assert.deepEqual(parseClient(JSON.stringify({ t: 'holdem', op: 'look', table: 3, pad: 'x'.repeat(HOLDEM_FRAME_MAX) }), { hasHello: true }), { error: 'frame too large' });
   const t = newTable({ chairs: 2, bb: 2 });
   sit(t, { id: 'a', name: 'A', chair: 0, now: 0 });
   // the relay's frame is `{t, table: index, now, ...message}` - the table's state rides as `state`, never as a second
@@ -199,8 +199,10 @@ test('CARDS5 the relay: two seated in a tavern\'s room and one watching - each t
   for (const ws of [a, b, c]) ws.sent.length = 0;
   await r.raw(a, JSON.stringify({ t: 'holdem', op: 'sit', table: 0, chair: 0, chairs: 4, bb: 10 }));
   await r.raw(b, JSON.stringify({ t: 'holdem', op: 'sit', table: 0, chair: 2, chairs: 4, bb: 10 }));
-  for (const ws of [a, b, c]) assert.equal(holdem(ws).filter((m) => m.state).length, 2, 'every socket in the room sees both sit');
-  assert.equal(holdem(a)[1].state.seats[2].name, 'Bob', 'the name the relay verified');
+  for (const ws of [a, b, c]) assert.equal(holdem(ws).filter((m) => m.state || m.delta).length, 2, 'every socket in the room sees both sit');
+  assert.ok(holdem(a)[0].state && !holdem(a)[1].state, 'CARDS-TIDY: the table whole first, then its changes');
+  assert.deepEqual(Object.keys(holdem(a)[1].delta), ['seats'], 'a sit changes the seats alone');
+  assert.equal(holdem(a)[1].delta.seats[2].name, 'Bob', 'the name the relay verified');
   assert.ok(Number.isFinite(r.alarm.at), 'the first deal on the alarm');
   // a word to a taken chair is refused to its sender alone
   await r.raw(c, JSON.stringify({ t: 'holdem', op: 'sit', table: 0, chair: 2, chairs: 4, bb: 10 }));
@@ -212,8 +214,9 @@ test('CARDS5 the relay: two seated in a tavern\'s room and one watching - each t
   assert.equal(holeA.length, 1); assert.equal(holeB.length, 1);
   assert.equal(holeC.length, 0, 'the spectator is told no hand');
   assert.notDeepEqual(holeA[0].hole.cards, holeB[0].hole.cards);
-  const pub = holdem(c).find((m) => m.state);
-  assert.ok(pub.state.hand && pub.state.hand.seats.every((s) => s.hole === null), 'the watcher sees the public hand');
+  const pub = holdem(c).find((m) => m.state || m.delta?.hand);
+  const ph = (pub.state ?? pub.delta).hand;
+  assert.ok(ph && ph.seats.every((s) => s.hole === null), 'the watcher sees the public hand');
   for (const card of holeA[0].hole.cards) assert.ok(!JSON.stringify(holdem(b)).includes(`"cards":[${card},`) || holeB[0].hole.cards.includes(card), 'Bob never sees Ann\'s cards');
   assert.ok(holdem(a).concat(holdem(b)).some((m) => m.turn), 'the seat to act is told');
   assert.equal(r.alarm.at, Date.now() + HOLDEM_CLOCK_MS, 'the seat clock on the alarm');

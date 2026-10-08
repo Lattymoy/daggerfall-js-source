@@ -24,18 +24,20 @@ export const PANEL_CARD_H = 45;
 
 /**
  * The panel's model.
- * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean}|null}} p
+ * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean, gold?: boolean}|null, gold?: boolean, staking?: boolean}} p
  */
-export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null }) {
+export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null, gold = false, staking = false }) {
   const unit = friendly ? 'chips' : 'gold';
   const title = `Card table - ${stakes.sb}/${stakes.bb} ${unit}`;
-  const note = online ? 'A friendly game with the room: the relay deals, and no gold changes hands.' : friendly ? 'A friendly game: online, no gold changes hands at a patrons\' table.' : null;
+  // CARDS6: online, a realm character's table plays for gold - the realm holds the stake, the relay deals
+  const note = gold ? 'A gold table: the realm holds your stake, the relay deals, and what you stand up with comes home.'
+    : online ? 'A friendly game with the room: the relay deals, and no gold changes hands.' : friendly ? 'A friendly game: online, no gold changes hands at a patrons\' table.' : null;
   if (phase === 'buyin') {
     return {
       phase, title, note,
       buyIn: buyIn ? { min: buyIn.min, max: buyIn.max, value: Math.min(buyIn.max, Math.max(buyIn.min, BUY_IN_START_BB * stakes.bb)) } : null,
-      message: buyIn ? `Buy in for ${buyIn.min}-${buyIn.max} ${unit}.` : `You need ${BUY_IN_MIN_BB * stakes.bb} ${unit} to sit in at these stakes.`,
-      actions: [{ id: 'deal', label: 'Deal me in', enabled: !!buyIn }, { id: 'stand', label: 'Stand up', enabled: true }],
+      message: staking ? 'The realm is holding your stake...' : buyIn ? `Buy in for ${buyIn.min}-${buyIn.max} ${unit}.` : `You need ${BUY_IN_MIN_BB * stakes.bb} ${unit} to sit in at these stakes.`,
+      actions: [{ id: 'deal', label: 'Deal me in', enabled: !!buyIn && !staking }, { id: 'stand', label: 'Stand up', enabled: true }],   // CARDS6: one stake at a time
     };
   }
   const hand = view?.hand ?? null;
@@ -116,7 +118,7 @@ export function showdownLine(sd, names, you = -1) {
 }
 
 /** CARDS5: the relay's refusals as the panel says them. */
-export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.' });
+export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.', 'gold table': 'That table plays for gold - a realm character\'s stake sits at it.', 'friendly table': 'That table plays for chips.', 'bad stake': 'That stake is outside the table\'s buy-in.', 'stake spent': 'That stake has been spent.', 'stake refused': 'The table will not take that stake.', 'stake elsewhere': 'That stake was for another table - it comes back to you.', 'stakes closed': 'The table cannot take stakes right now.', 'stake too old': 'That stake is too old to give back here.', 'cashed out': 'Your stake there has gone home - buy in again to sit.' });
 
 /** A one-line account of a session event for the panel's log (`names` this.seats' names; `you` the player's index, said in
  *  the second person - AUDIT CARDS-2 L10). */

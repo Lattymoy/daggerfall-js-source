@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  newTable, publicView, sit, stand, actAt, tick, tableLook, validHoldemIn, validHoldemOut, HOLDEM_FIRST_MS, HOLDEM_NAME_MAX,
+  newTable, publicView, sit, stand, actAt, tick, tableLook, validHoldemIn, validHoldemOut, HOLDEM_FIRST_MS, HOLDEM_NAME_MAX, stateDelta, STATE_KEYS,
 } from '../src/net/holdemTable.js';
 import { RemoteCardTable } from '../src/systems/cardRemoteTable.js';
 import { regularLook } from '../src/world/cardRegulars.js';
@@ -198,4 +198,36 @@ test('AUDIT CARDS-3 pins, the fixes\' own small seams: an old refusal cleared by
   const worth = (p) => p.chips.reduce((a, d) => a + d.value, 0);
   assert.equal(worth(scene.poses(1, view)), 1000);
   assert.equal(worth(scene.poses(1, view, { seat: 0, amount: 400 })), 600, 'carrying 400: it is off the stack (the drag draws it under the cursor)');
+});
+
+test('CARDS-TIDY a room frame names only what changed: the delta law, its check, and the client laying it over the table it knows (asking for the whole when it knows none)', () => {
+  const { t } = twoSeats(10, 31);
+  const a = publicView(t);
+  assert.equal(stateDelta(null, a), null, 'no table told yet: the whole goes');
+  assert.deepEqual(stateDelta(a, a), {}, 'nothing changed, nothing said');
+  actAt(t, { id: idToAct(t), action: { type: 'call' }, now: 1 });
+  const b = publicView(t);
+  const d = stateDelta(a, b);
+  assert.ok(Object.keys(d).length > 0 && Object.keys(d).every((k) => STATE_KEYS.includes(k)));
+  assert.ok(!('chairs' in d) && !('bb' in d) && !('seats' in d), 'the table\'s fixed parts, and the stacks mid-hand, never re-sent');
+  assert.deepEqual({ ...a, ...d }, b, 'laid over the last, it IS the table');
+  assert.ok(JSON.stringify(d).length < JSON.stringify(b).length * 0.8, 'and smaller');
+  // the check: a delta's fields alone, each as the whole would have it
+  assert.equal(validHoldemOut({ table: 0, events: [], delta: d }), true);
+  assert.equal(validHoldemOut({ table: 0, events: [], delta: { nonsense: 1 } }), false);
+  assert.equal(validHoldemOut({ table: 0, events: [], delta: { bb: 7 } }), false);
+  assert.equal(validHoldemOut({ table: 0, events: [], delta: { seats: [{ id: 'x', name: 'X', stack: -5 }] } }), false);
+  assert.equal(validHoldemOut({ table: 0, events: [], delta: d, state: b }), false, 'one or the other');
+  // the client: laid over what it knows; with nothing under it, it asks
+  const me = new RemoteCardTable({ myId: 'z' });
+  me.ingest({ t: 'holdem', table: 0, now: 1, events: [], delta: d, at: 1 });
+  assert.equal(me.needLook, true);
+  assert.equal(me.state, null);
+  me.ingest({ t: 'holdem', table: 0, now: 1, events: [], state: a, at: 1 });
+  assert.equal(me.needLook, false);
+  me.ingest({ t: 'holdem', table: 0, now: 2, events: [], delta: d, at: 2 });
+  assert.deepEqual(me.state, b);
+  me.ingest({ t: 'holdem', table: 0, now: 3, events: [], delta: { chairs: 3 }, at: 3 });
+  assert.equal(me.needLook, true, 'a merge that is no table (two seats in three chairs) is asked for whole');
+  assert.deepEqual(me.state, b, 'and never taken');
 });

@@ -19,7 +19,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { newHand, act, foldSeat, legalActions, viewFor, shuffleDeck, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../net/cardLaw.js';
 import { patronDecision, unit, PATRON_TEMPERS } from './cardPatrons.js';
-import { DEAL_STAGGER, THROW_LAND_S, FLIP_S, RIFFLE_S } from '../world/cardMotion.js';
+import { DEAL_STAGGER, THROW_LAND_S, FLIP_S, RIFFLE_S, GATHER_S } from '../world/cardMotion.js';
 
 /** MEASURE (CARDS4): a patron's thought before he acts, and its spread - a table with a rhythm. */
 export const THINK_MS = 900;
@@ -190,7 +190,7 @@ export class CardTableSession {
       button: live.indexOf(this.button), sb: this.stakes.sb, bb: this.stakes.bb, deck: shuffleDeck(this.rand32),
     });
     this._say({ t: 'hand', hand: this.handNo, button: this.button, seats: live.slice() }, now);
-    this._think(now, settleMs(live.length * 2) + Math.round(RIFFLE_S * 1000));   // the first to act waits for the riffle and the deal to land
+    this._think(now, settleMs(live.length * 2) + Math.round((GATHER_S + RIFFLE_S) * 1000));   // the first to act waits for the last hand's gathering, the riffle and the deal to land (CARDS-TIDY)
     this._afterAction(null, now);   // a hand the blinds settled at the deal still turns its streets (AUDIT CARDS-2 L2)
   }
 
