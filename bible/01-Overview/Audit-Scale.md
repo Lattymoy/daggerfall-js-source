@@ -8,7 +8,8 @@ them acct95 and 0091, past SD9b's. Five lenses:
 - **live, in real workerd** (this session's own): `npm run account` 46/46 on the pushed head; both crons fired by
   `wrangler dev --test-scheduled` over a migrated local D1, every job's own metrics point read back (all thirteen 200; a
   stale rate window deleted, a live one kept; a second minute finding nothing due); the deploy's `[triggers]` a
-  top-level table under a plain `wrangler deploy`;
+  top-level table under a plain `wrangler deploy`; and after the merge with main, the probe 46/46 again with every
+  migration through `0091_scale4` applied in order, `0090_sd_kills` before it;
 - **the account service** (lane A), **the client's heartbeat** (lane B), **the load harness and its numbers** (lane C),
   **the tests' honesty and the record** (lane D) - four independent adversarial reviewers, each reading a snapshot of
   the pushed head (`26594ff5`, a detached worktree) so the fixes never moved under a verdict (Home.md, 17l).
@@ -107,6 +108,16 @@ dead beside them.
 
 ## What was measured again
 
-The harness's numbers changed with C1, C2 and C5, and SCALE4c's code with B1-B6: every column was measured again by the
-one corrected harness, each from a worktree of its commit, the final column the audited head. Scale-Arc.md's "What it
-measured" is that table.
+The harness's numbers changed with C1, C2 and C5, and SCALE4c's code with B1-B6. Every column was measured again by the
+one corrected harness, each from a worktree of its commit, the last the audited head (`ffb03972`), and Scale-Arc.md's
+"What it measured" is that table. Main was 243 account requests and 1,149 D1 statements a bot-hour, where the record had
+said 279 and 1,602 - the invented professions' clock (C1) was 421 of them. After all four slices: 210 requests and 805
+statements, -30% (-33% of the play's, with the storm's mints apart), and -19% rows read. Measured like for like,
+SCALE4a is -14.5% statements (-17.2% of the play's), SCALE4b -13.7% on that, and SCALE4c -13.3% requests and -5.0%
+statements on SCALE4b. Lane B's simulator confirms the credit fix (B1, above).
+
+The relay's figures were not re-measured, and the record says why. The boot that measured these columns is slower than
+the one that measured the relay before. Every bot sent the same 2.8 frames a second, but the snapshot's own tree and
+harness, run the same hour as a control over three threads, heard 109 frames a second at a pose p50 of 4.8 s, and the
+audited head 88 at 6.4 s, against 132 at 19 ms on the earlier boot. Those ages are the fleets' own queues. No relay code
+changed in these slices, so the relay's figures stand as the earlier boot measured them.

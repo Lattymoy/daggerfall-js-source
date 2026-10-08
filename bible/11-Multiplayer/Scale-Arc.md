@@ -210,9 +210,10 @@ object's own door (`_adopt`), as `fetch` does.
 
 Mac, 2026-10-08, asked "How can we continue to improve server performance and overall game performance", and then, of
 the list it was answered with, "Do 1 2 and 3": the account service's two reads made one (SCALE4a), SCALE4 (here 4b and
-4c), and SCALE3. The service is **acct95** with migration **0091** (acct94 and 0090 until the merge with main, where SD9b had taken
-both); it deploys with the site, which waits for it. No
-relay change.
+4c), and SCALE3. The service is **acct95** with migration **0091** (acct94 and 0090 until the merge with main, where
+SD9b had taken both); it deploys with the site, which waits for it. No relay change. All four were audited before the
+merge (AUDIT SCALE, `01-Overview/Audit-Scale.md`); what it found is written into each section below, and every account
+figure here was measured again after it. The relay's could not be, on the boot that did (below).
 
 ### SCALE3: the load harness (the local half)
 
@@ -227,7 +228,12 @@ REAL account service, both in local workerd (`wrangler dev`; the service behind 
 - poses through `sendPose`, and chat;
 - every account call the client makes on its own clocks, at the client's own constants, each clock at a random phase.
   Where the tree has the heartbeat (SCALE4c), the bot keeps the beat, the box and the board through it, with the
-  client's own `MailBox`, notice book and play clock.
+  client's own `MailBox`, notice book and play clock;
+- the professions' state as the client's book reads it: on arrival, and again at the UTC day's turn. A guest's refusal
+  is asked again every `PROF_CLOSED_RECHECK_MS`. (AUDIT SCALE C1: the harness had asked it every 30 s of a gatherer's -
+  the client's floor for a read that FAILED - thirty times the client, a quarter of main's statements.)
+- Each role - walking, fighting, registered - is its own spread over the fleet, and the report states the mix it
+  measured.
 
 **What it measures:**
 - the account service by route: requests a bot-hour, statuses, latency, and D1 statements a request (the service's own
@@ -239,19 +245,26 @@ REAL account service, both in local workerd (`wrangler dev`; the service behind 
 
 **How it runs:**
 - The service's own clock is fired as the deploy fires it: the hour's jobs as play begins, the minute's every minute.
+  A six-minute run fires the hour's list once. Its statements count with the rest; they are the world's, a fixed cost,
+  not a player's.
+- A storm's seconds are counted by each call's, statement's and refusal's own moment, and its shares back from the
+  welcomes themselves.
 - `--threads` spreads the fleet over worker threads, so the bots' own event loop is not what is measured.
 - It refuses every address but its own two.
 - A run serves its tree live (`wrangler dev` rebuilds on every source change), so each column below ran from a
   `git worktree` of its commit.
 
 **What it is not.** Local workerd is not Cloudflare: D1 is one SQLite file with no queue and no network, and the fleet
-shares four cores with both Workers. Latency here is relative. Counts are not: statements a request, rows a statement,
-requests a bot-hour and frames a bot-second are the code's own. **The staging pair** (the same harness pointed at
-deployed Workers) is not built: it needs a second deploy of both Workers and a database on Mac's account.
+shares four cores with both Workers. Latency here is relative. The counts are the code's own: statements a request,
+requests a bot-hour and frames a bot-second. Rows a statement are only partly so, since they also depend on the data the
+run built and on what each isolate kept (the yards, the Motherlodes' pick). **The staging pair** (the same harness
+pointed at deployed Workers) is not built: it needs a second deploy of both Workers and a database on Mac's account.
 
 **Pins.** `test/scale3.test.js` (5) pins the parts that stand without a toolchain; `tools/mutants/scale3.json`: 11
-mutants, 11 dead. The harness itself is not in the suite, for the account probe's reason (`tools/accountProbe.mjs`).
-Two of its findings were fixed because it needed them:
+mutants, 11 dead. AUDIT SCALE pinned the measurement itself (`test/auditscale.test.js` section C: the report's
+arithmetic, the storm's seconds, the clocks, the roles and every counter), and moved scale3's merge pin (C9: the fleets'
+pose reservoirs pooled unweighted read a 75th percentile of a second for 10 ms). The harness itself is not in the suite,
+for the account probe's reason (`tools/accountProbe.mjs`). Two of its findings were fixed because it needed them:
 - `npm run account` died at its migrations step: wrangler reprints its summary after every migration, and at 89 the
   output passed execFile's 1 MiB buffer.
 - Node's WebSocket fires no close after a connect it could not make, where a browser fires 1006. The client's retry
@@ -259,46 +272,58 @@ Two of its findings were fixed because it needed them:
 
 ### What it measured
 
-100 bots, 6 minutes of play in one town cell, the storm at 70%, the same knobs and one thread for every column:
+100 bots, 6 minutes of play in one town cell, the storm at 70%, one thread. Every column was measured again after AUDIT
+SCALE by the one corrected harness, each from a `git worktree` of its commit, the last the audited head (`ffb03972`).
+The fleet: 70 walking, 49 fighting, all 100 registered, each role its own spread. "The play" leaves out the storm's
+token mints, since a storm folded into an hourly rate reads as a deploy every six minutes.
 
-| | main | + SCALE4a | + SCALE4b | + SCALE4c |
+| | main | + SCALE4a | + SCALE4b | + SCALE4c, audited |
 |---|---|---|---|---|
-| Account requests a bot-hour | 279.0 | 278.0 | 277.5 | 246.4 (-11.7%) |
-| D1 statements a bot-hour | 1,601.8 | 1,386.3 (-13.5%) | 1,197.4 (-25.2%) | 1,169.9 (-27.0%) |
-| D1 rows read a bot-hour | 1,852 | 1,834 | 1,463 | 1,396 (-24.6%) |
-| D1 rows written a bot-hour | 181 | 178 | 179 | 175 |
-| Storm: half, nine in ten, every bot back | 7.6, 11.7, 15.8 s | 7.5, 11.6, 14.6 s | 6.9, 12.0, 17.1 s | 7.6, 12.7, 15.8 s |
+| Account requests a bot-hour | 243.3 | 244.4 | 242.1 | 209.8 (-13.8%) |
+| of them the play's | 227.9 | 227.7 | 226.7 | 195.1 (-14.4%) |
+| D1 statements a bot-hour | 1,149.1 | 982.5 (-14.5%) | 847.7 (-26.2%) | 805.4 (-29.9%) |
+| of them the play's | 964.2 | 798.7 (-17.2%) | 678.2 (-29.7%) | 643.6 (-33.2%) |
+| D1 rows read a bot-hour | 1,564 | 1,582 | 1,340 | 1,267 (-19.0%) |
+| D1 rows written a bot-hour | 175 | 175 | 175 | 172 |
+| The storm's `busy` refusals, and its mints | 54, 154 | 67, 167 | 54, 154 | 47, 147 |
 
-The first three columns ran the harness as it stood before its fleets and its 30-second drains; SCALE4b re-measured
-under the harness as committed gives 277.7 requests and 1,186.1 statements a bot-hour, with every route's statements a
-request the same. Run to run, the storm's `busy` refusals vary (50-78 here), and its mints with them: about 2% of the
-statements.
+The percentages are on main. A run's storm varies (47-67 refusals here), and its mints with it: SCALE4a's extra 13 mints
+are 16 statements a bot-hour of its total, none of the play's.
 
 Where main's statements went, a bot-hour:
-- the professions' state, 421 (a gatherer's ask every 30 s, 13 a request);
 - the Notice Board, 420 (every minute in a town, 7 a request);
-- Renown, 214; the token mint, 200 (12 a mint, every one of them the storm's); the realm checkpoint, 120;
-- the Motherlodes 84, the letterbox 60, the seats 42, the play beat 39;
-- the yards cost almost nothing for their 60 requests: the isolate keeps them (YARD-SHED).
+- Renown, 204 (the 49 fighters' reports, 7 a request);
+- the token mint, 185 (12 a mint, every one of them the storm's);
+- the realm checkpoint, 120;
+- the Motherlodes 85, the letterbox 60, the seats 37, the play beat 37;
+- the yards almost nothing for their 60 requests: the isolate keeps them (YARD-SHED).
+
+The professions' state and the towns' layouts are read once, on arrival, before the measured play begins: at one
+arrival an hour, two requests a bot-hour more.
 
 **Findings:**
-- **The audit's estimate held:** about 280 account requests a player-hour (it said 150-300).
-- **Play mints nothing; a storm mints one per bot plus one per busy refusal.** Every run's tokens were the storm's:
-  167, 178, 174 and 178 for 100 bots, exactly 100 plus that run's 67, 78, 74 and 78 `busy` refusals. A cell's hello
-  gate is asked before the token is read, so a refused hello's token was never spent; but the client counts a room it
-  handed a token to as opened (`accountTokenMinter` `opened`) and mints afresh for the retry. **Left:** a siege's and an
-  arena floor's gate is asked *after* the token is spent, so the client cannot tell the two cases from the close
-  (1013) alone. The relay saying so is a relay deploy; the client knowing which rooms do which couples it to the
-  relay's order. It is two mints in five of a storm, one in two threaded.
-- **One thread is not enough for 100 bots in one cell.** The harness's event loop ran at 100% CPU: its bots read 75-78
-  frames a second and a pose's age (p50 33-40 s) was its own queue, while the relay's workerd stood at about 61%.
-  Over three threads (SCALE4c's tree) each bot heard **132 frames a second (28.7 KB)**, 131 of them poses - the fan's
-  32 nearest (`POSE_FAN_MAX`) at the sender's 2.7 a second, and the far listeners' one in four (`POSE_FAR_SHARE`) - and
-  sent 2.8 (340 B). **A pose's age: p50 19 ms, p95 54 ms, p99 78 ms.**
-- **The storm's recovery is the client's own law.** The relay answers again 2.4-2.6 s after it goes down, the wave's
-  first second carries 63-99 mints and 777-1,162 statements, and the stragglers wait out their own backoff: every bot
-  back in 14-17 s. Threaded, the fleet comes back all at once: 114 `busy` refusals, everyone back in 14.3 s. None
-  of the slices below moves it, and none was meant to.
+- **The audit's estimate held:** about 240 account requests a player-hour on main (it said 150-300).
+- **Standing play in one cell mints nothing; a storm mints one per bot plus one per busy refusal.** Every run's tokens
+  were the storm's: 154, 167, 154 and 147 for 100 bots, exactly 100 plus that run's 54, 67, 54 and 47 `busy`
+  refusals. A cell's hello gate is asked before the token is read, so a refused hello's token was never spent; but the
+  client counts a room it handed a token to as opened (`accountTokenMinter` `opened`) and mints afresh for the retry.
+  **Left:** a siege's and an arena floor's gate is asked *after* the token is spent, so the client cannot tell the two
+  cases from the close (1013) alone. The relay saying so is a relay deploy; the client knowing which rooms do which
+  couples it to the relay's order. It is about one mint in three of a storm on one thread, and 88 of 188 threaded.
+- **One thread is not enough for 100 bots in one cell, and on the boot that measured these columns neither were three.**
+  On one thread a pose's age (p50 58-63 s) is the harness's own queue. Over three threads, on the boot that measured
+  SCALE4c's tree before the audit, each bot heard **132 frames a second (28.7 KB)**, 131 of them poses - the fan's 32
+  nearest (`POSE_FAN_MAX`) at the sender's 2.7 a second, and the far listeners' one in four (`POSE_FAR_SHARE`) - and
+  sent 2.8 (340 B). **A pose's age: p50 19 ms, p95 54 ms, p99 78 ms.** The boot that measured these columns is slower.
+  Its bots sent the same 2.8 frames a second, but the snapshot's own tree and harness, run the same hour as a control,
+  heard 109 a second at p50 4.8 s, and the audited head 88 at 6.4 s. Those ages are the fleets' own queues again, and
+  no relay code changed in these slices, so the relay's figures stand as the earlier boot measured them. A pose's age
+  on Cloudflare is the staging pair's to say.
+- **The storm's recovery is the client's own law.** On the audited head over three threads, the relay answered again
+  2.4 s after it went down. The busiest second carried 56 mints and 616 statements, and there were 88 `busy`
+  refusals. Half the fleet was back in 6.6 s, nine in ten in 11.8 s and every bot in 19.9 s, the stragglers waiting out
+  their own backoff (the fleet's queue adds to those times on this boot). None of the slices moves it, and none was
+  meant to.
 
 ### SCALE4a: a session and its player in one read
 
@@ -308,7 +333,8 @@ player by id. The day before YARD-SHED those two were 4.86 and 4.73 million of t
 (`SESSION_COLUMNS`) beside `p.*`, LEFT JOINed so every exit the two reads had is met in the same order - a session idle
 past its year deleted first, an orphan refused, the stale touch unchanged.
 
-**Measured:** one statement off every request that carries a session (all but the yards): -13.5% of the statements.
+**Measured:** one statement off every request that carries a session (all but the yards): -14.5% of the statements,
+-17.2% of the play's (964 to 799 a bot-hour).
 
 **Left, Mac's call:** a session kept in the isolate for a few seconds would take most of the session reads left, but a
 sign-out or a revoked device would then take effect up to that long later on every other isolate.
@@ -332,10 +358,18 @@ could be served by a D1 read replica. And the tables nothing swept grew for ever
   before its kept word ages out (`ARENA_CHAMPION_CLOCK_S`), and the day's Motherlodes. Every one still runs on its read
   too, which finds it done: a read never answers from a world the clock has not caught up with.
 - **Every hour** (`HOUR_JOBS`): the sweeps the reads no longer run, each its module's own law exported beside its table
-  (`sweepBoard`, `sweepGuildNotes`, `sweepHarvests`, `pruneMarketHistory`), and the retention the tables never had - a
-  rate window a day past its start, a session idle past `SESSION_IDLE_S` (the table walked - an index on `last_seen` would cost a written row at every
-  stale touch, AUDIT SCALE A6), and a
-  guild invitation past its week.
+  (`sweepBoard`, `sweepGuildNotes`, `sweepHarvests`, `pruneMarketHistory`, each delete a page), and the retention the
+  tables never had - a rate window a day past its start, a session idle past `SESSION_IDLE_S`, and a guild invitation
+  past its week.
+- **A firing stays under D1's thousand statements an invocation** (AUDIT SCALE A2). Each job has its share of
+  `FIRING_STATEMENTS_MAX` (600), and a settler stops between items once its share is spent. A closer counts what it
+  moved, never what it picked, so a page that changed nothing is not asked again.
+- The auctions' candidates are every auction that could close, the surely closable first (AUDIT SCALE A1: a sale under
+  a seat's Tithe was judged without it, and twenty that could not close held the page). The season's #1 is counted
+  again only after a bout; otherwise its kept word is stamped again (A4).
+- Migration 0091 indexes what the clock asks every minute or hour: the contracts past their days or owed their escrow,
+  and an old auction's bids (A3, A5). It does not index `sessions.last_seen`: that index would cost a written row at
+  every stale touch to spare one hourly walk, and the sweep walks the table (A6).
 - A job never stops another; each writes one metrics point (`cron:<job>`); a service held for maintenance runs nothing.
 - The market's, the Work tab's and every guild's read used to issue their updates (expiry, the commissions, the
   succession) every time. They ask first now, so a read with nothing due writes nothing.
@@ -348,13 +382,15 @@ could be served by a D1 read replica. And the tables nothing swept grew for ever
 - **`world_witness`:** compacted by meaning (the first agreeing witnesses decide a fact), not by age, and the seats'
   audit reads it. Its redesign is its own slice.
 
-**Measured:** -13.6% statements on SCALE4a's and -20% rows read. The board's read went from 6 statements to 4 and the
-professions' state from 12 to 10; the sweeps' scans are gone from the rows read. On a quiet world the clock costs about
-five statements a minute and seventeen an hour, however many play.
+**Measured:** -13.7% statements on SCALE4a's (-15.1% of the play's) and -15.3% rows read. The board's read went from 6
+statements to 4, and the sweeps' scans are gone from the rows read. The clock itself cost 4.4 statements a bot-hour
+here: six minutes' firings and one hour's. On a quiet world it is about five statements a minute and seventeen an hour,
+however many play (pinned, AUDIT SCALE D7).
 
-**Pins.** `test/scale4b.test.js` (6), over the real Worker. `tools/mutants/scale4b.json`: 28 mutants, 28 dead; five
-earlier records re-aimed by content, and the 18 aimed into the changed code all still die. PIN MOVED: AUDIT 30 S3,
-BAG1's AUDIT2 S1 and NOTICE1's expiry now run the hour's firing.
+**Pins.** `test/scale4b.test.js` (6), over the real Worker. `tools/mutants/scale4b.json`: 27 mutants, 27 dead
+(SCALE4b-sessions-unindexed retired by AUDIT SCALE A6); five earlier records re-aimed by content, and the 18 aimed into
+the changed code all still die. PIN MOVED: AUDIT 30 S3, BAG1's AUDIT2 S1 and NOTICE1's expiry now run the hour's
+firing; AUDIT SCALE moved scale4b's arena clock (A4) and its sessions plan (A6).
 
 ### SCALE4c: one heartbeat for a tab's three clocks
 
@@ -368,40 +404,55 @@ That was 92 requests a player-hour in a town. `src/net/heartbeat.js` carries whi
 function, the same refusal word - so each book takes the answer it always took. Every clock keeps its own pace:
 - A part goes when its clock says, and rides a heartbeat that is going anyway when it is due within `RIDE_EARLY_MS`
   (5 s).
-- **The clocks fall into step from any phase.** A slower clock (its `every` no shorter) that would fall due before the
-  next heartbeat rides this one early: the clocks going start again as they go, so the next heartbeat is no sooner than
-  the soonest of their periods, less `RIDE_EARLY_MS`. Entering a town starts the board's minute again, and the box's
-  next look rides the board's heartbeat early rather than going alone every three minutes from then on. A faster clock
-  never rides a slower one's early: it goes again within its own period anyway.
-- The knock waits up to `BEAT_RIDE_MS` (2 minutes) for a ride. That is inside the play clock's grace, so a late beat
-  credits its whole gap. Where nothing will ride (a single-player world) it goes at once.
-- A hidden page sends nothing. A lost answer is asked again, `NOTICE_TRIES` in all, the board's own discipline.
+- **The clocks fall into step from any phase.** A slower clock (its `every` no shorter) rides this heartbeat early when
+  it would fall due before the soonest of the going clocks' periods, less `RIDE_EARLY_MS`. The going clocks start again
+  as they go (each part counts its clock from the send), so it would otherwise go alone between their heartbeats.
+  Entering a town starts the board's minute again, and the box's next look rides the board's heartbeat early rather
+  than going alone every three minutes from then on. A faster clock never rides a slower one's early: it goes again
+  within its own period anyway.
+- **The knock waits for a ride, up to `BEAT_RIDE_MS` (2 minutes), and never past the grace.** The service credits a gap
+  of `PLAY_GRACE_S` or less and nothing for a longer one, so a knock waits only while the last beat this page saw
+  credited leaves room (`BEAT_GRACE_MARGIN_MS` short of the grace). The page's first knock goes at once, since nothing
+  says how long ago the account last beat; so does the one after a dropped knock, and one where nothing will ride (a
+  single-player world). (AUDIT SCALE B1: the wait had spent the grace that covers a missed knock - a 40 s alt-tab over
+  the knock credited 910 s of a sitting's 1,500.)
+- A hidden page sends no part, but a knock made while it was seen goes as it hides, kept alive past the page; the world
+  host ticks the heartbeat at `visibilitychange`, so a tab closed first still sends it.
+- A lost answer is asked again, `NOTICE_TRIES` in all, the board's own discipline. Each try is given up after
+  `ACCOUNT_ACT_WAIT_MS` (AUDIT SCALE B2: one request that hung held all three clocks for the page), and a part whose
+  service half throws is answered that part's `{ error: 'server' }`, the others theirs (A7).
 
 The books join through small parts beside their own doors (`MailBox.heartbeatPart`, the notice book's
-`heartbeatPart`), each saying its period. The world host makes one heartbeat a page; its street frame stamps the town
-underfoot each second and its online lane stamps that it runs, so the board is read and the box looked at exactly where
-and while they were. Of the four hosts, `world.js` alone keeps any of the three. The three routes stand, for the doors
+`heartbeatPart`), each saying its period. The box's look in flight on a heartbeat is the box's look, so the Letters tab
+opened meanwhile takes its answer and asks nothing (AUDIT SCALE B3). The world host makes one heartbeat a page. Its
+street frame stamps the town underfoot once a second by the wall clock, and its online lane stamps that it runs, so the
+board is read and the box looked at exactly where and while they were. Of the four hosts, `world.js` alone keeps any
+of the three: `exterior.js`, `worldModes.js` and `dungeonContext.js` keep none. The three routes stand, for the doors
 that ask them alone.
 
-**Measured:** in a town the three routes' 92 requests a bot-hour became 60 heartbeats (-35%), each carrying the board,
-every third the box and about every fifth the beat (4.5 statements a heartbeat). One session read is saved for each
-request folded in: -11.2% requests on SCALE4b, -2.3% statements. The harness's bots stay in one town, so their clocks
-start in step and stay there; the falling into step is pinned instead: twenty-two requests in fifteen minutes for a
-town entered half a minute into the box's three, seventeen now.
+**Measured:** in a town the three routes' 91.8 requests a bot-hour (303 statements) became 60 heartbeats (270): -35% of
+those requests and -11% of their statements. Each heartbeat carries the board, every third the box and about every sixth
+the beat, 4.5 statements a heartbeat, since one session read is saved for each request folded in. Like for like on
+SCALE4b: -13.3% requests (-13.9% of the play's), -5.0% statements, -5.4% rows read. The harness's bots stay in one town,
+so their clocks start in step and stay there; the falling into step is pinned instead: twenty-two requests in fifteen
+minutes for a town entered half a minute into the box's three, seventeen now.
 
 **Pins.** `test/scale4c.test.js` (8); `tools/mutants/scale4c.json`: 28 mutants, 28 dead. Re-aimed by content, still
-dead: MAIL1's BOX-auth-kept and HOST-never-polled, NOTICE1-19. PIN MOVED: ACC4's play-clock host pin and MAIL1's host
-pin.
+dead: MAIL1's BOX-auth-kept and HOST-never-polled, NOTICE1-19, and eight of scale4c's own after AUDIT SCALE. PIN MOVED:
+ACC4's play-clock host pin and MAIL1's host pin; AUDIT DROPS F's and CHAT1's host pins (the lane's stamp); AUDIT SCALE
+moved scale4c's first knock (B1) and its street stamp (B7), and AUDIT WORLD7/8's hidden-tab pin to world.js's one
+`visibilitychange`, the heartbeat's.
 
 ### Left, each with its reason
 
 - **The session cache** (SCALE4a): Mac's call, above.
-- **Read replicas:** the reads SCALE4b emptied of writes are replica-safe now. Routing them needs D1's Sessions API on
-  every request, and a bookmark the client carries between its requests so a player reads their own writes; turning
-  replication on is a setting on the database. Its own slice.
+- **Read replicas:** SCALE4b's reads write nothing while nothing is due, so most of their calls could be served by a
+  replica. A read that finds something due still writes, and must reach the primary. Routing them needs D1's Sessions
+  API on every request, and a bookmark the client carries between its requests so a player reads their own writes;
+  turning replication on is a setting on the database. Its own slice.
 - **The board's 304:** its read is per reader (a muted author's notes shown to that author, a reporter's reports hidden
   from them, a moderator's view), so a kept or versioned board must still filter per reader. Its 180 statements a
-  bot-hour are the largest share left after the professions' state (324). Its own slice.
+  bot-hour (three in each heartbeat) are the largest single share left, just above Renown's 176. Its own slice.
 - **`world_witness`, the act receipts, guests:** not pruned, for the reasons above.
 - **The busy refusal's second mint:** found by SCALE3, above.
 - **The staging pair:** SCALE3's second half, above.
