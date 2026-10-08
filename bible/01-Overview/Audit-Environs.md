@@ -16,7 +16,7 @@ performance doesnt take a hit"*. Five lenses read the branch at `6e8ea589`, each
 - **the cost** (P): the per-frame cost of each mod on this thread and on the GPU (SwiftShader: relative only).
 
 Where two lenses found one fault the ids are joined (G1 = I1). Each fix carries an `AUDIT ENVIRONS <id>` comment and
-is pinned in `test/audit_environs.test.js` (14), or in the moved pin it names. It is mutated in
+is pinned in `test/audit_environs.test.js` (21), or in the moved pin it names. It is mutated in
 `tools/mutants/audit_environs.json`.
 
 ## Fixed
@@ -82,8 +82,46 @@ the shipped 2 ms budget; the GL in headless Chromium on SwiftShader (relative on
   progressive build is most of it: its rebuild every 20 m sampled all 169,090 points again, 88% of them unchanged.
   The draw pass cost 1.18 ms of main-thread GL (1,867 calls for 50 draws), and the frame left 5-100 MB/s of garbage.
 
+The lens prototyped its savings beside the code and proved each changed nothing. The snow's are ported, with the
+contact ramp's (P7), the track field's whole buckets (P4) and the pace a rider outran (P8, one of the lens's risks)
+beside them - each answering what it answered before:
+
+| ID | Where | Change |
+|---|---|---|
+| P1 | `renderer.js` `drawSnowBegin` / `drawSnowEnd`, `snowfallSurface.js` `draw` | ONE DRAW PASS: the tiers and the blanket's tiles drawn between the two, the state they share set once - a uniform uploaded when the float GL keeps moves (bit for bit), a snow unit bound when its picture moves, a tier's generic channels when its set does, the layer's offset on once - and handed back at the end as a lone draw leaves it. The surface fills one uniforms object a tier in place (the runtime's `localUniforms` / `midUniforms` / `blanketUniforms` / `depthUniforms` write into `snowUniforms()`), not 52 KB of objects a frame. |
+| P2 | `snowfallSurface.js` `sync` | The local window's uploads wait for a frame that draws it (the ring stands over it most of the time): its flags and its rectangle kept, all of it up the frame it stands again. |
+| P3 | `snowfallRuntime.js` `_midBegin` / `_midProcess` / `_midCommit`, `SnowContext.sameGround` | THE RING'S REBUILD COPIES THE LAST ONE'S SAMPLES where its points fall on the same place (a vertex's offset is dyadic, so a whole-cell move lands each on the last build's own number; a texel's place is asked bit for bit) of the same tile (a ground rebuilt is a new one) over the same roads and settlements under the same settings, and samples the new strips. Each copy spends the sample budget a sample does, so a build completes on the mod's own frame; the blanket's channels are built beside the committed ones, as the mesh is (5 MB more). A floating origin's move ends the copying; a settings change ends a build's. |
+| P4 | `snowfall.js` `applyToMask`, `refill`, `stampMaskPoint` | The track field walked over its slots in the Dictionary's order (no generator, no copy of the keys); a bucket, or a cell, whose every disc lies in the preserved rectangle skipped (its first and last cells' reach, as StampMaskPoint reckons it). |
+| P5 | `snowfall.js` `turnX` / `turnY`, `interpolateQuad(out)`; `snowfallRuntime.js` `SnowContext.sample`, `pathTile(out)` | No pair, view or object a sample; the context's global place read once for its three weights. |
+| P6 | `snowfallRuntime.js` `_blanketContext`, `SnowCoverage.fullByTile`, `SnowContext.roadOf` | A blanket tile's context off one table of its archive and its own Basic Roads tile, read once (were 16,384 map lookups and a walk of the roads a texel): 3.85 ms a tile to 0.93. |
+| P7 | `snowfall.js` `snowContactRamp` | The contact ramp's distance in bytes of its own (the alpha's stride a quarter as dense), a bare pixel left as it stands. |
+| P8 | `snowfallRuntime.js` `_cancelForRetarget`, `_processRecenter` | THE PORT'S PACE REFINED: a whole window the player outran goes again at the mod's own pace, its sample counts alone. On a machine that makes fewer samples in the two milliseconds than a ride asks - some 2.5 times slower than the lens's - a rider's window never stood, nor the ring and the blanket, which wait on it. |
+
+**Held.** Three rides on the mod's own sample budgets - a walk, a ride through falling snow, a run through a storm
+over a full track field of 65,536 cells - hashed the exact bytes each draw reads (a GL that keeps every buffer's and
+texture's content), every draw's uniforms, the runtime's committed arrays and the field: the same as the tree before
+on all three. In the suite: P3's ring against a twin that never copies, frame for frame through a rebuilt ground, an
+origin's move, a slope limit changed mid-build and a feather changed; P1's per-draw GL state; P2's GPU bytes; P5-P7
+against the reads as they were.
+
+**Measured** (the same VM, the tree before and after, the shipped 2 ms budget; ms a frame, the snow's CPU):
+
+| Ride | avg | p99 | frames over 8 ms | scavenges / 1000 frames | uploads |
+|---|---|---|---|---|---|
+| walk, 4.4 m/s | 0.74 -> 0.38 | 2.79 -> 2.21 | 3 -> 0 in 3,600 | 46 -> 11 | 6.2 -> 4.4 MB/s |
+| horse, 13 m/s | 2.07 -> 1.09 | 6.06 -> 4.50 | 7 -> 1 in 3,600 | 103 -> 34 | 11.8 -> 9.1 MB/s |
+| run in a storm, a full field | 1.61 -> 0.69 | 13.4 -> 3.7 | 46 -> 0 in 2,400 | 81 -> 19 | 10.3 -> 7.7 MB/s |
+
+What is left a frame is the ring's commit every 20 m (some 4 ms here: the contact ramp of its 321 x 321 statics, its
+history's scroll, the bodies' projection) and its 9 MB upload - the mod's own shape, its ring committed whole.
+
 ## Examined, not changed
 
+- **The lens's other prototypes**: a mask's changes uploaded as 32 x 32 tiles (1.7 MB/s less walking, a call a tile -
+  left with the one rectangle); a normals table for the ground's samples (faster only with the grass off, 400 KB a
+  pixel at stride 1 - left); the ring's mesh streamed to the GPU through its build (6.6 MB out of the commit frame -
+  not prototyped; the mod commits its ring whole); the haze's copy bounded to rows its rays can reach past the ground
+  (an estimate of 20-50% of the copy - not prototyped; the ring's own bound saves nothing).
 - **W2: the particles' turbulence.** The lens read the module's damping (on by default) as dividing its strength by
   its frequency (0.35), which would make the port's leaves about 2.9x too calm. Unity's two documents disagree on
   the damping's direction, and the engine's lattice noise and its normalisation cannot be measured here, so the

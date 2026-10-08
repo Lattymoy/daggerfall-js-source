@@ -7,13 +7,19 @@
 // mask Point). Owned by scenes/snowfallHost.js, disposed with it.
 
 import { SNOW_ATTR } from './snowfallGlsl.js';
-import { MID, BLANKET } from '../systems/snowfallRuntime.js';
+import { MID, BLANKET, snowUniforms } from '../systems/snowfallRuntime.js';
 
 /** The generic values a tier's absent channels read: the local window has no contexts of its own (Excluded), no tier
  *  but the ring has a blanket target. */
 const EXCLUDED = [-1, 0, 0, 0];
 const LOCAL_GENERIC = [[SNOW_ATTR.ctxA, EXCLUDED], [SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EXCLUDED], [SNOW_ATTR.ctxC, EXCLUDED], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]];
 const BLANKET_GENERIC = [[SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EXCLUDED], [SNOW_ATTR.ctxC, EXCLUDED], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]];
+
+/** A draw's five pictures, written into `t` (AUDIT ENVIRONS P1). */
+function textures(t, dynamic, statics, context, far, albedo) {
+  t.dynamic = dynamic; t.static = statics; t.context = context; t.far = far; t.albedo = albedo;
+  return t;
+}
 
 export class SnowfallSurface {
   /** @param {WebGL2RenderingContext} gl @param {any} renderer - render/renderer.js (drawSnow) */
@@ -33,6 +39,9 @@ export class SnowfallSurface {
     this.localUploads = 0;   // UploadDynamicMask's count (snow_status)
     this._og = [0, 0, 0];
     this._box = new Float32Array(6);   // a blanket tile's bounds, local to its origin (the cull's)
+    // AUDIT ENVIRONS P1: each tier's uniforms and pictures, filled in place each draw (no object a draw)
+    this._u = { local: snowUniforms(), mid: snowUniforms(), blanket: snowUniforms() };
+    this._tex = { local: {}, mid: {}, blanket: {} };
   }
 
   /** The mod's albedo (snow_albedo.png, 64 x 64, its seven levels - m_MipCount 7): Point, repeated - the level nearest
@@ -122,10 +131,15 @@ export class SnowfallSurface {
         dynamic: this._texture(L.mres, L.mres, gl.LINEAR, L.dynamic), statics: this._texture(L.sres, L.sres, gl.LINEAR, L.statics), context: this._texture(L.sres, L.sres, gl.LINEAR, L.context) };
       rt.dirty.localMesh = false; rt.dirty.localStatic = false; rt.rects.local.take();
     }
-    if (rt.dirty.localMesh) { rt.dirty.localMesh = false; this._rewrite(this.local.mesh.buffers[0], L.pos); this._rewrite(this.local.mesh.buffers[1], L.nrm); }
-    if (rt.dirty.localStatic) { rt.dirty.localStatic = false; this._upload(this.local.statics, L.sres, L.statics); this._upload(this.local.context, L.sres, L.context); }
-    const lp = rt.rects.local.take();
-    if (lp) { this._upload(this.local.dynamic, L.mres, L.dynamic, lp); this.localUploads++; }
+    // AUDIT ENVIRONS P2: the window's changes go up on a frame that draws it - the ring stands over it most of the time
+    // (it draws only while the ring is not ready round the player). Its flags stay set and its rectangle keeps growing
+    // meanwhile, all of it up the first frame it stands again (`visible` is the frame's own by now).
+    if (L.visible) {
+      if (rt.dirty.localMesh) { rt.dirty.localMesh = false; this._rewrite(this.local.mesh.buffers[0], L.pos); this._rewrite(this.local.mesh.buffers[1], L.nrm); }
+      if (rt.dirty.localStatic) { rt.dirty.localStatic = false; this._upload(this.local.statics, L.sres, L.statics); this._upload(this.local.context, L.sres, L.context); }
+      const lp = rt.rects.local.take();
+      if (lp) { this._upload(this.local.dynamic, L.mres, L.dynamic, lp); this.localUploads++; }
+    }
     // the middle ring
     if (!this.mid) {
       const mesh = this._mesh([[SNOW_ATTR.pos, 3, M.pos], [SNOW_ATTR.normal, 3, M.nrm], [SNOW_ATTR.uv, 2, M.uv], [SNOW_ATTR.ctxA, 4, M.ctxA], [SNOW_ATTR.blanket, 4, M.heights],
@@ -181,30 +195,36 @@ export class SnowfallSurface {
   draw(rt, outside = null) {
     this.drawn = 0;
     if (!this.albedo || !this.local) return false;
-    const R = this.renderer, tiers = rt.visibleTiers(), depth = rt.depthUniforms();
+    const R = this.renderer, tiers = rt.visibleTiers(), U = this._u, T = this._tex;
     const distant = tiers.far;
-    const farTex = distant ? this.far : this.white;
-    if (tiers.local) {
-      R.drawSnow(this.local.mesh, { ...rt.localUniforms(), ...depth }, { dynamic: this.local.dynamic, static: this.local.statics, context: this.local.context, far: this.white, albedo: this.albedo });
-      this.drawn++;
-    }
-    if (tiers.mid && this.mid) {
-      R.drawSnow(this.mid.mesh, { ...rt.midUniforms(), ...depth }, { dynamic: this.mid.history, static: this.mid.statics, context: this.mid.context, far: farTex, albedo: this.albedo });
-      this.drawn++;
-    }
-    if (tiers.blanket) {
-      const rise = outside ? rt.blanketRise() : 0, box = this._box;
-      for (const [o, g] of this.tiles) {
-        if (!o.ready || !rt.blanket.live.has(o.t)) continue;
-        if (outside) {
-          const og = o.t.origin(this._og);
-          box[0] = 0; box[1] = o.minY; box[2] = 0; box[3] = o.t.size; box[4] = o.maxY + rise; box[5] = o.t.size;
-          if (outside(box, og[0], og[1], og[2])) continue;
-        }
-        R.drawSnow(g.mesh, { ...rt.blanketUniforms(o, distant), ...depth }, { dynamic: distant ? this.far : this.white, static: g.statics, context: this.white, far: this.white, albedo: this.albedo });
+    R.drawSnowBegin?.();   // AUDIT ENVIRONS P1: one pass - the state its draws share set once (render/renderer.js)
+    try {
+      if (tiers.local) {
+        textures(T.local, this.local.dynamic, this.local.statics, this.local.context, this.white, this.albedo);
+        R.drawSnow(this.local.mesh, rt.depthUniforms(rt.localUniforms(U.local)), T.local);
         this.drawn++;
       }
-    }
+      if (tiers.mid && this.mid) {
+        textures(T.mid, this.mid.history, this.mid.statics, this.mid.context, distant ? this.far : this.white, this.albedo);
+        R.drawSnow(this.mid.mesh, rt.depthUniforms(rt.midUniforms(U.mid)), T.mid);
+        this.drawn++;
+      }
+      if (tiers.blanket) {
+        const rise = outside ? rt.blanketRise() : 0, box = this._box, u = rt.depthUniforms(U.blanket), t = T.blanket;
+        textures(t, distant ? this.far : this.white, null, this.white, this.white, this.albedo);
+        for (const [o, g] of this.tiles) {
+          if (!o.ready || !rt.blanket.live.has(o.t)) continue;
+          if (outside) {
+            const og = o.t.origin(this._og);
+            box[0] = 0; box[1] = o.minY; box[2] = 0; box[3] = o.t.size; box[4] = o.maxY + rise; box[5] = o.t.size;
+            if (outside(box, og[0], og[1], og[2])) continue;
+          }
+          t.static = g.statics;
+          R.drawSnow(g.mesh, rt.blanketUniforms(o, distant, u), t);
+          this.drawn++;
+        }
+      }
+    } finally { R.drawSnowEnd?.(); }
     return this.drawn > 0;
   }
 

@@ -1276,6 +1276,7 @@ import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
+const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -5781,11 +5782,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * surface offset and its pass's own Offset (SNOW_LAYER: a layer of the sea's one stack, under the film - AUDIT
    * ENVIRONS G2), and culls its back faces as the pass does (no Cull statement: Unity's Back; the grids wind as the
    * ground's - G5). A draw of this file's own (its program, its vertex array and unit 0 through the shadows; its
-   * pictures on units no shadow keeps), so no seam is owed after it.
+   * pictures on units no shadow keeps), so no seam is owed after it. Inside a pass (drawSnowBegin) the state the
+   * pass's draws share is set once and handed back at its end.
    */
   drawSnow(surface, u, tex) {
     this._close2D();   // PERF-2D
-    const gl = this.gl, S = this._ensureTerrainSnow(), L = S.loc;
+    const gl = this.gl, S = this._ensureTerrainSnow(), L = S.loc, P = this._snowPass;
     if (!S.el && this._elLocsOf) S.el = this._elLocsOf(S.program);
     this._use(S.program);
     if (!S.units) {
@@ -5816,29 +5818,90 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._csLoc.snow = S.cs;
     this._uploadCloudShadow('snow');
     if (!this._snowModel) this._snowModel = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);   // one matrix, its translation the tier's
-    const m = this._snowModel;
-    m[12] = u.origin[0]; m[13] = u.origin[1]; m[14] = u.origin[2];
-    gl.uniformMatrix4fv(L.uModel, false, m);
-    gl.uniform4fv(L.uSnowDepths, u.depths); gl.uniform4fv(L.uSnowLimits, u.limits);
-    gl.uniform4fv(L.uSnowDynMap, u.dynMap); gl.uniform4fv(L.uSnowDynTexel, u.dynTexel); gl.uniform4fv(L.uSnowStatMap, u.statMap);
-    gl.uniform4fv(L.uSnowFarMap, u.farMap ?? u.dynMap); gl.uniform4fv(L.uSnowFlags, u.flags); gl.uniform4fv(L.uSnowRadius, u.radius);
-    gl.uniform4fv(L.uSnowInner, u.inner); gl.uniform4fv(L.uSnowOuter, u.outer);
-    gl.uniform1f(L.uSnowBoundaryFade, u.boundaryFade); gl.uniform1f(L.uSnowDarkening, u.darkening);
-    for (const [k, unit] of Object.entries(SNOW_UNITS)) {   // PERF-TEX3: through the selector's shadow, on units no texture shadow keeps
+    const m = this._snowModel, f = Math.fround;
+    if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1])) || !Object.is(m[14], f(u.origin[2]))) {
+      m[12] = u.origin[0]; m[13] = u.origin[1]; m[14] = u.origin[2];
+      gl.uniformMatrix4fv(L.uModel, false, m);
+      if (P) P.model = true;
+    }
+    this._snowU4(L.uSnowDepths, u.depths); this._snowU4(L.uSnowLimits, u.limits);
+    this._snowU4(L.uSnowDynMap, u.dynMap); this._snowU4(L.uSnowDynTexel, u.dynTexel); this._snowU4(L.uSnowStatMap, u.statMap);
+    this._snowU4(L.uSnowFarMap, u.farMap ?? u.dynMap); this._snowU4(L.uSnowFlags, u.flags); this._snowU4(L.uSnowRadius, u.radius);
+    this._snowU4(L.uSnowInner, u.inner); this._snowU4(L.uSnowOuter, u.outer);
+    this._snowU1(L.uSnowBoundaryFade, u.boundaryFade); this._snowU1(L.uSnowDarkening, u.darkening);
+    let bound = false;
+    for (const [k, unit] of SNOW_UNIT_LIST) {   // PERF-TEX3: through the selector's shadow, on units no texture shadow keeps
+      if (P && P.tex[unit] === tex[k]) continue;   // AUDIT ENVIRONS P1: a pass's unit holding its picture already
       this._activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, tex[k]);
+      if (P) P.tex[unit] = tex[k];
+      bound = true;
     }
-    this._activeTexture(gl.TEXTURE0);
-    // the tiers' missing channels read as their generic values (the local window's own context is Excluded)
-    for (const [loc, v] of surface.generic ?? []) gl.vertexAttrib4f(loc, v[0], v[1], v[2], v[3]);
+    if (bound) this._activeTexture(gl.TEXTURE0);
+    // the tiers' missing channels read as their generic values (the local window's own context is Excluded) - a pass
+    // sets a tier's set once, the last set's handed back first
+    const generic = surface.generic ?? null;
+    if (!P || generic !== P.generic) {
+      if (P) for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+      for (const [loc, v] of generic ?? []) gl.vertexAttrib4f(loc, v[0], v[1], v[2], v[3]);
+      if (P) P.generic = generic;
+    }
     this._bindVao(surface.vao);
-    gl.enable(gl.POLYGON_OFFSET_FILL);
-    gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);   // AUDIT ENVIRONS G2: the snow's layer in the sea's stack (render/snowfallGlsl.js SNOW_LAYER) - over the ground, under the film
+    if (!P || !P.offset) {
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);   // AUDIT ENVIRONS G2: the snow's layer in the sea's stack (render/snowfallGlsl.js SNOW_LAYER) - over the ground, under the film
+      if (P) P.offset = true;
+    }
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    if (P) { this.stats.draws++; return; }
     gl.disable(gl.POLYGON_OFFSET_FILL);
     this.stats.draws++;
     this._bindVao(null);
-    for (const [loc] of surface.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+    for (const [loc] of generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+  }
+
+  /**
+   * AUDIT ENVIRONS P1: A SNOW PASS - render/snowfallSurface.js draws its tiers and its blanket's tiles between this and
+   * drawSnowEnd, and the state those draws share is set once: a uniform uploaded when the float GL would keep moves, a
+   * snow unit bound when its picture moves, a tier's generic channels when its set does, the layer's offset on once;
+   * at the end the offset off, the vertex array unbound and the generic channels 0,0,0,1, as a lone draw leaves them.
+   * Every draw sees the state a lone draw would make it (a walking frame's 50 draws: 1,867 GL calls, 416 in a pass).
+   */
+  drawSnowBegin() {
+    let P = this._snowPassState;
+    if (!P) P = this._snowPassState = { u: new Map(), tex: [], generic: null, offset: false, model: false };
+    P.u.clear(); P.tex.length = 0; P.generic = null; P.offset = false; P.model = false;
+    this._snowPass = P;
+  }
+  drawSnowEnd() {
+    const P = this._snowPass, gl = this.gl;
+    this._snowPass = null;
+    if (!P?.offset) return;   // nothing drawn
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    this._bindVao(null);
+    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+  }
+  /** uniform4fv in a snow pass: skipped where GL holds these four floats already, bit for bit (AUDIT ENVIRONS P1). */
+  _snowU4(loc, v) {
+    const P = this._snowPass, f = Math.fround;
+    if (P) {
+      let s = P.u.get(loc);
+      if (s && Object.is(s[0], f(v[0])) && Object.is(s[1], f(v[1])) && Object.is(s[2], f(v[2])) && Object.is(s[3], f(v[3]))) return;
+      if (!s) P.u.set(loc, (s = new Float32Array(4)));
+      s[0] = v[0]; s[1] = v[1]; s[2] = v[2]; s[3] = v[3];
+    }
+    this.gl.uniform4fv(loc, v);
+  }
+  /** uniform1f in a snow pass, the same. */
+  _snowU1(loc, v) {
+    const P = this._snowPass;
+    if (P) {
+      let s = P.u.get(loc);
+      if (s && Object.is(s[0], Math.fround(v))) return;
+      if (!s) P.u.set(loc, (s = new Float32Array(1)));
+      s[0] = v;
+    }
+    this.gl.uniform1f(loc, v);
   }
 
   /** FAR-CLIP1: THE TERRAIN'S OTHER PROGRAM IN - the clip variant for a pixel

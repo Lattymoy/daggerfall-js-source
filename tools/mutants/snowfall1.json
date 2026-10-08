@@ -30,8 +30,8 @@
   {
     "name": "SNOWFALL1-turn-one-unrotated",
     "file": "src/systems/snowfall.js",
-    "old": "function turnUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [v, f32(1 - u)];",
-    "new": "function turnUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [u, v];",
+    "old": "function turnX(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return v;",
+    "new": "function turnX(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return u;",
     "tests": [
       "test/snowfall1_model.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SNOWFALL1-path-turn-one-unrotated",
     "file": "src/systems/snowfall.js",
-    "old": "function pathUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [v, f32(1 - u)];",
-    "new": "function pathUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [u, v];",
+    "old": "  const x = turnX(tile, u, v), y = turnY(tile, u, v);   // PathUV\n  switch (tile >> 2) {",
+    "new": "  const x = (tile & 3) === 1 ? u : turnX(tile, u, v), y = (tile & 3) === 1 ? v : turnY(tile, u, v);   // PathUV\n  switch (tile >> 2) {",
     "tests": [
       "test/snowfall1_model.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "SNOWFALL1-ramp-diagonal-dropped",
     "file": "src/systems/snowfall.js",
-    "old": "        if (x > 0) a = Math.min(a, pixels[(i - width - 1) * 4 + 3] + 1);",
+    "old": "        if (x > 0) a = Math.min(a, d[i - width - 1] + 1);",
     "new": "",
     "tests": [
       "test/snowfall1_model.test.js"
@@ -293,7 +293,7 @@
   {
     "name": "SNOWFALL1-draw-generic-left-set",
     "file": "src/render/renderer.js",
-    "old": "    for (const [loc] of surface.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
+    "old": "    for (const [loc] of generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
     "new": "",
     "tests": [
       "test/snowfall1_runtime.test.js"
@@ -356,8 +356,8 @@
   {
     "name": "SNOWFALL1-draw-offset-left-on",
     "file": "src/render/renderer.js",
-    "old": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this.stats.draws++;",
-    "new": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);\n    this.stats.draws++;",
+    "old": "    if (P) { this.stats.draws++; return; }\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this.stats.draws++;",
+    "new": "    if (P) { this.stats.draws++; return; }\n    this.stats.draws++;",
     "tests": [
       "test/snowfall1_runtime.test.js"
     ]

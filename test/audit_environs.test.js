@@ -6,8 +6,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SnowCoverage, SNOWFALL_BUILT_IN, SNOWFALL_VENDOR } from '../src/systems/snowfall.js';
-import { SnowfallRuntime, SnowContext, BLANKET } from '../src/systems/snowfallRuntime.js';
+import { SnowCoverage, SNOWFALL_BUILT_IN, SNOWFALL_VENDOR, SNOW_EXCLUDED, contextOf, pathEdgeDistance, rectWeight, snowContactRamp } from '../src/systems/snowfall.js';
+import { SnowfallRuntime, SnowContext, BLANKET, MID } from '../src/systems/snowfallRuntime.js';
+import { SNOW_ATTR } from '../src/render/snowfallGlsl.js';
 import { createSnowfallHost, snowPixelBox, newSnowfallSaveData } from '../src/scenes/snowfallHost.js';
 import { SnowfallSurface } from '../src/render/snowfallSurface.js';
 import { restoreModSaveRecords } from '../src/systems/modSaveData.js';
@@ -391,4 +392,318 @@ test('AUDIT ENVIRONS W5: the console\'s sixty leaves rise where TriggerLeafTest 
   x /= 60; y /= 60;
   assert.ok(Math.abs(x + 8) < 4 && Math.abs(y - 4) < 1.5, `the burst about (-8, 4): (${x.toFixed(2)}, ${y.toFixed(2)})`);
   assert.equal(fx.flows.leaves.emitAt, null, 'spent');
+});
+
+// ---- THE COST (P): what the snow was made cheaper by, each answering what it answered before ----------------------------
+
+/** A world the ring's samples differ across: steep waves (slopes to 41 degrees), every record and turn, Basic Roads' tiles
+ *  on every pixel but (500, 250), a town's band along the walk, the scene's origin moved by `shift`; `world.who` names
+ *  the runtime asking (its `height` reads counted), `replace(x, y)` builds a pixel's ground again 3 m higher and its tiles moved a record (a new tile). */
+function richWorld() {
+  const tiles = new Map(), shift = [0, 0], reads = { A: 0, B: 0 };
+  const make = (mx, my, lift = 0) => {
+    const tileMap = new Uint8Array(16384);
+    for (let i = 0; i < 16384; i++) tileMap[i] = (((i * 7 + mx * 13 + my * 5 + lift) % 56) << 2) | (i & 3);
+    const h = (lx, lz) => lift + 25 * Math.sin(lx * 0.035 + mx) + 20 * Math.cos(lz * 0.03 + my * 0.7);
+    const roads = { pathTiles: 9, roadTiles: 9,
+      pathTile: (x, z) => ((x * 7 + z * 3 + mx + lift) % 13 === 0 ? (11 << 2) | ((x + z) & 3) : 0),
+      samplePath: (x, z) => (Math.floor(Math.abs(Math.sin(x * 1.7 + z * 0.9 + lift)) * 300) & 255),
+      sampleBerm: (x, z) => Math.floor(Math.abs(Math.cos(x * 0.9 - z * 1.3)) * 120) };
+    return { mapX: mx, mapY: my, size: SIZE, tileMap, winterArchive: 303, stamp: 1 + lift, roads: mx === 500 && my === 250 ? null : roads,
+      origin: (out) => { out[0] = (mx - 500) * SIZE + shift[0]; out[1] = 0; out[2] = -(my - 250) * SIZE + shift[1]; return out; },
+      height: (lx, lz) => { reads[world.who]++; return h(lx, lz); },
+      normal: (lx, lz, out) => {
+        const dx = 0.875 * Math.cos(lx * 0.035 + mx), dz = -0.6 * Math.sin(lz * 0.03 + my * 0.7), l = Math.hypot(dx, 1, dz);
+        out[0] = -dx / l; out[1] = 1 / l; out[2] = -dz / l; return out;
+      } };
+  };
+  const tileOf = (mx, my) => { const k = `${mx},${my}`; if (!tiles.has(k)) tiles.set(k, make(mx, my)); return tiles.get(k); };
+  const world = {
+    who: 'A', reads, shift, tileOf,
+    replace: (mx, my) => { const old = tileOf(mx, my), t = make(mx, my, 3); tiles.set(`${mx},${my}`, t); return [t, old]; },
+    terrainAt: (x, z) => tileOf(500 + Math.floor((x - shift[0]) / SIZE), 250 - Math.floor((z - shift[1]) / SIZE)),
+    terrainsNear: (r) => { const out = []; for (let d = 0; d <= r; d++) for (let j = -d; j <= d; j++) for (let k = -d; k <= d; k++) if (Math.max(Math.abs(j), Math.abs(k)) === d) out.push(tileOf(500 + k, 250 + j)); return out; },
+    terrainsIn: (minX, minZ, maxX, maxZ) => { const b = snowPixelBox(minX, minZ, maxX, maxZ), out = []; for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) out.push(tileOf(x, y)); return out; },
+    toGlobal: (x, z) => [500 * SIZE + x - shift[0], 249 * SIZE + z - shift[1]],
+    settlements: () => [{ minX: 500 * SIZE, minZ: 249 * SIZE - 20, maxX: 500 * SIZE + 700, maxZ: 249 * SIZE + 15 }],   // a town's band along the walk
+    terrainDistance: 1,
+  };
+  return world;
+}
+const bytesOf = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
+const RING_ARRAYS = ['pos', 'nrm', 'ctxA', 'ctxB', 'ctxC', 'heights', 'bnrm', 'statics', 'context'];
+
+test('AUDIT ENVIRONS P3: the ring\'s rebuild copies the last build\'s samples where its points fall on the same place of the same tile over the same roads and settlements - every ring it commits is, byte for byte and frame for frame, the one a ring that never copies commits, through a ground rebuilt under it, a floating origin\'s move, a slope limit changed mid-build and a feather changed; and it reads the ground a fraction as often (mutants: the tile unasked; the roads and settlements unasked; the source kept across the origin\'s move; the build going on copying under new settings; a copy spending no budget)', () => {
+  const world = richWorld(), cov = coverage();
+  const A = new SnowfallRuntime({ world, coverage: cov, frameBudgetMs: Infinity });
+  const B = new SnowfallRuntime({ world, coverage: cov, frameBudgetMs: Infinity });
+  const begin = B._midBegin;
+  B._midBegin = function (p) { this.mid.source = null; return begin.call(this, p); };   // the twin that never copies
+  const st = { now: 0, sec: 1_000_000, x: 10, z: 10 };
+  let commits = 0, sloped = false, shifted = false;
+  const both = (fn) => { world.who = 'A'; fn(A); world.who = 'B'; fn(B); };
+  for (let i = 0; i < 1300; i++) {
+    st.now += 1 / 60; st.sec += 2; st.x += 0.35;
+    if (i === 260) { const [t, old] = world.replace(500, 250); both((rt) => rt.terrainPromoted(t, st.now, old)); }   // the ground under the ring rebuilt
+    if (!shifted && i >= 520 && !A.mid.building) { shifted = true; world.shift[0] += 20; world.shift[1] -= 10; st.x += 20; st.z -= 10; both((rt) => rt.offsetOrigin([20, 0, -10])); }   // whole cells, the ring idle: the next build's old numbers would land
+    if (!sloped && i > 700 && A.mid.building && A.mid.meshCursor > 20000) { sloped = true; const next = { ...A.settings, maxSnowSlope: Math.fround(35) }; both((rt) => rt.applySettings(next)); }
+    if (i === 1000) { const next = { ...A.settings, settlementBoundaryFeather: 24 }; both((rt) => rt.applySettings(next)); }
+    const f = frameOf(st);
+    both((rt) => rt.frame(f));
+    assert.equal(A.mid.completed, B.mid.completed, `frame ${i}: the rings commit on the same frames`);
+    if (A.mid.completed !== commits) {
+      commits = A.mid.completed;
+      assert.deepEqual(A.mid.center, B.mid.center);
+      for (const k of RING_ARRAYS) assert.ok(bytesOf(A.mid[k]).equals(bytesOf(B.mid[k])), `commit ${commits}: ${k} the same bytes`);
+    }
+  }
+  assert.ok(sloped && shifted && commits >= 12, `rings committed through every event: ${commits}`);
+  assert.ok(world.reads.A < world.reads.B * 0.45, `the ground read a fraction as often: ${world.reads.A} of ${world.reads.B}`);
+  // the slope limit and the rebuilt ground moved what the ring holds (the twins could not agree by sampling nothing new)
+  const C = new SnowfallRuntime({ world, coverage: cov, frameBudgetMs: Infinity });
+  world.who = 'A';
+  C._midBegin([A.mid.center[0], A.mid.center[1]]);
+  while (C.mid.building) C._midProcess([A.mid.center[0], A.mid.center[1]], { now: 0 });
+  assert.ok(!bytesOf(C.mid.statics).equals(bytesOf(A.mid.statics)), 'a ring sampled under the first settings differs - the change reached the samples');
+});
+
+test('AUDIT ENVIRONS P1: a snow pass sets the state its draws share once - each draw sees the GL state a lone draw makes it, and the pass hands back what a lone draw does - a fraction of the calls (mutants: a uniform skipped though it moved; a unit skipped though its picture moved; the generic set kept across tiers; the offset left on; the vertex array left bound)', async () => {
+  const { Renderer } = await import('../src/render/renderer.js');
+  const run = (pass) => {
+    let next = 1, calls = 0;
+    const st = { program: null, unit: 0, tex: new Map(), vao: null, caps: new Set(), offset: null, generic: new Map(), uniforms: new Map() };
+    const draws = [];
+    const enums = new Map();
+    const E = (k) => { if (!enums.has(k)) enums.set(k, 0x9000 + enums.size); return enums.get(k); };
+    const uni = (loc, v) => { let m = st.uniforms.get(st.program); if (!m) st.uniforms.set(st.program, (m = new Map())); m.set(loc.name, Array.from(v, (x) => (Object.is(x, -0) ? '-0' : Math.fround(x))).join()); };   // -0 kept apart: GL keeps its sign
+    const snap = () => JSON.stringify({ program: st.program?.id, unit: st.unit, vao: st.vao?.id ?? null, caps: [...st.caps].sort(), offset: st.offset,
+      generic: [...st.generic].sort((a, b) => a[0] - b[0]), tex: [...st.tex].map(([u, t]) => [u, t?.id ?? null]).sort((a, b) => a[0] - b[0]),
+      uniforms: [...(st.uniforms.get(st.program) ?? [])].sort() });
+    const api = {
+      getProgramParameter: () => true, getShaderParameter: () => true, getUniformLocation: (_p, name) => ({ name }), getAttribLocation: () => 0,
+      getParameter: () => new Float32Array([0, 0, 0, 0]), getExtension: () => null,
+      useProgram: (p) => { st.program = p; }, activeTexture: (u) => { st.unit = u; }, bindTexture: (_t, t) => { st.tex.set(st.unit, t); },
+      bindVertexArray: (v) => { st.vao = v; }, enable: (c) => { st.caps.add(c); }, disable: (c) => { st.caps.delete(c); },
+      polygonOffset: (f, u) => { st.offset = [f, u]; }, vertexAttrib4f: (loc, a, b, c, d) => { st.generic.set(loc, [a, b, c, d]); },
+      drawElements: () => { draws.push(snap()); },
+    };
+    const gl = new Proxy({}, { get: (_, k) => {
+      if (k === 'drawingBufferWidth') return 320;
+      if (k === 'drawingBufferHeight') return 200;
+      if (typeof k !== 'string') return undefined;
+      if (k.toUpperCase() === k) return E(k);
+      if (k.startsWith('create')) return () => ({ id: `${k}${next++}` });
+      if (k.startsWith('uniform')) return (loc, ...a) => { calls++; if (loc) uni(loc, k.startsWith('uniformMatrix') ? a[1] : typeof a[0] === 'number' ? a : a[0]); };
+      const f = api[k];
+      return (...a) => { calls++; return f?.(...a); };
+    } });
+    const r = new Renderer({ getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 });
+    const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    r.beginFrame(I, I, new Float32Array([0, -1, 0]));
+    const EX = [-1, 0, 0, 0];
+    const local = { vao: { id: 'local' }, indexCount: 6, generic: [[SNOW_ATTR.ctxA, EX], [SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EX], [SNOW_ATTR.ctxC, EX], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]] };
+    const mid = { vao: { id: 'mid' }, indexCount: 6 };
+    const BG = [[SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EX], [SNOW_ATTR.ctxC, EX], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]];
+    const tile = (n) => ({ vao: { id: `tile${n}` }, indexCount: 6, generic: BG });
+    const u = (o, flags, dyn) => ({ origin: o, depths: [0.4, 0.2, 0.1, 0.1], limits: [0.05, 0.8, 0.4, 0.1], dynMap: dyn, dynTexel: [1 / 641, 1 / 641, 641, 641], statMap: [o[0], o[2], 1 / 819.2, 0], farMap: null, flags, radius: [1, 0, 0.008, 4], inner: [3, 4, 23.5, 24], outer: [0, 0, 0, 0], boundaryFade: 0, darkening: 0.18 });
+    const pics = new Map(), pic = (id) => { if (!pics.has(id)) pics.set(id, { id }); return pics.get(id); };   // a texture is one object, as the surface's are
+    const T = (d, s, c, f) => ({ dynamic: pic(d), static: pic(s), context: pic(c), far: pic(f), albedo: pic('albedo') });
+    const seq = [
+      [local, { ...u([1, 2, 3], [1, 0, 0, 1], [0, 0, 1, 0]), farMap: null, boundaryFade: 1 }, T('ld', 'ls', 'lc', 'white')],
+      [mid, { ...u([5, 0, 6], [1, 0, 1, 1], [0, 0, 1, 0]), farMap: [7, 8, 0.0015625, 1] }, T('mh', 'ms', 'mc', 'far')],
+      [tile(1), u([0, 0, 0], [0, 1, 0, 1], [7, 8, 0.0015625, 1]), T('far', 't1', 'white', 'white')],
+      [tile(2), u([819.2, 0, 0], [0, 1, 0, 1], [7, 8, 0.0015625, 1]), T('far', 't2', 'white', 'white')],
+      [tile(3), u([819.2, 0, -819.2], [0, 1, 0, 1], [7, 8, 0.0015625, 1]), T('far', 't3', 'white', 'white')],
+      [tile(30), u([819.2, 0, -819.2], [0, 1, 0, 1], [7, 8, 0.0015625, 1]), T('far', 't3', 'white', 'white')],
+      [mid, { ...u([5, 0, 6], [1, 0, 1, 1], [0, 0, 1, 0]), farMap: [7, 8, 0.0015625, 1] }, T('mh', 'ms', 'mc', 'far')],
+      ...Array.from({ length: 24 }, (_, n) => [tile(n + 4), u([819.2 * (n % 5), 0, -819.2 * Math.floor(n / 5)], [0, 1, 0, 1], [7, 8, 0.0015625, 1]), T('far', `t${n + 4}`, 'white', 'white')]),
+    ];
+    calls = 0;
+    if (pass) r.drawSnowBegin();
+    for (const [m, uu, tt] of seq) r.drawSnow(m, uu, tt);
+    if (pass) r.drawSnowEnd();
+    return { draws, calls, after: snap(), stats: r.stats.draws };
+  };
+  const lone = run(false), pass = run(true);
+  assert.equal(pass.draws.length, 31);
+  for (let i = 0; i < 31; i++) assert.equal(pass.draws[i], lone.draws[i], `draw ${i}: the state a lone draw makes`);
+  assert.equal(pass.after, lone.after, 'handed back as a lone draw leaves it: the offset off, the vertex array unbound, the generics 0,0,0,1');
+  assert.equal(pass.stats, lone.stats);
+  assert.ok(pass.calls < lone.calls * 0.35, `a fraction of the calls: ${pass.calls} of ${lone.calls}`);
+  // the surface draws its tiers in one pass, ended even when a draw throws
+  const gl = new Proxy({}, { get: (_, k) => (typeof k === 'string' && k.startsWith('create') ? () => ({ id: Math.random() }) : typeof k === 'string' && k.toUpperCase() === k ? 1 : () => {}) });
+  const log = [];
+  const renderer = { endUiRun() {}, markForeignPass() {}, drawSnowBegin: () => log.push('begin'), drawSnowEnd: () => log.push('end'), drawSnow: () => { log.push('draw'); throw new Error('lost'); } };
+  const surface = new SnowfallSurface(gl, renderer);
+  surface.setAlbedo({ width: 64, height: 64 });
+  const rt = new SnowfallRuntime({ world: syntheticWorld({ ring: 1 }), coverage: coverage(), frameBudgetMs: Infinity });
+  walk(rt, { now: 0, sec: 1_000_000, x: 10, z: 10 }, 600, { step: 0 });
+  surface.sync(rt, 1);
+  assert.throws(() => surface.draw(rt), /lost/);
+  assert.deepEqual(log, ['begin', 'draw', 'end'], 'the pass ended');
+});
+
+test('AUDIT ENVIRONS P2: the local window\'s uploads wait for a frame that draws it - while the ring stands over it nothing of it goes up, and the frame it stands again the GPU holds its mesh and its three masks byte for byte (mutants: the uploads every frame; the flags cleared unuploaded)', () => {
+  let unit = 0;
+  const bound = new Map(), unpack = { UNPACK_ROW_LENGTH: 0, UNPACK_SKIP_PIXELS: 0, UNPACK_SKIP_ROWS: 0 }, writes = { tex: 0, buf: 0 };
+  const api = {
+    createTexture: () => ({ w: 0, h: 0, data: null }), createBuffer: () => ({ data: null }), createVertexArray: () => ({}),
+    activeTexture: (u) => { unit = u; }, bindTexture: (_t, t) => { bound.set(`t${unit}`, t); }, bindBuffer: (target, b) => { bound.set(target, b); },
+    pixelStorei: (p, v) => { if (p in unpack) unpack[p] = v; },
+    texImage2D: (...a) => { const t = bound.get(`t${unit}`); if (a.length < 9) return; t.w = a[3]; t.h = a[4]; t.data = new Uint8Array(t.w * t.h * 4); if (a[8]) t.data.set(a[8]); },
+    texSubImage2D: (_t, _l, x, y, w, h, _f, _ty, px) => {
+      const t = bound.get(`t${unit}`), rl = unpack.UNPACK_ROW_LENGTH || w;
+      for (let r = 0; r < h; r++) { const src = ((unpack.UNPACK_SKIP_ROWS + r) * rl + unpack.UNPACK_SKIP_PIXELS) * 4; t.data.set(px.subarray(src, src + w * 4), ((y + r) * t.w + x) * 4); }
+      writes.tex++;
+    },
+    bufferData: (target, src) => { bound.get(target).data = typeof src === 'number' ? new Uint8Array(src) : bytesOf(src).slice(); },
+    bufferSubData: (target, dst, src) => { bound.get(target).data.set(bytesOf(src), dst); writes.buf++; },
+  };
+  const gl = new Proxy({}, { get: (_, k) => (typeof k === 'string' && /^[A-Z0-9_]+$/.test(k) ? k : api[k] ?? (() => {})) });
+  const surface = new SnowfallSurface(gl, { endUiRun() {}, markForeignPass() {} });
+  const rt = new SnowfallRuntime({ world: syntheticWorld({ ring: 1 }), coverage: coverage(), frameBudgetMs: Infinity });
+  const st = { now: 0, sec: 1_000_000, x: 10, z: 10 };
+  const tick = (n, o = {}) => { for (let i = 0; i < n; i++) { walk(rt, st, 1, { step: 0.12, npcs: (s) => [{ id: 'foe', x: s.x + 2, z: s.z, active: true, grounded: true, radius: 0.45, citizen: false }], ...o }); surface.sync(rt, st.now); } };
+  tick(500);
+  assert.ok(rt.mid.visible && !rt.local.visible, 'the ring stands over the window');
+  const L = surface.local, before = { tex: writes.tex, local: [L.dynamic.data.slice(), L.statics.data.slice(), L.mesh.buffers[0].data.slice()] };
+  const commits = rt.local.center.slice();
+  tick(200);
+  assert.notDeepEqual(rt.local.center, commits, 'the window recentred meanwhile');
+  assert.ok(rt.local.hasDeformation, 'and was walked');
+  assert.ok(bytesOf(L.dynamic.data).equals(bytesOf(before.local[0])) && bytesOf(L.statics.data).equals(bytesOf(before.local[1])) && bytesOf(L.mesh.buffers[0].data).equals(bytesOf(before.local[2])), 'none of it went up while hidden');
+  assert.ok(rt.dirty.localMesh && rt.dirty.localStatic && rt.rects.local.any, 'its changes kept for the frame it stands');
+  rt.applySettings({ ...rt.settings, streamedBlanketPrototype: false });   // no ring: the window stands again
+  tick(1);
+  assert.ok(rt.local.visible, 'the window stands');
+  const loc = rt.local;
+  assert.ok(bytesOf(L.dynamic.data).equals(bytesOf(loc.dynamic)), 'its track mask, byte for byte');
+  assert.ok(bytesOf(L.statics.data).equals(bytesOf(loc.statics)) && bytesOf(L.context.data).equals(bytesOf(loc.context)), 'its static and context masks');
+  assert.ok(bytesOf(L.mesh.buffers[0].data).equals(bytesOf(loc.pos)) && bytesOf(L.mesh.buffers[1].data).equals(bytesOf(loc.nrm)), 'its mesh');
+});
+
+test('AUDIT ENVIRONS P6: a blanket tile\'s context reads its archive\'s table and its own Basic Roads tile once - every texel and vertex what the per-texel reads made (mutants: the table off by a record; the roads of another pixel)', () => {
+  const world = richWorld();
+  world.settlements = () => [{ minX: 500 * SIZE + 1000, minZ: 249 * SIZE + 100, maxX: 500 * SIZE + 1300, maxZ: 249 * SIZE + 400 }];   // on (501, 250)
+  const rt = new SnowfallRuntime({ world, coverage: coverage(), frameBudgetMs: Infinity });
+  const seen = { track: false, full: false, excluded: false, settled: false };
+  for (const [mx, my] of [[501, 250], [501, 249]]) {
+    const t = world.tileOf(mx, my);
+    t.bare = (lx, lz) => lx > 300 && lx < 340;   // a carved channel
+    const o = { t, statics: new Uint8Array(16384 * 4), ctx: new Float32Array(4225 * 4), contextRevision: -1 };
+    rt._blanketContext(o);
+    // the reads as they were, a texel and a vertex at a time
+    const B = rt.blanket, s = rt.settings, og = t.origin([0, 0, 0]);
+    B.context0.prepare(og[0] + t.size * 0.5, og[2] + t.size * 0.5, t.size * 0.5, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
+    const px = new Uint8Array(16384 * 4), ctx = new Float32Array(4225 * 4), tmp = new Uint8Array(4);
+    for (let k = 0; k < 16384; k++) {
+      const full = rt.coverage.isFullySnowCovered(t.winterArchive, t.tileMap[k]);
+      px[k * 4] = full ? 128 : 0; px[k * 4 + 1] = full ? 255 : 0; px[k * 4 + 2] = B.context0.pathTileAt(t.mapX, t.mapY, k % 128, Math.floor(k / 128)); px[k * 4 + 3] = 255;
+    }
+    for (let k = 0; k < 4225; k++) {
+      const u = B.uv[k * 2], v = B.uv[k * 2 + 1], ix = Math.min(Math.trunc(u * 128), 127), iz = Math.min(Math.trunc(v * 128), 127);
+      let covered = rt.coverage.isFullySnowCovered(t.winterArchive, t.tileMap[iz * 128 + ix]);
+      const b = px[(iz * 128 + ix) * 4 + 2];
+      covered = covered || (b !== 0 && pathEdgeDistance(b, Math.fround(Math.fround(u * 128) - ix), Math.fround(Math.fround(v * 128) - iz)) <= 0);
+      if (covered && t.bare(Math.fround(u * t.size), Math.fround(v * t.size))) covered = false;
+      ctx.set(covered ? contextOf(...B.context0.sample(Math.fround(og[0] + Math.fround(u * t.size)), Math.fround(og[2] + Math.fround(v * t.size)), tmp)) : SNOW_EXCLUDED, k * 4);
+    }
+    assert.ok(bytesOf(o.statics).equals(bytesOf(px)), `${mx},${my}: the static mask`);
+    assert.ok(bytesOf(o.ctx).equals(bytesOf(ctx)), `${mx},${my}: the vertices' contexts`);
+    seen.track ||= px.some((v, i) => i % 4 === 2 && v !== 0); seen.full ||= px.some((v, i) => i % 4 === 0 && v === 128);
+    seen.excluded ||= ctx.some((v) => v === -1); seen.settled ||= ctx.some((v, i) => i % 4 === 0 && v > 0);
+  }
+  assert.deepEqual(seen, { track: true, full: true, excluded: true, settled: true }, 'tracks, full tiles, excluded and settled vertices among them');
+});
+
+test('AUDIT ENVIRONS P8: a whole window the player outran goes again at the mod\'s own pace - on a machine that makes a few hundred samples in the port\'s two milliseconds, a rider\'s window stands within a second and a half of the first one\'s cancellation, at no frame more than the mod\'s own samples (mutants: the outrun unmarked; the milliseconds asked through it)', () => {
+  let t = 0;
+  const rt = new SnowfallRuntime({ world: syntheticWorld({ ring: 2 }), coverage: coverage(), clock: () => (t += 1) });   // every reading a millisecond on: some 384 samples a frame
+  const st = { now: 0, sec: 1_000_000, x: 10, z: 10 };
+  let most = 0, cursor = 0, frames = 0;
+  while (!rt.local.meshReady && frames < 400) {
+    walk(rt, st, 1, { step: 13 / 60 });   // a horse
+    frames++;
+    const L = rt.local, done = L.recentering ? L.meshCursor + L.statCursor : 0;
+    if (L.recentering && done > cursor) most = Math.max(most, done - cursor);
+    cursor = done;
+  }
+  assert.ok(rt.staleCancellations >= 1, 'the first whole build was outrun');
+  assert.ok(rt.local.meshReady, `the window stood: ${frames} frames`);
+  assert.ok(frames < 120, `within two seconds of the ride: ${frames}`);
+  assert.ok(most <= 4096, `never more than the mod's own samples a frame: ${most}`);
+  assert.equal(rt.local.outrun, false, 'the mark spent with the build');
+});
+
+test('AUDIT ENVIRONS P5: the context samples a point at its one global place - the settlements\' and the footprints\' weights there (rectWeight), the greatest of the roads\' path and berm weights there, and PathLandCoverage the track under it - the place read once a sample (mutants: the place read for each weight; a footprint by the settlements\' feather; the track\'s place in its tile turned)', () => {
+  const world = richWorld(), toGlobal = world.toGlobal;
+  let reads = 0;
+  world.toGlobal = (x, z) => { reads++; return toGlobal(x, z); };
+  world.footprints = (gx, gz) => [{ minX: gx - 30, minZ: gz - 10, maxX: gx + 5, maxZ: gz + 40 }];
+  const ctx = new SnowContext(world, coverage());
+  const s = { ...SNOWFALL_BUILT_IN, basicRoadsIntegration: true, roadBermsEnabled: true, locationLoaderIntegration: true };
+  ctx.prepare(100, 0, 176, 8, 4, s);
+  assert.ok(ctx.roads.length >= 1 && ctx.settlements.length === 1 && ctx.locations.length === 1);
+  const rnd = seeded(3), f = Math.fround;
+  let tracks = 0;
+  for (let n = 0; n < 600; n++) {
+    const x = -60 + rnd() * 320, z = -60 + rnd() * 120;
+    reads = 0;
+    const got = [...ctx.sample(x, z)];
+    assert.equal(reads, 1, 'the place read once');
+    const [gx, gz] = toGlobal(x, z);
+    let path = 0, berm = 0, cover = 0, found = false;
+    for (const r of ctx.roads) {
+      const tx = f((gx - r.x) / r.tileMetres), tz = f((gz - r.z) / r.tileMetres);
+      if (!found && tx >= 0 && tz >= 0 && tx < 128 && tz < 128) {
+        found = true;
+        const ix = Math.floor(tx), iz = Math.floor(tz), tile = r.data.pathTile(ix, iz);
+        cover = tile !== 0 && pathEdgeDistance(tile, f(tx - ix), f(tz - iz)) <= 0 ? 1 : 0;
+      }
+      if (tx < -1 || tz < -1 || tx > 129 || tz > 129) continue;
+      path = Math.max(path, r.data.samplePath(tx, tz, r.tileMetres, s.pathBoundaryFeather));
+      berm = Math.max(berm, r.data.sampleBerm(tx, tz, r.tileMetres, s.roadBermWidth, r.archive, ctx.coverage));
+    }
+    assert.deepEqual(got, [rectWeight(ctx.settlements, gx, gz, 8), rectWeight(ctx.locations, gx, gz, 4), path, berm], `${x},${z}`);
+    assert.equal(ctx.pathLandCoverage(x, z), cover, `${x},${z}: the track under it`);
+    tracks += cover;
+  }
+  assert.ok(tracks > 0, `tracks among the points: ${tracks}`);
+});
+
+test('AUDIT ENVIRONS P7: SnowContactRamp reckons its distance in bytes of its own - every pixel of every mask what the ramp reckoned in the alpha made, every green level and radius (mutants: bare ground by another threshold; the backward pass skipping what the forward one reckoned)', () => {
+  // the ramp as it was (the C# reference's transcription, its distance in the alpha channel)
+  const f = Math.fround, clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const round = (v) => { const fl = Math.floor(v); return v - fl !== 0.5 ? Math.round(v) : fl % 2 === 0 ? fl : fl + 1; };
+  const was = (pixels, width, height, radius) => {
+    if (!pixels || width < 2 || height < 2 || pixels.length !== width * height * 4 || radius < 1) return;
+    for (let k = 0; k < pixels.length; k += 4) { pixels[k] = pixels[k + 2]; pixels[k + 3] = pixels[k + 1] > 1 ? 255 : 0; }
+    for (let j = 0; j < height; j++) for (let x = 0; x < width; x++) {
+      const i = j * width + x; let a = pixels[i * 4 + 3];
+      if (x > 0) a = Math.min(a, pixels[(i - 1) * 4 + 3] + 1);
+      if (j > 0) { a = Math.min(a, pixels[(i - width) * 4 + 3] + 1); if (x > 0) a = Math.min(a, pixels[(i - width - 1) * 4 + 3] + 1); if (x + 1 < width) a = Math.min(a, pixels[(i - width + 1) * 4 + 3] + 1); }
+      pixels[i * 4 + 3] = Math.min(a, 255);
+    }
+    for (let j = height - 1; j >= 0; j--) for (let x = width - 1; x >= 0; x--) {
+      const i = j * width + x; let a = pixels[i * 4 + 3];
+      if (x + 1 < width) a = Math.min(a, pixels[(i + 1) * 4 + 3] + 1);
+      if (j + 1 < height) { a = Math.min(a, pixels[(i + width) * 4 + 3] + 1); if (x > 0) a = Math.min(a, pixels[(i + width - 1) * 4 + 3] + 1); if (x + 1 < width) a = Math.min(a, pixels[(i + width + 1) * 4 + 3] + 1); }
+      pixels[i * 4 + 3] = Math.min(a, 255);
+    }
+    for (let k = 0; k < pixels.length; k += 4) {
+      const a = pixels[k + 3];
+      if (pixels[k + 1] >= 250 && a <= radius) { const t = radius === 1 ? 0 : clamp01(f(f(a - 1) / f(radius - 1))); pixels[k] = round(f(pixels[k + 2] * t)); pixels[k + 3] = round(f(255 * t)); }
+      else if (pixels[k + 1] > 1) pixels[k + 3] = 255;
+    }
+  };
+  const rnd = seeded(11);
+  for (let n = 0; n < 120; n++) {
+    const w = 2 + Math.floor(rnd() * 60), h = 2 + Math.floor(rnd() * 60), radius = Math.floor(rnd() * 8), bare = rnd() * 0.3;
+    const p = new Uint8Array(w * h * 4);
+    for (let i = 0; i < w * h; i++) p.set([Math.floor(rnd() * 256), rnd() < bare ? [0, 1, 2][Math.floor(rnd() * 3)] : [2, 3, 128, 249, 250, 255, Math.floor(rnd() * 256)][Math.floor(rnd() * 7)], Math.floor(rnd() * 256), Math.floor(rnd() * 256)], i * 4);
+    const q = p.slice();
+    snowContactRamp(p, w, h, radius);
+    was(q, w, h, radius);
+    assert.ok(bytesOf(p).equals(bytesOf(q)), `${w}x${h} radius ${radius}`);
+  }
 });

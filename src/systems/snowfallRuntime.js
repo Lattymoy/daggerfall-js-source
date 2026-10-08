@@ -26,7 +26,7 @@
 import {
   SnowpackState, resolveSnowDepth, encodeStaticSnow, staticSnowMultiplier, snapToGrid, fullSnowMask, rasterizeTrack,
   scrollMask, containsDeformation, snowContactRamp, PersistentTrackField, CorpseImpressions, contextOf, SNOW_EXCLUDED,
-  outsideWeight, rectWeight, pathEdgeDistance, interpolateQuad, snowfallSettings,
+  outsideWeight, rectWeight, pathEdgeDistance, interpolateQuad, snowfallSettings, contextInto,
 } from './snowfall.js';
 import { roundToInt } from './mathf.js';
 import { dateFromClassicMinutes, seasonValue, SEASONS } from './gameDate.js';
@@ -105,6 +105,7 @@ export class SnowContext {
     this.settings = null;
     this.settlementFeather = 0;
     this.locationFeather = 0;
+    this._tile = { tile: 0, u: 0, v: 0 };   // PathLandCoverage's tileUv (AUDIT ENVIRONS P5)
   }
 
   /** Prepare(sceneCenter, radius, feather, loaderFeather, settings). */
@@ -130,44 +131,71 @@ export class SnowContext {
     this.settlements = this.world.settlements(minGX, minGZ, maxGX, maxGZ);
   }
 
-  /** Sample(scenePosition): Color32(settlement, location cap, path, berm). */
+  /** Sample(scenePosition): Color32(settlement, location cap, path, berm) - the point's global place read once for the
+   *  three (AUDIT ENVIRONS P5; SampleSettlement and SampleLocationCap each read it again). */
   sample(x, z, out = new Uint8Array(4), o = 0) {
-    let path = 0, berm = 0;
+    let path = 0, berm = 0, settle = 0, cap = 0;
     const s = this.settings;
-    if (this.roads.length && s) {
-      const [gx, gz] = this.world.toGlobal(x, z);
-      for (const r of this.roads) {
-        const tx = f32((gx - r.x) / r.tileMetres), tz = f32((gz - r.z) / r.tileMetres);
-        if (tx < -1 || tz < -1 || tx > 129 || tz > 129) continue;
-        path = Math.max(path, r.data.samplePath(tx, tz, r.tileMetres, s.pathBoundaryFeather));
-        if (s.roadBermsEnabled && this.coverage) berm = Math.max(berm, r.data.sampleBerm(tx, tz, r.tileMetres, s.roadBermWidth, r.archive, this.coverage));
+    if ((this.roads.length && s) || this.settlements.length || this.locations.length) {
+      const g = this.world.toGlobal(x, z), gx = g[0], gz = g[1];
+      if (this.roads.length && s) {
+        for (const r of this.roads) {
+          const tx = f32((gx - r.x) / r.tileMetres), tz = f32((gz - r.z) / r.tileMetres);
+          if (tx < -1 || tz < -1 || tx > 129 || tz > 129) continue;
+          path = Math.max(path, r.data.samplePath(tx, tz, r.tileMetres, s.pathBoundaryFeather));
+          if (s.roadBermsEnabled && this.coverage) berm = Math.max(berm, r.data.sampleBerm(tx, tz, r.tileMetres, s.roadBermWidth, r.archive, this.coverage));
+        }
       }
+      if (this.settlements.length) settle = rectWeight(this.settlements, gx, gz, this.settlementFeather);
+      if (this.locations.length) cap = rectWeight(this.locations, gx, gz, this.locationFeather);
     }
-    out[o] = this.sampleSettlement(x, z); out[o + 1] = this.sampleLocationCap(x, z); out[o + 2] = path; out[o + 3] = berm;
+    out[o] = settle; out[o + 1] = cap; out[o + 2] = path; out[o + 3] = berm;
     return out;
   }
 
-  /** PathTile(scenePosition, out tileUv): the track tile under a point, and the point's place in it. */
-  pathTile(x, z) {
+  /** PathTile(scenePosition, out tileUv): the track tile under a point, and the point's place in it (into `out`). */
+  pathTile(x, z, out = { tile: 0, u: 0, v: 0 }) {
     if (!this.roads.length) return null;
-    const [gx, gz] = this.world.toGlobal(x, z);
+    const g = this.world.toGlobal(x, z), gx = g[0], gz = g[1];
     for (const r of this.roads) {
       const tx = f32((gx - r.x) / r.tileMetres), tz = f32((gz - r.z) / r.tileMetres);
       if (tx < 0 || tz < 0 || tx >= 128 || tz >= 128) continue;
       const ix = Math.floor(tx), iz = Math.floor(tz);
-      return { tile: r.data.pathTile(ix, iz), u: f32(tx - ix), v: f32(tz - iz) };
+      out.tile = r.data.pathTile(ix, iz); out.u = f32(tx - ix); out.v = f32(tz - iz);
+      return out;
     }
     return null;
   }
   /** PathLandCoverage: 1 on a track's painted ground. */
   pathLandCoverage(x, z) {
-    const p = this.pathTile(x, z);
+    const p = this.pathTile(x, z, this._tile);
     return p && p.tile !== 0 && pathEdgeDistance(p.tile, p.u, p.v) <= 0 ? 1 : 0;
+  }
+  /** The Basic Roads tile of a map pixel among the context's - the first, as PathTile's loop finds it - or null. */
+  roadOf(mapX, mapY) {
+    for (const r of this.roads) if (r.mapX === mapX && r.mapY === mapY) return r;
+    return null;
   }
   /** PathTile(mapX, mapY, tileX, tileZ). */
   pathTileAt(mapX, mapY, tx, tz) {
-    for (const r of this.roads) if (r.mapX === mapX && r.mapY === mapY) return r.data.pathTile(tx, tz);
-    return 0;
+    const r = this.roadOf(mapX, mapY);
+    return r ? r.data.pathTile(tx, tz) : 0;
+  }
+  /** Whether `o` was prepared over the same ground a sample reads: the same Basic Roads tiles at the same places, the
+   *  same settlements' rectangles, under the same settings - and no footprint (Location Loader's are found in a circle
+   *  round the centre, so two centres find different ones). A point either samples answers the same (AUDIT ENVIRONS P3). */
+  sameGround(o) {
+    if (!o || o.settings !== this.settings || o.settlementFeather !== this.settlementFeather || this.locations.length || o.locations.length) return false;
+    if (o.roads.length !== this.roads.length || o.settlements.length !== this.settlements.length) return false;
+    for (let i = 0; i < this.roads.length; i++) {
+      const a = this.roads[i], b = o.roads[i];
+      if (a.data !== b.data || a.x !== b.x || a.z !== b.z || a.tileMetres !== b.tileMetres || a.archive !== b.archive) return false;
+    }
+    for (let i = 0; i < this.settlements.length; i++) {
+      const a = this.settlements[i], b = o.settlements[i];
+      if (a.minX !== b.minX || a.minZ !== b.minZ || a.maxX !== b.maxX || a.maxZ !== b.maxZ) return false;
+    }
+    return true;
   }
   sampleSettlement(x, z) {
     if (!this.settlements.length) return 0;
@@ -185,8 +213,7 @@ export class SnowContext {
 /** TrySampleStaticSnow: the tile's coverage (its mask under its turn; a record off the masks is snow unless it is
  *  record 0), raised to 1 on a track's painted ground, and the depth multiplier the slope leaves - encoded into `out`
  *  at `o`. False where no loaded terrain holds the point. */
-function sampleStaticSnow(world, coverage, context, s, x, z, out, o) {
-  const t = world.terrainAt(x, z);
+function sampleStaticSnow(world, coverage, context, s, x, z, out, o, t = world.terrainAt(x, z)) {
   if (!t || !t.tileMap || t.tileMap.length < 16384) return false;
   const og = t.origin(_o);
   const lx = x - og[0], lz = z - og[2];
@@ -202,6 +229,14 @@ function sampleStaticSnow(world, coverage, context, s, x, z, out, o) {
   return true;
 }
 const _o = v3(), _n = v3();
+/** A tier's uniforms (render/renderer.js drawSnow's `u`), filled in place by the runtime's own (AUDIT ENVIRONS P1). */
+export const snowUniforms = () => ({ origin: [0, 0, 0], depths: [0, 0, 0, 0], limits: [0, 0, 0, 0], dynMap: [0, 0, 0, 0], dynTexel: [0, 0, 0, 0], statMap: [0, 0, 0, 0], farMap: null, flags: [0, 0, 0, 0], radius: [0, 0, 0, 0], inner: [0, 0, 0, 0], outer: [0, 0, 0, 0], boundaryFade: 0, darkening: 0 });
+const put4 = (a, x, y, z, w) => { a[0] = x; a[1] = y; a[2] = z; a[3] = w; return a; };
+/** Three or four bytes or floats from one array's row to another's (AUDIT ENVIRONS P5: no view a texel). */
+const copy3 = (a, i, b, j) => { b[j] = a[i]; b[j + 1] = a[i + 1]; b[j + 2] = a[i + 2]; };
+const copy4 = (a, i, b, j) => { b[j] = a[i]; b[j + 1] = a[i + 1]; b[j + 2] = a[i + 2]; b[j + 3] = a[i + 3]; };
+/** The middle ring's blend under a vertex, BlanketSamples.at's answer for one sample at a time (AUDIT ENVIRONS P5). */
+const _quad = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 };
 
 /** The pixels of a mask a frame changed, for a partial upload (Texture2D.SetPixel before Apply): a rectangle grown by
  *  each pixel written; `full` when the whole mask changed (a scroll, a refill, a projection). */
@@ -307,6 +342,7 @@ export class SnowfallRuntime {
     if (rebuildContext) this.blanket.contextRevision++;
     if (rebuildStatic || reevaluate) this.mid.rebuildPending = true;
     else if (rebuildContext) { this.mid.rebuildPending = true; this.mid.building = false; }
+    this.mid.reuse = null;   // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings (the next one's sameGround refuses a source of the old)
   }
 
   // ---- the local window (DynamicSnowController) ----
@@ -325,7 +361,7 @@ export class SnowfallRuntime {
       hasCenter: false, meshReady: false, staticReady: false,
       heightRebuild: true, staticRebuild: true, resourceRebuild: false,
       requiresFullProjection: true, hasDeformation: false,
-      recentering: false, fullRebuild: false, nextCenter: [0, 0], nextDyn: [0, 0], nextStat: [0, 0],
+      recentering: false, fullRebuild: false, outrun: false, nextCenter: [0, 0], nextDyn: [0, 0], nextStat: [0, 0],
       meshDelta: [0, 0], statDelta: [0, 0], meshCursor: 0, statCursor: 0, nextRetry: 0,
       lastStamp: [0, 0], hasLastStamp: false,
       pending: [],
@@ -517,7 +553,7 @@ export class SnowfallRuntime {
       if (sj >= 0 && sj < res && si >= 0 && si < res) {
         const from = si * res + sj;
         L.nextPos[k * 3] = lx; L.nextPos[k * 3 + 1] = L.pos[from * 3 + 1]; L.nextPos[k * 3 + 2] = lz;
-        L.nextNrm.set(L.nrm.subarray(from * 3, from * 3 + 3), k * 3);
+        L.nextNrm[k * 3] = L.nrm[from * 3]; L.nextNrm[k * 3 + 1] = L.nrm[from * 3 + 1]; L.nextNrm[k * 3 + 2] = L.nrm[from * 3 + 2];   // AUDIT ENVIRONS P5: no view a vertex
         continue;
       }
       const wx = f32(L.nextCenter[0] + lx), wz = f32(L.nextCenter[1] + lz);
@@ -528,7 +564,7 @@ export class SnowfallRuntime {
       const nr = t.normal(wx - og[0], wz - og[2], _n);
       L.nextNrm[k * 3] = nr[0]; L.nextNrm[k * 3 + 1] = nr[1]; L.nextNrm[k * 3 + 2] = nr[2];
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
+      if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;
     }
     if (L.meshCursor < n) return;
     const sres = L.sres, sn = sres * sres;
@@ -537,9 +573,8 @@ export class SnowfallRuntime {
       const i = Math.floor(k / sres), j = k - i * sres;
       const sj = j + L.statDelta[0], si = i + L.statDelta[1];
       if (sj >= 0 && sj < sres && si >= 0 && si < sres) {
-        const from = (si * sres + sj) * 4;
-        L.nextStatics.set(L.statics.subarray(from, from + 4), k * 4);
-        L.nextContext.set(L.context.subarray(from, from + 4), k * 4);
+        copy4(L.statics, (si * sres + sj) * 4, L.nextStatics, k * 4);
+        copy4(L.context, (si * sres + sj) * 4, L.nextContext, k * 4);
         continue;
       }
       const wx = f32(L.nextStat[0] + f32(f32(f32(j / (sres - 1)) - 0.5) * dia));
@@ -547,7 +582,7 @@ export class SnowfallRuntime {
       if (!sampleStaticSnow(this.world, this.coverage, this.context, s, wx, wz, L.nextStatics, k * 4)) { this._cancelForRetry(f); return; }
       this.context.sample(wx, wz, L.nextContext, k * 4);
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
+      if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;
     }
     if (L.statCursor >= sn) this._commitRecenter();
   }
@@ -566,7 +601,7 @@ export class SnowfallRuntime {
     snowContactRamp(L.statics, L.sres, L.sres, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / this.staticTexel)));
     L.meshReady = true; L.staticReady = true;
     L.heightRebuild = false; L.staticRebuild = false;
-    L.fullRebuild = false; L.recentering = false;
+    L.fullRebuild = false; L.recentering = false; L.outrun = false;
     L.nextRetry = 0;
     this.dirty.localMesh = true; this.dirty.localStatic = true;
     this._replayPendingTracks();
@@ -595,7 +630,10 @@ export class SnowfallRuntime {
   }
   _cancelForRetarget(f) {
     const L = this.local;
-    if (L.fullRebuild) { L.heightRebuild = true; L.staticRebuild = true; }
+    // AUDIT ENVIRONS P8: a whole window the player outran goes again at the mod's own pace - its sample budget alone, not
+    // the port's milliseconds - or a machine that makes fewer samples a frame than the ride asks never stands it, and
+    // the ring and the blanket (which wait on it) never build round a rider either
+    if (L.fullRebuild) { L.heightRebuild = true; L.staticRebuild = true; L.outrun = true; }
     this.staleCancellations++;
     L.recentering = false; L.fullRebuild = false;
     L.nextRetry = f.now + RETARGET_DELAY_SECONDS;
@@ -732,6 +770,11 @@ export class SnowfallRuntime {
       pos: new Float32Array(n * 3), nrm: new Float32Array(n * 3),
       nextPos: new Float32Array(n * 3), nextNrm: new Float32Array(n * 3),
       ctxA: new Float32Array(n * 4), ctxB: new Float32Array(n * 4), ctxC: new Float32Array(n * 4), heights: new Float32Array(n * 4), bnrm: new Float32Array(n * 3),
+      // AUDIT ENVIRONS P3: the blanket's channels built beside the committed ones as the mesh is (the build copies the
+      // last one's), and which tile each vertex and texel was sampled on (an index into the build's `tiles`, 0 none)
+      nextCtxA: new Float32Array(n * 4), nextCtxB: new Float32Array(n * 4), nextCtxC: new Float32Array(n * 4), nextHeights: new Float32Array(n * 4), nextBnrm: new Float32Array(n * 3),
+      meshTile: new Uint8Array(n), nextMeshTile: new Uint8Array(n), statTile: new Uint8Array(sn), nextStatTile: new Uint8Array(sn),
+      tiles: [], buildTiles: [], source: null, reuse: null,
       statics: new Uint8Array(sn * 4), nextStatics: new Uint8Array(sn * 4), context: new Uint8Array(sn * 4), nextContext: new Uint8Array(sn * 4),
       history: fullSnowMask(MID.history), scroll: fullSnowMask(MID.history),
       context0: new SnowContext(this.world, this.coverage),
@@ -754,33 +797,62 @@ export class SnowfallRuntime {
     return M.visible;
   }
   _midBegin(player) {
-    const M = this.mid, s = this.settings;
+    const M = this.mid, s = this.settings, last = M.source;
     M.buildCenter = snapToGrid(player[0], player[1], MID.snap, M.lattice[0], M.lattice[1]);
     M.context0.prepare(M.buildCenter[0], M.buildCenter[1], 176, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
     M.meshCursor = 0; M.staticCursor = 0;
     M.blankets = new Map();
+    M.buildTiles = [];
+    // AUDIT ENVIRONS P3: THE LAST BUILD'S SAMPLES, WHERE THIS ONE'S FALL ON THE SAME PLACE. The ring moves by whole
+    // cells (its 10 m snap: 8 vertices, 10 texels), so most of a rebuild is the last one's points again: a point at
+    // the very same place (its float position, bit for bit) on the very same tile (a ground rebuilt is a new one),
+    // over the same roads and settlements, takes the same sample - copied, the new strips sampled. Each copy spends the
+    // sample budget a sample does, so a build completes on the mod's own frame.
+    const dx = M.buildCenter[0] - (last?.center[0] ?? 0), dz = M.buildCenter[1] - (last?.center[1] ?? 0);
+    M.reuse = last && M.context0.sameGround(last.context) && Number.isInteger(dx / 1.25) && Number.isInteger(dz / 1.25) && Number.isInteger(dx) && Number.isInteger(dz)
+      ? { ...last, mesh: [dx / 1.25, dz / 1.25], stat: [dx, dz] } : null;
     M.building = true;
+  }
+  /** A tile's index among the build's (1 on). */
+  _midTile(t) {
+    const list = this.mid.buildTiles;
+    let i = list.indexOf(t);
+    if (i < 0) { i = list.length; list.push(t); }
+    return i + 1;
   }
   _midProcess(player, f) {
     const M = this.mid, s = this.settings, n = MID.mesh * MID.mesh, sn = MID.staticRes * MID.staticRes;
     let budget = Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) > 80 ? MID.catchUp : MID.samples;
-    const dia = 320;
+    const dia = 320, R = M.reuse;
     while (M.meshCursor < n && budget > 0) {
       const k = M.meshCursor++;
-      const i = Math.floor(k / 257);
-      const lx = f32(f32(f32((k - i * 257) / 256) - 0.5) * dia), lz = f32(f32(f32(i / 256) - 0.5) * dia);
+      const i = Math.floor(k / 257), j = k - i * 257;
+      const lx = f32(f32(f32(j / 256) - 0.5) * dia), lz = f32(f32(f32(i / 256) - 0.5) * dia);
       const wx = f32(M.buildCenter[0] + lx), wz = f32(M.buildCenter[1] + lz);
       const t = this.world.terrainAt(wx, wz);
       if (!t) { this._midFail(f); return; }
-      const og = t.origin(_o);
-      const ground = og[1] + t.height(wx - og[0], wz - og[2]);
-      M.nextPos[k * 3] = lx; M.nextPos[k * 3 + 1] = ground; M.nextPos[k * 3 + 2] = lz;
-      const nr = t.normal(wx - og[0], wz - og[2], _n);
-      M.nextNrm[k * 3] = nr[0]; M.nextNrm[k * 3 + 1] = nr[1]; M.nextNrm[k * 3 + 2] = nr[2];
-      const b = this._blanketSamplesFor(t, M.blankets, M.context0).at(f32((wx - og[0]) / t.size), f32((wz - og[2]) / t.size), ground - og[1], nr);
-      M.ctxA.set(b.contextA, k * 4); M.ctxB.set(b.contextB, k * 4); M.ctxC.set(b.contextC, k * 4);
-      M.heights[k * 4] = b.height + og[1]; M.heights[k * 4 + 1] = b.offset; M.heights[k * 4 + 2] = b.blend[0]; M.heights[k * 4 + 3] = b.blend[1];
-      M.bnrm[k * 3] = b.normal[0]; M.bnrm[k * 3 + 1] = b.normal[1]; M.bnrm[k * 3 + 2] = b.normal[2];
+      M.nextMeshTile[k] = this._midTile(t);
+      M.nextPos[k * 3] = lx; M.nextPos[k * 3 + 2] = lz;
+      // a vertex's offset is dyadic ((j / 256 - 0.5) x 320, a whole number of 1.25 m cells), so a move of whole cells
+      // lands each on the last build's very number: the tile is all there is to ask
+      const oj = R ? j + R.mesh[0] : -1, oi = R ? i + R.mesh[1] : -1, from = oi * 257 + oj;
+      if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257 && R.tiles[M.meshTile[from] - 1] === t) {
+        M.nextPos[k * 3 + 1] = M.pos[from * 3 + 1];   // AUDIT ENVIRONS P3: the last build's vertex, here
+        copy3(M.nrm, from * 3, M.nextNrm, k * 3);
+        copy4(M.ctxA, from * 4, M.nextCtxA, k * 4); copy4(M.ctxB, from * 4, M.nextCtxB, k * 4); copy4(M.ctxC, from * 4, M.nextCtxC, k * 4);
+        copy4(M.heights, from * 4, M.nextHeights, k * 4);
+        copy3(M.bnrm, from * 3, M.nextBnrm, k * 3);
+      } else {
+        const og = t.origin(_o);
+        const ground = og[1] + t.height(wx - og[0], wz - og[2]);
+        M.nextPos[k * 3 + 1] = ground;
+        const nr = t.normal(wx - og[0], wz - og[2], _n);
+        M.nextNrm[k * 3] = nr[0]; M.nextNrm[k * 3 + 1] = nr[1]; M.nextNrm[k * 3 + 2] = nr[2];
+        const b = this._blanketSamplesFor(t, M.blankets, M.context0).at(f32((wx - og[0]) / t.size), f32((wz - og[2]) / t.size), ground - og[1], nr, _quad);
+        M.nextCtxA.set(b.contextA, k * 4); M.nextCtxB.set(b.contextB, k * 4); M.nextCtxC.set(b.contextC, k * 4);
+        M.nextHeights[k * 4] = b.height + og[1]; M.nextHeights[k * 4 + 1] = b.offset; M.nextHeights[k * 4 + 2] = b.blend[0]; M.nextHeights[k * 4 + 3] = b.blend[1];
+        M.nextBnrm[k * 3] = b.normal[0]; M.nextBnrm[k * 3 + 1] = b.normal[1]; M.nextBnrm[k * 3 + 2] = b.normal[2];
+      }
       budget--;
       if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
     }
@@ -788,8 +860,18 @@ export class SnowfallRuntime {
       const k = M.staticCursor++;
       const i = Math.floor(k / 321), j = k - i * 321;
       const wx = f32(M.buildCenter[0] + f32(f32(f32(j / 320) - 0.5) * dia)), wz = f32(M.buildCenter[1] + f32(f32(f32(i / 320) - 0.5) * dia));
-      if (!sampleStaticSnow(this.world, this.coverage, M.context0, s, wx, wz, M.nextStatics, k * 4)) { this._midFail(f); return; }
-      M.context0.sample(wx, wz, M.nextContext, k * 4);
+      const t = this.world.terrainAt(wx, wz);
+      M.nextStatTile[k] = t ? this._midTile(t) : 0;
+      // a texel's offset is not (j / 320 rounds): the place itself is asked, bit for bit
+      const oj = R ? j + R.stat[0] : -1, oi = R ? i + R.stat[1] : -1, from = oi * 321 + oj;
+      if (R && t && oj >= 0 && oj < 321 && oi >= 0 && oi < 321 && R.tiles[M.statTile[from] - 1] === t
+        && f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx && f32(R.center[1] + f32(f32(f32(oi / 320) - 0.5) * dia)) === wz) {
+        copy4(M.statics, from * 4, M.nextStatics, k * 4);   // ramped in r and a, which the commit's ramp makes again from b and g
+        copy4(M.context, from * 4, M.nextContext, k * 4);
+      } else {
+        if (!sampleStaticSnow(this.world, this.coverage, M.context0, s, wx, wz, M.nextStatics, k * 4, t)) { this._midFail(f); return; }
+        M.context0.sample(wx, wz, M.nextContext, k * 4);
+      }
       budget--;
       if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
     }
@@ -805,7 +887,13 @@ export class SnowfallRuntime {
     [M.nrm, M.nextNrm] = [M.nextNrm, M.nrm];
     [M.statics, M.nextStatics] = [M.nextStatics, M.statics];
     [M.context, M.nextContext] = [M.nextContext, M.context];
+    [M.ctxA, M.nextCtxA] = [M.nextCtxA, M.ctxA]; [M.ctxB, M.nextCtxB] = [M.nextCtxB, M.ctxB]; [M.ctxC, M.nextCtxC] = [M.nextCtxC, M.ctxC];
+    [M.heights, M.nextHeights] = [M.nextHeights, M.heights]; [M.bnrm, M.nextBnrm] = [M.nextBnrm, M.bnrm];
+    [M.meshTile, M.nextMeshTile] = [M.nextMeshTile, M.meshTile]; [M.statTile, M.nextStatTile] = [M.nextStatTile, M.statTile];
+    M.tiles = M.buildTiles; M.buildTiles = [];
     M.center = [...M.buildCenter];   // a copy (a Vector2 is a value): offsetOrigin shifts each array once
+    M.source = { center: [...M.center], tiles: M.tiles, context: { roads: M.context0.roads, settlements: M.context0.settlements, locations: M.context0.locations, settings: M.context0.settings, settlementFeather: M.context0.settlementFeather } };   // AUDIT ENVIRONS P3: the next build's to copy from
+    M.reuse = null;
     M.baseY = 0;
     let p = [0, -1, 0, -1];
     if (wasReady) {
@@ -975,22 +1063,26 @@ export class SnowfallRuntime {
     const og = t.origin(v3());
     B.context0.prepare(og[0] + t.size * 0.5, og[2] + t.size * 0.5, t.size * 0.5, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
     const px = o.statics;
+    // AUDIT ENVIRONS P6: the archive's table and the tile's own Basic Roads entry read once, not at every texel
+    const full = this.coverage.fullByTile(t.winterArchive), road = B.context0.roadOf(t.mapX, t.mapY), map = t.tileMap;
     for (let k = 0; k < 16384; k++) {
-      const full = this.coverage.isFullySnowCovered(t.winterArchive, t.tileMap[k]);
-      px[k * 4] = full ? 128 : 0; px[k * 4 + 1] = full ? 255 : 0;
-      px[k * 4 + 2] = B.context0.pathTileAt(t.mapX, t.mapY, k % 128, Math.floor(k / 128));
+      const all = full !== null && full[map[k]] === 1;
+      px[k * 4] = all ? 128 : 0; px[k * 4 + 1] = all ? 255 : 0;
+      px[k * 4 + 2] = road ? road.data.pathTile(k % 128, Math.floor(k / 128)) : 0;
       px[k * 4 + 3] = 255;
     }
-    const tmp = new Uint8Array(4);
+    const tmp = new Uint8Array(4), ctx = o.ctx;
     for (let k = 0; k < 4225; k++) {
       const u = this.blanket.uv[k * 2], v = this.blanket.uv[k * 2 + 1];
       const ix = Math.min(Math.trunc(u * 128), 127), iz = Math.min(Math.trunc(v * 128), 127);
-      let covered = this.coverage.isFullySnowCovered(t.winterArchive, t.tileMap[iz * 128 + ix]);
+      let covered = full !== null && full[map[iz * 128 + ix]] === 1;
       const b = px[(iz * 128 + ix) * 4 + 2];
       covered = covered || (b !== 0 && pathEdgeDistance(b, f32(f32(u * 128) - ix), f32(f32(v * 128) - iz)) <= 0);
       if (covered && t.bare?.(f32(u * t.size), f32(v * t.size))) covered = false;
-      const c = covered ? contextOf(...B.context0.sample(f32(og[0] + f32(u * t.size)), f32(og[2] + f32(v * t.size)), tmp)) : SNOW_EXCLUDED;
-      o.ctx.set(c, k * 4);
+      if (covered) {
+        const c = B.context0.sample(f32(og[0] + f32(u * t.size)), f32(og[2] + f32(v * t.size)), tmp);
+        contextInto(c[0], c[1], c[2], c[3], ctx, k * 4);
+      } else copy4(SNOW_EXCLUDED, 0, ctx, k * 4);
     }
     o.contextRevision = B.contextRevision;
     this.dirty.blanket.add(o);
@@ -1058,6 +1150,7 @@ export class SnowfallRuntime {
     for (const seg of M.pending) { seg[0] += ox; seg[1] += oz; seg[2] += ox; seg[3] += oz; }
     for (const t of this.npcTargets.values()) if (t.hasAnchor) { t.last[0] += ox; t.last[1] += oz; }
     if (oy !== 0) { M.building = false; M.rebuildPending = true; }
+    M.source = null; M.reuse = null;   // AUDIT ENVIRONS P3: every place the ring sampled is another number now
   }
   /** HandleTransitionInterior / HandleTransitionExterior / InvalidateSessionPresentation: the world the snow stood on
    *  is gone (a door, a load, a fast travel) - every tier is built again where the player next stands outside. */
@@ -1116,65 +1209,63 @@ export class SnowfallRuntime {
   }
 
   // ---- what the shader is told, each tier ----
+  // Each writes into `u` (snowUniforms(): AUDIT ENVIRONS P1 - the surface keeps one a tier and fills it each draw).
   /** The depths and the limits every tier's material carries (SnowDepthRules.Apply and SetSnowDepth). */
-  depthUniforms() {
+  depthUniforms(u = snowUniforms()) {
     const s = this.settings;
-    return {
-      depths: [this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s.pathMaximumDepth],
-      limits: [s.roadBermsEnabled && s.basicRoadsIntegration ? s.roadBermRise : 0, s.wildernessMaximumDepth, s.settlementMaximumDepth, s.corpseRemainingSnowDepth],
-    };
+    put4(u.depths, this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s.pathMaximumDepth);
+    put4(u.limits, s.roadBermsEnabled && s.basicRoadsIntegration ? s.roadBermRise : 0, s.wildernessMaximumDepth, s.settlementMaximumDepth, s.corpseRemainingSnowDepth);
+    return u;
   }
   /** The local window's material (ApplyMaterialSettings and ApplyMaskMappings). */
-  localUniforms() {
+  localUniforms(u = snowUniforms()) {
     const L = this.local, s = this.settings, R = this.gridRadius, mt = this.maskTexel, st = this.staticTexel;
-    return {
-      origin: [L.center[0], L.baseY, L.center[1]],
-      dynMap: [f32(f32(L.dynCenter[0] - R) - f32(mt * 0.5)), f32(f32(L.dynCenter[1] - R) - f32(mt * 0.5)), f32(1 / f32(mt * L.mres)), 0],
-      dynTexel: [1 / L.mres, 1 / L.mres, L.mres, L.mres],
-      statMap: [f32(f32(L.statCenter[0] - R) - f32(st * 0.5)), f32(f32(L.statCenter[1] - R) - f32(st * 0.5)), f32(1 / f32(st * L.sres)), 0],
-      flags: [1, 0, 0, s.trackImpressionStrength],
-      radius: [R, 0, SNOW_SURFACE_OFFSET, s.textureWorldSize],
-      inner: [0, 0, 0, 0],
-      outer: [this.outerCenter?.[0] ?? 0, this.outerCenter?.[1] ?? 0, Math.max(0, s.snowRadius - 12), s.snowRadius],
-      boundaryFade: s.streamedBlanketPrototype ? 0 : 1,
-      darkening: s.compressionDarkening,
-    };
+    u.origin[0] = L.center[0]; u.origin[1] = L.baseY; u.origin[2] = L.center[1];
+    put4(u.dynMap, f32(f32(L.dynCenter[0] - R) - f32(mt * 0.5)), f32(f32(L.dynCenter[1] - R) - f32(mt * 0.5)), f32(1 / f32(mt * L.mres)), 0);
+    put4(u.dynTexel, 1 / L.mres, 1 / L.mres, L.mres, L.mres);
+    put4(u.statMap, f32(f32(L.statCenter[0] - R) - f32(st * 0.5)), f32(f32(L.statCenter[1] - R) - f32(st * 0.5)), f32(1 / f32(st * L.sres)), 0);
+    u.farMap = null;
+    put4(u.flags, 1, 0, 0, s.trackImpressionStrength);
+    put4(u.radius, R, 0, SNOW_SURFACE_OFFSET, s.textureWorldSize);
+    put4(u.inner, 0, 0, 0, 0);
+    put4(u.outer, this.outerCenter?.[0] ?? 0, this.outerCenter?.[1] ?? 0, Math.max(0, s.snowRadius - 12), s.snowRadius);
+    u.boundaryFade = s.streamedBlanketPrototype ? 0 : 1;
+    u.darkening = s.compressionDarkening;
+    return u;
   }
   /** The middle ring's (its ApplyMaterialSettings, ApplyHandoffSettings and ApplyMaskMapping). */
-  midUniforms() {
+  midUniforms(u = snowUniforms()) {
     const M = this.mid, s = this.settings;
-    const o = [M.center[0] - 160, M.center[1] - 160];
-    return {
-      origin: [M.center[0], M.baseY, M.center[1]],
-      dynMap: [f32(o[0] - 0.25), f32(o[1] - 0.25), f32(1 / (0.5 * 641)), 0],
-      dynTexel: [1 / 641, 1 / 641, 641, 641],
-      statMap: [f32(o[0] - 0.5), f32(o[1] - 0.5), f32(1 / 321), 0],
-      farMap: this.farMapping(),
-      flags: [1, 0, 1, s.trackImpressionStrength],
-      radius: [160, 24, SNOW_SURFACE_OFFSET, s.textureWorldSize],
-      inner: [M.localCenter[0], M.localCenter[1], 0, 0],
-      outer: [M.localCenter[0], M.localCenter[1], MID.clipStart, MID.visible],
-      boundaryFade: 0,
-      darkening: s.compressionDarkening,
-    };
+    const o0 = M.center[0] - 160, o1 = M.center[1] - 160;
+    u.origin[0] = M.center[0]; u.origin[1] = M.baseY; u.origin[2] = M.center[1];
+    put4(u.dynMap, f32(o0 - 0.25), f32(o1 - 0.25), f32(1 / (0.5 * 641)), 0);
+    put4(u.dynTexel, 1 / 641, 1 / 641, 641, 641);
+    put4(u.statMap, f32(o0 - 0.5), f32(o1 - 0.5), f32(1 / 321), 0);
+    u.farMap = this.farMapping(u.farMap ?? [0, 0, 0, 0]);
+    put4(u.flags, 1, 0, 1, s.trackImpressionStrength);
+    put4(u.radius, 160, 24, SNOW_SURFACE_OFFSET, s.textureWorldSize);
+    put4(u.inner, M.localCenter[0], M.localCenter[1], 0, 0);
+    put4(u.outer, M.localCenter[0], M.localCenter[1], MID.clipStart, MID.visible);
+    u.boundaryFade = 0;
+    u.darkening = s.compressionDarkening;
+    return u;
   }
   /** FarTrackMask.Mapping. */
-  farMapping() { const c = this.far.center; return [c[0] - 320, c[1] - 320, 0.0015625, 1]; }
+  farMapping(out = [0, 0, 0, 0]) { const c = this.far.center; return put4(out, c[0] - 320, c[1] - 320, 0.0015625, 1); }
   /** The blanket's (its ApplyMaterialSettings, SetDistantTrackMask and Tick; a tile's static mapping its own). */
-  blanketUniforms(o, distant) {
-    const s = this.settings, B = this.blanket, og = o.t.origin(v3());
-    return {
-      origin: og,
-      dynMap: distant ? this.farMapping() : [0, 0, 1, 0],
-      dynTexel: [1 / 641, 1 / 641, 641, 641],
-      statMap: [og[0], og[2], 1 / Math.max(o.t.size, 0.001), 0],
-      flags: [0, 1, 0, s.trackImpressionStrength],
-      radius: [1, 0, SNOW_SURFACE_OFFSET, s.textureWorldSize],
-      inner: [B.handoff[0], B.handoff[1], Math.max(0, B.innerRadius - 0.5), B.innerRadius],
-      outer: [0, 0, 0, 0],
-      boundaryFade: 0,
-      darkening: distant ? s.compressionDarkening : 0,
-    };
+  blanketUniforms(o, distant, u = snowUniforms()) {
+    const s = this.settings, B = this.blanket, og = o.t.origin(u.origin);
+    if (distant) this.farMapping(u.dynMap); else put4(u.dynMap, 0, 0, 1, 0);
+    put4(u.dynTexel, 1 / 641, 1 / 641, 641, 641);
+    put4(u.statMap, og[0], og[2], 1 / Math.max(o.t.size, 0.001), 0);
+    u.farMap = null;
+    put4(u.flags, 0, 1, 0, s.trackImpressionStrength);
+    put4(u.radius, 1, 0, SNOW_SURFACE_OFFSET, s.textureWorldSize);
+    put4(u.inner, B.handoff[0], B.handoff[1], Math.max(0, B.innerRadius - 0.5), B.innerRadius);
+    put4(u.outer, 0, 0, 0, 0);
+    u.boundaryFade = 0;
+    u.darkening = distant ? s.compressionDarkening : 0;
+    return u;
   }
 
   /** The most the blanket stands over the ground it lies on: the deepest depth any context resolves (the snowpack's,
@@ -1287,12 +1378,17 @@ export class BlanketSamples {
     this.samples.set(key, s);
     return s;
   }
-  /** At(u, v, groundHeight, groundNormal). */
-  at(u, v, groundHeight, groundNormal) {
-    if (!this.covered(u, v)) return { height: groundHeight, normal: groundNormal, contextA: SNOW_EXCLUDED, contextB: SNOW_EXCLUDED, contextC: SNOW_EXCLUDED, blend: [1, 0, 0], offset: 0 };
+  /** At(u, v, groundHeight, groundNormal) - into `out` when one is handed (the middle ring's, a sample at a time). */
+  at(u, v, groundHeight, groundNormal, out = undefined) {
+    if (!this.covered(u, v)) {
+      if (!out) return { height: groundHeight, normal: groundNormal, contextA: SNOW_EXCLUDED, contextB: SNOW_EXCLUDED, contextC: SNOW_EXCLUDED, blend: [1, 0, 0], offset: 0 };
+      out.height = groundHeight; out.normal[0] = groundNormal[0]; out.normal[1] = groundNormal[1]; out.normal[2] = groundNormal[2];
+      out.contextA = out.contextB = out.contextC = SNOW_EXCLUDED; out.blend[0] = 1; out.blend[1] = 0; out.blend[2] = 0; out.offset = 0;
+      return out;
+    }
     const x = f32(Math.max(0, Math.min(1, u)) * 64), z = f32(Math.max(0, Math.min(1, v)) * 64);
     const ix = Math.min(Math.floor(x), 63), iz = Math.min(Math.floor(z), 63);
-    return interpolateQuad(this.vertex(ix, iz), this.vertex(ix + 1, iz), this.vertex(ix, iz + 1), this.vertex(ix + 1, iz + 1), f32(x - ix), f32(z - iz));
+    return interpolateQuad(this.vertex(ix, iz), this.vertex(ix + 1, iz), this.vertex(ix, iz + 1), this.vertex(ix + 1, iz + 1), f32(x - ix), f32(z - iz), out);
   }
 }
 

@@ -115,6 +115,16 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
   a respawn) carries the tiers, their tracks and the last stamp by its move
   (`initOffset`) as a recentre does, so the old place's tracks stay on the old
   place and the arrival's first stamp is no trench (AUDIT ENVIRONS I2).
+- **WHAT IT COSTS** (AUDIT ENVIRONS P1-P8, `01-Overview/Audit-Environs.md`).
+  The ring's rebuild copies the last build's samples where its points fall on
+  the same place of the same tile over the same roads and settlements, each
+  copy spending the sample budget a sample does (P3); the window's uploads wait
+  for a frame that draws it (P2); the tiers draw in one pass that sets the
+  state they share once (P1); the samplers, the track field's walks, a blanket
+  tile's context and the contact ramp make no garbage and read nothing twice
+  (P4-P7). Every byte the GPU is handed and every draw's state is the one the
+  plain way made - pinned against a twin that never copies, and measured over
+  whole rides.
 
 ## THE FOUR HOSTS
 
@@ -161,7 +171,11 @@ the mod indoors, and no snow lies there.
   ring's, a blanket tile's - stop for the frame once the frame's snow has
   spent `SNOW_FRAME_BUDGET_MS` (2), under the mod's own sample counts: those
   cost a C# frame a millisecond or two and a JavaScript one up to ten. A
-  build a frame late is a frame the tier before it still stands.
+  build a frame late is a frame the tier before it still stands. A whole
+  window the player outran goes again at the mod's own pace, its sample
+  counts alone (AUDIT ENVIRONS P8): a machine that makes fewer samples in the
+  two milliseconds than a ride asks would otherwise never stand it, nor the
+  ring and the blanket, which wait on it.
 - **A BODY ON FIRST SIGHT.** HandleEnemyDeath and the scan are one law here:
   a body is registered the frame its marker first lies, whatever the player's
   side of a door.
@@ -175,5 +189,5 @@ second exception. The dynamic snow: `test/snowfall1_model.test.js` (12) and
 dead). The shader's variants compile and draw in Chromium's WebGL2 on both
 lanes (a synthetic hill through the real renderer, the mod's masks and
 albedo: the snow on the ground, the track in it, no GL error). AUDIT ENVIRONS
-(`01-Overview/Audit-Environs.md`): `test/audit_environs.test.js` (14),
+(`01-Overview/Audit-Environs.md`): `test/audit_environs.test.js` (21),
 `tools/mutants/audit_environs.json`.

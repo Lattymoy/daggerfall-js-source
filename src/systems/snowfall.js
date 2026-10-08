@@ -272,7 +272,12 @@ export function resolveSnowDepth(ctx, wilderness, settlement, locationCap, s) {
   return Math.min(depth, Math.min(capped, path));
 }
 /** A Color32 context as the shader and Resolve read it: each byte / 255 in float. */
-export const contextOf = (r, g, b, a) => [f32(r / 255), f32(g / 255), f32(b / 255), f32(a / 255)];
+export const contextOf = (r, g, b, a) => contextInto(r, g, b, a, [0, 0, 0, 0]);
+/** contextOf written into `out` at `o` (AUDIT ENVIRONS P6: a blanket vertex's own row, no array made). */
+export function contextInto(r, g, b, a, out, o = 0) {
+  out[o] = f32(r / 255); out[o + 1] = f32(g / 255); out[o + 2] = f32(b / 255); out[o + 3] = f32(a / 255);
+  return out;
+}
 
 // ---- SnowCoverageData ---------------------------------------------------------------------------------------------
 export const SNOW_MASK_ARCHIVES = Object.freeze([103, 303, 403]);
@@ -282,13 +287,22 @@ export const SNOW_MASK_BYTES = MASK_RECORDS * MASK_PIXELS;
 const ROAD_RECORDS = Object.freeze([46, 47, 55]);
 const SQRT2_F = f32(1.4142135);
 
-/** A tile's turn applied to its (u, v), as TrySample and RoadDistance read a mask (the TileMap byte's two low bits). */
-function turnUv(tile, u, v) {
+/** A tile's turn applied to its (u, v), as TrySample and RoadDistance read a mask (the TileMap byte's two low bits) -
+ *  its x and its y apart (AUDIT ENVIRONS P5: no pair a sample). Basic Roads' PathUV turns a track tile the same way. */
+function turnX(tile, u, v) {
   switch (tile & 3) {
-    case 1: return [v, f32(1 - u)];
-    case 2: return [f32(1 - u), f32(1 - v)];
-    case 3: return [f32(1 - v), u];
-    default: return [u, v];
+    case 1: return v;
+    case 2: return f32(1 - u);
+    case 3: return f32(1 - v);
+    default: return u;
+  }
+}
+function turnY(tile, u, v) {
+  switch (tile & 3) {
+    case 1: return f32(1 - u);
+    case 2: return f32(1 - v);
+    case 3: return u;
+    default: return v;
   }
 }
 
@@ -298,7 +312,7 @@ export class SnowCoverage {
   /** @param {ArrayLike<Uint8Array>} masks - the three archives' bytes, in SNOW_MASK_ARCHIVES' order */
   constructor(masks) {
     if (!masks || masks.length !== SNOW_MASK_ARCHIVES.length) throw new Error('Three winter surface-mask arrays are required.');
-    /** @type {Map<number, { pixels: Uint8Array, full: boolean[], roads: Map<number, Float32Array> }>} */
+    /** @type {Map<number, { pixels: Uint8Array, full: boolean[], roads: Map<number, Float32Array>, byTile?: Uint8Array }>} */
     this.archives = new Map();
     SNOW_MASK_ARCHIVES.forEach((archive, i) => {
       const pixels = masks[i];
@@ -321,8 +335,7 @@ export class SnowCoverage {
     const a = this.archives.get(archive);
     const field = a?.roads.get(tile >> 2);
     if (!field) return Infinity;
-    let [x, y] = turnUv(tile, u, v);
-    y = f32(1 - y);
+    const x = turnX(tile, u, v), y = f32(1 - turnY(tile, u, v));
     const cx = clamp01(x), cy = clamp01(y);
     const px = f32(cx * 63), py = f32(cy * 63);
     const x0 = floorToInt(px), y0 = floorToInt(py);
@@ -339,8 +352,7 @@ export class SnowCoverage {
     const record = tile >> 2;
     const a = this.archives.get(archive);
     if (!a || record < 0 || record >= MASK_RECORDS) return null;
-    const [x, y] = turnUv(tile, u, v);
-    const px = f32(clamp01(x) * 63), py = f32(f32(1 - clamp01(y)) * 63);
+    const px = f32(clamp01(turnX(tile, u, v)) * 63), py = f32(f32(1 - clamp01(turnY(tile, u, v))) * 63);
     const x0 = floorToInt(px), y0 = floorToInt(py);
     const x1 = Math.min(x0 + 1, 63), y1 = Math.min(y0 + 1, 63);
     const fx = f32(px - x0), fy = f32(py - y0);
@@ -355,6 +367,14 @@ export class SnowCoverage {
     const record = tile >> 2;
     const a = this.archives.get(archive);
     return !!a && record >= 0 && record < MASK_RECORDS && a.full[record];
+  }
+  /** IsFullySnowCovered for every TileMap byte of one archive at once - 1 where the byte's record is snow edge to edge,
+   *  null for none of the masks' archives (AUDIT ENVIRONS P6: a tile's 16,384 texels read off one table). */
+  fullByTile(archive) {
+    const a = this.archives.get(archive);
+    if (!a) return null;
+    if (!a.byTile) { a.byTile = new Uint8Array(256); for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b) ? 1 : 0; }
+    return a.byTile;
   }
 }
 
@@ -473,44 +493,49 @@ export function containsDeformation(pixels) {
  */
 export function snowContactRamp(pixels, width, height, radius) {
   if (!pixels || width < 2 || height < 2 || pixels.length !== width * height * 4 || radius < 1) return;
-  for (let k = 0; k < pixels.length; k += 4) { pixels[k] = pixels[k + 2]; pixels[k + 3] = pixels[k + 1] > 1 ? 255 : 0; }
+  // AUDIT ENVIRONS P7: the distance in bytes of its own while it is reckoned (the alpha's four-byte stride walked a
+  // quarter as densely), a pixel at nought left as it stands (no neighbour can lower it), written back in the last pass
+  const n = width * height, d = rampScratch(n);
+  for (let i = 0, k = 0; i < n; i++, k += 4) { pixels[k] = pixels[k + 2]; d[i] = pixels[k + 1] > 1 ? 255 : 0; }
   for (let j = 0; j < height; j++) {
     for (let x = 0; x < width; x++) {
       const i = j * width + x;
-      let a = pixels[i * 4 + 3];
-      if (x > 0) a = Math.min(a, pixels[(i - 1) * 4 + 3] + 1);
+      let a = d[i];
+      if (a === 0) continue;
+      if (x > 0) a = Math.min(a, d[i - 1] + 1);
       if (j > 0) {
-        a = Math.min(a, pixels[(i - width) * 4 + 3] + 1);
-        if (x > 0) a = Math.min(a, pixels[(i - width - 1) * 4 + 3] + 1);
-        if (x + 1 < width) a = Math.min(a, pixels[(i - width + 1) * 4 + 3] + 1);
+        a = Math.min(a, d[i - width] + 1);
+        if (x > 0) a = Math.min(a, d[i - width - 1] + 1);
+        if (x + 1 < width) a = Math.min(a, d[i - width + 1] + 1);
       }
-      pixels[i * 4 + 3] = Math.min(a, 255);
+      d[i] = Math.min(a, 255);
     }
   }
   for (let j = height - 1; j >= 0; j--) {
     for (let x = width - 1; x >= 0; x--) {
       const i = j * width + x;
-      let a = pixels[i * 4 + 3];
-      if (x + 1 < width) a = Math.min(a, pixels[(i + 1) * 4 + 3] + 1);
+      let a = d[i];
+      if (a === 0) continue;
+      if (x + 1 < width) a = Math.min(a, d[i + 1] + 1);
       if (j + 1 < height) {
-        a = Math.min(a, pixels[(i + width) * 4 + 3] + 1);
-        if (x > 0) a = Math.min(a, pixels[(i + width - 1) * 4 + 3] + 1);
-        if (x + 1 < width) a = Math.min(a, pixels[(i + width + 1) * 4 + 3] + 1);
+        a = Math.min(a, d[i + width] + 1);
+        if (x > 0) a = Math.min(a, d[i + width - 1] + 1);
+        if (x + 1 < width) a = Math.min(a, d[i + width + 1] + 1);
       }
-      pixels[i * 4 + 3] = Math.min(a, 255);
+      d[i] = Math.min(a, 255);
     }
   }
-  for (let k = 0; k < pixels.length; k += 4) {
-    const a = pixels[k + 3];
+  for (let i = 0, k = 0; i < n; i++, k += 4) {
+    const a = d[i];
     if (pixels[k + 1] >= 250 && a <= radius) {
       const t = radius === 1 ? 0 : clamp01(f32(f32(a - 1) / f32(radius - 1)));
       pixels[k] = roundToInt(f32(pixels[k + 2] * t));
       pixels[k + 3] = roundToInt(f32(255 * t));
-    } else if (pixels[k + 1] > 1) {
-      pixels[k + 3] = 255;
-    }
+    } else pixels[k + 3] = pixels[k + 1] > 1 ? 255 : 0;   // bare ground: its distance, nought
   }
 }
+let _ramp = new Uint8Array(0);
+const rampScratch = (n) => (_ramp.length >= n ? _ramp : (_ramp = new Uint8Array(n)));
 
 // ---- PersistentTrackField -----------------------------------------------------------------------------------------
 export const TRACK_CELL_SIZE = 0.5;
@@ -559,7 +584,6 @@ export class SlotMap {
   }
   clear() { this.index.clear(); this.keys = []; this.vals = []; this.live = []; this.free = []; }
   *[Symbol.iterator]() { for (let i = 0; i < this.keys.length; i++) if (this.live[i]) yield [this.keys[i], this.vals[i]]; }
-  *keysInOrder() { for (let i = 0; i < this.keys.length; i++) if (this.live[i]) yield this.keys[i]; }
 }
 
 /**
@@ -627,7 +651,13 @@ export class PersistentTrackField {
       for (let bx = bx0; bx <= bx1; bx++) {
         const bucket = this.buckets.get(makeKey(bx, bz));
         if (!bucket) continue;
-        for (const key of bucket.keysInOrder()) {
+        // AUDIT ENVIRONS P4: a bucket whose every disc lies in the preserved rectangle writes nothing - its first and last
+        // cells' reach, as StampMaskPoint reckons it (monotone in the cell), inside it on both axes
+        if (discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) && discsWithin(bz * BUCKET, wz, half, scale, radius, res, pMinZ, pMaxZ)) continue;
+        const keys = bucket.keys, live = bucket.live;   // the slots walked as the HashSet enumerates them, no generator
+        for (let q = 0; q < keys.length; q++) {
+          if (!live[q]) continue;
+          const key = keys[q];
           const cell = this.cells.get(key);
           if (!cell) continue;
           const x = keyX(key), z = keyZ(key);
@@ -644,9 +674,10 @@ export class PersistentTrackField {
   /** Refill(byteStep): every cell rises by the step; a cell that reaches full is gone. */
   refill(byteStep) {
     if (byteStep <= 0 || this.cells.size === 0) return;
-    for (const key of [...this.cells.keysInOrder()]) {
-      const cell = this.cells.get(key);
-      if (!cell) continue;
+    const C = this.cells, keys = C.keys, live = C.live, vals = C.vals, n = keys.length;   // AUDIT ENVIRONS P4: the Dictionary's slots in its order - a removal frees its own slot, never a later one's, so no copy of the keys
+    for (let q = 0; q < n; q++) {
+      if (!live[q]) continue;
+      const key = keys[q], cell = vals[q];
       const v = Math.min(255, cell.remaining + byteStep);
       if (v >= 255) { this._removeCell(key); continue; }
       cell.remaining = v;
@@ -756,11 +787,18 @@ export class PersistentTrackField {
   }
 }
 
+/** Whether the discs of a bucket's 64 cells from `first` on one axis all lie within the preserved pixels [lo, hi] -
+ *  StampMaskPoint's own reach of the first cell and of the last (AUDIT ENVIRONS P4). */
+function discsWithin(first, w, half, scale, radius, res, lo, hi) {
+  const a = f32(((first + 0.5) * 0.5 - (w - half)) * scale), b = f32(((first + BUCKET - 1 + 0.5) * 0.5 - (w - half)) * scale);
+  return clampI(floorToInt(f32(a - radius)), 0, res - 1) >= lo && clampI(ceilToInt(f32(b + radius)), 0, res - 1) <= hi;
+}
 /** StampMaskPoint: a disc of `radius` pixels at (cx, cz) lowering the red to `target`, outside the preserved
  *  rectangle; answers the pixels changed. */
 function stampMaskPoint(pixels, res, cx, cz, radius, target, pMinX, pMaxX, pMinZ, pMaxZ) {
   const x0 = clampI(floorToInt(f32(cx - radius)), 0, res - 1), x1 = clampI(ceilToInt(f32(cx + radius)), 0, res - 1);
   const z0 = clampI(floorToInt(f32(cz - radius)), 0, res - 1), z1 = clampI(ceilToInt(f32(cz + radius)), 0, res - 1);
+  if (x0 >= pMinX && x1 <= pMaxX && z0 >= pMinZ && z1 <= pMaxZ) return 0;   // AUDIT ENVIRONS P4: every pixel of it preserved - none to visit
   let changed = 0;
   for (let i = z0; i <= z1; i++) {
     for (let j = x0; j <= x1; j++) {
@@ -889,19 +927,19 @@ export function rectWeight(rects, x, z, feather) {
 
 // ---- BlanketSurfaceSamples.InterpolateQuad ------------------------------------------------------------------------
 /** InterpolateQuad(a, right, top, c, fx, fz): a grid cell's two triangles' barycentrics (the diagonal from a to c),
- *  the height and normal blended, the three corners' contexts carried for the shader to resolve and blend. */
-export function interpolateQuad(a, right, top, c, fx, fz) {
+ *  the height and normal blended, the three corners' contexts carried for the shader to resolve and blend - into `out`
+ *  (AUDIT ENVIRONS P5: the middle ring hands one of its own, no object a vertex). */
+export function interpolateQuad(a, right, top, c, fx, fz, out = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 }) {
   const mid = fz >= fx ? top : right;
   const wa = f32(1 - Math.max(fx, fz)), wm = Math.abs(f32(fz - fx)), wc = Math.min(fx, fz);
-  const blend = (p, q, r) => f32(f32(f32(p * wa) + f32(q * wm)) + f32(r * wc));
-  return {
-    height: blend(a.height, mid.height, c.height),
-    normal: [0, 1, 2].map((k) => blend(a.normal[k], mid.normal[k], c.normal[k])),
-    contextA: a.contextA, contextB: mid.contextA, contextC: c.contextA,
-    blend: [wa, wm, wc],
-    offset: blend(a.offset, mid.offset, c.offset),
-  };
+  out.height = blend3(a.height, mid.height, c.height, wa, wm, wc);
+  for (let k = 0; k < 3; k++) out.normal[k] = blend3(a.normal[k], mid.normal[k], c.normal[k], wa, wm, wc);
+  out.contextA = a.contextA; out.contextB = mid.contextA; out.contextC = c.contextA;
+  out.blend[0] = wa; out.blend[1] = wm; out.blend[2] = wc;
+  out.offset = blend3(a.offset, mid.offset, c.offset, wa, wm, wc);
+  return out;
 }
+const blend3 = (p, q, r, wa, wm, wc) => f32(f32(f32(p * wa) + f32(q * wm)) + f32(r * wc));
 
 // ---- BasicRoadsClassifier and BasicRoadsTerrain -------------------------------------------------------------------
 /** BasicRoadsClassifier.Kind. */
@@ -921,19 +959,10 @@ const HALF_SQRT2_F = f32(0.70710677);
 /** The road records Basic Roads paints: its road and the tracks' four sets (BasicRoadsTerrain's classification set). */
 export const PAINTED_ROAD_RECORDS = Object.freeze([46, 47, 55, 10, 11, 12, 25, 26, 27, 51, 52]);
 
-/** PathUV: a path tile's (u, v) under its turn. */
-function pathUv(tile, u, v) {
-  switch (tile & 3) {
-    case 1: return [v, f32(1 - u)];
-    case 2: return [f32(1 - u), f32(1 - v)];
-    case 3: return [f32(1 - v), u];
-    default: return [u, v];
-  }
-}
 /** BasicRoadsClassifier.PathEdgeDistance(tile, u, v): signed distance in tile widths to a track's painted edge -
  *  0 or less on the track; Infinity for a tile that is no track. */
 export function pathEdgeDistance(tile, u, v) {
-  const [x, y] = pathUv(tile, u, v);
+  const x = turnX(tile, u, v), y = turnY(tile, u, v);   // PathUV
   switch (tile >> 2) {
     case 11: case 26: return f32(0.5 - x);
     case 10: case 25: return f32(f32(f32(y - x) - 0.5) * HALF_SQRT2_F);
@@ -953,12 +982,12 @@ export function pathOutsideDistance(tile, u, v) {
     case 51: case 52: poly = 3; break;
     default: return Infinity;
   }
-  const [x, y] = pathUv(tile, u, v);
+  const x = turnX(tile, u, v), y = turnY(tile, u, v);   // PathUV
   if (x >= 0 && x <= 1 && y >= 0 && y <= 1 && pathEdgeDistance(tile, u, v) <= 0) return 0;
   const pts = PATH_POLYGONS[poly];
   let best = Infinity;
   for (let i = 0; i < pts.length; i++) {
-    const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length];
+    const A = pts[i], B = pts[(i + 1) % pts.length], ax = A[0], ay = A[1], bx = B[0], by = B[1];
     const ex = f32(bx - ax), ey = f32(by - ay);
     const t = clamp01(f32(f32(f32(f32(x - ax) * ex) + f32(f32(y - ay) * ey)) / f32(f32(ex * ex) + f32(ey * ey))));
     const dx = f32(f32(x - ax) - f32(t * ex)), dy = f32(f32(y - ay) - f32(t * ey));
