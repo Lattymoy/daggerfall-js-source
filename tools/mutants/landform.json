@@ -120,8 +120,8 @@
   {
     "name": "LANDFORM-arm-past-its-end-still-grades",
     "file": "src/world/landforms.js",
-    "old": "const w = (((1 - d / reach) ** 2) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
-    "new": "const w = (((1 - d / reach) ** 2) / (q * q));",
+    "old": "const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "const w = ((r * r) / (q * q));",
     "tests": [
       "test/landform.test.js"
     ]

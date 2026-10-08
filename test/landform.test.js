@@ -224,26 +224,32 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
   const px = 300, py = 255, x = 20;   // twenty samples west of the road that crosses it
   const cut = generateSamples(woods, px, py, H, LF);
   const lifted = generateSamples(woods, px, py, H, RELIEF);
-  const macro = sampleKernel(woods, px, py, H, false, FLAT);   // LANDFORM5: on a painted river's centre line the water stills the hills to nothing
+  // the cut's own law on the land without its hills (AUDIT LANDFORMS III C1: with them the river's valley carves the land
+  // under it too - test/auditlandforms3.test.js holds the valley)
+  const cutFlat = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const macro = sampleKernel(woods, px, py, H, false, FLAT);
   const { flat, drop } = LANDFORM_DIALS.river;
   assert.deepEqual([flat, drop], [2, 1.92]);
   const floor = macro(x, 64) * UNIT - drop;
-  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cut, x, y) * UNIT - floor) < 0.02, `y=${y}: the water's floor, ${(drop * STREAMING_TERRAIN_SCALE).toFixed(1)} m under the land it is graded to`);
-  for (const y of [61, 67]) assert.ok(at(cut, x, y) * UNIT > floor + 0.2, `y=${y}: the bank stands over the water`);
-  assert.ok(at(generateSamples(woods, px, py, H, FLAT), x, 64) * UNIT - floor > drop, 'the channel is cut into the field');   // the field the water stills (LANDFORM5)
+  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cutFlat, x, y) * UNIT - floor) < 0.02, `y=${y}: the water's floor, ${(drop * STREAMING_TERRAIN_SCALE).toFixed(1)} m under the land it is graded to`);
+  for (const y of [61, 67]) assert.ok(at(cutFlat, x, y) * UNIT > floor + 0.2, `y=${y}: the bank stands over the water`);
+  assert.ok(at(generateSamples(woods, px, py, H, FLAT), x, 64) * UNIT - floor > drop, 'the channel is cut into the field');
+  // ...and on the ground as it ships, the floor level across the painted width and the banks over it
+  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cut, x, y) - at(cut, x, 64)) * UNIT < 1e-6, `y=${y}: the shipped floor, level across`);
+  for (const y of [61, 67]) assert.ok(at(cut, x, y) > at(cut, x, 64) + 0.2 / UNIT, `y=${y}: the shipped bank over the water`);
   // rivers off (RiversAndStreams): painted nowhere, cut nowhere - so the switch MOVES THE GROUND, and online, where a
   // room stands on one ground, it is the room's: on (2026-10-06, Mac: "Yes rivers should be online")
   const dry = network({ water: false });
   const off = generateSamples(woods, px, py, H, createLandforms({ woods, roads: dry }));
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(off, x, y), at(lifted, x, y)), `y=${y}: no painted river, no channel`);
-  assert.ok(Math.abs(at(off, x, 64) - at(cut, x, 64)) * UNIT > 0.5, 'the river switch moves the ground under the river');   // PIN MOVED (LANDFORM5): `off` stood over `cut`; with the rivers off the hills come back, a dale among them
+  assert.ok(at(off, x, 64) - at(cut, x, 64) > 0.5 / UNIT, 'the river switch moves the ground under the river - its valley and its channel cut down');   // PIN MOVED BACK (AUDIT LANDFORMS III C1): LANDFORM5 had loosened it to a move either way, which hid the stilled river standing over its dales
   assert.ok(!Object.is(at(off, 64, 30), at(lifted, 64, 30)), 'and the road is cut either way');
   assert.equal(createLandforms({ woods, roads: dry }).rivers, false);
   assert.equal(LF.rivers, true);
   assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), true, 'online the room\'s rivers are painted, and so cut (onlineLane.js ONLINE_ROOM_MOD_KEYS)');
   assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', ''), undefined, 'offline the switch is the player\'s');
   // where the road crosses it the road wins, as its paint does: a causeway level across at the road's own grade
-  for (const rx of [63, 64, 65]) assert.ok(Math.abs(at(cut, rx, 64) * UNIT - macro(64, 64) * UNIT) < 0.02, `x=${rx}: the road over the river`);
+  for (const rx of [63, 64, 65]) assert.ok(Math.abs(at(cutFlat, rx, 64) * UNIT - macro(64, 64) * UNIT) < 0.02, `x=${rx}: the road over the river`);
   // the pipeline - the same job online and off - cuts the river wherever its network paints one
   const piped = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: { ...NET, smooth: false }, landform: true }).samples;
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(piped, x, y), at(cut, x, y)), `the job, y=${y}: the channel`);
@@ -251,7 +257,7 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(pipedDry, x, y), at(lifted, x, y)), `the job with the rivers off, y=${y}: no channel`);
   // a stream: level across its two painted tiles, a metre under
   assert.deepEqual(Object.values(LANDFORM_DIALS.stream), [1, 1.25, 4, 0.8]);
-  const s = generateSamples(woods, 312, 248, H, LF), sm = sampleKernel(woods, 312, 248, H, false, FLAT);
+  const s = generateSamples(woods, 312, 248, H, createLandforms({ woods, roads: NET, hills: false })), sm = sampleKernel(woods, 312, 248, H, false, FLAT);
   for (const sx of [63, 64, 65]) assert.ok(Math.abs(at(s, sx, 40) * UNIT - (sm(64, 40) * UNIT - LANDFORM_DIALS.stream.drop)) < 0.02, `stream x=${sx}`);
 });
 

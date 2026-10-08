@@ -126,13 +126,14 @@
     ]
   },
   {
-    "name": "LANDFORM5-no-stilling",
+    "name": "LANDFORM5-no-valley",
     "file": "src/world/landforms.js",
-    "old": "    return 1 - smooth01(b * 2);",
-    "new": "    return 1;",
+    "old": "      if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);",
+    "new": "      if (!valleys) hh = carve(gx, gy, hh, deepOut[0]);",
     "tests": [
       "test/landform45.test.js",
-      "test/landform.test.js"
+      "test/landform.test.js",
+      "test/auditlandforms3.test.js"
     ]
   },
   {

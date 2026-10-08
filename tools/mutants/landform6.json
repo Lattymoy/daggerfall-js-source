@@ -20,8 +20,8 @@
   {
     "name": "LANDFORM6-ease-on-the-woodlands-top",
     "file": "src/world/landforms.js",
-    "old": "  return sum * smooth01(e / (H.coast * top));",
-    "new": "  return sum * smooth01(e / (H.coast * LAND_TOP[0]));",
+    "old": "  const ease = smooth01(e / (H.coast * top));",
+    "new": "  const ease = smooth01(e / (H.coast * LAND_TOP[0]));",
     "tests": [
       "test/landform6.test.js"
     ]

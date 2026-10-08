@@ -188,8 +188,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-weight-inverse-d-squared",
     "file": "src/world/landforms.js",
-    "old": "const q = d * d + 0.25;",
-    "new": "const q = d + 0.25;",
+    "old": "const q = d * d + 0.25, r = 1 - d / reach;",
+    "new": "const q = d + 0.25, r = 1 - d / reach;",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-weight-falloff-linear",
     "file": "src/world/landforms.js",
-    "old": "const w = (((1 - d / reach) ** 2) / (q * q))",
-    "new": "const w = (((1 - d / reach)) / (q * q))",
+    "old": "const w = ((r * r) / (q * q))",
+    "new": "const w = ((r) / (q * q))",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lift-of-whole-height",
     "file": "src/world/landforms.js",
-    "old": "const l = h + reliefLift(low) * fade + hill(gx, gy, macro, low, lattice);",
-    "new": "const l = h + reliefLift(h) * fade + hill(gx, gy, macro, low, lattice);",
+    "old": "    const l = h + reliefLift(low) * fade + hh;",
+    "new": "    const l = h + reliefLift(h) * fade + hh;",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"

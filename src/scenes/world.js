@@ -1359,11 +1359,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
   }
-  // LANDFORM4: A TOWN STANDS IN ITS LAND - the game's own rows (HUB1's: the same on every client, so a mod's addition and
-  // a spawn never move the ground) as the landforms' sites, handed to both kernels before the first pixel is asked of
-  // either; LANDFORM6: THE LAND WEARS ITS CLIMATE - and every pixel's climate beside them.
+  // LANDFORM4: A TOWN STANDS IN ITS LAND - the game's own rows (HUB1's: so a mod's addition and a spawn never move the
+  // ground) as the landforms' sites, handed to both kernels before the first pixel is asked of either; LANDFORM6: THE LAND
+  // WEARS ITS CLIMATE - and every pixel's climate beside them. AUDIT LANDFORMS III B1: each row AS MAPS.BSA HOLDS IT
+  // (readClassicLocation, past the world-data door) - a town pack resizes a row's block grid (Beautiful Villages 3,240 of
+  // its 7,317, Beautiful Cities 120 of 410), and a client whose pack failed to load stood other wild ground round 3,360
+  // towns, up to 120 m off. The pack's own rect is still levelled by DFU's blend in its own pixel. Only a replaced row is
+  // read again (none with no pack; with both, about 3,400 rows, 75 ms).
   if (landform) {
-    _landformSites = landformSites(_hubRows.map((loc) => { const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude); return { px: p.x, py: p.y, loc }; }));
+    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);
+    _landformSites = landformSites(_hubRows.map(classicRow).filter(Boolean).map((loc) => { const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude); return { px: p.x, py: p.y, loc }; }));
     _landformClimates = landformClimates((x, y) => maps.getClimateIndex(x, y));   // LANDFORM6: after the boot's coastal dilation (above), as every pixel streams them
     terrainGen.setLandformTables({ sites: _landformSites, climates: _landformClimates });
   }

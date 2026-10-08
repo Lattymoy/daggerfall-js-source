@@ -535,6 +535,7 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
       swamp: { low: 2, high: 6, upland: 1, shape: 'hummocks' }, haunted: { low: 6, high: 40, upland: 1.5, shape: 'broken' },
       ocean: { low: 2, high: 24, upland: 1.6, shape: 'rolling' },
     },
+    valley: { river: 120, stream: 96 },   // PIN MOVED (AUDIT LANDFORMS III C1)
     site: { reach: 40, per: 3, most: 124, grid: 8 },
   });
   // the law below is the paths' on the land without its hills (LANDFORM5's own pins hold the hills)
@@ -939,7 +940,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   const before = job(null), after = job(NET);
   const cell = TERRAIN_SIZE / (H - 1), M = UNIT * STREAMING_TERRAIN_SCALE, x = sx * cell, z = sy * cell;
   const gB = before[sx * H + sy] * M, gA = after[sx * H + sy] * M;
-  assert.ok(Math.abs(gA - gB) > 1, `the landing moved the ground here (${(gA - gB).toFixed(2)} m)`);   // PIN MOVED (LANDFORM5): it cut it - the landing also stills the hills about the river, so the floor can stand over a dale the hills had
+  assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);   // PIN MOVED BACK (AUDIT LANDFORMS III C1): LANDFORM5's stilling had the landing raise the floor 2.62 m over a dale; the valley carves it down
   const run = ({ grounded }) => {
     const loot = createDroppedLoot({ renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} }, getTexture: async () => ({ getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 64, getFrameCount: () => 1 }), uploadRecordFrame: () => {} });
     const pile = loot.dropPile([{ group: 'Gems', templateIndex: 0 }], [x, gB, z], key);

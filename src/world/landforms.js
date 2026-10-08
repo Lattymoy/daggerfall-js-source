@@ -112,9 +112,9 @@
 // (hillsAt): a domain-warped sum of three octaves, its height set by a
 // region field (some country rolls hard, some lies almost flat) and by
 // the small heightmap (uplands roll taller), eased out toward the beach so
-// it never reaches the knee, and stilled along the painted rivers
-// (waterFade), so a river lies in its valley rather than climbing a
-// hill. A road and a track are graded to the land WITH its hills, so they
+// it never reaches the knee, and carved into valleys along the painted
+// rivers and streams (AUDIT LANDFORMS III C1: the water lies under every
+// hill across its valley) rather than climbing a hill or riding one. A road and a track are graded to the land WITH its hills, so they
 // ride them; a town's pull levels them.
 //
 // ALL THE DIALS ARE IN ONE PLACE, LANDFORM_DIALS (ROAD_DIALS' rule).
@@ -187,6 +187,9 @@ export const LANDFORM_DIALS = Object.freeze({
     haunted: Object.freeze({ low: 6, high: 40, upland: 1.5, shape: 'broken' }),
     ocean: Object.freeze({ low: 2, high: 24, upland: 1.6, shape: 'rolling' }),
   }),
+  // AUDIT LANDFORMS III C1: A RIVER CUTS ITS VALLEY - how far from a painted river's or stream's centre line (samples) the
+  // hills ease down to the deepest dale their land can stand: the water lies under every hill across its valley
+  valley: Object.freeze({ river: 120, stream: 96 }),
   // LANDFORM4: a site's pull - it reaches `reach` samples past its rect plus `per` times its rect's half-extent, never
   // more than `most` (so no further than the pixels beside its own); `grid` the stride of the level's mean over its pixel.
   site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),
@@ -369,9 +372,46 @@ const _node = new Float64Array(4 * NODE_VALUES);
 const HILL_OCTAVES = LANDFORM_DIALS.hills.scales.length;
 const HILL_WEIGHT = LANDFORM_DIALS.hills.weights.reduce((t, w) => t + w, 0);
 
+/**
+ * AUDIT LANDFORMS III A8: cos and sin of pi * t (|t| <= 1) and e^-t (t >= 0) by their series, every step an add, a
+ * multiply or a divide - each correctly rounded, so the ground is one float in every engine. Math.cos, Math.sin and
+ * Math.exp are each engine's own approximation (the spec asks no more), and the landforms were the only ground of the
+ * world that called one: a save stood in one browser and loaded in another read its hills a few ulps apart. Each within
+ * 4.5e-16 of V8's own, absolute - the land they shape moves by less than a float32 sample's last bit.
+ */
+export function cosPi(t) {
+  let a = t < 0 ? -t : t, sign = 1;
+  if (a > 0.5) { a = 1 - a; sign = -1; }   // cos(pi - y) = -cos(y); exact (Sterbenz)
+  const x = Math.PI * a, x2 = x * x;
+  let p = 1;
+  for (let k = 20; k >= 2; k -= 2) p = 1 - (x2 * p) / (k * (k - 1));
+  return sign * p;
+}
+
+/** AUDIT LANDFORMS III A8: sin(pi * t), |t| <= 1 (cosPi's). */
+export function sinPi(t) {
+  let a = t < 0 ? -t : t;
+  if (a > 0.5) a = 1 - a;   // sin(pi - y) = sin(y)
+  const x = Math.PI * a, x2 = x * x;
+  let p = 1;
+  for (let k = 21; k >= 3; k -= 2) p = 1 - (x2 * p) / (k * (k - 1));
+  return t < 0 ? -x * p : x * p;
+}
+
+/** AUDIT LANDFORMS III A8: e^-t, t >= 0 (cosPi's) - t less its whole multiple of ln 2, its series, halved back. Past 40
+ *  it is under half an ulp of anything it is taken from. */
+export function expNeg(t) {
+  if (!(t < 40)) return 0;
+  const n = Math.floor(t / Math.LN2), r = t - n * Math.LN2;
+  let p = 1;
+  for (let k = 18; k >= 1; k--) p = 1 - (r * p) / k;
+  for (let i = 0; i < n; i++) p *= 0.5;
+  return p;
+}
+
 /** LANDFORM6: the dunes' wind - their crests run across it, the long gentle face to windward and the slip face to lee -
  *  from a little south of west (the Alik'r's own, as the port stands it); and their spacing, samples (330 m). */
-const DUNE_WIND = 0.35, DUNE_COS = Math.cos(DUNE_WIND), DUNE_SIN = Math.sin(DUNE_WIND);
+const DUNE_WIND = 0.35, DUNE_COS = cosPi(DUNE_WIND / Math.PI), DUNE_SIN = sinPi(DUNE_WIND / Math.PI);
 const DUNE_SPACING = 64, DUNE_WINDWARD = 0.72;
 
 /** LANDFORM5: the rolling octaves, -1..1 at the most; `sc` stretches their wavelengths. */
@@ -388,7 +428,7 @@ const softAbs = (x, k) => Math.sqrt(x * x + k * k) - k;
 /** LANDFORM6: the ranges' two trends - a mountain land's ridges run along one or the other, as the slow rock field says
  *  (so a range keeps its line for kilometres and turns between massifs), stretched `RANGE_STRETCH` times along it. */
 const RANGE_A = 0.6, RANGE_B = -0.55, RANGE_STRETCH = 2.2;
-const RANGE_AC = Math.cos(RANGE_A), RANGE_AS = Math.sin(RANGE_A), RANGE_BC = Math.cos(RANGE_B), RANGE_BS = Math.sin(RANGE_B);
+const RANGE_AC = cosPi(RANGE_A / Math.PI), RANGE_AS = sinPi(RANGE_A / Math.PI), RANGE_BC = cosPi(RANGE_B / Math.PI), RANGE_BS = sinPi(RANGE_B / Math.PI);
 
 /** LANDFORM6: one trend's ridgelines - a ridged multifractal along (`cs`, `sn`): each octave folded about zero (the
  *  noise's zero lines stand as crests) and squared (its far reaches fall away as valleys), the finer octaves riding the
@@ -403,7 +443,7 @@ function ridgeline(wx, wy, cs, sn) {
 }
 
 /** LANDFORM6: the ridgelines' own centre and gain (the mountains', and the foothills' half of them). */
-const RIDGED_NORM = Object.freeze([0.967, 1.4]);
+const RIDGED_NORM = Object.freeze([0.958, 1.4]);
 
 /** LANDFORM6: ridgelines on the trend the rock field gives the point, blended across the turn between two. */
 function ridged(wx, wy, rock) {
@@ -418,7 +458,7 @@ function dunes(wx, wy) {
   const u = wx * DUNE_COS + wy * DUNE_SIN, v = wy * DUNE_COS - wx * DUNE_SIN, L = DUNE_SPACING;
   const phase = u / L + 0.8 * signed(v / (L * 3.1) + 13.7, u / (L * 6.3) + 2.9) + 0.35 * signed(wx / (L * 1.7) + 37.1, wy / (L * 1.7) + 8.3);
   const f = phase - Math.floor(phase);
-  const p = f < DUNE_WINDWARD ? 0.5 - 0.5 * Math.cos((Math.PI * f) / DUNE_WINDWARD) : 0.5 + 0.5 * Math.cos((Math.PI * (f - DUNE_WINDWARD)) / (1 - DUNE_WINDWARD));
+  const p = f < DUNE_WINDWARD ? 0.5 - 0.5 * cosPi(f / DUNE_WINDWARD) : 0.5 + 0.5 * cosPi((f - DUNE_WINDWARD) / (1 - DUNE_WINDWARD));
   return p * smooth01(0.55 + 1.3 * signed(v / (L * 5) + 71.9, u / (L * 5) + 44.1));
 }
 
@@ -454,8 +494,8 @@ function knollField(wx, wy, cell, fill, edge) {
       const kx = (ix + 0.15 + 0.7 * cellHash(ix, iy, 2)) * cell, ky = (iy + 0.15 + 0.7 * cellHash(ix, iy, 3)) * cell;
       const r = cell * (0.2 + 0.24 * cellHash(ix, iy, 4));
       if (!((wx - kx) * (wx - kx) + (wy - ky) * (wy - ky) < r * r)) continue;   // outside its circle, outside its ellipse
-      const ang = 6.283185307179586 * cellHash(ix, iy, 6), lean = 1 + 0.6 * cellHash(ix, iy, 7);
-      const ca = Math.cos(ang), sa = Math.sin(ang), dx = wx - kx, dy = wy - ky;
+      const turn = 2 * cellHash(ix, iy, 6), ang = turn > 1 ? turn - 2 : turn, lean = 1 + 0.6 * cellHash(ix, iy, 7);   // its turn, in half turns
+      const ca = cosPi(ang), sa = sinPi(ang), dx = wx - kx, dy = wy - ky;
       const ru = dx * ca + dy * sa, rv = (dy * ca - dx * sa) * lean;
       const d = Math.sqrt(ru * ru + rv * rv);
       if (!(d < r)) continue;
@@ -515,11 +555,13 @@ export function shapeRaw(shape, wx, wy, gx, gy, rock, land) {
  *  field with its own dials, so its mean sits on the land and nine in ten of its points inside the range - the land's
  *  average height is DFU's, lifted, whatever shape it wears. By land, not by shape: two lands that share a shape (the
  *  deserts, the knolls) wear it with their own dials and so their own spread. The woodlands' and the coasts' rolling
- *  octaves are LANDFORM5's own, uncentred. */
+ *  octaves are LANDFORM5's own, uncentred. AUDIT LANDFORMS III A2/A4: measured again over 200,000 points each - the
+ *  foothills' centre was the one their ridgelines had before RIDGED_NORM was set (0.165 against their own -0.006), which
+ *  stood every mountain wood 13-18 m low, mostly dales; the haunted woods' was -0.31 against -0.256. */
 const LAND_NORMS = Object.freeze({
-  woodlands: Object.freeze([0, 1]), mountainWoods: Object.freeze([0.165, 1.7]), mountain: RIDGED_NORM,
+  woodlands: Object.freeze([0, 1]), mountainWoods: Object.freeze([0, 1.9]), mountain: RIDGED_NORM,
   desert: Object.freeze([0.173, 1.55]), desert2: Object.freeze([0.17, 1.22]), rainforest: Object.freeze([0.025, 1.25]),
-  subtropical: Object.freeze([0.015, 1.5]), swamp: Object.freeze([-0.005, 2.6]), haunted: Object.freeze([-0.31, 1.25]),
+  subtropical: Object.freeze([0.02, 1.5]), swamp: Object.freeze([-0.005, 2.6]), haunted: Object.freeze([-0.256, 1.25]),
   ocean: Object.freeze([0, 1]),
 });
 /** LANDFORM6: each land's centre and gain and its tallest hill, by its index, read once. */
@@ -532,7 +574,7 @@ const SAT_KNEE = 0.6;
 function saturate(v) {
   const a = v < 0 ? -v : v;
   if (a <= SAT_KNEE) return v;
-  const o = SAT_KNEE + (1 - SAT_KNEE) * (1 - Math.exp(-(a - SAT_KNEE) / (1 - SAT_KNEE)));
+  const o = SAT_KNEE + (1 - SAT_KNEE) * (1 - expNeg((a - SAT_KNEE) / (1 - SAT_KNEE)));
   return v < 0 ? -o : o;
 }
 
@@ -547,10 +589,11 @@ function landShape(j, wx, wy, gx, gy, rock) {
  *  over its own pixels and gives way to its neighbour's across about a pixel. Writes the shares into `_share` (by land)
  *  and answers the lands present as a bit mask. With no climates every sample is woodlands. */
 const _share = new Float64Array(LANDS.length);
-const SHARE_SPAN = HEIGHTMAP_DIMENSION - 1;
-function landShares(gx, gy, climates) {
+function landShares(gx, gy, climates, span) {
   if (!climates) { _share[0] = 1; return 1; }
-  const fx = gx / SHARE_SPAN - 0.5, fy = MAP_H + 0.5 - gy / SHARE_SPAN;   // pixel centres at whole numbers; the row runs south
+  // pixel centres at whole numbers; the row runs south. AUDIT LANDFORMS III A7: the pixel's span is the shaper's own -
+  // a world of another hDim read its climates off 128-sample pixels
+  const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;
   const ix = Math.floor(fx), iy = Math.floor(fy);
   // the four nodes, their coordinates held to the map
   const x0 = ix < 0 ? 0 : ix >= MAP_W ? MAP_W - 1 : ix, x1 = ix + 1 < 0 ? 0 : ix + 1 >= MAP_W ? MAP_W - 1 : ix + 1;
@@ -577,11 +620,15 @@ function landShares(gx, gy, climates) {
  * @param {number} low - its small-heightmap term
  * @param {?ReturnType<typeof hillLattice>} [lattice] - nodes made already (a pixel's own); the same numbers without
  * @param {?Uint8Array} [climates] - landformClimates' table; null stands every sample in woodlands
+ * @param {?Float64Array} [out] - AUDIT LANDFORMS III C1: takes the deepest dale the lands there can stand (`out[0]`, the
+ *   height of their tallest hill at the sample, eased as the hills are - never less than the hills' own magnitude)
+ * @param {number} [span] - a pixel's samples (hDim - 1), where its climate's node stands
  * @returns {number}
  */
-export function hillsAt(gx, gy, macro, low, lattice = null, climates = null) {
+export function hillsAt(gx, gy, macro, low, lattice = null, climates = null, out = null, span = HEIGHTMAP_DIMENSION - 1) {
   const H = LANDFORM_DIALS.hills;
   const e = macro - LANDFORM_KNEE;
+  if (out) out[0] = 0;
   if (!(e > 0)) return 0;
   const fx = gx / HILL_NODE, fy = gy / HILL_NODE, ix = Math.floor(fx), iy = Math.floor(fy), u = fx - ix, v = fy - iy;
   let vals = _node, i00 = 0, i10 = NODE_VALUES, i01 = 2 * NODE_VALUES, i11 = 3 * NODE_VALUES;
@@ -598,16 +645,20 @@ export function hillsAt(gx, gy, macro, low, lattice = null, climates = null) {
   const wy = gy + (vals[i00 + 2] * a + vals[i10 + 2] * b + vals[i01 + 2] * c + vals[i11 + 2] * d);
   const rock = vals[i00 + 3] * a + vals[i10 + 3] * b + vals[i01 + 3] * c + vals[i11 + 3] * d;
   const up = smooth01((low - LANDFORM_KNEE) / H.uplandAt);
-  const mask = landShares(gx, gy, climates);
-  let top = 0, sum = 0;
+  const mask = landShares(gx, gy, climates, span);
+  let top = 0, sum = 0, deep = 0;
   for (let j = 0; j < LANDS.length; j++) {
     if (!(mask & (1 << j))) continue;
     const land = LANDS[j], w = _share[j];
     if (!(w > 0)) continue;
     top += w * LAND_TOP[j];
-    sum += w * (land.low + (land.high - land.low) * region) * (1 + (land.upland - 1) * up) * landShape(j, wx, wy, gx, gy, rock);
+    const amp = w * (land.low + (land.high - land.low) * region) * (1 + (land.upland - 1) * up);
+    deep += amp;
+    sum += amp * landShape(j, wx, wy, gx, gy, rock);
   }
-  return sum * smooth01(e / (H.coast * top));
+  const ease = smooth01(e / (H.coast * top));
+  if (out) out[0] = deep * ease;
+  return sum * ease;
 }
 
 /**
@@ -625,32 +676,6 @@ export function landformClimates(climateAt) {
 
 /** LANDFORM5: createLandforms' `hills: false` - no hills. */
 const NO_HILLS = () => 0;
-
-/**
- * LANDFORM5: how much of the hills a world sample keeps beside the painted water - a node at every map pixel's centre,
- * 1 where a river or a stream is painted in the pixel, read through a smoothstep-weighted bilinear, so a channel's
- * centre line between two of its pixels keeps none and the hills come back over about a third of a pixel. null with no
- * water cut (every sample keeps them all).
- * @param {Array<?Uint8Array>} nets - the layers' networks, LAYERS' order (the water's null when it is not cut)
- * @param {number} span
- * @returns {?(gx: number, gy: number) => number}
- */
-function waterFade(nets, span) {
-  const streams = nets[0], rivers = nets[1];
-  if (!streams && !rivers) return null;
-  const node = (qx, qy) => {
-    if (qx < 0 || qy < 0 || qx >= MAP_W || qy >= MAP_H) return 0;
-    const i = qy * MAP_W + qx;
-    return (rivers && rivers[i]) || (streams && streams[i]) ? 1 : 0;
-  };
-  return (gx, gy) => {
-    const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;   // pixel centres at whole numbers; the row runs south
-    const ix = Math.floor(fx), iy = Math.floor(fy);
-    const u = smooth01(fx - ix), v = smooth01(fy - iy);
-    const b = (node(ix, iy) * (1 - u) + node(ix + 1, iy) * u) * (1 - v) + (node(ix, iy + 1) * (1 - u) + node(ix + 1, iy + 1) * u) * v;
-    return 1 - smooth01(b * 2);
-  };
-}
 
 /** LANDFORM4: a site rect's bytes stand this far over its tile values (a city's clearance runs under 0). */
 const SITE_BIAS = 16;
@@ -684,8 +709,11 @@ const SITE_LEVELS_KEPT = 4096;
 /**
  * LANDFORM4: the level a site pulls its ground to, in kernel units - the mean of its pixel's land on a coarse grid
  * (every `site.grid` samples, its edges included): DFU's kernel, the lift faded as the shaper fades it, the hills - no
- * path's cut, no water's stilling and no site's pull, so it is one number however the network stands. The sea and the
- * beach count as they stand.
+ * path's cut, no water's valley and no site's pull, so it is one number however the network stands. AUDIT LANDFORMS III
+ * D4: the LAND's, the samples over the knee - DFU's blend after the kernel averages the sea and the beach into the town
+ * again, and a level that had counted them already stood six coastal towns under the beach line, 13 m under DFU's own;
+ * a pixel with no land on the grid takes the mean of all of it (a level under the knee, whose pull is held at the
+ * floor).
  * @param {object} woods
  * @param {number} sx
  * @param {number} sy
@@ -708,19 +736,19 @@ function siteLevel(woods, sx, sy, hDim, ground) {
   const cliff = cliffFade(woods, sx, sy, hDim);
   const ox = sx * span, oy = (MAP_H - sy) * span;
   const lattice = ground.hills ? hillLattice(ox, oy, span) : null;
-  let sum = 0, n = 0;
+  let sum = 0, n = 0, wet = 0, nw = 0;
   for (let x = 0; x <= span; x += step) {
     for (let y = 0; y <= span; y += step) {
       const h = kernel(x, y) * MAX_TERRAIN_HEIGHT;
+      if (!(h > LANDFORM_KNEE)) { wet += h; nw++; continue; }
       n++;
-      if (!(h > LANDFORM_KNEE)) { sum += h; continue; }
       const low = base(x, y) * BASE_HEIGHT_SCALE;
       const macro = Math.min(Math.max(low + noise(x, y) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);
-      sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates) : 0);
+      sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);
     }
   }
-  level = sum / n;
-  if (kept.size >= SITE_LEVELS_KEPT) kept.clear();
+  level = n ? sum / n : wet / nw;
+  if (kept.size >= SITE_LEVELS_KEPT) kept.delete(kept.keys().next().value);   // AUDIT LANDFORMS III R7: the longest kept goes, not the lot
   kept.set(k, level);
   return level;
 }
@@ -728,7 +756,10 @@ function siteLevel(woods, sx, sy, hDim, ground) {
 /**
  * LANDFORM4: the sites about one pixel - every site in the 5x5 of pixels round it (a path's profile is read in the
  * 3x3, and a site reaches no further than the pixels beside its own), in ONE global order, by pixel row then column, so
- * two pixels that share a sample fold the same sites into it in the same order and land on the same float.
+ * two pixels that share a sample fold the same sites into it in the same order and land on the same float. AUDIT
+ * LANDFORMS III C4: a margin - a sample reads a neighbour's arm only at its last two profile points, on their shared
+ * edge, where a site two pixels off stands its reach away at the nearest (124 samples, its clearance 3 past its pixel),
+ * so the 3x3's sites would land on the same floats; the 5x5 keeps a seam whole should a dial reach further.
  * @returns {Array<{x0: number, x1: number, y0: number, y1: number, reach: number, level: () => number}>}
  */
 function sitesAbout(woods, sites, px, py, span, hDim, ground) {
@@ -755,8 +786,12 @@ function sitesAbout(woods, sites, px, py, span, hDim, ground) {
 /**
  * LANDFORM4: the sites' pull at a world sample - each site's weight 1 inside its rect, easing to 0 at its reach past it
  * (1 - smoothstep); together they keep `keep` = the product of (1 - weight) of the land, and the rest goes to their
- * levels, each weighted by its weight to the fourth (the nearest all but alone where two reach). Writes `keep` to
- * `out[0]` and answers the pulled height.
+ * levels, each weighted by its weight to the fourth (the nearest all but alone where two reach). AUDIT LANDFORMS III A1:
+ * a pull UP is eased in by how far the land stands over the knee toward the level (smoothstep of (land - knee) /
+ * (level - knee)) - at the beach line the land is DFU's, and a sample beside it was pulled whole to a town's level: walls
+ * at the beach round coastal towns, 85 real pixels over 50 m past DFU's own step, the worst 149 m beside Penwold. Eased,
+ * a coast's land rises to a town's level no more than 1.69 times as steeply as it rises on its own. Writes the share of
+ * the land kept (`keep`, after the ease) to `out[0]` and answers the pulled height.
  * @param {ReturnType<typeof sitesAbout>} list
  * @param {number} gx
  * @param {number} gy
@@ -779,8 +814,11 @@ function pullTo(list, gx, gy, land, out) {
     ws += w4;
     wt += w4 * s.level();
   }
-  out[0] = keep;
-  return keep === 1 || !(ws > 0) ? land : keep * land + (1 - keep) * (wt / ws);
+  if (keep === 1 || !(ws > 0)) { out[0] = 1; return land; }
+  const level = wt / ws;
+  const move = level > land ? (1 - keep) * smooth01((land - LANDFORM_KNEE) / (level - LANDFORM_KNEE)) : 1 - keep;
+  out[0] = 1 - move;
+  return land + (level - land) * move;
 }
 
 /** LANDFORM1: a map-pixel byte's macro height with the lift, in kernel units - the far ring's law (farRing.js
@@ -800,9 +838,10 @@ export function reliefByteHeight(byte, fade = 1) {
  * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's
  * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood
  * up to 29.8 m over a road's cut (a fall billing over 120 HP) - on the real data now 1.6 m over at worst, 2.0 m under
- * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them - no network - the relief's
- * lift, through the same kernel (AUDIT LANDFORMS II J9: it was a second formula the game never ran, and the pins that
- * read it as "the real pipeline" read that). Not followed: World of Daggerfall's flatten.
+ * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them - no network, no sites, no
+ * climates - createLandforms' own defaults, the relief's lift and the hills in woodlands, through the same kernel (AUDIT
+ * LANDFORMS II J9: it was a second formula the game never ran, and the pins that read it as "the real pipeline" read
+ * that; AUDIT LANDFORMS III B4: this said "the relief alone" after LANDFORM5 gave the default its hills). Not followed: World of Daggerfall's flatten.
  * @param {object} woods - the sampler's three-method surface.
  * @param {number} px
  * @param {number} py
@@ -811,7 +850,8 @@ export function reliefByteHeight(byte, fade = 1) {
  * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [locationRect] - the pixel's location rect
  *   (setLocationTiles' answer), or null in the wild.
  * @param {number} [hDim]
- * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: the relief alone
+ * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: its defaults (the
+ *   relief and the woodlands' hills, no paths, no sites)
  * @returns {number}
  */
 export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
@@ -827,7 +867,7 @@ export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = 
  */
 export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
   const span = hDim - 1;
-  const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the relief alone, the kernel's own way
+  const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way
   let f;
   if (!locationRect) {
     const shaped = sampleKernel(woods, px, py, hDim, true, lf), plain = sampleKernel(woods, px, py, hDim, true, null);
@@ -881,10 +921,9 @@ export function createLandforms({ woods, roads = null, sites = null, hills = tru
   const half = span / 2;
   const cutRivers = !!roads?.water;
   const nets = LAYERS.map((l) => (l.water && !cutRivers ? null : roads?.[l.key] ?? null));
-  const still = hills ? waterFade(nets, span) : null;   // LANDFORM5: the hills stilled along the painted water
-  const hill = !hills ? NO_HILLS
-    : still ? (gx, gy, macro, low, lattice) => hillsAt(gx, gy, macro, low, lattice, climates) * still(gx, gy)
-      : (gx, gy, macro, low, lattice) => hillsAt(gx, gy, macro, low, lattice, climates);   // LANDFORM6: on the world's climates
+  // LANDFORM6: the hills on the world's climates (a pixel's shaper carves them along its painted water - AUDIT LANDFORMS
+  // III C1)
+  const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out, span);
   const ground = { hills: !!hills, climates };   // what a site's level stands on
   return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim), rivers: cutRivers };
 }
@@ -903,10 +942,69 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
   const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);
   const kept = new Float64Array(1);
   const lattice = hill === NO_HILLS ? null : hillLattice(ox, oy, span);   // LANDFORM5: the slow fields' nodes over this pixel
-  /** LANDFORMS 1, 4, 5: the land at a world sample - DFU's height, the lift, the hills (stilled by the water) - pulled to
-   *  the sites about it; `kept[0]` the share of the land's own left (so of its ground noise). */
+  // AUDIT LANDFORMS III C1: A RIVER CUTS ITS VALLEY. The first law stilled the hills to nothing along the painted water,
+  // and where its land was a dale the water stood over it on an embankment - on the real map 215 of 2,882 inland water
+  // pixels stood over every dry neighbour by more than 10 m, the worst 77 m. Now within `valley` of a river's or a
+  // stream's centre line the hills ease down to the deepest dale their land can stand (1 - smoothstep of the distance):
+  // the water lies under every hill across its valley, its floor flat a little way either side and its walls rising to
+  // the land's own hills. The centre lines are the network's own arms from the 5x5 of pixels round this one (a sample of
+  // this pixel or a path's profile point in the 3x3 lies nearer none further off than a valley's width), and a sample
+  // takes the nearest - order-free, so a seam is one number from both pixels.
+  const valleys = [];
+  if (hill !== NO_HILLS) {
+    for (const [li, radius] of [[0, LANDFORM_DIALS.valley.stream], [1, LANDFORM_DIALS.valley.river]]) {
+      const net = nets[li];
+      if (!net) continue;
+      const segs = [];
+      for (let qy = py - 2; qy <= py + 2; qy++) {
+        if (qy < 0 || qy >= MAP_H) continue;
+        for (let qx = px - 2; qx <= px + 2; qx++) {
+          if (qx < 0 || qx >= MAP_W) continue;
+          const mask = net[qy * MAP_W + qx];
+          if (!mask) continue;
+          const cx = qx * span + half, cy = (MAP_H - qy) * span + half;
+          for (const [bit, mdx, mdy] of DIR_DELTA) {
+            if (!(mask & bit)) continue;
+            const len = half * Math.sqrt(mdx * mdx + mdy * mdy);
+            segs.push({ ax: cx, ay: cy, ux: (mdx * half) / len, uy: (-mdy * half) / len, len });
+          }
+        }
+      }
+      if (segs.length) valleys.push({ segs, radius, r2: radius * radius });
+    }
+  }
+  /** AUDIT LANDFORMS III C1: the hills `h` at a world sample carved down toward `deep` (the deepest dale its lands can
+   *  stand) by its nearest painted water - never above `h`, never under `-deep`. */
+  const carve = (gx, gy, h, deep) => {
+    let out = h;
+    for (let vi = 0; vi < valleys.length; vi++) {
+      const v = valleys[vi];
+      let d2 = v.r2;
+      for (let si = 0; si < v.segs.length; si++) {
+        const sg = v.segs[si];
+        const vx = gx - sg.ax, vy = gy - sg.ay;
+        let t = vx * sg.ux + vy * sg.uy;
+        if (t < 0) t = 0; else if (t > sg.len) t = sg.len;
+        const qx = vx - sg.ux * t, qy = vy - sg.uy * t, q = qx * qx + qy * qy;
+        if (q < d2) d2 = q;
+      }
+      if (!(d2 < v.r2)) continue;
+      const k = smooth01(Math.sqrt(d2) / v.radius);
+      const c = h * k - deep * (1 - k);
+      if (c < out) out = c;
+    }
+    return out;
+  };
+  const deepOut = new Float64Array(1);
+  /** LANDFORMS 1, 4, 5: the land at a world sample - DFU's height, the lift, the hills (carved into the painted water's
+   *  valleys) - pulled to the sites about it; `kept[0]` the share of the land's own left (so of its ground noise). */
   const landAt = (gx, gy, h, macro, low, fade, list) => {
-    const l = h + reliefLift(low) * fade + hill(gx, gy, macro, low, lattice);
+    let hh = 0;
+    if (hill !== NO_HILLS) {
+      hh = hill(gx, gy, macro, low, lattice, deepOut);
+      if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);
+    }
+    const l = h + reliefLift(low) * fade + hh;
     if (!list.length) { kept[0] = 1; return l; }
     return pullTo(list, gx, gy, l, kept);
   };
@@ -1016,8 +1114,8 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
         // to a blend of its arms, never to a step where one arm hands over to the next. An arm the sample lies BEYOND
         // the end of (its nearest point its end) all but stands down a sample past it - a straight road is two arms
         // meeting at a centre and at every pixel edge, and the one alongside is the one that grades it
-        const q = d * d + 0.25;
-        const w = (((1 - d / reach) ** 2) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));
+        const q = d * d + 0.25, r = 1 - d / reach;   // AUDIT LANDFORMS III A8: r * r, not r ** 2 (an engine's own pow)
+        const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));
         ws += w;
         wf += w * graded(s, t);
       }

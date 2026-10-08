@@ -67,23 +67,31 @@ test('LANDFORM4: a town stands in its land - levelled on a lifted hillside it wa
   assert.ok(small <= bareSmall + 1, `the hamlet: ${small.toFixed(1)} degrees on land of ${bareSmall.toFixed(1)}`);
 });
 
-test('LANDFORM4: a site\'s rect stands at its level, the pixel\'s mean, so DFU\'s own blend after the kernel finds it all but level; the pull reaches past the pixel\'s edge and stops at its reach', () => {
+test('LANDFORM4: a site\'s rect stands at its level, the pixel\'s mean, wherever its land stands at or over it, and its land under the level is raised by the knee\'s ease (AUDIT LANDFORMS III A1), so DFU\'s own blend after the kernel finds it all but level; the pull reaches past the pixel\'s edge and stops at its reach', () => {
   const lf = createLandforms({ woods: upland, sites: SITES });
   const { px, py, loc: l } = TOWNS[1];
   const r = locationFootprintRect(l), shaped = generateSamples(upland, px, py, H, lf);
-  const level = at(shaped, 64, 64);
-  for (let x = Math.max(0, r.xMin); x <= Math.min(128, r.xMax); x += 4) for (let y = Math.max(0, r.yMin); y <= Math.min(128, r.yMax); y += 4) {
-    assert.ok(Object.is(at(shaped, x, y), level), `(${x},${y}): inside the rect, the site's level`);
+  const free = generateSamples(upland, px, py, H, createLandforms({ woods: upland }));
+  let coarse = 0, nc = 0;
+  for (let x = 0; x <= 128; x += LANDFORM_DIALS.site.grid) for (let y = 0; y <= 128; y += LANDFORM_DIALS.site.grid) { coarse += at(free, x, y); nc++; }
+  const ease = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t)), L = (coarse / nc) * UNIT;
+  const rect = [];
+  for (let x = Math.max(0, r.xMin); x <= Math.min(128, r.xMax); x += 4) for (let y = Math.max(0, r.yMin); y <= Math.min(128, r.yMax); y += 4) rect.push([x, y, at(free, x, y) * UNIT, at(shaped, x, y)]);
+  const over = rect.filter(([, , f]) => f >= L + 0.01), under = rect.filter(([, , f]) => f < L - 0.01);
+  assert.ok(over.length > 20 && under.length > 20, `the rect sits across its level on the hillside (${over.length} over, ${under.length} under)`);
+  const level = over[0][3];   // over the level: pulled down to it, whole - one float across the rect
+  for (const [x, y, , s] of over) assert.ok(Object.is(s, level), `(${x},${y}): its land over the level, the site's level`);
+  for (const [x, y, f, s] of under) {   // under it: raised by the knee's ease, (f - knee) / (level - knee) through smoothstep
+    const want = f + (L - f) * ease((f - LANDFORM_KNEE) / (L - LANDFORM_KNEE));
+    assert.ok(Math.abs(s * UNIT - want) < 0.02, `(${x},${y}): its land under the level, ${(s * UNIT).toFixed(3)} units against the ease's ${want.toFixed(3)}`);
+    assert.ok(s * UNIT > f && s <= level, `(${x},${y}): raised toward the level, never past it`);
   }
   // the level is the mean of the pixel's land on the coarse grid - within a few metres of the whole pixel's own mean, so
   // the pipeline's blend moves the town by little
-  const free = generateSamples(upland, px, py, H, createLandforms({ woods: upland }));
   let mean = 0;
   for (let i = 0; i < free.length; i++) mean += free[i];
   mean /= free.length;
   assert.ok(Math.abs(level - mean) * M < 6, `the level ${(level * M).toFixed(1)} m against the pixel's mean ${(mean * M).toFixed(1)} m`);
-  let coarse = 0, nc = 0;
-  for (let x = 0; x <= 128; x += LANDFORM_DIALS.site.grid) for (let y = 0; y <= 128; y += LANDFORM_DIALS.site.grid) { coarse += at(free, x, y); nc++; }
   assert.ok(Math.abs(level - coarse / nc) * UNIT < 0.01, `the level is that grid's mean of the pixel's own land, to the float (${((level - coarse / nc) * UNIT).toFixed(4)} units)`);
   const job = generatePixelTerrain({ woods: upland, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, sites: SITES, landform: true, hasLocation: true, locationRect: r });
   assert.ok(Math.abs(job.avg - level) * M < 3, `the town stands on ${(job.avg * M).toFixed(1)} m, its level ${(level * M).toFixed(1)} m`);
@@ -95,19 +103,21 @@ test('LANDFORM4: a site\'s rect stands at its level, the pixel\'s mean, so DFU\'
   assert.ok(past < 128 && past > 0, `the reach ends inside the neighbour (${past})`);
   for (const y of [20, 64, 108]) assert.ok(Object.is(at(east, past, y), at(eastFree, past, y)), `(${past},${y}) in the neighbour: past the reach, the land`);
   assert.equal(reach, LANDFORM_DIALS.site.most, 'a 6x6 town reaches the most');
-  // a site on the shore pulls toward a level the sea drags under the knee - a sea truly at the ocean's floor (no large
-  // heightmap over it) and a strand rising out of it to a byte of 7 across the site's pixel - and the land it pulls is
-  // held over the knee, at LANDFORM_FLOOR as a cut is; the sea and the beach DFU's to the bit (LANDFORM1's knee)
+  // a site in the sea pulls toward a level under the knee - a sea truly at the ocean's floor (no large heightmap over
+  // it) and a strand rising out of it to a byte of 7 in the pixel east of the site's; its pixel has no land on the grid,
+  // so its level is the whole mean (AUDIT LANDFORMS III D4 - PIN MOVED: the site stood on the strand's pixel, whose level
+  // the sea dragged under the knee; a level is its land's now) - and the land it pulls is held over the knee, at
+  // LANDFORM_FLOOR as a cut is; the sea and the beach DFU's to the bit (LANDFORM1's knee)
   const byte = (x) => (x <= 100 ? 0 : 7);
   const sea = {
     getHeightMapValue: (x) => byte(x),
     getHeightMapValuesRange1Dim: (x0, y0, dim) => { const out = new Uint8Array(dim * dim); for (let j = 0; j < dim; j++) for (let i = 0; i < dim; i++) out[i + j * dim] = byte(x0 + i); return out; },
     getLargeHeightMapValuesRange: (px, py, dim) => new Uint8Array(dim * 3 * dim * 3),
   };
-  const lfShore = createLandforms({ woods: sea, sites: landformSites([{ px: 101, py: 200, loc: loc(6, 6) }]) });
+  const lfShore = createLandforms({ woods: sea, sites: landformSites([{ px: 100, py: 200, loc: loc(6, 6) }]) });
   const FLOOR = Math.fround(LANDFORM_FLOOR / UNIT);
   let held = 0;
-  for (const [sx, sy] of [[101, 200], [102, 200], [101, 199]]) {
+  for (const [sx, sy] of [[100, 200], [101, 200], [101, 199]]) {
     const dfu = generateSamples(sea, sx, sy), pulled = generateSamples(sea, sx, sy, H, lfShore);
     for (let i = 0; i < dfu.length; i++) {
       if (Math.fround(dfu[i] * UNIT) <= LANDFORM_KNEE) assert.ok(Object.is(pulled[i], dfu[i]), `${sx},${sy} #${i}: under the knee, DFU's own`);
@@ -117,7 +127,7 @@ test('LANDFORM4: a site\'s rect stands at its level, the pixel\'s mean, so DFU\'
       }
     }
   }
-  assert.ok(held > 1000, `the strand pulled down to the floor and held there (${held} samples)`);
+  assert.ok(held > 100, `the strand pulled down to the floor and held there (${held} samples)`);
 });
 
 test('LANDFORM4: the sites are the game\'s own rows as the map table gives them - the block grid from its tile origin with setLocationTiles\' clearance, four bytes a pixel; and a seam is one number from both pixels round a site', () => {
@@ -180,10 +190,11 @@ test('LANDFORM5: the land rolls - hills over every land sample, a pure function 
     assert.ok(Math.abs(at(roll, 64, y) - smooth(64, y)) * UNIT < 1e-3, `y=${y}: the road's bed is the rolling land's macro`);
   }
   assert.ok(moved > 10, `off the road the land rolls (${moved} of 33)`);
-  // along a painted river the hills are stilled to nothing: its centre line is the land without them, cut
+  // along a painted river the hills are carved into its valley (AUDIT LANDFORMS III C1 - the first law stilled them to
+  // nothing there, and the river stood over its dales): its centre line stands under the land without hills, and with
+  // the rivers off the hills stand there again
   const riverRoll = generateSamples(woods, 290, 255, H, createLandforms({ woods, roads: NET })), riverFlat = generateSamples(woods, 290, 255, H, createLandforms({ woods, roads: NET, hills: false }));
-  for (let x = 0; x <= 128; x += 8) assert.ok(Math.abs(at(riverRoll, x, 64) - at(riverFlat, x, 64)) * UNIT < 1e-9, `x=${x}: on the river's centre line, no hill`);
-  // and the rivers off, no water to still them: the hills stand there too
+  for (let x = 0; x <= 128; x += 8) assert.ok(at(riverRoll, x, 64) < at(riverFlat, x, 64) - 1 / UNIT, `x=${x}: on the river's centre line, its valley's floor`);
   const dryRoll = generateSamples(woods, 290, 255, H, createLandforms({ woods, roads: { ...NET, water: false } }));
   let back = 0;
   for (let x = 0; x <= 128; x += 8) if (Math.abs(at(dryRoll, x, 64) - at(riverFlat, x, 64)) * UNIT > 2) back++;
@@ -214,7 +225,7 @@ test('LANDFORM4: the sites ride every kernel - the worker keeps the ones the cli
   assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, climates: this\._climates, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
   assert.match(client, /this\._worker\.postMessage\(\{ t: 'landform-tables', sites: s, climates: c \}, \[s, c\]\.filter\(Boolean\)\.map\(\(a\) => a\.buffer\)\);/, 'the worker gets copies');
   const world = src('src/scenes/world.js');
-  assert.match(world, /if \(landform\) \{\n    _landformSites = landformSites\(_hubRows\.map\(\(loc\) => \{ const p = longitudeLatitudeToMapPixel\(loc\.mapTableData\.longitude, loc\.mapTableData\.latitude\); return \{ px: p\.x, py: p\.y, loc \}; \}\)\);\n    _landformClimates = landformClimates\(\(x, y\) => maps\.getClimateIndex\(x, y\)\);[^\n]*\n    terrainGen\.setLandformTables\(\{ sites: _landformSites, climates: _landformClimates \}\);\n  \}/, 'made once of the game\'s own rows (HUB1\'s - the same sites on every client), handed to both kernels with the climates');
-  assert.ok(world.indexOf('_landformSites = landformSites(_hubRows') > world.indexOf('if (l < baseCount) { _hubRows.push(loc);'), 'after the rows are gathered');
+  assert.match(world, /if \(landform\) \{\n    const classicRow = \(row\) => \(maps\.locationReplaced\(row\.regionIndex, row\.locationIndex\) \? maps\.readClassicLocation\(row\.regionIndex, row\.locationIndex\) : row\);\n    _landformSites = landformSites\(_hubRows\.map\(classicRow\)\.filter\(Boolean\)\.map\(\(loc\) => \{ const p = longitudeLatitudeToMapPixel\(loc\.mapTableData\.longitude, loc\.mapTableData\.latitude\); return \{ px: p\.x, py: p\.y, loc \}; \}\)\);\n    _landformClimates = landformClimates\(\(x, y\) => maps\.getClimateIndex\(x, y\)\);[^\n]*\n    terrainGen\.setLandformTables\(\{ sites: _landformSites, climates: _landformClimates \}\);\n  \}/, 'made once of the game\'s own rows (HUB1\'s - the same sites on every client), handed to both kernels with the climates');
+  assert.ok(world.indexOf('_landformSites = landformSites(_hubRows') > world.indexOf('if (l < baseCount) { _hubRows.push(loc);'), 'after the rows are gathered');   // AUDIT LANDFORMS III B1: each as MAPS.BSA holds it (test/auditlandforms3.test.js)
   assert.ok(world.indexOf('terrainGen.setLandformTables(') < world.indexOf('await terrainGen.generate({'), 'before the first pixel is asked of either');
 });

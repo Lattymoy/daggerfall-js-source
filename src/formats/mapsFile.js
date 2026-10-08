@@ -653,6 +653,16 @@ export class MapsFile {
     return dfLocation;
   }
 
+  /**
+   * AUDIT LANDFORMS III B1: whether the world-data door serves this location in place of MAPS.BSA's own row (a town
+   * pack's) - the answer the door cached when getLocation asked, so a caller that needs every client's same row
+   * (world/landforms.js's sites) re-reads the classic one only where it differs.
+   * @returns {boolean}
+   */
+  locationReplaced(region, location) {
+    return !!worldDataDoor()?.getDFLocationReplacementData(region, location, this);
+  }
+
   _readLocation(region, location) {
     // Check for replacement location data and use it if found (MapsFile.cs:998-1000 - RR3b: the world-data door);
     // WD3: the reader is handed over, so a mod's edit can be laid on this location as the BSA holds it
