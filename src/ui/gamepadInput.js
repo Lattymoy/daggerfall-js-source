@@ -286,6 +286,9 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       const c = name ? codeOf(b, name) : null;
       // PAD-BINDS (FIELD BUGS 2026-10-04e): an action on no key at all (TravelView ships unbound) is the host's own
       // door - a synthetic press of nothing reached nothing
+      // MODE-WHEEL: the four mode actions ship unbound too (the wheel picks on a keyboard) - an unbound mode is the
+      // host's ChangeInteractionMode, `pickMode`, so NextMode and a d-pad mode choice still answer
+      if (!c && MODE_ACTIONS[name] && hooks.pickMode) { try { hooks.pickMode(MODE_ACTIONS[name]); } catch (e) { console.warn('[gamepad] pick mode:', e?.message ?? e); } return; }
       if (!c) { try { hooks.padAction?.(name); } catch (e) { console.warn('[gamepad] pad action:', e?.message ?? e); } return; }
       wanted.add(c);
       if (action === 'AutoMap' || action === 'TravelMap') { P.padMap = action; P.padMapCode = code; P.padMapSeen = false; P.padMapAge = 0; }

@@ -85,6 +85,7 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
 import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, askInteractionMode } from '../player/interactionMode.js';
+import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
@@ -476,6 +477,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // player who moves StealMode off F1 moves the key, and an F1 they
     // have re-pointed at Inventory falls through this ladder to the
     // host's own `actionOf` and opens the pack.
+    // MODE-WHEEL: the held key opens the wheel and its release picks through setMode - under the same two gates
+    // as the four mode keys below (ui/modeWheel.js). NOT consumed: the key still joins the host's held ring below
+    // this rung (G3), so a key the player shares with another action still does that one too (KB1 law 3)
+    if (actionsOf(e, keys).includes(MODE_WHEEL_ACTION)) { e.preventDefault(); modeWheel.press(e, (w) => setMode(w)); }
     const m = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);   // UXB1-S: the mode a shared key carries, whichever of its actions it is
     if (m) {
       e.preventDefault();
@@ -685,6 +690,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if ((overlay && talkPaused()) || otherOverlayActive?.()) return getInteractionMode();
     setMode(nextInteractionMode(getInteractionMode()));
     return getInteractionMode();
+  }
+
+  /** MODE-WHEEL: one mode, chosen - the pad's NextMode and its mode choices once the four mode actions ship unbound
+   *  (ui/gamepadInput.js fireDpad). Under nextMode's two gates; answers whether it was heard. */
+  function pickMode(m) {
+    if ((overlay && talkPaused()) || otherOverlayActive?.()) return false;
+    setMode(m);
+    return true;
   }
 
   /** The activation ray (the host's E/use edge). persons = [{ person, pos }] world feet of LIVE townsfolk. Returns true
@@ -1386,7 +1399,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     priority: 0,
   });
   return {
-    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
+    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, pickMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

@@ -377,7 +377,11 @@ test('AUDIT 58 talk: the mode keys are ACTIONS, and a window shuts them down (Pl
   assert.deepEqual({ ...MODE_ACTIONS },
     { StealMode: 'steal', GrabMode: 'grab', InfoMode: 'info', TalkMode: 'dialogue' });
   for (const m of Object.values(MODE_ACTIONS)) assert.ok(MODES.includes(m));
-  // InputManager.SetupDefaults :999-1002 - F1-F4 are the DEFAULTS
+  // InputManager.SetupDefaults :999-1002 - F1-F4 WERE the defaults; MODE-WHEEL (Ledger A) ships them unbound, and
+  // a player who wants DFU's keys binds them back - which is what this pin drives
+  assert.equal(actionOf(key('F1')), null);
+  const own = withDefaults();
+  for (const [code, a] of [['F1', 'StealMode'], ['F2', 'GrabMode'], ['F3', 'InfoMode'], ['F4', 'TalkMode']]) setBinding(own, code, a);
   assert.equal(actionOf(key('F1')), 'StealMode');
   assert.equal(actionOf(key('F4')), 'TalkMode');
 

@@ -30,8 +30,9 @@ export const TOUCH_BUTTON_ACTIONS = Object.freeze([
   { id: 'CastSpell', label: 'Spellbook', glyph: 'Cast', kind: 'tap', w: 60 },
   { id: 'RecastSpell', label: 'Ready the last spell', glyph: 'Recast', kind: 'tap', w: 72 },
   { id: 'UseMagicItem', label: 'Use magic item', glyph: 'Item', kind: 'tap', w: 60 },
-  { id: 'Crouch', label: 'Crouch', glyph: 'Crouch', kind: 'hold', w: 72 },
-  { id: 'Sneak', label: 'Sneak', glyph: 'Sneak', kind: 'hold', w: 68 },
+  // CROUCH-SNEAK: Crouch is the sneak now, and Sneak ships unbound - its button would press nothing, so it is no
+  // choice here (a stored 'Sneak' reads as its slot's default, touchButtonAction's law)
+  { id: 'Crouch', label: 'Crouch and sneak', glyph: 'Crouch', kind: 'hold', w: 72 },
   { id: 'Run', label: 'Run', glyph: 'Run', kind: 'hold', w: 60 },
   { id: 'AutoRun', label: 'Auto run', glyph: 'Auto', kind: 'tap', w: 60 },
   { id: 'SwitchHand', label: 'Switch hand', glyph: 'Hand', kind: 'tap', w: 60 },

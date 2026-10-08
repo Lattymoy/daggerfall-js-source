@@ -2,7 +2,7 @@
 // Transport, hold up = the next interaction mode) and the sticks' sensitivity.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createBindings, resetDefaults, getBinding, getJoystickUIBinding } from '../src/systems/inputActions.js';
+import { createBindings, resetDefaults, getBinding, getJoystickUIBinding, setBinding } from '../src/systems/inputActions.js';
 import { applyPlusPadLayout, registerCrossbar, plusDpadMap, setPlusDpad, scaleStick, plusStickSens, setPlusStickSens } from '../src/ui/plusPad.js';
 import { bindPlusRow, clearPlusRow, bindRefusal, rowCode, PLUS_BIND_ROWS } from '../src/ui/plusPadBinds.js';
 import { setBindings } from '../src/ui/input.js';
@@ -63,7 +63,8 @@ test('PADPLUS10 d-pad: hold left is Transport, a tap is the quest log; each hold
   const key = (a) => `keydown:${getBinding(store, a)}`;
   const hold = (i, frames) => { pad.buttons[i] = { pressed: true, value: 1 }; for (let f = 0; f < frames; f++) gp.tick(1 / 60); pad.buttons[i] = { pressed: false, value: 0 }; gp.tick(1 / 60); gp.tick(1 / 60); };
   const canvas = { dispatchEvent() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }), style: {} };
-  const gp = attachGamepad(canvas, { overlayActive: () => false, paused: () => false, attack() {}, look() {} }, { getPads: () => [pad], dispatch, makeEvent: (type, init) => ({ type, ...init }) });
+  const picked = [];   // MODE-WHEEL: the four mode actions ship unbound, so NextMode is the host's pickMode door
+  const gp = attachGamepad(canvas, { overlayActive: () => false, paused: () => false, attack() {}, look() {}, pickMode: (m) => { picked.push(m); setInteractionMode(m); } }, { getPads: () => [pad], dispatch, makeEvent: (type, init) => ({ type, ...init }) });
   try {
     gp.tick(1 / 60);
     assert.deepEqual(plusDpadMap().left, { tap: 'LogBook', hold: 'Transport' });
@@ -75,11 +76,15 @@ test('PADPLUS10 d-pad: hold left is Transport, a tap is the quest log; each hold
     // up: grab (the default) -> info -> talk
     setInteractionMode('grab');
     events.length = 0; hold(12, 40);
-    assert.ok(events.includes(key('InfoMode')), `hold up from Grab is Info: ${events}`);
+    assert.deepEqual(picked, ['info'], `hold up from Grab is Info, through the host's door: ${events}`);
     assert.ok(!events.includes(key('SwitchHand')), 'and no hand swap');
-    setInteractionMode('info');   // the host's own F3 handler would have done this
     events.length = 0; hold(12, 40);
-    assert.ok(events.includes(key('TalkMode')), `the next hold is Talk: ${events}`);
+    assert.deepEqual(picked, ['info', 'dialogue'], 'the next hold is Talk');
+    // a player who binds DFU's F-keys back gets the key pressed, as before
+    setBinding(store, 'F1', 'StealMode');
+    events.length = 0; hold(12, 40);
+    assert.ok(events.includes('keydown:F1'), `bound, the next mode's key is pressed: ${events}`);
+    assert.equal(picked.length, 2, 'and the door is not also used');
     // the player's own d-pad
     setPlusDpad('right', 'hold', 'CharacterSheet');
     events.length = 0; hold(15, 40);

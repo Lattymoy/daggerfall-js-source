@@ -190,6 +190,7 @@ import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
+import { modeWheel } from '../ui/modeWheel.js';   // MODE-WHEEL: the mouse steers it while it is open
 import { randomEpitaph } from '../systems/gravestoneLore.js';   // GRAVE1: Info mode's graveyard flavour line
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -3607,6 +3608,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // HOVER before the look gate refuses the unlocked pointer.
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
+    if (modeWheel.look(e.movementX, e.movementY)) return;   // MODE-WHEEL: while it is open the mouse steers it, not the view
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
     // weapon control, and whether this host or worldModes owns the
     // swing, it is never a look. The old line gated the whole thing on
@@ -3676,6 +3678,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     dial: isEnhanced(),
     enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    pickMode: (m) => townTalk.pickMode(m),   // MODE-WHEEL: the pad's NextMode, its mode actions unbound
     overlayActive: () => townTalk.overlayActive,
     // AUDIT 62 F7: the finger's pause gate - the same predicate the
     // mouse arms carry (the mousemove look needs the pointer lock a

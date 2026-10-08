@@ -46,7 +46,9 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
    its runtime does (AUDIT PRE-MERGE 0928 U7, `modSettings.js` latchModLoaded). No gameplay code reads a bound key by its raw code except the reservations the
    sweep in `test/kb1_keybinds.test.js` names with their reasons (the back-button latch, Alt's preventDefault, the
    travel panel's help, a talk window's confirm alias, the developer fly-cam).
-6. **Tests hold it, and old saves come forward.** The file carries `version: 2`. A version-1 file is carried once:
+6. **Tests hold it, and old saves come forward.** The file carries `version: 3` (MODE-WHEEL: a version-2 file lets
+   Left Alt go where it still holds Sneak, so the mode wheel lands there - Ledger A's CROUCH-SNEAK + MODE-WHEEL row).
+   A version-1 file is carried once:
    (1) E, Backquote and Left Ctrl are let go where they still hold DFU's old defaults (AbortSpell, the console,
    Slide), and the two hidden actions let go of any key; (2) the standard's defaults land on every key the player's
    own file left free; (3) a mod key the player SAVED is carried into its action onto a key still free after that (a
@@ -54,6 +56,13 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
    takes a key from another action. What could not be carried - an action whose new key the player's own file
    already spends, a mod's old key another action now holds - is TOLD to the player on the HUD once a scene stands
    (`controlsConfig.js keybindCarryNotes`, `notify.js hudTextWhenShown`), a mod's line only while it is on.
+
+## Crouch is sneak; the mode wheel (CROUCH-SNEAK + MODE-WHEEL, 2026-10-08)
+
+- **C crouches AND sneaks.** Crouched is sneaking: the crouched-sneak speed and the stealth half-speed gate ride the
+  crouch toggle (`player/motor.js`). `Sneak` ships unbound - bind it for DFU's held slow walk without the crouch.
+- **Hold Left Alt for the mode wheel.** Flick the mouse toward Talk (up), Grab (right), Steal (down) or Info (left)
+  and let go (`ui/modeWheel.js`). F1-F4 ship unbound and still set a mode once bound. A pad's NextMode is unchanged.
 
 ## Mac's four calls (2026-09-23)
 
@@ -242,10 +251,10 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `CenterView` | HOME |  | Centre the view |
 | `TogglePerspective` | MOUSE4 |  | First / third person |
 | `Jump` | SPACE | `JoystickButton5` | Jump |
-| `Crouch` | C | `JoystickButton4` | Crouch |
+| `Crouch` | C | `JoystickButton4` | Crouch and sneak |
 | `Run` | LSHIFT | `JoystickButton8` | Run |
 | `AutoRun` | MIDDLE CLICK |  | Auto run |
-| `Sneak` | LALT |  | Sneak |
+| `Sneak` | (unbound) |  | Sneak (held, no crouch) |
 | `WalkMode` | (unbound) |  | Walk mode on / off |
 | `FloatUp` | PG UP |  | Float up (levitate, swim) |
 | `FloatDown` | PG DN |  | Float down (levitate, swim) |
@@ -273,10 +282,11 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 |---|---|---|---|
 | `ActivateCenterObject` | LEFT CLICK |  | Activate (mouse) |
 | `Interact` | E | `JoystickButton1` | Interact |
-| `StealMode` | F1 |  | Steal mode |
-| `GrabMode` | F2 |  | Grab mode |
-| `InfoMode` | F3 |  | Info mode |
-| `TalkMode` | F4 |  | Talk mode |
+| `ModeWheel` | LALT |  | Mode wheel (hold, flick, release) |
+| `StealMode` | (unbound) |  | Steal mode |
+| `GrabMode` | (unbound) |  | Grab mode |
+| `InfoMode` | (unbound) |  | Info mode |
+| `TalkMode` | (unbound) |  | Talk mode |
 | `QuickLootAll` | P |  | Take everything |
 | `QuickLootOpen` | J |  | Open the container |
 | `Transport` | T |  | Transport |

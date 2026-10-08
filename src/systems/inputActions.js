@@ -162,6 +162,12 @@ export const ACTIONS = Object.freeze([
   // own action (KB1's law for a mod's key; LEGACY-KEY in DEFAULT_BINDINGS for why it is not G). Appended, like every
   // port action before it.
   'LegacyFamily',
+  // MODE-WHEEL (a recorded departure, Port-Ledger A; the player: "change the interaction model (steal, info, etc) into
+  // something more palatable and streamlined with easy input"): HOLD to open the interaction-mode wheel, flick the
+  // mouse toward Steal, Grab, Info or Talk, let go to choose (ui/modeWheel.js). DFU's four mode actions keep their
+  // rows and their positions - they only give up their F1-F4 DEFAULTS, so a player who wants them binds them back.
+  // Appended, like every port action before it.
+  'ModeWheel',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -179,7 +185,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily']);   // LEGACY1: Project Legacy's family tree   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel']);   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -206,10 +212,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['Mouse2', 'AutoRun'],
   ['KeyR', 'Rest'],
   ['KeyT', 'Transport'],
-  ['F1', 'StealMode'],
-  ['F2', 'GrabMode'],
-  ['F3', 'InfoMode'],
-  ['F4', 'TalkMode'],
+  // MODE-WHEEL: F1-F4 (StealMode..TalkMode) ship UNBOUND - the wheel on Left Alt picks the mode (below). The four
+  // rows stay in the pane for a player who wants DFU's keys back.
   ['Backspace', 'CastSpell'],
   ['KeyQ', 'RecastSpell'],
   ['Backquote', 'AbortSpell'],   // KB1: E is Interact's (Mac's call); the console key DFU spent on a console this port has not
@@ -225,7 +229,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['Insert', 'LookUp'],
   ['Delete', 'LookDown'],
   ['Home', 'CenterView'],
-  ['AltLeft', 'Sneak'],
+  // CROUCH-SNEAK: Sneak ships UNBOUND - Crouch (C) is the sneak now (player/motor.js); Left Alt is the mode wheel's
   ['KeyL', 'LogBook'],
   ['KeyN', 'NoteBook'],
   ['KeyM', 'AutoMap'],
@@ -277,7 +281,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // letter, and this is it.
   //
   // The obvious keys are all spoken for and each for a reason worth
-  // not undoing: Alt is Sneak, Backquote is the console, Tab is the
+  // not undoing: Alt is the mode wheel (it was Sneak), Backquote is the console, Tab is the
   // pixel dial (PX15), and Enter is the very collision this action
   // exists to get away from.
   //
@@ -361,6 +365,9 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // DECOR_FREE_KEYS), so the tree ships on the keypad's slash, read by nothing in play - and the pause window's Family
   // page is its door on every keyboard.
   ['NumpadDivide', 'LegacyFamily'],
+  // MODE-WHEEL: Left Alt, Sneak's old key - CROUCH-SNEAK made Crouch the sneak, and the hosts already stop the
+  // browser's own Alt (its menu bar) on both edges
+  ['AltLeft', 'ModeWheel'],
 ]);
 
 /**
@@ -473,8 +480,8 @@ export const ACTION_GROUPS = Object.freeze([
   g('Movement', [
     ['MoveForwards', 'Move forwards'], ['MoveBackwards', 'Move backwards'], ['MoveLeft', 'Move left'], ['MoveRight', 'Move right'],
     ['TurnLeft', 'Turn left'], ['TurnRight', 'Turn right'], ['LookUp', 'Look up'], ['LookDown', 'Look down'],
-    ['CenterView', 'Centre the view'], ['TogglePerspective', 'First / third person'], ['Jump', 'Jump'], ['Crouch', 'Crouch'], ['Run', 'Run'], ['AutoRun', 'Auto run'],
-    ['Sneak', 'Sneak'], ['WalkMode', 'Walk mode on / off'], ['FloatUp', 'Float up (levitate, swim)'], ['FloatDown', 'Float down (levitate, swim)'],
+    ['CenterView', 'Centre the view'], ['TogglePerspective', 'First / third person'], ['Jump', 'Jump'], ['Crouch', 'Crouch and sneak'], ['Run', 'Run'], ['AutoRun', 'Auto run'],
+    ['Sneak', 'Sneak (held, no crouch)'], ['WalkMode', 'Walk mode on / off'], ['FloatUp', 'Float up (levitate, swim)'], ['FloatDown', 'Float down (levitate, swim)'],
   ]),
   g('Combat', [
     ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
@@ -484,7 +491,7 @@ export const ACTION_GROUPS = Object.freeze([
     ['UseMagicItem', 'Use magic item'],
   ]),
   g('Interaction', [
-    ['ActivateCenterObject', 'Activate (mouse)'], ['Interact', 'Interact'],
+    ['ActivateCenterObject', 'Activate (mouse)'], ['Interact', 'Interact'], ['ModeWheel', 'Mode wheel (hold, flick, release)'],
     ['StealMode', 'Steal mode'], ['GrabMode', 'Grab mode'], ['InfoMode', 'Info mode'], ['TalkMode', 'Talk mode'],
     ['QuickLootAll', 'Take everything'], ['QuickLootOpen', 'Open the container'],
     ['Transport', 'Transport'], ['Rest', 'Rest'],
@@ -1314,8 +1321,18 @@ export function repairUnloseableBindings(store) {
   return fixed;
 }
 
-/** KB1: THE FILE'S VERSION. 1 is every file before the keybinding standard (it carried no field); 2 is the standard. */
-export const KEYBINDS_VERSION = 2;
+/** KB1: THE FILE'S VERSION. 1 is every file before the keybinding standard (it carried no field); 2 is the standard;
+ *  3 is MODE-WHEEL's (Left Alt let go of Sneak, so the wheel can land on it). */
+export const KEYBINDS_VERSION = 3;
+
+/** KB1's step-1 rows, `[code, old default, the version that moved it]`: a file older than the version lets the code
+ *  go where it still holds the old default. MODE-WHEEL: Left Alt was Sneak's until v3; a v2 file let go of it once, so
+ *  the wheel's default lands there - a player who chose Alt for something else keeps it, and is told the wheel has
+ *  no key. F1-F4 are NOT let go: a saved file's mode keys still work beside the wheel. */
+const LET_GO = Object.freeze([
+  ['KeyE', 'AbortSpell', 2], ['Backquote', 'ToggleConsole', 2], ['ControlLeft', 'Slide', 2],
+  ['AltLeft', 'Sneak', 3],
+]);
 
 /**
  * KB1: A v1 FILE COMES FORWARD, ONCE. The standard moved three defaults a saved file may still hold, and the
@@ -1328,8 +1345,9 @@ export const KEYBINDS_VERSION = 2;
  * drop, and the action that lost its key was never named. And E was let go of AbortSpell whether or not Backquote
  * could take it, so a player who had spent Backquote lost the spell's abort without a word. Now, in three steps:
  *  1. LET GO. E, Backquote and Left Ctrl are let go where they still hold the OLD default (AbortSpell,
- *     ToggleConsole, Slide), and the two hidden actions let go of ANY code they hold - they do nothing, and a row
- *     that holds a key and does nothing is how a key gets spent twice (HIDDEN_ACTIONS).
+ *     ToggleConsole, Slide) - and, for a v2 file, Left Alt where it still holds Sneak (MODE-WHEEL, LET_GO) - and
+ *     the two hidden actions let go of ANY code they hold - they do nothing, and a row that holds a key and does
+ *     nothing is how a key gets spent twice (HIDDEN_ACTIONS).
  *  2. THE STANDARD'S DEFAULTS LAND - the autofill, on every code the player's own file left free.
  *  3. THE MODS' OLD KEYS come in, onto a code free AFTER step 2 - a player's choice never takes a key from another
  *     action. A value they SAVED that the port never shipped is their choice; `None` keeps the action unbound; a
@@ -1342,8 +1360,8 @@ export const KEYBINDS_VERSION = 2;
 export function migrateKeyBinds(store, fromVersion) {
   const report = { moved: [], kept: [], lost: [] };
   if (fromVersion >= KEYBINDS_VERSION) return report;
-  for (const [code, was] of [['KeyE', 'AbortSpell'], ['Backquote', 'ToggleConsole'], ['ControlLeft', 'Slide']]) {
-    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
+  for (const [code, was, by] of LET_GO) {
+    if (fromVersion < by && store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
   }
   for (const hidden of HIDDEN_ACTIONS) {
     for (const primary of [true, false]) {
@@ -1354,6 +1372,7 @@ export function migrateKeyBinds(store, fromVersion) {
   resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free
   const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);
   for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
+    if (fromVersion >= 2) break;   // MODE-WHEEL: the mods' old keys are a v1 file's alone - a v2 file carried them already
     for (const row of rows) {
       if (row.legacy == null) continue;   // HELM-KEYS: a port row - no old setting to carry
       let saved;
@@ -1374,6 +1393,7 @@ export function migrateKeyBinds(store, fromVersion) {
     }
   }
   for (const [code, action] of DEFAULT_BINDINGS) {
+    if (fromVersion >= 2 && action !== 'ModeWheel') continue;   // MODE-WHEEL: a v2 file was told its losses at v2; v3 adds only the wheel
     if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
     report.lost.push({ action, code, holder: actionForCode(store, code) });
   }
