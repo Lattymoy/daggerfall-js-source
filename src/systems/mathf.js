@@ -30,6 +30,10 @@ export function roundToInt(v) {
   return f % 2 === 0 ? f : f + 1;
 }
 
+/** `Mathf.Lerp` in SINGLE precision, as the C# runs it: a + (b - a) * Clamp01(t), each operation rounded to a float
+ *  (WINDFALL1 and SNOWFALL1 pin their mods' arithmetic bit for bit against the assemblies' own). */
+export const lerpF = (a, b, t) => Math.fround(a + Math.fround(Math.fround(b - a) * (t < 0 ? 0 : t > 1 ? 1 : t)));
+
 /**
  * `Color.Lerp`: t is CLAMPED to [0,1] and every channel moves, in
  * floats (OH-A, 2026-09-26: There's a Hole in the Bottom of the Ocean's

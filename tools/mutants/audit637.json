@@ -292,8 +292,8 @@
   {
     "name": "AUDIT637-B2c-the-lean-left-out",
     "file": "src/render/shadowPass.js",
-    "old": "        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // the record's wind, for its quads' lean (quadRadius)",
-    "new": "        const wl = 0;   // the record's wind, for its quads' lean (quadRadius)",
+    "old": "        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // the record's wind, for its quads' lean (quadRadius)",
+    "new": "        const wl = 0, law = false;   // the record's wind, for its quads' lean (quadRadius)",
     "tests": [
       "test/audit637_shadow.test.js",
       "test/perfshadow1.test.js"

@@ -210,7 +210,7 @@ test('LA-COST1: THE SECOND CALL IN A FRAME SENDS ONLY ITS OWN - a billboard call
   const pairs = [
     // merged beside main's HITFLASH1 and WEAPON-MOUNT: a batch's hit flash is its own (uHitFlash), and a decal call
     // says whether it hangs a picture or lays a film (uPicture) - both the call's, beside the atlas
-    ['billboards', () => r.drawBillboards(bbs, R, UP), ['uRight', 'uUp', 'uFlatWind', 'uSpectral', 'uConceal', 'uHitFlash', 'uEliteGlow', 'uSize', 'uOrigin', 'uSway']],   // ELITE FOES: a batch's glow is its own too, as the flash is
+    ['billboards', () => r.drawBillboards(bbs, R, UP), ['uRight', 'uUp', 'uFlatWind', 'uWindfallSway', 'uWindfallAxis', 'uSpectral', 'uConceal', 'uHitFlash', 'uEliteGlow', 'uSize', 'uOrigin', 'uSway']],   // ELITE FOES: a batch's glow is its own too, as the flash is; WINDFALL1: Windfall's law is the call's, as the wind is
     ['decals', () => r.drawDecals(decal, { id: 'atlas' }), ['uPicture']],
     ['a character', () => r.drawCharacter(rig, I), ['uModel', 'uTex', 'uUseTex', 'uAlphaCut']],
   ];
@@ -238,7 +238,7 @@ test('LA-COST1: THE SECOND CALL IN A FRAME SENDS ONLY ITS OWN - a billboard call
   // must not ride onto the next frame's flats)
   // LPT1 (bible/07-Rendering/Low-Poly-Trees.md): and the low-poly trees' mesh mode and handover, set off (two more - a
   // call the trees drew in leaves the handover on for the flats after it)
-  assert.deepEqual(counts, ['billboards 106 -> 29', 'decals 85 -> 12', 'a character 86 -> 13']);
+  assert.deepEqual(counts, ['billboards 108 -> 31', 'decals 85 -> 12', 'a character 86 -> 13']);   // PIN MOVED (WINDFALL1, 2026-10-08): +2 a billboard call - Windfall's two vec4s, the call's own as the wind is
   // ...and the next frame sends them all again
   r.beginFrame(PROJ, VIEW, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
   calls.length = 0; r.drawBillboards(bbs, R, UP);

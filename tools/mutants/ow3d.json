@@ -142,8 +142,8 @@
   {
     "name": "OW3D3-spawns-snapshotted",
     "file": "src/scenes/world.js",
-    "old": "spawns: [...spawnedPixels(locationIndex),",
-    "new": "spawns: [...(_tvDungeonRows.spawns ??= spawnedPixels(locationIndex)),",
+    "old": "isFound, spawns: [...spawnedPixels(locationIndex),",
+    "new": "isFound, spawns: [...(_tvDungeonRows.spawns ??= spawnedPixels(locationIndex)),",
     "tests": [
       "test/tv6_dungeons.test.js"
     ],

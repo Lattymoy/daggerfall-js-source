@@ -118,7 +118,7 @@ test('AUDIT 68 S24-string-hash-duplicate: C#\'s string.GetHashCode has one home 
   for (const f of ['src/systems/answerPipeline.js', 'src/systems/betterAmbience.js']) {
     const s = rd(f);
     assert.doesNotMatch(s, /\(h << 5\) - h/, `${f} carries no copy of the hash`);
-    assert.match(s, /import \{ stringHash \} from '\.\.\/formats\/netRuntime\.js';/, `${f} imports it`);
+    assert.match(s, /import \{[^}]*\bstringHash\b[^}]*\} from '\.\.\/formats\/netRuntime\.js';/, `${f} imports it`);   // HAZE1: Better Ambience imports System.Random from the same home
   }
 });
 

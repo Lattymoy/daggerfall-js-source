@@ -8,6 +8,7 @@ import { CREDITS } from '../src/ui/credits.js';
 import { FEATURES, WINDMILLS_KEY } from '../src/systems/features.js';   // WM3: the Features home, and the Windmills switch's declaration
 import { OVERHAUL_PANELS } from '../src/systems/overhauls.js';
 import { UI_PACKS } from '../src/systems/uiPack.js';
+import { ENVIRONMENT_PACK_MODS } from '../src/systems/vanillaEnhancedPack.js';   // ALIKR1 / SNOWFALL1: the shipped environment packs
 
 // CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
 // want to give credit to the mod developer who created it").
@@ -113,6 +114,9 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.pack && UI_PACKS[o.pack]?.vendor) named.add(UI_PACKS[o.pack].vendor);
   // VE4: ...and a texture look names the pack it wears (Vanilla Enhanced is worn and put away on the Texture panel)
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.vendor) named.add(o.vendor);
+  // ALIKR1 / SNOWFALL1: ...and a pack shipped in the texture door is a switch of its own on the packs card (`textureMods`
+  // lists every registered .dfmod) and a chip under Vanilla Enhanced (its index names the Base) - `art/<vendor>`
+  for (const m of ENVIRONMENT_PACK_MODS) named.add(m.root.replace(/^art\//, ''));
   // ARENA1: the one credited work that is NOT a switch - the Arena of Daggerfall stands in the city in every game (Arena.md:
   // "the arena is not a switch, it is the city"), so there is nothing on the Features home to turn off
   named.add('daggerfall-arena');

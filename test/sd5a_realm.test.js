@@ -197,6 +197,7 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
     noMap: 'You cannot map the Shattered Hour.', noMark: 'You cannot set a Mark in the Shattered Hour.',
     noRecall: 'Nothing answers a Recall in the Shattered Hour.', lost: 'The way to the Shattered Hour is lost.',
     died: 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's; SD-ONELIFE (PIN MOVED): and final; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
+    noCompanions: 'Your companions cannot follow you through the Rift.',   // SD-ALONE (PIN MOVED): no companion through the Rift (test/sd21_alone.test.js)
   });
 });
 
@@ -209,7 +210,7 @@ test('SD5a the mode machine by source: into the Hour from the open world (its ma
   assert.match(W, /for \(const \[rec, art\] of realmArt\(\)\) \{ renderer\.uploadTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.albedo\); renderer\.uploadEmissionTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.emission, \{ white: true \}\); \}[^\n]*\n\s+_realmMesh = renderer\.createMesh\(buildRealmModel\(\)\);/);   // AUDIT SD II (L2 F3 - PIN MOVED): its own light
   assert.match(W, /ctx\.collider\.addMesh\(REALM_BUCKET, tris, idx, identity\(\)\);/);
   assert.match(W, /sdHollow: hit\.sdHollow \?\? null,/);
-  assert.match(W, /dungeonEntranceLanding\(dungeonReturn\.sdHollow \? host\.sdHollowDoors\?\.\(dungeonReturn\.sdHollow\) \?\? \[\] : dungeonReturn\.candidates\.map\(\(e\) => e\.door\)\)\);/);
+  assert.match(W, /dungeonEntranceLanding\(dungeonReturn\.sdHollow \? host\.sdHollowDoors\?\.\(dungeonReturn\.sdHollow\) \?\? \[\] : dungeonReturn\.candidates\.map\(\(e\) => e\.door\)\) \?\? dungeonReturn\.from \?\? null\);/);   // SD-LAND (PIN MOVED): with no door found, where the player stood outside as they went in
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _rl = realmLighting\(\); const _rt = dungeonTrilight\(!!renderer\.lightingLane, _rl\.tri\); renderer\.setLighting\(courtEquatorOf\(_rt\), 0, undefined, _rt\); renderer\.setMoonlight\(_rl\.key\); \}/);
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, SD_REALM_FOG\)\);/);
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _hour = realmLightsWith\(_dgLit, host\.sdRealmLights\?\.\(\) \?\? NO_LIGHTS, cam\.pos\); renderer\.setPointLights\(_hour\.data, null, _hour\.colors\); \}/);   // SD9e: the spoils' light before the lamps, as the court's (PIN MOVED); AUDIT SD II (L2 F9 - PIN MOVED): into the realm's own arrays
@@ -277,7 +278,7 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   const w = read('src/scenes/world.js');
   assert.match(w, /enter: \(\) => sdEnterRealm\(s\) \};/);
   assert.match(w, /sdWayBack: \(\) => sdWayBack\(\),/);
-  assert.match(w, /sdHollowDoors: \(h\) => buildingDoors\.filter\(\(d\) => d\.pixelKey === h\?\.key && d\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\)\.map\(\(d\) => d\.door\),/);
+  assert.match(w, /sdHollowDoors: \(h\) => buildingDoors\.filter\(\(d\) => d\.pixelKey === h\?\.key && d\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\)\.map\(shiftedDoor\),/);   // SD-SKY (PIN MOVED): in the scene's frame - the raw list's doors are their pixels' (test/sd23_sky.test.js)
   assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'sd'\) key = sdRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.s\);/);
   assert.match(w, /if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}[^\n]*\n\s+if \(modes\?\.sdRealmSlot\?\.\(\) != null\) \{ sdSay\(SD_REALM_TEXT\.noMark\); return; \}/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   assert.match(w, /if \(modes\?\.sdRealmSlot\?\.\(\) != null\) \{ sdSay\(SD_REALM_TEXT\.noRecall\); return; \}/);
@@ -286,7 +287,7 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdArenaHeld\(\) \? _realmArenaHeld : sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);   // SD6c (PIN MOVED): the Concord's bridge among its floors; AUDIT SD III (F2, PIN MOVED): the arena's rim first, for a fighter it holds
   assert.match(w, /inside: \(loc\) => \(modes\?\.mode \?\? 'exterior'\) === 'dungeon' && \(modes\?\.dungeonLocation\?\.sdSlot === loc\?\.sdSlot \|\| modes\?\.dungeonLocation\?\.sdRealm === loc\?\.sdSlot\),/);
   // a room that will not have me: out before the Hollow's door with the relay's own words, once
-  assert.match(w, /const sdFrame = \(\) => \{ try \{ sdHost\?\.frame\(\); \} catch \(e\) \{[^\n]*\} sdRealmFrame\(\); sdFightFrame\(\); sdVoiceFrame\(\); \};/);   // PIN MOVED (SD8c): the Remnant's fight after the realm's; AUDIT SD II (SD11d, PIN MOVED): and the Hour's voice last
+  assert.match(w, /const sdFrame = \(\) => \{ try \{ sdHost\?\.frame\(\); \} catch \(e\) \{[^\n]*\} sdRealmFrame\(\); sdAloneFrame\(\); sdFightFrame\(\); sdVoiceFrame\(\); \};/);   // PIN MOVED (SD8c): the Remnant's fight after the realm's; AUDIT SD II (SD11d, PIN MOVED): and the Hour's voice last; SD-ALONE (PIN MOVED): the companions' word after the realm's own
   assert.match(w, /if \(_sdOut \|\| !online\?\.terminal \|\| !\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return;\n\s+_sdOut = true;\n\s+gateVeil\?\.flash\('brass'\);[^\n]*\n\s+if \(modes\?\.unstuck\?\.\(\)\) sdSay\(\/\^The Hour \/\.test\(online\.error \?\? ''\) \? online\.error : SD_REALM_TEXT\.lost\);/);   // AUDIT SD II (SD11d, PIN MOVED): the Hour's brass veil, its voice
   assert.match(read('src/world/dungeonLabel.js'), /export const madeDungeon = \(loc\) => isGateArena\(loc\) \|\| isArenaFloor\(loc\) \|\| isArenaUndercroft\(loc\) \|\| isSdRealm\(loc\);/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD5a - shipped 2026-10-07/);

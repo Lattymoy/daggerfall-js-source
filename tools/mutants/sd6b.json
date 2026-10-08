@@ -191,8 +191,8 @@
   {
     "name": "SD6B-a-turn-from-a-cell",
     "file": "src/net/online.js",
-    "old": "    if (!w || !this.sdOk || !isSdRoom(this.room) || this.status !== 'open' || !this._ws) return false;\n    const gate = sdPzGate(",
-    "new": "    if (!w || !this.sdOk || this.status !== 'open' || !this._ws) return false;\n    const gate = sdPzGate(",
+    "old": "    if (!w || !this.sdOk || !isSdRoom(this.room) || this.status !== 'open' || !this._ws || !this._welcomed.has(this._ws)) return false;   // SD-HELLO: `sdOk` is the last welcome's\n    const gate = sdPzGate(",
+    "new": "    if (!w || !this.sdOk || this.status !== 'open' || !this._ws || !this._welcomed.has(this._ws)) return false;   // SD-HELLO: `sdOk` is the last welcome's\n    const gate = sdPzGate(",
     "tests": [
       "test/sd6b_hall.test.js"
     ]
