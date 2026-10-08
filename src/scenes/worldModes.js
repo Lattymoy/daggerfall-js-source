@@ -7947,12 +7947,12 @@ export function createWorldModes(host) {
    *  under it), then the veil opened on whatever stands, whatever `go` answered or threw. One step at a time: a second
    *  asked while one is under way is refused. No veil (offline, a page with no WebGL2) - the step unveiled. */
   let _stepping = false;
-  async function stepThroughFire(go, look = 'fire') {
+  async function stepThroughFire(go, look = 'fire', opts = undefined) {
     const veil = host.gateVeil?.() ?? null;
     if (_stepping) return false;
     _stepping = true;
     try {
-      if (veil) await veil.cover(look);   // AUDIT SD II (L6 F8): the step's own veil - the Hour's brass for the Rift's
+      if (veil) await veil.cover(look, opts);   // AUDIT SD II (L6 F8): the step's own veil - SD-LOOK: the Hour's blades for the Rift's, closing on it (`opts.centre`)
       return await go();
     } finally {
       _stepping = false;

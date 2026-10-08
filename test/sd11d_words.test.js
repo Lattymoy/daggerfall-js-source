@@ -438,10 +438,14 @@ test('SD11d THE HOUR\'S OWN VEIL (L6 F8; Mac, of the Hour: "not oblivion, someth
   for (const fire of ['vec3(0.98, 0.3, 0.03)', 'vec3(1.0, 0.72, 0.34)', 'vec3(1.0, 0.84, 0.56)', 'vec3(1.0, 0.76, 0.38)']) assert.ok(GATE_VEIL_FS.includes(`mix(${fire}, `), `the fire's ${fire} first, the brass mixed over it`);
   // every way through the Hour asks it
   const WM = read('src/scenes/worldModes.js');
-  assert.match(WM, /async function stepThroughFire\(go, look = 'fire'\) \{[\s\S]{0,200}if \(veil\) await veil\.cover\(look\);/);
-  assert.equal((W.match(/\}, 'brass'\);/g) ?? []).length, 2, 'the Rift\'s step in and the way back');
-  assert.equal((W.match(/gateVeil\?\.flash\('brass'\)/g) ?? []).length, 4, 'a death, the cast-out, the Hour\'s eject, the way home');
-  assert.match(W, /if \(hour\) gateVeil\?\.flash\('brass'\);\s*\n\s*sdSay\(SD_CAST_OUT_LINE\);/, 'the cast-out from the Hour, never from the Hollow');
+  // PIN MOVED (SD-LOOK S5, Super-Dungeons-Look.md section 3): the Hour's own veil (render/sdVeil.js) - in through its
+  // blades closing on the Rift, back in silver, home mended, forced out shattered; the brass whirl stays a theme
+  assert.match(WM, /async function stepThroughFire\(go, look = 'fire', opts = undefined\) \{[\s\S]{0,200}if \(veil\) await veil\.cover\(look, opts\);/);
+  assert.equal((W.match(/\}, 'hourIn', \{ centre: sdVeilCentre\(\) \}\);/g) ?? []).length, 1, 'the Rift\'s step in');
+  assert.equal((W.match(/\}, 'hourBack', \{ centre: sdVeilCentre\(\) \}\);/g) ?? []).length, 1, 'the way back');
+  assert.equal((W.match(/gateVeil\?\.flash\('hourCast'\)/g) ?? []).length, 3, 'a death, the cast-out, the Hour\'s eject');
+  assert.equal((W.match(/gateVeil\?\.flash\('hourHome', \{ centre: sdVeilCentre\(\) \}\)/g) ?? []).length, 1, 'the way home');
+  assert.match(W, /if \(hour\) gateVeil\?\.flash\('hourCast'\);[^\n]*\n\s*sdSay\(SD_CAST_OUT_LINE\);/, 'the cast-out from the Hour, never from the Hollow');
 });
 
 // ── the chart (L6 F11) ────────────────────────────────────────────────

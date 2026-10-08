@@ -93,8 +93,8 @@
   {
     "name": "WB6c-the-door-before-the-fire-has-closed",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (veil) await veil.cover(look);",
-    "new": "      if (veil) veil.cover(look);",
+    "old": "      if (veil) await veil.cover(look, opts);",
+    "new": "      if (veil) veil.cover(look, opts);",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {

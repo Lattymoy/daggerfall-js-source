@@ -11,6 +11,8 @@
 //   ?t=<seconds>     the Hour's anchored clock, pinned          ?still   the clock stopped
 //   ?lane=off        the classic set (no enhanced lighting)      ?nopanel the panel hidden (probes)
 //   ?x=&y=&z=&yaw=&pitch=   an exact eye (the dungeon's frame, metres; degrees)
+//   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
+//                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -20,6 +22,8 @@ import { skyGain } from '../render/deadlands.js';
 import { SdSkyRenderer, SD_SKY_STEPS, SD_SKY_MODE } from '../render/sdSky.js';
 import { SdMotesRenderer } from '../render/sdMotes.js';
 import { SD_HOUR_GRADE } from '../world/sdLook.js';
+import { SdVeilRenderer, SD_VEIL_MODE } from '../render/sdVeil.js';
+import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
 import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
@@ -290,7 +294,29 @@ function frame(now) {
     if (motes.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();
   }
   renderer.resolveFrame();
+  drawVeil();
   window.__frame++;
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+// ?veil: the Hour's veil on a canvas of its own over the frame, a third of its pixels and drawn pixelated (ui/gateVeil.js)
+let veilPass = null, veilCanvas = null;
+function drawVeil() {
+  const mode = SD_VEIL_MODE[params.get('veil') ?? ''];
+  if (mode === undefined) return;
+  if (!veilCanvas) {
+    veilCanvas = document.createElement('canvas');
+    veilCanvas.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated;';
+    document.body.appendChild(veilCanvas);
+    veilPass = new SdVeilRenderer(veilCanvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false }));
+  }
+  const w = Math.round(window.innerWidth / 3), h = Math.round(window.innerHeight / 3);
+  if (veilCanvas.width !== w) veilCanvas.width = w;
+  if (veilCanvas.height !== h) veilCanvas.height = h;
+  const vp = params.get('vp') ?? 'shut', vs = Number(params.get('vs') ?? 1), shut = vp === 'shut' ? vs : vp === 'opening' ? Number(params.get('vshut') ?? 2) : 0;
+  const opening = vp === 'opening' ? Math.min(1, vs / VEIL_OPEN_S) : 0;
+  veilPass.draw(w, h, vs, veilAt(vp, vs), {
+    mode, centre: [Number(params.get('vx') ?? 0), Number(params.get('vy') ?? 0)], shut, opening, reduce: params.has('reduce'),
+    mend: mode === SD_VEIL_MODE.home ? Math.min(1, shut / 1.2) : 0, shatter: mode === SD_VEIL_MODE.cast ? opening : 0,
+  });
+}

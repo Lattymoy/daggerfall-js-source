@@ -13734,7 +13734,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this is idempotent rather than a second mercy.
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
-      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words
+      if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words; SD-LOOK: its face shattered
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
@@ -21774,7 +21774,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;
       const hour = modes?.sdRealmSlot?.() != null;
       if (!modes?.unstuck?.()) return false;
-      if (hour) gateVeil?.flash('brass');
+      if (hour) gateVeil?.flash('hourCast');   // SD-LOOK: forced out - the Hour's face shattered
       sdSay(SD_CAST_OUT_LINE);
       return true;
     },
@@ -21833,7 +21833,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (modes?.sdRealmSlot?.() == null) { _sdOut = false; return; }
     if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
     _sdOut = true;
-    gateVeil?.flash('brass');   // AUDIT SD II (L6 F8): out of the Hour in its own brass
+    gateVeil?.flash('hourCast');   // AUDIT SD II (L6 F8): out of the Hour in its own veil - SD-LOOK: forced, its face shattered
     if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
   };
   /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
@@ -21899,6 +21899,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
     return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record
   };
+  /** SD-LOOK (Super-Dungeons-Look.md section 3): WHERE THE HOUR'S VEIL CLOSES - the Rift's window (or the Return's)
+   *  on the screen the last frame it was drawn, in screen radii (the corners at 1 - render/sdVeil.js uCentre), and when:
+   *  its blades pivot on it. Filled in the frame with no allocation (AUDIT SD II L2 F9): the model's place through the
+   *  view and the projection, by hand. */
+  const _sdVeilAt = new Float64Array(3);
+  const SD_VEIL_AIM_MS = 300;   // drawn this long ago at the most: older, the Rift is not on the screen
+  function sdVeilAim(proj, view, m) {
+    if (!m) return;
+    const x = m[12], y = m[13], z = m[14];
+    const vx = view[0] * x + view[4] * y + view[8] * z + view[12], vy = view[1] * x + view[5] * y + view[9] * z + view[13];
+    const vz = view[2] * x + view[6] * y + view[10] * z + view[14], vw = view[3] * x + view[7] * y + view[11] * z + view[15];
+    const cw = proj[3] * vx + proj[7] * vy + proj[11] * vz + proj[15] * vw;
+    if (!(cw > 1e-3)) return;   // behind the eye: the veil closes on the screen's middle
+    const W = renderer.gl.drawingBufferWidth, H = renderer.gl.drawingBufferHeight, d = Math.hypot(W, H) || 1;
+    _sdVeilAt[0] = ((proj[0] * vx + proj[4] * vy + proj[8] * vz + proj[12] * vw) / cw) * (W / d);
+    _sdVeilAt[1] = ((proj[1] * vx + proj[5] * vy + proj[9] * vz + proj[13] * vw) / cw) * (H / d);
+    _sdVeilAt[2] = performance.now();
+  }
+  /** Where the next Hour's veil pivots: the Rift as last drawn, if it was drawn this moment; else the screen's middle. */
+  const sdVeilCentre = () => (performance.now() - _sdVeilAt[2] < SD_VEIL_AIM_MS ? [_sdVeilAt[0], _sdVeilAt[1]] : null);
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
    *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
@@ -21924,7 +21944,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
       sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
       return false;
-    }, 'brass');   // AUDIT SD II (L6 F8): through the Hour's own veil
+    }, 'hourIn', { centre: sdVeilCentre() });   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift
     return true;
   }
   /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
@@ -21959,7 +21979,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  gathered as the Hour is left. Answers whether it carried me. */
   function sdWayHome() {
     if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0) || modes?.deathUp?.()) return false;
-    gateVeil?.flash('brass');
+    gateVeil?.flash('hourHome', { centre: sdVeilCentre() });   // SD-LOOK: the way home's veil - its crack mended
     if (!modes?.unstuck?.()) return false;
     sdSay(SD_HOME_TEXT.taken);
     return true;
@@ -21983,7 +22003,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const at = modes?.dungeonCtx?.sdRiftLanding?.();
       if (at) modes?.setPlayerLocalPosition?.(at);
       return true;
-    }, 'brass');   // AUDIT SD II (L6 F8)
+    }, 'hourBack', { centre: sdVeilCentre() });   // AUDIT SD II (L6 F8) - SD-LOOK: in silver, its face still cracked
     return true;
   }
   /** SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL, as its realm says it - the last word (the stones, the fray,
@@ -25569,6 +25589,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const sky = sdSkyPassOf(), pass = sdRiftPassOf(), fog = courtFogNow(), inHour = modes?.sdRealmSlot?.() != null;
       if (sky && !inHour) sky.paint(deadlandsSeconds(), { color: SD_REALM_FOG.color }, sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);
       const look = end.sdEndLook?.(eye, sky ? { map: sky.map.texture, seconds: deadlandsSeconds(), gain: inHour ? skyGain(renderer._fogColor, SD_REALM_FOG.color) : 1, clock: null } : null, minuteNow() / 60);
+      sdVeilAim(proj, view, look?.window?.model ?? look?.bay?.model);
       let drew = !!sky && !inHour;
       if (look && pass?.draw(proj, view, look, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) drew = true;
       if (sdHaloPassOf()?.draw(proj, view, end.sdEndHalos?.() ?? [], fog, renderer.lightingLane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) drew = true;

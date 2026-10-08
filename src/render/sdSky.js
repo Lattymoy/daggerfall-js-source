@@ -213,8 +213,9 @@ float skyline5(float u, float v) {
 `;
 
 /** The numerals as the paint draws them (world/sdSkyArt.js's glyphs, the cells of `numeralCell`): `numeralLit(h, cx,
- *  cy)` - hour h (0 the twelfth), cell cx from the numeral's left, cy from its top row. */
-const glyphGlsl = `const int GLYPH_I[7] = int[7](${SD_GLYPHS.I.rows.join(', ')});
+ *  cy)` - hour h (0 the twelfth), cell cx from the numeral's left, cy from its top row. The veil's dial reads them too
+ *  (render/sdVeil.js). */
+export const SD_NUMERAL_GLSL = `const int GLYPH_I[7] = int[7](${SD_GLYPHS.I.rows.join(', ')});
 const int GLYPH_V[7] = int[7](${SD_GLYPHS.V.rows.join(', ')});
 const int GLYPH_X[7] = int[7](${SD_GLYPHS.X.rows.join(', ')});
 float glyphBit(int g, int cx, int cy) {
@@ -271,7 +272,7 @@ const vec3 SILVER = vec3(0.8, 0.82, 0.88);
 const vec3 SHARD_DARK = vec3(0.016, 0.012, 0.008);
 const vec3 WINDOW = vec3(1.0, 0.7, 0.32);
 ivec2 gTexel;   // the texel being painted
-${DEAD_NOISE_GLSL}${BAYER_GLSL}${SD_PIXEL_GLSL}${SD_OCT_GLSL}${SD_CLOCK_GLSL}${SD_SKYLINE_GLSL}${glyphGlsl}
+${DEAD_NOISE_GLSL}${BAYER_GLSL}${SD_PIXEL_GLSL}${SD_OCT_GLSL}${SD_CLOCK_GLSL}${SD_SKYLINE_GLSL}${SD_NUMERAL_GLSL}
 float wrapPi(float a) { return mod(a + PI, TAU) - PI; }
 // whether the point p of the face falls on the texel being painted - a star of one texel, never a smear
 bool onTexel(vec2 p) { return ivec2(floor(octEncode(faceDir(p)) * MAP)) == gTexel; }
