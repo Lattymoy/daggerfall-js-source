@@ -100,7 +100,7 @@ function contractReturn(db, id, nowS) {
 }
 /** THE CONTRACTS PAST THEIR DAYS, closed, and every closed contract's escrow home - anyone's Work read runs it; at most
  *  WRIT_SETTLE_MAX a read, one batch each; a treasury the cap cannot take waits. */
-async function closeContracts({ db, nowS }) {
+export async function closeContracts({ db, nowS }) {
   const { results: due = [] } = await db.prepare(`SELECT id FROM guild_contracts WHERE (state = 'open' AND expires_at <= ?1)
       OR (state != 'open' AND returned = 0 AND (escrow = 0 OR COALESCE((SELECT balance FROM guild_marks WHERE guild_id = guild_contracts.guild_id), 0) + escrow <= ?2))
     ORDER BY expires_at LIMIT ${WRIT_SETTLE_MAX}`).bind(nowS, MARKS_MAX).all();
@@ -110,6 +110,7 @@ async function closeContracts({ db, nowS }) {
       ...contractReturn(db, c.id, nowS),
     ]);
   }
+  return due.length;   // SCALE4b: the service's clock asks again while a full page closed
 }
 
 // ─── THE WORK TAB'S READ ─────────────────────────────────────────────

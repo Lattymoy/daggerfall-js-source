@@ -87,7 +87,7 @@ const BOUGHT_ORIGIN_SQL = "CASE WHEN currency = 'gold' THEN 'gold' ELSE 'bought'
 /** How far back "My listings" shows a closed listing or order, and "Your trades" reaches. */
 const RECENT_S = 7 * DAY_S;
 /** Rows one settle works, at most - a read settles the rest next time. */
-const SETTLE_MAX = 20;
+export const SETTLE_MAX = 20;
 
 /** Whether the market is open to this account: the board, the professions and the Marks, each at its switch. */
 export function marketOpenFor(player, env) {
@@ -248,10 +248,18 @@ async function settle(ctx, player) {
   const me = player.id;
   /** AUDIT 30 U1: the Stores this settle moved, `char_id|material`, so a read can answer them */
   const touched = new Set();
-  await db.batch([
-    db.prepare(`UPDATE market_listings SET state = 'expired', closed_at = ?2 WHERE seller = ?1 AND state = 'open' AND expires_at <= ?2`).bind(me, nowS),
-    db.prepare(`UPDATE market_orders SET state = 'expired', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`).bind(me, nowS),
-  ]);
+  // SCALE4b (2026-10-08): ASKED BEFORE IT IS WRITTEN. Both updates went on every market read, nearly always changing
+  // nothing - two writes on the market's every look, which a read replica can never serve. One read says whether any
+  // of the account's listings or orders is past its time; only then do the same two updates go, word for word (a race
+  // that closes one meanwhile leaves its update nothing to change, as before).
+  const due = await db.prepare(`SELECT EXISTS (SELECT 1 FROM market_listings WHERE seller = ?1 AND state = 'open' AND expires_at <= ?2)
+      OR EXISTS (SELECT 1 FROM market_orders WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2) AS due`).bind(me, nowS).first();
+  if (Number(due?.due)) {
+    await db.batch([
+      db.prepare(`UPDATE market_listings SET state = 'expired', closed_at = ?2 WHERE seller = ?1 AND state = 'open' AND expires_at <= ?2`).bind(me, nowS),
+      db.prepare(`UPDATE market_orders SET state = 'expired', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`).bind(me, nowS),
+    ]);
+  }
   // the listings' goods back
   // AUDIT 30 S7: only what can settle now - a return a full Stores cannot take waits without holding back the rest
   const { results: back = [] } = await db.prepare(`SELECT * FROM market_listings WHERE seller = ?1 AND state IN ('expired', 'removed') AND returned = 0
@@ -346,7 +354,7 @@ async function settle(ctx, player) {
  * auction closes unsold. AUDIT 31 S1: a standing bid whose row is gone (its bidder's account deleted - no route does
  * it, Professions-Arc 18) closes it unsold too, never a sale to no one: the owner written NULL failed every read after.
  */
-async function closeAuctions(ctx) {
+export async function closeAuctions(ctx) {
   const { db, nowS, rand } = ctx;
   const live = (a) => `EXISTS (SELECT 1 FROM market_bids WHERE id = ${a}.high_bid AND state = 'high')`;
   const room = (a, gets) => `COALESCE((SELECT balance FROM marks WHERE account = ${a}.seller), 0) + ${gets} <= ?2`;
@@ -409,7 +417,32 @@ async function closeAuctions(ctx) {
         .bind(a.id, nonce, mintId(rand), nowS),
     ]);
   }
+  return due.length;   // SCALE4b: the service's clock asks again while a full page closed
 }
+/**
+ * THE MARKET'S HISTORY KEPT MARKET_KEEP_DAYS (section 20: 90 days) - every price and fill past it, and every listing,
+ * order, delivery, bid and auction long closed and settled. SCALE4b (2026-10-08): the service's clock's
+ * (server-account/src/cron.js, each hour); the History view pruned first, nine writes on a read. Answers how many went.
+ */
+export async function pruneMarketHistory(db, nowS) {
+  const keepFrom = utcDay(nowS) - MARKET_KEEP_DAYS;
+  const out = await db.batch([
+    db.prepare('DELETE FROM market_prices WHERE day < ?1').bind(keepFrom),
+    db.prepare('DELETE FROM market_gold_prices WHERE day < ?1').bind(keepFrom),   // GOLD-MARKET
+    db.prepare('DELETE FROM market_sales WHERE day < ?1 AND delivered = 1').bind(keepFrom),
+    db.prepare('DELETE FROM market_fills WHERE day < ?1').bind(keepFrom),
+    db.prepare(`DELETE FROM market_listings WHERE state != 'open' AND closed_at < ?1 AND (returned = 1 OR state = 'sold')`).bind(keepFrom * DAY_S),
+    db.prepare(`DELETE FROM market_orders WHERE state != 'open' AND closed_at < ?1 AND returned = 1`).bind(keepFrom * DAY_S),
+    db.prepare('DELETE FROM market_deliveries WHERE collected = 1 AND at < ?1').bind(keepFrom * DAY_S),
+    // PROF5b: a closed auction's settled bids, then the auction itself once nothing of it waits (its ids stay spent -
+    // AUDIT 30 S3: every decision asks the ledger)
+    db.prepare(`DELETE FROM market_bids WHERE at < ?1 AND state != 'high' AND (returned = 1 OR state = 'won')`).bind(keepFrom * DAY_S),
+    db.prepare(`DELETE FROM market_auctions WHERE state != 'open' AND closed_at < ?1 AND returned = 1
+      AND NOT EXISTS (SELECT 1 FROM market_bids WHERE auction = market_auctions.id)`).bind(keepFrom * DAY_S),
+  ]);
+  return out.reduce((n, r) => n + Number(r?.meta?.changes ?? 0), 0);
+}
+
 /** A closed listing's units back into its character's Stores, each with its origin - where its return carries `nonce`. */
 function backToStores(db, id, nonce) {
   // GOLD-MARKET: a gold listing's `bought` column holds its gold units - they go back as gold's
@@ -666,22 +699,7 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
     const medians = await mediansOf(db, [...new Set(rows.map((o) => o.material))], today);
     return { ...(await base()), orders: rows.map((o, i) => ({ ...orderView(o, me), road: quotes[i] })), medians: Object.fromEntries(medians) };
   }
-  // history - pruned first (section 20: 90 days)
-  const keepFrom = today - MARKET_KEEP_DAYS;
-  await db.batch([
-    db.prepare('DELETE FROM market_prices WHERE day < ?1').bind(keepFrom),
-    db.prepare('DELETE FROM market_gold_prices WHERE day < ?1').bind(keepFrom),   // GOLD-MARKET
-    db.prepare('DELETE FROM market_sales WHERE day < ?1 AND delivered = 1').bind(keepFrom),
-    db.prepare('DELETE FROM market_fills WHERE day < ?1').bind(keepFrom),
-    db.prepare(`DELETE FROM market_listings WHERE state != 'open' AND closed_at < ?1 AND (returned = 1 OR state = 'sold')`).bind(keepFrom * DAY_S),
-    db.prepare(`DELETE FROM market_orders WHERE state != 'open' AND closed_at < ?1 AND returned = 1`).bind(keepFrom * DAY_S),
-    db.prepare('DELETE FROM market_deliveries WHERE collected = 1 AND at < ?1').bind(keepFrom * DAY_S),
-    // PROF5b: a closed auction's settled bids, then the auction itself once nothing of it waits (its ids stay spent -
-    // AUDIT 30 S3: every decision asks the ledger)
-    db.prepare(`DELETE FROM market_bids WHERE at < ?1 AND state != 'high' AND (returned = 1 OR state = 'won')`).bind(keepFrom * DAY_S),
-    db.prepare(`DELETE FROM market_auctions WHERE state != 'open' AND closed_at < ?1 AND returned = 1
-      AND NOT EXISTS (SELECT 1 FROM market_bids WHERE auction = market_auctions.id)`).bind(keepFrom * DAY_S),
-  ]);
+  // history - kept 90 days (section 20); SCALE4b: pruned by the service's clock (pruneMarketHistory), never this read
   // GOLD-MARKET: the History in the view's currency - gold's own table, never the Drakes'
   const { results: top = [] } = await db.prepare(`SELECT material, SUM(units) AS units FROM ${currency === 'gold' ? 'market_gold_prices' : 'market_prices'} WHERE day > ?1 GROUP BY material
     ORDER BY units DESC, material LIMIT ${MARKET_HISTORY_SHOWN}`).bind(today - MARKET_MEDIAN_DAYS).all();

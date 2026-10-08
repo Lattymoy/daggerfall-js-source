@@ -217,6 +217,7 @@ import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
+import { runCron } from './cron.js';   // SCALE4b: the service's own clock
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
@@ -1641,4 +1642,7 @@ const service = {
 
 export default {
   fetch: (request, env) => measured(request, env, service.fetch),
+  // SCALE4b: THE SERVICE'S OWN CLOCK - wrangler.toml's [triggers] crons, each firing its list (cron.js), the sweeps no
+  // read runs any more and the settlements every read now nearly always finds done
+  scheduled: (controller, env) => runCron(env, { cron: controller?.cron, nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now()) / 1000) }),
 };

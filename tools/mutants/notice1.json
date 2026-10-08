@@ -128,8 +128,8 @@
   {
     "name": "NOTICE1-15-an-expired-row-kept",
     "file": "server-account/src/board.js",
-    "old": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT 200)'",
-    "new": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT 200)'",
+    "old": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)'",
+    "new": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT ?)'",
     "tests": [
       "test/notice1.test.js"
     ]
