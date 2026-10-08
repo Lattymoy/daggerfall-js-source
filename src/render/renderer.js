@@ -11,6 +11,7 @@ import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // EE5 / VC4: the cloud 
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: the mesh shader's dissolve over the port's one bayer4
 import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half, both lanes' billboard shaders
 import { FOG_GLSL } from './fogGlsl.js';
+import { WINDFALL_SWAY_GLSL, windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: Windfall's vertex wind - the flora's lean while the mod is on
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share - a foe under Iliac Puddle No More's sea is in the depth texture its top reads   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
 // ABOVE the first shader text on purpose: every template below is built
 // at module scope, and a block a shader interpolates has to be in hand by
@@ -365,7 +366,8 @@ uniform vec3 uUp;
 uniform vec3 uOrigin;
 uniform vec2 uSize;
 uniform vec4 uFlatWind;   // WIND3: the wind's rate x, z (m/s, the lab's rate from systems/windDrive.js), the clock, the gust
-uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still)
+uniform float uSway;      // WIND3: this batch's share of the lean (0 = stands still); WINDFALL1: its wind mask while the mod's law stands
+${WINDFALL_SWAY_GLSL}
 uniform vec3 uTip;        // PROF4: a felled tree's fall - x, z the way it falls, the angle it has leaned (0 = stands)
 uniform vec4 uFacePoint;  // DISC29-E: a lamp's position (w = 1) - each flat turns to face it; w = 0 in every other pass
 uniform vec4 uElitePad;   // ELITE FOES: the quad widened past the sprite (left, bottom, right, top, as fractions of it) - 0 in every other pass
@@ -429,7 +431,11 @@ void main() {
   // sheet. A tree's lean is a few percent of its height at most - the
   // grass's 0.055 scaled to a trunk - and uSway is 0 for every batch that
   // is not the climate's flora, which is the shader's off switch.
-  if (uSway > 0.0) {
+  // WINDFALL1 (render/windfallSway.js): WHILE WINDFALL IS ON, ITS LAW IN WIND3'S PLACE - the top corners alone move,
+  // by the flat's height (its own share of the batch's, LPT1) and its record's mask (uSway).
+  if (uSway > 0.0 && windfallLaw()) {
+    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs * (aCorner.y + 0.5));
+  } else if (uSway > 0.0) {
     vec2 wv = uFlatWind.xy;
     float wl = length(wv);
     vec2 wdir = wl > 1e-4 ? wv / wl : vec2(1.0, 0.0);
@@ -469,7 +475,9 @@ void main() {
     vec3 nm = normalize(aNormal / uMeshScale);
     world = vec3(tc * p.x + tsn * p.z, p.y, -tsn * p.x + tc * p.z) + aInst.xyz;
     vec3 wn = vec3(tc * nm.x + tsn * nm.z, nm.y, -tsn * nm.x + tc * nm.z);
-    if (uSway > 0.0) {
+    if (uSway > 0.0 && windfallLaw()) {   // WINDFALL1: the mod's lean, as the tree's far picture takes it - up the tree linearly, as up its quad
+      world += windfallLean(aInst.xz, uRight) * (uSway * uSize.y * aScale * clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0));
+    } else if (uSway > 0.0) {
       vec2 wv = uFlatWind.xy;
       float wl = length(wv);
       vec2 wdir = wl > 1e-4 ? wv / wl : vec2(1.0, 0.0);
@@ -1267,6 +1275,8 @@ import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
+import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
+const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -1633,6 +1643,9 @@ export class Renderer {
       this._bindVao(null);
     }
     this._flatWind = new Float32Array(4);   // WIND3: rate x, z, clock, gust - zero until an exterior host sets it, and zero is still
+    this._windfall = new Float32Array(8);   // WINDFALL1: the mod's law (render/windfallSway.js windfallUniforms) - zero is WIND3's
+    this._windfallSway = this._windfall.subarray(0, 4);   // its two vec4s, viewed once (EVERY ALLOCATION HAS AN OWNER: none a call)
+    this._windfallAxis = this._windfall.subarray(4, 8);
     this._proj = null;
     this._view = null;
 
@@ -1919,6 +1932,7 @@ export class Renderer {
       // the cap patched) and kept with the set - a page that never draws the carved sea never compiles it
       terrainFs: src.terrainFs,
       terrainClip: null,
+      terrainSnow: null,   // SNOWFALL1: and its SNOW variant (snowTerrainFs), built the first time a snow surface is drawn (_ensureTerrainSnow)
       // MAC-BUG W6: the decal is the set's FIFTH program. A set that brings
       // no twin lights its marks on the classic one - which is the exact
       // state W6 was reported in, so the lane the port ships carries one
@@ -2110,6 +2124,8 @@ export class Renderer {
     this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
     this.bbUFlatWind = gl.getUniformLocation(this.bbProgram, 'uFlatWind');   // WIND3
     this.bbUSway = gl.getUniformLocation(this.bbProgram, 'uSway');   // WIND3
+    this.bbUWindfallSway = gl.getUniformLocation(this.bbProgram, 'uWindfallSway');   // WINDFALL1
+    this.bbUWindfallAxis = gl.getUniformLocation(this.bbProgram, 'uWindfallAxis');   // WINDFALL1
     this.bbUTip = gl.getUniformLocation(this.bbProgram, 'uTip');   // PROF4: a felled tree's fall
     // LPT1: a low-poly tree's mesh mode and the far pictures' handover (BB_VS)
     this.bbLpt = Object.fromEntries(['uMesh', 'uMeshScale', 'uMeshColor', 'uMeshAlpha', 'uLptCut', 'uLptBand', 'uLptSun'].map((n) => [n, gl.getUniformLocation(this.bbProgram, n)]));
@@ -2132,6 +2148,7 @@ export class Renderer {
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's
+    this._elLocsOf = elLocs;   // SNOWFALL1: the snow program's lane table is looked up the same way, with its program (_ensureTerrainSnow)
     this._tFrameStamp = -1;
     this._bbFrameStamp = -1; this._dFrameStamp = -1; this._cFrameStamp = -1;   // LA-COST1: the other three blocks were the old set's programs'
     this._csUploaded = {};
@@ -2250,7 +2267,7 @@ export class Renderer {
    *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
   recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }   // AUDIT BAY A12: a fading ship's share
   recordShadowTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) { if (this._casting && surface?.vao) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize); }
-  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }
+  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall); }
   /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
    *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
   _ensureClusters() {
@@ -5274,7 +5291,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _scales: scales ?? null, lptProto: undefined, farH: undefined,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
-      _box: undefined, sway: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,
+      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,
       _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
@@ -5698,9 +5715,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  this times its own `sway` (0 for everything but the climate's flora,
    *  floraSwayOf), so an interior or a dungeon that never sets it draws
    *  as before whatever the last exterior frame left here. */
-  setFlatWind(v) {
+  /** WINDFALL1: `windfall` - Windfall's eight numbers (render/windfallSway.js windfallUniforms) while the mod's law
+   *  stands, else null: the flora lean by its law instead of WIND3's (BB_VS takes one or the other). */
+  setFlatWind(v, windfall = null) {
     const fw = this._flatWind ??= new Float32Array(4);
     if (v) { fw[0] = v[0] || 0; fw[1] = v[1] || 0; fw[2] = v[2] || 0; fw[3] = v[3] || 0; } else fw.fill(0);
+    const wf = this._windfall ??= new Float32Array(8);
+    if (windfall) { for (let i = 0; i < 8; i++) wf[i] = windfall[i] || 0; } else wf.fill(0);
   }
 
   /** VC4: bind the deck's shadow map (or nothing) on the reserved unit
@@ -5731,6 +5752,158 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  streaming host asks as Iliac Puddle No More mounts, beside the mod's own
    *  programs, so the first frame that draws a coast does not compile it. */
   prepareTerrainClip() { this._ensureTerrainClip(); }
+  /** RenderSettings.ambientLight's stand-in: the ambient the world programs light by this frame (snow_status reads it - AUDIT ENVIRONS S6). */
+  get ambientLight() { return this._ambient; }
+  /** SNOWFALL1 (AUDIT ENVIRONS I5): the installed set's snow program, built when the snow's surface is made (scenes/
+   *  snowfallHost.js) - not inside the first frame that draws snow; a fault here is the snow's own, which then stands nowhere. */
+  prepareTerrainSnow() { this._ensureTerrainSnow(); }
+
+  /** SNOWFALL1: the set's SNOW program - the mod's vertex law (SNOW_VS) over the set's own ground fragment program with
+   *  its tile decode swapped for the mod's snow (snowTerrainFs) - and its tables, built the first time a snow surface is
+   *  drawn and kept with the set (the clip variant's kind: a page that never stands snow never compiles it). */
+  _ensureTerrainSnow(set = this._worldSet) {
+    if (set.terrainSnow) return set.terrainSnow;
+    const program = this._buildProgram(SNOW_VS, snowTerrainFs(set.terrainFs));
+    const gl = this._locations(set);
+    const loc = Object.fromEntries(['uProj', 'uView', 'uModel', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor', 'uMoonDir', 'uMoonScale', 'uMoonColor',
+      'uPointCount', 'uPointLights', 'uPointColors', 'uIndirect', 'uIndirectColor', 'uSnowDepths', 'uSnowLimits', 'uSnowDynMap', 'uSnowDynTexel',
+      'uSnowStatMap', 'uSnowFarMap', 'uSnowFlags', 'uSnowRadius', 'uSnowInner', 'uSnowOuter', 'uSnowBoundaryFade', 'uSnowDarkening',
+      'uSnowDynamic', 'uSnowStatic', 'uSnowContext', 'uSnowFar', 'uSnowAlbedo'].map((n) => [n, gl.getUniformLocation(program, n)]));
+    const el = this._worldSet === set && this._elLocsOf ? this._elLocsOf(program) : null;
+    return (set.terrainSnow = { program, loc, el, fog: this._fogLocs(program), cs: [gl.getUniformLocation(program, 'uCloudShadowMap'), gl.getUniformLocation(program, 'uCloudShadowRect')], frame: -1, units: false });
+  }
+
+  /**
+   * SNOWFALL1: draw one snow surface (render/snowfallSurface.js) - `surface` its { vao, indexCount }, `u` its tier's
+   * uniforms (systems/snowfallRuntime.js localUniforms / midUniforms / blanketUniforms, with `depths` and `limits`),
+   * `tex` its five pictures { dynamic, static, context, far, albedo }. The installed set's snow program: the ground's
+   * own light on the mod's snow - the sun and its shadow, the moon, the clouds' shadow, the lanterns, the fog. It casts
+   * nothing (the mod's ShadowCastingMode.Off), writes depth as the ground does, stands over it by the mod's own 8 mm
+   * surface offset and its pass's own Offset (SNOW_LAYER: a layer of the sea's one stack, under the film - AUDIT
+   * ENVIRONS G2), and culls its back faces as the pass does (no Cull statement: Unity's Back; the grids wind as the
+   * ground's - G5). A draw of this file's own (its program, its vertex array and unit 0 through the shadows; its
+   * pictures on units no shadow keeps), so no seam is owed after it. Inside a pass (drawSnowBegin) the state the
+   * pass's draws share is set once and handed back at its end.
+   */
+  drawSnow(surface, u, tex) {
+    this._close2D();   // PERF-2D
+    const gl = this.gl, S = this._ensureTerrainSnow(), L = S.loc, P = this._snowPass;
+    if (!S.el && this._elLocsOf) S.el = this._elLocsOf(S.program);
+    this._use(S.program);
+    if (!S.units) {
+      S.units = true;
+      gl.uniform1i(L.uSnowDynamic, SNOW_UNITS.dynamic); gl.uniform1i(L.uSnowStatic, SNOW_UNITS.static); gl.uniform1i(L.uSnowContext, SNOW_UNITS.context);
+      gl.uniform1i(L.uSnowFar, SNOW_UNITS.far); gl.uniform1i(L.uSnowAlbedo, SNOW_UNITS.albedo);
+    }
+    if (S.frame !== this._frameStamp) {   // the frame's block, as the ground's (drawTerrain's PERF3 block)
+      S.frame = this._frameStamp;
+      gl.uniformMatrix4fv(L.uProj, false, this._proj);
+      gl.uniformMatrix4fv(L.uView, false, this._view);
+      this._uploadFog(S.fog);
+      gl.uniform3fv(L.uLightDir, this._lightDir);
+      gl.uniform3fv(L.uAmbient, this._c3(this._ambient));
+      gl.uniform1f(L.uSunScale, this._sunScale);
+      gl.uniform3fv(L.uSunColor, this._c3(this._sunColor));
+      gl.uniform3fv(L.uMoonDir, this._moonDir);
+      gl.uniform1f(L.uMoonScale, this._moonScale);
+      gl.uniform3fv(L.uMoonColor, this._c3(this._moonColor));
+      const count = this._pointLights.length / 4;
+      gl.uniform1i(L.uPointCount, count);
+      if (count > 0) gl.uniform4fv(L.uPointLights, this._pointLights);
+      if (count > 0) gl.uniform3fv(L.uPointColors, this._pointColorData(count));
+      gl.uniform4fv(L.uIndirect, this._indirect);
+      gl.uniform3fv(L.uIndirectColor, this._c3(this._indirectColor));
+      if (S.el) { this._el.snow = S.el; this._uploadEl('snow'); }
+    }
+    this._csLoc.snow = S.cs;
+    this._uploadCloudShadow('snow');
+    if (!this._snowModel) this._snowModel = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);   // one matrix, its translation the tier's
+    const m = this._snowModel, f = Math.fround;
+    if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1])) || !Object.is(m[14], f(u.origin[2]))) {
+      m[12] = u.origin[0]; m[13] = u.origin[1]; m[14] = u.origin[2];
+      gl.uniformMatrix4fv(L.uModel, false, m);
+      if (P) P.model = true;
+    }
+    this._snowU4(L.uSnowDepths, u.depths); this._snowU4(L.uSnowLimits, u.limits);
+    this._snowU4(L.uSnowDynMap, u.dynMap); this._snowU4(L.uSnowDynTexel, u.dynTexel); this._snowU4(L.uSnowStatMap, u.statMap);
+    this._snowU4(L.uSnowFarMap, u.farMap ?? u.dynMap); this._snowU4(L.uSnowFlags, u.flags); this._snowU4(L.uSnowRadius, u.radius);
+    this._snowU4(L.uSnowInner, u.inner); this._snowU4(L.uSnowOuter, u.outer);
+    this._snowU1(L.uSnowBoundaryFade, u.boundaryFade); this._snowU1(L.uSnowDarkening, u.darkening);
+    let bound = false;
+    for (const [k, unit] of SNOW_UNIT_LIST) {   // PERF-TEX3: through the selector's shadow, on units no texture shadow keeps
+      if (P && P.tex[unit] === tex[k]) continue;   // AUDIT ENVIRONS P1: a pass's unit holding its picture already
+      this._activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex[k]);
+      if (P) P.tex[unit] = tex[k];
+      bound = true;
+    }
+    if (bound) this._activeTexture(gl.TEXTURE0);
+    // the tiers' missing channels read as their generic values (the local window's own context is Excluded) - a pass
+    // sets a tier's set once, the last set's handed back first
+    const generic = surface.generic ?? null;
+    if (!P || generic !== P.generic) {
+      if (P) for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+      for (const [loc, v] of generic ?? []) gl.vertexAttrib4f(loc, v[0], v[1], v[2], v[3]);
+      if (P) P.generic = generic;
+    }
+    this._bindVao(surface.vao);
+    if (!P || !P.offset) {
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);   // AUDIT ENVIRONS G2: the snow's layer in the sea's stack (render/snowfallGlsl.js SNOW_LAYER) - over the ground, under the film
+      if (P) P.offset = true;
+    }
+    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    this.stats.draws++;
+    if (P) return;   // the pass hands it back at its end
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    this._bindVao(null);
+    for (const [loc] of generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+  }
+
+  /**
+   * AUDIT ENVIRONS P1: A SNOW PASS - render/snowfallSurface.js draws its tiers and its blanket's tiles between this and
+   * drawSnowEnd, and the state those draws share is set once: a uniform uploaded when the float GL would keep moves, a
+   * snow unit bound when its picture moves, a tier's generic channels when its set does, the layer's offset on once;
+   * at the end the offset off, the vertex array unbound and the generic channels 0,0,0,1, as a lone draw leaves them.
+   * Every draw sees the state a lone draw would make it (a walking frame's 50 draws in Chromium: 1,917 GL calls, 417 in
+   * a pass).
+   */
+  drawSnowBegin() {
+    let P = this._snowPassState;
+    if (!P) P = this._snowPassState = { u: new Map(), tex: [], generic: null, offset: false, model: false };
+    P.u.clear(); P.tex.length = 0; P.generic = null; P.offset = false; P.model = false;
+    this._snowPass = P;
+  }
+  drawSnowEnd() {
+    const P = this._snowPass, gl = this.gl;
+    this._snowPass = null;
+    if (!P?.offset) return;   // nothing drawn
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    this._bindVao(null);
+    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+  }
+  /** uniform4fv in a snow pass: skipped where GL holds these four floats already, bit for bit (AUDIT ENVIRONS P1). */
+  _snowU4(loc, v) {
+    const P = this._snowPass, f = Math.fround;
+    if (P) {
+      let s = P.u.get(loc);
+      if (s && Object.is(s[0], f(v[0])) && Object.is(s[1], f(v[1])) && Object.is(s[2], f(v[2])) && Object.is(s[3], f(v[3]))) return;
+      if (!s) P.u.set(loc, (s = new Float32Array(4)));
+      s[0] = v[0]; s[1] = v[1]; s[2] = v[2]; s[3] = v[3];
+    }
+    this.gl.uniform4fv(loc, v);
+  }
+  /** uniform1f in a snow pass, the same. */
+  _snowU1(loc, v) {
+    const P = this._snowPass;
+    if (P) {
+      let s = P.u.get(loc);
+      if (s && Object.is(s[0], Math.fround(v))) return;
+      if (!s) P.u.set(loc, (s = new Float32Array(1)));
+      s[0] = v;
+    }
+    this.gl.uniform1f(loc, v);
+  }
 
   /** FAR-CLIP1: THE TERRAIN'S OTHER PROGRAM IN - the clip variant for a pixel
    *  the Deep Waters cap patched, the plain program for every other. A
@@ -6160,7 +6333,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       f.gpu.pointInstances(run.drawStart);
       gl.uniform3f(L.uMeshScale, run.scale[0], run.scale[1], run.scale[2]);
       gl.uniform2f(this.bbUSize, run.size[0], run.size[1]);
-      gl.uniform1f(this.bbUSway, run.sway || 0);
+      gl.uniform1f(this.bbUSway, swayShare(run, windfallLawOn(this._windfall)));   // WINDFALL1: the mod's mask under its law (the far picture's)
       for (const sub of run.subs) {
         if (!sub.tex) continue;
         this._bindTex0(sub.tex);   // PERF-TEX3: unit 0 through its helper, the shadow kept
@@ -6219,7 +6392,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawBillboards(batches, camRight, camUp) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
-    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
+    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // EL2 (EL3: with the basis); WINDFALL1: and the mod's law
     // PERF-CROWD2: the frame's planes, once a CALL - after the shadow
     // record above, on purpose: everything still CASTS, only the drawing
     // is culled, so no shadow disappears because its caster went off
@@ -6248,6 +6421,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
     if (this.bbUFlatWind) gl.uniform4fv(this.bbUFlatWind, this._flatWind ?? ZERO_FLAT_WIND);   // WIND3: one upload a call; uSway is the batch's
+    if (this.bbUWindfallAxis) { gl.uniform4fv(this.bbUWindfallSway, this._windfallSway); gl.uniform4fv(this.bbUWindfallAxis, this._windfallAxis); }   // WINDFALL1: the mod's law, one upload a call
+    const wfLaw = windfallLawOn(this._windfall);   // WINDFALL1: a batch's share is its mask under the mod's law
     // LA-COST1 (2026-09-27, Mac: "a deep audit on the enhanced lighting system ... performance improvements"): THE
     // FRAME BLOCK, ONCE A STAMP - PERF3's terrain law on the billboard program. Every call re-sent the camera, the fog,
     // the tint and the sun, forty-eight lights and their colours (decoded again: 144 Math.pow), the indirect, and the
@@ -6393,7 +6568,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }   // PERF-EXT11
       const o = b.origin || ZERO_ORIGIN;
       if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
-      const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
+      const sw = swayShare(b, wfLaw);   // WIND3: the batch's share of the lean, uploaded when it changes between batches; WINDFALL1: its mask under the mod's law
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
       const tp = b.tip;   // PROF4: a felled tree's fall ([x, z, angle]); every other batch stands
       if (tp || this._bbTipOn) { gl.uniform3f(this.bbUTip, tp ? tp[0] : 0, tp ? tp[1] : 0, tp ? tp[2] : 0); this._bbTipOn = !!tp; }

@@ -202,7 +202,7 @@
   {
     "name": "PERF-CROWD2-the-cull-runs-BEFORE-the-shadow-record-so-an-off-screen-caster-stops-casting",
     "file": "src/render/renderer.js",
-    "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)",
+    "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // EL2 (EL3: with the basis); WINDFALL1: and the mod's law",
     "new": "",
     "tests": [
       "test/perfon2_peercull.test.js",

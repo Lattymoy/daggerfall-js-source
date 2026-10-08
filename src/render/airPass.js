@@ -98,6 +98,7 @@ import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // VC6c: a covered sun t
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
 import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
+import { windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
@@ -1283,7 +1284,7 @@ export class AirPass {
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect', 'uSunOn', 'uViewRot', 'uCloudSky', 'uCloudSkyOn', 'uLightDir', 'uHaze']),   // VC6c: the cloud in front of the sun; VC7b: the sky map's gaps and the haze
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
-      emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
+      emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uWindfallSway', 'uWindfallAxis', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),   // WINDFALL1: and the mod's law
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
       // EL4
       lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas', 'uVol']),   // AUDIT VOL1: the eye sees the glow
@@ -1889,13 +1890,14 @@ export class AirPass {
             gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView);
             gl.uniform1i(bound.uTex, 0); gl.uniform1i(bound.uEmissionTex, 1);
             gl.uniform4fv(bound.uFlatWind, r.flatWind);
+            if (r.wfAxis) { gl.uniform4fv(bound.uWindfallSway, r.wfSway); gl.uniform4fv(bound.uWindfallAxis, r.wfAxis); }   // WINDFALL1: the mod's law, as the flats were drawn
             this._emitDepth(bound, depthOn, T);
           }
           gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);   // the camera basis the batch was drawn with
           const o = b.origin || ZERO_ORIGIN;   // AUDIT 68 S16-v-replay-origin-alloc
           gl.uniform3f(P.emitBb.uOrigin, o[0], o[1], o[2]);
           gl.uniform2f(P.emitBb.uSize, b.size.w, b.size.h);
-          gl.uniform1f(P.emitBb.uSway, b.sway || 0);
+          gl.uniform1f(P.emitBb.uSway, swayShare(b, windfallLawOn(r.windfall)));   // WINDFALL1: the mod's mask under its law
           gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
           gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, emis);
           f.bindVao(b.vao);

@@ -1,0 +1,20 @@
+{
+  "Version": "2",
+  "Sections": [
+    {
+      "Name": "Heat Haze",
+      "Description": "Sunny and cloudy daytime heat shimmer in desert climates, with optional subtropical support.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Value": true, "Name": "Enabled", "Description": "Enable heat haze outdoors in desert climates during sunny or cloudy daytime weather.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Value": false, "Name": "AllowSubtropical", "Description": "Also allow heat haze in subtropical climates during sunny or cloudy daytime weather.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.5, "Name": "Intensity", "Description": "Maximum refraction displacement in screen pixels.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 50.0, "Max": 3000.0, "Value": 400.4, "Name": "FullStrengthDistance", "Description": "Radius in metres of the world-space haze ring around the player.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 50.0, "Max": 1500.0, "Value": 1006.0, "Name": "RingHeight", "Description": "Total vertical height in metres of the haze ring, including its soft top and bottom fades.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.25, "Max": 6.0, "Value": 4.5, "Name": "NoiseScale", "Description": "World-space density of the distortion field.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 4.0, "Value": 4.0, "Name": "AnimationSpeed", "Description": "Speed of the rising-air motion.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    }
+  ]
+}
