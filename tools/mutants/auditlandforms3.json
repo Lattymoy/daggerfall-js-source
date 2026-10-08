@@ -1,0 +1,323 @@
+[
+  {
+    "name": "AUDIT-LANDFORMS-III-A1-pulled-up-whole",
+    "file": "src/world/landforms.js",
+    "old": "  const move = level > land ? (1 - keep) * smooth01((land - LANDFORM_KNEE) / (level - LANDFORM_KNEE)) : 1 - keep;",
+    "new": "  const move = 1 - keep;",
+    "tests": [
+      "test/auditlandforms3.test.js",
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A1-eased-from-sea-level",
+    "file": "src/world/landforms.js",
+    "old": "  const move = level > land ? (1 - keep) * smooth01((land - LANDFORM_KNEE) / (level - LANDFORM_KNEE)) : 1 - keep;",
+    "new": "  const move = level > land ? (1 - keep) * smooth01(land / level) : 1 - keep;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A2-mountain-woods-old-centre",
+    "file": "src/world/landforms.js",
+    "old": "mountainWoods: Object.freeze([0, 1.9])",
+    "new": "mountainWoods: Object.freeze([0.165, 1.9])",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A2-haunted-old-centre",
+    "file": "src/world/landforms.js",
+    "old": "haunted: Object.freeze([-0.256, 1.25])",
+    "new": "haunted: Object.freeze([-0.31, 1.25])",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A2-ridged-off-centre",
+    "file": "src/world/landforms.js",
+    "old": "const RIDGED_NORM = Object.freeze([0.958, 1.4]);",
+    "new": "const RIDGED_NORM = Object.freeze([0.9, 1.4]);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A7-span-fixed",
+    "file": "src/world/landforms.js",
+    "old": "  const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;",
+    "new": "  const fx = gx / 128 - 0.5, fy = MAP_H + 0.5 - gy / 128;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A7-shaper-drops-its-span",
+    "file": "src/world/landforms.js",
+    "old": "  const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out, span);",
+    "new": "  const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A8-dunes-on-the-engine",
+    "file": "src/world/landforms.js",
+    "old": "0.5 - 0.5 * cosPi(f / DUNE_WINDWARD)",
+    "new": "0.5 - 0.5 * Math.cos(Math.PI * f / DUNE_WINDWARD)",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A8-path-weight-pow",
+    "file": "src/world/landforms.js",
+    "old": "const w = ((r * r) / (q * q))",
+    "new": "const w = ((r ** 2) / (q * q))",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A8-cos-series-short",
+    "file": "src/world/landforms.js",
+    "old": "  for (let k = 20; k >= 2; k -= 2) p = 1 - (x2 * p) / (k * (k - 1));",
+    "new": "  for (let k = 12; k >= 2; k -= 2) p = 1 - (x2 * p) / (k * (k - 1));",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A8-sin-unreflected",
+    "file": "src/world/landforms.js",
+    "old": "  if (a > 0.5) a = 1 - a;   // sin(pi - y) = sin(y)",
+    "new": "  if (a > 0.5) a = 0.5;   // sin(pi - y) = sin(y)",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-A8-exp-not-halved-back",
+    "file": "src/world/landforms.js",
+    "old": "  for (let i = 0; i < n; i++) p *= 0.5;",
+    "new": "  for (let i = 1; i < n; i++) p *= 0.5;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-B1-door-never-asked",
+    "file": "src/formats/mapsFile.js",
+    "old": "    return !!worldDataDoor()?.getDFLocationReplacementData(region, location, this);",
+    "new": "    return false;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-B1-packed-rows",
+    "file": "src/scenes/world.js",
+    "old": "    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);",
+    "new": "    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? row : row);",
+    "tests": [
+      "test/auditlandforms3.test.js",
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C1-valley-stilled-flat",
+    "file": "src/world/landforms.js",
+    "old": "      const c = h * k - deep * (1 - k);",
+    "new": "      const c = h * k;",
+    "tests": [
+      "test/auditlandforms3.test.js",
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C1-last-valley-wins",
+    "file": "src/world/landforms.js",
+    "old": "      if (c < out) out = c;",
+    "new": "      out = c;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C1-valley-depth-off-the-hills",
+    "file": "src/world/landforms.js",
+    "old": "  if (out) out[0] = deep * ease;",
+    "new": "  if (out) out[0] = 0.25 * deep * ease;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C2-level-on-the-woodlands",
+    "file": "src/world/landforms.js",
+    "old": "(ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);",
+    "new": "(ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, null, null, span) : 0);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C3-share-linear",
+    "file": "src/world/landforms.js",
+    "old": "  const u = smooth01(fx - ix), v = smooth01(fy - iy);",
+    "new": "  const u = fx - ix, v = fy - iy;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C3-rows-north",
+    "file": "src/world/landforms.js",
+    "old": "  const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;",
+    "new": "  const fx = gx / span - 0.5, fy = gy / span - 0.5;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C4-profile-unpulled",
+    "file": "src/world/landforms.js",
+    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;",
+    "new": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, []) : macro;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C4-sites-of-the-3x3",
+    "file": "src/world/landforms.js",
+    "old": "    for (let qx = px - 2; qx <= px + 2; qx++) {\n      if (qx < 0 || qx >= MAP_W) continue;\n      const i = 4 * (qy * MAP_W + qx);",
+    "new": "    for (let qx = px - 1; qx <= px + 1; qx++) {\n      if (qx < 0 || qx >= MAP_W) continue;\n      const i = 4 * (qy * MAP_W + qx);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ],
+    "equivalent": true,
+    "why": "sitesAbout's 5x5 is a margin (its docblock): a sample reads a neighbour's arm only at its last two profile points, on their shared edge, where a site two pixels off stands at least its widest reach away (124 samples: 128 less its clearance of 3, less the one sample in) - so the 3x3's sites land on the same floats. Kept against a dial that reaches further."
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C5-weights-not-fourth",
+    "file": "src/world/landforms.js",
+    "old": "    const w4 = w * w * w * w;",
+    "new": "    const w4 = w * w;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C5-keep-the-least",
+    "file": "src/world/landforms.js",
+    "old": "    keep *= 1 - w;",
+    "new": "    keep = Math.min(keep, 1 - w);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C5-reach-by-the-short-side",
+    "file": "src/world/landforms.js",
+    "old": "reach: Math.min(most, reach + per * Math.max(x1 - x0, y1 - y0) / 2)",
+    "new": "reach: Math.min(most, reach + per * Math.min(x1 - x0, y1 - y0) / 2)",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C6-upland-ignored",
+    "file": "src/world/landforms.js",
+    "old": "    const amp = w * (land.low + (land.high - land.low) * region) * (1 + (land.upland - 1) * up);",
+    "new": "    const amp = w * (land.low + (land.high - land.low) * region);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C6-client-hands-its-own",
+    "file": "src/world/terrainGenClient.js",
+    "old": "    const s = sites ? sites.slice() : null, c = climates ? climates.slice() : null;",
+    "new": "    const s = sites, c = climates;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-B4-restride-off-the-climates",
+    "file": "src/scenes/world.js",
+    "old": "roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates, bed: waterOn",
+    "new": "roads: terrainGen.roads(), sites: _landformSites, bed: waterOn",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-B4-lift-default-says-relief-alone",
+    "file": "src/world/landforms.js",
+    "old": "or null: its defaults (the\n *   relief and the woodlands' hills, no paths, no sites)",
+    "new": "or null: the relief alone",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C4-road-noise-unlevelled",
+    "file": "src/world/landforms.js",
+    "old": "      const smoothLand = land - g * keep;",
+    "new": "      const smoothLand = land - g;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C2-levels-one-table",
+    "file": "src/world/landforms.js",
+    "old": "  let kept = byWorld.get(ground.climates ?? NO_CLIMATES);",
+    "new": "  let kept = byWorld.get(NO_CLIMATES);",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C2-level-hills-regardless",
+    "file": "src/world/landforms.js",
+    "old": "+ (ground.hills ? hillsAt(ox + x",
+    "new": "+ (true ? hillsAt(ox + x",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C6-hills-eased-on-the-noise",
+    "file": "src/world/landforms.js",
+    "old": "    let land = landAt(gx, gy, h, h - g, low,",
+    "new": "    let land = landAt(gx, gy, h, h, low,",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-C3-row-off-by-one",
+    "file": "src/world/landforms.js",
+    "old": "  const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;",
+    "new": "  const fx = gx / span - 0.5, fy = MAP_H - 0.5 - gy / span;",
+    "tests": [
+      "test/auditlandforms3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-III-D4-level-counts-the-sea",
+    "file": "src/world/landforms.js",
+    "old": "      if (!(h > LANDFORM_KNEE)) { wet += h; nw++; continue; }",
+    "new": "      if (!(h > LANDFORM_KNEE)) { sum += h; n++; continue; }",
+    "tests": [
+      "test/auditlandforms3.test.js",
+      "test/landform45.test.js"
+    ]
+  }
+]

@@ -21,6 +21,8 @@ import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
 let woods = null;
 
 let roads = null;   // ROADS 3
+let sites = null;   // LANDFORM4: the game's own locations the landforms pull the ground to (landforms.js landformSites)
+let climates = null;   // LANDFORM6: the world's climates, the land each wears (landforms.js landformClimates)
 let pendingRoads = null;   // ROADS 19: the cache lookup in flight
 globalThis.onmessage = (ev) => handle(ev.data ?? {});
 
@@ -32,6 +34,9 @@ function handle(m) {
       woods = w;
       return;
     }
+    // LANDFORM4/6: the landforms' tables - the sites and the climates - arrive once, after init and before any job (the
+    // client posts them as the world mounts), and ride every job and every promotion from then on; null clears them.
+    if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
     // from then on. null clears it (a new game with a different archive).
     // AUDIT ROADS F2: the network is BUILT HERE, not shipped here. The
@@ -85,7 +90,7 @@ function handle(m) {
     // hand-copied field list, so a new kernel input can never be
     // silently dropped at the wire (the audit found the explicit list
     // was the one place a field could rot with every test green).
-    const out = generatePixelTerrain({ ...m, woods, roads });
+    const out = generatePixelTerrain({ ...m, woods, roads, sites, climates });
     const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
@@ -106,7 +111,7 @@ function answerGrid(m) {
     if (!woods) throw new Error('terrain worker got a grid before init');
     // LANDFORM1-3: the ghost rows are the shaped ground when the job carries the Landforms row, cut along this
     // worker's own network - the one its jobs paint
-    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads });
+    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });
     const transfer = [positions.buffer, normals.buffer];
     if (bed) transfer.push(bed.depths.buffer, bed.sheetDepths.buffer, bed.positions.buffer, bed.normals.buffer, ...(bed.halo ? [bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: and its bed
     globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);
