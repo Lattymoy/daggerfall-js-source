@@ -398,6 +398,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel oppon
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
+import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX } from '../systems/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
@@ -2987,6 +2988,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   let tvFar = { at: null, near: -1, list: [] };   // TV5: the far places about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvDng = { at: null, dg: -1, list: [] };   // TV6: the dungeons about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvFind = { at: null, dg: -1, n: -1, list: [] };   // AUDIT OW5 D1: the find's own, uncapped (above its readers: BOOT-TDZ - a load empties it)
+  let tvDngModels = { at: null, dg: -1, n: -1, list: [] };   // OW-DUNGEONS: the dungeons standing as models under the Overworld (above its readers: BOOT-TDZ - a load empties it)
+  const _tvDngModel = new Map();   // OW-DUNGEONS: each one's model as loaded (tvDungeonModelLoad), held by its own place while it stands
+  pipeline.keepPlaces('owdungeon', TV_DUNGEON_MODELS_MAX);   // OW-DUNGEONS: a dungeon that leaves the set and comes back is not loaded again
   const _tvBountyHold = new Map();   // BOUNTY-OVERWORLD: each held bounty's kept scene point, by bounty id
   const _tvVendorHold = {};   // HOME-VENDOR: the trader's waypoint's kept scene point (tvSceneKept's holder)
   const _tvWaypointHold = new Map();   // WAYPOINTS: each flag's kept scene point (tvSceneKept's holders), by its id
@@ -9427,10 +9431,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  body may stand (the place's collider swept from the player's feet). None while the player is not afoot in it: a
    *  door or a load in flight, at a helm, in the travel view, or the naval arc off. GATE-ALONE (2026-10-07, Mac: "We need
    *  to not allow followers inside the oblivion gates"): and none in an Oblivion Gate's court - the layer lifts every
-   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it. */
+   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it.
+   *  SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): nor in the Shattered Hour, the
+   *  same way - lifted as the player steps through the Rift, stood behind them again out of the Hour. */
   function companionPlace({ crew = true } = {}) {   // REVENANT-COMPANION: the sworn's layer asks it without the naval arc's gate
     if ((crew && !navalOn()) || !walkMode || !playerSpawned || _loading || modes?.transitioning || travelView?.active || csaRuntime?.isSailing?.()) return null;
     if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate
+    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift - they wait outside the Hour
     const spotOf = (col) => (from, dx, dz) => { const p = [from[0], from[1], from[2]]; try { col?.move(p, dx, 0, dz, 1.8); } catch { /* the leader's own spot */ } return [p[0], p[1], p[2]]; };   // AUDIT CC-A3: the swept spot's own height (a slope's, a stair's)
     const mode = _mode();
     const standIn = (pool) => (mobile, feet, o) => pool.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, allied: true, loose: true, transient: true });
@@ -9551,6 +9558,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  his whole); none with the arc off. */
   function partyCompanions() {
     if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it
+    if (modes?.sdRealmSlot?.() != null) return [];   // SD-ALONE: and none in the Shattered Hour
     // AUDIT WK-U5: none while I sail - the party is lifted aboard (it stood its cards over the ship's plate on a phone)
     const party = navalOn() && !csaRuntime?.isSailing?.() ? naval?.companions?.party ?? [] : [];
     const sworn = swornCards?.() ?? [];   // REVENANT-COMPANION: the sworn's cards after the crew's
@@ -14692,6 +14700,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)
     travelView?.exit('load', true);   // AUDIT DEEP X-3: a load under the travel view cuts it first - its release put the head back over the camera the save restores
     _owSay.sp.clear(); _owSay.dg.clear();   // OW6L: nor what the abandoned run still owed its cell (the loaded ledger is the save's)
+    tvDngModels = { at: null, dg: -1, n: -1, list: [] }; for (const e of _tvDngModel.values()) e.hold.release(); _tvDngModel.clear();   // OW-DUNGEONS: nor their models, once the view is cut
     // AUDIT OW4 D3: NOR THE SPAWNS THE ABANDONED RUN WAS TOLD OF - the Overworld marks a spawn once its pixel's line was
     // said (tvSpawnKnown), and that set outlived every load: another save's character saw "?"s where the last one had
     // walked. The loaded character's own are in the store its save restored (the same crossing files them, syncTopics).
@@ -21795,7 +21804,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdFightFrame(); sdVoiceFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdVoiceFrame(); };
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -21807,6 +21816,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     _sdOut = true;
     gateVeil?.flash('brass');   // AUDIT SD II (L6 F8): out of the Hour in its own brass
     if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+  };
+  /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
+   *  Shattered Hour (companionPlace answers none there, as in a gate's court - GATE-ALONE), and a player who steps
+   *  through the Rift with any at their side is told so - once each time they step in, when the step's veil has opened
+   *  over the Hour; owed again once they are out. */
+  let _sdAloneSaid = false;
+  const sdAloneFrame = () => {
+    if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }
+    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    _sdAloneSaid = true;
+    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);
   };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
@@ -27327,6 +27347,74 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvDng = { at, dg, grid, n, list };
     return list;
   }
+  /** OW-DUNGEONS (2026-10-08, Mac: "with dungeons on the overworld it doesnt show a dungeon model"; "Its own model,
+   *  enlarged"; systems/travelDungeonModels.js, bible/06-Systems/Travel-View.md OW-DUNGEONS): THE DUNGEONS STANDING AS
+   *  MODELS - TV6's own law (nearDungeons) with none left to TV2's grid (a found one there is a speck from the eye too)
+   *  and a standing Abyss Dungeon among the spawns (its own host stands and takes it - it is known from its rise), the
+   *  nearest TV_DUNGEON_MODELS_MAX; read again as TV6's is, when the pixel, the finds or the index move. */
+  function tvDungeonModelList() {
+    const at = playerTravelPixel(), dg = discoveryGeneration(), n = _locIndexGen;
+    if (tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) tvDngModels.at = null;   // AUDIT OW4 D2's law: a spawn whose time ran out goes
+    if (tvDngModels.at && tvDngModels.at.x === at.x && tvDngModels.at.y === at.y && tvDngModels.dg === dg && tvDngModels.n === n) return tvDngModels.list;
+    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),
+      spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s), spawnFound: tvSpawnFound,
+      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });
+    const list = dungeonModelSet(near).map((g) => ({ key: g.key, px: g.x, py: g.y, loc: g.loc, spawn: g.spawn }));
+    tvDngModels = { at, dg, n, list };
+    return list;
+  }
+  /** OW-DUNGEONS: a dungeon's model, loaded for the view - its blocks laid as its pixel's build lays them, its entrance
+   *  model picked (dungeonEntranceModel), held by its own place (PLACE-LRU `owdungeon`) and dressed in its climate and
+   *  the season as its pixel would (the bounty farm's way, BOUNTY-FARM); ready once its box is known. */
+  function tvDungeonModelLoad(g) {
+    const e = { key: g.key, px: g.px, py: g.py, ready: false, gpu: null, local: null, box: null, h: 0, texRemap: null, matrix: new Float32Array(16), hold: pipeline.holdPlace('owdungeon', g.key) };
+    _tvDngModel.set(g.key, e);
+    (async () => {
+      const lay = layoutLocation(g.loc, maps, blocks, { enhanced: isEnhanced(), windmills: false });
+      const tile = getLocationTerrainTileOrigin(g.loc);
+      const meshOf = (id) => { const i = arch.getRecordIndex(id); return i === -1 ? null : arch.getMesh(i); };
+      const pick = dungeonEntranceModel(lay.blocks, tile.x * tileSide, tile.y * tileSide, meshOf, isEnhanced());
+      if (!pick) return;
+      const gpu = await e.hold.getGpuMesh(pick.modelIdNum);
+      const cpu = cpuModels.get(pick.modelIdNum);
+      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;
+      const free = isClimateFreeModel(pick.modelIdNum);   // ARENA1's law, as the build's
+      const texRemap = free ? NO_CLIMATE_REMAP : new Map();
+      const climate = g.loc.climate?.climateType ?? getWorldClimateSettings(maps.getClimateIndex(g.px, g.py)).climateType;
+      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);
+      if (_tvDngModel.get(g.key) !== e) return;
+      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);
+      Object.assign(e, { ready: true, gpu, local: pick.local, box, h: Math.max(0.5, box[4] - Math.max(0, box[1])), texRemap });
+    })().catch((err) => console.warn('[overworld] a dungeon\'s model', g.key, err?.message ?? err));
+  }
+  /** OW-DUNGEONS: the set kept in step - a new one's model asked for, one gone released - and each drawn grown with the
+   *  eye's distance (owDungeonGrow) about its foot, where its real one stands: over a built pixel on the real model's
+   *  own level, past the grid on the far ring's ground. No giant's shadow (the view's law, WAGON-HITCH B2). Under the
+   *  view alone: in play the world's own entrance is the model. */
+  const _tvDngAt = [0, 0, 0];
+  function drawTvDungeonModels(eye) {
+    if (!eye) return;
+    const list = tvDungeonModelList();
+    const keep = new Set();
+    for (const g of list) { keep.add(g.key); if (!_tvDngModel.has(g.key)) tvDungeonModelLoad(g); }
+    for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }
+    for (const e of _tvDngModel.values()) {
+      if (!e.ready) continue;
+      const t = state.pixelTranslation(e.px, e.py, e.t ??= [0, 0, 0]);
+      const foot = (e.foot ??= modelFoot(e.box));
+      const level = built.get(`${e.px},${e.py}`)?.locOrigin ?? null;   // the real model's own level, where its pixel stands
+      _tvDngAt[0] = t[0] + foot[0]; _tvDngAt[2] = t[2] + foot[2];
+      if (level) _tvDngAt[1] = t[1] + level[1];
+      else {   // past the grid: the far ring's ground, asked again only as the ground moves (TV3's tvSceneKept's way)
+        const gen = tvGroundGenNow();
+        if (e.groundGen !== gen) { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }
+        _tvDngAt[1] = e.groundY;
+      }
+      const g = owDungeonGrow(Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2]), e.h);
+      if (!owDungeonDrawn(g, !!level)) continue;
+      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });
+    }
+  }
   /** AUDIT OW5 D1 (the audit before the merge, 2026-09-29): THE FIND ASKS EVERY UNFOUND DUNGEON IN ITS REACH - never the
    *  plates' list above, which keeps TV_DUNGEON_MAX with the FOUND first (AUDIT OW4 D7), so a traveller who had found a
    *  dozen about them never found another on approach. The dungeons within TV_FIND_REACH map pixels of the traveller's
@@ -30049,6 +30137,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
+    if (tvf) drawTvDungeonModels(travelView?.eye ?? null);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed

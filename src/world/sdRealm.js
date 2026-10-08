@@ -76,6 +76,9 @@ export const SD_REALM_TEXT = Object.freeze({
   // AUDIT SD II (L6 F4): a death in the Hour is the Hour's own - said so through its veil (the gate's court: "You are cast
   // out of the Burning Court."), never the plain dungeon's waking
   died: 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.',   // SD-ONELIFE: one life a Hollow
+  // SD-ALONE (Mac: "We need to make sure companions dont enter the rift"): said as a player steps through with any at
+  // their side - the court's own words for its gate (world/gateArena.js COURT_TEXT.noCompanions)
+  noCompanions: 'Your companions cannot follow you through the Rift.',
 });
 /** The floors a player is kept on until the Concord lays the bridge (SD6): the Threshold, the walk and the Orrery's
  *  hall. Discs { x, z, r } and the walk's band { x, z0, z1, halfW }, the realm's frame. */
