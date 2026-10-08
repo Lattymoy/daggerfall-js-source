@@ -15,7 +15,7 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 test('AUDIT CARDS-3 D1: the relay\'s card frames reach the host stamped with the cloth\'s clock, never the session\'s epoch', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /online\.onHoldem = \(f\) => modes\?\.cardOnlineFrame\?\.\(\{ \.\.\.f, at: performance\.now\(\) \}\);/);
-  assert.match(w, /welcomes: \(\) => online\?\.holdemWelcomes \?\? 0 \}/, 'B1: and the primary socket\'s welcomes');
+  assert.match(w, /welcomes: \(\) => online\?\.holdemWelcomes \?\? 0, room: \(\) => online\?\.room \?\? null \}/, 'B1: and the primary socket\'s welcomes');
   assert.match(read('src/net/online.js'), /if \(primary\) \{ this\.holdemOk = relaySupportsHoldem\(relayV\); this\.holdemWelcomes\+\+; \}/);
 });
 

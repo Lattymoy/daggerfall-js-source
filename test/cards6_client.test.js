@@ -120,6 +120,6 @@ test('CARDS6 the hosts: a realm character online sits at a gold table with the s
   assert.match(wm, /if \(typeof f\?\.cashout === 'string'\) \{\n\s*const j = host\.cardStakes\?\.receive\(f\.cashout\);\n\s*if \(j\) \{ host\.cardOnline\?\.send\(\{ op: 'ack', table: f\.table, j \}\); host\.cardStakes\.claim\(\); \}/);
   assert.match(wm, /for \(const v of host\.cardStakes\.voidable\(room\)\) \{ if \(!host\.cardOnline\.send\(\{ op: 'void', table: v\.table, stake: v\.order \}\)\) break; host\.cardStakes\.voiding\(v\.id\); \}/);
   assert.match(w, /const cardStakes = params\.has\('online'\) && realmSession\n\s*\? createCardStakes\(/);
-  assert.match(w, /room: \(\) => online\?\.room \?\? null \},\n\s*cardStakes,/);
+  assert.match(w, /room: \(\) => online\?\.room \?\? null \},[^\n]*\n\s*cardStakes,/);
   assert.match(on, /if \(!validHoldemOut\(m\) \|\| \(!primary && m\.cashout === undefined\)\) return;/, 'a cash-out from the room just left is heard too');
 });

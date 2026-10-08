@@ -597,6 +597,19 @@ export const REFUSALS = Object.freeze({
   // CUSTOMS-PASS: the developer's route (server-account/src/realm.js grantCustomsPass), said by tools/customsPass.mjs - its
   // `not-developer` is MARKS1's one word above (MERGE 2: both sides wrote it; the one refusal says both routes)
   ambiguous: 'More than one account goes by that name - name the account by its id instead.',
+  // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
+  'cards-realm': 'Only an online character of the realm can play a card table for gold.',
+  'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',
+  'cards-stake-paid': 'That stake has already been settled.',
+  'bad-table': 'The account service could not read that card table.',
+  'bad-stakes': 'That table does not play at those stakes.',
+  'bad-buy-in': 'A buy-in at that table must be between 20 and 100 big blinds.',
+  'cards-stake-failed': 'The stake could not be held. Try again.',
+  'cards-receipt': 'The table\'s cash-out could not be read.',
+  'cards-not-yours': 'That cash-out belongs to another account.',
+  'cards-no-stake': 'The realm holds no stake for that cash-out.',
+  'cards-other-character': 'That cash-out belongs to another of your characters - it is paid to the one that staked it.',
+  'cards-cashout-failed': 'The cash-out could not be paid. Try again.',
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw

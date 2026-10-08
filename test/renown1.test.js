@@ -248,7 +248,7 @@ test('RENOWN1 the token and the order: `lv` optional and within 1..50 when there
   assert.ok(claimsValid({ ...id, lv: 50 }));
   for (const lv of [0, 51, 1.5, '9', null]) assert.equal(claimsValid({ ...id, lv }), false, `lv ${lv}`);
   assert.equal(renownIssuable(12), true);
-  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown', 'guild', 'guildout', 'siege']);   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass (PIN MOVED)
+  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown', 'guild', 'guildout', 'siege', 'stake']);   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass (PIN MOVED)   // CARDS6: a gold table's stake (PIN MOVED)
   const lvOrder = { o: 'renown', s: 'acct-mara', lv: 9, i: T0, e: T0 + 30 };
   assert.ok(orderValid(lvOrder));
   assert.equal(orderValid({ ...lvOrder, mu: 0 }), false, 'a renown order carrying a mute is neither');

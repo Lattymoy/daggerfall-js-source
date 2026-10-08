@@ -73,7 +73,7 @@ test('GUILD1c the token: a character\'s guild rides it as three claims - its id,
 });
 
 test('GUILD1c the orders: `guild` says the carrier\'s guild now (all three or none), `guildout` a member removed (`gm`) or a guild gone (no `gm`) and never a tag; each kind carries its own fields and no other\'s, and the mute and renown orders carry none of a guild\'s; verifyOrder asks for its kind by name (mutants: a guild order read at the renown door; a guildout with a tag; a mute carrying a guild)', async () => {
-  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown', 'guild', 'guildout', 'siege']);   // SEAT2a: a battle's pass (PIN MOVED)
+  assert.deepEqual([...ORDER_KINDS], ['mute', 'renown', 'guild', 'guildout', 'siege', 'stake']);   // SEAT2a: a battle's pass (PIN MOVED)   // CARDS6: a gold table's stake (PIN MOVED)
   const o = { s: 'acct-0001', i: 1000, e: 1000 + ORDER_TTL_S };
   assert.equal(orderValid({ o: 'guild', ...o, gi: G1, gt: 'HND', gm: 'm3' }), true);
   assert.equal(orderValid({ o: 'guild', ...o }), true, 'none: a leave, a disbanding');
