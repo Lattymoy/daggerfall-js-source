@@ -9848,7 +9848,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => gatherHost?.hoverName?.(key) ?? null,   // PROF-MENU: a profession node, its acts the plaque's rows
     (key) => gatePool?.hoverName(key) ?? null,   // WB2: the Oblivion Gate, and its countdown
     (key) => sigilBroker?.hoverName(key) ?? null,   // SET7: the Sigil Broker (BROKER-CAGE: caged at the faithful's circle)
-    (key) => lefay?.hoverName(key) ?? null,   // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows
     (key) => riteHost?.hoverName(key) ?? null,   // WB12d: the faithful's chest - its own keys, and its pile's before the piles' word
     (key) => camps.hoverName?.(key) ?? null,
     (key) => droppedTorches.hoverName?.(key) ?? null,
@@ -9877,6 +9876,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own family (DFU has no other players), so it sits with the cart and
     // the camps ABOVE the mod's switch, as the names over heads already do.
     (key) => peerHoverName(key),
+    // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; last, as its press is the street's
+    // (worldModes.tryEnter, the ladder's last family)
+    (key) => lefay?.hoverName(key) ?? null,
   ];
   /**
    * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN

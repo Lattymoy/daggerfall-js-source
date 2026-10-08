@@ -1733,7 +1733,6 @@ export async function bootExterior(canvas, renderer, params, status) {
   // twin, and in the same order, because a tie must read here the way
   // it resolves there.
   const _hoverNamers = [
-    (key) => lefay.hoverName(key),   // LEFAY1: the monument to Julian LeFay
     (key) => camps.hoverName?.(key) ?? null,
     (key) => droppedTorches.hoverName?.(key) ?? null,
     (key) => exteriorFoes.hoverName?.(key) ?? null,
@@ -1753,6 +1752,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
     (key) => hcc.hoverName(key),   // HCC
+    (key) => lefay.hoverName(key),   // LEFAY1: the monument to Julian LeFay - last, as world.js's twin
   ];
   /**
    * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN
