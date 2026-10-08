@@ -208,5 +208,75 @@
       "test/scale4c.test.js"
     ],
     "note": "the play clock's knock carried by nothing"
+  },
+  {
+    "name": "SCALE4c-board-shut-shown",
+    "file": "src/net/noticeBook.js",
+    "old": "        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it",
+    "new": "        if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11's law, as `read` keeps it",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a board shut by the heartbeat's answer still shown from the cache"
+  },
+  {
+    "name": "SCALE4c-slower-never-early",
+    "file": "src/net/heartbeat.js",
+    "old": "    const riding = Number.isFinite(pace)\n      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))\n      : going;",
+    "new": "    const riding = going;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "two clocks out of step stay out of step: the box alone every three minutes after a town is entered"
+  },
+  {
+    "name": "SCALE4c-early-bound-loose",
+    "file": "src/net/heartbeat.js",
+    "old": "p.soon(t, pace - RIDE_EARLY_MS)))",
+    "new": "p.soon(t, pace)))",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box riding the board's second minute in step - a look every two minutes, not three"
+  },
+  {
+    "name": "SCALE4c-faster-rides-early",
+    "file": "src/net/heartbeat.js",
+    "old": "|| ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))",
+    "new": "|| (p.soon(t, pace - RIDE_EARLY_MS)))",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the board read early on the box's heartbeat - a read more, and no request fewer"
+  },
+  {
+    "name": "SCALE4c-box-period-unsaid",
+    "file": "src/net/mail.js",
+    "old": "      every: MAIL_POLL_MS,\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box's part without its period: it never rides early"
+  },
+  {
+    "name": "SCALE4c-board-period-unsaid",
+    "file": "src/net/noticeBook.js",
+    "old": "      every: BOARD_CACHE_MS,\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the board's part without its period: the heartbeat's pace unknown, nothing rides early"
+  },
+  {
+    "name": "SCALE4c-whileLive-period-lost",
+    "file": "src/net/heartbeat.js",
+    "old": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  ...part,",
+    "new": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  body: part.body, take: part.take,",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the world host's box, gated on its lane, loses its period"
   }
 ]

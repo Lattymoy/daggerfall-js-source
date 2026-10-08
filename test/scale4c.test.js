@@ -116,12 +116,14 @@ function rig({ answer = (body) => ({ status: 200, json: body }), signedIn = true
   });
   return { hb, sent, timers, at: () => t, advance: async (ms) => { t += ms; await hb.tick(); await Promise.resolve(); }, set: (v) => { t = v; } };
 }
-/** A clock's part: due every `every` ms from its last send, its answers kept. */
+/** A clock's part: due every `every` ms from its last send (its period said, as the books' parts say theirs), its
+ *  answers kept. */
 function every(r, name, everyMs, body = true) {
   const p = { last: -Infinity, took: [], asked: 0 };
   p.part = {
     due: (t) => t - p.last >= everyMs,
     soon: (t, early) => t - p.last >= everyMs - early,
+    every: everyMs,
     body: () => { p.last = r.at(); p.asked++; return body; },
     take: (a) => p.took.push(a),
   };
@@ -168,6 +170,58 @@ test('SCALE4c B: a part goes when its own clock says, a part due within RIDE_EAR
   await r.advance(BOARD_CACHE_MS); await flush();
   assert.ok(!('quiet' in r.sent.at(-1).body));
   assert.deepEqual(quiet.took, []);
+});
+
+test('SCALE4c B: two clocks far out of step fall into step at the slower one\'s next look, through the real books - a town entered half a minute into the box\'s three starts the board\'s minute there, and the box\'s next look rides the board\'s heartbeat early (by less than the board\'s minute less RIDE_EARLY_MS) rather than going alone every three minutes for ever; in step it rides the board\'s third minute, never its second; the faster clock never rides the slower one\'s early (mutants: no slower clock riding early, the bound without RIDE_EARLY_MS, the faster riding the slower, a book\'s part without its period, whileLive dropping it, the riders within RIDE_EARLY_MS left)', async () => {
+  const r = rig({ answer: (body) => ({ status: 200, json: {
+    ...(body.mail ? { mail: { letters: [], max: 50 } } : {}),
+    ...(body.board !== undefined ? { board: { notes: [], notices: [] } } : {}),
+  } }) });
+  const box = new MailBox({ ioOf: () => ({ fetch: async () => { throw new Error('the box asked alone'); }, secret: 'sek', storage: null }), now: r.at });
+  const book = createNoticeBook({ door: { read: async () => { throw new Error('the board asked alone'); } }, nowMs: r.at, sleep: async () => {} });
+  let town = null;
+  r.hb.add('mail', whileLive(box.heartbeatPart(), () => true));   // as the world host adds them (scenes/world.js)
+  r.hb.add('board', book.heartbeatPart(() => town));
+  await r.hb.tick(); await flush();
+  for (let s = 1; s <= 30; s++) await r.advance(1000);
+  town = 4242;   // the street frame names a town: its board is due at once, the box not for two and a half minutes
+  await r.hb.tick(); await flush();
+  assert.deepEqual(r.sent.map((x) => Object.keys(x.body)), [['mail'], ['board']]);
+  for (let s = 1; s <= 15 * 60; s++) await r.advance(1000);
+  await flush();
+  const boards = r.sent.filter((x) => x.body.board === 4242).map((x) => x.at);
+  const looks = r.sent.filter((x) => x.body.mail === true).map((x) => x.at);
+  assert.equal(boards.length, 16, 'the board\'s minute, from the town\'s first read');
+  assert.equal(r.sent.length, 17, 'after the box\'s first look every one rode a board\'s - none alone (twenty-two without)');
+  // the one early look: the board's heartbeat at two and a half minutes carried the box due at three
+  assert.equal(looks[1] - looks[0], MAIL_POLL_MS - 30_000);
+  assert.ok(MAIL_POLL_MS - (looks[1] - looks[0]) < BOARD_CACHE_MS - RIDE_EARLY_MS);
+  // and in step after it: every MAIL_POLL_MS to the millisecond - the board's third minute, never its second
+  assert.deepEqual(looks.slice(2).map((at, i) => at - looks[i + 1]), Array(looks.length - 2).fill(MAIL_POLL_MS));
+  assert.equal(looks.length, 6);
+  // the other way about - the box going while the board's minute has a while to run - the board waits for its minute:
+  // a faster clock goes again within its own period, and riding early would only move it
+  const q = rig({ answer: (body) => ({ status: 200, json: Object.fromEntries(Object.keys(body).map((k) => [k, {}])) }) });
+  const qb = every(q, 'board', BOARD_CACHE_MS, 4242);
+  await q.hb.tick(); await flush();
+  for (let s = 1; s <= 20; s++) await q.advance(1000);
+  every(q, 'mail', MAIL_POLL_MS);
+  await q.hb.tick(); await flush();
+  assert.deepEqual(q.sent.map((x) => Object.keys(x.body)), [['board'], ['mail']], 'the box\'s first look alone, the board\'s minute left as it was');
+  assert.equal(qb.asked, 1);
+  // the narrow gap the early bound leaves: a town entered 123 s into the box's three, so the board's next read is due
+  // three seconds after the box - past the box's early bound (the board's minute less RIDE_EARLY_MS) - and the board,
+  // a faster clock due within RIDE_EARLY_MS, rides the box's heartbeat; in step from there
+  const g = rig({ answer: (body) => ({ status: 200, json: Object.fromEntries(Object.keys(body).map((k) => [k, {}])) }) });
+  every(g, 'mail', MAIL_POLL_MS);
+  await g.hb.tick(); await flush();
+  for (let s = 1; s <= 123; s++) await g.advance(1000);
+  every(g, 'board', BOARD_CACHE_MS, 4242);
+  await g.hb.tick(); await flush();
+  for (let s = 1; s <= 15 * 60; s++) await g.advance(1000);
+  await flush();
+  assert.deepEqual(g.sent.slice(0, 3).map((x) => Object.keys(x.body).sort()), [['mail'], ['board'], ['board', 'mail']]);
+  assert.equal(g.sent.filter((x) => !('board' in x.body)).length, 1, 'none alone after the box\'s first look');
 });
 
 test('SCALE4c B: the knock waits for a ride - carried by the next part that goes within BEAT_RIDE_MS, alone once nothing will come, at once where no clock rides at all (a single-player world); a late beat still credits its whole gap (mutants: the knock sent at once beside a ride coming, held past its wait, held where nothing rides)', async () => {

@@ -11,8 +11,12 @@
 //
 // Here they ride one request, /v1/heartbeat (server-account/src/heartbeat.js), which answers each part exactly as its
 // own route would - so a part's book takes the same answer it always took, and every clock keeps its own pace:
-//   - A PART IS SENT WHEN IT IS DUE, never earlier than RIDE_EARLY_MS: a heartbeat that goes anyway carries a part due
-//     that soon, so two clocks whose paces divide (the board's minute, the box's three) fall into step and stay there.
+//   - A PART IS SENT WHEN IT IS DUE, or rides a heartbeat that goes anyway: one due within RIDE_EARLY_MS, and a slower
+//     clock (its `every` no shorter) that would fall due before the next heartbeat - the clocks going start again as
+//     they go, so the next is no sooner than the soonest of their periods, less RIDE_EARLY_MS. Two clocks whose paces
+//     divide (the board's minute, the box's three) fall into step from any phase and stay there: a town entered starts
+//     the board's minute again, and the box's next look rides the board's heartbeat early rather than going alone ever
+//     after. A faster clock never rides a slower one's early - it goes again within its own period, and would only move.
 //   - THE BEAT WAITS FOR A RIDE, up to BEAT_RIDE_MS. Its credit is the service's own gap, capped at PLAY_GRACE_S - twice
 //     PLAY_BEAT_S - so a knock carried two minutes late credits exactly what it would have; one with nothing due to
 //     ride within its wait (a single-player world: no box, no board) goes at once, alone, as it always did.
@@ -39,8 +43,9 @@ const RETRY = Object.freeze(['offline', 'server']);
 /**
  * One clock's share of the heartbeat. `due(t)` - its own clock says it is time; `soon(t, early)` - it would be within
  * `early` ms; `body()` - what the request carries for it (undefined: nothing this time, and it is not sent); `take(r)` -
- * its answer, in net/accountClient.js call's shape (`{ ok, data }` or `{ ok: false, error }`).
- * @typedef {{ due: (t: number) => boolean, soon: (t: number, early: number) => boolean, body: () => any, take: (r: any) => void }} HeartbeatPart
+ * its answer, in net/accountClient.js call's shape (`{ ok, data }` or `{ ok: false, error }`); `every` - how long after it
+ * is sent it falls due again, ms (its clock's own period; none - another part never rides early on its account).
+ * @typedef {{ due: (t: number) => boolean, soon: (t: number, early: number) => boolean, body: () => any, take: (r: any) => void, every?: number }} HeartbeatPart
  */
 
 /** A part asked only while `live()` - the host's frames that used to ask it are running (a page hidden, a lane gone
@@ -118,14 +123,22 @@ export function createHeartbeat({
     return r;
   }
 
-  /** One look at the clocks: a heartbeat when any is due, carrying every one due within RIDE_EARLY_MS and the waiting
-   *  knock. Answers the heartbeat's promise, or null when nothing went. */
+  /** One look at the clocks: a heartbeat when any is due, carrying every one due within RIDE_EARLY_MS, every slower
+   *  one that would fall due before the next heartbeat, and the waiting knock. Answers the heartbeat's promise, or null
+   *  when nothing went. */
   function tick(t = now()) {
     if (flying || !visible()) return null;
     const due = [...parts].filter(([, p]) => p.due(t));
     const beatDue = beatAt != null && (due.length > 0 || !rideComing(t));
     if (!due.length && !beatDue) return null;
-    const riding = [...parts].filter(([name, p]) => due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS));
+    const going = [...parts].filter(([name, p]) => due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS));
+    // the next heartbeat is no sooner than the soonest period among those going, so a slower clock due before it would go
+    // alone: it rides this one. Less RIDE_EARLY_MS, so clocks in step stay in step - the box rides the board's third
+    // minute, never its second.
+    const pace = Math.min(...going.map(([, p]) => p.every ?? Infinity));
+    const riding = Number.isFinite(pace)
+      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))
+      : going;
     flying = send(riding, beatAt != null).finally(() => { flying = null; });
     return flying;
   }

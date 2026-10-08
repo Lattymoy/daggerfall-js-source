@@ -175,6 +175,7 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
     return {
       due: (t) => ready(t, 0),
       soon: (t, early) => ready(t, early),
+      every: BOARD_CACHE_MS,
       body: () => {
         const map = townMap();
         if (!boardKeyOk(map)) return undefined;

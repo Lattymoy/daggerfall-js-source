@@ -164,8 +164,8 @@
   {
     "name": "NOTICE1-19-a-closed-board-still-shown",
     "file": "src/net/noticeBook.js",
-    "old": "      if (SHUT.includes(r?.error)) { open = false; e.board = null; }",
-    "new": "      if (SHUT.includes(r?.error)) { open = false; }",
+    "old": "      if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11: not this account's now",
+    "new": "      if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11: not this account's now",
     "tests": [
       "test/notice1.test.js"
     ]

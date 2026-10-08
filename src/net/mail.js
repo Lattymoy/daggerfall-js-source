@@ -227,6 +227,7 @@ export class MailBox {
     return {
       due: (nowMs) => ready(nowMs, 0),
       soon: (nowMs, early) => ready(nowMs, early),
+      every: MAIL_POLL_MS,
       body: () => {
         this.at = this.now();
         return this._io() ? true : undefined;   // signed out: the box says so, and nothing rides
