@@ -2106,6 +2106,10 @@ function outdoorsTestRow() {
  *  where the device reports touch (TI2). */
 function portRowsControls() {
   const out = [];
+  // PAD-CURSOR: a controller's, on every device and both skins - the touch knobs below stay a finger's device's
+  out.push(prefRow('padCursorAssist', 'Controller cursor assist',
+    'On: the controller\u2019s menu cursor eases in, speeds up on a long push, slows over a button and settles on it '
+    + 'when you let go. Off: Daggerfall\u2019s own cursor, one steady speed.'));
   if (!isTouchDevice()) return out;
   const times = (v) => `${v.toFixed(2)}\u00d7`;
   out.push(stepRow('touchLookSensitivity', 'Look sensitivity',

@@ -53,13 +53,14 @@
 // is the disease the touch layer's `up()` guards against.
 import { bindings } from './input.js';
 import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding } from '../systems/inputActions.js';
-import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, cursorStep, controllerSettings, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
+import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, CURSOR_SPEED, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { getBinding as getBindingOf, isPadCode } from '../systems/inputActions.js';
 // PADPLUS1: the Enhanced Plus controller layer - its layout, the crossbar, the menus, the prompts (ui/plusPad.js)
 import {
   plusPadActive, ensurePlusPadLayout, plusToggleRun, crossbarInForce, crossbarApi, crossbarSlot, CROSSBAR_CODES, CROSSBAR_HOLD,
-  LOOT_DPAD, HELM_DPAD, plusDpadByCode, NEXT_MODE, HOTBAR_ARRANGE_CODE, plusStickSens, scaleStick, plusBindCapturing, lootPrompts, quickActApi, cycleTab, spatialStep, scrollAt, domTargetAt, domPointer, domHoverChange, interactiveAt, markHover, showPrompts, windowPrompts, activeTabStrip,
+  LOOT_DPAD, HELM_DPAD, plusDpadByCode, NEXT_MODE, HOTBAR_ARRANGE_CODE, plusStickSens, scaleStick, plusBindCapturing, lootPrompts, quickActApi, cycleTab, spatialStep, scrollAt, domTargetAt, domPointer, domHoverChange, interactiveAt, markHover, showPrompts, windowPrompts, activeTabStrip, controlRectNear,
 } from './plusPad.js';
+import { padCursorAssist, createPadCursorState, stepPadCursor, linearPadCursorStep, padCursorCanvasTargets, pullTargetAmong, PAD_CURSOR } from '../systems/padCursor.js';   // PAD-CURSOR: the Destiny feel
 import { GAUNTLET_POINT, GAUNTLET_PRESS } from './plusCursor.js';
 import { dfuCursorUrl } from './cursor.js';   // CLASSIC-CURSOR: the pad's arrow is DFU's controllerCursorImage, the mouse's own
 import { overlayOpen } from './enhancedOverlays.js';   // PADPLUS2: the enhanced doors' registry - a DOM window is up
@@ -168,6 +169,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   let swinging = false;
   let lastMouse = null;          // Input.mousePosition, the port's last real mouse point (client px)
   let cursor = null;             // controllerCursorPosition, client px
+  const cursorFeel = createPadCursorState();   // PAD-CURSOR: its velocity and the full-lean clock
   const capturedHeld = new Set(); // A captured press cannot become a UI gesture before release.
   const cursorHeld = {};         // the UI click actions down at the cursor
   let cursorEl = null;
@@ -205,7 +207,11 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     if (typeof document === 'undefined' || !document.body) return;
     if (on && !cursorEl) {
       cursorEl = document.createElement('div');
-      cursorEl.style.cssText = `position:fixed;left:0;top:0;width:${CURSOR_SIZE}px;height:${CURSOR_SIZE}px;pointer-events:none;z-index:6;background:url("${CURSOR_ART}") no-repeat;image-rendering:pixelated;display:none`;
+      cursorEl.style.cssText = `position:fixed;left:0;top:0;width:${CURSOR_SIZE}px;height:${CURSOR_SIZE}px;pointer-events:none;background:url("${CURSOR_ART}") no-repeat;image-rendering:pixelated;display:none`;
+      // PAD-CURSOR: above every window on BOTH skins - at z-index 6 the classic arrow sat under the DOM pages it was
+      // meant to point at (the Professions pages, the online panels). It takes no pointer events, so standing over
+      // the asset picker (MWFIX 1's gate, which reads stylesheet literals) costs that modal no click
+      cursorEl.style.zIndex = '2147483001';
       document.body.appendChild(cursorEl);
     }
     if (!cursorEl) return;
@@ -214,7 +220,6 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     const plusNow = on && plusPadActive();
     if (P.plusCursor !== plusNow) {
       P.plusCursor = plusNow;
-      cursorEl.style.zIndex = plusNow ? '2147483001' : '6';
       cursorEl.style.width = plusNow ? '31px' : `${CURSOR_SIZE}px`;
       cursorEl.style.height = plusNow ? '32px' : `${CURSOR_SIZE}px`;
       cursorEl.style.backgroundImage = `url("${plusNow ? GAUNTLET_POINT : CURSOR_ART}")`;
@@ -228,6 +233,8 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     if (on && cursor) { cursorEl.style.left = `${cursor[0]}px`; cursorEl.style.top = `${cursor[1]}px`; }
   };
   const domDown = {};   // PADPLUS1: the DOM element each button went down on
+  /** The MouseEvent `buttons` mask of the click actions held at the cursor. */
+  const heldMask = () => (cursorHeld.LeftClick ? 1 : 0) | (cursorHeld.RightClick ? 2 : 0) | (cursorHeld.MiddleClick ? 4 : 0);
   const pointerAt = (type, button) => {
     if (!cursor) return;
     // PADPLUS1: UNDER PLUS THE CURSOR CLICKS THE PAGE. The enhanced windows are DOM above the canvas, and an event
@@ -245,9 +252,12 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       if (phase === 'down') domDown[button] = t;
       const at = phase === 'up' ? (t ?? domDown[button]) : t;
       if (phase === 'up') domDown[button] = null;
-      if (at) { domPointer(at, phase, { x: cursor[0], y: cursor[1], button, makeEvent }); return; }
+      if (at) { domPointer(at, phase, { x: cursor[0], y: cursor[1], button, buttons: phase === 'move' ? heldMask() : undefined, makeEvent }); return; }
     }
-    canvas.dispatchEvent(makeEvent(type, { clientX: cursor[0], clientY: cursor[1], button, buttons: type === 'pointerup' ? 0 : (button === 0 ? 1 : button === 2 ? 2 : 4), pointerType: 'mouse', pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }));
+    // PAD-CURSOR: a MOVE carries the buttons actually held (a hover reported the left button down - a drag to any window
+    // that reads `buttons`, the scroll bars' own poll); a press its own button, a release none
+    const buttons = type === 'pointerup' ? 0 : type === 'pointermove' ? heldMask() : (button === 0 ? 1 : button === 2 ? 2 : 4);
+    canvas.dispatchEvent(makeEvent(type, { clientX: cursor[0], clientY: cursor[1], button, buttons, pointerType: 'mouse', pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }));
   };
   const cursorRelease = () => {
     for (const ui of Object.keys(cursorHeld)) if (cursorHeld[ui]) { cursorHeld[ui] = false; pointerAt('pointerup', DOM_BUTTON_OF_UI[ui]); }
@@ -663,13 +673,25 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       let h = mh ? axes[mh] : 0, v = mvn ? axes[mvn] : 0;   // GetAxisRaw (:1526-1527)
       if (getAxisInversion(b, 'MovementHorizontal')) h = -h;
       if (getAxisInversion(b, 'MovementVertical')) v = -v;
-      if (Math.hypot(h, v) > s.deadzone) {
-        const st = cursorStep(h, v, dt, s.cursorSensitivity * (plus ? plusStickSens('left') : 1));   // PADPLUS10: and the cursor's speed
+      const sens = s.cursorSensitivity * (plus ? plusStickSens('left') : 1);   // PADPLUS10: and the cursor's speed
+      let st = null;
+      if (padCursorAssist()) {
+        // PAD-CURSOR (Ledger A): the Destiny feel on BOTH skins - the curve, the ramp, the boost, the friction over a
+        // control and the pull to it (systems/padCursor.js). The pull reads the DOM's controls and any canvas
+        // window's published buttons, and runs with the stick at rest too, so a let-go settles on the button
+        const near = controlRectNear(cursor[0], cursor[1], PAD_CURSOR.PULL_RADIUS);
+        const target = pullTargetAmong(near ? [near, ...padCursorCanvasTargets()] : padCursorCanvasTargets(), cursor[0], cursor[1]);
+        st = stepPadCursor(cursorFeel, { h, v, dt, deadzone: s.deadzone, speed: sens * CURSOR_SPEED, over: !!target?.inside, target, at: cursor });
+        if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) st = null;   // settled: no move event every idle frame
+      } else if (Math.hypot(h, v) > s.deadzone) {
+        st = linearPadCursorStep(h, v, dt, sens);   // DFU's own, the switch off (:1558-1562)
         // PADPLUS1: a little friction over a control, so a thumb can stop on a button rather than sail past it
         if (plus && P.domOver && interactiveAt(cursor[0], cursor[1])) { st.dx *= 0.55; st.dy *= 0.55; }
+      }
+      if (st) {
         const r = canvas?.getBoundingClientRect?.() ?? { left: 0, top: 0, width: Infinity, height: Infinity };
         cursor[0] = Math.min(r.left + r.width, Math.max(r.left, cursor[0] + st.dx));
-        cursor[1] = Math.min(r.top + r.height, Math.max(r.top, cursor[1] - st.dy));   // Unity's y is up (:1568)
+        cursor[1] = Math.min(r.top + r.height, Math.max(r.top, cursor[1] + st.dy));   // screen px, y down (Unity's y is up - :1568, flipped in the step)
         pointerAt('pointermove', 0);
       }
       for (const [ui, button] of Object.entries(DOM_BUTTON_OF_UI)) {

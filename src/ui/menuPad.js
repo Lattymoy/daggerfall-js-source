@@ -12,9 +12,18 @@
 //   - B is Escape - the menu's own back (enhancedMenu.js onKey), the popups' own close;
 //   - left and right on a focused list box or slider step its value, as they would on a keyboard.
 //
+// PAD-CURSOR (2026-10-08, the player: "a sort of navigatable cursor? Like destiny? For all the menus"): THE LEFT
+// STICK IS A CURSOR HERE TOO - the game's own (ui/gamepadInput.js), with the same feel (systems/padCursor.js: the
+// curve, the ramp, the boost, the slow over a control and the pull to its centre). A presses what it stands on; the
+// d-pad still walks the focus and carries the cursor onto the control it lands on, so there is one pointer. A real
+// mouse moved puts the pad cursor away. With the stick never touched, the door is the focus walk it always was.
+//
 // A control covered by something drawn over it - the sign-in window's scrim over the home - is not a place the focus
 // can go: what a pad can press is what a finger could. And it STOPS when a game is chosen (main.js), where the
 // scene's own pad takes over; the two never read the same press.
+
+import { padCursorAssist, createPadCursorState, stepPadCursor, linearPadCursorStep, pullTargetAmong, PAD_CURSOR } from '../systems/padCursor.js';
+import { CURSOR_SPEED, UNITY_AXIS_DEAD } from '../systems/gamepad.js';
 
 /** The standard-mapping buttons this loop reads (the W3C Gamepad "standard" layout). */
 export const PAD = Object.freeze({ A: 0, B: 1, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 });
@@ -29,11 +38,12 @@ const pressed = (pad, i) => !!pad?.buttons?.[i]?.pressed;
 /** The direction a pad asks for this frame - the d-pad first, else the left stick - or null. `prev` is last frame's:
  *  AUDIT PAD-DOOR A6 - a stick held near a diagonal keeps the way it went while that axis still leans past
  *  STICK_DIRECTION (the larger axis alone flipped right-down-right on a hand's tremor, and every flip fired a move). */
-export function padDirection(pad, prev = null) {
+export function padDirection(pad, prev = null, { stick = true } = {}) {
   if (pressed(pad, PAD.UP)) return 'up';
   if (pressed(pad, PAD.DOWN)) return 'down';
   if (pressed(pad, PAD.LEFT)) return 'left';
   if (pressed(pad, PAD.RIGHT)) return 'right';
+  if (!stick) return null;   // PAD-CURSOR: the stick is the cursor's
   const x = Number(pad?.axes?.[0]) || 0, y = Number(pad?.axes?.[1]) || 0;
   if (Math.max(Math.abs(x), Math.abs(y)) < STICK_DIRECTION) return null;
   const still = { right: x >= STICK_DIRECTION, left: x <= -STICK_DIRECTION, down: y >= STICK_DIRECTION, up: y <= -STICK_DIRECTION };
@@ -91,10 +101,10 @@ export function nearestTo(rect, candidates) {
  */
 export const REFOCUS_MS = 500;
 export const REFOCUS_SLOP = 8;   // px: the same button, redrawn
-export function padDoorFrame(pad, ui, state, now) {
+export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
   const confirm = pressed(pad, PAD.A) || pressed(pad, PAD.START);
   const back = pressed(pad, PAD.B);
-  const dir = padDirection(pad, state.dir);
+  const dir = padDirection(pad, state.dir, { stick });
   const focusOn = (c) => { if (c) { ui.focus(c.el); state.lastEl = c.el; state.lastRect = c.rect; state.lostAt = null; } };
   // AUDIT PAD-DOOR A5: the last focused control is gone and the PAGE put the focus somewhere (a redraw's own focus, the
   // intro's end) - that is the focus now; kept as lost, every frame walked the whole page asking who held it
@@ -111,9 +121,13 @@ export function padDoorFrame(pad, ui, state, now) {
     else if (now - state.lostAt > REFOCUS_MS) { state.lastEl = null; state.lastRect = null; state.lostAt = null; }
   }
   if (confirm && !state.confirm) {
-    const el = ui.active();
-    if (el) ui.press(el);
-    else focusOn(ui.candidates()[0]);
+    // PAD-CURSOR: with the cursor out, A presses what it stands on - nothing under it presses nothing
+    if (ui.cursorOut?.()) ui.pressAtCursor?.();
+    else {
+      const el = ui.active();
+      if (el) ui.press(el);
+      else focusOn(ui.candidates()[0]);
+    }
   }
   if (back && !state.back) ui.back();
   let fire = false;
@@ -130,6 +144,33 @@ export function padDoorFrame(pad, ui, state, now) {
     }
   }
   state.confirm = confirm; state.back = back; state.dir = dir;
+}
+
+/** PAD-CURSOR: the stick's dead zone at the door - Unity's per-axis clip, as the game's pad reads it. */
+export const DOOR_CURSOR_DEADZONE = UNITY_AXIS_DEAD;
+
+/**
+ * PAD-CURSOR: one frame of the door's cursor. `cur` carries { pos, out, feel }; `env` is { near(x, y) -> rect|null
+ * (a control under or near the point), bounds: { w, h }, speed (px/s at a full lean) }. The left stick past the dead
+ * zone brings the cursor out (at the focused control's centre, else the middle) and steers it with the game's law;
+ * out and at rest, the pull still settles it on a control. Answers whether it moved. Pure but for `cur`.
+ */
+export function padDoorCursorFrame(pad, cur, dt, env) {
+  const h = Number(pad?.axes?.[0]) || 0, v = -(Number(pad?.axes?.[1]) || 0);   // the standard map's y is down; the law's is Unity's, up
+  const live = Math.hypot(h, v) > DOOR_CURSOR_DEADZONE;
+  if (!cur.out && !live) return false;
+  if (!cur.out) { cur.out = true; cur.pos ??= [env.bounds.w / 2, env.bounds.h / 2]; }
+  let st;
+  if (padCursorAssist()) {
+    const near = env.near?.(cur.pos[0], cur.pos[1]) ?? null;
+    const target = pullTargetAmong(near ? [near] : [], cur.pos[0], cur.pos[1]);
+    st = stepPadCursor(cur.feel, { h, v, dt, deadzone: DOOR_CURSOR_DEADZONE, speed: env.speed ?? CURSOR_SPEED, over: !!target?.inside, target, at: cur.pos });
+  } else if (live) st = linearPadCursorStep(h, v, dt, (env.speed ?? CURSOR_SPEED) / CURSOR_SPEED);
+  else return false;
+  if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) return false;
+  cur.pos[0] = Math.min(env.bounds.w - 1, Math.max(0, cur.pos[0] + st.dx));
+  cur.pos[1] = Math.min(env.bounds.h - 1, Math.max(0, cur.pos[1] + st.dy));
+  return true;
 }
 
 const FOCUSABLE = 'button, a[href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -217,6 +258,8 @@ export function domDoorUi(doc = globalThis.document) {
 }
 
 const PAD_FOCUS_CSS = '.pad-focus { outline: 2px solid #d9b25a !important; outline-offset: 2px !important; }';
+/** PAD-CURSOR: the door's pointer - the gauntlet the game's pad cursor wears under the enhanced skin. */
+const DOOR_CURSOR_CSS = 'position:fixed;left:0;top:0;width:31px;height:32px;pointer-events:none;background-repeat:no-repeat;image-rendering:pixelated;display:none';
 
 /** Start the door's pad loop; answers the detach. Nothing happens until a pad is pressed - a page with no pad polls
  *  an empty list once a frame and does nothing. */
@@ -228,19 +271,81 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
   style.textContent = PAD_FOCUS_CSS;
   doc.head.append(style);
   const state = { confirm: false, back: false, dir: null, heldAt: 0, lastRepeat: 0, lastEl: null, lastRect: null, lostAt: null };
-  let raf = 0, live = true;
+  // PAD-CURSOR: the door's cursor - out once the stick moves, away again when a real mouse does
+  const cur = { pos: null, out: false, feel: createPadCursorState() };
+  const el = doc.createElement('div');
+  el.className = 'pad-door-cursor';
+  el.style.cssText = DOOR_CURSOR_CSS;
+  el.style.zIndex = '2147483001';   // over every window, as the game's pad cursor stands - it takes no pointer events, so the asset picker above all (MWFIX 1) loses no click
+  doc.body.append(el);
+  import('./plusCursor.js').then((m) => { el.style.backgroundImage = `url("${m.GAUNTLET_POINT}")`; }).catch(() => {});
+  const show = () => {
+    el.style.display = cur.out ? 'block' : 'none';
+    if (cur.out && cur.pos) { el.style.left = `${cur.pos[0]}px`; el.style.top = `${cur.pos[1]}px`; }
+  };
+  const near = (x, y) => {
+    let n = null;
+    for (let i = -1; i < 8 && !n; i++) {
+      const a = (i / 8) * Math.PI * 2, r = i < 0 ? 0 : PAD_CURSOR.PULL_RADIUS;
+      n = doc.elementFromPoint(x + Math.cos(a) * r, y + Math.sin(a) * r)?.closest?.(FOCUSABLE) ?? null;
+    }
+    const b = n?.getBoundingClientRect?.();
+    return b && b.width > 0 ? { x: b.left, y: b.top, w: b.width, h: b.height } : null;
+  };
+  let hover = null;
+  const hoverTo = (n) => {
+    if (n === hover) return;
+    hover?.classList?.remove('pad-focus');
+    hover = n;
+    n?.classList?.add('pad-focus');
+  };
+  ui.cursorOut = () => cur.out;
+  ui.pressAtCursor = () => {
+    const n = cur.pos ? doc.elementFromPoint(cur.pos[0], cur.pos[1])?.closest?.(FOCUSABLE) : null;
+    if (!n || n.disabled) return false;
+    try { n.focus({ preventScroll: true }); } catch { /* not focusable */ }
+    n.click();
+    return true;
+  };
+  const focus = ui.focus;
+  ui.focus = (n) => {   // the d-pad's walk carries the cursor onto the control it lands on: one pointer
+    focus(n);
+    if (!cur.out) return;
+    const b = n.getBoundingClientRect();
+    cur.pos = [b.left + b.width / 2, b.top + b.height / 2];
+    cur.feel.vx = 0; cur.feel.vy = 0;
+    show();
+  };
+  const onMouse = (e) => {
+    if (e.isTrusted === false || !(e.movementX || e.movementY) || !cur.out) return;
+    cur.out = false; cur.pos = [e.clientX, e.clientY]; hoverTo(null); show();
+  };
+  win.addEventListener('mousemove', onMouse);
+  let raf = 0, live = true, last = null;
   const loop = () => {
     if (!live) return;
+    const now = win.performance?.now?.() ?? Date.now();
+    const dt = last == null ? 0 : Math.min(0.1, (now - last) / 1000);
+    last = now;
     let pad = null;
     try { pad = pickDoorPad(getPads()); } catch { pad = null; }
-    if (pad) padDoorFrame(pad, ui, state, win.performance?.now?.() ?? Date.now());
+    if (pad) {
+      const bounds = { w: doc.documentElement.clientWidth, h: doc.documentElement.clientHeight };
+      if (padDoorCursorFrame(pad, cur, dt, { near, bounds, speed: CURSOR_SPEED })) {
+        show();
+        hoverTo(doc.elementFromPoint(cur.pos[0], cur.pos[1])?.closest?.(FOCUSABLE) ?? null);
+      }
+      padDoorFrame(pad, ui, state, now, { stick: false });
+    }
     raf = win.requestAnimationFrame(loop);
   };
   raf = win.requestAnimationFrame(loop);
   return () => {
     live = false;
     win.cancelAnimationFrame(raf);
+    win.removeEventListener('mousemove', onMouse);
     style.remove();
+    el.remove();
     doc.querySelector('.pad-focus')?.classList.remove('pad-focus');
   };
 }
