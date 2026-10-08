@@ -754,4 +754,6 @@ The second slice's receipt half; section 4 carries the law and its calls (BUILT,
   region, a region with no chapter); nothing for a non-member, no chapter, the switch shut or a gate with no region;
   the bounds (100 and the owed, another account's character, a dead one, a receipt credited once, a store that throws);
   a lost race; the board's asks (the rows, a member's state, the hidden two, the switch); the delete; the card in a DOM;
-  the wiring. `tools/mutants/chap2b.json`: 29 mutants, 28 dead, 1 equivalent as recorded.
+  the wiring. `tools/mutants/chap2b.json`: 29 mutants, 28 dead, 1 equivalent as recorded. The host's gate and raid
+  carriers' wiring pins moved (`test/auditonline2.test.js`, `test/raid4_rewards.test.js`, `test/wb5b_gate_claim.test.js`,
+  PIN MOVED); their mutant lists hold, 70 dead. The full suite: 22977 tests, 0 failing once they moved.
