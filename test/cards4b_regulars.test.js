@@ -85,10 +85,16 @@ test('CARDS4b the hosts: the interior hands its regulars over every frame (none 
   assert.match(wm, /cardSeat\.free\[i - 1\]/, 'in the chairs the cloth gives them');
   assert.match(wm, /cardBark\(g, e, now\); \}/, 'their play said as it happens');
   const w = read('src/scenes/world.js');
-  assert.match(w, /livingBillboards: \(\) => \[\.\.\.\(livingIndoors\?\.batches\(\) \?\? \[\]\), \.\.\.\(cardRegularBodies\?\.batches\(\) \?\? \[\]\)\],/);
-  assert.match(w, /if \(_mode\(\) === 'interior'\) cardRegularBodies\?\.draw\(canvas, \{ proj, view, eye \}\);/);
-  assert.match(w, /if \(!list\?\.length\) \{ if \(cardRegularBodies\) \{ cardRegularBodies\.clear\(\); cardRegularBodies = null; \} _cardBarks = \[\]; return; \}/, 'freed the moment none sit');
+  // AUDIT CARDS-3 D-pins: their own hooks on the building's pass - the residents' and the peers' lines stay as LW8 and
+  // MWBODY1 pin them
+  assert.match(w, /cardRegularBillboards: \(\) => cardRegularBodies\?\.batches\(\) \?\? \[\],/);
+  assert.match(w, /drawCardRegulars: \(\{ proj, view, eye \}\) => cardRegularBodies\?\.draw\(canvas, \{ proj, view, eye \}\),/);
+  assert.match(wm, /host\.drawPeerBodies\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*\n\s*host\.drawCardRegulars\?\.\(\{ proj, view, eye: mwv\.eye \}\);/, 'their bodies after the peers\' in the interior pass');
+  assert.match(wm, /const regularsInside = host\.cardRegularBillboards\?\.\(\) \?\? \[\];[^\n]*\n\s*if \(regularsInside\.length\) renderer\.drawBillboards\(regularsInside, camRight, UP_Y\);/, 'their sprites on the building\'s billboard pass');
+  assert.match(w, /if \(!list\?\.length\) \{ if \(cardRegularBodies\) \{ cardRegularBodies\.destroy\(\); cardRegularBodies = null; \} _cardBarks = \[\]; return; \}/, 'freed the moment none sit - their doll textures too (AUDIT CARDS-3 B10)');
   assert.match(w, /for \(const m of list\) cardRegularBodies\.stand\(m\.res, m\.feet, m\.yaw, false, m\.st\);/, 'seated');
   assert.match(w, /for \(const b of _cardBarks\) \{\n\s+const over = \[b\.feet\[0\], b\.feet\[1\] \+ CARD_REGULAR_HEAD_M, b\.feet\[2\]\];/, 'their lines over their heads, on the crew\'s layer');
-  assert.match(w, /if \(\(!livingIndoors && !_cardBarks\.length\) \|\| typeof document === 'undefined'\) return;/, 'with the living world off too');
+  assert.match(w, /points\.push\(\.\.\.cardBarkPoints\(proj, view, eye, w, h, rect\)\);/, 'with the room\'s talk');
+  assert.match(w, /if \(!livingIndoors && typeof document !== 'undefined'\) \{ cardBarkLines\(proj, view, eye, dt\); return; \}/, 'with the living world off too');
+  assert.match(w, /if \(!_cardBarks\.length && !_cardBarksShown\) return;\n\s*_cardBarksShown = _cardBarks\.length > 0;/, 'AUDIT CARDS-3 B8: the layer told once more when the last line ends');
 });

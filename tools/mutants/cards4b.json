@@ -72,8 +72,8 @@
   {
     "name": "C4b-host-wrong-chairs",
     "file": "src/scenes/worldModes.js",
-    "old": "    const seatOf = g.session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : cardSeat.free[i - 1]));\n    return regularsToStand(",
-    "new": "    const seatOf = g.session.seats.map((s, i) => i);\n    return regularsToStand(",
+    "old": "    const seatOf = g.session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : cardSeat.free[i - 1]));\n    const peers = takenSeats(",
+    "new": "    const seatOf = g.session.seats.map((s, i) => i);\n    const peers = takenSeats(",
     "tests": [
       "test/cards4b_regulars.test.js",
       "test/auditcards2_host.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "C4b-world-not-freed",
     "file": "src/scenes/world.js",
-    "old": "if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.clear(); cardRegularBodies = null; } _cardBarks = []; return; }",
+    "old": "if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.destroy(); cardRegularBodies = null; } _cardBarks = []; return; }",
     "new": "if (!list?.length) { _cardBarks = []; return; }",
     "tests": [
       "test/cards4b_regulars.test.js",

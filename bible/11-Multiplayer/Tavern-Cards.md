@@ -1,7 +1,7 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle). Mac answered
-four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay). Mac answered
+four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
 ## Mac's words
@@ -184,6 +184,7 @@ Each ships alone and is verifiable without the next.
 | **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
 | **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
 | **CARDS3** SHIPPED | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15); CARDS3b the held hand, the peek, the chips dragged, the riffle (section 19). OPEN: the squeeze, the frame cost measured on a phone. |
+| **CARDS-BAY** SHIPPED | The house deck of the Iliac Bay: the four crowns as the suits, their royals as the courts, their seals as the aces, the Bay's medallion on the back - painted in code, ours (section 21). |
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** SHIPPED | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables (section 17). |
 | **CARDS6** | Online stakes: buy-in and cash-out escrowed by the realm service. |
@@ -198,7 +199,10 @@ Each ships alone and is verifiable without the next.
 2. **The collectible game's rules.** ANSWERED: Iliac Hand as proposed.
 3. **Gold stakes.** ANSWERED: real gold (offline the purse, online escrowed).
 4. **Offline play.** ANSWERED: tavern patrons play.
-5. **The card art.** OPEN: who paints the cards, and in what style? Needed by CARDS8, not before.
+5. **The card art.** ANSWERED for the house deck (2026-10-08, Mac: "give the cards daggerfall especially themes instead of
+   the simple hearts queens and kings"; then, asked: the suits the Iliac Bay's kingdoms, the courts their royals, the ace
+   the crown's seal): the Hold'em deck is the Bay's, painted in code from paths (section 21). OPEN for the collectible
+   cards: who paints them, and in what style - needed by CARDS8, not before.
 
 ## 10. CARDS1 (2026-10-07): the cards' law
 
@@ -463,16 +467,18 @@ holds every card.
   hibernated room keeps its hands) and the alarm armed for the soonest clock or deal; a socket's leave stands it up.
 - **The client** (`src/systems/cardRemoteTable.js`): the relay's frames folded into the very shapes the offline evening
   offers (`view`, `legal`, `drain`), the relay's clock moved onto this one, a hand already under way told as the events
-  it took (`CATCH_UP_MS`) so a newcomer's cloth lies at rest at once. The host (`worldModes.js`): online, sitting joins
+  it took (`CATCH_UP_MS`) so a newcomer's cloth lies at rest at once (a room come into asks for each of its tables -
+  AUDIT CARDS-3 D7; before it, nothing showed till the table's next event). The host (`worldModes.js`): online, sitting joins
   the relay's table (no buy-in); the panel says whose turn and my clock, the relay's refusals in words; alone, "Play the
   regulars" stands up from it and plays the friendly game; the stand names its table. THE ROOM WATCHES (section 2): every
   table a player does not sit at is laid on its own cloth from the room's frames - a scene and a draw of its own, let go
   when its last seat stands, the room changes or the interior is left.
 - **Not yet:** spectators near the table only (the whole room watches every table); a seat a player takes after the
-  regulars began is the regulars' game, not the relay's; real stakes (CARDS6).
+  regulars began is the relay's table, not the regulars' game - his chair is his, and no regular is drawn in it (AUDIT
+  CARDS-3 E-N3); real stakes (CARDS6).
 - **Pins:** `test/cards5_relay.test.js` 6 (the table, the deal's privacy, the clock and the leaver, the words both ways,
   the client's session, the relay end to end on the fake room - three players, a hibernation), `test/cards5_client.test.js`
-  3 (the remote table, three hosts over an in-process relay, the regulars instead). `tools/mutants/cards5.json`: 25, all
+  9 (the remote table, three hosts over an in-process relay, the regulars instead; AUDIT CARDS-3's driven host seams). `tools/mutants/cards5.json`: 25, all
   dead.
 
 ## 18. CARDS4b (2026-10-08): the regulars in their chairs
@@ -502,13 +508,70 @@ The same ask; section 3's DECIDED hand and chips.
   probe's face pixels: the faces upright and unmirrored (the world's mirror puts the view's +X on the screen's left, which
   the first cut put the hand on).
 - **The chips** (`tablePoint`, `onStack`, `inBetZone`, `dragBet`): a press on his own stack picks up the panel's bet - the
-  raise slider's (clamped to the law), else the call - carried on the cloth under the cursor and let go in the betting
-  ground (nearer the middle than his cards) as the bet; anywhere else, it goes back. The press is taken at the capture
+  raise slider's when he set it (clamped to the law), else the call, else (nothing to call) the least bet: DECIDED (AUDIT
+  CARDS-3 C7), chips pushed in with the slider untouched CALL - carried on the cloth under the cursor and let go in the
+  betting ground (nearer the middle than his cards, and on the table: `onTable`) as the bet; anywhere else - off the
+  table, over the panel, a turn gone by - it goes back. A press on his stack is always the chips', his turn or not. The press is taken at the capture
   phase, before the seat's "a swing stands you up" hears it; a press on the panel is the panel's; the listeners are the
   game's and go with it.
 - **The riffle** (`riffleAt`, `RIFFLE_S`): the dealer riffles at his deck place before every deal - two halves part and
   fall one card from each in turn into one pile - and the deal begins when it is done; the evening's first patron waits
   it out.
 - **Recorded:** a thrown card's last centimetres may skim a seat's chip stack for a frame (the pin on chips through cards
-  is a pin on cards at rest).
-- **Pins:** `test/cards3b_hand.test.js` 5. `tools/mutants/cards3b.json`: 14, all dead.
+  is a pin on cards at rest, every frame - AUDIT CARDS-3 found a pot share coming home through a resting card, fixed).
+- **Pins:** `test/cards3b_hand.test.js` 7. `tools/mutants/cards3b.json`: 14, all dead.
+
+## 20. AUDIT CARDS-3 (2026-10-08): the arc audited a third time
+
+Mac: **"I wanna do a deep comprehensive of everything"**. Five lanes over a frozen snapshot of CARDS5, CARDS4b and
+CARDS3b (`01-Overview/Audit-Cards-3.md`): 4 HIGH, about 20 MED and a tail of LOW, every one reproduced and fixed or
+recorded. What changed in the record:
+
+- **The relay** (`world176`, undeployed, re-hashed in place): a refused sit moves nothing elsewhere; ONE SEAT AN
+  ACCOUNT in a room ('account seated'); a seat whose player has no socket in the room is stood up on the alarm and by an
+  empty room's sweep (no ghost deals for ever, nobody takes a ghost's cards by its id), the alarm given back to the
+  room's forgetting with the last table; the room's sits on one gate ('busy'); a table open at other chairs or stakes
+  refused ('table differs'); a dropped player's sit takes his own chair back mid-hand; a run-out's streets lengthen the
+  pause before the next deal (`HOLDEM_RUNOUT_MS`).
+- **The client**: the relay's frames on the cloth's clock; MY CHAIR IS THE ONE MY ID SITS IN (pending until a state shows
+  it; a refused or raced chair stands the player up; a chair the relay empties turns the game over, said to him); a new
+  socket asks its sit again; a stand the gate kept is said again until it goes; a refusal painted, then cleared; the
+  panel's message rewritten in place (its slider and buttons kept); a room asks for its tables on the way in; a seated
+  player never watches his own table; the regulars only with a chair for one, never drawn in a player's.
+- **The hand and the cloth**: the panel docks right on a wide screen and the hand lifts clear of it; each held card eases
+  between the cloth and the hand; the deal waits for the cloth to settle; pointer events (touch reaches the cards); a
+  bet kept to the table; the carried chips off the stack; a pot share home in the stack's own columns.
+- **THE FOUR HOSTS** (lane D): the card table is `worldModes.js`'s, mounted by world.js and exterior.js. world.js hands it
+  `cardOnline` and `cardRegulars`; exterior.js hands it neither - in that host the table is the offline game and its
+  regulars are names on the panel, unseen and unheard. The dungeon host has no tables.
+- **Pins:** `test/auditcards3_relay.test.js` 8, `test/auditcards3_host.test.js` 4, `test/auditcards3_pins.test.js` 7, and
+  six driven host tests in `cards5_client`. `tools/mutants/auditcards3.json`: 111 dead, 2 equivalent.
+
+## 21. CARDS-BAY (2026-10-08): the deck of the Iliac Bay
+
+Mac: **"give the cards daggerfall especially themes instead of the simple hearts queens and kings"**; asked, he chose the
+Iliac Bay's kingdoms as the suits, and their royals for the courts with the crown's seal as the ace.
+
+- **The suits are the Bay's four crowns** (`src/render/cardFaces.js` `SUIT_CROWNS`, in cardLaw's suit order): clubs are
+  ORSINIUM (an axe, iron green), diamonds SENTINEL (a sun, desert gold), hearts WAYREST (a rose, crimson), spades
+  DAGGERFALL (a dagger, royal blue). A four-colour deck: no two crowns share an ink. The charges are the port's own
+  reading of the game's words - Wayrest's Knights of the Rose, the ship "Sentinel Sun", the cargo "Orsinium Iron" and
+  Gortwog's cleaver, the dagger Daggerfall is named for.
+- **The courts are the crowns' royals, the game's names only** (3E 405, the roll `systems/naval/navalShips.js` already
+  sails under, and `lootRarity.js`'s King Gortwog): Daggerfall - Gothryd, Aubk-i, Nulfaga (the court's mage); Wayrest -
+  Eadwyre, Barenziah, Helseth; Sentinel - Camaron, Akorithi, Lhotun; Orsinium - Gortwog, and a queen and a champion the
+  game names nobody for, who carry their titles alone. Each is a painted bust in the crown's colour, the rank's headwear
+  (a crown, a circlet and veil, a coronet, a helm, a mage's hood), the crown's shield at the shoulder, the skin of the
+  crown's people (an orc's tusks for Orsinium), the name across the foot.
+- **The ace is the crown's seal**: its charge large in a double ring, the crown's name beneath. **The back** is the Bay's
+  medallion on a crimson field in a gold lattice, the four charges round it as the kingdoms lie (Daggerfall north,
+  Wayrest east, Sentinel south, Orsinium west).
+- **The corners keep the poker player's letters** (2-10, J, Q, K, A) beside the charge: the game is Hold'em, and the
+  hand's names (a pair of kings, a flush) are the game's.
+- **THE ART IS OURS** (section 6.2): every face is painted from canvas paths in code - no ARENA2 pixel, no font glyph for
+  a charge. ONE HOME: the cloth's atlas (`render/cardTableDraw.js`, its cells now 128 x 180 for the royals) and the
+  panel's little cards (`ui/cardTableHud.js`, each card its own painted face; a page with no canvas writes "K Daggerfall")
+  are one painter. The panel's hover names the card ("Gothryd, King of Daggerfall", "The Seal of Wayrest").
+- **Pins:** `test/cardsbay_faces.test.js` 7 (the crowns, the royals against the game's roll, the pips, every face inked
+  and drawn not written, the back, the panel painting with the same painter, no ARENA2 read). Mutants in
+  `tools/mutants/auditcards3.json` (BAY-*).

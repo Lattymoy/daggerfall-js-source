@@ -134,8 +134,8 @@
   {
     "name": "C3b-host-bubble",
     "file": "src/scenes/worldModes.js",
-    "old": "    window.addEventListener('mousedown', down, true);",
-    "new": "    window.addEventListener('mousedown', down);",
+    "old": "    window.addEventListener('pointerdown', down, true);",
+    "new": "    window.addEventListener('pointerdown', down);",
     "tests": [
       "test/cards3b_hand.test.js",
       "test/cards3_motion.test.js",

@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseCard } from '../src/net/cardLaw.js';
-import { SUIT_GLYPHS, cardFace, cardHudModel, eventLine, createCardTableHud } from '../src/ui/cardTableHud.js';
+import { cardFace, cardHudModel, eventLine, createCardTableHud } from '../src/ui/cardTableHud.js';
 import { CardTableSession } from '../src/systems/cardTableSession.js';
 import { fakeDoc, all, text } from './decorFakes.mjs';
 
@@ -18,11 +18,14 @@ const seeded = (seed = 99) => { let x = seed >>> 0; return () => { x ^= x << 13;
 const TABLE_STAKES = { sb: 5, bb: 10 };
 
 test('CARDS4 a card as the panel writes it', () => {
-  assert.deepEqual(SUIT_GLYPHS, ['♣', '♦', '♥', '♠']);
+  // CARDS-BAY: the Iliac Bay's deck - the crown in the words, its colour, the royal or the seal in the hover
   assert.deepEqual(['As', 'Td', '2h', 'Kc'].map((c) => cardFace(parseCard(c))), [
-    { text: 'A♠', red: false }, { text: '10♦', red: true }, { text: '2♥', red: true }, { text: 'K♣', red: false },
+    { card: parseCard('As'), text: 'A Daggerfall', colour: '#1d3f8a', title: 'The Seal of Daggerfall' },
+    { card: parseCard('Td'), text: '10 Sentinel', colour: '#9a5c08', title: '10 of Sentinel' },
+    { card: parseCard('2h'), text: '2 Wayrest', colour: '#a3141e', title: '2 of Wayrest' },
+    { card: parseCard('Kc'), text: 'K Orsinium', colour: '#2f5a2a', title: 'Gortwog, King of Orsinium' },
   ]);
-  assert.deepEqual(cardFace(-1), { text: '', red: false, back: true }, 'face down');
+  assert.deepEqual(cardFace(-1), { card: -1, text: '', colour: null, title: 'A card face down', back: true }, 'face down');
 });
 
 test('CARDS4 the panel at the buy-in: gold or chips, affordable or not', () => {

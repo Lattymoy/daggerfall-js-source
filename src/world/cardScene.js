@@ -72,6 +72,7 @@ export function tablePlaces(frame, seats, seatOf) {
     burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0),   // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)
     muck: at(0, POT_ACROSS),
     pot: at(0, -POT_ACROSS),
+    table: frame,   // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all
   };
 }
 
@@ -205,6 +206,12 @@ export class CardScene {
     }
   }
 
+  /** AUDIT CARDS-3 C4: the clock (seconds) the cloth is still until - the last street turned, the hands shown, the pot's
+   *  last share home. The next hand waits for it. */
+  settledAt() {
+    return this.pushes.reduce((a, p) => Math.max(a, p.t0 + PUSH_S), this.busyUntil);
+  }
+
   /** A street's end: every bet slides into the pot. */
   _pushBets(t) {
     for (const [seat, amount] of this.lastBets) if (amount > 0) this.pushes.push({ amount, from: this.places.seats[seat].bet, to: this.places.pot, t0: t, yaw: this.places.seats[seat].yaw });
@@ -217,8 +224,9 @@ export class CardScene {
    * end pushes what lay there (with the action's own `paid`, onEvent - an act and its street come in one drain).
    * @param {number} t
    * @param {any} view
+   * @param {{seat: number, amount: number}|null} [carried] - AUDIT CARDS-3 C8: chips the player is carrying off his stack
    */
-  poses(t, view) {
+  poses(t, view, carried = null) {
     const cards = [];
     for (const c of this.cards) {
       const p = this._poseOf(c, t);
@@ -229,7 +237,7 @@ export class CardScene {
     const chips = [];
     const live = this.pushes.filter((p) => t < p.t0 + PUSH_S);
     // a push is drawn once it begins; a pot share waiting its turn is still in the pot's pile (below)
-    for (const p of live) if (t >= p.t0 || !p.potShare) chips.push(...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0), p.yaw));
+    for (const p of live) if (t >= p.t0 || !p.potShare) chips.push(...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0), p.yaw, p.toSeat != null));   // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards
     if (view) {
       const hand = view.hand;
       let pot = 0;
@@ -240,7 +248,7 @@ export class CardScene {
         const h = hand && k >= 0 ? hand.seats[k] : null;
         // chips still sliding home are not yet in the stack they slide to
         const coming = live.filter((p) => p.toSeat === i && t < p.t0 + PUSH_S).reduce((a, p) => a + p.amount, 0);
-        const stack = (h ? h.stack : s.stack) - coming, bet = h ? h.bet : 0;
+        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0), bet = h ? h.bet : 0;
         if (h) { this.lastBets.set(i, bet); pot += h.total - h.bet; }
         chips.push(...chipDiscs(stack, place.stack, place.yaw, true));
         if (bet > 0) chips.push(...chipDiscs(bet, place.bet, place.yaw));

@@ -5,25 +5,27 @@
 // the table opens and freed when it closes (EVERY ALLOCATION HAS AN OWNER - the host's closeCardGame).
 //
 // THE ART IS OURS. No pixel here comes from ARENA2 (Port-Doctrine: A RENDER OF GAME DATA IS GAME DATA): the atlas is
-// PAINTED on a canvas when the table opens - each face its rank and suit in its corners and its suit in its middle, the
-// back a red lattice, the edge plain card stock, each chip value its own colour with a stock-white edge band.
+// PAINTED on a canvas when the table opens - each face the Iliac Bay's deck (render/cardFaces.js, CARDS-BAY: the four
+// crowns' charges, their royals, their seals), the back the Bay's medallion, the edge plain card stock, each chip value
+// its own colour with a stock-white edge band.
 //
 // THE LAYOUT AND THE MESHES ARE PURE (atlasCell, cardModel, chipModel, cardMatrix): pinned by test/cards3_draw.test.js;
 // only the painting needs a page.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { RANKS, rankOf, suitOf, isCard } from '../net/cardLaw.js';
+import { rankOf, suitOf, isCard } from '../net/cardLaw.js';
 import { CARD_W, CARD_L, CARD_T, CHIP_R, CHIP_T, CHIP_VALUES } from '../world/cardMotion.js';
 import { trs } from '../world/mat4.js';
 import { toColor32 } from '../formats/color32Order.js';
-import { SUIT_GLYPHS } from '../ui/cardTableHud.js';   // the suits' one home - the panel's and the cloth's alike
+import { paintFace, paintBack, STOCK } from './cardFaces.js';   // the suits' one home - the panel's and the cloth's alike
 
 /** The atlas's archive and record - a string archive (no mips by the renderer's own rule for string keys). */
 export const CARD_ARCHIVE = 'cards';
 export const CARD_RECORD = 'atlas';
 /** The atlas: 13 columns (the ranks) by 5 rows (the four suits, and a row of the back, the stock and the chips). */
-export const CARD_CELL_W = 64;
-export const CARD_CELL_H = 90;
+/** CARDS-BAY: 128 x 180 - the royals' faces and the charges want the texels (the card's own 63 x 88 mm shape). */
+export const CARD_CELL_W = 128;
+export const CARD_CELL_H = 180;
 export const CARD_ATLAS_COLS = 13;
 export const CARD_ATLAS_ROWS = 5;
 export const ATLAS_W = CARD_CELL_W * CARD_ATLAS_COLS;
@@ -34,8 +36,6 @@ export const CELL_STOCK = Object.freeze([1, 4]);
 export const chipCell = (i) => [2 + i, 4];
 /** MEASURE (CARDS3): the chips' colours by value - CHIP_VALUES' order (500, 100, 25, 5, 1). */
 export const CHIP_COLOURS = Object.freeze(['#6a2c8a', '#1a1a1a', '#1d6b2a', '#a51c1c', '#e8e2d0']);
-/** MEASURE (CARDS3): the faces' suit colours: clubs, diamonds, hearts, spades (cardLaw's order). */
-export const SUIT_COLOURS = Object.freeze(['#161616', '#b01818', '#b01818', '#161616']);
 
 /** A card's atlas cell `[col, row]` - its rank's column and its suit's row; the back for a card nobody may see. */
 export const atlasCell = (c) => (isCard(c) ? [rankOf(c), suitOf(c)] : CELL_BACK.slice());
@@ -126,38 +126,16 @@ export const cardMatrix = (pos, yaw, roll = 0) => trs(pos[0], pos[1], pos[2], 0,
 export function paintAtlas(ctx) {
   ctx.clearRect(0, 0, ATLAS_W, ATLAS_H);
   const cell = (col, row, paint) => { ctx.save(); ctx.translate(col * CARD_CELL_W, row * CARD_CELL_H); paint(); ctx.restore(); };
-  const stock = () => { ctx.fillStyle = '#f6efdc'; ctx.fillRect(0, 0, CARD_CELL_W, CARD_CELL_H); };
-  for (let s = 0; s < 4; s++) for (let r = 0; r < 13; r++) {
-    cell(r, s, () => {
-      stock();
-      ctx.strokeStyle = '#b8ab88'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, CARD_CELL_W - 2, CARD_CELL_H - 2);
-      ctx.fillStyle = SUIT_COLOURS[s];
-      const rank = RANKS[r] === 'T' ? '10' : RANKS[r];
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = 'bold 15px Georgia, serif'; ctx.fillText(rank, 11, 11);
-      ctx.font = '13px Georgia, serif'; ctx.fillText(SUIT_GLYPHS[s], 11, 25);
-      ctx.save(); ctx.translate(CARD_CELL_W - 11, CARD_CELL_H - 11); ctx.rotate(Math.PI);
-      ctx.font = 'bold 15px Georgia, serif'; ctx.fillText(rank, 0, 0);
-      ctx.font = '13px Georgia, serif'; ctx.fillText(SUIT_GLYPHS[s], 0, -14);
-      ctx.restore();
-      ctx.font = `${r >= 9 ? 30 : 36}px Georgia, serif`;
-      ctx.fillText(r >= 9 ? `${rank}${SUIT_GLYPHS[s]}` : SUIT_GLYPHS[s], CARD_CELL_W / 2, CARD_CELL_H / 2 + 2);
-    });
-  }
-  cell(CELL_BACK[0], CELL_BACK[1], () => {
-    ctx.fillStyle = '#f6efdc'; ctx.fillRect(0, 0, CARD_CELL_W, CARD_CELL_H);
-    ctx.fillStyle = '#7a1f1f'; ctx.fillRect(4, 4, CARD_CELL_W - 8, CARD_CELL_H - 8);
-    ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 1;
-    for (let k = -CARD_CELL_H; k < CARD_CELL_W + CARD_CELL_H; k += 8) { ctx.beginPath(); ctx.moveTo(k, 4); ctx.lineTo(k + CARD_CELL_H, CARD_CELL_H); ctx.stroke(); ctx.beginPath(); ctx.moveTo(k + CARD_CELL_H, 4); ctx.lineTo(k, CARD_CELL_H); ctx.stroke(); }
-    ctx.strokeStyle = '#f6efdc'; ctx.lineWidth = 4; ctx.strokeRect(2, 2, CARD_CELL_W - 4, CARD_CELL_H - 4);
-  });
+  const stock = () => { ctx.fillStyle = STOCK; ctx.fillRect(0, 0, CARD_CELL_W, CARD_CELL_H); };
+  for (let c = 0; c < 52; c++) cell(rankOf(c), suitOf(c), () => paintFace(ctx, c, CARD_CELL_W, CARD_CELL_H));
+  cell(CELL_BACK[0], CELL_BACK[1], () => paintBack(ctx, CARD_CELL_W, CARD_CELL_H));
   cell(CELL_STOCK[0], CELL_STOCK[1], stock);
   CHIP_VALUES.forEach((_, i) => {
     const [c, r] = chipCell(i);
     cell(c, r, () => {
       ctx.fillStyle = CHIP_COLOURS[i]; ctx.fillRect(0, 0, CARD_CELL_W, CARD_CELL_H);
       ctx.fillStyle = '#f2ead6'; ctx.fillRect(0, 0, CARD_CELL_W, CARD_CELL_H * 0.2);   // the edge's band (the top of the cell, v high)
-      for (let k = 0; k < 4; k++) ctx.fillRect(k * 16 + 4, 0, 6, CARD_CELL_H * 0.2 + 2);
+      for (let k = 0; k < 4; k++) ctx.fillRect(k * CARD_CELL_W / 4 + CARD_CELL_W / 16, 0, CARD_CELL_W / 10, CARD_CELL_H * 0.2 + 2);
     });
   });
 }

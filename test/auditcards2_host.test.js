@@ -54,13 +54,13 @@ function host({ gold = 5000, online = false, realmAct = null, seats = 4, peers =
     createCardTableHud: (p) => hudm.createCardTableHud({ ...p, doc }), cardHudModel: hudm.cardHudModel, eventLine: hudm.eventLine,
     deductGold: court.deductGold, addGold: court.addGold, playerEntity,
     CardTableSession: sess.CardTableSession, seatPatrons: sess.seatPatrons, regularsFor: sess.regularsFor, regularsAfter: sess.regularsAfter,
-    CardScene: class { constructor(o) { this.o = o; this.events = []; scenes.push(this); } onEvent(e) { this.events.push(e); } poses() { return { cards: [], chips: [] }; } },
-    tablePlaces: (frame, s, seatOf) => ({ seatOf }), tableFrame: () => ({}), hashSeed: (...x) => x.join(':'),
+    CardScene: class { constructor(o) { this.o = o; this.places = o.places; this.playerSeat = o.playerSeat; this.events = []; scenes.push(this); } onEvent(e) { this.events.push(e); } poses() { return { cards: [], chips: [] }; } settledAt() { return 0; } },
+    tablePlaces: (frame, s, seatOf) => ({ seatOf, seats: seatOf.map(() => ({})) }), tableFrame: () => ({}), hashSeed: (...x) => x.join(':'),
     registerPlayerHurtListener: () => {},
     isOnlinePage: () => online,
     mwViewFirstPerson: () => said.push('<head>'), homeTownOf: (b) => b?.townMapId || 0,
     worldMinutes: () => clock.minutes, MINUTES_PER_DAY: 1440,
-    RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners,
+    RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
   };
   const state = { interiorCtx: { tables: [{ aabb: {} }], collider: null }, interiorBuilding: building };
   const api = new Function('S', ...Object.keys(scope), `let interiorCtx = S.interiorCtx, interiorBuilding = S.interiorBuilding;\n${BLOCK}\n
@@ -131,7 +131,7 @@ test('AUDIT CARDS-2 H1: a load\'s road pays nothing - the chips belonged to the 
   assert.equal(h.draws.destroyed, 1);
   // the roads: the forced exit says whether it is a load, and the save refuses while chips are on the table
   assert.match(body(WM, 'forceExitToExterior'), /standFromCardTable\(\{ cashOut: !load \}\);/);
-  assert.match(WM, /cardTableLive: \(\) => !!cardGame\?\.session,/);
+  assert.match(WM, /cardTableLive: \(\) => !!cardGame\?\.session && !cardGame\.friendly,/);
   const W = read('src/scenes/world.js');
   assert.match(body(W, 'worldQuickSave'), /if \(modes\?\.cardTableLive\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save with chips on the table\.'\); return false; \}/);
   assert.match(W, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\) \|\| !!modes\?\.cardTableLive\?\.\(\),/);

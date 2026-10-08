@@ -518,6 +518,7 @@ export class OnlineSession {
     this.onRoll = null;           // DICE1: ({id, name, at, mine, sub, ch, roll}) => void - a roll the RELAY made, checked by the dice's law
     this._rollBucket = null;      // DICE1: my own rolls out, rollGate's law
     this.holdemOk = false;        // CARDS5: ...and deals cards (relaySupportsHoldem) - an older one CLOSES the socket on a holdem frame
+    this.holdemWelcomes = 0;      // AUDIT CARDS-3 B1: my primary socket's welcomes - the seat a dropped socket held is sat again on the next
     this._holdemBucket = null;    // CARDS5: my words to the card table, holdemGate's law
     this.castOk = false;          // AUDIT ALLY-CAST B1: the relay that welcomed this socket routes cast frames (relaySupportsCast) - an older one CLOSES the socket on one
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
@@ -1724,10 +1725,6 @@ export class OnlineSession {
     return true;
   }
 
-  /** DICE1: a roll ASKED of the relay (net/dice.js's spec) on the channel this socket's room is, or a party's (`ch`,
-   *  the hub link, CHAT-CHAN's law). The relay rolls and says the result to the channel, this socket included - the
-   *  receipt is the roll itself. False when nothing went: a spec the dice refuse, a relay that does not roll, the
-   *  rate, or no open socket. */
   /** CARDS5: a word to the room's card table (sit, stand, act, look - net/holdemTable.js validHoldemIn), to a relay that
    *  deals; false when it is not one, the word is bad or the gate is shut. */
   sendHoldem(word) {
@@ -1740,6 +1737,10 @@ export class OnlineSession {
     return true;
   }
 
+  /** DICE1: a roll ASKED of the relay (net/dice.js's spec) on the channel this socket's room is, or a party's (`ch`,
+   *  the hub link, CHAT-CHAN's law). The relay rolls and says the result to the channel, this socket included - the
+   *  receipt is the roll itself. False when nothing went: a spec the dice refuse, a relay that does not roll, the
+   *  rate, or no open socket. */
   sendRoll(spec, { ch = null } = {}) {
     if (!validRollSpec(spec) || !this.rollOk) return false;
     if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;   // GUILD1c
@@ -2270,7 +2271,7 @@ export class OnlineSession {
       if (primary) this.castOk = relaySupportsCast(relayV);   // AUDIT ALLY-CAST B1
       if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
-      if (primary) this.holdemOk = relaySupportsHoldem(relayV);   // CARDS5
+      if (primary) { this.holdemOk = relaySupportsHoldem(relayV); this.holdemWelcomes++; }   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
       if (primary) this.dmOk = relaySupportsDm(relayV);   // TITLE-N
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1

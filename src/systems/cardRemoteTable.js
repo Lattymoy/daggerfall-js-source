@@ -13,10 +13,17 @@
 // introduced is told as the events it would have taken - the deal, the streets, the folds - long enough ago that the
 // cloth lays them at rest at once.
 //
+// MY CHAIR IS THE ONE MY ID SITS IN (AUDIT CARDS-3 B2/D2/E-N1). The chair asked for is PENDING until a table state shows
+// my id in it: a frame the relay made before it read my sit shows the chair empty and is no news; a frame showing
+// another in it, or a refusal of the sit, is the chair lost ('refused'). Once confirmed, a state without my id is the
+// relay standing me up ('broke' when its leave says so, else 'stood') - `lost` says which, and which chair was mine.
+//
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 
 /** How long ago a hand already under way is told as having been dealt - past every throw and turn on the cloth. */
 export const CATCH_UP_MS = 20000;
+/** AUDIT CARDS-3 B2: the relay's refusals of a sit - the chair asked for is not mine. ('seated' is not one: I sit there.) */
+export const SIT_REFUSALS = Object.freeze(['taken', 'no such chair', 'bad table', 'table differs', 'account seated', 'busy']);
 
 export class RemoteCardTable {
   /**
@@ -31,6 +38,25 @@ export class RemoteCardTable {
     this.events = /** @type {any[]} */ ([]);
     this.seenHand = 0;     // the last hand an event (or a catch-up) introduced
     this.error = /** @type {string|null} */ (null);
+    this.confirmed = false;   // AUDIT CARDS-3 B2: a table state has shown my id in `chair`
+    this.lost = /** @type {{chair: number, why: 'refused'|'broke'|'stood'}|null} */ (null);
+    this.said = 0;            // AUDIT CARDS-3 B3: bumped by a refusal - the panel repaints for it, though no event came
+  }
+
+  /** The chair given up: the sit refused, or the relay stood me up. */
+  _lose(why) {
+    this.lost = { chair: this.chair, why };
+    this.chair = -1;
+    this.confirmed = false;
+    this.turn = null;
+  }
+
+  /** AUDIT CARDS-3 B1: my socket was replaced - the relay stood the old one up and my sit is asked again: the chair is
+   *  pending once more, and the turn the old socket was told is gone. */
+  resit() {
+    this.confirmed = false;
+    this.turn = null;
+    this.lost = null;
   }
 
   /** The player's seat index (the chair), as the session's `playerSeat`. */
@@ -43,9 +69,14 @@ export class RemoteCardTable {
   ingest(f) {
     const local = Number.isFinite(f.at) ? f.at : 0;
     const shift = (t) => (Number.isFinite(t) && Number.isFinite(f.now) ? t - f.now + local : local);
-    if (typeof f.error === 'string') { this.error = f.error; return; }
+    if (typeof f.error === 'string') {
+      this.error = f.error;
+      this.said++;
+      if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');
+      return;
+    }
     if (f.hole) { this.hole = f.hole; return; }
-    if (f.turn) { this.turn = { ...f.turn, clockAt: shift(f.turn.clockAt) }; return; }
+    if (f.turn) { this.turn = { ...f.turn, clockAt: shift(f.turn.clockAt) }; this.error = null; return; }   // AUDIT CARDS-3 B3: a new turn, the old refusal said
     if (!f.state) return;
     const st = f.state;
     const events = (f.events ?? []).map((e) => ({ ...e, at: shift(e.at) }));
@@ -61,7 +92,13 @@ export class RemoteCardTable {
     }
     if (st.handNo !== this.state?.handNo) this.turn = null;
     this.state = st;
-    if (this.chair >= 0 && !st.seats[this.chair]) this.chair = -1;   // stood up by the relay (out of chips, or gone)
+    if (events.length) this.error = null;   // AUDIT CARDS-3 B3/D8: the table moved on - an old refusal is not the news
+    const mine = this.myId ? st.seats.findIndex((s) => s?.id === this.myId) : -1;
+    if (mine >= 0) { this.chair = mine; this.confirmed = true; this.lost = null; }
+    else if (this.chair >= 0 && (this.confirmed || st.seats[this.chair])) {
+      const broke = events.some((e) => e.t === 'leave' && e.seat === this.chair && e.broke);
+      this._lose(!this.confirmed ? 'refused' : broke ? 'broke' : 'stood');   // another took the chair asked for; or the relay stood me up
+    }
     this.events.push(...events);
   }
 

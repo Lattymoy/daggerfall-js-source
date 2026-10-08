@@ -164,6 +164,13 @@ directory by `test/audit18_bible_docs.test.js`:
   each drawn with its own matrix in the interior's pass after the decor, all
   freed with the table. The plates wound counter-clockwise about their normals
   and the faces laid unmirrored for the mirrored world - both found by eye.
+- `cardFaces.js` - CARDS-BAY THE DECK OF THE ILIAC BAY (2026-10-08,
+  `11-Multiplayer/Tavern-Cards.md` section 21): the four crowns as the suits
+  (Orsinium's axe, Sentinel's sun, Wayrest's rose, Daggerfall's dagger, four
+  inks), their royals as the courts, their seals as the aces, the Bay's
+  medallion on the back - every face painted from canvas paths in code (no
+  ARENA2 pixel, no font glyph); one painter for the cloth's atlas and the
+  panel's little cards.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
   its view-space box touches, uploaded as two integer textures (the grid's

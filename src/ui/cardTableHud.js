@@ -9,19 +9,22 @@
 // test/cards4_hud.test.js. `createCardTableHud` paints that model into the page and hands presses back to the host.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { RANKS, rankOf, suitOf, isCard } from '../net/cardLaw.js';
+import { rankOf, suitOf, isCard } from '../net/cardLaw.js';
+import { SUIT_CROWNS, rankLabel, cardTitle, paintFace, paintBack } from '../render/cardFaces.js';   // CARDS-BAY: the suits' one home
 import { BUY_IN_MIN_BB, BUY_IN_START_BB } from '../systems/cardTableSession.js';   // the buy-in's one home (AUDIT CARDS-2 L10)
 
-/** The suits as the table draws them: spades, hearts, diamonds, clubs in cardLaw's own order (c, d, h, s). */
-export const SUIT_GLYPHS = Object.freeze(['♣', '♦', '♥', '♠']);
-/** A card as the panel writes it - `{text: 'A♠', red}` - or a face-down card. */
+/** A card as the panel shows it (CARDS-BAY): its own painted face (`card`), the words a page without a canvas writes
+ *  - `{text: 'K Daggerfall'}` in the crown's colour - and what the hover says; or a face-down card. */
 export const cardFace = (c) => (isCard(c)
-  ? { text: `${RANKS[rankOf(c)] === 'T' ? '10' : RANKS[rankOf(c)]}${SUIT_GLYPHS[suitOf(c)]}`, red: suitOf(c) === 1 || suitOf(c) === 2 }
-  : { text: '', red: false, back: true });
+  ? { card: c, text: `${rankLabel(rankOf(c))} ${SUIT_CROWNS[suitOf(c)].crown}`, colour: SUIT_CROWNS[suitOf(c)].colour, title: cardTitle(c) }
+  : { card: -1, text: '', colour: null, title: cardTitle(c), back: true });
+/** MEASURE (CARDS-BAY): the panel's little card, CSS pixels (the cloth's 128 x 180 cell at a quarter, painted at half). */
+export const PANEL_CARD_W = 32;
+export const PANEL_CARD_H = 45;
 
 /**
  * The panel's model.
- * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null}|null}} p
+ * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null, regulars?: boolean}|null}} p
  */
 export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null }) {
   const unit = friendly ? 'chips' : 'gold';
@@ -66,10 +69,10 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
     }
   }
   // CARDS5: alone at the relay's table, the regulars are a game too
-  if (online?.waiting) actions.push({ id: 'regulars', label: 'Play the regulars', enabled: true });
+  if (online?.waiting && online.regulars !== false) actions.push({ id: 'regulars', label: 'Play the regulars', enabled: true });   // AUDIT CARDS-3 B11: only with a chair for one
   actions.push({ id: 'stand', label: phase === 'over' ? 'Leave the table' : 'Stand up', enabled: true });
   const message = phase === 'over'
-    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : 'You leave the table.')
+    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : why === 'stood' ? 'The table stood you up.' : 'You leave the table.')
     : sd ? showdownLine(sd, view.seats.map((x) => x.name), you)
       : online?.waiting ? 'Waiting for another player to sit down.'
       : !hand ? 'The next hand is being dealt...' : legal ? (online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.') : `Waiting on ${seats.find((s) => s.state === 'to act')?.name ?? 'the table'}...`;
@@ -113,7 +116,7 @@ export function showdownLine(sd, names, you = -1) {
 }
 
 /** CARDS5: the relay's refusals as the panel says them. */
-export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.' });
+export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.' });
 
 /** A one-line account of a session event for the panel's log (`names` this.seats' names; `you` the player's index, said in
  *  the second person - AUDIT CARDS-2 L10). */
@@ -131,8 +134,8 @@ export function eventLine(e, names, you = -1) {
       return `${who} ${e.type}${s}.`;
     case 'street': return `The ${e.street}.`;
     case 'showdown': return showdownLine(e, names, you);
-    case 'leave': return e.broke === undefined ? `${e.name} is broke and leaves for the night.` : e.broke ? `${e.name} is out of chips and stands up.` : `${e.name} stands up.`;   // CARDS5: a player at the relay's table, not a regular
-    case 'sit': return `${e.name} sits down.`;
+    case 'leave': return e.broke === undefined ? `${e.name} is broke and leaves for the night.` : me ? (e.broke ? 'You are out of chips and stand up.' : 'You stand up.') : e.broke ? `${e.name} is out of chips and stands up.` : `${e.name} stands up.`;   // CARDS5: a player at the relay's table, not a regular; AUDIT CARDS-3 B7: said to me when it is me
+    case 'sit': return me ? 'You sit down.' : `${e.name} sits down.`;
     case 'over': return e.why === 'broke' ? 'You are broke.' : e.why === 'empty' ? 'The table has emptied.' : 'You stand up.';
     default: return '';
   }
@@ -145,6 +148,7 @@ const CSS = `
 .dfcards{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:13;box-sizing:border-box;min-width:min(520px,calc(100vw - 32px));max-width:min(760px,calc(100vw - 32px));
   background:rgba(18,14,10,.92);border:1px solid #8a6a2c;border-radius:6px;color:#e8dcc0;font:14px/1.35 Georgia,serif;padding:10px 14px;
   box-shadow:0 6px 24px rgba(0,0,0,.6)}
+@media (min-width:1000px){.dfcards{left:auto;right:16px;transform:none;min-width:0;width:430px}}
 .dfcards h3{margin:0 0 4px;font-size:15px;color:#e2b85a;font-weight:normal;letter-spacing:.04em}
 .dfcards .note{font-size:12px;color:#b9a77f;margin-bottom:6px}
 .dfcards .seats{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
@@ -154,7 +158,7 @@ const CSS = `
 .dfcards .seat .nm{font-size:13px}.dfcards .seat .st{font-size:12px;color:#c8b48a}
 .dfcards .cards{display:flex;gap:4px;align-items:center;min-height:30px}
 .dfcards .card{display:inline-block;min-width:26px;padding:3px 4px;border-radius:3px;background:#f4ecd8;color:#1a1a1a;text-align:center;font:bold 14px Georgia,serif}
-.dfcards .card.red{color:#a01818}.dfcards .card.back{background:repeating-linear-gradient(45deg,#5a1e1e,#5a1e1e 4px,#7a2a2a 4px,#7a2a2a 8px)}
+.dfcards .card.painted{padding:0;min-width:0;width:32px;height:45px;background:none;line-height:0}.dfcards .card.painted canvas{width:32px;height:45px;border-radius:3px}.dfcards .card.back{background:repeating-linear-gradient(45deg,#5a1e1e,#5a1e1e 4px,#7a2a2a 4px,#7a2a2a 8px)}
 .dfcards .board{display:flex;gap:8px;align-items:center;margin:6px 0}
 .dfcards .msg{margin:4px 0;color:#efe3c4}
 .dfcards .log{font-size:12px;color:#a8977a;max-height:64px;overflow:hidden}
@@ -190,12 +194,36 @@ export function createCardTableHud({ onPress, doc = document }) {
   root.addEventListener('keydown', (e) => { if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); });
   doc.body?.append(root);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-  const cardsOf = (list) => { const box = el('div', 'cards'); for (const c of list) box.append(el('span', `card${c.red ? ' red' : ''}${c.back ? ' back' : ''}`, c.text)); return box; };
-  let alive = true, sliderValue = null;
+  // CARDS-BAY: each card its own painted face, the cloth's painter at the panel's size; a page with no canvas writes it
+  const painted = (c) => {
+    const cv = doc.createElement('canvas'), ctx = cv.getContext?.('2d');
+    if (!ctx) return null;
+    cv.width = PANEL_CARD_W * 2; cv.height = PANEL_CARD_H * 2;
+    if (c.back) paintBack(ctx, cv.width, cv.height); else paintFace(ctx, c.card, cv.width, cv.height);
+    return cv;
+  };
+  const cardsOf = (list) => {
+    const box = el('div', 'cards');
+    for (const c of list) {
+      const cv = painted(c);
+      const n = el('span', `card${cv ? ' painted' : ''}${c.back ? ' back' : ''}`, cv ? null : c.text);
+      if (cv) n.append(cv);
+      if (c.colour && n.style) n.style.color = c.colour;
+      n.title = c.title;
+      box.append(n);
+    }
+    return box;
+  };
+  let alive = true, sliderValue = null, shownKey = null, msgEl = null;
   return {
     root,
     render(m) {
       if (!alive) return;
+      // AUDIT CARDS-3 B5: a model that differs only in its message (the turn's clock, once a second) is the message
+      // rewritten in place - a rebuild threw away the slider being dragged and the button being pressed
+      const key = JSON.stringify({ ...m, message: null });
+      if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }
+      shownKey = key;
       root.replaceChildren();
       root.append(el('h3', '', m.title));
       if (m.note) root.append(el('div', 'note', m.note));
@@ -213,7 +241,8 @@ export function createCardTableHud({ onPress, doc = document }) {
         board.append(cardsOf(m.board), el('span', '', `${m.street && m.street !== 'preflop' ? `${m.street[0].toUpperCase()}${m.street.slice(1)} - ` : ''}Pot ${m.pot}`));   // AUDIT CARDS-2 L15: the street named
         root.append(board);
       }
-      root.append(el('div', 'msg', m.message));
+      msgEl = el('div', 'msg', m.message);
+      root.append(msgEl);
       const acts = el('div', 'acts');
       if (m.buyIn) {
         const range = el('input');
@@ -248,7 +277,7 @@ export function createCardTableHud({ onPress, doc = document }) {
       if (m.log?.length) root.append(el('div', 'log', m.log.join(' ')));
     },
     /** A new hand forgets the last raise's slider. */
-    resetSlider() { sliderValue = null; },
+    resetSlider() { sliderValue = null; shownKey = null; },   // the next render rebuilds the slider at the law's own value
     /** CARDS3b: the slider's value (the raise a drag of chips carries), or null when untouched. */
     sliderValue: () => sliderValue,
     destroy() { if (!alive) return; alive = false; root.remove?.(); },

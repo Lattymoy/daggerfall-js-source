@@ -59,6 +59,9 @@ export function createFamilyBodies({ dolls, bodies = null }) {
     },
     /** Everything freed (the place left). */
     clear() { peers.length = 0; dolls.sync([], sceneOf); bodies?.destroy(); },
+    /** AUDIT CARDS-3 B10: the layer let go for good - every doll texture released too (clear keeps the dolls' cache for
+     *  the next stand; a layer dropped after clear took its textures with it, an evening's regulars at a time). */
+    destroy() { peers.length = 0; dolls.destroy?.(); bodies?.destroy(); },
     /** How many of the line stood this frame. */
     get size() { return peers.length; },
   };

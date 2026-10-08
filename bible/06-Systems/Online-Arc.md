@@ -15225,3 +15225,8 @@ frame asks (sit, stand, act, look - `validHoldemIn`, `holdemGate`, `HOLDEM_RELAY
 CSPRNG, keeps the deck, tells each seat its own cards alone and the room the public hand, runs the seat clock on the alarm
 and folds a leaver out of turn; the tables checkpointed to storage. Friendly - no gold moves. The whole record is
 `11-Multiplayer/Tavern-Cards.md` section 17.
+
+AUDIT CARDS-3 (2026-10-08, `01-Overview/Audit-Cards-3.md`; the same row, re-hashed in place): one seat an account in a
+room; a refused sit moves nothing elsewhere; seats with no socket in the room stood up on the alarm and by an empty
+room's sweep; the room's sits on `holdemSitRoomGate`; a table of other chairs refused; a dropped player's own chair back.
+On the client, the frames restamped on the cloth's clock, and the chair found by the player's own id.

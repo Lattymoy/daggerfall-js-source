@@ -363,8 +363,8 @@
   {
     "name": "E-scene-coming-ignored",
     "file": "src/world/cardScene.js",
-    "old": "const stack = (h ? h.stack : s.stack) - coming, bet",
-    "new": "const stack = (h ? h.stack : s.stack), bet",
+    "old": "const stack = (h ? h.stack : s.stack) - coming - (carried",
+    "new": "const stack = (h ? h.stack : s.stack) - (carried",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -1275,7 +1275,7 @@
   {
     "name": "A2-host-save-allowed",
     "file": "src/scenes/worldModes.js",
-    "old": "    cardTableLive: () => !!cardGame?.session,",
+    "old": "    cardTableLive: () => !!cardGame?.session && !cardGame.friendly,",
     "new": "    cardTableLive: () => false,",
     "tests": [
       "test/auditcards2_cloth.test.js",

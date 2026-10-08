@@ -153,7 +153,7 @@ test('AUDIT CARDS-2 L4, L5, L6: board neighbours on their own planes, the burn c
   evening({
     seed: 3, seconds: 160,
     frame: (p, t, events, scene) => {
-      if (Math.round(t * 60) % 30) return;
+      // AUDIT CARDS-3 D10/E-N4: EVERY frame - one in thirty never saw a share coming home through a resting card
       // cards at rest (a throw's last centimetres may skim a stack - recorded in Tavern-Cards section 19)
       const holes = scene.cards.filter((c) => c.seat >= 0 && t >= c.motions[c.motions.length - 1].t1).map((c) => scene._poseOf(c, t));
       for (const ch of p.chips) for (const q of holes) {
@@ -165,7 +165,7 @@ test('AUDIT CARDS-2 L4, L5, L6: board neighbours on their own planes, the burn c
       }
     },
   });
-  assert.ok(looked > 10000, `chip-card pairs looked at: ${looked}`);
+  assert.ok(looked > 300000, `chip-card pairs looked at: ${looked}`);
   // the board turned across the board's own axis: two thousand streets, every card on its slot within the throw's jitter
   {
     const sc = new CardScene({ places, playerSeat: 0, tableSeed: 5 });
@@ -257,4 +257,23 @@ test('AUDIT CARDS-2 E: the plate\'s edges on the stock, the chip\'s caps on its 
     if (cap) assert.ok(Math.abs(v - vBody) < 1e-6, 'a cap on the body\'s colour');
     else assert.ok(v >= vBand - 1e-6 && v <= v1 + 1e-6 && Math.abs(Math.abs(y) - CHIP_T / 2) < 1e-6, 'the side on the band');
   }
+});
+
+test('AUDIT CARDS-3 E-N4: no card on the cloth jumps - a fold slides from where the card IS (in the air or turning), every frame of four evenings', () => {
+  let worst = 0, folds = 0, pairs = 0;
+  for (const seed of [1, 2, 3, 6]) {
+    let last = new Map();
+    evening({
+      seed, seconds: 120,
+      onDrain: (events) => { folds += events.filter((e) => e.t === 'act' && e.type === 'fold').length; },
+      frame: (p, t, events, scene) => {
+        const now = new Map();
+        for (const c of scene.cards) { const q = scene._poseOf(c, t); if (!q.held) now.set(c.id, q.pos); }
+        if (!events.some((e) => e.t === 'hand')) for (const [id, pos] of now) { const was = last.get(id); if (was) { worst = Math.max(worst, Math.hypot(pos[0] - was[0], pos[1] - was[1], pos[2] - was[2])); pairs++; } }
+        last = now;
+      },
+    });
+  }
+  assert.ok(folds > 20 && pairs > 50000, `folds ${folds}, frame pairs ${pairs}`);
+  assert.ok(worst < 0.1, `a card jumped ${(worst * 100).toFixed(1)} cm in one frame (a throw's fastest is about five)`);
 });

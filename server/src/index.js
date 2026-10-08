@@ -268,7 +268,7 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
-import { holdemGate } from './relay.js';   // CARDS5: the card table's gate
+import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
 import { newTable, sit as holdemSit, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
@@ -751,6 +751,8 @@ export class Room {
     const dead = ['hellos'];   // SCALE2b: a relay before it kept the hello bucket here - the key goes with the drain
     this._secrets.clear();   // SCALE2b: nothing is left to hold an id (the list below takes the stored ones)
     for (const prefix of ['look:', 'secret:']) { const m = await this.state.storage.list({ prefix }); for (const k of m.keys()) dead.push(k); }
+    const tables = await this._holdemOf();   // AUDIT CARDS-3 A3: no seat outlives an empty room - the secrets go, so its id is anyone's
+    if (tables.size && this._holdemGhosts(tables, Date.now(), true)) await this._holdemSave();
     this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);   // SOC1: the parties go with the drain; acct: and asecret: stay (AUDIT SOC A4: listed in pages - an unbounded list of a namespace a client can grow is the isolate's memory)
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
   }
@@ -1088,7 +1090,9 @@ export class Room {
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
-    if (await this._holdemTick()) return;   // CARDS5: a card table's seat clock, or its next deal
+    const held = await this._holdemTick();   // CARDS5: a card table's seat clock, or its next deal
+    if (this._dead.size) await this._reap();   // AUDIT CARDS-3 A3: a send the tick failed closed its socket - no close comes for it
+    if (held) return;
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
@@ -2699,11 +2703,17 @@ export class Room {
     let msgs;
     if (m.op === 'look') msgs = t ? holdemLook(t, a.id, now) : [];
     else if (m.op === 'sit') {
-      if (!t) { t = newTable({ chairs: m.chairs, bb: m.bb }); if (!t) { refuse('bad table'); return; } tables.set(m.table, t); }
-      for (const [k, other] of tables) if (k !== m.table) msgs = [...(msgs ?? []), ...holdemStand(other, { id: a.id, now }).map((x) => ({ ...x, table: k }))];   // one seat in a room at a time
+      if (t && (t.chairs !== m.chairs || t.bb !== m.bb)) { refuse('table differs'); return; }   // AUDIT CARDS-3 A5: the first sitter never decides another cloth's chairs
+      if (a.sub && this._holdemAccountSeated(tables, a)) { refuse('account seated'); return; }   // AUDIT CARDS-3 A2: one seat an account - two tabs never see two hands
+      const gate = holdemSitRoomGate(this._holdemSitBucket ?? null, now);
+      this._holdemSitBucket = gate.bucket;
+      if (!gate.pass) { refuse('busy'); return; }   // AUDIT CARDS-3 A4
+      const fresh = !t;
+      if (fresh) { t = newTable({ chairs: m.chairs, bb: m.bb }); if (!t) { refuse('bad table'); return; } }
       const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now });
-      if (typeof r === 'string') { refuse(r); return; }
-      for (const x of msgs ?? []) this._holdemSend(x.table, [x], now);
+      if (typeof r === 'string') { refuse(r); return; }   // AUDIT CARDS-3 A1: refused before anything moved - no table stood him up unsaid
+      if (fresh) tables.set(m.table, t);
+      for (const [k, other] of tables) if (k !== m.table) { const up = holdemStand(other, { id: a.id, now }); if (up.length) this._holdemSend(k, up, now); }   // one seat in a room at a time, once this one took
       msgs = r;
     } else if (!t) { refuse('no table'); return; }
     else if (m.op === 'stand') msgs = holdemStand(t, { id: a.id, now });
@@ -2712,8 +2722,32 @@ export class Room {
       if (typeof r === 'string') { refuse(r); return; }
       msgs = r;
     }
+    if (!msgs.length) return;   // AUDIT CARDS-3 A4: a word that moved nothing (a stand by nobody seated) writes nothing
     this._holdemSend(m.table, msgs, now);
     if (m.op !== 'look') await this._holdemSave();
+  }
+  /** AUDIT CARDS-3 A2: does another of this account's sockets (another id) hold a seat in this room? */
+  _holdemAccountSeated(tables, a) {
+    const others = new Set([...this._all()].filter(([, b]) => b.id && b.id !== a.id && b.sub === a.sub).map(([, b]) => b.id));
+    if (!others.size) return false;
+    for (const t of tables.values()) for (const s of t.seats) if (s && others.has(s.id)) return true;
+    return false;
+  }
+  /** AUDIT CARDS-3 A3: every seat whose player has no hello'd socket in the room stood up (folded out of turn where a hand
+   *  holds him) - a socket this object closed itself has no close of its own, and a ghost's seat dealt for ever on the
+   *  alarm, kept the room from forgetting and, once an empty room's hello swept the secrets, let anyone saying its id
+   *  take its cards. `everyone`: the room is empty (the sweep) - no seat has a player. True when a seat moved. */
+  _holdemGhosts(tables, now, everyone = false) {
+    const here = new Set(everyone ? [] : [...this._all()].filter(([, b]) => b.id).map(([, b]) => b.id));
+    let moved = false;
+    for (const [k, t] of tables) {
+      for (const s of [...t.seats]) {
+        if (!s || s.leaving || here.has(s.id)) continue;
+        const up = holdemStand(t, { id: s.id, now });
+        if (up.length) { moved = true; this._holdemSend(k, up, now); }
+      }
+    }
+    return moved;
   }
   /** A player gone from the room: up from every table (folded out of turn where a hand holds him). */
   async _holdemLeave(a, now) {
@@ -2729,9 +2763,10 @@ export class Room {
     const tables = await this._holdemOf();
     if (!tables.size) return false;
     const now = Date.now();
+    this._holdemGhosts(tables, now);   // AUDIT CARDS-3 A3
     for (const [k, t] of tables) { const msgs = holdemTick(t, now, rand32); if (msgs.length) this._holdemSend(k, msgs, now); }
     await this._holdemSave();
-    return true;
+    return tables.size > 0;   // AUDIT CARDS-3 A3: the last table gone, the alarm is the room's again (its forgetting)
   }
   /** An arena word to one socket. */
   _arenaSend(ws, w) { return this._send(ws, JSON.stringify({ t: 'arena', ...w })); }

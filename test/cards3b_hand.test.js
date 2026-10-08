@@ -12,12 +12,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  heldMatrices, tablePoint, onStack, inBetZone, dragBet, FACE_THE_EYE, HELD_AT, HELD_LEAN_DEG, PEEK_LEAN_DEG, HELD_GAP, PEEK_GAP, STACK_GRAB_M,
+  heldMatrices, heldLift, blendMatrix, HOLD_S, tablePoint, onStack, onTable, inBetZone, dragBet, HELD_LIFT_MAX, HELD_PANEL_GAP_PX, FACE_THE_EYE, HELD_AT, HELD_LEAN_DEG, PEEK_LEAN_DEG, HELD_GAP, PEEK_GAP, STACK_GRAB_M,
 } from '../src/world/cardHand.js';
 import { riffleAt, RIFFLE_S, RIFFLE_HALF, RIFFLE_PART, CARD_T } from '../src/world/cardMotion.js';
 import { tablePlaces, CardScene } from '../src/world/cardScene.js';
 import { tableFrame, cardTableSeats } from '../src/world/cardTables.js';
-import { lookAt } from '../src/world/mat4.js';
+import { lookAt, trs } from '../src/world/mat4.js';
 import { CardTableSession, settleMs } from '../src/systems/cardTableSession.js';
 import { createCardTableDraw } from '../src/render/cardTableDraw.js';
 
@@ -79,11 +79,24 @@ test('CARDS3b the chips under the cursor: the ray met with the cloth, a press on
   assert.equal(inBetZone(places.pot, pl), true, 'and the middle');
   assert.equal(inBetZone(pl.stack, pl), false, 'not his stack');
   assert.equal(inBetZone(null, pl), false);
-  // the bet: the slider's raise clamped to the law, else the call, else nothing
+  // AUDIT CARDS-3 C6: on the table, or no betting ground at all - the top's endless plane past the table is nowhere
+  const frame = places.table;
+  assert.equal(onTable(places.pot, frame), true);
+  assert.equal(onTable(pl.bet, frame), true);
+  const beyond = [pl.bet[0] + (places.pot[0] - pl.bet[0]) * 40, 0.8, pl.bet[2] + (places.pot[2] - pl.bet[2]) * 40];
+  assert.equal(inBetZone(beyond, pl), true, 'by the seat\'s facing alone, far past the table is "nearer the middle"');
+  assert.equal(inBetZone(beyond, pl, frame), false, 'the table\'s own frame says it is off the top');
+  assert.equal(inBetZone(pl.bet, pl, frame), true);
+  assert.equal(onTable([frame.centre[0] + frame.halfLong * 0.99, 0.8, frame.centre[2]], { ...frame, axisYaw: Math.PI / 2 }), true, 'along its turned length');
+  assert.equal(onTable([frame.centre[0] + frame.halfLong * 1.01, 0.8, frame.centre[2]], { ...frame, axisYaw: Math.PI / 2 }), false);
+  assert.equal(onTable(null, frame), false);
+  // the bet: the slider's raise clamped to the law when it was set; untouched, the call (AUDIT CARDS-3 C7); nothing to
+  // call, the least bet; else nothing
   const raise = { call: 10, raise: { min: 20, max: 400 } };
   assert.deepEqual(dragBet(raise, 60, 10), { id: 'raise', value: 60, amount: 50 });
   assert.deepEqual(dragBet(raise, 9999, 0), { id: 'raise', value: 400, amount: 400 });
-  assert.deepEqual(dragBet(raise, null, 0), { id: 'raise', value: 20, amount: 20 }, 'the slider untouched: the least raise');
+  assert.deepEqual(dragBet(raise, null, 0), { id: 'call', value: 10, amount: 10 }, 'the slider untouched: chips pushed in call');
+  assert.deepEqual(dragBet({ check: true, call: 0, raise: { min: 10, max: 400 } }, null, 0), { id: 'raise', value: 10, amount: 10 }, 'nothing to call: the least bet');
   assert.deepEqual(dragBet({ call: 30, raise: null }, 60, 0), { id: 'call', value: 30, amount: 30 });
   assert.equal(dragBet({ check: true, call: 0, raise: null }, 0, 0), null, 'a check needs no chips');
   assert.equal(dragBet(null, 0, 0), null);
@@ -138,12 +151,50 @@ test('CARDS3b the host: the held two drawn from the view, the press on the stack
   const body = (name) => { const a = wm.indexOf(`function ${name}(`); return wm.slice(a, wm.indexOf('\n  }\n', a)); };
   assert.match(wm, /if \(cardGame\?\.scene\) cardDrawGame\(cardGame, proj, view, mwv\.eye\);/);
   assert.match(body('cardDrawGame'), /const held = mine >= 0 \? p\.cards\.filter\(\(c\) => c\.seat === mine && c\.settled && Math\.cos\(c\.roll\) > 0\.5\)/);
-  assert.match(body('cardDrawGame'), /const mats = heldMatrices\(view, held\.length, g\.peek\);/);
+  assert.match(body('cardDrawGame'), /const mats0 = heldMatrices\(view, fan, g\.peek\);/, 'AUDIT CARDS-3 C3: the fan laid for the whole hand');
+  assert.match(body('cardDrawGame'), /const mats = g\.lift > 1e-4 \? heldMatrices\(view, fan, g\.peek, g\.lift\) : mats0;/, 'AUDIT CARDS-3 C1: lifted clear of the panel');
+  assert.match(body('cardDrawGame'), /matrix: h\.k >= 1 \? h\.m : blendMatrix\(cardMatrix\(c\.pos, c\.yaw, c\.roll\), h\.m, ease\(h\.k\)\)/, 'AUDIT CARDS-3 C3: eased from the cloth into the hand and out');
   const listen = body('cardPointerListen');
-  assert.match(listen, /window\.addEventListener\('mousedown', down, true\);/, 'the capture phase - before the seat\'s mousedown');
-  assert.match(listen, /e\.stopImmediatePropagation\?\.\(\); e\.preventDefault\?\.\(\);   \/\/ a press on the stack or the hand is never a swing that stands you up/);
-  assert.match(listen, /if \(!mine\(\) \|\| onPanel\(e\)\) return;/, 'the panel\'s press is the panel\'s');
-  assert.match(listen, /if \(place && inBetZone\(d\.point, place\)\) cardPress\(g, d\.bet\.id, d\.bet\.value\);/);
+  // AUDIT CARDS-3 C5: pointer events (a touch is a pointer), the press at the capture phase - before the seat's
+  assert.match(listen, /window\.addEventListener\('pointerdown', down, true\);/, 'the capture phase - before the seat\'s mousedown');
+  assert.match(listen, /window\.addEventListener\('mousedown', mouseDown, true\);/, 'and the mouse press a taken pointerdown leaves behind');
+  assert.match(listen, /g\.swallowMouse = true;\n\s*e\.stopImmediatePropagation\?\.\(\); e\.preventDefault\?\.\(\);/);
+  assert.match(listen, /const up = \(e\) => \{\n\s*g\.swallowMouse = false;/, 'and the swallow ends with the press - a later click is the seat\'s');
+  assert.match(listen, /if \(!mine\(\) \|\| onPanel\(e\) \|\| \(e\.button \?\? 0\) !== 0\) return;/, 'the panel\'s press is the panel\'s; the primary button alone (C10)');
+  assert.match(listen, /else if \(!grabbed\) return;/, 'AUDIT CARDS-3 C2: a press on the stack is swallowed with nothing to bet');
+  assert.match(listen, /if \(!place \|\| d\.off \|\| onPanel\(e\) \|\| !inBetZone\(d\.point, place, g\.scene\.places\.table\)\) return;/, 'C6: let go on the table, never over the panel');
+  assert.match(listen, /if \(still && still\.id === d\.bet\.id && still\.value === d\.bet\.value\) cardPress\(g, d\.bet\.id, d\.bet\.value\);/, 'C10: the bet as the table stands at the letting go');
   assert.match(body('closeCardGame'), /g\.unlisten\?\.\(\);/, 'the listeners gone with the game');
   assert.match(read('src/ui/cardTableHud.js'), /sliderValue: \(\) => sliderValue,/);
+});
+
+test('AUDIT CARDS-3 C1: the held hand lifts clear of the panel - by the pixels it is under it, at the hand\'s depth and the frame\'s field of view; never past HELD_LIFT_MAX', () => {
+  const proj = new Float32Array(16); proj[5] = 1 / Math.tan((65 * Math.PI) / 360);   // a 65-degree field
+  assert.equal(heldLift(400, 500, 640, proj), 0, 'clear of it already');
+  assert.equal(heldLift(490, 500, 640, proj), 0, 'the gap kept, and still clear');
+  const px = 40 + HELD_PANEL_GAP_PX;
+  const want = (px * 2 * -HELD_AT[2]) / (proj[5] * 640);
+  assert.ok(Math.abs(heldLift(540, 500, 640, proj) - want) < 1e-9, 'metres for the pixels under the panel, at the hand\'s depth');
+  assert.equal(heldLift(5000, 0, 640, proj), HELD_LIFT_MAX, 'never off the top of the view');
+  // the lift raises every card the same, up the view
+  const view = lookAt([0, 1.2, 0], [0, 1.2, -1], [0, 1, 0]);
+  const a = heldMatrices(view, 2, 0), b = heldMatrices(view, 2, 0, 0.05);
+  for (let i = 0; i < 2; i++) assert.ok(Math.abs(b[i][13] - a[i][13] - 0.05) < 1e-6 && Math.abs(b[i][12] - a[i][12]) < 1e-6);
+  assert.ok(Math.abs(heldMatrices(view, 1, 0, 9)[0][13] - heldMatrices(view, 1, 0, HELD_LIFT_MAX)[0][13]) < 1e-9, 'clamped');
+});
+
+test('AUDIT CARDS-3 C3: a card picked up or let go blends - the place along the line, the turn the short way, a rigid card all the way', () => {
+  const a = trs(0, 0.8, 0, 0, 30, 0), b = trs(0.2, 1.1, -0.3, -70, 200, 10);
+  const close = (x, y) => [...x].every((v, i) => Math.abs(v - y[i]) < 1e-5);
+  assert.ok(close(blendMatrix(a, b, 0), a) && close(blendMatrix(a, b, 1), b), 'its ends are the two poses');
+  let last = blendMatrix(a, b, 0);
+  for (let i = 1; i <= 20; i++) {
+    const m = blendMatrix(a, b, i / 20);
+    for (const c of [0, 4, 8]) assert.ok(Math.abs(Math.hypot(m[c], m[c + 1], m[c + 2]) - 1) < 1e-5, 'never squashed');
+    assert.ok(Math.abs(m[0] * m[4] + m[1] * m[5] + m[2] * m[6]) < 1e-5, 'never sheared');
+    assert.ok(Math.abs(m[13] - (0.8 + 0.3 * i / 20)) < 1e-6, 'along the line');
+    assert.ok([...m].every((v, k) => Math.abs(v - last[k]) < 0.25), 'no jump between steps');
+    last = m;
+  }
+  assert.ok(HOLD_S > 0.1 && HOLD_S < 0.5);
 });

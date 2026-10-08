@@ -72,8 +72,8 @@
   {
     "name": "C5-first-deal-now",
     "file": "src/net/holdemTable.js",
-    "old": "t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
-    "new": "t.nextDealAt = now;",
+    "old": "t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "new": "t.nextDealAt = now;\n  return [room(t, [{ t: 'sit', seat: chair,",
     "tests": [
       "test/cards5_relay.test.js",
       "test/cards5_client.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "C5-relay-no-tick",
     "file": "server/src/index.js",
-    "old": "    if (await this._holdemTick()) return;   // CARDS5:",
-    "new": "    if (false) return;   // CARDS5:",
+    "old": "    const held = await this._holdemTick();   // CARDS5:",
+    "new": "    const held = false;   // CARDS5:",
     "tests": [
       "test/cards5_relay.test.js",
       "test/cards5_client.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "C5-host-stand-unsaid",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (g.remote) host.cardOnline?.send({ op: 'stand', table: g.table });",
-    "new": "    if (false) host.cardOnline?.send({ op: 'stand', table: g.table });",
+    "old": "    if (g.remote) cardStand(g.table);",
+    "new": "    if (false) cardStand(g.table);",
     "tests": [
       "test/cards5_relay.test.js",
       "test/cards5_client.test.js"
@@ -242,7 +242,7 @@
   {
     "name": "C5-host-regulars-unstood",
     "file": "src/scenes/worldModes.js",
-    "old": "        host.cardOnline?.send({ op: 'stand', table: cardSeat.table });\n        game.remote = null;",
+    "old": "        cardStand(game.table);\n        game.remote = null;",
     "new": "        game.remote = null;",
     "tests": [
       "test/cards5_relay.test.js",

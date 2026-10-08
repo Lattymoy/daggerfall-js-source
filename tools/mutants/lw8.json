@@ -321,8 +321,8 @@
   {
     "name": "LW8-host-billboards",
     "file": "src/scenes/world.js",
-    "old": "    livingBillboards: () => [...(livingIndoors?.batches() ?? []), ...(cardRegularBodies?.batches() ?? [])],",
-    "new": "    livingBillboards: () => [...(cardRegularBodies?.batches() ?? [])],",
+    "old": "    livingBillboards: () => (livingIndoors?.batches() ?? []),",
+    "new": "    livingBillboards: () => [],",
     "tests": [
       "test/lw8_indoors.test.js"
     ]

@@ -26,6 +26,9 @@ export const HOLDEM_CLOCK_MS = 30000;
 /** MEASURE (CARDS5): the pause after a hand before the next deal; and a table's first deal after its second seat. */
 export const HOLDEM_GAP_MS = 4000;
 export const HOLDEM_FIRST_MS = 2500;
+/** AUDIT CARDS-3 C4: each street an all-in's run-out turns at the hand's end lengthens that pause - the cloth lays it
+ *  street by street (its throws, its turn) before the hands show and the pot goes home. */
+export const HOLDEM_RUNOUT_MS = 1400;
 /** The friendly table's chips: a stake to play with, never gold. */
 export const HOLDEM_CHIPS_BB = 100;
 /** The big blinds a table may be opened at - the taverns' own stakes (systems/cardTableSession.js TABLE_STAKES; a pin
@@ -95,7 +98,7 @@ function after(t, prev, now) {
   t.hand = null;
   t.handSeats = [];
   t.clockAt = 0;
-  t.nextDealAt = now + HOLDEM_GAP_MS;
+  t.nextDealAt = now + HOLDEM_GAP_MS + HOLDEM_RUNOUT_MS * events.filter((e) => e.t === 'street').length;   // AUDIT CARDS-3 C4: a run-out's streets are on the cloth first
   return events;
 }
 
@@ -122,6 +125,14 @@ function deal(t, now, rand32) {
  */
 export function sit(t, { id, name, chair, now }) {
   if (!Number.isInteger(chair) || chair < 0 || chair >= t.chairs) return 'no such chair';
+  // AUDIT CARDS-3 E-N1: a player whose socket dropped mid-hand is folded and marked leaving - back in the room, his sit
+  // keeps his own chair (whichever he names): he plays the next hand, never 'taken' by his own ghost until this one ends
+  const mine = chairOf(t, id);
+  if (mine >= 0 && t.seats[mine].leaving) {
+    delete t.seats[mine].leaving;
+    if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);
+    return [room(t, [{ t: 'sit', seat: mine, name: t.seats[mine].name, at: now }])];
+  }
   if (t.seats[chair]) return 'taken';
   if (chairOf(t, id) >= 0) return 'seated';
   t.seats[chair] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), stack: HOLDEM_CHIPS_BB * t.bb };

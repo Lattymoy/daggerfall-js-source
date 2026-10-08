@@ -23,7 +23,7 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const vert = (m, i) => [m.positions[i * 3], m.positions[i * 3 + 1], m.positions[i * 3 + 2]];
 
 test('CARDS3 the atlas: a card\'s cell its rank and suit, the back for the unseen, the UVs inset and the right way up', () => {
-  assert.deepEqual([CARD_CELL_W, CARD_CELL_H, ATLAS_W, ATLAS_H], [64, 90, 832, 450]);
+  assert.deepEqual([CARD_CELL_W, CARD_CELL_H, ATLAS_W, ATLAS_H], [128, 180, 1664, 900]);   // CARDS-BAY: the royals want the texels
   assert.deepEqual(atlasCell(parseCard('2c')), [0, 0]);
   assert.deepEqual(atlasCell(parseCard('As')), [12, 3]);
   assert.deepEqual(atlasCell(parseCard('Td')), [8, 1]);
