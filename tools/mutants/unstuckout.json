@@ -1,18 +1,27 @@
 [
   {
-    "name": "UO-the-feet-unasked",
+    "name": "UO-held-by-the-feet-unasked",
     "file": "src/player/enterExit.js",
-    "old": "      if (collider.insideSolid([px, h + CAPSULE_RADIUS, pz]) || collider.insideSolid([px, h + CAPSULE_HEIGHT - CAPSULE_RADIUS, pz])) continue;",
-    "new": "      if (collider.insideSolid([px, h + CAPSULE_HEIGHT - CAPSULE_RADIUS, pz])) continue;",
+    "old": "  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid(",
+    "new": "  return false || collider.insideSolid(",
     "tests": [
       "test/unstuckout.test.js"
     ]
   },
   {
-    "name": "UO-the-head-unasked",
+    "name": "UO-held-by-the-head-unasked",
     "file": "src/player/enterExit.js",
-    "old": "      if (collider.insideSolid([px, h + CAPSULE_RADIUS, pz]) || collider.insideSolid([px, h + CAPSULE_HEIGHT - CAPSULE_RADIUS, pz])) continue;",
-    "new": "      if (collider.insideSolid([px, h + CAPSULE_RADIUS, pz])) continue;",
+    "old": " || collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]]);",
+    "new": " || false;",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-ring-search-asks-no-solid",
+    "file": "src/player/enterExit.js",
+    "old": "      if (heldInSolid(collider, [px, h, pz])) continue;\n",
+    "new": "",
     "tests": [
       "test/unstuckout.test.js"
     ]
@@ -36,10 +45,10 @@
     ]
   },
   {
-    "name": "UO-held-by-the-feet-unasked",
+    "name": "UO-the-sea-floor-stood-on",
     "file": "src/player/enterExit.js",
-    "old": "  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid(",
-    "new": "  return false || collider.insideSolid(",
+    "old": "      if (!Number.isFinite(h) || (dry && !dry(h))) continue;\n",
+    "new": "      if (!Number.isFinite(h)) continue;\n",
     "tests": [
       "test/unstuckout.test.js"
     ]
@@ -65,8 +74,8 @@
   {
     "name": "UO-indoors-too",
     "file": "src/scenes/world.js",
-    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;",
-    "new": "    if (!walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
+    "new": "    if (!walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
     "tests": [
       "test/unstuckout.test.js"
     ]
@@ -74,8 +83,8 @@
   {
     "name": "UO-the-dead-moved",
     "file": "src/scenes/world.js",
-    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;",
-    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy()) return false;",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
+    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning) return 'busy';",
     "tests": [
       "test/unstuckout.test.js"
     ]
@@ -83,17 +92,26 @@
   {
     "name": "UO-mid-journey-moved",
     "file": "src/scenes/world.js",
-    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;",
-    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || !(playerEntity.health > 0)) return false;",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
+    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
     "tests": [
       "test/unstuckout.test.js"
     ]
   },
   {
-    "name": "UO-the-sea-floor-stood-on",
-    "file": "src/player/enterExit.js",
-    "old": "      if (!Number.isFinite(h) || (dry && !dry(h))) continue;\n",
-    "new": "      if (!Number.isFinite(h)) continue;\n",
+    "name": "UO-mid-door-moved",
+    "file": "src/scenes/world.js",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';",
+    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return 'busy';",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-a-sailor-moved",
+    "file": "src/scenes/world.js",
+    "old": "    if (playerAfloat() || player.swimming) return 'afloat';",
+    "new": "    if (player.swimming) return 'afloat';",
     "tests": [
       "test/unstuckout.test.js"
     ]
@@ -101,7 +119,16 @@
   {
     "name": "UO-a-swimmer-moved",
     "file": "src/scenes/world.js",
-    "old": "    if (player.swimming || player.isPlayerSwimming) return false;   // in the water no rock holds the body\n",
+    "old": "    if (playerAfloat() || player.swimming) return 'afloat';",
+    "new": "    if (playerAfloat()) return 'afloat';",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-a-rider-moved",
+    "file": "src/scenes/world.js",
+    "old": "    if (!isOnFoot(player.transportMode)) return 'mounted';\n",
     "new": "",
     "tests": [
       "test/unstuckout.test.js"
@@ -112,6 +139,15 @@
     "file": "src/scenes/world.js",
     "old": "    const open = openGroundNear(collider, player.pos[0], player.pos[2], { dry: (floor) => floor >= tvSeaY() });",
     "new": "    const open = openGroundNear(collider, player.pos[0], player.pos[2]);",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-every-refusal-one-word",
+    "file": "src/scenes/world.js",
+    "old": "    afloat: 'Not while you are afloat.',",
+    "new": "    afloat: 'There is no open ground near enough to send you to.',",
     "tests": [
       "test/unstuckout.test.js"
     ]

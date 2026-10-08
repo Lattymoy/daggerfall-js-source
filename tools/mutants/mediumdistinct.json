@@ -74,8 +74,8 @@
   {
     "name": "MD-relay-the-compare-skipped",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (!relayDungeonPlaces(quest).moved) continue;\n",
-    "new": "    relayDungeonPlaces(quest);\n",
+    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
+    "new": "  relayDungeonPlaces(quest, { only });\n",
     "tests": [
       "test/mediumdistinct.test.js"
     ]
@@ -83,26 +83,8 @@
   {
     "name": "MD-relay-every-stamp",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== ONLINE_DUNGEONS_STATE) continue;\n",
-    "new": "",
-    "tests": [
-      "test/mediumdistinct.test.js"
-    ]
-  },
-  {
-    "name": "MD-relay-the-online-sizes-left",
-    "file": "src/systems/quest/questRepair.js",
-    "old": "quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== ONLINE_DUNGEONS_STATE) continue;",
-    "new": "quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE) continue;",
-    "tests": [
-      "test/mediumdistinct.test.js"
-    ]
-  },
-  {
-    "name": "MD-relay-nothing-put-back",
-    "file": "src/systems/quest/questRepair.js",
-    "old": "    putBackPlacements(quest, env);\n    relaid++;\n",
-    "new": "    relaid++;\n",
+    "old": "  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;",
+    "new": "  if (!questRunning(quest)) return false;",
     "tests": [
       "test/mediumdistinct.test.js"
     ]
@@ -110,8 +92,53 @@
   {
     "name": "MD-relay-a-finished-quest-read",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (!questRunning(quest)) continue;\n    if (quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE",
-    "new": "    if (quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE",
+    "old": "  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;",
+    "new": "  if (!portSize(quest.smallerDungeonsState)) return false;",
+    "tests": [
+      "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-nothing-put-back",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n  putBackPlacements(quest, env);\n",
+    "new": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
+    "tests": [
+      "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-an-unmoved-build-read",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "  const only = (sd, location) => location.dungeon?.distinct === true\n    && (",
+    "new": "  const only = (sd, location) => true\n    && (",
+    "tests": [
+      "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-an-unlinked-dungeon-read-offline",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "new": "    && true;",
+    "tests": [
+      "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-online-asks-a-link",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "new": "    && ((machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "tests": [
+      "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-the-only-ignored",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (only && !only(sd, location)) continue;\n",
+    "new": "",
     "tests": [
       "test/mediumdistinct.test.js"
     ]
@@ -123,6 +150,15 @@
     "new": "",
     "tests": [
       "test/mediumdistinct.test.js"
+    ]
+  },
+  {
+    "name": "MD-relay-the-share-unlaid",
+    "file": "src/systems/questShare.js",
+    "old": "    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
     ]
   }
 ]

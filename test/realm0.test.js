@@ -277,12 +277,16 @@ test('REALM P0.4: online a shop pays at most half what it asks for the same piec
         const k = { mercantile, personality };
         const off = calculateTradePrice(777, q, k, true, { online: false });
         const on = calculateTradePrice(777, q, k, true, { online: true });
-        assert.ok(on <= Math.min(off, Math.floor(calculateTradePrice(777, q, best, false, { online: false }) / 2)), `q${q} m${mercantile} p${personality}: under the half and Daggerfall's own offer`);
+        // MERC-SLOPE (its audit: an inequality here let any smaller sale through): the law, exactly
+        const half = Math.floor(calculateTradePrice(777, q, best, false, { online: false }) / 2);
+        const top = calculateTradePrice(777, q, best, true, { online: false });
+        assert.equal(on, Math.max(Math.floor(half * (0.5 + (0.5 * Math.min(off, top)) / top)), Math.min(off, half, 1)), `q${q} m${mercantile} p${personality}`);
+        assert.ok(on <= Math.min(off, half), `q${q} m${mercantile} p${personality}: under the half and Daggerfall's own offer`);
         assert.ok(on <= Math.floor(calculateTradePrice(777, q, k, false, { online: false }) / 2), `the buy-back loop stays shut: q${q} m${mercantile} p${personality}`);
       }
     }
   }
-  assert.ok(calculateTradePrice(1_000, 20, { mercantile: 0, personality: 10 }, true, { online: true }) <= calculateTradePrice(1_000, 20, { mercantile: 0, personality: 10 }, true, { online: false }), 'never more than Daggerfall\'s own offer');
+  assert.deepEqual([calculateTradePrice(1_000, 20, { mercantile: 0, personality: 10 }, true, { online: true }), calculateTradePrice(1_000, 20, { mercantile: 0, personality: 10 }, true, { online: false })], [187, 222], 'a weak seller at a dear counter: under Daggerfall\'s own offer');
 });
 
 test('REALM P0.4: online a pile\'s gold is divided back by the level, every key, never under one piece; offline it is the level\'s', () => {

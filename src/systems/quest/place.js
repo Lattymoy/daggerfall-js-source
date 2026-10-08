@@ -302,17 +302,46 @@ export class Place extends QuestResource {
    */
   _reseatStoryDungeon(world) {
     const sd = this.siteDetails;
-    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;
+    // KVAR-HOLD's audit: a `local dungeon` is drawn as a remote one (_setupLocalSite), so it is rescued as one too
+    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;
     const { p2 } = this.declaredSiteLaw();
-    const site = this._remoteDungeonSite(world, sd.regionIndex, p2) ?? this._remoteDungeonSite(world, sd.regionIndex, -1);
+    // KVAR-HOLD's audit: among the few nearest the dungeon it leaves - never this client's own player - so every copy of a
+    // shared quest, under its one die (reseatMovedSite's SHARED-SEAT), draws the same site
+    const row = world.maps.getRegion(sd.regionIndex)?.mapTable?.find?.((t) => t?.mapId === sd.mapId) ?? null;
+    const origin = row ? mapTablePixel(row) : null;
+    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });
     const next = site ? this._carryAssignments(sd, site) : null;
     if (!next) return false;
     this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
     for (const task of this.parentQuest?.tasks?.values?.() ?? []) {
       for (const a of task?.actions ?? []) {
-        if (a?.typeName === 'RevealLocation' && a.isComplete && a.placeSymbol?.name === this.symbol?.name) world.discoverLocation?.(next.regionName, next.locationName);
+        if (a?.typeName !== 'RevealLocation' || !a.isComplete || a.placeSymbol?.name !== this.symbol?.name) continue;
+        // KVAR-HOLD's audit: the reveal is the map's, best-effort - a name the world will not resolve throws (PlayerGPS's
+        // law), and the site has moved either way; the machine moves its link next (_reseatMovedOf's follow)
+        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }
       }
     }
+    return true;
+  }
+  /**
+   * KVAR-HOLD's audit: A DUNGEON SITE FITTED TO THE SIZE ITS LINK BUILDS. A site drawn again is enumerated before its
+   * link stands there, so its dungeon was sized by the settings (no link: dungeonSizeFor's last word) - and once the
+   * link moves, by the quest's own frozen size: a medium build's markers in a whole dungeon, or the other way round.
+   * After the machine moves the link (_reseatMovedOf) the site is enumerated again on the dungeon its world builds now;
+   * where the markers come out otherwise, what stood on them is carried (_carryAssignments). Answers whether it moved.
+   */
+  fitSiteToBuild(world) {
+    const sd = this.siteDetails;
+    if (sd?.siteType !== SITE_TYPES.Dungeon) return false;
+    const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+    const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
+    if (!location?.dungeon?.blocks) return false;
+    const { questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, location);
+    const at = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.dungeonZ},${m?.markerID}`).join(';');
+    if (at(questSpawnMarkers) === at(sd.questSpawnMarkers) && at(questItemMarkers) === at(sd.questItemMarkers)) return false;
+    const next = this._carryAssignments(sd, { ...sd, questSpawnMarkers, questItemMarkers });
+    if (!next) return false;
+    this.siteDetails = { ...next, questUID: sd.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
     return true;
   }
 
@@ -741,13 +770,14 @@ export class Place extends QuestResource {
   }
   /** SelectRemoteDungeonSite's draw in `regionIndex`: the site details, or null (KVAR-HOLD: the re-seat draws in the
    *  site's own region, not the player's). */
-  _remoteDungeonSite(world, regionIndex, dungeonTypeIndex) {
+  _remoteDungeonSite(world, regionIndex, dungeonTypeIndex, { origin = null } = {}) {
     const regionData = world.maps.getRegion(regionIndex);
     if (!regionData || regionData.locationCount === 0) return null;
 
     let foundIndices = this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex);
     if (!foundIndices.length) return null;
-    const reach = this._questReach(world);   // NEARBY-QUESTS: the dungeons within reach, or the nearest few
+    // NEARBY-QUESTS: the dungeons within reach, or the nearest few; KVAR-HOLD's re-seat: the nearest few to `origin`
+    const reach = origin ? { origin, pixels: 0 } : this._questReach(world);
     if (reach) foundIndices = nearbyIndices(regionData, foundIndices, reach.origin, reach.pixels);
     const index = this._range(foundIndices.length);
     const location = world.maps.getLocation(regionIndex, foundIndices[index]);

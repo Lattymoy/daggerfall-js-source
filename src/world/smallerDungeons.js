@@ -203,8 +203,9 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   return medium ? 'medium' : 'full';
 }
 
-/** SD-ONLINE: a frozen state that is one of the port's sizes (DFU's are NotSet, Disabled and Enabled). */
-const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;
+/** SD-ONLINE: a frozen state that is one of the port's sizes (DFU's are NotSet, Disabled and Enabled). MEDIUM-DISTINCT's
+ *  audit: exported - the two whose builds are medium are the two a moved medium layout reaches (questRepair.js). */
+export const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;
 
 /**
  * AUDIT DELVE E5: THE SIZE A QUEST'S MARKERS WERE CHOSEN ON. A quest's dungeon Place enumerates its markers when the

@@ -126,18 +126,18 @@ const BARE_SRC = ['Quest: __MDX', 'QRC:', 'Message:  1011', ' x', '', 'QBN:', 'v
 const sym = (name) => ({ name, original: `_${name}_`, clone() { return sym(name); } });
 const flat = (record, x) => ({ type: RDB_RESOURCE_TYPES.Flat, position: x, xPos: x, yPos: 0, zPos: 0, resources: { flatResource: { textureArchive: 199, textureRecord: record } } });
 
-test('MEDIUM-DISTINCT the quests: at every load a running quest at a medium size whose markers were chosen on the layout that laid one block twice has them enumerated again on the dungeon its world builds now, its foe put back on a marker that build has, its stamp untouched; DFU\'s stamps, an unmoved layout and a finished quest left alone; wired at the bridge\'s load, online and off (mutants: the compare skipped, the stamps widened, the put-back, the wiring)', () => {
+test('MEDIUM-DISTINCT the quests: at every load a running quest at a medium size whose markers were chosen on the layout that laid one block twice has them enumerated again on the dungeon its world builds now - the producer\'s own moved build - its foe put back, its stamp untouched; only a build that moved is read; offline only a dungeon a link holds (with none the build is the settings\'); DFU\'s stamps and a finished quest left alone; wired at the bridge\'s load, online and off (mutants: the compare skipped, the stamps widened, the moved-only read, the link\'s law, the put-back, the wiring)', () => {
   const m = new QuestMachine();
   const q = m.parseQuestForLists(BARE_SRC, 0, { rolls: () => 0 });
   m.startQuestImmediate(q);
-  const blockData = {
-    'N0000001.RDB': { position: 100, rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, 1), flat(18, 2)] }] } },
-    'N0000002.RDB': { position: 300, rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, 5)] }] } },
-    'B0000001.RDB': { position: 200, rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, 3)] }] } },
-  };
-  const built = (second) => ({ name: 'Keep', mapTableData: { mapId: 777 }, dungeon: { medium: true, blocks: [
-    { blockName: 'N0000001.RDB', x: 0, z: 0 }, { blockName: second, x: 1, z: 0 }, { blockName: 'B0000001.RDB', x: 0, z: -1 }] } });
-  let now = built('N0000001.RDB');   // the layout that laid one block twice
+  // every block of the list its own marker (a spawn at a place of its own), so a layout's markers name its blocks
+  const blockData = Object.fromEntries(TEN.map((name, i) => [name, { position: 1000 * (i + 1), rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, i + 1)] }] } }]));
+  const keep = (mapId) => ({ ...loc(TEN, mapId), name: 'Keep', regionIndex: 3 });
+  const moved = generateMediumDungeon(keep(idWhere(TEN, true)));   // the producer's own build, its draw taken again
+  assert.equal(moved.dungeon.distinct, true);
+  // what the old law laid: the same draws, the second interior block the first again
+  const old = { ...moved, dungeon: { ...moved.dungeon, distinct: undefined, blocks: moved.dungeon.blocks.map((b, i) => (i === 1 ? { ...moved.dungeon.blocks[0], x: b.x, z: b.z, isStartingBlock: false } : b)) } };
+  let now = moved;
   const world = {
     maps: { getRegion: (r) => (r === 3 ? { mapNameLookup: new Map([['Keep', 5]]) } : null), getLocation: (r, l) => (r === 3 && l === 5 ? now : null) },
     getBlock: (n) => blockData[n] ?? null,
@@ -145,42 +145,59 @@ test('MEDIUM-DISTINCT the quests: at every load a running quest at a medium size
   q.hooks = { ...(q.hooks ?? {}), world };
   const dun = new Place(q);
   dun.symbol = sym('dun');
-  const before = dun._enumerateDungeonQuestMarkers(world, now);   // the markers the old layout minted
-  assert.deepEqual(before.questSpawnMarkers.map((k) => [k.dungeonX, k.dungeonZ, k.markerID]), [[0, 0, 101], [1, 0, 101], [0, -1, 203]]);
-  dun.siteDetails = { siteType: SITE_TYPES.Dungeon, mapId: 777, regionIndex: 3, locationName: 'Keep', buildingKey: 0, magicNumberIndex: 0,
-    selectedMarker: { targetResources: [sym('boss')] }, ...before };
+  const before = dun._enumerateDungeonQuestMarkers(world, old);   // the markers the old layout minted - an older save's
+  const ids = (list) => list.map((k) => [k.dungeonX, k.dungeonZ, k.markerID]);
+  const was = ids(before.questSpawnMarkers);
+  const copy = (list) => (list ?? []).map((k) => ({ ...k, flatPosition: { ...k.flatPosition }, targetResources: null }));
+  const sit = () => {
+    dun.siteDetails = { siteType: SITE_TYPES.Dungeon, mapId: moved.mapTableData.mapId, regionIndex: 3, locationName: 'Keep', buildingKey: 0, magicNumberIndex: 0,
+      selectedMarker: { targetResources: [sym('boss')] }, questSpawnMarkers: copy(before.questSpawnMarkers), questItemMarkers: copy(before.questItemMarkers) };
+  };
+  sit();
   dun._range = () => 1;
   q.resources.set('dun', dun);
   q.resources.set('boss', { symbol: sym('boss'), isFoe: true, spawnCount: 1, killCount: 0, parentQuest: q, questResourceBehaviour: null });
   q.tasks.set('_go_', { actions: [{ typeName: 'PlaceFoe', foeSymbol: sym('boss'), placeSymbol: sym('dun'), marker: -1, isComplete: true }] });
   q.smallerDungeonsState = MEDIUM_DUNGEONS_STATE;
-  assert.equal(relayMovedLayouts(m), 0, 'the layout its markers know: nothing moves');
-  now = built('N0000002.RDB');   // the law moved it
-  // DFU's stamps name builds that never moved: left alone
-  for (const s of [SMALLER_DUNGEONS_STATE.NotSet, SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled]) {
-    q.smallerDungeonsState = s;
-    assert.equal(relayMovedLayouts(m), 0, `stamp ${s}`);
-    assert.equal(dun.siteDetails.questSpawnMarkers[1].markerID, 101);
-  }
-  q.smallerDungeonsState = MEDIUM_DUNGEONS_STATE;
-  assert.equal(relayMovedLayouts(m), 1, 'one quest re-laid');
-  assert.deepEqual(dun.siteDetails.questSpawnMarkers.map((k) => [k.dungeonX, k.dungeonZ, k.markerID]), [[0, 0, 101], [1, 0, 305], [0, -1, 203]], 'the build\'s markers');
+  // offline, no link: the build is the settings', no one's frozen size - left as it is
+  assert.equal(relayMovedLayouts(m, {}, false), 0, 'offline, unlinked: not read');
+  assert.deepEqual(ids(dun.siteDetails.questSpawnMarkers), was);
+  // online the build is the world's whatever links stand: re-laid on the producer's build
+  assert.equal(relayMovedLayouts(m, {}, true), 1, 'online: re-laid');
+  const fresh = ids(dun._enumerateDungeonQuestMarkers(world, moved).questSpawnMarkers);
+  assert.deepEqual(ids(dun.siteDetails.questSpawnMarkers), fresh, 'the moved build\'s markers');
+  assert.notDeepEqual(fresh, was);
   assert.deepEqual(dun.siteDetails.selectedMarker.targetResources.map((t) => t.name), ['boss'], 'the boss put back');
-  assert.equal(dun.siteDetails.selectedMarker.markerID, 305, '...on a marker the build has');
+  assert.ok(fresh.some(([, , id]) => id === dun.siteDetails.selectedMarker.markerID), '...on a marker the build has');
   assert.equal(q.smallerDungeonsState, MEDIUM_DUNGEONS_STATE, 'the stamp untouched');
-  assert.equal(relayMovedLayouts(m), 0, 'again: nothing');
+  assert.equal(relayMovedLayouts(m, {}, true), 0, 'again: nothing');
+  // offline with the quest's link standing: re-laid
+  sit();
+  m.createSiteLink(q, dun.symbol);
+  assert.equal(relayMovedLayouts(m, {}, false), 1, 'offline, linked: re-laid');
+  // DFU's stamps name builds that never moved: left alone
+  for (const st of [SMALLER_DUNGEONS_STATE.NotSet, SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled]) {
+    sit();
+    q.smallerDungeonsState = st;
+    assert.equal(relayMovedLayouts(m, {}, true), 0, `stamp ${st}`);
+  }
   // the world's sizes (a quest started online) are a medium size too
-  now = built('N0000001.RDB');
+  sit();
   q.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
-  assert.equal(relayMovedLayouts(m), 1);
-  assert.equal(q.smallerDungeonsState, ONLINE_DUNGEONS_STATE);
+  assert.equal(relayMovedLayouts(m, {}, true), 1);
+  // a build the law never moved is not read, whatever its markers say
+  sit();
+  now = generateMediumDungeon(keep(idWhere(TEN, false)));
+  assert.equal(now.dungeon.distinct, undefined);
+  assert.equal(relayMovedLayouts(m, {}, true), 0, 'unmoved: not read');
   // a finished quest is not read
-  now = built('N0000002.RDB');
+  now = moved;
   q.questComplete = true;
-  assert.equal(relayMovedLayouts(m), 0);
+  assert.equal(relayMovedLayouts(m, {}, true), 0);
   q.questComplete = false;
   // wired at the bridge's load, after the online re-lay, online and off
   const bridge = src('src/scenes/questBridge.js');
   const restore = bridge.slice(bridge.indexOf('restore(data) {'));
   assert.match(restore, /if \(isOnlinePage\(\)\) relayOnlineDungeons\(machine, [^\n]*\n(?:\s*\/\/[^\n]*\n)+\s*relayMovedLayouts\(machine, \{ carriesQuestItem: \(item\) => ctx\.carriesQuestItem\?\.\(item\) \?\? false \}\);\n/);
+  // and a shared copy on arrival (systems/questShare.js) - pinned by test/sd20g_delve.test.js
 });

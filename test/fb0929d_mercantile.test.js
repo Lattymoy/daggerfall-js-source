@@ -27,6 +27,9 @@ test('MERC-RISE: the field\'s counter - a higher Mercantile never sells for less
   // each seller stands where their Daggerfall offer stands against the best's, at half its strength
   assert.equal(ask(COST, Q, 100, 100), 5436);
   assert.deepEqual([0, 30, 60, 90, 100].map((m) => sale(COST, Q, m, 100)), [2187, 2344, 2500, 2663, 2718], 'every twenty or thirty Mercantile is felt, the best at the half');
+  // MERC-SLOPE's audit: a cheap lot whose half is one gold is a gold, never nothing - as MERC-RISE paid it
+  assert.deepEqual([6, 8, 10].map((c) => sale(c, 10, 20, 50)), [1, 1, 1]);
+  assert.equal(sale(5, 10, 20, 50), 0, 'a half of nothing stays nothing, as before');
   // through the trade window's own door
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   globalThis.location = { search: '?online' };

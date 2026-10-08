@@ -6112,6 +6112,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // StartGameBehaviour.ApplyStartSettings (:283), never rebuilding a
   // live world mid-session.
   const state = new StreamingWorldState(fogDistance); pipeline.keepPlaces('pixel', (2 * state.terrainDistance + 1) ** 2);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced; FIELD BUGS 2026-10-04d PLACE-LRU: and the pixels gone that are kept warm, one whole view's worth (the player's "minimum set for chunks visible by viewing range" is the view itself, never freed)
+  const _tvSeaT = [0, 0, 0];
+  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel.
+   *  FIELD BUGS 2026-10-08 (UNSTUCK-OUT's audit): declared here, beside `state`, not with the travel view far below - a
+   *  fast-travel landing held in a rock asks it (its open ground is above the sea), and the boot's own load lands before
+   *  that line ran: a const read in its dead zone threw. */
+  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
   const queue = state.init(startPixel.x, startPixel.y);
   if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
   _wodArrival = wodArrivalOf(queue);   // WOD6: the first world is an InitWorld too
@@ -18976,17 +18982,29 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (the presenter above, and the frame below as a backstop) and the reset reads IT, not the cleared live state.
   let _deathWasOnline = null;
   /** UNSTUCK-OUT (FIELD BUGS 2026-10-08): `/unstuck` OUTDOORS - the body stood on the nearest open ground
-   *  (player/enterExit.js openGroundNear: the terrain's floor where no rock holds the body, above the sea). Only on foot
-   *  in the open world, alive, out of the water, not mid-journey; answers whether it moved. */
+   *  (player/enterExit.js openGroundNear: the terrain's floor where no rock holds the body, above the sea). Answers true
+   *  when it moved the body, else why not (UNSTUCK_OUT_WORDS): 'busy' - no body in the open world, dead, mid-journey or
+   *  mid-door (staff /tp's own gate); 'afloat' - at a helm, aboard, on a ship's deck or in the water (playerAfloat - the
+   *  boat holds the body, and a fight at sea is no rock to leave); 'mounted' - on a horse or a cart; 'none' - no open
+   *  ground within reach. */
   function unstuckOutdoors() {
-    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;
-    if (player.swimming || player.isPlayerSwimming) return false;   // in the water no rock holds the body
+    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || !(playerEntity.health > 0)) return 'busy';
+    if (playerAfloat() || player.swimming) return 'afloat';
+    if (!isOnFoot(player.transportMode)) return 'mounted';
     const open = openGroundNear(collider, player.pos[0], player.pos[2], { dry: (floor) => floor >= tvSeaY() });
-    if (!open) return false;
+    if (!open) return 'none';
     player.spawn(open[0], open[1], open[2]);
     cam.pos = [open[0], open[1], open[2]];
     return true;
   }
+  /** UNSTUCK-OUT's audit: each refusal in its own words (every one read "no open ground" - a swimmer, a sailor and a
+   *  rider were told a falsehood). */
+  const UNSTUCK_OUT_WORDS = Object.freeze({
+    busy: 'You cannot do that right now.',
+    afloat: 'Not while you are afloat.',
+    mounted: 'Not while you are mounted.',
+    none: 'There is no open ground near enough to send you to.',
+  });
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   // ONE-SEAT (Mac: "the player can only have one character only at a time. Like they shouldnt be able to open multiple
   // tabs and join as different characters"): THIS TAB'S HOLD ON THE PLAYER'S ONE SEAT. Two arms say it is lost: the
@@ -20115,7 +20133,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const freed = !hour && !moved ? unstuckOutdoors() : false;
           if (moved || freed || !hour) {
             chatLog.push(tabId, {
-              text: moved ? 'You find your way back outside.' : freed ? 'You find your footing on open ground.' : 'There is no open ground near enough to send you to.',
+              text: moved ? 'You find your way back outside.' : freed === true ? 'You find your footing on open ground.' : UNSTUCK_OUT_WORDS[freed] ?? 'There is nowhere to send you from out here.',
               system: true,
             });
           }
@@ -26778,9 +26796,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters
   // carves under clear water is no floor for a veil, whose foot the surface (no depth written) never cuts
-  const _tvSeaT = [0, 0, 0];
-  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel. */
-  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
+  // (tvSeaY, the sea's surface, stands beside `state` - FIELD BUGS 2026-10-08 UNSTUCK-OUT's audit: the boot's load reads it)
   const tvGroundAt = (x, z) => {
     const n = state.worldCoords([x, 0, z]);
     const g = tvSceneOf(n.x, n.z)[1];

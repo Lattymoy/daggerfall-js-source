@@ -27,7 +27,8 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { ONLINE_DUNGEONS_STATE, MEDIUM_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { ONLINE_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -160,7 +161,7 @@ export function relayQuestOnline(quest, env = {}) {
  *  otherwise has them enumerated again there and its targets let go (putBackPlacements stands them again). Answers
  *  whether any moved, and whether a dungeon could not be read (no world, no such location, a throw). The two re-lays'
  *  one body (relayQuestOnline, relayMovedLayouts). */
-function relayDungeonPlaces(quest) {
+function relayDungeonPlaces(quest, { only = null } = {}) {
   const world = quest.hooks?.world ?? null;
   let moved = false, unread = false;
   for (const r of quest.resources?.values?.() ?? []) {
@@ -169,6 +170,7 @@ function relayDungeonPlaces(quest) {
     const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
     if (!location?.dungeon?.blocks) { unread = true; continue; }
+    if (only && !only(sd, location)) continue;
     let markers;
     try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
     if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
@@ -190,16 +192,26 @@ function relayDungeonPlaces(quest) {
  * untouched (the size is the same size). DFU's stamps are left alone: neither of their builds moved. Answers the count
  * of quests re-laid. Not a DFU member.
  */
-export function relayMovedLayouts(machine, env = {}) {
+export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
   let relaid = 0;
-  for (const quest of machine?.quests?.values?.() ?? []) {
-    if (!questRunning(quest)) continue;
-    if (quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== ONLINE_DUNGEONS_STATE) continue;
-    if (!relayDungeonPlaces(quest).moved) continue;
-    putBackPlacements(quest, env);
-    relaid++;
-  }
+  for (const quest of machine?.quests?.values?.() ?? []) if (relayQuestMovedLayout(quest, machine, env, online)) relaid++;
   return relaid;
+}
+/**
+ * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/questShare.js: a party member on an
+ * older page lays the old layout, and their copy's markers point into it). MEDIUM-DISTINCT's audit: only a dungeon
+ * whose build MOVED (`distinct` - the clone says it took a block again) is compared, so a load reads no block of a
+ * dungeon the law never touched; and offline only a dungeon a link holds - with none, the build is the settings' (the
+ * quest's frozen size reaches a build through its link), and re-laying on it stood the quest's later placement in
+ * another size's blocks. Online the build is the world's either way. Answers whether its markers moved.
+ */
+export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlinePage()) {
+  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;
+  const only = (sd, location) => location.dungeon?.distinct === true
+    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);
+  if (!relayDungeonPlaces(quest, { only }).moved) return false;
+  putBackPlacements(quest, env);
+  return true;
 }
 
 /**

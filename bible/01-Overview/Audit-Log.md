@@ -8,6 +8,34 @@
 
 Newest first.
 
+**2026-10-08 - AUDIT FIELD-BUGS 1008.** Mac: *"let's do an audit on everything"* - the branch's seven: SHIP-CREDIT
+WITHDRAWN, MEDIUM-DISTINCT, WED-GATE, KVAR-HOLD, UNSTUCK-OUT, WATER-OFF, MERC-SLOPE. One review over the whole diff
+(nineteen findings), every one read against the tree, the tree untouched while it read (17l's rule). FIXED:
+- **A crash on the boot's load** - the landing's rock check asked `tvSeaY`, a const declared after the boot's
+  `await worldQuickLoad` (its dead zone): declared beside `state` now, pinned before the load (`test/unstuckout.test.js`).
+- **MERC-SLOPE paid nothing** for a lot whose half is one gold - a gold at least where the half and Daggerfall's offer
+  both reach one, as MERC-RISE paid (`test/fb0929d_mercantile.test.js`); and P0.4's pins in `test/realm0.test.js`,
+  weakened to inequalities in the slope's own change, are the law exactly again.
+- **The moved-layout relay** read an unlinked dungeon offline on the settings' size, and every dungeon at every load:
+  only a build that MOVED (`distinct`) is read now, and offline only one a link holds (`questRepair.js
+  relayQuestMovedLayout`); a shared copy arriving is laid too (`questShare.js`); the size test is `portSize`, exported;
+  its pin builds on the producer's own moved build (`test/mediumdistinct.test.js`).
+- **KVAR-HOLD's re-seat** enumerated the new stronghold before its link stood there (the settings' size, then the
+  quest's): fitted after the link moves (`Place.fitSiteToBuild`, machine.js `_reseatMovedOf`); drew near this client's
+  player - every shared copy elsewhere: drawn among the nearest the Hold it leaves; left a `local dungeon` stuck:
+  rescued as the remote one it is; a reveal that throws left the link behind: the reveal is best-effort
+  (`test/kvarhold.test.js`, 3).
+- **`/unstuck` outdoors** moved a body at a helm, aboard, on a deck, mounted or mid-door, and said "no open ground" for
+  every refusal: refused by `playerAfloat`, `isOnFoot` and `modes.transitioning`, each in its own words
+  (`UNSTUCK_OUT_WORDS`); the ring search asks `heldInSolid`, the one probe law.
+LEFT, said: (1) a moved medium dungeon's ONLINE room is still `dungeon:m<id>.m` - its memory from before (30 days at
+most) is the old layout's, and a page from before shares the room until it reloads. A room of its own is a relay version
+(`net/wire.js` WORLD_ROOM, DUNGEON_ROOM_TAGS; ~40 pins of `world176` and a bundle row), so OPEN for Mac. (2) The
+landing's check reads any single skin overhead (an arch, an eave) as a rock - an arrival under one moves to the open
+ground beside it, metres at most where a street is open. (3) The ring search walks every static bucket (no broad phase)
+- one command, or one landing held in a rock, at a time. Mutants: `unstuckout.json` 17, `kvarhold.json` 12,
+`mediumdistinct.json` 18, `fb0929d_mercantile.json` 9 - all dead.
+
 **2026-10-08 - AUDIT SCALE.** Mac: *"Do a comprehensive audit on this and ensure perfection"*, of SCALE3 and SCALE4a-c -
 the load harness, the session and its player in one read, the service's own clock, one heartbeat for a tab's three
 clocks. Five lenses: this session's own, live in real workerd (the account probe, both crons fired over a migrated D1,

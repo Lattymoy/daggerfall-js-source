@@ -28,11 +28,12 @@ const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
 
 const PRIVATEERS_HOLD = 187853213;
 const HOME = { x: 100, y: 100 };
+const lair2 = { position: 9500, rdbBlock: { objectRootList: [{ rdbObjects: [{ type: 3, position: 40, xPos: 10, yPos: 4, zPos: 20, resources: { flatResource: { textureArchive: 199, textureRecord: 11 } } }] }] } };
 const lair = { position: 9000, rdbBlock: { objectRootList: [{ rdbObjects: [11, 18].map((record, i) => ({ type: 3, position: 100 + i * 8, xPos: 10, yPos: 4, zPos: 20, resources: { flatResource: { textureArchive: 199, textureRecord: record } } })) }] } };
 
 /** A region: the player's town at HOME, then Human Strongholds (dungeon type 2) `dx` pixels east, one of them `story`
  *  (its map id the main story's). */
-function makeWorld(sites, found = []) {
+function makeWorld(sites, found = [], { player = HOME, linked = () => false, reveal = null } = {}) {
   const all = [{ kind: 'town', dx: 0 }, ...sites.map((s) => ({ kind: 'dungeon', ...s }))];
   const locations = all.map((s, index) => {
     const pixel = { x: HOME.x + s.dx, y: HOME.y };
@@ -46,19 +47,24 @@ function makeWorld(sites, found = []) {
       dungeon: dungeon ? { blocks: [{ x: 0, z: 0, blockName: 'LAIRAA00.RDB' }] } : null,
     };
   });
-  const region = { name: 'Testshire', locationCount: locations.length, mapTable: locations.map((l) => ({ ...l.mapTableData })) };
+  const region = { name: 'Testshire', locationCount: locations.length, mapTable: locations.map((l) => ({ ...l.mapTableData })),
+    mapNameLookup: new Map(locations.map((l, i) => [l.name, i])) };
+  // the quest world's size law in small: a dungeon a link holds is built by the quest's own frozen size (here, a second
+  // block), one no link holds by the settings (one block) - world.js questWorld through dungeonLocationFor
+  const sized = (loc) => (loc?.hasDungeon && linked(loc.mapTableData.mapId)
+    ? { ...loc, dungeon: { blocks: [...loc.dungeon.blocks, { x: 1, z: 0, blockName: 'LAIRAA01.RDB' }] } } : loc);
   return {
     locations,
     maps: {
-      regionCount: 1, getRegion: (r) => (r === 0 ? region : null), getLocation: (r, l) => (r === 0 ? locations[l] ?? null : null),
+      regionCount: 1, getRegion: (r) => (r === 0 ? region : null), getLocation: (r, l) => (r === 0 ? sized(locations[l]) ?? null : null),
       getLocationByName: (rn, ln) => locations.find((l) => l.name === ln) ?? null,
       readLocationIdFast: (r, l) => locations[l].exterior.exteriorData.locationId, getClimateIndex: () => 231,
     },
-    getBlock: (name) => (name === 'LAIRAA00.RDB' ? lair : null),
+    getBlock: (name) => (name === 'LAIRAA00.RDB' ? lair : name === 'LAIRAA01.RDB' ? lair2 : null),
     currentLocation: () => locations[0], currentRegionIndex: () => 0, currentLocationIndex: () => 0, currentRegionName: () => 'Testshire',
     isPlayerInLocationRect: () => true, playerInside: () => null, isHouseOwned: () => false,
-    playerPixel: () => ({ ...HOME }), buildingNameOpts: () => ({}),
-    discoverLocation: (region, location) => { found.push(location); }, addNote: () => {},
+    playerPixel: () => ({ ...player }), buildingNameOpts: () => ({}),
+    discoverLocation: reveal ?? ((region, location) => { found.push(location); }), addNote: () => {},
   };
 }
 
@@ -119,4 +125,46 @@ test('KVAR-HOLD a save that holds a random dungeon site in Privateer\'s Hold has
   place.scope = Scopes.Fixed;
   assert.equal(m.reseatMovedSites(world), 0, 'permanent: the quest\'s own');
   assert.equal(place.siteDetails.mapId, PRIVATEERS_HOLD);
+});
+
+test('KVAR-HOLD (its audit) the re-seat\'s draw and fit: among the few nearest the Hold it leaves, never this client\'s player; a `local dungeon` rescued as a remote one; the new site enumerated again on the size its link builds once the link stands there, K\'avar carried; a reveal the world will not resolve leaves the move and the link standing (mutants: the player\'s reach, the local scope, the fit unwired, the reveal unguarded)', () => {
+  const PH = { dx: 1, story: true };
+  const sites = [PH, { dx: 6 }, { dx: 8 }, { dx: 10 }, { dx: 150 }, { dx: 160 }, { dx: 170 }];
+  const near = new Set(['dungeon6', 'dungeon8', 'dungeon10']);
+  const run = (placeLine, seed, opts = {}) => {
+    let m = null;
+    const world = makeWorld(sites, opts.found ?? [], { player: opts.player ?? HOME, linked: (id) => !!m?.siteLinks?.some((l) => l.mapId === id), reveal: opts.reveal });
+    m = new QuestMachine({ nowSeconds: () => 0, world, playerLevel: () => 1 });
+    const q = m.scheduleQuest(QUEST([placeLine, '', 'Foe _mtraitor_ is Ranger', '', ' reveal _stronghold_', ' place foe _mtraitor_ at _stronghold_']), 0, { rolls: rollsOf(seed) });
+    m.tick(); m.tick();
+    const place = q.getResource({ name: 'stronghold' });
+    const hold = world.locations.find((l) => l.mapTableData.mapId === PRIVATEERS_HOLD);
+    place.siteDetails = { ...place.siteDetails, mapId: PRIVATEERS_HOLD, locationId: hold.exterior.exteriorData.locationId, locationName: hold.name, questSpawnMarkers: place.siteDetails.questSpawnMarkers.slice(0, 1) };
+    for (const link of m.siteLinks) if (link.questUID === q.uid) Object.assign(link, linkSiteOf(place));
+    opts.before?.();
+    return { m, q, place, world, moved: m.reseatMovedSites(world) };
+  };
+  // the player stands by the far dungeons: the draw is still among the three nearest the Hold
+  for (let seed = 1; seed <= 12; seed++) {
+    const r = run('Place _stronghold_ remote dungeon2', seed, { player: { x: HOME.x + 160, y: HOME.y } });
+    assert.equal(r.moved, 1);
+    assert.ok(near.has(r.place.siteDetails.locationName), `seed ${seed}: ${r.place.siteDetails.locationName}`);
+  }
+  // a `local dungeon` - drawn as a remote one - rescued the same
+  const local = run('Place _stronghold_ local dungeon', 5);
+  assert.equal(local.place.scope, Scopes.Local);
+  assert.equal(local.moved, 1);
+  assert.notEqual(local.place.siteDetails.mapId, PRIVATEERS_HOLD);
+  // the fit: the link stands at the new site, so its build is the quest's size (two blocks) - and the markers are its
+  const sd = local.place.siteDetails;
+  assert.ok(local.m.siteLinks.some((l) => l.questUID === local.q.uid && l.mapId === sd.mapId), 'the link moved');
+  assert.deepEqual(sd.questSpawnMarkers.map((k) => [k.dungeonX, k.markerID]), [[0, 9100], [1, 9540]], 'enumerated on the linked build');
+  assert.ok(sd.selectedMarker.targetResources.some((t) => t.name === 'mtraitor'), 'K\'avar carried');
+  assert.ok(sd.questSpawnMarkers.some((k) => k.markerID === sd.selectedMarker.markerID), '...onto a marker that build has');
+  // a reveal that throws: the move and the link stand
+  let refuse = false;   // the quest's own reveal at its start stands; the re-seat's throws
+  const thrown = run('Place _stronghold_ remote dungeon2', 7, { reveal: () => { if (refuse) throw new Error('no such place'); }, before: () => { refuse = true; } });
+  assert.equal(thrown.moved, 1);
+  assert.notEqual(thrown.place.siteDetails.mapId, PRIVATEERS_HOLD);
+  assert.ok(thrown.m.siteLinks.filter((l) => l.questUID === thrown.q.uid).every((l) => l.mapId === thrown.place.siteDetails.mapId), 'the link followed');
 });

@@ -207,8 +207,8 @@
   {
     "name": "AUDIT-DELVE-E1-nothing-put-back",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  putBackPlacements(quest, env);\n  return true;",
-    "new": "  return true;",
+    "old": "  if (!moved) return false;\n  putBackPlacements(quest, env);\n  return true;",
+    "new": "  if (!moved) return false;\n  return true;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]

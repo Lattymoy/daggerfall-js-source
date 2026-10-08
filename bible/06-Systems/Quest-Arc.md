@@ -6547,5 +6547,7 @@ the only path. Repair could not help: it puts back what a marker lost, and his m
   `scenes/dungeonContext.js` mount what the quest says).
 
 Not done, offered to Mac: an Abandon for an ordinary guild quest (DFU's console `endquest`, `machine.tombstoneQuest`) -
-the port gives Abandon to bounties and revenant hunts alone. `test/kvarhold.test.js` (2); `tools/mutants/kvarhold.json`
-(7), all dead. PIN MOVED: `test/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).
+the port gives Abandon to bounties and revenant hunts alone. `test/kvarhold.test.js` (3); `tools/mutants/kvarhold.json`
+(12), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): drawn among the few nearest the Hold it leaves, never
+this client's player (every shared copy the same); a `local dungeon` rescued too; the new site fitted to the size its
+link builds once the link stands there (`fitSiteToBuild`); a reveal that throws leaves the move and the link standing. PIN MOVED: `test/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).

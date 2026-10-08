@@ -71,7 +71,7 @@ test('MERC-CAP: online the haggle reads 0..100 - a sale never falls with a skill
           // at half its strength, under that half and never over Daggerfall's own offer
           assert.equal(a, ask(cost, q, mm, pp, false), at);
           const off = sale(cost, q, mm, pp, false), top = sale(cost, q, 100, 100, false);
-          assert.equal(s, top > 0 ? Math.floor(half * (0.5 + (0.5 * Math.min(off, top)) / top)) : Math.min(off, half), at);
+          assert.equal(s, top > 0 ? Math.max(Math.floor(half * (0.5 + (0.5 * Math.min(off, top)) / top)), Math.min(off, half, 1)) : Math.min(off, half), at);
           assert.ok(s <= off, `${at}: never over Daggerfall's own offer (${s} against ${off})`);
           last = s;
           checked++;

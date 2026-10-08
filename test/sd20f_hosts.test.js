@@ -232,12 +232,13 @@ test('SD20f THE VEIL AHEAD, AND /unstuck IN THE HOUR (H9, H10): a Hollow stood b
   assert.ok(at > 0, 'the /unstuck command');
   const block = W.slice(at, W.indexOf('          return true;\n        }', at) + '          return true;\n        }'.length);
   // PIN MOVED (UNSTUCK-OUT, FIELD BUGS 2026-10-08): outdoors - the door refusing - the body stands on open ground
-  const run = (hour, wayHome, unstuck, outdoors = false) => {
+  const run = (hour, wayHome, unstuck, outdoors = 'none') => {
     const log = [];
     const env = {
       modes: { sdRealmSlot: () => (hour ? 4 : null), unstuck: () => { log.push('unstuck'); return unstuck; } },
       sdWayHome: () => { log.push('wayHome'); return wayHome; }, chatLog: { push: (tab, m) => log.push(m.text) }, tabId: 'world', text: '/unstuck',
       unstuckOutdoors: () => { log.push('outdoors'); return outdoors; },
+      UNSTUCK_OUT_WORDS: { none: 'There is no open ground near enough to send you to.' },
     };
     new Function(...Object.keys(env), `${block}\nreturn false;`)(...Object.values(env));
     return log;

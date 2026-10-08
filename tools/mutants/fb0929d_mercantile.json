@@ -42,7 +42,7 @@
   {
     "name": "MERC-SLOPE-the-flat-half-back",
     "file": "src/systems/shopStock.js",
-    "old": "    return Math.floor(half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));",
+    "old": "    return Math.max(slope, Math.min(sale, half, 1));",
     "new": "    return Math.min(sale, half);",
     "tests": [
       "test/fb0929d_mercantile.test.js",
@@ -77,6 +77,17 @@
     "file": "src/systems/shopStock.js",
     "old": "    const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });",
     "new": "    const top = calculateTradePrice(cost, shopQuality, best, false, { online: false });",
+    "tests": [
+      "test/fb0929d_mercantile.test.js",
+      "test/fb0929f_mercantile.test.js",
+      "test/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-a-cheap-lot-for-nothing",
+    "file": "src/systems/shopStock.js",
+    "old": "    return Math.max(slope, Math.min(sale, half, 1));",
+    "new": "    return slope;",
     "tests": [
       "test/fb0929d_mercantile.test.js",
       "test/fb0929f_mercantile.test.js",

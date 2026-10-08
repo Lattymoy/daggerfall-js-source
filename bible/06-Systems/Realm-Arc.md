@@ -529,3 +529,5 @@ PINS MOVED: `test/fb0929d_mercantile.test.js` (the field's counter, 2187 / 2344 
 30 / 60 / 90 / 100), `test/fb0929f_mercantile.test.js` (the law over every counter, lot and skill, and never over
 Daggerfall's own), `test/realm0.test.js` (P0.4: the best at the half, the loop's seller under it). Mutants:
 `tools/mutants/fb0929d_mercantile.json` - MERC-RISE's half re-aimed by content, four MERC-SLOPE records, all dead.
+AUDIT FIELD-BUGS 1008: a lot whose half is one gold pays a gold, never nothing (the floor took it under one); and
+`test/realm0.test.js` pins P0.4 to the law exactly again.

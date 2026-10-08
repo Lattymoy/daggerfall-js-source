@@ -20,7 +20,7 @@
   {
     "name": "KVAR-a-named-site-drawn-again",
     "file": "src/systems/quest/place.js",
-    "old": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "new": "    if (this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "tests": [
       "test/kvarhold.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "KVAR-any-dungeon-drawn-again",
     "file": "src/systems/quest/place.js",
-    "old": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
-    "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1) return false;",
+    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "new": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;",
     "tests": [
       "test/kvarhold.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KVAR-no-reveal",
     "file": "src/systems/quest/place.js",
-    "old": "        if (a?.typeName === 'RevealLocation' && a.isComplete && a.placeSymbol?.name === this.symbol?.name) world.discoverLocation?.(next.regionName, next.locationName);",
-    "new": "        if (a?.typeName === 'RevealLocation' && a.isComplete && a.placeSymbol?.name === this.symbol?.name) void world;",
+    "old": "        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }",
+    "new": "        try { void world; } catch { /* the Settings' repair files it again */ }",
     "tests": [
       "test/kvarhold.test.js"
     ]
@@ -56,8 +56,53 @@
   {
     "name": "KVAR-the-player-region",
     "file": "src/systems/quest/place.js",
-    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2) ?? this._remoteDungeonSite(world, sd.regionIndex, -1);",
-    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2) ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1);",
+    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });",
+    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1, { origin });",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-local-scope-left",
+    "file": "src/systems/quest/place.js",
+    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-players-reach",
+    "file": "src/systems/quest/place.js",
+    "old": "    const reach = origin ? { origin, pixels: 0 } : this._questReach(world);",
+    "new": "    const reach = this._questReach(world);",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-fit-unwired",
+    "file": "src/systems/quest/machine.js",
+    "old": "      resource.fitSiteToBuild?.(world);   // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds\n",
+    "new": "",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-fit-carries-nothing",
+    "file": "src/systems/quest/place.js",
+    "old": "    const next = this._carryAssignments(sd, { ...sd, questSpawnMarkers, questItemMarkers });",
+    "new": "    const next = { ...sd, questSpawnMarkers, questItemMarkers, selectedMarker: { targetResources: null } };",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-reveal-unguarded",
+    "file": "src/systems/quest/place.js",
+    "old": "        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }",
+    "new": "        world.discoverLocation?.(next.regionName, next.locationName);",
     "tests": [
       "test/kvarhold.test.js"
     ]

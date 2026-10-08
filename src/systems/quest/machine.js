@@ -1629,6 +1629,7 @@ export class QuestMachine {
       if (!resource.isPlace || !resource.reseatMovedSite?.(world)) continue;
       moved++;
       follow(resource);
+      resource.fitSiteToBuild?.(world);   // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds
     }
     for (const resource of quest.resources.values()) if (resource.isPlace) resource.mendCuratedMarkers?.(world);
     return moved;

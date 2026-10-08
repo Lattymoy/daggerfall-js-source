@@ -2280,4 +2280,6 @@ OPEN for Mac (the investigation's, not built here): a body a neighbour pixel's r
 not ejected on its own - `/unstuck` is its way out; the Overworld route marks only a mountain layout's own pixel as
 rock (`tvWodRocks`), so its travel walks into the spill; and the collider's floor is the bilinear read where the drawn
 landform ground is triangles, a gap that can reach metres on the steepest ridges. `test/unstuckout.test.js` (2) - the
-real collider over real closed rock meshes; `tools/mutants/unstuckout.json` (13), all dead.
+real collider over real closed rock meshes; `tools/mutants/unstuckout.json` (17), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): refused
+afloat (`playerAfloat`), mounted (`isOnFoot`) and mid-door, each refusal in its own words (`UNSTUCK_OUT_WORDS`);
+`tvSeaY` declared beside `state`, before the boot's own load reads it.

@@ -861,7 +861,10 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
     // MERC-SLOPE: under the half, where this seller's own offer stands against the best haggler's - at its weight
     const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });
     if (!(top > 0)) return Math.min(sale, half);
-    return Math.floor(half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));
+    const slope = Math.floor(half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));
+    // MERC-SLOPE's audit: the floor took a half of 1 to nothing for every seller but the best - a lot Daggerfall pays for,
+    // and MERC-RISE paid a gold for, handed over for none. A gold at least, where the half and the offer both reach one.
+    return Math.max(slope, Math.min(sale, half, 1));
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;

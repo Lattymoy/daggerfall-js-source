@@ -72,7 +72,7 @@ import { sharedActionMatches, takeLocalActions } from './quest/shareActions.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 import { BUILD_TAG } from '../buildTag.js';   // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
-import { relayQuestOnline } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
+import { relayQuestOnline, relayQuestMovedLayout } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
 import { isOnlinePage } from './onlineLane.js';
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
@@ -269,7 +269,13 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data)));
   // AUDIT SD III (D5): online, the copy's dungeons laid on the world's own sizes, as a load lays a saved quest's
   // (questRepair.js relayQuestOnline) - an older page's copy was laid whole, and pointed into blocks this build has not
-  const relay = (q) => { if (ctx.online ?? isOnlinePage()) relayQuestOnline(q, { carriesQuestItem: ctx.carriesQuestItem ?? null }); };
+  // MEDIUM-DISTINCT's audit: and a copy whose medium dungeon the older page laid with one block twice, laid on this
+  // page's (questRepair.js relayQuestMovedLayout - the load's own pass runs only at a load)
+  const relay = (q) => {
+    const online = ctx.online ?? isOnlinePage();
+    if (online) relayQuestOnline(q, { carriesQuestItem: ctx.carriesQuestItem ?? null });
+    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);
+  };
   if (check.resync) {
     const quest = machine.updateSharedQuest(questName, safe);
     if (quest) { relay(quest); return { ok: true, quest, resync: true }; }

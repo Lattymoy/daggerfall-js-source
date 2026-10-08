@@ -402,7 +402,7 @@ export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step
       const px = x + r * Math.cos(a), pz = z + r * Math.sin(a);
       const h = collider.heightAt?.(px, pz);
       if (!Number.isFinite(h) || (dry && !dry(h))) continue;
-      if (collider.insideSolid([px, h + CAPSULE_RADIUS, pz]) || collider.insideSolid([px, h + CAPSULE_HEIGHT - CAPSULE_RADIUS, pz])) continue;
+      if (heldInSolid(collider, [px, h, pz])) continue;
       if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;
       return [px, h, pz];
     }
