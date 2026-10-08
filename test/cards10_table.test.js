@@ -38,6 +38,15 @@ test('CARDS10 the grade: the Hold\'em stakes\' own bands of the tavern\'s qualit
   assert.deepEqual([...ILIAC_TEMPER_NAMES], [...TEMPER_NAMES]);
 });
 
+test('CARDS10 a regular\'s deck: every Prince costs four or more, so an upgrade at its own cost\'s place or the dearest below it puts a Prince in a four\'s', () => {
+  assert.ok(ILIAC_CARDS.filter((c) => c.kind === 'prince').every((c) => c.cost >= 4));
+  assert.equal(Math.max(...STARTER_DECK.map((id) => cardById(id).cost)), 4, 'the starter deck stops at four');
+  const d = patronDeck(9, 'tight', 2);
+  assert.ok(d.includes('azura'), 'the careful city regular\'s Prince');
+  const fours = (deck) => deck.filter((id) => cardById(id).cost === 4 && cardById(id).kind !== 'spell').length;
+  assert.ok(fours(d) < fours(STARTER_DECK) + 1);
+});
+
 test('CARDS10 a regular\'s deck: the starter deck\'s curve card for card, his grade\'s upgrades (a town\'s two, a city\'s Prince and all), his kind traded in; sound for his grade; never an artifact or a boss\'s own; his seed\'s, the same every evening (mutants: the swaps; the upgrades; the Prince\'s place; the tier caps)', () => {
   assert.deepEqual([...GRADE_SWAPS], [6, 3, 2]);
   assert.deepEqual(Object.fromEntries(Object.entries(TEMPER_UPGRADES).map(([k, v]) => [k, [...v]])), {
@@ -84,6 +93,11 @@ test('CARDS10 a regular\'s play: a commit the rules take, built a play at a time
   assert.equal(ILIAC_THINK_TRIALS, 400);
   assert.ok(boardScore({ over: true, turn: 7, holdings: [{ power: [5, 1] }, { power: [5, 1] }, { power: [0, 9] }] }, 0, ILIAC_TEMPERS.tight) > 4, 'two holdings held weigh most at the end');
   assert.equal(forfeitCard(['rat', 'giant'], () => 0.99), 'giant');
+  // the hold, where it bites: a turn-one hand with magicka to spare - a reckless regular lays several, a sly one one
+  const rich = newGame({ decks: [STARTER_DECK.slice(), STARTER_DECK.slice()], rand32: src32(5) });
+  rich.players[0].magicka = 10;
+  assert.ok(patronPlays(rich, 0, 'loose', 2, seededUnit(1)).length >= 2, 'the setup: several plays worth laying');
+  assert.equal(patronPlays(rich, 0, 'bluffer', 2, seededUnit(1)).length, 1, 'the bluffer holds his hand to one');
   assert.equal(forfeitCard([], () => 0), null);
   assert.ok(read('src/systems/iliacPatrons.js').includes('const v = iliacView(copy, p);'), 'judged through his own seat\'s view');
 });
@@ -114,6 +128,13 @@ test('CARDS10 the evening: the regular thinks, then commits; the turn turns over
   assert.equal(s.over, 'lost');
   assert.equal(s.prize.from, 'player');
   assert.ok(STARTER_DECK.includes(s.prize.card));
+  // the payer: a regular whose deck shares no card with the player's - the loser's card is the loser's deck's
+  const other = ILIAC_CARDS.filter((c) => (c.tier === 'common' || c.tier === 'magic') && (c.kind === 'unit' || c.kind === 'spell') && !STARTER_DECK.includes(c.id)).slice(0, 15).flatMap((c) => [c.id, c.id]);
+  assert.equal(deckValid(other), null, 'a lawful deck of its own');
+  const sp = new IliacTableSession({ player: { id: 'you', name: 'Ves', deck: STARTER_DECK.slice() }, patron: { id: 'regular:2', name: 'Ana', temper: 'loose', grade: 2, deck: other }, rand32: src32(11), now: 0, forKeeps: true });
+  for (let t = 1; t <= ILIAC_TURNS; t++) { const at = sp.thinkAt; sp.tick(at); sp.playerCommit([], at); sp.tick(at + ILIAC_REVEAL_MS); }
+  assert.equal(sp.over, 'lost');
+  assert.ok(STARTER_DECK.includes(sp.prize.card) && !other.includes(sp.prize.card), 'his own card, never the regular\'s');
   const ended = s.drain().find((e) => e.t === 'end');
   assert.deepEqual(ended.prize, s.prize);
   // standing up mid-game concedes - for keeps, his card; for fun, nothing
@@ -133,6 +154,7 @@ test('CARDS10 the forfeits\' book: a regular pays one card a game day at his tav
   b = forfeitsAfter(b, 't1', 5, 'Bors');
   b = forfeitsAfter(b, 't1', 5, 'Ana');
   assert.deepEqual(forfeitsFor(b, 't1', 5), ['Ana', 'Bors']);
+  assert.equal(FORFEITS_BOOK_MAX, 24);
   for (let i = 0; i < FORFEITS_BOOK_MAX + 3; i++) b = forfeitsAfter(b, `k${i}`, 100 + i, 'X');
   assert.equal(Object.keys(b).length, FORFEITS_BOOK_MAX);
   assert.ok(!('t1' in b), 'the oldest day went first');
@@ -169,6 +191,14 @@ test('CARDS10 the staging: stagedRefusal is the rules\' playsRefusal said over t
   const spell = v.players[0].hand.findIndex((c) => cardById(c.id).kind === 'spell');
   if (spell >= 0) assert.equal(stagedRefusal(v, [{ card: spell, holding: 1 }]), 'spell', 'Castle Daggerfall takes no spell');
   assert.equal(stagedSpend(v, []), 0);
+  // a side full: a unit staged there is refused for its room, as the rules refuse it (the seeded positions never fill one)
+  const full = newGame({ decks: [STARTER_DECK.slice(), STARTER_DECK.slice()], rand32: src32(4) });
+  full.players[0].magicka = 10;
+  for (let i = 0; i < 4; i++) full.holdings[0].sides[0].push({ uid: 500 + i, id: 'rat', mod: 0, token: true });
+  const unit = full.players[0].hand.findIndex((c) => cardById(c.id).kind === 'unit');
+  assert.ok(unit >= 0);
+  assert.equal(playsRefusal(full, 0, [{ card: unit, holding: 0 }]), 'room');
+  assert.equal(stagedRefusal(iliacView(full, 0), [{ card: unit, holding: 0 }]), 'room', 'the panel says so too');
 });
 
 test('CARDS10 the panel\'s model: the setup (decks with the binder\'s words, the regulars and their tempers, for keeps shut where it cannot be), the turn (holdings, the hand, staging and its targets, the commit\'s word), the end (the result and the prize said) (mutants: each word)', () => {

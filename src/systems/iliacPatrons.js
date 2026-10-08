@@ -111,8 +111,9 @@ export function patronDeck(seed, temper, grade) {
   for (const id of g === 1 ? ups.slice(0, 2) : ups) {
     const c = cardById(id);
     if (!c || !room(c)) continue;
-    // its own cost's place, else the dearest below it (the starter deck stops at four; a Prince always takes a four's)
-    const want = c.kind === 'prince' ? 4 : c.cost;
+    // its own cost's place, else the dearest below it - the starter deck stops at four, and every Prince costs four or
+    // more, so a Prince takes a four's (MUT-AIM's survivor: a Prince's own rule here was the same law said twice)
+    const want = c.cost;
     let at = -1;
     for (let cost = want; cost >= 1 && at < 0; cost--) at = deck.findIndex((x, i) => !fixed.has(i) && cardById(x).cost === cost && cardById(x).kind !== 'spell');
     if (at >= 0) swap(at, id);

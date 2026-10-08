@@ -1,0 +1,669 @@
+[
+  {
+    "name": "CARDS10-grade-bands",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "export const ILIAC_GRADE_BANDS = Object.freeze([7, 13]);",
+    "new": "export const ILIAC_GRADE_BANDS = Object.freeze([8, 13]);",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-tier-caps",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "  Object.freeze({ common: 30, magic: 30, rare: 3 }),",
+    "new": "  Object.freeze({ common: 30, magic: 30, rare: 6 }),",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-deck-swaps",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "export const GRADE_SWAPS = Object.freeze([6, 3, 2]);",
+    "new": "export const GRADE_SWAPS = Object.freeze([0, 3, 2]);",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-deck-upgrades",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "  for (const id of g === 1 ? ups.slice(0, 2) : ups) {",
+    "new": "  for (const id of []) {",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-play-judge-seat",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "  const v = iliacView(copy, p);",
+    "new": "  const v = iliacView(copy, 0);",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-play-hold",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "  const most = T.hold && state.turn <= T.hold ? 1 : Infinity;",
+    "new": "  const most = Infinity;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-play-slip",
+    "file": "src/systems/iliacPatrons.js",
+    "old": "export const GRADE_SLIP = Object.freeze([0.25, 0.1, 0]);",
+    "new": "export const GRADE_SLIP = Object.freeze([0, 0.1, 0]);",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-evening-think",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "  _thought() { return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS); }",
+    "new": "  _thought() { return 0; }",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-evening-beat",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "this.revealAt = now + ILIAC_REVEAL_MS; }",
+    "new": "this.revealAt = now; }",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-evening-payer",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "      const card = forfeitCard(this.seats[from === 'patron' ? 1 : 0].deck, this.unit);",
+    "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit);",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-evening-concession",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "      if (this.forKeeps) { const card = forfeitCard(this.seats[0].deck, this.unit); this.prize = card ? { from: 'player', card } : null; }\n",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-book-day",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "  return e && e.day === day && Array.isArray(e.paid)",
+    "new": "  return e && Array.isArray(e.paid)",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-book-bound",
+    "file": "src/systems/iliacTableSession.js",
+    "old": "export const FORFEITS_BOOK_MAX = 24;",
+    "new": "export const FORFEITS_BOOK_MAX = 240;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-staging-room",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';\n",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-staging-spell",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "    if (card.kind === 'spell') { if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell'; } else units[x.holding]++;",
+    "new": "    if (card.kind !== 'spell') units[x.holding]++;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-staging-discount",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "  for (const fx of cardById(view.holdings[h].id)?.fx ?? []) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-panel-words",
+    "file": "src/ui/iliacTableHud.js",
+    "old": ": 'Pass this turn', enabled: !committed",
+    "new": ": 'Pass', enabled: !committed",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-cloth-row",
+    "file": "src/world/iliacCloth.js",
+    "old": "c[0] + across[0] * (h - 1) * ILIAC_HOLD_GAP",
+    "new": "c[0] + across[0] * (h - 1) * 0",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-cloth-side",
+    "file": "src/world/iliacCloth.js",
+    "old": "  const d1 = d0[0] * d1raw[0] + d0[1] * d1raw[1] > -0.2 ? [-d0[0], -d0[1]] : d1raw;",
+    "new": "  const d1 = d0;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-cloth-throw",
+    "file": "src/world/iliacCloth.js",
+    "old": "    const k = at === undefined ? 1 : Math.max(0, Math.min(1, (t - at) / ILIAC_THROW_S));",
+    "new": "    const k = 1;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-atlas-cells",
+    "file": "src/render/iliacTableDraw.js",
+    "old": "[i % ILIAC_ATLAS_COLS, Math.floor(i / ILIAC_ATLAS_COLS)]",
+    "new": "[0, Math.floor(i / ILIAC_ATLAS_COLS)]",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-atlas-free",
+    "file": "src/render/iliacTableDraw.js",
+    "old": "      renderer.releaseTexture?.(ILIAC_ARCHIVE, ILIAC_RECORD);\n",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-host-defaults",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "  g.setup.deck = lawful >= 0 ? lawful : null;",
+    "new": "  g.setup.deck = null;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-host-settle",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      if (c) addItem(d.entity.items, c);",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-host-book",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, d.day, foe.name);",
+    "new": "",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-host-concession",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      if (concede && g.session && !g.session.over) { g.session.leave(d.now()); settle(); }",
+    "new": "      if (concede && g.session && !g.session.over) { g.session.leave(d.now()); }",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-host-slot",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!ig) return;\n    iliacGame = null;\n    ig.close({ concede });",
+    "new": "    if (!ig) return;\n    ig.close({ concede });\n    iliacGame = null;",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-save-waits",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.iliacStaked?.()) { if (!quiet)",
+    "new": "    if (false) { if (!quiet)",
+    "tests": [
+      "test/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-bad-deck",
+    "file": "src/net/iliacTable.js",
+    "old": "  if (!Array.isArray(deck) || deckValid(deck) !== null) return 'bad deck';\n",
+    "new": "",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-own-view",
+    "file": "src/net/iliacTable.js",
+    "old": "const own = (t, p) => ({ to: t.seats[p].id,",
+    "new": "const own = (t, p) => ({ to: null,",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-hidden-commit",
+    "file": "src/net/iliacTable.js",
+    "old": "  const said = { t: 'commit', seat: p, at: now };",
+    "new": "  const said = { t: 'commit', seat: p, plays, at: now };",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-clock",
+    "file": "src/net/iliacTable.js",
+    "old": "    if (now < t.clockAt) return [];",
+    "new": "    if (true) return [];",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-two-accounts",
+    "file": "src/net/iliacTable.js",
+    "old": "  const ranked = t.seats.every((s) => s.sub) && t.seats[0].sub !== t.seats[1].sub;",
+    "new": "  const ranked = t.seats.every((s) => s.sub);",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-concede",
+    "file": "src/net/iliacTable.js",
+    "old": "    events.push(finish(t, now, p));",
+    "new": "    events.push(finish(t, now, 1 - p));",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-order-digest",
+    "file": "server/src/index.js",
+    "old": "        if (v.claims.dh !== await deckDigest(m.deck, { subtle: crypto.subtle })) { refuse('deck refused'); return; }\n",
+    "new": "",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-order-account",
+    "file": "server/src/index.js",
+    "old": "        if (!v.ok || v.claims.s !== a.sub) { refuse('deck refused'); return; }",
+    "new": "        if (!v.ok) { refuse('deck refused'); return; }",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-other-game",
+    "file": "server/src/index.js",
+    "old": "      if (hold && !holdemEmpty(hold)) { refuse('other game'); return; }   // a cloth plays one game at a time",
+    "new": "",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-relay-receipt-both",
+    "file": "server/src/index.js",
+    "old": "if (b.id && (res.to.includes(b.id) || res.f.includes(b.sub))) this._send(w, out);",
+    "new": "if (b.id && b.id === res.to[0]) this._send(w, out);",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-receipt-draw",
+    "file": "src/net/iliacReceipt.js",
+    "old": "  if ((c.r === 2) !== (c.h === 'draw')) return false;   // a draw is said one way only\n",
+    "new": "",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-wire-relay-min",
+    "file": "src/net/wire.js",
+    "old": "export const ILIAC_RELAY_MIN = 179;",
+    "new": "export const ILIAC_RELAY_MIN = 178;",
+    "tests": [
+      "test/cards10_relay.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-short",
+    "file": "server-account/src/iliac.js",
+    "old": "  if (short) return { error: 'deck-short', card: short };\n",
+    "new": "",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-account",
+    "file": "server-account/src/iliac.js",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
+    "new": "",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-pair-day",
+    "file": "server-account/src/iliac.js",
+    "old": "    const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX && Number(pairSeason?.n ?? 0) < ARENA_PAIR_SEASON_MAX;",
+    "new": "    const rated = true;",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-title-games",
+    "file": "server-account/src/iliac.js",
+    "old": "export const ILIAC_CHAMPION_MIN_GAMES = 10;",
+    "new": "export const ILIAC_CHAMPION_MIN_GAMES = 1;",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-title-foes",
+    "file": "server-account/src/iliac.js",
+    "old": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;",
+    "new": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES;",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-title-held",
+    "file": "server-account/src/titles.js",
+    "old": "  if (player?.iliac?.champion === true) held.push('iliacchampion');",
+    "new": "",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-honours-door",
+    "file": "server-account/src/index.js",
+    "old": "      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(ctx, who.player, nowS);",
+    "new": "",
+    "tests": [
+      "test/cards10_service.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-service-season-played",
+    "file": "server-account/src/iliac.js",
+    "old": ": (await seasonPlayed(ctx, season)) ? await storeIliacChampion(ctx, season, nowS) : null;",
+    "new": ": await storeIliacChampion(ctx, season, nowS);",
+    "tests": [
+      "test/scale4b.test.js",
+      "test/stormshed2.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-my-view",
+    "file": "src/systems/iliacRemoteTable.js",
+    "old": "    const v = this.seat() >= 0 && this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game;",
+    "new": "    const v = this.state.game;",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-claims-mine",
+    "file": "src/net/iliacClaims.js",
+    "old": "  const mineOf = (c, id) => !!c && !!id && c.f.includes(id);",
+    "new": "  const mineOf = (c, id) => !!c;",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-claims-verdict",
+    "file": "src/net/iliacClaims.js",
+    "old": "  return answer?.error === 'receipt' && !ARENA_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return 'keep';",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-look",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "  if (d.online) d.online.send({ op: 'look', table: d.online.table });",
+    "new": "",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-sit-deck",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "chairs: d.online.chairs, deck: deck.cards.slice(), ...(order ? { order } : {}) });",
+    "new": "chairs: d.online.chairs, deck: [], ...(order ? { order } : {}) });",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-commit",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "if (d.online.send({ op: 'commit', table: d.online.table, plays: g.staged }))",
+    "new": "if (d.online.send({ op: 'commit', table: d.online.table, plays: [] }))",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-stand",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      if (d.online && mySeat() >= 0) d.online.send({ op: 'stand', table: d.online.table });",
+    "new": "",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-order",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "        go(r.order);",
+    "new": "        go(null);",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-regulars",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "if (mySeat() < 0 && d.regulars.length) { g.mode = 'regulars'; g.why = null; }",
+    "new": "if (mySeat() < 0 && d.regulars.length) { g.why = null; }",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-routed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    iliacGame?.relay?.(f);\n",
+    "new": "",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-board-press",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      else if (id === 'board') { seasonBoard(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-client-board-pinned",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "  if (b.pinned) out.push('...', row(b.pinned));\n",
+    "new": "",
+    "tests": [
+      "test/cards10_client.test.js"
+    ]
+  },
+  {
+    "name": "CARDS2c-drop",
+    "file": "src/net/remotePlayers.js",
+    "old": "shown.st > 0 ? SEAT_HIP_DROP : 0);",
+    "new": "shown.st > 0 ? 0.4 : 0);",
+    "tests": [
+      "test/cards2c_seated_sprite.test.js"
+    ]
+  },
+  {
+    "name": "CARDS2c-seat-read",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const seatedSink = (shown) => (Number.isInteger(shown?.st) && shown.st > 0",
+    "new": "export const seatedSink = (shown) => (Number.isInteger(shown?.st)",
+    "tests": [
+      "test/cards2c_seated_sprite.test.js"
+    ]
+  },
+  {
+    "name": "CARDS2c-doll-origin",
+    "file": "src/net/remotePlayers.js",
+    "old": "    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1] - sink; entry.batch.origin[2] = f[2];\n    entry.batch.conceal = veil;   // INVIS-LOOK: the renderer's blended phase, or plain",
+    "new": "    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];\n    entry.batch.conceal = veil;   // INVIS-LOOK: the renderer's blended phase, or plain",
+    "tests": [
+      "test/cards2c_seated_sprite.test.js"
+    ]
+  },
+  {
+    "name": "CARDS2c-doll-name",
+    "file": "src/net/remotePlayers.js",
+    "old": "height: entry.doll.h * g - sink });",
+    "new": "height: entry.doll.h * g });",
+    "tests": [
+      "test/cards2c_seated_sprite.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-slop",
+    "file": "src/world/cardHand.js",
+    "old": "export const CLICK_SLOP = 0.012;",
+    "new": "export const CLICK_SLOP = 0.05;",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-time",
+    "file": "src/world/cardHand.js",
+    "old": "  if (Math.hypot(dx, dy) <= CLICK_SLOP && ms <= CLICK_MS) return 'click';",
+    "new": "  if (Math.hypot(dx, dy) <= CLICK_SLOP) return 'click';",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-push-direction",
+    "file": "src/world/cardHand.js",
+    "old": "  if (-dy >= PUSH_FOLD && -dy > Math.abs(dx)) return 'push';",
+    "new": "  if (Math.hypot(dx, dy) >= PUSH_FOLD) return 'push';",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-squeeze-start",
+    "file": "src/world/cardHand.js",
+    "old": "  return pull > CLICK_SLOP ? Math.min(1, (pull - CLICK_SLOP) / SQUEEZE_PULL) : null;",
+    "new": "  return pull > 0 ? Math.min(1, pull / SQUEEZE_PULL) : null;",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-rise",
+    "file": "src/world/cardHand.js",
+    "old": "  return multiply(m, trs(0, 0, SQUEEZE_RISE * k, 0, SQUEEZE_TURN_DEG * k, 0));",
+    "new": "  return multiply(m, trs(0, SQUEEZE_RISE * k, 0, 0, SQUEEZE_TURN_DEG * k, 0));",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-turn",
+    "file": "src/world/cardHand.js",
+    "old": "  return multiply(m, trs(0, 0, SQUEEZE_RISE * k, 0, SQUEEZE_TURN_DEG * k, 0));",
+    "new": "  return multiply(m, trs(0, 0, SQUEEZE_RISE * k, 0, 0, 0));",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-clamp",
+    "file": "src/world/cardHand.js",
+    "old": "  const k = Math.max(0, Math.min(1, s));\n  return multiply(m, trs(0, 0, SQUEEZE_RISE",
+    "new": "  const k = s;\n  return multiply(m, trs(0, 0, SQUEEZE_RISE",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS3c-host-check",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (kind === 'click' && legal?.check) cardPress(g, 'check');",
+    "new": "        if (kind === 'click') cardPress(g, 'check');",
+    "tests": [
+      "test/cards3c_gestures.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-table-pack-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (id === 'pack') { const r = buyCardPackHere();",
+    "new": "    if (id === 'pack-never') { const r = buyCardPackHere();",
+    "tests": [
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "CARDS10-table-iliac-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (id === 'iliac') { openIliacGame(); return; }",
+    "new": "    if (id === 'iliac') { return; }",
+    "tests": [
+      "test/auditcards2_host.test.js"
+    ]
+  }
+]
