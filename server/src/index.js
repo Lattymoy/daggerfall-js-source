@@ -268,7 +268,7 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
-import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
+import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { sdMarksOf } from '../../src/net/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
 import { orreryOf, orreryStep, orreryLit, orreryFresh, orreryTurn, orreryShortest, orreryRightsFresh, orreryTurnerOf, orreryMayTurn, orreryTurned, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
@@ -4773,7 +4773,8 @@ export class Room {
   }
   /** THE HUB'S HALF of a find: believed against the record (the slot risen, the finder near the claimed pixel's centre),
    *  kept and fanned once. Answered ok whether believed or not - a cell tells a find once, and the hub's word is final -
-   *  with the slot the record holds (AUDIT SD II, L7 M4: the cell then tells no other slot's for a while). */
+   *  with the slot the record holds (AUDIT SD II, L7 M4: the cell then tells no other slot's for a while) and when the next
+   *  may rise (AUDIT SD III, R3: the next slot's find told from then). */
   async _sdFoundInternal(request) {
     let body = null;
     try { body = await request.json(); } catch { /* refused below */ }
@@ -4785,7 +4786,8 @@ export class Room {
       const found = sdFind(rec, now, c.fb);
       if (found) { await this._sdSave(found); this._sdFan(found); }
     }
-    return json({ ok: true, s: (await this._sdOf())?.s ?? 0 });
+    const held = await this._sdOf();
+    return json({ ok: true, s: held?.s ?? 0, ...(Number.isSafeInteger(held?.next) ? { next: held.next } : {}) });   // AUDIT SD III (R3): and when the next may rise
   }
   /** The hub's record, for the Worker's gate and a realm's hello - a Hollow that rose, or nothing. */
   async _sdLiveInternal() {
@@ -4802,8 +4804,10 @@ export class Room {
     // told and the hub answered is never told again, and while the hub's last answer is fresh a find for any slot but the
     // one it named is not told at all: one account in forty cells made forty hub requests a second, never struck
     if (this._sdTold?.has(m.s)) return;
+    // AUDIT SD III (R3): save the NEXT slot once the hub's word says it may have risen (`next`, its record's not-before) -
+    // a word for the old slot told a minute before the rise held the new Hollow's every find at this door nine minutes
     const known = this._sdHubSlot;
-    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s) return;
+    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s && !(m.s === known.s + 1 && now >= (known.next ?? Infinity))) return;
     const had = await this._sdFoundOf();
     if (had && had.s >= m.s) return;   // this slot's find is owed already - the first finder's (or a later slot's)
     await this._sdFoundSave({ s: m.s, px: m.px, py: m.py, x: a.pose.x, z: a.pose.z, fb: sanitizeName(a.name ?? '') });
@@ -4831,11 +4835,14 @@ export class Room {
       await this._sdCellArm(now + SD_TELL_RETRY_MS);
       const ans = await this._sdTellHubOf(owed);
       if (!ans) return true;
-      // AUDIT SD II (L7 M4): the slot told, and the hub's own, kept (a handful - the cell's memory, not its storage)
+      // AUDIT SD II (L7 M4): the slot told, and the hub's own, kept (a handful - the cell's memory, not its storage).
+      // AUDIT SD III (R1): A SLOT AHEAD OF THE HUB'S IS NOT TOLD FOR GOOD - its Hollow has not risen, and the hub's answer
+      // judged nothing of it. A premature word for the next slot (a guest's, at the pixel's centre) was kept as told and
+      // answered, and the cell never told that slot's real find once it rose: an hour of honest finds at its door, dropped.
       if (!this._sdTold) this._sdTold = new Set();
       if (this._sdTold.size >= 8) this._sdTold.delete(this._sdTold.values().next().value);
-      this._sdTold.add(owed.s);
-      if (Number.isSafeInteger(ans.s)) this._sdHubSlot = { s: ans.s, at: Date.now() };
+      if (!(Number.isSafeInteger(ans.s) && owed.s > ans.s)) this._sdTold.add(owed.s);
+      if (Number.isSafeInteger(ans.s)) this._sdHubSlot = { s: ans.s, at: Date.now(), ...(Number.isSafeInteger(ans.next) ? { next: ans.next } : {}) };   // AUDIT SD III (R3): and when the next may rise
       if (this._sdFound === owed) await this._sdFoundSave(null);   // a later slot's find said meanwhile is the next tell's
       return !!this._sdFound;
     } finally { this._sdTelling = false; }
@@ -4895,7 +4902,7 @@ export class Room {
     if (rec === undefined) return SD_NO_BUSY;   // AUDIT SD: no answer - try again
     if (!rec || rec.s !== s || !sdHolds(rec, now)) return SD_NO_CLOSED;
     const realm = await this._sdRealmOf(s);
-    if (sub && realm.dead.includes(sub)) return SD_NO_FALLEN;   // SD-ONELIFE: one life a Hollow
+    if (sub && (realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;   // SD-ONELIFE: one life a Hollow; AUDIT SD III (R2): past the list, its own key
     if (sub && realm.in.includes(sub)) return null;
     if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
     const f = await this._sdFightOf();
@@ -4926,7 +4933,8 @@ export class Room {
    *  its after is refused (SD_NO_FALLEN), whatever its page says. */
   async _sdMarkFallen(key, sub) {
     const realm = await this._sdRealmOf(sdSlotOfRoom(key));
-    if (realm.dead.includes(sub) || realm.dead.length >= SD_FIGHTERS_MAX) return;
+    if (realm.dead.includes(sub)) return;
+    if (realm.dead.length >= SD_FIGHTERS_MAX) { await this.state.storage.put(sdDeadKey(sub), 1); return; }   // AUDIT SD III (R2): past the list, one key an account - never forgotten
     realm.dead.push(sub);
     await this.state.storage.put(SD_REALM_KEY, realm);
   }

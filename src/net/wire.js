@@ -4576,6 +4576,10 @@ export const SD_TELL_RETRY_MS = 5000;
 export const SD_KEY = 'sdev';
 export const SD_FOUND_KEY = 'sdfound';
 export const SD_REALM_KEY = 'sdrealm';
+/** AUDIT SD III (R2): where a realm keeps a death past its list's SD_FIGHTERS_MAX - one key an account, so one life a
+ *  Hollow holds however many have died in it (the list stopped recording at 256: a click-each guest's 256 deaths and the
+ *  257th account died and came straight back). */
+export const sdDeadKey = (sub) => `sddead:${sub}`;
 /** SD6b: where a realm keeps its Orrery's hall - `{ s, st, f, ok, last }` (outside every swept prefix). */
 export const SD_ORRERY_KEY = 'sdorrery';
 /** SD8b: where a realm keeps its fight (net/sdRemnant.js newRemnantFight's record - outside every swept prefix). */

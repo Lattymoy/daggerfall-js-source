@@ -272,7 +272,7 @@
   {
     "name": "SD11b-L7M4-the-hubs-slot-unread",
     "file": "server/src/index.js",
-    "old": "    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s) return;",
+    "old": "    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s && !(m.s === known.s + 1 && now >= (known.next ?? Infinity))) return;",
     "new": "    void 0;",
     "tests": [
       "test/sd11b_relay.test.js"

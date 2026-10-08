@@ -45,11 +45,14 @@ async function relayPair() {
  *  hold one many times over; a roll that can never grant it fails here rather than looping. */
 const seedFor = (title, aura) => { for (let c = 1; c <= 1000; c++) { const h = sdHonoursRoll(c); if (h.title === title && h.aura === aura) return c; } throw new Error(`no seed grants title ${title}, aura ${aura}`); };
 const settle = () => new Promise((r) => setImmediate(r));   // a tick's own offer, answered
+/** AUDIT SD III (R4, PIN MOVED): the claim rolls its own seed - a draw of four bytes from its `rand`; this one answers that
+ *  draw with `seed`, and every other ask (the nonce) at random. */
+const rolling = (seed) => (b) => (b.length === 4 ? (b.set([(seed >>> 24) & 255, (seed >>> 16) & 255, (seed >>> 8) & 255, seed & 255]), b) : rand(b));
 const hour = (s, d, key, { c = seedFor(false, false), x = 'dealt', l = 30, nowS = T0 } = {}) => mintSdReceipt({ d, s, c, x, l }, key, { subtle, nowS });
 
 // ── the roll ──────────────────────────────────────────────────────────
 
-test('SD9b THE ROLL: off the receipt\'s seed, its own stream (salted - never the spoils\' draws): Hourbreaker one kill in four, The Turning Hour one in eight, the two apart; the same seed the same grants (mutants: the spoils\' stream; the odds swapped; one draw for both)', () => {
+test('SD9b THE ROLL: off a seed - the claim\'s own draw since AUDIT SD III (R4) - its own stream (salted - never the spoils\' draws): Hourbreaker one kill in four, The Turning Hour one in eight, the two apart; the same seed the same grants (mutants: the spoils\' stream; the odds swapped; one draw for both)', () => {
   assert.equal(SD_TITLE_CHANCE, 1 / 4); assert.equal(SD_AURA_CHANCE, 1 / 8);
   assert.equal(SD_HONOUR_TITLE, 1); assert.equal(SD_HONOUR_AURA, 2);
   const N = 40000;
@@ -75,7 +78,7 @@ test('SD9b THE CLAIM: an `h1` the relay signed, naming the claiming account, is 
   const db = d1();
   const A = await member(db), B = await member(db);
   const { priv, pubKey } = await relayPair();
-  const ctx = { db, nowS: T0 + 60, subtle, rand };
+  const ctx = { db, nowS: T0 + 60, subtle, rand: rolling(seedFor(false, false)) };   // AUDIT SD III (R4, PIN MOVED): the claim's draw rolls none
   const r7 = await hour(A.id, 7, priv);
   assert.deepEqual(await claimSd(ctx, A, r7, pubKey), { recorded: true, slot: 7, title: false, aura: false, broken: 1 });
   assert.deepEqual(await claimSd(ctx, A, r7, pubKey), { recorded: false, why: 'claimed', broken: 1 }, 'once, whatever happens to it');
@@ -102,7 +105,7 @@ test('SD9b THE CLAIM: an `h1` the relay signed, naming the claiming account, is 
   assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?').get(A.id).n, 0);
 });
 
-test('SD9b THE GRANTS: a kill\'s first write rolls Hourbreaker and The Turning Hour off its seed and lays them on the account\'s row by that row alone - held for good: a later kill granting nothing takes nothing, a second receipt for a slot already counted grants nothing (the first write alone), a guest\'s grants nothing; the title is then held and may be worn (mutants: the grants on every claim; the grants cleared; written whether the row was or not)', async () => {
+test('SD9b THE GRANTS: a kill\'s first write rolls Hourbreaker and The Turning Hour off the claim\'s own draw and lays them on the account\'s row by that row alone - held for good: a later kill granting nothing takes nothing, a second receipt for a slot already counted grants nothing (the first write alone), a guest\'s grants nothing; the title is then held and may be worn (mutants: the grants on every claim; the grants cleared; written whether the row was or not)', async () => {
   const db = d1();
   const A = await member(db), B = await member(db);
   const { priv, pubKey } = await relayPair();
@@ -112,25 +115,25 @@ test('SD9b THE GRANTS: a kill\'s first write rolls Hourbreaker and The Turning H
   assert.equal(honours(A.id), 0, 'none before');
   assert.ok(!titlesHeld(row(A.id), {}).includes('hourbreaker'));
   assert.equal(equipRefusal('hourbreaker', row(A.id), {}), 'not-held');
-  assert.deepEqual(await claimSd(ctx, A, await hour(A.id, 7, priv, { c: seedFor(true, false) }), pubKey), { recorded: true, slot: 7, title: true, aura: false, broken: 1 });
+  assert.deepEqual(await claimSd({ ...ctx, rand: rolling(seedFor(true, false)) }, A, await hour(A.id, 7, priv), pubKey), { recorded: true, slot: 7, title: true, aura: false, broken: 1 });
   assert.equal(honours(A.id), SD_HONOUR_TITLE);
   assert.ok(titlesHeld(row(A.id), {}).includes('hourbreaker'), 'held');
   assert.equal(equipRefusal('hourbreaker', row(A.id), {}), null, 'and may be worn');
-  assert.deepEqual(await claimSd(ctx, A, await hour(A.id, 8, priv, { c: seedFor(false, false) }), pubKey), { recorded: true, slot: 8, title: false, aura: false, broken: 2 });
+  assert.deepEqual(await claimSd({ ...ctx, rand: rolling(seedFor(false, false)) }, A, await hour(A.id, 8, priv), pubKey), { recorded: true, slot: 8, title: false, aura: false, broken: 2 });
   assert.equal(honours(A.id), SD_HONOUR_TITLE, 'held for good');
-  assert.deepEqual(await claimSd(ctx, A, await hour(A.id, 8, priv, { c: seedFor(true, true) }), pubKey), { recorded: false, why: 'claimed', broken: 2 }, 'a slot counted grants nothing again');
+  assert.deepEqual(await claimSd({ ...ctx, rand: rolling(seedFor(true, true)) }, A, await hour(A.id, 8, priv), pubKey), { recorded: false, why: 'claimed', broken: 2 }, 'a slot counted grants nothing again');
   assert.equal(honours(A.id), SD_HONOUR_TITLE, 'the first write alone');
-  assert.deepEqual(await claimSd(ctx, A, await hour(A.id, 9, priv, { c: seedFor(false, true) }), pubKey), { recorded: true, slot: 9, title: false, aura: true, broken: 3 });
+  assert.deepEqual(await claimSd({ ...ctx, rand: rolling(seedFor(false, true)) }, A, await hour(A.id, 9, priv), pubKey), { recorded: true, slot: 9, title: false, aura: true, broken: 3 });
   assert.equal(honours(A.id), SD_HONOUR_TITLE | SD_HONOUR_AURA, 'both');
   assert.deepEqual(db._raw.prepare('SELECT slot, title, aura FROM sd_kills WHERE account = ? ORDER BY slot').all(A.id).map((r) => ({ ...r })),
     [{ slot: 7, title: 1, aura: 0 }, { slot: 8, title: 0, aura: 0 }, { slot: 9, title: 0, aura: 1 }], 'each row says what it granted');
   // a guest's grants nothing - and a guest row never holds the title
   const g = (await createGuest({ db, subtle, rand, nowS: T0 }, { deviceLabel: null })).id;
-  assert.equal((await claimSd(ctx, { id: g, handle: null }, await hour(g, 7, priv, { c: seedFor(true, true) }), pubKey)).why, 'guest');
+  assert.equal((await claimSd({ ...ctx, rand: rolling(seedFor(true, true)) }, { id: g, handle: null }, await hour(g, 7, priv), pubKey)).why, 'guest');
   assert.equal(honours(g), 0);
   assert.ok(!titlesHeld({ ...row(g), sd_honours: SD_HONOUR_TITLE, handle: null, registered_at: null }, {}).includes('hourbreaker'), 'a guest row holds none');
   assert.equal(honours(B.id), 0, 'another account untouched');
-  assert.equal((await claimSd(ctx, B, await hour(B.id, 7, priv, { c: seedFor(false, true) }), pubKey)).aura, true);
+  assert.equal((await claimSd({ ...ctx, rand: rolling(seedFor(false, true)) }, B, await hour(B.id, 7, priv), pubKey)).aura, true);
   assert.equal(honours(B.id), SD_HONOUR_AURA);
   assert.ok(!titlesHeld(row(B.id), {}).includes('hourbreaker'), 'the aura alone is no title');
   assert.ok(TITLES.includes('hourbreaker'), 'a title the token carries');
@@ -162,11 +165,14 @@ test('SD9b THE WORKER: /v1/sd/claim behind a session and never open - the sessio
   const { call } = await stand({ gateKey: pub });
   const me = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
   const them = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
-  const r = await hour(me.id, 7, priv, { c: seedFor(true, false) });
+  const r = await hour(me.id, 7, priv, { c: seedFor(false, false) });   // AUDIT SD III (R4, PIN MOVED): its seed rolls none - the claim's own draw grants
   assert.deepEqual((await call('POST', '/v1/sd/claim', { receipt: r }, me.secret)).body, { recorded: false, why: 'guest', broken: 0 });
   assert.equal((await call('POST', '/v1/auth/register', { handle: 'HourBreaker1', password: 'correct horse battery', ...ACCEPTED }, me.secret)).status, 200);
   assert.equal((await call('POST', '/v1/sd/claim', { receipt: r })).status, 401, 'a stranger claims nothing');
+  const real = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+  const draw = t.mock.method(globalThis.crypto, 'getRandomValues', (b) => (b.length === 4 ? rolling(seedFor(true, false))(b) : real(b)));
   assert.deepEqual((await call('POST', '/v1/sd/claim', { receipt: r, account: them.id }, me.secret)).body, { recorded: true, slot: 7, title: true, aura: false, broken: 1 });
+  draw.mock.restore();
   assert.equal((await call('POST', '/v1/sd/claim', { receipt: r }, them.secret)).status, 403, 'another\'s receipt');
   const forged = await call('POST', '/v1/sd/claim', { receipt: await hour(me.id, 8, (await relayPair()).priv) }, me.secret);
   assert.deepEqual([forged.status, forged.body], [400, { error: 'receipt', why: 'signature' }]);

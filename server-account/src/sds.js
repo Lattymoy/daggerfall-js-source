@@ -17,9 +17,10 @@
 //
 // ═══ THE HOUR'S GRANTS, ON THE FIRST WRITE ALONE ═══════════════════
 //
-// The title HOURBREAKER one kill in four, the aura THE TURNING HOUR one in eight - rolled off the receipt's seed (the
-// relay's, never the client's; its own stream, salted - never the spoils' rolls, which the device draws from the same
-// seed) and written with the row: ONE TRANSACTION, the row stamped with this claim's NONCE and the grants laid on the
+// The title HOURBREAKER one kill in four, the aura THE TURNING HOUR one in eight - rolled HERE, at the claim, off a seed
+// this service draws (AUDIT SD III, R4: they were rolled off the receipt's seed, which the page holds - a guest read its
+// roll before it registered, and could register only the accounts whose receipts rolled both; the seed is the device's
+// spoils' alone now; the honours' own stream, salted) and written with the row: ONE TRANSACTION, the row stamped with this claim's NONCE and the grants laid on the
 // account's `sd_honours` by THAT row alone (serpents.js's law), so a receipt claimed twice at once rolls once. Once held,
 // held for good - a grant recorded (titles.js reads it off the row, the Broker's sale's way), never derived again.
 //
@@ -35,10 +36,10 @@ export const SD_HONOUR_AURA = 2;
 /** How often a kill's first write grants each: Hourbreaker one in four, The Turning Hour one in eight. */
 export const SD_TITLE_CHANCE = 1 / 4;
 export const SD_AURA_CHANCE = 1 / 8;
-/** The honours' own stream off the receipt's seed ('HOUR'), never the spoils' (systems/sdSpoils.js draws the seed's own). */
+/** The honours' own stream ('HOUR') off the claim's seed - never the spoils' (systems/sdSpoils.js draws the receipt's). */
 export const SD_HONOURS_SALT = 0x484f5552;
 
-/** What a receipt's seed grants on its kill's first write - `{ title, aura }`. Pure. */
+/** What a seed grants on its kill's first write - `{ title, aura }`. Pure. The claim's own draw feeds it (claimSd). */
 export function sdHonoursRoll(seed) {
   const r = seededRng((seed ^ SD_HONOURS_SALT) >>> 0);
   return { title: r() < SD_TITLE_CHANCE, aura: r() < SD_AURA_CHANCE };
@@ -55,8 +56,8 @@ export async function sdRecordOf({ db }, playerId) {
 
 /**
  * THE CLAIM: `receipt` verified with the relay's public half and naming `player` (the session's row, never the body's
- * word), one row a (slot, account), and on that first write the Hour's grants rolled off its seed. Answers
- * `{ recorded: true, slot, title, aura, broken }` (`title`/`aura` what THIS kill granted - an account that held one
+ * word), one row a (slot, account), and on that first write the Hour's grants rolled off the claim's own draw (`rand` -
+ * AUDIT SD III, R4). Answers `{ recorded: true, slot, title, aura, broken }` (`title`/`aura` what THIS kill granted - an account that held one
  * already holds it still), `{ recorded: false, why: 'claimed', broken }`, `{ recorded: false, why: 'guest', broken }`, or
  * `{ error }` - `no-gate-key` (this service holds no public half), `receipt` (`why` says which rung), `not-yours`.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto, rand: (b: Uint8Array) => Uint8Array }} ctx
@@ -71,7 +72,8 @@ export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publi
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
   if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };
-  const { title, aura } = sdHonoursRoll(c.c);
+  const draw = rand(new Uint8Array(4));   // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand
+  const { title, aura } = sdHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0);
   const bits = (title ? SD_HONOUR_TITLE : 0) | (aura ? SD_HONOUR_AURA : 0);
   const nonce = hex(rand(new Uint8Array(8)));
   const [row, , count] = await db.batch([

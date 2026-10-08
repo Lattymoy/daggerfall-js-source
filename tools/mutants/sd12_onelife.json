@@ -20,7 +20,7 @@
   {
     "name": "SD12-ONELIFE-unread-at-the-door",
     "file": "server/src/index.js",
-    "old": "    if (sub && realm.dead.includes(sub)) return SD_NO_FALLEN;",
+    "old": "    if (sub && (realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;",
     "new": "    if (false) return SD_NO_FALLEN;",
     "tests": [
       "test/sd12_onelife.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SD12-ONELIFE-twice-over",
     "file": "server/src/index.js",
-    "old": "if (realm.dead.includes(sub) || realm.dead.length >= SD_FIGHTERS_MAX) return;",
-    "new": "if (realm.dead.length >= SD_FIGHTERS_MAX) return;",
+    "old": "    if (realm.dead.includes(sub)) return;\n    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
+    "new": "    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
     "tests": [
       "test/sd12_onelife.test.js"
     ]

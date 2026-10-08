@@ -468,10 +468,11 @@ every number a whole pair from Faint to Ascendant, the design's own numbers the 
   in 90 -> 60 s.
 
 **The title and the aura (account service).** `POST /v1/sd/claim` verifies the `h1` receipt, writes one row per
-(slot, account) and, ON THAT FIRST WRITE ONLY, rolls from the receipt's seed: the title **Hourbreaker** one time in
+(slot, account) and, ON THAT FIRST WRITE ONLY, rolls from a seed of its own drawn at the claim (SD20b - the receipt's,
+which the page holds, let a guest read its roll before it registered): the title **Hourbreaker** one time in
 four, the aura **The Turning Hour** - a slow wheel of brass gears and gold light about the wearer - one time in eight.
-Once held, held for good. The profile counts *Hours broken*. (SD9b: the roll is the seed's own stream, salted - never
-the spoils' draws off the same seed; the grants are laid on the account's row, `players.sd_honours`, by the kill's
+Once held, held for good. The profile counts *Hours broken*. (SD9b: the roll is its own stream, salted - never the
+spoils' draws, which are the receipt's seed's alone; the grants are laid on the account's row, `players.sd_honours`, by the kill's
 row alone, and read off it as the Broker's sale is - so every badge the service mints carries them with no other read.)
 
 **The collapse.** The kill sets the record `fell`; for `SD_COLLAPSE_MS` (3 minutes) the realm stands so the spoils can
@@ -1553,8 +1554,9 @@ token's titles).
   account (another's, 403; a refusal 400 with its rung); one row a (slot, account) in `sd_kills` - how it was earned,
   the level, what it granted - so a receipt counts once whatever happens to it; a guest's fought and not counted,
   counted once the account registers inside the receipt's week.
-- **The grants** (`sdHonoursRoll`): Hourbreaker one kill in four, The Turning Hour one in eight, off the receipt's seed
-  - its own stream, salted (`SD_HONOURS_SALT`), so never the spoils' draws - rolled on the row's FIRST write alone: the
+- **The grants** (`sdHonoursRoll`): Hourbreaker one kill in four, The Turning Hour one in eight, off the claim's own
+  draw (SD20b - the receipt's seed until then) - its own stream, salted (`SD_HONOURS_SALT`) - rolled on the row's FIRST
+  write alone: the
   row stamped with the claim's nonce, the grants OR-ed onto the account's `players.sd_honours` by that row alone in the
   same batch. Once held, held for good: a later kill that grants nothing takes nothing, a second receipt for a slot
   already counted grants nothing.
@@ -2094,7 +2096,8 @@ good. You wake before the Hollow's door."*) and is final for that Hollow - its f
 
 - **The realm keeps its dead.** The dying pose (PCORPSE1's `dd`) that comes through a realm's room marks its account
   dead there (`server/src/index.js` `_sdMarkFallen`, kept with the realm under `SD_REALM_KEY` beside `in` and `gu`, once
-  each, read back by a fresh instance). Its door (`_sdAdmit`) refuses that account's every hello after, before it asks
+  each, read back by a fresh instance - and past that list's 256, under its account's own key, `sddead:<account>`:
+  SD20b). Its door (`_sdAdmit`) refuses that account's every hello after, before it asks
   whether they were in: *"The Hour will not take you back."* (`net/sdLaw.js` `SD_NO_FALLEN`) - a refusal the page takes
   as final, so it casts out with those words. A world cell's death marks nothing.
 - **The page keeps the slot.** The frame I die in the Hour keeps its slot on the device (`SD_FALLEN_KEY`, the last
@@ -2507,3 +2510,26 @@ at one; the read's `over`); `scenes/worldModes.js` FLAGGED - the mode machine ca
 (SD7b), and the arena's edge is the world host's motor arena; `scenes/dungeonContext.js` FLAGGED - the realm's floors and
 the blows' rig are the world host's, the dungeon host stands the Hour's level alone; `scenes/exterior.js` FLAGGED - the
 `?exterior` bench is offline, and there is no Hour offline.
+
+#### SD20b - the relay and the account
+
+| | what was wrong | now |
+|---|---|---|
+| R1 | A WORD AHEAD OF THE HUB POISONED THE CELL. A cell keeps the slots it has told and the hub answered (AUDIT SD II, L7 M4), and a slot told AHEAD of the hub's - a guest's word for the next Hollow, said at its pixel's centre before it rose - was kept with them: once that Hollow rose there, its real find was never told from that cell (an hour of an honest finder's words at the door, dropped; a fresh cell instance alone forgot) | a slot ahead of the hub's own is never kept as told (`_sdTellHub`): its Hollow had not risen, and the hub's answer judged nothing of it |
+| R3 | THE NEW HOLLOW HELD NINE MINUTES. While the hub's last answer is fresh (`SD_FIND_KNOWN_MS`, ten minutes) a cell tells no other slot's find - and a word for the old slot told a minute before the rise held the new Hollow's every find at that door for nine minutes | the hub's answer says when the next may rise (`next`, its record's not-before), and from then the next slot's find is told; a slot two ahead is held as ever |
+| R2 | ONE LIFE LAPSED AT 256. The realm's list of the dead stopped recording at `SD_FIGHTERS_MAX`: 256 guests (a click each) walked in and died, and the 257th account died and came straight back | past the list each death is kept under its account's own key (`net/wire.js` `sdDeadKey`), read at the door once the list is full |
+| R4 | THE HONOURS WERE READ BEFORE THEY WERE CLAIMED. Hourbreaker and The Turning Hour were rolled off the receipt's seed, which the page holds: a guest computed its roll before it registered, and could register only the accounts whose receipts rolled both | rolled at the claim off four bytes the service draws (`server-account/src/sds.js` `claimSd`): nothing the page holds beforehand decides them. The row's nonce law is unchanged - the first write's roll is the one the account holds |
+
+The relay stays `world176`, re-hashed in place; the account service stays `acct94` (both undeployed - the arc's own).
+
+Pins: `test/sd20b_relay.test.js` (4 - a premature word for the next slot and the real find after the rise; the next
+slot told from `next`, two ahead held; a death past the list refused at the door; the honours the claim's own draw);
+`tools/mutants/sd20b.json` (8, all dead). RE-AIMED BY CONTENT, each still dead: `sd11b.json`
+(`SD11b-L7M4-the-hubs-slot-unread`), `sd12_onelife.json` (`SD12-ONELIFE-unread-at-the-door`, `SD12-ONELIFE-twice-over`),
+`sd9b.json` (`SD9B-the-guest-counted`). PINS MOVED: `test/sd9b_claim.test.js` (the claims roll by their own draw - a
+`rand` that answers the claim's four bytes with a chosen seed; the worker's claim under a mocked draw),
+`test/relayversion.test.js` (`world176` re-hashed in place).
+
+THE FOUR HOSTS: none wired - the relay (`server/src/index.js`) and the account service (`server-account/src/sds.js`)
+alone. `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED: a cell's
+tell, a realm's door and a claim's roll are the servers' - no host reads them differently.

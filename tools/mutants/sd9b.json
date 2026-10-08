@@ -47,8 +47,8 @@
   {
     "name": "SD9B-the-guest-counted",
     "file": "server-account/src/sds.js",
-    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const { title, aura } = sdHonoursRoll(c.c);",
-    "new": "  const { title, aura } = sdHonoursRoll(c.c);",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const draw = rand(new Uint8Array(4));",
+    "new": "  const draw = rand(new Uint8Array(4));",
     "tests": [
       "test/sd9b_claim.test.js"
     ]
