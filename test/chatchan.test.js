@@ -393,7 +393,8 @@ test('CHAT-CHAN commands: a slash is a channel\'s command, the list, a host comm
   assert.equal(unknownCommandText('pary'), 'There is no /pary command. /help lists them.');
   assert.equal(emptyCommandText('p'), '/p needs something to say.');
   assert.equal(hostMisuseText('red'), '/red needs something to say.');
-  assert.equal(hostMisuseText('unstuck'), '/unstuck takes nothing after it.');
+  assert.equal(hostMisuseText('unstuck'), '/unstuck takes nothing after it but cancel.', 'PVPUNSTUCK: the one word it takes');
+  assert.equal(hostMisuseText('ready'), '/ready takes nothing after it.');
 });
 
 // ─── THE ROSTERS ────────────────────────────────────────────────────────────────────────────────────────────────

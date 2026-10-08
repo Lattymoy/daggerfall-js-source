@@ -5974,7 +5974,10 @@ export class Room {
         kin = !!(res?.ok && (await res.json())?.kin);
       } catch (e) { console.warn('[wdun] kin', e?.message ?? e); }
     }
-    if (this._wdunKin.size > 512) this._wdunKin.clear();
+    // the stalest pair goes first, never the whole cache (SCALE2b's law for the relay's bounded caches); a pair asked
+    // again moves to the end
+    this._wdunKin.delete(key);
+    if (this._wdunKin.size >= 512) this._wdunKin.delete(this._wdunKin.keys().next().value);
     this._wdunKin.set(key, { kin, at: now });
     return kin;
   }

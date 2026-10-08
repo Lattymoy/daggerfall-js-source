@@ -28003,9 +28003,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const out = new Uint8Array(n);
     const onRoad = (i) => ((net?.roads?.[i] ?? 0) | (net?.tracks?.[i] ?? 0));
     if (src) for (let i = 0; i < n; i++) if (src[i] && !onRoad(i)) out[i] = 1;
-    // THE WROTHGARIAN MOUNTAINS, ON FOOT (the owner): outside the open zone only roads and tracks may be walked; inside
-    // it nothing blocks (tvWildFree). Online alone - offline there is no zone and the mountains are Daggerfall's own.
-    // (the Wrothgarian Mountains' on-foot restriction outside the zone is removed)
+    // THE WROTHGARIAN MOUNTAINS, ON FOOT (the owner): inside the open zone nothing blocks (tvWildFree) - and since
+    // MOUNTAINS WALKABLE (systems/travelRoute.js) nothing blocks outside it either: the massifs' table is still handed
+    // to the planner, whose step law no longer refuses it.
     _tvRocksFrom = src; _tvRocksRoads = net; _tvRocksMask = wm; _tvRocks = out;
     return out;
   }

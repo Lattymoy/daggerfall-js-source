@@ -220,7 +220,36 @@ export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, 
       }
     }
   }
-  return { width, height, inside, region, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null };
+  return {
+    width, height, inside, region, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null,
+    regionBox: rx1 >= 0 ? { x0: rx0, y0: ry0, x1: rx1, y1: ry1 } : null,   // CLASSIC-CUT: the whole region's box (wildPictureZone)
+  };
+}
+
+/**
+ * CLASSIC-CUT: THE ZONE ON A PICTURE OF THE REGION - the classic province map's picker bitmap, whose region 16 is the
+ * Wrothgarian Mountains drawn small and in its own shape. A picture pixel `isRegion` answers for is the zone's when the
+ * map pixel at the same place in the region's box is: the pixel read as a fraction of the picture's own box of the
+ * region, laid over the mask's (`regionBox`) - so the owner's cut and the keep-out read on the picture as on the map,
+ * never the whole region. Answers a predicate `(x, y) => boolean`; never the zone without a mask.
+ * @param {any} mask
+ * @param {(x: number, y: number) => boolean} isRegion
+ * @param {number} width
+ * @param {number} height
+ */
+export function wildPictureZone(mask, isRegion, width, height) {
+  const rb = mask?.regionBox;
+  if (!rb) return () => false;
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!isRegion(x, y)) continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  }
+  if (x1 < 0) return () => false;
+  const sx = (rb.x1 - rb.x0 + 1) / (x1 - x0 + 1), sy = (rb.y1 - rb.y0 + 1) / (y1 - y0 + 1);
+  return (x, y) => isRegion(x, y) && wildInside(mask, rb.x0 + (x - x0 + 0.5) * sx, rb.y0 + (y - y0 + 0.5) * sy);
 }
 
 /**

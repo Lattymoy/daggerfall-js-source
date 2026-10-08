@@ -2,6 +2,7 @@
 // relay's clock, an account's hour lock (lifted while its own remains lie in the hall), the empty hall's reset (its world
 // room wiped), the crows told to everyone online, and no party member taking a fallen friend's remains.
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   SOCIAL_ROOM, PIXEL_UNITS, worldRoom, parseClient, validWdunIn, validWdunOut, wdunHall, wdunRoomKey, isWorldRoom,
@@ -114,5 +115,9 @@ test('PVPDUNGEONS relay: the hub keeps the halls - day, locks, the reset wipes t
     await say(cb, { k: 'take', r: 'rrrrrr01', i: 0, n: 1 });
     assert.equal(cb.sent.filter((m) => m.t === 'wild' && m.k === 'got').length, 1, 'a stranger takes it');
     assert.ok(party, 'the party stood (the kin rule was exercised)');
+    // the kin cache is bounded as the relay's caches are (SCALE2b): the stalest pair goes, never the whole cache
+    const relay = readFileSync(new URL('../server/src/index.js', import.meta.url), 'utf8');
+    assert.doesNotMatch(relay, /this\._wdunKin\.clear\(\)/, 'never the whole cache at once');
+    assert.match(relay, /this\._wdunKin\.delete\(key\);\s*\n\s*if \(this\._wdunKin\.size >= 512\) this\._wdunKin\.delete\(this\._wdunKin\.keys\(\)\.next\(\)\.value\);\s*\n\s*this\._wdunKin\.set\(key, \{ kin, at: now \}\);/, 'the stalest pair first, and a pair asked again moves to the end');
   } finally { Date.now = realNow; }
 });

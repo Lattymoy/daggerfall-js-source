@@ -169,7 +169,7 @@ with the minutes left.
   their foes', never their party's or their guild's. The room refuses the take
   (`server/src/index.js:"a fallen's remains are theirs and their"`) - a guildmate read off the sockets' own verified
   guilds (the remains keep the fallen's `gi`), a party member asked of the hub (`_wdunKinOf`,
-  `server/src/index.js:"async _wdunKinOf"`, over `WDUN_INTERNAL_KIN`, kept a minute a pair) - and a member's game
+  `server/src/index.js:"async _wdunKinOf"`, over `WDUN_INTERNAL_KIN`, kept a minute a pair, the stalest pair let go first past 512 - never the whole cache) - and a member's game
   never seeds the pile at all (`canTake`, `world.js:"canTake: (rec) =>"` and `wildRemains.js:"if (!canTake(rec))"`).
 - BESIDE THE BODY (PVPFIX, the owner: "place the pile next to the body not on top of it"): the pile stands a fixed
   step to the side of where they fell, the same on every client (`wildRemains.js:"- on top it was hidden"`) - on top
@@ -199,7 +199,10 @@ with the minutes left.
   it since the later passes: the day's halls, the crows, my locks, the Greater Giants' skulls, and the border alight
   under the pointer (sections 12-18).
 - THE CLASSIC MAP (`src/ui/travelMapWindow.js`, which GrimoireUI dresses): the same zone as a dithered fog layer and a
-  red rim, over the province map and over the Wrothgarian Mountains' own page, under the dots.
+  red rim, over the province map and over the Wrothgarian Mountains' own page, under the dots. CLASSIC-CUT
+  (2026-10-08): on the province map too it is the cut alone, never the whole region - the picker bitmap's region laid
+  over the map's by their two boxes (`wildPictureZone`, `wildZone.js:"export function wildPictureZone"`, over the
+  mask's `regionBox`; `travelMapWindow.js:"const isZone = wildPictureZone("`); pinned in `test/wild1_zone.test.js`.
 - WHO IS SEEN: in or near the zone only my party and my guild (`wildHidesPlayer`) - on the world map and the
   Overworld alike; and a player with no guild sends no region mark there at all.
 
@@ -490,6 +493,9 @@ half health", "everyone in the zone should see the same ... that the big giant i
   cancels too, a death ends it - once every `UNSTUCK_COOLDOWN_ZONE_MS` (an hour,
   `world.js:"const UNSTUCK_COOLDOWN_ZONE_MS"`; `unstuckBegin`, `world.js:"const unstuckBegin"`). Refused, at the start
   and again at the end, while a stranger is within `UNSTUCK_ENEMY_M` (600 m).
+- ITS WORDS: the chat's list says both ways out and the cancel ("/unstuck - out by the door you came in, or outdoors
+  to the nearest town (/unstuck cancel stops a wait)"), and a line with anything else after it is refused as "/unstuck
+  takes nothing after it but cancel." (`hostMisuseText`, `chatCommands.js:"export const hostMisuseText"`).
 
 ## 18. The maps, later
 
@@ -538,7 +544,10 @@ OW-MOUNTAINS (2026-09-28, Mac: "You shouldnt be able to navigate mountains" - th
 refused, `06-Systems/Travel-View.md`) and the World of Daggerfall massifs OW-WOD-PATH made peaks: the host still hands
 the planner its rock table (`tvWodRocks`, `world.js:"function tvWodRocks"`, which says the Wrothgarian Mountains'
 on-foot rule outside the zone is removed - the patch had for a while let only roads and tracks be walked in region 16
-outside the cut), and the planner no longer reads it. Offline too: the law is the planner's, not the zone's.
+outside the cut), and the planner no longer reads it. Offline too: the law is the planner's, not the zone's. The
+words that promised the old rule say the new one: First Person Travel's roads switch is "planned by land"
+(`modSettings.js:"GeneralOptions.FirstPersonTravelFollowsRoads"`) and the Overworld's Free path is "straight across
+country" (`travelPathMode.js:"tipFree:"`), neither "round the mountains" any more.
 
 ## 20. The test build (TESTBUILD)
 
@@ -572,9 +581,10 @@ each is a line here, findable by its tag.
 - REST-WARN (the owner: "Poison/Disease warning on rest, there should be one for when you attempt to rest"): a rest
   begun while a poison or a plain disease works asks first - "You are poisoned." / "Resting will not cure it." / "Rest
   anyway?" (`restAilmentLines`, `restWarning.js:"export function restAilmentLines"`; `src/systems/restWarning.js`),
-  the rest window opening on its Yes once the box has left the slot (`world.js:"const restNow = ()"`). Wired in the
-  street's, the interior's and the dungeon's rests (world.js, worldModes.js, dungeonContext.js); exterior.js, the
-  fixed city, is FLAGGED by name here - it rests without the warning. REST-WARN2 (the owner: "those are not enhanced
+  the rest window opening on its Yes once the box has left the slot (`world.js:"const restNow = ()"`). Wired in all
+  four hosts' rests - the street's, the interior's, the dungeon's and the fixed city's (world.js, worldModes.js,
+  dungeonContext.js, exterior.js; the last left out by the patch and wired after it, 2026-10-08, THE FOUR HOSTS RULE -
+  `test/pvpdungeons_game.test.js` sweeps all four). REST-WARN2 (the owner: "those are not enhanced
   plus ui button and window"): THE DECISION BOX (`DecisionBoxWindow`,
   `decisionBox.js:"export class DecisionBoxWindow"`; `src/ui/decisionBox.js`) - DFU's message box with its YesNo
   buttons, drawn as the Plus decision dialog under the enhanced skin and DFU's parchment on the classic; Y / N, Return
@@ -629,8 +639,6 @@ each is a line here, findable by its tag.
   claimed.
 - The halls' day, locks and crows are the hub's: with no hub (an older relay, a lost socket) a client stands the
   halls by its own clock and keeps its own session's locks, and hears no one else's crows.
-- The classic province map fogs the whole of region 16 (the picker bitmap's own pixels); the cut is drawn on the
-  region's own page and on the enhanced maps.
 - ZONE-WATCH's door reads a town's buildings too, but no player blow is struck indoors, so in practice it is the
   street's.
 

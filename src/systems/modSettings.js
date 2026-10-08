@@ -1164,7 +1164,7 @@ export const MOD_SETTINGS = Object.freeze({
       // with First-Person Travel on: a journey picked on the travel map is the Overworld's route - its planner, its legs,
       // its refusals (scenes/world.js tvRoutesJourneys) - walked in first person, the view not raised. OFF, the default:
       // First-Person Travel is the mod's own straight journey, the original travel option Mac asked back.
-      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: false, description: 'With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned round the mountains, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised. Off, it walks straight to its destination, as Travel Options does. Takes effect at once. (This port’s own switch - the mod has none.)' }),
+      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: false, description: 'With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned by land, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised. Off, it walks straight to its destination, as Travel Options does. Takes effect at once. (This port’s own switch - the mod has none.)' }),
       // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"): the
       // mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration, AccelerationLimit)
       // is not declared - the spinner it started and bounded is gone, and a journey runs at its ground's rate

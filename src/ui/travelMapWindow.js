@@ -104,7 +104,7 @@ import {
 import { DOT_SCALE } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
-import { WILD_REGION, WILD_RINGS, wildInside, wildRingAt, wildRingName, wildRingBonus } from '../systems/wildZone.js';   // WILD1: the open zone on the classic map too (WILD2: and its rings)
+import { WILD_REGION, WILD_RINGS, wildInside, wildRingAt, wildRingName, wildRingBonus, wildPictureZone } from '../systems/wildZone.js';   // WILD1: the open zone on the classic map too (WILD2: and its rings)
 import { RING_INK, RING_NUMERALS } from './wildZoneMap.js';   // WILD2: the rings' own tones, the zone map's
 import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, on the open province's page
 import { readBountyMarks, bountyMarksKey, bountyRingTexels, BOUNTY_DOT_RGB, REVENANT_DOT_RGB, REVENANT_LEGEND_TEXT } from './bountyMapMark.js';   // BOUNTY1: held bounties' black circles on the region page
@@ -828,18 +828,21 @@ export class TravelMapWindow {
     }
   }
   /** WILD1: THE ZONE ON THE PROVINCE MAP - the picker bitmap's Wrothgarian pixels (the identify's own read), fogged, its
-   *  rim red. */
+   *  rim red. CLASSIC-CUT: only the part the owner's cut takes (wildPictureZone - the picture's region laid over the
+   *  map's), as the region's own page and the enhanced maps draw it, never the whole region. */
   _drawWildOverview() {
     this._wildBuf.fill(0);
     this._wildFor = 'overview';
     this._wildAny = false;
     this._wildDirty = true;
     const bmp = _art?.pickerBitmap;
-    if (!bmp || !this.deps.wildMask?.()) return;
+    const mask = this.deps.wildMask?.() ?? null;
+    if (!bmp || !mask) return;
     const { fogA, fogB, edge } = TravelMapWindow.WILD_TEXELS;
     const width = bmp.width, height = bmp.height;
     const diff = height - REGION_H - REGION_PANEL_OFFSET + 1;
-    const isZone = (x, y) => x >= 0 && y >= 0 && x < width && y < height && bmp.data[y * width + x] - 128 === WILD_REGION;
+    const isRegion = (x, y) => x >= 0 && y >= 0 && x < width && y < height && bmp.data[y * width + x] - 128 === WILD_REGION;
+    const isZone = wildPictureZone(mask, isRegion, width, height);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         if (!isZone(x, y)) continue;

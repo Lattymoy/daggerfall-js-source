@@ -51,7 +51,7 @@ test('TO-ROADS THE SWITCH: the port\'s own key beside First-Person Travel - OFF 
   assert.ok(def, 'declared on Travel Options\' pane');
   assert.equal(def.default, false, 'OFF - First-Person Travel keeps "the original travel option" (Mac, OW-TOGGLE)');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  assert.match(def.description, /^With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned round the mountains, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised\./);
+  assert.match(def.description, /^With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned by land, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised\./);
   assert.match(def.description, / Off, it walks straight to its destination, as Travel Options does\./);
   assert.match(def.description, / Takes effect at once\. /, 'read live, as First-Person Travel is (AUDIT OW5 T1) - the tile\'s "when the world next loads" is the mod\'s other keys\'');
   assert.match(def.description, /\(This port’s own switch - the mod has none\.\)$/);

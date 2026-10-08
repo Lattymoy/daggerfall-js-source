@@ -7,6 +7,7 @@ import { wildHallPicks, wildRingBorderDistance, wildHallFoes, wildHallKeeps, wil
 import { startInfection, INFECTION, liveInfections } from '../src/systems/infection.js';
 import { curseOf, healCurseOffer, healCursePaid, healCursePrice, HEAL_CURSE_BASE } from '../src/systems/healCurse.js';
 import { restAilmentLines } from '../src/systems/restWarning.js';
+import { readFileSync } from 'node:fs';
 import { equipItem, swapHands, canSwapHands, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../src/systems/gothwayBoards.js';
 
@@ -70,6 +71,15 @@ test('REST-WARN: poisoned, diseased or both, the rest asks first and says which;
   assert.equal(restAilmentLines({ activeEffects: [{ kind: 'disease', infection: 'Werewolf-Infection' }] }), null);
   assert.equal(restAilmentLines({ activeEffects: [{ kind: 'poison', ended: true }] }), null);
   assert.deepEqual(restAilmentLines({ activeEffects: [{ kind: 'poison' }] }), ['You are poisoned.', 'Resting will not cure it.', 'Rest anyway?']);
+});
+
+test('REST-WARN in THE FOUR HOSTS: the street\'s, a building\'s, a dungeon\'s and the fixed city\'s rest each ask before the window - its Yes the one way to it, nothing ailing the window at once', () => {
+  const asks = /const restNow = \(\) => [\s\S]{0,300}?createRestWindow\([^\n]*\n(?:[^\n]*\n){0,2}?\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{[^\n]*new DecisionBoxWindow\(\{ rows: ail,[^\n]*return; \}\s*\n\s*restNow\(\);/;
+  for (const host of ['world.js', 'worldModes.js', 'dungeonContext.js', 'exterior.js']) {
+    const src = readFileSync(new URL(`../src/scenes/${host}`, import.meta.url), 'utf8');
+    assert.match(src, asks, `${host}: the rest asks first (exterior.js - the fixed city - was the host left out)`);
+    assert.match(src, /import \{ restAilmentLines \} from '\.\.\/systems\/restWarning\.js';/, `${host}: the one law`);
+  }
 });
 
 test('SWAP-HANDS: two one-handers trade hands; one crosses to the empty hand; a shield never leaves the left, a two-hander never the right', () => {

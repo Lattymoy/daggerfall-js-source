@@ -126,6 +126,8 @@ import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice,
 import { exhaustionOutcome } from '../systems/rest.js';   // AUDIT 23 (C5); SWIM-SPENT: the water's line is the outcome's
 import { preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { createRestWindow } from '../ui/restDoor.js';   // RESTDOOR1: the enhanced/native fork, same law as ui/tradeDoor.js
+import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { restAilmentLines } from '../systems/restWarning.js';   // REST-WARN: the fourth host's rest asks too
 import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn } from '../systems/encounters.js';
 import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRoutSweep, revenantRoutedEvent } from '../systems/revenant.js';   // REVENANT: the world host's twin - who comes back, and what the player is told
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
@@ -2415,7 +2417,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (lines) townTalk.showOverlay(new ActionTextBox(lines));
       return;
     }
-    townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    // REST-WARN: poisoned or diseased, the rest asks first (systems/restWarning.js) - the window opens on its Yes, once
+    // the box has left the slot (the world host's own order; THE FOUR HOSTS RULE: this host had been left out)
+    const restNow = () => townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    const ail = restAilmentLines(playerEntity);
+    if (ail) { let yes = false; townTalk.showOverlay(new DecisionBoxWindow({ rows: ail, onYes: () => { yes = true; } }), () => { if (yes) restNow(); }); return; }
+    restNow();
   };
   // G2: arrest + court through the townTalk overlay seam.
   //

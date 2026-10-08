@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WILD_REGION, WILD_FOE_HEALTH_MULT, WILD_FOE_DAMAGE_MULT, WILD_LOOT_GOLD_MULT, WILD_LOOT_DROP_MULT, WILD_LOOT_RARE_MULT,
-  WILD_DEATH_HOLD_S, WILD_CUT, buildWildMask, wildInside, wildNear, wildEdgeChains, applyWildFoe, isWildRegion, setWildDeath, wildDeath,
+  WILD_DEATH_HOLD_S, WILD_CUT, buildWildMask, wildPictureZone, wildInside, wildNear, wildEdgeChains, applyWildFoe, isWildRegion, setWildDeath, wildDeath,
   wildDeathLines, setWildHere, wildHere,
 } from '../src/systems/wildZone.js';
 import { keptOnWildDeath, wildCanLose, takeWildDrop, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../src/systems/wildDeath.js';
@@ -130,4 +130,29 @@ test('ZONE-CUT (the owner\'s cut, then ZONE-CUT2): the zone is only the cut\'s p
   const us = WILD_CUT.map((p) => p[0]), vs = WILD_CUT.map((p) => p[1]);
   assert.ok(cut.box.x0 >= Math.floor(Math.min(...us) * W) && cut.box.x1 <= Math.ceil(Math.max(...us) * W), 'west and east as the cut draws them');
   assert.ok(cut.box.y0 >= Math.floor(Math.min(...vs) * 90) && cut.box.y1 <= Math.ceil(Math.max(...vs) * 90), 'north and south');
+});
+
+test('CLASSIC-CUT: the classic province map\'s picture of the region fogs the cut alone - each picture pixel read where it falls in the region\'s box on the map', () => {
+  const W = 200, H = 100;
+  const region = (x, y) => y < 90 && x >= 10;
+  const m = buildWildMask({ width: W, height: H, regionAt: (x, y) => (region(x, y) ? WILD_REGION : 0) });
+  assert.deepEqual(m.regionBox, { x0: 10, y0: 0, x1: W - 1, y1: 89 }, 'the whole region\'s box, kept beside the zone\'s');
+  // the picture: the same region at half the size, shifted into a picture of its own
+  const isRegion = (x, y) => x >= 3 && y >= 2 && region(10 + (x - 3) * 2, (y - 2) * 2) && 10 + (x - 3) * 2 < W && (y - 2) * 2 < H;
+  const pic = wildPictureZone(m, isRegion, 110, 60);
+  let zone = 0, reg = 0;
+  for (let y = 0; y < 60; y++) {
+    for (let x = 0; x < 110; x++) {
+      if (!isRegion(x, y)) { assert.equal(pic(x, y), false, 'never outside the region'); continue; }
+      reg++;
+      if (!pic(x, y)) continue;
+      zone++;
+      assert.ok(wildInside(m, 10 + (x - 3 + 0.5) * 2, (y - 2 + 0.5) * 2), 'a fogged picture pixel is the map\'s zone');
+    }
+  }
+  let mapZone = 0;
+  for (let i = 0; i < W * H; i++) mapZone += m.inside[i];
+  assert.ok(zone > 0 && zone < reg, 'the cut, never the whole region');
+  assert.ok(Math.abs(zone * 4 - mapZone) < mapZone * 0.1, 'about a quarter of the map\'s zone at half the size');
+  assert.equal(wildPictureZone(null, isRegion, 110, 60)(50, 20), false, 'no mask: no zone');
 });
