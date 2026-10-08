@@ -88,7 +88,8 @@ export function lastLineOf(/** @type {any} */ last) {
  *   regulars: {name: string, seed: number, chair: number}[], frame: any, mySeatFeet: number[], chairFeet: (k: number) => number[],
  *   packPrice?: () => number|null, buyPack?: () => {ok: boolean, price: number}, onHoldem: () => void, onStand: () => void,
  *   online?: {send: (w: any) => boolean, myId: () => (string|null), table: number, chairs: number, chair: number, now: () => number,
- *     rankedWhy: () => (string|null), vouch: (deck: string[]) => Promise<{ok: boolean, order?: string, why?: string}>}|null}} d
+ *     rankedWhy: () => (string|null), vouch: (deck: string[]) => Promise<{ok: boolean, order?: string, why?: string}>,
+ *     board?: () => Promise<any>}|null}} d
  */
 export function openIliacTableGame(d) {
   const g = {
@@ -97,7 +98,7 @@ export function openIliacTableGame(d) {
     hud: null, release: d.holdCursor(), places: null, closed: false,
     // CARDS10: the relay's table - `mode` 'online' while the panel is the room's, 'regulars' once he plays the tavern's own
     mode: d.online ? 'online' : 'offline', remote: d.online ? new RemoteIliacTable({ myId: d.online.myId() }) : null,
-    busy: false, sat: false, rankedOn: false, rankedLine: null, clockShown: -1, endWhy: null,
+    busy: false, sat: false, rankedOn: false, rankedLine: null, clockShown: -1, endWhy: null, board: null, boardBusy: false,
   };
   const online = () => g.mode === 'online';
   const mySeat = () => g.remote?.seat() ?? -1;
@@ -114,6 +115,7 @@ export function openIliacTableGame(d) {
       ranked: g.rankedOn, rankedOn: g.rankedOn, rankedOk: !why, rankedWhy: why, busy: g.busy, regularsOk: mySeat() < 0 && d.regulars.length > 0,
       waiting: r.waiting(), watching: mySeat() < 0 && !!r.state?.game, clock: r.clockLeft(now), error: null, rankedLine: g.rankedLine,
       lastLine: mySeat() < 0 ? lastLineOf(r.state?.last) : null,   // a watched game's end, said of its players
+      board: g.board, boardBusy: g.boardBusy,
     };
   };
   const paint = () => {
@@ -236,6 +238,7 @@ export function openIliacTableGame(d) {
       else if (id === 'ranked') { if (!d.online.rankedWhy()) g.rankedOn = !g.rankedOn; }
       else if (id === 'regulars') { if (mySeat() < 0 && d.regulars.length) { g.mode = 'regulars'; g.why = null; } }
       else if (id === 'deal') { sitOnline(); return; }
+      else if (id === 'board') { seasonBoard(); return; }
       paint();
       return;
     }
@@ -252,6 +255,19 @@ export function openIliacTableGame(d) {
       else g.why = 'The relay is not answering - try again.';
     }
     paint();
+  }
+  /** CARDS10: the season's board asked of the service (its rows, its #1, my standing) - shown under the setup; a second
+   *  press hides it. */
+  function seasonBoard() {
+    if (g.board) { g.board = null; paint(); return; }
+    if (!d.online.board || g.boardBusy) return;
+    g.boardBusy = true; paint();
+    d.online.board().then((r) => {
+      g.boardBusy = false;
+      if (g.closed) return;
+      g.board = r?.ok && r.data ? r.data : { error: 'The season board is not answering - try again.' };
+      paint();
+    }, () => { g.boardBusy = false; if (!g.closed) { g.board = { error: 'The season board is not answering - try again.' }; paint(); } });
   }
   /** CARDS10: the chosen deck sat in this chair - ranked, the realm's order on it asked first. */
   function sitOnline() {

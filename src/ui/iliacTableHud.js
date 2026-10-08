@@ -115,10 +115,12 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
       keeps: online ? null : { on: !!s.forKeeps && !!s.keepsOk, enabled: !!s.keepsOk, why: s.keepsWhy ?? null },
       // CARDS10: online, the season's board - a deck the service vouches the realm character holds (the relay seats it ranked)
       ranked: online ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null } : null,
+      board: online?.board ? boardLines(online.board) : null,
       message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Asking the realm to vouch for your deck...' : online ? 'Sit down and wait for another player.' : 'Ready to deal.'),
       actions: [
         { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) && !online?.busy },
         ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: alone in the room, the tavern's own
+        ...(online ? [{ id: 'board', label: online.board ? 'Hide the season board' : 'Season board', enabled: !online.boardBusy }] : []),   // CARDS10: the ladder
         { id: 'holdem', label: 'Play Hold\'em instead', enabled: true },
         ...pack,
         { id: 'stand', label: 'Stand up', enabled: true },
@@ -175,6 +177,24 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
     actions, message: online?.error ? `${message} (${online.error})` : message, log: log.slice(-6),
   };
 }
+/**
+ * CARDS10: THE SEASON'S BOARD as the panel says it (server-account/src/iliac.js iliacBoardOf's answer): the season, its
+ * top rows and the caller's own pinned under them, its #1 and whether they wear the title, the caller's standing.
+ * @param {any} b
+ */
+export function boardLines(b) {
+  if (!b) return [];
+  if (b.error) return [b.error];
+  const row = (r) => `${r.rank}. ${r.name ?? '?'} - ${r.rating} (${r.wins}-${r.losses}-${r.draws})${r.you ? ' - you' : ''}`;
+  const out = [`Season ${b.season?.n ?? '?'}, day ${b.season?.day ?? '?'}.`];
+  if (!b.rows?.length) out.push('No ranked game has been played this season.');
+  for (const r of b.rows ?? []) out.push(row(r));
+  if (b.pinned) out.push('...', row(b.pinned));
+  out.push(b.champion ? `Iliac Champion: ${b.champion.name}.` : `No Iliac Champion yet - the top needs ${b.titleNeeds?.games ?? 10} games against ${b.titleNeeds?.foes ?? 5} different players.`);
+  if (b.me) out.push(`Your rating ${b.me.rating}, ${b.me.games} ${b.me.games === 1 ? 'game' : 'games'} this season.`);
+  return out;
+}
+
 /** The prize said: a card won or lost for keeps. */
 export function prizeLine(prize, other = 'The regular') {
   if (!prize?.card) return '';
@@ -221,7 +241,7 @@ const swallowPresses = (node) => {
 };
 
 /**
- * The panel in the page. `onPress(id, value)`: 'deck' and 'foe' with an index, 'keeps', 'ranked', 'regulars', 'deal', 'holdem', 'pack',
+ * The panel in the page. `onPress(id, value)`: 'deck' and 'foe' with an index, 'keeps', 'ranked', 'regulars', 'board', 'deal', 'holdem', 'pack',
  * 'pick' with a hand index, 'hold' with a holding, 'unstage' with a staged index, 'commit', 'clear', 'again', 'stand'.
  * `render(model)` repaints; `destroy()` takes it away (once).
  * @param {{onPress: (id: string, value?: number) => void, doc?: any}} p
@@ -292,6 +312,11 @@ export function createIliacTableHud({ onPress, doc = document }) {
             foes.append(l);
           }
           root.append(foes);
+        }
+        if (m.board) {
+          const box = el('div', 'opts');
+          for (const line of m.board) box.append(el('div', '', line));
+          root.append(box);
         }
         if (m.ranked) {
           const k = el('label', '', `${m.ranked.on ? '☑' : '☐'} Ranked - the season's board (your realm character's own cards)`);

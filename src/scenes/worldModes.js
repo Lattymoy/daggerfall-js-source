@@ -582,6 +582,7 @@ export function createWorldModes(host) {
         send: (w) => !!host.iliacOnline.send(w), myId: () => host.iliacOnline.id(), now: () => host.iliacOnline.now(),
         table: cardSeat.table, chairs: seats.length, chair: cardSeat.seat,
         rankedWhy: () => host.iliacRanked?.why?.() ?? 'Ranked games are closed here.', vouch: (deck) => host.iliacRanked?.vouch?.(deck) ?? Promise.resolve({ ok: false }),
+        board: () => host.iliacRanked?.board?.() ?? Promise.resolve({ ok: false }),   // the season's board
       } : null,
     });
     iliacGame.regulars = regs;   // CARDS4b's look for the regular in his chair (cardRegularsNow)

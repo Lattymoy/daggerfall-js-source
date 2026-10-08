@@ -13,7 +13,7 @@ import { mintIliacReceipt } from '../src/net/iliacReceipt.js';
 import { RemoteIliacTable } from '../src/systems/iliacRemoteTable.js';
 import { createIliacClaims, iliacClaimVerdict, ILIAC_CLAIMS_KEY, ILIAC_CLAIM_RETRY_MS } from '../src/net/iliacClaims.js';
 import { openIliacTableGame, iliacOnlineLine, lastLineOf, ILIAC_ONLINE_REFUSALS } from '../src/scenes/iliacTableGame.js';
-import { iliacHudModel } from '../src/ui/iliacTableHud.js';
+import { iliacHudModel, boardLines } from '../src/ui/iliacTableHud.js';
 import { giveBinderAtChargen } from '../src/systems/iliacItems.js';
 import { STARTER_DECK, cardById } from '../src/net/iliacCards.js';
 import { ILIAC_TURNS } from '../src/net/iliacHand.js';
@@ -143,7 +143,7 @@ test('CARDS10 online on two fake pages over the relay\'s table: a look on openin
   // opened before anyone sat: the setup, its deck chosen, the regulars greyed (none), ranked closed with its reason
   assert.equal(A.game.g.phase, 'setup');
   const m0 = iliacHudModel({ phase: 'setup', setup: { decks: [{ name: 'Starter Deck' }], foes: [], deck: 0 }, online: { rankedOk: false, rankedWhy: 'Ranked games are a realm character\'s.', regularsOk: false } });
-  assert.deepEqual(m0.actions.map((x) => [x.id, x.enabled]), [['deal', true], ['regulars', false], ['holdem', true], ['stand', true]]);
+  assert.deepEqual(m0.actions.map((x) => [x.id, x.enabled]), [['deal', true], ['regulars', false], ['board', true], ['holdem', true], ['stand', true]]);
   assert.deepEqual(m0.ranked, { on: false, enabled: false, why: 'Ranked games are a realm character\'s.' });
   A.game.press('deal');
   assert.equal(A.game.g.phase, 'playing');
@@ -244,4 +244,38 @@ test('CARDS10 ranked online: the realm\'s order asked first and carried in the s
   assert.ok(W.includes('    online.onIliac = (f) => modes?.iliacOnlineFrame?.(f);'));
   assert.ok(W.includes('    iliacClaims?.tick();'));
   assert.ok(W.includes("call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck })"), 'the record checkpointed first, then asked');
+});
+
+test('CARDS10 the season board in the panel: asked of the service on a press, its rows and the caller pinned, its #1 or what the title needs, a second press hides it; the service not answering is said (mutants: the press; the pinned row)', async () => {
+  const data = {
+    ok: true, season: { n: 3, day: 12 }, total: 14,
+    rows: [{ rank: 1, name: 'Eira', rating: 1104, wins: 9, losses: 2, draws: 1 }, { rank: 2, name: 'Fen', rating: 1050, wins: 5, losses: 4, draws: 0 }],
+    pinned: { rank: 14, name: 'Ves', rating: 984, wins: 1, losses: 3, draws: 0, you: true },
+    champion: { player: 'p1', name: 'Eira' }, titleNeeds: { games: 10, foes: 5 }, me: { rating: 984, games: 4 },
+  };
+  assert.deepEqual(boardLines(data), ['Season 3, day 12.', '1. Eira - 1104 (9-2-1)', '2. Fen - 1050 (5-4-0)', '...', '14. Ves - 984 (1-3-0) - you', 'Iliac Champion: Eira.', 'Your rating 984, 4 games this season.']);
+  assert.match(boardLines({ ...data, rows: [], pinned: null, champion: null })[1], /No ranked game has been played this season\./);
+  assert.match(boardLines({ ...data, champion: null }).join(' '), /No Iliac Champion yet - the top needs 10 games against 5 different players\./);
+  const entity = { name: 'a', items: [], goldPieces: 100 };
+  giveBinderAtChargen(entity);
+  let answer = { ok: true, data };
+  let asked = 0;
+  const game = openIliacTableGame({
+    doc: fakeDoc(), renderer: null, entity, say: () => {}, holdCursor: () => () => false, rand32: seeded(9), now: () => 0,
+    day: 1, key: 'tav', grade: 0, friendly: true, regulars: [],
+    frame: { centre: [0, 0.8, 0], halfShort: 0.45 }, mySeatFeet: [0, 0, -1], chairFeet: () => [0, 0, 1], onHoldem: () => {}, onStand: () => {},
+    online: { send: () => true, myId: () => 'a', now: () => 0, table: 0, chairs: 4, chair: 0, rankedWhy: () => null, vouch: async () => ({ ok: false }), board: async () => { asked++; return answer; } },
+  });
+  game.press('board');
+  await new Promise((r) => setImmediate(r));
+  assert.equal(asked, 1);
+  assert.match(text(game.g.hud.root), /Iliac Champion: Eira\./);
+  assert.match(text(game.g.hud.root), /Hide the season board/);
+  game.press('board');
+  assert.equal(game.g.board, null, 'hidden');
+  answer = { ok: false, error: 'offline' };
+  game.press('board');
+  await new Promise((r) => setImmediate(r));
+  assert.match(text(game.g.hud.root), /The season board is not answering - try again\./);
+  game.close();
 });

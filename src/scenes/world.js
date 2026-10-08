@@ -26806,6 +26806,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const card = r?.data?.card ?? r?.card;
         return { ok: false, why: r?.error === 'deck-short' ? `Your realm character does not hold every card of that deck${card ? ` (${card})` : ''}.` : r?.error === 'cards-realm' ? 'Ranked games are a realm character\'s.' : 'The realm could not vouch for that deck.' };
       },
+      board: () => iliacDoor.board(),   // the season's board (iliac.js iliacBoardOf)
     },
     iliacClaims,
     sailingCabin: sailingCabins,
