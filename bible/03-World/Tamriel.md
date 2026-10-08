@@ -189,4 +189,4 @@ towns, roads, dungeons or regions - the later use.
   floored), the cache and the climate, the composition to the byte on nine Bay pixels, the seam and the blend, the
   range reads through the overrides, a whole pixel beyond the Bay through the kernel (Skyrim's trees; the Eltheric
   under it), the raster as the same law, the stream's frame and load list, the ring's bytes past the map, the worker's
-  word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json`.
+  word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json` (22: 21 dead, 1 equivalent as recorded - the cache's key, one key a pixel whichever it is).
