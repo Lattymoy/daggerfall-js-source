@@ -90,6 +90,10 @@ test('MODE-WHEEL: press opens, the mouse steers it, the opening key\'s release c
   assert.equal(w.spoke(), 'steal');
   w.look(-200, -60);   // a flick back the other way changes the choice at once - the arm is clamped
   assert.equal(w.spoke(), 'info');
+  w.look(60, 0);   // AUDIT: back to the middle - the choice is dropped
+  assert.equal(w.spoke(), null, 'brought back inside the dead zone, nothing is chosen');
+  w.look(-40, 0);
+  assert.equal(w.spoke(), 'info');
   assert.equal(w.release({ code: 'KeyW' }), false, 'another key\'s release is not the wheel\'s');
   assert.equal(w.isOpen(), true);
   assert.equal(w.release({ code: 'AltLeft' }), true);
@@ -117,7 +121,7 @@ test('MODE-WHEEL: a v2 bindings file lets Left Alt go of Sneak, once, so the whe
   loadKeyBinds(s, file);
   const report = migrateKeyBinds(s, 2);
   resetDefaults(s, true);
-  assert.deepEqual(report, { moved: ['Sneak off AltLeft'], kept: [], lost: [] });
+  assert.deepEqual(report, { moved: ['Sneak off AltLeft'], kept: [], lost: [{ action: 'Sneak', code: 'AltLeft', holder: MODE_WHEEL_ACTION }] }, 'AUDIT: and Sneak, left keyless, is TOLD - on the HUD, not the console only');
   assert.equal(getBinding(s, MODE_WHEEL_ACTION), 'AltLeft');
   assert.equal(getBinding(s, 'Sneak'), null);
   assert.equal(actionForCode(s, 'F1'), 'StealMode', 'a saved file\'s mode keys still work beside the wheel');
@@ -139,18 +143,51 @@ test('MODE-WHEEL: a v2 bindings file lets Left Alt go of Sneak, once, so the whe
   assert.equal(actionForCode(e, 'KeyE'), 'AbortSpell');
 });
 
-test('MODE-WHEEL hosts: townTalk and the dungeon host open it under their gates; the three look-owning hosts hand the mouse to it before the look filter; the pad\'s unbound mode is the host\'s pickMode door', () => {
+test('MODE-WHEEL AUDIT: the wheel hears the window - it steers on a freed cursor too, a click CONFIRMS and is swallowed (its release too) ahead of every host listener, a blur cancels (mutants: the click let through; the click not choosing)', () => {
+  const on = {};
+  const win = { addEventListener: (type, fn, capture) => { (on[type] ??= []).push({ fn, capture: !!capture }); } };
+  const w = createModeWheel({ defaultView: win });   // no createElement: it picks, it draws nothing
+  const picked = [];
+  w.press({ code: 'AltLeft' }, (m) => picked.push(m));
+  const fire = (type, e) => { for (const l of on[type] ?? []) l.fn(e); return e; };
+  const ev = (extra = {}) => ({ prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra });
+  fire('mousemove', { movementX: 0, movementY: -40 });
+  assert.equal(w.spoke(), 'dialogue', 'the window\'s own mousemove steers - no host look path, no pointer lock needed');
+  assert.ok(on.mousedown.every((l) => l.capture) && on.mouseup.every((l) => l.capture), 'caught in the capture phase, ahead of the hosts');
+  const down = fire('mousedown', ev({ button: 0 }));
+  assert.ok(down.prevented && down.stopped, 'the click is the wheel\'s - never an activation or a swing in the old mode');
+  assert.deepEqual(picked, ['dialogue'], 'and it chooses at once');
+  assert.equal(w.isOpen(), false);
+  const up = fire('mouseup', ev({ button: 0 }));
+  assert.ok(up.prevented && up.stopped, 'its release goes with it (the activate fires on the release)');
+  const later = fire('mouseup', ev({ button: 0 }));
+  assert.ok(!later.stopped, 'and only that one release');
+  const free = fire('mousedown', ev({ button: 0 }));
+  assert.ok(!free.stopped, 'closed, a click is the world\'s');
+  w.press({ code: 'AltLeft' }, (m) => picked.push(m));
+  fire('mousemove', { movementX: 40, movementY: 0 });
+  fire('blur', {});
+  fire('keyup', { code: 'AltLeft' });
+  assert.deepEqual(picked, ['dialogue'], 'a blur cancels; the late keyup finds it shut');
+});
+
+test('MODE-WHEEL hosts: townTalk and the dungeon host open it under their gates; the three look-owning hosts hand the mouse to it before the look filter; the pad\'s unbound mode is PAD-BINDS\' padAction door', () => {
   const tt = rd('src/scenes/townTalk.js');
-  assert.match(tt, /if \(actionsOf\(e, keys\)\.includes\(MODE_WHEEL_ACTION\)\) \{ e\.preventDefault\(\); modeWheel\.press\(e, \(w\) => setMode\(w\)\); \}/, 'opened and NOT consumed - the key still joins the host\'s held ring (a shared key does both)');
+  assert.match(tt, /if \(keysLive\?\.\(\) !== false && actionsOf\(e, keys\)\.includes\(MODE_WHEEL_ACTION\)\) \{ e\.preventDefault\(\); modeWheel\.press\(e, pickMode\); \}/, 'opened (not before KEY-BOOT), and NOT consumed - the key still joins the host\'s held ring (a shared key does both)');
+  assert.match(tt, /function pickMode\(m\) \{\n\s*if \(\(overlay && talkPaused\(\)\) \|\| otherOverlayActive\?\.\(\) \|\| keysLive\?\.\(\) === false\) return false;/, 'AUDIT: the release asks the window gates again');
+  assert.match(rd('src/scenes/world.js'), /keysLive: \(\) => _worldKeysLive,/, 'the world host hands KEY-BOOT\'s gate in');
   assert.ok(tt.indexOf('if (otherOverlayActive?.()) return false;') < tt.indexOf('modeWheel.press('), 'after the other host\'s overlay gate');
   const d = rd('src/scenes/dungeon.js');
-  assert.match(d, /if \(!ctx\.uiOverlayActive && actionsOf\(e, keys\)\.includes\(MODE_WHEEL_ACTION\)\) \{\n\s*e\.preventDefault\(\);\n\s*modeWheel\.press\(e, pickMode\);/);
+  assert.match(d, /if \(!ctx\.uiOverlayActive && acts\.includes\(MODE_WHEEL_ACTION\)\) \{\n\s*e\.preventDefault\(\);\n\s*modeWheel\.press\(e, pickMode\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = rd(host);
-    const wheel = s.indexOf('if (modeWheel.look(e.movementX, e.movementY)) return;');
+    const wheel = s.indexOf('if (modeWheel.isOpen()) return;');
     const look = s.indexOf('lookFilter.add(e.movementX * lookScale()');
     assert.ok(wheel > 0 && wheel < look, `${host}: the wheel takes the mouse before the camera`);
   }
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /pickMode: \(m\) => townTalk\.pickMode\(m\),/);
-  assert.match(rd('src/ui/gamepadInput.js'), /if \(!c && MODE_ACTIONS\[name\] && hooks\.pickMode\) \{ try \{ hooks\.pickMode\(MODE_ACTIONS\[name\]\); \}/);
+  // AUDIT: the pad's unbound mode rides PAD-BINDS' one door for an action on no key - no second hook
+  assert.match(rd('src/scenes/world.js'), /if \(MODE_ACTIONS\[act\]\) return townTalk\.pickMode\(MODE_ACTIONS\[act\]\);/);
+  assert.match(rd('src/scenes/exterior.js'), /padAction: \(act\) => \(MODE_ACTIONS\[act\] \? townTalk\.pickMode\(MODE_ACTIONS\[act\]\) : false\),/);
+  assert.match(rd('src/scenes/dungeon.js'), /padAction: \(act\) => \(MODE_ACTIONS\[act\] \? pickMode\(MODE_ACTIONS\[act\]\) : false\),/);
+  assert.equal(/pickMode/.test(rd('src/ui/gamepadInput.js')), false, 'the shared pad code special-cases no mode');
 });

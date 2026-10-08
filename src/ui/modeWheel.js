@@ -5,16 +5,20 @@
 // DFU picks PlayerActivate's mode with four keys (F1-F4: Steal, Grab, Info, Talk - PlayerActivate.cs:221-228), far
 // from the movement hand, with nothing on screen to say which is which. The wheel is one held key instead: HOLD the
 // ModeWheel action (Left Alt by default - CROUCH-SNEAK freed it), FLICK the mouse toward a mode, LET GO to choose.
-// Talk is up, Grab right, Steal down, Info left. A release with no flick keeps the mode. The mode itself is not
+// Talk is up, Grab right, Steal down, Info left. A release inside the dead zone - no flick, or the mouse brought back
+// to the middle - keeps the mode; a click while it is open chooses at once and is the wheel's, never an activation or
+// a swing in the old mode. The mode itself is not
 // touched here: the host's `pick` is ChangeInteractionMode (townTalk.js setMode, dungeon.js's own copy), so the
 // mid-screen line, the SENSE1 asks and the no-op on the same mode stay that function's.
 //
 // The four mode actions keep their rows (unbound by default) and still set the mode directly; the pad's NextMode
 // and the touch cycle button are untouched.
 //
-// THE MOUSE IS THE WHEEL'S WHILE IT IS OPEN: a host's mousemove hands its delta to `look()` first and turns no
-// camera when it answers true (scenes/world.js, scenes/exterior.js, scenes/dungeon.js - the three hosts that own a
-// look; worldModes.js and dungeonContext.js ride world.js's and dungeon.js's).
+// THE MOUSE IS THE WHEEL'S WHILE IT IS OPEN. It hears the window's own mousemove (pointer locked or freed - AUDIT:
+// a host's look path returns early on a freed cursor, so steering through it left a freed wheel unaimable), and a
+// host's look asks `isOpen()` first and turns no camera while it answers true (scenes/world.js, scenes/exterior.js,
+// scenes/dungeon.js - the three hosts that own a look; worldModes.js and dungeonContext.js ride world.js's and
+// dungeon.js's). It opens on a KEY's press: a pad picks the mode with its NextMode, not the wheel.
 //
 // The face is a DOM overlay in the enhanced tokens (with fallbacks, so the classic skin draws it too), centred on the
 // screen, pointer-events none. It exists only while the key is held.
@@ -55,6 +59,7 @@ export function createModeWheel(doc = globalThis.document ?? null) {
   let spoke = null;
   let root = null;
   let listening = false;
+  const swallowUp = new Set();   // the buttons whose press confirmed a choice - their release is the wheel's too
   const cells = new Map();
 
   function build() {
@@ -91,6 +96,19 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     // closes the wheel WITHOUT choosing, so a key whose keyup the page never saw does not leave it standing
     win.addEventListener('keyup', (e) => { release(e); });
     win.addEventListener('blur', () => close(false));
+    win.addEventListener('mousemove', (e) => { look(e.movementX, e.movementY); });
+    // AUDIT: a click while it is open CONFIRMS, and is the wheel's - caught in the capture phase, ahead of every host's
+    // own window listener, so it is never also an activation or a swing in the mode being left; its release goes too
+    win.addEventListener('mousedown', (e) => {
+      if (!open) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      swallowUp.add(e.button);
+      close(true);
+    }, true);
+    win.addEventListener('mouseup', (e) => {
+      if (!swallowUp.delete(e.button)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
   }
 
   function paint() {
@@ -136,14 +154,15 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     return true;
   }
 
-  /** The mouse's delta while open: steers the wheel and answers true, so the host turns no camera. */
+  /** The mouse's delta while open: steers the wheel and answers true. Back inside the dead zone the choice is
+   *  dropped (AUDIT: a mistaken flick is undone by bringing the mouse back, not only by alt-tabbing). */
   function look(dx, dy) {
     if (!open) return false;
     x += dx || 0; y += dy || 0;
     const r = Math.hypot(x, y);
     if (r > MODE_WHEEL_MAX_ARM) { x *= MODE_WHEEL_MAX_ARM / r; y *= MODE_WHEEL_MAX_ARM / r; }
     const s = spokeOf(x, y);
-    if (s && s !== spoke) { spoke = s; paint(); }
+    if (s !== spoke) { spoke = s; paint(); }
     return true;
   }
 

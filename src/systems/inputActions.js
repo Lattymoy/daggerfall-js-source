@@ -1360,8 +1360,10 @@ const LET_GO = Object.freeze([
 export function migrateKeyBinds(store, fromVersion) {
   const report = { moved: [], kept: [], lost: [] };
   if (fromVersion >= KEYBINDS_VERSION) return report;
+  const unkeyed = [];   // MODE-WHEEL AUDIT: an action left with NO key by a let-go - the player is told, not the console only
   for (const [code, was, by] of LET_GO) {
     if (fromVersion < by && store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
+    if (by > 2 && report.moved.includes(`${was} off ${code}`)) unkeyed.push([code, was]);   // a v2-era default (Sneak's Alt) ships no new one
   }
   for (const hidden of HIDDEN_ACTIONS) {
     for (const primary of [true, false]) {
@@ -1396,6 +1398,9 @@ export function migrateKeyBinds(store, fromVersion) {
     if (fromVersion >= 2 && action !== 'ModeWheel') continue;   // MODE-WHEEL: a v2 file was told its losses at v2; v3 adds only the wheel
     if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
     report.lost.push({ action, code, holder: actionForCode(store, code) });
+  }
+  for (const [code, action] of unkeyed) {
+    if (getBinding(store, action, true) == null) report.lost.push({ action, code, holder: actionForCode(store, code) });
   }
   return report;
 }

@@ -460,7 +460,7 @@ import { loadHud, drawHud, hudScale } from '../ui/hud.js';   // AUDIT 21 hosts F
 import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from '../ui/hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
-import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
+import { getInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it; MODE-WHEEL: the pad's unbound mode actions
 import { modeWheel } from '../ui/modeWheel.js';   // MODE-WHEEL: the mouse steers it while it is open
 import { randomEpitaph } from '../systems/gravestoneLore.js';   // GRAVE1: Info mode's graveyard flavour line
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -6616,6 +6616,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // declared below, so the read is deferred (the regionIndex idiom).
     otherOverlayActive: () => modes?.overlayHeld ?? false,
     otherHudCovered: () => modes?.hudCovered ?? false,   // AUDIT ENH-NOTICE3 C2: the previousWindow chain on the mode host's stack, for the toasts
+    keysLive: () => _worldKeysLive,   // MODE-WHEEL (AUDIT): KEY-BOOT's gate, for the wheel this rung opens above it - declared below, read deferred
   });
   townTalk.ensureLoaded();
   /** THE GAME PAUSE for this host - ONE composition, asked of the
@@ -16764,7 +16765,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     trackLargeHudPointer(canvas, e);   // ROAD-Ar: HUDLarge's MouseEnter/MouseLeave (:361-372), for the activate gate's HUD guard
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
-    if (modeWheel.look(e.movementX, e.movementY)) return;   // MODE-WHEEL: while it is open the mouse steers it, not the view
+    if (modeWheel.isOpen()) return;   // MODE-WHEEL: while it is open the mouse steers it (its own listener), not the view
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
     // weapon control, and whether this host or worldModes owns the
     // swing, it is never a look. The old line gated the whole thing on
@@ -16847,11 +16848,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     dial: isEnhanced(),
     enhanced: isEnhanced(),   // FONT1: the layer's text in the pixel face under the enhanced skin
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
-    pickMode: (m) => townTalk.pickMode(m),   // MODE-WHEEL: the pad's NextMode, its mode actions unbound
     socialInteract: () => socialInteract(),   // AUDIT SOC C9: the phone's F - the host's own door (a card over the body in front, else the friends panel; false with no account, and the layer's button then does nothing)
     overlayActive: () => townTalk.overlayActive || !!travelView?.active || !!modes?.overlayHeld,   // AUDIT DEEP2 A2: under the view the pad is a cursor (its pick, orbit and zoom) - never the world's look, activation or swing. FIELD BUGS 29h (TOUCH-HELD): and a window on a building's or a dungeon's own stack is a window - the castle guard's terms box had no nav row, so no abc, no keyboard and no Return on a phone (the standalone dungeon host's hook always read its stack)
     // PAD-BINDS (FIELD BUGS 2026-10-04e): a d-pad choice whose action is on no key - the Overworld ships unbound
-    padAction: (act) => { if (act !== 'TravelView' || townTalk.overlayActive) return false; travelViewKey(); return true; },
+    // MODE-WHEEL: the four mode actions ship unbound too - the pad's NextMode lands here, at the host's ChangeInteractionMode
+    padAction: (act) => { if (MODE_ACTIONS[act]) return townTalk.pickMode(MODE_ACTIONS[act]); if (act !== 'TravelView' || townTalk.overlayActive) return false; travelViewKey(); return true; },
     aimHold: () => !!naval?.atGuns,   // NAV-H: at a helm with guns the attack is the broadside's aim - the pad and the finger HOLD it (no gesture strokes) and look on under it
     // CSA-L: the pad's helm d-pad (ui/gamepadInput.js HELM_DPAD) - at the helm on Enhanced Plus, the helm panel's presses
     helm: {

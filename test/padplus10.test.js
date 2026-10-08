@@ -63,8 +63,9 @@ test('PADPLUS10 d-pad: hold left is Transport, a tap is the quest log; each hold
   const key = (a) => `keydown:${getBinding(store, a)}`;
   const hold = (i, frames) => { pad.buttons[i] = { pressed: true, value: 1 }; for (let f = 0; f < frames; f++) gp.tick(1 / 60); pad.buttons[i] = { pressed: false, value: 0 }; gp.tick(1 / 60); gp.tick(1 / 60); };
   const canvas = { dispatchEvent() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }), style: {} };
-  const picked = [];   // MODE-WHEEL: the four mode actions ship unbound, so NextMode is the host's pickMode door
-  const gp = attachGamepad(canvas, { overlayActive: () => false, paused: () => false, attack() {}, look() {}, pickMode: (m) => { picked.push(m); setInteractionMode(m); } }, { getPads: () => [pad], dispatch, makeEvent: (type, init) => ({ type, ...init }) });
+  const picked = [];   // MODE-WHEEL: the four mode actions ship unbound, so NextMode is PAD-BINDS' door for an action on no key
+  const padAction = (act) => { const m = { StealMode: 'steal', GrabMode: 'grab', InfoMode: 'info', TalkMode: 'dialogue' }[act]; if (!m) return false; picked.push(m); setInteractionMode(m); return true; };
+  const gp = attachGamepad(canvas, { overlayActive: () => false, paused: () => false, attack() {}, look() {}, padAction }, { getPads: () => [pad], dispatch, makeEvent: (type, init) => ({ type, ...init }) });
   try {
     gp.tick(1 / 60);
     assert.deepEqual(plusDpadMap().left, { tap: 'LogBook', hold: 'Transport' });

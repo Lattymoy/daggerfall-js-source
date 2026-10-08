@@ -1,9 +1,0 @@
-<!doctype html><html><body style="margin:0;background:#556b2f;width:600px;height:400px">
-<script type="module">
-import { modeWheel } from '/src/ui/modeWheel.js';
-import { setInteractionMode } from '/src/player/interactionMode.js';
-setInteractionMode('grab');
-modeWheel.press({ code: 'AltLeft' }, (m) => { window.__picked = m; });
-modeWheel.look(0, 40);
-window.__ready = true;
-</script></body></html>
