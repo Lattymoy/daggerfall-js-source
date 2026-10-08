@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  PIXEL_M, PICTURE_W, PICTURE_H, PIXELS_PER_PICTURE_UNIT, TAMRIEL_W, TAMRIEL_H, BAY_W, BAY_H, BAY_ORIGIN, KM_PER_PIXEL,
+  PICTURE_W, PICTURE_H, PIXELS_PER_PICTURE_UNIT, TAMRIEL_W, TAMRIEL_H, BAY_W, BAY_H, BAY_ORIGIN, KM_PER_PIXEL,
   bayToTamriel, tamrielToBay, pictureToBay, bayToPicture, inBay, bayPictureRect, tamrielFrameInBay, pixelsToKm,
 } from '../src/world/tamrielFrame.js';
 import {
@@ -59,7 +59,7 @@ const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
 // ── THE FRAME ────────────────────────────────────────────────────
 
 test('TAMRIEL1 frame: a Tamriel pixel is the Bay\'s pixel - 819.2 m, MapsFile\'s own 32768 units at 40 a metre - and the continent is the picture grid at one authored ratio', () => {
-  assert.equal(PIXEL_M, PIXEL_UNITS / 40, 'the scale is the wire\'s own world units a pixel, over the metre');
+  assert.equal(KM_PER_PIXEL * 1000, PIXEL_UNITS / 40, 'the scale is the wire\'s own world units a pixel, over the metre');
   assert.equal(PICTURE_W, 320); assert.equal(PICTURE_H, 200);
   assert.equal(TAMRIEL_W, PICTURE_W * PIXELS_PER_PICTURE_UNIT);
   assert.equal(TAMRIEL_H, PICTURE_H * PIXELS_PER_PICTURE_UNIT);
@@ -522,5 +522,6 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.ok(!/TMAP00I0\.IMG|readFileSync|import .*imgFile/.test(geo), 'authored, never traced from the picture');
   const frame = read('src/world/tamrielFrame.js');
   assert.match(frame, /export const BAY_ORIGIN = Object\.freeze\(\{ x: 862, y: 975 \}\);/, 'the one authored offset, named once');
+  assert.ok(!/from '\.\.\/net\//.test(frame + geo + read('src/world/tamrielGround.js')), 'TAMRIEL2-WORKER: nothing of net/ under the frame, the geography or the ground - the terrain worker reads them');
   assert.ok(!/BAY_ORIGIN\s*=|862, 975/.test(ink + geo + read('src/world/tamrielRaster.js')), 'and nowhere else');
 });

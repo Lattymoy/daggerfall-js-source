@@ -192,3 +192,14 @@ towns, roads, dungeons or regions - the later use.
   range reads through the overrides, a whole pixel beyond the Bay through the kernel (Skyrim's trees; the Eltheric
   under it), the raster as the same law, the stream's frame and load list, the ring's bytes past the map, the worker's
   word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json` (22: 21 dead, 1 equivalent as recorded - the cache's key, one key a pixel whichever it is).
+
+## TAMRIEL2-WORKER - the freeze on going outside (2026-10-08)
+
+The field, within the hour of the deploy: *"game freezes when I go outside."* The ground beyond the Bay is read by the
+terrain WORKER, whose import graph is pure by law (EV7); TAMRIEL2 had taken two helpers from their "one home" in
+net/ - the gate's PIXEL_M (`net/gateLaw.js`, which imports `net/wire.js`) and the strike's segmentDistance
+(`net/gateStrike.js`) - and through them the worker's bundle grew by twenty modules of the relay's law, and the world
+froze on its first exterior build. The helpers live in pure homes now: `world/segment.js` (the one segment distance,
+which the gate's strike imports too) and the frame's own kilometres a pixel, held to the wire's units by its pin. The
+pin that would have caught it walks the worker's whole graph at any depth and holds every module to world/ and
+formats/ (`test/tamriel2.test.js`); the frame, the geography and the ground are swept for any import of net/.

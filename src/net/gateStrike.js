@@ -16,6 +16,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { ATTACK_BY_ID, ATTACKS, BASE_PROFILE, windupOf, isDagons, HOST_BLOWS } from './gateBrain.js';
+import { segmentDistance } from '../world/segment.js';   // TAMRIEL2-WORKER: the one segment distance, from a module that imports nothing
 
 /** A landing is decided at the first frame at or past it - and a frame that comes later than this past its span (a
  *  stalled or hidden screen) lets it pass: nobody is struck by what their screen never showed land. */
@@ -25,11 +26,7 @@ const DEG = Math.PI / 180;
 const wrap = (a) => { let x = (a + Math.PI) % (2 * Math.PI); if (x < 0) x += 2 * Math.PI; return x - Math.PI; };
 
 /** The distance from (px, pz) to the segment (ax, az)-(bx, bz). */
-export function segmentDistance(px, pz, ax, az, bx, bz) {
-  const vx = bx - ax, vz = bz - az, len2 = vx * vx + vz * vz;
-  const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * vx + (pz - az) * vz) / len2)) : 0;
-  return Math.hypot(px - (ax + vx * t), pz - (az + vz * t));
-}
+export { segmentDistance };   // TAMRIEL2-WORKER: declared in world/segment.js, a module that imports nothing (the terrain worker's law)
 
 /** WBX5: the Spokes of Dagon's lanes - `n` segments from where he stood, the first along his facing, each `len` long:
  *  [[ax, az, bx, bz], ...]. Pure. */
