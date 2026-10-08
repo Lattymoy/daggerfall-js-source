@@ -5865,7 +5865,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * drawSnowEnd, and the state those draws share is set once: a uniform uploaded when the float GL would keep moves, a
    * snow unit bound when its picture moves, a tier's generic channels when its set does, the layer's offset on once;
    * at the end the offset off, the vertex array unbound and the generic channels 0,0,0,1, as a lone draw leaves them.
-   * Every draw sees the state a lone draw would make it (a walking frame's 50 draws: 1,867 GL calls, 416 in a pass).
+   * Every draw sees the state a lone draw would make it (a walking frame's 50 draws in Chromium: 1,917 GL calls, 417 in
+   * a pass).
    */
   drawSnowBegin() {
     let P = this._snowPassState;

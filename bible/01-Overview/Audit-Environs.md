@@ -104,16 +104,21 @@ on all three. In the suite: P3's ring against a twin that never copies, frame fo
 origin's move, a slope limit changed mid-build and a feather changed; P1's per-draw GL state; P2's GPU bytes; P5-P7
 against the reads as they were.
 
-**Measured** (the same VM, the tree before and after, the shipped 2 ms budget; ms a frame, the snow's CPU):
+**Measured** (the same VM, the tree before and after, one after the other, the shipped 2 ms budget; ms a frame, the
+snow's CPU - a second run lands within a tenth):
 
 | Ride | avg | p99 | frames over 8 ms | scavenges / 1000 frames | uploads |
 |---|---|---|---|---|---|
-| walk, 4.4 m/s | 0.74 -> 0.38 | 2.79 -> 2.21 | 3 -> 0 in 3,600 | 46 -> 11 | 6.2 -> 4.4 MB/s |
-| horse, 13 m/s | 2.07 -> 1.09 | 6.06 -> 4.50 | 7 -> 1 in 3,600 | 103 -> 34 | 11.8 -> 9.1 MB/s |
-| run in a storm, a full field | 1.61 -> 0.69 | 13.4 -> 3.7 | 46 -> 0 in 2,400 | 81 -> 19 | 10.3 -> 7.7 MB/s |
+| walk, 4.4 m/s | 0.72 -> 0.35 | 2.75 -> 2.20 | 5 -> 0 in 3,600 | 47 -> 11 | 6.2 -> 4.4 MB/s |
+| horse, 13 m/s | 2.10 -> 1.12 | 5.92 -> 3.84 | 7 -> 2 in 3,600 | 99 -> 33 | 11.7 -> 9.0 MB/s |
+| run in a storm, a full field | 1.44 -> 0.67 | 13.0 -> 3.8 | 46 -> 0 in 2,400 | 77 -> 18 | 10.2 -> 7.7 MB/s |
+
+In Chromium's WebGL (SwiftShader, relative only), a walking frame's 50 snow draws: 1,917 GL calls -> 417, the draw
+pass 1.33 ms -> 0.47 (p99 3.0 -> 1.3), the frame's own JavaScript and uploads 0.95 -> 0.61; no GL error either way.
 
 What is left a frame is the ring's commit every 20 m (some 4 ms here: the contact ramp of its 321 x 321 statics, its
-history's scroll, the bodies' projection) and its 9 MB upload - the mod's own shape, its ring committed whole.
+history's scroll, the bodies' projection) and its 9 MB upload - the mod's own shape, its ring committed whole - and a
+refill step over a full field (some 2.5 ms once warm: 65,536 cells and three masks).
 
 ## Examined, not changed
 
