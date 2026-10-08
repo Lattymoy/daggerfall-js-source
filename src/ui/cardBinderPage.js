@@ -223,8 +223,20 @@ function drawDecks(detail, rerender, el, divider, items, binder) {
     const add = el('button', 'act', 'New deck');
     add.type = 'button';
     add.setAttribute('data-focus', 'binder-deck-new');
-    add.onclick = () => { _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] }; _said = 'Press a card below to put it in the deck.'; _dropArmed = null; _picked = null; rerender(); };
+    add.onclick = () => { _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] }; _said = 'Press a card below to put it in the deck.'; _dropArmed = null; _picked = null; rerender(); focusNext(add, ['binder-deck-name']); };
     detail.append(add);
+  }
+}
+
+/** AUDIT CARDS-5 D3: a press that took its own button away (New deck, Keep, Cancel) hands the keyboard on - the page is
+ *  drawn again in the same turn (domRepaint.js keeps a control it can find again, and these it cannot). */
+function focusNext(/** @type {any} */ node, /** @type {string[]} */ keys) {
+  const doc = node?.ownerDocument;
+  for (const k of keys) {
+    const n = doc?.querySelector?.(`[data-focus="${k}"]`);
+    if (!n || n.disabled) continue;
+    try { n.focus({ preventScroll: true }); } catch { n.focus?.(); }
+    return;
   }
 }
 
@@ -271,11 +283,12 @@ function drawEditor(detail, rerender, el, items, binder, have) {
     const kept = e.name.trim() || `Deck ${e.i + 1}`;
     if (setBinderDeck(binder, e.i, { name: kept, cards: e.cards })) { _said = `${kept} kept in your binder.`; _editing = null; }
     rerender();
+    focusNext(keep, [`binder-deck-edit-${e.i}`, 'binder-deck-new']);
   };
   const cancel = el('button', 'act', 'Cancel');
   cancel.type = 'button';
   cancel.setAttribute('data-focus', 'binder-deck-cancel');
-  cancel.onclick = () => { _editing = null; _said = null; rerender(); };
+  cancel.onclick = () => { _editing = null; _said = null; rerender(); focusNext(cancel, [`binder-deck-edit-${e.i}`, 'binder-deck-new']); };
   box.append(keep, cancel);
   detail.append(box);
 }

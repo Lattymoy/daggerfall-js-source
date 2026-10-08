@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { ILIAC_CARDS, ILIAC_LOCATIONS, ILIAC_TIERS, ILIAC_TAGS, CARD_EMBLEMS, STARTER_DECK, cardById } from '../src/net/iliacCards.js';
 import { deckValid, fxText, fxRefusal, ILIAC_VERBS, ILIAC_TRIGGERS, ILIAC_TARGETS, ILIAC_PICKS, ILIAC_TURNS } from '../src/net/iliacHand.js';
 import { RARITY_ORDER } from '../src/systems/lootRarity.js';
+import { EMBLEM_KEYS } from '../src/render/iliacCardFaces.js';
 
 const ALL = [...ILIAC_CARDS, ...ILIAC_LOCATIONS];
 const KEYS = ['id', 'name', 'kind', 'cost', 'power', 'tier', 'tags', 'emblem', 'fx', 'text', 'flavor'].sort();
@@ -16,9 +17,11 @@ const rank = (tier) => ILIAC_TIERS.indexOf(tier);
 
 test('CARDS8 the tiers are the loot\'s, and the painter\'s emblems are the list he was given', () => {
   assert.deepEqual(ILIAC_TIERS, RARITY_ORDER);
-  assert.deepEqual(CARD_EMBLEMS, ['beast', 'insect', 'undead', 'ghost', 'vampire', 'lich', 'were', 'orc', 'giant', 'centaur',
+  assert.deepEqual(CARD_EMBLEMS, ['beast', 'undead', 'ghost', 'vampire', 'lich', 'were', 'orc', 'giant', 'centaur',
     'harpy', 'nymph', 'dreugh', 'daedra', 'atronach', 'dragon', 'knight', 'mage', 'thief', 'assassin', 'priest', 'warrior',
-    'noble', 'prince', 'artifact', 'fire', 'frost', 'shock', 'heal', 'shadow', 'city', 'desert', 'fortress', 'dungeon', 'sea']);
+    'noble', 'prince', 'artifact', 'fire', 'frost', 'shock', 'heal', 'shadow', 'city', 'desert', 'fortress', 'dungeon', 'sea',
+    'razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun']);
+  assert.deepEqual([...CARD_EMBLEMS], [...EMBLEM_KEYS], 'AUDIT CARDS-5 B: the catalog\'s list is the painter\'s, no glyph drawn for no card');
   for (const list of [ILIAC_TIERS, ILIAC_TAGS, CARD_EMBLEMS, ILIAC_CARDS, ILIAC_LOCATIONS, STARTER_DECK]) assert.ok(Object.isFrozen(list));
   const used = new Set(ALL.map((c) => c.emblem));
   assert.deepEqual(CARD_EMBLEMS.filter((e) => !used.has(e)), [], 'every emblem the painter draws is some card\'s');
@@ -62,7 +65,7 @@ test('CARDS8 a Prince is legendary or higher and rules the whole board; an artif
   for (const c of princes) {
     assert.ok(rank(c.tier) >= rank('legendary'), `${c.id}: ${c.tier}`);
     assert.ok(c.tags.includes('prince') && c.tags.includes('daedra'), c.id);
-    assert.equal(c.emblem, 'prince', c.id);
+    assert.equal(c.emblem, c.id === 'azura' ? 'prince' : 'daedric', c.id);   // AUDIT CARDS-5 B: the moon and star are Azura's alone
     const rule = c.fx.filter((f) => f.on === 'ongoing');
     assert.ok(rule.length >= 1, `${c.id} has an ongoing rule`);
     assert.ok(rule.every((f) => f.to === undefined || f.to.startsWith('all.')), `${c.id}'s rule is the whole board's`);
@@ -70,7 +73,7 @@ test('CARDS8 a Prince is legendary or higher and rules the whole board; an artif
   assert.deepEqual(ALL.filter((c) => c.tags.includes('prince')).map((c) => c.kind).filter((k) => k !== 'prince'), []);
   for (const c of ILIAC_CARDS.filter((x) => x.tier === 'artifact')) {
     assert.equal(c.kind, 'spell', c.id);
-    assert.equal(c.emblem, 'artifact', c.id);
+    assert.equal(c.emblem, { 'mehrunes-razor': 'razor', wabbajack: 'staff', 'oghma-infinium': 'book', chrysamere: 'claymore', 'sanguine-rose': 'rose' }[c.id] ?? 'artifact', c.id);   // AUDIT CARDS-5 B: each artifact its own picture, Azura's Star the gem
     assert.ok(c.tags.includes('artifact'), c.id);
   }
   assert.deepEqual(ILIAC_CARDS.filter((c) => c.tags.includes('artifact') && c.tier !== 'artifact').map((c) => c.id), []);
@@ -144,4 +147,13 @@ test('CARDS8 the starter deck: thirty, clean by the deck\'s law, common and magi
   // Playable from the first turn: a one-cost card or more in it, nothing past four.
   assert.ok(STARTER_DECK.filter((id) => cardById(id).cost === 1).length >= 6);
   assert.ok(STARTER_DECK.every((id) => cardById(id).cost <= 4));
+});
+
+test('AUDIT CARDS-5: the catalog\'s rules are the ones looked at - every card\'s name, kind, cost, power, tier, tags and effects, every holding\'s, and the starter deck, digested', async () => {
+  // A change to any of these changes the game a deck was built for: this digest is updated beside the change, on purpose.
+  const { createHash } = await import('node:crypto');
+  const rec = (c) => [c.id, c.name, c.kind, c.cost, c.power, c.tier, c.tags, c.fx];
+  const body = JSON.stringify({ cards: ILIAC_CARDS.map(rec), locations: ILIAC_LOCATIONS.map(rec), starter: STARTER_DECK });
+  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [82, 11, 30]);
+  assert.equal(createHash('sha256').update(body).digest('hex'), 'e28e35bca3b3ef0608cf037541b1929289f29c45163ed242751be9bc6954d9ca');
 });

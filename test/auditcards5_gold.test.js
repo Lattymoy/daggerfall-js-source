@@ -179,3 +179,100 @@ test('AUDIT CARDS-5 lane E\'s survivors: recover on a lost lease keeps; a receip
     assert.equal(s.env.DB._raw.prepare('SELECT paid FROM card_stakes WHERE id = ?').get(st.id).paid, 500);
   } finally { Date.now = realNow; }
 });
+
+test('AUDIT CARDS-5 lane E\'s survivors (second pass), the relay: a top-up from a chair its player is leaving is "not seated"; a socket\'s top-up of an account not its own, or of an account not its seat\'s, refused unspent; one the table moved under after its spend handed back whole', async () => {
+  // leaving mid-hand, cashed out: not seated, nothing spent
+  await withRoom(async ({ r, tick, nowS }) => {
+    const ws = { 'peer-a': await join(r, 'peer-a'), 'peer-b': await join(r, 'peer-b'), 'peer-c': await join(r, 'peer-c') };
+    for (const [i, id] of ['peer-a', 'peer-b', 'peer-c'].entries()) await word(r, ws[id], { op: 'sit', table: 0, chair: i, chairs: 3, bb: 10, stake: (await order(r, nowS(), { s: `acct-${id}` })).stake });
+    tick(HOLDEM_FIRST_MS); await r.fire();
+    const t = r.room._holdem.get(0);
+    const who = t.seats[t.handSeats[t.hand.toAct]].id;
+    await word(r, ws[who], { op: 'stand', table: 0 });
+    assert.ok(t.hand && t.seats.find((x) => x?.id === who)?.leaving);
+    ws[who].sent.length = 0;
+    const up = await order(r, nowS(), { s: `acct-${who}`, ca: 100 });
+    await word(r, ws[who], { op: 'topup', table: 0, stake: up.stake });
+    assert.equal(holdem(ws[who]).find((m) => m.error)?.error, 'not seated', 'a chair cashed out is no seat to top up');
+    assert.equal(r.store.get(`cstake:${up.cj}`), undefined);
+  });
+  // the seat's id reconnected under another account: neither account's order tops it up
+  await withRoom(async ({ r, nowS }) => {
+    const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
+    await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
+    await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
+    const a2 = r.connect();
+    await r.hello(a2, 'peer-a', null, { name: 'peer-a', tokenSub: 'acct-other' });
+    const t = r.room._holdem.get(0);
+    assert.equal(t.seats[0]?.id, 'peer-a', 'the chair kept');
+    for (const s of ['acct-other', 'acct-peer-a']) {   // the socket's own account (not the seat's); the seat's (not the socket's)
+      a2.sent.length = 0;
+      const up = await order(r, nowS(), { s, ca: 100 });
+      await word(r, a2, { op: 'topup', table: 0, stake: up.stake });
+      assert.equal(holdem(a2).find((m) => m.error)?.error, 'stake refused', s);
+      assert.equal(r.store.get(`cstake:${up.cj}`), undefined, `${s}: not spent`);
+      assert.equal(t.seats[0].stack, 500, `${s}: the stack unmoved`);
+    }
+  });
+  // a hand dealt while the top-up's spend was written: spent, refused, the whole of it back
+  await withRoom(async ({ r, tick, nowS }) => {
+    const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
+    await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
+    await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
+    const up = await order(r, nowS(), { s: 'acct-peer-a', ca: 100 });
+    const st = r.state.storage, get = st.get;
+    st.get = async (k) => { if (k === `cstake:${up.cj}`) { st.get = get; tick(HOLDEM_FIRST_MS); await r.fire(); } return get.call(st, k); };
+    a.sent.length = 0;
+    await word(r, a, { op: 'topup', table: 0, stake: up.stake });
+    st.get = get;
+    const t = r.room._holdem.get(0);
+    assert.ok(t.hand, 'the hand dealt meanwhile');
+    assert.equal(holdem(a).find((m) => m.error)?.error, 'in hand');
+    assert.notEqual(r.store.get(`cstake:${up.cj}`), undefined, 'spent');
+    assert.deepEqual(receipts(a).filter((x) => x.j === up.cj).map((x) => [x.r, x.w]), [[100, 'refused']], 'and handed back whole');
+  });
+});
+
+test('AUDIT CARDS-5 lane E\'s survivors (second pass), the device and the service: a receipt banks where its stake was staked, wherever the player stands now; a paid request asked again is refused; a top-up is one said as true; a settle by nothing brought twice at once is one settle', async () => {
+  // the device: staked at 17, the receipt heard at 42 - home to 17
+  let reg = 17;
+  const banked = [], kept = new Map();
+  const book = createCardStakes({ door: { stake: async (q) => ({ ok: true, data: { stake: `o-${q.rid}`, id: sid() } }), cashout: async () => ({ ok: true, data: { gold: 300 } }) },
+    realm: { act: async ({ call, reserve, apply }) => { reserve?.(); const x = await call({}); if (x?.ok) apply?.(x); return x; } },
+    wallet: (g) => ({ gold: () => 9999, pay: () => () => {}, bank: (v) => banked.push([g, v]) }), character: () => 'CH1', region: () => reg,
+    storage: { get: (k) => kept.get(k), set: (k, v) => kept.set(k, v) }, now: () => 0 });
+  const st = await book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 300 });
+  book.seated(st.id);
+  reg = 42;
+  assert.equal(book.receive(await mintCardReceipt({ s: 'acct-me', j: st.id, r: 300, w: 'stood' }, null, { subtle, nowS: 1000 })), st.id);
+  await book.claim();
+  assert.deepEqual(banked, [[17, 300]], 'the region it was staked from');
+  // the service
+  let now = T0;
+  const realNow = Date.now; Date.now = () => now * 1000;
+  try {
+    const s = await standService({});
+    const who = await s.registered('dee');
+    const R = await seatRealm(s.env, who.secret, 'dee', { name: 'dee', level: 5, items: [], goldPieces: 5000 });
+    const body = (x) => ({ character: R.id, realm: R.at(), region: 17, room: 'interior:m1.2', table: 0, bb: 10, amount: 500, rid: `card-pass-${String(++n).padStart(8, '0')}`, ...x });
+    const q = body({});
+    const held = (await s.call('/v1/cards/stake', q, who.secret)).body;
+    const rec = await mintCardReceipt({ s: who.id, j: held.id, r: 500, w: 'stood' }, s.gatePriv, { subtle, nowS: now });
+    assert.equal((await s.call('/v1/cards/cashout', { character: R.id, realm: R.at(), receipt: rec }, who.secret)).body.gold, 500);
+    assert.deepEqual((await s.call('/v1/cards/stake', { ...q, realm: R.at() }, who.secret)).body, { error: 'cards-stake-paid' }, 'a paid stake gives no order again');
+    for (const topup of [1, 'yes']) assert.equal((await s.call('/v1/cards/stake', body({ topup, amount: 50 }), who.secret)).body.error, 'bad-buy-in', `topup ${JSON.stringify(topup)} is no top-up`);
+    const top = (await s.call('/v1/cards/stake', body({ topup: true, amount: 50 }), who.secret)).body;
+    const joined = await mintCardReceipt({ s: who.id, j: top.id, r: 0, w: 'joined' }, s.gatePriv, { subtle, nowS: now });
+    const at = R.at();
+    // both past the row's read before either settles: the first batch waits for the second
+    const DB = s.env.DB, batch = DB.batch;
+    let open, calls = 0;
+    const met = new Promise((res) => { open = res; });
+    let timer;
+    DB.batch = async (list) => { if (++calls === 1) await Promise.race([met, new Promise((res) => { timer = setTimeout(res, 1000); })]); else open(); return batch.call(DB, list); };
+    const both = (await Promise.all([0, 1].map(() => s.call('/v1/cards/cashout', { character: R.id, realm: at, receipt: joined }, who.secret)))).map((x) => x.body);
+    DB.batch = batch; clearTimeout(timer);
+    assert.equal(calls, 2, 'both reached the settle');
+    assert.deepEqual(both.map((x) => [x.ok, x.gold, !!x.repeat]).sort(), [[true, 0, false], [true, 0, true]], JSON.stringify(both));
+  } finally { Date.now = realNow; }
+});

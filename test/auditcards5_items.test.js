@@ -156,3 +156,79 @@ test('AUDIT CARDS-5 C lane\'s pack survivors, driven: a binder carried takes the
     view.unmount();
   });
 });
+
+test('AUDIT CARDS-5 C3 (lane C\'s aside): two books are two keys on the bar, and a book slotted under the old bare key is found again by its title', async () => {
+  const q = await import('../src/systems/quickslots.js');
+  const { itemLongName } = await import('../src/systems/itemInfo.js');
+  const book = (message) => ({ group: 'Books', templateIndex: 277, name: 'Book', message, stackCount: 1 });
+  const other = book(7), doors = book(417);   // 417: a port book, titled without the game's data
+  assert.notEqual(q.quickslotKey(other), q.quickslotKey(doors), 'a book is keyed by its text');
+  assert.equal(q.quickslotKey({ group: 'Books', templateIndex: 277 }), 'Books|277|||||||', 'a record with no text keeps the bare key');
+  const title = itemLongName(doors);
+  assert.notEqual(title, itemLongName(other));
+  const old = q.quickslotKey({ ...doors, message: undefined });
+  q.restoreQuickslotSaveData({ hotbar: [{ type: 'item', kind: 'use', key: old, name: title }] });
+  const view = q.hotbarView({ items: [other, doors] });
+  assert.equal(view[0].item, doors, 'the titled book, not the first book in the pack');
+  assert.equal(q.quickslotSaveData().hotbar[0].key, q.quickslotKey(doors), 'and saved under its new key');
+  q.restoreQuickslotSaveData({ hotbar: [{ type: 'item', kind: 'use', key: old, name: 'A Title Not Carried' }] });
+  assert.equal(q.hotbarView({ items: [other, doors] })[0].ghost, true, 'a title not carried stays a ghost');
+  q.clearQuickslots();
+});
+
+test('AUDIT CARDS-5 lane C\'s survivors (second pass): the binder is the binder only in its group; a holding costs nothing said; each wears its own picture; twelve decks at most; a card-less stack still stacks; a card\'s and the binder\'s lines on the info card and the stat panel; an array is no deck; the sheet counts copies', async () => {
+  const { isCardBinder, ILIAC_CARD_ROW } = await import('../src/systems/iliacItems.js');
+  const { itemInfoRows, itemStatRows } = await import('../src/systems/itemInfo.js');
+  const { addItem, stacksWith } = await import('../src/systems/inventory.js');
+  const { inventoryItemImage } = await import('../src/systems/itemTemplates.js');
+  // the binder's group
+  assert.equal(isCardBinder({ templateIndex: CARD_BINDER_TEMPLATE, group: 'Books' }), false, 'another group: no binder');
+  assert.equal(binderOf([{ templateIndex: CARD_BINDER_TEMPLATE, group: 'Books' }]), null);
+  assert.equal(isCardBinder(mintBinder()), true);
+  // a holding's line: its tier and kind, no cost
+  const loc = ILIAC_LOCATIONS[0];
+  assert.equal(iliacCardLines(mintIliacCard(loc.id))[0], `${loc.tier[0].toUpperCase()}${loc.tier.slice(1)} Location`);
+  // the pictures: the binder the Spellbook's (209/4), the card the Parchment's (209/8)
+  const bi = inventoryItemImage(mintBinder()), ci = inventoryItemImage(mintIliacCard(A));
+  assert.deepEqual([bi.archive, bi.record], [209, 4]);
+  assert.deepEqual([ci.archive, ci.record], [209, ILIAC_CARD_ROW.worldTextureRecord]);
+  // twelve decks at most: the readers' list, and no thirteenth added
+  assert.equal(BINDER_DECKS_MAX, 12);
+  const full = mintBinder(Array.from({ length: 13 }, (_, i) => ({ name: `D${i}`, cards: [] })));
+  assert.equal(binderDecks(full).length, 12);
+  full.decks = full.decks.slice(0, 12);
+  assert.equal(setBinderDeck(full, 12, { name: 'more', cards: [] }), false, 'a full binder takes no thirteenth');
+  // a stack with no card still merges with its own kind
+  const book = () => ({ group: 'Books', templateIndex: 277, message: 7, stackCount: 1 });
+  assert.equal(stacksWith(book(), book()), true);
+  const list = [];
+  addItem(list, book()); addItem(list, book());
+  assert.equal(list.length, 1, 'two of one book: one stack');
+  assert.equal(stacksWith(mintIliacCard(A), mintIliacCard(B)), false, 'two cards stay two');
+  // the info card's rows and the stat panel's lines
+  for (const it of [mintIliacCard(A), mintBinder()]) {
+    const want = survivalInfoTokens(it).map((t) => t.text);
+    assert.deepEqual(itemInfoRows(it, () => null).map((r) => r.text), want, 'the card\'s own tokens, never a record lookup');
+    assert.deepEqual(itemStatRows(it).filter((r) => r.label === '').map((r) => r.text), want.slice(2), 'its lines on the stat panel');
+  }
+  // an array is no deck, however it is dressed
+  const arr = /** @type {any} */ ([]);
+  arr.name = 'x'; arr.cards = [];
+  assert.equal(validBinderDeck(arr), false);
+  // the sheet's head: copies of kinds
+  withDom((dom) => {
+    const host = dom.mk('div'); dom.body.append(host);
+    const e = { items: [], goldPieces: 0 };
+    giveBinder(e);
+    e.items.push(mintIliacCard(units.find((c) => !STARTER_DECK.includes(c.id)).id, 3));
+    const have = collectionOf(e.items);
+    const copies = [...have.values()].reduce((s, n) => s + n, 0);
+    assert.notEqual(copies, have.size);
+    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
+    const text = (n) => [n.textContent, ...n.children.map(text)].join(' ');
+    host.querySelectorAll('button').find((x) => /^\s*Books/.test(text(x))).onclick({});
+    host.querySelectorAll('button').find((x) => /Card Binder/.test(text(x))).onclick({});
+    assert.equal(host.querySelector('.bindersheet').querySelector('.wallet-head').textContent, `${copies} cards of ${have.size} kinds`);
+    view.unmount();
+  });
+});

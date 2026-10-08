@@ -182,3 +182,160 @@ test('AUDIT CARDS-5 D1-D7 and lane D\'s survivors: the Cards part - faces painte
   assert.equal(made, 2, 'another size, another face');
   resetCardsPart();
 });
+
+test('AUDIT CARDS-5 D3: a press that takes its own button away hands the keyboard on - New deck to the name, Keep to the deck kept, Cancel back where it came from', () => {
+  globalThis.document = undefined;
+  _resetForTests();
+  resetCardsPart();
+  const me = { items: [] };
+  giveBinder(me);
+  let focused = null;
+  const box = { root: null };
+  const doc = { querySelector: (sel) => { const k = /^\[data-focus="(.+)"\]$/.exec(sel)?.[1]; return all(box.root, (c) => c.getAttribute?.('data-focus') === k)[0] ?? null; } };
+  const el2 = (t, cls, text) => { const n = el(t, cls, text); n.ownerDocument = doc; n.focus = () => { focused = n; }; return n; };
+  const draw = () => { box.root = el2('div'); drawCardsPart(box.root, draw, { el: el2, divider: (t) => el2('h4', 'px-divider', t), player: me }); };
+  draw();
+  const key = () => focused?.getAttribute('data-focus') ?? null;
+  const at = (k) => all(box.root, (c) => c.getAttribute?.('data-focus') === k)[0];
+  const decks = () => all(box.root, (c) => /^binder-deck-edit-\d+$/.test(c.getAttribute?.('data-focus') ?? '')).length;
+  const n0 = decks();
+  at('binder-deck-new').onclick();
+  assert.equal(key(), 'binder-deck-name', 'New deck: the keyboard on the new deck\'s name');
+  at('binder-deck-cancel').onclick();
+  assert.equal(key(), 'binder-deck-new', 'Cancel on a new deck: back to New deck');
+  at('binder-deck-edit-0').onclick();
+  focused = null;
+  at('binder-deck-cancel').onclick();
+  assert.equal(key(), 'binder-deck-edit-0', 'Cancel on a deck: back to its Edit');
+  at('binder-deck-edit-0').onclick();
+  focused = null;
+  at('binder-deck-keep').onclick();
+  assert.equal(key(), 'binder-deck-edit-0', 'Keep: the deck kept');
+  assert.equal(decks(), n0);
+});
+
+test('AUDIT CARDS-5 lane D\'s survivors (second pass): the Collections page - a landing on a part not shown falls back to one that is; an unfound row says where it is said to be; a found one opened whole says its power; an unfound set piece is never named; the reset closes the row and forgets the Cards part', () => {
+  globalThis.document = undefined;
+  _resetForTests(); setPref('lootRarity', true); CX._resetCodexForTests();
+  CX.noteFind(legend('wyrmbane'), { quiet: true });
+  resetCollectionsPage();
+  const me = { items: [] };
+  // no binder: a landing on cards opens the codex
+  setCollectionsPart('cards');
+  let p = page(me);
+  assert.ok(all(p.root, (c) => c.classList?.contains('codex-line')).length > 0, 'the codex drawn');
+  assert.equal(all(p.root, (c) => c.textContent === 'No Card Binder carried.').length, 0);
+  // an unfound row: its group and its hint
+  const rows = CX.codexRows();
+  const u = rows.find((r) => !r.found && r.hint);
+  const uline = all(p.root, (c) => c.dataset?.record === u.id)[0];
+  assert.equal(uline.children[1].textContent, `${u.group} · ${u.hint}`);
+  // a found one opened whole: its power
+  const w = rows.find((r) => r.id === 'wyrmbane');
+  assert.ok(LR.powerLine(w.power));
+  all(p.root, (c) => c.dataset?.record === 'wyrmbane')[0].onclick();
+  assert.ok(all(p.root, (c) => c.classList?.contains('codex-whole'))[0].children.some((c) => c.textContent === LR.powerLine(w.power)), 'its power said');
+  // an unfound set piece: '?'
+  const unfoundPieces = all(p.root, (c) => c.classList?.contains('unfound'));
+  assert.ok(unfoundPieces.length > 0);
+  assert.ok(unfoundPieces.every((s) => s.textContent === '?'), 'never its name or id');
+  // the reset: the row closed
+  resetCollectionsPage();
+  p = page(me);
+  assert.equal(all(p.root, (c) => c.classList?.contains('codex-whole')).length, 0, 'the row closed');
+  // the reset: the Cards part forgotten too
+  giveBinder(me);
+  setCollectionsPart('cards');
+  p = page(me);
+  button(p.root, 'Princes').onclick();
+  assert.ok(button(p.root, 'Princes').classList.contains('on'));
+  resetCollectionsPage(); setCollectionsPart('cards');
+  p = page(me);
+  assert.ok(button(p.root, 'All').classList.contains('on'), 'the filter forgotten');
+  resetCollectionsPage();
+  CX._resetCodexForTests();
+});
+
+test('AUDIT CARDS-5 lane D\'s survivors (second pass): the Cards part - the decks\' head and count, twelve at most, a new deck named, its name cut, the reset forgets an open builder and an armed Delete, a card not held or every copy in says so, the chips by cost, a face at the screen\'s pixel ratio', async () => {
+  const { BINDER_DECKS_MAX, DECK_NAME_MAX, binderDecks } = await import('../src/systems/iliacItems.js');
+  globalThis.document = undefined;
+  _resetForTests();
+  resetCardsPart();
+  const me = { items: [] };
+  giveBinder(me);
+  const binder = binderOf(me.items);
+  const box = { root: el('div') };
+  const draw = () => { box.root = el('div'); drawCardsPart(box.root, draw, { el, divider: (t) => el('h4', 'px-divider', t), player: me }); };
+  const r = () => box.root;
+  const focus = (k) => all(r(), (c) => c.getAttribute?.('data-focus') === k)[0];
+  const said = () => all(r(), (c) => c.classList?.contains('binder-said'))[0]?.textContent;
+  const tile = (id) => all(r(), (c) => c.dataset?.card === id && c.classList.contains('binder-tile'))[0];
+  draw();
+  // the head and a ready deck's count
+  const decks = binderDecks(binder);
+  assert.ok(decks.length >= 1);
+  assert.ok(all(r(), (c) => c.tag === 'h4').some((h) => h.textContent === `Decks - ${decks.length} of ${BINDER_DECKS_MAX}`));
+  const ok = all(r(), (c) => c.classList?.contains('binder-deck'))[0].children.find((c) => c.classList?.contains('ok'));
+  assert.equal(ok.textContent, `${decks[0].cards.length} cards - ready`);
+  // the reset: an armed Delete disarmed, an open builder closed
+  focus('binder-deck-drop-0').onclick();
+  assert.equal(focus('binder-deck-drop-0').textContent, 'Delete it');
+  resetCardsPart(); draw();
+  assert.equal(focus('binder-deck-drop-0').textContent, 'Delete', 'the reset disarms');
+  focus('binder-deck-new').onclick();
+  assert.equal(all(r(), (c) => c.classList?.contains('binder-edit')).length, 1);
+  resetCardsPart(); draw();
+  assert.equal(all(r(), (c) => c.classList?.contains('binder-edit')).length, 0, 'the reset closes the builder');
+  // a new deck: named after its place; a long name cut as typed
+  focus('binder-deck-new').onclick();
+  assert.equal(focus('binder-deck-name').value, `Deck ${decks.length + 1}`);
+  focus('binder-deck-name').value = 'n'.repeat(80);
+  focus('binder-deck-name').oninput();
+  draw();
+  assert.equal(focus('binder-deck-name').value, 'n'.repeat(DECK_NAME_MAX), 'the name cut where it is typed');
+  // a card not held; a card's every copy in
+  const held = new Set(STARTER_DECK);
+  const unheld = ILIAC_CARDS.find((c) => !held.has(c.id) && copiesAllowed(c) === 2);
+  tile(unheld.id).onclick();
+  assert.equal(said(), `Your binder holds no ${unheld.name}.`);
+  me.items.push(mintIliacCard(unheld.id, 1));
+  draw();
+  tile(unheld.id).onclick();
+  assert.match(all(r(), (c) => c.classList?.contains('px-qverdict'))[0].textContent, /Building - 1 of /);
+  tile(unheld.id).onclick();
+  assert.equal(said(), `Your binder's 1 copy of ${unheld.name} is in this deck.`);
+  assert.match(all(r(), (c) => c.classList?.contains('px-qverdict'))[0].textContent, /Building - 1 of /, 'not past the binder\'s one');
+  focus('binder-deck-cancel').onclick();
+  // the chips: cheapest first, whatever the deck's order
+  const byCost = new Map();
+  for (const id of STARTER_DECK) { const c = cardById(id); if (!byCost.has(c.cost)) byCost.set(c.cost, id); }
+  const costs = [...byCost.keys()].sort((a, b) => b - a);
+  assert.ok(costs.length >= 2);
+  binder.decks = [{ name: 'Down', cards: costs.map((k) => byCost.get(k)) }];
+  draw();
+  focus('binder-deck-edit-0').onclick();
+  assert.deepEqual(all(r(), (c) => c.classList?.contains('binder-chip')).map((c) => c.dataset.card), [...costs].reverse().map((k) => byCost.get(k)));
+  focus('binder-deck-cancel').onclick();
+  // twelve decks: no New deck; eleven: one
+  binder.decks = Array.from({ length: BINDER_DECKS_MAX - 1 }, (_, i) => ({ name: `D${i}`, cards: [] }));
+  draw();
+  assert.ok(focus('binder-deck-new'));
+  binder.decks = Array.from({ length: BINDER_DECKS_MAX }, (_, i) => ({ name: `D${i}`, cards: [] }));
+  draw();
+  assert.equal(focus('binder-deck-new'), undefined, 'a full binder: no New deck');
+  // a face at the screen's pixel ratio, two at most
+  _clearCardFacesForTests();
+  const doc = { createElement: () => { const c = { getContext: () => null }; c.ownerDocument = doc; return c; } };
+  const was = globalThis.devicePixelRatio;
+  try {
+    globalThis.devicePixelRatio = 2;
+    assert.equal(cardCanvas(doc, cardById(STARTER_DECK[0]), TILE_H).height, 2 * TILE_H);
+    _clearCardFacesForTests();
+    globalThis.devicePixelRatio = 3;
+    assert.equal(cardCanvas(doc, cardById(STARTER_DECK[1]), TILE_H).height, 2 * TILE_H);
+  } finally {
+    if (was === undefined) delete globalThis.devicePixelRatio; else globalThis.devicePixelRatio = was;
+    _clearCardFacesForTests();
+  }
+  resetCardsPart();
+});

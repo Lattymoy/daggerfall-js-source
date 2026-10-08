@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -736,7 +736,8 @@ CARDS8"**.
   raster.
 - **THE CARDS AS ITEMS** (`systems/iliacItems.js`; section 6.3): a card is template 581 named by its `card` - two of one
   card stack, two cards never (`inventory.js` stacksWith), a split keeps it (splitStack); its name is the catalog's
-  ("Card: Rat"), never stored; weightless, worth a coin, not bound (CARDS9 brings it into the trade and the market). The
+  ("Card: Rat"), never stored; weightless, worth a coin, not bound - it moves as any unbound item does (the trades, a listing, a shelf), though no
+  shop buys one (AUDIT CARDS-5 C2); CARDS9 sets its worth and its customs. The
   CARD BINDER is template 582, the Wallet's shape (bound, pack-only, refused by the realm's trade - `BOUND_TEMPLATES`):
   it organizes - the cards stay in the pack's own `items`, never a second list, and leave the pages for the binder's
   sheet while it is carried - and holds the DECKS (`decks`, declared item fields, replaced whole when they change). Every
@@ -749,7 +750,40 @@ CARDS8"**.
   second press, its cards staying in the binder.
 - **Not yet:** where cards come from (foes, tavern packs, quests, winning, the trade and the market - CARDS9) and Iliac
   Hand at the table against patrons and online (CARDS10). A card minted offline that walks into the realm is worth
-  nothing to its gold law today; CARDS9 decides its customs before cards change hands there.
+  nothing to its gold law today (it already moves there as any unbound item, worth a coin - AUDIT CARDS-5 C2); CARDS9
+  decides its customs before cards have any source but the starter gift.
 - **Pins:** `test/cards7_rules.test.js` 27, `test/cards8_catalog.test.js` 8, `test/cards8_faces.test.js` 7,
   `test/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 21, all dead; the engine's own 22 were run by its
   builder, all caught.
+
+## 27. AUDIT CARDS-5 (2026-10-08): the Iliac Hand, its faces, the binder, the page and the gold tables again
+
+Mac: **"Alright, one last comprehensive audit to ensure this is perfection"**. Five lanes over a frozen snapshot of
+section 26 and the gold tables' AUDIT CARDS-4 fixes - the record is `01-Overview/Audit-Cards-5.md`. What it changed here:
+
+- **The rules** (`net/iliacHand.js`): a weaken takes from the power the card shows, never below nothing (A1); an unveiled
+  card's ongoing text is its own once it is face up, never twice (A2); the reveal's tie is the deal's coin, then turn
+  about (`state.coin`, drawn after the shuffles); a source that is not a 32-bit draw, or draws without end, is refused at
+  the deal (`ILIAC_RAND_DRAWS_MAX`); the words say "round the table", "its owner summons", "one card".
+- **The catalog** (`net/iliacCards.js`): names, tags and flavor as Daggerfall has them (the Ancient Vampire, the Ice
+  Atronach, the guilds' and the Knights of the Wheel's ids); each artifact its own picture (Azura's Star the gem), every
+  Prince but Azura the Daedric sigil, the bat, the scorpion, the boar, the spriggan, the gargoyle, Banish, Recall and Turn
+  Undead their own - fourteen new emblems, the beetle and the insect tag gone with no card to wear them; the list is the
+  painter's (`CARD_EMBLEMS` is `EMBLEM_KEYS`), and the catalog's rules are digested in a pin.
+- **The faces** (`render/iliacCardFaces.js`): a tile (112 high, the grid's) is drawn as a tile - no rules box, the
+  emblem large, the name at 8 px or more; the gem and the shield inside the panel; the flavor kept beside the shield; the
+  cost's digit on the gem's dark; a keyline under every rim; names on two lines before they are condensed.
+- **The items**: a binder's decks made sound on a load (`cleanBinders`) and read sound everywhere (`binderDecks`); no shop
+  buys a card; the hotbar tells one card from another; chargen gives the binder whatever mark a stale entity carries; the
+  binder's Use opens its sheet; and a book is keyed by its text on the bar (an old save's found again by its title).
+  Recorded: a binder thrown away is not given again (the Wallet's law - the gift is once); a card moves as any unbound
+  item does, with no source but the starter gift until CARDS9 sets its customs.
+- **The page**: the faces painted once a size (a cache), every act a focus key, an armed Delete disarmed by any other
+  press or by leaving, thirty cards and a card's copies said at the press, the binder's shortfall marked; the Codex
+  part's rows and lines the Reforge's own; a landing names its part.
+- **The gold tables**: a cash-out is bounded by the stakes that came to its table, not by six seats' most (E NEW-1); a
+  stake at a chair its player is leaving is handed back, and the client never takes a chair it is leaving for its own
+  (NEW-2); a request is let go only on a refusal or a never-asked, and an order for one let go elsewhere is kept again
+  (NEW-3). Recorded: a top-up's row stays held until its receipt, so a character delete waits on it (N-4; no gold lost).
+- **Pins:** `test/auditcards5_gold.test.js`, `_items`, `_ui`; `cards7_rules` 31, `cards8_faces` 15, `cards8_catalog` 9;
+  `tools/mutants/auditcards5.json`.

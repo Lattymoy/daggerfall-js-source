@@ -868,3 +868,25 @@ test('AUDIT CARDS-5 lane A\'s last survivors: a both-sides weaken takes its owne
   turn(d, [[0, 0]]);
   assert.equal(d.holdings[0].sides[0].length, 1, 'the face-down bat stayed where it was played');
 });
+
+test('AUDIT CARDS-5 lane A\'s last survivor: a face-down card\'s end text is still text - it never fires while the card lies hidden, on itself or across the table', () => {
+  const st = game(['werewolf'], [], ['privateers-hold', 'daggerfall', 'vampire-crypt']);
+  handOf(st, 0, ['werewolf']);
+  st.players[0].magicka = ILIAC_MAGICKA_MAX;
+  const ev = turn(st, [[0, 0]]);
+  const w = st.holdings[0].sides[0][0];
+  assert.equal(w.down, true);
+  assert.equal(w.mod, 0, 'the Werewolf\'s "End of turn: +1" waits for its unveiling, and never fires then');
+  assert.equal(ev.filter((e) => e.t === 'buff').length, 0);
+  turn(st);
+  assert.equal(st.holdings[0].sides[0][0].mod, 0);
+  // and one aimed across the table: the Daedroth's "End of turn: -1 to their weakest here" reaches no one while hidden
+  const d = game(['daedroth'], ['harpy'], ['privateers-hold', 'daggerfall', 'vampire-crypt']);
+  const foe = place(d, 1, 0, 'harpy');
+  handOf(d, 0, ['daedroth']);
+  d.players[0].magicka = ILIAC_MAGICKA_MAX;
+  const dev = turn(d, [[0, 0]]);
+  assert.equal(d.holdings[0].sides[0][0].down, true);
+  assert.equal(d.holdings[0].sides[1].find((c) => c.uid === foe).mod, 0, 'the Harpy untouched');
+  assert.equal(dev.filter((e) => e.t === 'weaken').length, 0);
+});

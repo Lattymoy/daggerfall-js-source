@@ -18,17 +18,17 @@ import { RARITIES, RARITY_ORDER } from '../src/systems/lootRarity.js';
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 /** The first set's emblems, then AUDIT CARDS-5's fourteen - EMBLEM_KEYS in its order. */
-const EMBLEMS_35 = ['beast', 'insect', 'undead', 'ghost', 'vampire', 'lich', 'were', 'orc', 'giant', 'centaur', 'harpy', 'nymph',
+const EMBLEMS_34 = ['beast', 'undead', 'ghost', 'vampire', 'lich', 'were', 'orc', 'giant', 'centaur', 'harpy', 'nymph',
   'dreugh', 'daedra', 'atronach', 'dragon', 'knight', 'mage', 'thief', 'assassin', 'priest', 'warrior', 'noble', 'prince',
   'artifact', 'fire', 'frost', 'shock', 'heal', 'shadow', 'city', 'desert', 'fortress', 'dungeon', 'sea'];
 const EMBLEMS_NEW = ['razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun'];
-const EMBLEMS = [...EMBLEMS_35, ...EMBLEMS_NEW];
+const EMBLEMS = [...EMBLEMS_34, ...EMBLEMS_NEW];
 const KINDS = ['unit', 'spell', 'prince', 'location'];
 /**
  * Each glyph's measure as drawn - its path segments / fills / strokes. A detail lost (the skull's sockets, the
  * crescent's bite) changes it; a deliberate redraw of a glyph updates its entry here, beside the picture it was looked at in.
  */
-const GLYPH_MEASURE = Object.freeze({beast: '14/1/0', insect: '28/2/1', undead: '23/1/0', ghost: '14/1/0', vampire: '16/4/0', lich: '30/2/0', were: '31/1/0', orc: '24/4/0', giant: '21/2/0', centaur: '33/2/1', harpy: '56/4/1', nymph: '12/4/0', dreugh: '22/4/1', daedra: '27/3/0', atronach: '26/2/2', dragon: '31/2/0', knight: '36/1/0', mage: '17/2/0', thief: '16/2/0', assassin: '17/5/0', priest: '21/1/1', warrior: '30/2/0', noble: '23/1/0', prince: '13/2/0', artifact: '28/2/1', fire: '14/1/0', frost: '60/0/1', shock: '7/1/0', heal: '17/1/1', shadow: '13/1/1', city: '35/1/0', desert: '26/3/1', fortress: '51/1/0', dungeon: '37/2/1', sea: '15/1/1', razor: '15/2/0', staff: '17/2/2', book: '47/3/2', claymore: '23/2/0', rose: '27/2/1', daedric: '23/3/1', scorpion: '56/5/1', bat: '25/1/0', boar: '45/3/0', tree: '42/2/2', gargoyle: '53/1/0', banish: '28/1/2', recall: '91/1/2', sun: '42/2/0'});
+const GLYPH_MEASURE = Object.freeze({beast: '14/1/0', undead: '23/1/0', ghost: '14/1/0', vampire: '16/4/0', lich: '30/2/0', were: '31/1/0', orc: '24/4/0', giant: '21/2/0', centaur: '33/2/1', harpy: '56/4/1', nymph: '12/4/0', dreugh: '22/4/1', daedra: '27/3/0', atronach: '26/2/2', dragon: '31/2/0', knight: '36/1/0', mage: '17/2/0', thief: '16/2/0', assassin: '17/5/0', priest: '21/1/1', warrior: '30/2/0', noble: '23/1/0', prince: '13/2/0', artifact: '28/2/1', fire: '14/1/0', frost: '60/0/1', shock: '7/1/0', heal: '17/1/1', shadow: '13/1/1', city: '35/1/0', desert: '26/3/1', fortress: '51/1/0', dungeon: '37/2/1', sea: '15/1/1', razor: '15/2/0', staff: '17/2/2', book: '47/3/2', claymore: '23/2/0', rose: '27/2/1', daedric: '23/3/1', scorpion: '56/5/1', bat: '25/1/0', boar: '45/3/0', tree: '42/2/2', gargoyle: '53/1/0', banish: '28/1/2', recall: '91/1/2', sun: '42/2/0'});
 const TILE = [78, 112], LARGE = [260, 371], FULL = [350, 500];
 const SIZES = [TILE, LARGE, FULL];
 
@@ -149,7 +149,7 @@ const catalog = async () => {
 };
 
 test('CARDS8 every emblem the catalog carries has its own glyph, traced from paths and filled or stroked', () => {
-  assert.deepEqual([...EMBLEM_KEYS], EMBLEMS, 'EMBLEM_KEYS: the first 35, then the fourteen of AUDIT CARDS-5, in order');
+  assert.deepEqual([...EMBLEM_KEYS], EMBLEMS, 'EMBLEM_KEYS: the first 34, then the fourteen of AUDIT CARDS-5, in order');
   assert.ok(Object.isFrozen(EMBLEM_KEYS));
   assert.deepEqual(Object.keys(EMBLEM_PAINTERS), EMBLEMS, 'one painter per emblem, no more and no fewer');
   assert.ok(Object.isFrozen(EMBLEM_PAINTERS));

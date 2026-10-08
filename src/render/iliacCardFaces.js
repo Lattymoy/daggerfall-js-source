@@ -207,19 +207,6 @@ const GLYPHS = {
     oval(ctx, 0.13, -0.32, 0.1, 0.14); oval(ctx, 0.36, -0.12, 0.1, 0.13);
     part(ctx);
   },
-  insect(ctx) {       // a beetle: the shell split down its back, the head, six legs and the feelers
-    oval(ctx, 0, 0.08, 0.24, 0.32);
-    poly(ctx, [[-0.015, -0.18], [0.015, -0.18], [0.015, 0.34], [-0.015, 0.34]]);
-    part(ctx, 'evenodd');
-    circ(ctx, 0, -0.36, 0.11); part(ctx);
-    for (const m of [1, -1]) {
-      ctx.moveTo(0.2 * m, -0.06); ctx.lineTo(0.38 * m, -0.2); ctx.lineTo(0.44 * m, -0.3);
-      ctx.moveTo(0.23 * m, 0.08); ctx.lineTo(0.46 * m, 0.1);
-      ctx.moveTo(0.2 * m, 0.24); ctx.lineTo(0.38 * m, 0.38); ctx.lineTo(0.42 * m, 0.47);
-      ctx.moveTo(0.05 * m, -0.45); ctx.quadraticCurveTo(0.1 * m, -0.5, 0.22 * m, -0.48);
-    }
-    line(ctx, 0.05);
-  },
   undead(ctx) { skull(ctx); },                                                     // a skull
   ghost(ctx) {        // a shade: a domed sheet with a ragged hem, two eyes and a mouth
     ctx.moveTo(-0.32, 0.38); ctx.lineTo(-0.32, -0.08); ctx.arc(0, -0.08, 0.32, Math.PI, TAU); ctx.lineTo(0.32, 0.38);
@@ -694,9 +681,10 @@ function painter(trace) {
 export const EMBLEM_PAINTERS = Object.freeze(Object.fromEntries(Object.entries(GLYPHS).map(([k, trace]) => [k, painter(trace)])));
 
 /**
- * EMBLEM_PAINTERS' keys in their order: the first set's 35, then AUDIT CARDS-5's 14 (razor, staff, book, claymore,
- * rose, daedric, scorpion, bat, boar, tree, gargoyle, banish, recall, sun). 'prince', the moon and the star, is Azura's
- * own; 'daedric' is the sigil of a Prince who has no picture of their own.
+ * EMBLEM_PAINTERS' keys in their order: the first set's 34 (its beetle gone - no card is an insect once the scorpion
+ * has its own), then AUDIT CARDS-5's 14 (razor, staff, book, claymore, rose, daedric, scorpion, bat, boar, tree,
+ * gargoyle, banish, recall, sun) - net/iliacCards.js CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
+ * Azura's own; 'daedric' is the sigil of a Prince who has no picture of their own.
  */
 export const EMBLEM_KEYS = Object.freeze(Object.keys(GLYPHS));
 
