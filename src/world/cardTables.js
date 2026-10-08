@@ -1,12 +1,12 @@
 // @ts-check
 // CARDS2 (2026-10-07, bible/11-Multiplayer/Tavern-Cards.md section 2; Mac: "needing to be in a tavern and being set up in
-// a sort of table enviroment"): THE CARD TABLE AND ITS SEATS - pure, DOM-free. Which of a tavern's own pieces is a card
-// table, where its seats stand, and the eye a seated player looks from. The host (scenes/worldModes.js) hands in the
-// table's own box, its matrix and its world box, and a probe of its own collider; nothing here reads a mesh or the scene.
+// a sort of table enviroment"): THE CARD TABLE AND ITS SEATS - pure, DOM-free. Where a card table's seats stand, and the
+// eye a seated player looks from. The host (scenes/worldModes.js) hands in the table's own box, its matrix and its world
+// box, and a probe of its own collider; nothing here reads a mesh or the scene.
 //
-// THE TABLES ARE DAGGERFALL'S. No placed prop and no new mesh: a card table is a table model a tavern already stands -
-// save one, the owner's (GOTHWAY-TABLE, world/placedCardTable.js): a tavern in Gothway Garden stands one more of it.
-// FLAGGED: CARD_TABLE_MODELS holds the one ARCH3D id this tree can name as a table - 41130, "Table" in the vendored World of Daggerfall's model list (vendor/world-of-daggerfall/Scripts/LocationHelper.cs, its {"41130", "Table"} row). The tavern blocks' other tables are unmeasured: the container carries no ARENA2, and `node tools/cardTableCensus.mjs <arena2>` lists every furniture model the tavern interiors stand, with its count and its size, for Mac's eye.
+// THE TABLE IS ITS OWN PROP (TAVERN-TABLE, 2026-10-08; the owner: "a new property specifficaly used for the card
+// table"): every tavern stands one (world/cardTableProp.js, its floor found by world/placedCardTable.js), and it is the
+// tavern's one card table - Daggerfall's own tables are furniture.
 //
 // THE SEATS stand round the table's OWN box (its model's, turned by its matrix - AUDIT CARDS B6: a table turned off the
 // square has a world box that bulges past it, and seats round the bulge sat in the air), on the floor it stands on:
@@ -20,10 +20,6 @@
 import { HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../net/cardLaw.js';
 import { SEATED_EYE_HEIGHT, SEAT_OUT } from '../player/seatPose.js';   // CARDS2b: the seated eye is the seated body's head, and the sitter's distance from the edge the body's own
 import { transformPoint } from './mat4.js';
-
-/** The ARCH3D ids a card table may be (classic ids: the host maps a town mod's alias through classicModelIdOf first). */
-export const CARD_TABLE_MODELS = Object.freeze(new Set([41130]));
-export const isCardTableModel = (id) => CARD_TABLE_MODELS.has(id);
 
 /** MEASURE (CARDS2): a seat's width along the table's edge, in metres - a chair and an elbow either side. */
 export const SEAT_SPACING = 0.75;

@@ -31,11 +31,11 @@ import { Collider } from '../player/collider.js';
 import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
-import { isCardTableModel } from '../world/cardTables.js';   // CARDS2
-import { localAabb } from '../render/frustum.js';   // AUDIT CARDS B6: a card table's own box
-import { PLACED_CARD_TABLE_MODEL, placedTableSpot } from '../world/placedCardTable.js';   // GOTHWAY-TABLE: a card table stood where the room has none
+import { localAabb } from '../render/frustum.js';   // AUDIT CARDS B6 / TAVERN-TABLE: the card table's own box
+import { placedTableSpot } from '../world/placedCardTable.js';   // TAVERN-TABLE: where a tavern's card table stands
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD } from '../world/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
-import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // GOTHWAY-TABLE: a static door's place, for the placed table to keep clear of
+import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { createBaseRoom, baseBucketOf } from './decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
 import { decorBaseModelKey, decorBaseFlatKey } from '../net/decorLaw.js';   // BASE-HIDE: the layout's names for them
@@ -237,7 +237,6 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const recordData = dfBlock.rmbBlock.subRecords[recordIndex];
   const ids = new Set();
   for (const obj of recordData.interior.block3dObjectRecords) ids.add(obj.modelIdNum);
-  if (opts.placeCardTable) ids.add(PLACED_CARD_TABLE_MODEL);   // GOTHWAY-TABLE: the placed table's model, climate-swapped with the room's
   await Promise.all([...ids].map(collect));
 
   const interior = layoutInterior(dfBlock, blockIndex, recordIndex, (id) => pending.get(id));
@@ -322,7 +321,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Library/Guild/Temple bookshelves route at activation (BS1), and
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
-  const tables = [];   // CARDS2: the room's card tables (world/cardTables.js) - their world boxes; the host seats them in a tavern
+  const tables = [];   // CARDS2: the room's card tables (world/cardTables.js) - TAVERN-TABLE: the one prop a tavern stands (below); the host seats them
   const beds = [];   // RR1: models 41000-41002 (RoleplayRealism.cs:126-128), listed always, activated under bedSleeping
   // IF1: the combined mesh's materials, as Immersive Footsteps reads them
   // off `CombinedModels` (Main.cs:237-308) - one name per texture in
@@ -432,7 +431,6 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // for, so it is not ported.) A non-prop shelf/wardrobe model was a
     // lootable container here where DFU leaves it as geometry.
     if (p.objectType !== PROP_MODEL_TYPE) continue;
-    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) { const b = localAabb(cpu.positions); tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }   // CARDS2: a prop, like the furniture below; AUDIT CARDS B6: its own box and its turn, so its seats stand round the table and not round the world box's bulge
     const had = [containers.length, shelves.length, beds.length];   // BASE-HIDE: which list this piece lands in, if any
     if (isShopShelfModel(p.modelIdNum)) {
       if (opts.houseOwned) {
@@ -483,20 +481,20 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
   }
 
-  // GOTHWAY-TABLE (world/placedCardTable.js; the owner: "Put a table in gothway tavern"): A CARD TABLE STOOD WHERE THE
-  // HOST ASKS FOR ONE (`opts.placeCardTable` - a tavern in Gothway Garden, scenes/worldModes.js). Its floor is found from
-  // the room's FIRST enter marker - the record's, not the door walked through, so every client stands it in the same
-  // place - with the room's whole collider built (its closed doors stop the walk), keeping clear of the doors, the
-  // people, the flats and the markers. Then it is one of the room's models - drawn in the merge, collided, on the
-  // automap (its key the next placement index, past the record's own) - and one of its card tables, after the room's
-  // own (the relay keys a table by its index). A data set without the model, or a room with no such floor, stands none.
+  // TAVERN-TABLE (world/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in
+  // each inn. A new property specifficaly used for the card table"): THE TAVERN'S CARD TABLE, ITS OWN PROP, where the host
+  // asks for one (`opts.placeCardTable` - a tavern, scenes/worldModes.js). Its floor is found from the room's FIRST enter
+  // marker - the record's, not the door walked through, so every client stands it in the same place - with the room's
+  // whole collider built (its closed doors stop the walk), keeping clear of the doors, the people, the flats and the
+  // markers. Then it is one of the room's models - drawn in the merge, collided, on the automap (its key the next
+  // placement index, past the record's own) - and the room's card table. Its mesh is this context's (freed by destroy);
+  // its two painted textures the renderer's, uploaded once. A room with no enter marker or no such floor stands none.
+  let propMesh = null;
   if (opts.placeCardTable) {
-    const id = PLACED_CARD_TABLE_MODEL;
-    const gpu = await getGpuMesh(id);
-    const cpu = cpuModels.get(id);
+    const cpu = cardTablePropModel();
     const enter = interior.markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? interior.markers.find((m) => m.type === INTERIOR_MARKER.REST);
-    const b = cpu ? localAabb(cpu.positions) : null;
-    const spot = gpu && cpu && enter ? placedTableSpot({ min: b.slice(0, 3), max: b.slice(3) }, [enter.x, enter.y, enter.z], {
+    const b = localAabb(cpu.positions);
+    const spot = enter ? placedTableSpot({ min: b.slice(0, 3), max: b.slice(3) }, [enter.x, enter.y, enter.z], {
       floor: (x, y, z) => { const d = collider.raycast(parentPt(x, y, z), [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
       open: (x, y, z, r) => !collider.sphereOverlaps(parentPt(x, y, z), r),
     }, [
@@ -507,15 +505,18 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       ...interior.markers.map((m) => [m.x, m.y, m.z, 0.5]),
     ]) : null;
     if (spot) {
+      renderer.uploadTexture(CARD_TABLE_ARCHIVE, FELT_RECORD, paintFelt(), { mips: true, opaque: true });   // a model's material: opaque, with its mip chain, as a TEXTURE archive's
+      renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });
+      propMesh = renderer.createMesh(cpu);
       const matrix = parent(trs(spot.x, spot.y, spot.z, 0, 0, 0));
       const aabb = worldAabb(cpu.positions, matrix);
       const key = `int:${interior.placements.length}`;
-      drawList.push({ mesh: gpu, matrix, key, aabb });
-      if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
-      automapEntries.push({ key, aabb, blockIndex: 0, blockName: amapBlockName, elementIndex: 0, elementName: INTERIOR_ELEMENT_NAMES[0], modelIndex: amapModelCount[0]++, waterLevel: null, positions: cpu.positions, indices: cpu.indices, normals: cpu.normals ?? null, matrix });
+      drawList.push({ mesh: propMesh, matrix, key, aabb });
+      staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true;
+      automapEntries.push({ key, aabb, blockIndex: 0, blockName: amapBlockName, elementIndex: 0, elementName: INTERIOR_ELEMENT_NAMES[0], modelIndex: amapModelCount[0]++, waterLevel: null, positions: cpu.positions, indices: cpu.indices, normals: cpu.normals, matrix });
       collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
-      tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: id });
-    } else console.warn('[interior] no card table stood: ' + (!gpu || !cpu ? `model ${id} is not in this ARCH3D` : !enter ? 'the room has no enter marker' : 'no clear floor near the entrance'));
+      tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix });
+    } else console.warn('[interior] no card table stood: ' + (!enter ? 'the room has no enter marker' : 'no clear floor near the entrance'));
   }
 
   // People (C1): AddPeople's data layer - base positions batch through
@@ -914,6 +915,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       for (const b of billboardBatches) renderer.destroyBatch(b);
       for (const b of base?.outBatches() ?? []) renderer.destroyBatch(b);   // BASE-HIDE: the flats taken out, out of that list
       if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF6
+      if (propMesh) { renderer.destroyMesh(propMesh); propMesh = null; }   // TAVERN-TABLE: the card table's mesh is this room's
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
       // meshes per context - every interior exit leaked them.
       for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);

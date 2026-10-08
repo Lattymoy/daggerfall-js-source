@@ -1,23 +1,18 @@
 // @ts-check
-// GOTHWAY-TABLE (2026-10-08, the owner: "Put a table in gothway tavern"): A CARD TABLE STOOD WHERE THE ROOM HAS NONE -
-// pure, DOM-free. Tavern-Cards.md section 2 finds the tables Daggerfall already put in a tavern, and only one table model
-// is nameable (world/cardTables.js CARD_TABLE_MODELS - the rest wait on the census), so Gothway Garden - the first town out of
-// Privateer's Hold - may stand none. This finds the floor for one: the host (scenes/interiorContext.js, asked by
-// scenes/worldModes.js for a tavern in Gothway Garden) stands that one table model there, and from then on it is a card
-// table like any other - the same `tables` row, its seats round its own box through the same probe.
+// TAVERN-TABLE (2026-10-08, the owner: "Lets instead place a specific table in each inn. A new property specifficaly used
+// for the card table"): WHERE A TAVERN'S CARD TABLE STANDS - pure, DOM-free. Every tavern stands the card table's own prop
+// (world/cardTableProp.js); this finds its floor, and the host (scenes/interiorContext.js, asked by scenes/worldModes.js
+// for a tavern) stands it there - one of the room's `tables`, its seats round its own box through the host's probe.
 //
 // THE SPOT IS FOUND, not guessed: the room's own floor is walked from its entrance on a grid (PLACE_CELL), a cell walkable
 // where the floor under it is the entrance's storey and a body's height above it is clear; the spot is the walkable
 // cell NEAREST the entrance by that walk, at least PLACE_FROM_DOOR_M in, whose table AND a ring round it a seated body
 // needs (PLACE_RING_M) are all walkable and clear of the room's doors, people, flats and markers. Nearest by the walk,
 // not the crow: a closed door stops it, so the table stands in the room the player walks into, never behind a wall. The
-// walk's order is fixed, so every client stands the same table in the same place (the relay keys a table by its index).
+// walk's order is fixed, so every client stands the same table in the same place.
 
-import { CARD_TABLE_MODELS } from './cardTables.js';
 import { SEAT_OUT } from '../player/seatPose.js';
 
-/** The table it stands: the one model the tree names a table (cardTables.js). */
-export const PLACED_CARD_TABLE_MODEL = [...CARD_TABLE_MODELS][0];
 /** The walk's cell (metres). */
 export const PLACE_CELL = 0.5;
 /** How far from the entrance the walk looks (metres, each way). */
