@@ -219,14 +219,17 @@ export function domDoorUi(doc = globalThis.document) {
 const PAD_FOCUS_CSS = '.pad-focus { outline: 2px solid #d9b25a !important; outline-offset: 2px !important; }';
 
 /** Start the door's pad loop; answers the detach. Nothing happens until a pad is pressed - a page with no pad polls
- *  an empty list once a frame and does nothing. */
-export function attachMenuPad({ doc = globalThis.document, getPads = () => globalThis.navigator?.getGamepads?.() ?? [] } = {}) {
+ *  an empty list once a frame and does nothing. DA12: `focusStyle: false` for a page that draws its own focus and
+ *  whose CSP refuses a style written by script (the desktop launcher, app/launcher/pad.js). */
+export function attachMenuPad({ doc = globalThis.document, getPads = () => globalThis.navigator?.getGamepads?.() ?? [], focusStyle = true } = {}) {
   const win = doc?.defaultView;
   if (!win || typeof win.requestAnimationFrame !== 'function') return () => {};
   const ui = domDoorUi(doc);
-  const style = doc.createElement('style');
-  style.textContent = PAD_FOCUS_CSS;
-  doc.head.append(style);
+  const style = focusStyle ? doc.createElement('style') : null;
+  if (style) {
+    style.textContent = PAD_FOCUS_CSS;
+    doc.head.append(style);
+  }
   const state = { confirm: false, back: false, dir: null, heldAt: 0, lastRepeat: 0, lastEl: null, lastRect: null, lostAt: null };
   let raf = 0, live = true;
   const loop = () => {
@@ -240,7 +243,7 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
   return () => {
     live = false;
     win.cancelAnimationFrame(raf);
-    style.remove();
+    style?.remove();
     doc.querySelector('.pad-focus')?.classList.remove('pad-focus');
   };
 }

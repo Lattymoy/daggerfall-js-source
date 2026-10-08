@@ -65,6 +65,10 @@ export const ARENA_CHAMPION_CACHE_S = 60;
  *  it (`arena_champions`, migration 0086) is taken as it stands before a reader counts it again, seconds. Every rated
  *  bout recorded counts it at once (claimArena); this bounds whatever else moves the board (an account deleted). */
 export const ARENA_CHAMPION_STORED_S = 600;
+/** SCALE4b (2026-10-08): the service's clock counts the season's #1 again once the kept word is this old - two minutes
+ *  inside ARENA_CHAMPION_STORED_S, so a reader (a token's mint, an account, a box's or a board's badges) finds it kept and
+ *  counts nothing, and writes nothing. A clock that stops leaves the readers counting it as before. */
+export const ARENA_CHAMPION_CLOCK_S = ARENA_CHAMPION_STORED_S - 120;
 const GRAND_TIER = ARENA_TIERS - 1;
 
 // ═══ ARENA4b (2026-10-03) - A BOUT'S RENOWN ═══════════════════════════════════════════════════════════════════════════
