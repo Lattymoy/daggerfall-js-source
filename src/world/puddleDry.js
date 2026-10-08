@@ -10,6 +10,8 @@
 // WATER-PUDDLE drew in its art's shape), the rest a lone shore corner or edge (a sliver) or one of the two lone record-0
 // tiles. The rest are ponds a block was laid out with - a water heart in its shore ring, a garden pond, the castles'
 // moats (a CASTAA block's runs to 202 tiles with its ring - AUDIT WATER-NEXT m11), Sentinel's harbour - and they stay.
+// WATER-DRAW2 (2026-10-07) taught the draw's table the islands, the corners and the half-turned saddles, and the census
+// moved with it: 1,246 patches, 660 of one tile, 686 dried and 560 kept (Water-Arc WATER-DRAW2).
 //
 // THE RULE: a patch is a puddle when it is ONE tile, or every tile of it is shallow-water art (PUDDLE_RECORDS: DFU's
 // PlayerMotor.OnShallowWaterTile records the shore families do not hold, world/waterCorners.js SHALLOW_WHOLE, and
