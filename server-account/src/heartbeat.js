@@ -18,9 +18,10 @@
 import { creditPlay, accountKind } from './accounts.js';
 import { inboxOf } from './letters.js';
 import { readBoard } from './board.js';
+import { postBoxOf } from './post.js';   // SERVER-POST
 
 /** The parts a heartbeat may carry - the body's own keys. */
-export const HEARTBEAT_PARTS = Object.freeze(['beat', 'mail', 'board']);
+export const HEARTBEAT_PARTS = Object.freeze(['beat', 'mail', 'board', 'post']);   // SERVER-POST: the server's post, on the letterbox's clock
 
 /**
  * ONE HEARTBEAT: `beat: true` - a knock (/v1/account/played's `creditPlay`, the gap by this service's clock); `mail:
@@ -41,5 +42,7 @@ export async function heartbeat(ctx, player, env, body) {
   if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));
   if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));
   if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));
+  // SERVER-POST: the server's post (/v1/post/box's `postBoxOf`, refused `post-needs-account` to a guest as its door refuses one)
+  if (body?.post === true) await part('post', async () => (accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player)));
   return out;
 }

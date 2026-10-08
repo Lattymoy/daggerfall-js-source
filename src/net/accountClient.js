@@ -179,6 +179,12 @@ export const REFUSALS = Object.freeze({
   // MAIL1, letters. The words are the service's (server-account/src/letters.js) and the letter's law's
   // (net/letterLaw.js, which the service returns verbatim); every one says what to do next.
   'mail-needs-account': 'Letters need a username and a password. Give this account one and you can send and receive them.',
+  // SERVER-POST, the server's post (server-account/src/post.js): the developers' messages, and the items in them
+  'post-needs-account': 'The mailbox needs a username and a password. Give this account one and the developers can send you post.',
+  'no-post': 'That message is not in your mailbox any more.',
+  'post-no-item': 'That message holds no item to claim.',
+  'post-claimed': 'That item has already been claimed.',
+  'post-unclaimed': 'Claim the item in that message before you throw it away.',
   muted: 'You are muted, so you cannot send letters or pin notes until the mute ends.',
   'no-reader': 'No registered player has that username.',
   'to-self': 'A letter goes to another player.',

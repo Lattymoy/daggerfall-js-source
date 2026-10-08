@@ -157,6 +157,9 @@ export const ROUTES = new Set([
   // are POSTs, each naming the letter in its body - never in the path,
   // so an id is never a URL a log keeps.
   '/v1/mail/inbox', '/v1/mail/send', '/v1/mail/read', '/v1/mail/delete',
+  // SERVER-POST: the developers' pieces to one registered account - the box a GET, the three that change something POSTs,
+  // each naming the piece in its body; a claim names the realm character it goes into and where its record stands.
+  '/v1/post/box', '/v1/post/read', '/v1/post/claim', '/v1/post/delete',
   // DUEL1: the duelling record - the loser's own report, and any
   // account's two counts for the Inspect card. Both behind a session.
   '/v1/duel/loss', '/v1/duel/record',
