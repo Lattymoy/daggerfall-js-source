@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../formats/woodsFile.js';
+import { groundWoods } from './tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
@@ -31,7 +32,9 @@ function handle(m) {
     if (m.t === 'init') {
       const w = new WoodsFile();
       if (!w.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the terrain worker');
-      woods = w;
+      // TAMRIEL2: the continent round the Bay, composed here as the host composes its own (the fallback law's) - the
+      // same pure modules, so a pixel built on the worker is the bytes one built on the main thread is
+      woods = m.tamriel ? groundWoods(w) : w;
       return;
     }
     // LANDFORM4/6: the landforms' tables - the sites and the climates - arrive once, after init and before any job (the

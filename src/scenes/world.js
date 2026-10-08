@@ -266,7 +266,9 @@ import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
 import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
-import { landformsOn } from './shared.js';   // LANDFORM1-3: the Landforms switch
+import { landformsOn, tamrielLandOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's
+import { groundWoods, groundClimateIndex } from '../world/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
+import { tamrielFrameInBay, inBay as onTheBay } from '../world/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
 import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { vergeClear, natureReach, pathTileMask, lptFitCap } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads; LPT-FIT: every Low Poly tree's crown off them
 import { LPT_CROWNS } from '../world/lptCrowns.js';   // LPT-FIT: the drawn prototype's crown, turned (its radial reach)
@@ -1175,7 +1177,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT NAV1 (B2): a Warm Ashes raid parsed at sea reads the crown of these waters' region (waRaidQuest) - declared up
   // here with maps, before townTalk's load can reach _questRegionIndex (FIELD 2026-09-27's order, below)
   let _questRegionPin = null;
-  const woods = new WoodsFile();
+  let woods = new WoodsFile();   // TAMRIEL2: rebound below to the reader with the continent round it, when the land beyond the Bay is on
   if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
   // W1: the window reads the map through ContentReader's own
   // dictionary - one MapSummary per location, keyed by map pixel.
@@ -1196,6 +1198,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // smoothed heights go back into them BEFORE the client copies them.
   woods.syncHeightMapBytes();
   console.log(`[terrain] ${dilated} coastal ocean pixel(s) dilated, ${smoothedLocations} location neighbourhood(s) smoothed`);
+  // TAMRIEL2 (Mac: "only implement the land mass"): THE GROUND BEYOND THE BAY - read once, as the world mounts. The
+  // reader `woods` becomes the Bay's own with the continent round it (world/tamrielGround.js: the Bay to the byte, the
+  // seam band the clamp's own, the authored land past it) - the kernels (this thread's fallback and the worker's, which
+  // composes its own copy the same way), the far ring and every other reader see one reader; the stream's frame grows
+  // to the continent's; the climate read answers the province's past the Bay (the Bay's own, after its coastal
+  // dilation above, on it). World of Daggerfall and Deep Waters are the Bay's, and are held to it below.
+  const tamrielLand = tamrielLandOn();
+  if (tamrielLand) {
+    woods = groundWoods(woods);   // every reader of `woods` from here on: the Bay to the byte, the continent past it
+    maps.getClimateIndex = groundClimateIndex(maps.getClimateIndex.bind(maps));
+  }
+  StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
   // EV7: the pixel kernel's off-thread home - a COPY of the WOODS
   // bytes crosses once; this thread's `woods` stays the fallback law.
   const terrainGen = new TerrainGenClient({ woods, woodsBytes });
@@ -4845,7 +4859,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
           worldHeight: woods.getHeightMapValue(px, py),
         }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/roadClearance.js); GATE-CLEAR: nor one reaching the Oblivion Gate's clearing
-        if (picks.length) wodPicks = picks;
+        if (picks.length && onTheBay(px, py)) wodPicks = picks;   // TAMRIEL2: the mod's sites are the Bay's
       } catch (e) {
         console.warn(`[wod] pixel ${key}: the loader failed here, and the pixel stands without its site: ${e?.message ?? e}`);
         wodPicks = null;
@@ -4878,7 +4892,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // deferred to the pump, nearest first - and built there, the port's own
     // whole-stream carve (Port-Ledger (9): the mod's pump builds only a near
     // pixel, and a far one's surface).
-    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;
+    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;   // TAMRIEL2: the mod's bathymetry is the Bay's
     // WM3: this pixel's climate law, bound once - the one argument the
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
@@ -31850,6 +31864,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           climateAt: (x, y) => maps.getClimateIndex(x, y),
           baseX: state.current.x, baseY: state.current.y,
           relief: !!landform,   // LANDFORM1: the ring stands the massifs the streamed ground raises
+          byteAt: tamrielLand ? (x, y) => woods.getHeightMapValue(x, y) : null,   // TAMRIEL2: the continent past the map's edge, as the stream grows it
         }, state.current.x, state.current.y, state.terrainDistance);
       } else {
         farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);
