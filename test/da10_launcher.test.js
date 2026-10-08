@@ -223,7 +223,7 @@ test('DA10: the shell - Play is the only way in, the news is the check\'s own re
   assert.match(acts, /case 'open-saves': openSavesFolder\(\); break;/);
   assert.match(main, /\{ label: 'Open Saves Folder', click: \(\) => openSavesFolder\(\) \},/);
   // a dock click with no window opens the launcher, as a launch does
-  assert.match(main, /app\.on\('activate', \(\) => \{ if \(BrowserWindow\.getAllWindows\(\)\.length === 0\) runLauncher\(\); \}\);/);
+  assert.match(main, /app\.on\('activate', \(\) => \{ if \(BrowserWindow\.getAllWindows\(\)\.length === 0 && !directStarting\) runLauncher\(\); \}\);/);
   // File > Locate ARENA2 with the launcher open is the launcher's own door (macOS: the menu bar is the app's)
   assert.match(main, /if \(launcher\) \{ launcherChooseFolder\(\); return; \}/);
 });

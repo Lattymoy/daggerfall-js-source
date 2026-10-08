@@ -666,6 +666,48 @@ contents; the fix is measured on the Linux package.
 **Pinned** in `test/da11_install_whole.test.js` (2): the site in the
 archive and nowhere beside it, and the shell reading it there.
 
+## Past the front door, and a pad at it (DA12, 2026-10-08)
+
+Mac: *"is it possible to integrate the launcher inside the game? ...
+some game managers, like PlayNite, don't reconigze the launcher as a
+game and also I can't control the Launcher with a controller."*
+
+The launcher was never a second program (DA8: the shell's first window,
+one process, one exe). What a game manager trips on is that a game
+manager starts a game and watches its PROCESS: a launcher waiting for a
+press it cannot give, and an update installed before play - the app
+quits, the silent installer reopens it, a process the manager never
+started - read as the game having quit. An update cannot install INSIDE
+a running game: the installer replaces the files the game runs from, so
+the app must close for it either way. So:
+
+- **`--play`** (`app/lib/launcherState.cjs` directPlay, `app/main.cjs`
+  runDirect): a copy started with it goes straight into the game - the
+  argument a game manager's entry or a Steam shortcut adds. Updates are
+  the game's, as they always were after Play: the launch check and the
+  hourly re-check inside DA6's two gates, the HUD line, the install at
+  QUIT (`autoInstallOnAppQuit` - the process the manager watches simply
+  ends) or from File > Restart to Update. What the launcher must still
+  ASK is still asked: with no game files chosen (the first run) the
+  launcher opens as it would; a saved folder is judged first, in a
+  process of its own (R2-D1), and one that is not whole opens the
+  launcher, whose card names what is wrong. The game's own picker,
+  chosen once and kept (`arena2InGame`), goes straight in. The version
+  played is kept as Play keeps it, for the launcher's NEW marks.
+- **The launcher answers a controller** (`app/launcher/pad.js`): the
+  game's own front-door loop (`src/ui/menuPad.js`, PAD-DOOR) over the
+  page's own controls - the d-pad or left stick moves the focus, A or
+  Start presses it, B is Escape. ONE module: the shell serves it at
+  `dagger://launcher/menuPad.js` (`MENU_PAD`) - packed beside the page
+  (`app/package.json` build.files), the source tree's own unpacked. The
+  page's CSP refuses a style written by script, so `attachMenuPad`
+  takes `focusStyle: false` and the focus is the page's own
+  (`launcher.css` `.pad-focus`).
+
+Pinned in `test/da12_directplay.test.js`; `tools/mutants/da12.json`:
+13, all dead. Not driven with a real pad or a real game manager here -
+the shell probe has neither.
+
 ## Finding the game files (DA9, 2026-09-29)
 
 **A2-WHOLE, still open in the app.** The shell's test for "this is
