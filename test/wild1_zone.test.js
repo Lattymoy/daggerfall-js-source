@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WILD_REGION, WILD_FOE_HEALTH_MULT, WILD_FOE_DAMAGE_MULT, WILD_LOOT_GOLD_MULT, WILD_LOOT_DROP_MULT, WILD_LOOT_RARE_MULT,
-  WILD_DEATH_HOLD_S, buildWildMask, wildInside, wildNear, wildEdgeChains, applyWildFoe, isWildRegion, setWildDeath, wildDeath,
+  WILD_DEATH_HOLD_S, WILD_CUT, buildWildMask, wildInside, wildNear, wildEdgeChains, applyWildFoe, isWildRegion, setWildDeath, wildDeath,
   wildDeathLines, setWildHere, wildHere,
 } from '../src/systems/wildZone.js';
 import { keptOnWildDeath, wildCanLose, takeWildDrop, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../src/systems/wildDeath.js';
@@ -13,9 +13,10 @@ import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../src/ui/deathScreen.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { REGION_NAMES } from '../src/formats/mapsTables.js';
 
-/** A 40 x 20 map whose zone is the 6 x 4 box at (10..15, 5..8). */
+/** A 40 x 20 map whose zone is the 6 x 4 box at (10..15, 5..8) - the whole region (`cut: null`): the mask's laws over a
+ *  plain shape. ZONE-CUT's own pin, the owner's cut over a region, is below. */
 const box = (x, y) => (x >= 10 && x <= 15 && y >= 5 && y <= 8 ? WILD_REGION : 3);
-const mask = buildWildMask({ width: 40, height: 20, regionAt: box, nearPx: 2 });
+const mask = buildWildMask({ width: 40, height: 20, regionAt: box, nearPx: 2, cut: null });
 
 test('WILD1: the zone is the Wrothgarian Mountains - region 16 - and its numbers are the owner\'s', () => {
   assert.equal(WILD_REGION, 16);
@@ -110,10 +111,23 @@ test('WILD1: the death screen holds two minutes in the zone and takes no Enter; 
 
 test('WILD1: the live flag, and the fog\'s pixels - inside the zone only, feathered toward its edge', () => {
   setWildHere(true); assert.equal(wildHere(), true); setWildHere(false); assert.equal(wildHere(), false);
-  const big = buildWildMask({ width: 60, height: 40, regionAt: (x, y) => (x >= 10 && x < 40 && y >= 10 && y < 30 ? WILD_REGION : 0) });
+  const big = buildWildMask({ width: 60, height: 40, regionAt: (x, y) => (x >= 10 && x < 40 && y >= 10 && y < 30 ? WILD_REGION : 0), cut: null });
   const fog = fogPixels(big, 2);
   assert.equal(fog.w, 60); assert.equal(fog.h, 40);
   const alpha = (mx, my) => fog.data[((Math.round((my - big.box.y0) * 2)) * fog.w + Math.round((mx - big.box.x0) * 2)) * 4 + 3];
   assert.ok(alpha(25, 20) > alpha(10.3, 20), 'thick in its heart, thin at its edge');
   assert.ok(alpha(25, 20) > 0);
+});
+
+test('ZONE-CUT (the owner\'s cut, then ZONE-CUT2): the zone is only the cut\'s part of region 16 - inside the region, inside the polygon\'s box over it; `cut: null` the whole region', () => {
+  const W = 200, H = 100;
+  const whole = buildWildMask({ width: W, height: H, regionAt: () => WILD_REGION, cut: null });
+  const cut = buildWildMask({ width: W, height: H, regionAt: (x, y) => (y < 90 ? WILD_REGION : 0) });
+  assert.deepEqual(whole.box, { x0: 0, y0: 0, x1: W - 1, y1: H - 1 }, 'no cut: the region, whole');
+  let n = 0;
+  for (let i = 0; i < W * H; i++) if (cut.inside[i]) { n++; assert.equal(cut.region[i], 1, 'never ground outside the region'); }
+  assert.ok(n > 0 && n < (W * 90) / 2, 'the cut keeps a part of the region, never all of it');
+  const us = WILD_CUT.map((p) => p[0]), vs = WILD_CUT.map((p) => p[1]);
+  assert.ok(cut.box.x0 >= Math.floor(Math.min(...us) * W) && cut.box.x1 <= Math.ceil(Math.max(...us) * W), 'west and east as the cut draws them');
+  assert.ok(cut.box.y0 >= Math.floor(Math.min(...vs) * 90) && cut.box.y1 <= Math.ceil(Math.max(...vs) * 90), 'north and south');
 });

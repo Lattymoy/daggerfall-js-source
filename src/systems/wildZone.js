@@ -100,10 +100,10 @@ export const WILD_STRANGER_RGBA = Object.freeze([1, 0.23, 0.18, 1]);
 // snapped onto the roads it was drawn along (traced off the owner's own map), with the south edge's bump - the road's climb
 // north of the heart - taken straight across.
 export const WILD_CUT = Object.freeze([[0.4103,0.0],[0.4097,0.0375],[0.4166,0.0778],[0.4103,0.1056],[0.4007,0.1278],[0.3952,0.1736],[0.3924,0.1764],[0.3924,0.1903],[0.4007,0.2083],[0.3862,0.2278],[0.3848,0.25],[0.3972,0.3014],[0.3993,0.3403],[0.4048,0.3681],[0.4055,0.4292],[0.4124,0.4639],[0.4193,0.4792],[0.42,0.4986],[0.4379,0.4736],[0.4641,0.4542],[0.5828,0.4458],[0.5897,0.4653],[0.5952,0.4625],[0.6159,0.4792],[0.6421,0.4819],[0.66,0.5056],[0.6938,0.5139],[0.7152,0.5417],[0.7331,0.5444],[0.7131,0.4833],[0.7138,0.4514],[0.7359,0.4042],[0.7503,0.3833],[0.7545,0.3472],[0.8103,0.2361],[0.8103,0.2236],[0.8,0.2083],[0.7614,0.2069],[0.7352,0.1819],[0.731,0.1875],[0.7338,0.1764],[0.7276,0.1597],[0.7241,0.1153],[0.7117,0.0569],[0.7179,0.0417],[0.7324,0.0389],[0.7414,0.0]]);
-const inCut = (u, v) => {
+const inCut = (cut, u, v) => {
   let c = false;
-  for (let i = 0, j = WILD_CUT.length - 1; i < WILD_CUT.length; j = i++) {
-    const [xi, yi] = WILD_CUT[i], [xj, yj] = WILD_CUT[j];
+  for (let i = 0, j = cut.length - 1; i < cut.length; j = i++) {
+    const [xi, yi] = cut[i], [xj, yj] = cut[j];
     if ((yi > v) !== (yj > v) && u < ((xj - xi) * (v - yi)) / (yj - yi) + xi) c = !c;
   }
   return c;
@@ -133,7 +133,7 @@ export const wildMask = () => _mask;
  * byte a pixel, and the inside's bounding box. `regionAt(x, y)` answers a pixel's region (MapsFile.getRegionIndexAt).
  * Built once a map (`wildMaskOf` caches it).
  */
-export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, keepOut = [] }) {
+export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, keepOut = [], cut = WILD_CUT }) {   // cut: null - the whole region (the laws over a plain shape)
   const inside = new Uint8Array(width * height);
   const region = new Uint8Array(width * height);   // the whole region 16 (road-only walking outside the cut)
   let rx0 = width, ry0 = height, rx1 = -1, ry1 = -1;
@@ -148,7 +148,7 @@ export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, 
   for (let y = ry0; y <= ry1; y++) {
     for (let x = rx0; x <= rx1; x++) {
       if (!region[y * width + x]) continue;
-      if (!inCut((x + 0.5 - rx0) / (rx1 - rx0 + 1), (y + 0.5 - ry0) / (ry1 - ry0 + 1))) continue;
+      if (cut && !inCut(cut, (x + 0.5 - rx0) / (rx1 - rx0 + 1), (y + 0.5 - ry0) / (ry1 - ry0 + 1))) continue;
       inside[y * width + x] = 1;
     }
   }
@@ -364,7 +364,8 @@ export function wildRingAnchors(mask) {
  * WILD3: A FAST JOURNEY's law - from map pixel `from` to `to` (each `{ x, y }`), with the zone's `mask` (null offline:
  * no zone), the last fast journey inside it at `lastAt` (ms, or null), `now`, and the gold the traveller can pay it from.
  * Answers `{ ok: true, fee }` (fee 0 outside the zone), or `{ ok: false, text }`: never into or out of the zone, and
- * inside it one journey in ten minutes, for WILD_TRAVEL_FEE gold. The Overworld map's journeys are walked, never asked.
+ * inside it one journey in ten minutes, for the fee of the tier it lands in (PVPTIERS: WILD_TRAVEL_FEES). The Overworld
+ * map's journeys are walked, never asked.
  */
 export function wildJourney({ from, to, mask, now = Date.now(), lastAt = null, gold = 0 }) {
   if (!mask || !from || !to) return { ok: true, fee: 0 };
