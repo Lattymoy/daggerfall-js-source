@@ -554,10 +554,12 @@ test('AUDIT CHAP2 S1: a board read in a region with no chapter, once the Court\'
   const s = await stand();
   await s.ground();
   const mac = await s.registered('Mac');
-  await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret);
   let ground = 0;
   const real = s.env.DB.prepare.bind(s.env.DB);
   s.env.DB.prepare = (sql) => { if (/kind = 'pixel'/.test(sql)) ground++; return real(sql); };
+  await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret);
+  assert.ok(ground >= 1, 'the spy sees a read of the ground when one comes');   // AUDIT CHAP3 T8: never a pass by a spy that sees nothing
+  ground = 0;
   for (let i = 0; i < 3; i++) await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret);
   s.env.DB.prepare = real;
   assert.equal(ground, 0);
@@ -636,7 +638,7 @@ test('AUDIT CHAP2 T7/C1/E1: the wiring - the kept adoption rides the save, the t
   assert.match(world, /createRollTracker\(\{\n\s+io: accountRoll\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\),\n\s+character: \(\) => realmSession\.id,/);
   assert.match(world, /const hallCmd = parseHallCommand\(text\);[\s\S]{0,700}hallDoor\.strike\(hallCmd\.key\)[\s\S]{0,700}hallDoor\.halls\(region\)/);
   const board = src('src/ui/noticeWindow.js');
-  assert.match(board, /const said = r\?\.ok \? work\.onTaken\?\.\(r\) : null;\n\s+if \(!alive\) return;/);
+  assert.match(board, /const said = r\?\.ok \? work\.onTaken\?\.\(r\) : null;\n\s+if \(!alive\) \{ if \(said\) work\.sayLate\?\.\(said\); return; \}/);   // PIN MOVED (AUDIT CHAP3 C5: and the line said in the chat)
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/strike' \? await strikeHall\(ctx, who\.player, env, body\)/);
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/witness', '\/v1\/chapters\/halls', '\/v1\/chapters\/strike',/);
   assert.match(src('server-account/migrations/0092_npc_halls.sql'), /ALTER TABLE npc_roll_heads ADD COLUMN kseq INTEGER NOT NULL DEFAULT 0;/);

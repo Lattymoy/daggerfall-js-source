@@ -100,3 +100,20 @@ CREATE TABLE IF NOT EXISTS hall_writ_days (
   at      INTEGER NOT NULL,
   PRIMARY KEY (day, region)
 );
+
+-- AUDIT CHAP3 S3: A REGION'S CHAPTERS, COMPUTED ONCE A CHANGE. Every reader of
+-- a region's chapters had read every report of the region's towns (and the
+-- sheet every report there is) once a minute an isolate - a read that grew
+-- with accounts x towns. A witness that changed something, and a strike,
+-- move `ver` for every region its town's reports name; the next reader
+-- computes the region's chapters once from its reports (npcHalls.js
+-- regionChapters) and writes them under the `ver` it read (`done`), so a
+-- change that lands between is computed again. Never held: the reports stay
+-- the truth, this their answer kept.
+CREATE TABLE IF NOT EXISTS npc_hall_regions (
+  region    INTEGER PRIMARY KEY,
+  chapters  TEXT NOT NULL DEFAULT '[]',
+  ver       INTEGER NOT NULL DEFAULT 1,
+  done      INTEGER NOT NULL DEFAULT 0,
+  at        INTEGER NOT NULL DEFAULT 0
+);

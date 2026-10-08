@@ -217,65 +217,72 @@
   },
   {
     "name": "CHAP3B-ALL-CONFIRMED",
-    "file": "server-account/src/npcChapters.js",
-    "old": "if (factConfirmed(t.fact) && t.fact.region === g) for",
-    "new": "if (t.fact.region === g) for",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "new": "if (t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-ALL-REGION",
-    "file": "server-account/src/npcChapters.js",
-    "old": "if (factConfirmed(t.fact) && t.fact.region === g) for",
-    "new": "if (factConfirmed(t.fact)) for",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
+    "new": "if (factConfirmed(t.fact)) for (const id of t.fact.factions) factions.add(id);\n  }\n  return",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-ALL-KEPT",
-    "file": "server-account/src/npcChapters.js",
-    "old": "if (_all && nowS * 1000 - _all.at < ALL_CHAPTERS_KEPT_MS) return _all.chapters;",
-    "new": "if (_all && nowS * 1000 - _all.at <= ALL_CHAPTERS_KEPT_MS) return _all.chapters;",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (!row || Number(row.done) !== Number(row.ver)) return null;",
+    "new": "  if (!row) return null;",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-ALL-KEPTNUM",
     "file": "server-account/src/npcChapters.js",
-    "old": "export const ALL_CHAPTERS_KEPT_MS = 60_000;",
-    "new": "export const ALL_CHAPTERS_KEPT_MS = 120_000;",
+    "old": "export const CHAPTER_TURNING_GRACE_S = 300;",
+    "new": "export const CHAPTER_TURNING_GRACE_S = 600;",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-SETTLE-KEY",
     "file": "server-account/src/npcChapters.js",
-    "old": "      db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, at) VALUES (?1, ?2, ?3, ?4, ?5)')",
-    "new": "      db.prepare('INSERT OR REPLACE INTO npc_chapter_weeks (week, active, target, chapters, at) VALUES (?1, ?2, ?3, ?4, ?5)')",
+    "old": "      db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')",
+    "new": "      db.prepare('INSERT OR REPLACE INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-SETTLE-WEEK",
     "file": "server-account/src/npcChapters.js",
-    "old": "FROM npc_chapter_merit WHERE week = ?1 GROUP BY faction, region",
-    "new": "FROM npc_chapter_merit WHERE week >= ?1 GROUP BY faction, region",
+    "old": "FROM npc_chapter_merit WHERE week = ?1\n    GROUP BY",
+    "new": "FROM npc_chapter_merit WHERE week >= ?1\n    GROUP BY",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-SETTLE-UNION",
     "file": "server-account/src/npcChapters.js",
-    "old": "  for (const r of merits) at(Number(r.faction), Number(r.region)).merit = Number(r.n);",
-    "new": "  for (const r of merits) { const c = all.get(`${r.faction}|${r.region}`); if (c) c.merit = Number(r.n); }",
+    "old": "  for (const r of merits) at(Number(r.faction), Number(r.region)).merit += Number(r.n);",
+    "new": "  for (const r of merits) { const c = all.get(`${r.faction}|${r.region}`); if (c) c.merit += Number(r.n); }",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -389,10 +396,11 @@
   {
     "name": "CHAP3B-SHEET-SETTLE",
     "file": "server-account/src/npcChapters.js",
-    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK));\n",
-    "new": "",
+    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n",
+    "new": "  void seasonZeroOf;\n",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -425,19 +433,21 @@
   {
     "name": "CHAP3B-POST-SETTLE",
     "file": "server-account/src/professions.js",
-    "old": "    await settleChaptersDue(db, nowS, zero);\n    const strengths",
+    "old": "    await settleChaptersDue(db, nowS, zero, open);\n    const strengths",
     "new": "    const strengths",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3B-LIST-SETTLE",
     "file": "server-account/src/professions.js",
-    "old": "  if (halls) await settleChaptersDue(db, nowS, zero);",
+    "old": "  if (halls) await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);",
     "new": "  void settleChaptersDue;",
     "tests": [
-      "test/chap3b_strength.test.js"
+      "test/chap3b_strength.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {

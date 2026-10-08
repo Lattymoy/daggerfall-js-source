@@ -4989,7 +4989,7 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     // CHAP3c (Chapters-Arc 5.2): online, this hall's chapter's Strength from the chapter sheet (the host's - none
     // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
-    const chapterStrength = () => host.chapterStrength?.(guild?.factionId ?? null, b?.regionIndex ?? null) ?? null;
+    const chapterStrength = () => host.chapterStrength?.(guild?.factionId ?? null) ?? null;   // AUDIT CHAP3 C6: the host's region, the chapters' own
     const chapterFactor = () => chapterPriceFactor(chapterStrength());
     const shelfQuality = () => chapterShelfQuality(b?.quality ?? 0, chapterStrength());
     const closeSelf = () => closeSpellWindow(flow);
@@ -5466,13 +5466,14 @@ export function createWorldModes(host) {
       const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
       if (!sbi) return null;
       let bookWin = null;
+      const bookFactor = chapterFactor();   // AUDIT CHAP3 C1: read once a window - the price shown is the price charged
       bookWin = new SpellbookWindow({
         spells: () => (playerEntity.spells ??= []),
         entity: playerEntity,
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
         offered: () => [...sbi.values(), ...(isOnlinePage() ? [resurrectionSpell(), sharedCartographySpell()] : [])],   // RESURRECT1: online, the ready-made Resurrection is on the shelf; PARTY-MAP: and Shared Cartography beside it
         buildingQuality: () => b?.quality ?? 0,
-        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's price
+        priceFactor: () => bookFactor,   // CHAP3c: the hall's chapter's band on a spell's price
         shopName: () => b?.name ?? '',
         skills: () => ({
           mercantile: skillValue(playerEntity, SKILLS.Mercantile),
@@ -5504,10 +5505,11 @@ export function createWorldModes(host) {
         return { rows: [{ text: 'You have no spellbook!', center: true }], closesWindow: true };
       }
       let makerWin = null;
+      const makerFactor = chapterFactor();   // AUDIT CHAP3 C1: read once a window, as training's and the spellbook's
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
         rows,
-        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's making
+        priceFactor: () => makerFactor,   // CHAP3c: the hall's chapter's band on a spell's making
         onClose: () => closeSpellWindow(makerWin),
       });  makerWin = enhancedWindow(makerWin, 'spellMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(makerWin);

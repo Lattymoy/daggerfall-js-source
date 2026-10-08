@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { _resetYardsKept } from '../server-account/src/decor.js';   // YARD-SHED: a stood service is a fresh isolate - no town's yards kept
+import { forgetChapters } from '../server-account/src/npcHalls.js';   // AUDIT CHAP3 T4: nor any region's chapters - a test's first read is its own database's
 import { renownXpFor } from '../src/net/renown.js';
 import { mintReceipt, importReceiptKey } from '../src/net/gateReceipt.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
@@ -53,6 +54,7 @@ export const T0 = 1_800_000_000;
 export async function standService(extra = {}) {
   _resetKeyForTests();
   _resetYardsKept();
+  forgetChapters();
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const gk = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);

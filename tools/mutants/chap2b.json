@@ -112,10 +112,11 @@
   {
     "name": "CHAP2B-MEMBERS-DEAD",
     "file": "server-account/src/npcReceipts.js",
-    "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL)`).bind(character, player).all();",
-    "new": "`).bind(character, player).all();",
+    "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`).bind(character, player).all();",
+    "new": " ORDER BY faction_id`).bind(character, player).all();",
     "tests": [
-      "test/chap2b_receipts.test.js"
+      "test/chap2b_receipts.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -220,19 +221,21 @@
   {
     "name": "CHAP2B-HOST-REFRESH",
     "file": "src/scenes/world.js",
-    "old": "      rollTracker?.refresh();\n      const line = hallRememberLine(",
-    "new": "      const line = hallRememberLine(",
+    "old": "      rollTracker?.refresh();\n      // AUDIT CHAP3 C8",
+    "new": "      // AUDIT CHAP3 C8",
     "tests": [
-      "test/chap2b_receipts.test.js"
+      "test/chap2b_receipts.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP2B-HOST-RAID",
     "file": "src/scenes/world.js",
-    "old": "    claim: (...a) => _accountRaids.claim(...a).then(rollHeard),",
+    "old": "    claim: (r, ch, ...a) => _accountRaids.claim(r, ch, ...a).then((x) => (ch === characterIdOf(playerEntity) ? rollHeard(x) : x)),",
     "new": "    claim: _accountRaids.claim,",
     "tests": [
-      "test/chap2b_receipts.test.js"
+      "test/chap2b_receipts.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {

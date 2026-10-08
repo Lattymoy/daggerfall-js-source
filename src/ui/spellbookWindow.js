@@ -209,6 +209,7 @@ export const SELECT_ICON_TIP = 'Select icon';                                  /
  *  tagged spells lives there now); imported and re-exported so this
  *  window's own laws and its consumers keep one spelling. */
 import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from '../systems/lycanthropy.js';
+import { chapterPriced } from '../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's price
 export { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG };
 /** ListItem's desaturation toward grey when the spell is unaffordable
  *  (:276-279). */
@@ -519,8 +520,7 @@ export class SpellbookWindow {
       this.deps.skills?.() ?? {}, false);
     // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's price (`priceFactor`, the host's) -
     // DFU's own where it answers 1 or nothing
-    const f = this.deps.priceFactor?.() ?? 1;
-    return f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f));
+    return chapterPriced(price, this.deps.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
   }
 
   /** SetEffectLabels (:624-649): the group and subgroup names of the

@@ -15,7 +15,7 @@ import {
   strengthSeasonEnd, CHAPTER_BANDS, chapterBandOf, hallWritCountIn, hallWritCount, chapterLineOf, meritWeekOf,
 } from '../src/net/npcChapterLaw.js';
 import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt } from '../src/net/townSeatLaw.js';
-import { settleChapterWeek, settleChaptersDue, allChapters, forgetAllChapters, chapterSheet, CHAPTER_WEEKS_MAX, ALL_CHAPTERS_KEPT_MS } from '../server-account/src/npcChapters.js';
+import { settleChapterWeek, settleChaptersDue, allChapters, chapterSheet, CHAPTER_WEEKS_MAX, CHAPTER_TURNING_GRACE_S } from '../server-account/src/npcChapters.js';
 import { forgetChapters } from '../server-account/src/npcHalls.js';
 import { readRoll } from '../server-account/src/npcRoll.js';
 import { herbPatches, nodeKey } from '../src/net/nodeLaw.js';
@@ -75,7 +75,6 @@ const rid = () => `chap3b-${String(++_rid).padStart(6, '0')}`;
 async function stand({ open = 'on', towns = [[77, ANTICLERE, [41, 108, 368]]], members = [41], extra = {} } = {}) {
   clock(NOON);
   forgetChapters();
-  forgetAllChapters();
   const s = await standService({ CHAPTERS_OPEN: open, PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Devra,Wit0,Wit1,Wit2,Ground', ...extra });
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - days * DAY, who.id);
@@ -98,22 +97,28 @@ async function stand({ open = 'on', towns = [[77, ANTICLERE, [41, 108, 368]]], m
   const R = await seatRealm(s.env, who.secret, 'Rolla');
   await readRoll({ db: s.env.DB, nowS: _now }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 10, 108: 0, 368: 5 }, members: members.map((f) => ({ f, rank: 0 })) } });
   const merit = (week, faction, region, amount, ref = `x:${++_rid}`) => raw.prepare(`INSERT INTO npc_chapter_merit (week, faction, region, account, char_id, source, amount, ref, at)
-    VALUES (?, ?, ?, ?, ?, 'gate', ?, ?, ?)`).run(week, faction, region, who.id, R.id, amount, ref, _now);
+    VALUES (?, ?, ?, ?, ?, 'raid', ?, ?, ?)`).run(week, faction, region, who.id, R.id, amount, ref, _now);   // PIN MOVED (AUDIT CHAP3 E1): a raid's - a gate's counts only where its day's claims agree
   const strengths = () => raw.prepare('SELECT faction, region, strength, week, merit FROM npc_chapters ORDER BY region, faction').all().map((r) => ({ ...r }));
   const weeks = () => raw.prepare('SELECT week, active, target, chapters FROM npc_chapter_weeks ORDER BY week').all().map((r) => ({ ...r }));
   return { ...s, raw, who, R, merit, strengths, weeks };
 }
 
-test('CHAP3b every region\'s chapters at once: the towns confirmed for each region - as each region\'s own read - kept by the isolate a minute (mutants: the region, the confirmation, the minute)', async () => {
+test('CHAP3b every region\'s chapters at once: the towns confirmed for each region - as each region\'s own read - each region computed once a change (PIN MOVED, AUDIT CHAP3 S3: its row, not the isolate\'s minute) (mutants: the region, the confirmation, the row)', async () => {
   const s = await stand({ towns: [[77, ANTICLERE, [41, 108]], [78, 17, [368]], [79, ANTICLERE, [40, 41]]] });
   const row = s.raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('npchall', ?, ?, ?, ?, ?)");
   row.run('1:90', s.who.id, '[90,21,[42]]', ANTICLERE, _now);   // one account's word: unconfirmed
   row.run('1:78', s.who.id, '[78,21,[368]]', ANTICLERE, _now - 5);   // an early word for this region, three confirmed for Daggerfall
   assert.deepEqual(await allChapters(s.env.DB, _now), [{ faction: 368, region: 17 }, { faction: 40, region: 21 }, { faction: 41, region: 21 }, { faction: 108, region: 21 }]);
-  s.raw.prepare("DELETE FROM world_witness WHERE kind = 'npchall' AND key = '1:78'").run();
-  assert.equal((await allChapters(s.env.DB, _now + 30)).length, 4, 'kept');
-  assert.equal(ALL_CHAPTERS_KEPT_MS, 60_000);
-  assert.deepEqual((await allChapters(s.env.DB, _now + 60)).map((c) => c.region), [21, 21, 21], 'read again after the minute');
+  // a region whose answer stands is its row - no report read
+  let reads = 0;
+  const spy = { prepare: (sql) => { if (/FROM world_witness/.test(sql)) reads++; return s.env.DB.prepare(sql); }, batch: (l) => s.env.DB.batch(l) };
+  assert.equal((await allChapters(spy, _now + 30)).length, 4);
+  assert.equal(reads, 0, 'computed once, read as its row after');
+  // a strike tells every region its town's reports named: Daggerfall's, and Anticlere's (the early word)
+  const dev = await s.registered('Devra');
+  assert.equal((await s.call('/v1/chapters/strike', { key: 78 }, dev.secret)).status, 200);
+  assert.deepEqual((await allChapters(spy, _now + 60)).map((c) => c.region), [21, 21, 21], 'computed again once told');
+  assert.ok(reads > 0);
 });
 
 test('CHAP3b a week settled: each chapter moved by its week\'s Merit against the week\'s scale, an idle one down three, a chapter with Merit and no town still counted; written once - a second settle of the week changes nothing (mutants: the key, the merit\'s week, the scale, the union)', async () => {
@@ -240,11 +245,12 @@ test('CHAP3b the board: a chapter\'s hall writs by its band - one Failing, three
   assert.deepEqual(l.chapters, [{ faction: 41, strength: 75, band: 'thriving' }, { faction: 368, strength: 50, band: 'steady' }], 'the Brotherhood\'s to its members alone');
   // a Turning passed after the day's writs were written down: the lines read it
   const turning = seatWeekStartMs(meritWeekOf(_now) + 1) / 1000;
-  assert.equal(utcDay(turning - 60), utcDay(turning + 60), 'the Turning falls inside a UTC day');
+  const past = turning + CHAPTER_TURNING_GRACE_S + 60;   // PIN MOVED (AUDIT CHAP3 S1): a week settles its grace after its boundary
+  assert.equal(utcDay(turning - 60), utcDay(past), 'the Turning falls inside a UTC day');
   clock(turning - 60);
   await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret);
   s.merit(meritWeekOf(_now), 41, ANTICLERE, 600);
-  clock(turning + 60);
+  clock(past);
   const after = (await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret)).body;
   assert.deepEqual(after.chapters[0], { faction: 41, strength: 85, band: 'thriving' }, 'settled on the read, not the next day\'s writs');
   // the Chapters shut to the reader: no lines - and the day's hall writs still by the band the week's Turning left

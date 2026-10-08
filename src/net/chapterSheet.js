@@ -41,7 +41,11 @@ export function createChapterSheet({ door, nowMs = () => Date.now() }) {
         const next = new Map();
         for (const c of r.data.chapters) if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set(`${c.f}|${c.region}`, c.strength);
         strengths = next;
-      } else if (SHEET_STOPS.includes(r?.error)) stopped = true;
+      } else if (SHEET_STOPS.includes(r?.error)) {
+        // AUDIT CHAP3 C2: and what it held forgotten - the Chapters shut to the account, every hall is DFU's own again
+        stopped = true;
+        strengths = new Map();
+      }
     }, () => { /* a read that failed is asked again at the next beat */ }).finally(() => { busy = false; });
     return true;
   };

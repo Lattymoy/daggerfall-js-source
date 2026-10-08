@@ -178,16 +178,20 @@ test('CHAP3c a spell made: the maker\'s gold cost with the hall\'s factor laid o
 
 test('CHAP3c the wiring: the hall\'s chapter read off its guild and region; training, the spellbook and the maker given its factor, the three shelves its quality; the sheet built online, asked at a town\'s entry, handed to the interiors (mutants: each seam)', () => {
   const modes = src('src/scenes/worldModes.js');
-  assert.match(modes, /const chapterStrength = \(\) => host\.chapterStrength\?\.\(guild\?\.factionId \?\? null, b\?\.regionIndex \?\? null\) \?\? null;/);
+  assert.match(modes, /const chapterStrength = \(\) => host\.chapterStrength\?\.\(guild\?\.factionId \?\? null\) \?\? null;/);   // PIN MOVED (AUDIT CHAP3 C6: the host's region)
   assert.match(modes, /const chapterFactor = \(\) => chapterPriceFactor\(chapterStrength\(\)\);/);
   assert.match(modes, /const shelfQuality = \(\) => chapterShelfQuality\(b\?\.quality \?\? 0, chapterStrength\(\)\);/);
   assert.match(modes, /priceFactor: chapterFactor\(\),   \/\/ CHAP3c: the hall's chapter's band on the training's price/);
-  assert.match(modes, /priceFactor: chapterFactor,   \/\/ CHAP3c: the hall's chapter's band on a spell's price/);
-  assert.match(modes, /priceFactor: chapterFactor,   \/\/ CHAP3c: the hall's chapter's band on a spell's making/);
+  // PIN MOVED (AUDIT CHAP3 C1: read once a window)
+  assert.match(modes, /const bookFactor = chapterFactor\(\);[^\n]*\n\s+bookWin = new SpellbookWindow\(\{/);
+  assert.match(modes, /priceFactor: \(\) => bookFactor,   \/\/ CHAP3c: the hall's chapter's band on a spell's price/);
+  assert.match(modes, /const makerFactor = chapterFactor\(\);[^\n]*\n\s+makerWin = new SpellMakerWindow\(\{/);
+  assert.match(modes, /priceFactor: \(\) => makerFactor,   \/\/ CHAP3c: the hall's chapter's band on a spell's making/);
   assert.equal((modes.match(/quality: shelfQuality\(\)/g) ?? []).length, 3, 'soul gems, potions and magic items');
   const world = src('src/scenes/world.js');
   assert.match(world, /const chapterSheet = hallDoor \? createChapterSheet\(\{ door: hallDoor \}\) : null;/);
-  assert.match(world, /chapterStrength: \(faction, region\) => chapterSheet\?\.strengthOf\(faction, region\) \?\? null,/);
+  // PIN MOVED (AUDIT CHAP3 C6: the politic map's region at the player's pixel, as the halls' witness and the board read it)
+  assert.match(world, /chapterStrength: \(faction\) => \{\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+return Number\.isInteger\(region\) \? chapterSheet\?\.strengthOf\(faction, region\) \?\? null : null;/);
   assert.match(world, /const revealMemberGuildHalls = \(\{ witness = false \} = \{\}\) => \{\n\s+if \(witness\) chapterSheet\?\.refresh\(\);/);
   assert.match(src('src/net/accountClient.js'), /list: \(\) => post\('\/v1\/chapters\/list', \{\}\),/);
   // offline there is no door, so no sheet: every hall DFU's own

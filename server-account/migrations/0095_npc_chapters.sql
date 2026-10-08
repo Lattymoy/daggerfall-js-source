@@ -12,12 +12,16 @@
 -- THE WEEKS SETTLED. One row a seat week whose Turning moved the chapters'
 -- Strength: the key a second settle of the week fails on (its whole batch
 -- rolled back), the accounts that played and the week's target, how many
--- chapters it moved.
+-- chapters it moved. AUDIT CHAP3 S2: and the switch it settled under
+-- (CHAPTERS_OPEN, 'dev' or 'on') - the first week settled 'on' after weeks
+-- at 'dev' starts every chapter from 50, so the developers' trial weeks
+-- leave no chapter Failing, nor Ascendant, the day the Chapters open.
 CREATE TABLE IF NOT EXISTS npc_chapter_weeks (
   week      INTEGER PRIMARY KEY,
   active    INTEGER NOT NULL,
   target    INTEGER NOT NULL,
   chapters  INTEGER NOT NULL,
+  open      TEXT NOT NULL DEFAULT 'on' CHECK (open IN ('dev', 'on')),
   at        INTEGER NOT NULL
 );
 -- THE CHAPTERS. One row a guild faction and region a Turning has settled:

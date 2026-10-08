@@ -35,9 +35,10 @@ import { regionChapters } from './npcHalls.js';
 import { REALM_ID_RE } from './realm.js';
 import { regionOk } from '../../src/net/nodeLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { gateTimes } from '../../src/net/gateLaw.js';   // AUDIT CHAP3 E1: the week a gate rose in
 import { MAX_REPUTATION } from '../../src/systems/guildFactions.js';
 import {
-  RECEIPT_KINDS, receiptCreditsOf, receiptRef, receiptWritRef, hallReceiptKindsOf, hallHidden, MERIT_RECEIPT,
+  RECEIPT_KINDS, receiptCreditsOf, receiptRef, receiptWritRef, hallReceiptKindsOf, hallHidden, MERIT_RECEIPT, meritWeekOf,
 } from '../../src/net/npcChapterLaw.js';
 
 /** A write's own tag: eight random bytes, hex (npcRoll.js mints its own the same way). */
@@ -53,14 +54,14 @@ function mintTag(/** @type {((b: Uint8Array) => Uint8Array) | undefined} */ rand
 export async function membersOf(/** @type {any} */ db, /** @type {string} */ player, /** @type {unknown} */ character) {
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return [];
   const { results = [] } = await db.prepare(`SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1
-    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL)`).bind(character, player).all();
+    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`).bind(character, player).all();   // AUDIT CHAP3 T9: in the guilds' order, never the index's
   return results.map((/** @type {any} */ r) => Number(r.faction_id));
 }
 
 /**
  * A RECEIPT REMEMBERED: `{ character, kind, id, region }` - the realm character that fought, 'gate' or 'raid', the
  * receipt's own id (a gate's day, a raid's key) and the region it stood in. Answers `{ counted: true, credited: [{ f,
- * amount }], merit: [{ f, amount }] }` (CHAP3a: the Merit its chapters count it, npcMerit.js), or `{ counted: false, why }`: 'chapters-closed', 'no-receipt', 'no-region', 'no-member' (no Roll, no
+ * amount }], merit: [{ f, amount }] }` (CHAP3a: the Merit its chapters count it, npcMerit.js), or `{ counted: false, why }`: 'chapters-closed', 'no-receipt', 'no-region', 'old-week' (AUDIT CHAP3 E1: a gate risen in another seat week), 'no-member' (no Roll, no
  * guild on it, another account's character or a dead one), 'no-chapter' (none of its guilds keeps one there), 'credited' (this receipt's lines already stand),
  * 'busy' (a race lost - the receipt stands; its credit is asked by no one again), 'server'.
  * @param {{ db: any, nowS: number, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string }} player @param {any} env @param {any} body
@@ -70,6 +71,11 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
     if (!chaptersOpenFor(player, env)) return { counted: false, why: 'chapters-closed' };
     if (!RECEIPT_KINDS.includes(kind) || id == null || id === '') return { counted: false, why: 'no-receipt' };
     if (!regionOk(region)) return { counted: false, why: 'no-region' };
+    // AUDIT CHAP3 E1: a gate of another week counts for no chapter - its Merit would be this week's for a gate of the last
+    // (a receipt lives seven days, so a week's gates banked and claimed in one); the seats' creditGate's own law
+    if (kind === 'gate' && (!Number.isSafeInteger(id) || meritWeekOf(Math.floor(gateTimes(Number(id)).riseAt / 1000)) !== meritWeekOf(nowS))) {
+      return { counted: false, why: 'old-week' };
+    }
     const members = await membersOf(db, player.id, character);
     if (!members.length) return { counted: false, why: 'no-member' };
     const credits = receiptCreditsOf({ kind, id, day: utcDay(nowS), members, chapters: await regionChapters(db, region, nowS * 1000) });

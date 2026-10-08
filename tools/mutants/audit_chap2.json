@@ -471,13 +471,14 @@
   {
     "name": "T-HALLS-REGION-BIND",
     "file": "server-account/src/npcHalls.js",
-    "old": ".bind(hallWitnessKey(h.key), player.id, hallReportText(h), h.region, nowS).run();",
-    "new": ".bind(hallWitnessKey(h.key), player.id, hallReportText(h), null, nowS).run();",
+    "old": ".bind(key, player.id, hallReportText(h), h.region, nowS, h.key),",
+    "new": ".bind(key, player.id, hallReportText(h), null, nowS, h.key),",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -702,10 +703,9 @@
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
-    ],
-    "equivalent": true,
-    "why": "every base the tracker builds holds every faction the current standing holds; only a tampered kept record differs, and rollKeptOf shapes it"
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
+    ]
   },
   {
     "name": "T-LAW-GUILD-TABLE-OWN",
@@ -1185,13 +1185,14 @@
   {
     "name": "T-HALLS-SORT",
     "file": "server-account/src/npcHalls.js",
-    "old": "const chapters = [...factions].sort((a, b) => a - b);",
-    "new": "const chapters = [...factions];",
+    "old": "  return [...factions].sort((a, b) => a - b);\n}",
+    "new": "  return [...factions];\n}",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
-      "test/chap2_halls.test.js"
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -1568,7 +1569,7 @@
   {
     "name": "AUDIT-CHAP2-C1-BOARD-ORDER",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) return;",
+    "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) { if (said) work.sayLate?.(said); return; }",
     "new": "    if (!alive) return;\n    const said = r?.ok ? work.onTaken?.(r) : null;",
     "tests": [
       "test/audit_chap1.test.js",
@@ -1576,7 +1577,8 @@
       "test/board_ui.test.js",
       "test/chap1_roll.test.js",
       "test/chap2_halls.test.js",
-      "test/prof1_client.test.js"
+      "test/prof1_client.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {

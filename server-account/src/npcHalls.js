@@ -26,6 +26,16 @@
 // one) and STRIKES a false town (strikeHall): its reports go, and it is
 // never witnessed again.
 //
+// AUDIT CHAP3 S3: A REGION'S CHAPTERS COMPUTED ONCE A CHANGE. A reader read
+// every report of the region's towns (and the sheet every report there is)
+// once a minute an isolate - a read that grew with accounts x towns. Now a
+// witness that changed something, and a strike, move `npc_hall_regions.ver`
+// for every region its town's reports name, and a region's chapters are
+// computed from its reports once a change (chaptersOf), written under the
+// version read; every other read is the region's one row. AUDIT CHAP3 S5:
+// the strike is asked inside the witness's own write, so a report racing a
+// strike lands nowhere.
+//
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -46,6 +56,14 @@ export const CHAPTERS_KEPT_MS = 60_000;
 const _kept = new Map();
 /** Tests and the witness's own write forget what the isolate kept. */
 export const forgetChapters = () => _kept.clear();
+
+/** AUDIT CHAP3 S3: the statement that moves the version of every region a town's reports name - `keySql` the town's
+ *  key test over world_witness (?1 its value), ?2 now, `guard` an SQL condition the statement asks (the witness's:
+ *  that its own insert changed something). */
+const bumpRegions = (/** @type {any} */ db, /** @type {string} */ keySql, /** @type {string} */ key, /** @type {number} */ nowS, guard = '1') => db.prepare(
+  `INSERT INTO npc_hall_regions (region, ver, done, at) SELECT DISTINCT region, 1, 0, ?2 FROM world_witness
+    WHERE kind = '${HALL_WITNESS_KIND}' AND ${keySql} AND ${guard}
+    ON CONFLICT (region) DO UPDATE SET ver = npc_hall_regions.ver + 1`).bind(key, nowS);
 
 /** A region's towns' reports at this version: each town read over ALL its reports (a town one early report named for
  *  this region and three confirmed for another is the other's, as a pixel is - professions.js regionGround, AUDIT 29
@@ -101,27 +119,80 @@ export async function witnessHall({ db, nowS }, player, env, { hall } = {}) {
   if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };
   if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };
   if (hallFacts(await regionRows(db, h.region), nowS).ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };
-  const r = await db.prepare(`INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('${HALL_WITNESS_KIND}', ?, ?, ?, ?, ?)`)
-    .bind(hallWitnessKey(h.key), player.id, hallReportText(h), h.region, nowS).run();
+  // AUDIT CHAP3 S5: the strike asked again inside the write - a strike that landed after the check above takes this report
+  // with it; S3: and the regions its town's reports name told a change came, in the same batch
+  const key = hallWitnessKey(h.key);
+  const [r] = await db.batch([
+    db.prepare(`INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at)
+      SELECT '${HALL_WITNESS_KIND}', ?1, ?2, ?3, ?4, ?5 WHERE NOT EXISTS (SELECT 1 FROM npc_hall_strikes WHERE map_id = ?6)`)
+      .bind(key, player.id, hallReportText(h), h.region, nowS, h.key),
+    bumpRegions(db, 'key = ?1', key, nowS, 'changes() > 0'),
+  ]);
   if (r?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news
+  else if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };
   return { ok: true, counted: true };
 }
 
 /**
  * A REGION'S CHAPTERS: every guild faction a confirmed town of the region names, ascending (hallFacts: the ignored
- * accounts left out). Kept by the isolate CHAPTERS_KEPT_MS.
+ * accounts left out). Kept by the isolate CHAPTERS_KEPT_MS; past it, the region's row (chaptersOf).
  * @param {any} db @param {number} region @param {number} [nowMs]
  */
 export async function regionChapters(db, region, nowMs = Date.now()) {
   const kept = _kept.get(region);
   if (kept && nowMs - kept.at < CHAPTERS_KEPT_MS) return kept.chapters;
-  const factions = new Set();
-  for (const t of hallFacts(await regionRows(db, region), Math.floor(nowMs / 1000)).towns) {
-    if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);
-  }
-  const chapters = [...factions].sort((a, b) => a - b);
+  const chapters = await chaptersOf(db, region, Math.floor(nowMs / 1000));
   _kept.set(region, { at: nowMs, chapters });
   return chapters;
+}
+
+/** AUDIT CHAP3 S3: a region's chapters computed from its reports - every guild faction a town confirmed for this region
+ *  names, ascending. */
+async function computeChapters(/** @type {any} */ db, /** @type {number} */ region, /** @type {number} */ nowS) {
+  const factions = new Set();
+  for (const t of hallFacts(await regionRows(db, region), nowS).towns) {
+    if (factConfirmed(t.fact) && t.fact.region === region) for (const id of t.fact.factions) factions.add(id);
+  }
+  return [...factions].sort((a, b) => a - b);
+}
+
+/** A region's row read back: its chapters as written, or null for a row whose answer is not its version's. */
+const rowChapters = (/** @type {any} */ row) => {
+  if (!row || Number(row.done) !== Number(row.ver)) return null;
+  try { const v = JSON.parse(String(row.chapters)); return Array.isArray(v) ? v.map(Number) : null; } catch { return null; }
+};
+
+/** AUDIT CHAP3 S3: A REGION'S CHAPTERS AS ITS ROW HOLDS THEM - computed from its reports where a change came since
+ *  (or no row stands yet), and written under the version read, so a change landing between is computed again. */
+async function chaptersOf(/** @type {any} */ db, /** @type {number} */ region, /** @type {number} */ nowS) {
+  const row = await db.prepare('SELECT chapters, ver, done FROM npc_hall_regions WHERE region = ?1').bind(region).first();
+  const held = rowChapters(row);
+  if (held) return held;
+  const chapters = await computeChapters(db, region, nowS);
+  if (row) {
+    await db.prepare('UPDATE npc_hall_regions SET chapters = ?1, done = ?2, at = ?3 WHERE region = ?4 AND ver = ?2')
+      .bind(JSON.stringify(chapters), Number(row.ver), nowS, region).run();
+  } else {
+    await db.prepare('INSERT OR IGNORE INTO npc_hall_regions (region, chapters, ver, done, at) VALUES (?1, ?2, 0, 0, ?3)')
+      .bind(region, JSON.stringify(chapters), nowS).run();
+  }
+  return chapters;
+}
+
+/**
+ * AUDIT CHAP3 S3: EVERY REGION'S CHAPTERS, `[{ faction, region }]` - each region a town's report has named, its row read
+ * (62 at most), a region whose change is not computed yet computed now.
+ * @param {any} db @param {number} nowS
+ */
+export async function allRegionChapters(db, nowS) {
+  const { results = [] } = await db.prepare('SELECT region, chapters, ver, done FROM npc_hall_regions ORDER BY region').all();
+  const out = [];
+  for (const row of results) {
+    const g = Number(row.region);
+    const chapters = rowChapters(row) ?? await chaptersOf(db, g, nowS);
+    for (const f of chapters) out.push({ faction: f, region: g });
+  }
+  return out;
 }
 
 /**
@@ -151,8 +222,10 @@ export async function listHalls({ db, nowS }, dev, env, { region } = {}) {
 export async function strikeHall({ db, nowS }, dev, env, { key } = {}) {
   if (!isDeveloper(dev, env)) return { error: 'not-developer' };
   if (!Number.isSafeInteger(key) || key < 0 || key > 0xffffffff) return { error: 'bad-hall' };
-  const [, gone] = await db.batch([
+  const [, , gone] = await db.batch([
     db.prepare('INSERT OR IGNORE INTO npc_hall_strikes (map_id, by, at) VALUES (?, ?, ?)').bind(key, dev.handle ?? null, nowS),
+    // AUDIT CHAP3 S3/S5: the regions its reports named told first, while the reports stand to name them
+    bumpRegions(db, 'key LIKE ?1', `%:${key}`, nowS),
     db.prepare(`DELETE FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND key LIKE ?`).bind(`%:${key}`),
   ]);
   forgetChapters();

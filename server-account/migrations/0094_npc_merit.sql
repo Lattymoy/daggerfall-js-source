@@ -34,3 +34,5 @@ CREATE TABLE IF NOT EXISTS npc_chapter_merit (
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_merit_chapter ON npc_chapter_merit (week, faction, region);
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_merit_account ON npc_chapter_merit (week, account, faction);
+-- AUDIT CHAP3 (S, notes): an act's lines by its id (npcMerit.js meritOfAct)
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_merit_act ON npc_chapter_merit (char_id, source, ref);

@@ -20,28 +20,31 @@
   {
     "name": "CHAP3C-SHELF-MIN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(HALL_QUALITY_MAX, quality + chapterBandOf(strength).shelf));",
-    "new": "return Math.min(HALL_QUALITY_MAX, quality + chapterBandOf(strength).shelf);",
+    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "return Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step);",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3C-SHELF-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(HALL_QUALITY_MAX, quality + chapterBandOf(strength).shelf));",
-    "new": "return Math.max(HALL_QUALITY_MIN, quality + chapterBandOf(strength).shelf);",
+    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "return Math.max(HALL_QUALITY_MIN, quality + step);",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3C-SHELF-NOQUALITY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!(quality > 0)) return quality;",
-    "new": "  if (quality == null) return quality;",
+    "old": "  if (!(quality > 0) || step === 0) return quality;",
+    "new": "  if (quality == null || step === 0) return quality;",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -128,19 +131,21 @@
   {
     "name": "CHAP3C-SHEET-STOPS",
     "file": "src/net/chapterSheet.js",
-    "old": "} else if (SHEET_STOPS.includes(r?.error)) stopped = true;",
-    "new": "}",
+    "old": "      } else if (SHEET_STOPS.includes(r?.error)) {",
+    "new": "      } else if (false) {",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3C-SHEET-KEEP",
     "file": "src/net/chapterSheet.js",
-    "old": "} else if (SHEET_STOPS.includes(r?.error)) stopped = true;",
-    "new": "} else { strengths = new Map(); if (SHEET_STOPS.includes(r?.error)) stopped = true; }",
+    "old": "      } else if (SHEET_STOPS.includes(r?.error)) {",
+    "new": "      } else if ((strengths = new Map()) && SHEET_STOPS.includes(r?.error)) {",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -158,10 +163,9 @@
     "old": "if (stopped || busy ||",
     "new": "if (stopped ||",
     "tests": [
-      "test/chap3c_halls.test.js"
-    ],
-    "equivalent": true,
-    "why": "A read stamps `readAt` as it is asked, so a second ask inside SHEET_KEPT_MS is refused by the beat whatever `busy` says; only a read still out after ten minutes would reach the guard, and its answer then is a newer sheet over an older one - the same sheet."
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
+    ]
   },
   {
     "name": "CHAP3C-OFFER",
@@ -220,19 +224,21 @@
   {
     "name": "CHAP3C-SPELLBOOK",
     "file": "src/ui/spellbookWindow.js",
-    "old": "const f = this.deps.priceFactor?.() ?? 1;",
-    "new": "const f = 1;",
+    "old": "return chapterPriced(price, this.deps.priceFactor?.() ?? 1);",
+    "new": "return chapterPriced(price, 1);",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3C-SPELLMAKER",
     "file": "src/ui/spellMakerWindow.js",
-    "old": "const f = this.priceFactor?.() ?? 1;",
-    "new": "const f = 1;",
+    "old": "this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);",
+    "new": "this.totalGoldCost = chapterPriced(gold, 1);",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -256,10 +262,11 @@
   {
     "name": "CHAP3C-HOST-STRENGTH",
     "file": "src/scenes/worldModes.js",
-    "old": "host.chapterStrength?.(guild?.factionId ?? null, b?.regionIndex ?? null) ?? null;",
-    "new": "host.chapterStrength?.(guild?.factionId ?? null, 0) ?? null;",
+    "old": "host.chapterStrength?.(guild?.factionId ?? null) ?? null;",
+    "new": "host.chapterStrength?.(null) ?? null;",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -274,19 +281,21 @@
   {
     "name": "CHAP3C-HOST-SPELLBOOK",
     "file": "src/scenes/worldModes.js",
-    "old": "        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's price\n",
+    "old": "        priceFactor: () => bookFactor,   // CHAP3c: the hall's chapter's band on a spell's price\n",
     "new": "",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
     "name": "CHAP3C-HOST-MAKER",
     "file": "src/scenes/worldModes.js",
-    "old": "        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's making\n",
+    "old": "        priceFactor: () => makerFactor,   // CHAP3c: the hall's chapter's band on a spell's making\n",
     "new": "",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {
@@ -310,10 +319,11 @@
   {
     "name": "CHAP3C-WORLD-HOOK",
     "file": "src/scenes/world.js",
-    "old": "    chapterStrength: (faction, region) => chapterSheet?.strengthOf(faction, region) ?? null,",
-    "new": "    chapterStrength: () => null,",
+    "old": "      return Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;",
+    "new": "      return null;",
     "tests": [
-      "test/chap3c_halls.test.js"
+      "test/chap3c_halls.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {

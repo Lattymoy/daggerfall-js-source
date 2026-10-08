@@ -616,10 +616,11 @@
   {
     "name": "CHAP3A-CARD-PAY",
     "file": "src/ui/noticeWindow.js",
-    "old": "${own ? `, standing and Merit with the ${poster}` : poster",
-    "new": "${own ? ` and standing with the ${poster}` : poster",
+    "old": "${own && earns ? `, standing and Merit with the ${poster}` : poster",
+    "new": "${own && earns ? ` and standing with the ${poster}` : poster",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/chap3a_merit.test.js",
+      "test/audit_chap3.test.js"
     ]
   },
   {

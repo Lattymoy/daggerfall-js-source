@@ -30,3 +30,6 @@ CREATE TABLE IF NOT EXISTS npc_receipt_credits (
   PRIMARY KEY (char_id, faction_id, ref)
 );
 CREATE INDEX IF NOT EXISTS idx_npc_receipt_credits_tag ON npc_receipt_credits (char_id, tag);
+-- AUDIT CHAP3 (S, notes): a character's lines by their id - the board's asks and a credit's check read them so (the key
+-- leads with the faction after the character, so they scanned every line the character ever earned)
+CREATE INDEX IF NOT EXISTS idx_npc_receipt_credits_ref ON npc_receipt_credits (char_id, ref);

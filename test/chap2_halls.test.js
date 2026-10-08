@@ -279,6 +279,9 @@ test('CHAP2a a region\'s chapters: the guilds its confirmed towns name - three a
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000), [40, 41, 108], 'never here');
   // THE ISOLATE KEEPS IT A MINUTE: a row written behind the service's back is read after
   s.raw.prepare("DELETE FROM world_witness WHERE kind = 'npchall' AND key = '1:2'").run();   // PIN MOVED (AUDIT CHAP2 E7)
+  // PIN MOVED (AUDIT CHAP3 S3): a row taken behind the service's back is no change its region's row hears - told so (as a
+  // witness's and a strike's own writes tell it: its version moved), the region is computed again past the minute
+  s.raw.prepare('UPDATE npc_hall_regions SET ver = ver + 1 WHERE region = ?').run(ANTICLERE);
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000 + 1000), [40, 41, 108]);
   assert.equal(CHAPTERS_KEPT_MS, 60_000);
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000 + CHAPTERS_KEPT_MS), [40, 41]);

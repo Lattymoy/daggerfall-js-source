@@ -162,7 +162,7 @@ function injectSkin(doc = document) {
  *   nowS?: () => number,
  *   onExit?: (() => void) | null,
  *   work?: ({ book: any, region: number, regionName: string, countName: (key: string, n: number) => string,
- *     onTaken?: (r: any) => (string|void), writs?: any, regionNameOf?: (r: number) => string,
+ *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, writs?: any, regionNameOf?: (r: number) => string,
  *     pieces?: (c: any) => any[], settle?: () => any, onList?: (data: any) => void, forgetMarket?: () => void } | null),
  *   market?: (any | null),
  *   guilds?: boolean,
@@ -475,7 +475,10 @@ export function mountNoticeBoard(host, deps) {
       : poster
         ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
         : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
-    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`));
+    // AUDIT CHAP3 C8: a member's own writ promises Merit only where the account's Merit line here says it can earn some
+    const m = own ? (writs?.merit ?? []).find((x) => x.faction === w.faction) : null;
+    const earns = !!m && m.from == null && !m.elsewhere && m.merit < m.max;
+    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`));
     li.append(el('p', 'writ-left', w.state === 'mine' ? 'Taken by you' : w.state === 'taken' ? 'Filled by another' : timeLeftText(w.expiresAt, nowS())));
     const held = work.book.held(w.material);
     const take = el('div', 'writ-take');
@@ -513,14 +516,15 @@ export function mountNoticeBoard(host, deps) {
     // AUDIT CHAP2 C1: the host hears a filled writ whether or not the board still stands - its balance, its Renown and a
     // hall writ's Roll refresh were lost with a board closed while the answer was out
     const said = r?.ok ? work.onTaken?.(r) : null;
-    if (!alive) return;
+    if (!alive) { if (said) work.sayLate?.(said); return; }   // AUDIT CHAP3 C5: the line said in the chat, not lost with the board
     busy = false;
     if (r?.ok) {
       writs = work.book.state && writs ? { ...writs, writs: writs.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)), today: r.data?.today ?? writs.today } : writs;
       word = { ok: true, text: said || `Writ filled: ${r.data?.pay ?? w.pay} silver.` };
     } else {
       word = { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
-      if (r?.error === 'writ-taken' || r?.error === 'writ-expired') loadWrits(true);
+      // AUDIT CHAP3 C7: and a writ no longer the reader's (no-writ) or the Chapters shut: the list read again, its Take gone
+      if (r?.error === 'writ-taken' || r?.error === 'writ-expired' || r?.error === 'no-writ' || r?.error === 'chapters-closed') loadWrits(true);
     }
     render();
   }

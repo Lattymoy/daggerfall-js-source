@@ -104,6 +104,7 @@ import {
 } from '../systems/spellMaker.js';
 import { goldAmount } from '../systems/court.js';
 import { firstHotkey, shortcutBinding, sequenceString, normalizeCode } from '../systems/dialogShortcuts.js';
+import { chapterPriced } from '../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's making
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
 // classic rangeType / element index order the record stores.
@@ -500,8 +501,7 @@ export class SpellMakerWindow {
     }
     const { gold, sp } = spellMakerCost(this._spell(), this.entity);
     // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's gold cost - DFU's own at 1 or none
-    const f = this.priceFactor?.() ?? 1;
-    this.totalGoldCost = f === 1 || !(gold > 0) ? gold : Math.max(1, Math.round(gold * f));
+    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
     this.totalSpellPointCost = sp;
   }
 

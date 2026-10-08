@@ -19534,7 +19534,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     kept: () => rollKept,
     keep: (k) => { rollKept = k; },
     onCeiling: (factions) => { for (const f of factions) townTalk.say(rollCeilingLine(playerEntity?.factionRep?.dict?.get(f)?.name)); },
-    onStop: (error) => { if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error); },   // shut: the save keeps it, quietly
+    // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
+    onStop: (error) => {
+      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
+      else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
+    },
   }) : null;
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
   // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
@@ -21054,13 +21058,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     const c = a?.ok ? a.data?.chapters : null;
     if (c?.counted) {
       rollTracker?.refresh();
-      const line = hallRememberLine((c.credited ?? []).map((x) => x.f));
+      // AUDIT CHAP3 C8: and the Merit its chapters counted it, as a member's own writ's line says its own
+      const merit = (c.merit ?? []).reduce((n, /** @type {any} */ x) => n + (Number(x?.amount) || 0), 0);
+      const line = hallRememberLine((c.credited ?? []).map((x) => x.f), merit);
       if (line) chatNotice(line);
     }
     return a;
   };
+  /** AUDIT CHAP3 C3: a kept receipt's claim, offered as the page comes up, waits for the gate's scan - its region is the
+   *  seats' and the chapters' word, and a claim without one counts for neither - GATE_SCAN_WAIT_MS at most; past it the
+   *  claim goes as before, with no region. */
+  const GATE_SCAN_WAIT_MS = 90_000;
+  const _gateClaimsFrom = Date.now();
+  const gateClaimReady = () => {
+    if (_gateScan || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;
+    warmGateScan();
+    return false;
+  };
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: (r) => _accountGates.claim(r, gateSeatWord(r)).then(rollHeard),
+    claim: (r) => (gateClaimReady() ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
     me: _accountGates.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -21138,7 +21154,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  standing here (another's track moved, not this one's - RENOWN-CHAR: as before RENOWN-ACCOUNT). */
   const _accountRaids = accountRaids({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const raidClaims = params.has('online') ? createRaidClaims({
-    claim: (...a) => _accountRaids.claim(...a).then(rollHeard),   // CHAP2b: and the town defended remembered by its chapters
+    // CHAP2b: and the town defended remembered by its chapters - AUDIT CHAP3 C4: said, and the Roll refreshed, on the page
+    // of the character that fought (a kept claim lands under whichever plays)
+    claim: (r, ch, ...a) => _accountRaids.claim(r, ch, ...a).then((x) => (ch === characterIdOf(playerEntity) ? rollHeard(x) : x)),
     me: _accountRaids.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -23935,6 +23953,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const work = profBook?.state.open === true && Number.isInteger(region) ? {
       book: profBook, region, regionName: REGION_NAMES[region] ?? 'the region', countName: materialCountLabel,
       onTaken: (r) => profWritTaken(r),
+      sayLate: (text) => chatNotice(text),   // AUDIT CHAP3 C5: a writ filled after the board closed says its line in the chat
       // PROF6: the guild writs and commissions beside the Court's, while the Marks are this account's too
       ...(writBook && marksBook?.state?.open !== false ? {
         writs: writBook, regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', pieces: commissionPieces,
@@ -25930,7 +25949,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
-    chapterStrength: (faction, region) => chapterSheet?.strengthOf(faction, region) ?? null,   // CHAP3c: a hall's chapter's Strength, its band on the hall
+    // CHAP3c: a hall's chapter's Strength, its band on the hall - AUDIT CHAP3 C6: in the region the chapters are keyed by
+    // (the politic map's, as the hall's witness and the board read it), never the location record's
+    chapterStrength: (faction) => {
+      const px = playerTravelPixel();
+      const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+      return Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;
+    },
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)
     hallOfRecords: {

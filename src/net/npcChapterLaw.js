@@ -51,10 +51,11 @@
 // standing - each bounded here.
 //
 // The shapes and bounds BOTH ends read - the account service
-// (server-account/src/npcRoll.js, npcHalls.js, professions.js), which
+// (server-account/src/npcRoll.js, npcHalls.js, npcReceipts.js, npcMerit.js,
+// npcChapters.js, professions.js - AUDIT CHAP3 R14), which
 // keeps the Roll, the halls and their writs, and the client
-// (net/npcRollTracker.js, npcHallBook.js, the board), which claims, adopts
-// and witnesses. Pure: no clock, no DOM, no network. Every balance number
+// (net/npcRollTracker.js, npcHallBook.js, chapterSheet.js, the board, the
+// halls' service windows), which claims, adopts, witnesses and prices. Pure: no clock, no DOM, no network. Every balance number
 // lives here; the stores' own (CHAPTERS_KEPT_MS in npcHalls.js, the hall
 // book's key and bound in npcHallBook.js) live with them.
 // ═══════════════════════════════════════════════════════════════════
@@ -442,12 +443,14 @@ export function hallPosterName(/** @type {number} */ faction) {
 }
 
 /** CHAP2b: the line a credited receipt says - "The Fighters Guild and the Knights of the Dragon will remember it." -
- *  or null where no guild is named. */
-export function hallRememberLine(/** @type {number[]} */ factions) {
+ *  or null where no guild is named. AUDIT CHAP3 C8: and the Merit its chapters counted it, where some - "..., 100 Merit
+ *  to the chapters here." */
+export function hallRememberLine(/** @type {number[]} */ factions, merit = 0) {
   const names = [...new Set(factions ?? [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
   if (!names.length) return null;
   const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  return `${said.charAt(0).toUpperCase()}${said.slice(1)} will remember it.`;
+  const m = Number.isSafeInteger(merit) && merit > 0 ? `, ${merit.toLocaleString('en-US')} Merit to ${names.length === 1 ? 'its chapter' : 'their chapters'} here` : '';
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)} will remember it${m}.`;
 }
 
 /**
@@ -630,8 +633,11 @@ export const chapterPriceFactor = (/** @type {unknown} */ strength) => chapterBa
 /** A price with a hall's factor laid over it, rounded - never under 1 for a price that was some; DFU's own at 1. */
 export const chapterPriced = (/** @type {number} */ price, /** @type {number} */ factor) => (factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));
 /** A hall's shelf's quality by its chapter's Strength: DFU's building quality moved by the band, inside 1-20; the hall's
- *  own where no Strength is known (chapterBandOf reads it as Steady, which moves nothing) or the hall has no quality. */
+ *  own where no Strength is known (chapterBandOf reads it as Steady, which moves nothing) or the hall has no quality.
+ *  AUDIT CHAP3 D2: a band that moves nothing returns the quality untouched (offline is DFU's, whatever a world-data pack
+ *  sets - DFU reads a building's quality raw), and a move never takes a hall above 20 below its own quality. */
 export function chapterShelfQuality(/** @type {number} */ quality, /** @type {unknown} */ strength) {
-  if (!(quality > 0)) return quality;
-  return Math.max(HALL_QUALITY_MIN, Math.min(HALL_QUALITY_MAX, quality + chapterBandOf(strength).shelf));
+  const step = chapterBandOf(strength).shelf;
+  if (!(quality > 0) || step === 0) return quality;
+  return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));
 }

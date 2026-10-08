@@ -20,60 +20,39 @@
 // that earned Merit that week, every one the sheet already holds. Its scale
 // is the accounts that played in the week before its Turning or since (a
 // player's last play is all the service keeps).
+//
+// AUDIT CHAP3: a week settles CHAPTER_TURNING_GRACE_S after its boundary
+// (S1: a credit in flight across it lands in its week first); only while
+// the Chapters are 'dev' or 'on', and the first week settled 'on' after
+// weeks at 'dev' starts every chapter from 50 (S2); a gate's Merit counts
+// only in the region the day's claims agree on (E1, the seats' own law).
 // ═══════════════════════════════════════════════════════════════════
 
 import { chaptersOpenFor } from './npcRoll.js';
-import { hallFacts } from './npcHalls.js';
-import { factConfirmed } from '../../src/net/nodeLaw.js';
+import { allRegionChapters } from './npcHalls.js';
+import { agreedGateRegions } from './seatInfluence.js';   // AUDIT CHAP3 E1: a gate's region, as three of the day's claims agree on it
 import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt, seasonZeroOf } from '../../src/net/townSeatLaw.js';
 import {
-  HALL_WITNESS_KIND, HALL_REPORT_V, STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden,
+  STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden, chaptersSwitchOf,
 } from '../../src/net/npcChapterLaw.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
 export const CHAPTER_WEEKS_MAX = 8;
-/** Every region's chapters, kept by an isolate this long (npcHalls.js CHAPTERS_KEPT_MS's minute). */
-export const ALL_CHAPTERS_KEPT_MS = 60_000;
-/** @type {{ at: number, chapters: { faction: number, region: number }[] } | null} */
-let _all = null;
-/** For tests: forget the isolate's kept chapters. */
-export const forgetAllChapters = () => { _all = null; };
+/** AUDIT CHAP3 S1: how long after its boundary a week is settled - a credit in flight across the boundary (its week
+ *  stamped from its own clock) lands in its week before the Turning reads it. */
+export const CHAPTER_TURNING_GRACE_S = 300;
 
 /**
- * EVERY REGION'S CHAPTERS, `[{ faction, region }]`: one read of every hall report, each region's towns read as
- * npcHalls.js regionChapters reads them - every report of each town any report names the region for, its ignored
- * accounts left out, a town confirmed for this region. Kept by the isolate a minute.
+ * EVERY REGION'S CHAPTERS, `[{ faction, region }]` (npcHalls.js allRegionChapters - AUDIT CHAP3 S3: each region's row,
+ * computed once a change), by region then faction.
  * @param {any} db @param {number} nowS
  */
 export async function allChapters(db, nowS) {
-  if (_all && nowS * 1000 - _all.at < ALL_CHAPTERS_KEPT_MS) return _all.chapters;
-  const { results = [] } = await db.prepare(`SELECT key, account, report, region, at FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND key LIKE ?`)
-    .bind(`${HALL_REPORT_V}:%`).all();
-  /** @type {Map<string, { key: string, account: string, report: string, at: number }[]>} */
-  const byKey = new Map();
-  /** @type {Map<number, Set<string>>} */
-  const keysOf = new Map();
-  for (const r of results) {
-    const row = { key: String(r.key), account: String(r.account), report: String(r.report), at: Number(r.at) };
-    const list = byKey.get(row.key) ?? [];
-    list.push(row);
-    byKey.set(row.key, list);
-    const g = Number(r.region);
-    const keys = keysOf.get(g) ?? new Set();
-    keys.add(row.key);
-    keysOf.set(g, keys);
-  }
-  const out = [];
-  for (const [g, keys] of keysOf) {
-    const rows = [...keys].flatMap((k) => byKey.get(k) ?? []);
-    const factions = new Set();
-    for (const t of hallFacts(rows, nowS).towns) if (factConfirmed(t.fact) && t.fact.region === g) for (const f of t.fact.factions) factions.add(f);
-    for (const f of factions) out.push({ faction: f, region: g });
-  }
-  out.sort((a, b) => a.region - b.region || a.faction - b.faction);
-  _all = { at: nowS * 1000, chapters: out };
-  return out;
+  return (await allRegionChapters(db, nowS)).sort((a, b) => a.region - b.region || a.faction - b.faction);
 }
+
+/** AUDIT CHAP3 E1: the gate's day a Merit line's `ref` names (`gate:<day>`), or null. */
+const gateDayOf = (/** @type {unknown} */ ref) => { const m = /^gate:(\d+)$/.exec(String(ref)); return m ? Number(m[1]) : null; };
 
 /** The Turning that ends seat week `week`, in seconds. */
 const turningOf = (/** @type {number} */ week) => Math.floor((seatWeekStartMs(week) + SEAT_WEEK_MS) / 1000);
@@ -81,18 +60,27 @@ const turningOf = (/** @type {number} */ week) => Math.floor((seatWeekStartMs(we
 /**
  * SETTLE WEEK `week`'S STRENGTH: each chapter's Strength moved by its week's Merit against the week's target
  * (npcChapterLaw.js strengthAfter), halfway back toward 50 where a Season ends with it (`zero`, the week Season 0 began,
- * or null). Answers `{ settled: true, chapters }` or `{ settled: false }` - settled first by another reader, or rolled
- * back (the next read settles it again).
- * @param {any} db @param {number} week @param {number} nowS @param {number | null} [zero]
+ * or null). `open` the Chapters' switch it settles under ('dev' or 'on' - AUDIT CHAP3 S2: the first week settled 'on'
+ * after a week settled 'dev' starts every chapter from 50). Answers `{ settled: true, chapters }` or `{ settled: false }`
+ * - settled first by another reader, or rolled back (the next read settles it again).
+ * @param {any} db @param {number} week @param {number} nowS @param {number | null} [zero] @param {string} [open]
  */
-export async function settleChapterWeek(db, week, nowS, zero = null) {
+export async function settleChapterWeek(db, week, nowS, zero = null, open = 'on') {
   const turning = turningOf(week);
   const active = Number((await db.prepare('SELECT COUNT(*) AS n FROM players WHERE handle IS NOT NULL AND played_at >= ?1')
     .bind(turning - SEAT_WEEK_MS / 1000).first())?.n ?? 0);
   const target = strengthTarget(active);
-  const { results: merits = [] } = await db.prepare('SELECT faction, region, SUM(amount) AS n FROM npc_chapter_merit WHERE week = ?1 GROUP BY faction, region')
-    .bind(week).all();
-  const { results: held = [] } = await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
+  // AUDIT CHAP3 E1: a gate's Merit only in the region three of its day's claims agree on (the seats' agreedGateRegions)
+  // - the region a claim names is its client's word; the other sources' lines stand as they were written
+  const { results: lines = [] } = await db.prepare(`SELECT faction, region, source, ref, SUM(amount) AS n FROM npc_chapter_merit WHERE week = ?1
+    GROUP BY faction, region, source, CASE WHEN source = 'gate' THEN ref ELSE '' END`).bind(week).all();
+  const gateDays = [...new Set(lines.filter((r) => r.source === 'gate').map((r) => gateDayOf(r.ref)).filter((d) => d !== null))];
+  const agreed = await agreedGateRegions(db, gateDays);
+  const merits = lines.filter((r) => r.source !== 'gate' || agreed.get(/** @type {number} */ (gateDayOf(r.ref))) === Number(r.region));
+  // AUDIT CHAP3 S2: the developers' weeks forgotten the first week the Chapters are everyone's
+  const last = await db.prepare('SELECT open FROM npc_chapter_weeks WHERE week < ?1 ORDER BY week DESC LIMIT 1').bind(week).first();
+  const opened = open === 'on' && last != null && last.open !== 'on';
+  const { results: held = [] } = opened ? { results: [] } : await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
   /** @type {Map<string, { faction: number, region: number, prev: number, merit: number }>} */
   const all = new Map();
   const at = (/** @type {number} */ f, /** @type {number} */ g) => {
@@ -102,7 +90,7 @@ export async function settleChapterWeek(db, week, nowS, zero = null) {
   };
   for (const c of await allChapters(db, nowS)) at(c.faction, c.region);
   for (const r of held) at(Number(r.faction), Number(r.region)).prev = Number(r.strength);
-  for (const r of merits) at(Number(r.faction), Number(r.region)).merit = Number(r.n);
+  for (const r of merits) at(Number(r.faction), Number(r.region)).merit += Number(r.n);
   const ends = seasonEndingAt(week, zero);
   const rows = [...all.values()].map((c) => {
     const s = strengthAfter(c.prev, c.merit, target);
@@ -110,7 +98,7 @@ export async function settleChapterWeek(db, week, nowS, zero = null) {
   });
   try {
     await db.batch([
-      db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(week, active, target, rows.length, nowS),
+      db.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(week, active, target, rows.length, open, nowS),
       db.prepare(`INSERT INTO npc_chapters (faction, region, strength, week, merit, at)
         SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1, json_extract(value, '$[3]'), ?2
         FROM json_each(?3) WHERE true
@@ -127,15 +115,19 @@ export async function settleChapterWeek(db, week, nowS, zero = null) {
  * THE CHAPTERS' TURNINGS DUE: every week before this one not yet settled, oldest first - from the week after the last
  * settled (or, on a service that has settled none, the last week alone), at most CHAPTER_WEEKS_MAX back; a week that
  * fails is the first the next read settles (the seats' settleDue, AUDIT-SEATS S1). Cheap when nothing is due: one read.
- * @param {any} db @param {number} nowS @param {number | null} [zero]
+ * `open` the Chapters' switch - AUDIT CHAP3 S2: none settled while it is 'off'. "This week" is the week
+ * CHAPTER_TURNING_GRACE_S ago (S1).
+ * @param {any} db @param {number} nowS @param {number | null} [zero] @param {unknown} [open]
  */
-export async function settleChaptersDue(db, nowS, zero = null) {
-  const current = meritWeekOf(nowS);
+export async function settleChaptersDue(db, nowS, zero = null, open = 'on') {
+  const sw = chaptersSwitchOf(open);
+  if (sw === 'off') return 0;
+  const current = meritWeekOf(nowS - CHAPTER_TURNING_GRACE_S);
   const last = (await db.prepare('SELECT MAX(week) AS w FROM npc_chapter_weeks').first())?.w;
   const from = Math.max(last == null ? current - 1 : Number(last) + 1, current - CHAPTER_WEEKS_MAX);
   let n = 0;
   for (let w = from; w < current; w++) {
-    const r = await settleChapterWeek(db, w, nowS, zero);
+    const r = await settleChapterWeek(db, w, nowS, zero, sw);
     if (!r.settled) break;
     n++;
   }
@@ -160,7 +152,7 @@ export async function regionStrengths(/** @type {any} */ db, /** @type {number} 
  */
 export async function chapterSheet({ db, nowS }, player, env) {
   if (!chaptersOpenFor(player, env)) return { error: 'chapters-closed' };
-  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK));
+  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);
   const chapters = (await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));
   const { results = [] } = await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
   const held = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, Number(r.strength)]));

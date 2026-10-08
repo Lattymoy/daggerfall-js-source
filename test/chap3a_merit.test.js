@@ -22,6 +22,7 @@ import { readRoll } from '../server-account/src/npcRoll.js';
 import { forgetChapters } from '../server-account/src/npcHalls.js';
 import { mintRaidReceipt } from '../src/net/raidReceipt.js';
 import { mintReceipt } from '../src/net/gateReceipt.js';
+import { gameDayAt } from '../src/net/gateLaw.js';   // AUDIT CHAP3 E1: a gate's day is the game's
 import { mountNoticeBoard } from '../src/ui/noticeWindow.js';
 import { materialCountLabel } from '../src/systems/profItems.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
@@ -130,7 +131,7 @@ async function stand({ open = 'on', factions = [41, 108, 368], members = [41], r
   const rep = (f) => raw.prepare('SELECT rep FROM npc_roll WHERE char_id = ? AND faction_id = ?').get(R.id, f)?.rep;
   const merit = () => raw.prepare('SELECT week, faction, region, account, char_id, source, amount, ref FROM npc_chapter_merit ORDER BY rowid').all().map((r) => ({ ...r }));
   const gate = async (character = R.id) => s.call('/v1/gate/claim', {
-    receipt: await mintReceipt({ d: utcDay(_now), b: 'ruhn', s: who.id, c: 4242, x: 'dealt' }, s.gatePriv, { subtle, nowS: _now }), region: ANTICLERE, character,
+    receipt: await mintReceipt({ d: gameDayAt(_now * 1000), b: 'ruhn', s: who.id, c: 4242, x: 'dealt' }, s.gatePriv, { subtle, nowS: _now }), region: ANTICLERE, character,
   }, who.secret);
   const raid = async (loc) => s.call('/v1/raid/claim', {
     receipt: await mintRaidReceipt({ w: `${ANTICLERE}:${loc}:${utcDay(_now)}`, s: who.id, c: 777, y: 2 }, s.gatePriv, { subtle, nowS: _now }), character: R.id,
@@ -244,7 +245,7 @@ test('CHAP3a a receipt\'s Merit: 50 to each chapter its own line credited, never
   assert.deepEqual(b.body.chapters.merit, [{ f: 41, amount: 50 }, { f: 368, amount: 50 }], 'the receipt writ filled: the receipt\'s own Merit still');
   const week = meritWeekOf(_now);
   assert.deepEqual(s.merit().map((m) => [m.faction, m.source, m.ref, m.amount, m.week, m.region]), [
-    [41, 'gate', `gate:${day}`, 50, week, ANTICLERE], [368, 'gate', `gate:${day}`, 50, week, ANTICLERE],
+    [41, 'gate', `gate:${gameDayAt(_now * 1000)}`, 50, week, ANTICLERE], [368, 'gate', `gate:${gameDayAt(_now * 1000)}`, 50, week, ANTICLERE],   // PIN MOVED (AUDIT CHAP3 E1)
     [41, 'raid', `raid:${ANTICLERE}:7:${day}`, 50, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:7:${day}`, 50, week, ANTICLERE],
     [41, 'raid', `raid:${ANTICLERE}:8:${day}`, 50, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:8:${day}`, 50, week, ANTICLERE],
   ]);
