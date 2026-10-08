@@ -380,6 +380,40 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
   return [pos[0], bestFloorY, pos[2]];
 }
 
+/**
+ * UNSTUCK-OUT (FIELD BUGS 2026-10-08, SaberGGaming: "Invisible walls around mountains often gets you stuck ... unstuck
+ * didn't work"; Sahh: "I got stuck inside a mountain during fast travel"): THE NEAREST OPEN GROUND. World of
+ * Daggerfall's mountain rocks are meshes scaled by hundreds, reaching past their pixel, and the collider holds both
+ * faces of a skin while the renderer culls the back ones - so from inside a rock its walls are invisible and hold the
+ * body in. Here: the terrain's own floor (`heightAt`) at the point and then on rings out from it, the first spot where
+ * no static solid holds the body's feet or head (`insideSolid`, the collider's parity law - a rock open beneath holds
+ * what stands under its crown) and its torso's sphere touches no mesh - and, where the host asks, `dry(floor)` (the
+ * sea's floor is no ground to stand a body on). The feet of that spot, or null (nothing built there - `heightAt`
+ * answers no floor - or no open ground within the last ring). Pure over the collider's queries.
+ */
+export const OPEN_GROUND_RINGS = Object.freeze([0, 4, 8, 16, 32, 64, 128, 256]);
+/** UNSTUCK-OUT: the spacing of the spots on a ring (metres along it), and the body's points asked of the solids. */
+export const OPEN_GROUND_STEP = 8;
+export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null } = {}) {
+  for (const r of rings) {
+    const n = r === 0 ? 1 : Math.max(8, Math.round((2 * Math.PI * r) / step));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 2 * Math.PI;
+      const px = x + r * Math.cos(a), pz = z + r * Math.sin(a);
+      const h = collider.heightAt?.(px, pz);
+      if (!Number.isFinite(h) || (dry && !dry(h))) continue;
+      if (collider.insideSolid([px, h + CAPSULE_RADIUS, pz]) || collider.insideSolid([px, h + CAPSULE_HEIGHT - CAPSULE_RADIUS, pz])) continue;
+      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;
+      return [px, h, pz];
+    }
+  }
+  return null;
+}
+/** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head). */
+export function heldInSolid(collider, feet) {
+  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]]);
+}
+
 /** floorLanding's footprint sweep: the highest floor its five rays (the centre and a ring at ~half the capsule's
  *  radius, each from 0.2 above `pos`) meet within `maxDist`, or -Infinity. */
 function footprintFloorY(collider, pos, maxDist) {

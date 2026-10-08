@@ -448,7 +448,12 @@ export const FEATURES = Object.freeze([
       + 'ripples where things move, the sky and the moon on the surface. Off brings back Daggerfall’s flat water.',   // WATER-NEXT: what the water is now
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
+    // WATER-OFF (FIELD BUGS 2026-10-08, SylviaBun: "an option to disable Enhanced Water would be nice (I prefer the
+    // textured water over 'realistic' water anyway)", the frame rate falling round Gothway Garden): THE PLAYER'S, ONLINE
+    // TOO - OL-LIGHT's shape. The water is what THIS screen draws: no wire field, relay law or shared roll reads it
+    // (swimming and feet read WATER_MASK_TABLE either way; the one other reader, the townsfolk's paths, is no one's but
+    // this page's), so off online brings back Daggerfall's flat tile and the Deep Waters sea's own scrolling texture.
+    control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: 'player' }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
   // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
   // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple

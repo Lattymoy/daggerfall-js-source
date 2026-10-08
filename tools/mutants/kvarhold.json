@@ -1,0 +1,65 @@
+[
+  {
+    "name": "KVAR-the-story-dungeons-drawn",
+    "file": "src/systems/quest/place.js",
+    "old": "      if (isMainStoryDungeon(regionData.mapTable[i].mapId)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-reseat-arm-unwired",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (sd?.siteType === SITE_TYPES.Dungeon) return this._reseatStoryDungeon(world);   // KVAR-HOLD\n",
+    "new": "",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-a-named-site-drawn-again",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "new": "    if (this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-any-dungeon-drawn-again",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1) return false;",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-nothing-carried",
+    "file": "src/systems/quest/place.js",
+    "old": "    const next = site ? this._carryAssignments(sd, site) : null;\n    if (!next) return false;\n    this.siteDetails = { ...next,",
+    "new": "    const next = site;\n    if (!next) return false;\n    this.siteDetails = { ...next,",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-no-reveal",
+    "file": "src/systems/quest/place.js",
+    "old": "        if (a?.typeName === 'RevealLocation' && a.isComplete && a.placeSymbol?.name === this.symbol?.name) world.discoverLocation?.(next.regionName, next.locationName);",
+    "new": "        if (a?.typeName === 'RevealLocation' && a.isComplete && a.placeSymbol?.name === this.symbol?.name) void world;",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  },
+  {
+    "name": "KVAR-the-player-region",
+    "file": "src/systems/quest/place.js",
+    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2) ?? this._remoteDungeonSite(world, sd.regionIndex, -1);",
+    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2) ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1);",
+    "tests": [
+      "test/kvarhold.test.js"
+    ]
+  }
+]

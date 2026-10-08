@@ -6515,3 +6515,37 @@ over the hosts' location seams and the Foe's own incrementKills, and pins the re
 stays; a second three for one who kills, steps out and comes back inside the trance (none while away; the kills on
 record unread); nothing armed after the trance. `tools/mutants/fb1007_guardreturn.json` (2, both dead: a re-set that
 keeps the count, a `pc at` that never clears).
+
+## KVAR-HOLD - THE MAIN STORY'S DUNGEONS ARE NO RANDOM QUEST'S (2026-10-08)
+
+FIELD BUGS 2026-10-08, Themicles (Fighters Guild, Lord K'avar Quest Part I, `vendor/dfu-quests/Quests/M0B11Y18.txt`):
+*"the quest assigned K'var's location to Privateers Hold in Daggerfall. I've searched the dungeon several times now and
+have tried the repair button ... I can now not receive new Fighters Guild quests with this one still stuck"* - and,
+searching further, *"it seems to be bugged all the way back in the base game if the quest manages to pick Privateer's
+Hold"*. `Place _stronghold_ remote dungeon2` draws a Human Stronghold; DFU's CollectDungeonIndicesOfType (Place.cs
+:1346-1380) keeps out only a dungeon another Place holds, so once the tutorial and `_BRISIEN` let Privateer's Hold go
+(their own `permanent` Places), the draw could land there - K'avar on one of the Hold's quest markers, many of which no
+player walking in from its door reaches, his questor hidden until the quest ends (`_S.03_`), the guild's door shut with
+it. Two port laws made it likely: NEARBY-QUESTS draws among the nearest few, and the Hold is among the nearest
+strongholds to the classic start; and online `_S.02_`'s 3-13 days are a short wait (REST8), so the stronghold hunt is
+the only path. Repair could not help: it puts back what a marker lost, and his marker had lost nothing.
+
+- **The draw** (`systems/quest/place.js _collectDungeonIndicesOfType`): a dungeon of the main story
+  (`world/dungeonTextures.js isMainStoryDungeon`, DFU's fourteen) is never a random quest's - the declared type's
+  draw and the any-dungeon retry alike. The main story's own Places name them `permanent` and never pass there. A
+  DEPARTURE (Port-Ledger A), the precedent `oceanHoles.js` and the spawned dungeons' "the main story's own dungeons
+  are never cloned".
+- **A save that already holds one** (`Place._reseatStoryDungeon`, the dungeon arm of `reseatMovedSite`, which the
+  load's re-seat already runs - `machine.js reseatMovedSites`, `world.js` applyLayoutPins): a remote dungeon site in a
+  main-story dungeon is drawn again in ITS region (`_remoteDungeonSite`, SelectRemoteDungeonSite's draw lifted out to
+  take a region) by the place's declared type, else any dungeon; what the quest stood on its markers is carried to
+  the new site's (`_carryAssignments`), the site link follows, and a reveal the quest already made of it is made again
+  (`discoverLocation`), so the map shows where K'avar went. The questor stays hidden as the quest has it; the quest
+  ends as it always could - K'avar killed or driven off, or the 30-day `_gettraitor_` clock.
+- **THE FOUR HOSTS**: none is touched - the draw is the quest layer's, and the re-seat rides the load pass
+  `scenes/world.js` already runs (`scenes/exterior.js`, the fixed city, runs no layout pins; `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` mount what the quest says).
+
+Not done, offered to Mac: an Abandon for an ordinary guild quest (DFU's console `endquest`, `machine.tombstoneQuest`) -
+the port gives Abandon to bounties and revenant hunts alone. `test/kvarhold.test.js` (2); `tools/mutants/kvarhold.json`
+(7), all dead. PIN MOVED: `test/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).

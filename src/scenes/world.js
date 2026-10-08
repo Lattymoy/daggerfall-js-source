@@ -631,7 +631,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -12913,6 +12913,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
       console.warn(`[travel] start marker at ${raw[0].toFixed(1)},${raw[2].toFixed(1)} stands in geometry (floor ${(pos[1] - raw[1]).toFixed(1)} above the flat) - landing at the edge instead`);
     }
+    // UNSTUCK-OUT (FIELD BUGS 2026-10-08, Sahh: "I got stuck inside a mountain during fast travel"): a floor the ray
+    // found INSIDE a rock - a World of Daggerfall mountain's inner face, or under the crown of one standing in the
+    // ground - stands the body where the rock's walls cannot be seen and hold it. The nearest open ground instead.
+    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {
+      const open = openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
+      if (open) {
+        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
+        pos = open;
+      }
+    }
     // Party journeys validate after the pixel builds but BEFORE its terrain
     // landing is committed. A missing hull must not expose the seabed fallback.
     const resolved = resolveArrival ? await resolveArrival(pos) : null;
@@ -18965,6 +18975,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the reset always found it null and always ended the run. This snapshot is taken the moment death starts
   // (the presenter above, and the frame below as a backstop) and the reset reads IT, not the cleared live state.
   let _deathWasOnline = null;
+  /** UNSTUCK-OUT (FIELD BUGS 2026-10-08): `/unstuck` OUTDOORS - the body stood on the nearest open ground
+   *  (player/enterExit.js openGroundNear: the terrain's floor where no rock holds the body, above the sea). Only on foot
+   *  in the open world, alive, out of the water, not mid-journey; answers whether it moved. */
+  function unstuckOutdoors() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || worldMoveBusy() || !(playerEntity.health > 0)) return false;
+    if (player.swimming || player.isPlayerSwimming) return false;   // in the water no rock holds the body
+    const open = openGroundNear(collider, player.pos[0], player.pos[2], { dry: (floor) => floor >= tvSeaY() });
+    if (!open) return false;
+    player.spawn(open[0], open[1], open[2]);
+    cam.pos = [open[0], open[1], open[2]];
+    return true;
+  }
   let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   // ONE-SEAT (Mac: "the player can only have one character only at a time. Like they shouldnt be able to open multiple
   // tabs and join as different characters"): THIS TAB'S HOLD ON THE PLAYER'S ONE SEAT. Two arms say it is lost: the
@@ -20087,9 +20109,13 @@ export async function bootWorld(canvas, renderer, params, status) {
           // way out of it is (it left unveiled and unsaid); refused there (the dead's is the death's), nothing more said
           const hour = modes?.sdRealmSlot?.() != null;
           const moved = hour ? sdWayHome() : modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
-          if (moved || !hour) {
+          // UNSTUCK-OUT (FIELD BUGS 2026-10-08, SaberGGaming: "I had to end up dying to respawn somewhere else cause unstuck
+          // didnt work"): outdoors it refused - open air has no door - and a body held inside a mountain's rock had no way
+          // out but death. Outdoors now it stands on the nearest open ground (unstuckOutdoors)
+          const freed = !hour && !moved ? unstuckOutdoors() : false;
+          if (moved || freed || !hour) {
             chatLog.push(tabId, {
-              text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
+              text: moved ? 'You find your way back outside.' : freed ? 'You find your footing on open ground.' : 'There is no open ground near enough to send you to.',
               system: true,
             });
           }
@@ -20649,8 +20675,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
   // AUDIT LEGACY III W3: and never while lying dead - an Enduring death in the temple, its rise still to come, wed (the
   // duel's own law, duelCan's 'dead'; a wedding has no word of its own for it, so 'busy')
+  // FIELD BUGS 2026-10-08 (Sahh: two Enduring or two Bloodlines characters "cannot seem to marry each other" - the
+  // button grey everywhere): wedRefusal answers NULL when the one played may wed, and `?? 'house'` read that null as
+  // no house - every character refused, at every temple, and every proposal and answer with it. 'house' only for no host.
   const wedCan = () => (playerEntity.health <= 0 || modes?.deathUp?.() ? 'busy'
-    : online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+    : online?.status === 'open' && online.wedOk ? (legacyHost ? legacyHost.wedRefusal() : 'house') : 'busy');
   /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
   let _wedBox = null;
   let _wedBoxPeer = null;

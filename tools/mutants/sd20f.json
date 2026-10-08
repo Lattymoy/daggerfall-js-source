@@ -137,8 +137,8 @@
   {
     "name": "SD20F-H10-said-anyway",
     "file": "src/scenes/world.js",
-    "old": "          if (moved || !hour) {",
-    "new": "          if (moved || hour || !hour) {",
+    "old": "          if (moved || freed || !hour) {",
+    "new": "          if (moved || freed || hour || !hour) {",
     "tests": [
       "test/sd20f_hosts.test.js"
     ]
