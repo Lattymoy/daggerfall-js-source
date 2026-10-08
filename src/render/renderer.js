@@ -5853,9 +5853,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (P) P.offset = true;
     }
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    if (P) { this.stats.draws++; return; }
-    gl.disable(gl.POLYGON_OFFSET_FILL);
     this.stats.draws++;
+    if (P) return;   // the pass hands it back at its end
+    gl.disable(gl.POLYGON_OFFSET_FILL);
     this._bindVao(null);
     for (const [loc] of generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
   }

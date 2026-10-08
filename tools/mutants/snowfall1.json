@@ -356,8 +356,8 @@
   {
     "name": "SNOWFALL1-draw-offset-left-on",
     "file": "src/render/renderer.js",
-    "old": "    if (P) { this.stats.draws++; return; }\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this.stats.draws++;",
-    "new": "    if (P) { this.stats.draws++; return; }\n    this.stats.draws++;",
+    "old": "    if (P) return;   // the pass hands it back at its end\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
+    "new": "    if (P) return;   // the pass hands it back at its end\n",
     "tests": [
       "test/snowfall1_runtime.test.js"
     ]
