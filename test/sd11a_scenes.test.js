@@ -18,7 +18,7 @@ import { lookAt, perspective, mirrorProjectionX, multiply, identity, transformPo
 import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_ARENA, SD_STONE_POS, realmToDungeon, dungeonToRealm, inOrreryHall, SD_FRAY_LASH } from '../src/net/sdBrain.js';
 import {
   buildRealmModel, realmColliderTris, realmLights, realmLampFeet, realmLampTris, realmLighting, realmLightsNear, realmLightsWith, SD_LIGHTS_CAP, walkNearZ, walkFarZ,
-  SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_ISLAND_SIDES, SD_RIM_W, SD_RIM_H,
+  SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_REALM_COBBLE_RECORD, SD_ISLAND_SIDES, SD_RIM_W, SD_RIM_H,
   SD_KERB_W, SD_KERB_H, SD_LAMP_H, SD_LAMP_HEAD, SD_LAMP_POST_W,
 } from '../src/world/sdRealm.js';
 import { withCourtLights } from '../src/world/gateArena.js';
@@ -223,7 +223,7 @@ test('AUDIT SD II L2 F3: THE HOUR\'S GLOWS ARE THEIR OWN LIGHT - every emission 
 
 test('AUDIT SD II L2 F4: THE WALK RUNS FROM ISLAND TO ISLAND AND OVER NEITHER - its floor laid from the Threshold\'s edge to the Orrery\'s, each end following the island\'s own edge: every point of the walk\'s band under exactly one floor (it ran z 7-25 over the dial\'s own floor at the hall\'s mouth, in its plane - a 4 x 0.65 m patch that fought); the collider\'s walk unchanged (mutants: the walk to z 25; an end straight across)', () => {
   const m = buildRealmModel();
-  const floors = trisOf(m, (rec, P) => (rec === SD_REALM_FLOOR_RECORD || rec === SD_REALM_DIAL_RECORD) && P.every((p) => Math.abs(p[1]) < 1e-6)).map(([P]) => P.map((p) => dungeonToRealm(...p)));
+  const floors = trisOf(m, (rec, P) => (rec === SD_REALM_FLOOR_RECORD || rec === SD_REALM_DIAL_RECORD || rec === SD_REALM_COBBLE_RECORD) && P.every((p) => Math.abs(p[1]) < 1e-6))   /* SD-LOOK (PIN MOVED): the Threshold wears the Bay's cobbles */.map(([P]) => P.map((p) => dungeonToRealm(...p)));
   const nearBand = floors.filter((P) => P.some((p) => Math.abs(p[0]) < 3 && p[2] > 5 && p[2] < 27) || P.some((p) => p[0] === 0 && (p[2] === 0 || p[2] === SD_ORRERY.z)));
   const s = (p, a, b) => (p[0] - b[0]) * (a[2] - b[2]) - (a[0] - b[0]) * (p[2] - b[2]);
   const inTri = (p, [a, b, c]) => { const d1 = s(p, a, b), d2 = s(p, b, c), d3 = s(p, c, a); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };

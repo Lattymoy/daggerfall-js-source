@@ -20,7 +20,7 @@
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { realmToDungeon, SD_REALM_ORIGIN } from '../net/sdBrain.js';
-import { SD_STEPS_COURSE, SD_BEAT_HALF, SD_CRUMBLE_DELAY, SD_CRUMBLE_BACK, SD_GUST_EVERY, stepAt, beatStands, beatBlinks, crumbleAfter, gustAt, breathSeen, inBreath, inVoid, spanAt, castBackTo } from '../world/sdSteps.js';
+import { SD_STEPS_COURSE, SD_BEAT_HALF, SD_BEAT_CYCLE, SD_BEAT_SOLID, SD_BEAT_BLINK, SD_CRUMBLE_DELAY, SD_CRUMBLE_BACK, SD_GUST_EVERY, stepAt, beatStands, beatBlinks, crumbleAfter, gustAt, breathSeen, inBreath, inVoid, spanAt, castBackTo } from '../world/sdSteps.js';
 import { SD_STEP_KINDS, SD_BREATH, buildStepModel, stepTris, buildChecksModel, checkFloorTris, buildBreathModel } from '../world/sdStepsModel.js';
 import { stepsArt } from '../world/sdStepsArt.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
@@ -38,9 +38,10 @@ export const SD_STEPS_SOUNDS = Object.freeze({ tick: 433, grind: 68, wind: 70, m
 /** Where a gone step's bucket waits (the realm's y): far under the void's floor, out of every reach. */
 export const SD_STEP_GONE_Y = -400;
 /** A shaking Crumble step's shudder (m); the Beat's blink (flashes a second); how far under the course a falling Crumble
- *  step is still drawn. */
+ *  step is still drawn. SD-FLASH: the blink is a flash, under the project's ceiling (`TELEGRAPH_THROB_MAX_HZ`, 3) - at 8
+ *  it toggled sixteen times a second; at 2.5 the warning's 0.4 s is one falter: shown, then out. */
 export const SD_CRUMBLE_SHAKE = 0.035;
-export const SD_BEAT_BLINK_HZ = 8;
+export const SD_BEAT_BLINK_HZ = 2.5;
 export const SD_CRUMBLE_SEEN = 40;
 /** The longest frame the breath pushes for (s) - a hitch is not a gale. */
 const BREATH_DT_MAX = 0.1;
@@ -104,7 +105,10 @@ export function createSdSteps({ renderer = null, audio = null } = {}) {
     let solid = true, seen = true, drawY = y, sx = 0, sz = 0;
     if (s.kind === 'beat') {
       solid = beatStands(s, t);
-      seen = solid && !(beatBlinks(s, t) && Math.floor(t * SD_BEAT_BLINK_HZ) % 2 === 1);
+      // SD-FLASH: the falter from the warning's own start (world/sdSteps.js beatWarned's sum, inline - AUDIT SD II L2 F9: a
+      // double handed back from a call is a number made)
+      const warned = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE - (SD_BEAT_SOLID - SD_BEAT_BLINK);
+      seen = solid && !(beatBlinks(s, t) && Math.floor(warned * 2 * SD_BEAT_BLINK_HZ) % 2 === 1);
     } else if (s.kind === 'crumble') {
       let since = -1;   // AUDIT SD II (L2 F9): untouched, a since before any touch (crumbleAfter's own whole) - never null beside a number
       if (st.touched != null) {

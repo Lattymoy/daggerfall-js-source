@@ -1,0 +1,148 @@
+[
+  {
+    "name": "SD25-the-blink-at-eight",
+    "file": "src/scenes/sdSteps.js",
+    "old": "export const SD_BEAT_BLINK_HZ = 2.5;",
+    "new": "export const SD_BEAT_BLINK_HZ = 3.5;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-falter-on-the-absolute-clock",
+    "file": "src/scenes/sdSteps.js",
+    "old": "Math.floor(warned * 2 * SD_BEAT_BLINK_HZ)",
+    "new": "Math.floor(t * 2 * SD_BEAT_BLINK_HZ)",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-light-re-valued",
+    "file": "src/world/sdLook.js",
+    "old": "  mantella: Object.freeze([0.45, 1.0, 0.6]),",
+    "new": "  mantella: Object.freeze([0.5, 1.0, 0.6]),",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-escapement-unheld",
+    "file": "src/world/sdLook.js",
+    "old": "  const s = Math.floor(t), e = Math.min(1, (t - s) / SD_TICK_EASE_S);",
+    "new": "  const s = Math.floor(t), e = t - s;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-blend-between-steps",
+    "file": "src/world/sdPixelKit.js",
+    "old": "  return [...r[f - i > bayer(x, y) ? i + 1 : i]];",
+    "new": "  return r[i].map((v, k) => Math.round(v + (r[i + 1][k] - v) * (f - i)));",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-joint-lit",
+    "file": "src/world/sdRealmArt.js",
+    "old": "    if (fx < J || fy < J) { put(albedo, x, y, step(B, 0)); continue; }",
+    "new": "    if (fx < J || fy < J) { put(albedo, x, y, step(B, 0)); put(emission, x, y, scale(step(Br, 3), 0.18)); continue; }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-brass-glowing-whole",
+    "file": "src/world/sdRealmArt.js",
+    "old": "    put(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));",
+    "new": "    put(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y)); put(emission, x, y, scale(ramp(Br, 0.2 + 0.55 * g, x, y), 0.12));",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-street-off-its-palette",
+    "file": "src/world/sdRealmArt.js",
+    "old": "  quantize(albedo, paletteOf(Co, Br));\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ],
+    "equivalent": true,
+    "why": "every texel of the street is painted from a ramp's step already (ramp, step); quantize is the pixel law's backstop for a painter that blends, kept so the next one cannot drift"
+  },
+  {
+    "name": "SD25-the-furnace-dark",
+    "file": "src/world/sdRealm.js",
+    "old": "  ground: Object.freeze([0.34, 0.2, 0.08]),",
+    "new": "  ground: Object.freeze([0.12, 0.1, 0.07]),",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-grade-kept-past-its-frame",
+    "file": "src/render/renderer.js",
+    "old": "    this._air.setGrade?.(this._sceneGrade); this._sceneGrade = null;",
+    "new": "    this._air.setGrade?.(this._sceneGrade);",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-defaults-never-back",
+    "file": "src/render/airPass.js",
+    "old": "    this.adaptParams[1] = g?.adaptKey ?? AIR_ADAPT_KEY;",
+    "new": "    this.adaptParams[1] = g?.adaptKey ?? this.adaptParams[1];",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-tooth-over-the-rim",
+    "file": "src/world/sdRealm.js",
+    "old": "export const SD_TOOTH_TOP = SD_RIM_H - 0.05;",
+    "new": "export const SD_TOOTH_TOP = SD_RIM_H + 0.05;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-compass-turned",
+    "file": "src/world/sdRealm.js",
+    "old": "len = k === 0 ? SD_COMPASS.north",
+    "new": "len = k === 2 ? SD_COMPASS.north",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-rim's-edge-line-gone",
+    "file": "src/world/sdRealm.js",
+    "old": "    quadFacing(f, SD_REALM_EDGE_RECORD, E(re, a0, ye), E(re, a1, ye), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], UP);\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-kerb's-edge-line-gone",
+    "file": "src/world/sdRealm.js",
+    "old": "      quadFacing(f, SD_REALM_EDGE_RECORD, P(xl, Y, true), P(xl, Y, false), P(xr, Y, false), P(xr, Y, true), [0, 0], [0, 1], [1, 1], [1, 0], UP);\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-arena-a-disc-again",
+    "file": "src/world/sdRealm.js",
+    "old": "{ lean: 4, bands: SD_ARENA_BANDS }",
+    "new": "{ lean: 4 }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  }
+]

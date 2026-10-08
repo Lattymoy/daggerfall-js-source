@@ -19,6 +19,7 @@ import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { skyGain } from '../render/deadlands.js';
 import { SdSkyRenderer } from '../render/sdSky.js';
 import { SdMotesRenderer } from '../render/sdMotes.js';
+import { SD_HOUR_GRADE } from '../world/sdLook.js';
 import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
@@ -214,6 +215,7 @@ function frame(now) {
     renderer.setLighting(_equator, 0, undefined, rt);
     renderer.setMoonlight(rl.key);
     applyFog(renderer, dungeonFog(lane, SD_REALM_FOG));
+    if (!params.has('nograde')) renderer.setSceneGrade(SD_HOUR_GRADE);   // SD-LOOK: the dungeon arm's own (?nograde: the lane's defaults, for a before)
     const hour = realmLightsWith(EMPTY_LIT, NO_LIGHTS, cam.pos);
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);

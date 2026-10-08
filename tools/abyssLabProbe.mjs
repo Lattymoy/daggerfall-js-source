@@ -34,11 +34,17 @@ try {
       gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
       let sum = 0, lit = 0;
       for (let i = 0; i < px.length; i += 4) { const l = (px[i] + px[i + 1] + px[i + 2]) / 3; sum += l; if (l > 12) lit++; }
-      return { mean: sum / (w * h), lit: lit / (w * h), glError: gl.getError() };
+      // SD-LOOK: the floor's display luminance (the lower third of the frame - readPixels' first rows - Rec. 709 luma of
+      // the sRGB bytes), its 95th and 99th percentiles: the value ladder's L1 holds at or under 0.25
+      const lum = [];
+      for (let y = 0; y < Math.floor(h / 3); y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; lum.push((0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]) / 255); }
+      lum.sort((a, b) => a - b);
+      const pc = (q) => lum[Math.min(lum.length - 1, Math.floor(q * lum.length))];
+      return { mean: sum / (w * h), lit: lit / (w * h), glError: gl.getError(), p95: pc(0.95), p99: pc(0.99) };
     });
     const file = `${shots}/abyss-${view}${extra ? `-${extra.replace(/[^a-z0-9]+/gi, '_')}` : ''}.png`;
     await page.screenshot({ path: file });
-    check(view, !errors.length && s.glError === 0 && s.lit > 0.02, `${file} mean ${s.mean.toFixed(1)} lit ${(s.lit * 100).toFixed(1)}%${errors.length ? ` errors: ${errors.slice(0, 3).join(' | ')}` : ''}${s.glError ? ` gl ${s.glError}` : ''}`);
+    check(view, !errors.length && s.glError === 0 && s.lit > 0.02, `${file} mean ${s.mean.toFixed(1)} lit ${(s.lit * 100).toFixed(1)}% floor p95 ${s.p95.toFixed(2)} p99 ${s.p99.toFixed(2)}${errors.length ? ` errors: ${errors.slice(0, 3).join(' | ')}` : ''}${s.glError ? ` gl ${s.glError}` : ''}`);
   }
 } finally {
   await browser.close();

@@ -101,7 +101,7 @@
   {
     "name": "SD7B-no-blink",
     "file": "src/scenes/sdSteps.js",
-    "old": "seen = solid && !(beatBlinks(s, t) && Math.floor(t * SD_BEAT_BLINK_HZ) % 2 === 1);",
+    "old": "seen = solid && !(beatBlinks(s, t) && Math.floor(warned * 2 * SD_BEAT_BLINK_HZ) % 2 === 1);",
     "new": "seen = solid;",
     "tests": [
       "test/sd7b_steps.test.js"
