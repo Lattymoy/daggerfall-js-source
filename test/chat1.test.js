@@ -275,6 +275,8 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   ws.open();
   assert.equal(ws.sent[0].t, 'hello'); assert.equal(ws.sent[0].pose, null, 'a channel\'s hello carries no pose whatever the join was handed');
   assert.equal(ws.sent[0].id, 'mac-0001'); assert.equal(ws.sent[0].secret, 'secret-of-mac-0001');
+  assert.equal(s.sendChat('early'), false, 'SD-HELLO (PIN MOVED): nothing past the hello until the room welcomes the socket');
+  ws.receive({ t: 'welcome', id: 'mac-0001', peers: [] });   // SD-HELLO (PIN MOVED): welcomed - the channel's law below as it was
   assert.equal(s.sendPose({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), false, 'AUDIT CHAT D3: a channel session refuses a pose');
   assert.equal(s.sendChat('   '), false, 'nothing to say sends nothing');
   assert.equal(s.sendChat('\u200b'), false);
@@ -337,6 +339,7 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   const pw = sockets[4]; pw.open();
   const { ts: helloTs, ...helloPose } = pw.sent[0].pose;   // SCALE2b: and stamped with when it was said
   assert.deepEqual(helloPose, { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }); assert.ok(Number.isInteger(helloTs));
+  pw.receive({ t: 'welcome', id: 'mac-0001', peers: [] });   // SD-HELLO (PIN MOVED): welcomed - a socket says nothing past its hello until then
   assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'a presence session sends its pose');
   // RELAY-H1 re-aimed this: a presence session now ALSO pings (PING_MS, runtime-answered in the object's sleep) so the
   // socket's liveness no longer costs a wake; its proof of life to the PEERS is still the pose, which a ping never delays.
