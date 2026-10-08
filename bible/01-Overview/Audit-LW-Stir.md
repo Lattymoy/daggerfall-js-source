@@ -84,4 +84,7 @@ sooner than the roads let one, two hours after they come in: those in after five
 waved them through), `auditlwstir`'s F1 (the same). `tools/mutants/auditlwstir.json` (22, all dead); `lwstir.json`
 LW-STIR-gate-share, -break-up, -round, -quarrel-by-pair, -quarrel-once, -call-hours, -call-duty and -halt-post re-aimed
 by content (-halt-post survived its first re-aim - `_gateHalt` answered only for the roads' arrivals, so the pin probing
-other minutes read nothing; `_gateHalt` judges any minute again), all 55 dead.
+other minutes read nothing; `_gateHalt` judges any minute again), all 55 dead. `lwtalk.json` LW-TALK-deal-from-street
+and `watchfix.json` WATCH-FIX-census-skip re-aimed (the census's skip of the lent now deals them), dead. The 1,041
+records of the 33 lists with a record on the files this audit touched (`livingTown.js`, `stir.js`) judged again on the
+fixed tree: 1,039 dead, 2 equivalent as recorded, none surviving.
