@@ -200,7 +200,7 @@
   {
     "name": "LEFAY-POOL-TRAPS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (!at || bodyTrapped(at, feet())) return;",
+    "old": "    if (!at || (!moved && bodyTrapped(at, feet()))) return;",
     "new": "    if (!at) return;",
     "tests": [
       "test/lefay1_monument.test.js"
@@ -614,26 +614,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-TRAPPED-NO-HEIGHT",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": " && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1]",
-    "new": "",
-    "tests": [
-      "test/lefay1_monument.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LEFAY1-B1-load-keeps-flights",
-    "file": "src/scenes/world.js",
-    "old": "      lefay?.dropFlights();   // AUDIT LEFAY1 B1",
-    "new": "      // AUDIT LEFAY1 B1",
-    "tests": [
-      "test/lefay1_monument.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LEFAY1-B1-drop-lays",
-    "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      for (const f of tosses) { f.landed = true; if (f.batch)",
-    "new": "      for (const f of tosses) { land(f); if (f.batch)",
+    "old": "\n    && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT;",
+    "new": ";",
     "tests": [
       "test/lefay1_monument.test.js"
     ]
@@ -642,7 +624,88 @@
     "name": "AUDIT-LEFAY1-B6-ground-ring-past-open",
     "file": "src/world/lefayMonument.js",
     "old": "Object.freeze({ y: 0, r0: 2.95, r1: 3.3, share: 0.15 })",
-    "new": "Object.freeze({ y: 0, r0: 2.95, r1: 3.5, share: 0.15 })",
+    "new": "Object.freeze({ y: 0, r0: 2.95, r1: 5.7, share: 0.15 })",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B1-laid-after-a-load",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    if (f.gen === restores()) keep(layFlower(tribute(), f.entry));",
+    "new": "    keep(layFlower(tribute(), f.entry));",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B1-unstamped",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "landed: false, gen: restores() };",
+    "new": "landed: false, gen: 0 };",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B1-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    restores: restoresSoFar,   // AUDIT LEFAY1 B1",
+    "new": "    // AUDIT LEFAY1 B1",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C1-pedestal-only",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS",
+    "new": "Math.abs(f[0] - at[0]) < 0.84 + CAPSULE_RADIUS && Math.abs(f[2] - at[2]) < 0.84 + CAPSULE_RADIUS",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C1-foot-not-sunk",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT;",
+    "new": "f[1] + CAPSULE_HEIGHT > at[1];",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C1-moved-held-back",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "(!moved && bodyTrapped(at, feet()))",
+    "new": "bodyTrapped(at, feet())",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C2-vertical-ignored",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "comp !== groundAtXZ[3] || ",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C2-world-no-comp",
+    "file": "src/scenes/world.js",
+    "old": "        _lefaySite[2] = state.compensation[1];",
+    "new": "        _lefaySite[2] = 0;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-C3-clear-is-the-carve",
+    "file": "src/world/lefayMonument.js",
+    "old": "export const MONUMENT_CLEAR_M = 5.8;",
+    "new": "export const MONUMENT_CLEAR_M = 4.0;",
     "tests": [
       "test/lefay1_monument.test.js"
     ]

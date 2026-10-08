@@ -14746,7 +14746,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       modes?.abortTransition?.();
       await modes?.transitionSettled?.();
       if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD of the save's player (SaveLoadManager.cs:1378, the restore at :1497) - its StopSailing hands a lent ship back, and after restorePlayer it took the loaded character's own
-      lefay?.dropFlights();   // AUDIT LEFAY1 B1: a flower still in the air is the replaced character's - never laid in the loaded pile (no await from here to the restore, so no frame lands one)
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
@@ -14839,7 +14838,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         droppedTorches.restore(restandAt('position')(w.droppedTorches), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
         bountyFarms?.destroyAll();   // BOUNTY-FARM: a load - the farms stand again from the loaded bounties
         quays?.destroyAll();   // QUAYS: and the quays, off the harbours found again
-        lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (its flights were dropped before the restore: AUDIT LEFAY1 B1)
+        lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (a flower in the air lands nowhere: thrown before the restore - AUDIT LEFAY1 B1)
         camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back
         camps.restore(restandAt('pos')(w.camps), campFromNatives);   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
@@ -23557,7 +23556,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - in the middle of Gothway Garden, where its
   // pixel's build found open ground (`p.lefay`, the location frame), carried by the live floating-origin translation;
   // the flowers a press throws there laid in the character's own pile (systems/save.js carries it)
-  const _lefayT = [0, 0, 0], _lefaySite = [0, 0];
+  const _lefayT = [0, 0, 0], _lefaySite = [0, 0, 0];
   lefay = createLefayMonument({
     renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
     site: () => {
@@ -23566,6 +23565,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!p.lefay || !p.locOrigin) continue;
         const t = state.pixelTranslation(p.px, p.py, _lefayT);
         _lefaySite[0] = t[0] + p.locOrigin[0] + p.lefay.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.lefay.z;
+        _lefaySite[2] = state.compensation[1];   // AUDIT LEFAY1 C2: a vertical recentre re-reads its ground
         return _lefaySite;
       }
       return null;
@@ -23575,6 +23575,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
+    restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
   });
   /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's

@@ -15,6 +15,7 @@ import {
 } from '../src/world/lefayMonument.js';
 import { lefayArt, lefayPlaqueArt, LEFAY_GLYPHS, lefayGlyph, lineWidth, PLAQUE_SCALES, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H, GLYPH_H } from '../src/world/lefayArt.js';
 import { createLefayMonument, bodyTrapped, LEFAY_REACH, TOSS_HAND_DROP } from '../src/scenes/lefayMonumentHost.js';
+import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { CityNavigation, NAV_CELL, HALF_CELL } from '../src/world/cityNavigation.js';
 import { THROWN_FLOWERS } from '../src/systems/arenaCrowd.js';
 import { REGION_NAMES } from '../src/formats/mapsTables.js';
@@ -44,9 +45,12 @@ test('LEFAY1: THE TOWN - Gothway Garden in the Daggerfall region, by its names (
 });
 
 test('LEFAY1: THE SPOT - the open ground nearest the grid\'s middle, all of MONUMENT_CLEAR_M round it open, a road counted against it', () => {
-  assert.equal(MONUMENT_CLEAR_M, 4.0);
+  assert.equal(MONUMENT_CLEAR_M, 5.8);   // PIN MOVED (AUDIT LEFAY1 C3): 4.0 -> 5.8, a ring round the carve
   const disc = discCells(MONUMENT_CLEAR_M);
-  assert.equal(disc.length, 21, 'the cells within 4 m of a cell\'s centre (2.5 cells): a 5x5 less its corners');
+  assert.equal(disc.length, 45, 'the cells within 5.8 m of a cell\'s centre (3.625 cells)');
+  // AUDIT LEFAY1 C3: every cell beside a carved one is in it - the people's way round the monument, wherever it stands
+  const clear = new Set(disc.map((c) => `${c}`));
+  for (const [x, y] of discCells(MONUMENT_CARVE_M)) for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) assert.ok(clear.has(`${[x + a, y + b]}`), `${x + a},${y + b} beside the carve is open`);
   assert.deepEqual(disc[0], [0, 0], 'nearest first');
   // all open: the middle (an even grid's middle is a cell corner - the lower row and column win the tie)
   const open = navOf(128, 128);
@@ -58,12 +62,12 @@ test('LEFAY1: THE SPOT - the open ground nearest the grid\'s middle, all of MONU
   for (let y = 60; y <= 67; y++) for (let x = 60; x <= 67; x++) built.set(x, y, 0);
   const b = lefaySpot(built);
   for (const [dx, dy] of disc) assert.ok(built.weightAt(b.gx + dx, b.gy + dy) > 0, 'its whole disc is open');
-  assert.deepEqual([b.gx, b.gy], [63, 57], 'three cells off the building\'s edge, its lower rows first');
+  assert.deepEqual([b.gx, b.gy], [63, 56], 'its disc\'s edge on the building\'s, its lower rows first');
   // a road down the middle: a green beside it wins while it is nearer than the road's cost
   const road = navOf(128, 128);
   for (let y = 0; y < 128; y++) for (let x = 62; x <= 65; x++) road.set(x, y, 15);
   const r = lefaySpot(road);
-  assert.deepEqual([r.gx, r.gy], [60, 63], 'beside the road: three road cells under its edge (0.9) cost less than the cell further that touches none');
+  assert.deepEqual([r.gx, r.gy], [58, 63], 'beside the road: the cell nearer with five road cells under its edge (1.5) costs more than this one, which touches none');
   for (const [dx, dy] of disc) assert.ok(r.gx + dx < 62 || road.weightAt(r.gx + dx, r.gy + dy) === 15);
   assert.ok(MONUMENT_ROAD_COST > 0);
   // a town all road: it stands on the road at the middle
@@ -93,7 +97,7 @@ test('LEFAY1: THE SPOT OF A LAID-OUT TOWN - its blocks carved as the people\'s n
   for (const b of loc.blocks) nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles[tx][ty].textureRecord, { enhancedWater: true });
   assert.deepEqual(s, lefaySpot(nav));
   // open land begins at x 80 (block 1's water to 79): the middle (64) is shut both ways, so the first clear cell east
-  assert.deepEqual([s.gx, s.gy], [82, 31]);
+  assert.deepEqual([s.gx, s.gy], [83, 31]);
   assert.equal(lefaySpotOf({ width: 0, height: 0, blocks: [] }), null);
   // AUDIT LEFAY1 A3: the shallows the classic table walks (record 8, a shore the player wades) are water to it on every
   // lane - one spot for every client, never in the water
@@ -236,13 +240,13 @@ test('LEFAY1: A THROW\'S REST - the ring by its share, the thrower\'s side, a fl
   assert.ok(FLOWER_RINGS[1].r0 > steps[2].r && FLOWER_RINGS[1].r1 < apothem(steps[1].r) && FLOWER_RINGS[1].y === steps[1].top);
   assert.ok(FLOWER_RINGS[2].r0 > steps[1].r && FLOWER_RINGS[2].r1 < apothem(steps[0].r) && FLOWER_RINGS[2].y === steps[0].top);
   // AUDIT LEFAY1 B6: the ground ring inside the ground the spot's search holds open - the nearest point of any cell
-  // outside the clear disc (3.39 m, at the diagonals), not MONUMENT_CLEAR_M itself
+  // outside the clear disc (5.6 m, on the axes), not MONUMENT_CLEAR_M itself
   const inDisc = new Set(discCells(MONUMENT_CLEAR_M).map(([dx, dy]) => `${dx},${dy}`));
   let openTo = Infinity;
   for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
     if (!inDisc.has(`${dx},${dy}`)) openTo = Math.min(openTo, Math.hypot(Math.max(Math.abs(dx) - 0.5, 0), Math.max(Math.abs(dy) - 0.5, 0)) * NAV_CELL);
   }
-  assert.ok(Math.abs(openTo - 1.5 * Math.SQRT2 * NAV_CELL) < 1e-9, `open to ${openTo.toFixed(3)} m`);
+  assert.ok(Math.abs(openTo - 3.5 * NAV_CELL) < 1e-9, `open to ${openTo.toFixed(3)} m`);
   assert.ok(FLOWER_RINGS[3].r0 > steps[0].r && FLOWER_RINGS[3].r1 < openTo && FLOWER_RINGS[3].y === 0);
   // the flight: from the hand to the rest, its arc TOSS_ARC over the line at its middle
   const from = [4, 1.4, 0], to = [1.3, 0.9, 0];
@@ -344,11 +348,25 @@ test('LEFAY1: THE POOL HOLDS ITS STONE BACK from a body standing where it would 
   m.frame();
   assert.equal(log.buckets.has(LEFAY_KEY), false, 'a body inside the pedestal: no walls rise round it');
   assert.equal(bodyTrapped([100, 2, 50], [100.5, 2, 50.2]), true);
-  assert.equal(bodyTrapped([100, 2, 50], [100 + PEDESTAL.corniceHalf + 0.36, 2, 50]), false, 'beyond the cornice and a capsule\'s radius');
+  // AUDIT LEFAY1 C1: its whole footprint - a body on the green inside its steps is walled in by them too (their tops over
+  // the motor's step), so it is held back there; past the lowest step's corner and a capsule's radius it is not
+  assert.equal(bodyTrapped([100, 2, 50], [102.5, 2, 50]), true, 'on the green inside its lowest step');
+  assert.equal(bodyTrapped([100, 2, 50], [100 + (MONUMENT_STEPS[0].r + CAPSULE_RADIUS) * Math.SQRT1_2 - 0.01, 2, 50 + (MONUMENT_STEPS[0].r + CAPSULE_RADIUS) * Math.SQRT1_2 - 0.01]), true, 'by its corner');
+  assert.equal(bodyTrapped([100, 2, 50], [100 + MONUMENT_STEPS[0].r + CAPSULE_RADIUS + 0.01, 2, 50]), false, 'beyond the lowest step\'s corner and a capsule\'s radius');
   assert.equal(bodyTrapped([100, 2, 50], [100.5, 2 + OBELISK.apex + 0.1, 50]), false, 'over its point');
+  assert.equal(bodyTrapped([100, 2, 50], [100.5, 2 - MONUMENT_FOOT - CAPSULE_HEIGHT - 0.1, 50]), false, 'under its sunk foot');
+  assert.equal(bodyTrapped([100, 2, 50], [100.5, 2 - CAPSULE_HEIGHT - 0.2, 50]), true, 'a head in its sunk foot');
+  st.feet = [102.5, 2, 50];
+  m.frame();
+  assert.equal(log.buckets.has(LEFAY_KEY), false, 'still on its steps\' ground: held back');
   st.feet = [104, 2, 50];
   m.frame();
   assert.equal(log.buckets.has(LEFAY_KEY), true);
+  // a body standing on its steps as the land moves under them both (a recentre) keeps them: never held back as it moves
+  st.feet = [101.8, 2.6, 50];
+  st.site = [90, 50]; st.feet = [91.8, 2.6, 50];
+  m.frame();
+  assert.deepEqual([...log.buckets.get(LEFAY_KEY).m].slice(12, 15), [90, 2, 50], 'stood again where it moved, under the body on it');
 });
 
 test('LEFAY1: THE PRESS - Read (or Info) reads it, Steal takes nothing, anything else throws a flower that lands and is laid', async () => {
@@ -441,26 +459,40 @@ test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand it, the street pre
 });
 
 // ── AUDIT LEFAY1 (lens B): the host's lifecycle, the pool's own laws, the plaque read as a reader reads it ──────────
-test('AUDIT LEFAY1 B1: a load drops what is in flight - never laid in the loaded pile; the quick load drops it before the restore', async () => {
+test('AUDIT LEFAY1 B1: a flower thrown before a load lands nowhere - never in the loaded pile, by any load; one thrown after it is laid', async () => {
   const { log, st, deps } = rig();
+  st.restores = 0;
+  deps.restores = () => st.restores;
   const m = createLefayMonument(deps);
   m.frame();
   await new Promise((r) => setTimeout(r, 0));
   m.frame();
   m.activate(LEFAY_KEY, 'grab', 'flowers');
   const flight = m.batches().at(-1);
+  st.restores++;   // a load: systems/save.js restorePlayer counts it, whichever host's load it is
   st.tribute = normalTribute({ count: 4, laid: [[0, 0, 0, 0]] });   // the loaded character's own pile
   const loaded = st.tribute;
-  m.dropFlights();
+  st.t += TOSS_MS; m.frame();
+  assert.equal(st.tribute, loaded, 'nothing laid in the loaded pile');
   assert.ok(log.destroyed.includes(flight), 'its batch freed');
   assert.equal(m.state().tosses, 0);
-  st.t += TOSS_MS; m.frame(); m.destroyAll();
-  assert.equal(st.tribute, loaded, 'nothing laid in the loaded pile, by a frame or a transition');
-  // the quick load: the drop before the restore, no await between them
-  const world = read('src/scenes/world.js');
-  const load = world.slice(world.indexOf('async function worldQuickLoad('), world.indexOf('const extras = restorePlayer(playerEntity, snap, spellsByIndex);') + 80);
-  const tail = load.slice(load.indexOf('lefay?.dropFlights();'));
-  assert.ok(load.includes('lefay?.dropFlights();') && /^lefay\?\.dropFlights\(\);[^\n]*\n\s*const extras = restorePlayer\(playerEntity, snap, spellsByIndex\);/.test(tail), 'dropped on the line before the restore');
+  st.t += TOSS_EVERY_MS;
+  m.activate(LEFAY_KEY, 'grab', 'flowers');
+  m.destroyAll();   // a transition lays one thrown since
+  assert.equal(st.tribute.count, 5);
+  // the world host hands it the save's own count
+  assert.match(read('src/scenes/world.js'), /restores: restoresSoFar,/);
+});
+
+test('AUDIT LEFAY1 C2: a vertical recentre (the site\'s compensation) re-reads its ground at once', () => {
+  const { log, st, deps } = rig();
+  st.site = [100, 50, 0];
+  const m = createLefayMonument(deps);
+  assert.deepEqual(m.frame(), [100, 2, 50]);
+  st.ground = 2 - 500; st.site = [100, 50, -500];
+  assert.deepEqual(m.frame(), [100, -498, 50], 'the next frame, not LEFAY_GROUND_EVERY frames on');
+  assert.deepEqual([...log.buckets.get(LEFAY_KEY).m].slice(12, 15), [100, -498, 50]);
+  assert.match(read('src/scenes/world.js'), /_lefaySite\[2\] = state\.compensation\[1\];/);
 });
 
 test('AUDIT LEFAY1 B2: THE POOL\'S OWN LAWS - a flight laid when its town goes, the lit row over the mode, no count line before a flower, the work done once', async () => {

@@ -25,6 +25,7 @@
 import { REGION_NAMES } from '../formats/mapsTables.js';
 import { CityNavigation, NAV_CELL, HALF_CELL } from './cityNavigation.js';
 import { THROWN_FLOWERS } from '../systems/arenaCrowd.js';
+import { ROAD_WEIGHT } from '../systems/gothwayBoards.js';
 
 /** The town, by its region's name and its own (a pack's read of it keeps both). */
 export const LEFAY_TOWN = 'Gothway Garden';
@@ -60,19 +61,20 @@ export const LEFAY_ROWS = Object.freeze([
 export const LEFAY_KEY = 'lefay:monument';
 
 // ── THE SPOT ─────────────────────────────────────────────────────────────────────────────────────────────────────
-/** Open ground the monument needs round its middle, metres: every navgrid cell whose centre is this near is open. AUDIT
- *  LEFAY1 B6: that is open ground to 3.39 m from its middle at the least (the diagonals, where the next cell's nearest
- *  corner is) - past its lowest step (MONUMENT_STEPS[0].r) and the flowers' ring at its foot (FLOWER_RINGS' last, 3.3),
- *  and more on the axes (4.0). */
-export const MONUMENT_CLEAR_M = 4.0;
+/** Open ground the monument needs round its middle, metres: every navgrid cell whose centre is this near is open.
+ *  AUDIT LEFAY1 C3: every cell beside the carve's (MONUMENT_CARVE_M) - a ring the people walk round it by, wherever it
+ *  stands (at 4.0 the clear disc WAS the carve's, and on a green five cells wide the carve could close the town's way
+ *  through). Open ground to 5.6 m from its middle at the least (B6: the next cell's nearest edge, on the axes) - past
+ *  its lowest step and the flowers' ring at its foot. */
+export const MONUMENT_CLEAR_M = 5.8;
 /** How far from the grid's middle a spot is looked for, navgrid cells (one block's side is 64). */
 export const MONUMENT_SEARCH_CELLS = 48;
-/** What a road cell under it costs, in cells of distance from the middle (CityNavigation's Road family is weight 15). */
+/** What a road cell under it costs, in cells of distance from the middle (a cell of CityNavigation's Road family weighs
+ *  ROAD_WEIGHT - its one home is GOTHWAY-BOARDS', the same town's). */
 export const MONUMENT_ROAD_COST = 0.3;
-export const ROAD_WEIGHT = 15;
 /** The navgrid closed under it for the wandering people, metres from its middle: its lowest step and the flowers at its
- *  foot (AUDIT LEFAY1 A4: at 3.2 a walker's centre came within 3.58 m, its sprite over the ground ring's 3.3) - the
- *  cells of its clear disc, so the nearest a walker's centre comes is 4.5 m. */
+ *  foot (AUDIT LEFAY1 A4: at 3.2 a walker's centre came within 3.58 m, its sprite over the ground ring's 3.3) - 21
+ *  cells, so the nearest a walker's centre comes is 4.5 m; the ring of open cells round them is MONUMENT_CLEAR_M's. */
 export const MONUMENT_CARVE_M = 3.6;
 
 /** The cell offsets within `m` metres of a cell's centre, nearest first. Pure. */

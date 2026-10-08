@@ -5,9 +5,9 @@
 //
 // WHERE: the host says (`site`: the scene's x, z of its middle - world/lefayMonument.js lefaySpot's, carried by the
 // host's own frame - or null where Gothway Garden is not built); the ground there is the host's (`groundAt`), read when
-// the spot moves (a floating-origin recentre) and every LEFAY_GROUND_EVERY frames, never every frame. Its collider
-// bucket is restood when it moves and held back while a body stands inside its pedestal (`bodyTrapped` - AUDIT SET
-// W1's law: a body a wall rises round is sealed in).
+// the spot moves (a floating-origin recentre, across or up) and every LEFAY_GROUND_EVERY frames, never every frame. Its
+// collider bucket is restood when it moves, and held back while a body stands where it would first rise - anywhere in
+// its footprint (`bodyTrapped` - AUDIT SET W1's law: a body a wall rises round is sealed in).
 //
 // THE FLOWERS: a press throws one (a lit Throw row, or any mode but Info and Steal) - at most one every TOSS_EVERY_MS -
 // from the thrower's hand on an arc to its rest on the thrower's side (lefayMonument.js tossRest), where it is laid:
@@ -27,7 +27,7 @@
 //
 // Not a DFU member. Ledger A (LEFAY).
 import {
-  LEFAY_KEY, LEFAY_TEXT, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, PEDESTAL, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
+  LEFAY_KEY, LEFAY_TEXT, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, MONUMENT_STEPS, MONUMENT_FOOT, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
   TOSS_MS, TOSS_EVERY_MS, buildLefayModel, tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../world/lefayMonument.js';
 import { lefayArt } from '../world/lefayArt.js';
@@ -44,12 +44,14 @@ export const LEFAY_REACH = STATIC_NPC_ACTIVATION_DISTANCE;
 export const TOSS_HAND_DROP = 0.35;
 const NONE = Object.freeze([]);
 
-/** Would its pedestal and obelisk, stood with its middle at feet `at`, rise round a body whose feet are at `f` (the
- *  motor's capsule)? The cornice's square and the capsule's radius about it, the heights overlapping. Pure. */
+/** Would its stone, stood with its middle at feet `at`, rise round a body whose feet are at `f` (the motor's capsule)?
+ *  AUDIT LEFAY1 C1: its whole footprint - the lowest step's corners and the capsule's radius about them, from its sunk
+ *  foot to its gilt point - not the pedestal's alone: its steps' tops (0.6, 0.9) are over the motor's STEP_OFFSET, so a
+ *  body on the green when it first stands (a save from before it) was walled in by them. Pure. */
 export function bodyTrapped(at, f) {
   if (!at || !f) return false;
-  const reach = PEDESTAL.corniceHalf + CAPSULE_RADIUS;
-  return Math.abs(f[0] - at[0]) < reach && Math.abs(f[2] - at[2]) < reach && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1];
+  return Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS
+    && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT;
 }
 
 /**
@@ -60,18 +62,20 @@ export function bodyTrapped(at, f) {
  *   eye?: () => (number[]|null), feet?: () => (number[]|null),
  *   tribute?: () => any, keep?: (next: {count: number, laid: number[][]}) => void,
  *   say?: (text: string) => void, midText?: (text: string) => void, sound?: () => void,
- *   now?: () => number, rand?: () => number,
- * }} deps  `site` the scene x, z of its middle (null where it does not stand); `tribute`/`keep` the character's record
+ *   now?: () => number, rand?: () => number, restores?: () => number,
+ * }} deps  `site` the scene x, z of its middle (null where it does not stand), and the frame's vertical compensation
+ *   when the host has one (a change re-reads the ground); `tribute`/`keep` the character's record; `restores` how many
+ *   saves the page has restored (systems/save.js restoresSoFar)
  */
 export function createLefayMonument({
   renderer = null, getTexture = null, uploadRecord = null, billboardSize = null, site, groundAt, collider = () => null,
   eye = () => null, feet = () => null, tribute = () => null, keep = () => {},
-  say = () => {}, midText = () => {}, sound = () => {}, now = () => Date.now(), rand = Math.random,
+  say = () => {}, midText = () => {}, sound = () => {}, now = () => Date.now(), rand = Math.random, restores = () => 0,
 }) {
   /** Where its middle stands this frame ([x, y, z], the ground's), or null; its matrix, made when it moves. */
   let at = null, matrix = null;
   let groundY = NaN, frameN = 0;
-  const groundAtXZ = [NaN, NaN, -Infinity];
+  const groundAtXZ = [NaN, NaN, -Infinity, NaN];   // the x, z the ground was read at, the frame, the vertical compensation
   /** Its collider, where it was stood ([x, y, z]), or null. */
   let colAt = null;
   /** Its mesh, made once; the model it was made from (the collider's triangles). */
@@ -83,8 +87,8 @@ export function createLefayMonument({
   /** @type {Map<number, any>} */
   const laidBatches = new Map();
   let laidFrom = null;
-  /** The flowers in flight: {entry, from (local), to (local), at (ms), batch|null, pos, landed}. */
-  /** @type {Array<{entry: number[], from: number[], to: number[], at: number, batch: any, pos: number[], landed?: boolean}>} */
+  /** The flowers in flight: {entry, from (local), to (local), at (ms), batch|null, pos, landed, gen}. */
+  /** @type {Array<{entry: number[], from: number[], to: number[], at: number, batch: any, pos: number[], landed?: boolean, gen: number}>} */
   let tosses = [];
   let lastToss = -Infinity;
   const _batches = [];
@@ -126,13 +130,15 @@ export function createLefayMonument({
     }
     for (const [kind, centers] of byKind) laidBatches.set(kind, flowerBatch(kind, centers));
   }
-  /** A flower in flight comes to rest: laid in the character's pile (which makes the pile's batches again). */
+  /** A flower in flight comes to rest: laid in the character's pile (which makes the pile's batches again) - AUDIT LEFAY1
+   *  B1: unless a save was restored since it was thrown, whichever load did it: the pile is another's then (the loaded
+   *  character's, or another character's), and it lands nowhere. */
   function land(f) {
     if (f.landed) return;
     f.landed = true;
     if (f.batch) renderer?.destroyBillboardBatch?.(f.batch);
     f.batch = null;
-    keep(layFlower(tribute(), f.entry));
+    if (f.gen === restores()) keep(layFlower(tribute(), f.entry));
   }
   function ensureMesh() {
     if (meshTried || !renderer?.createMesh) return;
@@ -146,8 +152,9 @@ export function createLefayMonument({
     const col = collider();
     if (!col?.addMesh) return;
     if (colAt && at && colAt[0] === at[0] && colAt[1] === at[1] && colAt[2] === at[2]) return;
+    const moved = colAt !== null;   // stood, and the land moved under it (a recentre carries the body with it)
     if (colAt) { col.removeBucket?.(LEFAY_KEY); colAt = null; }
-    if (!at || bodyTrapped(at, feet())) return;   // held back while a body stands where it would rise - asked every frame
+    if (!at || (!moved && bodyTrapped(at, feet()))) return;   // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps
     col.addMesh(LEFAY_KEY, model.positions, model.indices, matrix);
     colAt = [at[0], at[1], at[2]];
   }
@@ -160,7 +167,7 @@ export function createLefayMonument({
     const entry = tossRest(bearing, rand);
     const to = flowerPlace(entry);
     const from = e ? [e[0] - at[0], e[1] - TOSS_HAND_DROP - at[1], e[2] - at[2]] : [to[0] * 1.6, to[1] + 1.5, to[2] * 1.6];
-    const f = { entry, from, to, at: t, batch: null, pos: [0, 0, 0], landed: false };
+    const f = { entry, from, to, at: t, batch: null, pos: [0, 0, 0], landed: false, gen: restores() };
     if (flowers?.sizes) { f.batch = flowerBatch(entry[1], [[0, 0, 0]]); }
     tosses.push(f);
     sound();
@@ -186,8 +193,9 @@ export function createLefayMonument({
         if (at) { at = null; standCollider(); for (const f of tosses) land(f); tosses = []; }
         return null;
       }
-      if (s[0] !== groundAtXZ[0] || s[1] !== groundAtXZ[1] || !Number.isFinite(groundY) || frameN - groundAtXZ[2] >= LEFAY_GROUND_EVERY) {
-        groundY = groundAt(s[0], s[1]); groundAtXZ[0] = s[0]; groundAtXZ[1] = s[1]; groundAtXZ[2] = frameN;
+      const comp = s[2] ?? 0;   // AUDIT LEFAY1 C2: a vertical recentre moves the ground and not its x, z
+      if (s[0] !== groundAtXZ[0] || s[1] !== groundAtXZ[1] || comp !== groundAtXZ[3] || !Number.isFinite(groundY) || frameN - groundAtXZ[2] >= LEFAY_GROUND_EVERY) {
+        groundY = groundAt(s[0], s[1]); groundAtXZ[0] = s[0]; groundAtXZ[1] = s[1]; groundAtXZ[2] = frameN; groundAtXZ[3] = comp;
       }
       if (!Number.isFinite(groundY)) { at = null; standCollider(); return null; }
       if (!at || at[0] !== s[0] || at[1] !== groundY || at[2] !== s[1]) {
@@ -253,12 +261,6 @@ export function createLefayMonument({
     /** For the tests and the probes. */
     state: () => ({ at, collider: colAt !== null, mesh: !!mesh, flowers: flowers ? (flowers.sizes ? 'loaded' : 'failed') : (flowerLoad ? 'loading' : null), laid: [...laidBatches.keys()], tosses: tosses.length }),
     destroyAll,
-    /** AUDIT LEFAY1 B1: a load replaces the character - what is in flight is the old one's and lands nowhere (laid, it
-     *  would land in the loaded pile, or another character's). Its batches freed, nothing laid. */
-    dropFlights() {
-      for (const f of tosses) { f.landed = true; if (f.batch) renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }
-      tosses = [];
-    },
     /** The scene ends: its mesh and every batch freed (EVERY ALLOCATION HAS AN OWNER). */
     dispose() {
       destroyAll();

@@ -13,8 +13,9 @@ departure, Ledger A (LEFAY).
 name in `REGION_NAMES`, the town by its own - a pack's read of the town keeps both), in every read of it. The spot is
 the open ground nearest the middle of the town's block grid, read off the town's own navgrid
 (`world/cityNavigation.js`, DFU's CityNavigation carve: every automap byte a building, a tree or a lamp draws is closed,
-and the water with it): the nearest cell whose every cell centred within `MONUMENT_CLEAR_M` (4 m) of it is open - open
-ground to 3.39 m from its middle at the least, at the diagonals, past the flowers' ring at its foot - each road cell under it
+and the water with it): the nearest cell whose every cell centred within `MONUMENT_CLEAR_M` (5.8 m) of it is open - open
+ground to 5.6 m from its middle at the least, past the flowers' ring at its foot, and a ring of open cells round the
+people's carve (below) to walk round it by - each road cell under it
 costing `MONUMENT_ROAD_COST` (0.3 cells) of distance, so it stands on a green beside a street rather than across one
 where the town has a green (`lefaySpot`, `lefaySpotOf`). It is read on the enhanced water table always (the classic
 table walks the shallows), whichever lane a client plays. A function of the layout alone: every client stands it on the
@@ -74,22 +75,24 @@ lie."), and anything else throws a flower ("You lay flowers for Julian LeFay.", 
 
 `createLefayMonument` stands the monument on its site's ground (the drawn ground, read when the spot moves and every
 30 frames, and read afresh when the town is built again), restands its collider when it moves, and holds the collider
-back while a body stands inside its pedestal (`bodyTrapped`, AUDIT SET W1's law) until they step off. Its mesh is made
+back while a body stands where it would first rise - anywhere in its footprint, its lowest step's corners and a
+capsule's radius about them (`bodyTrapped`, AUDIT SET W1's law) - until they step off; never as it moves (a recentre
+carries a body on its steps with it). A vertical recentre (the site's compensation) re-reads its ground at once. Its mesh is made
 once; the laid pile is one billboard batch to a kind of flower, made again when the character's pile changes, riding
 the monument's middle; a flower in flight is a batch of its own, freed when it lands. A transition lays what is in
-flight. `dispose` frees the mesh and every batch. A game folder that will not give TEXTURE.254 leaves the flowers
+flight - but a flower thrown before a save was restored (`systems/save.js` `restoresSoFar`, any load) lands nowhere. `dispose` frees the mesh and every batch. A game folder that will not give TEXTURE.254 leaves the flowers
 unseen, and the count still counts.
 
 ## Verification
 
-- `test/lefay1_monument.test.js` (18): the town; the spot (the middle, round a building, beside a road, all road, none);
+- `test/lefay1_monument.test.js` (19): the town; the spot (the middle, round a building, beside a road, all road, none);
   a laid-out town's spot equal to the people's own navgrid's on the enhanced lane; the carve; the stone's faces by picture and all wound
   outward; the plaque's face (its picture's top-left at the plaque's top, on the viewer's left, on all four faces); the
   art (deterministic, opaque, every letter drawn, every line fitting, the cut texels counted); a throw's rest and
   flight; the tribute and its round trip through the save; the pool (its ground, bucket, boxes, recentre, its town gone,
   no ground; held back from a body; the press's arms, the flight, the landing, the cooldown, the hover, a loaded pile,
-  dispose); and the wiring in the hosts and the save. Five more hold AUDIT LEFAY1's lens B (below).
-- `tools/mutants/lefay1.json`: 72 mutants, 72 dead (34 at the slice, 4 by lens A, 34 by lens B). Three more were
+  dispose); and the wiring in the hosts and the save. Five more hold AUDIT LEFAY1's lenses B and C (below).
+- `tools/mutants/lefay1.json`: 79 mutants, 79 dead (34 at the slice, 4 by lens A, 32 by lens B, 9 with lens C's fixes). Three more were
   run by lens B and left out as equivalent: the carve's bounds check (the clear disc is always in bounds and holds the
   carve's), `flowerPlace`'s ring fallback (an entry is normalised before it is placed) and `tossPoint`'s low clamp (a
   flight's k is never under 0 - a clock stepped back lands it).
@@ -112,15 +115,31 @@ and a NaN bearing refused.
 pins, 31 of them surviving, and the record read against the code). B1 (major): a flower still in the air at a quick
 load was laid in the LOADED character's pile - `restorePlayer` ran before the load's `destroyAll`, which lands what is
 in flight - so a quickload within 850 ms of a throw added a flower to the save loaded, or to another character.
-The pool's `dropFlights` frees what is in flight and lays nothing, and `worldQuickLoad` calls it on the line before
-the restore, with no await between (the dungeon's load and the boot's never have it standing). B2-B5: the pins the
+Each throw is stamped with the save's restore count (`systems/save.js` `restoresSoFar`, PORTAL1's), and one that lands
+after the count moved is freed and laid nowhere - every load at once, the quick load's and the classic import's
+(lens C's C4 found the latter). B2-B5: the pins the
 survivors showed missing - the pool's own laws (a flight laid when its town goes, the lit row over the mode, no "0
 flowers" line, the ground, the collider and the pile's batches made once, `dispose` freeing the pile), the A5 bearing,
 the draws' order, every edge of a saved entry and the save's 48, the search's round bound, and the plaque READ off its
 picture (its letters the right way round and up, centred inside its bevel - the slice counted cut texels, which a
-mirrored or upside-down glyph keeps). B6: "all of 4 m round it open" overclaimed - the clear disc holds open ground to
-3.39 m at the diagonals; the words and the ground ring's pin now say so (the ring, 3.3, is inside it). The record's
-carve (3.2), its water switch and its counts were stale after lens A; corrected.
+mirrored or upside-down glyph keeps). B6: "all of 4 m round it open" overclaimed - the clear disc held open ground to
+3.39 m at the diagonals; the words and the ground ring's pin say what it holds (5.6 m since C3). The record's carve
+(3.2), its water switch and its counts were stale after lens A; corrected.
+
+**Lens C - the hosts' integration** (an adversarial reviewer over both exterior hosts and the shared press, the
+frame math, the transitions, the ray, the carve's consumers, the flowers' draw list and the save; those traced clean).
+C1: the hold-back covered the pedestal alone - the steps' tops (0.6, 0.9) are over the motor's STEP_OFFSET, so a body on
+the green when it first stood (a save from before it, in the first town out of Privateer's Hold) was walled in by
+them. It covers the whole footprint now, and only as it first stands: a recentre carries a body on its steps with it.
+C2: a vertical recentre moved the ground and not the site's x, z, so its stone stood up to 29 frames at the old
+height; the site carries the vertical compensation and a change re-reads the ground. C3: the clear disc (4.0 m) and
+the carve (3.6 m) were the same 21 cells - no way round it was held open, and on a green five cells wide the carve
+could close the town's way through; `MONUMENT_CLEAR_M` is 5.8 m, every cell beside a carved one open (the spot may
+stand a little further from the middle for it). C4: the classic import's restore, a load the B1 call did not reach -
+B1's mechanism moved to the restore count, which every load passes. The merge's gates and the full suite on the merged tree found four
+pins the branch had broken and never run - the peer's namer last (PEER-PLAQUE1), the wagon's draw beside the camps'
+(HCC), one home for `ROAD_WEIGHT` (GOTHWAY-BOARDS' now), the pixel entry's bound (DISC20-C, 9500 -> 9700) - and one host
+NUDE-HOSTS names; each mended.
 
 ## Not done / open
 
