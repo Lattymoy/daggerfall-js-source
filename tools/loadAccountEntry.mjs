@@ -2,7 +2,7 @@
 // tools/loadHarness.mjs hands this file to `wrangler dev` as the entry, over server-account/wrangler.toml's own bindings.
 //
 // It is the real Worker (server-account/src/index.js), unchanged, with two things kept in the isolate that a deploy sends
-// elsewhere, so the harness can read them back at /__load/stats:
+// elsewhere, so the harness can read them back at /__load/stats (each read drains what it answers):
 //   - the service's own metrics point a request (metrics.js `measured`: the route as a template, the status, wall ms and
 //     the D1 statements it ran) - where the deploy writes them to Analytics Engine, and miniflare's local dataset drops
 //     every one;
@@ -87,9 +87,11 @@ const withLoad = (/** @type {any} */ env) => ({ ...env, DB: database(env.DB), ME
 export default {
   async fetch(/** @type {Request} */ request, /** @type {any} */ env, /** @type {any} */ ctx) {
     const url = new URL(request.url);
+    // EVERY READ DRAINS: the points and the statements since the last read, never a running total - a reader that
+    // folds each read into its own sum (the storm's every second) counts each statement once
     if (url.pathname === '/__load/stats') {
       const body = JSON.stringify({ points: points.splice(0), statements: [...bySql].map(([sql, s]) => ({ sql, ...s })) });
-      if (url.searchParams.get('reset') === '1') bySql.clear();
+      bySql.clear();
       return new Response(body, { headers: { 'content-type': 'application/json' } });
     }
     return service.fetch(request, withLoad(env), ctx);

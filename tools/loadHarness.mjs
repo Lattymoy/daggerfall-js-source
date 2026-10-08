@@ -364,7 +364,8 @@ async function standServices(o, state) {
   return svc;
 }
 
-/** The account service's kept points and statements since the last read (tools/loadAccountEntry.mjs). */
+/** The account service's kept points and statements since the last read (tools/loadAccountEntry.mjs) - every read
+ *  drains them, so each fold is of what is new. */
 async function serviceStats(port) {
   return new Promise((resolve, reject) => {
     const req = httpRequest({ host: '127.0.0.1', port, path: '/__load/stats', timeout: 30_000 }, (r) => {
@@ -538,7 +539,7 @@ async function main(o) {
     await sleep(5000);
 
     console.log(`== playing for ${o.minutes} min${o.scenario === 'storm' ? `, the relay restarted at ${Math.round(o['storm-at'] * 100)}%` : ''}`);
-    await fetchReset(svc.accountPort);   // the setup's and the ramp's points and rows are not the play's
+    await serviceStats(svc.accountPort);   // the setup's and the ramp's points and rows are not the play's - drained
     ctx.account = accountTally();
     for (const k of ['inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] = 0;
     relay.inByType = {}; relay.outByType = {}; relay.poseMs = []; relay.closes = {}; relay.refusals = {};
@@ -581,15 +582,6 @@ async function main(o) {
     else console.log(`== the state is kept at ${state}`);
   }
   return out;
-}
-
-/** Clear the per-statement rows (the points are cleared by every read). */
-async function fetchReset(port) {
-  return new Promise((resolve) => {
-    const req = httpRequest({ host: '127.0.0.1', port, path: '/__load/stats?reset=1', timeout: 30_000 }, (r) => { r.resume(); r.on('end', resolve); });
-    req.on('error', () => resolve());
-    req.end();
-  });
 }
 
 /** A DEPLOY: the relay's process killed - every socket in the game closes at once - and started again on the same state.
