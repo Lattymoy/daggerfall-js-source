@@ -460,6 +460,8 @@ export const AFFIX_RANGES = Object.freeze({
   standing:  Object.freeze({ magic: [2, 3], rare: [3, 5], legendary: [5, 8] }),     // standing with one social group
   warmth:    Object.freeze({ magic: [2, 4], rare: [4, 7], legendary: [7, 10] }),    // degrees of clothing warmth
   dry:       Object.freeze({ magic: [10, 20], rare: [20, 35], legendary: [35, 50] }), // % less of the weather's soaking
+  // CAST-SPEED: the casting hands' own
+  castSpeed: Object.freeze({ magic: [3, 6], rare: [6, 10], legendary: [10, 15] }),  // % faster a cast's hands (systems/castSpeed.js)
 });
 /** How many affixes a tier rolls: [min, max]. A Legendary's are its record's. */
 export const AFFIX_COUNTS = Object.freeze({ magic: [1, 2], rare: [3, 4] });
@@ -508,6 +510,7 @@ const STANDING_SUFFIX = Object.freeze({
 });
 const WARMTH_PREFIX = Object.freeze(['Lined', 'Quilted', 'Fur-lined']);
 const DRY_PREFIX = Object.freeze(['Waxed', 'Oiled', 'Stormproof']);
+const CAST_SPEED_SUFFIX = Object.freeze(['of Quickening', 'of Alacrity', 'of the Swift Hand']);   // CAST-SPEED
 const DAMAGE_PREFIX = Object.freeze(["Soldier's", "Warrior's", "Slayer's"]);
 const ARMOR_PREFIX = Object.freeze(["Sentinel's", "Guardian's", "Bulwark"]);
 const WEIGHT_PREFIX = Object.freeze(["Porter's", "Mule's", "Giant's"]);
@@ -552,13 +555,19 @@ export const AFFIX_KINDS = Object.freeze({
     word: (band) => WARMTH_PREFIX[band], label: (a) => `+${a.value} warmth` }),
   dry:    Object.freeze({ slot: 'prefix', groups: CLOTHING_GROUPS, params: null, survival: true,
     word: (band) => DRY_PREFIX[band], label: (a) => `${a.value}% weatherproof` }),
+  // CAST-SPEED (2026-10-08, Mac: "have casting speed a new rarity affix"): A LINE THAT DOES SOMETHING, after every kind
+  // before it so no other piece's draw moves - the casting hands run that much faster (systems/castSpeed.js, summed and
+  // capped by systems/lootPowers.js). Jewellery's and a weapon's, so a caster who may wear no armour still finds it.
+  castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
+    word: (band) => CAST_SPEED_SUFFIX[band], label: (a) => `+${a.value}% casting speed` }),
 });
 export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS));
 
 /** Gold per point of each affix, for the item's value. */
 export const AFFIX_WORTH = Object.freeze({ damage: 40, armor: 60, weight: 15, stat: 90, resist: 20, skill: 25,
   elemental: 50, leech: 80, thorns: 40, focus: 60, slayer: 25,   // LOOT4
-  standing: 60, warmth: 30, dry: 8 });   // LOOT14
+  standing: 60, warmth: 30, dry: 8,   // LOOT14
+  castSpeed: 60 });   // CAST-SPEED: focus's own worth, its fellow at the cast
 /** LOOT14: A GARMENT'S LINES ARE WORTH HALF - its slots carry no fight, and it weighs a quarter of a kilo to two and a
  *  half: at a weapon's price a Rare pair of Tights was the best gold a kilo in the game, against the Economy Arc's own
  *  pressure home (capacity). Its Rare enchantment is worth GARMENT_RARE_ENCHANT_WORTH where a weapon's is 600. */

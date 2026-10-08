@@ -36,6 +36,7 @@
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { frameToColor32 } from './fpsWeapon.js';   // the ONE indexed-bitmap bake
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
+import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast runs at
 
 /** nativeScreenWidth / nativeScreenHeight (:44-45). NOT 320x200: the
  *  hands are laid out against a 300-wide surface, which is why they
@@ -54,8 +55,16 @@ export const RELEASE_FRAME = 5;
 export const SMALL_FRAME_ADJUST = 0.134;
 
 /** animSpeed (:48) - "Set slower than classic for now", DFU's own
- *  note. Seven steps at 0.04s is a 0.28s cast. */
+ *  note. Seven steps at 0.04s is a 0.28s cast. The port's hands no
+ *  longer step at it - see CAST_FRAME_PERIOD. */
 export const ANIM_SPEED = 0.04;
+
+/** CAST-SPEED (2026-10-08, Mac: "nerf the animation of the regular sprite spellcasting to fall in line with the
+ *  morrowind model"): THE PERIOD THE HANDS STEP AT, at rate 1 - two and a half times DFU's animSpeed. The release
+ *  (frame 5) lands at 0.5 s and the hands come down at 0.7 s, where at DFU's 0.2 s and 0.28 s a classic caster cast
+ *  three times for every Morrowind hand's one. Divided by the cast's rate (systems/castSpeed.js: the live Speed and the
+ *  castSpeed loot line), which the Morrowind arm's spellcast group plays at too. */
+export const CAST_FRAME_PERIOD = 0.1;
 
 /** MW-CAST1: the longest a release HELD for the Morrowind arm's own key waits (seconds from the cast) before it goes
  *  anyway - NEVER-TRAPS, the bow's HELD_HIT_MAX_S law (combat/weaponRig.js, MW-D42): a .kf with no "<type> release",
@@ -156,6 +165,7 @@ export class SpellCastAnim {
     this._onRelease = null;   // the OnReleaseFrame subscriber (see playOneShot)
     this._hold = null;        // MW-CAST1: the release held for the Morrowind arm's key (see playOneShot)
     this._heldAge = 0;
+    this._period = CAST_FRAME_PERIOD;   // CAST-SPEED: this cast's step, CAST_FRAME_PERIOD over its rate
   }
 
   /** MW-CAST1: is a release waiting on the Morrowind arm's own key? */
@@ -189,9 +199,11 @@ export class SpellCastAnim {
    * animation - and its pending release - untouched.
    *
    * @param {?Function} onRelease raised on the release frame (:284).
+   * @param {{hold?: ?Function, rate?: number}} [opts] CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js),
+   *   fixed for the cast as it starts.
    * @returns true when a cast actually started.
    */
-  playOneShot(element, onRelease = null, { hold = null } = {}) {
+  playOneShot(element, onRelease = null, { hold = null, rate = 1 } = {}) {
     if (this.isPlayingAnim || this._hold) return false;
     if (!magicAnimFilename(element)) return false;
     this.element = element;
@@ -206,6 +218,7 @@ export class SpellCastAnim {
     // release - and the hold has a ceiling, HELD_RELEASE_MAX_S, so nothing waits for ever.
     this._hold = typeof hold === 'function' ? hold : null;
     this._heldAge = 0;
+    this._period = CAST_FRAME_PERIOD / validCastRate(rate);
     return true;
   }
 
@@ -220,7 +233,8 @@ export class SpellCastAnim {
   }
 
   /**
-   * AnimateSpellCast's body (:267-283). Steps at ANIM_SPEED, raises
+   * AnimateSpellCast's body (:267-283). Steps at the cast's period (CAST-SPEED: CAST_FRAME_PERIOD over its rate, where
+   * DFU steps at ANIM_SPEED), raises
    * the release on the step that reaches releaseFrame, and ends the
    * animation past the last index.
    *
@@ -230,7 +244,7 @@ export class SpellCastAnim {
    * is what tallies, plays the cast sound, assigns the bundle or
    * launches the missile, raises OnCastReadySpell and clears the ready
    * - five frames (RELEASE_FRAME x ANIM_SPEED = 0.2s) into the hand
-   * motion. `scenes/hostMagic.js`'s castInput now runs DFU's split:
+   * motion (CAST-SPEED: the port's five are 0.5 s at rate 1). `scenes/hostMagic.js`'s castInput now runs DFU's split:
    * the gates and the magicka spend at the CAST (CastReadySpell
    * :402-435, where DecreaseMagicka sits BEFORE PlayOneShot), the
    * resolution parked on this raise. The return value is still the
@@ -247,8 +261,8 @@ export class SpellCastAnim {
     }
     if (!this.isPlayingAnim) { this._acc = 0; return released; }
     this._acc += dt;
-    while (this._acc >= ANIM_SPEED && this.currentFrame >= 0) {
-      this._acc -= ANIM_SPEED;
+    while (this._acc >= this._period && this.currentFrame >= 0) {
+      this._acc -= this._period;
       this.currentFrame++;
       // :283-284 - the raise happens ON the step, before the end-of-
       // frames wrap, and the handler runs inside the coroutine.

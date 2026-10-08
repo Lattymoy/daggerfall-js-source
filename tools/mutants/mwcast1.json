@@ -67,8 +67,8 @@
   {
     "name": "MWCAST1-the-rig-never-holds",
     "file": "src/combat/weaponRig.js",
-    "old": "      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight() } : {});",
-    "new": "      return fpsSpellCasting.playOneShot(element, onRelease, {});",
+    "old": "      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : { rate });",
+    "new": "      return fpsSpellCasting.playOneShot(element, onRelease, { rate });",
     "tests": [
       "test/mwcast1.test.js"
     ]

@@ -99,6 +99,7 @@ import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js'
 import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
 import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
+import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast is handed, made safe
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -2839,6 +2840,7 @@ export function createFpArm() {
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
+  let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -4718,8 +4720,11 @@ export function createFpArm() {
      *  SELF, ByTouch is TOUCH, SingleTargetAtRange and AreaAtRange are
      *  TARGET. Lands back in the stance through the upper-body machine.
      *  Never a gate: a missing clip is a note on the card and the spell
-     *  still flies. */
-    castSpell(rangeType = 2) {
+     *  still flies.
+     *
+     *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
+     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
+    castSpell(rangeType = 2, rate = 1) {
       // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
       // stance the next frame's readySpell(false) tore down again
       if (!built || !built.ok || built.werewolf) return false;
@@ -4743,6 +4748,7 @@ export function createFpArm() {
       const type = spellAttackType(rangeType);
       attackType = type;
       castReleased = false;   // MW-CAST1: this cast's own release, not a stale one
+      castRate = validCastRate(rate);
       unreadyAfterCast = false;
       attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
@@ -4853,7 +4859,9 @@ export function createFpArm() {
         // blow's own clock advanced beside it (blowPace). The record's pace is the fallback, unchanged.
         const paced = attacking && blowPlan;
         if (paced) blowPlan.clock += dt;
-        advanceClip(actionState, (actionSource || rig()).keys, dt * (paced ? blowPlan.rate : weapSpeed), onActionKey);
+        // CAST-SPEED: a cast plays at its own rate, where OpenMW plays the spellcast group at 1
+        const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
         stepUpper();
       }
       // MW-D39: jump refreshes BEFORE movement, the reference's own

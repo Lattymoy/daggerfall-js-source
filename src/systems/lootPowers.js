@@ -45,6 +45,7 @@ import { effectSchool } from './spellcost.js';   // LOOT15: Stendarr's Mercy rea
 import { hoodUp } from './survival/temperature.js';   // LOOT15: Unseen reads the hood (HOOD-SAID's one law)
 import { registerPlayerStrikeListener, enemyEntityGroup, ENEMY_GROUPS } from '../combat/formulas.js';
 import { registerSpellCostMod } from './spellcost.js';
+import { registerCastSpeedMod } from './castSpeed.js';   // CAST-SPEED: the castSpeed lines' door onto a cast's rate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M } from './sigilSetPowers.js';
 import { playerDoor } from './playerDoor.js';
 import { careerTolerance, EFFECT_FLAGS } from './spellcast.js';
@@ -71,6 +72,8 @@ export const THORNS_CAP = 25;
 export const FOCUS_CAP = 30;
 /** LOOT5: all the loot takes off a spell's magicka, focus and powers together, at most (%). */
 export const SPELL_CUT_MOST = 50;
+/** CAST-SPEED: all the casting speed a wearer's pieces sum to, at most (%). */
+export const CAST_SPEED_CAP = 30;
 
 const mine = (e) => !!e?.isPlayer && !e.peer;
 /** A piece's valid lines of one kind - none with the switch off (off is DFU exactly). */
@@ -418,6 +421,13 @@ export function lootCastCost(entity, sp, spell = null) {
   return pct > 0 ? (sp * (100 - pct)) / 100 : sp;
 }
 
+/** CAST-SPEED: MY casting hands' speed - the castSpeed lines I wear, summed under the cap, a percent onto the cast's rate
+ *  (systems/castSpeed.js castRate). */
+export function lootCastSpeed(entity) {
+  if (!mine(entity)) return 0;
+  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));
+}
+
 // ── LOOT5: the absorption roll, the round, the find ─────────────────
 /** Hagraven's Pact: the chance (%) a Destruction spell that strikes me is absorbed (absorption.js's own roll, under DFU's
  *  two gates). */
@@ -479,6 +489,7 @@ registerWeaponBlowMod(LOOT_POWERS, lootBlow);
 registerPlayerStrikeListener(LOOT_POWERS, lootStrike);
 registerPlayerBlowLanded(LOOT_POWERS, lootLanded);
 registerSpellCostMod(LOOT_POWERS, lootCastCost);
+registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED
 registerPlayerDamageMod(LOOT_POWERS, lootDamageMod);   // LOOT5
 registerPlayerDeathSave(LOOT_POWERS, lootDeathSave);
 registerPlayerHurtListener(LOOT_POWERS, lootHurt);

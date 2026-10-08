@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFpArm, fpSkeletonPath, FP_CLIP_PATH, UPPER_BODY } from '../src/combat/fpArm.js';
 import { MW_WEAPON_TYPE } from '../src/formats/mwFirstPerson.js';
-import { SpellCastAnim, HELD_RELEASE_MAX_S, ANIM_SPEED, RELEASE_FRAME } from '../src/combat/fpsSpellCasting.js';
+import { SpellCastAnim, HELD_RELEASE_MAX_S, CAST_FRAME_PERIOD, RELEASE_FRAME } from '../src/combat/fpsSpellCasting.js';
 import { castClip, CAST_KEYS } from './fixtures/mw/castClip.mjs';
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
@@ -76,7 +76,7 @@ test('MW-CAST1: a release HELD for the arm goes on its key, not on frame 5 - and
   let key = false;
   assert.equal(anim.playOneShot(4, () => released++, { hold: () => key }), true);
   assert.equal(anim.releaseHeld, true);
-  for (let t = 0; t < RELEASE_FRAME * ANIM_SPEED + 0.1; t += 0.01) anim.tick(0.01);
+  for (let t = 0; t < RELEASE_FRAME * CAST_FRAME_PERIOD + 0.1; t += 0.01) anim.tick(0.01);
   assert.equal(released, 0, 'frame 5 is not the release while the arm casts');
   assert.equal(anim.playOneShot(4, () => {}, {}), false, 'one pair of hands: no second cast while the first is held');
   key = true;
@@ -96,7 +96,7 @@ test('MW-CAST1: a release HELD for the arm goes on its key, not on frame 5 - and
   let ct = 0; let cat = null;
   classic.playOneShot(1, () => { cat = ct; });
   for (let i = 0; i < 100 && cat == null; i++) { ct += 0.01; classic.tick(0.01); }
-  assert.ok(Math.abs(cat - RELEASE_FRAME * ANIM_SPEED) < 0.011, `without a hold the release is frame 5 (${cat})`);
+  assert.ok(Math.abs(cat - RELEASE_FRAME * CAST_FRAME_PERIOD) < 0.011, `without a hold the release is frame 5 (${cat})`);   // CAST-SPEED: the port's period
 });
 
 // ── the arm ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ test('MW-CAST1: the rig holds the release for the arm on screen, draws the casti
   fpArm.takeCastRelease = () => { if (!key) return false; key = false; return true; };
   fpArm.castInFlight = () => true;
   try {
-    const r = createWeaponRig({ renderer: {}, canvas: { clientWidth: 1000, clientHeight: 800 }, fetchBytes: () => { throw new Error('no art'); }, palette: null, audio: { playOneShot() {} }, entity: { items: [] } });
+    const r = createWeaponRig({ renderer: {}, canvas: { clientWidth: 1000, clientHeight: 800 }, fetchBytes: () => { throw new Error('no art'); }, palette: null, audio: { playOneShot() {} }, entity: { items: [], stats: { speed: 50 }, activeEffects: [] } });   // CAST-SPEED: rate 1
     let released = 0;
     assert.equal(r.castSpellAnim(2, 0, () => released++), true);
     assert.equal(fpsSpellCasting.releaseHeld, true, 'held for the arm');
@@ -205,7 +205,7 @@ test('MW-CAST1: the rig holds the release for the arm on screen, draws the casti
     let classic = 0;
     assert.equal(r.castSpellAnim(2, 0, () => classic++), true);
     assert.equal(fpsSpellCasting.releaseHeld, false);
-    for (let i = 0; i < 30; i++) fpsSpellCasting.tick(1 / 60);
+    for (let i = 0; i < 40; i++) fpsSpellCasting.tick(1 / 60);   // CAST-SPEED: frame 5 at the port's 0.5 s
     assert.equal(classic, 1);
   } finally {
     Object.assign(fpArm, saved);
