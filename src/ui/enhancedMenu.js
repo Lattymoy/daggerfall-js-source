@@ -3241,7 +3241,9 @@ function overhaulPanel(p) {
   // the look is worn (the PLUS rows' shape); each takes effect when the world next loads, and is kept for the next wear
   const addons = o === cur ? o.addons?.() ?? [] : [];
   for (const m of addons) {
-    const label = String(m.title).replace(/^Vanilla Enhanced - /, '');
+    // ALIKR1/SNOWFALL1: the environment packs ride the look as its add-ons do (built on its Base) - each named with its
+    // own author where the archive names one, so Snowfall does not read as carademono's
+    const label = /^Vanilla Enhanced - /.test(m.title) ? String(m.title).replace(/^Vanilla Enhanced - /, '') : `${m.title}${m.author ? ` by ${m.author}` : ''}`;
     const row = el('div', 'look-colours');
     row.setAttribute('role', 'group');
     row.setAttribute('aria-label', label);

@@ -22,7 +22,19 @@
 //   - THE DECODE IS A WORKER'S (P1, systems/vanillaEnhancedDecodeWorker.js): the fetch, the readback and the texture
 //     detail's fit run off the main thread, as an attached bundle's decode does in its own worker. A browser with no
 //     OffscreenCanvas in a worker, or node, decodes on this thread - the same pixels.
+//
+// ALIKR1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These
+// should be on by default and integrate into our enhanced environments seamlessly."): TWO MORE PACKS SHIP THROUGH THIS
+// DOOR, ON BY DEFAULT - Sands of the Alik'r's desert ground (public/art/sands-of-the-alikr/, a loose pack in DFU) and
+// Snowfall's packaged winter ground (public/art/snowfall/, three archives the mod's bundle carries). Port-Doctrine
+// carries both as its second exception. They are the door's mods as Vanilla Enhanced's are - one load order, one walk,
+// a switch each on the Replacement packs card - and the one list setShippedDfmods takes is ALL the shipped packs, so it
+// is built here, where the first was: `installVanillaEnhancedPack` installs every one of them (the name is the door's
+// history; every caller wants the whole list - another list would replace it). Each pack's index (vendor/<pack>/
+// <pack>.index.json, tools/environmentModsExtract.mjs) names its own root under the served art.
 import pack from '../../vendor/vanilla-enhanced/vanilla-enhanced.index.json' with { type: 'json' };
+import sandsPack from '../../vendor/sands-of-the-alikr/sands-of-the-alikr.index.json' with { type: 'json' };
+import snowfallPack from '../../vendor/snowfall/snowfall.index.json' with { type: 'json' };
 import { setShippedDfmods } from './dfmodTextures.js';
 import { decodePng, PRELOAD_CONCURRENCY } from './textureReplacement.js';
 import { resampleRgba, mipFitSize } from '../formats/resample.js';
@@ -92,9 +104,9 @@ const askWorker = (lanes, url, maxSize) => new Promise((resolve, reject) => {
   try { lane.w.postMessage({ id, url, maxSize }); } catch (e) { lane.pending.delete(id); reject(Object.assign(e, { unsupported: true })); }
 });
 /** One shipped file as top-down RGBA, fitted to `maxSize` as a mip chain would be: a worker's decode where the page has
- *  one, else this thread's - and this thread's for good once a worker says it cannot. */
-async function decodeShipped(path, maxSize = Infinity) {
-  const url = vePackUrl(path);
+ *  one, else this thread's - and this thread's for good once a worker says it cannot. ALIKR1: `root` is the pack's. */
+async function decodeShipped(path, maxSize = Infinity, root = pack.Root) {
+  const url = vePackUrl(path, undefined, root);
   const lanes = decodeWorkers();
   if (lanes) {
     try { return await askWorker(lanes, url, maxSize); } catch (e) {
@@ -108,20 +120,23 @@ async function decodeShipped(path, maxSize = Infinity) {
   return w === img.width && h === img.height ? img : resampleRgba(img, w, h);
 }
 
-/** The served URL of a file under the pack's root (`base/302_0-0.png`). */
-export const vePackUrl = (path, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
-  new URL(`${pack.Root}/${path.split('/').map(encodeURIComponent).join('/')}`, root).href;
+/** The served URL of a file under the pack's root (`base/302_0-0.png`). ALIKR1: `packRoot` - another shipped pack's
+ *  root under the served art (`art/sands-of-the-alikr`). */
+export const vePackUrl = (path, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/', packRoot = pack.Root) =>
+  new URL(`${packRoot}/${path.split('/').map(encodeURIComponent).join('/')}`, root).href;
 
 /** A shipped mod's client, in unityBundleClient's shape: `rgba(name, { maxSize })` a texture, top-down RGBA at the
- *  texture detail; `layers(name)` an array's slices, top-down, whole; `close()`. */
+ *  texture detail; `layers(name)` an array's slices, top-down, whole; `close()`. ALIKR1: `mod.root`, a pack's own root
+ *  (Vanilla Enhanced's mods name none). */
 export function vePackClient(mod) {
-  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir}/${name}.png`]));
-  const picture = (path) => decodeShipped(path);
+  const root = mod.root ?? pack.Root;
+  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]));
+  const picture = (path) => decodeShipped(path, Infinity, root);
   return {
     async rgba(name, { maxSize = Infinity } = {}) {
       const path = files.get(name);
       if (!path) throw new Error(`${mod.index.title} carries no ${name}`);
-      return decodeShipped(path, maxSize);
+      return decodeShipped(path, maxSize, root);
     },
     async layers(name) {
       const paths = mod.slices?.[name] ?? [];
@@ -139,7 +154,13 @@ export function vePackClient(mod) {
   };
 }
 
-const SHIPPED = Object.freeze(VE_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: ON_BY_DEFAULT.has(m.dir) })));
+/** ALIKR1 / SNOWFALL1: the environment packs - each `{ key, dir, index, root }`, on by default (Mac: "These should be
+ *  on by default"). */
+export const ENVIRONMENT_PACK_MODS = Object.freeze([sandsPack, snowfallPack].flatMap((p) => p.Mods.map((m) => Object.freeze({ ...m, root: p.Root }))));
+const SHIPPED = Object.freeze([
+  ...VE_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: ON_BY_DEFAULT.has(m.dir) })),
+  ...ENVIRONMENT_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: true })),
+]);
 /** Put the shipped mods in the texture-mod door. Idempotent (the same list each time), and cheap: a registration is
  *  names - the boot seam calls it before the attached mods register, and the menus before they read the door, so a
  *  card opened before any host has booted still finds Vanilla Enhanced. */
