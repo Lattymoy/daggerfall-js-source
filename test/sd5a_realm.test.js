@@ -193,10 +193,10 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
   assert.match(D, /sdRiftLanding\(\) \{\n\s+if \(!_superTier \|\| !sdEnd\) return null;\n\s+if \(!_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}\n\s+return _sdLanding \? \[_sdLanding\[0\], _sdLanding\[1\], _sdLanding\[2\]\] : null;/);
   assert.ok(SD_WAY_BACK_Z < 0 && Math.abs(SD_WAY_BACK_Z) < SD_THRESHOLD.r && SD_WAY_BACK_SIZE < 2 * SD_THRESHOLD.r, 'at the Threshold\'s back, on it');
   assert.deepEqual(SD_REALM_TEXT, {
-    wayBack: 'To the Hollow', noRest: 'You cannot rest in the Shattered Hour.', noSave: 'You cannot save in the Shattered Hour.',
+    wayBack: 'To the Abyss Dungeon', noRest: 'You cannot rest in the Shattered Hour.', noSave: 'You cannot save in the Shattered Hour.',
     noMap: 'You cannot map the Shattered Hour.', noMark: 'You cannot set a Mark in the Shattered Hour.',
     noRecall: 'Nothing answers a Recall in the Shattered Hour.', lost: 'The way to the Shattered Hour is lost.',
-    died: 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's; SD-ONELIFE (PIN MOVED): and final
+    died: 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's; SD-ONELIFE (PIN MOVED): and final; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   });
 });
 

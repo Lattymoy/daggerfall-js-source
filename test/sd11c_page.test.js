@@ -580,6 +580,7 @@ function fightHost() {
     playerEntity: { health: 10 }, SD_ARENA: { x: 0, z: 0 }, cam: { yaw: 0 }, sdPerilAt: () => null, sdGroundModel: () => null,
     sdBeats: { frame: () => null, leave: () => {} }, titleCardModel: () => null, drawGateGround: () => log.push('ground'), drawSdTitleCard: () => log.push('card'),
     sdMarksCardModel: () => null, sdMarksOf: () => null, drawGateMarksCard: () => log.push('marks'), performance: { now: () => 0 },   // SD18b (PIN MOVED): the Hour's marks card - none to draw
+    gateVeil: null,   // AUDIT SD III (T18, PIN MOVED): the veil the Hour's readouts wait under - none here
   };
   const body = `let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false, _sdPassesWarm = true;\n${fnOf('sdFightHeard')}\n${constOf('sdFightFrame')}\nreturn { sdFightHeard, sdFightFrame, held: () => _sdFightHeld };`;   // AUDIT SD III (V13, PIN MOVED): the passes already warm
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -614,7 +615,7 @@ test('SD11c THE WORLD HOST\'S FIGHT, RUN FROM ITS OWN TEXT (L8 G3, L5 F5): in th
 // ── L6 F4, F14: the Hour's death, the floor's last words ──────────────
 
 test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO TO THE CHAT (L6 F4, F14): the respawn reads the Hour before it leaves it, and wakes under the veil with the Hour\'s own words (it woke with a plain dungeon\'s); what the floor still held, gathered as I leave, is said in the chat - over the screen it took the place of the way home\'s line or the cast-out\'s a frame after (mutants: read after the exit; the dungeon\'s words; the gathered line over the screen)', () => {
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.');   // SD-ONELIFE (PIN MOVED): one life
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.');   // SD-ONELIFE (PIN MOVED): one life; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   const w = strip(W);
   const at = w.indexOf('const diedInHour = modes?.sdRealmSlot?.() != null;');
   const go = w.indexOf('Promise.resolve().then(async () => {', at);
@@ -764,7 +765,7 @@ test('SD11c THE SMALLER GAPS (L8 G13): a fallen Echo strikes nothing (its blow i
   L.word(validSdOut({ k: 'ec', e: [[0, 9, T0, 0], [0, 9, T0, T0]], d: 1, n: 'Bo', at: T0 }));
   assert.ok(said.includes('Bo fells the Silver Echo.'), JSON.stringify(said));
   // a world with no Hollow for the slot
-  const rig = hollowRig({ templates: () => [], regionName: () => 'the Alik\'r Desert' });
+  const rig = hollowRig({ templates: () => [], regionName: () => 'Alik\'r Desert' });   // AUDIT SD III (T19, PIN MOVED): the region's own name, as the world's maps give it
   const warns = [];
   const warn = console.warn;
   console.warn = (m) => warns.push(String(m));
@@ -776,7 +777,8 @@ test('SD11c THE SMALLER GAPS (L8 G13): a fallen Echo strikes nothing (its blow i
     rig.host.frame(); rig.host.frame();
     assert.equal(rig.host.hollow(), null, 'nothing stood');
     assert.equal(warns.filter((m) => /offers no Hollow/.test(m)).length, 1, 'warned once');
-    assert.deepEqual(rig.log.filter((x) => Array.isArray(x) && x[0] === 'line').map((x) => x[1]), [sdFoundLine({ who: 'Mara', near: 'the Alik\'r Desert' }), sdMarksLine({ name: null, s: r.s })], 'the find said, by its region - SD19 (PIN MOVED): and its marks');
+    assert.deepEqual(rig.log.filter((x) => Array.isArray(x) && x[0] === 'line').map((x) => x[1]), [sdFoundLine({ who: 'Mara', region: 'Alik\'r Desert' }), sdMarksLine({ name: null, s: r.s })], 'the find said, by its region - SD19 (PIN MOVED): and its marks');
+    assert.equal(sdFoundLine({ who: 'Mara', region: 'Alik\'r Desert' }), 'Mara has found an Abyss Dungeon in the Alik\'r Desert region!', 'AUDIT SD III (T19): said as a region - it read "near Alik\'r Desert"');
   } finally { console.warn = warn; }
   void quiet; void near;
 });

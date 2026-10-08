@@ -162,9 +162,10 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   the map (its ring), the compass (inside 1 km), the Timers window and the notice boards.
 - **Its presence** (SD19). The air the taverns speak of is there: near a standing Hollow the land's haze and light lean
   to brass, by its column's light, whole within 1 km and gone by 8 km, a little all day and most at dusk. Within 60 m of
-  its centre a banner names it and its state (*"The Stopped Bell - an Abyss Dungeon - fades in 1d 04h"*, *"... -
-  collapsing"*), its marks beside it on the gate's own card. Its find is followed by its marks (*"The Stopped Bell keeps
-  the Ending of Sentinel - Sunfall - under The Unending Reset and The Brazen Hide."*), a found Hollow's last hour is said
+  its centre a banner names it and its state (*"The Stopped Bell - fades in 1d 04h"*, *"... - collapsing"* - SD20e
+  T1: what it is is the card's, beside it), its marks beside it on the gate's own card, both in the Hour's brass. Its
+  find is followed by its marks (*"The Stopped Bell keeps the Ending of Sentinel - Sunfall - under the Unending Reset and
+  the Brazen Hide."*), a found Hollow's last hour is said
   to the realm once (*"... near Copperham will fade within the hour."*), and once one is gone the Timers count the next
   one's not-before - never where.
 
@@ -214,8 +215,8 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
   refuses a newcomer and admits again whoever went through it, as the realm keeps them - remembered on the device, the
   last eight Hours (SD11c: a reload forgot them, and the Rift shut on its own fighters). One who died in its Hour is
   refused for good: *"The Hour will not take you back."* (SD-ONELIFE). Its plaque counts its Hour under its own row
-  (`world/sdDungeon.js` `sdRiftCount`): *Fades in 46h 12m*, its last hour by the second, *Collapses in 2:31* in its
-  collapse (SD11f: a Hollow unbeaten closed on everyone in it with no count anywhere inside).
+  (`world/sdDungeon.js` `sdRiftCount`): *Fades in 1d 22h*, its last day by the second - the Timers' own words, as its
+  banner says it (SD20e T6) - *Collapses in 2:31* in its collapse (SD11f: a Hollow unbeaten closed on everyone in it with no count anywhere inside).
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
   out with it.
@@ -400,8 +401,8 @@ and the End stay no-one's) and its signature: **Daggerfall**, the Lion's Roar (s
 arena's rim at 13 m/s); **Sentinel**, Sunfall (fire - seven gears, the brass burning half again as long); **Wayrest**,
 the Turning Tide (frost - the Hour-Hand sweeps three quarters of the arena over five seconds); **Orsinium**, the Tusk
 (poison - it walks 40% faster, its Stomp 8.5 m); **the Underking**, the Hungering Heart (magic - the Mantella pulses
-every 22 s); **the Blades**, the Dragon's Break (fire - its Echoes walk a fifth faster and must fall within ten
-seconds). The omens: *the Brazen Hide* (a quarter more health), *the Quickened Gears* (its own blows wind up in 85% of
+every 22 s); **the Blades**, the Dragon's Haste (fire - its Echoes walk a fifth faster and must fall within ten
+seconds; SD20e T9: it was the Dragon's Break, one apostrophe from the phase it shapes). The omens: *the Brazen Hide* (a quarter more health), *the Quickened Gears* (its own blows wind up in 85% of
 the time), *the Short Hour* (it Ends at twelve minutes), *the Hardened Hearts* (a quarter again as much - half again
 until SD20a, a race no party ran), *the Burning Brass* (twice as long, a third wider), *the Fraying* (the Orrery snaps at
 36 turns), *the Restless Pulse* (each four points harder than the last, to the same three quarters), *the Unending Reset* (every 40 s) and *the Twin Hands* (the pair's Hand every 10 s). The relay
@@ -480,7 +481,7 @@ be taken and a way home rises where the Remnant fell, clear of the pillars (to t
 never walked into, for it stands where the spoils land (SD11f, the gate's SS3); it rises out of the floor with the
 Rift's bell tolled once, a fourth higher, and the Hour says *"The way home stands open."* Then `gone`: on every client
 the Hollow sinks into its pixel, its column of light goes out, and anyone still in the Hollow or the Hour is cast out
-before its door: *"The Hour closes, and the Hollow folds in on itself behind you."* (SD10a: the way home is the Return's
+before its door: *"The Hour closes, and the Abyss Dungeon folds in on itself behind you."* (SD10a: the way home is the Return's
 pale light, risen once the Remnant's body has sunk; whoever stands in the Hollow or the Hour is told how long is left -
 at the fall, then at a minute, thirty seconds and ten. The Hollow is taken down at its end, not sunk: a location's
 blocks have no sink in this port.) (SD11c: one dead at the end is cast out the frame a Resurrect raises them where they
@@ -499,8 +500,11 @@ the tiers differ; offline every dungeon is DFU's. Shown:
 
 - **the entrance plaque** (World Tooltips): the title is the tier's words, the subs *To <name>* and the size - as
   Elite's already was; offline (and over the undercroft's stair) the mod's own *To <name>*;
-- **the held map** (enhanced): the hover label carries the phrase after the dungeon's name, *Region : Location (Elite
-  Dungeon, Small)*, and the I-key box opens with it, before DFU's own refusal;
+- **the held map** (enhanced): the hover label carries the phrase after the dungeon's name, *Region : Location (Regular
+  Dungeon, Large)*, and the I-key box opens with it, before DFU's own refusal. Its marks are the Bay's own places
+  (MAPS.BSA), so the phrase it says is a Regular Dungeon's: an Elite spawn stands on a pixel with no place and has no
+  mark there, and a found Hollow answers by its ring and its card (AUDIT SD III, SD20e T8: this line promised *Elite
+  Dungeon* on the held map, and the list below the Abyss tier's words on it);
 - **the overworld plates** (TV6): a found dungeon's place plate carries the phrase under its name, a far plate before
   its distance;
 - **the sight line**: *You see an Elite Dungeon 460 metres to the Northwest!* - and a Super's, *an Abyss Dungeon*;
@@ -511,7 +515,7 @@ RULE).
 
 ABYSS-NAME (2026-10-07, Mac: *"Btw lets rename Super Dungeons to Abyss Dungeons (Keep the code in tact, this is for
 player facing putposes)"*): THE PLAYER READS **ABYSS DUNGEON** wherever the game said Super Dungeon - the tier's words
-(the entrance plaque, the held map, the overworld plates, the line on entering), the sight line (*an Abyss Dungeon*),
+(the entrance plaque, the overworld plates, the line on entering), the sight line (*an Abyss Dungeon*),
 the find's line to everyone online (`net/sdLaw.js` `sdFoundLine`), the held map's legend, the ring's card, the notice
 board's note, the Timers row and its label, and a Hollow's line said before its place is known (*an Abyss Dungeon*).
 The code keeps its names - the tier `super`, `superTier`, `sd*`, the SUPER-DUNGEONS arc and its slices - and so does
@@ -844,7 +848,7 @@ inside, `scenes/sdHost.js` casts them out once (`castOut`, the host's seam, `cas
 has ACTED, a refusal asked again the next frame); the next frame finds
 them outside and takes it down. The world host's cast-out is the dungeon's own way out - the mode machine's exit
 (`modes.unstuck`), drained at its safe point into `exitDungeonNow`, PositionPlayerToDungeonExit's landing before its
-door - with the closing line, *"The Hour closes, and the Hollow folds in on itself behind you."* (sdLaw.js
+door - with the closing line, *"The Hour closes, and the Abyss Dungeon folds in on itself behind you."* (sdLaw.js
 SD_CAST_OUT_LINE); a player dead inside is the death's (its own door wakes them, and the Hollow goes when they are out).
 
 THE HOST FRAMES IN EVERY MODE NOW. SD2b framed it in the exterior's half of the world host's frame, which the modal
@@ -992,7 +996,7 @@ dungeon host with a level made in code - never a fifth host.
   (the staff teleport's way - the street streamed, so the way out has a door to land before), then the realm built and
   entered (`scenes/worldModes.js enterSdRealm`), facing the Orrery. Its room is the relay's realm, `sd:<s>`, whose hello
   asks the Rift's law again (SD3's `_sdAdmit`).
-- **The way back** (`sdWayBack`): the Hollow's own Rift at the Threshold's back (*The Rift - To the Hollow*), pressed or
+- **The way back** (`sdWayBack`): the Hollow's own Rift at the Threshold's back (*The Rift - To the Abyss Dungeon*), pressed or
   walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
   Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
 - **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
@@ -1727,7 +1731,7 @@ three minutes between were missing was a way out and a clock. No relay or accoun
 
 - **The way home** (`scenes/sdEnd.js` `standReturn`, `SD_HOME_TEXT`): the Return's pale light, stood alone and later -
   where the Remnant fell, once its body has sunk (`scenes/sdRemnant.js` `SD_REM_SINK_MS`), on the arena's floor - under
-  the Hour's own words on its plaque (*The Way Home*, *To the Hollow's door*). Walked into or pressed (SD11f: pressed
+  the Hour's own words on its plaque (*The Way Home*, *To the Abyss Dungeon's door* - SD20e T15, the player's word). Walked into or pressed (SD11f: pressed
   alone - a step after the spoils carried a player out mid-loot), it carries the player out of the Hour under the veil,
   before the Hollow's door outside: the mode machine's own exit, the one the Hour's end casts a player out by
   (`scenes/world.js` `sdWayHome`); leaving gathers the floor's spoils (SD9e). The dungeon host stands it where the world
@@ -2092,7 +2096,7 @@ Hour).
 
 Mac: *"A death within the rift casts you out and youre unable to re enter. You get one life to prove your worth"*. A
 death in the Shattered Hour casts the player out (SD5a, under the Hour's veil, *"The Shattered Hour casts you out for
-good. You wake before the Hollow's door."*) and is final for that Hollow - its found window and its collapse alike:
+good. You wake before the Abyss Dungeon's door."*) and is final for that Hollow - its found window and its collapse alike:
 
 - **The realm keeps its dead.** The dying pose (PCORPSE1's `dd`) that comes through a realm's room marks its account
   dead there (`server/src/index.js` `_sdMarkFallen`, kept with the realm under `SD_REALM_KEY` beside `in` and `gu`, once
@@ -2389,8 +2393,9 @@ signature, element, light, `Resist <element> to blunt its own blows and brass.` 
 by the gate's card (`drawGateMarksCard`) and bar (`ui/gateBossBar.js`) with the Hour's own signs (`SD_MARK_ICONS` - the
 six stones' and the nine omens'; `markIconHtml` draws a mark's own path, the gate's table for its own). The card stands
 `SD_MARKS_ARRIVE_MS` (9 s) as a fighter steps into the Hour, coming up and fading; the world never hides it as the
-street's card (the line that put the gate's card away off the street now spares the Hour). Under the bar, the row and
-the omens' line; the phase's name stays over it.
+street's card (the line that put the gate's card away off the street now spares the Hour). Under the bar, the row, each
+mark its sign and its name (AUDIT SD III, SD20e T17: the row alone - the omens joined in a line, `trials`, were handed
+to a bar that draws none); the phase's name stays over it.
 - **The wake** (`sdWakeText`): *The Brass Remnant - <signature> - the Ending of <stone>*.
 - **The element on the floor** (`scenes/sdRemnantBlows.js`): `sdTint` leans the Remnant's own blows' colours
 `SD_TINT_LEAN` (35%) to the element's (each keeps its own, to be told apart; the Hour's own blows untouched, the Reset's
@@ -2423,7 +2428,7 @@ brass's gold as they were.
 - **Its sparks** (`scenes/sdFx.js` `sdHeartColorOf`): the Hearts risen and broken and the stun in the Ending's light.
 - **Its word** (`systems/sdOmen.js`): the taverns tell the omen its Ending sends (`SD_ENDING_RUMOR` - a lion roars where
 there is no lion; the sun goes down twice; the tide comes in where there is no sea; something heavy walks just under the
-earth; the dead in their barrows turn their heads toward it; a dragon's shadow crosses where no dragon flies - the bell
+earth; the dead in their barrows turn their heads toward the walls; a dragon's shadow crosses where no dragon flies - the bell
 where none is kept), and its card on the held map says *It keeps the Ending of <stone>*.
 
 Pins: `test/sd18c_endings.test.js` (4 - the lights; the bodies and the scene; the sparks; the word);
@@ -2479,7 +2484,7 @@ conflicted with main since SD13. The relay stays `world176`, re-hashed in place 
 
 | | what was wrong | now |
 |---|---|---|
-| F1 | THE PULSE HAD NO CEILING. The table's own climb stays under the whole (its thirtieth Pulse 70%), but a Hollow's marks quicken and steepen it: the Underking's 22 s clock under the Restless Pulse's four points a step passed 100% of everyone's health eight minutes in - eight Hollows of every 216 (slots 2, 20, 43, 90, 96, 148, 160, 166) a wall a group at reference damage, needing nine minutes, could not pass | three quarters at most (`net/sdRemnant.js` `SD_PULSE_MAX`), the table's step and a Restless one on the wire (`pulsePctOf`) alike; the omen says so - *"Each Mantella Pulse climbs twice as steeply - to three quarters of your health."* |
+| F1 | THE PULSE HAD NO CEILING. The table's own climb stays under the whole (its thirtieth Pulse 70%), but a Hollow's marks quicken and steepen it: the Underking's 22 s clock under the Restless Pulse's four points a step passed 100% of everyone's health eight minutes in - eight Hollows of every 216 (slots 2, 20, 43, 90, 96, 148, 160, 166) a wall a group at reference damage, needing nine minutes, could not pass | three quarters at most (`net/sdRemnant.js` `SD_PULSE_MAX`), the table's step and a Restless one on the wire (`pulsePctOf`) alike; the omen says so - *"Each Mantella Pulse climbs twice as fast, to three quarters of your health at most."* (SD20e T13's words) |
 | F2 | A STEP OFF THE ARENA DODGED THE HOUR. The Concord's band lets go of the arena's near edge as of the Steps' far one, and a step back over it was a fall the Steps cast back to the Crumble's checkpoint - out of the arena, and so out of every blow of the whole arena, for the void's 15%: a 70% Mantella Pulse, the Reset or the End walked off a moment before it landed | THE ARENA HOLDS WHAT IT HAS TAKEN (`world/sdRealm.js` `arenaHolds`, `SD_ARENA_FLOORS`): joined to a living fight (`net/sdFightLink.js` `joined`) and standing inside the rim, the motor's edge is the disc alone - the near edge a rim. A fighter leaves the fight by its end, by death or by the way home (the unstuck word, SD10's `sdWayHome`) - never by the rim; anyone else walks the Concord's floors as before |
 | F3 | A HIDDEN TAB, A FROZEN PAGE. A landing first seen late is not judged (the gate's law) - so a tab hidden across a Pulse's landing and shown again was never struck: Ctrl+Tab and back through 70% of everyone's health. And the relay's census read a fighter's LAST pose however old: a page frozen in the arena (a hidden tab draws and poses nothing) stood there for good - its share counted standing, and half a fight of it earned the receipt by `stood` | the whole arena's blows judged however late (`net/sdStrike.js`: a blow of the whole arena has no place a late frame could misjudge - a hidden page does not move - so where I stand when I first see it is where I stood when it landed, and it lands then, once; never on the Steps); the realm stamps an Hour's pose as it takes it (`pAt`), and the fight's census counts a body only while its pose is fresh (`SD_POSE_FRESH_MS`, 25 s - the pose heartbeat's 20 and five of grace; a closed socket's law past it: absent, its share out at `ABSENT_RETIRE_MS`) |
 | F4 | THE END KILLED THE REFUSED. The Hour's End throws 99% every two seconds for half a minute, and a page that walked into the arena in that tail - its `in` refused, the fight closed to it - was struck dead by a fight it could never join: with one life a Hollow, its slot gone for good | a blow strikes a FIGHTER (`scenes/sdRemnantBlows.js`): a page the realm has not counted in its fight (`link.counted()`) is shown every blow and judged by none, nor by the brass |
@@ -2639,3 +2644,60 @@ remembered; the court's and the arena's faded; the voice for the living); `scene
 step through the fire's own flag); `scenes/dungeonContext.js` FLAGGED - the Hour's sound is the world host's and its
 air's, the dungeon host stands the Hour's level; `scenes/exterior.js` FLAGGED - the `?exterior` bench has no Hour, no
 court and no arena bout, and its music is the director's alone.
+
+#### SD20e - what the player reads
+
+| | what was wrong | now |
+|---|---|---|
+| T1 | THE DOOR'S BANNER RAN OFF A PHONE. *"The Hollow Under Glenpoint Foothills - an Abyss Dungeon - fades in 1d 04h"* on one line (`white-space: nowrap`) ran off both sides of a 390 px screen | the banner says its name and its state (`systems/sdOmen.js` `sdBannerText`) - what it is is the card's, beside it; it wraps inside the screen (`ui/gateBanner.js`, `max-width: calc(100vw - 32px)`) |
+| T2 | THE TITLE CARD ON THE BAR. On a phone held upright the Hour's card stood at 30%, on the Remnant's bar's foot and its chips; held sideways the way out's chevron rode its 72 px ring onto the bar's plate | upright, the card under the bar's foot (`ui/sdTitleCard.js`, 40%); sideways, at 46% with the foot's chips stepping aside while a beat stands, and the chevron on a 36 px ring (`ui/gateGroundView.js` `PERIL_ARROW_R_LOW`) |
+| T3 | AN ABYSS DUNGEON IN DAGON'S RED. Its door's banner and the Hour's marks card - at its door and in the Hour - wore the gate's red, the omens' signs the gate's orange | the Hour's brass: the banner's `look` (`SD_BANNER_BRASS`, outlined on the Plus skin as the gate's is), the card's (`sdMarksCardModel`'s `look`, `ui/gateMarksView.js`'s `sd-brass`), the omens' signs in it |
+| T4 | THE HOUR'S CARD IN THE SERIF. On the Plus skin the gate's title card wore the HUD's face; the Hour's stood in Cormorant, the one readout of the fight's that did | `ui/enhancedPlusStyle.js`'s `.sd-title-*`, the HUD's face in the Hour's brass and light |
+| T5 | THE ECHO'S CALLOUT CAME IN EACH SECOND. *"Gold rises in 12s"* - the bar brings a callout in afresh when its head changes, and the count was in the head | *"Gold rises - 12s"*: the count after the dash, as every countdown the bar calls (`ui/sdRemnantBar.js`); the chip keeps *"rises in 7s"* |
+| T6 | TWO COUNTS OF TIME. The Rift's plaque counted *"Fades in 46h 12m"* beside the banner's, the card's and the Timers row's *"fades in 1d 22h"* | the plaque in the Timers' own words (`world/sdDungeon.js` `sdRiftCount`, `timerText`) - its own count (`sdLongCount`) gone |
+| T7 | THE RING'S CARD UNREACHABLE. A found Hollow stands two to four pixels out from its city; at a far zoom the city's mark (16 px of reach) took the whole of its ring, and its card answered nowhere; and a ring at a far zoom answered only its map radius, not all the paper draws of it | a ring's centre nearer the pointer than the nearest mark answers as the ring (`ui/heldMap.js` `_ringCoreAt`), and a ring answers all it is drawn over (`ui/inkMap.js` `GATE_RING_MIN_PX`, 10 px) |
+| T8 | THE PAGE PROMISED *ELITE DUNGEON* ON THE HELD MAP. Section 12 listed the held map among the tier's surfaces with *(Elite Dungeon, Small)*, and ABYSS-NAME among the Abyss tier's - but its marks are the Bay's own places: an Elite spawn has none, and a Hollow is its ring | section 12 says so - the held map's phrase is a Regular Dungeon's, a Hollow's word its ring's card |
+| T9 | THE DRAGON'S TWO NAMES. The Blades' signature, *the Dragon's Break*, stood one apostrophe from the phase it shapes, *the Dragon Break* | *the Dragon's Haste* (`net/sdMarks.js`) |
+| T10 | THE GATE'S WORD FOR THE HOUR'S FALL. The Remnant fallen, the bar said the Warden's *Felled* | *Undone* - the Hour's word (`SD_BAR_TEXT.undone`, the bar's `fallenText`); the gate's bar keeps *Felled* |
+| T11 | CAPITALS INSIDE THE LINE. *"... keeps the Ending of the Blades - The Dragon's Break - under The Quickened Gears and The Hardened Hearts."* | each mark's article small inside it (`sdMarksLine`, `net/sdLaw.js` `sdNameIn`) |
+| T12 | A RUMOUR TURNED TOWARD NOTHING. The Underking's: *the dead in their barrows turn their heads toward it* - toward what? | *toward the walls* |
+| T13 | THE RESTLESS OMEN GARBLED. *"Each Mantella Pulse climbs twice as steeply - to three quarters of your health."* | *"Each Mantella Pulse climbs twice as fast, to three quarters of your health at most."* |
+| T14 | THE WINDOW SAID FOUR WAYS. The beat's sub, the Blades' tip and omen, and the turn's line (*"Strike down the Gold and Silver Echoes together"* - "together" said no window) | one form, by the fight's own window: *"Fell Gold and Silver within N seconds of each other"* - the beat (`sdBreakSub`), the tip, the omen, and the turn's line (`SD_FIGHT_TEXT.dragonBreak(pairMs)`, the Blades' ten) |
+| T15 | THE CODE'S WORD TO THE PLAYER. The readouts, the way home, the way back, the death and the cast-out said *the Hollow* - the code's word - to a player who reads *Abyss Dungeon* (ABYSS-NAME); and the readout said an unbeaten end *closes* where its banner, ring, notice and Timers say it *fades* | the Abyss Dungeon throughout (`scenes/sdHost.js`, `scenes/sdEnd.js`, `world/sdRealm.js`, `net/sdLaw.js` `SD_CAST_OUT_LINE`); *"The Abyss Dungeon fades in 0:30."* - in the Hour, *"The Hour closes in 0:30."* |
+| T16 | THE FEATURES ROWS READ AS SLIPS. *"Smaller dungeons wins when both are on, this over medium"*; the world-sizes row left out that a quest keeps its size; *"switching to Info mode"* (asking again works); *"its World Tooltips label says which way a lever works"* | said plainly (`systems/features.js`): *"If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it was set up at."*, *"selecting Info mode"*, *"a lever's World Tooltips label says which way it works"*. The title *Dungeon sizes as online* stays - "Online dungeon sizes" would read as a switch for online play |
+| T17 | AN OMENS' LINE NEVER DRAWN. The bar's model handed it `trials`, and this page said "under the bar, the row and the omens' line" - the bar draws the row alone | the row alone, the page and the model (`sdOmensLine` gone) |
+| T18 | THE HOUR'S READOUTS UNDER THE VEIL. Stepping into the Hour, the bar and the marks card drew under the veil (the court's hide there), and the card's nine seconds ran out beneath it - met half gone | hidden under it as the court's are, and the card's nine seconds from the veil's opening (`scenes/world.js`) |
+| T19 | A REGION AFTER "NEAR". With no city known, the find and the last hour said *"near Alik'r Desert"* - the region's bare name | *"in the Alik'r Desert region"* (`net/sdLaw.js` `sdWhere`, the find's and the last hour's one door) |
+| T20 | *Abyss* is also in Ocean Holes' names (`world/oceanHoles.js`) - REPORTED to Mac, unchanged: the name is the player's word, and his to give | - |
+
+The relay stays `world176`, re-hashed in place (undeployed): its bundle carries `net/sdLaw.js`'s and `net/sdMarks.js`'s
+words and never sends them.
+
+Pins: `test/sd20e_text.test.js` (12 - the banner's words, wrap and brass, by its own draw and the world's ask; the card's
+brass, its class and its signs, the gate's kept; the title card's places and the foot stepping aside, the chevron's ring,
+the Plus skin's card; the callout's still head, *Undone* drawn and the gate's *Felled*; one count of time over a sweep of
+times; the ring's centre and drawn reach on a real held map; the Dragon's names and the window's one form; the lines said
+plainly over every slot's marks; the player's word in every line; a region as a region; the Features rows; the readouts
+waiting for the veil, run from the world host's own text); `tools/mutants/sd20e.json` (41, all dead). RE-AIMED BY
+CONTENT, each still dead: `eventtip.json` (`EVENT-TIP-a-square-ring`), `sd11c.json` (`SD11c-G13-no-Hollow-no-region`),
+`sd11d.json`
+(`SD11D-the-chip-says-fallen`, `SD11D-the-old-dragon-break`, `SD11D-the-fade-in-the-hollows-words`), `sd11f.json`
+(`SD11f-the-hours-by-the-second`, `SD11f-the-minutes-rounded-down`, `SD11f-the-collapse-uncounted`), `sd18b.json`
+(`SD18B-no-row`), `sd19.json` (`SD19-the-banner-nameless`, `SD19-the-banner-stateless`, `SD19-the-marks-line-one-omen`,
+`SD19-world-door-over-the-gate`), `sd20a.json` (`SD20A-F1-the-omens-old-words`), `sd8c.json` (`SD8C-the-turns-unsaid`),
+`wb1.json` (`WB1-the-ring-lost-at-the-far-zoom`). PINS MOVED: `test/auditwb_world.test.js` and
+`test/sd19_presence.test.js` (the banner's look; its words, the marks line's articles, the last hour's region),
+`test/sd10_collapse.test.js`, `test/sd1_sdlaw.test.js`, `test/sd2d_castout.test.js`, `test/sd5a_realm.test.js` and
+`test/sd12_onelife.test.js` (the player's word), `test/sd11a_scenes.test.js` and `test/sd11c_page.test.js` (the veil
+in the fight frame's harness; the death's words; the region as a region), `test/sd11d_words.test.js` (the callout's
+count after the dash, the fade's words, the Dragon Break's window), `test/sd11f_scenes.test.js` (the Rift's count in the
+Timers' words), `test/sd18a_marks.test.js` (the callout), `test/sd18b_seen.test.js` (no omens' line; the card's clock
+from the veil; its brass), `test/sd20a_fight.test.js` (the Restless omen's words), `test/sd8c_remnant_page.test.js` (the
+Dragon Break's window; the hide under the veil), `test/features.test.js` (the notes' ceiling, +57 - the growth and no
+more), `test/relayversion.test.js` (`world176` re-hashed in place).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the banner's brass asked for a Hollow's door alone; the Hour's readouts under
+the veil and the card's clock from its opening); `scenes/worldModes.js` FLAGGED - the mode machine says nothing the
+player reads of the Hour but through the world host's and the dungeon host's words; `scenes/dungeonContext.js` FLAGGED -
+the dungeon host stands the Rift and the way home, whose plaques' words are `world/sdDungeon.js`'s and `scenes/sdEnd.js`'s;
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no banner, no Hour.

@@ -173,7 +173,7 @@
   {
     "name": "SD8C-the-turns-unsaid",
     "file": "src/net/sdFightLink.js",
-    "old": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak : SD_FIGHT_TEXT.lastMoment);",
+    "old": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);",
     "new": "      if (w.k === 'ph' && was.fi) { /* unsaid */ }",
     "tests": [
       "test/sd8c_remnant_page.test.js"

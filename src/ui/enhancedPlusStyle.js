@@ -2069,6 +2069,7 @@ body .wb-boss-wrath { color: #ff9a7a; border-color: #8a2820; }
 body .wb-boss-wrath.near { color: #fff6e4; }
 @media (max-width: 640px) { body .wb-boss-chip-head, body .wb-boss-chip-name { font-size: 11px; letter-spacing: 0; } }   /* FONT3's floor: a phone narrows the chip by its tracking, not under 11px */
 body .wb-gate-banner { ${PIXEL_FONT_CSS} font-size: 14px; letter-spacing: 0.14em; text-shadow: ${OUTLINED}; }
+body .wb-gate-banner.sd-brass { text-shadow: ${OUTLINED}; }   /* AUDIT SD III (T3): an Abyss Dungeon's door outlined as the gate's, in its own brass - its glow is the classic skin's */
 /* WB13e: the fight's beats in the HUD's face, outlined - the name large, the rule a brass line */
 body .wb-title-card { ${PIXEL_FONT_CSS} color: #efe8d6; text-shadow: ${OUTLINED}; }
 body .wb-title-kicker { font-size: 12px; letter-spacing: 0.3em; color: ${FRAME_TONES.brassHi}; }
@@ -2076,6 +2077,14 @@ body .wb-title-main { font-size: 34px; letter-spacing: 0.12em; color: #fff6e4; t
 body .wb-title-rule { height: 2px; background: linear-gradient(90deg, transparent, ${FRAME_TONES.brass}, transparent); box-shadow: 0 1px 0 #050608; }
 body .wb-title-sub { font-size: 14px; letter-spacing: 0.06em; color: #d8cfae; }
 @media (max-width: 640px), (max-height: 480px) { body .wb-title-main { font-size: 24px; } body .wb-title-sub { font-size: 12px; } }
+/* AUDIT SD III (T4): the Hour's card the same way - the HUD's face, outlined - in its own brass and light (it stood in the
+   serif on the Plus skin, the one readout of the fight's that did) */
+body .sd-title-card { ${PIXEL_FONT_CSS} color: #efe8d6; text-shadow: ${OUTLINED}; }
+body .sd-title-kicker { font-size: 12px; letter-spacing: 0.3em; color: ${FRAME_TONES.brassHi}; }
+body .sd-title-main { font-size: 34px; letter-spacing: 0.12em; color: #fff1cf; text-shadow: ${OUTLINED}, 0 0 14px rgba(232,192,96,0.45); }
+body .sd-title-rule { height: 2px; background: linear-gradient(90deg, transparent, ${FRAME_TONES.brass}, transparent); box-shadow: 0 1px 0 #050608; }
+body .sd-title-sub { font-size: 14px; letter-spacing: 0.06em; color: #d8cfae; }
+@media (max-width: 640px), (max-height: 480px) { body .sd-title-main { font-size: 24px; } body .sd-title-sub { font-size: 12px; } }
 /* FONT3 + WB13c (both 2026-10-02, the same surface found from two sides; the dress is WB13c's, the weight FONT3's
    reading 500): the ground's warning in the HUD's face, outlined on a dark band (it stood in the serif among pixel words, orange
    on the orange rim); the way out's arrow in a hard black edge */

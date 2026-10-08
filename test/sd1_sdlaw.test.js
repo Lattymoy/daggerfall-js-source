@@ -201,7 +201,7 @@ test('SD1: the name, the room and the words', () => {
   assert.equal(sdFellLine({ top: 'Mara', n: 2, name: 'The Brass Hollow' }), 'Mara and 1 other broke the Hour in the Brass Hollow. It collapses.');
   assert.equal(sdFellLine({ top: 'Mara', n: 5, name: 'The Brass Hollow' }), 'Mara and 4 others broke the Hour in the Brass Hollow. It collapses.');
   assert.equal(sdFadeLine({ name: 'The Stopped Bell' }), 'The Hour closes over the Stopped Bell, unbroken.');
-  assert.equal(SD_CAST_OUT_LINE, 'The Hour closes, and the Hollow folds in on itself behind you.');
+  assert.equal(SD_CAST_OUT_LINE, 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.');   // AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
 });
 
 test('SD1: pure, and the relay\'s - it reaches nothing past wire.js and the gate\'s law, both already the relay bundle\'s', () => {

@@ -310,8 +310,8 @@ export const FEATURES = Object.freeze([
     id: 'medium-dungeons',
     group: 'world',
     title: 'Medium dungeons',
-    note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. Smaller '
-      + 'dungeons wins when both are on. Main-story dungeons keep full size; a quest keeps the size it was set up at (an '
+    note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. If Smaller '
+      + 'dungeons is on too, it wins. Main-story dungeons keep full size; a quest keeps the size it was set up at (an '
       + 'older save\u2019s may not). Online every dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['enhanced']),
@@ -328,7 +328,8 @@ export const FEATURES = Object.freeze([
     group: 'world',
     title: 'Dungeon sizes as online',
     note: 'Every dungeon takes the size it has online - small, medium or large, half of them medium - the same every '
-      + 'visit. Smaller dungeons wins when both are on, this over medium. Online it is always on.',
+      + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '
+      + 'was set up at. Online it is always on.',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes
@@ -1234,7 +1235,7 @@ export const FEATURES = Object.freeze([
     id: 'dungeon-sense',
     group: 'interface',
     title: 'Look around',
-    note: 'In a dungeon, switching to Info mode makes the levers, doors and containers near you and in sight glow for '
+    note: 'In a dungeon, selecting Info mode makes the levers, doors and containers near you and in sight glow for '
       + 'a few seconds. With secrets, walls that only a lever moves glow too.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
@@ -1249,7 +1250,7 @@ export const FEATURES = Object.freeze([
     group: 'interface',
     title: 'Lever echoes',
     note: 'When a lever or a plate moves something out of sight, a line says which way, the Enhanced map marks it, and '
-      + 'it glows when you reach it. In Info mode, its World Tooltips label says which way a lever works.',
+      + 'it glows when you reach it. In Info mode, a lever\u2019s World Tooltips label says which way it works.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeonEcho.js ECHO_PREF

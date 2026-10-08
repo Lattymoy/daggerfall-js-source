@@ -39,8 +39,8 @@ export const RETURN_TEX = Object.freeze({ w: 40, h: 64 });
 /** SD10: the way home's words - its plaque, and what is said as it carries a player out of the Hour. */
 export const SD_HOME_TEXT = Object.freeze({
   title: 'The Way Home',
-  to: 'To the Hollow\'s door',
-  taken: 'The way home carries you out of the Hour, to the Hollow\'s door.',
+  to: 'To the Abyss Dungeon\'s door',   // AUDIT SD III (T15): the player's word for it - "the Hollow's door"
+  taken: 'The way home carries you out of the Hour, to the Abyss Dungeon\'s door.',
   rises: 'The way home stands open.',   // AUDIT SD II (L6 F16): said as it rises (the fall's readout said where)
 });
 /** AUDIT SD II (L6 F16): how long the way home takes to rise out of the floor (ms) - the gate's portal's own

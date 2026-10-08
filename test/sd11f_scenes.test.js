@@ -13,7 +13,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createSdEnd, SD_HOME_TEXT, SD_HOME_RISE_MS, SD_HOME_SAY_MS, SD_RETURN_KEY, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
 import { tollRiftBell, SD_HOME_TOLL, RIFT_BELL_KEY, RIFT_BELL_RECORDS } from '../src/systems/sdRiftSound.js';
-import { sdRiftCount, sdLongCount, SD_RETURN_SIZE, SD_END_TEXT } from '../src/world/sdDungeon.js';
+import { sdRiftCount, SD_RETURN_SIZE, SD_END_TEXT } from '../src/world/sdDungeon.js';   // AUDIT SD III (T6, PIN MOVED): no long count of its own - the Timers' words
 import { sdRise, sdFirst, sdFind, sdFell, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
 import { SD_REM_SINK_MS } from '../src/scenes/sdRemnant.js';
@@ -146,27 +146,28 @@ test('SD11f THE WAY HOME SAID AS IT RISES (L6 F16), the world host from its own 
 
 test('SD11f THE RIFT COUNTS ITS HOUR (L6 F5): its plaque\'s second row - found or risen, the fade by the hour and minute ("Fades in 46h 12m"), its last hour by the minute and second (the gate\'s countdown words, never 0:00 while time is left); in its collapse "Collapses in 2:31"; nothing for another slot\'s record, none, or one gone; the plaque shows it under the Rift\'s own row; the hosts hand it through (mutants: no count on the plaque; the hours by the second; the collapse uncounted; another slot counted)', () => {
   const r = sdRise(sdFirst(T0 - 3 * H), T0 - 10 * M, 0);
-  assert.equal(sdRiftCount(r, r.s, r.until - 47 * H), 'Fades in 47h 00m', 'risen: by the hour and minute');
-  assert.equal(sdRiftCount(r, r.s, r.until - 46.2 * H), 'Fades in 46h 12m');
-  assert.equal(sdRiftCount(r, r.s, r.until - (H + 1)), 'Fades in 1h 01m', 'the minutes rounded up - never less than is left');
-  assert.equal(sdRiftCount(r, r.s, r.until - H), 'Fades in 1h 00m');
+  // AUDIT SD III (T6, PIN MOVED): the Timers' own words (systems/eventTimers.js timerText), as its banner, its card and the
+  // Timers row say it - it counted "46h 12m" beside their "1d 22h"
+  assert.equal(sdRiftCount(r, r.s, r.until - 47 * H), 'Fades in 1d 23h', 'risen: by the day and hour');
+  assert.equal(sdRiftCount(r, r.s, r.until - 46.2 * H), 'Fades in 1d 22h');
+  assert.equal(sdRiftCount(r, r.s, r.until - (H + 1)), 'Fades in 1:00:01', 'its last day by the second - never less than is left');
+  assert.equal(sdRiftCount(r, r.s, r.until - H), 'Fades in 1:00:00');
   assert.equal(sdRiftCount(r, r.s, r.until - (H - 1000)), 'Fades in 59:59', 'its last hour by the second');
   assert.equal(sdRiftCount(r, r.s, r.until - (12 * M + 4000)), 'Fades in 12:04');
   assert.equal(sdRiftCount(r, r.s, r.until - 300), 'Fades in 0:01', 'never 0:00 while time is left');
   assert.equal(sdRiftCount(r, r.s, r.until), null, 'gone: nothing');
   const f = sdFind(r, T0, 'Mara');
-  assert.equal(sdRiftCount(f, f.s, f.until - 3 * H), 'Fades in 3h 00m', 'found: the same');
+  assert.equal(sdRiftCount(f, f.s, f.until - 3 * H), 'Fades in 3:00:00', 'found: the same');
   const k = sdFell(f, T0 + 2 * M, { top: 'Mara', n: 2 });
   assert.equal(sdRiftCount(k, k.s, k.fellAt + 29 * 1000), 'Collapses in 2:31', 'its collapse by the second');
   assert.equal(sdRiftCount(k, k.s, k.fellAt + SD_COLLAPSE_MS), null, 'collapsed: nothing');
   assert.equal(sdRiftCount(f, f.s + 1, T0), null, 'another slot\'s record');
   assert.equal(sdRiftCount(null, 1, T0), null);
-  assert.equal(sdLongCount(NaN), '0h 00m');
   // the plaque: the Rift's own row, then its count
-  let n = 'Fades in 3h 00m';
+  let n = 'Fades in 3:00:00';
   const e = createSdEnd({ riftCount: () => n });
   e.stand({ rift: { at: [0, 0, 0], size: 4 }, retAt: [2, 0, 0] });
-  assert.deepEqual(e.hoverName(SD_RIFT_KEY), { title: SD_END_TEXT.rift, subs: [SD_END_TEXT.riftTo, 'Fades in 3h 00m'] });
+  assert.deepEqual(e.hoverName(SD_RIFT_KEY), { title: SD_END_TEXT.rift, subs: [SD_END_TEXT.riftTo, 'Fades in 3:00:00'] });
   n = null;
   assert.deepEqual(e.hoverName(SD_RIFT_KEY), { title: SD_END_TEXT.rift, subs: [SD_END_TEXT.riftTo] }, 'no count: its own row alone');
   assert.deepEqual(createSdEnd({}).hoverName(SD_RIFT_KEY), null);

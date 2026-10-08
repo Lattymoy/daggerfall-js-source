@@ -225,7 +225,7 @@ test('SD18a THE WIRE AND THE PAGE: a blow\'s shape bounded key by key, an elemen
   // the bar's "rises again" and the card
   const brk = { ...s, ph: 2, op: T0 - 60_000, h: 500, m: 1000, ec: [{ x: 0, z: 0, yw: 0, mv: null, atk: null, h: 0, m: 100, up: T0 - 9000, dn: T0 - 4000 }, { x: 5, z: 0, yw: 0, mv: null, atk: null, h: 80, m: 100, up: T0 - 9000, dn: 0 }] };
   const bar = remnantBarModel(brk, T0);
-  assert.equal(bar.callout?.text, 'Gold rises in 6s', 'the callout: six seconds, not eleven');
+  assert.equal(bar.callout?.text, 'Gold rises - 6s', 'the callout: six seconds, not eleven');   // AUDIT SD III (T5, PIN MOVED): its count after the dash
   const beats = createSdBeats();
   beats.frame({ ...s, ph: 1, op: T0 - 60_000 }, T0);
   const card = beats.frame({ ...s, ph: 2, op: T0 - 60_000 }, T0 + 10);

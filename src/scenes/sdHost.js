@@ -37,11 +37,12 @@ export function sdCollapseDue(left, said = Infinity) {
   return due < said ? due : null;
 }
 /** Its words: in the Hour, the way home named at the first; in the Hollow, the Hollow's. Pure. AUDIT SD II (L6 F2, F21):
- *  WB13b's - no dash asides; and the way home OPENS where it fell (it said "stands" four seconds before it rose). */
+ *  WB13b's - no dash asides; and the way home OPENS where it fell (it said "stands" four seconds before it rose). AUDIT
+ *  SD III (T15): outside the Hour the player's word for the place, as everywhere else it is named - the Abyss Dungeon. */
 export function sdCollapseLine(left, { hour = false, first = false } = {}) {
   const t = countdownText(left);
   if (hour) return first ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.` : `The Hour collapses in ${t}.`;
-  return first ? `The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;
+  return first ? `The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`;
 }
 /** AUDIT SD II (L6 F5): THE FADE'S READOUTS - a Hollow unbeaten closes at its `until` and casts out whoever stands in it
  *  or its Hour, mid-blow; whoever stands there is told as it nears, at each of these marks, ms (the first said with
@@ -54,8 +55,9 @@ export function sdFadeDue(left, said = Infinity) {
   for (const m of SD_FADE_WARN_MS) if (left <= m) due = m;
   return due < said ? due : null;
 }
-/** Its words. Pure. */
-export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hour' : 'The Hollow'} closes in ${countdownText(left)}.`;
+/** Its words. Pure. AUDIT SD III (T15): the Abyss Dungeon FADES, as its ring, its banner and its note say it does (it
+ *  "closed" here alone) - and the Hour inside it closes as it goes. */
+export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;
 
 /** @typedef {import('../net/wire.js').SdRecord} SdRecord */
 
@@ -139,9 +141,9 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       const h = hollowOf(o.rec);
       if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;
       owed.shift();
-      const near = h?.site?.cityName || regionName(o.rec.r) || 'the Iliac Bay';
+      const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';   // AUDIT SD III (T19): its region said as a region
       const name = h?.loc?.name || 'an Abyss Dungeon';
-      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
+      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
       else if (o.kind === 'fell') say(sdFellLine({ top: o.rec.top || 'Someone', n: o.rec.n ?? 1, name }));
       else say(sdFadeLine({ name }));
     }
@@ -191,7 +193,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
     if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
       const hh = hollowOf(rec);
-      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || regionName(rec.r) })); }
+      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }
     }
     sayOwed(t);
   }

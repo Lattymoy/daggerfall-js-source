@@ -29,7 +29,7 @@
   {
     "name": "SD20A-F1-the-omens-old-words",
     "file": "src/net/sdMarks.js",
-    "old": "text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.'",
+    "old": "text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.'",
     "new": "text: 'Each Mantella Pulse strikes harder than the last by twice as much.'",
     "tests": [
       "test/sd20a_fight.test.js"

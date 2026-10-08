@@ -91,7 +91,7 @@ test('SD20a THE PULSE\'S CEILING (F1): the Mantella Pulse climbs to three quarte
   assert.deepEqual(v.hits.map((h) => [h.part, h.pct]), [['all', SD_PULSE_MAX]]);
   // the omen says the ceiling
   const restless = SD_OMENS.find((o) => o.id === 'restless');
-  assert.equal(restless.text, 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.');
+  assert.equal(restless.text, 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.');   // AUDIT SD III (T13, PIN MOVED): said plainly - "twice as steeply - to three quarters" read garbled
   assert.equal(restless.law.pulseStep, 2 * SD_PULSE_STEP);
 });
 

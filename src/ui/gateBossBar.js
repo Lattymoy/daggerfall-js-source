@@ -344,7 +344,7 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
   const alpha = model.alpha ?? 1;
   if (alpha !== shown.alpha) { shown.alpha = alpha; root.style.opacity = alpha < 1 ? String(alpha) : ''; }
   // THE CALLOUT - WB13c: in on a change, out over CALLOUT_OUT_MS, a line filling to its landing, Dagon's on a plate
-  const text = model.fallen ? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? BOSS_BAR_TEXT.warded : '';
+  const text = model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? BOSS_BAR_TEXT.warded : '';   // AUDIT SD III (T10): a fight's own word for its fall (the Hour's "Undone")
   const color = model.fallen ? model.ringCss ?? GATE_RING_CSS : model.callout ? model.callout.color : model.warded ? WARD_CSS : model.ringCss ?? GATE_RING_CSS;   // SERPENT1: the sea's ring colour
   if (text) {
     shown.outAt = null;

@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  sdMarksViewOf, sdMarksCardModel, sdOmensLine, sdEndingCss, sdEndingStoneLight, SD_MARK_ICONS, SD_MARK_TIPS, SD_ELEMENT_WORD, SD_MARKS_ARRIVE_MS,
+  sdMarksViewOf, sdMarksCardModel, sdEndingCss, sdEndingStoneLight, SD_MARK_ICONS, SD_MARK_TIPS, SD_ELEMENT_WORD, SD_MARKS_ARRIVE_MS,
   SD_MARKS_FADE_MS, SD_MARKS_CARD_TEXT, SD_STONE_LIGHT,
 } from '../src/ui/sdMarksView.js';
 import { markIconHtml, markIconSvg, marksViewOf } from '../src/ui/gateMarksView.js';
@@ -47,7 +47,7 @@ test('SD18b THE MARKS AS THEY ARE SHOWN: the Ending first - its signature, its e
   assert.equal(sdMarksViewOf(MK), v, 'kept');
   assert.equal(sdMarksViewOf(['nowhere', 'twin', 'short']), null); assert.equal(sdMarksViewOf(null), null);
   assert.match(sdMarksViewOf(['daggerfall', 'twin', 'short']).aspect.tip, /^Resist shock /, 'Lightning resisted as shock');
-  assert.equal(sdOmensLine(MK), 'The Hardened Hearts - The Twin Hands');
+  // AUDIT SD III (T17, PIN MOVED): no omens' line - the bar draws the row alone (sdOmensLine went with `trials`)
   // every mark its sign and its tip; every element a word
   for (const m of [...SD_ENDINGS, ...SD_OMENS]) { assert.ok(SD_MARK_ICONS[m.id]?.d, `${m.id}: a sign`); assert.ok(SD_MARK_TIPS[m.id], `${m.id}: a tip`); }
   assert.ok(SD_ENDINGS.every((E) => SD_ELEMENT_WORD[E.el]));
@@ -69,13 +69,15 @@ test('SD18b THE HOUR\'S CARD as a fighter steps in: the gate\'s card\'s model, l
   const c = sdMarksCardModel(MK, { since: 1000, now: 1000 + 125 });
   assert.deepEqual([c.mode, c.key, c.alpha, c.title, c.sub], ['arrive', MK.join(','), 0.5, SD_MARKS_CARD_TEXT.title, 'The Brass Remnant keeps the Ending of Wayrest']);
   assert.equal(c.aspect, sdMarksViewOf(MK).aspect); assert.equal(c.trials, sdMarksViewOf(MK).trials);
+  assert.equal(c.look, 'brass', 'AUDIT SD III (T3): the Hour\'s card in its own brass, never Dagon\'s red');
   assert.equal(sdMarksCardModel(MK, { since: 1000, now: 5000 }).alpha, 1);
   assert.ok(near(sdMarksCardModel(MK, { since: 0, now: SD_MARKS_ARRIVE_MS - SD_MARKS_FADE_MS / 2 }).alpha, 0.5));
   assert.equal(sdMarksCardModel(MK, { since: 0, now: SD_MARKS_ARRIVE_MS }), null, 'gone');
   assert.equal(sdMarksCardModel(['nope'], { since: 0, now: 10 }), null);
   assert.equal(sdMarksCardModel(['blades', 'twin', 'short'], { since: 0, now: 10 }).sub, 'The Brass Remnant keeps the Ending of the Blades');
-  assert.match(W, /marks = sdMarksCardModel\(sdFightLink\.state\(\)\?\.mk \?\? sdMarksOf\(modes\?\.sdRealmSlot\?\.\(\) \?\? null\), \{ since: _sdMarksSince, now: nowMs \}\);/);
-  assert.match(W, /if \(_sdMarksSince === null\) _sdMarksSince = nowMs;/);
+  // AUDIT SD III (T18, PIN MOVED): its nine seconds from the veil's opening - they ran out under it
+  assert.match(W, /marks = _sdMarksSince === null \? null : sdMarksCardModel\(sdFightLink\.state\(\)\?\.mk \?\? sdMarksOf\(modes\?\.sdRealmSlot\?\.\(\) \?\? null\), \{ since: _sdMarksSince, now: nowMs \}\);/);
+  assert.match(W, /if \(_sdMarksSince === null && !gateVeil\?\.busy\) _sdMarksSince = nowMs;/);
   assert.match(W, /\} else _sdMarksSince = null;/);
   assert.match(W, /if \(marks \|\| _sdMarksUp\) \{ drawGateMarksCard\(marks, \{ hidden \}\); _sdMarksUp = !!marks; \}/);
   assert.match(W, /if \(_sdMarksUp\) \{ drawGateMarksCard\(null\); _sdMarksUp = false; \}/);
@@ -89,11 +91,11 @@ test('SD18b UNDER ITS BAR AND ON ITS WAKE: the row of its marks and the omens\' 
   L.word(validSdOut({ ...remnantStateOf(f), me: 1 }));
   const bar = remnantBarModel(L.state(), T0 + 20_000);
   assert.equal(bar.marksView, sdMarksViewOf(MK));
-  assert.equal(bar.trials, 'The Hardened Hearts - The Twin Hands');
+  assert.equal(bar.trials, undefined, 'AUDIT SD III (T17, PIN MOVED): the row alone - no line of omens handed to a bar that draws none');
   assert.deepEqual([bar.title, bar.epithet], ['The Walking Hour', ''], 'its phase over the row');
   const plain = newRemnantFight(4, 1, T0); joinRemnant(plain, 'a', 'A', 30, T0);
   const P = createSdFightLink({ now: () => T0 + 20_000 }); P.word(validSdOut({ ...remnantStateOf(plain), me: 1 }));
-  assert.deepEqual([remnantBarModel(P.state(), T0 + 20_000).marksView, remnantBarModel(P.state(), T0 + 20_000).trials], [null, '']);
+  assert.equal(remnantBarModel(P.state(), T0 + 20_000).marksView, null);   // AUDIT SD III (T17, PIN MOVED): and no `trials`
   // the wake
   assert.deepEqual(sdWakeText(MK), { ...SD_BEAT_TEXT.wake, sub: 'The Turning Tide - the Ending of Wayrest' });
   assert.equal(sdWakeText(null), SD_BEAT_TEXT.wake);

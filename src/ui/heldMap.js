@@ -111,7 +111,7 @@ import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './questMarks.js';   // GUIDE5: where the quests point
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
-  viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
+  viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK, GATE_RING_MIN_PX,
   markKind, markInks, mapKeyGroups, KIND_WORD, paintKeyChip, KEY_CHIP_PX,   // MAP-KEY: the key, and each kind in its classic hue
   PEN,   // AUDIT GUIDE U16: the followed quest's diamond is the pen's ink, in the legend as on the sheet
 } from './inkMap.js';
@@ -2126,8 +2126,26 @@ export class HeldMapWindow {
    *  inside it is the gate's. */
   _gateAt(sx, sy) {
     const [mx, my] = toMap(this._view, sx, sy);
-    for (const g of [this._gate, this._serpent, this._sd]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= g.r) return g;   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
+    const least = GATE_RING_MIN_PX / this._view.scale;
+    for (const g of [this._gate, this._serpent, this._sd]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
+  }
+
+  /** AUDIT SD III (T7): A RING'S OWN CENTRE IS A PLACE ON THE MAP - the ring under the pointer whose centre is nearer it
+   *  than the nearest mark `m` is, or null. An Abyss Dungeon stands two to four pixels out from its city, and its ring
+   *  answered only where no mark did: at a far zoom the city's mark took its whole ring, and its card was unreachable. */
+  _ringCoreAt(sx, sy, m) {
+    let best = null, bestD = Infinity;
+    if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
+    const scale = this._view.scale;
+    for (const g of [this._gate, this._serpent, this._sd]) {
+      if (!g) continue;
+      const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+      const r = Math.max(GATE_RING_MIN_PX, g.r * scale);
+      if (d <= r * r && d < bestD) { best = g; bestD = d; }
+    }
+    return best;
   }
 
   /** EVENT-TIP: THE CARD - a world event's words at the pointer, kept on the screen (ui/eventMapMarks.js placeTip),
@@ -3343,6 +3361,8 @@ export class HeldMapWindow {
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };
+    const core = this._ringCoreAt(sx, sy, m);   // AUDIT SD III (T7)
+    if (core) return { label: core.label, cursor: '', tip: core.tip };
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';

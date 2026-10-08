@@ -105,5 +105,5 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   assert.match(W, /if \(_deathWasOnline == null\)[^\n]*\n\s*\{ const hourSlot = modes\?\.sdRealmSlot\?\.\(\) \?\? null; if \(hourSlot != null\) _sdFallen\.add\(hourSlot\); \}/, 'kept the frame I die');   // AUDIT SD III (PIN MOVED): under D-ONLINE1's capture, which stays the death block's first statement (AUDIT WORLD B6, MWBODY1)
   assert.match(W, /word: sdRiftWord\(rec, s, now, \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \}\),/, 'the Rift asked with it');
   assert.match(W, /const rez = social\?\.acct && modes\?\.sdRealmSlot\?\.\(\) == null \? rezFor\(social\.others\(\), social\.acct, _rezSeen\) : null;[^\n]*\n\s*if \(rez\) \{ resurrectInPlace\(rez\); return; \}/, 'no Resurrect in the Hour');   // AUDIT SD III (PIN MOVED): asked of the call, the rise MWBODY1's own line
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.');
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.');
 });

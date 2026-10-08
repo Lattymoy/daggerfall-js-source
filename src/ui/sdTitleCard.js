@@ -24,8 +24,11 @@ export const SD_TITLE_CSS = `
 .sd-title-sub { font-size: 18px; letter-spacing: 0.06em; min-height: 22px; }
 .sd-title-card.in .sd-title-main { animation: sd-title-in 420ms cubic-bezier(.2,.7,.3,1); }
 @keyframes sd-title-in { from { opacity: 0; letter-spacing: 0.32em; } }
-@media (max-width: 640px) { .sd-title-card { top: 30%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }
-@media (max-height: 480px) { .sd-title-card { top: 48%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }
+@media (max-width: 640px) { .sd-title-card { top: 40%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }
+@media (max-height: 480px) { .sd-title-card { top: 46%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }
+/* AUDIT SD III (T2): clear of the Remnant's bar - a phone held upright stands the card under the bar's foot (at 30% it
+   sat on the foot's chips); one held sideways has no room for both, so while a beat stands the foot's chips step aside */
+@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*="display: none"])) .wb-boss-foot { display: none; } }
 `;
 
 let root = null, parts = null;

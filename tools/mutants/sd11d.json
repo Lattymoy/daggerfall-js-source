@@ -236,7 +236,7 @@
   {
     "name": "SD11D-the-chip-says-fallen",
     "file": "src/ui/sdRemnantBar.js",
-    "old": "const chip = (E, e) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.rises(e, Math.ceil(r / 1000)).replace(/^(Gold|Silver) /, ''); };",
+    "old": "const chip = (E) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.risesIn(Math.ceil(r / 1000)); };",
     "new": "const chip = (E) => SD_BAR_TEXT.echoLeft(E.h, E.m);",
     "tests": [
       "test/sd11d_words.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "SD11D-the-old-dragon-break",
     "file": "src/net/sdFightLink.js",
-    "old": "dragonBreak: 'The Dragon Break! Strike down the Gold and Silver Echoes together.',",
-    "new": "dragonBreak: 'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.',",
+    "old": "dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`,",
+    "new": "dragonBreak: () => 'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.',",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SD11D-the-fade-in-the-hollows-words",
     "file": "src/scenes/sdHost.js",
-    "old": "`${hour ? 'The Hour' : 'The Hollow'} closes in ${countdownText(left)}.`",
-    "new": "`The Hollow closes in ${countdownText(left)}.`",
+    "old": "`${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`",
+    "new": "`The Abyss Dungeon fades in ${countdownText(left)}.`",
     "tests": [
       "test/sd11d_words.test.js"
     ]

@@ -210,13 +210,16 @@ export const sdSlotOfRoom = (key) => (isSdRoom(key) ? Number(String(key).slice(3
 //
 // What the chat says at a Hollow's moments - each client says its own off the fanned record. A Hollow's rise is said
 // to nobody: it is a find.
-export const sdFoundLine = ({ who, near }) => `${who} has found an Abyss Dungeon near ${near}!`;   // ABYSS-NAME (Mac: "lets rename Super Dungeons to Abyss Dungeons"): the player's word; the code's stays `super`
+/** AUDIT SD III (T19): WHERE AN ABYSS DUNGEON STANDS, in a line: near its city, else in its region (*in the Alik'r
+ *  Desert region* - it read *near Alik'r Desert*), else near the Bay. Pure. */
+export const sdWhere = (near, region = '') => (near ? `near ${near}` : region ? `in the ${region} region` : 'near the Iliac Bay');
+export const sdFoundLine = ({ who, near, region }) => `${who} has found an Abyss Dungeon ${sdWhere(near, region)}!`;   // ABYSS-NAME (Mac: "lets rename Super Dungeons to Abyss Dungeons"): the player's word; the code's stays `super`
 /** AUDIT SD II (L6 F20): a Hollow's name inside a sentence - its article small ("in the Brass Hollow"), as the Orrery's
  *  stones store theirs (net/sdBrain.js). */
 export const sdNameIn = (name) => String(name ?? '').replace(/^The /, 'the ');
 export const sdFellLine = ({ top, n, name }) => (n > 1 ? `${top} and ${n - 1} ${n === 2 ? 'other' : 'others'} broke the Hour in ${sdNameIn(name)}. It collapses.` : `${top} broke the Hour in ${sdNameIn(name)}. It collapses.`);
 export const sdFadeLine = ({ name }) => `The Hour closes over ${sdNameIn(name)}, unbroken.`;
-export const SD_CAST_OUT_LINE = 'The Hour closes, and the Hollow folds in on itself behind you.';
+export const SD_CAST_OUT_LINE = 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.';   // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said "the Hollow"
 /** The Rift's refusals (section 6) - said by the realm's room at a hello it will not admit, and by the client's own Rift
  *  before it asks: not yet found, and the Hour closed (or closing - its boss fallen, a newcomer is not let in). */
 export const SD_NO_RIFT = 'The Rift will not take you yet.';

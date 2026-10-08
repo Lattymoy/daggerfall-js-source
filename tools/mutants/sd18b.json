@@ -92,8 +92,8 @@
   {
     "name": "SD18B-no-row",
     "file": "src/ui/sdRemnantBar.js",
-    "old": "marksView: sdMarksViewOf(s.mk), trials: s.mk ? sdOmensLine(s.mk) : '',",
-    "new": "marksView: null, trials: '',",
+    "old": "epithetColor: null, marksView: sdMarksViewOf(s.mk),",
+    "new": "epithetColor: null, marksView: null,",
     "tests": [
       "test/sd18b_seen.test.js"
     ]

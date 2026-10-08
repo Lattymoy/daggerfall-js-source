@@ -64,7 +64,7 @@ export const SD_ENDINGS = Object.freeze([
   }),
   Object.freeze({
     id: 'blades', stone: 'the Blades', sign: 'the dragon', el: 'fire', light: Object.freeze([1.0, 0.36, 0.26]),
-    sig: 'The Dragon\'s Break', text: 'Its Echoes walk the faster, and must fall within ten seconds of each other.',
+    sig: 'The Dragon\'s Haste', text: 'Its Echoes walk the faster, and must fall within ten seconds of each other.',   // AUDIT SD III (T9): "The Dragon's Break" beside its phase's "The Dragon Break", one apostrophe apart
     law: Object.freeze({ pairMs: 10_000, echoSpeedX: 1.2 }),
   }),
 ]);
@@ -76,7 +76,7 @@ export const SD_OMENS = Object.freeze([
   Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts hold a quarter again as much.', law: Object.freeze({ heartX: 1.25 }) }),   // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
   Object.freeze({ id: 'burning', name: 'The Burning Brass', text: 'Its brass burns twice as long, and wider.', law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }) }),
   Object.freeze({ id: 'fraying', name: 'The Fraying', text: 'The Orrery snaps back at thirty-six turns.', law: Object.freeze({ fray: 36 }) }),
-  Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.', law: Object.freeze({ pulseStep: 0.04 }) }),
+  Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.', law: Object.freeze({ pulseStep: 0.04 }) }),   // AUDIT SD III (T13): "climbs twice as steeply - to three quarters" read garbled
   Object.freeze({ id: 'unending', name: 'The Unending Reset', text: 'The Reset comes every forty seconds.', law: Object.freeze({ resetMs: 40_000 }) }),
   Object.freeze({ id: 'twin', name: 'The Twin Hands', text: 'The Echoes\' paired Hour-Hand comes every ten seconds.', law: Object.freeze({ pairHandMs: 10_000 }) }),
 ]);

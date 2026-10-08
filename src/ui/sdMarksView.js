@@ -38,7 +38,7 @@ export const SD_MARK_TIPS = Object.freeze({
   wayrest: 'Its Hand reaches three quarters round - keep a pillar near.',
   orsinium: 'It closes fast; give its Stomp a wider berth.',
   underking: 'Heal between Pulses; they come quicker.',
-  blades: 'Fell gold and silver within ten seconds.',
+  blades: 'Fell Gold and Silver within ten seconds of each other.',   // AUDIT SD III (T14): the Dragon Break's window in its one form
   brazen: 'Bring more damage.',
   quickened: 'Move at the word, not the fill.',
   short: 'Fell it in twelve minutes.',
@@ -77,8 +77,6 @@ export function sdMarksViewOf(mk) {
   _views.set(key, view);
   return view;
 }
-/** The omens' line under the bar (the gate's trials line). */
-export const sdOmensLine = (mk) => sdOmensOf(mk).map((o) => o.name).join(' - ');
 
 /** SD18b: THE ENDING'S STONE LIT in the Orrery's hall - the stone its Hollow keeps glowing in its light, breathing on the
  *  hall's clock (`t` seconds): `{ x, y, z, range, color }` in the dungeon's frame, for the Hour's light channel; null for a
@@ -130,7 +128,7 @@ export function sdMarksCardModel(mk, { since = 0, now = 0, mode = 'arrive' } = {
     alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);
   }
   return {
-    mode: mode === 'gate' ? 'gate' : 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100,
+    mode: mode === 'gate' ? 'gate' : 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100, look: 'brass',   // AUDIT SD III (T3): in the Hour's brass, never Dagon's red
     title: SD_MARKS_CARD_TEXT.title, sub: SD_MARKS_CARD_TEXT.sub(sdEndingOf(mk)),
     aspect: view.aspect, trials: view.trials,
   };

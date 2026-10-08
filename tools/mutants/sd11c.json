@@ -545,8 +545,8 @@
   {
     "name": "SD11c-G13-no-Hollow-no-region",
     "file": "src/scenes/sdHost.js",
-    "old": "const near = h?.site?.cityName || regionName(o.rec.r) || 'the Iliac Bay';",
-    "new": "const near = h?.site?.cityName || 'the Iliac Bay';",
+    "old": "const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';",
+    "new": "const near = h?.site?.cityName || '', region = '';",
     "tests": [
       "test/sd11c_page.test.js"
     ]

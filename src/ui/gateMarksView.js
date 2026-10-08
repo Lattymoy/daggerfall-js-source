@@ -164,6 +164,12 @@ export const MARKS_CARD_CSS = `
 .wb-marks-name { font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; }
 .wb-marks-text { font-size: 13px; opacity: 0.92; }
 .wb-marks-tip { font-size: 13px; opacity: 0.85; color: #e9c9a6; }
+/* AUDIT SD III (T3): the Hour's own - its brass and its light (ui/sdTitleCard.js), never Dagon's red */
+.wb-marks-card.sd-brass { color: #f5e7c4; background: linear-gradient(180deg, rgba(30,22,8,0.93), rgba(12,9,4,0.9));
+  border-color: rgba(232,192,96,0.6); box-shadow: 0 0 22px rgba(0,0,0,0.85), inset 0 0 18px rgba(110,80,20,0.45); }
+.wb-marks-card.sd-brass .wb-marks-title { color: #e8c060; }
+.wb-marks-card.sd-brass .wb-marks-sub { color: #fff1cf; }
+.wb-marks-card.sd-brass .wb-marks-tip { color: #e6d2a6; }
 /* WB13c: beside the party's frames where the screen holds both, never over them */
 @media (min-width: 900px) {
   body:has(.dfparty:not([style*="display: none"])) .wb-marks-card { right: 220px; }
@@ -217,12 +223,13 @@ function build(doc) {
   parts = { title, sub, rows };
 }
 
-/** Write one row: a mark's sign, name and lines - or hide it (no mark for it). */
-function writeRow(r, m, first) {
+/** Write one row: a mark's sign, name and lines - or hide it (no mark for it); a trial's sign in the card's own ring
+ *  colour (`look` - AUDIT SD III, T3: the Hour's omens in its brass). */
+function writeRow(r, m, first, look = 'gate') {
   if (!m) { r.n.style.display = 'none'; return; }
   r.n.style.display = '';
   r.icon.innerHTML = markIconHtml(m, 20);   // SD18b: the Hour's own signs
-  r.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a';
+  r.icon.style.color = m.kind === 'aspect' ? m.color : look === 'brass' ? '#e8c060' : '#ffb27a';
   r.name.textContent = m.kind === 'aspect' ? `${m.name} - ${m.element}` : m.name;
   r.name.style.color = m.kind === 'aspect' ? m.color : '';
   r.text.textContent = m.text;
@@ -240,12 +247,13 @@ export function drawGateMarksCard(model, { hidden = false, doc = globalThis.docu
   const vis = want ? 'on' : 'off';
   if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
   if (!want || !model) return;
-  if (model.mode !== shown.mode) { shown.mode = model.mode; root.className = `wb-marks-card wb-marks-${model.mode}`; }
+  const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`;   // AUDIT SD III (T3): the Hour's card in its own brass
+  if (mode !== shown.mode) { shown.mode = mode; root.className = `wb-marks-card wb-marks-${mode}`; }
   if (model.key !== shown.key) {
     shown.key = model.key;
     parts.title.textContent = model.title;
     const all = [model.aspect, ...model.trials];
-    parts.rows.forEach((r, i) => writeRow(r, all[i] ?? null, i === 0));
+    parts.rows.forEach((r, i) => writeRow(r, all[i] ?? null, i === 0, model.look));
   }
   if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }
   if (model.alpha !== shown.alpha) { shown.alpha = model.alpha; root.style.opacity = String(model.alpha); }

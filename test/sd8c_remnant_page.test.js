@@ -10,6 +10,7 @@ import {
   SD_BODY, SD_BLOWS, SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_ECHO_SPOTS, SD_OPENING_MS, SD_BREAK_MS, SD_PHASE_AT, SD_PHASE_NAMES,
   SD_RESET_FIRST_MS, SD_RESET_EVERY_MS, SD_HEARTS, SD_HEARTS_CLOSE_MS, SD_LOST_MS, SD_ENDS_MS, SD_PILLARS, SD_STUN_MS,
   newRemnantFight, joinRemnant, stepRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, heartsOpen, remnantStateOf, behindPillar, windupFor,
+  SD_ECHO_PAIR_MS,
 } from '../src/net/sdRemnant.js';
 import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
 import { validSdOut, SOCIAL_ROOM, SD_KEY, worldRoom, PIXEL_UNITS, SD_BRAIN_V, SD_NO_WORDS } from '../src/net/wire.js';
@@ -239,7 +240,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   L3.word(validSdOut({ k: 'ec', e: [[4, 9, T0 + 9, 0], [9, 9, T0, 0]], r: 0, at: T0 + 2 }));
   L3.word(validSdOut({ k: 'ph', n: 3, at: T0 + 3, up: T0 + 4 }));
   L3.word(validSdOut({ k: 'stun', until: T0 + 9, at: T0 + 5 }));
-  assert.deepEqual(words, [SD_FIGHT_TEXT.dragonBreak, SD_FIGHT_TEXT.echoFell('Ann', 0), SD_FIGHT_TEXT.echoRose(0), SD_FIGHT_TEXT.lastMoment, SD_FIGHT_TEXT.stunned]);
+  assert.deepEqual(words, [SD_FIGHT_TEXT.dragonBreak(SD_ECHO_PAIR_MS), SD_FIGHT_TEXT.echoFell('Ann', 0), SD_FIGHT_TEXT.echoRose(0), SD_FIGHT_TEXT.lastMoment, SD_FIGHT_TEXT.stunned]);   // AUDIT SD III (T14, PIN MOVED): the Dragon Break says its window
 });
 
 // ── the realm's `me` ──────────────────────────────────────────────────
@@ -670,7 +671,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it   // SD14a (PIN MOVED): its voice let go with it   // SD16 (PIN MOVED): its sparks
   assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read
-  assert.match(W, /const hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden;\n\s*if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden \}\); _sdBarUp = !!bar; \}/);   // SD15 (PIN MOVED): one hide for the bar, the ground and the card
+  assert.match(W, /const hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy;[^\n]*\n\s*if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden \}\); _sdBarUp = !!bar; \}/);   // SD15 (PIN MOVED): one hide for the bar, the ground and the card; AUDIT SD III (T18, PIN MOVED): and under the veil, as the court's
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);
   assert.match(W, /sdBlow: \(k, f\) => !!online\?\.sendSdBlow\?\.\(k, f\),/);
   assert.match(W, /serpentAway\(!onlineOn\);[^\n]*sdFightAway\(\);/);

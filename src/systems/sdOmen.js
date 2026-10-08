@@ -12,7 +12,7 @@
 // clock handed - every client holding the same record says the same thing at the same moment. Nothing is sent or saved.
 //
 // Not a DFU member: Daggerfall has no world events. Ledger A (SUPER-DUNGEONS).
-import { sdPhase, sdStands, sdMarked, SD_COLLAPSE_MS } from '../net/sdLaw.js';
+import { sdPhase, sdStands, sdMarked, sdNameIn, sdWhere, SD_COLLAPSE_MS } from '../net/sdLaw.js';
 import { timerText } from './eventTimers.js';
 import { pixelOfLoc } from './sdSite.js';
 import { MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS } from './rumorMill.js';
@@ -113,17 +113,19 @@ export const SD_BRASS_TINT = Object.freeze([1.1, 0.92, 0.62]);
 export const sdBrassLight = (rgb, w) => (!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0)))));
 /** The banner at its door: within this many metres of its centre. */
 export const SD_BANNER_M = 60;
-/** The banner's words: its name, what it is, its state ("fades in 1d 04h", "collapsing"). */
-export const sdBannerText = (name, rec, now) => { const w = sdStateWords(rec, now); return `${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`; };
-/** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel - Sunfall - under The Brazen
- *  Hide and The Short Hour." */
+/** The banner's words: its name and its state ("fades in 1d 04h", "collapsing") - AUDIT SD III (T1): what it is is the
+ *  card's beside it, and with it a long name ran the banner off both sides of a phone. */
+export const sdBannerText = (name, rec, now) => { const w = sdStateWords(rec, now); return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`; };
+/** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel - the Sunfall - under the
+ *  Brazen Hide and the Short Hour." AUDIT SD III (T11): each mark's article small inside the line (net/sdLaw.js sdNameIn)
+ *  - it read "under The Brazen Hide and The Short Hour". */
 export function sdMarksLine({ name, s }) {
   const mk = sdMarksOf(s), E = sdEndingOf(mk), O = sdOmensOf(mk);
-  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${E.sig} - under ${O.map((o) => o.name).join(' and ')}.` : '';
+  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.` : '';
 }
 /** A found Hollow's last hour, said to the realm once. */
 export const SD_HOUR_LEFT_MS = 60 * 60 * 1000;
-export const sdHourLine = ({ name, near }) => `${name || 'The Abyss Dungeon'} near ${near || 'the Iliac Bay'} will fade within the hour.`;
+export const sdHourLine = ({ name, near, region }) => `${name || 'The Abyss Dungeon'} ${sdWhere(near, region)} will fade within the hour.`;   // AUDIT SD III (T19): where, as the find's line says it
 
 /** SD18c: what the taverns say of a Hollow by the Ending it keeps - the omen that goes with it. */
 export const SD_ENDING_RUMOR = Object.freeze({
@@ -131,7 +133,7 @@ export const SD_ENDING_RUMOR = Object.freeze({
   sentinel: 'the sun goes down twice',
   wayrest: 'the tide comes in where there is no sea',
   orsinium: 'something heavy walks just under the earth',
-  underking: 'the dead in their barrows turn their heads toward it',
+  underking: 'the dead in their barrows turn their heads toward the walls',   // AUDIT SD III (T12): "toward it" - toward the air, the walls, the city?
   blades: 'a dragon\'s shadow crosses where no dragon flies',
 });
 /** The taverns' word of it (section 4) - SD18c: the omen its Ending sends, else the bell where there is no bell. */

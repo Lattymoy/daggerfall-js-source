@@ -146,8 +146,8 @@
   {
     "name": "SD11f-the-hours-by-the-second",
     "file": "src/world/sdDungeon.js",
-    "old": "left < HOUR_MS ? countdownText(left) : sdLongCount(left)",
-    "new": "countdownText(left)",
+    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "return SD_COUNT_TEXT.fades(`${Math.ceil((rec.until - now) / 3_600_000)}h`);",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD11f-the-minutes-rounded-down",
     "file": "src/world/sdDungeon.js",
-    "old": "const m = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 60000));",
-    "new": "const m = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 60000));",
+    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "return SD_COUNT_TEXT.fades(timerText(rec.until - now - 999));",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SD11f-the-collapse-uncounted",
     "file": "src/world/sdDungeon.js",
-    "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(countdownText(rec.fellAt + SD_COLLAPSE_MS - now));\n",
+    "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(timerText(rec.fellAt + SD_COLLAPSE_MS - now));\n",
     "new": "",
     "tests": [
       "test/sd11f_scenes.test.js"

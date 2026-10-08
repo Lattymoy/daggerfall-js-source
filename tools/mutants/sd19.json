@@ -101,7 +101,7 @@
   {
     "name": "SD19-the-banner-nameless",
     "file": "src/systems/sdOmen.js",
-    "old": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
     "new": "`An Abyss Dungeon${w ? ` - ${w}` : ''}`",
     "tests": [
       "test/sd19_presence.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "SD19-the-banner-stateless",
     "file": "src/systems/sdOmen.js",
-    "old": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
-    "new": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}`",
+    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "new": "`${name || 'An Abyss Dungeon'}`",
     "tests": [
       "test/sd19_presence.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD19-the-marks-line-one-omen",
     "file": "src/systems/sdOmen.js",
-    "old": "under ${O.map((o) => o.name).join(' and ')}.",
-    "new": "under ${O[0].name}.",
+    "old": "under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
+    "new": "under ${sdNameIn(O[0].name)}.",
     "tests": [
       "test/sd19_presence.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD19-world-door-over-the-gate",
     "file": "src/scenes/world.js",
-    "old": "    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden });",
-    "new": "    drawGateBanner(sb?.text ?? _gateBannerWish ?? null, { hidden });",
+    "old": "    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });",
+    "new": "    drawGateBanner(sb?.text ?? _gateBannerWish ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });",
     "tests": [
       "test/sd19_presence.test.js"
     ]

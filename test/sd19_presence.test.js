@@ -18,7 +18,7 @@ import { createSdHost } from '../src/scenes/sdHost.js';
 import { sdCities, findSdSite, sdTemplates } from '../src/systems/sdSite.js';
 import { scanGatePixels } from '../src/systems/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../src/formats/mapsFile.js';
-import { sdFirst, sdRise, sdFind, sdFell, sdGone, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
+import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdNameIn, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
 import { eventTimerRows, timerText } from '../src/systems/eventTimers.js';
 import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 
@@ -88,17 +88,19 @@ test('SD19 THE BANNER AT ITS DOOR: its name, what it is and its state - fading, 
   assert.equal(SD_BANNER_M, 60);
   const risen = sdRise(sdFirst(T0 - 20 * M), T0 - 10 * M, 0);
   const found = sdFind(risen, T0, 'Mara');
-  assert.equal(sdBannerText('The Stopped Bell', found, T0), `The Stopped Bell - an Abyss Dungeon - fades in ${timerText(found.until - T0)}`);
+  // AUDIT SD III (T1, PIN MOVED): its name and its state - what it is is the card's beside it (a long name ran the banner
+  // off both sides of a phone)
+  assert.equal(sdBannerText('The Stopped Bell', found, T0), `The Stopped Bell - fades in ${timerText(found.until - T0)}`);
   assert.equal(sdBannerText('', found, T0), `An Abyss Dungeon - fades in ${timerText(found.until - T0)}`, 'nameless: said once');
   const fell = sdFell(found, T0 + M, { top: 'Mara', n: 2 });
-  assert.equal(sdBannerText('The Stopped Bell', fell, T0 + 2 * M), 'The Stopped Bell - an Abyss Dungeon - collapsing');
-  assert.equal(sdBannerText('The Stopped Bell', sdGone(found, found.until), found.until), 'The Stopped Bell - an Abyss Dungeon');
+  assert.equal(sdBannerText('The Stopped Bell', fell, T0 + 2 * M), 'The Stopped Bell - collapsing');
+  assert.equal(sdBannerText('The Stopped Bell', sdGone(found, found.until), found.until), 'The Stopped Bell');
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(!h\?\.site \|\| !rec \|\| rec\.s !== h\.s \|\| !walkMode \|\| !playerSpawned \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return null;/);
   assert.match(w, /if \(!\['risen', 'found', 'fell'\]\.includes\(sdHost\.phase\(\)\)\) return null;/);
   assert.match(w, /if \(Math\.hypot\(f\[0\] - x, f\[2\] - z\) > SD_BANNER_M\) return null;/);
   assert.match(w, /return \{ text: sdBannerText\(h\.loc\?\.name, rec, t\), card: sdHost\.phase\(\) === 'fell' \? null : sdMarksCardModel\(sdMarksOf\(h\.s\), \{ mode: 'gate' \}\) \};/);
-  assert.match(w, /drawGateBanner\(_gateBannerWish \?\? sb\?\.text \?\? null, \{ hidden \}\);/, 'the gate\'s first');
+  assert.match(w, /drawGateBanner\(_gateBannerWish \?\? sb\?\.text \?\? null, \{ hidden, look: _gateBannerWish == null && sb \? 'brass' : 'gate' \}\);/, 'the gate\'s first');   // AUDIT SD III (T3, PIN MOVED): a Hollow's door in the Hour's brass
   assert.match(w, /if \(gatePool \|\| sdHost\) presenceFrame\(\);/);
   assert.match(w, /if \(\(gatePool \|\| sdHost\) && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) drawGateBanner\(null\);/, 'cleared indoors');
   // the card at the door: no clock, whole, its marks
@@ -153,10 +155,14 @@ function harness({ scanReady = true } = {}) {
 test('SD19 THE WORDS: its marks said with its find - its Ending, its signature and both omens; a found Hollow\'s last hour said to the realm once, near its city - never while it is only risen, never before the hour, never twice; with no Hollow the world offers, the region\'s name', () => {
   const risen = sdRise(sdFirst(T0 - 20 * M), T0 - 10 * M, 0);
   const E = sdEndingOf(sdMarksOf(risen.s)), O = sdOmensOf(sdMarksOf(risen.s));
-  assert.equal(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }), `The Stopped Bell keeps the Ending of ${E.stone} - ${E.sig} - under ${O[0].name} and ${O[1].name}.`);
+  // AUDIT SD III (T11, PIN MOVED): each mark's article small inside the line - it read "under The Quickened Gears and The
+  // Hardened Hearts"
+  assert.equal(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }), `The Stopped Bell keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${sdNameIn(O[0].name)} and ${sdNameIn(O[1].name)}.`);
+  assert.doesNotMatch(sdMarksLine({ name: 'The Stopped Bell', s: risen.s }).slice(1), /\bThe /, 'no capital article inside it');
   assert.match(sdMarksLine({ s: risen.s }), /^The Abyss Dungeon keeps the Ending of /);
   assert.equal(sdHourLine({ name: 'The Stopped Bell', near: 'Copperham' }), 'The Stopped Bell near Copperham will fade within the hour.');
   assert.equal(sdHourLine({}), 'The Abyss Dungeon near the Iliac Bay will fade within the hour.');
+  assert.equal(sdHourLine({ region: 'Alik\'r Desert' }), 'The Abyss Dungeon in the Alik\'r Desert region will fade within the hour.', 'AUDIT SD III (T19): a region said as a region');
   assert.equal(SD_HOUR_LEFT_MS, 60 * M);
   // the host
   const { s, host } = harness();
@@ -194,7 +200,7 @@ test('SD19 THE WORDS: its marks said with its find - its Ending, its signature a
   h3.frame();
   assert.deepEqual(s3.lines, [], 'its place not yet known');
   const H = read('src/scenes/sdHost.js');
-  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{ hourSaidS = rec\.s; say\(sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| regionName\(rec\.r\) \}\)\); \}/, 'with no Hollow: the region\'s');
+  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{ hourSaidS = rec\.s; say\(sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| '', region: regionName\(rec\.r\) \|\| '' \}\)\); \}/, 'with no Hollow: the region\'s');   // AUDIT SD III (T19, PIN MOVED): said as a region
 });
 
 test('SD19 THE NEXT ONE\'S RISE: once a Hollow is gone - beaten, collapsed or faded - the Timers count the next slot\'s not-before, never where; none once it may rise', () => {

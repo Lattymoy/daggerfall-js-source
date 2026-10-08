@@ -1167,9 +1167,12 @@ export function inkShip(ctx, x, y) {
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number, oy:number, scale:number}} view
  * @param {{cx:number, cy:number, r:number, label?:string}} g @param {number} [pulse] 0..1
  */
+/** AUDIT SD III (T7): the least a ring is drawn on the paper, in pixels - and so the least it answers a pointer in. */
+export const GATE_RING_MIN_PX = 10;
+
 export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {   // SERPENT1: `ink` {ring, fill} - the sea serpent's ring in its own colours
   const [x, y] = toPaper(view, g.cx, g.cy);
-  const r = Math.max(10, g.r * view.scale);
+  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);
   ctx.save();
   ctx.setLineDash([]);
   ctx.fillStyle = ink?.fill ?? GATE_FILL_CSS;

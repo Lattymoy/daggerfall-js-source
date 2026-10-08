@@ -51,7 +51,7 @@ export const SD_FIGHT_TEXT = Object.freeze({
   }),
   // AUDIT SD II (L6 F21, SD11d): WB13b's words - the event, then what to do; no dash asides, no shouted names, nothing
   // the bar already says (it was "The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.")
-  dragonBreak: 'The Dragon Break! Strike down the Gold and Silver Echoes together.',
+  dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`,   // AUDIT SD III (T14): the window's one form, by its frame's own - "together" said none
   lastMoment: 'The Last Moment! The Remnant returns.',
   echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,
   echoRose: (e) => `The ${e === 0 ? 'Gold' : 'Silver'} Echo rises again!`,
@@ -203,7 +203,7 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
       const was = state;
       state = foldSdFight(state, w, now());
       if (w.k === 'st' && w.me === 1) { mine = state.fi; refused = null; }   // the realm's answer to my `in`: I am in this fight
-      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak : SD_FIGHT_TEXT.lastMoment);
+      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);
       else if (w.k === 'ec' && was.fi) { if (w.d != null && w.n) say(SD_FIGHT_TEXT.echoFell(w.n, w.d)); else if (w.r != null) say(SD_FIGHT_TEXT.echoRose(w.r)); }
       else if (w.k === 'stun' && was.fi) say(SD_FIGHT_TEXT.stunned);
       else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0) say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY);   // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand

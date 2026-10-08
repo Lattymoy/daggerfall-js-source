@@ -22020,10 +22020,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     let marks = null;
     if (inRealm) {
       const nowMs = performance.now();
-      if (_sdMarksSince === null) _sdMarksSince = nowMs;
-      marks = sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes?.sdRealmSlot?.() ?? null), { since: _sdMarksSince, now: nowMs });   // AUDIT SD III: guarded on the object - this runs above `var modes` (audit24 wave37's law)
+      if (_sdMarksSince === null && !gateVeil?.busy) _sdMarksSince = nowMs;   // AUDIT SD III (T18): its nine seconds from the veil's opening - they ran out under it
+      marks = _sdMarksSince === null ? null : sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes?.sdRealmSlot?.() ?? null), { since: _sdMarksSince, now: nowMs });   // AUDIT SD III: guarded on the object - this runs above `var modes` (audit24 wave37's law)
     } else _sdMarksSince = null;
-    const hidden = gamePaused() || !!townTalk.hudHidden;
+    const hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;   // AUDIT SD III (T18): the Hour's readouts under the veil as the court's are (scenes/gateCourt.js)
     if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden }); _sdBarUp = !!bar; }
     if (ground || _sdGroundUp) { drawGateGround(ground, { hidden }); _sdGroundUp = !!ground; }
     if (card || _sdCardUp) { drawSdTitleCard(card, { hidden }); _sdCardUp = !!card; }
@@ -22089,7 +22089,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _gateBannerWish = null, _gateMarksWish = null;
   const presenceFrame = () => {
     const sb = sdHost ? sdBannerNow() : null, hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;
-    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden });
+    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });   // AUDIT SD III (T3): an Abyss Dungeon's door in the Hour's brass
     drawGateMarksCard(_gateMarksWish ?? sb?.card ?? null, { hidden });
   };
   /** SD2c: the compass's mark - a found Hollow's centre, in THIS scene, while the player stands outside within

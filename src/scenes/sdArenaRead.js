@@ -37,8 +37,9 @@ export const SD_JUMP_CALL_M = 3;
 export const SD_BEAT_LATE_MS = 1500;
 /** The Hour's last minute. */
 export const SD_BEAT_LAST_MS = 60 * 1000;
-/** The Dragon Break's charge, by the window its pair falls in (SD18a: the Dragon's Break's ten seconds). */
-export const sdBreakSub = (ms) => `Gold and silver - fell them within ${Math.round(ms / 1000)} seconds`;
+/** The Dragon Break's charge, by the window its pair falls in (SD18a: the Dragon's Haste's ten seconds) - AUDIT SD III
+ *  (T14): in the window's one form, the card's, the chat's, the Blades' tip and law (it was said four ways). */
+export const sdBreakSub = (ms) => `Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other`;
 /** SD18b: its wake's words by its Hollow's Ending - its signature and the Ending it keeps (the table's with none). */
 export const sdWakeText = (mk) => { const E = sdEndingOf(mk); return E ? { ...SD_BEAT_TEXT.wake, sub: `${E.sig} - the Ending of ${E.stone}` } : SD_BEAT_TEXT.wake; };
 /** The words on the card. */

@@ -11,7 +11,7 @@
 // `remnantBarModel` is pure - the fight's state and the relay's clock in, the gate bar's model out. Not a DFU member.
 // Ledger A (SUPER-DUNGEONS).
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, atkWindup, sdProfileOf } from '../net/sdRemnant.js';
-import { sdMarksViewOf, sdOmensLine } from './sdMarksView.js';   // SD18b
+import { sdMarksViewOf } from './sdMarksView.js';   // SD18b
 import { SD_ARENA } from '../net/sdBrain.js';
 import { sdBlowDone, sdHourOver } from '../net/sdFightLink.js';
 import { countdownText } from '../net/gateLaw.js';
@@ -29,7 +29,8 @@ export const SD_BAR_TEXT = Object.freeze({
   stirs: (secs) => `It stirs - ${secs}s`,
   outside: 'Outside time - strike the Echoes',
   returns: (secs) => `It returns - ${secs}s`,   // AUDIT SD II (L6 F10): the Last Moment's return, the Echoes gone
-  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`,   // AUDIT SD II (L6 F6): the pair's window
+  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`,   // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - "rises in 12s" came in afresh each second
+  risesIn: (secs) => `rises in ${secs}s`,   // the Echoes' chip: "Gold 45% - Silver rises in 7s"
   stunned: (secs) => `Stunned - ${secs}s`,
   reset: (left, n, secs) => `The Reset - ${left} of ${n} ${n === 1 ? 'Heart' : 'Hearts'} - ${secs}s`,
   echo: (e, name) => `${e === 0 ? 'Gold' : 'Silver'} Echo: ${name}`,
@@ -39,6 +40,7 @@ export const SD_BAR_TEXT = Object.freeze({
   endsIn: (left) => `The Hour ends in ${left}`,
   ended: 'The Hour has ended',
   fighters: (n) => (n === 1 ? '1 in the arena' : `${n} in the arena`),
+  undone: 'Undone',   // AUDIT SD III (T10): the Hour's word for its fall - "The Brass Remnant is undone." (the gate's bar said "Felled")
 });
 /** The bar stands over the screen while I stand this near the arena's rim (metres - the realm's frame). */
 export const SD_BAR_NEAR_M = 20;
@@ -98,19 +100,20 @@ export function remnantBarModel(s, now) {
   const ec = !s.fell && s.ph === 2 && s.ec ? s.ec : null;
   // AUDIT SD II (L6 F6): a fallen Echo's chip counts to its rising, pulsing at the last (it said "fallen" and no time)
   const riseIn = (E) => (E.h > 0 || !(E.dn > 0) ? null : Math.max(0, E.dn + sdProfileOf(s).pairMs - now));   // SD18a: the Dragon's Break's ten
-  const chip = (E, e) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.rises(e, Math.ceil(r / 1000)).replace(/^(Gold|Silver) /, ''); };
+  const chip = (E) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.risesIn(Math.ceil(r / 1000)); };
   const resetComing = !s.fell && !s.ended && s.ph >= 3 && s.rk > now && !(s.rem?.atk?.a === SD_BLOWS.reset.id && !sdBlowDone(s.rem.atk, now));
   return {
     theme: 'brass', ringCss: SD_BAR_CSS.ring,
-    // SD18b: the Hour's marks under its health - its Ending's signature in its light, then its omens (ui/sdMarksView.js); the
-    // phase's name kept over the bar (the Ending is the row's)
-    name: SD_BAR_TEXT.name, title: SD_PHASE_NAMES[s.ph - 1] ?? '', epithet: '', epithetColor: null, marksView: sdMarksViewOf(s.mk), trials: s.mk ? sdOmensLine(s.mk) : '',
+    // SD18b: the Hour's marks under its health - its Ending's signature in its light, then its omens, each its sign and its
+    // name (ui/sdMarksView.js); the phase's name kept over the bar (the Ending is the row's). AUDIT SD III (T17): the row
+    // alone - the omens joined in a line (`trials`) were handed to a bar that draws none
+    name: SD_BAR_TEXT.name, title: SD_PHASE_NAMES[s.ph - 1] ?? '', epithet: '', epithetColor: null, marksView: sdMarksViewOf(s.mk),
     frac, marks: [...SD_PHASE_AT], phase: s.ph, spent: SD_PHASE_AT.map((_, i) => s.ph > i + 1),
-    warded, fallen: !!s.fell, callout,
+    warded, fallen: !!s.fell, fallenText: SD_BAR_TEXT.undone, callout,
     wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ? SD_BAR_TEXT.endsIn(countdownText(toEnd)) : null,   // AUDIT SD II (L4 F3): ended at its moment - its wind-up still counts down, and still takes blows
     wrathNear: !s.fell && (!!s.ended || toEnd <= SD_ENDS_NEAR_MS),
     fighters: s.n | 0, fightersLine: SD_BAR_TEXT.fighters(s.n | 0),
-    host: ec ? SD_BAR_TEXT.echoes(chip(ec[0], 0), chip(ec[1], 1)) : null,
+    host: ec ? SD_BAR_TEXT.echoes(chip(ec[0]), chip(ec[1])) : null,
     hostNear: !!ec && ec.some((E) => { const r = riseIn(E); return r !== null && r <= SD_ECHO_RISE_NEAR_MS; }),
     reckonIn: resetComing ? SD_BAR_TEXT.resetIn(countdownText(s.rk - now)) : null,
     alpha: Math.round(alpha * 20) / 20, now, low: !s.fell && frac > 0 && frac < LOW_HEALTH,

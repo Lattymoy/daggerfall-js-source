@@ -81,8 +81,8 @@ test('SD10 THE READOUTS\' LAW: the readout owed is the least mark at or above wh
   assert.equal(sdCollapseDue(-5, Infinity), null);
   assert.equal(sdCollapseLine(SD_COLLAPSE_MS, { hour: true, first: true }), 'The Hour collapses in 3:00. The way home opens where the Remnant fell.');   // AUDIT SD II (L6 F2, F21, PIN MOVED): WB13b's words; the way home opens there
   assert.equal(sdCollapseLine(30_000, { hour: true }), 'The Hour collapses in 0:30.');
-  assert.equal(sdCollapseLine(150_400, { first: true }), 'The Hour is broken. The Hollow collapses in 2:31.');   // AUDIT SD II (PIN MOVED)
-  assert.equal(sdCollapseLine(9_100), 'The Hollow collapses in 0:10.', 'rounded up - never 0:00 while time is left');
+  assert.equal(sdCollapseLine(150_400, { first: true }), 'The Hour is broken. The Abyss Dungeon collapses in 2:31.');   // AUDIT SD II (PIN MOVED); AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
+  assert.equal(sdCollapseLine(9_100), 'The Abyss Dungeon collapses in 0:10.', 'rounded up - never 0:00 while time is left');
 });
 
 test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it collapses is told at the fall and at each mark, once each, in the Hollow\'s words - in the Hour, the Hour\'s; a player outside is told nothing; the collapse\'s end casts them out as before (mutants: never told; told outside; the Hour\'s words in the Hollow)', () => {
@@ -93,7 +93,7 @@ test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it col
   assert.deepEqual(h.s.warned, [], 'outside: nothing');
   h.s.inside = true;
   h.host.frame(); h.host.frame();
-  assert.deepEqual(h.s.warned, ['The Hour is broken. The Hollow collapses in 3:00.'], 'at the fall, once');   // AUDIT SD II (PIN MOVED)
+  assert.deepEqual(h.s.warned, ['The Hour is broken. The Abyss Dungeon collapses in 3:00.'], 'at the fall, once');   // AUDIT SD II (PIN MOVED); AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   h.s.clock = T0 + H + SD_COLLAPSE_MS - 60_000;
   h.host.frame(); h.host.frame();
   h.s.hour = true;   // through the Rift, into the Hour
@@ -102,7 +102,7 @@ test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it col
   h.s.clock = T0 + H + SD_COLLAPSE_MS - 10_000;
   h.host.frame(); h.host.frame();
   assert.deepEqual(h.s.warned, [
-    'The Hour is broken. The Hollow collapses in 3:00.', 'The Hollow collapses in 1:00.', 'The Hour collapses in 0:30.', 'The Hour collapses in 0:10.',
+    'The Hour is broken. The Abyss Dungeon collapses in 3:00.', 'The Abyss Dungeon collapses in 1:00.', 'The Hour collapses in 0:30.', 'The Hour collapses in 0:10.',
   ]);
   h.s.clock = T0 + H + SD_COLLAPSE_MS;
   h.host.heard({ k: 'ev', ...sdGone(k, h.s.clock) });
@@ -131,7 +131,7 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
   assert.deepEqual(e.ret, { at: [10, 0, 20] });
   const t = e.targets().find((x) => x.key === SD_RETURN_KEY);
   assert.deepEqual(t.aabb, { min: [10 - SD_RETURN_SIZE.w / 2, 0, 20 - SD_RETURN_SIZE.w / 2], max: [10 + SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h, 20 + SD_RETURN_SIZE.w / 2] });
-  assert.deepEqual(e.hoverName(SD_RETURN_KEY), { title: 'The Way Home', subs: ['To the Hollow\'s door'] });
+  assert.deepEqual(e.hoverName(SD_RETURN_KEY), { title: 'The Way Home', subs: ['To the Abyss Dungeon\'s door'] });   // AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   assert.equal(e.press(SD_RETURN_KEY), true);
   assert.equal(homes, 1, 'pressed: the host\'s way home');
   // AUDIT SD II (SD11f, L6 F9, PIN MOVED): never walked into - it stands where the spoils land; pressed alone
@@ -165,7 +165,7 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
   const d = createSdEnd({});
   d.stand({ rift: { at: [0, 0, 0], size: 4 }, retAt: [2, 0, 0] });
   assert.deepEqual(d.hoverName(SD_RETURN_KEY), { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] });
-  assert.deepEqual(SD_HOME_TEXT, { title: 'The Way Home', to: 'To the Hollow\'s door', taken: 'The way home carries you out of the Hour, to the Hollow\'s door.', rises: 'The way home stands open.' });   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): and said as it rises
+  assert.deepEqual(SD_HOME_TEXT, { title: 'The Way Home', to: 'To the Abyss Dungeon\'s door', taken: 'The way home carries you out of the Hour, to the Abyss Dungeon\'s door.', rises: 'The way home stands open.' });   // AUDIT SD I; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss DungeonI (SD11f, L6 F16, PIN MOVED): and said as it rises
 });
 
 // ── the hosts ────────────────────────────────────────────────────────
