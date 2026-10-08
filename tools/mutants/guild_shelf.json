@@ -56,8 +56,8 @@
   {
     "name": "GUILD-SHELF-potions-mint-a-throwaway",
     "file": "src/scenes/worldModes.js",
-    "old": "      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }));",
-    "new": "      const shelf = { items: stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }) };",
+    "old": "      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }));",
+    "new": "      const shelf = { items: stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }) };",
     "tests": [
       "test/guildshelf.test.js"
     ]

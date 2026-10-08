@@ -656,6 +656,7 @@ import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/r
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
+import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
@@ -1560,6 +1561,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // offline a town is DFU's.
   const hallDoor = params.has('online') ? accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
   const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;
+  // CHAP3c (Chapters-Arc 5.2, 5.3): the chapter sheet - every chapter's Strength - held for the halls' prices and shelves
+  // (net/chapterSheet.js), asked at a town's entry and again when it grows old. Online only - offline a hall is DFU's.
+  const chapterSheet = hallDoor ? createChapterSheet({ door: hallDoor }) : null;
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
   /** SEAT2a part four: the siege this client is in, made with the online session (net/siegeSession.js) - null offline. */
@@ -15676,6 +15680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  summaries walk the town map builds from, not the talk directory's
    *  doors. */
   const revealMemberGuildHalls = ({ witness = false } = {}) => {
+    if (witness) chapterSheet?.refresh();   // CHAP3c: the chapter sheet asked at a town's entry, for its halls' prices
     const px = playerTravelPixel();
     const key = `${px.x},${px.y}`;
     const dfLoc = locationIndex.get(key);
@@ -25905,6 +25910,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
+    chapterStrength: (faction, region) => chapterSheet?.strengthOf(faction, region) ?? null,   // CHAP3c: a hall's chapter's Strength, its band on the hall
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)
     hallOfRecords: {

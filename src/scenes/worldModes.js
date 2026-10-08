@@ -400,6 +400,7 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac P
 import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
 import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
+import { chapterPriceFactor, chapterShelfQuality } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -4986,6 +4987,11 @@ export function createWorldModes(host) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
     const b = interiorBuilding;
+    // CHAP3c (Chapters-Arc 5.2): online, this hall's chapter's Strength from the chapter sheet (the host's - none
+    // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
+    const chapterStrength = () => host.chapterStrength?.(guild?.factionId ?? null, b?.regionIndex ?? null) ?? null;
+    const chapterFactor = () => chapterPriceFactor(chapterStrength());
+    const shelfQuality = () => chapterShelfQuality(b?.quality ?? 0, chapterStrength());
     const closeSelf = () => closeSpellWindow(flow);
     const now = () => interiorTicker.ownMinutes;   // already CLASSIC minutes (AUDIT 21 F2); LIVED1: a service's clock (training's cooldown, a blessing) is the character's own
     const godName = guild?.divine ?? '';
@@ -5030,7 +5036,7 @@ export function createWorldModes(host) {
     // everything just bought; the players found it as an endless shop.
     if (destination === 'guildServiceBuySoulgems' && tradeDoorReady()) {
       const shelf = guildShelf('BuySoulgems', () => stockSoulGems(
-        { quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) },
+        { quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) },   // CHAP3c: the chapter's band on the shelf
         { soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0 }));
       // The slot is freed by the frame's own `done` sweep (:2450,
       // :2517), which is how EVERY trade window is dismissed -
@@ -5055,7 +5061,7 @@ export function createWorldModes(host) {
       return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     if (destination === 'guildServiceBuyPotions' && tradeDoorReady()) {
-      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }));   // GUILD-SHELF: the day's, as the soul gems'
+      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }));   // GUILD-SHELF: the day's, as the soul gems'; CHAP3c: the band's
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
       return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
@@ -5069,7 +5075,7 @@ export function createWorldModes(host) {
       const sellsSoulGems = canAccessService(guild, membership, 'BuySoulgems');
       const playerLevel = playerEntity.level ?? 1, gender = playerEntity.gender ?? 0;
       const shelf = guildShelf(`BuyMagicItems|${sellsSoulGems ? 1 : 0}|${playerLevel}|${gender}`, () => stockGuildMagicItems({   // GUILD-SHELF: the day's, as the soul gems'
-        quality: b?.quality ?? 0,
+        quality: shelfQuality(),   // CHAP3c: the chapter's band on the shelf
         gameMinutes: Math.floor(worldMinutes()),
         sellsSoulGems,
       }, {
@@ -5466,6 +5472,7 @@ export function createWorldModes(host) {
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
         offered: () => [...sbi.values(), ...(isOnlinePage() ? [resurrectionSpell(), sharedCartographySpell()] : [])],   // RESURRECT1: online, the ready-made Resurrection is on the shelf; PARTY-MAP: and Shared Cartography beside it
         buildingQuality: () => b?.quality ?? 0,
+        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's price
         shopName: () => b?.name ?? '',
         skills: () => ({
           mercantile: skillValue(playerEntity, SKILLS.Mercantile),
@@ -5500,6 +5507,7 @@ export function createWorldModes(host) {
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
         rows,
+        priceFactor: chapterFactor,   // CHAP3c: the hall's chapter's band on a spell's making
         onClose: () => closeSpellWindow(makerWin),
       });  makerWin = enhancedWindow(makerWin, 'spellMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(makerWin);
@@ -5513,6 +5521,7 @@ export function createWorldModes(host) {
       const refined = rrRefinedTrainingOn();
       flow = (refined ? buildRefinedTrainingFlow : buildTrainingFlow)(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
+        priceFactor: chapterFactor(),   // CHAP3c: the hall's chapter's band on the training's price
         variablePrice: rrSetting('RefinedTraining.variableTrainingPrice') === true, intensive: rrSetting('RefinedTraining.intensiveTraining') === true,
         // TrainSkillIntense (GuildServiceTrainingRR.cs:130-134): four days off the clock and four permanent points, before the fifth session
         applyIntensive: (skill, days, points) => {

@@ -596,10 +596,10 @@ export function strengthAfter(prev, merit, target) {
 export const strengthSeasonEnd = (/** @type {number} */ s) => STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);
 /** THE BANDS (5.2's table), each from its floor: Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100. */
 export const CHAPTER_BANDS = Object.freeze([
-  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5 }),
-  Object.freeze({ band: 'steady', name: 'Steady', from: 20, price: 1, writs: 1 }),
-  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5 }),
-  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9, writs: 1.5 }),
+  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -4 }),
+  Object.freeze({ band: 'steady', name: 'Steady', from: 20, price: 1, writs: 1, shelf: 0 }),
+  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),
+  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9, writs: 1.5, shelf: 4 }),
 ]);
 /** A Strength's band (CHAPTER_BANDS' row) - Steady's for a number that is none. */
 export function chapterBandOf(/** @type {unknown} */ strength) {
@@ -613,4 +613,25 @@ export const hallWritCountIn = (/** @type {unknown} */ active, /** @type {unknow
 /** The board's line for a chapter - "The Fighters Guild here is Thriving (Strength 74)". */
 export function chapterLineOf(/** @type {{ faction: number, strength: number }} */ c) {
   return `The ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;
+}
+
+// ─── CHAP3c: THE BANDS ON THE HALLS (Chapters-Arc 5.2) ──────────────
+// What a chapter's band does to its hall, online: training, a spell bought and a spell made cost a quarter more Failing
+// and a tenth less Thriving and Ascendant; the guild's shelf is stocked as a hall four qualities poorer Failing, four
+// richer Thriving and Ascendant (DFU's stock law reads a hall's quality - more items, deeper ones). DFU's own price and
+// stock laws stay the base: the band is laid over them, never written into them. A hall whose chapter's Strength is not
+// known - offline, or a chapter the sheet does not name - is DFU's own.
+
+/** The building qualities DFU's halls stand at, which a band's shelf moves inside. */
+export const HALL_QUALITY_MIN = 1;
+export const HALL_QUALITY_MAX = 20;
+/** A hall's price factor by its chapter's Strength - 1 where none is known (chapterBandOf reads it as Steady). */
+export const chapterPriceFactor = (/** @type {unknown} */ strength) => chapterBandOf(strength).price;
+/** A price with a hall's factor laid over it, rounded - never under 1 for a price that was some; DFU's own at 1. */
+export const chapterPriced = (/** @type {number} */ price, /** @type {number} */ factor) => (factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));
+/** A hall's shelf's quality by its chapter's Strength: DFU's building quality moved by the band, inside 1-20; the hall's
+ *  own where no Strength is known (chapterBandOf reads it as Steady, which moves nothing) or the hall has no quality. */
+export function chapterShelfQuality(/** @type {number} */ quality, /** @type {unknown} */ strength) {
+  if (!(quality > 0)) return quality;
+  return Math.max(HALL_QUALITY_MIN, Math.min(HALL_QUALITY_MAX, quality + chapterBandOf(strength).shelf));
 }

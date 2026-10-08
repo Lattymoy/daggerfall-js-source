@@ -423,10 +423,12 @@ export class EffectSettingsEditorWindow {
  * deps: { entity, rows(id) -> [{text, center}], onClose }
  */
 export class SpellMakerWindow {
-  constructor({ entity, rows = null, onClose = null } = {}) {
+  constructor({ entity, rows = null, onClose = null, priceFactor = null } = {}) {
     this.entity = entity;
     this.rows = rows;
     this.onClose = onClose;
+    /** @type {(() => number) | null} CHAP3c: the hall's chapter's price factor, the host's (none offline) */
+    this.priceFactor = priceFactor;
     this.done = false;
     this.isChoiceWindow = true;
     this.iconPicker = null;
@@ -497,7 +499,9 @@ export class SpellMakerWindow {
       return;
     }
     const { gold, sp } = spellMakerCost(this._spell(), this.entity);
-    this.totalGoldCost = gold;
+    // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's gold cost - DFU's own at 1 or none
+    const f = this.priceFactor?.() ?? 1;
+    this.totalGoldCost = f === 1 || !(gold > 0) ? gold : Math.max(1, Math.round(gold * f));
     this.totalSpellPointCost = sp;
   }
 

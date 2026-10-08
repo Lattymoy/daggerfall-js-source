@@ -12,7 +12,8 @@ six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its t
 receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3a BUILT (2026-10-08, the same
 words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b BUILT (2026-10-08, Mac:
 "Continue"; Strength at the Turning, its band on the hall writs, the sheet - sections 5.2 and 5.3, its record at the
-foot). CHAP3c (the bands on the halls' prices and shelf) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
+foot). CHAP3c BUILT (2026-10-08, the same word; the bands on the halls' prices and shelf - section 5.2, its record at
+the foot). CHAP4 (the seats) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
 arc's migrations are `0091_npc_roll` to `0094_npc_merit` and its service `acct95` - the records below name the numbers
 they were built under.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
@@ -441,6 +442,22 @@ BUILT (CHAP3b, 2026-10-08), and where building it asked, narrowed here:
 - **The bands' writs** stand now (`hallWritCountIn`): a chapter's hall writs a day halved Failing (never none), half again
   Thriving and Ascendant. Their prices and shelf are CHAP3c's - the numbers are the law's (`CHAPTER_BANDS`) already.
 
+BUILT (CHAP3c, 2026-10-08), and where building it asked, narrowed here - online, the band laid over DFU's own laws in
+the hall the player stands in (its guild's faction, as the hall's service window reads it, and its building's region):
+
+- **The prices**: training (DFU's `trainingPrice` - both DFU's chain and RefinedTraining's, offer and gold check), a
+  spell bought (DFU's trade price) and a spell made (the spellmaker's gold cost; its spell points DFU's) - x1.25
+  Failing, x0.9 Thriving and Ascendant, rounded, never under 1 (`chapterPriceFactor`, `chapterPriced`). The rest of the
+  hall's services - repair, identify, a donation, a cure, recharge, the item maker, a summoning, a teleport - stay DFU's:
+  5.2's table names training and spells alone.
+- **The shelf**: the guild's soul gems, potions and magic items stocked as a hall four qualities poorer Failing, four
+  richer Thriving and Ascendant, inside DFU's 1-20 (`chapterShelfQuality` - DFU's stock law reads the hall's quality:
+  fewer items Failing, more and deeper Thriving). A shelf is minted once a day (GUILD-SHELF), so a band that moves
+  mid-day reaches it the next day; its prices are the shop's own law, untouched.
+- **Where no Strength is known the hall is DFU's own**: offline (no sheet), and for a chapter the sheet does not name -
+  the Thieves Guild's and the Dark Brotherhood's (5.3), and a hall whose town is not yet confirmed. NARROWED: the
+  underworld's halls take no band until a sheet can be read by their members alone (CHAP5 reads the sheet again).
+
 ### 5.3 The chapter sheet
 
 DECIDED. `/v1/chapters/list` publishes every chapter: its Strength and band, its seats' holders, its Season's event
@@ -453,6 +470,10 @@ CHAP4's and CHAP6's to add, and its cache CHAP3c's, the halls' first reader. NAR
 Brotherhood's chapters are never on it - a public sheet would name where the underworld keeps its halls, which their
 writs and receipt asks keep to their members (AUDIT CHAP2 S2). The board says the region's chapters' state beside its
 writs ("The Fighters Guild here is Thriving (Strength 74)", `chapterLineOf`), a hidden guild's to its members alone.
+BUILT (CHAP3c): the playing tab holds the sheet (`src/net/chapterSheet.js` createChapterSheet over `accountRoll.list`),
+read at a town's entry and again once ten minutes old (`SHEET_KEPT_MS`, the seats' list's beat), one read at a time, a
+refusal that is the account's stopping it for the page; its readers ask it synchronously and are answered as it last
+stood.
 
 ## 6. The seats - ranks 8 and 9 (CHAP4)
 
@@ -602,7 +623,8 @@ DECIDED.
    (2026-10-08): a receipt's standing and the receipt writs; the fence decided against.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
    CHAP3a BUILT (2026-10-08): a member's own writ and the week's Merit (5.1). CHAP3b BUILT (2026-10-08): the Turning's
-   Strength, the bands on the hall writs, the sheet (5.2, 5.3). CHAP3c: the bands on the halls' prices and shelf.
+   Strength, the bands on the hall writs, the sheet (5.2, 5.3). CHAP3c BUILT (2026-10-08): the bands on the halls' prices
+   and shelf (5.2).
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
@@ -617,7 +639,8 @@ host online runs in - the interiors and the dungeons are that same page and that
 
 - `scenes/worldModes.js` (interiors) - the hall's service window: the rank from the Roll, the prices from Strength
   (CHAP1, CHAP3), and the hall's roll (CHAP5). CHAP1: nothing to wire - the window reads the entity's reputation and
-  book as it always did, and online the reputation it reads is the Roll's.
+  book as it always did, and online the reputation it reads is the Roll's. CHAP3c BUILT: the hall's chapter's band
+  on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline).
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll: flagged by name, DFU's guilds as today.
@@ -681,8 +704,10 @@ is Mac's to overrule.
 | Strength's target | 60 Merit a point for each hundred active accounts (`STRENGTH_TARGET`, `strengthTarget`) | 5.2 |
 | The Turnings a read settles | 8 at most (`CHAPTER_WEEKS_MAX`, `server-account/src/npcChapters.js`); every region's chapters kept 60 seconds an isolate (`ALL_CHAPTERS_KEPT_MS`) | 5.2 |
 | Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 (`CHAPTER_BANDS`, `chapterBandOf`) | 5.2 |
-| Failing price | x1.25 | 5.2 |
-| Thriving and Ascendant price | x0.9 | 5.2 |
+| Failing price | x1.25 on training, a spell bought, a spell made (`CHAPTER_BANDS`, `chapterPriceFactor`, `chapterPriced`) | 5.2 |
+| Thriving and Ascendant price | x0.9 on the same | 5.2 |
+| The shelf by band | 4 qualities poorer Failing, 4 richer Thriving and Ascendant, inside 1-20 (`HALL_QUALITY_MIN`, `HALL_QUALITY_MAX`, `chapterShelfQuality`) | 5.2 |
+| The sheet held by the tab | 10 minutes (`SHEET_KEPT_MS`, `src/net/chapterSheet.js`) | 5.3 |
 | Seats | 1 Master, 3 officers a chapter | 6 |
 | Seat eligibility | 14 days in the guild, account 7 days old | 6 |
 | Merit window | 4 weeks | 6 |
@@ -880,3 +905,25 @@ The third slice's second half; sections 5.2 and 5.3 carry the law and what build
   passed after the day's writs, the writs by band for a reader the switch keeps out); the wiring.
   `tools/mutants/chap3b.json`: 58 mutants, 58 dead. AUDIT CHAP2's `T-POST-COUNT-ACTIVE` and CHAP2a's `CHAP2-WRIT-SCALE`
   re-aimed at the writs' count by band and the hall writs' scale (`strengthTarget` repeats its text), both dead.
+
+## CHAP3c - the bands on the halls, as built (2026-10-08, Mac: "Continue")
+
+The third slice's last part; section 5.2 carries the law and what building it narrowed (BUILT, CHAP3c). CHAP3 stands
+whole: the week's Merit, the Turning's Strength, its band on the writs and the halls, the sheet.
+
+- **The law.** `src/net/npcChapterLaw.js`: the bands' shelf step (`CHAPTER_BANDS`' `shelf`), a hall's price factor and a
+  price laid over (`chapterPriceFactor`, `chapterPriced`), a shelf's quality (`chapterShelfQuality`, `HALL_QUALITY_MIN`,
+  `HALL_QUALITY_MAX`).
+- **The client.** `src/net/chapterSheet.js` (the sheet the playing tab holds); `src/scenes/world.js` (built online over
+  the halls' door, asked at a town's entry, handed to the interiors as `chapterStrength`); `src/scenes/worldModes.js`
+  (the hall's chapter read off its guild and building, its factor to training, the spellbook and the spellmaker, its
+  quality to the three shelves); `src/systems/guildServiceActions.js` and `src/ui/guildServiceWindows.js` (training's
+  offer and gold check by a factor, DFU's own at 1); `src/ui/spellbookWindow.js` and `src/ui/spellMakerWindow.js` (the
+  trade price and the gold cost by a factor). No service change; still `acct95`.
+- **Pins.** `test/chap3c_halls.test.js`, 9 tests: the law against literals (the factor by band and unknown, a price laid
+  over and its rounding, the shelf's quality, its bounds, DFU's potion count read through it); the sheet over a fake door
+  (nothing before its read, one read at a time, the beat, a failed read keeping the last, a door that throws, the stops,
+  a row naming no guild); training's offer and gold check, DFU's chain and RefinedTraining's; a spell bought; a spell
+  made (its gold, never its spell points); the hosts' wiring. `tools/mutants/chap3c.json`: 36 mutants, 35 dead, 1
+  equivalent as recorded. TIME1's census row for the soul gems' shelf moved with its line (`test/fixtures/time1_census.json`), and GUILD-SHELF's
+`GUILD-SHELF-potions-mint-a-throwaway` was re-aimed at the potions' line (dead).

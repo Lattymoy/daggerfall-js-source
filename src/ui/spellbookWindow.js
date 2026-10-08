@@ -515,8 +515,12 @@ export class SpellbookWindow {
    *  same pair every other trade surface does. */
   tradePrice() {
     this._updatePresentedCost();
-    return calculateTradePrice(this.presentedCost, this.deps.buildingQuality?.() ?? 0,
+    const price = calculateTradePrice(this.presentedCost, this.deps.buildingQuality?.() ?? 0,
       this.deps.skills?.() ?? {}, false);
+    // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's price (`priceFactor`, the host's) -
+    // DFU's own where it answers 1 or nothing
+    const f = this.deps.priceFactor?.() ?? 1;
+    return f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f));
   }
 
   /** SetEffectLabels (:624-649): the group and subgroup names of the

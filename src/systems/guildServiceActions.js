@@ -163,16 +163,19 @@ export function trainSkill(entity, skill, nowClassicMinutes, rolls = Math.random
 export const trainableSkills = (guild) => trainingSkills(guild) ?? [];
 
 /** The whole offer decision, so a window is only buttons. */
-export function trainingOffer(entity, guild, membership, nowClassicMinutes) {
+export function trainingOffer(entity, guild, membership, nowClassicMinutes, priceFactor = 1) {
   if (trainingTooSoon(entity, nowClassicMinutes)) return { kind: 'tooSoon', textId: TRAINING_TOO_SOON_ID };
-  return { kind: 'offer', textId: TRAINING_OFFER_ID, price: trainingPrice(membership, entity.level ?? 1) };
+  return { kind: 'offer', textId: TRAINING_OFFER_ID, price: factored(trainingPrice(membership, entity.level ?? 1), priceFactor) };
 }
+/** CHAP3c (Chapters-Arc 5.2): a price with the hall's chapter's factor laid over it (npcChapterLaw.js chapterPriced's
+ *  law, here so DFU's service law reads no network module) - DFU's own at 1. */
+const factored = (/** @type {number} */ price, /** @type {number} */ f) => (f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f)));
 
 /** ConfirmTraining's Yes branch (:73-90): the gold check happens
  *  BEFORE the skill picker opens, so a player who cannot pay never
  *  sees the list. */
-export function canAffordTraining(entity, membership) {
-  return totalGoldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);
+export function canAffordTraining(entity, membership, priceFactor = 1) {
+  return totalGoldAmount(entity) >= factored(trainingPrice(membership, entity.level ?? 1), priceFactor);
 }
 
 // ── DONATION (DaggerfallGuildServiceDonation.cs) ──────────────────
