@@ -1,0 +1,383 @@
+[
+  {
+    "name": "SNOWFALL1-melt-step-as-snowfall",
+    "file": "src/systems/snowfall.js",
+    "old": "    const delta = (this.phaseWasSnowing ? this.snowfallStep : -this.meltStep) * steps;",
+    "new": "    const delta = (this.phaseWasSnowing ? this.snowfallStep : -this.snowfallStep) * steps;",
+    "tests": [
+      "test/snowfall1_model.test.js",
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-berm-past-its-ceiling",
+    "file": "src/systems/snowfall.js",
+    "old": "  depth = f32(depth + Math.min(Math.max(0, f32(ceiling - depth)), f32(rise * ctx[3])));",
+    "new": "  depth = f32(depth + f32(rise * ctx[3]));",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-path-cap-dropped",
+    "file": "src/systems/snowfall.js",
+    "old": "  return Math.min(depth, Math.min(capped, path));",
+    "new": "  return Math.min(depth, capped);",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-turn-one-unrotated",
+    "file": "src/systems/snowfall.js",
+    "old": "function turnUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [v, f32(1 - u)];",
+    "new": "function turnUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [u, v];",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-path-turn-one-unrotated",
+    "file": "src/systems/snowfall.js",
+    "old": "function pathUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [v, f32(1 - u)];",
+    "new": "function pathUv(tile, u, v) {\n  switch (tile & 3) {\n    case 1: return [u, v];",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-ramp-diagonal-dropped",
+    "file": "src/systems/snowfall.js",
+    "old": "        if (x > 0) a = Math.min(a, pixels[(i - width - 1) * 4 + 3] + 1);",
+    "new": "",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-cell-a-quarter-metre",
+    "file": "src/systems/snowfall.js",
+    "old": "export const TRACK_CELL_SIZE = 0.5;",
+    "new": "export const TRACK_CELL_SIZE = 0.25;",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-bucket-span-32",
+    "file": "src/systems/snowfall.js",
+    "old": "const BUCKET = 64;",
+    "new": "const BUCKET = 32;",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-track-min-radius-ignored",
+    "file": "src/systems/snowfall.js",
+    "old": "  const radius = Math.max(minRadius, f32(f32(width * 0.5) * scale));",
+    "new": "  const radius = f32(f32(width * 0.5) * scale);",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-static-encoding-unhalved",
+    "file": "src/systems/snowfall.js",
+    "old": "  const b = roundToInt(f32(clamp01(f32(depthMultiplier / 2)) * 255));",
+    "new": "  const b = roundToInt(f32(clamp01(depthMultiplier) * 255));",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-location-paving-not-184",
+    "file": "src/systems/snowfall.js",
+    "old": "    if (road && x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax) return 184;",
+    "new": "    if (road && x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax) return 183;",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-authored-tile-classified",
+    "file": "src/systems/snowfall.js",
+    "old": "  if (authored) return ROAD_KIND.none;\n",
+    "new": "",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-authored-block-rows-unflipped",
+    "file": "src/systems/snowfall.js",
+    "old": "  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) if (ground[j][15 - i].textureRecord < 56) authored[(originZ + i) * 128 + originX + j] = 1;",
+    "new": "  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) if (ground[j][i].textureRecord < 56) authored[(originZ + i) * 128 + originX + j] = 1;",
+    "tests": [
+      "test/snowfall1_model.test.js",
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-location-rect-tile-128-units",
+    "file": "src/systems/snowfall.js",
+    "old": "  const x = mapX * 32768 + tileOrigin.x * 2 * 128, z = (499 - mapY) * 32768 + tileOrigin.y * 2 * 128;",
+    "new": "  const x = mapX * 32768 + tileOrigin.x * 128, z = (499 - mapY) * 32768 + tileOrigin.y * 128;",
+    "tests": [
+      "test/snowfall1_model.test.js",
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-wild-maximum-unclamped",
+    "file": "src/systems/snowfall.js",
+    "old": "  s.wildernessMaximumDepth = clampF(num('Snowpack.WildernessMaximumDepth'), s.wildernessMinimumDepth, 1);",
+    "new": "  s.wildernessMaximumDepth = clampF(num('Snowpack.WildernessMaximumDepth'), f32(0.1), 1);",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-deflate-length-base-moved",
+    "file": "src/formats/rawDeflate.js",
+    "old": "const LEN_BASE = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];",
+    "new": "const LEN_BASE = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 257];",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-deflate-distance-extra-bit",
+    "file": "src/formats/rawDeflate.js",
+    "old": "const DIST_EXTRA = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];",
+    "new": "const DIST_EXTRA = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 12];",
+    "tests": [
+      "test/snowfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-handoff-window-kept",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    L.visible = L.meshReady && L.staticReady && !midShown;",
+    "new": "    L.visible = L.meshReady && L.staticReady;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-desert-snows",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    const eligible = s.activationOverride === 1 || (s.activationOverride !== 2 && !f.desert && f.winter);",
+    "new": "    const eligible = s.activationOverride === 1 || (s.activationOverride !== 2 && f.winter);",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-stamp-every-frame",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    if (d < s.playerStampSpacing) { this.lastStampStatus = `waiting for spacing: ${d.toFixed(3)}m`; return; }",
+    "new": "    if (d < 0) { this.lastStampStatus = `waiting for spacing: ${d.toFixed(3)}m`; return; }",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-npc-distance-unsquared",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "const MAX_NPC_TRACK_DISTANCE_SQ = 102400;   // 320 m",
+    "new": "const MAX_NPC_TRACK_DISTANCE_SQ = 320 * 1000;   // 320 m",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-npc-flyer-stamps",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      if (!(n.citizen || n.grounded) || (n.x - f.player.x) ** 2 + (n.z - f.player.z) ** 2 > MAX_NPC_TRACK_DISTANCE_SQ) { t.hasAnchor = false; continue; }",
+    "new": "      if ((n.x - f.player.x) ** 2 + (n.z - f.player.z) ** 2 > MAX_NPC_TRACK_DISTANCE_SQ) { t.hasAnchor = false; continue; }",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-ring-centre-aliased",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    M.center = [...M.buildCenter];",
+    "new": "    M.center = M.buildCenter;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-reset-keeps-the-ring",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    this._midClearHistory(); M.ready = false;",
+    "new": "    this._midClearHistory();",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-promote-overlap-anywhere",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    const overlaps = (cx, cz, r) => og[0] <= cx + r && og[0] + t.size >= cx - r && og[2] <= cz + r && og[2] + t.size >= cz - r;",
+    "new": "    const overlaps = () => true;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-host-body-never-dies",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      const h = { id: key, x: gx, z: gz, alive: () => lying.has(key) };",
+    "new": "      const h = { id: key, x: gx, z: gz, alive: () => true };",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-host-rebuilt-pixel-not-replaced",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    const was = had ?? byPixel.get(key) ?? null;",
+    "new": "    const was = had ?? null;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-host-page-door-ignored",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "export const snowfallOn = (search) => modSetting(SNOWFALL_VENDOR, 'Enabled') === true && pageParam('snowfall', search) !== 'off';",
+    "new": "export const snowfallOn = (search) => modSetting(SNOWFALL_VENDOR, 'Enabled') === true;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-host-corners-sides-swapped",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    roadCorners: roadCorners(at(net.roads, x - 1), at(net.roads, x + 1)),",
+    "new": "    roadCorners: roadCorners(at(net.roads, x + 1), at(net.roads, x - 1)),",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-host-ship-a-settlement",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      if (loc && isVanillaLocation(loc.mapTableData?.locationType ?? Infinity) && d?.width && d?.height)",
+    "new": "      if (loc && d?.width && d?.height)",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-glsl-albedo-undecoded",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "  const decode = fs.includes('elDecode(') ? (/** @type {string} */ t) => `elDecode(${t})` : (/** @type {string} */ t) => t;",
+    "new": "  const decode = (/** @type {string} */ t) => t;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-glsl-albedo-on-unit-15",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 20 });",
+    "new": "export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 15 });",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-draw-generic-left-set",
+    "file": "src/render/renderer.js",
+    "old": "    for (const [loc] of surface.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
+    "new": "",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-draw-frame-block-every-draw",
+    "file": "src/render/renderer.js",
+    "old": "    if (S.frame !== this._frameStamp) {   // the frame's block, as the ground's (drawTerrain's PERF3 block)",
+    "new": "    if (true) {   // the frame's block, as the ground's (drawTerrain's PERF3 block)",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-normal-difference-reversed",
+    "file": "src/world/terrainSurface.js",
+    "old": "    const nx = _snAt(heightmapData, x - stride, z) * lift - _snAt(heightmapData, x + stride, z) * lift;",
+    "new": "    const nx = _snAt(heightmapData, x + stride, z) * lift - _snAt(heightmapData, x - stride, z) * lift;",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-grid-value-other-diagonal",
+    "file": "src/world/terrainSurface.js",
+    "old": "  return az >= ax ? v00 + az * (v01 - v00) + ax * (v11 - v01) : v00 + ax * (v10 - v00) + az * (v11 - v10);",
+    "new": "  return az >= ax ? v00 + az * (v01 - v00) + ax * (v10 - v00) : v00 + ax * (v10 - v00) + az * (v11 - v10);",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-world-promote-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    snowfall.promoted(built.get(key));   // SNOWFALL1:",
+    "new": "    // snowfall.promoted(built.get(key));   // SNOWFALL1:",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-world-carved-sea-snows",
+    "file": "src/scenes/world.js",
+    "old": "    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,",
+    "new": "    bare: () => false,",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-exterior-snow-undrawn",
+    "file": "src/scenes/exterior.js",
+    "old": "    snowfall.draw();   // SNOWFALL1: the snow on the town's ground",
+    "new": "    // snowfall.draw();   // SNOWFALL1: the snow on the town's ground",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-draw-cull-left-off",
+    "file": "src/render/renderer.js",
+    "old": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)\n    gl.enable(gl.CULL_FACE);",
+    "new": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-pace-never-asked",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "  _spent() { return this.clock() - this.frameStart > this.frameBudgetMs; }",
+    "new": "  _spent() { return false; }",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "SNOWFALL1-refill-skips-a-track",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    for (let k = 0; k < h.length; k += 4) { const r = h[k]; if (r === 255) continue; const v = r + step; if (v >= 255) h[k] = 255; else { h[k] = v; any = true; } }",
+    "new": "    for (let k = 0; k < h.length; k += 4) { const r = h[k]; if (r === 255) continue; const v = r + step; if (v >= 255) h[k] = 255; else { h[k] = v; } }",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  }
+]

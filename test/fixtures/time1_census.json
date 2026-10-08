@@ -1037,6 +1037,30 @@
    "has": "const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes()",
    "clock": "sky",
    "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
   }
  ]
 }

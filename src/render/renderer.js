@@ -1275,6 +1275,7 @@ import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
+import { SNOW_VS, snowTerrainFs, SNOW_UNITS } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -1930,6 +1931,7 @@ export class Renderer {
       // the cap patched) and kept with the set - a page that never draws the carved sea never compiles it
       terrainFs: src.terrainFs,
       terrainClip: null,
+      terrainSnow: null,   // SNOWFALL1: and its SNOW variant (snowTerrainFs), built the first time a snow surface is drawn (_ensureTerrainSnow)
       // MAC-BUG W6: the decal is the set's FIFTH program. A set that brings
       // no twin lights its marks on the classic one - which is the exact
       // state W6 was reported in, so the lane the port ships carries one
@@ -2145,6 +2147,7 @@ export class Renderer {
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's
+    this._elLocsOf = elLocs;   // SNOWFALL1: the snow program's lane table is looked up the same way, with its program (_ensureTerrainSnow)
     this._tFrameStamp = -1;
     this._bbFrameStamp = -1; this._dFrameStamp = -1; this._cFrameStamp = -1;   // LA-COST1: the other three blocks were the old set's programs'
     this._csUploaded = {};
@@ -5748,6 +5751,87 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  streaming host asks as Iliac Puddle No More mounts, beside the mod's own
    *  programs, so the first frame that draws a coast does not compile it. */
   prepareTerrainClip() { this._ensureTerrainClip(); }
+
+  /** SNOWFALL1: the set's SNOW program - the mod's vertex law (SNOW_VS) over the set's own ground fragment program with
+   *  its tile decode swapped for the mod's snow (snowTerrainFs) - and its tables, built the first time a snow surface is
+   *  drawn and kept with the set (the clip variant's kind: a page that never stands snow never compiles it). */
+  _ensureTerrainSnow(set = this._worldSet) {
+    if (set.terrainSnow) return set.terrainSnow;
+    const program = this._buildProgram(SNOW_VS, snowTerrainFs(set.terrainFs));
+    const gl = this._locations(set);
+    const loc = Object.fromEntries(['uProj', 'uView', 'uModel', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor', 'uMoonDir', 'uMoonScale', 'uMoonColor',
+      'uPointCount', 'uPointLights', 'uPointColors', 'uIndirect', 'uIndirectColor', 'uSnowDepths', 'uSnowLimits', 'uSnowDynMap', 'uSnowDynTexel',
+      'uSnowStatMap', 'uSnowFarMap', 'uSnowFlags', 'uSnowRadius', 'uSnowInner', 'uSnowOuter', 'uSnowBoundaryFade', 'uSnowDarkening',
+      'uSnowDynamic', 'uSnowStatic', 'uSnowContext', 'uSnowFar', 'uSnowAlbedo'].map((n) => [n, gl.getUniformLocation(program, n)]));
+    const el = this._worldSet === set && this._elLocsOf ? this._elLocsOf(program) : null;
+    return (set.terrainSnow = { program, loc, el, fog: this._fogLocs(program), cs: [gl.getUniformLocation(program, 'uCloudShadowMap'), gl.getUniformLocation(program, 'uCloudShadowRect')], frame: -1, units: false });
+  }
+
+  /**
+   * SNOWFALL1: draw one snow surface (render/snowfallSurface.js) - `surface` its { vao, indexCount }, `u` its tier's
+   * uniforms (systems/snowfallRuntime.js localUniforms / midUniforms / blanketUniforms, with `depths` and `limits`),
+   * `tex` its five pictures { dynamic, static, context, far, albedo }. The installed set's snow program: the ground's
+   * own light on the mod's snow - the sun and its shadow, the moon, the clouds' shadow, the lanterns, the fog. It casts
+   * nothing (the mod's ShadowCastingMode.Off), writes depth as the ground does, stands over it by the mod's own 8 mm
+   * surface offset, and both faces draw (a heightfield seen from above). A draw of this file's own (its program, its vertex array and unit 0 through the shadows; its pictures
+   * on units no shadow keeps), so no seam is owed after it.
+   */
+  drawSnow(surface, u, tex) {
+    this._close2D();   // PERF-2D
+    const gl = this.gl, S = this._ensureTerrainSnow(), L = S.loc;
+    if (!S.el && this._elLocsOf) S.el = this._elLocsOf(S.program);
+    this._use(S.program);
+    if (!S.units) {
+      S.units = true;
+      gl.uniform1i(L.uSnowDynamic, SNOW_UNITS.dynamic); gl.uniform1i(L.uSnowStatic, SNOW_UNITS.static); gl.uniform1i(L.uSnowContext, SNOW_UNITS.context);
+      gl.uniform1i(L.uSnowFar, SNOW_UNITS.far); gl.uniform1i(L.uSnowAlbedo, SNOW_UNITS.albedo);
+    }
+    if (S.frame !== this._frameStamp) {   // the frame's block, as the ground's (drawTerrain's PERF3 block)
+      S.frame = this._frameStamp;
+      gl.uniformMatrix4fv(L.uProj, false, this._proj);
+      gl.uniformMatrix4fv(L.uView, false, this._view);
+      this._uploadFog(S.fog);
+      gl.uniform3fv(L.uLightDir, this._lightDir);
+      gl.uniform3fv(L.uAmbient, this._c3(this._ambient));
+      gl.uniform1f(L.uSunScale, this._sunScale);
+      gl.uniform3fv(L.uSunColor, this._c3(this._sunColor));
+      gl.uniform3fv(L.uMoonDir, this._moonDir);
+      gl.uniform1f(L.uMoonScale, this._moonScale);
+      gl.uniform3fv(L.uMoonColor, this._c3(this._moonColor));
+      const count = this._pointLights.length / 4;
+      gl.uniform1i(L.uPointCount, count);
+      if (count > 0) gl.uniform4fv(L.uPointLights, this._pointLights);
+      if (count > 0) gl.uniform3fv(L.uPointColors, this._pointColorData(count));
+      gl.uniform4fv(L.uIndirect, this._indirect);
+      gl.uniform3fv(L.uIndirectColor, this._c3(this._indirectColor));
+      if (S.el) { this._el.snow = S.el; this._uploadEl('snow'); }
+    }
+    this._csLoc.snow = S.cs;
+    this._uploadCloudShadow('snow');
+    if (!this._snowModel) this._snowModel = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);   // one matrix, its translation the tier's
+    const m = this._snowModel;
+    m[12] = u.origin[0]; m[13] = u.origin[1]; m[14] = u.origin[2];
+    gl.uniformMatrix4fv(L.uModel, false, m);
+    gl.uniform4fv(L.uSnowDepths, u.depths); gl.uniform4fv(L.uSnowLimits, u.limits);
+    gl.uniform4fv(L.uSnowDynMap, u.dynMap); gl.uniform4fv(L.uSnowDynTexel, u.dynTexel); gl.uniform4fv(L.uSnowStatMap, u.statMap);
+    gl.uniform4fv(L.uSnowFarMap, u.farMap ?? u.dynMap); gl.uniform4fv(L.uSnowFlags, u.flags); gl.uniform4fv(L.uSnowRadius, u.radius);
+    gl.uniform4fv(L.uSnowInner, u.inner); gl.uniform4fv(L.uSnowOuter, u.outer);
+    gl.uniform1f(L.uSnowBoundaryFade, u.boundaryFade); gl.uniform1f(L.uSnowDarkening, u.darkening);
+    for (const [k, unit] of Object.entries(SNOW_UNITS)) {   // PERF-TEX3: through the selector's shadow, on units no texture shadow keeps
+      this._activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex[k]);
+    }
+    this._activeTexture(gl.TEXTURE0);
+    // the tiers' missing channels read as their generic values (the local window's own context is Excluded)
+    for (const [loc, v] of surface.generic ?? []) gl.vertexAttrib4f(loc, v[0], v[1], v[2], v[3]);
+    this._bindVao(surface.vao);
+    gl.disable(gl.CULL_FACE);
+    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)
+    gl.enable(gl.CULL_FACE);
+    this.stats.draws++;
+    this._bindVao(null);
+    for (const [loc] of surface.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);
+  }
 
   /** FAR-CLIP1: THE TERRAIN'S OTHER PROGRAM IN - the clip variant for a pixel
    *  the Deep Waters cap patched, the plain program for every other. A

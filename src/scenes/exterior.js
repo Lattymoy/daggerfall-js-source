@@ -240,6 +240,10 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, heatHazeOn, heatHazeSettings, HAZE_OFF } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
+import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
+import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
+import { gridValueAt } from '../world/terrainSurface.js';   // SNOWFALL1: the bed carved under the town's water, off the snow's ground
+import { BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SNOWFALL1: a foe's controller, as its track's width reads it
 import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flora batch's share of the mod's lean
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -938,6 +942,40 @@ export async function bootExterior(canvas, renderer, params, status) {
     return renderer.createTerrainSurface(positions, normals, indices);
   })();
   const identityMatrix = trs(0, 0, 0, 0, 0, 0);
+  // SNOWFALL1 (world.js's twin note): THE TOWN'S SNOW - its one tile is its map pixel's 128 x 128, the town's tiles
+  // laid where the streamed world lays them (TerrainHelper.GetLocationTerrainTileOrigin) and nothing past them (this
+  // host draws no ground there: bare), on the flat ground DFU lays and the bed WATER-NEXT carves under its water. No
+  // floating origin; no road but the town's own paving (authored ground, never Basic Roads'); its one location the
+  // settlement.
+  const snowOrigin = getLocationTerrainTileOrigin(dfLocation), snowTileUnits = RMB_SIDE / GROUND_TILE_DIM;   // TILE_WORLD's law (below)
+  const snowW = loc.width * GROUND_TILE_DIM, snowH = loc.height * GROUND_TILE_DIM;
+  const snowTileMap = new Uint8Array(128 * 128);
+  for (let ty = 0; ty < snowH; ty++) for (let tx = 0; tx < snowW; tx++) snowTileMap[(snowOrigin.y + ty) * 128 + snowOrigin.x + tx] = tilemapBytes[tx + ty * tilemapDim];
+  const snowSW = [-snowOrigin.x * snowTileUnits, 0, -snowOrigin.y * snowTileUnits];   // the 128's south-west corner, scene
+  const snowPixel = { x: _locPixel.x, y: _locPixel.y }, snowTile = { snowPixel };
+  const _snowG = [0, 0];
+  const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: {
+    size: TERRAIN_SIZE,
+    terrainDistance: 1,
+    pixelAt: (x, z) => (x >= snowSW[0] && x < snowSW[0] + TERRAIN_SIZE && z >= snowSW[2] && z < snowSW[2] + TERRAIN_SIZE ? snowTile : null),
+    pixelsNear: () => [snowTile],
+    translation: (p, out) => { out[0] = snowSW[0]; out[1] = 0; out[2] = snowSW[2]; return out; },
+    height: (p, lx, lz) => {
+      const x = lx + snowSW[0], z = lz + snowSW[2];
+      const inTown = x >= 0 && z >= 0 && x <= snowW * snowTileUnits && z <= snowH * snowTileUnits;
+      return GROUND_OFFSET * 0.025 - (townBed && inTown ? gridValueAt(townBed.depths, townBed.gx, townBed.gz, snowTileUnits, x, z) : 0);
+    },
+    normal: (p, lx, lz, out) => { out[0] = 0; out[1] = 1; out[2] = 0; return out; },
+    tileMap: () => snowTileMap,
+    climate: () => locClimateIndex,
+    mapPixel: () => snowPixel,
+    bare: (p, lx, lz) => {
+      const tx = Math.floor(lx / snowTileUnits) - snowOrigin.x, ty = Math.floor(lz / snowTileUnits) - snowOrigin.y;
+      return tx < 0 || ty < 0 || tx >= snowW || ty >= snowH;
+    },
+    toGlobal: (x, z) => { _snowG[0] = snowPixel.x * TERRAIN_SIZE + (x - snowSW[0]); _snowG[1] = (499 - snowPixel.y) * TERRAIN_SIZE + (z - snowSW[2]); return _snowG; },
+    settlements: (a, b, c, d) => settlementsIn((x, y) => (x === snowPixel.x && y === snowPixel.y ? dfLocation : null), a, b, c, d),
+  } });
   const townWater = waterOn ? (() => {
     const idx = buildWaterIndices(tilemapBytes, 1, undefined, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);
     return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.sheetDepths } : { terrain: groundSurface }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
@@ -4784,6 +4822,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
+  /** SNOWFALL1: who walks the town's snow, and the bodies lying in it (world.js's twin). */
+  const snowPlayer = () => (walkMode
+    ? { x: player.pos[0], y: player.pos[1], z: player.pos[2], grounded: !!player.grounded, swimming: !!player.swimming, levitating: !!player.levitating }
+    : { x: cam.pos[0], y: cam.pos[1], z: cam.pos[2], grounded: false, swimming: false, levitating: true });
+  const snowNpcs = () => {
+    const out = [];
+    for (const f of exteriorFoes.foes) if (!f.dead && f.ai?.feet) out.push({ id: f, x: f.ai.feet[0], z: f.ai.feet[2], active: true, grounded: !!f.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const g of cityGuards.guards) if (!g.dead && g.ai?.feet) out.push({ id: g, x: g.ai.feet[0], z: g.ai.feet[2], active: true, grounded: !!g.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const seat of _livePersons) out.push({ id: seat.person, x: seat.pos[0], z: seat.pos[2], active: true, grounded: true, radius: 0, citizen: true });
+    return out;
+  };
+  const snowBodies = () => exteriorFoes.physicalCorpses().concat(cityGuards.physicalCorpses());
   function frame(now) {
     // AUDIT-WH L4: THE PLAQUE DIES WITH THE LOOP THAT RAISED IT. This
     // is the host's only unwind point - a later boot or an unwind has
@@ -4942,6 +4992,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
+      snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update indoors (world.js's twin)
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -5456,6 +5507,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
     const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
       heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin
+    snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -5734,6 +5786,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
+    snowfall.draw();   // SNOWFALL1: the snow on the town's ground, by the ground's own program (world.js's twin)
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
     // EV3: per-batch skip off the build-time boxes; the clocks above
     // ticked already, so an off-screen fire keeps its frame.
