@@ -295,7 +295,12 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   const today = daySinceZero(now);
   if (today < m.lastRankChange + DAYS_BETWEEN_RANK_CHANGES) return null;
 
-  const newRank = calculateNewRank(entity, guild, store);
+  // CHAP4b (Chapters-Arc 3.5): online, while the Roll holds, ranks 8 and 9 are seats - the host names the highest rank a
+  // review gives (`ctx.rankCeiling`, null offline). A review never takes past it, and never demotes a rank above it (the
+  // Roll's adoption holds the book at 7 itself, unannounced by DFU's demotion record)
+  const ruled = calculateNewRank(entity, guild, store);
+  const ceiling = ctx?.rankCeiling;
+  const newRank = Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;
   // REP6 (the reputation overhaul, 2026-09-29 - "Guilds: probation below 0, and expulsion only below -10, with a warning
   // first"): DFU expels a member the first review their standing is below zero - one failed quest's -2 from 0 was out
   // ("i got expelled from the mages... it says i dont have reputation"), a timeout's -22 was out with a death squad

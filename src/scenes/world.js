@@ -664,7 +664,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
@@ -785,6 +785,7 @@ import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
+import { GUILD_FACTION_IDS } from '../systems/guildFactions.js';   // CHAP4b: the Mages Guild's faction, for its seat's teleport
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
@@ -15742,7 +15743,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // own question, because that is the function that would refuse.
       coordsAllowed: () => !!travelOptions,
       // TravelOptionsMapWindow.cs:472 - `GuildManager.GetGuild(MagesGuild).Rank`.
-      magesGuildRank: () => joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0,
+      // CHAP4b: and a seat's rank at its own chapter's hall - the paid teleport is the hall's service, pushed from there
+      magesGuildRank: () => Math.max(joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0, seatRankHere(GUILD_FACTION_IDS.MagesGuild) ?? 0),
       payTeleport: (cost) => { deductGold(playerEntity, cost); },
       // :384-388 - the place's OWN discovered buildings, the port's
       // discovery store keyed the same way (systems/discovery.js).
@@ -19635,12 +19637,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     kept: () => rollKept,
     keep: (k) => { rollKept = k; },
     onCeiling: (factions) => { for (const f of factions) townTalk.say(rollCeilingLine(playerEntity?.factionRep?.dict?.get(f)?.name)); },
+    // CHAP4b: ranks 8 and 9 are seats - the book held at 7 said once a hold, the seats as they stand and as they move
+    onCapped: (factions) => { const line = bookCappedLine(factions); if (line) chatNotice(line); },
+    onSeats: (seats, before) => { for (const line of seatLinesOf(before, seats)) chatNotice(line); },
     // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
     onStop: (error) => {
       if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
       else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
     },
   }) : null;
+  // CHAP4b: the rank the playing character's seat gives it at a hall of `faction` where it stands - the politic region,
+  // as the chapter sheet's (AUDIT CHAP3 C6) - null offline, before the Roll's first word, or with no seat here
+  const seatRankHere = (/** @type {number} */ faction) => {
+    if (!rollTracker?.held || rollTracker.stopped) return null;
+    const px = playerTravelPixel();
+    const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+    return seatRankAt(rollTracker.seats, faction, region);
+  };
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
   // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
   // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
@@ -26057,6 +26070,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
       return Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;
     },
+    // CHAP4b: the rank the playing character's seat gives it at a hall of this guild here (the politic region, as the
+    // sheet's); and the highest rank DFU's review gives while the Roll holds - 8 and 9 are seats (Chapters-Arc 3.5)
+    chapterSeatRank: (faction) => seatRankHere(faction),
+    rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)
     hallOfRecords: {

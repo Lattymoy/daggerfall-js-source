@@ -200,7 +200,7 @@ import {
 import { mintCondition, setItemFields, itemValueOf } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
 import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT, DEITY_DESCRIPTIONS } from '../systems/guildServices.js';   // MACRO-4: %gdd
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
-import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
+import { membershipOf, joinGuild, joinDecision, activeMemberships, membershipKey } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick; CHAP4b: a row's key, for the seated book
 import { ensureFactionRep } from '../systems/factionRep.js';
 import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH, isDayFromMinutes } from '../systems/gameDate.js';   // RR1: WorldTime.Now.IsDay   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
@@ -400,7 +400,7 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac P
 import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
 import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
-import { chapterPriceFactor, chapterShelfQuality } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf
+import { chapterPriceFactor, chapterShelfQuality, seatedBook } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf; CHAP4b: a seat's rank at its halls
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -4768,6 +4768,10 @@ export function createWorldModes(host) {
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
+    // CHAP4b (Chapters-Arc 6): a seat's rank at its own chapter's halls - the hall's services read the book SEATED (the
+    // host's chapterSeatRank: the playing character's seat at this guild in this region, online), while the review, the
+    // join and the title read the book itself (rank 7, while the Roll holds)
+    const seated = () => seatedBook(memberships, membershipKey(guild), host.chapterSeatRank?.(guild.factionId) ?? null);
     // THE ONE CONSTRUCTION SEAM (5th), RECORDED and not a gap: DFU's
     // PlayerEntity is BUILT with its faction store - PlayerEntity.cs
     // :65 field-initializes `factionData = new PersistentFactionData()`
@@ -4816,11 +4820,12 @@ export function createWorldModes(host) {
       rows,
       // OnPush (:158-205) runs once, on construction.
       steps: () => onPushEffects(playerEntity, guild, memberships, store, ownDate(), {
-        freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
-        freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
+        freeHealing: freeHealing(guild, membershipOf(seated(), guild)),
+        freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(seated(), guild), playerEntity),
         revealLocation,   // G8: the TG/DB map reveals - MACRO-4: through the popup's own wrapper, which keeps the name for %dng
         // F114: OwnsHouse per CURRENT region (DaggerfallBankManager.cs:136).
         ownsHouse: () => ownsHouse(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0),
+        rankCeiling: host.rollRankCeiling?.() ?? null,   // CHAP4b: 7 online while the Roll holds - 8 and 9 are seats
       }),
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
@@ -4849,7 +4854,7 @@ export function createWorldModes(host) {
        *  the same engine doors, then the window push. */
       onTalk: () => talkToStaticNpcHere({ isSpyMaster: false, returnTo: win }),
       onService: () => {
-        const access = serviceAccess(guild, membershipOf(memberships, guild), service);
+        const access = serviceAccess(guild, membershipOf(seated(), guild), service);   // CHAP4b: a seat's rank here
         if (!access.allowed) {
           return { rows: access.textId ? rows(access.textId) : [access.text] };
         }
@@ -4857,7 +4862,7 @@ export function createWorldModes(host) {
         // the twenty, so guildServiceFlow.SERVICE_DESTINATION maps
         // every arm and there is no null left to name.
         const flow = openServiceFlow(serviceDestination(service), {
-          guild, memberships, store, rows, route,
+          guild, memberships: seated(), store, rows, route,   // CHAP4b: the service at a seat's rank here
           // G6: the greeting's dismissal IS the service - the same
           // talk door the popup's own Talk button opens, with
           // isSpyMaster TRUE (:713), which is the one thing that

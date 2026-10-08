@@ -64,6 +64,7 @@ import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RAN
 import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
+import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
 import { seatWeekOf, SIEGE_DEFENCE_BONUS } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4a: a holder's carry
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
@@ -743,4 +744,75 @@ export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {It
   for (const s of after) at(s).to = s.seat;
   return [...out.values()].filter((c) => c.from !== c.to)
     .sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));
+}
+
+// ─── CHAP4b: THE SEATS ON THE PAGE (Chapters-Arc 3.5, 6) ────────────
+// What the tab does with the Roll's word on ranks 8 and 9, online: the book's own rank held at 7 - at the Roll's adoption
+// (rollBookCap) and at DFU's review (systems/guilds.js updateRank's ceiling, the host's while the Roll holds) - and a
+// seat's rank at its own chapter's halls alone: the hall's service window reads the book seated (seatedBook). Offline,
+// and wherever the Roll does not hold, every rank is DFU's.
+
+/** A Roll answer's seats as the tab keeps them, `[{ f, region, seat }]` - each a guild's, a region's and a seat's. */
+export function rollSeatsOf(/** @type {unknown} */ list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))
+    .map((s) => ({ f: s.f, region: s.region, seat: s.seat }));
+}
+/** The rank a character's `seats` give it at a hall of `faction` in `region` - null where it holds none there. */
+export function seatRankAt(/** @type {unknown} */ seats, /** @type {unknown} */ faction, /** @type {unknown} */ region) {
+  const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);
+  return s ? SEAT_RANK[/** @type {'master' | 'officer'} */ (s.seat)] : null;
+}
+/** A BOOK SEATED: a membership book (systems/guilds.js) whose row under `key` reads `rank` where its own is lower -
+ *  every other read and every write (a knightly order's gifts, a probation) the row's own. The book itself where it has
+ *  no such row or the seat gives no higher rank. */
+export function seatedBook(/** @type {any} */ book, /** @type {string} */ key, /** @type {unknown} */ rank) {
+  const row = book?.[key];
+  if (!row || typeof row !== 'object' || !(typeof rank === 'number' && rank > whole(row.rank))) return book;
+  return { ...book, [key]: new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) }) };
+}
+/** THE BOOK HELD AT 7: each row of a Roll guild in `store`'s books (the mortal's and the vampire's) above
+ *  ROLL_BOOK_RANK_MAX set to it; answers the guild factions it held. Run at the Roll's adoption. */
+export function rollBookCap(/** @type {any} */ store) {
+  if (!store || typeof store !== 'object') return [];
+  const books = Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];
+  const held = new Set();
+  for (const book of books) {
+    if (!book || typeof book !== 'object') continue;
+    for (const m of Object.values(book)) {
+      const f = rollFactionOfGuild(m?.guild);
+      if (f == null || !(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;
+      m.rank = ROLL_BOOK_RANK_MAX;
+      held.add(f);
+    }
+  }
+  return [...held].sort((a, b) => a - b);
+}
+
+const SEAT_WORDS = Object.freeze({ master: 'the Master\'s seat', officer: 'an officer\'s seat' });
+const listed = (/** @type {string[]} */ names) => (names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+/** A seat said - "You hold the Master's seat of the Fighters Guild in Anticlere." - or, `held` false, no longer held.
+ *  Worded without gender (Seats-Arc 7.4: nothing about a player is guessed). */
+export function seatLineOf(/** @type {{ f: number, region: number, seat: string }} */ s, held = true) {
+  const words = /** @type {Record<string, string>} */ (SEAT_WORDS)[s?.seat] ?? 'a seat';
+  return `You ${held ? 'hold' : 'no longer hold'} ${words} of the ${hallPosterName(s?.f) ?? 'guild'} in ${REGION_NAMES[s?.region] ?? 'its region'}.`;
+}
+/** What the tab says of its seats: every seat held at the page's first word (`before` null); after it, each seat newly
+ *  held or moved, then each lost. */
+export function seatLinesOf(/** @type {unknown} */ before, /** @type {unknown} */ after) {
+  const now = rollSeatsOf(after);
+  if (before == null) return now.map((s) => seatLineOf(s));
+  const was = rollSeatsOf(before);
+  const k = (/** @type {{ f: number, region: number }} */ s) => `${s.f}|${s.region}`;
+  const wasAt = new Map(was.map((s) => [k(s), s.seat]));
+  const nowAt = new Set(now.map(k));
+  return [...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)), ...was.filter((s) => !nowAt.has(k(s))).map((s) => seatLineOf(s, false))];
+}
+/** The book's cap said, once a hold: "The Fighters Guild keeps ranks 8 and 9 as its chapters' seats, won by Merit - your
+ *  rank there is 7." Null for no guild. */
+export function bookCappedLine(/** @type {unknown} */ factions) {
+  const names = [...new Set(Array.isArray(factions) ? factions : [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
+  if (!names.length) return null;
+  const one = names.length === 1, said = listed(names);
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 as ${one ? 'its' : 'their'} chapters' seats, won by Merit - your rank there is 7.`;
 }

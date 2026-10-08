@@ -14,7 +14,9 @@ words; a member's own writ and the week's Merit - section 5.1, its record at the
 "Continue"; Strength at the Turning, its band on the hall writs, the sheet - sections 5.2 and 5.3, its record at the
 foot). CHAP3c BUILT (2026-10-08, the same word; the bands on the halls' prices and shelf - section 5.2, its record at
 the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the seats placed at the Turning, the book's
-rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b (the client's half) is next. Merged with main
+rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
+held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
+CHAP4c (the titles, the Chronicle's reader, the Focus) is next. Merged with main
 past the Super Dungeons arc (2026-10-08): the arc's migrations are `0091_npc_roll` to `0096_npc_seats` and its service
 `acct95` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -230,6 +232,14 @@ BUILT (CHAP4a, the service's half): the Roll records no rank past 7 (`ROLL_BOOK_
 a claim's, and a claim with no book's, AUDIT CHAP2 E8's path), so a rank 8 or 9 the book reports is recorded 7, and a
 character's seats ride the Roll's answer beside its memberships (`seats: [{ f, region, seat, since }]`). The book itself
 is the client's, and CHAP4b holds it at 7 while the Roll does.
+
+BUILT (CHAP4b, the client's half): online, while the Roll holds (the tab's `held`, not `stopped`), the book's own rank
+stops at 7 twice over - every adoption of the Roll's word sets a row above 7 to 7, in both books
+(`rollBookCap`, through the tab's `cap` door; said once a hold: "The Fighters Guild keeps ranks 8 and 9 as its
+chapters' seats, won by Merit - your rank there is 7."), and DFU's own review (`updateRank`) takes the host's ceiling
+(`ctx.rankCeiling`, the hall popup's push effects): a member DFU would make 8 or 9 is promoted to 7, one at 7 stays
+unmoved and unannounced, and the review never demotes for it - so DFU's demotion record is never shown for a seat's rule.
+Offline the ceiling is none and every review is DFU's whole.
 
 ### 3.6 Customs and a new character
 
@@ -563,9 +573,23 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   (null for none) - a week that moved no seat writes none; kept when the character is deleted. Its reader - the Hall of
   Records - is CHAP4c's, with the titles.
 - **Hidden guilds** are placed as any chapter is; nothing of their seats is public (the sheet and the board name none).
-- **Still to build**: the client's half (CHAP4b - the book held at 7 online, a seat's rank at its chapter's halls); the
-  titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay first, Seats-Arc 7.4,
-  worded without gender); the Focus and the Chronicle's reader (CHAP4c).
+- **Still to build**: the titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay
+  first, Seats-Arc 7.4, worded without gender); the Focus and the Chronicle's reader (CHAP4c).
+
+BUILT (CHAP4b, 2026-10-08), the seat on the page:
+
+- **A seat's rank at its own chapter's halls alone** (`seatRankAt`, the host's `chapterSeatRank` - the playing
+  character's seat at the hall's guild in the politic region it stands in, as the sheet's): the hall's service gate, its
+  services and the temples' free healing read the book SEATED (`seatedBook`: the row reads the seat's rank where its own
+  is lower; every other read and every write - a knightly order's gifts, a probation - the row's own). The review, the
+  join and the title read the book itself. NARROWED: the "rank's DFU services" are the hall's - a knightly order's
+  rank-9 house and its armour, the Mages Guild's teleport, Zenithar's summoning, the hall's quests; what DFU reads off a
+  rank anywhere else (Akatosh's travel discount, Kynareth's breath, the arrest rescue, a quest's reward) reads the book's
+  7. The one exception: the Mages Guild's paid teleport (Travel Options) is pushed from the hall's own service, so its fee
+  reads the seat where the character stands (`magesGuildRank`).
+- **The seats said** (`seatLinesOf`, worded without gender - Seats-Arc 7.4): every seat held at the page's first word of
+  the Roll ("You hold the Master's seat of the Fighters Guild in Anticlere."), then each seat gained or moved and each
+  lost, as the Roll's answers carry them (the tab's `seats`, `onSeats`).
 
 ## 7. Seasons - the chapter's story (CHAP6)
 
@@ -702,7 +726,8 @@ DECIDED.
    Strength, the bands on the hall writs, the sheet (5.2, 5.3). CHAP3c BUILT (2026-10-08): the bands on the halls' prices
    and shelf (5.2).
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows. CHAP4a BUILT
-   (2026-10-08): the seats placed at the Turning, the Roll's rank stopped at 7, the Chronicle's rows (section 6).
+   (2026-10-08): the seats placed at the Turning, the Roll's rank stopped at 7, the Chronicle's rows (section 6). CHAP4b
+   BUILT (2026-10-08): the book held at 7 online, a seat's rank at its chapter's halls, the seats said (3.5, 6).
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
@@ -717,10 +742,13 @@ host online runs in - the interiors and the dungeons are that same page and that
 - `scenes/worldModes.js` (interiors) - the hall's service window: the rank from the Roll, the prices from Strength
   (CHAP1, CHAP3), and the hall's roll (CHAP5). CHAP1: nothing to wire - the window reads the entity's reputation and
   book as it always did, and online the reputation it reads is the Roll's. CHAP3c BUILT: the hall's chapter's band
-  on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline).
+  on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline). CHAP4b
+  BUILT: the hall's services read the book seated (the host's `chapterSeatRank`), its review the host's ceiling
+  (`rollRankCeiling`, 7 while the Roll holds).
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5). CHAP3c BUILT: the sheet the playing tab holds (`net/chapterSheet.js`), asked at a town's entry and handed to
-  the interiors.
+  the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
+  rank where the character stands (`seatRankHere` - the hall's and the paid teleport's).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll and no sheet: flagged by name, DFU's guilds and DFU's
   prices as today.
 - `scenes/dungeonContext.js` - no hall, so no sheet; the receipts a dungeon's foes give are the relay's already: none.
@@ -1055,3 +1083,21 @@ The fourth slice's service half; sections 3.5 and 6 carry the law and what build
   the carry against a newcomer; `since` through a move; the Chronicle; a gate's agreement; the developers' weeks;
   Eligible at the Turning); the Roll's rank and seats through its routes; a delete through its route.
   `tools/mutants/chap4a.json`: 44 mutants, 43 dead, 1 equivalent as recorded. ACC1b's table list moved (PIN MOVED).
+
+## CHAP4b - the seats on the client, as built (2026-10-08, Mac: "Your decision", on "Whats next")
+
+The fourth slice's client half; sections 3.5 and 6 carry the law and what building it narrowed (BUILT, CHAP4b).
+
+- **The law.** `src/net/npcChapterLaw.js`: a Roll answer's seats (`rollSeatsOf`), a seat's rank at a hall
+  (`seatRankAt`), the book seated (`seatedBook`) and held (`rollBookCap`), the lines (`seatLineOf`, `seatLinesOf`,
+  `bookCappedLine`).
+- **DFU's review.** `src/systems/guilds.js` updateRank takes `ctx.rankCeiling` - promoted to it, never past it, never a
+  demotion for it; `src/systems/guildServiceFlow.js` onPushEffects hands the host's through.
+- **The client.** `src/net/npcRollTracker.js` (the `cap` door, `onCapped`, `onSeats`, `seats`); `src/scenes/worldModes.js`
+  (the hall popup's seated services and ceiling); `src/scenes/world.js` (`seatRankHere`, `chapterSeatRank`,
+  `rollRankCeiling`, the teleport's fee, the lines). No service change.
+- **Pins.** `test/chap4b_seats.test.js`, 8 tests: the law against literals (the seats kept, a seat's rank by guild and
+  region, the seated book's reads, its write-through and its guards, the hold in both books, every line); DFU's review
+  under the ceiling through updateRank and the push effects; the teleport's gate at a seat's rank; the tab holding the
+  book and saying the seats through two answers; the hosts' wiring. `tools/mutants/chap4b.json`: 34 mutants, all dead.
+  G8's wiring pin moved (the ceiling beside the reveal, PIN MOVED).

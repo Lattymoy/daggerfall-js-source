@@ -54,12 +54,19 @@
 // the page (ROLL_STOPS); anything else is asked again, waiting longer each
 // time. Shut, the save keeps the standing exactly as before CHAP1.
 //
+// CHAP4b: AND RANKS 8 AND 9 ARE SEATS. Every adoption holds the book's
+// own rank at 7 (`cap`, rollBookCap - said once a hold, `onCapped`), and
+// keeps the Roll's word on the character's seats (`seats`, said as they
+// stand at the page's first word and as they move, `onSeats`); the host
+// seats the book at its chapter's halls (scenes/worldModes.js).
+//
 // Pure but for `rollEntityDoors`, the host's glue: the clock, the service
 // and the entity's standing are arguments.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
   ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
+  rollBookCap, rollSeatsOf,
 } from './npcChapterLaw.js';
 import { setReputation } from '../systems/factionRep.js';
 
@@ -98,6 +105,7 @@ export function rollEntityDoors(/** @type {() => any} */ entityOf) {
       if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
     },
     members: () => rollMembersOf(entityOf()?.guildMemberships),
+    cap: () => rollBookCap(entityOf()?.guildMemberships),   // CHAP4b: the book held at 7
   };
 }
 
@@ -110,15 +118,18 @@ const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((
  * holds them now (rollValuesOf - null before its store stands); `write(values)` puts the Roll's word on the entity;
  * `members()` its memberships (rollMembersOf - null with no book); `kept()` the last adoption as the save keeps it and
  * `keep(k)` the new one (the host's mod-save record). `onCeiling(factions)` hears the lines the day's pace cut;
- * `onStop(error)` the refusal that ended it.
+ * `onStop(error)` the refusal that ended it. CHAP4b: `cap()` holds the book at 7 (rollBookCap - the guild factions it
+ * held), `onCapped(factions)` hears them; `onSeats(seats, before)` the character's seats at each adoption (`before` null
+ * at the first).
  * @param {{ io: any, character: () => string | null, lease: () => string | null, read: () => Record<number, number> | null,
  *   write: (values: Record<number, number>) => void, members: () => { f: number, rank: number }[] | null,
  *   kept?: () => unknown, keep?: (k: { seq: number, factions: Record<number, number> }) => void, now?: () => number,
- *   rid?: () => string, onCeiling?: (factions: number[]) => void, onStop?: (error: string) => void }} o
+ *   rid?: () => string, onCeiling?: (factions: number[]) => void, onStop?: (error: string) => void, cap?: () => number[],
+ *   onCapped?: (factions: number[]) => void, onSeats?: (seats: { f: number, region: number, seat: string }[], before: { f: number, region: number, seat: string }[] | null) => void }} o
  */
 export function createRollTracker({
   io, character, lease, read, write, members, kept = () => null, keep = () => {}, now = () => Date.now(), rid = () => rollRid(),
-  onCeiling = () => {}, onStop = () => {},
+  onCeiling = () => {}, onStop = () => {}, cap = () => [], onCapped = () => {}, onSeats = () => {},
 }) {
   /** @type {Record<number, number> | null} the Roll's last word, as adopted */
   let base = null;
@@ -136,6 +147,8 @@ export function createRollTracker({
   let heldKey = null;
   /** @type {string | null} the lease a 'lease' refusal came under (AUDIT CHAP2 C4) */
   let stoppedLease = null;
+  /** @type {{ f: number, region: number, seat: string }[] | null} CHAP4b: the character's seats, as the Roll last said */
+  let seats = null;
 
   const fail = (/** @type {string} */ error, /** @type {string | null} */ ls = null) => {
     if (ROLL_STOPS.includes(error)) { stopped = error; stoppedLease = ls; onStop(error); return; }
@@ -151,6 +164,12 @@ export function createRollTracker({
     heldKey = rollMembersKey(membersOf(roll.members));
     wait = ROLL_RETRY_MS;
     nextAt = now();
+    // CHAP4b: the book held at 7, and the seats kept - each said
+    const held = cap();
+    if (held.length) onCapped(held);
+    const before = seats;
+    seats = rollSeatsOf(roll.seats);
+    onSeats(seats, before);
   };
 
   async function first(/** @type {string} */ id, /** @type {string} */ ls, /** @type {Record<number, number>} */ values) {
@@ -222,5 +241,7 @@ export function createRollTracker({
     },
     get held() { return base != null; },
     get stopped() { return stopped; },
+    /** CHAP4b: the character's seats, `[{ f, region, seat }]` - none before the Roll's first word. */
+    get seats() { return seats ?? []; },
   };
 }
