@@ -21756,7 +21756,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     door: (key) => {
       if (_sdDoorAt && _sdDoorAt.key === key && _sdDoorAt.gen === doorGeneration) return _sdDoorAt.at;
       const e = buildingDoors.find((d) => d.pixelKey === key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
-      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(e.door) : null };
+      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(shiftedDoor(e)) : null };   // SD-SKY: in the scene's frame, the feet's own - the list holds each door in its pixel's frame (AUDIT 68 S22)
       return _sdDoorAt.at;
     },
     feet: () => (walkMode && playerSpawned && _mode() === 'exterior' ? player.feetAt() : null),   // SD2d: the find is the street's - the host frames in every mode now
@@ -25667,7 +25667,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
     sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
     sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
-    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
+    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor),   // SD5a: out of the Hour - a death, its end - before the Hollow's door; SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not

@@ -224,7 +224,8 @@ and the start markers only with no enemy marker at all.
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
   out with it. Every way out of the Hollow or its Hour lands before the Hollow's door - and, its door gone (the Hollow
   taken down at its end), where the player stood outside as they went in, never the Hour's own frame read in the
-  street's (SD-LAND).
+  street's (SD-LAND). The door is read in the street's own frame: the world host's door list keeps each door in its
+  pixel's, and read raw it stood the player the streamer's vertical shift over the Hollow, in the sky (SD-SKY).
 
 ## 7. The Shattered Hour - the place the Warp left
 
@@ -639,6 +640,7 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | SD20 | AUDIT SD III |
 | SD-ALONE | no companion through the Rift |
 | SD-REACH, SD-LAND | the Rift where a walk reaches; never out in the Hour's sky |
+| SD-SKY | the way out of the Hour, and the find's door, in the street's own frame |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -2924,3 +2926,40 @@ THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the end asked over the new can
 `scenes/worldModes.js` WIRED (the record's `from`, the way out's last resort); `scenes/world.js` FLAGGED - its Hollow's
 doors (`sdHollowDoors`) answer as before, the fallback is the mode machine's; `scenes/exterior.js` FLAGGED - the
 `?exterior` bench has no dungeon, and `scenes/dungeon.js` (the `?dungeon` bench) exits to no street.
+
+### SD-SKY - shipped 2026-10-08 (the way out of the Hour in the street's own frame)
+
+The Discord again, with SD-REACH and SD-LAND live (the deployed page's build tag was 1978e937, their merge): maya,
+*"WHY DID I GET TPED HERE WHEN I WENT INTO THE RIFT"*, and ValenValarys, *"now I really find the portal but portal keep
+teleporting me out of dungeon"* - each picture high over the Hollow by its column of light, maya's under its door's own
+banner, *The Clockless Deep - fades in 1d 20h*, her sworn companion stood back at her side on the ground below. The
+Hollow stood, so SD-LAND's empty landing could not be it: the door was FOUND, in the wrong frame.
+
+| | what was wrong | now |
+|---|---|---|
+| K1 | THE WAY OUT IN THE PIXEL'S FRAME. The world host's door list (`buildingDoors`) keeps each door in its PIXEL's frame; `doorTargets` hands the mode machine every door moved by its pixel's translation (`shiftedDoor`, AUDIT 68 S22), and `sdHollowDoors` read the list raw. The way out of the Hour (`returnLanding`, `exitDungeonNow`) stood the player at the door's native height - the streamer's vertical shift (`StreamingWorldState.compensation[1]`: minus the eye's height at each recentre past 500 m, and kept through every teleport) over the Hollow. Every way out did it: the realm room's refusal (`sdRealmFrame`), the end's cast-out, the way home, `/unstuck` in the Hour. SD-LAND's picture was this one - the Hollow it came from was standing, and SD-LAND's FOUR HOSTS line left `sdHollowDoors` "as before" | `sdHollowDoors` maps the list through `shiftedDoor`, as `doorTargets` does; the list's own doors stay their pixel's (the living world and the talk read them so) |
+| K2 | THE FIND'S DOOR IN THE PIXEL'S FRAME. The sdHost's `door` seam measured the feet (the scene's) against the door read raw - right only on the pixel the player stands in, whose translation is the vertical shift alone; a Hollow's door on the pixel beside it stood a pixel's width off, and no find was said from beside it | the same `shiftedDoor` (its cache keyed on the door generation, which every origin move bumps) |
+
+Not changed, and why:
+- WHAT SENT THEM OUT. Every way out of a standing Hollow's Hour is one of the realm's own - its room refusing the hello
+  for good (`online.terminal`, the relay's *"The Hour has closed."*, *"The Hour is full."*, *"The Hour will not take you
+  back."*), the way home, `/unstuck` - and each now lands before the door with its words. The screenshots carry no
+  word, so which one these two players met is not read off them; a report that names the line said is the next step.
+- TWO PLAYERS, TWO RIFTS (ValenValarys: *"player cant see what I see"*, the other player standing in the ring) were two
+  builds: a tab kept open from before SD-REACH stands the Rift in its old pocket. The end reads the layout alone. The
+  species stood at its markers differ by client (the level's band, Varied Dungeon Monsters), but the water-species veto
+  that drops a marker fires on a fixed marker alone, the same everywhere: only the underwater table holds a water
+  species, and a random marker that draws from it stands under the water the veto asks it to be above.
+- THE COMPANION in maya's picture was stood beside her because she was outside the Hour (SD-ALONE, as designed).
+
+Pins: `test/sd23_sky.test.js` (3 - the world host's own `shiftedDoor`, `sdHollowDoors` and `door` seam read off its
+text, over a streamer shifted 560 m down and a Hollow entrance the real `getStaticDoors` mints: the way out on the
+ground before the door, the raw door 560 m up; the same through the mode machine's own `returnLanding`, its door gone
+where I went in, a Hollow a pixel east by that pixel's translation; the find's door a pixel's width off beside mine);
+`tools/mutants/sd23_sky.json` (4, all dead). PINS MOVED: `test/sd5a_realm.test.js` (`sdHollowDoors` through
+`shiftedDoor` - the old pin held the raw list's text, the defect itself).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (both of the Hollow's door seams through `shiftedDoor`);
+`scenes/worldModes.js` FLAGGED - `returnLanding` asks the world host's doors as before, now the street's;
+`scenes/dungeonContext.js` FLAGGED - the end and the Rift unchanged (the layout's markers, every client's);
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no Hour.
