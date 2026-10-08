@@ -270,24 +270,34 @@ test('SCALE4b D: every minute the clock settles what no read has asked for - an 
   ran = await runCron(s.env, { cron: CRON_MINUTE, nowS: T0 + 60, rand });
   assert.equal(ran.find((j) => j.name === 'seats').changed, 0, 'and a week settled is not settled again');
   assert.equal(ran.find((j) => j.name === 'seats').statements, 1, 'one read says so');
-  // the #1 kept younger than ARENA_CHAMPION_CLOCK_S is read, not counted; past it, counted again before a reader would
-  assert.deepEqual(['changed', 'statements'].map((k) => ran.find((j) => j.name === 'arena-champion')[k]), [0, 1]);
+  // the #1 kept younger than ARENA_CHAMPION_CLOCK_S is read, not counted
+  const champ = () => ['changed', 'statements'].map((k) => ran.find((j) => j.name === 'arena-champion')[k]);
+  assert.deepEqual(champ(), [0, 1]);
+  // PIN MOVED (AUDIT SCALE A4): past it with no bout since, the kept word is stamped again rather than counted - a bout
+  // is all that moves the board, and the count walks the season's every bout - before a reader would count it
   ran = await runCron(s.env, { cron: CRON_MINUTE, nowS: T0 + ARENA_CHAMPION_CLOCK_S, rand });
-  assert.equal(ran.find((j) => j.name === 'arena-champion').changed, 1);
+  assert.deepEqual(champ(), [0, 3], 'the kept word read, the newest bout read, the word stamped');
   assert.ok(ARENA_CHAMPION_CLOCK_S < ARENA_CHAMPION_STORED_S, 'the clock first, the readers never');
-  assert.equal(raw.prepare('SELECT at FROM arena_champions WHERE season = ?').get(arenaSeasonOf(T0)).at, T0 + ARENA_CHAMPION_CLOCK_S);
+  const keptAt = () => raw.prepare('SELECT at FROM arena_champions WHERE season = ?').get(arenaSeasonOf(T0)).at;
+  assert.equal(keptAt(), T0 + ARENA_CHAMPION_CLOCK_S);
+  // a bout since the word: counted again, before a reader would
+  raw.prepare(`INSERT INTO arena_pvp (bout, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, banner_a, banner_b, at)
+    VALUES ('b1', ?, NULL, NULL, 0, 'fall', 1000, 1000, 1016, 984, 1, NULL, NULL, ?)`).run(arenaSeasonOf(T0), T0 + ARENA_CHAMPION_CLOCK_S + 10);
+  ran = await runCron(s.env, { cron: CRON_MINUTE, nowS: T0 + 2 * ARENA_CHAMPION_CLOCK_S, rand });
+  assert.equal(ran.find((j) => j.name === 'arena-champion').changed, 1);
+  assert.equal(keptAt(), T0 + 2 * ARENA_CHAMPION_CLOCK_S);
 });
 
 // ═══ E. RETENTION ════════════════════════════════════════════════════════════════════════════════════════════════════
 
-test('SCALE4b E: each hour the rows nothing reads any more go - a rate window a day past its start (the longest window any bucket counts is an hour), a session idle past its year (the bound resolveSession refuses it at, by its own index), an invitation past its week - and the live stay; a sweep past a page is taken in rounds, never more than ROUNDS_MAX pages a firing (mutants: the cutoffs moved, the rounds unbounded, the session sweep unindexed)', async () => {
+test('SCALE4b E: each hour the rows nothing reads any more go - a rate window a day past its start (the longest window any bucket counts is an hour), a session idle past its year (the bound resolveSession refuses it at; the table walked, AUDIT SCALE A6), an invitation past its week - and the live stay; a sweep past a page is taken in rounds, never more than ROUNDS_MAX pages a firing (mutants: the cutoffs moved, the rounds unbounded)', async () => {
   const s = await standService(OPEN);
   const raw = s.env.DB._raw;
   const g = await s.guest();
   raw.prepare('INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 3), (?, ?, 7)').run('ip:old', T0 - RATE_ROW_KEEP_S - 1, 'ip:live', T0 - 600);
   const ctx = { db: s.env.DB, subtle, rand };
-  const stale = await openSession({ ...ctx, nowS: T0 - SESSION_IDLE_S - 1 }, g.id, 'an old phone');
-  const atBound = await openSession({ ...ctx, nowS: T0 - SESSION_IDLE_S }, g.id, 'a laptop');
+  await openSession({ ...ctx, nowS: T0 - SESSION_IDLE_S - 1 }, g.id, 'an old phone');
+  await openSession({ ...ctx, nowS: T0 - SESSION_IDLE_S }, g.id, 'a laptop');
   const a = await s.registered('Aldric', { renown: 10 });
   s.seedMarks(a, 100_000, 'a');
   const f = await s.found(a, { name: 'The Hound', tag: 'HND' });
@@ -299,7 +309,6 @@ test('SCALE4b E: each hour the rows nothing reads any more go - a rate window a 
   assert.deepEqual(raw.prepare('SELECT key FROM rate_limits WHERE key LIKE ? ORDER BY key').all('ip:%').map((r) => r.key).filter((k) => k !== 'ip:unknown'), ['ip:live']);
   const left = raw.prepare('SELECT device_label FROM sessions WHERE player_id = ? ORDER BY device_label').all(g.id).map((r) => r.device_label);
   assert.ok(!left.includes('an old phone') && left.includes('a laptop'), JSON.stringify(left));
-  assert.ok(stale.secret && atBound.secret);
   assert.deepEqual(raw.prepare('SELECT player FROM guild_invites').all().map((r) => r.player), [b.id], 'a week old to the second is gone, a second younger stays');
   // a live window's row still counts after the sweep (the bucket's next call increments it, never starts again)
   assert.equal(raw.prepare("SELECT count FROM rate_limits WHERE key = 'ip:live'").get().count, 7);
@@ -327,11 +336,15 @@ test('SCALE4b E: each hour the rows nothing reads any more go - a rate window a 
   assert.ok(calls > 40, `every overRate call read (${calls})`);
   assert.ok(windows.get('LOGIN_WINDOW_S') * 2 <= RATE_ROW_KEEP_S);
 
-  // the sessions' sweep by its own index
+  // PIN MOVED (AUDIT SCALE A6): the sessions' sweep WALKS the table, by no index of its own - one on last_seen cost a
+  // written row at every stale touch (D1 bills a write at a thousand times a read) to spare this hourly walk
   const plan = new DatabaseSync(':memory:');
   for (const m of readdirSync(new URL('../server-account/migrations', import.meta.url)).filter((x) => x.endsWith('.sql')).sort()) plan.exec(src(`server-account/migrations/${m}`));
   const detail = plan.prepare('EXPLAIN QUERY PLAN SELECT id FROM sessions WHERE last_seen < ?1 LIMIT ?2').all().map((r) => r.detail).join(' | ');
-  assert.match(detail, /USING (COVERING )?INDEX idx_sessions_last_seen/, detail);
+  assert.match(detail, /^SCAN sessions$/, detail);
+  const onLastSeen = plan.prepare("SELECT name FROM pragma_index_list('sessions')").all()
+    .filter((ix) => plan.prepare('SELECT name FROM pragma_index_info(?)').all(ix.name).some((c) => c.name === 'last_seen'));
+  assert.deepEqual(onLastSeen.map((ix) => ix.name), ['idx_sessions_player'], 'the device list\'s own index alone writes at a touch');
 
   // rounds: a backlog past a page is taken a page at a time, ROUNDS_MAX pages a firing at most
   const many = SWEEP_ROWS * ROUNDS_MAX + 5;

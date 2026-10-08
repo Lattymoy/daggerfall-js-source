@@ -10,7 +10,9 @@
 // this answers each part EXACTLY as its own route answers it: the same function, the same body, the same refusal word
 // (`{ error }` where the route would have said it with a status). Nothing a part answers depends on another riding with
 // it, so a heartbeat is the three requests' answers under one session - and the three routes stand as they were, for
-// the doors that ask them alone (a window's own read, an older client).
+// the doors that ask them alone (a window's own read, an older client). AUDIT SCALE A7: AND NONE FAILS ANOTHER - a part
+// that throws (a D1 error on the board's read) is answered `{ error: 'server' }`, its route's 500, and the others theirs;
+// a throw had been the whole request's 500, the box lost with the board and the beat credited unanswered.
 // ═══════════════════════════════════════════════════════════════════
 
 import { creditPlay, accountKind } from './accounts.js';
@@ -30,8 +32,14 @@ export const HEARTBEAT_PARTS = Object.freeze(['beat', 'mail', 'board']);
 export async function heartbeat(ctx, player, env, body) {
   /** @type {Record<string, any>} */
   const out = {};
-  if (body?.beat === true) out.beat = await creditPlay(ctx, player.id);
-  if (body?.mail === true) out.mail = accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : await inboxOf(ctx, player, env);
-  if (body?.board !== undefined) out.board = await readBoard(ctx, player, env, body.board);
+  const part = async (/** @type {string} */ name, /** @type {() => Promise<any>} */ fn) => {
+    try { out[name] = await fn(); } catch (e) {
+      console.warn(`[heartbeat] the ${name} part failed`, /** @type {any} */ (e)?.message ?? e);
+      out[name] = { error: 'server' };
+    }
+  };
+  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));
+  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));
+  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));
   return out;
 }

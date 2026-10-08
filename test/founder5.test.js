@@ -67,7 +67,7 @@ test('FOUNDER5 the names: a handle in FOUNDER_HANDLES holds Founder whenever it 
   assert.deepEqual(wardrobeOf(late, env, OLD_CUT + 21 * DAY).titles, ['founder'], 'the account card shows it');
 });
 
-test('FOUNDER5 the config: FOUNDER_HANDLES is a var in wrangler.toml beside the developers\' and moderators\' lists; the version moved to acct92 (CRAFT2-CRAFT5 on to acct93, SCALE4a and SCALE4b to acct94 since)', () => {
+test('FOUNDER5 the config: FOUNDER_HANDLES is a var in wrangler.toml beside the developers\' and moderators\' lists; the version moved to acct92 (CRAFT2-CRAFT5 on to acct93, SCALE4a, SCALE4b and SCALE4c to acct94 since)', () => {
   const toml = src('server-account/wrangler.toml');
   assert.match(toml, /^FOUNDER_HANDLES = "[^"]*"$/m);
   assert.match(toml, /^ACCOUNT_VERSION = "acct94"$/m);

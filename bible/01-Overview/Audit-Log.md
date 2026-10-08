@@ -8,6 +8,21 @@
 
 Newest first.
 
+**2026-10-08 - AUDIT SCALE.** Mac: *"Do a comprehensive audit on this and ensure perfection"*, of SCALE3 and SCALE4a-c -
+the load harness, the session and its player in one read, the service's own clock, one heartbeat for a tab's three
+clocks. Five lenses: this session's own, live in real workerd (the account probe, both crons fired over a migrated D1,
+the deploy's triggers), and four independent adversarial reviewers on a snapshot of the pushed head (the service, the
+client's heartbeat, the harness and its numbers, the tests and the record). Paid: an auction won under a seat's Tithe,
+its seller within the Tithe of the Marks cap, picked every minute and closed never, twenty of them holding every auction
+behind them - on main already (A1); a firing able to spend thousands of statements on a stuck page and pass D1's
+thousand an invocation (A2); the knock's wait spending the grace that covers a missed knock - a 40 s alt-tab credited
+910 s of a sitting's 1,500 (B1); one hung heartbeat holding the board, the box and the beat for the page (B2); one
+part's throw failing all three (A7); the professions' state polled thirty times the client in the harness, a quarter of
+main's statements (C1); the arena's whole board counted every eight minutes on an empty world (A4); and the mutation
+runner reading "dead" off a test file that did not parse (M1). Lane D's 45 surviving mutants pinned; the measurements
+taken again by the corrected harness. 81 new mutants, 80 dead and 1 recorded equivalent. Record: `Audit-Scale.md` (AUDIT
+SCALE).
+
 **2026-10-07 - FIELD BUGS 2026-10-07.** Eight player reports from the Discord's bug-reports channel, through Mac, read
 one at a time. Six paid, two are recorded and left as they stand:
 - CRASH-BLUR - the crash screen's "NotFoundError: Failed to execute 'replaceChildren' ... moved in a 'blur' event

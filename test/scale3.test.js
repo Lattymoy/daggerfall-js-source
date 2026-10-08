@@ -154,7 +154,7 @@ test('SCALE3: a fleet spread over threads adds up - every route\'s calls, status
     account: [['/v1/heartbeat', { n: k, statuses: { 200: k }, ms: [k] }], ...(k === 2 ? [['/v1/auth/token', { n: 1, statuses: { 503: 1 }, ms: [9] }]] : [])],
     relay: { opened: k, synthetic: 0, inFrames: 100 * k, inBytes: 1000 * k, outFrames: 10 * k, outBytes: 50 * k, inByType: { pose: 90 * k, pong: 10 * k }, outByType: { pose: 10 * k }, closes: { 1006: k }, refusals: { busy: k }, poseMs: [k, k], poseSeen: 5 * k },
   });
-  const m = mergeFleets([fleet(1), fleet(2)]);
+  const m = mergeFleets([fleet(1), fleet(2)], () => 0);
   assert.equal(m.bots, 30);
   assert.deepEqual(m.account.byRoute.get('/v1/heartbeat'), { n: 3, statuses: { 200: 3 }, ms: [1, 2] });
   assert.deepEqual(m.account.byRoute.get('/v1/auth/token'), { n: 1, statuses: { 503: 1 }, ms: [9] });
@@ -162,6 +162,14 @@ test('SCALE3: a fleet spread over threads adds up - every route\'s calls, status
   assert.deepEqual(m.relay.inByType, { pose: 270, pong: 30 });
   assert.deepEqual(m.relay.closes, { 1006: 3 });
   assert.deepEqual(m.relay.refusals, { busy: 3 });
-  assert.deepEqual(m.relay.poseMs, [1, 1, 2, 2]);
+  // PIN MOVED (AUDIT SCALE C9): the kept ages pooled in proportion to the poses each fleet heard - fleet 1 heard 5 for its
+  // two kept, fleet 2 heard 10 for its two, so fleet 2's kept stand for twice as many and fleet 1 keeps one
+  assert.deepEqual(m.relay.poseMs.slice().sort((a, b) => a - b), [1, 2, 2]);
   assert.equal(m.poseSeen, 15);
+  // lane C's own case: a million poses heard at 10 ms beside 150,000 at a second, each fleet's reservoir full - over every
+  // pose heard the 75th percentile is 10 ms (pooled unweighted it read a second)
+  const full = (v, seen) => ({ ...fleet(1), relay: { ...fleet(1).relay, poseMs: Array(1000).fill(v), poseSeen: seen } });
+  const uneven = mergeFleets([full(10, 1_000_000), full(1000, 150_000)]).relay.poseMs.sort((a, b) => a - b);
+  assert.equal(percentile(uneven, 0.75), 10);
+  assert.equal(percentile(uneven, 0.9), 1000);
 });

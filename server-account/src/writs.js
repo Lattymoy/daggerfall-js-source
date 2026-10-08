@@ -164,17 +164,23 @@ function commissionReturn(db, id, nowS) {
 
 /** THE GUILD WRITS PAST THEIR DAYS, closed, and every closed writ's escrow home - anyone's Work read runs it; at most
  *  WRIT_SETTLE_MAX a read, one batch each; a treasury the cap cannot take waits. */
-export async function closeGuildWrits({ db, nowS }) {
+export async function closeGuildWrits(ctx) {
+  const { db, nowS } = ctx;
   const { results: due = [] } = await db.prepare(`SELECT id FROM guild_writs WHERE (state = 'open' AND expires_at <= ?1)
       OR (state != 'open' AND returned = 0 AND (escrow = 0 OR COALESCE((SELECT balance FROM guild_marks WHERE guild_id = guild_writs.guild_id), 0) + escrow <= ?2))
     ORDER BY expires_at LIMIT ${WRIT_SETTLE_MAX}`).bind(nowS, MARKS_MAX).all();
+  let moved = 0;
   for (const w of due) {
-    await db.batch([
+    if (ctx.budget && !ctx.budget()) break;   // AUDIT SCALE A2: the clock's firing keeps under D1's statements an invocation
+    const out = await db.batch([
       db.prepare(`UPDATE guild_writs SET state = 'expired', closed_at = ?2 WHERE id = ?1 AND state = 'open' AND expires_at <= ?2`).bind(w.id, nowS),
       ...guildWritReturn(db, w.id, nowS),
     ]);
+    if (out.some((r) => Number(r?.meta?.changes ?? 0) > 0)) moved++;
   }
-  return due.length;   // SCALE4b: the service's clock asks again while a full page closed
+  // SCALE4b: the service's clock asks again while a full page closed. AUDIT SCALE A2: the writs MOVED - closed or
+  // returned - never the ones picked, so a page that changed nothing is not asked again
+  return moved;
 }
 /** An account's own commissions settled: those past their days closed - those it posted and (AUDIT 31 L1) those naming
  *  it, so a crafter's Yours never shows one open that cannot be filled - those whose crafter is gone declined, and the

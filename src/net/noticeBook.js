@@ -158,12 +158,14 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
    * instead of its own request. `townMap()` is the town the host says the player stands in, or null. Due when that
    * board's minute is up, as `read` asks it; riding a heartbeat that goes anyway when it would be due within `early` ms;
    * in flight it is the town's `pending` read, so a window's own read meanwhile waits for this answer rather than asking
-   * twice; its answer taken as `read` takes its own - a refusal kept the minute too.
+   * twice; its answer taken as `read` takes its own - a refusal kept the minute too - with its minute counted from the
+   * send (AUDIT SCALE B4: the heartbeat's parts count their clocks from the send, so a slow answer never pushes the
+   * board's minute out of step with the box's three).
    * @param {() => (number|null)} townMap
    * @returns {import('./heartbeat.js').HeartbeatPart}
    */
   function heartbeatPart(townMap) {
-    /** @type {{ map: number, e: any, settle: (v: any) => void } | null} */
+    /** @type {{ map: number, e: any, settle: (v: any) => void, at: number } | null} */
     let asking = null;
     const ready = (/** @type {number} */ t, /** @type {number} */ early) => {
       if (asking) return false;
@@ -184,7 +186,7 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
         /** @type {(v: any) => void} */
         let settle = () => {};
         e.pending = new Promise((r) => { settle = r; });
-        asking = { map, e, settle };
+        asking = { map, e, settle, at: nowMs() };
         return map;
       },
       take: (r) => {
@@ -194,13 +196,13 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
         const { e } = a;
         e.pending = null;
         if (r?.ok) {
-          open = true; e.board = r.data; e.at = nowMs(); e.error = null;
+          open = true; e.board = r.data; e.at = a.at; e.error = null;
           a.settle({ board: e.board, error: null, stale: false });
           return;
         }
         if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it
         e.error = r?.error ?? 'server';
-        e.at = nowMs();
+        e.at = a.at;
         a.settle({ board: e.board, error: e.error, stale: !!e.board });
       },
     };

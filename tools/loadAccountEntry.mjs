@@ -21,7 +21,9 @@ const POINTS_MAX = 500_000;
 const points = [];
 /** @type {Map<string, { n: number, rowsRead: number, rowsWritten: number, ms: number }>} */
 const bySql = new Map();
-const sink = { writeDataPoint(/** @type {any} */ p) { if (points.length < POINTS_MAX) points.push(p); } };
+// each point with its moment (AUDIT SCALE C5: the storm's seconds are bucketed by when a request ended, not by when the
+// harness happened to read)
+const sink = { writeDataPoint(/** @type {any} */ p) { if (points.length < POINTS_MAX) points.push({ ...p, t: Date.now() }); } };
 
 const note = (/** @type {string} */ sql, /** @type {any} */ meta) => {
   const key = sql.replace(/\s+/g, ' ').trim().slice(0, 240);
@@ -46,10 +48,15 @@ function statement(/** @type {any} */ real, /** @type {string} */ sql) {
           const r = await target.all();
           note(sql, r?.meta);
           const row = r?.results?.[0] ?? null;
-          return col === undefined ? row : (row?.[col] ?? null);
+          if (col === undefined || row === null) return row;
+          // AUDIT SCALE C13: as workerd's binding answers a column the row has not - a throw, never a quiet null
+          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);
+          return row[col];
         };
       }
       if (key === 'all' || key === 'run') return async () => { const r = await target[key](); note(sql, r?.meta); return r; };
+      // raw() answers no meta: counted as a statement, its rows unknown (the service asks none today) - never run twice
+      if (key === 'raw') return async (/** @type {any} */ opts) => { const r = await target.raw(opts); note(sql, null); return r; };
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;
     },

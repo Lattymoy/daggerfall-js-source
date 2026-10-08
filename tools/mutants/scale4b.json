@@ -112,7 +112,7 @@
   {
     "name": "SCALE4b-auctions-off-the-clock",
     "file": "server-account/src/cron.js",
-    "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX)],\n",
+    "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],\n",
     "new": "",
     "tests": [
       "test/scale4b.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "SCALE4b-writs-off-the-clock",
     "file": "server-account/src/cron.js",
-    "old": "  ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX)],\n",
+    "old": "  ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX, ctx.budget)],\n",
     "new": "",
     "tests": [
       "test/scale4b.test.js"
@@ -132,7 +132,7 @@
   {
     "name": "SCALE4b-contracts-off-the-clock",
     "file": "server-account/src/cron.js",
-    "old": "  ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX)],\n",
+    "old": "  ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX, ctx.budget)],\n",
     "new": "",
     "tests": [
       "test/scale4b.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "SCALE4b-champion-off-the-clock",
     "file": "server-account/src/cron.js",
-    "old": "    if (kept && ctx.nowS - Number(kept.at) < ARENA_CHAMPION_CLOCK_S) return 0;\n    await storeArenaChampion(ctx, season, ctx.nowS);",
-    "new": "    if (kept && ctx.nowS - Number(kept.at) < ARENA_CHAMPION_CLOCK_S) return 0;\n    void storeArenaChampion;",
+    "old": "    await storeArenaChampion(ctx, season, ctx.nowS);\n    return 1;",
+    "new": "    void storeArenaChampion;\n    return 1;",
     "tests": [
       "test/scale4b.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "SCALE4b-minute-runs-the-hour",
     "file": "server-account/src/cron.js",
-    "old": "export const jobsFor = (/** @type {string} */ cron) => (cron === CRON_MINUTE ? MINUTE_JOBS : cron === CRON_HOUR ? HOUR_JOBS : []);",
-    "new": "export const jobsFor = (/** @type {string} */ cron) => (cron === CRON_MINUTE ? HOUR_JOBS : cron === CRON_HOUR ? HOUR_JOBS : []);",
+    "old": "  if (cron === CRON_MINUTE) return MINUTE_JOBS;",
+    "new": "  if (cron === CRON_MINUTE) return HOUR_JOBS;",
     "tests": [
       "test/scale4b.test.js"
     ],
@@ -252,22 +252,12 @@
   {
     "name": "SCALE4b-rounds-unbounded",
     "file": "server-account/src/cron.js",
-    "old": "  for (let i = 0; i < ROUNDS_MAX; i++) {",
-    "new": "  for (let i = 0; i < ROUNDS_MAX * 2; i++) {",
+    "old": "  let n = 0;\n  for (let i = 0; i < ROUNDS_MAX; i++) {\n    const got = Number(await step()) || 0;",
+    "new": "  let n = 0;\n  for (let i = 0; i < ROUNDS_MAX * 2; i++) {\n    const got = Number(await step()) || 0;",
     "tests": [
       "test/scale4b.test.js"
     ],
     "note": "a firing takes past its bound"
-  },
-  {
-    "name": "SCALE4b-sessions-unindexed",
-    "file": "server-account/migrations/0090_scale4.sql",
-    "old": "CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions (last_seen);",
-    "new": "-- no index",
-    "tests": [
-      "test/scale4b.test.js"
-    ],
-    "note": "the sessions' sweep walks the table"
   },
   {
     "name": "SCALE4b-unscheduled",

@@ -2,7 +2,7 @@
   {
     "name": "SCALE4c-mail-part-dropped",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.mail === true) out.mail = accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : await inboxOf(ctx, player, env);\n",
+    "old": "  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));\n",
     "new": "",
     "tests": [
       "test/scale4c.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SCALE4c-guest-box-opened",
     "file": "server-account/src/heartbeat.js",
-    "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : await inboxOf(ctx, player, env)",
-    "new": "await inboxOf(ctx, player, env)",
+    "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)",
+    "new": "inboxOf(ctx, player, env)",
     "tests": [
       "test/scale4c.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE4c-board-elsewhere",
     "file": "server-account/src/heartbeat.js",
-    "old": "out.board = await readBoard(ctx, player, env, body.board);",
-    "new": "out.board = await readBoard(ctx, player, env, Number(body.board) + 1);",
+    "old": "() => readBoard(ctx, player, env, body.board)",
+    "new": "() => readBoard(ctx, player, env, Number(body.board) + 1)",
     "tests": [
       "test/scale4c.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4c-knock-held-long",
     "file": "src/net/heartbeat.js",
-    "old": "    const left = BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt));",
-    "new": "    const left = 10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt));",
+    "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
+    "new": "    : Math.min(10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
     "tests": [
       "test/scale4c.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SCALE4c-sent-hidden",
     "file": "src/net/heartbeat.js",
-    "old": "    if (flying || !visible()) return null;",
-    "new": "    if (flying) return null;",
+    "old": "    if (!visible()) {\n      // AUDIT SCALE B1",
+    "new": "    if (false) {\n      // AUDIT SCALE B1",
     "tests": [
       "test/scale4c.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SCALE4c-box-untaken",
     "file": "src/net/mail.js",
-    "old": "      take: (r) => { this._take(r); },",
-    "new": "      take: () => {},",
+    "old": "        const out = this._take(r, undefined, false);",
+    "new": "        const out = { ok: true };",
     "tests": [
       "test/scale4c.test.js"
     ],
@@ -172,7 +172,7 @@
   {
     "name": "SCALE4c-refusal-unkept",
     "file": "src/net/noticeBook.js",
-    "old": "        e.error = r?.error ?? 'server';\n        e.at = nowMs();\n        a.settle(",
+    "old": "        e.error = r?.error ?? 'server';\n        e.at = a.at;\n        a.settle(",
     "new": "        e.error = r?.error ?? 'server';\n        a.settle(",
     "tests": [
       "test/scale4c.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "SCALE4c-frame-reads-again",
     "file": "src/scenes/world.js",
-    "old": "_noticeTown = { mapId: town ? town.mapId : null, at: performance.now() }; }",
-    "new": "_noticeTown = { mapId: town ? town.mapId : null, at: performance.now() }; if (town) noticeBook.read(town.mapId); }",
+    "old": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }",
+    "new": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; if (town) noticeBook.read(town.mapId); }",
     "tests": [
       "test/scale4c.test.js"
     ],

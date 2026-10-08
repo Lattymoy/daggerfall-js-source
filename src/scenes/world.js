@@ -11450,7 +11450,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
-  let _noticeReadT = 0;   // NOTICE1: the town underfoot is asked about once a second (the book's cache answers the rest)
   /** SCALE4c: the town the street frame last found underfoot, and when (performance.now ms) - the heartbeat's board part
    *  asks it, so the board is read exactly where and while the frame asked it before; and when the online lane last ran,
    *  for the letterbox's part the same way. */
@@ -19432,6 +19431,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
+  // AUDIT SCALE B1: the hide seen at once, not at the next tick - a knock waiting as the page hides goes with it, kept
+  // alive past the page (a tab closed), where a second's tick may never come
+  globalThis.document?.addEventListener?.('visibilitychange', () => { heartbeat.tick(); });
   startPlayClock({
     beat: () => heartbeat.beat(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
@@ -28983,8 +28985,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
-    _noticeReadT -= dt;
-    if (noticeBook && _noticeReadT <= 0) { _noticeReadT = 1; const town = noticeTownHere(); _noticeTown = { mapId: town ? town.mapId : null, at: performance.now() }; }   // SCALE4c: the heartbeat's board part reads it (above)
+    // AUDIT SCALE B7: once a second by the wall clock, not by the frame's dt - the dt is clamped at 0.1 s, so at four
+    // frames a second or fewer that "second" outran FRAME_LIVE_MS and the board's part dropped out between stamps
+    const stampAt = performance.now();
+    if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000)) { const town = noticeTownHere(); _noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }   // SCALE4c: the heartbeat's board part reads it (above)
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     pump();

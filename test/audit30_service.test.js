@@ -91,7 +91,7 @@ test('AUDIT 30 S2: a fill and a buy under one id each keep their tax - the fill\
   assert.equal(s.escrowRows(), s.escrowLedger(), 'the escrow the rows hold is the ledger\'s');
 });
 
-test('AUDIT 30 S3: an id whose row the History pruned is spent - an order, a buy, a listing asked under it again are refused, never an escrow held unpaid or goods moved unpaid', async () => {
+test('AUDIT 30 S3: an id whose row the market\'s prune took (SCALE4b: the hour\'s, pruneMarketHistory) is spent - an order, a buy, a listing asked under it again are refused, never an escrow held unpaid or goods moved unpaid', async () => {
   const s = await stand();
   const mac = await s.registered('Mac'), ann = await s.registered('Ann');
   s.fund(mac, 10_000); s.fund(ann, 100_000);

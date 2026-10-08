@@ -204,8 +204,7 @@ const writsToday = async (db, player, day) =>
  * lost (or heard under another character) was refused `prof-day` and its counted units never came. `limit` of each kind
  * at once, answering how many went.
  * SCALE4b (2026-10-08): THE SERVICE'S CLOCK'S (server-account/src/cron.js, each hour), never the state's read - which swept
- * first on every ask, a gatherer's every thirty seconds: two writes on the professions' busiest read, and every gatherer
- * racing every other to run them. The bounds are the read's own, so a row lives no shorter; the state reads today alone.
+ * first on every ask: two writes on the professions' busiest read, and every reader racing every other to run them. The bounds are the read's own, so a row lives no shorter; the state reads today alone.
  */
 export async function sweepHarvests(db, nowS, limit = 500) {
   const day = utcDay(nowS);

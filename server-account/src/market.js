@@ -55,7 +55,8 @@ import { marksOpenFor, balanceOf } from './marks.js';
 import { boardOpenFor } from './board.js';
 import { titheAt } from './seatHolding.js';   // SEAT1d: the bailiwick's Tithe
 import { listingsCapAt } from './seatForts.js';   // SEAT2b: a Market Hall's listings
-import { titheOf } from '../../src/net/townSeatLaw.js';
+import { titheOf, TITHE_CAP } from '../../src/net/townSeatLaw.js';
+import { marketHallTitheCap } from '../../src/net/fortLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's couriers (9.3)
 import { tideCourier } from '../../src/net/tideLaw.js';
 import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
@@ -215,6 +216,10 @@ const bidView = (b) => ({
 });
 /** PROF5b: a sale's tax and Tithe off its whole, in SQL - `x`'s floor of hundredths, as saleTax and saleTithe are. */
 const netSql = (x) => `${x} - (${x} * ${MARKET_TAX_PCT}) / 100 - (${x} * ${MARKET_TITHE_PCT}) / 100`;
+/** AUDIT SCALE A1: the most any seat's Tithe can take of a sale - the crown's cap and a Market Hall's whole rise
+ *  (townSeatLaw.js TITHE_CAP, fortLaw.js marketHallTitheCap) - and so the least a seller can be owed. */
+export const TITHE_PCT_MOST = marketHallTitheCap(Math.max(...Object.values(TITHE_CAP)), Infinity);
+const leastNetSql = (x) => `${x} - (${x} * ${MARKET_TAX_PCT}) / 100 - (${x} * ${TITHE_PCT_MOST}) / 100`;
 /** SEAT1d: a board's town pixel as a request names it (`board: [x, y]`), or null - an older client's names none. */
 const boardOf = (b) => (Array.isArray(b) && b.length === 2 && hubPixelOk(b[0], b[1]) ? [b[0], b[1]] : null);
 /** SEAT1d: a row's board pixel (a listing's, an auction's), or null. */
@@ -357,23 +362,35 @@ async function settle(ctx, player) {
 export async function closeAuctions(ctx) {
   const { db, nowS, rand } = ctx;
   const live = (a) => `EXISTS (SELECT 1 FROM market_bids WHERE id = ${a}.high_bid AND state = 'high')`;
-  const room = (a, gets) => `COALESCE((SELECT balance FROM marks WHERE account = ${a}.seller), 0) + ${gets} <= ?2`;
-  const { results: due = [] } = await db.prepare(`SELECT id, high, region, board_x, board_y, ${live('a')} AS live, ${room('a', netSql('high'))} AS room FROM market_auctions a
+  const balance = (a) => `COALESCE((SELECT balance FROM marks WHERE account = ${a}.seller), 0)`;
+  // AUDIT SCALE A1: THE SELLER'S ROOM IS DECIDED HERE, AFTER THE SEAT'S TITHE, BY THE `gets` BOTH DECISIONS GUARD ON. It
+  // was decided in this SELECT by the Tithe-free proceeds (netSql's MARKET_TITHE_PCT is 0), while the decisions guard on
+  // the proceeds less the seat's real Tithe - so a won auction under a Tithe, its seller within the Tithe of the Marks
+  // cap, waited out the whole grace though the sale fitted, and then was picked every time and closed by neither: the
+  // unsold close saw the room the SELECT had denied. Twenty of them held the page, and no auction after them closed.
+  // The candidates now are every auction that COULD close - unbid, past the grace, or with room at the least any Tithe
+  // could leave (TITHE_PCT_MOST) - the surely closable first, so one that turns out to wait never holds the page.
+  const { results: due = [] } = await db.prepare(`SELECT id, high, region, board_x, board_y, ends_at, ${live('a')} AS live, ${balance('a')} AS balance FROM market_auctions a
       WHERE state = 'open' AND ends_at <= ?1
-        AND (NOT ${live('a')} OR ${room('a', netSql('high'))} OR ends_at + ?3 <= ?1)
-    ORDER BY ends_at LIMIT ${SETTLE_MAX}`).bind(nowS, MARKS_MAX, AUCTION_GRACE_S).all();
+        AND (NOT ${live('a')} OR ${balance('a')} + ${leastNetSql('high')} <= ?2 OR ends_at + ?3 <= ?1)
+    ORDER BY (NOT ${live('a')} OR ${balance('a')} + ${netSql('high')} <= ?2 OR ends_at + ?3 <= ?1) DESC, ends_at LIMIT ${SETTLE_MAX}`).bind(nowS, MARKS_MAX, AUCTION_GRACE_S).all();
   const day = utcDay(nowS);
+  let closed = 0;
   for (const a of due) {
+    if (ctx.budget && !ctx.budget()) break;   // SCALE4b / AUDIT SCALE A2: the clock's firing keeps under D1's statements an invocation
     const nonce = mintId(rand);
     const high = a.high == null ? null : Number(a.high);
     // SEAT1d: the Tithe of the seat the auction's board belongs to, from the seller's proceeds
     const tt = high == null ? null : await titheAt(db, nowS, Number(a.region), rowBoard(a));
     const tithe = tt ? saleTithe(high, tt.pct) : 0;
     const tax = high == null ? 0 : saleTaxOn(0, high), gets = high == null ? 0 : high - tax - tithe;
+    const room = Number(a.balance) + gets <= MARKS_MAX;
+    // a sale the cap cannot take yet, inside its grace: it waits, and nothing is written
+    if (Number(a.live) && !room && Number(a.ends_at) + AUCTION_GRACE_S > nowS) continue;
     // the winning bid, once this close marked it won (the second statement) - every line and the owner keyed on it
     const won = `FROM market_auctions a JOIN market_bids b ON b.id = a.high_bid AND b.state = 'won' WHERE a.id = ?1 AND a.cn = ?2`;
-    if (!Number(a.live) || !Number(a.room)) {
-      await db.batch([
+    if (!Number(a.live) || !room) {
+      const out = await db.batch([
         // THE DECISION: still open, past its end, the standing bid the one read - none, or gone, or one the seller's cap
         // has not taken in the grace
         db.prepare(`UPDATE market_auctions SET state = 'unsold', closed_at = ?3, cn = ?2, returned = 0
@@ -385,9 +402,10 @@ export async function closeAuctions(ctx) {
         db.prepare(`UPDATE market_bids SET state = 'void' WHERE id = (SELECT high_bid FROM market_auctions WHERE id = ?1 AND cn = ?2) AND state = 'high'`)
           .bind(a.id, nonce),
       ]);
+      closed += Number(out?.[0]?.meta?.changes ?? 0);
       continue;
     }
-    await db.batch([
+    const sold = await db.batch([
       // THE DECISION: still open, past its end, the standing bid the one read and standing, the seller's room under the cap
       db.prepare(`UPDATE market_auctions SET state = 'sold', closed_at = ?3, cn = ?2, returned = 1, tithe = ?7
         WHERE id = ?1 AND state = 'open' AND ends_at <= ?3 AND high IS ?4 AND ${live('market_auctions')}
@@ -416,31 +434,42 @@ export async function closeAuctions(ctx) {
         SELECT ?3, b.bidder, b.char_id, a.provenance, a.wear, 'bought', a.region, ?4 + b.seconds, ?4 ${won}`)
         .bind(a.id, nonce, mintId(rand), nowS),
     ]);
+    closed += Number(sold?.[0]?.meta?.changes ?? 0);
   }
-  return due.length;   // SCALE4b: the service's clock asks again while a full page closed
+  // SCALE4b: the service's clock asks again while a full page closed. AUDIT SCALE A2: the auctions CLOSED - the
+  // decisions' own changes - never the ones picked: a page picked and not closed (A1's) was asked again every round,
+  // twenty-five rounds a minute
+  return closed;
 }
 /**
  * THE MARKET'S HISTORY KEPT MARKET_KEEP_DAYS (section 20: 90 days) - every price and fill past it, and every listing,
  * order, delivery, bid and auction long closed and settled. SCALE4b (2026-10-08): the service's clock's
- * (server-account/src/cron.js, each hour); the History view pruned first, nine writes on a read. Answers how many went.
+ * (server-account/src/cron.js, each hour); the History view pruned first, nine writes on a read. AUDIT SCALE A5: each
+ * table's delete takes `rows` at most, and the clock asks again while one took a full page - one unbounded batch, a
+ * backlog's worth, could outrun D1's thirty seconds a batch, roll back, and only grow (the auctions' delete walked every
+ * bid for each auction it took, until 0090 indexed market_bids by its auction). Answers `{ changed, full }`.
+ * @param {any} db @param {number} nowS @param {number} rows
  */
-export async function pruneMarketHistory(db, nowS) {
+export async function pruneMarketHistory(db, nowS, rows) {
   const keepFrom = utcDay(nowS) - MARKET_KEEP_DAYS;
+  const bounded = (/** @type {string} */ table, /** @type {string} */ where, /** @type {number} */ cutoff) =>
+    db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} WHERE ${where} LIMIT ?2)`).bind(cutoff, rows);
   const out = await db.batch([
-    db.prepare('DELETE FROM market_prices WHERE day < ?1').bind(keepFrom),
-    db.prepare('DELETE FROM market_gold_prices WHERE day < ?1').bind(keepFrom),   // GOLD-MARKET
-    db.prepare('DELETE FROM market_sales WHERE day < ?1 AND delivered = 1').bind(keepFrom),
-    db.prepare('DELETE FROM market_fills WHERE day < ?1').bind(keepFrom),
-    db.prepare(`DELETE FROM market_listings WHERE state != 'open' AND closed_at < ?1 AND (returned = 1 OR state = 'sold')`).bind(keepFrom * DAY_S),
-    db.prepare(`DELETE FROM market_orders WHERE state != 'open' AND closed_at < ?1 AND returned = 1`).bind(keepFrom * DAY_S),
-    db.prepare('DELETE FROM market_deliveries WHERE collected = 1 AND at < ?1').bind(keepFrom * DAY_S),
+    bounded('market_prices', 'day < ?1', keepFrom),
+    bounded('market_gold_prices', 'day < ?1', keepFrom),   // GOLD-MARKET
+    bounded('market_sales', 'day < ?1 AND delivered = 1', keepFrom),
+    bounded('market_fills', 'day < ?1', keepFrom),
+    bounded('market_listings', "state != 'open' AND closed_at < ?1 AND (returned = 1 OR state = 'sold')", keepFrom * DAY_S),
+    bounded('market_orders', "state != 'open' AND closed_at < ?1 AND returned = 1", keepFrom * DAY_S),
+    bounded('market_deliveries', 'collected = 1 AND at < ?1', keepFrom * DAY_S),
     // PROF5b: a closed auction's settled bids, then the auction itself once nothing of it waits (its ids stay spent -
     // AUDIT 30 S3: every decision asks the ledger)
-    db.prepare(`DELETE FROM market_bids WHERE at < ?1 AND state != 'high' AND (returned = 1 OR state = 'won')`).bind(keepFrom * DAY_S),
-    db.prepare(`DELETE FROM market_auctions WHERE state != 'open' AND closed_at < ?1 AND returned = 1
-      AND NOT EXISTS (SELECT 1 FROM market_bids WHERE auction = market_auctions.id)`).bind(keepFrom * DAY_S),
+    bounded('market_bids', "at < ?1 AND state != 'high' AND (returned = 1 OR state = 'won')", keepFrom * DAY_S),
+    bounded('market_auctions', `state != 'open' AND closed_at < ?1 AND returned = 1
+      AND NOT EXISTS (SELECT 1 FROM market_bids WHERE auction = market_auctions.id)`, keepFrom * DAY_S),
   ]);
-  return out.reduce((n, r) => n + Number(r?.meta?.changes ?? 0), 0);
+  const changes = out.map((/** @type {any} */ r) => Number(r?.meta?.changes ?? 0));
+  return { changed: changes.reduce((n, c) => n + c, 0), full: changes.some((c) => c >= rows) };
 }
 
 /** A closed listing's units back into its character's Stores, each with its origin - where its return carries `nonce`. */

@@ -34,10 +34,12 @@
 //   - world_witness: its rows are compacted by meaning (the first agreeing witnesses decide a fact), not by age, and
 //     the seats' audit reads them - its redesign is its own slice.
 //
-// A JOB NEVER STOPS ANOTHER: each runs alone, a throw is logged and the next runs. Each writes one metrics point, as a
-// request does (metrics.js; `cron:<job>` its route, `CRON` its method, the statements it ran, the rows it moved as a
-// fourth double). A service held for maintenance (service.js maintaining - RESTORE's rewind) runs nothing: a write in
-// the rewind's minute would vanish with it.
+// A JOB NEVER STOPS ANOTHER: each runs alone, a throw is logged and the next runs - and none spends another's share of
+// the firing (AUDIT SCALE A2: FIRING_STATEMENTS_MAX, under D1's thousand queries a Worker invocation; a settler stops
+// between its items when its share is spent, and asks again only while a full page MOVED, never while one was merely
+// picked). Each writes one metrics point, as a request does (metrics.js; `cron:<job>` its route, `CRON` its method, the
+// statements it ran, the rows it moved as a fourth double). A service held for maintenance (service.js maintaining -
+// RESTORE's rewind) runs nothing: a write in the rewind's minute would vanish with it.
 // ═══════════════════════════════════════════════════════════════════
 
 import { closeAuctions, pruneMarketHistory, SETTLE_MAX } from './market.js';
@@ -72,14 +74,20 @@ export const RATE_ROW_KEEP_S = 24 * 3600;
  *  is bounded however far behind it starts (an hour later it goes on). */
 export const SWEEP_ROWS = 1000;
 export const ROUNDS_MAX = 25;
+/** AUDIT SCALE A2: the D1 statements one firing may run, all its jobs together - D1 answers a Worker invocation a
+ *  thousand queries at most (Workers Paid), and a backlog of sold auctions is about eleven a sale. Each job's share is
+ *  this over its list's length; a settler stops between items once its share is spent, so a firing runs at most this
+ *  and one item a job. The minute's backlog goes on the next minute (and on any read that settles it). */
+export const FIRING_STATEMENTS_MAX = 600;
 
-/** Ask `step` again while it took a whole page (`page`), ROUNDS_MAX times at most - answering what it took in all. */
-async function rounds(/** @type {() => Promise<number>} */ step, /** @type {number} */ page) {
+/** Ask `step` again while it took a whole page (`page`) and `more()` says the job's share is not spent, ROUNDS_MAX
+ *  times at most - answering what it took in all. */
+async function rounds(/** @type {() => Promise<number>} */ step, /** @type {number} */ page, /** @type {() => boolean} */ more = () => true) {
   let n = 0;
   for (let i = 0; i < ROUNDS_MAX; i++) {
     const got = Number(await step()) || 0;
     n += got;
-    if (got < page) break;
+    if (got < page || !more()) break;
   }
   return n;
 }
@@ -96,21 +104,31 @@ let lodesPicked = -1;
 /** Tests stand fresh isolates. */
 export const _resetCronForTests = () => { lodesPicked = -1; };
 
-/** @typedef {{ db: any, nowS: number, rand: (b: Uint8Array) => void }} CronCtx */
+/** @typedef {{ db: any, nowS: number, rand: (b: Uint8Array) => void, budget: () => boolean }} CronCtx */
 /** @typedef {[string, (ctx: CronCtx, env: any) => Promise<number>]} CronJob */
 
 /** @type {readonly CronJob[]} */
 export const MINUTE_JOBS = Object.freeze([
-  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX)],
-  ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX)],
-  ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX)],
+  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],
+  ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX, ctx.budget)],
+  ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX, ctx.budget)],
   // a seat's Turning while the seats are open to everyone - behind `dev` they are a developer's, settled by their reads
   ['seats', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'on' ? settleDue(ctx.db, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK)) : 0)],
-  // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word)
+  // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word). AUDIT SCALE
+  // A4: COUNTED ONLY WHEN A BOUT HAS COME SINCE - the board moves through a bout alone (claimArena counts it at once; no
+  // route deletes an account), so a kept word no bout is newer than is stamped again rather than counted: the count
+  // walks the season's every bout, and the clock ran it every eight minutes on a world nobody played in
   ['arena-champion', async (ctx) => {
     const season = arenaSeasonOf(ctx.nowS);
     const kept = await ctx.db.prepare('SELECT at FROM arena_champions WHERE season = ?1').bind(season).first();
     if (kept && ctx.nowS - Number(kept.at) < ARENA_CHAMPION_CLOCK_S) return 0;
+    if (kept) {
+      const last = await ctx.db.prepare('SELECT MAX(at) AS at FROM arena_pvp WHERE season = ?1').bind(season).first();
+      if (last?.at == null || Number(last.at) < Number(kept.at)) {
+        await ctx.db.prepare('UPDATE arena_champions SET at = ?2 WHERE season = ?1').bind(season, ctx.nowS).run();
+        return 0;
+      }
+    }
     await storeArenaChampion(ctx, season, ctx.nowS);
     return 1;
   }],
@@ -128,10 +146,20 @@ export const HOUR_JOBS = Object.freeze([
   ['board', (ctx) => rounds(() => sweepBoard(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS)],
   ['guild-board', (ctx) => rounds(() => sweepGuildNotes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS)],
   ['harvests', (ctx) => rounds(() => sweepHarvests(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS)],
-  ['market-history', (ctx) => pruneMarketHistory(ctx.db, ctx.nowS)],
+  // AUDIT SCALE A5: each table's delete a page, asked again while one took a full page (market.js pruneMarketHistory)
+  ['market-history', async (ctx) => {
+    let n = 0;
+    for (let i = 0; i < ROUNDS_MAX; i++) {
+      const r = await pruneMarketHistory(ctx.db, ctx.nowS, SWEEP_ROWS);
+      n += r.changed;
+      if (!r.full || !ctx.budget()) break;
+    }
+    return n;
+  }],
   ['rate-limits', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM rate_limits WHERE rowid IN (SELECT rowid FROM rate_limits WHERE window_start < ?1 LIMIT ?2)', ctx.nowS - RATE_ROW_KEEP_S), SWEEP_ROWS)],
-  // resolveSession's own bound: idle when nowS - last_seen > SESSION_IDLE_S (0090_scale4.sql indexes last_seen)
+  // resolveSession's own bound: idle when nowS - last_seen > SESSION_IDLE_S. AUDIT SCALE A6: the table walked, by no index of
+  // its own - one on last_seen would cost a written row at every stale touch to spare this hourly walk
   ['sessions', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM sessions WHERE id IN (SELECT id FROM sessions WHERE last_seen < ?1 LIMIT ?2)', ctx.nowS - SESSION_IDLE_S), SWEEP_ROWS)],
   // every read of an invitation asks `at > now - GUILD_INVITE_TTL_S` (guilds.js)
@@ -139,8 +167,14 @@ export const HOUR_JOBS = Object.freeze([
     'DELETE FROM guild_invites WHERE rowid IN (SELECT rowid FROM guild_invites WHERE at <= ?1 LIMIT ?2)', ctx.nowS - GUILD_INVITE_TTL_S), SWEEP_ROWS)],
 ]);
 
-/** The jobs a schedule runs - none for a schedule this service does not keep. */
-export const jobsFor = (/** @type {string} */ cron) => (cron === CRON_MINUTE ? MINUTE_JOBS : cron === CRON_HOUR ? HOUR_JOBS : []);
+/** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in
+ *  wrangler.toml and not here is seen in the log: AUDIT SCALE A9). */
+export const jobsFor = (/** @type {string} */ cron) => {
+  if (cron === CRON_MINUTE) return MINUTE_JOBS;
+  if (cron === CRON_HOUR) return HOUR_JOBS;
+  console.warn(`[cron] no jobs for the schedule ${JSON.stringify(cron)}`);
+  return [];
+};
 
 /**
  * ONE FIRING: every job of `cron`'s list, each alone - answering what each did.
@@ -150,12 +184,13 @@ export const jobsFor = (/** @type {string} */ cron) => (cron === CRON_MINUTE ? M
 export async function runCron(env, { cron, nowS, rand = (b) => { crypto.getRandomValues(b); }, jobs = jobsFor(cron) }) {
   if (!env?.DB || maintaining(env) || !Number.isSafeInteger(nowS)) return [];
   const out = [];
+  const share = Math.floor(FIRING_STATEMENTS_MAX / Math.max(1, jobs.length));
   for (const [name, job] of jobs) {
     const tally = { n: 0 };
     const started = Date.now();
     let ok = true, changed = 0;
     try {
-      changed = Number(await job({ db: countedDb(env.DB, tally), nowS, rand }, env)) || 0;
+      changed = Number(await job({ db: countedDb(env.DB, tally), nowS, rand, budget: () => tally.n < share }, env)) || 0;
     } catch (e) {
       ok = false;
       console.warn(`[cron] ${name} failed`, e?.message ?? e);

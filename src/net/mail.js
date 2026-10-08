@@ -187,9 +187,10 @@ export class MailBox {
   }
 
   /** What a look does with the box's answer - its own call's, or (SCALE4c) a heartbeat's mail part, the same answer
-   *  under another request. */
-  _take(r, io = this.ioOf?.() ?? null) {
-    this.at = this.now();
+   *  under another request. `restamp` false: the look's clock stays counted from its send (AUDIT SCALE B4 - the
+   *  heartbeat's parts count their clocks from the send, so a slow answer never pushes the box out of step). */
+  _take(r, io = this.ioOf?.() ?? null, restamp = true) {
+    if (restamp) this.at = this.now();
     if (!r.ok) {
       if (!this._boxRefusal(io, r.error)) { this.state = 'error'; this.error = r.error ?? 'server'; this._changed(); }
       return { ok: false, error: r.error };
@@ -218,21 +219,34 @@ export class MailBox {
    * SCALE4c: THE BOX AS A HEARTBEAT'S PART (net/heartbeat.js) - due when a look is (MAIL_POLL_MS since the last), riding
    * a heartbeat that goes anyway when it would be due within `early` ms; stamped as it sets out, as a look is, so the
    * box is never asked twice for one look; its answer taken as a look takes its own.
+   * AUDIT SCALE B3: IN FLIGHT IT IS THE BOX'S LOOK (`_looking`), as `refresh` keeps its own - the Letters tab opened
+   * meanwhile takes the heartbeat's answer rather than asking again, where two looks at once let the older answer land
+   * last, roll the box back and announce a letter twice.
    * @returns {import('./heartbeat.js').HeartbeatPart}
    */
   heartbeatPart() {
     // the stamp at `body` is what keeps a look from going twice: the box is not due again for MAIL_POLL_MS (and a
     // heartbeat's tick waits while one is out)
     const ready = (/** @type {number} */ nowMs, /** @type {number} */ early) => !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS - early);
+    /** @type {((v: any) => void)|null} */
+    let settle = null;
     return {
       due: (nowMs) => ready(nowMs, 0),
       soon: (nowMs, early) => ready(nowMs, early),
       every: MAIL_POLL_MS,
       body: () => {
-        this.at = this.now();
-        return this._io() ? true : undefined;   // signed out: the box says so, and nothing rides
+        this.at = this.now();   // MAIL1: stamped even when there is no session (`_refresh`'s own rule)
+        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides
+        this._looking = new Promise((r) => { settle = r; });
+        return true;
       },
-      take: (r) => { this._take(r); },
+      take: (r) => {
+        const done = settle;
+        settle = null;
+        this._looking = null;
+        const out = this._take(r, undefined, false);
+        done?.(out);
+      },
     };
   }
 

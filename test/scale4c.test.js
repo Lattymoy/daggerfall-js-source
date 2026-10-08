@@ -104,7 +104,7 @@ function rig({ answer = (body) => ({ status: 200, json: body }), signedIn = true
   const storage = new Map(signedIn ? [[SESSION_KEY, JSON.stringify({ id: 'p1', secret: 'a-secret-long-enough-0001', name: 'Ann' })]] : []);
   const fetch = async (url, init) => {
     const body = JSON.parse(init.body);
-    sent.push({ url, body, at: t });
+    sent.push({ url, body, at: t, init });
     const a = answer(body, sent.length);
     if (a === 'offline') throw new Error('down');
     return { ok: a.status < 400, status: a.status, headers: { get: () => 'application/json' }, json: async () => a.json };
@@ -140,7 +140,7 @@ test('SCALE4c B: a part goes when its own clock says, a part due within RIDE_EAR
   assert.deepEqual(r.sent.map((x) => x.body), [{ board: 4242, mail: true }], 'both due at once: one request');
   assert.deepEqual(board.took, [{ ok: true, data: { echo: 'board' } }]);
   assert.deepEqual(mail.took, [{ ok: true, data: { echo: 'mail' } }]);
-  // fifteen minutes in town: the board's minute and the box's three fall in step - fifteen requests, not twenty
+  // fifteen minutes in town: the board's minute and the box's three fall in step - sixteen requests, not twenty-two
   for (let s = 1; s <= 15 * 60; s++) await r.advance(1000);
   await flush();
   assert.equal(board.asked, 16);
@@ -151,7 +151,7 @@ test('SCALE4c B: a part goes when its own clock says, a part due within RIDE_EAR
   const mailAt = r.sent.filter((x) => x.body.mail).map((x) => x.at);
   for (let i = 1; i < mailAt.length; i++) assert.ok(mailAt[i] - mailAt[i - 1] >= MAIL_POLL_MS - RIDE_EARLY_MS, `${mailAt[i] - mailAt[i - 1]}`);
   // two clocks a moment out of step: the box comes due two seconds after the board went, and rides the board's next
-  // heartbeat early rather than going alone (without RIDE_EARLY_MS: a request of its own every three minutes)
+  // heartbeat early rather than going alone - inside RIDE_EARLY_MS of it, and inside the pace rule's bound as well
   const d = rig({ answer: (body) => ({ status: 200, json: Object.fromEntries(Object.keys(body).map((k) => [k, {}])) }) });
   const db = every(d, 'board', BOARD_CACHE_MS, 4242);
   await d.hb.tick(); await flush();
@@ -224,37 +224,44 @@ test('SCALE4c B: two clocks far out of step fall into step at the slower one\'s 
   assert.equal(g.sent.filter((x) => !('board' in x.body)).length, 1, 'none alone after the box\'s first look');
 });
 
-test('SCALE4c B: the knock waits for a ride - carried by the next part that goes within BEAT_RIDE_MS, alone once nothing will come, at once where no clock rides at all (a single-player world); a late beat still credits its whole gap (mutants: the knock sent at once beside a ride coming, held past its wait, held where nothing rides)', async () => {
+/** The service's answer to a heartbeat, as the real one shapes it: the beat credited, the box and the board answered. */
+const credited = (body) => ({ status: 200, json: Object.fromEntries(Object.keys(body).map((k) => [k, k === 'beat' ? { playedS: 1 } : {}])) });
+
+test('SCALE4c B: the knock waits for a ride - after the page\'s first, which goes at once (AUDIT SCALE B1) - carried by the next part that goes within BEAT_RIDE_MS, alone once nothing will come, at once where no clock rides at all (a single-player world); carried late after a knock on time, a beat still credits its whole gap (mutants: the knock sent at once beside a ride coming, held past its wait, held where nothing rides)', async () => {
   assert.ok(BEAT_RIDE_MS <= (PLAY_GRACE_S - PLAY_BEAT_S) * 1000, 'a knock carried as late as it may be credits all it would have');
   // no clock to ride: the knock goes at once, alone - the play clock's own knock, as it always went
-  const solo = rig();
+  const solo = rig({ answer: credited });
   const p = solo.hb.beat();
   await flush(); await p;
   assert.deepEqual(solo.sent.map((x) => x.body), [{ beat: true }]);
-  // a box due in a minute: the knock waits for it, and rides
-  const r = rig();
+  // PIN MOVED (AUDIT SCALE B1): the page's first knock goes at once, a ride coming or not - nothing on the page says how
+  // long ago the account last beat, so a wait could take the gap past the grace. The knocks after it wait.
+  const r = rig({ answer: credited });
   const mail = every(r, 'mail', MAIL_POLL_MS);
   await r.hb.tick(); await flush();   // the box's first look
+  r.hb.beat(); await flush();
+  assert.deepEqual(r.sent.map((x) => x.body), [{ mail: true }, { beat: true }], 'the first knock: at once, though a look is three minutes off');
+  // a box due in a minute: the knock waits for it, and rides
   r.set(r.at() + MAIL_POLL_MS - 60_000);
   r.hb.beat(); await flush();
-  assert.equal(r.sent.length, 1, 'the knock waits: a look is a minute off');
+  assert.equal(r.sent.length, 2, 'the knock waits: a look is a minute off');
   for (let s = 0; s < 60; s++) await r.advance(1000);
   await flush();
-  assert.deepEqual(r.sent.map((x) => x.body), [{ mail: true }, { mail: true, beat: true }]);
+  assert.deepEqual(r.sent.slice(2).map((x) => x.body), [{ mail: true, beat: true }]);
   // a box three minutes off: past the knock's wait - it goes alone, now
   r.set(r.at() + 1000);
   r.hb.beat(); await flush();
   assert.deepEqual(r.sent.at(-1).body, { beat: true });
   assert.equal(mail.asked, 2);
   // a knock while one waits is the same knock
-  const q = rig();
+  const q = rig({ answer: credited });
   every(q, 'mail', MAIL_POLL_MS);
-  await q.hb.tick(); await flush();
+  q.hb.beat(); await flush();   // the page's first, at once
   q.set(q.at() + MAIL_POLL_MS - 30_000);
   q.hb.beat(); q.hb.beat(); await flush();
   for (let s = 0; s < 31; s++) await q.advance(1000);
   await flush();
-  assert.equal(q.sent.filter((x) => x.body.beat).length, 1);
+  assert.equal(q.sent.filter((x) => x.body.beat).length, 2);
 });
 
 test('SCALE4c B: a lost answer is asked again (NOTICE_TRIES in all) and then each part takes the failure as its own request\'s; a refusal is a part\'s answer; signed out, every part is told so and nothing is sent; a hidden page sends nothing (mutants: never asked again, asked again on a refusal, the session unasked, sent while hidden)', async () => {
@@ -285,12 +292,11 @@ test('SCALE4c B: a lost answer is asked again (NOTICE_TRIES in all) and then eac
   assert.deepEqual(out.sent, []);
   assert.deepEqual(b4.took, [{ ok: false, error: 'no-session' }]);
   // hidden: a part due, nothing sent; a part asked only while its lane runs
-  let shown = false;
+  const shown = false;
   const hid = rig();
   const hb = createHeartbeat({ fetch: async () => { throw new Error('sent while hidden'); }, storage: { getItem: () => null }, visible: () => shown, setInterval: () => 0, clearInterval: () => {} });
   hb.add('board', every(hid, 'x', 1).part);
   assert.equal(hb.tick(), null);
-  shown = false;
   let live = false;
   const gated = whileLive(every(hid, 'y', 1).part, () => live);
   assert.equal(gated.due(1e9), false); assert.equal(gated.soon(1e9, 5000), false);
@@ -381,12 +387,26 @@ test('SCALE4c C: the town\'s board as a part - due when the town the host stands
 test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, the play clock knocks through it, the town\'s board and the letterbox join it - each where and while its frame asked it before - and neither the street frame nor the online lane asks the service itself any more; no other host keeps any of the three (mutants: the board read in the frame again, the box polled in the lane again, the knock past the heartbeat)', () => {
   const w = src('src/scenes/world.js');
   assert.equal((w.match(/createHeartbeat\(/g) ?? []).length, 1, 'one heartbeat a page');
+  // AUDIT SCALE (lane D D10, B8): the heartbeat's own sight of the page, and the hide seen at once (B1)
+  assert.match(w, /createHeartbeat\(\{\s*fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\),\s*visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden',\s*\}\);/);
+  assert.match(w, /globalThis\.document\?\.addEventListener\?\.\('visibilitychange', \(\) => \{ heartbeat\.tick\(\); \}\);/);
   assert.match(w, /startPlayClock\(\{\s*beat: \(\) => heartbeat\.beat\(\),\s*visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden',/);
+  assert.equal((w.match(/startPlayClock\(/g) ?? []).length, 1, 'one play clock');
+  assert.doesNotMatch(w, /accountPlayBeat/, 'no knock past the heartbeat');
   assert.match(w, /if \(noticeBook\) heartbeat\.add\('board', noticeBook\.heartbeatPart\(\(\) => \(_noticeTown && performance\.now\(\) - _noticeTown\.at < FRAME_LIVE_MS \? _noticeTown\.mapId : null\)\)\);/);
   assert.match(w, /heartbeat\.add\('mail', whileLive\(mail\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/);
-  assert.doesNotMatch(w, /mail\?\.poll\(\)/, 'the lane no longer looks at the box itself');
-  assert.doesNotMatch(w, /if \(town\) noticeBook\.read\(town\.mapId\)/, 'the street frame no longer reads the board itself');
-  assert.match(w, /_noticeTown = \{ mapId: town \? town\.mapId : null, at: performance\.now\(\) \};/);
+  assert.doesNotMatch(w, /mail\??\.poll\(/, 'the lane no longer looks at the box itself');
+  // the street frame's second: the town stamped, and no read of the board of its own (AUDIT SCALE B8: the text pin
+  // passed with one put back)
+  const streetAt = w.indexOf('// NOTICE1: the town the player stands in is read on arrival');
+  const street = streetAt < 0 ? '' : w.slice(streetAt, w.indexOf('_farmSyncT -= dt;', streetAt));
+  assert.ok(street.length > 0 && street.length < 1500, 'the street frame\'s stamp found');
+  assert.doesNotMatch(street, /noticeBook\??\.read\(/, 'the street frame no longer reads the board itself');
+  // PIN MOVED (AUDIT SCALE B7): once a second by the wall clock - the frame's dt is clamped, and at four frames a second
+  // or fewer its "second" outran FRAME_LIVE_MS
+  assert.match(street, /const stampAt = performance\.now\(\);\s*if \(noticeBook && \(!_noticeTown \|\| stampAt - _noticeTown\.at >= 1000\)\) \{ const town = noticeTownHere\(\); _noticeTown = \{ mapId: town \? town\.mapId : null, at: stampAt \}; \}/);
+  const live = Number(w.match(/const FRAME_LIVE_MS = (\d+);/)?.[1]);
+  assert.ok(live > 1000 && live <= 5000, `FRAME_LIVE_MS ${live}: past the stamp's second, and a stilled frame's parts drop out within seconds`);
   assert.match(w, /_mailFrameAt = performance\.now\(\);/);
   for (const host of ['src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     const h = src(host);
