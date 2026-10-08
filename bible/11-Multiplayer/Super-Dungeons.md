@@ -247,6 +247,8 @@ the Deadlands' law) so every screen shows the same moment.
 
 The realm refuses what the Court refuses: rest, save, map, a Mark and a Recall, regeneration (`courtRules`) - and
 Levitate (SD7b: a Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown).
+And as the court does (GATE-ALONE), it takes no companion through the Rift: the crew's hands and the sworn wait outside
+the Hour, and come back to the player's side out of it (SD-ALONE, section 16).
 
 **Its music** (SD13, `systems/sdScore.js`): the Hollow and the Hour have a score of their own - C minor and a clock
 where the Warden's is D minor and fire. Its one motif is the Westminster quarters struck in the minor and BROKEN, the
@@ -630,6 +632,7 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | SD-ONELIFE | one life a Hollow |
 | SD13-SD19 | the detail past the gates: the score, the voice, the air and the motes, the arena read, the blows seen, the body moved, the marks, the Hollow's presence |
 | SD20 | AUDIT SD III |
+| SD-ALONE | no companion through the Rift |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -2852,3 +2855,35 @@ THE FOUR HOSTS: `scenes/worldModes.js` WIRED (its `motorState` hands the fall un
 WIRED (the trail tick given the fall; the way out given the drops); `scenes/world.js` WIRED (a shared quest laid with
 the item I carry; the tier kept by place); `scenes/exterior.js` FLAGGED - the `?exterior` bench has no dungeon, no trail
 and no way out (the `?dungeon` bench, `scenes/dungeon.js`, hands its motor's fall as the world's dungeon lane does).
+
+### SD-ALONE - shipped 2026-10-08 (no companion through the Rift)
+
+Mac: *"We need to make sure companions dont enter the rift"*. A player's companions - the crew's hands ashore
+(CREW-COMPANIONS) and the sworn revenants (REVENANT-COMPANION) - followed them through the Rift as through any door:
+the companion layer (`scenes/crewAshore.js`) stands its party in whatever place the player is in, and the Hour is a
+dungeon. The Burning Court had kept them out since GATE-ALONE (`World-Bosses.md` section 21); the Hour, made on the
+court's pattern, never took that rule. Now it has the court's law whole:
+
+- The place the layer asks for (`scenes/world.js companionPlace`) is none while the player stands in the Hour
+  (`sdRealmSlot`), asked beside the court's, for the crew's layer and the sworn's alike. The layer lifts every companion
+  as the player steps through - a door's own lift, the health and the spells carried - and stands none inside, however
+  long. Out of the Hour (the way back to the Abyss Dungeon's Rift, the way home, a death or the end cast out) the next
+  place stands them behind the player again, through their portals. The Abyss Dungeon itself, before its Rift, still
+  takes them.
+- They stay the player's: the party, the slots, the sworn's loyalty and their rest are untouched.
+- The party panel draws no card for them in the Hour (`partyCompanions`).
+- The Hour says so once as a player steps through with any at their side - *"Your companions cannot follow you through
+  the Rift."* (`world/sdRealm.js SD_REALM_TEXT.noCompanions`) - through its own voice, once the step's veil has opened
+  (`sdAloneFrame`, in the Hour's frame after the realm's own): never through the door, under the veil or under a
+  window, and owed again the next time through.
+
+No relay change (`world/sdRealm.js` is the page's alone) and nothing in the account service.
+
+Pins: `test/sd21_alone.test.js` (4 - the place, through the real companion layer, the party panel, the word);
+`tools/mutants/sd21_alone.json` (13, all dead). PINS MOVED: `test/sd5a_realm.test.js` (the realm's words carry the
+companions' refusal; the Hour's frame says it after the realm's own).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the place none in the Hour, the party's cards none there, the word);
+`scenes/worldModes.js` FLAGGED - its `sdRealmSlot` answers the world host, unchanged; `scenes/dungeonContext.js`
+FLAGGED - the layer stands its bodies in the dungeon's pool through the place the world host answers, unchanged;
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hour, and no Rift to step through.
