@@ -332,8 +332,8 @@
   {
     "name": "AUDIT32-B4-anvil-busy-everywhere",
     "file": "src/scenes/world.js",
-    "old": "text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };",
-    "new": "text: r?.kept ? st.kept : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };",
+    "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
+    "new": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "tests": [
       "test/audit30_client.test.js",
       "test/prof3_client.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "AUDIT32-P8-silk-unsaid",
     "file": "src/ui/profPages.js",
-    "old": "  if (_loom.family === 'clothing' && _loom.cloth === STANDARD_SILK.key)",
-    "new": "  if (false)",
+    "old": "    if (r.cloth === STANDARD_SILK.key) box.append(",
+    "new": "    if (false) box.append(",
     "tests": [
       "test/audit32_pages.test.js"
     ]
@@ -567,22 +567,24 @@
   {
     "name": "AUDIT32-S1-service-always-pays",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, prof,",
-    "new": "nonce, FIRST_CRAFT_XP, prof,",
+    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
+    "new": "nonce, FIRST_CRAFT_XP, craft,",
     "tests": [
       "test/audit32_service.test.js",
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT32-S1-service-pays-inverted",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, prof,",
-    "new": "nonce, firstCraftPays(r) ? 0 : FIRST_CRAFT_XP, prof,",
+    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
+    "new": "nonce, firstCraftPays(r) ? 0 : FIRST_CRAFT_XP, craft,",
     "tests": [
       "test/audit32_service.test.js",
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT32-S1-law-any-counter-input",

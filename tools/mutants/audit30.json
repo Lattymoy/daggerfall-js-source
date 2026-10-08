@@ -464,8 +464,8 @@
   {
     "name": "AUDIT30-A3-the-bench-s-rows-open-mid-pass",
     "file": "src/ui/profPages.js",
-    "old": "    row.disabled = planing;\n",
-    "new": "",
+    "old": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: planing });",
+    "new": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: false });",
     "tests": [
       "test/audit30_client.test.js"
     ]

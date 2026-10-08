@@ -1037,12 +1037,12 @@
   {
     "name": "PROF9-pages-cooking-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "'carpentry', 'masonry', 'jewelcrafting', 'alchemy', 'enchanting']);",
+    "old": "  cooking: Object.freeze([['Hunter\\'s Stew, Fisherman\\'s Supper', 1],",
+    "new": "  cookery: Object.freeze([['Hunter\\'s Stew, Fisherman\\'s Supper', 1],",
     "tests": [
       "test/prof9_client.test.js"
     ],
-    "note": "PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF9-pages-feast-unlock-55",
@@ -1083,8 +1083,8 @@
   {
     "name": "PROF9-pages-hands-not-at-the-fire",
     "file": "src/ui/profPages.js",
-    "old": ": me !== _cook && _cook.act ? 'the fire'\n",
-    "new": "\n",
+    "old": ": me !== _cook && (_cook.act || _cook.crafting) ? 'the fire' : me !== _jewel",
+    "new": ": me !== _jewel",
     "tests": [
       "test/prof9_client.test.js"
     ]
@@ -1339,11 +1339,12 @@
   {
     "name": "AUDIT-PROF-541-K7-steps-unsaid",
     "file": "src/ui/profPages.js",
-    "old": "Cooking XP to a plain dish's ${cookXp(rank, { steps })}",
-    "new": "Cooking XP to a plain dish's ${cookXp(rank)}",
+    "old": "${professionName('cooking')} XP to a plain dish's ${cookXp(rank, { steps })}",
+    "new": "${professionName('cooking')} XP to a plain dish's ${cookXp(rank)}",
     "tests": [
       "test/prof9_client.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "AUDIT-PROF-541-K7-steps-unread",
@@ -1519,8 +1520,8 @@
   {
     "name": "PROF541-R2-S7-dish-key",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind === 'dish' ? r.product : r.id);",
-    "new": "r.kind === 'dish' ? r.id : r.id);",
+    "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
+    "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'dish' ? r.id : `${r.product}@${r.tier}`);",
     "tests": [
       "test/prof9_law.test.js",
       "test/prof9_service.test.js"
@@ -1530,8 +1531,8 @@
   {
     "name": "PROF541-R2-S7-dish-prefix",
     "file": "server-account/src/professions.js",
-    "old": "  const keyed = r.kind === 'jewel' || r.kind === 'dish';",
-    "new": "  const keyed = r.kind === 'jewel';",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'dish' ? [r.id] : firstCraftKin(r);",
     "tests": [
       "test/prof9_service.test.js"
     ],
@@ -1540,8 +1541,8 @@
   {
     "name": "PROF541-R2-S7-plain-ring-prefix",
     "file": "server-account/src/professions.js",
-    "old": "  const keyed = r.kind === 'jewel' || r.kind === 'dish';",
-    "new": "  const keyed = firstCraftKey(r) !== r.id;",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'jewel' && !r.gem ? [r.id] : firstCraftKin(r);",
     "tests": [
       "test/prof10_service.test.js"
     ],

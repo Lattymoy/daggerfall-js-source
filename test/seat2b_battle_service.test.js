@@ -96,7 +96,7 @@ test('SEAT2b part two (b) THE WORKS FROZEN AT THE FIRST PASS: the Walls\' tier, 
   work(s.raw, 'barracks', 2, { building: 3, standsAt: T0 + 60 });   // a tier whose day has come counts
   work(s.raw, 'walls', 2, { building: 3, standsAt: START });   // ...one whose day comes after the door opens does not
   s.raw.prepare('UPDATE town_seat_battles SET rams = 2 WHERE week = ? AND key = ?').run(W + 1, ANTICLERE.key);
-  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, 'siegewright', ?)`).run(s.a2.id, s.a2.character, xpForRank(100), T0);
+  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, 'building', ?, 'siegewright', ?)`).run(s.a2.id, s.a2.character, xpForRank(100), T0);  // PIN MOVED (CRAFT3): Carpentry's and Masonry's are Building's track
   s.setNow(START - 600 + 1);
   assert.equal((await s.pass(s.d1, F)).body.error, 'field-unsettled', 'one side\'s field alone settles nothing - and freezes nothing');
   assert.equal(s.battle().works, null);
@@ -111,7 +111,7 @@ test('SEAT2b part two (b) THE WORKS FROZEN AT THE FIRST PASS: the Walls\' tier, 
 test('SEAT2b part two (b) A PALACE WITHOUT A GATE, AND NO SIEGEWRIGHT: no Gatehouse (-1) and no Ram whatever the camp sent; a Siegewright among the defenders is not the attackers\' (mutants: the gate\'s -1; the Rams\' gate; the attacking side)', async (t) => {
   const s = await battleWeek(t);
   s.raw.prepare('UPDATE town_seat_battles SET rams = 3 WHERE week = ? AND key = ?').run(W + 1, ANTICLERE.key);
-  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, 'siegewright', ?)`).run(s.d1.id, s.d1.character, xpForRank(100), T0);
+  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, 'building', ?, 'siegewright', ?)`).run(s.d1.id, s.d1.character, xpForRank(100), T0);  // PIN MOVED (CRAFT3): Carpentry's and Masonry's are Building's track
   s.setNow(START - 600 + 1);
   await s.pass(s.a1, F);
   assert.deepEqual(await sxOf(s, s.d1), [0, -1, 0, 0, 0]);

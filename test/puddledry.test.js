@@ -142,8 +142,11 @@ test('PUDDLE-DRY on BLOCKS.BSA: every town block served with no lone water tile 
   }
   assert.equal(rmb, 920);
   assert.equal(puddles, 0, 'no puddle served');
-  assert.equal(dried, 700, 'the census: 700 puddles dried');
-  assert.equal(kept, 611, 'and 611 ponds, basins and moats kept');
+  // PIN MOVED (WATER-DRAW2, test/waterdraw2.test.js): 700 and 611 when the draw's table knew no island - the islands,
+  // corners and half-turned saddles joined their ponds (fewer, whole), six lone islands dried and twenty tiles of ponds
+  // the islands had cut apart stopped drying as slivers
+  assert.equal(dried, 686, 'the census: 686 puddles dried');
+  assert.equal(kept, 560, 'and 560 ponds, basins and moats kept');
   const castle = blocks.getBlockIndex('CASTAA25.RMB');
   const largest = (g) => Math.max(...patchesOf(g).map((p) => p.length));
   assert.equal(largest(blocks.getBlock(castle).rmbBlock.fldHeader.groundData.groundTiles), 202, 'a castle\'s moat, its shore ring with it');
