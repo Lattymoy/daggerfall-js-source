@@ -30,10 +30,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
+import { PIXEL_M } from '../net/gateLaw.js';   // the metres a map pixel spans (819.2: MapsFile's 32768 world units at 40 a metre) - ONE home, the gate's law declared it first
 
 /** The metres a map pixel spans - MapsFile's own 32768 world units at 40 a metre (world/streamingWorld.js
- *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS). Measured, not chosen. */
-export const PIXEL_M = 819.2;
+ *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS). Measured, not chosen; re-exported from its one home for the frame's readers. */
+export { PIXEL_M };
 /** The authoring grid: Daggerfall's Tamriel picture, 320 x 200 (TMAP00I0.IMG, TAMRIEL2.IMG - ui/provinceMap.js). */
 export const PICTURE_W = 320;
 export const PICTURE_H = 200;

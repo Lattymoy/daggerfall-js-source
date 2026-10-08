@@ -19,7 +19,7 @@ import {
   bayToTamriel, tamrielToBay, pictureToBay, bayToPicture, inBay, bayPictureRect, tamrielFrameInBay, pixelsToKm,
 } from '../src/world/tamrielFrame.js';
 import {
-  V, COAST, ISLANDS, BORDERS, PROVINCES, RANGES, RIVERS, SEAS, CITIES, coastRun, classifyEdges, inRing, provinceAt, seaAt,
+  V, COAST, ISLANDS, BORDERS, PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, coastRun, classifyEdges, inRing, provinceAt, seaAt,
   landBounds, pt, pts, closedRing, provinceByKey,
 } from '../src/world/tamrielGeography.js';
 import {
@@ -159,7 +159,7 @@ test('TAMRIEL1 geography: every city stands in the province it is listed under a
   assert.equal(seaAt(260, 56).name, 'Inner Sea');
   const b = landBounds();
   assert.ok(b.x0 >= 0 && b.y0 >= 0 && b.x1 <= PICTURE_W && b.y1 <= PICTURE_H, 'the land is on the picture');
-  for (const rg of RANGES) { assert.ok(rg.pts.length >= 2 && rg.w > 0 && rg.gain > 0 && rg.gain <= 1); }
+  for (const rg of MOUNTAIN_RANGES) { assert.ok(rg.pts.length >= 2 && rg.w > 0 && rg.gain > 0 && rg.gain <= 1); }
   for (const rv of RIVERS) assert.ok(rv.pts.length >= 3, `${rv.name} has a course`);
   // the Bay's edge classification the authored shape commits to: its north edge is High Rock, its south Hammerfell,
   // its east land, and its west edge opens to the sea in the middle (the probe measures the data against this)
@@ -371,7 +371,7 @@ test('TAMRIEL1 raster: the frame in WOODS\' own shape - sea bytes 0 and Ocean, l
   }
   assert.ok(land > r.province.length * 0.3 && sea > r.province.length * 0.3, 'a continent in an ocean');
   // Red Mountain: the cell under its spine is at the snowline
-  const [mx, my] = [RANGES.find((g) => g.name === 'Red Mountain').pts[0][0] * PIXELS_PER_PICTURE_UNIT / 25, RANGES.find((g) => g.name === 'Red Mountain').pts[0][1] * PIXELS_PER_PICTURE_UNIT / 25];
+  const [mx, my] = [MOUNTAIN_RANGES.find((g) => g.name === 'Red Mountain').pts[0][0] * PIXELS_PER_PICTURE_UNIT / 25, MOUNTAIN_RANGES.find((g) => g.name === 'Red Mountain').pts[0][1] * PIXELS_PER_PICTURE_UNIT / 25];
   const peak = r.heightBytes[Math.floor(my) * r.width + Math.floor(mx)];
   assert.ok(peak >= SNOWLINE_BYTE, `the peak ${peak} is over the snowline ${SNOWLINE_BYTE}`);
   assert.ok(SNOW_BYTE > SNOWLINE_BYTE);

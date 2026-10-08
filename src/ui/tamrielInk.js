@@ -28,7 +28,7 @@
 // handed in by the window.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  PROVINCES, RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt, seaAt, provinceByKey,
+  PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt, seaAt, provinceByKey,
 } from '../world/tamrielGeography.js';
 import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, PIXELS_PER_PICTURE_UNIT, tamrielFrameInBay } from '../world/tamrielFrame.js';
 import { makeNoise, octaveNoise } from './introMap.js';   // the intro's own seeded value noise - ONE home for it
@@ -264,7 +264,7 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   const rivers = [];
   for (const rv of RIVERS) for (const c of clipOutsideRect(chainToBay(rv.pts.map(([x, y]) => ({ x, y }))), rect)) rivers.push(roundCorners(c, 12));
   const carets = [];
-  for (const rg of RANGES) for (const c of rangeCarets(rg, noise)) { const q = toBay(c); if (!inBay(q.x, q.y)) carets.push({ ...c, x: q.x, y: q.y }); }
+  for (const rg of MOUNTAIN_RANGES) for (const c of rangeCarets(rg, noise)) { const q = toBay(c); if (!inBay(q.x, q.y)) carets.push({ ...c, x: q.x, y: q.y }); }
   const provinces = PROVINCES.map((p) => { const [x, y] = pictureToBay(p.label[0], p.label[1]); return { key: p.key, name: p.name, x, y }; });
   const seas = SEAS.map((s) => { const [x, y] = pictureToBay(s.at[0], s.at[1]); return { name: s.name, x, y }; });
   const cities = CITIES.map((c) => { const [x, y] = pictureToBay(c.at[0], c.at[1]); return { name: c.name, province: c.province, capital: !!c.capital, x, y }; })

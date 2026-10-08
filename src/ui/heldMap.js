@@ -1417,7 +1417,10 @@ export class HeldMapWindow {
   /** TAMRIEL1: the scale that fits the whole BAY on the paper - the home view's, and the mark past which the sheet is
    *  on the continent (ui/tamrielInk.js onContinent). */
   _bayFit(lim = null) {
-    return scaleMinOf({ mapW: this._size.width, mapH: this._size.height, paperW: lim?.paperW ?? this._paper.w, paperH: lim?.paperH ?? this._paper.h });
+    // held to SCALE_MAX, the ceiling the view itself is held to: a synthetic bay smaller than the sheet (the pins'
+    // ten-pixel one) fits at a scale the view can never reach, and an unheld fit would put every view "on the
+    // continent" and thin the Bay's own ink for nothing
+    return Math.min(SCALE_MAX, scaleMinOf({ mapW: this._size.width, mapH: this._size.height, paperW: lim?.paperW ?? this._paper.w, paperH: lim?.paperH ?? this._paper.h }));
   }
 
   _limits() {

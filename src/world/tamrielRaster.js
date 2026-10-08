@@ -17,7 +17,7 @@
 // little lattice noise keeps a plain from reading as a contour. The climate is the province's. The province byte is
 // its index in PROVINCES, PROVINCE_NONE at sea.
 // ═══════════════════════════════════════════════════════════════════
-import { PROVINCES, RANGES, pts } from './tamrielGeography.js';
+import { PROVINCES, MOUNTAIN_RANGES, pts } from './tamrielGeography.js';
 import { TAMRIEL_W, TAMRIEL_H, PIXELS_PER_PICTURE_UNIT, BAY_ORIGIN, BAY_W, BAY_H } from './tamrielFrame.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 
@@ -98,7 +98,7 @@ export function rasterizeTamriel({ cell = 8 } = {}) {
       }
     }
   }
-  const ranges = RANGES.map((rg) => ({ ...rg, line: rg.pts.map(([x, y]) => toCell({ x, y })), w: rg.w * unit }));
+  const ranges = MOUNTAIN_RANGES.map((rg) => ({ ...rg, line: rg.pts.map(([x, y]) => toCell({ x, y })), w: rg.w * unit }));
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;

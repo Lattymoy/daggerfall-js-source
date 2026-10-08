@@ -184,7 +184,7 @@ export const PROVINCES = Object.freeze([
 /** The mountains: a spine (picture units) and a half-width `w`; `gain` how high the raster lifts the ridge
  *  (1 = the snowline). The Wrothgarians and the Dragontails begin inside the Bay's rectangle, where WOODS.WLD
  *  already stands them; only their reach past its edge is drawn. */
-export const RANGES = Object.freeze([
+export const MOUNTAIN_RANGES = Object.freeze([
   Object.freeze({ name: 'Wrothgarian Mountains', w: 4, gain: 1.0, pts: [[96, 58], [108, 54], [116, 50]] }),
   Object.freeze({ name: 'Dragontail Mountains', w: 4, gain: 0.95, pts: [[90, 74], [104, 80], [116, 90]] }),
   Object.freeze({ name: 'Druadach Mountains', w: 3, gain: 0.9, pts: [[114, 30], [116, 44], [118, 58]] }),
