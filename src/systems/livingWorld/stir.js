@@ -46,6 +46,8 @@ export const HUMOURS = Object.freeze({
   rough: Object.freeze([/** @type {const} */ (['civil', 0.3]), /** @type {const} */ (['curt', 0.35]), /** @type {const} */ (['hostile', 0.35])]),
 });
 const ROUGH = new Set(['mercenary', 'sailor']);
+/** AUDIT LW-STIR A5: the pleas that name nobody - a stranger's (a beggar knows the town's names, not a traveller's). */
+export const PLEA_UNNAMED = Object.freeze(PLEA_SCRIPTS.filter((s) => s.every((l) => !l.text.includes('{b}'))));
 /** THE SMALL VOICES: how long a word stays up (real seconds); the night watch calls the hour within CALL_SPREAD_MIN of
  *  it, CALL_SHARE of the hours; a stall cries every CRY_EVERY_MIN of the clock CRY_SHARE of the time (by day), a beggar
  *  BEG_EVERY_MIN; one who drinks sings SONG_EVERY_MIN on a walk home from the tavern late. */
@@ -75,6 +77,11 @@ export const SONG_SHARE = 0.35;
 /** The draw in [0, 1) of a seed's parts. @param {...number} parts */
 const draw = (...parts) => (lwSeed(...parts) % 100000) / 100000;
 
+/** AUDIT LW-STIR A1: the slack of a sum on the clock - a few of its last bits, never under 1e-9. The online sky's clock
+ *  passes 2^24 minutes in 2028, where a bit is 3.7e-9: a fixed 1e-9 lost every gate's word whose sum came out one bit
+ *  long, and the stranger stood the whole halt unquestioned. @param {number} v */
+const slack = (v) => Math.max(1e-9, Math.abs(v) * 8 * Number.EPSILON);
+
 /** LW-STIR: whether one is a stranger to the town's watch - of another town (a visitor, a ship's hand ashore), not the
  *  watch itself. @param {StirWho} who @param {number} mapId */
 export function strangerOf(who, mapId) {
@@ -96,18 +103,29 @@ const pick = (pool, seed) => pool[lwSeed(seed, 0x70696b) % pool.length];   // 'p
 /**
  * LW-STIR: HOW LONG A STRANGER COME IN AT A GATE THE WATCH KEEPS HALTS THERE (the clock's minutes; 0, waved through) -
  * GATE_SHARE of the arrivals, a party come in together halting together (the draw the gate's, the day's and the
- * minute's), long enough for the gate's longest word (GATE_LINES) whole in a round of the gate's (meetups.js spotRound):
+ * second's), long enough for the gate's longest word (GATE_LINES) whole in a round of the gate's (meetups.js spotRound):
  * from the next round's start when the one they come in at is too short - their turn waited. The planner's (dayPlan.js
  * schedule: the stay at the gate), read where a post keeps the gate through it; the word's `gate` incident
  * (spotIncidents). Pure. @param {string} spotKey @param {number} day @param {number} inT @param {number} perS
  * @returns {number}
  */
 export function gateHalt(spotKey, day, inT, perS) {
-  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= GATE_SHARE) return 0;   // 'gate'
+  return gateWord(spotKey, day, inT, perS)?.halt ?? 0;
+}
+
+/**
+ * AUDIT LW-STIR A2: gateHalt's halt and the round of the gate's its word falls in (null: waved through) - one party's
+ * word a round, as the street has one incident at a spot a round: a second party halted for a word in a round another's
+ * holds stood its halt out unquestioned (684 such pairs in the lens's days). livingTown.js `_gateHalts` waves it through.
+ * Pure. @param {string} spotKey @param {number} day @param {number} inT @param {number} perS
+ * @returns {{ halt: number, round: number } | null}
+ */
+export function gateWord(spotKey, day, inT, perS) {
+  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= GATE_SHARE) return null;   // 'gate'
   const len = (STIR_GATHER_S + STIR_AFTER_S) * perS + GATE_LINES * lineMinutes(perS);
   const r = spotRound(spotKey, inT, ROUND_S * perS);
   const start = inT + len <= r.end ? inT : r.end + 1e-6;
-  return start - inT + len;
+  return { halt: start - inT + len, round: spotRound(spotKey, start, ROUND_S * perS).round };
 }
 
 /**
@@ -144,17 +162,18 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS) {
   const laid = [];
   /** an incident of `kind` between `a` and `b` (`anchor` the one who keeps their stand) soon after they meet in the
    *  overlap of their stays [o0, o1), whole in the spot's round - else from the next round's start - if it fits */
-  const lay = (/** @type {Incident['kind']} */ kind, /** @type {StirWho} */ a, /** @type {StirWho} */ b, /** @type {0|1} */ anchor, /** @type {readonly StirLine[]} */ script, /** @type {number} */ seed, /** @type {number} */ o0, /** @type {number} */ o1, mood = /** @type {string|null} */ (null), guard = /** @type {SpotStay|null} */ (null)) => {
+  const lay = (/** @type {Incident['kind']} */ kind, /** @type {StirWho} */ a, /** @type {StirWho} */ b, /** @type {0|1} */ anchor, /** @type {readonly StirLine[]} */ script, /** @type {number} */ seed, /** @type {number} */ o0, /** @type {number} */ o1, mood = /** @type {string|null} */ (null), guards = /** @type {readonly SpotStay[]|null} */ (null)) => {
     const soon = o0 + draw(seed, 0x77616974) * Math.min(5, Math.max(0, o1 - o0 - gather - script.length * lineMin - after));   // 'wait' - soon after they meet
     const steps = pick(BREAK_UP_LINES, lwSeed(seed, 0x6272656b));   // 'brek'
     for (const t0 of [soon, spotRound(spotKey, soon, roundMin).end + 1e-6]) {
       const r = spotRound(spotKey, t0, roundMin);
       const from = t0 + gather;
-      // the watch stands through it, its words too: steps in
-      const g = guard && guard.t0 <= from && guard.t1 >= from + (script.length + steps.length) * lineMin + after ? guard.who : null;
+      // the watch stands through it, its words too: steps in - AUDIT LW-STIR A3: whichever of it does on this try (one
+      // chosen before, the first there, left at a handover; the one who came on stood by)
+      const g = guards?.find((w) => w.t0 <= from && w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ?? null;
       const lines = g ? Object.freeze([...script, ...steps]) : script;
       const end = from + lines.length * lineMin + after;
-      if (end > o1 + 1e-9 || end > r.end + 1e-9) continue;   // (a gate's ends as its halt does: the clock's sums)
+      if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue;   // (a gate's ends as its halt does: the clock's sums - AUDIT LW-STIR A1)
       const loud = lines.findIndex((l) => l.loud);
       laid.push({ kind, spot: spotKey, members: [a, b], anchor, guard: g, mood, script: lines, seed, round: r.round, t0, from, end, loudFrom: loud < 0 ? Infinity : from + loud * lineMin });
       return;
@@ -197,7 +216,8 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS) {
     }
   }
   // two at the spot together: a plea, a haggle, a quarrel - one a day between the same two at one spot
-  const watch = stays.filter((s) => s.duty);
+  // AUDIT LW-STIR A7: the watch that steps in - never the second of a pair, who stands by (the first in time, then id)
+  const watch = stays.filter((s) => s.duty && s.pair !== 1);
   const met = new Set();
   const pairOf = (/** @type {StirWho} */ a, /** @type {StirWho} */ b) => (a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`);
   const meets = (/** @type {SpotStay} */ x, /** @type {SpotStay} */ y) => { const [o0, o1] = overlap(x, y); return o1 > o0; };
@@ -212,7 +232,9 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS) {
         if (met.has(pair) || draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'
         met.add(pair);
         const [o0, o1] = overlap(x, y);
-        lay('plea', x.who, y.who, 0, pick(PLEA_SCRIPTS, ps), ps, o0, o1);   // the beggar keeps their place
+        // the beggar keeps their place - AUDIT LW-STIR A4: a stall's keeper theirs, the beggar come to the stall; A5: a
+        // stranger is asked by no name (a beggar called one of Wayrest "kind Finn")
+        lay('plea', x.who, y.who, y.kind === 'stall' ? 1 : 0, pick(strangerOf(y.who, mapId) ? PLEA_UNNAMED : PLEA_SCRIPTS, ps), ps, o0, o1);
       }
       continue;
     }
@@ -242,8 +264,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS) {
     const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));
     if (met.has(pair)) continue;
     met.add(pair);
-    const by = watch.find((w) => w.t0 <= o0 + 1 && w.t1 >= o1 - 1) ?? watch.find((w) => w.t0 < o1 && w.t1 > o0) ?? null;
-    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, by);   // the one who falls out, the aggrieved
+    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);   // the one who falls out, the aggrieved
   }
   // one at the spot a round (so one at a time, and one at a time for each of its people): the gate's first, halted for
   // it - then the first in time
@@ -286,7 +307,7 @@ export const stirLoud = (inc, t) => t >= inc.loudFrom && t < inc.end;
  * watch on duty calls the hour (WATCH_HOURS, by the weather), a stall cries its wares by day, a beggar calls, one who
  * drinks sings on a walk home from the tavern late (`fromTavern(e)`). Each now and then, on their own draws of the
  * clock; up VOICE_S. Pure. `perS` the clock's minutes a real second.
- * @param {StirWho} who @param {{ kind: string, duty?: boolean, from?: any } | null} e @param {number} t @param {number} perS
+ * @param {StirWho} who @param {{ kind: string, duty?: boolean, pair?: number | null, from?: any } | null} e @param {number} t @param {number} perS
  * @param {{ town?: string, weather?: string | null, places?: readonly string[] | null }} [ctx] @param {(e: any) => boolean} [fromTavern]
  * @returns {{ text: string, kind: 'shout'|'sing' } | null}
  */
@@ -303,7 +324,7 @@ export function smallVoice(who, e, t, perS, ctx = {}, fromTavern = () => false) 
     const at = k * every + draw(seed, 1) * Math.max(0, every - up);
     return t >= at && t < at + up ? seed : null;
   };
-  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS) {
+  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS) {   // AUDIT LW-STIR A6: the first of a pair calls it, the second stands by
     const seed = lwSeed(id, dayHour, 0x63616c6c);   // 'call'
     if (draw(seed) >= CALL_SHARE) return null;
     const at = dayHour * 60 + draw(seed, 1) * CALL_SPREAD_MIN;

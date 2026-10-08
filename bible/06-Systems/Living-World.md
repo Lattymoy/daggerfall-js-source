@@ -1830,22 +1830,27 @@ traveller being hostile with a guard and other smaller details that make the wor
 stood alone or talked in circles (LW-TALK), and greeted the player; nobody spoke to anyone in any other way, and the
 street had no voice of its own. LW-STIR deals THE DAY'S INCIDENTS AT EACH SPOT from the plans - every stay of the day at
 it, the spot's key, the day and the clock's rate (`systems/livingWorld/stir.js spotIncidents`) - and THE SMALL VOICES
-from the plan entry one is in and the clock (`smallVoice`): every reader alike, nothing sent. The words are
+from the plan entry one is in and the clock (`smallVoice`): every reader alike, nothing sent - dealt again whenever the
+plans are made again, those lent to the watch dealt and left out as the struck down are, and none of a household living
+here beyond the census, which another reader has not (AUDIT LW-STIR B1, B2: `livingTown.js _stirOf`). The words are
 `systems/livingWorld/lines.js`'s (GATE_SCRIPTS, CHALLENGE_SCRIPTS, QUARREL_SCRIPTS, BREAK_UP_LINES, HAGGLE_SCRIPTS,
 PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
 
 - **The gate.** Mac's own: a stranger come in at a gate the watch keeps halts there - GATE_SHARE (0.6) of the arrivals,
-  a party together (`gateHalt`: the gate's, the day's and the minute's draw) - as long as the gate's longest word
+  a party together (`gateHalt`: the gate's, the day's and the second's draw) - as long as the gate's longest word
   (GATE_LINES) whole in one round of the gate's, waiting for the next round's start when theirs is too short (their
-  turn). The plans hold it (`dayPlan.js schedule`: a `gate` stay at the exit before the walk in, a kind of the street's)
+  turn); one party's word a round of the gate's, a party come in for a word in a round an earlier one's holds waved
+  through at once, and one whose halt would leave no time to walk out by their leaving (AUDIT LW-STIR A2, C2:
+  `livingTown.js _gateOf`). The plans hold it (`dayPlan.js schedule`: a `gate` stay at the exit before the walk in, a kind of the street's)
   where one of the town's watch posted at that gate keeps it through the halt (`livingTown.js _gateHalt`; WATCH-DAY: a
   gate's post for each nine blocks past nine - a town of nine blocks posts none and halts nobody), never off a ship. The
   post questions one of the party, the draw's: their answer by their humour that day (`humourOf`: civil, curt or
   hostile by HUMOURS - a stranger's 0.5, 0.3 and 0.2, a sellsword's and a sailor's 0.3, 0.35 and 0.35), the hostile
   shouting. Found first: the watch never met a stranger. A patrol keeps its district all shift (WATCH-DAY's beat) and the
   strangers stand at the square of an afternoon and the market of a morning - in two days of Daggerfall, Wayrest and
-  Ripmarket with twelve visitors a day, not one stop of a patrol's met one; the four gates of a city are posted round the
-  clock, and every stranger comes in by one.
+  Ripmarket with twelve visitors a day, not one stop of a patrol's met one; a city of 45 blocks or more posts its four
+  gates round the clock (fewer below it - a city of 36 three, of 25 one, of 16 none: AUDIT LW-STIR C's count), and every
+  stranger the roads bring comes in by one (off a ship, by the dock).
 - **The watch on its rounds.** A stop of a patrol's where a stranger stands - CHALLENGE_SHARE (0.5) of the stops, the
   stranger the draw's - stops them (CHALLENGE_SCRIPTS); the second of a pair never speaks for it, a stranger is stopped
   once a day at a spot, and one halted at a gate is the gate's. Rare, by the districts: one in three days of three
@@ -1854,10 +1859,12 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   their stays there, QUARREL_EVENING (4) times it from six between two who drink (DRINKER); never a stranger, the watch,
   nor one working a stall or begging. Each one's own draw, so a busy spot's falling out grows with its people, not their
   pairs: dealt by the pair, an evening's spot of ten in the synthetic town fell out three times in half an hour. The
-  watch on duty standing there through it steps in (BREAK_UP_LINES), the one who began it having the last word. One come
+  watch on duty standing there through it steps in (BREAK_UP_LINES) - whichever of it does, never the second of a pair
+  (AUDIT LW-STIR A3, A7) - the one who began it having the last word. One come
   to a spot with stalls haggles at one of them (HAGGLE_SHARE 0.2), at the stall - one who does not may still fall out
   there (the first cut's haggle sent every one at a spot with a stall past the quarrel's draw); a beggar asks one
-  standing near (PLEA_SHARE 0.1 of each - at 0.2 one more on the open town's square stood two a metre apart across a
+  standing near - a stall's keeper at the stall, the beggar come to it (AUDIT LW-STIR A4), a stranger by no name (A5) -
+  (PLEA_SHARE 0.1 of each - at 0.2 one more on the open town's square stood two a metre apart across a
   walker's lane, past LW-SPACE's measure: recorded below). One a day between the same two at a spot.
 - **One at a spot a round, the round's places as they were.** An incident falls whole in a round of its spot
   (`meetups.js spotRound`) - from the next round's start when the one they meet in is too short - one at a spot a round,
@@ -1866,7 +1873,9 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   (`_spaceAlone`): the one who keeps their stand - the watch at its post, a beggar, a stall's keeper, else the one there
   first (`anchor`) - where they stand, the other FACE_M (CIRCLE_APART, 1.25 m) before them (`meetups.js besideStand`,
   `aloneStands`' `beside`: at their own turn, or just after the one they come to where that one comes later), the two
-  turned to each other. The first cut laid the two as one more circle after the round's: when one began within a round
+  turned to each other - and drawn as themselves while it runs, never a still picture that faces nobody (AUDIT LW-STIR
+  B4). Where a spot is crowded past it, the street holds no place before the one who keeps their stand, and the other
+  speaks from their own (AUDIT LW-STIR B5, recorded: a close-built spot of 22 or more). The first cut laid the two as one more circle after the round's: when one began within a round
   the places of those alone at the spot moved (LW-SPACE's "kept their place as others came" caught it), and a stall's
   keeper left the stall for the pair's place, the two walking through each other on the way (the open town's walkers
   inside another 0.34% -> 0.48%, LW-SPACE's limit 0.5%). Laid so, 0.34%, as before LW-STIR; and the post keeps their stand
@@ -1875,10 +1884,12 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
 - **Said aloud.** An incident's line every LINE from its first, by its part (`stirLine`: a and b its two, g the watch
   stepping in), said while both its two stand on this street (as a circle's are); a shouted line a shout (`speech` kind
   `shout`); the watch stepping in by its own voice (`_stirVoice`). While it is shouted (`stirLoud`) the spot's circles
-  hush and its others turn to look (`_stirAt`, `where`: a post keeps the road).
-- **The small voices** (`smallVoice`, each now and then on their own draws of the clock, a word up VOICE_S): the night
+  hush and its others turn to look (`_stirAt`, `where`: a post keeps the road). Its two are its own from their coming
+  together to its end, and their own again after: walking on in the round, they greet the player (AUDIT LW-STIR B7).
+- **The small voices** (`smallVoice`, each now and then on their own draws of the clock, a word up VOICE_S; by the plan
+  entry where the body is - a walker held by the politeness gate owes its minutes, AUDIT LW-STIR B6): the night
   watch on duty calls the hour (WATCH_HOURS, nine at night to five; CALL_SHARE 0.6 of the hours, within CALL_SPREAD_MIN
-  of it, by the weather - WATCH_CALLS); a stall cries its wares eight to six (CRY_EVERY_MIN, CRY_SHARE); a beggar calls
+  of it, by the weather - WATCH_CALLS), the first of a pair (AUDIT LW-STIR A6); a stall cries its wares eight to six (CRY_EVERY_MIN, CRY_SHARE); a beggar calls
   (BEG_EVERY_MIN, BEG_SHARE); one who drinks deep (SONG_DRINK 0.8) sings on a walk from a tavern's door nine to three
   (SONG_EVERY_MIN, SONG_SHARE 0.35 - the first cut's 0.7 and 0.5 sang 150 to 250 songs a night in a city).
 - **Measured** (`stir.js` over the day's plans, three days; twelve visitors a day of another town in at the four gates
@@ -1892,7 +1903,9 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   | Ripmarket (317) | 6.7 | 0 | 7 | 19 | 3.3 | 4 of 20 | 105 | 739 | 149 | 23 |
 
   Every halt questioned (Daggerfall, four days of twelve: 36 halted, 36 questioned, each by the post keeping its gate);
-  every incident's two FACE_M apart in the middle of it. A word lasts some 25 real seconds.
+  every incident's two FACE_M apart in the middle of it. A word lasts some 25 real seconds. The table is LW-STIR's, before
+  its audit: the hour called counted both men of a pair (A6 halves a pair's), and a second party in a round stood its
+  halt out (A2 waves it through) - the real towns' rows are not measured again here (no ARENA2 in the audit's container).
 - **Recorded, not changed.** How many strangers a town has a day is the roads' (LW3's trips) - twelve is the measure's.
   The step aside (LW-SPACE's `_dodge`) crosses its own line through one standing on it where the only side free is the
   far one - two standing a metre apart across a walker's lane, as the plea at 0.2 stood them: LW-SPACE's to settle.

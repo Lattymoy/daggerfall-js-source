@@ -2,8 +2,8 @@
   {
     "name": "LW-STIR-gate-share",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= GATE_SHARE) return 0;   // 'gate'",
-    "new": "  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= 1) return 0;   // 'gate'",
+    "old": "  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= GATE_SHARE) return null;   // 'gate'",
+    "new": "  if (!(perS > 0) || draw(textSeed(spotKey), day, Math.round(inT * 60), 0x67617465) >= 1) return null;   // 'gate'",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW-STIR-break-up",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      const g = guard && guard.t0 <= from && guard.t1 >= from + (script.length + steps.length) * lineMin + after ? guard.who : null;",
-    "new": "      const g = guard ? guard.who : null;",
+    "old": "      const g = guards?.find((w) => w.t0 <= from && w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ?? null;",
+    "new": "      const g = guards?.find((w) => w.t0 < o1 && w.t1 > o0)?.who ?? null;",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-STIR-round",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (end > o1 + 1e-9 || end > r.end + 1e-9) continue;   // (a gate's ends as its halt does: the clock's sums)",
-    "new": "      if (end > o1 + 1e-9) continue;   // (a gate's ends as its halt does: the clock's sums)",
+    "old": "      if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue;",
+    "new": "      if (end > o1 + slack(o1)) continue;",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW-STIR-quarrel-by-pair",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'\n    const [o0, o1] = overlap(x, y);\n    const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n    if (draw(seed, 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;   // 'qrre'\n    const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n    if (met.has(pair)) continue;\n    met.add(pair);\n    const by = watch.find((w) => w.t0 <= o0 + 1 && w.t1 >= o1 - 1) ?? watch.find((w) => w.t0 < o1 && w.t1 > o0) ?? null;\n    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, by);   // the one who falls out, the aggrieved",
-    "new": "    for (const y of others) {\n      const [o0, o1] = overlap(x, y);\n      const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n      if (draw(lwSeed(seed, textSeed(y.who.id)), 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;\n      const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n      if (met.has(pair)) continue;\n      met.add(pair);\n      const by = watch.find((w) => w.t0 <= o0 + 1 && w.t1 >= o1 - 1) ?? watch.find((w) => w.t0 < o1 && w.t1 > o0) ?? null;\n      lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, by);\n    }",
+    "old": "    const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'\n    const [o0, o1] = overlap(x, y);\n    const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n    if (draw(seed, 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;   // 'qrre'\n    const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n    if (met.has(pair)) continue;\n    met.add(pair);\n    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);   // the one who falls out, the aggrieved",
+    "new": "    for (const y of others) {\n      const [o0, o1] = overlap(x, y);\n      const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n      if (draw(lwSeed(seed, textSeed(y.who.id)), 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;\n      const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n      if (met.has(pair)) continue;\n      met.add(pair);\n      lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);\n    }",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LW-STIR-quarrel-once",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    if (met.has(pair)) continue;\n    met.add(pair);\n    const by = watch.find(",
-    "new": "    met.add(pair);\n    const by = watch.find(",
+    "old": "    if (met.has(pair)) continue;\n    met.add(pair);\n    lay('quarrel'",
+    "new": "    met.add(pair);\n    lay('quarrel'",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LW-STIR-call-hours",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS) {",
-    "new": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post')) {",
+    "old": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS) {",
+    "new": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && e.pair !== 1) {",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LW-STIR-call-duty",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS) {",
-    "new": "  if ((e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS) {",
+    "old": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS) {",
+    "new": "  if ((e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS) {",
     "tests": [
       "test/lwstir_street.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "LW-STIR-halt-post",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this.planOf(g, day).some((e) => e.kind === 'post' && e.duty && e.at?.key === exit.key && e.t0 <= inT && e.t1 >= inT + halt)) return halt;",
-    "new": "      if (this.planOf(g, day).some((e) => e.kind === 'post' && e.duty && e.at?.key === exit.key && e.t0 <= inT)) return halt;",
+    "old": "posts.some((e) => e.t0 <= inT && e.t1 >= inT + halt);",
+    "new": "posts.some((e) => e.t0 <= inT);",
     "tests": [
       "test/lwstir_street.test.js"
     ]

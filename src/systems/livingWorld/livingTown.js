@@ -46,13 +46,13 @@ import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../to
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
 import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
 import { townCensus, isHome, watchShiftSize } from './census.js';
-import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
+import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth's cell
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
-import { spotIncidents, stirLine, stirLoud, smallVoice, gateHalt } from './stir.js';
+import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -330,8 +330,11 @@ export class LivingTown {
     /** LW-TALK: each exchange's script as it began (meetups.js exchangeScript) @type {Map<string, any>} */
     this._scripts = new Map();
     /** LW-STIR: each day's incidents at each spot (stir.js spotIncidents), kept while the same people stand the day
-     *  @type {Map<number, { sig: number, rate: number, by: Map<string, import('./stir.js').Incident[]>, spots: Map<string, any> }>} */
+     *  @type {Map<number, { sig: number, rate: number, gen: number, by: Map<string, import('./stir.js').Incident[]>, spots: Map<string, any> }>} */
     this._stirDays = new Map();
+    /** AUDIT LW-STIR A2: each day's gates (`_gateOf`), kept for the day's roads at a clock's rate (LW-DAWN: a day beside
+     *  another, each its own) @type {Map<number, { roads: any, rate: number, by: Map<string, ReturnType<LivingTown['_gateOf']>> }>} */
+    this._gateKeep = new Map();
     /** LW-STIR: this beat's shouting at each spot (an incident in its loud part) and the middle of its two, the spot's
      *  others turned to it @type {Map<string, { inc: import('./stir.js').Incident, mid: { x: number, z: number } }>} */
     this._stirAt = new Map();
@@ -484,18 +487,65 @@ export class LivingTown {
   /**
    * LW-STIR: HOW LONG A STRANGER COME IN AT `exit` AT `inT` HALTS THERE (stir.js gateHalt) - where the town's watch keeps
    * the gate through it: one of its census posted there (a `post` on duty, by the plans) from their coming to the halt's
-   * end; else none. By the plans alone, so every reader halts them alike. @param {any} exit @param {number} inT
-   * @param {number} day @returns {number}
+   * end; else none. By the plans alone, so every reader halts them alike. AUDIT LW-STIR A2: one party's word a round of
+   * the gate's - a party come in for a word in a round an earlier one's holds is waved through; C2: and one whose halt
+   * leaves them no time to walk out by their leaving (`_gateOf`).
+   * @param {any} exit @param {number} inT @param {number} day @returns {number}
    */
   _gateHalt(exit, inT, day) {
     if (!exit?.key || !this.places.exits.includes(exit)) return 0;
-    const halt = gateHalt(exit.key, day, inT, this._baseRate());
-    if (!(halt > 0)) return 0;
-    for (const g of this.peopleOf(day)) {
-      if (g.job !== 'guard' || this._roads?.visitorOf?.has(g.id)) continue;
-      if (this.planOf(g, day).some((e) => e.kind === 'post' && e.duty && e.at?.key === exit.key && e.t0 <= inT && e.t1 >= inT + halt)) return halt;
+    const gate = this._gateOf(exit, day);
+    const w = gateWord(exit.key, day, inT, this._baseRate());
+    if (!w || !gate.keeps(inT, w.halt) || gate.short.has(inT)) return 0;
+    const by = gate.held.get(w.round);
+    return by === undefined || by === inT ? w.halt : 0;
+  }
+
+  /**
+   * AUDIT LW-STIR A2 / C2: A GATE'S DAY - `keeps` whether a post of the watch keeps it through a halt; `held` the round
+   * each party's word holds, the parties of the roads' visitors come in by it (none off a ship) taken in the order they
+   * come: a party is halted where the gate is kept through it and its word's round is no earlier one's; `short` the
+   * minutes of the parties a halt would keep from walking out by their leaving (the walk in from the gate past it - their
+   * walk out lost, and they stood "away" at the gate to the day's end). Kept for the day's roads at the clock's rate.
+   * @param {any} exit @param {number} day
+   * @returns {{ keeps: (inT: number, halt: number) => boolean, held: Map<number, number>, short: Set<number> }}
+   */
+  _gateOf(exit, day) {
+    const roads = this._roadsOf(day), rate = this._baseRate();
+    let keep = this._gateKeep.get(day);
+    if (!keep || keep.roads !== roads || keep.rate !== rate) {
+      this._gateKeep.set(day, keep = { roads, rate, by: new Map() });
+      for (const d of this._gateKeep.keys()) if (d < day - 1 || d > day + 1) this._gateKeep.delete(d);
     }
-    return 0;
+    const known = keep.by.get(exit.key);
+    if (known) return known;
+    const posts = this.peopleOf(day).filter((g) => g.job === 'guard' && !roads?.visitorOf?.has(g.id))
+      .flatMap((g) => this.planOf(g, day).filter((e) => e.kind === 'post' && e.duty && e.at?.key === exit.key));
+    const keeps = (/** @type {number} */ inT, /** @type {number} */ halt) => posts.some((e) => e.t0 <= inT && e.t1 >= inT + halt);
+    /** @type {Map<number, any[]>} the parties come in by the gate, by their minute */
+    const parties = new Map();
+    for (const v of roads?.visitorOf?.values() ?? []) {
+      if (v.dock || exitToward(this.places, v.yaw) !== exit) continue;
+      const l = parties.get(v.inT) ?? [];
+      l.push(v);
+      parties.set(v.inT, l);
+    }
+    const got = { keeps, held: new Map(), short: new Set() };
+    keep.by.set(exit.key, got);
+    for (const inT of [...parties.keys()].sort((a, b) => a - b)) {
+      const w = gateWord(exit.key, day, inT, rate);
+      if (!w || got.held.has(w.round) || !keeps(inT, w.halt)) continue;
+      if (parties.get(inT)?.some((v) => !(inT + w.halt + walkMinutes(exit, this._lodging(v.res), this.o.mpm) < v.outT))) { got.short.add(inT); continue; }
+      got.held.set(w.round, inT);
+    }
+    return got;
+  }
+
+  /** AUDIT LW-STIR B7: whether one is of an incident running now - from their coming together to its end (held the
+   *  round through, its two walked on after their words and passed the player by unspoken). @param {string} id */
+  _stirring(id) {
+    const x = this._inStir.get(id);
+    return !!x && this._now >= x.inc.t0 && this._now < x.inc.end;
   }
 
   /** AUDIT LW-STIR: a stranger's own town by name, where the roads know it (a visitor's trip's home), else null.
@@ -812,12 +862,14 @@ export class LivingTown {
     const alive = [];
     /** LW-SPACE: everyone the plans stand in this town now, the struck down too (their place is dealt, and left empty) */
     const everyone = [];
+    /** AUDIT LW-STIR B2: those with the watch - dealt the day's incidents as everyone is, and left out (`absent`) */
+    const lent = [];
     const wanted = [];
     /** @type {{ res: Resident, gap: number }[]} */
     const pending = [];
     if (this.o.harbour && !this.places.dock.length && !this._harbourDock) this.dockSpot();   // LW5: the harbour sounded since
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
-      if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them
+      if (this._away(res)) { lent.push(res); continue; }   // WATCH-FIX: with the watch - a guard stands for them
       if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port
       everyone.push(res);
       const plan = this.planOf(res, day);
@@ -848,7 +900,8 @@ export class LivingTown {
     // whole in a round of its spot and takes its two out of the round's circles (their places there left empty, as the
     // struck down's): the round's deal and its circles' places are the ones they were. Its two stand the round through
     // with those alone at the spot (`_spaceAlone`), the one who comes before the one who keeps their stand
-    const stirs = this._stirOf(day, everyone);
+    for (const res of lent) absent.add(res.id);
+    const stirs = this._stirOf(day, everyone.concat(lent));
     for (const key of new Set([...presence.keys(), ...stirs.by.keys()])) {
       const list = presence.get(key) ?? [];
       const round = spotRound(key, t, roundMin);
@@ -934,20 +987,27 @@ export class LivingTown {
   /**
    * LW-STIR: THE DAY'S INCIDENTS AT EACH SPOT (stir.js spotIncidents) - from every outdoor stay of the day at it, of
    * everyone the plans stand in the town (the census's, its visitors and the crews ashore - the struck down too: dealt,
-   * and left out where they are shown), so every reader deals alike; kept while the same people stand the day at the
-   * same clock's rate. `spots` each spot by its key. @param {number} day @param {readonly Resident[]} everyone
+   * and left out where they are shown - AUDIT LW-STIR B2: and those with the watch, this reader's lends or a peer's), so
+   * every reader deals alike; never one living here beyond the census (`o.extraPeople`, a household of this player's own
+   * that another reader has not: its draws moved the town's own incidents, 49 of 752 in twenty days); kept while the same
+   * people stand the day by the same plans (AUDIT LW-STIR B1/C1: the plans made again - the roads' word come, a harbour
+   * found, a crew's arrival moved - kept the day dealt from the plans before, and a reader come after dealt another) at
+   * the same clock's rate. `spots` each spot by its key. @param {number} day @param {readonly Resident[]} everyone
    * @returns {{ by: Map<string, import('./stir.js').Incident[]>, spots: Map<string, any> }}
    */
   _stirOf(day, everyone) {
     const rate = this._baseRate();
-    const sig = textSeed(everyone.map((r) => r.id).join(','));
+    const extra = this.o.extraPeople?.(day, this);
+    const beyond = extra?.length ? new Set(extra.map((r) => r.id)) : null;
+    const dealt = beyond ? everyone.filter((r) => !beyond.has(r.id)) : everyone;
+    const sig = textSeed(dealt.map((r) => r.id).join(','));
     const kept = this._stirDays.get(day);
-    if (kept && kept.sig === sig && kept.rate === rate) return kept;
+    if (kept && kept.sig === sig && kept.rate === rate && kept.gen === this._planGen) return kept;
     /** @type {Map<string, import('./stir.js').SpotStay[]>} */
     const stays = new Map();
     /** @type {Map<string, any>} */
     const spots = new Map();
-    for (const res of everyone) {
+    for (const res of dealt) {
       for (const e of this.planOf(res, day)) {
         if (e.kind === 'walk' || !isOutdoor(e) || !e.at?.key) continue;
         const list = stays.get(e.at.key) ?? [];
@@ -962,7 +1022,7 @@ export class LivingTown {
       const got = spotIncidents(key, list, day, this.o.town.mapId, lineMinutes(rate), rate);
       if (got.length) by.set(key, got);
     }
-    const got = { sig, rate, by, spots };
+    const got = { sig, rate, gen: this._planGen, by, spots };   // (the plans the deal made counted)
     this._stirDays.set(day, got);
     for (const d of this._stirDays.keys()) if (d < day - 1) this._stirDays.delete(d);
     return got;
@@ -1130,7 +1190,7 @@ export class LivingTown {
       // temple's door - stands as Daggerfall's still picture of their kind (looks.js), stood where nobody sees it, as the
       // uniform is; themselves again at once when they go on or join a circle (a picture never walks)
       if (typeof p.still === 'function') {
-        const role = !p.moving && this._inCircle.get(res.id)?.spot !== w.e.at ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf)
+        const role = !p.moving && this._inCircle.get(res.id)?.spot !== w.e.at && !(this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at) ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf); AUDIT LW-STIR B4: nor one of an incident at its spot while it runs - a still picture faces nobody
         const want = role ? stillFlatOf(res, role) : null;
         const has = p.stillLook;
         if ((want?.archive ?? -1) !== (has?.archive ?? -1) || (want?.record ?? -1) !== (has?.record ?? -1)) {
@@ -1205,7 +1265,7 @@ export class LivingTown {
    *  as the player came by speaks when the player stops before them (the rest was taken by the quiet pass, so the stop
    *  that rule waits for never came: not one of 298 quiet strangers spoke, held before the player). */
   _greet(res, person, dist, stopped) {
-    if (dist > GREET_RANGE || this._inCircle.has(res.id) || this._inStir.has(res.id)) return;   // LW-STIR: nor one of an incident
+    if (dist > GREET_RANGE || this._inCircle.has(res.id) || this._stirring(res.id)) return;   // LW-STIR: nor one of an incident (AUDIT LW-STIR B7: while it runs)
     const last = this._greeted.get(res.id);
     if (last && this._now >= last.t && this._now - last.t < GREET_REST_MIN && (last.said || !stopped)) return;   // AUDIT-E6: a clock gone back (a load) forgets the rest
     const text = this.greetingFor(res, this._now, stopped);
@@ -1274,7 +1334,7 @@ export class LivingTown {
           out.push({ person: p, text: line.text, kind: line.loud ? 'shout' : 'talk' });
           continue;
         }
-        if (own) continue;
+        if (own && this._stirring(id)) continue;   // AUDIT LW-STIR B7: after its words, their own again
       }
       if (c) {
         if (this._stirAt.has(c.spot.key)) continue;   // LW-STIR: hushed while words are shouted at their spot
@@ -1285,7 +1345,7 @@ export class LivingTown {
       const g = this._greetings.find((x) => x.person === p);
       if (g) { out.push({ person: p, text: g.text, kind: 'talk' }); continue; }
       // LW-STIR: a small voice - the watch's hour, a stall's cry, a beggar's call, a drinker's song
-      const at = this.entryOf(row.res, this._now);
+      const at = this.entryOf(row.res, this._now - (this._lag.get(id) ?? 0));   // AUDIT LW-STIR B6: where the body is - a walker held owes its minutes (a stall cried from mid-walk)
       const v = at ? smallVoice(row.res, at.e, this._now, rate, ctx, fromTavern) : null;
       if (v && (v.kind === 'sing' || !p.moving)) out.push({ person: p, text: v.text, kind: v.kind });
     }

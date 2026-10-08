@@ -8,6 +8,20 @@
 
 Newest first.
 
+**2026-10-08 - AUDIT LW-STIR.** Mac: *"Lets audit everything and ensure perfection"*, of LW-STIR - the watch's word at
+the gate and on its rounds, the town's quarrels, haggles and pleas, the street hushing and turning, its small voices.
+Taken up again on main after its lenses never reported: four independent adversarial lenses on the frozen merge (the
+dealer's math and laws, the street and every reader, the plans and the hosts, the pins and the record) and this
+session's own; the game's own towns not run (no ARENA2 in the container). Paid: the day's incidents kept by who was in
+town, not by their plans - a reader there before the roads' word staged a day apart from one come after, travellers on
+the road among it (B1 = C1); a gate's word lost past 2^24 minutes, where the online sky is in 2028 (A1); a second party
+halted in a round another's word held, asked nothing (A2); a quarrel unbroken at a watch's handover (A3); a plea taking a
+keeper off their stall (A4 = B3); the day dealt from this reader's lends and household (B2); an incident's beggar and
+keeper drawn as still pictures facing nobody (B4); a halt costing a day visit its walk out (C2); a stranger asked by
+name, both of a pair calling the hour, a pair's second breaking it up, a held walker crying wares, one of an incident
+unable to greet the player the round through (A5, A6, A7, B6, B7). The record's false claims corrected; B5, B4's
+onlookers and C2's elder half recorded. 22 new mutants, all dead. Record: `Audit-LW-Stir.md`.
+
 **2026-10-08 - AUDIT LW-ROOMS.** Mac: *"Audit this"*, of LW-ROOMS - the whole room walked, the tables filled apart and in
 sight, a room holding what its floor does, no afternoon sat out in the tavern. Four independent adversarial lenses on the
 frozen head (the room's math, the layer and every reader, the day's plan, the pins and the record), every one on the

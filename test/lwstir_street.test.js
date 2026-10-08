@@ -61,6 +61,7 @@ function visitorsOf(n = 16) {
   const yaws = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
   const vis = travellerRoster({ mapId: 999, blocks: 45, region: 17, people: 3 }).slice(0, n).map((res, i) => ({ res, inT: D0 + 300 + ((i * 97) % 700), outT: H(17), yaw: yaws[i % 4] }));
   for (let i = 1; i < vis.length; i += 2) { vis[i].inT = vis[i - 1].inT; vis[i].yaw = vis[i - 1].yaw; }   // in twos, a party apiece
+  for (const v of vis) v.outT = Math.max(v.outT, v.inT + 120);   // AUDIT LW-STIR C2: gone no sooner than the roads let one (trips.js: a stay of two hours at the least before noon) - those in after five left before they came
   return vis;
 }
 /** The town's census stood by a tick at minute `t`. */
@@ -150,7 +151,7 @@ test('LW-STIR the gate (Mac: "a traveller being hostile with a guard"): a strang
   assert.ok(OUTDOOR.has('gate') && isOutdoor(held[gi]), 'seen in the street');
 });
 
-test('LW-STIR the town at its gates: the plans halt a stranger where a post of the town\'s watch keeps their gate through the halt (livingTown.js _gateHalt; WATCH-DAY: a gate\'s post for each nine blocks past nine) - a visitor\'s plan holds its gate stay exactly then, none where no post keeps it (a town of nine blocks posts none), nor off a ship; each halt\'s round at its gate has its word, the post\'s, to one halted in it (one a spot a round: a second party halted in it waits on, and is waved through); on the street the post keeps their stand and the stranger comes before them, FACE_M off, the two turned to each other, the rest at the gate turned to them while it is shouted (mutants: the post through it, the halt read, the anchor, the stand before, the faces)', () => {
+test('LW-STIR the town at its gates: the plans halt a stranger where a post of the town\'s watch keeps their gate through the halt (livingTown.js _gateHalt; WATCH-DAY: a gate\'s post for each nine blocks past nine) - a visitor\'s plan holds its gate stay exactly then, none where no post keeps it (a town of nine blocks posts none), nor off a ship; each halt\'s round at its gate has its word, the post\'s, to one halted in it (one a spot a round: a second party whose word would fall in it waved through at once - AUDIT LW-STIR A2); on the street the post keeps their stand and the stranger comes before them, FACE_M off, the two turned to each other, the rest at the gate turned to them while it is shouted (mutants: the post through it, the halt read, the anchor, the stand before, the faces)', () => {
   const built = synthTown();
   const vis = visitorsOf();
   const lt = townOf(built, 45, vis);
