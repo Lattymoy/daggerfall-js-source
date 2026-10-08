@@ -47,8 +47,8 @@
   {
     "name": "CLICK-LIFT-the-dungeon-never-asks",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!interact && (actClick || host.profActing?.())) return true;",
-    "new": "    if (!interact && host.profActing?.()) return true;",
+    "old": "    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
+    "new": "    if (!interact && host.profActing?.()) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
     "tests": [
       "test/fb1001_audit.test.js"
     ]

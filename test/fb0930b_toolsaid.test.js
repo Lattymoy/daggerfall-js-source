@@ -600,7 +600,8 @@ test('PROF-MENU host by source: the street\'s plaque races the node over its own
   assert.match(w, /profClick: \(\) => profClickPress\(\),/);
   assert.match(w, /profHoverPick: \(ray\) => gatherHost\?\.hoverHit\?\.\(ray\) \?\? null,/);
   const m = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(m, /if \(!interact && !pressCast && !actClick && !host\.profActing\?\.\(\) && host\.profClick\?\.\(\)\) return true;/);
+  // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the building's ladder carries the same arm, above - this pin is the dungeon's
+  assert.match(m.slice(m.indexOf('  function tryExitDungeon(')), /if \(!interact && !pressCast && !actClick && !host\.profActing\?\.\(\) && host\.profClick\?\.\(\)\) return true;/);
   assert.match(m, /profHoverPick: \(ray\) => host\.profHoverPick\?\.\(ray\) \?\? null,/);
   const d = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(d, /return opts\.profHoverPick\?\.\(ray\) \?\? ray;/);

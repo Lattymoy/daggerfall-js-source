@@ -875,12 +875,13 @@
   {
     "name": "PROF12-svc-brew-xp-uncapped",
     "file": "server-account/src/alchemy.js",
-    "old": "SELECT ?1, ?2, 'alchemy', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
-    "new": "SELECT ?1, ?2, 'alchemy', 0, ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
+    "old": "SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
+    "new": "SELECT ?1, ?2, '${trackOf('alchemy')}', 0, ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
     "tests": [
       "test/prof12_service.test.js",
       "test/prof12_client.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF12-svc-dis-listed",
@@ -1003,17 +1004,18 @@
   {
     "name": "PROF12-svc-transmuter-open",
     "file": "server-account/src/professions.js",
-    "old": "  if (!workSpecOk(r, r.spec ? specsAt(tracks.find((t) => t.profession === r.spec.profession), nowS) : null)) return { error: 'prof-transmuter' };\n",
+    "old": "  if (!workSpecOk(r, r.spec ? specsAt(tracks.find((t) => t.profession === trackOf(r.spec.profession)), nowS) : null)) return { error: 'prof-transmuter' };\n",
     "new": "",
     "tests": [
       "test/prof12_service.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF12-svc-dish-no-halls",
     "file": "server-account/src/professions.js",
-    "old": "  const halls = takesQuality(r) || r.kind === 'dish' ? await seatStepsFor(",
-    "new": "  const halls = takesQuality(r) ? await seatStepsFor(",
+    "old": "  const halls = rollsQuality(r) || r.kind === 'dish' ? await seatStepsFor(",
+    "new": "  const halls = rollsQuality(r) ? await seatStepsFor(",
     "tests": [
       "test/prof12_apothecary.test.js"
     ]
@@ -1267,11 +1269,12 @@
   {
     "name": "PROF12-pages-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "'jewelcrafting']);",
+    "old": "'provisioning', 'enchanting']);",
+    "new": "]);",
     "tests": [
       "test/prof12_client.test.js"
-    ]
+    ],
+    "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF12-pages-dis-once",

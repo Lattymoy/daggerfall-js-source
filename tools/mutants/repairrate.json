@@ -21,7 +21,7 @@
   {
     "name": "KIT-CEILING-targets-unfiltered",
     "file": "src/systems/smithItems.js",
-    "old": "kitMends(metal, it) && kitGives(it))",
+    "old": "kitMends(metal, it) && kitGives(it, kit))",
     "new": "kitMends(metal, it) && it.currentCondition < it.maxCondition)",
     "tests": [
       "test/repair_rate.test.js",
@@ -31,7 +31,7 @@
   {
     "name": "KIT-CEILING-cap-dropped",
     "file": "src/systems/smithItems.js",
-    "old": "  it.currentCondition = Math.min(kitCeiling(it), it.currentCondition",
+    "old": "  it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition",
     "new": "  it.currentCondition = Math.min(it.maxCondition, it.currentCondition",
     "tests": [
       "test/repair_rate.test.js",
@@ -41,7 +41,7 @@
   {
     "name": "KIT-CEILING-refusal-dropped",
     "file": "src/systems/smithItems.js",
-    "old": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: KIT_CEILING_TEXT, refused: true };\n",
+    "old": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: kitCeilingText(item), refused: true };   // CRAFT5: the kit's own reach\n",
     "new": "",
     "tests": [
       "test/repair_rate.test.js"
@@ -50,7 +50,7 @@
   {
     "name": "KIT-CEILING-refusal-never-fires",
     "file": "src/systems/smithItems.js",
-    "old": "kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it));",
+    "old": "kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it, kit));",
     "new": "kitMends(metal, it) && it.currentCondition < it.maxCondition && false);",
     "tests": [
       "test/repair_rate.test.js"
@@ -69,8 +69,8 @@
   {
     "name": "AUDIT-ECON-R4-ceiling-rounded-up",
     "file": "src/systems/smithItems.js",
-    "old": "export const kitCeiling = (it) => Math.floor(it.maxCondition * KIT_CEILING);",
-    "new": "export const kitCeiling = (it) => Math.ceil(it.maxCondition * KIT_CEILING);",
+    "old": "export const kitCeiling = (it, kit = null) => Math.floor(it.maxCondition * kitReach(kit));",
+    "new": "export const kitCeiling = (it, kit = null) => Math.ceil(it.maxCondition * kitReach(kit));",
     "tests": [
       "test/repair_rate.test.js",
       "test/prof3_client.test.js",
@@ -81,8 +81,8 @@
   {
     "name": "AUDIT-ECON-R4-ceiling-rounded",
     "file": "src/systems/smithItems.js",
-    "old": "export const kitCeiling = (it) => Math.floor(it.maxCondition * KIT_CEILING);",
-    "new": "export const kitCeiling = (it) => Math.round(it.maxCondition * KIT_CEILING);",
+    "old": "export const kitCeiling = (it, kit = null) => Math.floor(it.maxCondition * kitReach(kit));",
+    "new": "export const kitCeiling = (it, kit = null) => Math.round(it.maxCondition * kitReach(kit));",
     "tests": [
       "test/repair_rate.test.js",
       "test/prof3_client.test.js",
@@ -151,8 +151,8 @@
   {
     "name": "AUDIT-ECON-R2-the-hundredth-dropped",
     "file": "src/systems/smithItems.js",
-    "old": "export const kitGives = (it) => kitCeiling(it) - it.currentCondition > Math.floor(it.maxCondition / 100);",
-    "new": "export const kitGives = (it) => kitCeiling(it) - it.currentCondition > 0;",
+    "old": "export const kitGives = (it, kit = null) => kitCeiling(it, kit) - it.currentCondition > Math.floor(it.maxCondition / 100);",
+    "new": "export const kitGives = (it, kit = null) => kitCeiling(it, kit) - it.currentCondition > 0;",
     "tests": [
       "test/repair_rate.test.js",
       "test/prof3_client.test.js",
@@ -187,8 +187,8 @@
   {
     "name": "AUDIT-ECON-R3-the-refusal-unflagged",
     "file": "src/systems/smithItems.js",
-    "old": "text: KIT_CEILING_TEXT, refused: true };",
-    "new": "text: KIT_CEILING_TEXT };",
+    "old": "text: kitCeilingText(item), refused: true };",
+    "new": "text: kitCeilingText(item) };",
     "tests": [
       "test/repair_rate.test.js",
       "test/prof3_client.test.js",

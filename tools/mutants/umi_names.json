@@ -1,0 +1,20 @@
+[
+  {
+    "name": "UMI-NAMES-raw-name-field",
+    "file": "src/ui/useMagicItemWindow.js",
+    "old": "nameOf = (it) => itemLongName(it) } = {}) {",
+    "new": "nameOf = (it) => it?.name ?? '' } = {}) {",
+    "tests": [
+      "test/ui1_usemagicitem.test.js"
+    ]
+  },
+  {
+    "name": "UMI-NAMES-potions-never-stack",
+    "file": "src/systems/inventory.js",
+    "old": "  if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion",
+    "new": "",
+    "tests": [
+      "test/ui1_usemagicitem.test.js"
+    ]
+  }
+]

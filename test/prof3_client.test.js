@@ -214,10 +214,12 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   const press = (label) => buttons().find((b) => b.textContent.startsWith(label)).onclick();
   assert.match(text(), /The Anvil/);
   assert.match(text(), /The smith's anvil - 50 gold a craft/);
-  press('Mithril');
-  const row = buttons().find((b) => b.textContent.startsWith('Mithril Longsword'));
+  // PIN MOVED (CRAFT2): the anvil lists its patterns, the metal chosen in the box from what is held - none made now, so the
+  // open one holding most of its inputs (the three Mithril Ingots)
+  const row = buttons().find((b) => b.textContent.startsWith('Longsword'));
   assert.match(row.textContent, /wants its inputs/, 'no Cured Leather yet');
   row.onclick();
+  assert.match(text(), /Mithril Longsword - rank 55/);
   assert.match(text(), /Cured Leather|leather:cured/);
   assert.match(text(), /margin 0: Crude 20 \| Standard 60 \| Fine 20/);
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
@@ -240,8 +242,7 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   forge = { kind: 'home', fee: 0 };
   held.delete('leather:cured');
   draw();
-  press('Mithril');
-  buttons().find((b) => b.textContent.startsWith('Mithril Longsword')).onclick();
+  assert.match(text(), /Mithril Longsword - rank 55/, 'CRAFT2: the pattern and its metal kept');
   assert.equal(buttons().some((b) => b.textContent.startsWith('Buy ')), false);
   assert.match(text(), /Your anvil/);
   forge = null;
@@ -259,7 +260,7 @@ test('PROF3 wiring: the host mints a craft\'s pieces once each by provenance, pa
   assert.match(w, /onSettle: \(\) => \{ profBook\.settle\(profMint, profMintCraft\)\.catch\(\(\) => \{\}\); \},/);
   // PROF4: a Heartwood for a plank; AUDIT 30 C4: the fee rides the kept craft and is paid where its pieces are minted
   // PROF7 moved it: the station's own kept word (craftStation), and a garment's dye beside the Heartwood
-  assert.match(w, /const r = await profBook\.craft\(recipe, \{ clean, heartwood, dye, cracked, fee: f\.fee > 0 \? f\.fee : 0, name: [^\n]*\n\s*if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? st\.kept : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem; (AUDIT PROF-541 R2-C2) the busy word the book's   // PIN MOVED (AUDIT2 BAG1 K8): and what went into the Stores first
+  assert.match(w, /const r = await profBook\.craft\(recipe, \{ clean, heartwood, dye, cracked, fee: f\.fee > 0 \? f\.fee : 0, name: [^\n]*\n\s*\/\/ CRAFT1 \(bible[^\n]*\n\s*\/\/ AUDIT CRAFT1 F3: [^\n]*\n\s*const chain = \[refinedText\([^\n]*\n\s*if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem; (AUDIT PROF-541 R2-C2) the busy word the book's   // PIN MOVED (AUDIT2 BAG1 K8): and what went into the Stores first; (CRAFT1) and what the chain refined first - kept or refused (AUDIT CRAFT1 F3)
   assert.match(w, /const profMintCraft = \(data, kept = null\) => \{\n\s*if \(kept\?\.fee > 0\) \{ deductGold\(playerEntity, Math\.min\(kept\.fee, totalGoldAmount\(playerEntity\)\)\); saveSoon\.changed\(\); \}/);
   assert.match(w, /heatBand: \(\) => heatBand\(\{ strength: liveStat\(playerEntity, 'strength'\), agility: liveStat\(playerEntity, 'agility'\) \}\),/);
   assert.match(src('src/scenes/shared.js'), /installSmithing\(\);/);

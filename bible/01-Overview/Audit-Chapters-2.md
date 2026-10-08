@@ -7,7 +7,7 @@ own and each told to prove what it reported (a node probe over the real migratio
 none edited the tree while any of them was reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING):
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, the hall parts of `professions.js`, the routes,
-  migrations `0088` and `0089`;
+  migrations `0090` and `0091` (`0088` and `0089` before the merge of main that renumbered them past CRAFT2-CRAFT5's);
 - **the client** (C): `src/net/npcRollTracker.js`, `npcHallBook.js`, the door, the board, `scenes/world.js`'s wiring;
 - **Daggerfall's law** (D): the leaf, the join, the halls each town keeps, the reveal - against DFU's C#;
 - **the economy and its abuse** (E): a modified client, colluding accounts, the numbers;
@@ -23,7 +23,7 @@ reason). The first run judged a few records dead that a flaky pin had failed - t
 turns for a real round trip, which a loaded runner does not always give - so the pin waits on what the trip moves, and
 every record judged on one failing test was run again: four the pins lens had called equivalent stand so. The arc's older lists hold
 too: `chap1.json` 25, `audit_chap1.json` 49 and `chap2.json` 39, all dead. The service stays `acct94`: none of it has
-shipped, so migration `0089` grew in place.
+shipped, so migration `0091` grew in place.
 
 ## Fixed
 

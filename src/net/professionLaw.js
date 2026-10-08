@@ -3,7 +3,8 @@
 // PROF1 (2026-09-28, Mac: "Begin!"; "Life skills will utilize things
 // like tree chopping, picking up ingredients, fishing, etc. Active player
 // involvement and actual UI integration for life skills") - THE
-// PROFESSIONS' LAW: the thirteen, their ranks and XP, the tiers, the
+// PROFESSIONS' LAW: the ten (the thirteen until CRAFT3 merged eight crafts
+// into five), their ranks and XP, the tiers, the
 // specialisations, the day (no cap since CAP-OFF), the Stores, Herbalism's
 // two acts, the materials the Stores hold, and the Court writs. The record is
 // bible/06-Systems/Professions-Arc.md (PROF0) 3, 5, 7, 11 and 22.
@@ -30,9 +31,11 @@ import { REGION_RACES } from '../formats/mapsTables.js';
 import { attributeBand } from '../systems/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
 import { renownRate } from './renown.js';   // MERGE 2: a writ's Renown at every source's rate (RENOWN-ACCOUNT)
 
-// ─── THE THIRTEEN (PROF0 3.1) ────────────────────────────────────────
+// ─── THE TEN (PROF0 3.1; CRAFT3, Professions-Arc 41.6) ───────────────
 
-/** Every profession, in the Professions tab's order: the five that gather, then the eight that craft. */
+/** Every profession - every TRACK a character holds - in the Professions tab's order: the five that gather, then the
+ *  five that craft (CRAFT3, Mac: "Lets do it" - Smithing with Jewelcrafting, Building of Carpentry and Masonry,
+ *  Outfitting, Provisioning of Alchemy and Cooking, Enchanting; the eight crafts until then). */
 export const PROFESSIONS = Object.freeze([
   Object.freeze({ id: 'mining', name: 'Mining', kind: 'gathering' }),
   Object.freeze({ id: 'logging', name: 'Logging', kind: 'gathering' }),
@@ -40,19 +43,42 @@ export const PROFESSIONS = Object.freeze([
   Object.freeze({ id: 'hunting', name: 'Hunting', kind: 'gathering' }),
   Object.freeze({ id: 'fishing', name: 'Fishing', kind: 'gathering' }),
   Object.freeze({ id: 'smithing', name: 'Smithing', kind: 'crafting' }),
+  Object.freeze({ id: 'building', name: 'Building', kind: 'crafting' }),
   Object.freeze({ id: 'outfitting', name: 'Outfitting', kind: 'crafting' }),
-  Object.freeze({ id: 'carpentry', name: 'Carpentry', kind: 'crafting' }),
-  Object.freeze({ id: 'masonry', name: 'Masonry', kind: 'crafting' }),
-  Object.freeze({ id: 'alchemy', name: 'Alchemy', kind: 'crafting' }),
+  Object.freeze({ id: 'provisioning', name: 'Provisioning', kind: 'crafting' }),
   Object.freeze({ id: 'enchanting', name: 'Enchanting', kind: 'crafting' }),
-  Object.freeze({ id: 'cooking', name: 'Cooking', kind: 'crafting' }),
-  Object.freeze({ id: 'jewelcrafting', name: 'Jewelcrafting', kind: 'crafting' }),
+]);
+/**
+ * CRAFT3: THE EIGHT DISCIPLINES - what a recipe, a work or a choice is OF (recipeLaw's `profession`, a work's `xp` and
+ * `more.profession`, a choice's own), each the craft whose track it raises and reads. The disciplines stay as they
+ * were - a Ring is Jewelcrafting's work, the Gemcutter Jewelcrafting's choice - and the track is the craft's: a Ring
+ * made raises Smithing, and a Gemcutter stands under Smithing.
+ */
+export const DISCIPLINES = Object.freeze([
+  Object.freeze({ id: 'smithing', name: 'Smithing', craft: 'smithing' }),
+  Object.freeze({ id: 'jewelcrafting', name: 'Jewelcrafting', craft: 'smithing' }),
+  Object.freeze({ id: 'carpentry', name: 'Carpentry', craft: 'building' }),
+  Object.freeze({ id: 'masonry', name: 'Masonry', craft: 'building' }),
+  Object.freeze({ id: 'outfitting', name: 'Outfitting', craft: 'outfitting' }),
+  Object.freeze({ id: 'alchemy', name: 'Alchemy', craft: 'provisioning' }),
+  Object.freeze({ id: 'cooking', name: 'Cooking', craft: 'provisioning' }),
+  Object.freeze({ id: 'enchanting', name: 'Enchanting', craft: 'enchanting' }),
 ]);
 /** @type {Map<string, { id: string, name: string, kind: string }>} */
 const BY_ID = new Map(PROFESSIONS.map((p) => [p.id, p]));
+/** @type {Map<string, { id: string, name: string, craft: string }>} */
+const DISCIPLINE_BY_ID = new Map(DISCIPLINES.map((d) => [d.id, d]));
+/** CRAFT3: the track a profession or a discipline is read and raised on - a discipline its craft's ('jewelcrafting'
+ *  'smithing', 'masonry' 'building', 'cooking' 'provisioning'), every track its own. */
+export const trackOf = (id) => DISCIPLINE_BY_ID.get(id)?.craft ?? id;
+/** CRAFT3: a craft's disciplines, in the table's order (`building` ['carpentry', 'masonry']); a gathering track none. */
+export const disciplinesOf = (craft) => DISCIPLINES.filter((d) => d.craft === craft).map((d) => d.id);
+/** CRAFT3: a discipline's own name ("Jewelcrafting"), or a track's. */
+export const disciplineName = (id) => DISCIPLINE_BY_ID.get(id)?.name ?? BY_ID.get(id)?.name ?? '';
 export const isProfession = (id) => typeof id === 'string' && BY_ID.has(id);
-export const professionName = (id) => BY_ID.get(id)?.name ?? '';
-export const isGathering = (id) => BY_ID.get(id)?.kind === 'gathering';
+/** A track's name - a discipline's its craft's (CRAFT3: "+60 Smithing XP" for a Ring). */
+export const professionName = (id) => BY_ID.get(trackOf(id))?.name ?? '';
+export const isGathering = (id) => BY_ID.get(trackOf(id))?.kind === 'gathering';
 
 // ─── RANKS, XP, TIERS (PROF0 3.2) ────────────────────────────────────
 
@@ -111,9 +137,10 @@ export const RESPEC = Object.freeze({ marks: 1000, days: 7 });
 /** `later`: the slice the choice waits for - named on its card, never chosen until then (AUDIT 29 A17). */
 const spec = (id, name, text, later = null) => Object.freeze(later ? { id, name, text, later } : { id, name, text });
 const pair = (a, b) => Object.freeze([a, b]);
-/** Every profession's two choices at 50 and at 100 - the record's words. PROF1 gives Herbalism's their effect; the
- *  others take effect with their professions' slices (a track there holds no XP until then). */
-export const SPECIALISATIONS = Object.freeze({
+/** Every profession's and discipline's two choices at 50 and at 100 - the record's words. PROF1 gives Herbalism's their
+ *  effect; the others take effect with their professions' slices (a track there holds no XP until then). CRAFT3: a
+ *  merged craft offers its disciplines' (SPECIALISATIONS, below). */
+const OWN_CHOICES = Object.freeze({
   mining: Object.freeze({
     50: pair(spec('prospector', 'Prospector', 'Surface veins within 200 m are marked on the compass; gems come a tenth more often.'),
       spec('deep-delver', 'Deep Delver', 'Dungeon veins yield +50%.')),
@@ -196,16 +223,28 @@ export const SPECIALISATIONS = Object.freeze({
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),
 });
-/** Whether `specId` is one of the two a profession offers at `rank` (50 or 100). */
-export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[profession]?.[rank]?.some((s) => s.id === specId && !s.later);
+/**
+ * EVERY TRACK'S CHOICES AT 50 AND AT 100. CRAFT3 (41.2: "its choices at 50 and at 100 are its parents' four, one
+ * chosen"): a merged craft offers its two disciplines' - Smithing's Weaponsmith, Armoursmith, Gemcutter and Goldsmith at
+ * 50 - one chosen, each acting on its own discipline's work as it did (a Gemcutter's gem, a Weaponsmith's weapons); a
+ * track of one discipline offers its own two.
+ */
+export const SPECIALISATIONS = Object.freeze(Object.fromEntries(PROFESSIONS.map((p) => {
+  const of = disciplinesOf(p.id).length ? disciplinesOf(p.id) : [p.id];
+  return [p.id, Object.freeze(Object.fromEntries(SPEC_RANKS.map((r) => [r, Object.freeze(of.flatMap((d) => OWN_CHOICES[d][r]))])))];
+})));
+/** CRAFT3: the discipline (or gathering profession) a choice is of - 'gemcutter' 'jewelcrafting' - or null. */
+export const specDiscipline = (specId) => Object.keys(OWN_CHOICES).find((d) => SPEC_RANKS.some((r) => OWN_CHOICES[d][r].some((s) => s.id === specId))) ?? null;
+/** Whether `specId` is one of those a track (or a discipline's craft's) offers at `rank` (50 or 100). */
+export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId && !s.later);
 /** A choice's record, or null. */
-export const specOf = (profession, rank, specId) => SPECIALISATIONS[profession]?.[rank]?.find((s) => s.id === specId) ?? null;
+export const specOf = (profession, rank, specId) => SPECIALISATIONS[trackOf(profession)]?.[rank]?.find((s) => s.id === specId) ?? null;
 /**
  * The specialisations a track stands under at `nowS`: the chosen ones, a paid change taking the place of its rank's
  * choice once its week is out. `row` is the service's track row (spec50, spec100, respec_rank, respec_to, respec_at).
  * @returns {{ 50: string|null, 100: string|null }}
  */
-export function specsAt(row, nowS) {
+export function specsAt(row, nowS) {   // CRAFT3: a merged craft's track stands under one choice a rank, of its four
   const out = { 50: row?.spec50 ?? null, 100: row?.spec100 ?? null };
   if (row?.respec_to && Number.isSafeInteger(row?.respec_at) && nowS >= row.respec_at && (row.respec_rank === 50 || row.respec_rank === 100)) {
     out[row.respec_rank] = row.respec_to;
@@ -933,9 +972,12 @@ export function smeltOrigin(r, count, bought) {
   return { own: count - b, bought: b };
 }
 /** THE CRAFTER'S LIMIT (PROF0 3.2): a character raises at most two crafts past Journeyman. A craft that is not one of
- *  them while two others are stops at rank 50 - the XP one short of rank 51. `ranks` every crafting track's rank. */
+ *  them while two others are stops at rank 50 - the XP one short of rank 51. `ranks` every crafting track's rank.
+ *  CRAFT3 (41.2: "the crafter's limit stays two above Journeyman - of five, a real choice"): the five crafts' tracks; a
+ *  discipline asked is its craft's. */
 export function craftXpCap(profession, ranks) {
-  const past = Object.entries(ranks ?? {}).filter(([p, r]) => p !== profession && BY_ID.get(p)?.kind === 'crafting' && r > JOURNEYMAN_RANK).length;
+  const own = trackOf(profession);
+  const past = Object.entries(ranks ?? {}).filter(([p, r]) => p !== own && BY_ID.get(p)?.kind === 'crafting' && r > JOURNEYMAN_RANK).length;
   return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;
 }
 

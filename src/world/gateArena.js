@@ -79,6 +79,7 @@ export const COURT_TEXT = Object.freeze({
   noSave: 'You cannot save in the Deadlands.',
   noMap: 'You cannot map the Deadlands.',   // WB13b: the refusals one shape
   noMark: 'You cannot set a Mark in the Deadlands.',
+  noCompanions: 'Your companions cannot follow you into the Deadlands.',   // GATE-ALONE: said as a fighter steps in with any at their side
   castOut: 'You are cast out of the Burning Court.',
   collapse: 'The Burning Court collapses.',
   lost: 'The way to the Burning Court is lost.',   // AUDIT WB B5: the relay's link gone for good

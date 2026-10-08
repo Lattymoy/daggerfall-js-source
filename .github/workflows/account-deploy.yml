@@ -106,6 +106,7 @@ on:
       - "src/characters/nameGen.json"
       - "src/characters/dyes.js"
       - "src/net/alchemyLaw.js"
+      - "src/net/temperLaw.js"
       - "src/systems/potionRecipes.js"
       - "src/characters/itemTemplates.json"
       - ".github/workflows/account-deploy.yml"

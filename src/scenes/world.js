@@ -66,6 +66,8 @@ import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } fr
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt, surfaceNormalAt, groundOffPlane, terrainSampleHeightAt, lowestGroundUnder } from '../world/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
+import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
+import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
@@ -252,12 +254,12 @@ import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1
 import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn } from './shared.js';   // LANDFORM1-3: the Landforms switch
-import { createLandforms, landformLiftField, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
+import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { vergeClear, natureReach, pathTileMask, lptFitCap } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads; LPT-FIT: every Low Poly tree's crown off them
 import { LPT_CROWNS } from '../world/lptCrowns.js';   // LPT-FIT: the drawn prototype's crown, turned (its radial reach)
 import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
-import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
+import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
 import { utcDayOfMs } from '../net/nodeLaw.js';   // PROF8: a haul's UTC day
 import { registerPlayerKillListener } from '../systems/playerKills.js';   // PROF7: the player's own kill stamps a body
@@ -272,6 +274,7 @@ import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/
 import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands
 import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
+import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
@@ -322,6 +325,7 @@ import { bossPlace } from '../world/gateBoss.js';   // AUDIT WBX F3: where he fe
 import { itemIconColor32 } from '../ui/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
 import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { createGateCrowd, gateCrowdMax } from '../net/gateCrowd.js';   // GATE-CROWD: a gate's court draws the nearest of a crowd
 import { gateLandingFor, courtRing, courtArena, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -465,6 +469,11 @@ import { mintPieces, mintPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_
 import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
+import { temperItem, reforgeItem, essenceReforgeRefusal, TEMPER_MOVED_TEXT, TEMPER_LOST_TEXT, REFORGE_LOST_TEXT } from '../systems/smithItems.js';   // CRAFT4: the temper and the Reforge with Essence, on the piece
+import { temperRecipeOf, temperRefusal, pieceQuality, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: what a temper takes
+import { QUALITY_NAMES } from '../net/recipeLaw.js';   // CRAFT4: a temper's word
+import { reforgeableLines, affixLine } from '../systems/lootRarity.js';   // CRAFT4: the lines an Enchanter reforges
+import { trackOf } from '../net/professionLaw.js';   // CRAFT4: the craft a piece's temper is
 import { brewItems, brewedText, BREW_KEPT_TEXT } from '../systems/alchemyItems.js';   // PROF12: a brew's potions, DFU's own, into the pack
 import { essenceOf, piecePoints, DISENCHANTER } from '../net/alchemyLaw.js';   // PROF12: a piece's Essence, as the enchanting station shows it
 import { facetBand } from '../net/recipeLaw.js';   // PROF10: the facet's attribute band
@@ -549,7 +558,7 @@ import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
-import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
+import { restrideGrid, gridBed } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -811,7 +820,7 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
-import { setShotPlace } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken
+import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
 import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
@@ -1220,9 +1229,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // world stands on one ground. A river is cut where it is painted (the network's `water`); online the river switch is
   // the room's (onlineLane.js ONLINE_ROOM_MOD_KEYS), so the room stands on one ground. Off, every kernel is DFU's to the bit.
   const landform = landformsOn();
+  /** LANDFORM4: the game's own locations the landforms pull the ground to (landforms.js landformSites), and LANDFORM6: the
+   *  world's climates whose lands they stand (landformClimates) - made at the index's fill below, before the first pixel
+   *  is asked of either kernel, and handed to both (setLandformTables). */
+  let _landformSites = null, _landformClimates = null;
   /** LANDFORM1-3: this thread's landforms - the gate's beacon (gateGroundAt) and a record's frame (landformLiftAt)
-   *  read them, over the network this thread holds: the same arrays the worker cuts along. */
-  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads() }) : null);
+   *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites. */
+  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);
   // VERGE1: CLEAR ROADSIDES (world/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -1355,6 +1368,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
       }
     }
+  }
+  // LANDFORM4: A TOWN STANDS IN ITS LAND - the game's own rows (HUB1's: so a mod's addition and a spawn never move the
+  // ground) as the landforms' sites, handed to both kernels before the first pixel is asked of either; LANDFORM6: THE LAND
+  // WEARS ITS CLIMATE - and every pixel's climate beside them. AUDIT LANDFORMS III B1: each row AS MAPS.BSA HOLDS IT
+  // (readClassicLocation, past the world-data door) - a town pack resizes a row's block grid (Beautiful Villages 3,240 of
+  // its 7,317, Beautiful Cities 120 of 410), and a client whose pack failed to load stood other wild ground round 3,360
+  // towns, up to 120 m off. The pack's own rect is still levelled by DFU's blend in its own pixel. Only a replaced row is
+  // read again (none with no pack; with both, about 3,400 rows, 75 ms).
+  if (landform) {
+    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);
+    _landformSites = landformSites(_hubRows.map(classicRow).filter(Boolean).map((loc) => { const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude); return { px: p.x, py: p.y, loc }; }));
+    _landformClimates = landformClimates((x, y) => maps.getClimateIndex(x, y));   // LANDFORM6: after the boot's coastal dilation (above), as every pixel streams them
+    terrainGen.setLandformTables({ sites: _landformSites, climates: _landformClimates });
   }
   // WD3: WHERE A SAVE'S RECORDS STAND, for the layout pins (systems/layoutPins.js) - a town by its map id (a deed, a
   // room, a quest's site, a repair ticket), by its pixel (a Recall anchor, an inside save), by its discovery id
@@ -1645,7 +1671,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => chatNotice(text), regionName: (r) => REGION_NAMES[r] ?? 'the Iliac Bay', oreName: (m) => materialLabel(m).replace(/ Ore$/, ''),
     onChange: (l) => gatherHost?.restandAt(l.x, l.y),
   }) : null;
-  /** PROF7: the stamped bodies where the player is (scenes/huntHost.js bodiesOf) - the gather host's, once it is built. */
+  /** PROF7: the stamped bodies where the player is (scenes/huntHost.js bodiesHere - the street's, a dungeon's or a building's) - the gather host's, once it is built. */
   let huntBodies = () => [];
   /** PROF7: the station a recipe's profession is crafted at - the anvil (Smithing's), the workbench (Carpentry's, PROF4),
    *  the loom (Outfitting's) - its place, its keeper and its words. */
@@ -1653,15 +1679,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // one latch holds every craft and brew (profBook.js _craftBusy), so a station's own word named another's work: the
   // book's refusal says the hands are busy (accountClient.js 'prof-busy')
   const craftStation = (profession) => (profession === 'carpentry'
-    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: 'Carpentry' }
+    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: professionName('carpentry') }   // CRAFT3: each discipline's craft's track - Building's
     : profession === 'outfitting'
       ? { here: () => modes?.loomHere?.() ?? null, a: 'a loom', who: 'tailor', noun: 'loom', kept: LOOM_KEPT_TEXT, xp: 'Outfitting' }
       : profession === 'masonry'   // PROF11: the mason's bench - a General Store's or a home's
-        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: 'Masonry' }
+        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: professionName('masonry') }
         : profession === 'cooking'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee
-          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: 'Cooking' }
+          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: professionName('cooking') }
           : profession === 'jewelcrafting'   // PROF10: the jeweller's bench - a Pawn Shop's or a Gem Store's, or a home's
-            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: 'Jewelcrafting' }
+            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName('jewelcrafting') }
             : { here: () => modes?.forgeHere?.() ?? null, a: 'an anvil', who: 'smith', noun: 'anvil', kept: CRAFT_KEPT_TEXT, xp: 'Smithing' });
   /** AUDIT 32 B3: a balance a counter's purchase answered, told to every book that shows one - the Bank's and the
    *  market's (AUDIT 30 U6's law, which the Stores page's counters never kept: the Market tab read the old one for its
@@ -2172,6 +2198,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
+  renderer.waterBed = waterOn;   // WATER-NEXT 2: the ground under the enhanced water is a bed (render/waterBedGlsl.js)
+  renderer.waterSimple = getPref('waterQuality') === 'simple';   // WATER-NEXT: the Water quality row - Simple takes no copy and no ripples
+  // WATER-NEXT 4: the ripple field round the camera - the rings and wakes of what moves in the water (world/waterRipples.js)
+  const ripples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;   // AUDIT WATER-NEXT m12: the hosts' one stir
+  let _rippleOnWater = false;   // the player's feet in exterior water this frame (the footsteps' own answer)
+  /** WATER-NEXT 4: one step of the ripple field - recentred on the eye, stirred by the player in the water and by every
+   *  boat afloat under way, stepped at its fixed rate, and handed to the renderer for this frame's water. AUDIT
+   *  WATER-NEXT P3/m12: the hosts' one stir (world/waterRipples.js createRippleStir) on the frame's clock - no closure
+   *  or array a frame - and a hull stirs only under way (BOAT_WAKE_SPEED). */
+  function stirRipples(dt, nowMs) {
+    if (!ripples) return;
+    ripples.begin(dt, cam.pos[0], cam.pos[2]);
+    if (_rippleOnWater) ripples.stir(player, player.pos, !!(player.isPlayerSwimming || player.swimming), nowMs);   // AUDIT WATER-NEXT F4: outdoors the swimmer is isPlayerSwimming (swimming is Deep Waters' forge's)
+    for (const boat of csaRuntime?.AllBoats ?? []) {
+      const g = boat.GameObject;
+      if (g?.activeSelf && g.position) ripples.stir(boat, g.position, true, nowMs, BOAT_STIR, BOAT_WAKE_SPEED);
+    }
+    ripples.end(dt);
+    renderer.setWaterRipples(ripples.field, RIPPLE_SPAN, RIPPLE_CELLS);
+  }
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
   const stormLights = createStormLights();   // BOLT: every strike's channel and light, the storm overhead's and the distant ones'
   const boltsGl = sky.enhanced ? new LightningBoltsRenderer(renderer.gl) : null;   // BOLT: built on the enhanced lane (the wisps' law)
@@ -3878,9 +3924,38 @@ export async function bootWorld(canvas, renderer, params, status) {
   function dwSetTilemap(entry, bytes) {
     renderer.writeTilemapTexture(entry.tilemapTex, bytes, TERRAIN_TILE_DIM);
     entry._dwBytes = bytes === entry.tilemapBytes ? null : bytes;
+    dwRecarve(entry);   // AUDIT WATER-NEXT H1: the bed by the TileMap the cap leaves, before the clip and the water read the ground
     dwClipTerrain(entry);
     dwWaterSurface(entry);
   }
+  /** AUDIT WATER-NEXT H1: THE TileMap THE BED IS CARVED BY - the one the water draws from: the cap's, where Deep Waters
+   *  patched one, else the pixel's own. A tile the cap clipped votes dry, so the bed comes up to its bank at the clip's
+   *  edge, where the mod's floor is fitted to the vanilla shore - carved under it, the ground stood metres below the floor
+   *  it should meet, and the gap between them was open. */
+  function bedBytesOf(p) { return p._dwBytes ?? p.tilemapBytes; }
+  /** AUDIT WATER-NEXT H1 (2026-10-07): A REPAINTED TILE IS GROUND. The cap repaints a water tile that stands above the
+   *  sea with the ground beside it (world/deepWaterCap.js) - and the bed had been carved by the pixel's own TileMap at
+   *  the build, so every such tile was a pit four units deep, of grass or sand, with no water over it (Iliac Puddle No
+   *  More is on by default: a river's mouth on a coast). When the cap's TileMap moves the bed, the ground is carved again
+   *  from the grid as it stood (`_bed.sheet` and `_bed.normals`); the clip and the water's sheet are re-made after it by
+   *  the caller. Once a cap (a coastal pixel's): one depth pass, and a carve and an upload where the bed moved. */
+  function dwRecarve(p) {
+    if (!waterOn || !p._bed || !p.terrain) return;   // no vertex was under water: a cap only takes water away
+    const stride = p._stride ?? 1;
+    const halo = stride === 1 ? p._bed.halo : null;   // AUDIT WATER-NEXT F2: the seams' tiles the build read
+    const depths = waterBedDepths(bedBytesOf(p), { stride, halo });
+    const was = p._bed.depths;
+    if (depths === was || (depths && was && depths.length === was.length && depths.every((d, i) => d === was[i]))) return;
+    const grid = { positions: p._bed.sheet, normals: p._bed.normals };
+    const bed = depths ? gridBed(grid, bedBytesOf(p), stride, halo) : null;
+    renderer.destroyMesh(p.terrain);
+    p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
+      stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
+  }
+  /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
+   *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
+  function hostBed(grid, bed) { return bed ? { sheet: grid.positions, normals: grid.normals, depths: bed.depths, sheetDepths: bed.sheetDepths, halo: bed.halo ?? null } : null; }
   // DW-F: WATER1 - the port's own water, drawn over the tiles whose art is water - reads the TileMap the cap
   // leaves: a texel the mod clips (the carved sea) or repaints from the ground beside it (raised water) takes
   // WATER1's sheet with it, as it takes the ground's water art, and the texture's water is the sheet's again
@@ -3891,8 +3966,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!waterOn || !p.terrain) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     const idx = buildWaterIndices(p._dwBytes ?? p.tilemapBytes, p._stride ?? 1);
-    p.water = idx ? renderer.createWaterSurface(p.terrain, idx) : null;
+    p.water = idx ? renderer.createWaterSheet(idx, waterSheetOf(p._bed, p.terrain)) : null;   // WATER-NEXT 2: the bed the build carved
   }
+  /** WATER-NEXT 2: a water sheet's source - the bed's grid and depths, or (no vertex under water) the terrain's own
+   *  positions with no bed (renderer.createWaterSheet). */
+  function waterSheetOf(bed, terrain) { return bed?.depths ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }; }   // AUDIT WATER-NEXT H2: the sheet's own depths
   // DW-C: THE CLIP'S CULL - a quad, and at a far stride a skirt segment, whose every tile the cap clipped leaves the
   // ground's index set: the mod's discard exactly while a tile is a quad (stride 1). FAR-CLIP1: at EV4's far stride a
   // quad is sixteen tiles and a part-clipped one stands - its clipped tiles are the clip program's to discard
@@ -3979,7 +4057,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function dwColumnFrame(f) {
     return {
       sceneTint: sceneTint(f.s.darker, f.daylight, f.camY > f.seaY),
-      columnOn: f.s.spawnSurfaces && !f.underwater,   // the top's share: none while its _DeepWatersUnderwater discards it
+      columnOn: f.s.spawnSurfaces && !f.underwater && !waterOn,   // the top's share: none while its _DeepWatersUnderwater discards it - WATER-NEXT 2: and none under the enhanced water, which measures the column itself (the scene's depth) and would take it twice; the share's 128-tiled texture is moire under clear water
       seaY: f.seaY + SURFACE_RENDER_Y_OFFSET,
       topColor: f.look.topColor, topVision: f.look.topVision,
       surfaceScroll: surfaceScrollAt(_dwNowMs / 1000),   // the surface's own offset this frame - the column's colour is the texel the top draws
@@ -4146,6 +4224,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _dwFogU = new Float32Array(20);
   const _dwBreathState = { tally: 0 };
   const _dwSurfaceList = [];
+  let _waterU = null;   // WATER-NEXT 2: the frame's water uniforms, set where the terrain's water draws
   function drawDeepWatersSurfaces(nowMs) {
     const f = _dwFrame;
     if (!f || !f.s.spawnSurfaces) return;
@@ -4155,6 +4234,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (p._visible && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
     }
     if (!_dwSurfaceList.length) return;
+    // WATER-NEXT 2: from above, the sea is the water's own - the swell, the depth to the floor the mod carved, the
+    // look through it - drawn by the water program over the mod's own sheets; from under it, the mod's underside
+    if (waterOn && !f.underwater && _waterU) {
+      const here = playerTravelPixel();
+      let arch = here ? built.get(`${here.x},${here.y}`)?.groundArchive : null;   // the sea's water is the camera's climate's
+      if (arch == null) for (const p of built.values()) if (p.groundArchive != null) { arch = p.groundArchive; break; }
+      renderer.drawSeaSurfaces(_dwSurfaceList, deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, _waterU, f.look.topColor, renderer.tileArrays.get(arch));   // its rgb read in place
+      return;
+    }
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
@@ -4531,8 +4619,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+      bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,
@@ -4587,18 +4676,21 @@ export async function bootWorld(canvas, renderer, params, status) {
         origin: Int32Array.of(ox, oz, 1),
       };
     }
-    const terrain = renderer.createTerrainSurface(positions, normals,
+    // WATER-NEXT 2 (world/waterBed.js): the ground the eye sees carved into a bed under the water - the game's ground
+    // (heightAt, the samples) never moves - and the water's own sheet, the grid as it stood with the bed's depth.
+    // AUDIT WATER-NEXT P1: carved by the kernel on the worker (terrainGen.js restrideGrid), not on this thread
+    const bed = hostBed({ positions, normals }, carved);
+    const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    // WATER1 / WATER-AUDIT (M4): the water's own quads over the same
-    // vertices - null for a pixel without water, which never enters the pass
+    // WATER1 / WATER-AUDIT (M4): the water's own quads - null for a pixel without water, which never enters the pass
     const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride) : null;
-    const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
+    const water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, terrain)) : null;
     made.terrain = terrain; made.water = water;   // BUILD-FAIL1
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
     // EV4: dropped by the skirt depth so a future restride to the far
     // ring never hangs geometry below the culling box.
-    const bounds = localAabb(positions);
+    const bounds = localAabb(carved?.positions ?? positions);   // WATER-NEXT 2: the bed inside the box
     bounds[1] -= TERRAIN_SKIRT_DEPTH;
     const unionBox = (b) => {
       for (let i = 0; i < 3; i++) {
@@ -5429,6 +5521,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
+      _bed: bed,   // WATER-NEXT 2: the bed, for the cap's re-index (dwWaterSurface) and its re-carve (dwRecarve)
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
@@ -5736,21 +5829,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = `${p.px},${p.py}`;
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
-    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
+    const bedBytes = waterOn ? bedBytesOf(p) : null;   // AUDIT WATER-NEXT P1: the bed carved on the worker with the grid
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
       if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
+      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), 1, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
       restrideTerrain(p, 1, grid);
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads() })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
-    p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
+    const bed = waterOn ? hostBed(grid, grid.bed) : null;   // WATER-NEXT 2: the bed at the new ring class - AUDIT WATER-NEXT P1/H1: the kernel's, by the TileMap the water draws from
+    p._bed = bed;
+    p.terrain = renderer.createTerrainSurface(grid.bed?.positions ?? grid.positions, grid.bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
-    p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
+    p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
     p._stride = stride;
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
     if (p._dwBytes) dwClipTerrain(p);   // DW-C: the clip, at the new ring class
@@ -8218,7 +8315,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** CSA-F: the wave object - opaque, cut out and dithered, its depth written - with the world's cut-outs, after the
    *  ground (GROUND-LAST) and before the sea's transparent top; the dither LoadSettings puts on the material. */
   function csaDrawWaves() {
-    if (!csaRender) return;
+    // WATER-NEXT 3: the enhanced water breaks on its own shore (its foam, pushed up the bank by its own swell) - Come
+    // Sail Away's sprite breakers are retired under it; the first sea shots found them in the scene's depth, a band of
+    // opaque surf a hand over the sea that the clear water then showed as the ground
+    if (!csaRender || waterOn) return;
     csaCall(() => {
       const w = csaRuntime.waves();
       if (!w.mesh) return;
@@ -9276,9 +9376,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  pool itself: the street's, a building's, a dungeon's), how a companion stands there (the player's ally, loose of
    *  every cap, out of the place's own save - the layer's catch-up comes long before the street's cull) and goes, and where behind the player a
    *  body may stand (the place's collider swept from the player's feet). None while the player is not afoot in it: a
-   *  door or a load in flight, at a helm, in the travel view, or the naval arc off. */
+   *  door or a load in flight, at a helm, in the travel view, or the naval arc off. GATE-ALONE (2026-10-07, Mac: "We need
+   *  to not allow followers inside the oblivion gates"): and none in an Oblivion Gate's court - the layer lifts every
+   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it. */
   function companionPlace({ crew = true } = {}) {   // REVENANT-COMPANION: the sworn's layer asks it without the naval arc's gate
     if ((crew && !navalOn()) || !walkMode || !playerSpawned || _loading || modes?.transitioning || travelView?.active || csaRuntime?.isSailing?.()) return null;
+    if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate
     const spotOf = (col) => (from, dx, dz) => { const p = [from[0], from[1], from[2]]; try { col?.move(p, dx, 0, dz, 1.8); } catch { /* the leader's own spot */ } return [p[0], p[1], p[2]]; };   // AUDIT CC-A3: the swept spot's own height (a slope's, a stair's)
     const mode = _mode();
     const standIn = (pool) => (mobile, feet, o) => pool.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, allied: true, loose: true, transient: true });
@@ -9398,6 +9501,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  name, role and effects, his health off his body where one stands here (else as the party carries it, a share of
    *  his whole); none with the arc off. */
   function partyCompanions() {
+    if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it
     // AUDIT WK-U5: none while I sail - the party is lifted aboard (it stood its cards over the ship's plate on a phone)
     const party = navalOn() && !csaRuntime?.isSailing?.() ? naval?.companions?.party ?? [] : [];
     const sworn = swornCards?.() ?? [];   // REVENANT-COMPANION: the sworn's cards after the crew's
@@ -9658,7 +9762,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (`player.collider`: the street's, the building's, the dungeon's), the same rule the plaque's other racers keep
    *  (pickActivatableHit's wall test). A player behind a wall is not named, lit or pressed. */
   const peerInSight = (eye, dir) => {
-    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate), SOCIAL_REACH, rayPersonDistance);   // INVIS-NET: a player concealed is not there to press - CONCEAL-MATE: unless they are in my party
+    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), SOCIAL_REACH, rayPersonDistance);   // INVIS-NET: a player concealed is not there to press - CONCEAL-MATE: unless they are in my party; GATE-CROWD: nor one a gate's crowd leaves undrawn
     if (!hit) return null;
     const col = player?.collider ?? collider;
     const wall = col?.raycast ? col.raycast(eye, dir, hit.distance) : Infinity;
@@ -10430,12 +10534,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dungeon's, a puppet's owner's word), a node where it lies while the pack holds a Skinning Knife
       const bodyStamps = createBodyStamps({ nowMs: () => Date.now() + _sharedOffsetMs });
       registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });
-      huntBodies = () => (modeNow() === 'dungeon'
-        ? bodiesOf(modes?.dungeonCtx?.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f), (f) => modes?.dungeonCtx?.corpseKeyOf?.(f))   // AUDIT 32 H3: where it lies, not where it flew
-        : bodiesOf(exteriorFoes.foes, bodyStamps, exteriorFoes.corpseAt, exteriorFoes.corpseKeyOf));
+      // FIELD BUGS 2026-10-07 INDOOR-SKIN: and a building's - its own pool (a quest's rats in a house in town), where the
+      // street's was asked and the body was never found
+      huntBodies = () => bodiesHere(modeNow(), { street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);
       // AUDIT 32 H8: a body's search opens its loot through its pool's own door, by its key - the street's body window, the
-      // dungeon's take
-      const openHuntLoot = (key) => (key.startsWith('foeCorpse:') ? openBodyLoot(key) : modes?.dungeonCtx?.takeLoot(key, getInteractionMode()));
+      // dungeon's take; INDOOR-SKIN: a building's body window (its keys are the street's spelling, its pool its own)
+      const openHuntLoot = (key) => (modeNow() === 'interior' ? modes?.openInteriorBody?.(key)
+        : key.startsWith('foeCorpse:') ? openBodyLoot(key) : modes?.dungeonCtx?.takeLoot(key, getInteractionMode()));
+      const _fishSeaT = [0, 0, 0];   // HIGH-CAST: the sea's top's translation, the fish host's waterY
       gatherHost = createGatherHost({
         book: profBook, hud, kinds: [herbKind({ book: profBook }), mineKind({ book: profBook, lodes: motherlodeBook, marks: marksBook }),   // PROF2b: and the Motherlodes
           treeKind({ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord }),   // PROF4: Logging's trees
@@ -10455,6 +10561,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             // FIELD BUGS 2026-10-05 SHORE-CAST: the cast's point over water the feet would swim in (MAC2's coverage law) -
             // null off the built ground, which the kind reads as unknown
             waterAt: (pos) => { const g = groundSampleAt(pos); const c = g ? feetWaterCoverage(g.tile, g.feet) : null; return c == null ? null : c >= SWIM_COVERAGE; },
+            // FIELD BUGS 2026-10-07 HIGH-CAST: the water's surface under the cast - the ground the water lies on (heightAt), or the
+            // sea's top over it (tvSeaY's composition: Deep Waters' sea over its carved seabed, else the ground's clamp at
+            // OceanElevation); null off the built ground, which the kind reads as unknown
+            waterY: (pos) => { const g = heightAt(pos[0], pos[2]); return Number.isFinite(g) ? Math.max(g, (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : null; },
             // the tug's buzz (5.2: "the pad and phone buzz") - the touch layer's own pulse, under its own pref (TI2)
             tug: () => { if (!getPref('touchHaptics')) return; try { navigator.vibrate?.(120); } catch { /* a platform without it */ } },
             trophy: (species) => {
@@ -10472,8 +10582,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
         eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
         // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
-        clear: (from, to, underground) => {
-          const c = underground ? modes?.dungeonCtx?.collider : collider;
+        clear: (from, to, underground, interior = false) => {
+          const c = underground ? modes?.dungeonCtx?.collider : interior ? modes?.interiorCollider : collider;   // INDOOR-SKIN: a building's own walls
           if (!c?.raycast) return true;
           const d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
           const l = Math.hypot(d[0], d[1], d[2]) || 1;
@@ -10496,6 +10606,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         step: (n) => plaqueStep(n),
         active: () => walkMode && modeNow() === 'exterior' && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning && !travelView?.active,   // AUDIT 32 H10: never from under the travel view (its ray is the hidden head's - AUDIT OW5 V2's law for E)
         activeDungeon: () => walkMode && modeNow() === 'dungeon' && !modes?.dungeonCtx?.uiOverlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // PROF2: a dungeon's veins
+        activeInterior: () => walkMode && modeNow() === 'interior' && !modes?.overlayHeld && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // INDOOR-SKIN: a building's bodies (its own pool's)
         onSettle: () => { profBook.settle(profMint, profMintCraft).catch(() => {}); }, pointer: (want) => { const relock = () => { if (!cursorActive() && !gamePaused() && !pointerSurfaces.size && !(modes?.modalWindowUp?.() ?? false) && !overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look') { if (cursorActive()) { setCursorActive(false); relock(); } return null; } if (controllerLook()) return null; const off = holdCursor(); return () => { if (!off()) return; if (backButtonHeld) escRelock = relock; else relock(); }; },   // HERB-CURSOR (FIELD BUGS 2026-10-02 part four): the Basket's glints are clicked with the cursor, held free while it plays and the look taken back after (never under a window, a surface, an overlay, the travel view or the player's own freed mouse); a vein's, a body's or the net's act is aimed by the look - a mouse the player freed is taken back, under the same gates (AUDIT A4). AUDIT A1: an Escape that ended the act asks on its keyup (escRelock) - a lock taken inside its keydown was the browser's to end on the keyup, and ESC-LOCK read that as a second Escape; C8: a pad in hand strikes with its trigger, and no hold shows the OS pointer
       });
       /** AUDIT PROF-541 B4: the town the alchemy station stands in, where my guild holds it - its Apothecary's steps, and
@@ -10538,11 +10649,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           // step this craft (fortLaw.js hallStepsFor) - the service asks the Charter again (professions.js seatStepsFor)
           const { seat } = myHall(recipeById(recipe)?.profession);
           const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);   // PROF10: a Lapidary's cracked gem
-          if (!r?.ok) return { ok: false, text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
+          // CRAFT1 (bible/06-Systems/Professions-Arc.md 41): the chain's works the craft ran first - said, made or refused
+          // AUDIT CRAFT1 F3: a kept craft says it too; F4: and a refused one where the chain stopped
+          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');
+          if (!r?.ok) return { ok: false, text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };
           const paid = f.fee > 0 && !r.elsewhere;
           const rec = recipeById(recipe);
           const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));   // SEAT2b part two: a Ram Kit is the Stores'
-          return { ok: true, text: `${made} (+${r.data.xp} ${st.xp} XP)${paid ? `, and paid the ${st.who} ${f.fee} gold` : ''}.` };
+          return { ok: true, text: `${chain ? `${chain} ` : ''}${made} (+${r.data.xp} ${st.xp} XP)${paid ? `, and paid the ${st.who} ${f.fee} gold` : ''}.` };
         },
         stock: async (material, qty, counter = stockOf(material)?.counter) => {
           const r = await profBook.stock(material, qty);
@@ -10588,7 +10702,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const r = await profBook.brew(potion, keys, { fee: f.fee > 0 ? f.fee : 0, seat }, profMintCraft);
           if (!r?.ok) return { ok: false, text: r?.kept ? BREW_KEPT_TEXT : r?.error === 'prof-busy' ? 'Your hands are busy with another craft.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
           const paid = f.fee > 0 && !r.elsewhere;
-          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} Alchemy XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
+          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} ${professionName('alchemy')} XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
         },
         // PROF12: THE ENCHANTING STATION the player stands at (a Mages Guild hall, its fee a piece; a home's), the pack's crafted
         // pieces it may take (in the pack, not worn, bound or locked, no market act kept on them) and a disenchant: the piece
@@ -10654,6 +10768,51 @@ export async function bootWorld(canvas, renderer, params, status) {
           saveSoon.changed();
           const got = Number.isSafeInteger(r.data?.essence) ? `${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting XP)` : 'Arcane Essence';   // a landed realm act says no more
           return { ok: true, text: `${name} comes apart into ${got}${paid ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
+        },
+        // CRAFT4 (bible/06-Systems/Professions-Arc.md 41.7): THE TEMPER at the anvil (the smith's pieces) and the loom (the
+        // tailor's) - the pack's pieces a temper takes (Rare or below, below Superior), not worn, no market act kept on them;
+        // the step laid on the piece on the service's answer (smithItems.js temperItem), the station's fee a temper
+        temperable: (where) => (playerEntity.items ?? []).filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))
+          .map((it) => ({ it, r: temperRecipeOf(it) })).filter(({ r }) => trackOf(r.profession) === (where === 'loom' ? 'outfitting' : 'smithing'))
+          .map(({ it, r }) => ({ item: it, name: itemLongName(it), recipe: r.id, quality: pieceQuality(it), provenance: typeof it.provenance === 'string' ? it.provenance : null })),
+        temper: async (offer) => {
+          const r0 = recipeById(offer?.recipe);
+          const loom = trackOf(r0?.profession) === 'outfitting';
+          const f = (loom ? modes?.loomHere?.() : modes?.forgeHere?.()) ?? null;
+          if (!f) return { ok: false, text: loom ? 'You are not at a loom.' : 'You are not at an anvil.' };
+          const who = loom ? 'tailor' : 'smith';
+          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The ${who} asks ${f.fee} gold for a temper.` };
+          const pack = playerEntity.items, it = offer.item;
+          if (!pack?.includes(it) || isEquipped(it) || temperRefusal(it) || pieceQuality(it) !== offer.quality) return { ok: false, text: TEMPER_MOVED_TEXT };
+          const name = itemLongName(it);
+          const r = await profBook.temper(offer.recipe, offer.quality, offer.provenance);
+          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while tempering. Check its Stores when you return.' };
+          if (!r?.ok) return { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
+          // the fee for the temper this press made, on the first answer it hears - `repeat` or not (AUDIT 29 C3's law)
+          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
+          const took = pack.includes(it) && temperItem(it, r.data);
+          saveSoon.changed();
+          if (!took) return { ok: false, text: TEMPER_LOST_TEXT };
+          return { ok: true, text: `${name} is ${QUALITY_NAMES[r.data.quality]} now (+${r.data.xp} ${professionName(r0.profession)} XP)${f.fee > 0 ? `, and paid the ${who} ${f.fee} gold` : ''}.` };
+        },
+        // CRAFT4: THE REFORGE WITH ESSENCE at the enchanting station - the pack's known Magic and Rare pieces, not worn, each
+        // line the Loot arc's own Reforge may roll (once reforged, that line alone); the line rolled on the service's seed
+        reforgeable: () => (playerEntity.items ?? []).filter((it) => it && reforgeEssence(it.rarity) && !essenceReforgeRefusal(it, reforgeableLines(it)[0]))
+          .map((it) => ({ item: it, name: itemLongName(it), tier: it.rarity, lines: reforgeableLines(it).map((index) => ({ index, text: affixLine(it, index) })) })),
+        essenceReforge: async (offer, index) => {
+          const f = modes?.enchantHere?.() ?? null;
+          if (!f) return { ok: false, text: 'You are not at an enchanting station.' };
+          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The enchanter asks ${f.fee} gold to reforge a piece.` };
+          const pack = playerEntity.items, it = offer.item;
+          if (!pack?.includes(it) || essenceReforgeRefusal(it, index) || it.rarity !== offer.tier) return { ok: false, text: TEMPER_MOVED_TEXT };
+          const r = await profBook.reforge(offer.tier);
+          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while reforging. Check its Stores when you return.' };
+          if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
+          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
+          const line = pack.includes(it) && r.data?.tier === it.rarity ? reforgeItem(it, index, r.data.seed) : null;
+          saveSoon.changed();
+          if (!line) return { ok: false, text: REFORGE_LOST_TEXT };
+          return { ok: true, text: `Reforged: ${affixLine(it, index)}${f.fee > 0 ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
         },
         facetBand: () => facetBand({ willpower: liveStat(playerEntity, 'willpower'), luck: liveStat(playerEntity, 'luck') }),
         clothing: () => (playerEntity?.gender === 'female' ? 'WomensClothing' : 'MensClothing'),
@@ -10759,6 +10918,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _veils = new Map();   // INVIS-LOOK: peer id -> this frame's concealed draw (ECV1's visual), for every layer
   const _hiddenPeers = new Set();   // AUDIT (pre-merge) I-B: the peers the classic lane stands nowhere this frame - their teams with them
   const veilOf = (id) => _veils.get(id) ?? null;
+  const gateCrowd = createGateCrowd();   // GATE-CROWD: a gate's court draws the nearest of a crowd (net/gateCrowd.js) - the places held frame to frame
+  const crowdDrawnHere = (p) => gateCrowd.shows(p.id);   // GATE-CROWD: a player the court's crowd leaves undrawn is not there to press or aim a gift at
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     lairHere: () => {   // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): a deed in the open world - my map pixel, and the named dungeons in the boards' ring about it
@@ -16941,6 +17102,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         location: p.location ?? null,
       });
     };
+    // WATER-NEXT probe: the sea's surface in scene y at the camera's pixel (Iliac Puddle No More's ocean line), or null
+    window.__seaY = () => { const at = playerTravelPixel(); return deepWaters && at ? state.pixelTranslation(at.x, at.y, [0, 0, 0])[1] + deepWaters.oceanLocalY : null; };
+    // WATER-NEXT 4 probe: a stir dropped into the ripple field at a world point (a body's splash), so a shot sees rings
+    window.__ripple = (x, z, strength = 0.25) => { ripples?.field.disturb(x, z, strength, 1.2); return !!ripples; };
     // WATER-PUDDLE probe: every tile of these records in the built pixels, as world centres on the ground
     window.__findTiles = (records, max = 40) => {
       const want = new Set(records), out = [];
@@ -21112,6 +21277,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
   };
+  /** GATE-ALONE (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates"): no companion stands in a
+   *  gate's court (companionPlace answers none there), and a fighter who steps in with any at their side is told so -
+   *  once each time they step in, when the step's fire has opened over the court (the veil covers the HUD); owed again
+   *  once they are out. */
+  let _courtAloneSaid = false;
+  const courtAloneFrame = () => {
+    if (modes?.gateArenaDay?.() == null) { _courtAloneSaid = false; return; }
+    if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    _courtAloneSaid = true;
+    if (companionsWithYou() > 0) setMidScreenText(COURT_TEXT.noCompanions, courtSaySeconds(COURT_TEXT.noCompanions));
+  };
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
   const gateFrame = () => {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
@@ -21140,6 +21316,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
+    courtAloneFrame();   // GATE-ALONE: my companions wait outside - said as I step in
   };
   // ═══ SERPENT1 (2026-10-04, Mac: "A new world event that requires players with a ship to meet up and take on a large
   // scale sea serpent in the ocean"; "make this something truly special"): SETHRAKUL, THE OLD COIL ════════════════════
@@ -23851,7 +24028,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  crosshair always on them), and never a CONCEALED stranger (INVIS-NET: the F key's pick does not see them - a
    *  gift named them aloud). A concealed mate is still a mate, as the party's own reads keep them (player/socialPick.js
    *  openPeers - CONCEAL-MATE's one law for every social door). */
-  const giftablePeers = (list) => openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent));
+  const giftablePeers = (list) => openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent) && crowdDrawnHere(p));
   /** ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
    *  whether it went - a refusal (the gate, the socket gone, a relay too old to route it) lets the release fall
    *  through to the ordinary arm. */
@@ -24093,7 +24270,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _peerFxHp = playerEntity?.health ?? null;
     if (!online) return;
     for (const p of online.peers.values()) {
-      if (!p?.shown || !online.visible(p)) { peerFxPlayer.forget(p?.id); continue; }
+      if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id)) { peerFxPlayer.forget(p?.id); continue; }   // GATE-CROWD: no spark nor cry from a player the court's crowd leaves undrawn
       peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0);
     }
     peerFxPlayer.frame();
@@ -24440,7 +24617,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
-    const visiblePeers = cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id));
+    const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
     peerCastVisuals(visiblePeers);   // SPELLFX1: a peer's new cast, drawn once
     _veilT += dt > 0 ? dt : 0;
     _veils.clear(); _hiddenPeers.clear();
@@ -27844,6 +28021,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
+      deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
       gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
       // DISC29-D (Skeptikali on Discord: a dungeon at 99.9% CPU, and a counter that could not say whose): the indoor
       // foot is a WHOLE frame - the interior or the dungeon, its foes, its draw - so it takes its sample, and the FPS
@@ -28304,6 +28482,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // DW-D: the value PlayerFootsteps' FixedUpdate reads is the one the sea's forge left after the motor
           // (OutdoorSwimDriverAfter re-applies it), PlayerMotor.Update's own only on a frame the driver wrote none
           const _onWater = (dwPlayer?.waterMethod ?? _surf.water) !== ON_EXTERIOR_WATER.None;
+          _rippleOnWater = _onWater;   // WATER-NEXT 4: the ripple field's stir reads the same answer
           // AUDIT-TO1 J1: `PlayerFootsteps.enabled = false` for the journey
           // (:1225) - the component does not RUN, which is what a disabled
           // MonoBehaviour is; the one-gate line below stays the hosts' literal.
@@ -29493,7 +29672,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // cloud deck and the mills take; null = calm), the front's rain, and
     // the dome's own two colours to reflect.
     if (waterOn) {
-      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
+      stirRipples(dt, now);   // WATER-NEXT 4
+      const wu = _waterU = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });   // WATER-NEXT 2: the sea's draw takes the frame's too
       let n = 0;   // PERF-EXT13: collected, then ONE call - the frame's block once, not once a pixel (renderer.js)
       for (const p of built.values()) {
         if (!p._visible || !p.water || p.deepWaters?.hide) continue;   // DW-C: a hidden cap takes its water with it
@@ -30420,6 +30600,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // screenshot while the buffer is still this task's to read
     // (preserveDrawingBuffer false clears it after compositing).
     capturePendingScreenshot(canvas);
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
 
     if (shotMode) {
       window.__frame++;

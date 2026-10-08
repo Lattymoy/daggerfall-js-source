@@ -457,5 +457,5 @@ test('CHAP2a the wiring: the halls witnessed at the town\'s entry edge off the r
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/witness' \? await witnessHall\(ctx, who\.player, env, body\)/);
   assert.match(src('server-account/src/service.js'), /ACCOUNT_VERSION = 'acct94'/);
   assert.match(src('server-account/wrangler.toml'), /CHAPTERS_OPEN = "dev"/);
-  assert.match(src('server-account/migrations/0089_npc_halls.sql'), /kind IN \('pixel', 'dungeon', 'hub', 'seat', 'npchall'\)/);
+  assert.match(src('server-account/migrations/0091_npc_halls.sql'), /kind IN \('pixel', 'dungeon', 'hub', 'seat', 'npchall'\)/);
 });

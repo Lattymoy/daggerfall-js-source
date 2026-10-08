@@ -42,8 +42,9 @@ async function stand(extra = {}) {
     for (const { key, n } of recipeById(recipe).inputs) raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).run(who.id, who.character, key, origin, n * times);
   };
-  const xpOf = (who) => Number(raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(who.id, who.character, 'jewelcrafting')?.xp ?? 0);
-  const setXp = (who, xp, { spec50 = null, spec100 = null } = {}) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'jewelcrafting', ?, ?, ?, ?)
+  // PIN MOVED (CRAFT3): a jewel raises and reads the Smithing track - the row read and seeded is 'smithing'
+  const xpOf = (who) => Number(raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(who.id, who.character, 'smithing')?.xp ?? 0);
+  const setXp = (who, xp, { spec50 = null, spec100 = null } = {}) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'smithing', ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec50 = excluded.spec50, spec100 = excluded.spec100`)
     .run(who.id, who.character, xp, spec50, spec100, _now);
   const cut = (who, recipe, extra2 = {}) => s.call('/v1/prof/craft', { character: who.character, recipe, clean: false, name: 'Silverthorn', rid: rid(), ...extra2 }, who.secret);
@@ -63,7 +64,7 @@ test('PROF10 service: a Silver Ruby Ring at the jeweller\'s bench - its Silver a
   const r = await steered(0x80, () => s.call('/v1/prof/craft', ask, mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.recipe, r.body.quality, r.body.count, r.body.maker, r.body.marked, r.body.first, r.body.xp, r.body.hand], ['ring:silver:ruby', 1, 1, 'Silverthorn', false, true, 20 + FIRST_CRAFT_XP, null], 'margin 0 at the middle: Standard');
-  assert.deepEqual([r.body.track.profession, r.body.track.xp], ['jewelcrafting', 520]);
+  assert.deepEqual([r.body.track.profession, r.body.track.xp], ['smithing', 520]);   // PIN MOVED (CRAFT3): the Ring credits the Smithing track
   const p = r.body.pieces[0];
   const v = await verifyProductRecord(p.record, s.identityPublic, { subtle: globalThis.crypto.subtle });
   assert.deepEqual([v.ok, v.claims?.r, v.claims?.q, v.claims?.m, v.claims?.f], [true, 'ring:silver:ruby', 1, 'Silverthorn', undefined], 'signed; no hand');

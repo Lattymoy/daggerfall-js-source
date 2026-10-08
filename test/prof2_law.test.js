@@ -228,9 +228,11 @@ test('PROF2 law: smelting (PROF0 4.1) - two of a raw metal an ingot, Steel and B
   assert.deepEqual(smeltOrigin(smeltRecipe('ingot:iron'), 5, [0]), { own: 5, bought: 0 });
   assert.deepEqual(smeltOrigin(smeltRecipe('ingot:iron'), 2, [99]), { own: 0, bought: 2 });
   assert.deepEqual(smeltOrigin(smeltRecipe('metal:brass'), 5, [1, 4]), { own: 1, bought: 4 }, 'the most any input\'s bought units reach');
-  assert.equal(craftXpCap('smithing', { alchemy: 60, cooking: 51 }), xpForRank(51) - 1, 'a third craft past Journeyman stops at 50');
-  assert.equal(craftXpCap('smithing', { alchemy: 60, cooking: 50, mining: 90 }), xpForRank(100), 'a gathering track is no craft; 50 is not past');
-  assert.equal(craftXpCap('smithing', { smithing: 70, alchemy: 60 }), xpForRank(100), 'its own rank is never counted against it');
+  // PIN MOVED (CRAFT3): the limit counts the five crafting TRACKS - Alchemy and Cooking are one track now (Provisioning), so the two others past Journeyman are Provisioning and Building
+  assert.equal(craftXpCap('smithing', { provisioning: 60, building: 51 }), xpForRank(51) - 1, 'a third craft past Journeyman stops at 50');
+  assert.equal(craftXpCap('smithing', { provisioning: 60, building: 50, mining: 90 }), xpForRank(100), 'a gathering track is no craft; 50 is not past');   // PIN MOVED (CRAFT3): track ids
+  assert.equal(craftXpCap('smithing', { smithing: 70, provisioning: 60 }), xpForRank(100), 'its own rank is never counted against it');   // PIN MOVED (CRAFT3): track ids
+  assert.equal(craftXpCap('jewelcrafting', { smithing: 70, provisioning: 60 }), xpForRank(100), 'a discipline is its craft\'s track: Smithing\'s own rank is Jewelcrafting\'s');   // PIN MOVED (CRAFT3): the profession asked maps through trackOf
 });
 
 test('PROF2 law: the Court writs ask metal and stone too - the ground\'s veins (tiers 1-2 unconfirmed), its region\'s signature on a confirmed pixel, Rough Stone where boulders stand; never an ingot, Cut Stone or a gem', () => {

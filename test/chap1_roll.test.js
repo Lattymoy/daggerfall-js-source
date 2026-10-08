@@ -396,7 +396,7 @@ test('CHAP1 the wiring: built online for a realm character alone, ticked in the 
   assert.match(src('src/systems/realmSaves.js'), /get lease\(\) \{ return lost \? null : lease; \},/);
   assert.match(src('server-account/wrangler.toml'), /^CHAPTERS_OPEN = "dev"$/m);
   assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct94';/);   // PIN MOVED: CHAP2a's acct94
-  assert.match(src('server-account/migrations/0088_npc_roll.sql'), /CREATE TABLE IF NOT EXISTS npc_roll \(/);
+  assert.match(src('server-account/migrations/0090_npc_roll.sql'), /CREATE TABLE IF NOT EXISTS npc_roll \(/);
   const realm = src('server-account/src/realm.js');
   for (const t of ['npc_roll', 'npc_roll_heads', 'npc_rep_events']) assert.match(realm, new RegExp(`DELETE FROM ${t} WHERE player = \\? AND char_id = \\?`));
 });

@@ -130,7 +130,7 @@ test('AUDIT WK-SN the world: the cards drawn every frame of the layer; a card\'s
   // the card, lifted
   const at = WORLD.indexOf('function partyCompanions() {');
   const body = WORLD.slice(WORLD.indexOf('{', at) + 1, WORLD.indexOf('\n  }\n', at));
-  const cards = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', body);   // REVENANT-COMPANION: the sworn's cards (none here)
+  const cards = new Function('navalOn', 'csaRuntime', 'naval', 'crewAshore', 'composePartyFx', 'swornCards', 'modes', body);   // REVENANT-COMPANION: the sworn's cards (none here); GATE-ALONE: the mode machine, for a gate's court
   const party = [{ boat: 42, name: 'Hilda', role: 'Bosun', health: 20, maxHealth: 60 }];
   const naval = { companions: { party } };
   const standing = { bodies: () => [{ companion: '42:Hilda', dead: false, entity: { health: 45, maxHealth: 60 } }] };
@@ -142,4 +142,6 @@ test('AUDIT WK-SN the world: the cards drawn every frame of the layer; a card\'s
   assert.deepEqual(cards(() => true, null, naval, fallen, fx), [{ key: '42:Hilda', name: 'Hilda', role: 'Bosun', h: 20, hm: 60, fx: [] }], 'a body down: the party\'s word');
   assert.deepEqual(cards(() => false, null, naval, standing, fx), [], 'the arc off');
   assert.deepEqual(cards(() => true, { isSailing: () => true }, naval, standing, fx), [], 'sailing (AUDIT WK-U5)');
+  assert.deepEqual(cards(() => true, null, naval, standing, fx, undefined, { gateArenaDay: () => 3 }), [], 'in a gate\'s court (GATE-ALONE: they wait outside it)');
+  assert.equal(cards(() => true, null, naval, standing, fx, undefined, { gateArenaDay: () => null }).length, 1, 'out of it, the cards as ever');
 });

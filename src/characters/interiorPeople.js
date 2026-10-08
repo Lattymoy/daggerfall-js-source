@@ -122,10 +122,14 @@ export function peopleAreVisible(building, {
  *    shop around you - the sleeper gains company, never loses it.
  *  - It does NOT consult house ownership. AddPeople's tail hides the
  *    people of a house you bought (:1209-1212); this member never asks,
- *    so its arms are reached for an owned house too. Harmless in
- *    practice (an owned house is a residence, and every residence's
- *    hours still have to pass) and left exactly as written rather than
- *    tidied into the visibility law next door.
+ *    so its arms are reached for an owned house too - and they PASS for
+ *    a House2-4 by day (open 6-18; House1's row never opens), so a
+ *    bought House2-4 rested in by day takes its people back. DFU's own,
+ *    left exactly as written for the bank's deed rather than tidied
+ *    into the visibility law next door. A player's room ONLINE (an
+ *    online home, a guild's hall, a private room) never reaches this
+ *    law: the host's re-roll refuses it first (FIELD BUGS 2026-10-07
+ *    HALL-FOLK, worldModes.js interiorRestDeps.updateNpcPresence).
  *  - The shop arm is the NEGATION of AddPeople's: there, a shop shows
  *    its people when the player walked into an OPEN one; here, the arm
  *    is taken when they did NOT - which is precisely the case worth

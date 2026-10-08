@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generateSamples, ghostSampler, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION } from '../src/world/terrainSampler.js';
-import { createLandforms, reliefLift, reliefByteHeight, landformLift, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS, LANDFORM_CEILING } from '../src/world/landforms.js';
+import { createLandforms, reliefLift, reliefByteHeight, landformLift, hillsAt, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS, LANDFORM_CEILING, HILLS_TOP } from '../src/world/landforms.js';
 import { generateTileData, BEACH_JITTER } from '../src/world/terrainTiles.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { DIR } from '../src/world/roadNetwork.js';
@@ -37,7 +37,8 @@ assert.equal(woods.load(WOODS_BYTES.slice()), true);
 
 const NET = network();
 const LF = createLandforms({ woods, roads: NET });
-const RELIEF = createLandforms({ woods });   // the lift alone: no network to cut along
+const RELIEF = createLandforms({ woods });   // the lift and the hills: no network to cut along
+const FLAT = createLandforms({ woods, hills: false });   // LANDFORM5: the lift alone - the macro a river's floor is graded to, where the water stills the hills
 const at = (s, x, y) => s[x * H + y];
 
 test('LANDFORM1: at or under the knee a height is DFU\'s to the bit, and over it it stays over it - the sea, the beach and every tile class stand where they stood, a road run down to the shore included', () => {
@@ -111,15 +112,27 @@ test('LANDFORM1: the small heightmap is lifted - nothing under the median land, 
   const dfu = generateSamples(woods, 400, 250), shaped = generateSamples(woods, 400, 250, H, LF);
   assert.ok(Math.max(...shaped) * UNIT > Math.max(...dfu) * UNIT * 1.5, 'the summit');
   assert.ok(Math.max(...shaped) > 1, 'a raised mountain stands over the reference\'s normalising height, not flattened against it');
-  const low = generateSamples(woods, 150, 100), lowShaped = generateSamples(woods, 150, 100, H, RELIEF);
-  assert.ok(low.every((v, i) => Object.is(v, lowShaped[i])), 'a lowland pixel with no path near it is DFU\'s to the bit');
+  const low = generateSamples(woods, 150, 100), lowFlat = generateSamples(woods, 150, 100, H, FLAT);
+  assert.ok(low.every((v, i) => Object.is(v, lowFlat[i])), 'the lift leaves a lowland pixel with no path near it DFU\'s to the bit');
+  // PIN MOVED (LANDFORM5, 2026-10-07, Mac: "I dont care about DFU. I want detailed generation, rolling hills, varied
+  // terrian"): it said the lowland was DFU's to the bit with the row on. Now it rolls - by exactly the hills at each
+  // sample, never more than their top, and the sea and the beach stay DFU's (the knee pin above)
+  const lowShaped = generateSamples(woods, 150, 100, H, RELIEF);
+  let rolled = 0;
+  for (let x = 0; x < H; x += 4) for (let y = 0; y < H; y += 4) {
+    const d = (lowShaped[x * H + y] - low[x * H + y]) * UNIT;
+    assert.ok(Math.abs(d) <= HILLS_TOP + 1e-3, `(${x},${y}): a hill within the hills' top (${d.toFixed(2)})`);
+    if (Math.abs(d) > 2) rolled++;
+  }
+  assert.ok(rolled > 200, `the lowland rolls (${rolled} of 1,089 samples moved over 2 units)`);
 });
 
 test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s height as DFU clamps it and the lift is level past the 7-bit top, so WOODS.WLD\'s one glitch byte stands at the landforms\' ceiling as DFU stands it at its own', () => {
   // the shipped file carries one byte over 127: a 255 at map pixel (470, 355), in the sea off Tigonus - DFU's
   // kernel stands it at its ceiling, a 1.9 km pillar; unclamped and lifted it was 5 km
-  assert.equal(LANDFORM_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(127 * 8));
-  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3020.06) < 0.01, 'about 3 km');
+  assert.equal(LANDFORM_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(127 * 8) + HILLS_TOP);   // PIN MOVED (LANDFORM5): and the tallest hill
+  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3180.06) < 0.01, 'about 3.2 km');   // PIN MOVED (LANDFORM6): the mountains' hills are the tallest
+  const LIFT_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(127 * 8);   // the glitch's top with the hills left out (LANDFORM5)
   assert.equal(reliefLift(255 * 8), reliefLift(127 * 8), 'the lift is level past the top');
   assert.ok(reliefLift(126 * 8) < reliefLift(127 * 8), '...and rising up to it');
   const bytes = WOODS_BYTES.slice();
@@ -130,10 +143,12 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   const net = network();
   net.roads[400 * MAP_WIDTH + 150] |= DIR.SE | DIR.NW;
   net.roads[401 * MAP_WIDTH + 151] |= DIR.SE | DIR.NW;
-  const cut = createLandforms({ woods: glitch, roads: net }), relief = createLandforms({ woods: glitch });
-  let dfuTop = 0, top = 0, roadAtCorner = 0, worst = 0;
+  const cut = createLandforms({ woods: glitch, roads: net, hills: false }), relief = createLandforms({ woods: glitch, hills: false });
+  const rolling = createLandforms({ woods: glitch, roads: net });   // LANDFORM5: the ground as it ships, hills and all
+  let dfuTop = 0, top = 0, roadAtCorner = 0, worst = 0, rollingTop = 0;
   for (const [px, py] of [[150, 400], [151, 400], [150, 401], [151, 401], [149, 400]]) {
     const v = generateSamples(glitch, px, py, H, null), r = generateSamples(glitch, px, py, H, relief), c = generateSamples(glitch, px, py, H, cut);
+    rollingTop = Math.max(rollingTop, ...generateSamples(glitch, px, py, H, rolling));
     const { base } = kernelTerms(glitch, px, py, H);
     for (let x = 0; x < H; x += 4) for (let y = 0; y < H; y += 4) {
       const i = x * H + y;
@@ -143,8 +158,9 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
     if (px === 150 && py === 400) roadAtCorner = c[128 * H];
   }
   assert.equal(dfuTop, 1, 'DFU stands the glitch at its ceiling');
-  assert.ok(Math.abs(top * UNIT - LANDFORM_CEILING) < 1e-3, `the landforms stand it at theirs (${(top * UNIT).toFixed(2)})`);
-  assert.ok(Math.abs(roadAtCorner * UNIT - LANDFORM_CEILING) < 1e-3, 'a road graded over it is graded to the same - DFU\'s macro as DFU stands it');
+  assert.ok(Math.abs(top * UNIT - LIFT_CEILING) < 1e-3, `the lift stands it at its top (${(top * UNIT).toFixed(2)})`);
+  assert.ok(Math.abs(roadAtCorner * UNIT - LIFT_CEILING) < 1e-3, 'a road graded over it is graded to the same - DFU\'s macro as DFU stands it');
+  assert.ok(rollingTop * UNIT <= LANDFORM_CEILING + 1e-3 && rollingTop * UNIT > LIFT_CEILING - HILLS_TOP, `with the hills, under the landforms' ceiling (${(rollingTop * UNIT).toFixed(2)})`);
   assert.ok(worst < 1e-3, `and the relief's lift is reliefLift of the kernel's own small-heightmap term, the glitch's pixels too (${worst})`);   // AUDIT LANDFORMS II J9: the re-stand's field is the cuts' too since B2 - this is the lift alone
   assert.ok(Math.abs(reliefByteHeight(255) - 255 * 8 - reliefLift(127 * 8)) < 1e-9, 'the ring takes the same lift');
 });
@@ -178,10 +194,10 @@ test('LANDFORM1-3: a seam is one number from both pixels - every shared edge and
 });
 
 test('LANDFORM2: a road is graded level across to the kernel\'s own macro height - the ground noise cut away, the land untouched past its verge', () => {
-  const px = 300, py = 250;
-  const cut = generateSamples(woods, px, py, H, LF);
-  const lifted = generateSamples(woods, px, py, H, RELIEF);
-  const macro = sampleKernel(woods, px, py, H, false, RELIEF);   // the lift on the two bicubic terms, no ground noise
+  const px = 300, py = 250;   // PIN MOVED (LANDFORM7): on the land without its hills, as the paths' laws are read - beside a road the hills are eased (test/landform7.test.js)
+  const cut = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const lifted = generateSamples(woods, px, py, H, FLAT);
+  const macro = sampleKernel(woods, px, py, H, false, FLAT);   // the lift on the two bicubic terms, no ground noise
   const { flat, bank, verge } = LANDFORM_DIALS.road;
   assert.deepEqual([flat, bank, verge, LANDFORM_DIALS.road.drop], [1.25, 2.5, 6, 0]);
   let cutAway = 0;
@@ -208,26 +224,32 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
   const px = 300, py = 255, x = 20;   // twenty samples west of the road that crosses it
   const cut = generateSamples(woods, px, py, H, LF);
   const lifted = generateSamples(woods, px, py, H, RELIEF);
-  const macro = sampleKernel(woods, px, py, H, false, RELIEF);
+  // the cut's own law on the land without its hills (AUDIT LANDFORMS III C1: with them the river's valley carves the land
+  // under it too - test/auditlandforms3.test.js holds the valley)
+  const cutFlat = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const macro = sampleKernel(woods, px, py, H, false, FLAT);
   const { flat, drop } = LANDFORM_DIALS.river;
   assert.deepEqual([flat, drop], [2, 1.92]);
   const floor = macro(x, 64) * UNIT - drop;
-  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cut, x, y) * UNIT - floor) < 0.02, `y=${y}: the water's floor, ${(drop * STREAMING_TERRAIN_SCALE).toFixed(1)} m under the land it is graded to`);
-  for (const y of [61, 67]) assert.ok(at(cut, x, y) * UNIT > floor + 0.2, `y=${y}: the bank stands over the water`);
-  assert.ok(at(lifted, x, 64) * UNIT - floor > drop, 'the channel is cut into the field');
+  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cutFlat, x, y) * UNIT - floor) < 0.02, `y=${y}: the water's floor, ${(drop * STREAMING_TERRAIN_SCALE).toFixed(1)} m under the land it is graded to`);
+  for (const y of [61, 67]) assert.ok(at(cutFlat, x, y) * UNIT > floor + 0.2, `y=${y}: the bank stands over the water`);
+  assert.ok(at(generateSamples(woods, px, py, H, FLAT), x, 64) * UNIT - floor > drop, 'the channel is cut into the field');
+  // ...and on the ground as it ships, the floor level across the painted width and the banks over it
+  for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cut, x, y) - at(cut, x, 64)) * UNIT < 1e-6, `y=${y}: the shipped floor, level across`);
+  for (const y of [61, 67]) assert.ok(at(cut, x, y) > at(cut, x, 64) + 0.2 / UNIT, `y=${y}: the shipped bank over the water`);
   // rivers off (RiversAndStreams): painted nowhere, cut nowhere - so the switch MOVES THE GROUND, and online, where a
   // room stands on one ground, it is the room's: on (2026-10-06, Mac: "Yes rivers should be online")
   const dry = network({ water: false });
   const off = generateSamples(woods, px, py, H, createLandforms({ woods, roads: dry }));
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(off, x, y), at(lifted, x, y)), `y=${y}: no painted river, no channel`);
-  assert.ok(at(off, x, 64) - at(cut, x, 64) > 0, 'the river switch moves the ground under the river');
+  assert.ok(at(off, x, 64) - at(cut, x, 64) > 0.5 / UNIT, 'the river switch moves the ground under the river - its valley and its channel cut down');   // PIN MOVED BACK (AUDIT LANDFORMS III C1): LANDFORM5 had loosened it to a move either way, which hid the stilled river standing over its dales
   assert.ok(!Object.is(at(off, 64, 30), at(lifted, 64, 30)), 'and the road is cut either way');
   assert.equal(createLandforms({ woods, roads: dry }).rivers, false);
   assert.equal(LF.rivers, true);
   assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), true, 'online the room\'s rivers are painted, and so cut (onlineLane.js ONLINE_ROOM_MOD_KEYS)');
   assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', ''), undefined, 'offline the switch is the player\'s');
   // where the road crosses it the road wins, as its paint does: a causeway level across at the road's own grade
-  for (const rx of [63, 64, 65]) assert.ok(Math.abs(at(cut, rx, 64) * UNIT - macro(64, 64) * UNIT) < 0.02, `x=${rx}: the road over the river`);
+  for (const rx of [63, 64, 65]) assert.ok(Math.abs(at(cutFlat, rx, 64) * UNIT - macro(64, 64) * UNIT) < 0.02, `x=${rx}: the road over the river`);
   // the pipeline - the same job online and off - cuts the river wherever its network paints one
   const piped = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: { ...NET, smooth: false }, landform: true }).samples;
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(piped, x, y), at(cut, x, y)), `the job, y=${y}: the channel`);
@@ -235,7 +257,7 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
   for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(pipedDry, x, y), at(lifted, x, y)), `the job with the rivers off, y=${y}: no channel`);
   // a stream: level across its two painted tiles, a metre under
   assert.deepEqual(Object.values(LANDFORM_DIALS.stream), [1, 1.25, 4, 0.8]);
-  const s = generateSamples(woods, 312, 248, H, LF), sm = sampleKernel(woods, 312, 248, H, false, RELIEF);
+  const s = generateSamples(woods, 312, 248, H, createLandforms({ woods, roads: NET, hills: false })), sm = sampleKernel(woods, 312, 248, H, false, FLAT);
   for (const sx of [63, 64, 65]) assert.ok(Math.abs(at(s, sx, 40) * UNIT - (sm(64, 40) * UNIT - LANDFORM_DIALS.stream.drop)) < 0.02, `stream x=${sx}`);
 });
 
@@ -349,11 +371,11 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
 
 test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stands every record\'s height again by it', () => {
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
-  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\) \}\) : null\);/, 'this thread\'s landforms, over its own network');
+  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
-  assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform \}\)/, 'the promotion off the thread');
-  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\) \}\)/, 'and on it');
+  assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion off the thread');   // PIN MOVED (AUDIT WATER-NEXT P1): the bed carved with it
+  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)/, 'and on it');   // PIN MOVED (AUDIT WATER-NEXT P1)
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
   assert.match(WORLD, /ringHeight\(byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is
@@ -364,8 +386,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /return restandHeight\(y, x, z, was\); \};   \/\/ LANDFORM1: the row's lift put back on\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrainGen.js');
   // AUDIT LANDFORMS D3 MOVED THIS PIN: the same pass writes DFU's own samples beside, for a location's tiles
-  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
-  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
+  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
+  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
   assert.match(src('src/world/terrainGenWorker.js'), /if \(m\.t === 'grid' && m\.landform && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/, 'a landforms promotion waits for the network its pixel was cut along');
 });
 

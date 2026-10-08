@@ -79,11 +79,12 @@ test('PROF1 service: registered only; PROFESSIONS_OPEN off shuts every route, de
   assert.deepEqual((await s.call('/v1/prof/state', { character: 'no' }, mac.secret)).body, { error: 'prof-character' });
 });
 
-test('PROF1 service: a character\'s state - thirteen tracks at nothing, no Stores, the day\'s bounds', async () => {
+test('PROF1 service: a character\'s state - ten tracks at nothing (CRAFT3: thirteen until eight crafts became five), no Stores, the day\'s bounds', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   const r = (await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body;
-  assert.equal(r.tracks.length, 13);
+  // PIN MOVED (CRAFT3): the state lists the ten tracks - the five crafts, not the eight disciplines - in the tab's order
+  assert.deepEqual(r.tracks.map((t) => t.profession), ['mining', 'logging', 'herbalism', 'hunting', 'fishing', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);
   assert.deepEqual(r.tracks.find((t) => t.profession === 'herbalism'), { profession: 'herbalism', xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null });
   assert.deepEqual([r.stores, r.taken, r.today, r.writs], [[], [], {}, { today: 0, max: 3 }]);
   assert.deepEqual(r.caps, { stores: STORES_MAX, withdraw: 200, highHides: 3 });   // PROF7 moved it: Hunting's day, the account's; PROF8: Fishing's; CAP-OFF: no day's harvests, hides or hauls

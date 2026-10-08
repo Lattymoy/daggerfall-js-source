@@ -474,7 +474,7 @@ test('DW-E2: seen from over the sea a decoration takes the top\'s column share, 
   const world = rd('src/scenes/world.js');
   assert.match(world, /dwRender\.drawFloors\(_dwFloorList, dwColumnFrame\(f\)\);/);
   assert.match(world, /dwRender\.drawDecorations\(_dwDecorList, dwColumnFrame\(f\)\);/, 'the decorations take the floors\' frame');
-  assert.match(world, /columnOn: f\.s\.spawnSurfaces && !f\.underwater,/);
+  assert.match(world, /columnOn: f\.s\.spawnSurfaces && !f\.underwater && !waterOn,/);   // PIN MOVED (WATER-NEXT 2): off under the enhanced water, which measures its own column
 });
 
 test('DW-E2: the settings and the host wiring - the four decoration reads, the promote and the crossing hooks, the draw after the floors (pins)', () => {

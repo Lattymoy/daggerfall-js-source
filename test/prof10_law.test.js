@@ -14,7 +14,7 @@ import {
   takesHeartwood, qualitySteps, craftXp, firstCraftPays, recipeOpen, craftCount, FIRST_CRAFT_XP, pieceLines,
   FACET_ACT, facetBand, facetCount, facetWindow, bearingGap, HAND_CHEF,
 } from '../src/net/recipeLaw.js';
-import { SPECIALISATIONS, specOk, TIER_RANKS, JEWEL_FEE, MASON_FEE, GEMS, PEARL, SIEGE_GEM, ACT_BANDS, minedMaterial } from '../src/net/professionLaw.js';
+import { SPECIALISATIONS, specOk, specDiscipline, TIER_RANKS, JEWEL_FEE, MASON_FEE, GEMS, PEARL, SIEGE_GEM, ACT_BANDS, minedMaterial } from '../src/net/professionLaw.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
 import { mintProductRecord, readProductRecord, productRecordValid } from '../src/net/productRecord.js';
@@ -89,10 +89,13 @@ test('PROF10 law: a piece of jewellery takes a quality and lists among the Jewel
 // ─── THE SPECIALISATIONS AND THE POINTS (3.3, 9.3) ───────────────────
 
 test('PROF10 law: Jewelcrafting\'s four (3.3) - the Gemcutter and the Goldsmith at 50, the Master Jeweller and the Lapidary at 100, every one chosen now', () => {
-  assert.deepEqual(SPECIALISATIONS.jewelcrafting[50].map((s) => [s.id, s.name, s.later ?? null]), [['gemcutter', 'Gemcutter', null], ['goldsmith', 'Goldsmith', null]]);
-  assert.deepEqual(SPECIALISATIONS.jewelcrafting[100].map((s) => [s.id, s.name, s.later ?? null]), [['master-jeweller', 'Master Jeweller', null], ['lapidary', 'Lapidary', null]]);
+  // PIN MOVED (CRAFT3): Jewelcrafting's four stand under the Smithing track now, after the smith's own two at each rank
+  assert.deepEqual(SPECIALISATIONS.smithing[50].map((s) => [s.id, s.name, s.later ?? null]), [['weaponsmith', 'Weaponsmith', null], ['armoursmith', 'Armoursmith', null], ['gemcutter', 'Gemcutter', null], ['goldsmith', 'Goldsmith', null]]);
+  assert.deepEqual(SPECIALISATIONS.smithing[100].map((s) => [s.id, s.name, s.later ?? null]), [['masterwright', 'Masterwright', null], ['quartermaster', 'Quartermaster', null], ['master-jeweller', 'Master Jeweller', null], ['lapidary', 'Lapidary', null]]);
+  assert.equal(SPECIALISATIONS.jewelcrafting, undefined);   // PIN MOVED (CRAFT3): no track of its own
+  assert.deepEqual([GEMCUTTER, GOLDSMITH, MASTER_JEWELLER, LAPIDARY].map(specDiscipline), ['jewelcrafting', 'jewelcrafting', 'jewelcrafting', 'jewelcrafting']);   // PIN MOVED (CRAFT3): still Jewelcrafting's choices
   assert.deepEqual([GEMCUTTER, GOLDSMITH, MASTER_JEWELLER, LAPIDARY], ['gemcutter', 'goldsmith', 'master-jeweller', 'lapidary']);
-  assert.ok([[50, GEMCUTTER], [50, GOLDSMITH], [100, MASTER_JEWELLER], [100, LAPIDARY]].every(([r, s]) => specOk('jewelcrafting', r, s)));
+  assert.ok([[50, GEMCUTTER], [50, GOLDSMITH], [100, MASTER_JEWELLER], [100, LAPIDARY]].every(([r, s]) => specOk('jewelcrafting', r, s) && specOk('smithing', r, s)));   // PIN MOVED (CRAFT3): asked of the discipline or its track
 });
 
 test('PROF10 law: the piece\'s enchantment points (9.3) - Silver +0%, Gold +10%, Platinum +20%, a set gem +10% (a Gemcutter\'s +20%), a Goldsmith\'s Silver counted as Gold; over DFU\'s template\'s, floored', () => {
@@ -138,9 +141,12 @@ test('PROF10 law: a Lapidary\'s Siege-cracked Gem stands in for a piece\'s gem (
   assert.deepEqual(recipeInputs(plain, { cracked: true }), [{ key: 'metal:gold', n: 1 }], 'no gem to stand in for');
   assert.deepEqual(recipeInputs(wand, { cracked: true, heartwood: true }), [{ key: 'plank:ghostwood', n: 1 }, { key: SIEGE_GEM.key, n: 1 }, { key: 'wood:heartwood', n: 1 }], 'a Heartwood and a cracked gem together');
   assert.equal(SIEGE_GEM.key, 'gem:siege');
-  assert.deepEqual([masterworkSpec(MASTER_JEWELLER), masterworkSpec('masterwright'), masterworkSpec(LAPIDARY), masterworkSpec(null)], [true, true, false, false]);
-  assert.deepEqual(qualityOdds(100, { masterwright: masterworkSpec(MASTER_JEWELLER) }), [0, 0, 35, 52, 13]);
-  assert.deepEqual(qualityOdds(100, { masterwright: masterworkSpec(LAPIDARY) }), [0, 0, 40, 52, 8]);
+  // PIN MOVED (CRAFT3): both choices the Smithing track's now - the Master Jeweller's points a jewel's alone, the Masterwright's every other (none asked, the smith's)
+  const sword = recipeById('longsword:iron');
+  assert.deepEqual([masterworkSpec(MASTER_JEWELLER, ruby), masterworkSpec('masterwright', ruby), masterworkSpec(LAPIDARY, ruby), masterworkSpec(null, ruby)], [true, false, false, false]);
+  assert.deepEqual([masterworkSpec('masterwright', sword), masterworkSpec(MASTER_JEWELLER, sword), masterworkSpec('masterwright'), masterworkSpec(MASTER_JEWELLER), masterworkSpec(null)], [true, false, true, false, false]);
+  assert.deepEqual(qualityOdds(100, { masterwright: masterworkSpec(MASTER_JEWELLER, ruby) }), [0, 0, 35, 52, 13]);   // PIN MOVED (CRAFT3): asked of the jewel
+  assert.deepEqual(qualityOdds(100, { masterwright: masterworkSpec(LAPIDARY, ruby) }), [0, 0, 40, 52, 8]);   // PIN MOVED (CRAFT3): asked of the jewel
 });
 
 test('PROF10 law: a piece of jewellery\'s card says its quality, its maker and its enchantment points; the bench is a Pawn Shop\'s or a Gem Store\'s at 9.3\'s 50 gold, or a home\'s jeweller\'s bench - the eighth station, the workbench\'s 50,000', () => {

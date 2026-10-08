@@ -139,8 +139,8 @@
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  vec3 n = normalize(vNormal);\n  float diff = max(dot(n, uLightDir), 0.0);",
-    "new": "  vec3 n = normalize(vNormal);\n  float diff = max(dot(n, uLightDir), 0.0);",
+    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  ${waterBedMix()}",
+    "new": "  ${waterBedMix()}",
     "tests": [
       "test/ecotone1.test.js"
     ]

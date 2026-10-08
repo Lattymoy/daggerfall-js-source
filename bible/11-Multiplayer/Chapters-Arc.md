@@ -295,7 +295,7 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
   no two chapters could). AUDIT CHAP2 E5: a chapter's writs are the Court's law's slots AFTER its first, which is the
   table's top tier - two a chapter had made every other hall writ that one, a quarter richer than a Court writ. A writ's
   id is `h:day:region:faction:slot`; it rides the Court's `writs` table (kind `hall`, its `faction`) and its day's
-  posting is `hall_writ_days` (migration `0089_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
+  posting is `hall_writ_days` (migration `0091_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
   Thieves Guild's fence in another town are CHAP2b's.
 - **Widened** (AUDIT CHAP2 R3): every chapter posts delivery writs in its own families - the Fighters, the Brotherhood
   and the orders too, whose rows in the table above name receipt writs alone - and the Thieves Guild's are ordinary
@@ -471,11 +471,11 @@ classic skin, the row off, the service unreachable - the living world is exactly
 
 DECIDED.
 
-- **Account service (D1)**: BUILT (CHAP1, migration `0088_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
+- **Account service (D1)**: BUILT (CHAP1, migration `0090_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
   last_rid, tag, seeded_at, updated_at - every write moves `seq` on under its own `tag`, a claim names `last_rid`);
   `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at); `npc_rep_events` (seq,
   char_id, player, faction_id, asked, credited, rid, at - AUDIT CHAP2 S6: a claim with no reputation line leaves a line
-  of faction 0, its id). BUILT (CHAP2a, migration `0089_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
+  of faction 0, its id). BUILT (CHAP2a, migration `0091_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
   with `kind` ('court', 'hall') and `faction`, `UNIQUE (day, region, kind, faction, slot)`; `hall_writ_days` (day,
   region, posted, at); AUDIT CHAP2: `npc_hall_strikes` (map_id, by, at) and `npc_roll_heads.kseq`, the claim sequence
   (C1). Still drawn: `npc_chapters` (key -
@@ -613,7 +613,7 @@ the law and every place this slice narrowed it (BUILT, CHAP1).
   whatever moved while the claim was out) and the memberships off both books (`rollMembersOf`). AUDIT CHAP moved the
   credit to a pace with what it leaves owed (`rollDrain`), the cap to a customs crossing's and a member's rank's need,
   and the adoption to the factions the client holds; it added `rollRankCapOf` and `rollKeptOf`.
-- **The service.** `server-account/src/npcRoll.js` over migration `0088_npc_roll`: `POST /v1/chapters/roll` reads the
+- **The service.** `server-account/src/npcRoll.js` over migration `0090_npc_roll`: `POST /v1/chapters/roll` reads the
   Roll, seeding it the first time from the save's standing (twenty-two rows and a head, one batch, each INSERT OR
   IGNORE); `POST /v1/chapters/claim` credits what moved, in one batch whose first statement moves the head's `seq` on
   and whose every other write stands only at that `seq` under the claim's id - a lost race writes nothing and says
@@ -667,7 +667,7 @@ The second slice's delivery half; section 4 carries the law and every narrowing 
   town read over all its reports, kept by the isolate a minute). `professions.js`: the day's hall writs written down
   beside the Court's (`hall_writ_days`), listed to an account the Chapters are open to (a hidden guild's to its
   members on the Roll), delivered as a Court writ is
-  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0089_npc_halls` rebuilds
+  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0091_npc_halls` rebuilds
   `world_witness` (the kind) and `writs` (the kind and the faction). The service is `acct94`; deploy it before the
   site.
 - **The client.** `src/net/npcHallBook.js` (a town's halls off `buildingSummaries`' rows, reported once a day a town),

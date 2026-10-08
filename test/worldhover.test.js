@@ -1299,8 +1299,12 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // quick loot declines on a tab, which is a request for that window.
   // PIN MOVED (AUDIT 625 D6): and the door answers whether it opened - the quick take's `true`, the window's own (a
   // refused pack is null) - which the corpse door rolls a body's silver on
-  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const bodyPool = \(k\) => \(k\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards\);\n(?:\s*\/\/[^\n]*\n)*\s*const openBodyLoot = \(lootKey, pileKeys = null\) => \{\n\s*bodyPool\(lootKey\)\?\.takeLoot\(lootKey, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\?\.pileBody\(k\) \?\? null, open: openBodyLoot \}\);\n\s*const w = interiorInventory\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*mountInterior\(w\);\n\s*return !!w;[^\n]*\n\s*\}\);\n\s*\};\n\s*openBodyLoot\(key\);\n\s*return true;\n\s*\}/,
+  // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the door is the host's own function now, `openInteriorBodyLoot` -
+  // one door for this ladder's press and the outer host's (a skinnable body's Search), where it was the ladder's closure
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*openInteriorBodyLoot\(key\);\n\s*return true;\n\s*\}/,
     'the press arm the bodies never had');
+  assert.match(wm, /function openInteriorBodyLoot\(lootKey, pileKeys = null\) \{\n\s*const bodyPool = \(k\) => \(k\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards\);\n\s*bodyPool\(lootKey\)\?\.takeLoot\(lootKey, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\?\.pileBody\(k\) \?\? null, open: openInteriorBodyLoot \}\);\n\s*const w = interiorInventory\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*mountInterior\(w\);\n\s*return !!w;[^\n]*\n\s*\}\);\n\s*\}/,
+    'its door: the pool\'s own takeLoot, the quick take, the pile\'s tabs back through it, whether it opened');
 
   // ...and it sits INSIDE the reach refusal, like every other family in
   // this ladder: the pick reaches as far as the whole ray, so a body

@@ -272,8 +272,9 @@ test('PROF2 service: a smelt refused - the product\'s room; the crafter\'s limit
   assert.deepEqual((await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'ingot:mithril', count: 3, rid: rid() }, mac.secret)).body, { error: 'stores-full' });
   s.give(mac, 'ingot:mithril', 'own', 0);
   s.raw.prepare('DELETE FROM prof_stores WHERE material = ?').run('ingot:mithril');
-  s.setXp(mac, xpForRank(60), 'alchemy');
-  s.setXp(mac, xpForRank(60), 'cooking');
+  // PIN MOVED (CRAFT3): Alchemy and Cooking are one track (Provisioning) - the two crafts past Journeyman are Provisioning and Building, seeded under the craft's id
+  s.setXp(mac, xpForRank(60), 'provisioning');
+  s.setXp(mac, xpForRank(60), 'building');
   s.setXp(mac, xpForRank(51) - 10, 'smithing');
   const r = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'ingot:mithril', count: 5, rid: rid() }, mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));

@@ -223,7 +223,7 @@ test('CLICK-LIFT: the latch is the press\'s - pressed mid-act it is taken to its
 test('CLICK-LIFT: underground the dungeon\'s ladder holds the act\'s click to its release - the modal frame asks it every frame with the button\'s level, the world host hands the gathering host\'s, and tryExitDungeon stops on it (mutants: the dungeon never asks)', () => {
   assert.match(MODES, /\n\s*const _activateDown = held\(keys, 'ActivateCenterObject'\) \|\| !!host\.activateDown\?\.\(\);\n\s*const _act = activateFrame\(\(latch\.activate \?\?= createActivateGate\(\)\), \{\n\s*down: _activateDown,/, 'the gate\'s press is the level the latch is asked with');
   assert.match(MODES, /\n\s*const actClick = host\.profClickTaken\?\.\(_activateDown\) \?\? false;[^\n]*\n\s*if \(\(_act\.activate \|\| useEdge\) && !overlayHeld\) \(mode === 'dungeon' \? tryExitDungeon : tryExit\)\(\{ pressCast: _act\.pressCast, interact: useEdge, actClick \}\);/, 'asked every frame, before the ladder, and handed to it');
-  assert.match(MODES, /\n\s*if \(!interact && \(actClick \|\| host\.profActing\?\.\(\)\)\) return true;/, 'tryExitDungeon: the act\'s click, or an act playing, stops the ladder');
+  assert.match(MODES.slice(MODES.indexOf('  function tryExitDungeon(')), /\n\s*if \(!interact && \(actClick \|\| host\.profActing\?\.\(\)\)\) return true;/, 'tryExitDungeon: the act\'s click, or an act playing, stops the ladder');   // PIN MOVED (INDOOR-SKIN): the building's ladder has its own, above
   assert.match(WORLD, /\n\s*profClickTaken: \(down\) => gatherHost\?\.clickTaken\(down\) \?\? false,/, 'the world host hands the gathering host\'s latch');
 });
 

@@ -639,5 +639,5 @@ test('AUDIT CHAP2 T7/C1/E1: the wiring - the kept adoption rides the save, the t
   assert.match(board, /const said = r\?\.ok \? work\.onTaken\?\.\(r\) : null;\n\s+if \(!alive\) return;/);
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/strike' \? await strikeHall\(ctx, who\.player, env, body\)/);
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/witness', '\/v1\/chapters\/halls', '\/v1\/chapters\/strike',/);
-  assert.match(src('server-account/migrations/0089_npc_halls.sql'), /ALTER TABLE npc_roll_heads ADD COLUMN kseq INTEGER NOT NULL DEFAULT 0;/);
+  assert.match(src('server-account/migrations/0091_npc_halls.sql'), /ALTER TABLE npc_roll_heads ADD COLUMN kseq INTEGER NOT NULL DEFAULT 0;/);
 });

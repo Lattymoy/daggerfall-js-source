@@ -36,6 +36,14 @@
 // open (a nasal helm, the face showing): `styles`, picked by the Steel
 // Helm switch (systems/features.js, pref `mwSteelHelm`; closed by default,
 // Mac's answer). bible/04-Characters/Steel-Plate.md is the record.
+//
+// MW-STEEL4 (2026-10-07, Mac: "You do it properly"): the plate's meshes
+// ship SKINNED, as retail's armour does - weighted to Morrowind's own
+// bones in its bind at bake time (tools/bakeSteelPlate.mjs) - so a steel
+// piece here is the parts it fills and nothing else, and the binder takes
+// it on the very path it takes a retail ARMO's BODY meshes. The runtime fit
+// and skin solve MW-STEEL1-3 carried (`fit`, `solvePose`, a part's own
+// `skinFrom`) are gone with it.
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 
 /** Roleplay & Realism Items' Jerkin (systems/rriItems.js RRI_TEMPLATES,
@@ -54,84 +62,47 @@ export const CLASSIC_ARMOR_TEMPLATE = Object.freeze({
 export const STEEL_HELM_STYLES = Object.freeze(['closed', 'open']);
 export const STEEL_HELM_DEFAULT = STEEL_HELM_STYLES[0];
 
-/** MW-STEEL1: THE BODY MAC'S STEEL PLATE WAS FITTED ON - the bounds (scene units, Morrowind's axes) of the Breton
- *  head and neck his scene carries, measured by `node tools/bakeSteelPlate.mjs --import`. The meshes are Morrowind's
- *  own and were stripped from the committed source; these twelve numbers are what the fit needs of them. */
-export const STEEL_PLATE_SCENE = Object.freeze({
-  head: Object.freeze({ min: Object.freeze([-4.764463, -5.649226, 113.146219]), max: Object.freeze([4.764463, 9.197224, 129.199977]) }),
-  neck: Object.freeze({ min: Object.freeze([-3.895279, -4.097911, 109.962381]), max: Object.freeze([3.895279, 3.687286, 121.834567]) }),
-});
-
-/** MW-STEEL1: the set's fits. Every piece but the helm and the boots keeps its place by the NECK - the one part of
- *  the scene's body every wearer has in the same place over the shoulders, across and front to back by its middle and
- *  up by its base. The helm sits on the wearer's own HEAD (heads differ by race and face; the neck would carry it to
- *  where the Breton's was): across by its middle, front to back by the back of the skull (noses differ, skulls far
- *  less), up by its crown. The boots stand on the wearer's FEET (legs differ in length between the three skeletons;
- *  a boot off the ground or sunk into it is the plainest error a body can show), the sole at the foot's lowest point,
- *  and keep the neck's across and front to back so they stay under the greaves. */
-const AT_NECK = Object.freeze({ to: 'neck', x: 'centre', y: 'centre', z: 'min', scene: STEEL_PLATE_SCENE.neck });
-const AT_HEAD = Object.freeze({ to: 'head', x: 'centre', y: 'min', z: 'max', scene: STEEL_PLATE_SCENE.head });
-const ON_FEET = Object.freeze({ to: 'foot', z: 'min', scene: 'self' });
-const NECK_FIT = Object.freeze([AT_NECK]);
-const HEAD_FIT = Object.freeze([AT_HEAD]);
-const BOOT_FIT = Object.freeze([Object.freeze({ ...AT_NECK, z: null }), ON_FEET]);
-const slotsOf = (fit) => Object.freeze([...new Set(fit.map((r) => r.to))]);
-
-const part = (p, model, hides = null, skinFrom = null) => Object.freeze({
-  part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}), ...(skinFrom ? { skinFrom: Object.freeze(skinFrom) } : {}),
-});
-/** MW-STEEL2: every steel piece is solved in the body's BIND pose (formats/mwSkinTransfer.js bindPoseMats) - Mac's
- *  plate was fitted on a T-posed body, and the T-pose is the skins' bind, not the skeleton file's rest (the idle's
- *  first frame, arms hanging, on retail data): solved in the rest, every gauntlet copied the shoulder. */
-export const STEEL_SOLVE_POSE = 'bind';
-const steel = (id, name, templateIndex, { skinFrom, fit, parts, styles = null }) => Object.freeze({
-  id, name, templateIndex, material: ARMOR_MATERIAL.Steel,
-  skinFrom: Object.freeze(skinFrom), fit, fitFrom: slotsOf(fit), parts: Object.freeze(parts), solvePose: STEEL_SOLVE_POSE,
+const part = (p, model, hides = null) => Object.freeze({ part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}) });
+const steel = (id, name, templateIndex, { parts, styles = null }) => Object.freeze({
+  id, name, templateIndex, material: ARMOR_MATERIAL.Steel, parts: Object.freeze(parts),
   ...(styles ? { styles: Object.freeze(styles) } : {}),
 });
 
-/** MW-STEEL1: Mac's steel plate, piece by piece (tools/bakeSteelPlate.mjs bakes the meshes). Each piece fills the
- *  ARMO_PART slots a retail piece of its shape fills, so the priority law and the skin shadows are the ordinary path:
- *  the cuirass the cuirass, and (MW-STEEL2, its painting come: "This is the missing texture for the morrowind steel
- *  armor's skirt") the plate skirt under it Morrowind's skirt slot - modelled from the same cuirass mesh as the
- *  breastplate, skinned from the groin and the thighs it hangs over, shadowing nothing (ARMO_PART's skirt row), so a
- *  clothing skirt worn over it takes the slot at its higher priority as the law says; each gauntlet its
- *  hand, hiding the wrist and forearm under it; the greaves the upper legs;
- *  each pauldron its pauldron; each boot its foot, hiding the ankle and knee. The helm fills the HAIR slot, which
- *  hides the hair and leaves the head - the open helm shows the face, and the closed one's eye slit looks onto it. */
-/** MW-STEEL2: the body the plate skirt hangs over - the groin, and the thighs its plates move with at a stride. */
-export const STEEL_SKIRT_SKIN_FROM = Object.freeze(['groin', 'upperleg']);
-
+/** MW-STEEL1: Mac's steel plate, piece by piece (tools/bakeSteelPlate.mjs bakes the meshes, skinned - MW-STEEL4). Each
+ *  piece fills the ARMO_PART slots a retail piece of its shape fills, so the priority law and the skin shadows are the
+ *  ordinary path: the cuirass the cuirass, and (MW-STEEL2, its painting come: "This is the missing texture for the
+ *  morrowind steel armor's skirt") the plate skirt under it Morrowind's skirt slot - modelled from the same cuirass mesh
+ *  as the breastplate, shadowing nothing (ARMO_PART's skirt row), so a clothing skirt worn over it takes the slot at its
+ *  higher priority as the law says; each gauntlet its hand, hiding the wrist and forearm under it; the greaves the
+ *  upper legs; each pauldron its pauldron; each boot its foot, hiding the ankle and knee. The helm fills the HAIR slot,
+ *  which hides the hair and leaves the head - the open helm shows the face, and the closed one's eye slit looks onto
+ *  it. */
 function steelPlate() {
   const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);
   const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif')]);
   return [
     steel('daggerfall_steel_cuirass', 'Steel Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
-      skinFrom: ['chest', 'groin', 'upperarm'], fit: NECK_FIT,
-      parts: [part('cuirass', 'steel_plate_cuirass.nif'), part('skirt', 'steel_plate_skirt.nif', null, STEEL_SKIRT_SKIN_FROM)],
+      parts: [part('cuirass', 'steel_plate_cuirass.nif'), part('skirt', 'steel_plate_skirt.nif')],
     }),
     steel('daggerfall_steel_gauntlets', 'Steel Gauntlets', CLASSIC_ARMOR_TEMPLATE.Gauntlets, {
-      skinFrom: ['hand', 'wrist', 'forearm', 'upperarm'], fit: NECK_FIT,
       parts: [
         part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),
         part('left hand', 'steel_plate_gauntlet_left.nif', ['left wrist', 'left forearm']),
       ],
     }),
     steel('daggerfall_steel_greaves', 'Steel Greaves', CLASSIC_ARMOR_TEMPLATE.Greaves, {
-      skinFrom: ['upperleg', 'knee', 'groin'], fit: NECK_FIT,
       parts: [part('right upper leg', 'steel_plate_greave_right.nif'), part('left upper leg', 'steel_plate_greave_left.nif')],
     }),
     steel('daggerfall_steel_left_pauldron', 'Steel Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
-      skinFrom: ['upperarm', 'chest'], fit: NECK_FIT, parts: [part('left pauldron', 'steel_plate_pauldron_left.nif')],
+      parts: [part('left pauldron', 'steel_plate_pauldron_left.nif')],
     }),
     steel('daggerfall_steel_right_pauldron', 'Steel Right Pauldron', CLASSIC_ARMOR_TEMPLATE.Right_Pauldron, {
-      skinFrom: ['upperarm', 'chest'], fit: NECK_FIT, parts: [part('right pauldron', 'steel_plate_pauldron_right.nif')],
+      parts: [part('right pauldron', 'steel_plate_pauldron_right.nif')],
     }),
     steel('daggerfall_steel_helm', 'Steel Helm', CLASSIC_ARMOR_TEMPLATE.Helm, {
-      skinFrom: ['head'], fit: HEAD_FIT, parts: helmClosed, styles: { closed: helmClosed, open: helmOpen },
+      parts: helmClosed, styles: { closed: helmClosed, open: helmOpen },
     }),
     steel('daggerfall_steel_boots', 'Steel Boots', CLASSIC_ARMOR_TEMPLATE.Boots, {
-      skinFrom: ['foot', 'ankle', 'knee'], fit: BOOT_FIT,
       parts: [
         part('right foot', 'steel_plate_boot_right.nif', ['right ankle', 'right knee']),
         part('left foot', 'steel_plate_boot_left.nif', ['left ankle', 'left knee']),
@@ -153,12 +124,8 @@ function steelPlate() {
  * the Morrowind body: drawn at the scene's height, the brigandine sat below the torso and left the chest it hides
  * bare, in MW-BRIG1 and MW-BRIG2 alike.
  *
- * `fit` (MW-STEEL1): the same lesson said for a scene that CARRIES its body. Mac's steel-plate scene has the body it
- * was fitted on - Morrowind's own Breton head and neck, whose bounds STEEL_PLATE_SCENE keeps - so a piece keeps its
- * relation to that body rather than to its own edges: a list of rules (formats/mwSkinTransfer.js fitShift), each
- * naming a wearer's part (`to`), for each axis the feature of it to meet ('min', 'max', 'centre'), and the scene's own
- * bounds of that part (or 'self', the piece's own, for a part the scene did not carry). A pure translation, measured
- * on the wearer in the rest pose, before the piece is skinned. `fitFrom` is the slots the rules measure.
+ * A model with neither ships skinned (the steel plate, MW-STEEL4): its NIF carries its own weights and inverse binds,
+ * as a retail armour mesh's do, and is bound exactly as one.
  *
  * `hides`, per part: the slots a part covers beyond its own, reserved with no mesh so their skin is not drawn (a
  * gauntlet over the wrist and forearm, a boot over the ankle and knee) - reserveIndividualPart's occupation, at the
