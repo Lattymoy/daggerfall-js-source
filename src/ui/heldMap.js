@@ -472,6 +472,9 @@ export const TRAVEL_VIEW_BUTTON = 'Overworld (O)';
 const FOCUS_SCALE = 6;
 /** How often the breathing rings repaint the sheet while one is up. */
 const PULSE_HZ = 10;
+/** FINDME: the red cross's half-beats a second - on, off, twice a second (a named rate: test/heldmap.test.js U61 keeps
+ *  travel-law fragments such as `* 4)` out of this window's code). */
+const FINDME_BLINK_HZ = 4;
 const HANDS_LOST_TICKS = 45;   // AUDIT-MAP2: ticks without corners before the hands lane gives the sheet back to the sprite
 /** MAP-FIT1: how far past the screen's edges the arm's sheet may hang, as
  *  a fraction of each dimension, before the window gives it back to the
@@ -1278,7 +1281,7 @@ export class HeldMapWindow {
         { const giants = this.deps.wildGiants?.() ?? []; if (giants.length) paintWildGiants(ctx, env.view, giants, { paperW: env.paperW, paperH: env.paperH, t: this._clock }); }
         this._paintWaypoints(ctx, env);   // WAYPOINTS: the flags over everything the sheet breathes
         // FINDME: the red cross over me, blinking for three seconds (the owner's screenshot: a full-width red cross)
-        if (this._findMeT > 0 && this._player && Math.floor(this._clock * 4) % 2 === 0) {
+        if (this._findMeT > 0 && this._player && Math.floor(this._clock * FINDME_BLINK_HZ) % 2 === 0) {
           const fx = (this._player.x + 0.5 - env.view.ox) * env.view.scale, fy = (this._player.y + 0.5 - env.view.oy) * env.view.scale;
           ctx.save();
           ctx.strokeStyle = 'rgba(200,24,24,0.95)'; ctx.lineWidth = 3;

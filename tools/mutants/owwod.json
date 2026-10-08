@@ -70,24 +70,24 @@
     "note": "The host never settles its pixel."
   },
   {
-    "name": "OW-WOD-PATH-rocks-ignored",
+    "name": "MOUNTAINS-WALKABLE-rocks-refused",
     "file": "src/systems/travelRoute.js",
-    "old": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && ((rocks !== null && rocks[by * width + bx] === 1) || openStepBlocked(climateOf, heightOf, ax, ay, bx, by, leaving));",
-    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && openStepBlocked(climateOf, heightOf, ax, ay, bx, by, leaving);",
+    "old": "  const openBlocked = () => false;   // MOUNTAINS WALKABLE",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && rocks !== null && rocks[by * width + bx] === 1;",
     "tests": [
       "test/ow_wod.test.js"
     ],
-    "note": "The route walks straight into the massif again."
+    "note": "MOUNTAINS WALKABLE undone for the World of Daggerfall massifs: the route goes round a massif again."
   },
   {
-    "name": "OW-WOD-PATH-peak-climate-only",
+    "name": "MOUNTAINS-WALKABLE-rock-peaks",
     "file": "src/systems/travelRoute.js",
-    "old": "  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE || (rocks !== null && rocks[y * width + x] === 1);",
-    "new": "  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE;",
+    "old": "  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
+    "new": "  const peak = (x, y) => rocks !== null && rocks[y * width + x] === 1;",
     "tests": [
       "test/ow_wod.test.js"
     ],
-    "note": "A spot inside a massif is walked to; a traveller among its rocks is trapped."
+    "note": "MOUNTAINS WALKABLE undone for the massifs: a massif's pixel is a peak again - a spot there refused."
   },
   {
     "name": "OW-WOD-PATH-rock-fields-too",

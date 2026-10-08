@@ -11,7 +11,7 @@ import { LOCATION_TYPES, CLIMATES, getMapPixelID } from '../src/formats/mapsFile
 import { TV_FAR_RANGE } from '../src/systems/travelFarPlaces.js';
 import { ARRIVAL_BUFFER } from '../src/systems/travelAutopilot.js';
 import { spawnedMapId, spawnsDungeon, createSpawnLedger, GENERAL_TTL_MINUTES } from '../src/world/spawnedDungeons.js';
-import { planRoute, routeLegs, routeDrawPoints, openStepBlocked, TV_MOUNTAIN_CLIMATE } from '../src/systems/travelRoute.js';
+import { planRoute, routeLegs, routeDrawPoints, routeGround, TV_MOUNTAIN_CLIMATE, TV_STEEP_RISE } from '../src/systems/travelRoute.js';
 
 // PIN MOVED (AUDIT OW5 G2): the Overworld's own lines are said through tvSay - held at the scale they are said at
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -316,22 +316,32 @@ test('AUDIT OW4 D6: WHERE THE LAST LEG STARTS - the aim of the leg before it (a 
   assert.deepEqual(dungeonApproach(rect, lastLegStart(bent, { x: 0, z: 22000 }, mid)), { x: 14096 + ARRIVAL_BUFFER, z: 22050 }, 'its east edge - the feet in the west would face the far side');
 });
 
-test('AUDIT OW4 D1/D6 host: a walk to a spawn\'s DOOR is a place\'s - never refused for the peaks, its own pixel\'s step exempt, every other step under the law - while a spot there is refused; its edge faces the route\'s LAST LEG (lifted and run over the real planner)', () => {
+/** MOUNTAINS WALKABLE (the owner, the Wrothgarian zone's merge): the host's own ground refuses no step and names no peak
+ *  (travelRoute.js routeGround). The door's law is the walk's own, over ANY ground that refuses - driven here by
+ *  OW-MOUNTAINS' law as it stood before the merge, a stand-in and never the port's (test/tv2_click_to_move.test.js keeps
+ *  the same one for the planner's own machinery). */
+const oldPeaksLaw = (climateAt, heightAt, ax, ay, bx, by, leaving = false) => {
+  if (leaving) return false;
+  if (climateAt(bx, by) === TV_MOUNTAIN_CLIMATE) return true;
+  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;
+};
+
+test('AUDIT OW4 D1/D6 host, then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): over the host\'s own ground a spot among the peaks is walked, straight over the ridge; over a ground that refuses (the old law, a stand-in) a walk to a spawn\'s DOOR is a place\'s - never refused for the peaks, its own pixel\'s step exempt, every other step under the law - while a spot there is refused; its edge faces the route\'s LAST LEG (lifted and run over the real planner)', () => {
   const w = rd('src/scenes/world.js');
   const m = /\n {2}(function travelViewWalkTo\(point, pix, \{ door = null, water = false, roads = false \} = \{\}\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the walk, with its one option');
   const P = 32768, mid = (p) => [p.x * P + P / 2, p.y * P + P / 2];   // this test's own native frame
   const doorAt = (px, py) => { const [x, z] = mid({ x: px, y: py }); return { minX: x - 2048, maxX: x + 2048, minZ: z - 2048, maxZ: z + 2048 }; };
   const spot = (px, py) => { const [x, z] = mid({ x: px, y: py }); return [x, 0, z]; };
-  let climate = () => 231, height = () => 20, water = () => false;
+  let climate = () => 231, height = () => 20, water = () => false, real = null;   // real: the host's own ground (routeGround), else the stand-in
   const said = [], begun = [], plans = [];
   const [fx, fz] = mid({ x: 10, y: 5 });
   const d = {
     state: { worldCoords: (p) => ({ x: p[0], y: p[1], z: p[2] }) }, maps: { getClimateIndex: (x, y) => climate(x, y) }, TV_MOUNTAIN_CLIMATE,
     townTalk: { say: (t) => said.push(t) }, tvSay: (t) => said.push(t), TRAVEL_VIEW_TEXT: { mountains: 'peaks', noWay: 'no way', spot: 'spot' },   // AUDIT OW5 G2: the walk's refusals say through tvSay
     playerTravelPixel: () => ({ x: 10, y: 5 }), terrainGen: { roads: () => null }, planRoute, tvWater: (x, y) => water(x, y),
-    tvOpenBlocked: (ax, ay, bx, by) => openStepBlocked(climate, height, ax, ay, bx, by),
-    tvRouteGround: () => ({ isWater: (x, y) => water(x, y), peakAt: (x, y) => climate(x, y) === TV_MOUNTAIN_CLIMATE, openBlocked: (ax, ay, bx, by, leaving = false) => openStepBlocked(climate, height, ax, ay, bx, by, leaving) }),   // AUDIT OW4 J3: the ground read once
+    tvOpenBlocked: (ax, ay, bx, by) => oldPeaksLaw(climate, height, ax, ay, bx, by),
+    tvRouteGround: () => real ?? ({ isWater: (x, y) => water(x, y), peakAt: (x, y) => climate(x, y) === TV_MOUNTAIN_CLIMATE, openBlocked: (ax, ay, bx, by, leaving = false) => oldPeaksLaw(climate, height, ax, ay, bx, by, leaving) }),   // AUDIT OW4 J3: the ground read once
     tvJoinedLegs: (from, plan) => { plans.push(plan); return routeLegs(plan.pixels, plan.kinds); },
     dungeonApproach, pixelBox: () => null, lastLegStart, player: { pos: [fx, 0, fz] }, tvLegMid: mid,   // AUDIT OW5 J4: this map's own frame (its pixels are not the world's): the approach unclamped
     travelOptions: { beginTravelAlongRoute: (plan) => { begun.push(plan); return true; }, route: {} }, tvCautious: () => false, tvQuiet: false,
@@ -345,6 +355,14 @@ test('AUDIT OW4 D1/D6 host: a walk to a spawn\'s DOOR is a place\'s - never refu
   const reset = () => { said.length = 0; begun.length = 0; plans.length = 0; };
   // D1: the spawn's pixel among the peaks, and a one-pixel ridge on the way
   climate = (x, y) => ((x === 14 && y === 5) || (x === 12 && y >= 3 && y <= 7) ? TV_MOUNTAIN_CLIMATE : 231);
+  // MOUNTAINS WALKABLE: over the host's own ground (routeGround over that climate) the spot is walked, the ridge crossed
+  real = routeGround((x, y) => climate(x, y), (x, y) => height(x, y), 0);
+  assert.equal(walkTo(spot(14, 5), { x: 14, y: 5 }), true, 'MOUNTAINS WALKABLE: a spot among the peaks - walked');
+  assert.deepEqual([said, begun[0].point.pixel], [[], { x: 14, y: 5 }], 'nothing said - never "The mountains cannot be crossed on foot."');
+  assert.ok(plans[0].pixels.some((p) => p.x === 12 && p.y >= 3 && p.y <= 7), '...straight over the ridge');
+  real = null;
+  reset();
+  // the stand-in: a ground that refuses
   assert.equal(walkTo(spot(14, 5), { x: 14, y: 5 }), false, 'a spot among the peaks: refused');
   assert.deepEqual([said, begun], [['peaks'], []]);
   reset();
@@ -488,10 +506,11 @@ test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bump
   const ledger = createSpawnLedger(), index = new Map(), unroaded = new Set();
   let clock = 0;
   const env = new Function('d', `let _locIndexGen = 0; const { params, spawnsDungeon, _spawnSalt, maps, CLIMATES, _spawnGround, terrainGen, pathFreePixel, _spawnLedger, _spawnClock, _insideSpawn,
-    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow } = d; ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, gen: () => _locIndexGen };`)({
+    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, wildMaskOf, wildInside, wildHallStand } = d; ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, gen: () => _locIndexGen };`)({
     params: { has: () => true }, spawnsDungeon: () => true, _spawnSalt: 1, maps: { getClimateIndex: () => 231 }, CLIMATES, _spawnGround: () => true, terrainGen: { roads: () => ({}) },
     pathFreePixel: () => true, _spawnLedger: ledger, _spawnClock: () => clock, _insideSpawn: () => false, locationIndex: index,
     _spawnCloneAt: (x, y) => spawnLoc(x, y), _spawnUnroaded: unroaded, owSayRow: () => {},
+    wildMaskOf: () => null, wildInside: () => false, wildHallStand: () => null,   // PVPDUNGEONS: no open zone here - the spawner's own pixel
   });
   assert.equal(env.at(7, 8).name, 'Old Keep (7,8)');
   assert.deepEqual([env.gen(), index.has('7,8')], [1, true], 'stood: bumped');
