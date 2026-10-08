@@ -63,6 +63,7 @@ import { getPref } from '../systems/uiPrefs.js';
 import { AIR_TUNING } from './airPass.js';   // FLICKER-FIX: the calmer eye
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
+import { windfallLawOn, swayShare, windfallLeanMax } from './windfallSway.js';   // WINDFALL1: the flora's lean while Windfall's law stands
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
@@ -339,7 +340,10 @@ export const swayLean = (wl, sway, h) => wl * 1.3 * 0.0015 * sway * h;
  *  placementRadius over WIND3's lean, which BB_VS applies only while uSway > 0 and scales by the quad's height
  *  whichever way it hangs (an upside-down flame's h is negative). The review: the half-diagonal once a size
  *  (placedHalfDiagonal), not a Math.hypot at every ask. */
-const quadRadius = (wl, b) => { const h = b.size.h; return placementRadius(placedHalfDiagonal(b), b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0); };
+/** WINDFALL1: the crown's lean of `b` under record `r`'s wind - WIND3's at the record's rate `wl`, or, while the mod's law
+ *  stands (`law`, render/windfallSway.js), its law's most at the batch's mask. */
+const crownLean = (r, wl, law, b, h) => { const share = swayShare(b, law); return share > 0 ? (law ? windfallLeanMax(r.windfall, share, h) : swayLean(wl, share, h)) : 0; };
+const quadRadius = (r, wl, law, b) => { const h = b.size.h; return placementRadius(placedHalfDiagonal(b), crownLean(r, wl, law, b, h < 0 ? -h : h)); };
 /** AUDIT SC1: a remembered placement matches to this - a floating-origin rebase adds the offset in a different order
  *  than the host did, and the last bit of a float is no motion. */
 export const SHADOW_STILL_EPS = 1e-3;
@@ -952,6 +956,7 @@ export class ShadowPass {
       bb: {
         p: bb, proj: u(bb, 'uProj'), view: u(bb, 'uView'), right: u(bb, 'uRight'), up: u(bb, 'uUp'), origin: u(bb, 'uOrigin'),
         size: u(bb, 'uSize'), tex: u(bb, 'uTex'), flatWind: u(bb, 'uFlatWind'), sway: u(bb, 'uSway'),
+        wfSway: u(bb, 'uWindfallSway'), wfAxis: u(bb, 'uWindfallAxis'),   // WINDFALL1: render/windfallSway.js
         face: u(bb, 'uFacePoint'),   // DISC29-E: the lamp each flat turns to face, per vertex (renderer.js BB_VS)
       },
     };
@@ -987,7 +992,7 @@ export class ShadowPass {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     // the pool: records are minted once and reused by index
-    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, right:Float32Array, up:Float32Array, bounded:boolean, sphere:Float32Array, subSpheres:Float32Array, cellSpheres:Float32Array, dynamic:boolean, cut:number}>} */
+    /** @type {Array<{kind:number, mesh:any, matrix:Float32Array, texRemap:any, surface:any, arrayTex:any, tilemapTex:any, tileSize:number, batches:any, flatWind:Float32Array, windfall:Float32Array, wfSway:Float32Array|null, wfAxis:Float32Array|null, right:Float32Array, up:Float32Array, bounded:boolean, sphere:Float32Array, subSpheres:Float32Array, cellSpheres:Float32Array, dynamic:boolean, cut:number}>} */
     this.records = [];
     this.count = 0;
     this.recording = true;
@@ -1178,8 +1183,9 @@ export class ShadowPass {
     if (this.count >= SHADOW_RECORD_MAX) return null;
     let r = this.records[this.count];
     if (!r) {
-      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), right: new Float32Array(3), up: new Float32Array(3),
+      r = { kind: 0, mesh: null, matrix: new Float32Array(16), texRemap: null, surface: null, arrayTex: null, tilemapTex: null, tileSize: 0, batches: null, flatWind: new Float32Array(4), windfall: new Float32Array(8), wfSway: null, wfAxis: null, right: new Float32Array(3), up: new Float32Array(3),
         bounded: false, sphere: new Float32Array(4), subSpheres: new Float32Array(0), cellSpheres: new Float32Array(0), dynamic: false, cut: 0 };   // EL5: the world-space spheres, the record's and its sub-meshes'; LA-AUDIT A1: and its shadow cells'; SC1: moved since last frame
+      r.wfSway = r.windfall.subarray(0, 4); r.wfAxis = r.windfall.subarray(4, 8);   // WINDFALL1: the law's two vec4s, viewed once
       this.records[this.count] = r;
     }
     this.count++;
@@ -1370,9 +1376,10 @@ export class ShadowPass {
     r.bounded = !!mesh.bounds;
     if (r.bounded) transformSphere(matrix, mesh.bounds, r.sphere);
   }
-  recordBillboards(batches, flatWind, camRight, camUp) {
+  recordBillboards(batches, flatWind, camRight, camUp, windfall = null) {
     const r = this._rec(); if (!r) return;
     r.kind = REC_BB; r.batches = batches; r.flatWind.set(flatWind ?? this._zeroWind);
+    if (windfall) r.windfall.set(windfall); else r.windfall.fill(0);   // WINDFALL1: the mod's law, as the flats were drawn with it
     r.right.set(camRight); r.up.set(camUp);   // EL3: the basis the batch was drawn with, for the emission replay
     r.bounded = false;   // a batch list is culled batch by batch (each has its own bounds about its origin)
     // SC1: a flat is dynamic while its origin moves (a walker, a missile, a thrown torch) - per batch, remembered on the batch
@@ -1380,7 +1387,7 @@ export class ShadowPass {
     // batch's `sway`, on a clock that runs every frame), so while a wind blows its silhouette is never twice the
     // same - a dynamic for as long as the wind lasts, and still the moment it drops. The audit had left this as
     // "a lantern's shadow of a swaying tree holds one phase".
-    const fw = r.flatWind, wl = Math.hypot(fw[0], fw[1]);
+    const fw = r.flatWind, wl = Math.hypot(fw[0], fw[1]), law = windfallLawOn(r.windfall);
     // AUDIT SC1: ...and while its FRAME changes (an animated flat's silhouette is the frame's - a townsman's idle,
     // a 211 prop - and the cache would have held the build frame's until an unrelated rebuild), and always for a
     // batch built dynamic (`_dyn`: moveBillboardBatch rewrites its vertices with the origin left null, so the
@@ -1392,7 +1399,7 @@ export class ShadowPass {
       // AUDIT REACH: the silhouette is the RECORD's (a townsman's idle, a foe's swing rewrite `record`; `frame` is a
       // 211 prop's) and its FLIP's (a turn is the sign of size.w) - the first cut watched `frame` alone
       const fr = b.frame ?? -1, rec = b.record, flip = !!(b.size && b.size.w < 0);
-      const swaying = b.sway > 0 && b.size && swayLean(wl, b.sway, b.size.h) > SHADOW_SWAY_STILL;   // leaning past half a texel: moving, on the sway's own cadence
+      const swaying = !!b.size && crownLean(r, wl, law, b, b.size.h) > SHADOW_SWAY_STILL;   // leaning past half a texel: moving, on the sway's own cadence (WINDFALL1: by whichever law stands)
       if (b._shSeen === true && b._shGen !== this._shiftGen) { const d = this._shiftDelta(b); b._shOx += d[0]; b._shOy += d[1]; b._shOz += d[2]; }
       if (b._shGen !== this._shiftGen) this._shiftSeen(b);
       const placeChanged = b._shSeen === true && !(Math.abs(b._shOx - ox) <= SHADOW_STILL_EPS && Math.abs(b._shOy - oy) <= SHADOW_STILL_EPS && Math.abs(b._shOz - oz) <= SHADOW_STILL_EPS);
@@ -1732,7 +1739,7 @@ export class ShadowPass {
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
       if (r.kind === REC_BB) {
-        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);
         for (const b of r.batches) {
           if (!b?.vao || b._dead || (b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;   // DISC29-E: `anim` - the lo tier's walk folds a flat animating in place too, by its id and place (a new frame is no rebuild)
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
@@ -1742,7 +1749,7 @@ export class ShadowPass {
             if (c && !spheresTouch(c[0], c[1], c[2], c[3], x, y, z, far)) continue;
             // PERF-EXT1: ...and a pixel-wide batch by its QUADS, in the cube its six faces tile. One with none in it puts
             // nothing in this cache, so whatever it does is no reason to rebuild it.
-            if (quads && b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }
+            if (quads && b._place) { if (rad < 0) rad = quadRadius(r, wl, law, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }
             if (id === 0) { id = shId(b); at = Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919; }
             out[k * 2] = foldSignature(foldSignature(out[k * 2], id), at); out[k * 2 + 1]++;
           }
@@ -1875,14 +1882,14 @@ export class ShadowPass {
       const r = this.records[rec[j]];
       if (r.kind === REC_BB) {
         const list = bb[j];
-        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // the record's wind, for its quads' lean (quadRadius)
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // the record's wind, for its quads' lean (quadRadius)
         let m = 0;
         for (let t = 0; t < list.length; t++) {
           const b = list[t];
           if (b._place) {
             const c = batchSphere(b, sp);
             if (c && c[0] === c[0] && c[1] === c[1] && c[2] === c[2] && c[3] === c[3]) {
-              const rad = quadRadius(wl, b);
+              const rad = quadRadius(r, wl, law, b);
               if (rad === rad && !placementsInCube(b, rad, lim[o], lim[o + 1], lim[o + 2], lim[o + 3] + cubeReach(rad) - rad + lim[o + 4])) continue;   // AUDIT 637: the cube's own reach (placementsInCube adds the radius itself)
             }
           }
@@ -1910,7 +1917,7 @@ export class ShadowPass {
       const r = this.records[cand ? cand.rec[j] : j];
       if (r.kind === REC_BB) {
         if (!r.dynamic) continue;
-        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);
         for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
@@ -1922,7 +1929,7 @@ export class ShadowPass {
           // beat (six faces blitted and replayed every fourth frame) - asked of its trees, it holds only a lantern
           // one of them stands by. The CUBE, not the far sphere: a face draws into its corners (pins: a quad at
           // 22.3 of a 20 far, 17 along +X, still redraws the slot).
-          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;
+          if (b._place && !placementsInCube(b, quadRadius(r, wl, law, b), pos[0], pos[1], pos[2], far)) continue;
           if (!b._shSway) return DYN_MOVER;
           near = DYN_SWAY;
         }
@@ -2071,6 +2078,7 @@ export class ShadowPass {
         use(P.bb);
         gl.uniform1i(P.bb.tex, 0);
         gl.uniform4fv(P.bb.flatWind, r.flatWind);
+        if (P.bb.wfAxis) { gl.uniform4fv(P.bb.wfSway, r.wfSway); gl.uniform4fv(P.bb.wfAxis, r.wfAxis); }   // WINDFALL1: the mod's law, as the flats were drawn
         gl.activeTexture(gl.TEXTURE0);
         let lastSway = null;
         // PERF-BASIS (2026-09-19): THE BASIS IS UPLOADED ONCE, NOT ONCE A
@@ -2101,7 +2109,7 @@ export class ShadowPass {
         // this loop binds another, and only this loop writes these two.
         // Reset per record, beside the sway's and the texture's.
         let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
-        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // PERF-EXT1: the record's wind, for its quads' lean
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // PERF-EXT1: the record's wind, for its quads' lean; WINDFALL1: and whose law
         for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) : (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn)) continue;   // SC1: by the batch's own word; DISC29-E: the lo tier takes a flat that animates in place
@@ -2112,7 +2120,7 @@ export class ShadowPass {
           // PERF-EXT1: a pixel-wide batch passes the sphere test in every cascade and face of its pixel; asked of its
           // quads it is drawn only where one of them stands (the census's noon city: cascade 0 drew 123 flat batches a
           // frame for 7 with a tree in it, cascade 1 144 for 79). A skip here is a batch that rasterises nothing.
-          if (b._place && !placementsInVolume(b, quadRadius(wl, b), planes)) { this.stats.culled++; continue; }
+          if (b._place && !placementsInVolume(b, quadRadius(r, wl, law, b), planes)) { this.stats.culled++; continue; }
           // WEEDS1: F5's sphere test used to sit here and is GONE, because
           // it can no longer decide anything. A single-flat batch's radius
           // is hypot(w, h) / 2, so F5 fired only when hypot(w, h) < 4 texels
@@ -2154,7 +2162,7 @@ export class ShadowPass {
           if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(P.bb.origin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
           const w = b.size.w, h = b.size.h;
           if (w !== lastW || h !== lastH) { gl.uniform2f(P.bb.size, w, h); lastW = w; lastH = h; }   // PERF-EXT11
-          const sw = b.sway || 0;
+          const sw = swayShare(b, law);   // WINDFALL1: the mod's mask under its law
           if (sw !== lastSway) { gl.uniform1f(P.bb.sway, sw); lastSway = sw; }
           if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS
           f.bindVao(b.vao);

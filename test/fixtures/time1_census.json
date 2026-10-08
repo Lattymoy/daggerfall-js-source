@@ -1013,6 +1013,30 @@
    "has": "people: livingWorldOn() ? () => peoplePage(livingRelations, Math.floor((skyMinutes() - 240) / 1440), livingTownOfId) : undefined,",
    "clock": "sky",
    "why": "LW7c: the People page reads each regard on the living day - the sky's"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "windfall.frame({ dt, outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "windfall.frame({ dt, outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
   }
  ]
 }

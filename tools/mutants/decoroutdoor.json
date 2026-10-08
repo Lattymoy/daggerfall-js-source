@@ -131,7 +131,7 @@
   {
     "name": "DECOROUTDOOR-tree-classic-under-sib",
     "file": "src/scenes/yardNature.js",
-    "old": "    const pic = await naturePicture({ door, seasons: seasonal?.() ?? null, renderer, uploadRecord }, t, archive, record);",
+    "old": "    const pic = await naturePicture({ door, seasons, renderer, uploadRecord }, t, archive, record);",
     "new": "    const pic = await naturePicture({ door, seasons: null, renderer, uploadRecord }, t, archive, record);",
     "tests": [
       "test/decoroutdoor.test.js"

@@ -32,7 +32,7 @@ water, the dirt and the paving at their edges are the original's). Records
   each file's sha256. They are a render of game data; Port-Doctrine carries
   them as its second exception, on Mac's word.
 - `sands-of-the-alikr.index.json` - the texture door's index of the pack
-  (`src/systems/shippedTexturePacks.js`).
+  (`src/systems/vanillaEnhancedPack.js` `ENVIRONMENT_PACK_MODS`).
 - NOT the screenshots: they are pictures of the game, not the pack.
 
 Every file here but this note is made by

@@ -56,7 +56,7 @@ the tracks by shading out to 320 m.
   (`snow_surface_masks_<archive>.bytes`). The records are a render of game
   data; Port-Doctrine carries them as its second exception, on Mac's word.
 - `snowfall.index.json` - the texture door's index of the shipped records
-  (`src/systems/shippedTexturePacks.js`).
+  (`src/systems/vanillaEnhancedPack.js` `ENVIRONMENT_PACK_MODS`).
 
 Every file here but this note is made by
 `node tools/environmentModsExtract.mjs` and the two Python tools.

@@ -1373,7 +1373,7 @@ export const MOD_SETTINGS = Object.freeze({
     author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({ default: true, description: 'Wind in the enhanced outdoors that changes by the day: trees and plants sway and shiver by their kind, some days turn windy or stormy, gusts come and go with their own sound, leaves blow off the trees and snow off winter boughs.' }),
-      'General.WindDirectionDegrees': Object.freeze({ default: 35.0, min: 0.0, max: 360.0, float: true, step: 5, description: 'Optional heading offset added to the deterministic daily wind direction.' }),
+      'General.WindDirectionDegrees': Object.freeze({ default: 35.0, min: 0.0, max: 360.0, float: true, step: 5, description: 'Optional heading offset added to the deterministic daily wind direction. INERT here: the enhanced outdoors\u2019 own wind gives the heading, so the trees, the leaves, the wisps and the rain all blow one way (WINDFALL1).' }),
       'General.OverallWindyPeriodFrequency': Object.freeze({ default: 100.0, min: 0.0, max: 200.0, float: true, step: 5, description: 'Overall natural windy-period probability. 100% uses the authored seasonal and regional distribution.' }),
       'General.NaturalWindstormFrequency': Object.freeze({ default: 100.0, min: 0.0, max: 200.0, float: true, step: 5, description: 'Chance that a qualifying natural windy period escalates to a 1-3 hour windstorm. 100% uses the authored 8% escalation chance.' }),
       'General.GustFrequency': Object.freeze({ default: 100.0, min: 0.0, max: 200.0, float: true, step: 5, description: 'Frequency of automatically scheduled breezes and gusts. 0% disables automatic events; 200% halves their delays.' }),

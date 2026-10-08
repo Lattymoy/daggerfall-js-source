@@ -102,7 +102,7 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
-import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
+import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
@@ -239,6 +239,8 @@ import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';  
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, heatHazeOn, heatHazeSettings, HAZE_OFF } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
+import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flora batch's share of the mod's lean
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
@@ -513,6 +515,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;   // HAZE1: Heat Haze on the enhanced lane (world.js's twin note) - this host's one city has no floating origin to shift it
   const heatHaze = createHeatHaze();
+  const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });   // WINDFALL1: world.js's twin note - this host's one city has no floating origin to shift it
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance
@@ -1039,7 +1042,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, getTexture,
     seasonal: seasons ? { key: (a) => (seasons.lookup(a, 1) ? `s${seasons.installedSeason}.${seasons.generation}` : ''), picture: (a, r) => seasons.lookup(a, r)?.texture ?? null, generation: () => seasons.generation } : null,   // AUDIT LPT C2: the season only where it re-skins the tree's own archive (world.js)
   }) : null;
-  const lptHandles = [], lptGroups = [], lptSway = new Map();
+  const lptHandles = [], lptGroups = [], lptSway = new Map(), lptWindfall = new Map();   // WINDFALL1: and its share under Windfall's law
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
     const t = textureFiles.get(archive);
@@ -1055,7 +1058,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       batch.farH = plain.h;   // AUDIT LPT A8 (as world.js)
       batch._box = flatBatchAabb(centers, far.size);
       batch.sway = floraSwayOf(archive, natureArchive, plain.h);
+      batch.windfall = windfallResponse(archive, record);   // WINDFALL1: the stock record's mask (Low Poly Trees' tree stands for it)
       lptSway.set(lpt, batch.sway);
+      lptWindfall.set(lpt, batch.windfall);
       billboardBatches.push(batch);
       flatCount += centers.length;
       if (isCoverFlat(archive, record, plain)) collider.cover.add('tact1:flats', centers.flatMap((c) => coverProxies(c, plain, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) })));
@@ -1065,6 +1070,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
       batch._box = flatBatchAabb(centers, sib.size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
+      batch.windfall = windfallResponse(archive, record, seasonPrefixOf(seasons.installedSeason, archive));   // WINDFALL1: the mod's table for the season's atlas
       billboardBatches.push(batch);
       flatCount += centers.length;
       if (isCoverFlat(archive, record, sib.size)) collider.cover.add('tact1:flats', centers.flatMap((c) => coverProxies(c, sib.size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) })));   // TACT1; AUDIT TACT B2: a tree's trunk and crown
@@ -1074,6 +1080,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
     batch._box = flatBatchAabb(centers, size);   // EV3: world-space here - this host has no floating origin
     batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
+    batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask (every nature batch, as the mod patches them)
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     flatCount += centers.length;
@@ -1082,7 +1089,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   const lptSets = lptGroups.length ? [{ ox: 0, oy: 0, oz: 0, handles: lptHandles, ...buildTreeSet(0, 0, lptGroups) }] : [];   // LPT1: the location's 3D trees, gatherNear's one set
   const _lptPlanes = new Float32Array(24);
-  const lptOpts = { swayOf: (proto) => lptSway.get(proto) ?? 0, planes: cullOn ? _lptPlanes : null };
+  const lptOpts = { swayOf: (proto) => lptSway.get(proto) ?? 0, windfallOf: (proto) => lptWindfall.get(proto) ?? 0, planes: cullOn ? _lptPlanes : null };
 
   // AUDIT 26 (F019): the street StaticNPCs' identity + extent, once
   // their archives are loaded (they are flats, so the batch pass above
@@ -4923,8 +4930,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AudioSource stops. The mills fall silent with it and start
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
-      windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
       heatHaze.suppress();   // HAZE1: inside, the strength is 0 at once (world.js's twin note)
+      windfall.frame({ dt, outside: false, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel, feet: player.pos, height: player.height });   // WINDFALL1: WindMod.Update indoors (world.js's twin)
+      windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
       // crickets stop (CRICKET-DUNGEON, which only ever ran here). AUDIT DISC7 B1: the WORD and the rain's GAIN stay
@@ -5446,6 +5454,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
+    const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
+      heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -5759,7 +5769,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (const b of arenaBouts.batches()) _visBatches.push(b);   // ARENA-FIX 12: the crowd in the colosseum's tiers, and what it throws
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     if (lowPolyTrees && lptSets.length) { if (cullOn) spherePlanes(_pv, _lptPlanes); lowPolyTrees.frame(lptSets, cam.pos[0], cam.pos[1], cam.pos[2], lptOpts); }   // LPT1: the near 3D trees, for the flats' call below - culled to the frame's view (AUDIT LPT B4)
-    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
+    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
@@ -5836,6 +5846,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (hcc.enabled) personBatches.push(...hcc.batches());   // HCC: the horse on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
+    // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
+    if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
     // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
     if (hazeGl) {
       const hz = heatHaze.tick({ dt, exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
