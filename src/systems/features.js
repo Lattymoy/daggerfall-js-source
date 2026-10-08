@@ -758,6 +758,19 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
   }),
+  // TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): the streamed world goes on past the Bay's edge over the
+  // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamrielGround.js;
+  // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door.
+  Object.freeze({
+    id: 'tamriel-land',
+    group: 'world',
+    title: 'Land beyond the Bay',
+    note: 'Walk off the edge of the Iliac Bay and the land of Tamriel goes on: hills, mountains and coasts under each '
+      + 'province\u2019s own sky and trees. Empty ground for now - no towns, roads or dungeons stand there yet.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' }),
+  }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
   // day's words as places (systems/weatherField.js), read by the sim

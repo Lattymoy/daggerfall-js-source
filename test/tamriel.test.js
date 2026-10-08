@@ -438,9 +438,9 @@ test('TAMRIEL1 clamp: clampView takes the map\'s own origin - absent, nothing mo
   assert.equal(nan.scale, scaleMinOf(frame), 'a NaN view rests, on the frame');
 });
 
-test('TAMRIEL1 band: the continent band inks the Bay\'s cities alone, thins its carets to CARET_STEP.continent, draws roads at the far width and no tracks, and letters no region name', () => {
+test('TAMRIEL1 continent: the flag thins the Bay\'s carets to CARET_STEP.continent and letters no region name; the band\'s own roads, tracks and marks stand as the band says', () => {
   assert.equal(CONTINENT_BAND, 'continent');
-  assert.deepEqual([...BAND_MARKS.continent], [...BAND_MARKS.far], 'the cities, as far');
+  assert.equal(BAND_MARKS.continent, undefined, 'not a band');
   assert.equal(CARET_STEP.continent, 12);
   assert.ok(CARET_STEP.continent > CARET_STEP.far);
   // a 30x30 fixture of high ground with two regions and a road
@@ -451,18 +451,19 @@ test('TAMRIEL1 band: the continent band inks the Bay\'s cities alone, thins its 
   const model = buildInkModel({ width: w, height: h, heightBytes: bytes, climateAt: () => CLIMATES.Woodlands, regionAt: (x) => (x < 15 ? 0 : 1), regionCount: 2, roads: { source: 'basic-roads', roads, tracks } });
   assert.equal(model.highBands.continent.length, model.high.filter((p) => p.x % 12 === 0 && p.y % 12 === 0).length);
   assert.ok(model.highBands.continent.length < model.highBands.far.length);
-  const paint = (band) => {
+  const paint = (band, continent = false) => {
     const ctx = recordingCtx();
-    paintInkStatic(ctx, model, { ox: 0, oy: 0, scale: 5 }, { paperW: 150, paperH: 150, band, regionNames: ['West', 'East'] });
+    paintInkStatic(ctx, model, { ox: 0, oy: 0, scale: 5 }, { paperW: 150, paperH: 150, band, continent, regionNames: ['West', 'East'] });
     return ctx.calls;
   };
-  const cont = paint(CONTINENT_BAND), far = paint('far');
+  const cont = paint('far', true), far = paint('far');
   assert.ok(!cont.some((c) => c.fn === 'fillText'), 'no region name on the continent');
   assert.ok(far.some((c) => c.fn === 'fillText' && c.args[0] === spacedName('West')), 'far letters them');
   const dashes = (calls) => calls.filter((c) => c.fn === 'setLineDash').map((c) => c.args[0]);
-  assert.ok(!dashes(cont).some((d) => d.length === 2 && d[0] === 2 && d[1] === 3), 'no tracks on the continent');
+  assert.ok(!dashes(cont).some((d) => d.length === 2 && d[0] === 2 && d[1] === 3), 'no tracks at far, continent or not');
   const roadStroke = (calls) => calls.filter((c) => c.fn === 'stroke' && c.strokeStyle === PEN.line && c.lineWidth === 1);
   assert.ok(roadStroke(cont).length >= 1, 'the roads at the far width');
+  assert.equal(paint('mid', true).filter((c) => c.fn === 'fillText').length, 0, 'the flag silences the names at any band');
   const caretsOf = (calls) => calls.filter((c) => c.fn === 'lineTo' && c.strokeStyle === PEN.relief).length;
   assert.ok(caretsOf(cont) < caretsOf(far) && caretsOf(cont) > 0);
   // penOf is the one pen: exported for the continent's layer, culled per segment as before
@@ -504,7 +505,8 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.match(sheet, /if \(this\._tamriel && !this\._zoneMap\) \{/, 'never on the zone map');
   assert.match(sheet, /frame: \(\) => \(this\._tamriel \? tamrielFrameInBay\(\) : null\)/, 'the frame through the sheet, off when the switch is');
   assert.match(sheet, /homeView: \(lim\) => \(this\._tamriel && lim/, 'the home view is the Bay\'s fit while the frame is round it');
-  assert.match(sheet, /band: this\._tamriel && onContinent\(env\.view\.scale, this\._bayFit\(\)\) \? CONTINENT_BAND : env\.band/, 'the band the Bay\'s ink thins for');
+  assert.match(sheet, /band: env\.band,\n/, 'the band is the band');
+  assert.match(sheet, /continent: this\._tamriel && onContinent\(env\.view\.scale, this\._bayFit\(\)\),/, 'the flag the Bay\'s ink thins for');
   assert.match(held, /this\._tamriel = tamrielMapOn\(\);/, 'read once, at open');
   assert.match(held, /const frame = this\._sheet\?\.frame\?\.\(\) \?\? null;\n    if \(frame\) return \{ mapW: frame\.w, mapH: frame\.h, mapX0: frame\.x0, mapY0: frame\.y0/, 'the limits carry the origin');
   const hover = held.slice(held.indexOf('  _hoverLabel(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {'));

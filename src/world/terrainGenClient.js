@@ -52,6 +52,7 @@ export class TerrainGenClient {
    */
   constructor({ woods, woodsBytes = null, workerFactory = null } = {}) {
     this._woods = woods;
+    this._tamriel = !!woods?.isTamrielGround;   // TAMRIEL2: the host's reader has the continent round it (world/tamrielGround.js groundWoods) - the worker composes its own copy the same way
     this._sites = null;   // LANDFORM4: setLandformTables
     this._climates = null;   // LANDFORM6: setLandformTables
     this._worker = null;
@@ -93,7 +94,7 @@ export class TerrainGenClient {
       // a COPY - transferring the reader's own bytes would detach the
       // buffer the rest of the session still reads (the RA1 law)
       const bytes = woodsBytes.slice();
-      w.postMessage({ t: 'init', woodsBytes: bytes }, [bytes.buffer]);
+      w.postMessage({ t: 'init', woodsBytes: bytes, tamriel: this._tamriel }, [bytes.buffer]);   // TAMRIEL2: the worker composes its own reader the same way
       this._worker = w;
     } catch (e) {
       console.warn('[terrain] worker unavailable; generating on the main thread', e);

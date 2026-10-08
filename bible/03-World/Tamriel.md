@@ -80,11 +80,12 @@ else (`test/tamriel.test.js` sweeps for a second copy), so the probe's correctio
   borders dashed as the Bay's, the Bay's own edge a faint dotted frame so the player sees where the data's ground
   ends, the capitals at any zoom and every city once the sheet is in to the Bay's own scale, the province names in
   `spacedName`'s thin-spaced capitals (now the one spelling the Bay's region names use too), the seas in italic.
-- **The continent band.** Past CONTINENT_BELOW (0.85) of the Bay's own fit the world sheet hands the Bay's painter
-  CONTINENT_BAND (`ui/inkMap.js`): the cities alone as far, the carets at CARET_STEP.continent (12), the roads at the
-  far width and no tracks, no region names - the Bay is a hand's width there and its sixty-two names would be a
-  smudge; the continent's province names stand instead. Not in ZOOM_BANDS, which are pure on the scale: the Bay's fit
-  depends on the paper, so the sheet names the band itself.
+- **The continent flag.** Past CONTINENT_BELOW (0.85) of the Bay's own fit the world sheet hands the Bay's painter
+  `continent: true` beside the band (`ui/inkMap.js`): the carets thin to CARET_STEP.continent (12, the highBands key
+  of that name) and no region names are lettered - the Bay is a hand's width there and its sixty-two names would be a
+  smudge; the continent's province names stand instead. The band stays the band's (far, at any real paper: the roads
+  at the far width, no tracks, the cities alone). Not a ZOOM_BAND, which are pure on the scale: the Bay's fit depends
+  on the paper, so the sheet decides it.
 - **The hover.** `tamrielPlaceAt`: a city within CITY_HIT_PX, else the province, else the sea - "Skyrim : Solitude
   (beyond the Bay)", "Skyrim (beyond the Bay)", "Sea of Ghosts" - and null on the Bay's own ground, where the window's
   reads stand. A press beyond the Bay picks nothing: `_pickAt` was not touched.
@@ -128,8 +129,8 @@ page says so.
 - The Bay's edge classification (which runs of each edge are land) is committed by the rings and measured by the
   probe; where they disagree past STITCH_REACH the authored chain ends where the Bay's rectangle cut it and the Bay's
   own coast ends on its edge as it always did.
-- The sheet's `band` chip still says `far` on the continent: the chip reads ZOOM_BANDS, the painter the band the
-  sheet names.
+- The sheet's `band` chip still says `far` on the continent: the chip reads ZOOM_BANDS, the painter the band and
+  the flag beside it.
 
 ## Pins
 
@@ -138,9 +139,54 @@ page says so.
 beyond the Bay, one capital a province; the clip's four cases, the fret's kept vertices and calm, the stitch's edge,
 reach and once-each, the model's budget and cut ends ON the Bay's ends, one model a coast array; not one canvas call on
 the Bay, the paint's order and faces off it, the hover's three answers; the raster's planes, the peak over the snowline,
-determinism, the compose on and not beside the Bay; the clamp's origin, the continent band's four thinnings, the switch
+determinism, the compose on and not beside the Bay; the clamp's origin, the continent flag's thinnings, the switch
 and its kill door; the source sweeps (the paint after the Bay's ink and under the zone map's, the switch read once, the
 layer reading no game data, BAY_ORIGIN named once). `test/heldmap.test.js` TAMRIEL1 window (+1): the limits carry the
 frame, the rest is the Bay's fit, the pan out to the frame's edge, the continent inked only past the Bay, the hover
 beyond it and nothing picked there, Off as it was. Mutants `tools/mutants/tamriel.json` (37: 34 dead, 3 equivalent as recorded), and map1's four clamp and
 band records re-aimed by content.
+
+## TAMRIEL2 - the land mass, streamed (2026-10-08)
+
+Mac, after the question of populating it: *"Lets worry about this later and only implement the land mass."*
+
+The streamed world goes on past the Bay's edge. Daggerfall grows every tile from two bytes a map pixel - WOODS.WLD's
+height and CLIMATE.PAK's climate - through DFU's own kernel, and the kernel asks for them through three reads of the
+WoodsFile (`getHeightMapValue`, `getHeightMapValuesRange1Dim`, `getLargeHeightMapValuesRange`) and one of the MapsFile
+(`getClimateIndex`). `world/tamrielGround.js` answers those reads for any pixel of the frame: the Bay's own on the Bay,
+the authored continent's past it - its height by the one law the raster reads (the sea 0, the shore rising to the
+plain over PLAIN_REACH from the coast, a range lifted toward SNOW_BYTE by its gain, a lattice hash of ±2), its climate
+the province's (the Ocean's at sea), its large-map detail a lattice hash of small bytes. Nothing stands on it: no
+towns, roads, dungeons or regions - the later use.
+
+- **THE BAY IS NOT MOVED BY A BYTE.** The kernel's windows reach 2 pixels past a pixel, and at the Bay's edge WoodsFile
+  CLAMPS them to the edge's own pixel. `groundWoods(woods)` - a prototype child of the reader, so the two range reads
+  built on the two it overrides answer the continent too and nothing else about the reader changes - keeps the SEAM
+  band (SEAM_PX, 2) at exactly the clamped read, and blends the authored ground in from the edge's byte over BLEND_PX
+  (12) after it. `test/tamriel2.test.js` holds every Bay pixel's samples, edge and corner included, byte-identical
+  with the ground composed and without.
+- **The host** (`scenes/world.js`): `woods` is rebound to the composed reader at the mount, after the boot repairs
+  (the coastal dilation, the location smoothing, the sync of the worker's bytes) and before the terrain client copies
+  the bytes - so the fallback kernel, the promotions, the far ring and every other reader see one reader. The worker
+  composes its own copy the same way (`terrainGenWorker.js`, told by the client off the reader's own
+  `isTamrielGround`). `maps.getClimateIndex` is composed (`groundClimateIndex`: the Bay's own, dilation and all, on
+  it). `StreamingWorldState.frame` is the continent's box and `streams` is what the load list and the range ask;
+  `onMap` stays the map's law for World of Daggerfall's slots and every reader of the data. The far ring is handed
+  `byteAt` for the pixels past the map. World of Daggerfall's picks and Deep Waters' promotions are held to the Bay.
+- **The switch.** The Features row `tamriel-land` ("Land beyond the Bay", the world group, on by default, the player's
+  own online), `scenes/shared.js` `tamrielLandOn` on the enhanced skin, `?tamrielland=off` the kill door, read once as
+  the world mounts. Off - and on the classic skin - the edge of the world is DFU's: empty.
+- **Readings, honest.** The region past the Bay reads as `getRegionIndexAt`'s clamp (0, the Alik'r Desert) - DFU's own
+  clamp, kept; weather, quests and factions key on it and see the Alik'r. The relay carries no pose past the map
+  (`net/wire.js` holds the Bay's bounds), so online a player beyond the Bay walks unseen by the room until they come
+  back. The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's). The Wrothgarians
+  and the Dragontails begin in WOODS' bytes and continue in the authored law past the edge; the seam band and the
+  blend join them, and the probe's seam report says where the data and the authored shape disagree.
+- **Performance.** A pixel's ground past the Bay costs a point-in-province test, a coast distance over ~100 edges and a
+  range distance over 12 spines, once a pixel, cached (GROUND_CACHE_MAX, dropped whole); the kernel's cost is the
+  kernel's. On the Bay the composition is one subtraction and a compare a read.
+- **Pins.** `test/tamriel2.test.js` (10): the law (sea, shore, plain, Red Mountain over the snowline, the noise
+  floored), the cache and the climate, the composition to the byte on nine Bay pixels, the seam and the blend, the
+  range reads through the overrides, a whole pixel beyond the Bay through the kernel (Skyrim's trees; the Eltheric
+  under it), the raster as the same law, the stream's frame and load list, the ring's bytes past the map, the worker's
+  word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json`.

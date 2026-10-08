@@ -135,7 +135,6 @@ import { dungeonMap3dOn, tamrielMapOn } from './mapSkin.js';   // EM3-3D: the so
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
 import { tamrielInkFor, paintTamrielInk, tamrielPlaceAt, onContinent } from './tamrielInk.js';
 import { tamrielFrameInBay } from '../world/tamrielFrame.js';
-import { CONTINENT_BAND } from './inkMap.js';
 import { NOTE_MAX_CHARACTERS } from '../systems/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -1239,7 +1238,7 @@ export class HeldMapWindow {
         // its own pin stands (test/heldmap.test.js): what went is this
         // sheet's use of it, and the measure cache it needed.
         paintInkStatic(ctx, env.model, env.view, {
-          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
+          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
           filters: this.filters, names: null, regionNames: REGION_NAMES,
           // MAP2: the mark in the mod's colour. PORT-MAP: the harbours
           // always - the quays stand at every port, whatever Travel Options
@@ -1247,7 +1246,7 @@ export class HeldMapWindow {
           // still the mod's: _portsShown)
           ports: true,
           // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
-          band: this._tamriel && onContinent(env.view.scale, this._bayFit()) ? CONTINENT_BAND : env.band,
+          continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),
           markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
           markColor: rgbaCss(this._to?.settings?.markLocationColor),
           inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette

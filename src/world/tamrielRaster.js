@@ -17,23 +17,13 @@
 // little lattice noise keeps a plain from reading as a contour. The climate is the province's. The province byte is
 // its index in PROVINCES, PROVINCE_NONE at sea.
 // ═══════════════════════════════════════════════════════════════════
-import { PROVINCES, MOUNTAIN_RANGES, pts } from './tamrielGeography.js';
+import { PROVINCES, pts } from './tamrielGeography.js';
 import { TAMRIEL_W, TAMRIEL_H, PIXELS_PER_PICTURE_UNIT, BAY_ORIGIN, BAY_W, BAY_H } from './tamrielFrame.js';
+import { authoredHeightByte, groundHash, SHORE_BYTE, INLAND_BYTE, SNOW_BYTE, PLAIN_REACH } from './tamrielGround.js';   // TAMRIEL2: the one height law, the streamed ground's
 import { CLIMATES } from '../formats/mapsTables.js';
 
 export const PROVINCE_NONE = 255;
-export const SHORE_BYTE = 5;
-export const INLAND_BYTE = 22;
-export const SNOW_BYTE = 112;
-/** How far inland (picture units) the plain takes to rise from the shore to INLAND_BYTE. */
-export const PLAIN_REACH = 6;
-
-/** A small stable lattice hash, 0..1 (the fog's own shape, ui/wildMapInk.js - a hash, not a table). */
-function hash(x, y) {
-  let h = (x * 374761393 + y * 668265263 + 0x51ed) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
-}
+export { SHORE_BYTE, INLAND_BYTE, SNOW_BYTE, PLAIN_REACH };
 
 /** Scanline-fill a closed ring (points in CELL units) into `out` with `value`, even-odd. */
 function fillRing(ring, w, h, out, value) {
@@ -54,19 +44,6 @@ function fillRing(ring, w, h, out, value) {
   }
 }
 
-/** Distance from a point to a polyline (same units). */
-function distToLine(x, y, line) {
-  let best = Infinity;
-  for (let i = 0; i + 1 < line.length; i++) {
-    const a = line[i], b = line[i + 1];
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const len2 = dx * dx + dy * dy || 1e-9;
-    const t = Math.min(1, Math.max(0, ((x - a.x) * dx + (y - a.y) * dy) / len2));
-    best = Math.min(best, Math.hypot(x - (a.x + dx * t), y - (a.y + dy * t)));
-  }
-  return best;
-}
-
 /**
  * The frame rasterised at `cell` Bay pixels a cell: {width, height, cell, height: Uint8Array, climate: Uint8Array,
  * province: Uint8Array}. Pure and deterministic.
@@ -82,36 +59,15 @@ export function rasterizeTamriel({ cell = 8 } = {}) {
   PROVINCES.forEach((p, idx) => {
     for (const r of p.rings) fillRing(pts(r).map(toCell), width, height, province, idx);
   });
-  // the coast's distance, for the plain: a cheap pass - each land cell's nearest sea cell within PLAIN_REACH, by
-  // a dilation of the sea in rings
-  const reach = Math.max(1, Math.round(PLAIN_REACH * unit));
-  const dist = new Uint8Array(n).fill(reach);
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (province[y * width + x] === PROVINCE_NONE) dist[y * width + x] = 0;
-  for (let d = 1; d < reach; d++) {
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const i = y * width + x;
-        if (dist[i] !== reach) continue;
-        const near = (x > 0 && dist[i - 1] === d - 1) || (x + 1 < width && dist[i + 1] === d - 1)
-          || (y > 0 && dist[i - width] === d - 1) || (y + 1 < height && dist[i + width] === d - 1);
-        if (near) dist[i] = d;
-      }
-    }
-  }
-  const ranges = MOUNTAIN_RANGES.map((rg) => ({ ...rg, line: rg.pts.map(([x, y]) => toCell({ x, y })), w: rg.w * unit }));
+  // TAMRIEL2: each land cell's height is the ground law's at the cell's centre (world/tamrielGround.js) - the streamed
+  // ground past the Bay and this raster are one law by construction
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
       const p = province[i];
       if (p === PROVINCE_NONE) continue;
       climate[i] = PROVINCES[p].climate;
-      const inland = dist[i] / reach;
-      let h = SHORE_BYTE + (INLAND_BYTE - SHORE_BYTE) * inland + (hash(x, y) - 0.5) * 4;
-      for (const rg of ranges) {
-        const d = distToLine(x + 0.5, y + 0.5, rg.line);
-        if (d < rg.w) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * rg.gain * (1 - d / rg.w));
-      }
-      heightBytes[i] = Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));
+      heightBytes[i] = Math.max(SHORE_BYTE, authoredHeightByte((x + 0.5) / unit, (y + 0.5) / unit, (groundHash(x, y) - 0.5) * 4));   // a cell the fill says is land stands at least on the shore
     }
   }
   return { width, height, cell, heightBytes, climate, province };

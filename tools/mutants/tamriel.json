@@ -239,9 +239,9 @@
   },
   {
     "name": "TAMRIEL1-raster-range-flat",
-    "file": "src/world/tamrielRaster.js",
-    "old": "if (d < rg.w) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * rg.gain * (1 - d / rg.w));",
-    "new": "if (false) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * rg.gain * (1 - d / rg.w));",
+    "file": "src/world/tamrielGround.js",
+    "old": "if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
+    "new": "if (false) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
     "tests": [
       "test/tamriel.test.js"
     ]
@@ -286,17 +286,17 @@
   {
     "name": "TAMRIEL1-region-names-on-the-continent",
     "file": "src/ui/inkMap.js",
-    "old": "if (band !== 'near' && band !== CONTINENT_BAND && opts.regionNames) {",
+    "old": "if (band !== 'near' && !opts.continent && opts.regionNames) {",
     "new": "if (band !== 'near' && opts.regionNames) {",
     "tests": [
       "test/tamriel.test.js"
     ]
   },
   {
-    "name": "TAMRIEL1-tracks-on-the-continent",
+    "name": "TAMRIEL1-carets-not-thinned-on-the-continent",
     "file": "src/ui/inkMap.js",
-    "old": "const wide = band !== 'far' && band !== CONTINENT_BAND;",
-    "new": "const wide = band !== 'far';",
+    "old": "const caretBand = opts.continent ? CONTINENT_BAND : band;",
+    "new": "const caretBand = band;",
     "tests": [
       "test/tamriel.test.js"
     ]

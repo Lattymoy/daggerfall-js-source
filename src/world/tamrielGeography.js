@@ -23,6 +23,8 @@
 // Coordinates: x east, y south, picture units. Fractions are fine.
 // ═══════════════════════════════════════════════════════════════════
 
+import { segmentDistance } from '../net/gateStrike.js';   // a point's distance to a segment - ONE home, the gate's strike declared it first
+
 /** @typedef {{ x: number, y: number }} Pt */
 
 /** The vertex table. `c` is the mainland's outer coast, in order; `j` the inland junctions where three provinces
@@ -375,6 +377,36 @@ export function seaAt(x, y) {
   }
   return best;
 }
+/** The coast's edges as point pairs, built once: every edge of one ring (classifyEdges' coast), the islands' too. */
+let _coastEdges = null;
+export function coastEdges() {
+  if (!_coastEdges) {
+    _coastEdges = [];
+    for (const k of classifyEdges().coast.keys()) { const [a, b] = k.split('|'); _coastEdges.push([pt(a), pt(b)]); }
+  }
+  return _coastEdges;
+}
+/** How far a picture-grid point stands from the nearest coast, picture units (15.36 km each). */
+export function coastDistance(x, y) {
+  let best = Infinity;
+  for (const [a, b] of coastEdges()) { const d = segmentDistance(x, y, a.x, a.y, b.x, b.y); if (d < best) best = d; }
+  return best;
+}
+/** The mountains' lift at a picture-grid point: the strongest range whose band holds it, 0..1 (its gain at the
+ *  spine, nothing at the band's edge); 0 off every band. */
+export function rangeLift(x, y) {
+  let lift = 0;
+  for (const rg of MOUNTAIN_RANGES) {
+    let d = Infinity;
+    for (let i = 0; i + 1 < rg.pts.length; i++) {
+      const dd = segmentDistance(x, y, rg.pts[i][0], rg.pts[i][1], rg.pts[i + 1][0], rg.pts[i + 1][1]);
+      if (dd < d) d = dd;
+    }
+    if (d < rg.w) lift = Math.max(lift, rg.gain * (1 - d / rg.w));
+  }
+  return lift;
+}
+
 /** The bounds of the authored land on the picture grid - the probe and the pins read them. */
 export function landBounds() {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;

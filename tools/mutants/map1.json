@@ -155,8 +155,8 @@
   {
     "name": "roads-flag-ignored",
     "file": "src/ui/inkMap.js",
-    "old": "  if (!opts.filters?.roads) stroke(model.roads, wide ? 1.5 : 1, PEN.line);",
-    "new": "  stroke(model.roads, wide ? 1.5 : 1, PEN.line);",
+    "old": "  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
+    "new": "  stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "tracks-at-far",
     "file": "src/ui/inkMap.js",
-    "old": "  if (wide && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
+    "old": "  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
     "new": "  if (!opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
     "tests": [
       "test/heldmap.test.js"

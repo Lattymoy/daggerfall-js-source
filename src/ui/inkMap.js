@@ -300,16 +300,15 @@ export function mapKeyGroups() {
 /** Which buckets each band inks. Far: the cities alone. Mid: towns,
  *  temples and dungeons. Near: everything the discovery store admits. */
 export const BAND_MARKS = Object.freeze({
-  continent: new Set([11]),   // TAMRIEL1: out past the Bay's own fit, the cities alone - as far
   far: new Set([11]),
   mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),
   near: new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]),
 });
-/** TAMRIEL1: the band PAST far - the sheet zoomed out beyond the Bay's own fit onto the continent
- *  (ui/tamrielInk.js onContinent). Not in ZOOM_BANDS, which are pure on the scale: the Bay's fit depends on the
- *  paper, so the world sheet names this band itself and hands it to the painter. The Bay's ink thins for it: the
- *  carets at CARET_STEP.continent, the roads at the far width, no tracks, no region names (the continent's
- *  province names stand in for them). */
+/** TAMRIEL1: THE CONTINENT - the sheet zoomed out beyond the Bay's own fit (ui/tamrielInk.js onContinent). Not a
+ *  band: ZOOM_BANDS are pure on the scale and the Bay's fit depends on the paper, so the world sheet decides it and
+ *  hands the painter `continent: true` beside the band (far, at any real paper). The Bay's ink thins for it: the
+ *  carets at CARET_STEP.continent (the highBands key of that name), and no region names - the continent's province
+ *  names stand in for them. */
 export const CONTINENT_BAND = 'continent';
 /** A province's name as the sheet letters it: capitals, a thin space between - ONE spelling, so the continent's
  *  provinces (ui/tamrielInk.js) and the Bay's regions are set in the same hand. */
@@ -993,8 +992,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   ctx.lineWidth = 1;
   ctx.beginPath();
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
-  const step = CARET_STEP[band] ?? 3;
-  const carets = model.highBands?.[band] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
+  const caretBand = opts.continent ? CONTINENT_BAND : band;   // TAMRIEL1: on the continent the carets thin further
+  const step = CARET_STEP[caretBand] ?? 3;
+  const carets = model.highBands?.[caretBand] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
   for (const h of carets) {
     if (!visible(h.x, h.y)) continue;
     const [x, y] = toPaper(view, h.x + 0.5, h.y + 0.5);
@@ -1005,9 +1005,8 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the provinces
   stroke(model.borders, 1, PEN.soft, [4, 3]);
   // the roads and the tracks
-  const wide = band !== 'far' && band !== CONTINENT_BAND;   // TAMRIEL1: the continent band is far's, thinner still
-  if (!opts.filters?.roads) stroke(model.roads, wide ? 1.5 : 1, PEN.line);
-  if (wide && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
+  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
   // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
   if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
@@ -1076,7 +1075,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   }
   // the provinces' names, far and mid (TAMRIEL1: not on the continent, where the Bay is a hand's width and its
   // sixty-two names would be a smudge - the continent's own province names stand there)
-  if (band !== 'near' && band !== CONTINENT_BAND && opts.regionNames) {
+  if (band !== 'near' && !opts.continent && opts.regionNames) {
     ctx.fillStyle = PEN.region;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
