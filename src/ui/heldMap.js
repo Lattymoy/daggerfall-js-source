@@ -129,7 +129,13 @@ import {
 } from './mapStrip.js';
 import { mapContextOf } from '../systems/mapTabs.js';
 import { createAutomapSheet } from './automapSheet.js';
-import { dungeonMap3dOn } from './mapSkin.js';   // EM3-3D: the solid dungeon map's switch
+import { dungeonMap3dOn, tamrielMapOn } from './mapSkin.js';   // EM3-3D: the solid dungeon map's switch; TAMRIEL1: the continent's
+// TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
+// continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
+// the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
+import { tamrielInkFor, paintTamrielInk, tamrielPlaceAt, onContinent } from './tamrielInk.js';
+import { tamrielFrameInBay } from '../world/tamrielFrame.js';
+import { CONTINENT_BAND } from './inkMap.js';
 import { NOTE_MAX_CHARACTERS } from '../systems/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -592,6 +598,9 @@ export class HeldMapWindow {
     // back. `woods` is the one thing the bay's model cannot be built
     // without (`_ensureWorldModel` returns null for want of it), so it
     // is what the window asks.
+    // TAMRIEL1: the continent round the Bay, decided at open (the Features row's "takes effect the next time a map
+    // is opened"); the world sheet reads it for its frame, its home view, its paint and its hover
+    this._tamriel = tamrielMapOn();
     this._sheets = new Map();
     if (deps.woods) this._sheets.set('world', this._worldSheet());
     // EM3: the dungeon and interior hosts hand `automap` - the reveal
@@ -1205,6 +1214,9 @@ export class HeldMapWindow {
     return {
       id: 'world',
       size: () => this._size,
+      // TAMRIEL1: the box the view may pan over is the whole continent's frame, in the Bay's own coordinates (the Bay
+      // at 0..1000, 0..500 inside it) - the Bay's pixels, picks, marks and range checks never move
+      frame: () => (this._tamriel ? tamrielFrameInBay() : null),
       ensure: () => this._ensureWorldModel(),
       staticKey: () => [
         this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
@@ -1227,13 +1239,15 @@ export class HeldMapWindow {
         // its own pin stands (test/heldmap.test.js): what went is this
         // sheet's use of it, and the measure cache it needed.
         paintInkStatic(ctx, env.model, env.view, {
-          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
+          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
           filters: this.filters, names: null, regionNames: REGION_NAMES,
           // MAP2: the mark in the mod's colour. PORT-MAP: the harbours
           // always - the quays stand at every port, whatever Travel Options
           // says of where a ship may sail from (the Ports filter, the P key,
           // still the mod's: _portsShown)
           ports: true,
+          // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
+          band: this._tamriel && onContinent(env.view.scale, this._bayFit()) ? CONTINENT_BAND : env.band,
           markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
           markColor: rgbaCss(this._to?.settings?.markLocationColor),
           inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
@@ -1249,6 +1263,12 @@ export class HeldMapWindow {
             if (zone && !this._zoneMap) paintWildRings(c, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
           },
         });
+        // TAMRIEL1: the continent round the Bay, AFTER the Bay's ink (which clears the canvas first) and clipped to
+        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay
+        if (this._tamriel && !this._zoneMap) {
+          const bayFit = this._bayFit();
+          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit });
+        }
         // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
         const zone = this._zoneMap ? this._zoneInk() : null;
         if (zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'over', places: this._zoneNames === false ? [] : this._zonePlaces(), zoom: this._zoneZoom() });
@@ -1334,8 +1354,11 @@ export class HeldMapWindow {
         this._closePanel?.();
         if (this._zoneMap) this._closeZoneMap({ quiet: true });   // WILD2: the zone map is the world sheet's
       },
-      // at rest the whole bay is on the sheet, centred
-      homeView: () => null,
+      // at rest the whole bay is on the sheet, centred - TAMRIEL1: and still so with the continent round it: the
+      // home is the BAY's fit, centred on the Bay, and the continent is where the zoom goes from there
+      homeView: (lim) => (this._tamriel && lim
+        ? viewCentredOn(this._size.width / 2, this._size.height / 2, this._bayFit(lim), lim)
+        : null),
       // WILD2: the zone map is this sheet's - offered here, and its view held to the zone's box (and its band of the bay),
       // the legend's room left on the right
       zoneMap: true,
@@ -1391,10 +1414,20 @@ export class HeldMapWindow {
     hint.style.display = text ? '' : 'none';
   }
 
+  /** TAMRIEL1: the scale that fits the whole BAY on the paper - the home view's, and the mark past which the sheet is
+   *  on the continent (ui/tamrielInk.js onContinent). */
+  _bayFit(lim = null) {
+    return scaleMinOf({ mapW: this._size.width, mapH: this._size.height, paperW: lim?.paperW ?? this._paper.w, paperH: lim?.paperH ?? this._paper.h });
+  }
+
   _limits() {
     // WILD2: a sheet that holds the view to a box of its own (the world sheet's zone map) answers its limits whole
     const held = this._sheet?.limits?.(this._paper) ?? null;
     if (held) return held;
+    // TAMRIEL1: a sheet with a FRAME round its map (the world sheet with the continent) pans over the frame, whose
+    // top-left is not the map's (0, 0) - the clamp takes the origin (inkMap clampView mapX0/mapY0)
+    const frame = this._sheet?.frame?.() ?? null;
+    if (frame) return { mapW: frame.w, mapH: frame.h, mapX0: frame.x0, mapY0: frame.y0, paperW: this._paper.w, paperH: this._paper.h };
     const size = this._sheet?.size?.() ?? this._size;
     // ME-PAN fix: a sheet that knows what it has drawn hands the clamp that box, so a drag cannot take the map off
     // the paper into the empty rest of the level's space
@@ -3604,7 +3637,12 @@ export class HeldMapWindow {
     if (g) return { label: g.label, cursor: '', tip: g.tip };
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
-    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) return null;
+    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) {
+      // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
+      if (!this._tamriel || this._zoneMap) return null;
+      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model));
+      return place ? { label: place, cursor: '' } : null;
+    }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
     const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;

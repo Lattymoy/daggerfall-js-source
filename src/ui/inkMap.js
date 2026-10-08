@@ -300,10 +300,20 @@ export function mapKeyGroups() {
 /** Which buckets each band inks. Far: the cities alone. Mid: towns,
  *  temples and dungeons. Near: everything the discovery store admits. */
 export const BAND_MARKS = Object.freeze({
+  continent: new Set([11]),   // TAMRIEL1: out past the Bay's own fit, the cities alone - as far
   far: new Set([11]),
   mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),
   near: new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]),
 });
+/** TAMRIEL1: the band PAST far - the sheet zoomed out beyond the Bay's own fit onto the continent
+ *  (ui/tamrielInk.js onContinent). Not in ZOOM_BANDS, which are pure on the scale: the Bay's fit depends on the
+ *  paper, so the world sheet names this band itself and hands it to the painter. The Bay's ink thins for it: the
+ *  carets at CARET_STEP.continent, the roads at the far width, no tracks, no region names (the continent's
+ *  province names stand in for them). */
+export const CONTINENT_BAND = 'continent';
+/** A province's name as the sheet letters it: capitals, a thin space between - ONE spelling, so the continent's
+ *  provinces (ui/tamrielInk.js) and the Bay's regions are set in the same hand. */
+export const spacedName = (name) => name.toUpperCase().split('').join('\u2009');
 /** Which buckets each band NAMES (a subset of what it inks). */
 export const BAND_NAMES = Object.freeze({
   far: new Set([11]),
@@ -313,7 +323,7 @@ export const BAND_NAMES = Object.freeze({
 /** The order names compete for room: a city's name beats a farm's. */
 export const NAME_RANK = Object.freeze([11, 12, 13, 8, 9, 10, 0, 1, 2, 3, 4, 5, 6, 7]);
 /** How many map pixels apart the high-ground carets sit, per band. */
-export const CARET_STEP = Object.freeze({ far: 6, mid: 3, near: 2 });
+export const CARET_STEP = Object.freeze({ continent: 12, far: 6, mid: 3, near: 2 });
 
 // ── THE CHAINS ───────────────────────────────────────────────────
 
@@ -569,6 +579,7 @@ export function buildInkModel(deps) {
     // paint - the far band iterated a hundred thousand pixels a frame to
     // draw three thousand carets
     highBands: {
+      continent: high.filter((h) => h.x % CARET_STEP.continent === 0 && h.y % CARET_STEP.continent === 0),   // TAMRIEL1
       far: high.filter((h) => h.x % CARET_STEP.far === 0 && h.y % CARET_STEP.far === 0),
       mid: high.filter((h) => h.x % CARET_STEP.mid === 0 && h.y % CARET_STEP.mid === 0),
       near: high.filter((h) => h.x % CARET_STEP.near === 0 && h.y % CARET_STEP.near === 0),
@@ -627,16 +638,19 @@ export const SCALE_MAX = 14;
  */
 /** ME-PAN fix: how much of the paper a drag may leave blank past the edge of what a sheet has drawn. */
 export const PAN_SLACK = 0.5;
-export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev = null }) {
+/** TAMRIEL1: a sheet whose map does not start at (0, 0) - the world sheet with the continent round the Bay
+ *  (ui/tamrielInk.js; world/tamrielFrame.js tamrielFrameInBay) - hands the clamp `mapX0`/`mapY0`, the map's own
+ *  top-left in its coordinates. Absent they are 0 and nothing moves. */
+export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev = null, mapX0 = 0, mapY0 = 0 }) {
   const scaleMin = Math.min(paperW / mapW, paperH / mapH);
-  if (!Number.isFinite(view.scale)) view = { ox: 0, oy: 0, scale: scaleMin };   // a total function: a NaN view rests
+  if (!Number.isFinite(view.scale)) view = { ox: mapX0, oy: mapY0, scale: scaleMin };   // a total function: a NaN view rests
   // contain wins over the ceiling: a bay smaller than the sheet (a
   // probe's synthetic one) is never let shrink off it
   const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));
-  const axis = (o, map, paper) => {
+  const axis = (o, lo, map, paper) => {
     const visible = paper / scale;
-    if (visible >= map) return (map - visible) / 2;
-    return Math.min(map - visible, Math.max(0, o));
+    if (visible >= map) return lo + (map - visible) / 2;
+    return Math.min(lo + map - visible, Math.max(lo, o));
   };
   // ME-PAN fix: a sheet's drawn box, where it hands one. What is drawn may leave at most PAN_SLACK of the paper
   // blank on a side (at 0.5: the paper's middle stays over the drawn box), wherever the sheet's own box would let
@@ -662,7 +676,7 @@ export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev =
       scale,
     };
   }
-  return { ox: axis(view.ox, mapW, paperW), oy: axis(view.oy, mapH, paperH), scale };
+  return { ox: axis(view.ox, mapX0, mapW, paperW), oy: axis(view.oy, mapY0, mapH, paperH), scale };
 }
 export function scaleMinOf({ mapW, mapH, paperW, paperH }) {
   return Math.min(paperW / mapW, paperH / mapH);
@@ -913,8 +927,9 @@ export function paintInk(ctx, model, view, opts) {
   paintInkOverlay(ctx, view, { ...opts, clear: false });
 }
 
-/** The visible test and the chain stroke, shared by the two halves. */
-function penOf(ctx, view, paperW, paperH) {
+/** The visible test and the chain stroke, shared by the two halves - and by the continent's layer
+ *  (ui/tamrielInk.js), which is why it is exported: one pen, one cull. */
+export function penOf(ctx, view, paperW, paperH) {
   const s = view.scale;
   const visible = (x, y, pad = 2) => x >= view.ox - pad && y >= view.oy - pad
     && x <= view.ox + paperW / s + pad && y <= view.oy + paperH / s + pad;
@@ -990,8 +1005,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the provinces
   stroke(model.borders, 1, PEN.soft, [4, 3]);
   // the roads and the tracks
-  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
-  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  const wide = band !== 'far' && band !== CONTINENT_BAND;   // TAMRIEL1: the continent band is far's, thinner still
+  if (!opts.filters?.roads) stroke(model.roads, wide ? 1.5 : 1, PEN.line);
+  if (wide && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
   // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
   if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
@@ -1058,8 +1074,9 @@ export function paintInkStatic(ctx, model, view, opts) {
       ctx.fillText(n.mark.name, n.x, n.y);
     }
   }
-  // the provinces' names, far and mid
-  if (band !== 'near' && opts.regionNames) {
+  // the provinces' names, far and mid (TAMRIEL1: not on the continent, where the Bay is a hand's width and its
+  // sixty-two names would be a smudge - the continent's own province names stand there)
+  if (band !== 'near' && band !== CONTINENT_BAND && opts.regionNames) {
     ctx.fillStyle = PEN.region;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1068,7 +1085,7 @@ export function paintInkStatic(ctx, model, view, opts) {
       const name = opts.regionNames[r.region];
       if (!name || !visible(r.x, r.y, 30)) continue;
       const [x, y] = toPaper(view, r.x, r.y);
-      ctx.fillText(name.toUpperCase().split('').join(' '), x, y);
+      ctx.fillText(spacedName(name), x, y);
     }
   }
 }

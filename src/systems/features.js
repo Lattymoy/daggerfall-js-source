@@ -743,6 +743,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),   // the player's own, as the held map's is
   }),
+  // TAMRIEL1 (2026-10-08, Mac: "building the entirety of tamriel that connects accurately to Daggerfall. Not actually
+  // traversalable but used and connected as a gigantic map ... seen by players ingame"): the held map's world sheet
+  // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
+  // world/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/mapSkin.js
+  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door.
+  Object.freeze({
+    id: 'tamriel-map',
+    group: 'interface',
+    title: 'Tamriel on the map',
+    note: 'The enhanced map zooms out past the Iliac Bay to the whole of Tamriel, hand-drawn: the provinces, their '
+      + 'capitals, the mountains and the seas, joined to Daggerfall’s own coast. Nothing beyond the Bay can be travelled to.',
+    effect: 'Takes effect the next time a map is opened.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
+  }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
   // day's words as places (systems/weatherField.js), read by the sim
