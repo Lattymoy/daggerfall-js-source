@@ -1,0 +1,177 @@
+[
+  {
+    "name": "LW-ROOMS-same-place",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (at !== home) {\n      if (start - cursor > walkMinutes(at, home, mpm)",
+    "new": "    if (at !== home && at !== it.at) {\n      if (start - cursor > walkMinutes(at, home, mpm)",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-lunch",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "        if (i === 2 && rng() < 0.3) I('tavern', fav.tavern, h(12), 30);",
+    "new": "        if (i === 1 && rng() < 0.3) I('tavern', fav.tavern, h(12), 30);",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-reach",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_REACH_M = 20;",
+    "new": "export const INDOOR_REACH_M = 30;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-cells",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_CELLS = 400;",
+    "new": "export const INDOOR_CELLS = 4000;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-floor-under",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const start = [origin[0], y0 != null && Number.isFinite(y0) ? y0 : origin[1], origin[2]];",
+    "new": "  const start = [origin[0], origin[1], origin[2]];",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-level",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
+    "new": "      if (y == null || !Number.isFinite(y) || Math.abs(y - start[1]) > 1.2) continue;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-ramp",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
+    "new": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M) continue;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-arrive",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (Math.hypot(q[0] - tx, q[2] - tz) > INDOOR_ARRIVE_M) continue;",
+    "new": "      void 0;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-centimetre",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    if (!far(p, spots, INDOOR_APART_M - 0.01) ||",
+    "new": "    if (!far(p, spots, INDOOR_APART_M) ||",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-spread-gap",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const TABLE_GAP_M = 4;",
+    "new": "export const TABLE_GAP_M = 2;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-spread-rest",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  return [...out, ...left].map((a) => a.tb);",
+    "new": "  return out.map((a) => a.tb);",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-spread-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length)));",
+    "new": "        const groups = tablesOf(spots, dealOf(b.key, spots.length));",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-hold",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          if (bedFor(x) < 0 && onFloor++ >= room.holds) continue;",
+    "new": "          void onFloor;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-hold-lodger",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          if (bedFor(x) < 0 && onFloor++ >= room.holds) continue;",
+    "new": "          if (onFloor++ >= room.holds) continue;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-floor-m2",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_FLOOR_M2 = 8;",
+    "new": "export const INDOOR_FLOOR_M2 = 6;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-own",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const own = new Set(free.filter((i) => (clear.get(i) ?? 0) >= Math.min(TABLE_GAP_M, best)));",
+    "new": "  const own = new Set(free);",
+    "tests": [
+      "test/lwrooms_tavern.test.js",
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-farthest",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const own = new Set(free.filter((i) => (clear.get(i) ?? 0) >= Math.min(TABLE_GAP_M, best)));",
+    "new": "  const own = new Set(free.filter((i) => (clear.get(i) ?? 0) >= TABLE_GAP_M));",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-lodger-place",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const theirs = standing.filter((x) => x.id !== id && x.spot >= 0)",
+    "new": "  const theirs = standing.filter((x) => x.id !== id)",
+    "tests": [
+      "test/lwrooms_tavern.test.js",
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-nostep",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8, true, false, true); } catch { continue; }",
+    "new": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8); } catch { continue; }",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ],
+    "equivalent": true,
+    "why": "the walk's `noStep` spares the collider's step ladder, nothing else: a lip the capsule's sphere rides over (2 cm to 30 cm on the port's collider, measured) is ridden over either way, and a step up is refused by the level either way - the same cells at near half the cost (the synthetic hall of 24 by 18, tools/livingRoomProbe.mjs: 31 ms a sounding, 56 with the ladder)"
+  }
+]

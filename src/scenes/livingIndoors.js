@@ -8,12 +8,12 @@
 // minute - the evening's drinkers at the tavern, the errand's customers at a shop, the faithful at the temple, members
 // at the guild hall, a household at home awake - read again each INDOOR_TICK_S; never the asleep, and never the
 // building's own staff at their work where it is no house (DFU's static people stand for them, as they always have).
-// WHERE. A room has no grid to walk; it is SOUNDED once from its way in (`origin`, AUDIT-E4: the first door's): a fan of
-// INDOOR_FAN directions walked out to INDOOR_SPREAD_M through the room's own collider (`move` - never through a wall),
-// each landing on a floor (`floorAt`), kept INDOOR_APART_M from every other, from the building's static people and from
-// the way in - and each resident given one, in the order of their ids over an order the building's key deals (those in
-// the room on the way in stand alike for every reader). They stand facing into the room, in their own clothes (indoors
-// no one is armed), to INDOOR_MAX.
+// WHERE. A room has no grid to walk; it is SOUNDED once from its way in (`origin`, AUDIT-E4: the first door's) - LW-ROOMS:
+// its floor walked out cell by cell on a lattice of INDOOR_APART_M through the room's own collider (`move` - never through
+// a wall, a counter or a table), each step onto a floor (`floorAt`) level with the last, every cell a place kept from the
+// building's static people and from the ways in - and each resident given one, in the order of their ids over an order
+// the building's key deals (those in the room on the way in stand alike for every reader). They stand facing into the
+// room, in their own clothes (indoors no one is armed), to INDOOR_MAX - LW-ROOMS: and to what its floor holds.
 // COMING AND GOING. One whose day takes them in comes on, one whose day takes them out goes - where the player is not
 // looking, or at once on the way in (the room as the day has it, LW2's arrival law).
 // TALK. Each is a talk target in the street's own shape ({ person, pos }), so the street's own talk ray takes them
@@ -51,6 +51,12 @@
 // its people stay put while an exchange is on and through their first round together (one in a quiet circle got up
 // mid-talk, and a temple's two parted the moment their talk ended); and one who kept quiet as the player came by
 // speaks when the player stops before them.
+//
+// LW-ROOMS (2026-10-08, Mac: "With living world integration, NPCs still group up in taverns"): THE WHOLE ROOM. The first
+// cut sounded twelve ways out to 6.6 m from the way in, at its height - the door's middle: a tavern's every drinker stood
+// within a few strides of its door, one crowd, and the sounding passed over the tables onto their tops. Now its floor is
+// walked wherever it goes on (`soundRoom`), its tables fill apart (`spreadTables`, TABLE_GAP_M), it holds one to every
+// INDOOR_FLOOR_M2 of floor, and one who stirs makes for a place of their own (`stirPlace`).
 // ═══════════════════════════════════════════════════════════════════
 import { WITNESS_M, GREET_RANGE, GREET_REST_MIN, GREET_S, LINE_RANGE } from '../systems/livingWorld/livingTown.js';
 import { dealCircles, circleLine, exchangeAt, ROUND_S, GATHER_BEAT_S, SLOT_LINES } from '../systems/livingWorld/meetups.js';
@@ -62,20 +68,27 @@ import { BUILDING_TYPES } from '../world/buildingNames.js';
 
 /** Who is inside is read this often (real seconds). */
 export const INDOOR_TICK_S = 1;
-/** The directions a room is sounded in from the way in, and the distances walked out along each (m). */
-export const INDOOR_FAN = 12;
-export const INDOOR_SPREAD_M = Object.freeze([2.4, 3.8, 5.2, 6.6]);
+/** LW-ROOMS: the room is walked out from its way in on a lattice of INDOOR_APART_M - to INDOOR_REACH_M of it and
+ *  INDOOR_CELLS cells at the most (m); a step reaches its cell within INDOOR_ARRIVE_M, onto a floor within INDOOR_LEVEL_M
+ *  of the one it left (m). */
+export const INDOOR_REACH_M = 20;
+export const INDOOR_CELLS = 400;
+export const INDOOR_ARRIVE_M = 0.3;
+export const INDOOR_LEVEL_M = 0.15;
 /** How far apart two spots stand (m), and how far a spot keeps from a static person and from the way in (m). */
 export const INDOOR_APART_M = 1.3;
 export const INDOOR_CLEAR_M = 1.1;
 export const INDOOR_DOOR_M = 1.8;
-/** The most residents stood in one room. */
+/** The most residents stood in one room - LW-ROOMS: and on its floor one to every INDOOR_FLOOR_M2 of it (m^2). */
 export const INDOOR_MAX = 12;
+export const INDOOR_FLOOR_M2 = 8;
 /** A coming or a going waits for the player to look away unless it is this far off (m) - indoors, little is. */
 export const INDOOR_SEEN_M = 14;
 /** LW8b: spots this near one another share a table (m), and the most at one. */
 export const TABLE_M = 2.2;
 export const TABLE_MAX = 3;
+/** LW-ROOMS: how far apart the room's tables are filled, while it has room for it (m, middle to middle). */
+export const TABLE_GAP_M = 4;
 /** LW-LODGE: how far beside their bed a lodger stands (m, the nearer first) and the ways about it tried. */
 export const BED_STEP_M = Object.freeze([0.9, 1.3]);
 export const BED_FAN = 8;
@@ -90,28 +103,48 @@ export const INDOOR_WALK_M = 7;
 export const INDOOR_WALK_SPEED = 1.2;
 
 /**
- * Sound a room: from `origin` (feet), a fan of directions walked out through the collider and landed on its floor,
- * kept apart from each other, from `keepClear` (feet) and from every way in (`origin`, `waysIn`). Pure over the collider.
- * @param {number[]} origin @param {{ move: (feet: number[], dx: number, dy: number, dz: number, height: number) => any }} collider
+ * Sound a room: LW-ROOMS - its floor walked out from `origin` (the way in), cell by cell on a lattice of INDOOR_APART_M,
+ * each step through the collider (never through a wall, a counter or a table) onto a floor of this room level with the
+ * one it left (never up a stair, never onto a table's top), to INDOOR_REACH_M and INDOOR_CELLS cells; every cell walked
+ * to a spot, in the order walked to, kept apart from each other, from `keepClear` (feet) and from every way in
+ * (`origin`, `waysIn`). Pure over the collider. The first cut walked a fan of twelve ways out to 6.6 m and no farther -
+ * a tavern's every drinker within a few strides of its door - at the landing's height, the door's middle: over the
+ * tables, and down onto their tops.
+ * @param {number[]} origin
+ * @param {{ move: (feet: number[], dx: number, dy: number, dz: number, height: number, snap?: boolean, keepFloor?: boolean, noStep?: boolean) => any }} collider -
+ *   each step walked as a body that never steps up (the collider's `noStep`: a step up is not this floor)
  * @param {(x: number, y: number, z: number) => (number|null)} floorAt - the floor's height under a point, or null
  * @param {readonly number[][]} [keepClear] @param {readonly number[][]} [waysIn] - AUDIT-E4: the building's other ways in
  * @returns {number[][]}
  */
 export function soundRoom(origin, collider, floorAt, keepClear = [], waysIn = []) {
-  const spots = [];
   const far = (p, list, d) => list.every((q) => Math.hypot(p[0] - q[0], p[2] - q[2]) >= d);
-  for (const dist of INDOOR_SPREAD_M) {
-    for (let i = 0; i < INDOOR_FAN; i++) {
-      const a = (i / INDOOR_FAN) * Math.PI * 2 + (dist / 7);
-      const q = [origin[0], origin[1] + 0.05, origin[2]];
-      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }
+  const y0 = floorAt(origin[0], origin[1] + 0.5, origin[2]);
+  const start = [origin[0], y0 != null && Number.isFinite(y0) ? y0 : origin[1], origin[2]];   // on the floor under the way in
+  /** the cells walked to, in the order walked to: steps from the way in (i, j) and the floor's point there */
+  const cells = [{ i: 0, j: 0, p: start }];
+  const seen = new Set(['0,0']);
+  for (let h = 0; h < cells.length && cells.length < INDOOR_CELLS; h++) {
+    const { i, j, p } = cells[h];
+    for (const [di, dj] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const ni = i + di, nj = j + dj, key = `${ni},${nj}`;
+      if (seen.has(key) || Math.hypot(ni, nj) * INDOOR_APART_M > INDOOR_REACH_M) continue;
+      const tx = start[0] + ni * INDOOR_APART_M, tz = start[2] + nj * INDOOR_APART_M;
+      const q = [p[0], p[1] + 0.05, p[2]];
+      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8, true, false, true); } catch { continue; }
+      if (Math.hypot(q[0] - tx, q[2] - tz) > INDOOR_ARRIVE_M) continue;   // stopped short: a wall, a counter, a table
       const y = floorAt(q[0], q[1] + 0.5, q[2]);
-      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;   // a floor of this room, not a stair's foot or a hole
-      const p = [q[0], y, q[2]];
-      if (Math.hypot(p[0] - origin[0], p[2] - origin[2]) < INDOOR_DOOR_M) continue;
-      if (!far(p, spots, INDOOR_APART_M) || !far(p, keepClear, INDOOR_CLEAR_M) || !far(p, waysIn, INDOOR_DOOR_M)) continue;
-      spots.push(p);
+      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;   // this room's floor, level with the last: not a stair's step, a table's top or a hole
+      seen.add(key);
+      cells.push({ i: ni, j: nj, p: [q[0], y, q[2]] });
+      if (cells.length >= INDOOR_CELLS) break;
     }
+  }
+  const spots = [];
+  for (const { p } of cells) {
+    if (Math.hypot(p[0] - origin[0], p[2] - origin[2]) < INDOOR_DOOR_M) continue;
+    if (!far(p, spots, INDOOR_APART_M - 0.01) || !far(p, keepClear, INDOOR_CLEAR_M) || !far(p, waysIn, INDOOR_DOOR_M)) continue;   // apart to a centimetre: the lattice's own step, as its sums round it
+    spots.push(p);
   }
   return spots;
 }
@@ -204,10 +237,31 @@ export function tablesOf(spots, order) {
 }
 
 /**
+ * LW-ROOMS: THE ORDER THE ROOM FILLS ITS TABLES - the building's deal (`tables`, tablesOf's), but each next the first of
+ * it whose middle stands TABLE_GAP_M from every table's before it, while any does; then the rest, in the deal's order.
+ * So the room fills apart, all over it - the first cut filled the deal's tables as they came, and two of them side by
+ * side stood as one crowd. Pure over the spots and the deal.
+ * @param {readonly number[][]} spots @param {readonly number[][]} tables @returns {number[][]}
+ */
+export function spreadTables(spots, tables) {
+  const left = tables.map((tb) => ({ tb, x: tb.reduce((s, i) => s + spots[i][0], 0) / tb.length, z: tb.reduce((s, i) => s + spots[i][2], 0) / tb.length }));
+  /** @type {typeof left} */
+  const out = [];
+  for (;;) {
+    const k = left.findIndex((a) => out.every((b) => Math.hypot(a.x - b.x, a.z - b.z) >= TABLE_GAP_M));
+    if (k < 0) break;
+    out.push(...left.splice(k, 1));
+  }
+  return [...out, ...left].map((a) => a.tb);
+}
+
+/**
  * LW8c: WHERE ONE STIRRING MAKES FOR - from their place `spot`, a free place of the room within INDOOR_WALK_M along a line
  * `walkable` lets them walk: a table where one stands alone first (the nearest - company), else one their own dice pick
- * (`stirs`, how often they have); -1, none. `standing` everyone stood ({ id, spot, walking }), the one stirring too. Pure
- * over the room, the standing and the line.
+ * (`stirs`, how often they have) - LW-ROOMS: of the places of their own first, TABLE_GAP_M from everyone else's (where
+ * they stand, or make for), or where none in reach is, the farthest from everyone that any is; else of any (the first
+ * cut's every pick: beside a table of strangers, so the room's stirs drew it back into one crowd); -1, none. `standing`
+ * everyone stood ({ id, spot, walking }), the one stirring too. Pure over the room, the standing and the line.
  * @param {{ spots: number[][], tableOf: number[] }} room @param {readonly { id: string, spot: number, walking: boolean }[]} standing
  * @param {string} id @param {number} spot @param {number} stirs @param {(a: number[], b: number[]) => boolean} walkable
  * @returns {number}
@@ -223,8 +277,14 @@ export function stirPlace(room, standing, id, spot, stirs, walkable) {
   const company = free.filter((i) => room.tableOf[i] !== room.tableOf[spot] && alone.get(room.tableOf[i]) === 1)
     .sort((a, b) => Math.hypot(room.spots[a][0] - at[0], room.spots[a][2] - at[2]) - Math.hypot(room.spots[b][0] - at[0], room.spots[b][2] - at[2]) || a - b);
   for (const i of company) if (walkable(at, room.spots[i])) return i;
-  const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, free.length);
-  for (let k = 0; k < free.length; k++) { const i = free[(roll + k) % free.length]; if (walkable(at, room.spots[i])) return i; }
+  const theirs = standing.filter((x) => x.id !== id && x.spot >= 0).map((x) => room.spots[x.spot]);   // LW-LODGE: one up by their bed is in no place of this room
+  const clear = new Map(free.map((i) => [i, Math.min(Infinity, ...theirs.map((p) => Math.hypot(room.spots[i][0] - p[0], room.spots[i][2] - p[2])))]));
+  const best = Math.max(0, ...clear.values());
+  const own = new Set(free.filter((i) => (clear.get(i) ?? 0) >= Math.min(TABLE_GAP_M, best)));
+  for (const list of [[...own], free.filter((i) => !own.has(i))]) {
+    const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, list.length);
+    for (let k = 0; k < list.length; k++) { const i = list[(roll + k) % list.length]; if (walkable(at, room.spots[i])) return i; }
+  }
   return -1;
 }
 
@@ -249,7 +309,7 @@ export function stirPlace(room, standing, id, spot, stirs, walkable) {
  *   them of the bed of the room the player rents here (-1 none)
  */
 export function createLivingIndoors(deps) {
-  /** @type {{ key: number, spots: number[][], centre: number[], order: number[], tableOf: number[], beds: { feet: number[], yaw: number }[] } | null} */
+  /** @type {{ key: number, spots: number[][], centre: number[], order: number[], tableOf: number[], beds: { feet: number[], yaw: number }[], holds: number } | null} */
   let room = null;
   /** @type {Map<string, { res: any, spot: number, bed: number, next: number, stirs: number, walk: { from: number[], to: number[], t: number, dur: number } | null, flat?: { archive: number, record: number } | null }>}
    *  who stands where - LW8c: when each next stirs (real seconds), how often they have, and a walk under way; LW-LODGE: a
@@ -344,22 +404,35 @@ export function createLivingIndoors(deps) {
         const collider = deps.collider();
         const spots = collider ? soundRoom(origin, collider, deps.floorAt, deps.staticFeet(), deps.waysIn?.() ?? []) : [];
         const cx = spots.reduce((s, p) => s + p[0], 0) / Math.max(1, spots.length), cz = spots.reduce((s, p) => s + p[2], 0) / Math.max(1, spots.length);
-        // LW8b: the room fills table by table - the tables in the building's deal, each its spots in turn
-        const groups = tablesOf(spots, dealOf(b.key, spots.length));
+        // LW8b: the room fills table by table - the tables in the building's deal, each its spots in turn (LW-ROOMS: the
+        // deal's tables apart first)
+        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length)));
         const tableOf = new Array(spots.length).fill(-1);
         groups.forEach((tb, ti) => { for (const i of tb) tableOf[i] = ti; });
         // LW-LODGE: where a lodger stands by each of the room's beds
         const beds = collider ? (deps.beds?.() ?? []).map((m) => bedStand(m, collider, deps.floorAt)) : [];
-        room = { key: b.key, spots, centre: [cx, origin[1], cz], order: groups.flat(), tableOf, beds };
+        // LW-ROOMS: what its floor holds - one to every INDOOR_FLOOR_M2 of it (its places, a lattice cell each)
+        const holds = Math.ceil((spots.length * INDOOR_APART_M ** 2) / INDOOR_FLOOR_M2);
+        room = { key: b.key, spots, centre: [cx, origin[1], cz], order: groups.flat(), tableOf, beds, holds };
       }
       timer += dt;
       realNow += dt;
+      /** LW-LODGE: the bed one inside is at - a lodger up in their room (their day's `home` here), else none (-1) */
+      const bedFor = (/** @type {{ res: any, e?: any }} */ x) => (x.e?.kind === 'home' ? bedOf.get(x.res.id) ?? -1 : -1);
       if (timer >= INDOOR_TICK_S) {
         timer = 0;
-        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res)).slice(0, INDOOR_MAX);   // LEGACY-HOME: a family's house holds its own
         // LW-LODGE: the day's lodgers here dealt the room's beds (none but at a tavern)
         const lodgers = room.beds.length ? b.town.lodgersAt?.(b.key, b.town.dayOf(deps.clock())) ?? [] : [];
         bedOf = bedsOf(lodgers.map((r) => r.id), room.beds.length, b.key, deps.rented?.() ?? -1);
+        // the day's own, to INDOOR_MAX - LW-ROOMS: and no more on the room's floor than it holds (one up in their room by
+        // their bed is on none of it; the first cut stood twelve in any room, a closet of a shop's as a great hall's)
+        inside = [];
+        let onFloor = 0;
+        for (const x of b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res))) {   // LEGACY-HOME: a family's house holds its own
+          if (inside.length >= INDOOR_MAX) break;
+          if (bedFor(x) < 0 && onFloor++ >= room.holds) continue;
+          inside.push(x);
+        }
       }
       // comings and goings: at once on the way in, else where the player is not looking (or far)
       const unseen = (p) => {
@@ -368,8 +441,6 @@ export function createLivingIndoors(deps) {
       };
       /** LW8c: where one is now - on a walk, along it; LW-LODGE: one in their room, by their bed. */
       const placeOf = (s) => (s.bed >= 0 ? room.beds[s.bed].feet : s.walk ? [s.walk.from[0] + (s.walk.to[0] - s.walk.from[0]) * (s.walk.t / s.walk.dur), s.walk.to[1], s.walk.from[2] + (s.walk.to[2] - s.walk.from[2]) * (s.walk.t / s.walk.dur)] : room.spots[s.spot]);
-      /** LW-LODGE: the bed one inside is at - a lodger up in their room (their day's `home` here), else none (-1) */
-      const bedFor = (/** @type {{ res: any, e?: any }} */ x) => (x.e?.kind === 'home' ? bedOf.get(x.res.id) ?? -1 : -1);
       const want = new Map(inside.map((x) => [x.res.id, bedFor(x)]));
       // one gone - or gone up to their room, or down from it (where they stand is another place): when unseen where they are
       for (const [id, s] of [...stood]) if ((!want.has(id) || (want.get(id) ?? -1) !== s.bed) && unseen(placeOf(s))) stood.delete(id);   // LW-FIX1: one walking judged where they are, not where they make for

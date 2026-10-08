@@ -83,8 +83,8 @@
   {
     "name": "LW8c-dice",
     "file": "src/scenes/livingIndoors.js",
-    "old": "  const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, free.length);",
-    "new": "  const roll = 0;",
+    "old": "    const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, list.length);",
+    "new": "    const roll = 0;",
     "tests": [
       "test/lw8c_astir.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW8c-line",
     "file": "src/scenes/livingIndoors.js",
-    "old": "{ const i = free[(roll + k) % free.length]; if (walkable(at, room.spots[i])) return i; }",
-    "new": "{ const i = free[(roll + k) % free.length]; return i; }",
+    "old": "{ const i = list[(roll + k) % list.length]; if (walkable(at, room.spots[i])) return i; }",
+    "new": "{ const i = list[(roll + k) % list.length]; return i; }",
     "tests": [
       "test/lw8c_astir.test.js"
     ]

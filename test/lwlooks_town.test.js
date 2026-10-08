@@ -305,8 +305,15 @@ test('LW-LOOKS indoors: one whose calling is a class\'s in it; the palace\'s cou
   const st = { key: 7000, type: B.Palace, inside: [lady, guard] };
   const town = { insideAt: (key) => (key === st.key ? st.inside.map((res) => ({ res, e: { kind: 'home' } })) : []), typeOf: () => st.type, dayOf: () => 100, o: { relations: () => null } };
   const room = { move(q, dx, dy, dz) { q[0] = Math.max(-5.7, Math.min(5.7, q[0] + dx)); q[2] = Math.max(-4.7, Math.min(4.7, q[2] + dz)); q[1] += dy; } };
-  const layer = createLivingIndoors({ sprites, building: () => ({ key: st.key, town }), collider: () => room, floorAt: () => 0, origin: () => [0, 0, 0], staticFeet: () => [], clock: () => 1000 });
-  layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  const enter = () => createLivingIndoors({ sprites, building: () => ({ key: st.key, town }), collider: () => room, floorAt: () => 0, origin: () => [0, 0, 0], staticFeet: () => [], clock: () => 1000 });
+  // LW-ROOMS: PIN MOVED - the room's places all over it, so the way in is looked at her own place (the first cut's put
+  // her before the player's every look): found by a first visit, the room the same for every one
+  const first = enter();
+  first.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  const hers = first.stood().find((x) => x.id === 'L9.1')?.at ?? [0, 0, 1];
+  first.clear();
+  const layer = enter();
+  layer.frame(0.016, [0, 0, 0], Math.atan2(hers[0], hers[2]), [0, 1.6, 0]);
   const of = (id) => synced.find((x) => x.res.id === id);
   assert.equal(of('L9.2')?.res.cls, townClassOf(guard), 'a guild\'s own in their guild\'s class');
   assert.ok(GUILD_CLASSES[FIGHTERS_GUILD].includes(of('L9.2')?.res.cls));

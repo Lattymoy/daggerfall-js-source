@@ -222,7 +222,7 @@ test('LW8c their own: each waits their own while (spread over INDOOR_STIR_S, nev
   assert.equal(shut.layer.stood()[0].walking, false, 'not before their next while');
 });
 
-test('LW8c where they make for (stirPlace): a table where one stands alone, the nearest free place at it - never a table of two, never one walking, never their own; else a free place their own dice pick within INDOOR_WALK_M; never along a line the room will not let them walk; nowhere, -1 (mutants: the company, the one alone, the walking, their own table, the nearest, the reach, the dice, the line, the none)', () => {
+test('LW8c where they make for (stirPlace): a table where one stands alone, the nearest free place at it - never a table of two, never one walking, never their own; else a free place their own dice pick within INDOOR_WALK_M (LW-ROOMS: PIN MOVED - a place of their own first, test/lwrooms_tavern.test.js); never along a line the room will not let them walk; nowhere, -1 (mutants: the company, the one alone, the walking, their own table, the nearest, the reach, the dice, the line, the none)', () => {
   // two rows of places: tables T0 {0,1,2}, T1 {3,4,5}, T2 {6} (7.2 m: beyond reach), T3 {7,8,9}, T4 {10}
   const spots = [[0, 0, 0], [1.2, 0, 0], [2.4, 0, 0], [3.6, 0, 0], [4.8, 0, 0], [6, 0, 0], [7.2, 0, 0], [0, 0, 2.4], [1.2, 0, 2.4], [2.4, 0, 2.4], [3.6, 0, 2.4]];
   const tableOf = [0, 0, 0, 1, 1, 1, 2, 3, 3, 3, 4];
@@ -237,9 +237,10 @@ test('LW8c where they make for (stirPlace): a table where one stands alone, the 
   const walking = over([S('me', 0), S('a', 7), S('b', 8), S('c', 3, true)]);
   assert.ok(new Set(walking).size >= 3, 'the dice spread');
   for (const i of walking) assert.ok(i >= 0 && spots[i][0] <= INDOOR_WALK_M && ![0, 7, 8, 3].includes(i), 'a free place within reach');
-  // their own table: one alone at mine is no company to go to - the dice still free to land there
+  // their own table: one alone at mine is no company to go to - LW-ROOMS: PIN MOVED, the dice make for a place of their
+  // own, TABLE_GAP_M from everyone's (the first cut's were free to land anywhere, at their own table too)
   const mine = over([S('me', 0), S('d', 1)]);
-  assert.ok(new Set(mine).size > 1, 'not drawn to my own table');
+  assert.deepEqual([...new Set(mine)], [5], 'not drawn to my own table: a place of my own');
   // beyond reach: one alone at T2 (7.2 m) - no company; never past INDOOR_WALK_M
   for (const i of over([S('me', 0), S('e', 6)])) assert.ok(spots[i][0] <= INDOOR_WALK_M && i !== 6);
   // the line: the company's nearer place shut - its next; all shut, nowhere

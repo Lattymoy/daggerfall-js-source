@@ -33,6 +33,7 @@ const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
 const MPM = PERSON_MOVE_SPEED / RATE;
 const SYNTH = Object.freeze({ mapId: 12345, blocks: 9, region: 17, people: 3, port: false });
+const SYNTH4 = Object.freeze({ mapId: 24680, blocks: 16, region: 17, people: 3, port: false });
 const CLOSE = Object.freeze({ mapId: 777, blocks: 16, region: 17, people: 3, port: false });
 
 function makeTown(fx, rec, minute, { relations = createRelations(), places = null } = {}) {
@@ -71,8 +72,9 @@ test('LW-TALK the facing: a resident standing keeps the way they face - the walk
   const frames = new Set();
   for (let i = 0; i < 8; i++) frames.add(w.update(0.25, eye, false).frame);
   assert.ok(frames.size > 1, 'walking: the cycle');
-  // on the street, those standing in a circle on the wheel, each toward the circle's middle
-  const t = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+  // on the street, those standing in a circle on the wheel, each toward the circle's middle - LW-ROOMS: PIN MOVED, at half
+  // past six: a long gap at one place is spent at home now, and the late afternoon's stand-ins at the square went
+  const t = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18.5 * 60);
   const seats = run(t, 20);
   let checked = 0;
   for (const s of seats) {
@@ -314,9 +316,12 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
 });
 
 test('LW-TALK every reader deals alike: the deal is the plans\' - one taken off this street alone (the trample) is dealt and left out after, the spot\'s other circles as every reader has them, their partner left to their own counsel; two readers come at different minutes keep the same circles, gatherings and words (mutants: the deal from the street, the drop)', () => {
-  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 10 * 60);   // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the town's spots now
+  // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the
+  // town's spots now; LW-ROOMS: PIN MOVED - in the town of sixteen blocks: a long gap at one place spent at home, the
+  // small town has no pair in the square's sight at a spot of three circles, at any ten minutes from seven to nine
+  const a = makeTown(synthTown({ blocksW: 4, blocksH: 4 }), SYNTH4, 100 * DAY_MIN + 10 * 60);
   run(a, 30);
-  const b = makeTown(synthTown(), SYNTH, a.clock.t);
+  const b = makeTown(synthTown({ blocksW: 4, blocksH: 4 }), SYNTH4, a.clock.t);
   for (let i = 0; i < 30 * 20; i++) { step(a); b.clock.t = a.clock.t; b.town.update(1 / 30, b.at, Math.PI, b.eye, true, () => false); }
   const view = (t) => [...t.town._inCircle.entries()].map(([id, c]) => `${id}:${c.circle.members.map((x) => x.id).join(',')}@${c.circle.from.toFixed(6)}`).sort();
   assert.deepEqual(view(b), view(a), 'the same circles and gatherings for every reader');

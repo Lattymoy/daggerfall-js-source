@@ -74,8 +74,8 @@
   {
     "name": "LW8b-fill-deal",
     "file": "src/scenes/livingIndoors.js",
-    "old": "order: groups.flat(), tableOf, beds };",
-    "new": "order: dealOf(b.key, spots.length), tableOf, beds };",
+    "old": "order: groups.flat(), tableOf, beds, holds };",
+    "new": "order: dealOf(b.key, spots.length), tableOf, beds, holds };",
     "tests": [
       "test/lw8b_talk.test.js"
     ]

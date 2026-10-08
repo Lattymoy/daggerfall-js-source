@@ -495,7 +495,9 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
         I(shop ? 'work' : 'stall', shop ? fav.shops[Math.floor(rng() * fav.shops.length)] : (spots.length ? spots[Math.floor(rng() * spots.length)] : null),
           t, rollInt(rng, 25, 60));
         t += 120;
-        if (i === 1 && rng() < 0.3) I('tavern', fav.tavern, h(12), 30);
+        // LW-ROOMS: the lunch at the tavern after the stint at eleven - laid after the one at nine, the three in ten who
+        // lunch there walked on from it and waited in the tavern for noon wherever home was too far to go between
+        if (i === 2 && rng() < 0.3) I('tavern', fav.tavern, h(12), 30);
       }
       evening();
       break;
@@ -707,8 +709,10 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
     const end = Math.min(start + it.dur, it.until ?? Infinity, homeBy, awayBy, watchBy, D1);
     if (end - start < MIN_STAY) continue;
     // between two places, never lingering where the last stay ended (a shop shut at six is left at six): a long gap
-    // is spent at home, a short one going on at once and waiting at the next
-    if (at !== home && at !== it.at) {
+    // is spent at home, a short one going on at once and waiting at the next - LW-ROOMS: and a long one between two stays
+    // at the same place too (a sellsword with no hall of their guild sat in the tavern from one o'clock to the evening's
+    // drink, a labourer from their lunch to it)
+    if (at !== home) {
       if (start - cursor > walkMinutes(at, home, mpm) + walkMinutes(home, it.at, mpm) + HOME_GAP) go(home, cursor);
       else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind, it.mark ?? null);
     }
