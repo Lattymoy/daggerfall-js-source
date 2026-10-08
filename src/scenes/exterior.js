@@ -237,6 +237,8 @@ import { foeFrameDt } from '../characters/enemyMotor.js';   // AUDIT TACT: the f
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units (GR2's slider inside it); the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
+import { createHeatHaze, heatHazeOn, heatHazeSettings, HAZE_OFF } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
@@ -509,6 +511,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
+  const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;   // HAZE1: Heat Haze on the enhanced lane (world.js's twin note) - this host's one city has no floating origin to shift it
+  const heatHaze = createHeatHaze();
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance
@@ -4920,6 +4924,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      heatHaze.suppress();   // HAZE1: inside, the strength is 0 at once (world.js's twin note)
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
       // crickets stop (CRICKET-DUNGEON, which only ever ran here). AUDIT DISC7 B1: the WORD and the rain's GAIN stay
@@ -5830,6 +5835,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       camps.tick(dt); personBatches.push(...camps.batches());   // SURV3
       if (hcc.enabled) personBatches.push(...hcc.batches());   // HCC: the horse on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
+    }
+    // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
+    if (hazeGl) {
+      const hz = heatHaze.tick({ dt, exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
+        grounded: !walkMode || !!player.grounded, settings: heatHazeOn() ? heatHazeSettings() : HAZE_OFF });
+      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], now / 1000)) renderer.markForeignPass();
     }
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     const precipShown = enhancedFront ? fx.shown : precipMode;

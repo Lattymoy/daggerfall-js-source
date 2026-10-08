@@ -1,0 +1,227 @@
+[
+  {
+    "name": "HAZE1-cloudy-full",
+    "file": "src/systems/heatHaze.js",
+    "old": "if (weather === 1 || weather === 'cloudy') return 0.5;",
+    "new": "if (weather === 1 || weather === 'cloudy') return 1;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-subtropical-always",
+    "file": "src/systems/heatHaze.js",
+    "old": "(allowSubtropical && climate === HAZE_CLIMATES.subtropical)",
+    "new": "(climate === HAZE_CLIMATES.subtropical)",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-day-ignored",
+    "file": "src/systems/heatHaze.js",
+    "old": "return isExterior && desert && isDay ?",
+    "new": "return isExterior && desert ?",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-ramp-an-hour",
+    "file": "src/systems/heatHaze.js",
+    "old": "transitionMinutes: 30,",
+    "new": "transitionMinutes: 60,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-evening-ramp-dropped",
+    "file": "src/systems/heatHaze.js",
+    "old": "return rise < fall ? rise : fall;",
+    "new": "return rise;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-min-a-max",
+    "file": "src/systems/heatHaze.js",
+    "old": "return rise < fall ? rise : fall;",
+    "new": "return rise > fall ? rise : fall;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-noise-seed",
+    "file": "src/systems/heatHaze.js",
+    "old": "noiseSeed: 1212701233,",
+    "new": "noiseSeed: 1212701234,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-noise-lattice",
+    "file": "src/systems/heatHaze.js",
+    "old": "noiseSize: 64, noiseLattice: 8,",
+    "new": "noiseSize: 64, noiseLattice: 4,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-noise-channels-swapped",
+    "file": "src/systems/heatHaze.js",
+    "old": "out[o] = roundHalfEven(f32(lattice(a,",
+    "new": "out[o] = roundHalfEven(f32(lattice(b,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-ease-linear",
+    "file": "src/systems/heatHaze.js",
+    "old": "const k = 1 - Math.exp(-Math.max(0, dt) / HAZE.fadeSeconds);",
+    "new": "const k = Math.min(1, Math.max(0, dt) / HAZE.fadeSeconds);",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-drop-eased",
+    "file": "src/systems/heatHaze.js",
+    "old": "if (!settings.enabled || !eligible) current = 0;",
+    "new": "if (!settings.enabled || !eligible) current *= 0.5;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-layer-read-in-the-air",
+    "file": "src/systems/heatHaze.js",
+    "old": "if (grounded || !layerKnown)",
+    "new": "if (true || !layerKnown)",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-layer-offset",
+    "file": "src/systems/heatHaze.js",
+    "old": "layerHeightOffset: 1.5,",
+    "new": "layerHeightOffset: 2.5,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-intensity-unclamped",
+    "file": "src/systems/heatHaze.js",
+    "old": "intensity: clamp(Number(read('Heat Haze.Intensity')), 0, 3),",
+    "new": "intensity: Number(read('Heat Haze.Intensity')),",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-off-by-default",
+    "file": "src/systems/modSettings.js",
+    "old": "Enabled: Object.freeze({ default: true, description: 'Heat shimmer",
+    "new": "Enabled: Object.freeze({ default: false, description: 'Heat shimmer",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-shader-axis",
+    "file": "src/render/heatHaze.js",
+    "old": "vec2(0.9239, 0.3827)), vWorld.y * 1.5",
+    "new": "vec2(0.3827, 0.9239)), vWorld.y * 1.5",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-shader-scale",
+    "file": "src/render/heatHaze.js",
+    "old": "  float k = uNoiseScale * 0.0022;",
+    "new": "  float k = uNoiseScale * 0.0023;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-drift",
+    "file": "src/render/heatHaze.js",
+    "old": "HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.48]);",
+    "new": "HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.38]);",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-bend-mix",
+    "file": "src/render/heatHaze.js",
+    "old": "(n1 * 1.15 + n2 * 0.85)",
+    "new": "(n1 * 0.85 + n2 * 1.15)",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-anchor-sign",
+    "file": "src/render/heatHaze.js",
+    "old": "this.anchor[0] -= offset[0];",
+    "new": "this.anchor[0] += offset[0];",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-phase-axis-scale",
+    "file": "src/render/heatHaze.js",
+    "old": "const raw = [ax * k * HAZE_AXES.k1,",
+    "new": "const raw = [ax * k * HAZE_AXES.k2,",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-mask-left-off",
+    "file": "src/render/heatHaze.js",
+    "old": "    gl.depthMask(true);\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-cull-left-off",
+    "file": "src/render/heatHaze.js",
+    "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
+    "new": "    gl.depthMask(true);",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-copy-rect",
+    "file": "src/render/heatHaze.js",
+    "old": "gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, vx, vy, vw, vh);",
+    "new": "gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, vw, vh);",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "HAZE1-world-indoor-drop",
+    "file": "src/scenes/world.js",
+    "old": "      heatHaze.suppress();   // HAZE1: inside is no exterior",
+    "new": "      // heatHaze none   // HAZE1: inside is no exterior",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  }
+]

@@ -221,6 +221,8 @@ import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a
 import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOf, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
+import { createHeatHaze, heatHazeOn, heatHazeSettings, HAZE_OFF } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -2169,6 +2171,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  // HAZE1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): HEAT HAZE -
+  // built on the enhanced lane (a shader fault is a boot fault), its switch read per frame (heatHazeOn: the mod's own,
+  // and `?haze=off`). The state is the mod's per-frame law; the ring is drawn once the opaque world is whole.
+  const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;
+  const heatHaze = createHeatHaze();
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
@@ -27876,6 +27883,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // per-frame retry restarts them on the way out.
       for (const p of built.values()) for (const w of p.windmills) { w.hum?.stop(); w.hum = null; }
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      heatHaze.suppress();   // HAZE1: inside is no exterior - the strength is 0 at once (HeatHazeMod.Update), and eases up again outside
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
       // crickets stop (CRICKET-DUNGEON, which only ever ran here). AUDIT DISC7 B1: the WORD and the rain's GAIN stay
@@ -28801,6 +28809,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
       sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
+      hazeGl?.offsetOrigin(r.offset);   // HAZE1: the shimmer's noise stands on the land, not the scene
       renderer.shadowOriginShift?.(r.offset);   // AUDIT SC1: the shadow cache's remembered placements follow the origin too, or every still caster reads as moved for a second
       // AUDIT FLICKER R2: AND THE FLATS THE NEXT REPLAY READS. The frame's records are replayed at the next beginFrame,
       // before the pixel loop writes a pixel's translation and a townsman's place again - a pixel's flats stand at its
@@ -30097,6 +30106,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         wind: Math.min(1, wd.strength01 * wd.gust),
         fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, focus: renderer._focus },
       })) renderer.markForeignPass();
+    }
+    // HAZE1: HEAT HAZE - the mod's GrabPass at Transparent-100: the opaque world whole (the ground, the models, the flats,
+    // the grass and the banners), what falls and every translucent thing still to come. Not under the travel view's
+    // camera: the ring stands round the player's feet, and that eye is hundreds of metres over them.
+    if (hazeGl) {
+      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;
+      const _hzPx = playerTravelPixel();
+      const hz = heatHaze.tick({ dt, exterior: true, climate: maps.getClimateIndex(_hzPx.x, _hzPx.y), weather, minuteOfDay: minute,
+        foot: _hzFoot, grounded: !walkMode || !!player.grounded, settings: heatHazeOn() ? heatHazeSettings() : HAZE_OFF });
+      if (hz.visible && !tvf && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], now / 1000)) renderer.markForeignPass();
     }
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
