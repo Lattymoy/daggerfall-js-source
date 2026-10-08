@@ -19,7 +19,7 @@
 // moveTo/lineTo/quadraticCurveTo/arc and filled or stroked - no ARENA2 pixel, no sprite's silhouette, no font glyph for
 // a picture. The card stock is the house deck's own (cardFaces.js STOCK): one tavern, one card stock.
 //
-// THE TABLES ARE PURE (EMBLEM_PAINTERS' keys, KIND_ART, TIER_FRAMES, iliacLayout, wrapText): pinned by
+// THE TABLES ARE PURE (EMBLEM_PAINTERS' keys, KIND_ART, TIER_FRAMES, iliacLayout, wrapCardText): pinned by
 // test/cards8_faces.test.js against a recording context; only the painting needs a page.
 //
 // SCALE: every measure is in u = h / 100, so one painter serves a 70 x 100 tile in the binder's grid and a 350 x 500
@@ -504,7 +504,7 @@ const KIND_EMBLEM = Object.freeze({ unit: 'warrior', spell: 'shock', prince: 'pr
  * @param {number} maxWidth
  * @returns {string[]}
  */
-export function wrapText(ctx, text, maxWidth) {
+export function wrapCardText(ctx, text, maxWidth) {
   const width = (t) => ctx.measureText(t)?.width ?? 0;
   const lines = [];
   for (const para of String(text ?? '').split('\n')) {
@@ -657,7 +657,7 @@ function paintText(ctx, L, text, flavor) {
   let px = 5.2 * u, lines = [];
   for (;;) {
     ctx.font = `${px}px Georgia, serif`;
-    lines = wrapText(ctx, text, maxW);
+    lines = wrapCardText(ctx, text, maxW);
     if (lines.length * px * 1.15 <= avail || px <= 3.6 * u) break;
     px = Math.max(3.6 * u, px - 0.3 * u);
   }
@@ -675,7 +675,7 @@ function paintText(ctx, L, text, flavor) {
   if (!flavor) return;
   const fpx = Math.min(px * 0.9, 4.6 * u);
   ctx.font = `italic ${fpx}px Georgia, serif`;
-  const flines = wrapText(ctx, flavor, maxW), flh = fpx * 1.15;
+  const flines = wrapCardText(ctx, flavor, maxW), flh = fpx * 1.15;
   if (lines.length * lh + 0.8 * u + flines.length * flh > avail) return;   // no room: the flavor is the first to go
   ctx.fillStyle = FLAVOR_INK;
   const fy = bottom - flines.length * flh;

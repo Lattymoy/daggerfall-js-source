@@ -232,7 +232,7 @@ const cardOf = (inst) => cardById(inst.form ?? inst.id);
 const holdingCard = (state, h) => cardById(state.holdings[h].id);
 const holdingRule = (state, h, verb) => holdingCard(state, h).fx.find((f) => f.on === 'ongoing' && f.do === verb) ?? null;
 /** The cards one side of holding `h` stands. */
-export const roomOf = (state, h) => holdingRule(state, h, 'room')?.n ?? ILIAC_ROOM;
+export const holdingRoomOf = (state, h) => holdingRule(state, h, 'room')?.n ?? ILIAC_ROOM;
 const veiled = (state, h) => !!holdingRule(state, h, 'veil');
 const noSpells = (state, h) => !!holdingRule(state, h, 'nospell');
 
@@ -246,7 +246,7 @@ function find(state, uid) {
 }
 
 /** The free room on player `p`'s side of `h`, less the plays of his still on their way there this reveal (`T.res`). */
-const freeRoom = (state, T, p, h) => roomOf(state, h) - state.holdings[h].sides[p].length - (T ? T.res[p][h] : 0);
+const freeRoom = (state, T, p, h) => holdingRoomOf(state, h) - state.holdings[h].sides[p].length - (T ? T.res[p][h] : 0);
 
 /** The refs on one side of one holding. */
 const sideRefs = (state, h, p) => state.holdings[h].sides[p].map((inst, i) => ({ h, p, i, inst }));
@@ -613,7 +613,7 @@ export function result(state) {
  * card of the other's is `{uid, down: true}` and his power at that holding counts only what the viewer can see.
  * @param {any} state @param {number} viewer
  */
-export function publicView(state, viewer) {
+export function iliacView(state, viewer) {
   const pw = powers(state);
   const seen = (p) => (inst) => !inst.down || p === viewer;
   const cardView = (inst, p) => (seen(p)(inst)
@@ -622,7 +622,7 @@ export function publicView(state, viewer) {
   return {
     viewer, turn: state.turn, turns: ILIAC_TURNS, over: state.over,
     holdings: state.holdings.map((hd, h) => ({
-      id: hd.id, room: roomOf(state, h),
+      id: hd.id, room: holdingRoomOf(state, h),
       sides: hd.sides.map((side, p) => side.map((inst) => cardView(inst, p))),
       power: [0, 1].map((p) => sidePower(state, pw, h, p, seen(p))),
     })),

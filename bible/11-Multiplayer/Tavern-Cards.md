@@ -751,5 +751,5 @@ CARDS8"**.
   Hand at the table against patrons and online (CARDS10). A card minted offline that walks into the realm is worth
   nothing to its gold law today; CARDS9 decides its customs before cards change hands there.
 - **Pins:** `test/cards7_rules.test.js` 27, `test/cards8_catalog.test.js` 8, `test/cards8_faces.test.js` 7,
-  `test/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 20, all dead; the engine's own 22 were run by its
+  `test/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 21, all dead; the engine's own 22 were run by its
   builder, all caught.

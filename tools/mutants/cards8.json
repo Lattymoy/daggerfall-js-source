@@ -278,5 +278,19 @@
       "test/cards8_faces.test.js",
       "test/holdings.test.js"
     ]
+  },
+  {
+    "name": "C8-decks-field-refuses",
+    "file": "src/systems/itemFields.js",
+    "old": "  decks: list(validBinderDeck),",
+    "new": "  decks: list(() => false),",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
   }
 ]

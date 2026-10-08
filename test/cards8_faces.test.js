@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
-  EMBLEM_PAINTERS, paintIliacCard, paintIliacBack, wrapText, ILIAC_CARD_ASPECT, KIND_ART, TIER_FRAMES, iliacLayout,
+  EMBLEM_PAINTERS, paintIliacCard, paintIliacBack, wrapCardText, ILIAC_CARD_ASPECT, KIND_ART, TIER_FRAMES, iliacLayout,
   COST_GEM, POWER_SHIELD,
 } from '../src/render/iliacCardFaces.js';
 import { paintBack } from '../src/render/cardFaces.js';
@@ -127,12 +127,12 @@ test('CARDS8 the kind is the frame: a location has no gem nor shield, a spell no
 
 test('CARDS8 the rules wrap by the context\'s own measure; the flavor in italics goes first when the box is full', () => {
   const { ctx } = recorder({ charW: 10 });
-  assert.deepEqual(wrapText(ctx, 'aaa bbb ccc', 70), ['aaa bbb', 'ccc'], '7 letters at 10 a letter fill a 70 line');
-  assert.deepEqual(wrapText(ctx, 'aaa bbb ccc', 69), ['aaa', 'bbb', 'ccc']);
-  assert.deepEqual(wrapText(ctx, 'one\ntwo three', 200), ['one', 'two three'], 'a newline always breaks');
-  assert.deepEqual(wrapText(ctx, 'abcdefghij', 40), ['abcd', 'efgh', 'ij'], 'a word wider than the line breaks by letters');
-  assert.deepEqual(wrapText(ctx, '', 40), [''], 'no words, one empty line');
-  for (const line of wrapText(ctx, 'The quick brown fox jumps over the lazy dog by the Iliac Bay', 90)) assert.ok(line.length * 10 <= 90, line);
+  assert.deepEqual(wrapCardText(ctx, 'aaa bbb ccc', 70), ['aaa bbb', 'ccc'], '7 letters at 10 a letter fill a 70 line');
+  assert.deepEqual(wrapCardText(ctx, 'aaa bbb ccc', 69), ['aaa', 'bbb', 'ccc']);
+  assert.deepEqual(wrapCardText(ctx, 'one\ntwo three', 200), ['one', 'two three'], 'a newline always breaks');
+  assert.deepEqual(wrapCardText(ctx, 'abcdefghij', 40), ['abcd', 'efgh', 'ij'], 'a word wider than the line breaks by letters');
+  assert.deepEqual(wrapCardText(ctx, '', 40), [''], 'no words, one empty line');
+  for (const line of wrapCardText(ctx, 'The quick brown fox jumps over the lazy dog by the Iliac Bay', 90)) assert.ok(line.length * 10 <= 90, line);
   const roomy = recorder({ charW: 3 });
   paintIliacCard(roomy.ctx, sample('spell', 'magic', { text: 'Deal two.', flavor: 'Short.' }), 350, 500);
   const fl = roomy.log.calls.filter((c) => c[0] === 'set' && c[1] === 'font').map((c) => c[2]);

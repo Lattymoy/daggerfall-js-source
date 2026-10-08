@@ -17,6 +17,7 @@ import { resolveItemName, survivalInfoTokens } from '../src/systems/itemInfo.js'
 import { isBound, isPackOnly } from '../src/systems/itemBound.js';
 import { BOUND_TEMPLATES } from '../src/net/realmTradeLaw.js';
 import { ITEM_FIELDS, validBinderDeck } from '../src/systems/itemFields.js';
+import { validLootItem } from '../src/systems/loot.js';
 import { pageOf } from '../src/ui/packPages.js';
 import { ILIAC_CARDS, STARTER_DECK, cardById } from '../src/net/iliacCards.js';
 import { deckValid } from '../src/net/iliacHand.js';
@@ -54,6 +55,9 @@ test('CARDS8 the binder: the Wallet\'s shape - bound, pack-only, refused by the 
   assert.ok(BOUND_TEMPLATES.includes(CARD_BINDER_TEMPLATE), 'the realm\'s trade refuses it as the client does');
   assert.equal(pageOf(b), 'books');
   assert.ok(ITEM_FIELDS.card && ITEM_FIELDS.decks);
+  const whole = validLootItem({ ...mintBinder([{ name: 'Starter Deck', cards: STARTER_DECK }]) });
+  assert.deepEqual(whole?.decks, [{ name: 'Starter Deck', cards: [...STARTER_DECK] }], 'the item check keeps a binder\'s decks whole');
+  assert.equal(validLootItem({ ...mintIliacCard(A, 2) })?.card, A, 'and a card\'s card');
   assert.equal(validBinderDeck({ name: 'x', cards: STARTER_DECK }), true);
   assert.equal(validBinderDeck({ name: 'x'.repeat(41), cards: [] }), false);
   const me = { items: [] };

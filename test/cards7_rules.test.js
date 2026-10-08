@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  newGame, legalPlays, commit, playsRefusal, reveal, result, deckValid, publicView, powers, revealOrder, costOf, roomOf,
+  newGame, legalPlays, commit, playsRefusal, reveal, result, deckValid, iliacView, powers, revealOrder, costOf, holdingRoomOf,
   fxText, fxRefusal, ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX, ILIAC_TURNS, ILIAC_MAGICKA_MAX,
   ILIAC_HAND_START, ILIAC_HAND_MAX, ILIAC_HOLDINGS, ILIAC_ROOM, ILIAC_TRIGGERS, ILIAC_VERBS, ILIAC_TARGETS, ILIAC_PICKS,
 } from '../src/net/iliacHand.js';
@@ -211,14 +211,14 @@ test('CARDS7 room: four cards a side, a spell takes none, a summon stops at the 
   place(st, 0, 0, 'harpy'); place(st, 0, 0, 'harpy'); place(st, 0, 0, 'giant-bat');
   handOf(st, 0, ['giant-bat', 'shock', 'spriggan']);
   st.players[0].magicka = 6;
-  assert.equal(roomOf(st, 0), ILIAC_ROOM);
+  assert.equal(holdingRoomOf(st, 0), ILIAC_ROOM);
   assert.equal(playsRefusal(st, 0, [{ card: 0, holding: 0 }, { card: 2, holding: 0 }]), 'room');
   assert.equal(playsRefusal(st, 0, [{ card: 0, holding: 0 }, { card: 1, holding: 0 }]), null, 'the fourth card, and a spell beside it');
   handOf(st, 1, ['giant-bat']);
   assert.equal(playsRefusal(st, 1, [{ card: 0, holding: 0 }]), null, 'the other side has its own room');
   // Wayrest's walls: three a side. A rat played beside another play keeps the room for it - no token.
   const w = game(['rat', 'harpy', 'dreugh'], [], ['wayrest', 'daggerfall', 'vampire-crypt']);
-  assert.equal(roomOf(w, 0), 3);
+  assert.equal(holdingRoomOf(w, 0), 3);
   place(w, 0, 0, 'dreugh');
   handOf(w, 0, ['rat', 'harpy', 'spriggan']);
   w.players[0].magicka = 6;
@@ -234,7 +234,7 @@ test('CARDS7 the public view: your own hand and plays, the other\'s counts alone
   handOf(st, 0, ['rat', 'harpy', 'harpy', 'spriggan']);
   handOf(st, 1, ['harpy', 'spriggan', 'spriggan', 'giant-bat']);
   assert.equal(commit(st, 0, [{ card: 0, holding: 1 }]), null);
-  const v0 = publicView(st, 0), v1 = publicView(st, 1), vs = publicView(st, -1);
+  const v0 = iliacView(st, 0), v1 = iliacView(st, 1), vs = iliacView(st, -1);
   assert.deepEqual(v0.players[0].hand, st.players[0].hand.map((c) => ({ uid: c.uid, id: c.id })));
   assert.deepEqual(v0.players[0].plays, [{ card: 0, holding: 1 }]);
   assert.equal(v0.players[1].hand, undefined);
@@ -250,7 +250,7 @@ test('CARDS7 the public view: your own hand and plays, the other\'s counts alone
   // The view is a copy: changing it changes nothing.
   v0.players[0].hand.length = 0;
   assert.equal(st.players[0].hand.length, 4);
-  assert.deepEqual(publicView(st, 0).holdings.map((h) => [h.id, h.room]), [['orsinium', 4], ['daggerfall', 4], ['vampire-crypt', 4]]);
+  assert.deepEqual(iliacView(st, 0).holdings.map((h) => [h.id, h.room]), [['orsinium', 4], ['daggerfall', 4], ['vampire-crypt', 4]]);
 });
 
 test('CARDS7 the simultaneous turn: nothing until both commit, then more power reveals first (a tie, player 0)', () => {
@@ -496,7 +496,7 @@ test('CARDS7 transform: the target becomes the card (its power, its text), and i
   const inst = st.holdings[0].sides[0].find((c) => c.uid === dr);
   assert.deepEqual(inst, { uid: dr, id: 'dreugh', mod: 0, form: 'rat' });
   assert.equal(pw(st, dr), 1);
-  assert.deepEqual(publicView(st, 1).holdings[0].sides[0].find((c) => c.uid === dr), { uid: dr, id: 'dreugh', power: 1, mod: 0, form: 'rat' });
+  assert.deepEqual(iliacView(st, 1).holdings[0].sides[0].find((c) => c.uid === dr), { uid: dr, id: 'dreugh', power: 1, mod: 0, form: 'rat' });
   // The bat flew on at the turn's end; the razor finds the rat-that-was alone, and destroyed it is a Dreugh again.
   assert.ok(st.holdings[1].sides[0].some((c) => c.uid === bat));
   assert.deepEqual(ids(st.holdings[0].sides[0]), ['dreugh']);
@@ -586,7 +586,7 @@ test('CARDS7 Privateer\'s Hold: a card played face down, no text, hidden from th
   assert.ok(st.holdings[0].sides[1].some((c) => c.uid === enemy));
   assert.equal(pw(st, as.uid), 2, 'Dagon\'s -1 does not reach a face-down card');
   // The other sees a card and no power; its owner sees it whole.
-  const theirs = publicView(st, 1).holdings[0], mine = publicView(st, 0).holdings[0];
+  const theirs = iliacView(st, 1).holdings[0], mine = iliacView(st, 0).holdings[0];
   assert.deepEqual(theirs.sides[0], [{ uid: as.uid, down: true }]);
   assert.deepEqual(theirs.power, [0, 4]);
   assert.deepEqual(mine.sides[0], [{ uid: as.uid, id: 'dark-brotherhood-assassin', power: 2, mod: 0, down: true }]);
@@ -639,7 +639,7 @@ test('CARDS7 the game ends after its sixth turn, and an ended game takes nothing
   assert.equal(commit(st, 0, []), 'over');
   assert.deepEqual(reveal(st), []);
   assert.deepEqual(legalPlays(st, 0), []);
-  assert.deepEqual(publicView(st, 0).result, result(st));
+  assert.deepEqual(iliacView(st, 0).result, result(st));
 });
 
 // ── the random games ──
@@ -695,7 +695,7 @@ test('CARDS7 three thousand random games: no throw, no fizzle, six turns, every 
         assert.deepEqual(census(s, p), ALL_UIDS(p), `seed ${seed}: conservation`);
         assert.ok(s.players[p].hand.length <= ILIAC_HAND_MAX);
         assert.ok(s.players[p].magicka <= ILIAC_MAGICKA_MAX);
-        for (let h = 0; h < ILIAC_HOLDINGS; h++) assert.ok(s.holdings[h].sides[p].length <= roomOf(s, h), `seed ${seed}: room`);
+        for (let h = 0; h < ILIAC_HOLDINGS; h++) assert.ok(s.holdings[h].sides[p].length <= holdingRoomOf(s, h), `seed ${seed}: room`);
       }
       assert.ok(Object.values(powers(s)).every((x) => Number.isInteger(x) && x >= 0));
     });

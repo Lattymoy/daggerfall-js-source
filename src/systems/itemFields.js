@@ -140,7 +140,7 @@ export const ITEM_FIELDS = Object.freeze({
   fieldKit: bool(),
   // CARDS8 (bible/11-Multiplayer/Tavern-Cards.md section 26): a card's catalog id (net/iliacCards.js); a Card Binder's decks
   card: str(),
-  decks: list(rec(validBinderDeck)),
+  decks: list(validBinderDeck),
   // AUDIT 31 H3: the recipe a crafted piece was minted of (recipeLaw's id) - an Ebony and a Warforged piece share their
   // template and material, so a commission's picker reads this before any look-alike
   recipe: str(),
