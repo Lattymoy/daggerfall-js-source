@@ -3052,7 +3052,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       waysIn: () => modes?.interiorCtx?.waysIn ?? [],   // ...and every door's landing kept clear
       staticFeet: () => (modes?.interiorCtx?.people ?? []).map((p) => [p.x, p.y, p.z]),   // AUDIT LW-ROOMS: every one, at their post at the hour or not
       questFeet: () => modes?.interiorQuestFeet?.() ?? [],   // AUDIT-E7: and the quest's people - AUDIT LW-ROOMS: kept clear when one is placed, the reader's own
-      doorsShut: (fn) => (modes?.interiorCtx?.actions?.withDoorsShut ? modes.interiorCtx.actions.withDoorsShut(fn) : fn()),   // AUDIT LW-ROOMS: the room measured as its build hung it
+      doorsShut: (fn) => ((actions) => (actions?.withDoorsShut ? actions.withDoorsShut(fn) : fn()))(modes?.interiorCtx?.actions),   // AUDIT LW-ROOMS: the room measured as its build hung it
       clock: skyMinutes,
       ready: () => !_loading && !modes?.transitioning,
       beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...

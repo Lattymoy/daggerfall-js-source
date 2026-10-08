@@ -72,7 +72,7 @@ test('AUDIT LW-ROOMS A1/B1 the room measured as its build hung it - every door s
   assert.ok(Number.isFinite(h.actions.withDoorsShut(across)), 'shut within');
   // the host: the interior's own actions
   const w = rd('src/scenes/world.js');
-  const doorsShut = new Function('modes', `return ${lift(w, /\n\s*doorsShut: (\(fn\) => \(modes\?\.interiorCtx\?\.actions\?\.withDoorsShut \? modes\.interiorCtx\.actions\.withDoorsShut\(fn\) : fn\(\)\)),/, 'the host\'s doors shut')}`);
+  const doorsShut = new Function('modes', `return ${lift(w, /\n\s*doorsShut: (\(fn\) => \(\(actions\) => \(actions\?\.withDoorsShut \? actions\.withDoorsShut\(fn\) : fn\(\)\)\)\(modes\?\.interiorCtx\?\.actions\)),/, 'the host\'s doors shut')}`);
   assert.ok(doorsShut({ interiorCtx: { actions: h.actions } })(across) < 3, 'the host\'s: shut within');
   assert.equal(doorsShut({})(() => 7), 7, 'no room: as it is');
 });

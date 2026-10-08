@@ -99,7 +99,10 @@ own rooms and towns unless the synthetic ones are named.
 
 `scenes/livingIndoors.js` and `dayPlan.js` the law; `world/actionSystem.js` the doors' measure (`withDoorsShut`, new,
 nothing else changed). `scenes/world.js` - WIRED: hands the layer `doorsShut` (the interior's own actions), every one of
-the building's people as `staticFeet`, the quest's as `questFeet`, and stops the talk ray at the room's walls.
+the building's people as `staticFeet`, the quest's as `questFeet`, and stops the talk ray at the room's walls. The hook
+read `modes.interiorCtx` past a guard above `modes`'s declaration, which AUDIT 24 wave 37's sweep forbids (every reference
+there guarded on the object: `audit24_wave37`, red on this audit's head; LW-STIR's run of the whole suite on its merge
+caught it) - it reads `modes?.interiorCtx?.actions` once now, the lift and AUDIT-LWR-doors-host re-aimed, dead.
 `scenes/worldModes.js` - no change: its scene restore still swings the doors, which the measure no longer reads.
 `scenes/exterior.js` - FLAGGED as LW2 has it (stands nobody of the living world in a room). `scenes/dungeonContext.js` -
 no town.

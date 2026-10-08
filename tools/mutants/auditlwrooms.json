@@ -29,7 +29,7 @@
   {
     "name": "AUDIT-LWR-doors-host",
     "file": "src/scenes/world.js",
-    "old": "      doorsShut: (fn) => (modes?.interiorCtx?.actions?.withDoorsShut ? modes.interiorCtx.actions.withDoorsShut(fn) : fn()),",
+    "old": "      doorsShut: (fn) => ((actions) => (actions?.withDoorsShut ? actions.withDoorsShut(fn) : fn()))(modes?.interiorCtx?.actions),",
     "new": "      doorsShut: (fn) => fn(),",
     "tests": [
       "test/auditlwrooms.test.js"
