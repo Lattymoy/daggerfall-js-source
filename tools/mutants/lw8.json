@@ -69,8 +69,8 @@
   {
     "name": "LW8-fan",
     "file": "src/scenes/livingIndoors.js",
-    "old": "    for (const [di, dj] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {",
-    "new": "    for (const [di, dj] of [[1, 0], [0, 1]]) {",
+    "old": "export const ROOM_STEPS = Object.freeze([[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]].map((s) => Object.freeze(s)));",
+    "new": "export const ROOM_STEPS = Object.freeze([[1, 0], [0, 1], [1, 1]].map((s) => Object.freeze(s)));",
     "tests": [
       "test/lw8_indoors.test.js",
       "test/lwrooms_tavern.test.js"
@@ -143,7 +143,7 @@
   {
     "name": "LW8-walls",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8, true, false, true); } catch { continue; }",
+    "old": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8); } catch { continue; }",
     "new": "      q[0] = tx; q[2] = tz;",
     "tests": [
       "test/lw8_indoors.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "LW8-arrival",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        return arriving || Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
-    "new": "        return Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
+    "old": "        return arriving || dx * Math.sin(viewYaw)",
+    "new": "        return dx * Math.sin(viewYaw)",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "LW8-unseen-always",
     "file": "src/scenes/livingIndoors.js",
-    "old": " || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0;",
-    "new": " || true;",
+    "old": "arriving || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0 || (Math.hypot",
+    "new": "arriving || true || (Math.hypot",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -334,7 +334,7 @@
   {
     "name": "LW8-host-act",
     "file": "src/scenes/world.js",
-    "old": "    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),",
+    "old": "    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), Math.min(nearer, modes?.interiorCollider?.raycast(eye, dir, 80) ?? Infinity)),",
     "new": "    livingPersonsAct: () => false,",
     "tests": [
       "test/lw8_indoors.test.js"
@@ -370,7 +370,7 @@
   {
     "name": "LW8-host-statics",
     "file": "src/scenes/world.js",
-    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),",
+    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).map((p) => [p.x, p.y, p.z]),",
     "new": "      staticFeet: () => [],",
     "tests": [
       "test/lw8_indoors.test.js"

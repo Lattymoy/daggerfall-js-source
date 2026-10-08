@@ -91,7 +91,9 @@ test('LW8c the room astir: one in no circle stays put a while (INDOOR_STIR_S, th
   while (!two.layer.stood()[0].walking && steps++ < 400) run(two, 0.5);
   const claimed = two.layer.stood()[0].at;
   two.st.inside = [RES(1), RES(2), RES(3), RES(4), RES(5), RES(6), RES(7), RES(8)];
-  two.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  two.layer.frame(1, [0, 0, -4.65], Math.PI, [0, 1.6, -4.65]);   // AUDIT LW-ROOMS: PIN MOVED - a step behind the door's row,
+  // looking out of it (the room's walk deals a place of that row first now, square to the look, where the eye's own
+  // rounding saw it and none came in)
   const others = two.layer.stood().filter((s) => s.id !== 'L9.1');
   assert.ok(others.length > 0 && !others.some((s) => s.at === claimed), 'their place, while they walk to it');
 });
@@ -171,10 +173,12 @@ test('LW8c company and the room\'s walls: one alone makes for a table where one 
   // walls: a partition at x = 0 - every walk keeps to its own side
   const walled = rig({ inside: [RES(1), RES(2), RES(3)], wall: 0 });
   walled.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-  const side = new Map(walled.layer.stood().map((s) => [s.id, Math.sign(s.at[0])]));
+  // (AUDIT LW-ROOMS: PIN MOVED - each side by the mock's own law, x < 0 the far one: the door's line x = 0 is the near
+  // side's, where the room's walk now walks some)
+  const side = new Map(walled.layer.stood().map((s) => [s.id, s.at[0] < 0]));
   for (let s = 0; s < 400; s += 0.5) {
     walled.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-    for (const s2 of walled.layer.stood()) assert.equal(Math.sign(s2.at[0]), side.get(s2.id), `${s2.id} never through the wall`);
+    for (const s2 of walled.layer.stood()) assert.equal(s2.at[0] < 0, side.get(s2.id), `${s2.id} never through the wall`);
   }
   // nowhere to go (every line shut): they stay, and try again later
   const shut = rig({ inside: [RES(1)] });

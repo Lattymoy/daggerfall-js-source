@@ -169,8 +169,8 @@
   {
     "name": "LW8b-greet-circle",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
-    "new": "        if (dist > GREET_RANGE) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE ||",
+    "new": "        if (dist > GREET_RANGE ||",
     "tests": [
       "test/lw8b_talk.test.js"
     ],
@@ -179,8 +179,8 @@
   {
     "name": "LW8b-greet-range",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
-    "new": "        if (inCircle.has(id)) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE ||",
+    "new": "        if (inCircle.has(id) ||",
     "tests": [
       "test/lw8b_talk.test.js"
     ],

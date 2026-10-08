@@ -593,10 +593,11 @@ all have tasks ... perform activities" - LW2 shut the door behind a resident; th
   calling is a class's in it), to `INDOOR_MAX` (12) (LW-ROOMS: and no more than its floor holds).
 - **Coming and going**: who is inside is read every `INDOOR_TICK_S` (1 s); on the way in the room is as the day has it,
   all at once (LW2's arrival law); after it one who comes or goes waits for the player to look away (or be
-  `INDOOR_SEEN_M`, 14 m, off).
+  `INDOOR_SEEN_M`, 14 m, off - AUDIT LW-ROOMS: and hidden there by the room, `inView`).
 - **Talk** (the building mode's press, `host.livingPersonsAct`): a resident in the room is offered the press before the
   ladder's own winner - the street's own talk ray (`townTalk.tryActivate`) on the room's talk seats - and their regard
-  hears it through the room's door (a refusal from an enemy, a word, a tone). A hand caught in a purse here is seen by
+  hears it through the room's door (a refusal from an enemy, a word, a tone) - AUDIT LW-ROOMS: never through the room's
+  walls (the interior collider's ray the nearer). A hand caught in a purse here is seen by
   those in the room within `WITNESS_M`. Drawn on the building's own billboard pass (`host.livingBillboards`).
 - **The host** stands the layer in a building of a living town (the room's collider and floor, its static people, the
   sky's clock), steps it in the modal frame and frees it in the street. EVERY ALLOCATION HAS AN OWNER: each body is the
@@ -614,7 +615,8 @@ conversations with each other ... much like the crew on board ships" - LW8 stood
 - **The tables** (`tablesOf`). The room's sounded spots are grouped where people stand together: in the building's
   deal, each spot not yet at a table opens one and takes the nearest of the rest within `TABLE_M` (2.2 m) of every one
   already at it, to `TABLE_MAX` (3). The room fills TABLE BY TABLE (the tables in the deal, each its spots in turn), so
-  those inside stand in twos and threes; those at a table face its middle, one alone faces the room.
+  those inside stand in twos and threes; those at a table face its middle, one alone faces the room (AUDIT LW-ROOMS:
+  their table's middle, or the room's open way there - `faceOf`).
 - **The circles.** LW-TALK: a table's company - those standing at it - meets from the minute it sat down as it is, a
   round of the street's at a time (`ROUND_S`, on the town's clock: `talkBeat`) while it stays the same, dealt as the
   street's circles are (`dealCircles` on `in:<building>:<table>:<the minute>`) and talking in the street's exchanges.
@@ -1692,21 +1694,33 @@ A screenshot in Daggerfall - 1 fps, "script 6179.8 ms", the game's own frame 637
 Mac: "With living world integration, NPCs still group up in taverns". Measured with no game data (`tools/livingRoomProbe.mjs`:
 the synthetic towns, each with one tavern, and a synthetic tavern hall on the port's own collider, `test/lwRoom.mjs`):
 every one the day had in a room stood within a few strides of its door, and a room's twelve chained into one crowd (the
-biggest crowd - people within 2.5 m of one another, chained - 12 of the 12 on the way in, 9.0-9.7 on average through ten
-minutes of the room astir); and the day sat people in the tavern for hours they never meant to spend there (the town of
-sixteen blocks: 22 inside before noon; twelve stays of four hours and more in five days). Five causes, each fixed at its
-root, and the one risk the first fix made, closed (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
+biggest crowd - the places stood at within CROWD_M, 2.5 m, of one another, chained - 12 of the 12 on the way in, 9.0-9.7
+on average through ten minutes of the room astir); and the day sat people in the tavern for hours they never meant to
+spend there (the town of sixteen blocks: 23 inside before noon; twelve stays of four hours and more in five days). Five
+causes, each fixed at its root, and the one risk the first fix made, closed (`test/lwrooms_tavern.test.js`,
+`tools/mutants/lwrooms.json`). AUDIT LW-ROOMS (2026-10-08, Mac: "Audit this"; the record is
+`01-Overview/Audit-LW-Rooms.md`) measured it on the game's own rooms and towns and changed these laws - each below.
 
 - **The room was a fan by its door.** LW8's sounding walked twelve ways out to 6.6 m from the way in and no farther - a
   hall of 24 by 18 m kept 26 places, every one within 6.6 m of its door - and walked them at the way in's own height:
-  the host's landing (`interiorCtx.landing`, interiorLanding's) is the door's middle, a metre up, so the capsule passed
-  over the tables and the counter, and a fan's end over a table read the table's top for its floor. The room's floor is
+  the host's landing (`interiorCtx.landing`, interiorLanding's) is the door's middle, a metre up, so in a house or a shop
+  the capsule passed over a table or a counter and a fan's end over one read its top for its floor (AUDIT LW-ROOMS:
+  2,705 places in 1,765 of the game's 5,797 houses, 50 in 41 of its 628 shops; one tavern of 290). The room's floor is
   walked now (`livingIndoors.js soundRoom`): from the floor under the way in, cell by cell on a lattice of
-  INDOOR_APART_M - the four ways - each step through the room's own collider (as a body that never steps up, the
-  collider's `noStep`), reaching its cell within INDOOR_ARRIVE_M, onto a floor within INDOOR_LEVEL_M of the one it left
-  (never a stair's step, a table's top or a hole) and within 1.2 m of the way in's, to INDOOR_REACH_M and INDOOR_CELLS
-  cells; every cell walked to a place, apart (to a centimetre: the lattice's own step, as its sums round it), clear of
-  the static people and the ways in as before. The hall: 207 places, to 19.8 m.
+  INDOOR_APART_M, onto a floor within INDOOR_LEVEL_M of the one it left (never a stair's step, a table's top or a hole)
+  and within 1.2 m of the way in's, to INDOOR_REACH_M and INDOOR_CELLS cells; every cell walked to a place, apart (to a
+  centimetre: the lattice's own step, as its sums round it), clear of the static people and the ways in as before.
+  AUDIT LW-ROOMS: LW-ROOMS's walk took the lattice's four ways and kept a step only where it reached its own lattice
+  point, as a body that never steps up, so it stopped at every doorway off its lines and in a door's jamb - 81 of the
+  game's 290 taverns walked to under ten places, fifteen to one, and 622 of 1,494 houses. It takes the eight ways
+  (`ROOM_STEPS`) now, each step walked as the room's people walk theirs (the collider's own step up, LW8c's
+  `walkable`'s) and kept wherever it slides, in the cell it slid to - never a second place in a cell walked to already;
+  a cell where the body stood up on an edge, the floor under its middle beside it, walked through and never stood at.
+  The game's taverns: none under ten places (the median 51 -> 67); houses 204 under ten. The hall: 179 places, to 19.8
+  m. And the room is measured as its build hung it (`deps.doorsShut`, `ActionSystem.withDoorsShut`): every door shut,
+  the building's own people every one, at their post at the hour or not, and every bed's stand kept clear, the reader's
+  own quest's people kept clear only when one is placed - a door left open, the hour or one reader's quest laid out
+  every reader's room anew.
 - **The room filled side by side.** It filled the deal's tables as they came, and two of them side by side stood as one
   crowd. It fills them apart now (`spreadTables`): in the building's deal, each next the first whose middle stands
   TABLE_GAP_M (4 m) from every table before it, while any does, then the rest in the deal's order.
@@ -1715,76 +1729,99 @@ root, and the one risk the first fix made, closed (`test/lwrooms_tavern.test.js`
   people see one another now (`tablesOf`'s `sees`, `inSight`): the line between them TABLE_SIGHT_M (1.4 m) over the floor
   clear of the room's collider - over its tables and counters, never through a wall (a collider that casts no ray hides
   nothing). Measured on the synthetic hall with a partition: some 200 rays a room, under a millisecond.
-- **Any room held twelve.** INDOOR_MAX stood twelve in a closet of a shop's as in a great hall. A room's floor holds one
-  to every INDOOR_FLOOR_M2 (8 m²) of its places now (a lattice cell each), INDOOR_MAX in all; one up in their room by
-  their bed (LW-LODGE) is on none of the floor.
+- **Any room held up to twelve.** The first cut stood as many as its fan found places, to INDOOR_MAX, whatever the floor
+  (a 6 by 5 room's ten). A room's floor holds one to every INDOOR_FLOOR_M2 (8 m²) of its places now (a lattice cell
+  each), INDOOR_MAX in all - AUDIT LW-ROOMS: and a household, INDOOR_HOLD_MIN (3), at the least (a house of nine places
+  held two of its family of three); one up in their room by their bed (LW-LODGE) is on none of the floor.
 - **A stir made for anywhere.** LW8c's dice took any free place within INDOOR_WALK_M, beside a table of strangers too,
   so the room's stirs drew it back into one crowd. One who stirs with no company to go to makes for a place of their
   own now (`stirPlace`): TABLE_GAP_M from everyone else's (where they stand, or make for), their dice's pick of those;
-  where none in reach is, the farthest from everyone that any is; else any, as before. A lodger up by their bed has no
-  place of the room (`spot` -1) and counts nowhere - this slice's first reading of everyone's places threw on one, and
-  `lwlodge_tavern` caught it.
+  where none in reach is, as far from everyone as the farthest they can walk to (AUDIT LW-ROOMS: the farthest of all,
+  round a corner, left them none to walk to and the dice picked of any - in the game's taverns 49 of 290 stood a crowd
+  of five or more astir). Company only at a table CROWD_M from every other table's people (two tables stood as one
+  crowd through a lone drinker's table between them). A lodger up by their bed has no place of the room (`spot` -1) and
+  counts nowhere - this slice's first reading of everyone's places threw on one, and `lwlodge_tavern` caught it.
+- **AUDIT LW-ROOMS: the room's people, as the room shows them.** One alone faces their table's middle, or the room's most
+  open way where their table is theirs alone (`faceOf`) - they faced the middle of the whole floor's places, a point in
+  another room (a wall within a metre of the face for 807 of 12,389 tavern places; 53 of 21,766 now). A coming or a
+  going past INDOOR_SEEN_M waits while the room shows it the player (`inView` - past it, anything went, 110 tavern places
+  in plain view of the way in). A word only to one the room shows the player, on their floor; the talk ray never
+  through the room's walls (`scenes/world.js livingPersonsAct`).
 - **The day sat people in the tavern.** A long gap between two stays at ONE place was waited out at it: the schedule's
   "a long gap is spent at home" (`dayPlan.js schedule`) held between two places only, so a sellsword whose guild keeps
   no hall in the town sat in the tavern from one o'clock to the evening's drink, a labourer from their lunch to it. A
-  long gap at one place is spent at home now, as one between two is. And a labourer's and a courier's lunch at the
-  tavern was laid after the stint at nine, before the one at eleven (the stints at seven, nine, eleven, one and three;
-  the lunch on `i === 1`): the three in ten who lunch there walked on from the stint at nine and waited in the tavern
-  for noon wherever home was too far to go between, then did the stint at eleven at half past twelve. The lunch comes
-  after the stint at eleven now.
-- **Measured** (before / after; `tools/livingRoomProbe.mjs`). The room - twelve the day has inside the synthetic hall,
-  the player at the way in, ten real minutes of the room astir:
+  long gap at one place indoors is spent at home now, as one between two is - AUDIT LW-ROOMS: out of doors one stands on
+  there as ever (LW-ROOMS sent those home too: the game's towns' street at 17:00 stood a quarter thinner, its talk a
+  fifth quieter). And a labourer's and a courier's lunch at the tavern was laid after the stint at nine, before the one
+  at eleven (the stints at seven, nine, eleven, one and three; the lunch on `i === 1`): the three in ten who lunch there
+  walked on from the stint at nine and waited in the tavern for noon wherever home was too far to go between, then did
+  the stint at eleven at half past twelve. The lunch comes after the stint at eleven now - AUDIT LW-ROOMS: from that
+  stint's own end, its half hour from their coming in (laid at noon, those done at 11:25 waited for it), its three in
+  ten drawn where the first cut drew them.
+- **Measured** (the first cut / now; `tools/livingRoomProbe.mjs`). The room - twelve the day has inside the synthetic
+  hall, the player at the way in, ten real minutes of the room astir; the crowd is of the places stood at (a walker's
+  where they make for), read every ten seconds:
 
   | hall | places (the farthest) | the biggest crowd, on the way in | astir, the most / on average | the way in, on average |
   |---|---|---|---|---|
-  | 24 x 18 m | 26 (6.6 m) / 207 (19.8 m) | 12 / 3 | 12, 9.7 / 3, 2.5 | 4.6 / 11.9 m |
-  | 12 x 10 m | 24 (6.6 m) / 45 (10.3 m) | 12 / 3 (it holds 10) | 12, 9.7 / 3, 2.5 | 4.6 / 6.0 m |
-  | 40 x 30 m | 26 (6.6 m) / 373 (19.9 m) | 12 / 3 | 12, 9.0 / 3, 2.7 | 4.6 / 12.4 m |
+  | 24 x 18 m | 26 (6.6 m) / 179 (19.8 m) | 12 / 3 | 12, 9.7 / 3, 2.8 | 4.6 / 8.6 m |
+  | 12 x 10 m | 24 (6.6 m) / 36 (9.8 m) | 12 / 3 (it holds 8) | 12, 9.7 / 3, 2.3 | 4.6 / 6.3 m |
+  | 40 x 30 m | 26 (6.6 m) / 346 (19.9 m) | 12 / 3 | 12, 9.0 / 3, 2.6 | 4.6 / 11.4 m |
 
-  A sounding (once a room, on the way in): 29, 42 and 29 ms before, 31, 23 and 23 after (with the collider's step ladder,
-  56, 51 and 30 - the walk's `noStep` the same cells at near half the cost). The tavern's day - the most inside at once
-  over five days by its plans (`insideAt`), and its stays of four hours and more by those who neither work nor lodge
-  there:
+  A table's own crowd at the most at every hall size from 12 by 10 to 30 by 20 (AUDIT LW-ROOMS: LW-ROOMS's 13 by 11 stood
+  ten of ten in one). On the game's 290 taverns (AUDIT LW-ROOMS), twelve inside: on the way in at most 3; astir the most
+  a median 3, at most 6, 3 taverns at five or more. A sounding, once a room on its first frame inside, on the game's
+  taverns: a median 135 ms, at most 273 (the first cut's fan 96-112 and 203-333). The tavern's day - the most inside at
+  once over five days by its plans (`insideAt`), read every minute (AUDIT LW-ROOMS: the quarter-hour reads missed those
+  who waited for the noon lunch), and its stays of four hours and more by those who neither work nor lodge there:
 
   | town (its people) | before noon | noon | afternoon | evening | stays of four hours |
   |---|---|---|---|---|---|
-  | 3 x 3 blocks (134) | 6 / 4 | 13 / 12 | 4 / 2 | 24 / 24 | 6 / 0 |
-  | 4 x 4 (256) | 22 / 5 | 33 / 18 | 6 / 3 | 31 / 31 | 12 / 0 |
-  | 6 x 6 (303) | 26 / 5 | 35 / 25 | 9 / 7 | 32 / 32 | 28 / 17 |
-  | walled (84) | 4 / 4 | 11 / 9 | 5 / 3 | 23 / 23 | 12 / 2 |
+  | 3 x 3 blocks (134) | 6 / 5 | 14 / 11 | 4 / 2 | 25 / 25 | 6 / 0 |
+  | 4 x 4 (256) | 23 / 9 | 34 / 19 | 6 / 4 | 32 / 32 | 12 / 0 |
+  | 6 x 6 (303) | 27 / 8 | 35 / 22 | 11 / 9 | 32 / 32 | 28 / 17 |
+  | walled (84) | 4 / 6 | 12 / 11 | 5 / 3 | 23 / 23 | 12 / 2 |
 
-  The great town's stays left are its one tavern's: two hours' walk and more from much of the town, the gap waited out
-  because home and back is longer than it. A real city keeps a tavern near home (`favourites`: one of the two nearest).
+  Before noon now every one is at their lunch from the stint at eleven, none waiting for noon (the walled town's 6, its
+  lunches begun before twelve). The great town's stays left are its one tavern's: 13 of its 17 a gap waited out because
+  home and back - two hours' walk and more from much of the town - is longer than it, 4 an adventurer's own evening of
+  three to five hours (AUDIT LW-ROOMS). A real city keeps a tavern near home (`favourites`: one of the two nearest).
 - **Recorded, not changed: the evening.** A third of a town drinks at its tavern of an evening (LW1: a drink over 0.55,
   three evenings in four), so a town of one tavern has 23-32 in it at once of an evening: the room stands what its floor
-  holds of them, the first by their ids, as LW8 stood its twelve.
-- **The four hosts.** LW-ROOMS is the living town's plan and the room's layer (`dayPlan.js`, `scenes/livingIndoors.js`):
-  `scenes/worldModes.js` - WIRED through the host as LW8 has it (the building's collider, its landing and ways in, its
-  beds: no change); `scenes/world.js` - runs the layer and the plans it lays (no host change); `scenes/exterior.js` -
-  FLAGGED as LW2 has it: the fixed-city page keeps DFU's walkers and stands nobody of the living world in a room;
-  `scenes/dungeonContext.js` - no town.
-- **Pinned** by `test/lwrooms_tavern.test.js` (9: a long gap at one place spent at home, a short one waited out there,
-  the small town's tavern sitting no afternoon out; the lunch after the stint at eleven, the great town's tavern before
-  noon; the floor walked - the four ways, a long hall to its far wall and every corner, the reach, the cells, the floor
-  under the way in; level - off a stair, up a ramp to 1.2 m and no farther, a step stopped short none; apart to a
-  centimetre, the lattice's own and one a wall drew in; the tables apart - the deal's, the rest after, twelve at four
-  tables four metres apart - and in sight, over a table and never through a wall, a partitioned hall's none across
-  it; the hold - a small room's three, a great hall's twelve, a lodger by their bed on none of
-  the floor; a place of their own - the dice's, the farthest, a lodger counting nowhere; the synthetic hall on the
-  port's collider - on the floor, in no table, clear of the way in, a table's own crowd at the most) and
-  `tools/mutants/lwrooms.json` (25: 24 dead, one equivalent as recorded - the walk's `noStep`). PIN MOVED:
+  holds of them, the first by their ids, as LW8 stood its twelve. AUDIT LW-ROOMS recorded more (`Audit-LW-Rooms.md`):
+  the wait at the next place where home is too far (C2), one in view holding every arrival (B7), the room's talk (B6).
+- **The four hosts.** LW-ROOMS is the living town's plan and the room's layer (`dayPlan.js`, `scenes/livingIndoors.js`;
+  AUDIT LW-ROOMS: `world/actionSystem.js`'s doors measured shut): `scenes/worldModes.js` - WIRED through the host as LW8
+  has it (the building's collider, its landing and ways in, its beds: no change - its scene restore still swings the
+  doors, which the measure no longer reads); `scenes/world.js` - runs the layer and the plans it lays, and AUDIT LW-ROOMS
+  hands it the doors' measure, every one of the building's people, the quest's apart, and stops the talk ray at the
+  room's walls; `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page keeps DFU's walkers and stands nobody
+  of the living world in a room; `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwrooms_tavern.test.js` (9: a long gap at one place indoors spent at home, a short one waited out
+  there, out of doors stood out there between, the small town's tavern sitting no afternoon out; the lunch after the
+  stint at eleven from its end, one a day, the great town's tavern before noon, read every minute; the floor walked -
+  the eight ways, a long hall to its far wall and every corner, the reach, the cells, the floor under the way in, a
+  narrow doorway off the lattice's lines on the port's collider; level - off a stair, up a ramp to 1.2 m and no
+  farther, a step stopped short kept where it came to, none in a cell walked already; apart to a centimetre, the
+  lattice's own and one a wall drew in; the tables apart - the deal's, the rest after, twelve at four tables four
+  metres apart in a dozen buildings' deals - and in sight, over a table and never through a wall, a partitioned hall's
+  none across it in six; the hold - a small room's three, a closet's household, a great hall's twelve, a lodger by
+  their bed on none of the floor; a place of their own - the dice's, the farthest, its ties the dice's, a lodger
+  counting nowhere; the synthetic hall on the port's collider - on the floor, in no table, clear of the way in, a
+  table's own crowd at the most), `test/auditlwrooms.test.js` (8, AUDIT LW-ROOMS's) and `tools/mutants/lwrooms.json`
+  (27, all dead) and `tools/mutants/auditlwrooms.json` (40: 37 dead, 3 equivalent as recorded). PIN MOVED:
   `lw8_indoors` (the room sounded: the lattice's, apart to a centimetre), `lw8b_talk` (the word to the player: they come
   in from out of reach of every place), `lw8c_astir` (where they make for: not drawn to their own table, a place of
   their own), `lwlooks_town` (the court's still pictures on the way in: her place looked at), `lwtalk_town` (the facing
   at half past six; every reader alike in the town of sixteen blocks - a long gap at one place spent at home, the small
   town has no pair in the square's sight at a spot of three circles); `tools/mutants/lw8.json` (LW8-fan the lattice's
-  four ways, LW8-spread the reach, LW8-walls, LW8-floor-unread, LW8-other-floor, LW8-door-crowded, LW8-apart-unchecked,
+  ways, LW8-spread the reach, LW8-walls, LW8-floor-unread, LW8-other-floor, LW8-door-crowded, LW8-apart-unchecked,
   LW8-clear-unchecked, LW8-cap), `lw8b.json` LW8b-fill-deal and LW8b-every-one and `lw8c.json` LW8c-dice and LW8c-line
-  re-aimed by content. The 270 records of the lists on the files LW-ROOMS touched (`dayPlan.js`, `livingIndoors.js`)
-  and naming the pins it moved, re-judged: 267 dead, one equivalent as recorded (LW8-inside-outdoor), and two it left
+  re-aimed by content. The 299 records of the lists on the files LW-ROOMS touched (`dayPlan.js`, `livingIndoors.js`)
+  and naming the pins it moved, re-judged: all dead but one equivalent as recorded (LW8-inside-outdoor) and two it left
   unkilled - `lw8b.json` LW8b-greet-circle and `lwlooks.json` LW-LOOKS-court-way-in, their pins' scenes moved, then the
-  84 records naming those two files judged again, all dead; and after the sight, the 106 records on `livingIndoors.js`
-  judged again, all dead.
+  86 records naming those two files judged again, all dead; and after the sight, the 106 records on `livingIndoors.js`
+  judged again, all dead. AUDIT LW-ROOMS's pins and re-judge: `Audit-LW-Rooms.md`.
 
 ## The four hosts
 

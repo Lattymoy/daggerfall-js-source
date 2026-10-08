@@ -1,0 +1,388 @@
+[
+  {
+    "name": "AUDIT-LWR-doors-unshut",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const { spots, groups, tableOf, face, beds } = collider && deps.doorsShut ? deps.doorsShut(lay) : lay();",
+    "new": "        const { spots, groups, tableOf, face, beds } = lay();",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-doors-base",
+    "file": "src/world/actionSystem.js",
+    "old": "    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base); }",
+    "new": "    for (const o of doors) { this.collider.removeBucket(o.key); this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix); }",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-doors-after",
+    "file": "src/world/actionSystem.js",
+    "old": "    try { return fn(); } finally { for (const o of doors) this._settleDoorBucket(o); }",
+    "new": "    return fn();",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-doors-host",
+    "file": "src/scenes/world.js",
+    "old": "      doorsShut: (fn) => (modes?.interiorCtx?.actions?.withDoorsShut ? modes.interiorCtx.actions.withDoorsShut(fn) : fn()),",
+    "new": "      doorsShut: (fn) => fn(),",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-hour",
+    "file": "src/scenes/world.js",
+    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).map((p) => [p.x, p.y, p.z]),",
+    "new": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]),",
+    "tests": [
+      "test/lwfix6_rooms.test.js",
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-quest-measured",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "[...deps.staticFeet(), ...beds.map((x) => x.feet)], deps.waysIn?.() ?? [])",
+    "new": "[...deps.staticFeet(), ...beds.map((x) => x.feet), ...(deps.questFeet?.() ?? [])], deps.waysIn?.() ?? [])",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-quest-stood",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const spot = freeSpot((i) => !questHeld(room.spots[i], quest));",
+    "new": "        const spot = freeSpot();",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-quest-walked",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "(a, q) => !questHeld(q, quest) && walkable(a, q));",
+    "new": "walkable);",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-quest-host",
+    "file": "src/scenes/world.js",
+    "old": "      questFeet: () => modes?.interiorQuestFeet?.() ?? [],",
+    "new": "      questFeet: () => [],",
+    "tests": [
+      "test/lwfix6_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-beds",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "[...deps.staticFeet(), ...beds.map((x) => x.feet)], deps.waysIn?.() ?? [])",
+    "new": "deps.staticFeet(), deps.waysIn?.() ?? [])",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-step-up",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8); } catch { continue; }",
+    "new": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8, true, false, true); } catch { continue; }",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-edge",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (q[1] - y > INDOOR_LEVEL_M) lifted.add(cells.length);",
+    "new": "      void 0;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-edge-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    if (lifted.has(k)) continue;   // AUDIT LW-ROOMS: walked through, never stood at",
+    "new": "    void k;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-farthest-of-all",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const clear = new Map(free.map((i) => [i, Math.min(Infinity, ...theirs.map((x) => apart(i, room.spots[x.spot])))]));\n  // AUDIT LW-ROOMS: the farthest they can walk to sets how far is their own\n  const first = [...free].sort((a, b) => (clear.get(b) ?? 0) - (clear.get(a) ?? 0) || a - b).find((i) => walkable(at, room.spots[i]));\n  if (first == null) return -1;\n  const own = free.filter((i) => (clear.get(i) ?? 0) >= Math.min(TABLE_GAP_M, clear.get(first) ?? 0));\n  const roll = lwSeed(textSeed(id), stirs, 0x67) % own.length;\n  for (let k = 0; k < own.length; k++) { const i = own[(roll + k) % own.length]; if (i === first || walkable(at, room.spots[i])) return i; }\n  return first;\n}",
+    "new": "  const clear = new Map(free.map((i) => [i, Math.min(Infinity, ...theirs.map((x) => apart(i, room.spots[x.spot])))]));\n  const best = Math.max(0, ...clear.values());\n  const own = new Set(free.filter((i) => (clear.get(i) ?? 0) >= Math.min(TABLE_GAP_M, best)));\n  for (const list of [[...own], free.filter((i) => !own.has(i))]) {\n    const roll = lwSeed(textSeed(id), stirs, 0x67) % Math.max(1, list.length);\n    for (let k = 0; k < list.length; k++) { const i = list[(roll + k) % list.length]; if (walkable(at, room.spots[i])) return i; }\n  }\n  return -1;\n}",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lw8c_astir.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-company-crowd",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "\n    && theirs.every((x) => room.tableOf[x.spot] === room.tableOf[i] || apart(i, room.spots[x.spot]) >= CROWD_M))",
+    "new": ")",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-face-table",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  if (table.length > 1) return [table.reduce((a, k) => a + spots[k][0], 0) / table.length, p[1], table.reduce((a, k) => a + spots[k][2], 0) / table.length];",
+    "new": "  if (table.length > 0) return [table.reduce((a, k) => a + spots[k][0], 0) / table.length, p[1], table.reduce((a, k) => a + spots[k][2], 0) / table.length];",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-face-open",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    if (d > far + 1e-9) { far = d; best = [dx / n, dz / n]; }",
+    "new": "    if (far < 0 || d < far - 1e-9) { far = d; best = [dx / n, dz / n]; }",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-face-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          : room.face[s.spot];   // AUDIT LW-ROOMS: alone - their table, or the room's open side there",
+    "new": "          : [p[0] + 1, p[1], p[2]];",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-far-view",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "(Math.hypot(dx, dz) > INDOOR_SEEN_M && !inView(deps.collider(), eye, p));",
+    "new": "Math.hypot(dx, dz) > INDOOR_SEEN_M;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-view-height",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const to = [p[0] - eye[0], p[1] + TABLE_SIGHT_M - eye[1], p[2] - eye[2]];",
+    "new": "  const to = [p[0] - eye[0], p[1] - eye[1], p[2] - eye[2]];",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-word-view",
+    "file": "src/scenes/livingIndoors.js",
+    "old": " || Math.abs(p[1] - feet[1]) > 1.2 || !inView(deps.collider(), eye, p)) continue;",
+    "new": " || Math.abs(p[1] - feet[1]) > 1.2) continue;",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-word-floor",
+    "file": "src/scenes/livingIndoors.js",
+    "old": " || Math.abs(p[1] - feet[1]) > 1.2 || !inView(deps.collider(), eye, p)) continue;",
+    "new": " || !inView(deps.collider(), eye, p)) continue;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-ray-wall",
+    "file": "src/scenes/world.js",
+    "old": "townTalk.tryActivate(eye, dir, livingIndoors.seats(), Math.min(nearer, modes?.interiorCollider?.raycast(eye, dir, 80) ?? Infinity)),",
+    "new": "townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lw8_indoors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-outdoors",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (at !== home && (at !== it.at || !OUTDOOR.has(it.kind))) {",
+    "new": "    if (at !== home) {",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-lunch-noon",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "        if (i === 2 && lunch) I('tavern', fav.tavern, t - 120 + dur, 30);",
+    "new": "        if (i === 2 && lunch) I('tavern', fav.tavern, h(12), 30);",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-lunch-once",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "        if (i === 2 && lunch) I('tavern', fav.tavern, t - 120 + dur, 30);",
+    "new": "        if (i >= 2 && lunch) I('tavern', fav.tavern, t - 120 + dur, 30);",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-lunch-draw",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "        if (i === 1) lunch = rng() < 0.3;\n        if (i === 2 && lunch) I('tavern', fav.tavern, t - 120 + dur, 30);",
+    "new": "        if (i === 2 && rng() < 0.3) I('tavern', fav.tavern, t - 120 + dur, 30);",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ],
+    "equivalent": true,
+    "why": "the draw's place, not a law: three in ten lunch at the tavern after the stint at eleven either way - drawn after the stint at nine, where the first cut drew it, every labourer's and courier's later rolls are the first cut's (drawn after the one at eleven, LW-ROOMS re-rolled 4,646 of their plans for nothing)"
+  },
+  {
+    "name": "AUDIT-LWR-minute",
+    "file": "tools/livingRoomProbe.mjs",
+    "old": "for (let m = h0 * 60; m < h1 * 60; m++) most[name]",
+    "new": "for (let m = h0 * 60; m < h1 * 60; m += 15) most[name]",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-floor-under-landing",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
+    "new": "Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - origin[1]) > 1.2) continue;",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-spread-opener",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "x: tb.reduce((s, i) => s + spots[i][0], 0) / tb.length, z: tb.reduce((s, i) => s + spots[i][2], 0) / tb.length }",
+    "new": "x: spots[tb[0]][0], z: spots[tb[0]][2] }",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-centimetre-wide",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    if (!far(p, spots, INDOOR_APART_M - 0.01) ||",
+    "new": "    if (!far(p, spots, INDOOR_APART_M - 0.1) ||",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-hold-floor",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "const holds = Math.max(INDOOR_HOLD_MIN, Math.ceil(",
+    "new": "const holds = Math.max(INDOOR_HOLD_MIN, Math.floor(",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-no-inner-break",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (cells.length >= INDOOR_CELLS) break;",
+    "new": "      void 0;",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-reach",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_REACH_M = 20;",
+    "new": "export const INDOOR_REACH_M = 21;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-floor-m2",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const INDOOR_FLOOR_M2 = 8;",
+    "new": "export const INDOOR_FLOOR_M2 = 7;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-dais",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
+    "new": "      if (y == null || !Number.isFinite(y) || Math.abs(y - start[1]) > 1.2) continue;",
+    "tests": [
+      "test/auditlwrooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-y0-at-landing",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const y0 = floorAt(origin[0], origin[1] + 0.5, origin[2]);",
+    "new": "  const y0 = floorAt(origin[0], origin[1], origin[2]);",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ],
+    "equivalent": true,
+    "why": "a ray from the way in or half a metre over it finds the same floor first: every host's way in stands a metre over its floor (interiorLanding: the door's middle), and one at the floor's own height that the ray from it misses falls back to its own height - the floor; the half metre is kept so a way in a touch under its floor still finds it"
+  },
+  {
+    "name": "AUDIT-LWR-X-sight-zero-d",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  if (!collider?.raycast || !(d > 0)) return true;\n  const hit = collider.raycast([a[0], a[1] + TABLE_SIGHT_M, a[2]]",
+    "new": "  if (!collider?.raycast) return true;\n  const hit = collider.raycast([a[0], a[1] + TABLE_SIGHT_M, a[2]]",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ],
+    "equivalent": true,
+    "why": "two places of a table stand INDOOR_APART_M apart at the least, so the sight is never asked of a line of no length; were it, the collider's ray of no length meets nothing and answers the same - the guard keeps a NaN direction out of the collider"
+  },
+  {
+    "name": "AUDIT-LWR-X-sight-from-floor0",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const hit = collider.raycast([a[0], a[1] + TABLE_SIGHT_M, a[2]],",
+    "new": "  const hit = collider.raycast([a[0], TABLE_SIGHT_M, a[2]],",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWR-X-own-from-self",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const theirs = standing.filter((x) => x.id !== id && x.spot >= 0);",
+    "new": "  const theirs = standing.filter((x) => x.spot >= 0);",
+    "tests": [
+      "test/auditlwrooms.test.js",
+      "test/lwrooms_tavern.test.js",
+      "test/lw8c_astir.test.js"
+    ]
+  }
+]

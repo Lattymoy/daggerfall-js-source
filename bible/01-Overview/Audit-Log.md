@@ -8,6 +8,22 @@
 
 Newest first.
 
+**2026-10-08 - AUDIT LW-ROOMS.** Mac: *"Audit this"*, of LW-ROOMS - the whole room walked, the tables filled apart and in
+sight, a room holding what its floor does, no afternoon sat out in the tavern. Four independent adversarial lenses on the
+frozen head (the room's math, the layer and every reader, the day's plan, the pins and the record), every one on the
+freeware ARENA2's 6,823 interiors and the game's own towns in scratch, and this session's own. Paid: the walk stopped at
+every doorway off its lattice's lines - 81 of 290 taverns under ten places - and slides through them now (E1: none); an
+open door laid the room out anew, its every drinker elsewhere, for the next visit, a load and a peer - the room is
+measured with every door shut as built (A1/B1); one stirring was drawn beside strangers by a farthest place round a
+corner and company chained two tables - their own place is the farthest they can walk to, company apart (A2/D2: taverns
+at five or more astir 49 -> 3); the tavern day was read every quarter hour and hid the noon lunch's wait - read every
+minute, the lunch from the stint's end (D1); the same-place rule emptied the street a quarter at 17:00 - indoors alone
+now (C1); a body on a bench's edge, the step ladder, one reader's quest and the hour, a lodger's stand, faces to the
+wall, comings in plain view, a word and the talk ray through walls, a household's hold (A3, D5, B2, B1b, A4, A5, B3, B4,
+E3). Lens D's survivors pinned or proven equivalent; the record's overstated sentences corrected (D3, D4, D8-D10); the
+room's talk measured back to 79.5 lines in five minutes (B6); C2, B7, C5, C6, A8-A10 recorded; the long stands at the
+square left for Mac (C1's trade-off). 40 new mutants, 37 dead and 3 recorded equivalent. Record: `Audit-LW-Rooms.md`.
+
 **2026-10-07 - FIELD BUGS 2026-10-07.** Eight player reports from the Discord's bug-reports channel, through Mac, read
 one at a time. Six paid, two are recorded and left as they stand:
 - CRASH-BLUR - the crash screen's "NotFoundError: Failed to execute 'replaceChildren' ... moved in a 'blur' event

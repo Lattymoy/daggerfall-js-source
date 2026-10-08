@@ -16,19 +16,21 @@ import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
-import { createLivingIndoors, soundRoom } from '../src/scenes/livingIndoors.js';
+import { createLivingIndoors, soundRoom, CROWD_M } from '../src/scenes/livingIndoors.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
 import { lineMinutes, ROUND_S } from '../src/systems/livingWorld/meetups.js';
 import { isMain } from './lib/isMain.mjs';
 
 const RATE = CLASSIC_MINUTES_PER_SECOND, MPM = PERSON_MOVE_SPEED / RATE;
-/** Two this near one another stand in one crowd (m), chained. */
-export const CROWD_M = 2.5;
+/** Two this near one another stand in one crowd (m), chained - AUDIT LW-ROOMS: the layer's own, one making for company
+ *  keeping it from every other table's people. */
+export { CROWD_M };
 /** The towns: a hamlet's worth of blocks to a city's, and the walled one - each with one tavern. */
 export const TOWNS = Object.freeze([
   ['3x3', () => synthTown(), 9], ['4x4', () => synthTown({ blocksW: 4, blocksH: 4 }), 16], ['6x6', () => synthTown({ blocksW: 6, blocksH: 6 }), 36], ['walled', () => walledTown(), 16],
 ]);
-/** The day's parts the tavern's people are read in (hours, every quarter). */
+/** The day's parts the tavern's people are read in (hours - AUDIT LW-ROOMS: every minute: read every quarter, the most
+ *  inside at once missed the six come in at 11:40-11:57 for the noon lunch). */
 export const PARTS = Object.freeze([['before noon', 6, 12], ['noon', 12, 14], ['afternoon', 14, 18], ['evening', 18, 24]]);
 
 /** A synthetic town's tavern through five days: the most inside at once in each part, and its stays of four hours and
@@ -43,7 +45,7 @@ export function tavernDay(build, blocks) {
   const most = Object.fromEntries(PARTS.map(([name]) => [name, 0]));
   let long = 0;
   for (let day = 100; day < 105; day++) {
-    for (const [name, h0, h1] of PARTS) for (let m = h0 * 60; m < h1 * 60; m += 15) most[name] = Math.max(most[name], town.insideAt(tavern, day * DAY_MIN + m).length);
+    for (const [name, h0, h1] of PARTS) for (let m = h0 * 60; m < h1 * 60; m++) most[name] = Math.max(most[name], town.insideAt(tavern, day * DAY_MIN + m).length);
     for (const res of town.peopleOf(day)) for (const e of town.planOf(res, day)) if (e.kind === 'tavern' && e.at?.building === tavern && e.t1 - e.t0 >= 240 && res.work !== tavern && res.home !== tavern) long++;
   }
   return { people: town.peopleOf(100).length, most, long };
