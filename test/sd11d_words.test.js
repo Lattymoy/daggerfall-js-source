@@ -255,8 +255,12 @@ test('SD11d THE HEARTS HEARD AND SAID (L6 F7): the Reset\'s call counts its Hear
   gone.word({ k: 'cx', i: I, m: 500, c: SPOTS });
   gone.to(gone.now() + 16);
   gone.sounds.length = 0;
-  gone.word({ k: 'stun', until: gone.now() + 8000, at: gone.now() });
-  gone.to(gone.now() + 9000);
+  // PIN MOVED (AUDIT SD IV A2): framed while the stun's word is late - one step of nine seconds is a page away, and a
+  // page away takes the Hearts again in silence whatever the stun (sd26_audio); the word itself late is this law's
+  const stunAt = gone.now();
+  for (let k = 0; k < 9; k++) gone.to(gone.now() + 1000);
+  gone.word({ k: 'stun', until: stunAt + 8000, at: stunAt });
+  gone.to(gone.now() + 16);
   assert.equal(gone.sounds.filter((x) => x.clip === BOSS_CUES.crystalBreak.clip).length, 0, 'the stun over before this screen looked: nothing shatters late');
   // a Reset first heard late (a hello mid-wind-up): no rise
   const late = hearts();

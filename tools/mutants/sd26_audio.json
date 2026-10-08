@@ -16,5 +16,41 @@
     "tests": [
       "test/sd26_audio.test.js"
     ]
+  },
+  {
+    "name": "SD26-A2-the-standing-heard",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    if (away || !heartsOf || heartsOf.fi !== s.fi",
+    "new": "    if (!heartsOf || heartsOf.fi !== s.fi",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-the-stun-heard",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (heartsOf && !X && s.fi === heartsOf.fi && !away) {",
+    "new": "if (heartsOf && !X && s.fi === heartsOf.fi) {",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-the-rise-heard-late",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (!away && t - called <= SD_HEART_LATE_MS)",
+    "new": "if (t - called <= SD_HEART_LATE_MS)",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-every-hitch-silent",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS));",
+    "new": "hearts(s, t, t - t0 > 500);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
   }
 ]

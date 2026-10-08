@@ -27,6 +27,7 @@ import { sdBlowVerdict, sdVolleyPools, sdPoolUnder } from '../net/sdStrike.js';
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_STYLE, TELEGRAPH_POOL, TELEGRAPH_FLASH_MS, TELEGRAPH_POINTS_MAX } from '../render/gateTelegraph.js';
 import { damageChartModel, drawGateDamageChart, DAMAGE_CHART_DELAY_MS, DAMAGE_CHART_MS } from '../ui/gateDamageChart.js';
 import { BODY_FALL, BURNING, THUNDER_ROLL, SWING_LOW, CRYSTAL_CLIPS, BOSS_CUES } from '../world/gateBoss.js';
+import { SD_VOICE_AWAY_MS } from './sdRemnantVoice.js';
 
 /** Each blow's colour on the floor (linear rgb) - the brass's for its own, the Mantella's green for the Hour's, red for
  *  the End. */
@@ -293,7 +294,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
    *  (its shatter, and the ring after it). They rose, took blows and broke in silence. */
   let heartsOf = null;
   const broke = (p) => { play(BOSS_CUES.crystalBreak, p); play(BOSS_CUES.crystalRing, p); };
-  function hearts(s, t) {
+  function hearts(s, t, away) {
     const X = s.cx;
     if (!X || s.fell || s.lost) {
       // the LAST Heart breaks in the stun's own word: the realm fans its `cxb` and the stun together, and the stun takes
@@ -301,7 +302,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       // this screen looked shatters nothing late). AUDIT SD III (A12): a Reset that LANDED breaks no Heart, and takes the
       // ones left standing back - seen to burst in its light as they go (SD20c, V10), and heard so: the crystal's low
       // ring alone, never its shatter, as its landing is heard live (they went in silence)
-      if (heartsOf && !X && s.fi === heartsOf.fi) {
+      if (heartsOf && !X && s.fi === heartsOf.fi && !away) {
         const stunned = s.stunAt >= heartsOf.called, broken = stunned && s.su > t;
         const taken = !stunned && t - (heartsOf.called + SD_BLOWS.reset.windup) < SD_HEART_LATE_MS;
         for (let k = 0; k < heartsOf.h.length; k++) if (heartsOf.h[k] > 0) { if (broken) broke(heartsOf.p[k]); else if (taken) play(BOSS_CUES.crystalRing, heartsOf.p[k]); }
@@ -309,10 +310,12 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       heartsOf = null;
       return;
     }
-    if (!heartsOf || heartsOf.fi !== s.fi || heartsOf.i !== X.i) {
+    // AUDIT SD IV (A2): A6's law reaches the Hearts - unheard SD_VOICE_AWAY_MS (a tab put away), they are taken again as
+    // they stand, in silence: every Heart broken while the page was away shattered and rang at once on its first frame
+    if (away || !heartsOf || heartsOf.fi !== s.fi || heartsOf.i !== X.i) {
       const called = s.rem?.atk?.a === SD_BLOWS.reset.id ? s.rem.atk.at - SD_BLOWS.reset.windup : -Infinity;
       heartsOf = { fi: s.fi, i: X.i, h: X.c.map((q) => q[2]), p: X.c.map((q) => realmToDungeon(SD_ARENA.x + q[0], 1.2, SD_ARENA.z + q[1])), called };
-      if (t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);
+      if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);
       return;
     }
     for (let k = 0; k < X.c.length; k++) {
@@ -345,7 +348,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       if (s.fi !== marksFi) { marksFi = s.fi; marks.clear(); pools = []; inFire = false; }   // AUDIT SD: a fight lost and a fresh one begun - the last one's numbers are not this one's
       const t0 = prevT ?? t;
       prevT = t;
-      hearts(s, t);   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
+      hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS));   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
       owedBlows(s, t, t0);   // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same
       // AUDIT SD II (L2 F9): no blow in flight and no brass burning - nothing to judge or show, and nothing made for it
       if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
