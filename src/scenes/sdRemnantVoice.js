@@ -155,6 +155,7 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       const ou = t < s.ou;
       if (ou && !k.ou) play(SD_VOICE_CUES.back, rem(3));
       k.ou = ou;
+      const outside = s.ph === 2 || ou;
       // stunned, and up again
       const stun = t < s.su;
       if (stun && !k.stun) { play(SD_VOICE_CUES.stunned, rem(4)); play(SD_VOICE_CUES.stunRing, rem(3)); }
@@ -162,12 +163,14 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       k.stun = stun;
       // hurt, and the gears slipping once
       const hp = frac(s.h, s.m);
-      if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) { play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }
+      // AUDIT SD IV (A1): and none outside time - an Echo's blow comes off the whole, and nothing stands where it is
+      // heard; the count follows, so no grunt is banked for its return
+      if (outside) k.hurtHp = hp;
+      else if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) { play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }
       if (hp > k.hurtHp) k.hurtHp = hp;   // a share joined: the count from where it stands
       if (hp < SD_SLIP_FRAC && !k.slipped) { k.slipped = true; play(SD_VOICE_CUES.slip, rem(3)); play(SD_VOICE_CUES.slipBark, rem(4)); }
       k.hp = hp;
       // its strides, and a growl while it does not strike
-      const outside = s.ph === 2 || ou;
       if (!outside) strides(k, s.rem, t, SD_STRIDE_M, SD_VOICE_CUES.step, 0.5);
       else k.at = null;
       const striking = !!s.rem?.atk && t < s.rem.atk.at + 1500;

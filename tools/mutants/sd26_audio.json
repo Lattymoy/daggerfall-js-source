@@ -1,0 +1,20 @@
+[
+  {
+    "name": "SD26-A1-a-grunt-outside-time",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (outside) k.hurtHp = hp;\n      else if (k.hurtHp - hp",
+    "new": "      if (false) k.hurtHp = hp;\n      else if (k.hurtHp - hp",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A1-the-count-banked",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (outside) k.hurtHp = hp;\n",
+    "new": "      if (outside) void 0;\n",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  }
+]
