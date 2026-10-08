@@ -43,3 +43,18 @@ export const STARTER_DECK_WORTH = STARTER_DECK.reduce((s, id) => s + cardWorth(i
 export const CUSTOMS_CARD_WORTH_PER_LEVEL = 150;
 /** The card worth an offline character may bring into the realm at a level (the gold allowance's level law). */
 export const customsCardAllowance = (/** @type {number} */ level) => STARTER_DECK_WORTH + CUSTOMS_CARD_WORTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);
+
+/** CARDS10: the cards a save holds, by id - every list it carries (carriedItemLists), each record's stack counted. */
+export function cardCountsOf(/** @type {any} */ snap) {
+  const n = new Map();
+  for (const list of carriedItemLists(snap)) for (const rec of list) if (isCardRecord(rec)) n.set(rec.card, (n.get(rec.card) ?? 0) + Math.max(1, Math.trunc(rec.stackCount ?? 1) || 1));
+  return n;
+}
+/** CARDS10: the first card of `deck` the save holds too few of for it (a ranked seat's deck order - the service's
+ *  word that the character holds every card it plays), or null. */
+export function deckShortOf(/** @type {any} */ snap, /** @type {string[]} */ deck) {
+  const have = cardCountsOf(snap), want = new Map();
+  for (const id of deck) want.set(id, (want.get(id) ?? 0) + 1);
+  for (const [id, k] of want) if ((have.get(id) ?? 0) < k) return id;
+  return null;
+}

@@ -96,6 +96,7 @@ export const TITLE_TEXT = Object.freeze({
   primarch: 'Primarch',              // PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own
   crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
   hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
+  iliacchampion: 'Iliac Champion',   // CARDS10 (2026-10-08, Tavern-Cards section 6.4: "a title for the top of it"): Iliac Hand's season #1, while they hold the top
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -227,6 +228,9 @@ export const TITLE_RGBA = Object.freeze({
   // royal purple and the Apostle's periwinkle, darker and bluer than the Hierophant's rose
   crystalfist: CRYSTAL_PURPLE,
   hourbreaker: HOUR_GOLD,   // SD9b: the Remnant's bar's gold
+  // CARDS10: the ILIAC CHAMPION in the Bay's own sea-blue - the water the game is named for, bluer and brighter than the
+  // Apostle's periwinkle, no gold (the Founder's) and no green (the Arena Champion's laurel)
+  iliacchampion: Object.freeze([0.239, 0.608, 0.820, 1]),   // #3d9bd1
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left

@@ -303,6 +303,7 @@ export function titlesHeld(player, env) {
   // the season's #1, so it passes to whoever takes the top and lapses by itself. A row read without them holds neither.
   if (player?.arena?.grand === true) held.push('grandchampion');
   if (player?.arena?.champion === true) held.push('arenachampion');
+  if (player?.iliac?.champion === true) held.push('iliacchampion');   // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top
   // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
   // held for good. A guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');

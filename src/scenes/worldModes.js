@@ -577,8 +577,21 @@ export function createWorldModes(host) {
       packPrice: cardPackHere, buyPack: buyCardPackHere,
       onHoldem: () => { closeIliacGame(); if (cardSeat) openCardGame((cardSeat.free?.length ?? 0) + 1); },
       onStand: () => standFromCardTable(),
+      // CARDS10: a relay that deals Iliac Hand - the room's table at this cloth (the same index and chairs as Hold'em's)
+      online: host.iliacOnline?.ok?.() ? {
+        send: (w) => !!host.iliacOnline.send(w), myId: () => host.iliacOnline.id(), now: () => host.iliacOnline.now(),
+        table: cardSeat.table, chairs: seats.length, chair: cardSeat.seat,
+        rankedWhy: () => host.iliacRanked?.why?.() ?? 'Ranked games are closed here.', vouch: (deck) => host.iliacRanked?.vouch?.(deck) ?? Promise.resolve({ ok: false }),
+      } : null,
     });
     iliacGame.regulars = regs;   // CARDS4b's look for the regular in his chair (cardRegularsNow)
+  }
+  /** CARDS10: the relay's Iliac table's frames (world.js online.onIliac): a ranked game's receipt is carried wherever the
+   *  player is now; the rest is the open game's, at its table. */
+  function iliacOnlineFrame(f) {
+    if (typeof f?.receipt === 'string') host.iliacClaims?.add(f.receipt);   // a result on the board, from any room
+    if (mode !== 'interior' || !interiorCtx) return;
+    iliacGame?.relay?.(f);
   }
   const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];   // the table's own source - DFU's one stream is never stirred
   /** CARDS4: the tavern's regulars - the same names every evening at this building (the living world's own namer, on a
@@ -12822,7 +12835,8 @@ export function createWorldModes(host) {
     /** AUDIT DROPS E2: the surface underfoot in this mode, as PEER-FS1's kind - what the pose says peers hear. */
     get footstepKind() { return _modeFootstepKind; },
     cardTableLive: () => !!cardGame?.session && !cardGame.friendly,   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave); AUDIT CARDS-3 E-N5: a friendly game's chips are no gold
-    iliacStaked: () => !!iliacGame?.staked?.(),   // CARDS10: a game of Iliac Hand for keeps under way - a card in play the save would not know (world.js worldQuickSave)
+    iliacStaked: () => !!iliacGame?.staked?.(),
+    iliacOnlineFrame,   // CARDS10: the relay's Iliac table's frames (world.js online.onIliac)   // CARDS10: a game of Iliac Hand for keeps under way - a card in play the save would not know (world.js worldQuickSave)
     cardOnlineFrame,   // CARDS5: the relay's card table's frames (world.js online.onHoldem)
     /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
      *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */

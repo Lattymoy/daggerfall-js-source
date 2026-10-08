@@ -1502,6 +1502,19 @@ export function accountCards({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   };
 }
 
+/** CARDS10: ILIAC HAND'S DOOR (server-account/src/iliac.js) - a ranked seat's deck vouched for (`deck`: `{ character,
+ *  realm, deck }` - the service's order the relay seats it ranked on), a ranked game's receipt the relay signed, carried
+ *  here by an account it names (`claim`), and the season board (`board`). Every answer is `call`'s shape. */
+export function accountIliac({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    deck: (req) => post('/v1/cards/deck', req),
+    claim: (receipt) => post('/v1/iliac/claim', { receipt }),
+    board: () => post('/v1/iliac/board', {}),
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /** PROF6: the writs' door beside the Court's (server-account/src/writs.js) - a guild writ posted, supplied, withdrawn,
  *  the Officers' budget; a commission posted, fulfilled, cancelled, declined; the guild Stores read and moved. */
 export function accountWrits({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {

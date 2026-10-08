@@ -53,7 +53,7 @@ import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: yo
 import { createArenaGate, nearArenaGate } from './arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
 import { createArenaOnline } from './arenaOnline.js';   // ARENA4: the arena online - the hall, a relay's bout, the boards and the receipts
 import { arenaFloorRoomOf } from '../net/arenaLaw.js';   // ARENA4: a bout's room (ARENA4b: or the hour's exhibition's)
-import { accountArena } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service
+import { accountArena, accountIliac } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service; CARDS10: Iliac Hand's season board
 import { fighterIdentity } from '../systems/arenaFighters.js';   // ARENA4: the relay's fighters billed by the bout's seed
 import { bossStandIn } from '../world/gateBoss.js';   // ARENA4: my opponent's stand-in for the formulas
 import { closeArenaDoor, arenaDoorOpen } from '../ui/arenaDoor.js'; import { createArenaSessionButton } from '../ui/arenaSessionButton.js';   // HOTFIX 1003f: the session's button on the screen   // ARENA4: the window goes when a bout calls
@@ -290,6 +290,7 @@ import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName }
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createCardStakes } from '../net/cardStakes.js';   // CARDS6: a realm character's card stakes
+import { createIliacClaims } from '../net/iliacClaims.js';   // CARDS10: the ranked games' results carried to the service
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
@@ -1740,6 +1741,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     ? createCardStakes({ door: accountCards({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
       realm: { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) }, wallet: realmWallet,
       character: () => characterIdOf(playerEntity), region: () => _questRegionIndex(), now: () => Date.now() + _sharedOffsetMs })
+    : null;
+  // CARDS10 (bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND'S SEASON BOARD - the service's door, and the
+  // ranked games' signed results this device carries to it (net/iliacClaims.js), offered at once and again while kept
+  const iliacDoor = accountIliac({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  const iliacClaims = params.has('online')
+    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: spoilsStore(appStorage()), me: () => iliacDoor.me(), nowMs: () => Date.now() + _sharedOffsetMs,
+      onCounted: (a) => townTalk?.say?.(a.rated ? `Iliac Hand: the game is on the season's board - your rating ${a.rating} (${a.delta >= 0 ? '+' : ''}${a.delta}).` : 'Iliac Hand: the game is kept, but not counted - you have played that opponent often enough today.'),
+      onGuest: () => townTalk?.say?.('Iliac Hand: register your account to keep your ranked games on the board.') })
     : null;
   // PROF6 (bible/06-Systems/Professions-Arc.md 28): the writs' book - a guild writ posted, supplied, withdrawn; a
   // commission posted, filled (the piece KEPT before it is asked), cancelled, declined; the guild Stores (net/writBook.js).
@@ -20244,6 +20253,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onIliac = (f) => modes?.iliacOnlineFrame?.(f);   // CARDS10: the relay's Iliac table, to the room's host
     online.onHoldem = (f) => modes?.cardOnlineFrame?.({ ...f, at: performance.now() });   // CARDS5: the relay's card table, to the room's host - AUDIT CARDS-3 D1: on the cloth's clock (the session's own `now` is the epoch's)
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
@@ -22872,6 +22882,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
     serpentClaims?.tick();
     sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
+    iliacClaims?.tick();   // CARDS10: and the ranked Iliac games', on theirs
     if (!serpentHost) return;
     const street = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.();
     let fight = false;
@@ -26783,6 +26794,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
+    // CARDS10: the relay that deals Iliac Hand - a word to the room's Iliac table, who I am at it; a ranked seat's deck
+    // vouched for by the service (a realm character's own cards, the record checkpointed first); the results carried
+    iliacOnline: { ok: () => !!online?.iliacOk, send: (w) => !!online?.sendIliac(w), id: () => online?.id ?? null, now: () => Date.now() + _sharedOffsetMs },
+    iliacRanked: {
+      why: () => (!realmSession ? 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.' : !iliacDoor.me() ? 'Sign in to play ranked.' : null),
+      vouch: async (deck) => {
+        if (!realmSession) return { ok: false, why: 'Ranked games are a realm character\'s.' };
+        const r = await realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), needsAnswer: true, call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck }) });
+        if (r?.ok && typeof r.data?.order === 'string') return { ok: true, order: r.data.order };
+        const card = r?.data?.card ?? r?.card;
+        return { ok: false, why: r?.error === 'deck-short' ? `Your realm character does not hold every card of that deck${card ? ` (${card})` : ''}.` : r?.error === 'cards-realm' ? 'Ranked games are a realm character\'s.' : 'The realm could not vouch for that deck.' };
+      },
+    },
+    iliacClaims,
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),

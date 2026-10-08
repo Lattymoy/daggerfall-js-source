@@ -181,7 +181,7 @@
 import { routeStaffTeleport } from './staffTeleport.js';
 import { privateInteriorOf, privateInteriorAdmits } from '../../src/net/privateInterior.js';
 import { isStaff } from '../../src/net/staffCommands.js';
-import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
+import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
@@ -232,6 +232,8 @@ import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenD
 import { raidWordFits, raidWordSane, raidSig, raidLedgerId, raidEvictPick, newRaidLedger, foldRaidWord, raidCleansed, raidEarned, raidTop, raidLedgerState, raidLedgerEndMinute, raidDayOfKey, RAID_KEEP_MS, RAID_LEDGERS_MAX, RAID_LEDGERS_BY_MAX, RAID_SAVE_MS, RAID_DAY_MINUTES, RAID_ACCOUNTS_MAX, raidDaySlots, raidOnSlot, raidDayIds, readRaidTowns, raidTownsHash, RAID_TOWNS_SHA_RE } from '../../src/net/raidLaw.js';   // RAID-ROLL: the day's roll
 import { mintRaidReceipt, readRaidReceipt } from '../../src/net/raidReceipt.js';
 import { mintWatchReceipt, watchDue } from '../../src/net/watchReceipt.js';
+import { newIliacTable, iliacSit, iliacStand, iliacCommit, iliacTick as iliacTableTick, iliacNextAt, iliacEmpty, iliacLook, iliacSeatOf } from '../../src/net/iliacTable.js';   // CARDS10: THE RELAY DEALS ILIAC HAND - iliacTable.js imports the rules (iliacHand.js, iliacCards.js) and Hold'em's bounds
+import { mintIliacReceipt } from '../../src/net/iliacReceipt.js';   // CARDS10: a ranked game's result - the relay's signature again
 import { mintCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/cardReceipt.js';   // CARDS6: a staked seat's cash-out - the relay's fourth signature   // SEAT1b: the Watch's tick and its rhythm - the relay's third signature
 // DISCORD-GATES (2026-09-28, Mac: "Discord live gates?" - the omen, 15 minutes before, pinging an opt-in role, and the
 // boss slain): ONE FILE JOINS THE BUNDLE - net/gateHerald.js (the posts and when they are owed, pure law - it imports
@@ -830,6 +832,8 @@ export class Room {
     for (const prefix of ['look:', 'secret:']) { const m = await this.state.storage.list({ prefix }); for (const k of m.keys()) dead.push(k); }
     const tables = await this._holdemOf();   // AUDIT CARDS-3 A3: no seat outlives an empty room - the secrets go, so its id is anyone's
     if (tables.size && this._holdemGhosts(tables, Date.now(), true)) await this._holdemSave();
+    const iliac = await this._iliacOf();   // CARDS10: and no Iliac seat either
+    if (iliac.size && this._iliacGhosts(iliac, Date.now(), true)) await this._iliacSave();
     // CARDS6: a spent stake remembered past the oldest order a void takes, then forgotten
     // AUDIT CARDS-4 B6: read a page at a time (AUDIT SOC A4), and an account's owed cash-outs all past their life go too
     const nowS = Math.floor(Date.now() / 1000), old = nowS - HOLDEM_STAKE_KEEP_S;
@@ -1173,8 +1177,9 @@ export class Room {
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
     const held = await this._holdemTick();   // CARDS5: a card table's seat clock, or its next deal
+    const iheld = await this._iliacTick();   // CARDS10: an Iliac table's turn clock, or its next game
     if (this._dead.size) await this._reap();   // AUDIT CARDS-3 A3: a send the tick failed closed its socket - no close comes for it
-    if (held) return;
+    if (held || iheld) return;
     if (await this._sdFightTick()) return;   // SD8b: a realm's alarm is its Remnant's beat while its fight lives
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
@@ -2563,6 +2568,18 @@ export class Room {
       await this._holdemWord(ws, a, m, now);
       return;
     }
+    if (m.t === 'iliac') {
+      // ═══ CARDS10 — THE RELAY DEALS ILIAC HAND ═══════════════════════
+      //
+      // Tavern-Cards section 6.4: online, "the relay running the game exactly as it runs Hold'em - hidden hands, its own
+      // shuffle, its own clock". A building's room keeps its Iliac tables beside its Hold'em ones (net/iliacTable.js),
+      // one game a table index at a time; a ranked seat brings the service's deck order. An interior's room only.
+      const now = Date.now();
+      if (!String(a.key ?? '').startsWith('interior:')) return;
+      if (!this._spend(ws, now, holdemGate, 'iliacBucket', 'iliacDrops', 'too many card words', CHAT_STRIKES_MAX)) return;
+      await this._iliacWord(ws, a, m, now);
+      return;
+    }
     if (m.t === 'roll') {
       // ═══ DICE1 — THE RELAY ROLLS ════════════════════════════════════
       //
@@ -2849,6 +2866,7 @@ export class Room {
     if (isBattleRoom(a.key) && a.sub) { try { await this._siegeGone(ws, a.sub, Date.now()); } catch (e) { console.warn('[siege] leave failed', e?.message ?? e); } }   // AUDIT-SEATS T3: a fighter's place kept from now
     if (isSocialRoom(a.key) && a.acct) { try { await this._leaveAccount(ws, a, Date.now()); } catch (e) { console.warn('[hub] leave failed', e?.message ?? e); } }   // SOC1: last seen stamped, the friends and the party told
     if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._holdemLeave(a, Date.now()); } catch (e) { console.warn('[holdem] leave failed', e?.message ?? e); } }   // CARDS5: folded out of turn, stood up at the hand's end
+    if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._iliacLeave(a, Date.now()); } catch (e) { console.warn('[iliac] leave failed', e?.message ?? e); } }   // CARDS10: a game under way conceded
     if (isArenaRoom(a.key) && a.sub) { try { await this._arenaLeave(ws, a, Date.now()); } catch (e) { console.warn('[arena] leave failed', e?.message ?? e); } }   // ARENA4: out of the queue, off the sand, out of the stands
   }
 
@@ -2919,6 +2937,8 @@ export class Room {
       const no = async (why) => { if (stake) await this._holdemReceipt(m.table, a.id, { j: stake.j, s: stake.sub, r: stake.amount, w: 'refused' }); refuse(why); };
       if (t && (t.chairs !== m.chairs || t.bb !== m.bb)) { await no('table differs'); return; }   // AUDIT CARDS-3 A5: the first sitter never decides another cloth's chairs
       if (a.sub && this._holdemAccountSeated(tables, a)) { await no('account seated'); return; }   // AUDIT CARDS-3 A2: one seat an account - two tabs never see two hands
+      const ili = (await this._iliacOf()).get(m.table);
+      if (ili && !iliacEmpty(ili)) { await no('other game'); return; }   // CARDS10: a cloth plays one game at a time
       const gate = holdemSitRoomGate(this._holdemSitBucket ?? null, now);
       this._holdemSitBucket = gate.bucket;
       if (!gate.pass) { await no('busy'); return; }   // AUDIT CARDS-3 A4
@@ -2928,6 +2948,7 @@ export class Room {
       if (typeof r === 'string') { await no(r); return; }   // AUDIT CARDS-3 A1: refused before anything moved - no table stood him up unsaid
       if (fresh) tables.set(m.table, t);
       for (const [k, other] of tables) if (k !== m.table) { const up = holdemStand(other, { id: a.id, now }); if (up.length) this._holdemSend(k, up, now); }   // one seat in a room at a time, once this one took
+      if (await this._iliacUp(a.id, now)) await this._iliacSave();   // CARDS10: and off an Iliac table
       msgs = r;
     } else if (!t) { refuse('no table'); return; }
     else if (m.op === 'stand') msgs = holdemStand(t, { id: a.id, now });
@@ -3078,6 +3099,134 @@ export class Room {
     for (const [k, t] of tables) { const msgs = holdemTick(t, now, rand32); if (msgs.length) this._holdemSend(k, msgs, now); }
     await this._holdemSave();
     return tables.size > 0;   // AUDIT CARDS-3 A3: the last table gone, the alarm is the room's again (its forgetting)
+  }
+  // ═══ CARDS10 — THE ROOM'S ILIAC TABLES ══════════════════════════════════════════════════════════════════════════
+  /** The room's Iliac tables (index -> table), read from storage once a wake - a hibernated room keeps its games. */
+  async _iliacOf() {
+    if (!this._iliac) {
+      const kept = await this.state.storage.get('iliac');
+      this._iliac = new Map(kept && typeof kept === 'object' ? Object.entries(kept).map(([k, v]) => [Number(k), v]) : []);
+    }
+    return this._iliac;
+  }
+  /** The tables checkpointed (the empty ones forgotten - never with a ranked result unsigned), the alarm armed. */
+  async _iliacSave() {
+    const tables = this._iliac;
+    if (!tables) return;
+    await this._iliacResults(tables);
+    for (const [k, t] of tables) if (iliacEmpty(t) && !t.results?.length) tables.delete(k);
+    if (tables.size) await this.state.storage.put('iliac', Object.fromEntries(tables));
+    else await this.state.storage.delete('iliac');
+    let at = Infinity;
+    for (const t of tables.values()) { const n = iliacNextAt(t); if (n != null) at = Math.min(at, n); }
+    if (Number.isFinite(at)) await this._boutArm(Date.now(), at);
+  }
+  /** A table's messages sent: the room's to every socket in it, a seat's to that player's sockets alone. */
+  _iliacSend(index, msgs, now) {
+    for (const { to, frame } of msgs) {
+      const out = JSON.stringify({ t: 'iliac', table: index, now, ...frame });
+      for (const [w, b] of this._all()) if (b.id && (to == null || b.id === to)) this._send(w, out);
+    }
+  }
+  /** Up from every Iliac table in the room (a game under way conceded) - true when a seat moved. */
+  async _iliacUp(id, now) {
+    const tables = await this._iliacOf();
+    let moved = false;
+    for (const [k, t] of tables) { const up = iliacStand(t, { id, now }); if (up.length) { moved = true; this._iliacSend(k, up, now); } }
+    return moved;
+  }
+  /** One player's word to an Iliac table: sit (with his deck - ranked with the service's order for it), stand, commit,
+   *  look. */
+  async _iliacWord(ws, a, m, now) {
+    const tables = await this._iliacOf();
+    const refuse = (error) => this._send(ws, JSON.stringify({ t: 'iliac', table: m.table, now, error }));
+    let t = tables.get(m.table);
+    let msgs;
+    if (m.op === 'look') msgs = t ? iliacLook(t, a.id) : [];
+    else if (m.op === 'sit') {
+      // a ranked seat: the order checked first (its await opens the room to other words, so the table is read after)
+      let sub = null;
+      if (m.order !== undefined) {
+        if (!this._verifyKey || !a.sub) { refuse('ranked closed'); return; }
+        const v = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'deck' });
+        if (!v.ok || v.claims.s !== a.sub) { refuse('deck refused'); return; }
+        if (v.claims.dh !== await deckDigest(m.deck, { subtle: crypto.subtle })) { refuse('deck refused'); return; }
+        sub = a.sub;
+      }
+      t = tables.get(m.table);
+      if (t && t.chairs !== m.chairs) { refuse('table differs'); return; }
+      const hold = (await this._holdemOf()).get(m.table);
+      if (hold && !holdemEmpty(hold)) { refuse('other game'); return; }   // a cloth plays one game at a time
+      if (a.sub && [...this._all()].some(([, b]) => b.id && b.id !== a.id && b.sub === a.sub && [...tables.values()].some((x) => iliacSeatOf(x, b.id) >= 0))) { refuse('account seated'); return; }   // one seat an account
+      const gate = holdemSitRoomGate(this._holdemSitBucket ?? null, now);   // the room's sits, both games' one budget
+      this._holdemSitBucket = gate.bucket;
+      if (!gate.pass) { refuse('busy'); return; }
+      const fresh = !t;
+      if (fresh) { t = newIliacTable({ chairs: m.chairs }); if (!t) { refuse('bad table'); return; } }
+      const r = iliacSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, deck: m.deck, now, sub });
+      if (typeof r === 'string') { refuse(r); return; }
+      if (fresh) tables.set(m.table, t);
+      for (const [k, other] of tables) if (k !== m.table) { const up = iliacStand(other, { id: a.id, now }); if (up.length) this._iliacSend(k, up, now); }   // one seat in a room at a time
+      const holdem = await this._holdemOf();
+      let stood = false;
+      for (const [k, other] of holdem) { const up = holdemStand(other, { id: a.id, now }); if (up.length) { stood = true; this._holdemSend(k, up, now); } }
+      if (stood) await this._holdemSave();
+      msgs = r;
+    } else if (!t) { refuse('no table'); return; }
+    else if (m.op === 'stand') msgs = iliacStand(t, { id: a.id, now });
+    else {
+      const r = iliacCommit(t, { id: a.id, plays: m.plays, now });
+      if (typeof r === 'string') { refuse(r); return; }
+      msgs = r;
+    }
+    if (!msgs.length) return;
+    this._iliacSend(m.table, msgs, now);
+    if (m.op !== 'look') await this._iliacSave();
+  }
+  /** The ranked results the tables queued, signed (net/iliacReceipt.js i1) and handed to every socket of either account
+   *  in the room - the winner's copy is enough for the service. A result that will not mint is dropped and said. */
+  async _iliacResults(tables) {
+    const key = await this._receiptKeyOf();
+    const nowS = Math.floor(Date.now() / 1000);
+    for (const [k, t] of tables) {
+      while (t.results?.length) {
+        const res = t.results.shift();
+        let receipt;
+        try { receipt = await mintIliacReceipt({ j: res.j, f: res.f, r: res.r, h: res.h }, key, { subtle: crypto.subtle, nowS }); } catch (e) { console.warn('[iliac] a result would not mint', e?.message ?? e); continue; }
+        const out = JSON.stringify({ t: 'iliac', table: k, now: Date.now(), receipt });
+        for (const [w, b] of this._all()) if (b.id && (res.to.includes(b.id) || res.f.includes(b.sub))) this._send(w, out);
+      }
+    }
+  }
+  /** AUDIT CARDS-3 A3's law for the second game: a seat whose player is gone from the room stands (its game conceded). */
+  _iliacGhosts(tables, now, everyone = false) {
+    const here = new Set(everyone ? [] : [...this._all()].filter(([, b]) => b.id).map(([, b]) => b.id));
+    let moved = false;
+    for (const [k, t] of tables) {
+      for (const s of [...t.seats]) {
+        if (!s || here.has(s.id)) continue;
+        const up = iliacStand(t, { id: s.id, now });
+        if (up.length) { moved = true; this._iliacSend(k, up, now); }
+      }
+    }
+    return moved;
+  }
+  /** A player gone from the room: up from every Iliac table (a game under way conceded). */
+  async _iliacLeave(a, now) {
+    const tables = await this._iliacOf();
+    if (!tables.size) return;
+    if (await this._iliacUp(a.id, now)) await this._iliacSave();
+  }
+  /** The alarm's turn at the Iliac tables: a turn whose clock ran out passes and turns over, a paused table deals. True
+   *  when the room keeps a table. */
+  async _iliacTick() {
+    const tables = await this._iliacOf();
+    if (!tables.size) return false;
+    const now = Date.now();
+    this._iliacGhosts(tables, now);
+    for (const [k, t] of tables) { const msgs = iliacTableTick(t, now, rand32); if (msgs.length) this._iliacSend(k, msgs, now); }
+    await this._iliacSave();
+    return tables.size > 0;
   }
   /** An arena word to one socket. */
   _arenaSend(ws, w) { return this._send(ws, JSON.stringify({ t: 'arena', ...w })); }

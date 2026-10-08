@@ -85,6 +85,7 @@ export function resultLine(view, end) {
   const r = view?.result;
   const me = view?.viewer ?? 0;
   if (end === 'left') return 'You concede the game.';
+  if (end === 'won-left') return 'Your opponent stands up and concedes - the game is yours.';   // CARDS10: the relay's concession
   if (!r) return '';
   const held = r.held.filter((x) => x === me).length, theirs = r.held.filter((x) => x === 1 - me).length;
   if (r.winner === null) return `A draw - ${held} holdings each way and ${r.total[me]} power to ${r.total[1 - me]}.`;
@@ -112,9 +113,12 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
       decks: s.decks.map((d, i) => ({ i, name: d.name, word: d.word ?? null, chosen: i === s.deck })),
       foes: online ? [] : s.foes.map((f, i) => ({ i, name: f.name, temper: TEMPER_WORDS[f.temper] ?? f.temper, paid: !!f.paid, chosen: i === s.foe })),
       keeps: online ? null : { on: !!s.forKeeps && !!s.keepsOk, enabled: !!s.keepsOk, why: s.keepsWhy ?? null },
-      message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online ? 'Sit down and wait for another player.' : 'Ready to deal.'),
+      // CARDS10: online, the season's board - a deck the service vouches the realm character holds (the relay seats it ranked)
+      ranked: online ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null } : null,
+      message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Asking the realm to vouch for your deck...' : online ? 'Sit down and wait for another player.' : 'Ready to deal.'),
       actions: [
-        { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) },
+        { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) && !online?.busy },
+        ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: alone in the room, the tavern's own
         { id: 'holdem', label: 'Play Hold\'em instead', enabled: true },
         ...pack,
         { id: 'stand', label: 'Stand up', enabled: true },
@@ -122,7 +126,7 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
       log: log.slice(-6),
     };
   }
-  const me = view?.viewer ?? 0, them = 1 - me;
+  const me = view?.viewer >= 0 ? view.viewer : 0, them = 1 - me;   // a spectator's view (-1) reads seat 0 as the first side
   const mine = view?.players?.[me] ?? null;
   const stagedAt = (h) => staged.flatMap((x, k) => (x.holding === h ? [{ ...iliacFace(mine?.hand?.[x.card]), staged: k }] : []));
   const holdings = (view?.holdings ?? []).map((hd, h) => {
@@ -144,17 +148,21 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
   if (phase === 'playing') {
     actions.push({ id: 'commit', label: committed ? 'Committed' : staged.length ? `Commit ${staged.length} ${staged.length === 1 ? 'play' : 'plays'}` : 'Pass this turn', enabled: !committed && stagedRefusal(view, staged) === null });
     actions.push({ id: 'clear', label: 'Clear', enabled: !committed && staged.length > 0 });
-    actions.push({ id: 'stand', label: view?.forKeeps ? 'Concede and stand' : 'Stand up', enabled: true });
+    actions.push({ id: 'stand', label: view?.forKeeps || (online && view && !online.watching) ? 'Concede and stand' : 'Stand up', enabled: true });
+  } else if (online) {
+    actions.push(...pack);   // CARDS10: the relay deals the next game while both still sit
+    actions.push({ id: 'stand', label: 'Leave the table', enabled: true });
   } else {
-    actions.push({ id: 'again', label: 'Play again', enabled: !online });
-    actions.push({ id: 'holdem', label: 'Play Hold\'em', enabled: !online });
+    actions.push({ id: 'again', label: 'Play again', enabled: true });
+    actions.push({ id: 'holdem', label: 'Play Hold\'em', enabled: true });
     actions.push(...pack);
     actions.push({ id: 'stand', label: 'Leave the table', enabled: true });
   }
   const other = view?.names?.[them] ?? (online ? 'Your opponent' : 'The regular');
   const message = phase === 'over'
-    ? [resultLine(view, end), prizeLine(prize, other)].filter(Boolean).join(' ')
+    ? [online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end), prizeLine(prize, other), online?.rankedLine ?? '', online ? 'The next game deals in a moment.' : ''].filter(Boolean).join(' ')
     : online?.waiting ? 'Waiting for another player to sit down.'
+      : online?.watching ? `You watch ${view?.names?.[0] ?? 'a player'} and ${view?.names?.[1] ?? 'a player'} play.`
       : view?.revealing ? 'The cards turn over...'
       : committed ? (view?.players?.[them]?.committed ? 'Both committed - the turn turns over.' : `${other} is thinking...`)
       : `Turn ${view?.turn ?? 1} of ${view?.turns ?? 6} - your magicka ${Math.max(0, (mine?.magicka ?? 0) - spend)} of ${mine?.magicka ?? 0}.${online?.clock ? ` ${online.clock} s.` : ''}`;
@@ -163,6 +171,7 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
     them: { name: other, hand: view?.players?.[them]?.handCount ?? 0, deck: view?.players?.[them]?.deckCount ?? 0, committed: !!view?.players?.[them]?.committed },
     me: { deck: mine?.deckCount ?? 0, magicka: mine?.magicka ?? 0, spend },
     turn: view?.turn ?? 1, turns: view?.turns ?? 6,
+    sides: online?.watching ? [view?.names?.[0] ?? 'seat one', view?.names?.[1] ?? 'seat two'] : ['you', 'them'],
     actions, message: online?.error ? `${message} (${online.error})` : message, log: log.slice(-6),
   };
 }
@@ -212,7 +221,7 @@ const swallowPresses = (node) => {
 };
 
 /**
- * The panel in the page. `onPress(id, value)`: 'deck' and 'foe' with an index, 'keeps', 'deal', 'holdem', 'pack',
+ * The panel in the page. `onPress(id, value)`: 'deck' and 'foe' with an index, 'keeps', 'ranked', 'regulars', 'deal', 'holdem', 'pack',
  * 'pick' with a hand index, 'hold' with a holding, 'unstage' with a staged index, 'commit', 'clear', 'again', 'stand'.
  * `render(model)` repaints; `destroy()` takes it away (once).
  * @param {{onPress: (id: string, value?: number) => void, doc?: any}} p
@@ -284,6 +293,14 @@ export function createIliacTableHud({ onPress, doc = document }) {
           }
           root.append(foes);
         }
+        if (m.ranked) {
+          const k = el('label', '', `${m.ranked.on ? '☑' : '☐'} Ranked - the season's board (your realm character's own cards)`);
+          if (!m.ranked.enabled) { k.style && (k.style.opacity = '0.5'); if (m.ranked.why) k.append(el('span', 'w', ` - ${m.ranked.why}`)); }
+          else k.addEventListener('click', () => onPress('ranked'));
+          const box = el('div', 'opts');
+          box.append(k);
+          root.append(box);
+        }
         if (m.keeps) {
           const k = el('label', '', `${m.keeps.on ? '☑' : '☐'} Play for a card (the loser pays one from their deck)`);
           if (!m.keeps.enabled) { k.style && (k.style.opacity = '0.5'); if (m.keeps.why) k.append(el('span', 'w', ` - ${m.keeps.why}`)); }
@@ -301,7 +318,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
           const theirs = el('div', 'row');
           for (const c of hd.theirs) theirs.append(card(c));
           const pw = el('div', 'pw');
-          pw.append(el('b', '', String(hd.power[0])), el('span', '', ' you - them '), el('b', '', String(hd.power[1])));
+          pw.append(el('b', '', String(hd.power[0])), el('span', '', ` ${m.sides?.[0] ?? 'you'} - ${m.sides?.[1] ?? 'them'} `), el('b', '', String(hd.power[1])));
           const mine = el('div', 'row');
           for (const c of hd.mine) mine.append(card(c));
           for (const c of hd.staged) mine.append(card(c, { cls: 'staged', press: 'unstage', value: c.staged }));

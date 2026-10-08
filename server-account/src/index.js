@@ -167,6 +167,7 @@ import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUT
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
+import { deckOrderOf, claimIliac, iliacBoardOf, withIliacHonours } from './iliac.js';   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, withArenaHonours, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
@@ -700,6 +701,7 @@ const service = {
       // season's #1 (server-account/src/arena.js arenaHonoursOf) - so titles.js derives `grandchampion`, `arenachampion`
       // and the laurel from the arena's rows as it derives the founder from a date. Only on the doors that read a badge.
       if (ARENA_HONOUR_PATHS.has(path)) who.player = await withArenaHonours(ctx, who.player, nowS);
+      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withIliacHonours(ctx, who.player, nowS);   // CARDS10: and Iliac Hand's season #1 (iliac.js), on the same doors
 
       if (path === '/v1/auth/token' && request.method === 'POST') {
         const key = await signingKey(env, subtle);
@@ -992,6 +994,20 @@ const service = {
         // season's ratings and its #1, the climb, the fastest Grand Champions, the banners and the Hall of Champions - and
         // the caller's own (`me`).
         return json(await arenaBoardOf(ctx, who.player, env), 200, origin);
+      }
+
+      if (path === '/v1/iliac/claim' && request.method === 'POST') {
+        // CARDS10: A RANKED GAME'S RECEIPT, CARRIED HERE BY AN ACCOUNT IT NAMES - the arena players' bout's law for Iliac
+        // Hand (iliac.js claimIliac): the signature, the account, one row a game, both ratings. A refusal says its rung.
+        const r = await claimIliac(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' || r.error === 'busy' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/iliac/board' && request.method === 'POST') {
+        // CARDS10: ILIAC HAND'S SEASON BOARD (Tavern-Cards section 6.4: "a season board, the Arena's way, with a title for
+        // the top of it"), counted from the rows, and the caller's own.
+        return json(await iliacBoardOf(ctx, who.player, env), 200, origin);
       }
 
       if (path === '/v1/arena/team' && request.method === 'POST') {
@@ -1329,6 +1345,7 @@ const service = {
         const act = {
           '/v1/cards/stake': async () => stakeCards(cctx, who.player, env, body, await signingKey(env, subtle)),
           '/v1/cards/cashout': async () => cashoutCards(cctx, who.player, env, body, await gatePublicKey(env, subtle)),
+          '/v1/cards/deck': async () => deckOrderOf(cctx, who.player, env, body, await signingKey(env, subtle)),   // CARDS10: a ranked seat's deck, vouched for
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
