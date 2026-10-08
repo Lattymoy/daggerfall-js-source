@@ -337,3 +337,167 @@ test('SD-LOOK THE WINDOW: the Hour\'s own painted sky through the iris (the fetc
   for (const g of [[0, 0], [0.3, 0.2], [-0.9, 0.1]]) assert.ok(f.windowRay(g).every(Number.isFinite), `the window's ray at ${g}, no step at all`);
   assert.match(SD_FLOOR_FS, /fract\(\(ha - uGear\) \/ TAU \* 36\.0\)/, 'the gear\'s 36 teeth as spokes');
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S5 - THE STEP THROUGH THE HOUR: the Hour's own veil.
+// ---------------------------------------------------------------------------------------------------------------------
+import { SD_VEIL_FS, SD_VEIL_MODE, SD_VEIL_TURN_S, SD_VEIL_SLOW_AFTER_S, sdVeilHand, sdVeilQuarters } from '../src/render/sdVeil.js';
+import { createGateVeil, VEIL_THEMES, VEIL_HOUR_CUES, VEIL_HOUR_HOLD_S, VEIL_HOUR_SCALE, VEIL_SCALE, VEIL_CENTRE_MAX, VEIL_OPEN_WAIT_TICKS } from '../src/ui/gateVeil.js';
+import { VEIL_CLOSE_S } from '../src/render/gateVeil.js';
+import { HOUR_CHIME, HOUR_CHIME_MENDED } from '../src/systems/sdScore.js';
+import { midiNote } from '../src/systems/gateScore.js';
+
+/** A page the veil builds in: a GL that records its calls (a uniform's location its name), a frame clock, the sounds. */
+function veilPage({ reduce = false, noHour = false } = {}) {
+  const calls = [], sources = new Map();
+  const gl = new Proxy({ ARRAY_BUFFER: 1, STATIC_DRAW: 2, FLOAT: 3, TRIANGLES: 4, COLOR_BUFFER_BIT: 5, VERTEX_SHADER: 6, FRAGMENT_SHADER: 7 }, {
+    get(t, k) {
+      if (k in t) return t[k];
+      return (...a) => {
+        calls.push([k, ...a]);
+        if (k === 'shaderSource') sources.set(a[0], a[1]);
+        if (k === 'getShaderParameter') return !(noHour && sources.get(a[0])?.includes('uShatter'));
+        if (k === 'getProgramParameter') return true;
+        if (k === 'getUniformLocation') return a[1];
+        return {};
+      };
+    },
+  });
+  const canvas = { style: {}, width: 0, height: 0, setAttribute() {}, remove() {}, getContext: () => gl };
+  const doc = { body: { appendChild() {} }, createElement: () => canvas };
+  let frames = [], t = 1000;
+  const sounds = [];
+  const engine = { soundIndexForId: () => -1, playOneShot: (...a) => sounds.push(a) };
+  const step = (ms = 16) => { t += ms; const f = frames; frames = []; for (const g of f) g(); };
+  const win = { innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1, matchMedia: (q) => ({ matches: reduce && /reduced-motion/.test(q) }) };
+  const u = (name) => calls.filter((c) => (c[0] === 'uniform1f' || c[0] === 'uniform2f') && c[1] === name).map((c) => c.slice(2));
+  return { doc, raf: (f) => frames.push(f), now: () => t, engine, win, calls, sounds, step, canvas, u };
+}
+const pitchOf = (note) => 0.7 * 2 ** ((midiNote(note) - midiNote('C5')) / 12);
+
+test('SD-LOOK THE HOUR\'S HAND (S5): shut into the Hour it sweeps BACKWARDS from XII - a turn in its first two seconds, then slower (the stillness deliberate); out of it FORWARD and slowing; the shader\'s hand the JS law to the last digit, the quarters struck as it passes each (mutants: the hand forward into the Hour; the shader\'s forward; no slowing)', () => {
+  const f = glslFunctions(SD_VEIL_FS, { uRes: [960, 540], uCentre: [0, 0], uMend: 0 });
+  for (const mode of Object.values(SD_VEIL_MODE)) for (let t = 0; t <= 10; t += 0.37) assert.ok(Math.abs(f.handAt(t, mode) - sdVeilHand(t, mode)) < 1e-9, `mode ${mode} at ${t}`);
+  const IN = SD_VEIL_MODE.in;
+  assert.ok(sdVeilHand(0.5, IN) < 0, 'backwards');
+  assert.ok(Math.abs(sdVeilHand(SD_VEIL_TURN_S, IN) + Math.PI * 2) < 1e-9, 'a whole turn back by its first');
+  const early = sdVeilHand(0, IN) - sdVeilHand(1, IN), late = sdVeilHand(SD_VEIL_SLOW_AFTER_S + 1, IN) - sdVeilHand(SD_VEIL_SLOW_AFTER_S + 2, IN);
+  assert.ok(late <= early * 0.5 && late > 0, `slower once it has run (${late} against ${early})`);
+  for (const mode of [SD_VEIL_MODE.back, SD_VEIL_MODE.home]) {
+    assert.ok(sdVeilHand(0.5, mode) > 0, 'forward out of it');
+    assert.ok(sdVeilHand(2, mode) - sdVeilHand(1, mode) < sdVeilHand(1, mode) - sdVeilHand(0, mode), 'slowing');
+    assert.ok(sdVeilHand(60, mode) <= Math.PI * 2 * 1.2 + 1e-9, 'coming to rest');
+  }
+  assert.equal(sdVeilQuarters(SD_VEIL_TURN_S, IN), 4, 'four quarters in a turn');
+  assert.equal(sdVeilQuarters(0.4, IN), 0);
+});
+
+test('SD-LOOK THE HOUR\'S VEIL, DRAWN (S5): nothing taken before it closes; shut, the whole screen its brass and its dial, the Mantella\'s green at its hub; every pixel a whole step of six (pixel art); the Dragon Break\'s crack only past the hand\'s first turn; the way home\'s crack MENDED; forced, its pieces gone once it has shattered; reduced motion, a dither wipe and nothing between (mutants: the posterize dropped; the Break at once; the mend unread; the pieces never falling; reduced motion ignored)', () => {
+  const W = 96, H = 54;
+  const at = (x, y, u) => {
+    const f = glslFunctions(SD_VEIL_FS, { uRes: [W, H], uTime: 1, uCover: 0, uShut: 0, uOpening: 0, uCentre: [0, 0], uMode: 0, uMend: 0, uShatter: 0, uReduce: 0, ...u, gl_FragCoord: [x + 0.5, y + 0.5, 0, 1], o: [0, 0, 0, 0] });
+    f.main();
+    return f.globals.o;
+  };
+  const grid = [];
+  for (let y = 2; y < H; y += 13) for (let x = 3; x < W; x += 17) grid.push([x, y]);
+  assert.equal(at(W / 2, H / 2, { uCover: 0 })[3], 0, 'nothing taken');
+  for (const [x, y] of grid) {
+    const o = at(x, y, { uCover: 1, uShut: 0.5 });
+    assert.equal(o[3], 1, `shut over (${x}, ${y})`);
+    for (const c of o.slice(0, 3)) assert.ok(Math.abs(c * 6 - Math.round(c * 6)) < 1e-9, `a whole step at (${x}, ${y}): ${c}`);
+  }
+  const hub = at(W / 2, H / 2, { uCover: 1, uShut: 0.5 });
+  assert.ok(hub[1] > hub[0] && hub[1] > hub[2], `the hub the Mantella's green: ${hub}`);
+  // the crack, on the face itself: a point on its line
+  const f = glslFunctions(SD_VEIL_FS, { uRes: [960, 540], uCentre: [0, 0], uMend: 0 });
+  const x = 0.2, d = [0.86, 0.5].map((v) => v / Math.hypot(0.86, 0.5)), n = [-d[1], d[0]];
+  const y = 0.035 * Math.sin(x * 23) + 0.018 * Math.sin(x * 61 + 1.3) + 0.01 * Math.sign(Math.sin(x * 9));
+  const P = [d[0] * x + n[0] * y, d[1] * x + n[1] * y], lum = (c) => c[0] + c[1] + c[2];
+  const dark = (mode, t) => lum(f.face(P, mode, t, { value: 0 })) < 0.2;
+  assert.equal(dark(SD_VEIL_MODE.in, 1), false, 'whole before its first turn');
+  assert.equal(dark(SD_VEIL_MODE.in, SD_VEIL_TURN_S + 0.5), true, 'the Dragon Break');
+  assert.equal(dark(SD_VEIL_MODE.back, 0.2), true, 'still cracked going back');
+  assert.equal(dark(SD_VEIL_MODE.home, 0.2), true, 'cracked as the way home shuts...');
+  f.globals.uMend = 1;
+  assert.equal(dark(SD_VEIL_MODE.home, 1.5), false, '...and mended');
+  // forced: the face whole, then every piece gone
+  for (const [x2, y2] of grid.slice(0, 6)) {
+    assert.equal(at(x2, y2, { uMode: SD_VEIL_MODE.cast, uCover: 1, uShatter: 0 })[3], 1, 'the red face at once');
+    assert.equal(at(x2, y2, { uMode: SD_VEIL_MODE.cast, uCover: 1, uShatter: 1 })[3], 0, `shattered away at (${x2}, ${y2})`);
+  }
+  // reduced motion: every pixel all or nothing, about as many as the cover
+  let shown = 0, n2 = 0;
+  for (let yy = 0; yy < 8; yy++) for (let xx = 0; xx < 8; xx++) { const a = at(xx + 40, yy + 20, { uReduce: 1, uCover: 0.5 })[3]; assert.ok(a === 0 || a === 1); shown += a; n2++; }
+  assert.equal(shown / n2, 0.5, 'the ordered dither: half of every 4x4 at half');
+});
+
+test('SD-LOOK THE HOUR\'S VEIL ON THE PAGE (S5): the Hour\'s themes draw its own program at a third of the pixels, pixelated, pivoting on the Rift (held inside the screen); the blades ratchet in at the closing\'s thirds, the bell tolls as they shut, the BROKEN quarters strike as the hand passes (the fourth on its wrong F sharp) and the chime as it opens; the way home holds shut until mended and strikes the mended; forced, the bell and the shattering; reduced motion strikes no quarter; the brass whirl stays for "brass" and stands in where the Hour\'s will not build (mutants: the hold dropped; one ratchet; the quarters mended going in; the centre unclamped; reduced motion never asked; drawn smooth; at the fire\'s scale)', () => {
+  const p = veilPage();
+  const veil = createGateVeil(p);
+  veil.cover('hourIn', { centre: [0.2, 0.1] });
+  const R = VEIL_HOUR_CUES.ratchet;
+  assert.deepEqual(p.sounds, [[R.clip, R.volume, R.pitches[0]]], 'the first ratchet');
+  for (let i = 0; i < Math.ceil((VEIL_CLOSE_S * 1000) / 16) + 1; i++) p.step();
+  assert.equal(veil.phase, 'shut');
+  assert.deepEqual(p.sounds.map((s) => s[2]).slice(0, 3), R.pitches, 'three ratchets, rising');
+  assert.deepEqual(p.sounds[3], [VEIL_HOUR_CUES.shut[0].clip, VEIL_HOUR_CUES.shut[0].volume, VEIL_HOUR_CUES.shut[0].pitch], 'the toll as it shuts');
+  assert.deepEqual(p.u('uMode').at(-1), [SD_VEIL_MODE.in]);
+  assert.deepEqual(p.u('uCentre').at(-1), [0.2, 0.1], 'on the Rift');
+  assert.equal(p.canvas.width, Math.round(1280 * VEIL_HOUR_SCALE));
+  assert.equal(p.canvas.style.imageRendering, 'pixelated');
+  for (let i = 0; i < Math.ceil((SD_VEIL_TURN_S * 1000) / 16) + 2; i++) p.step();
+  const quarters = p.sounds.slice(4).filter((s) => s[0] === VEIL_HOUR_CUES.chime);
+  assert.deepEqual(quarters.map((s) => s[2]), HOUR_CHIME.map((c) => pitchOf(c[3])), 'the broken quarters, a turn of them');
+  assert.ok(Math.abs(quarters[3][2] - pitchOf('F#5')) < 1e-12, 'the fourth on F sharp');
+  p.sounds.length = 0;
+  veil.frameDrawn(); veil.reveal();
+  for (let i = 0; i < VEIL_OPEN_WAIT_TICKS + 2; i++) { veil.frameDrawn(); p.step(); }
+  assert.equal(veil.phase, 'opening', 'a step\'s opens as soon as its place has drawn');
+  assert.ok(p.sounds.some((s) => s[0] === VEIL_HOUR_CUES.open[0].clip && s[2] === VEIL_HOUR_CUES.open[0].pitch), 'the chime');
+  // the way home: shut at once, held until mended, the mended quarters
+  const h = veilPage();
+  const home = createGateVeil(h);
+  home.flash('hourHome', { centre: [3, 0] });
+  assert.deepEqual(h.u('uCentre').at(-1), [VEIL_CENTRE_MAX, 0], 'held inside the screen');
+  assert.ok(!h.sounds.some((s) => s[0] === VEIL_HOUR_CUES.cast[1].clip && s[2] === VEIL_HOUR_CUES.cast[1].pitch), 'no shattering');
+  for (let i = 0; i < 50; i++) { home.frameDrawn(); h.step(); }
+  assert.equal(home.phase, 'shut', `held ${VEIL_HOUR_HOLD_S[SD_VEIL_MODE.home]} s`);
+  for (let i = 0; i < 60 && home.phase === 'shut'; i++) { home.frameDrawn(); h.step(); }
+  assert.equal(home.phase, 'opening');
+  const mended = h.sounds.filter((s) => s[0] === VEIL_HOUR_CUES.chime && s[1] === 0.55).map((s) => s[2]);
+  assert.ok(mended.length > 0 && mended.every((v, i) => v === HOUR_CHIME_MENDED.map((c) => pitchOf(c[3]))[i]), `the mended quarters: ${mended}`);
+  // forced: the bell and the shattering, at once
+  const c = veilPage();
+  createGateVeil(c).flash('hourCast');
+  assert.deepEqual(c.sounds, VEIL_HOUR_CUES.cast.map((s) => [s.clip, s.volume, s.pitch]));
+  assert.deepEqual(c.u('uMode').at(-1), [SD_VEIL_MODE.cast]);
+  // reduced motion: still, no quarter
+  const r = veilPage({ reduce: true });
+  const rv = createGateVeil(r);
+  rv.cover('hourIn');
+  for (let i = 0; i < 300; i++) r.step();
+  assert.deepEqual(r.u('uReduce').at(-1), [1]);
+  assert.equal(r.sounds.filter((s) => s[0] === VEIL_HOUR_CUES.chime).length, 0, 'no quarter struck');
+  // the brass whirl stays its own, and stands in for an Hour's that would not build
+  const b = veilPage();
+  createGateVeil(b).flash('brass');
+  assert.deepEqual(b.u('uTheme').at(-1), [VEIL_THEMES.brass]);
+  assert.equal(b.canvas.width, Math.round(1280 * VEIL_SCALE));
+  assert.equal(b.u('uMode').length, 0);
+  const nb = veilPage({ noHour: true });
+  createGateVeil(nb).flash('hourCast');
+  assert.deepEqual(nb.u('uTheme').at(-1), [VEIL_THEMES.brass], 'the whirl in brass');
+  assert.equal(nb.canvas.style.imageRendering, '');
+});
+
+test('SD-LOOK THE VEIL CLOSES ON THE RIFT (S5): the world host keeps where the Rift\'s window (or the Return\'s) stood on the screen the frame it was drawn - into a kept typed array, by hand through the view and the projection (nothing made a frame) - and the step in, the way back and the way home each close on it; forced, on the screen\'s middle (mutants: the aim dropped)', () => {
+  const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const body = W.slice(W.indexOf('function sdVeilAim(proj, view, m) {'), W.indexOf('/** Where the next Hour\'s veil pivots'));
+  assert.ok(body.length > 100);
+  assert.doesNotMatch(body, /new |[=(,:]\s*\[|=>|\.\.\./, 'nothing made: no array, no closure, no spread');
+  assert.match(W, /sdVeilAim\(proj, view, look\?\.window\?\.model \?\? look\?\.bay\?\.model\);/, 'each frame the Rift is drawn');
+  assert.match(W, /\}, 'hourIn', \{ centre: sdVeilCentre\(\) \}\);/);
+  assert.match(W, /\}, 'hourBack', \{ centre: sdVeilCentre\(\) \}\);/);
+  assert.match(W, /gateVeil\?\.flash\('hourHome', \{ centre: sdVeilCentre\(\) \}\);/);
+});

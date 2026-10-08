@@ -279,5 +279,149 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-hand-forward-into-the-Hour",
+    "file": "src/render/sdVeil.js",
+    "old": "    return -Math.PI * 2 * turns;",
+    "new": "    return Math.PI * 2 * turns;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-shader-hand-forward",
+    "file": "src/render/sdVeil.js",
+    "old": "    return -TAU * turns;",
+    "new": "    return TAU * turns;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-hand-never-slowing",
+    "file": "src/render/sdVeil.js",
+    "old": "export const SD_VEIL_SLOW_S = 6;",
+    "new": "export const SD_VEIL_SLOW_S = 2;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-Break-at-once",
+    "file": "src/render/sdVeil.js",
+    "old": "float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) :",
+    "new": "float w = mode < 0.5 ? 0.008 :",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-mend-unread",
+    "file": "src/render/sdVeil.js",
+    "old": "mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
+    "new": "mode < 2.5 ? 0.008 : 0.012;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-pieces-never-falling",
+    "file": "src/render/sdVeil.js",
+    "old": "vec2 rel = uv - seed - vec2((h - 0.5) * 0.3 * tt, -2.4 * tt * tt);",
+    "new": "vec2 rel = uv - seed;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-veil-smooth",
+    "file": "src/render/sdVeil.js",
+    "old": "  c = floor(c * 6.0 + bayer4(gl_FragCoord.xy)) / 6.0;   // six levels",
+    "new": "  c = clamp(c, 0.0, 1.0);   // six levels",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-reduced-motion-ignored",
+    "file": "src/render/sdVeil.js",
+    "old": "  if (uReduce > 0.5) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-hold-dropped",
+    "file": "src/ui/gateVeil.js",
+    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
+    "new": "const held = true;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-one-ratchet",
+    "file": "src/ui/gateVeil.js",
+    "old": "for (const want = Math.min(3, 1 + Math.floor((seconds(t) / VEIL_CLOSE_S) * 3)); ratchets < want; ratchets++)",
+    "new": "for (const want = 1; ratchets < want; ratchets++)",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-quarters-mended-going-in",
+    "file": "src/ui/gateVeil.js",
+    "old": "const notes = m === SD_VEIL_MODE.home ? H.mended : H.quarters;",
+    "new": "const notes = H.mended;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-centre-unclamped",
+    "file": "src/ui/gateVeil.js",
+    "old": "centre = l > VEIL_CENTRE_MAX ? [(x / l) * VEIL_CENTRE_MAX, (y / l) * VEIL_CENTRE_MAX] : [x, y];",
+    "new": "centre = [x, y];",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-reduced-motion-never-asked",
+    "file": "src/ui/gateVeil.js",
+    "old": "try { reduce = !!win.matchMedia?.(REDUCE_QUERY)?.matches; } catch { reduce = false; }",
+    "new": "reduce = false;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-veil-drawn-smooth",
+    "file": "src/ui/gateVeil.js",
+    "old": "const px = hp ? 'pixelated' : '';",
+    "new": "const px = '';",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-veil-at-the-fire-scale",
+    "file": "src/ui/gateVeil.js",
+    "old": "const k = hp ? VEIL_HOUR_SCALE : VEIL_SCALE;",
+    "new": "const k = VEIL_SCALE;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-aim-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      sdVeilAim(proj, view, look?.window?.model ?? look?.bay?.model);\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]
