@@ -210,6 +210,118 @@ no longer equivalent). 24 records the fixes moved re-aimed by content and killed
 `auditsilver.json`, `fb1001_mining.json`, `forest1.json`, `landform.json`, `lwdry.json`, `prof2.json` and
 `verge1.json`. Judged on the final code with `landform.json`: 195, 189 dead, 6 equivalent, 0 survived.
 
+## AUDIT LANDFORMS III - LANDFORM4-6 audited, 2026-10-07
+
+Mac: *"Audit this. Must be perfection"*, of LANDFORM4-6 - a town standing in its land, the rolling hills, the land each
+climate wears. Four lenses on the head LANDFORM6 left (`848caa51`, frozen in a detached worktree so no fix moved under
+a verdict - Home.md, 17l): **the shaper's math and determinism** (A), **every reader, the wiring, the boot and online**
+(B), **the tests' and the record's honesty** (C), **the real map's body and cost** (D) - four independent adversarial
+reviewers, every one on the freeware ARENA2 and the vendored Basic Roads network in scratch, never in the repository -
+and this session's own (E): each fix measured on the real data before and after, its pin red on the code as it stood,
+the lenses' own mutants judged again on the final code.
+
+Every finding was reproduced before it was fixed. Every fix's pin fails on the code as it stood before it - proven by
+its mutants (`tools/mutants/auditlandforms3.json`), each the old line put back; a coverage pin - a law that held but that
+nothing could fail - is proven the same way. Each change carries an `AUDIT LANDFORMS III` comment.
+
+### Fixed
+
+| ID | Sev | Finding | Fix |
+|---|---|---|---|
+| A1 | Blocker | **The town pull stood walls at the beach round coastal towns** - the very cliffs LANDFORM4 was made to take away. At or under the knee a sample is DFU's; a sample just over it was pulled most of the way to its site's level, and nothing eased the pull as the land neared the knee (the hills, the cuts and the lift all fade there). On the final mesh (DFU's blend and SmoothRoads after) over the 7,434 pixels within one of a coastal site: a step past DFU's own over 10 m at 257 pixels, over 50 m at 85, 149 m beside Penwold ((140, 237): 41.1 -> 161.7 units where DFU steps 41.1 -> 42.3); Naresa 143 m, Tunmont 112, Penwall Derry 111; inside a site's pixel DFU's blend only shrank it. A road's profile took the same jump. | **A pull up is eased in by how far the land stands over the knee toward the level** (`landforms.js` `pullTo`: smoothstep of (land - knee) / (level - knee)): a coast's land rises to a town no more than 1.69 times as steeply as it rises on its own. Over the same 7,434 pixels: 0 steps over 5 m past DFU's, the worst 0.9 m (with D4); over lens D's 914 coastal sites the biggest step between neighbouring samples over 10/20/30/50/100 m 24/3/0/0/0, the worst 25.1 m - LANDFORM1-3's own 19/2/0/0/0 and 25.0 m (the snapshot's 284/170/105/55/14, 151.4 m); straight down the fall line at x1 at Kalunnunu, Privateer's Hold, Tuncart, Penwold and Naresa no damaging run (21-62 at each on the snapshot, the worst 162.5 m, 787 HP). Measured before it was chosen, each on the same probes: the ease kept whole near the rect (the rect exact at its level) left 227 pixels over 5 m and 45 over 50 m - a level rect and no wall at the knee cannot both hold beside it, and DFU's blend levels the rect after the kernel anyway; a cap instead of the ease (the move up at most three times the land's height over the knee, so a town's own land is pulled whole) left 124 steps over 5 m and stood the land round 26 towns' rects steeper than 45 degrees against this law's 10. So a rect's land under its level is raised by the ease - high over the knee all but whole (within a tenth of a unit on LANDFORM4's upland), and a hillside town low over the sea stands under its level (lens D's D4 row, below). |
+| C1 | Major | **On the shipped ground the hills stood rivers on embankments, and the moved pins hid it.** `waterFade` took every hill away within half a pixel of a river's centre line, so wherever the land beside a river was a dale the water's corridor stood over it: 215 of 2,882 inland water pixels stood more than 10 m over every dry neighbour, 86 over 20 m, the worst at (259, 119) in mountain woods, the river at 611 m and its banks at 534-559. LANDFORM3's pin `off - cut > 0` had been relaxed to `abs > 0.5` and its channel re-pointed at the land without hills; G1/G2's pile rode the river's floor UP 2.62 m while its title said down the cut. | **A river cuts its valley** (`carve`): within `valley` of a painted river's centre line (120 samples; a stream's 96) the hills ease down to the deepest dale their land can stand (`hillsAt`'s `out`) by 1 - smoothstep of the distance - never above the hills, never under that dale; where two valleys meet the deeper wins. River centres more than 10 m over their lowest dry neighbour on the real map: 1,612 with the stilling (and A2's stale centres), 266 now - under DFU's own land's 957, the hills off (the worst, 204 m, a river DFU's own data runs over a ridge: 228 m there without the hills). LANDFORM3's strict `off - cut > 0.5 / UNIT` and G1/G2's strict fall restored. |
+| A2 | Major | **The mountain woods sat 13-18 m low, mostly dales.** The foothills' shape centred its ridgelines with RIDGED_NORM, then was centred again at 0.165 - the ridgelines' own centre before RIDGED_NORM was set - against its raw mean of -0.006: every one of the 18,379 MountainWoods pixels a mean hill of -13.2 m on the real data, against "the land's mean height is untouched". It drove much of C1. A4: the haunted woods' centre -0.31 against -0.256, +3 m. | Every land's centre measured again over 200,000 points (`LAND_NORMS`, by land): the foothills 0, the haunted woods -0.256, the ridgelines 0.958, the subtropics 0.02. Every land's mean hill within 3 in 100 of its height (pinned). |
+| B1 | Major | **The sites hung on whether each client's town packs loaded.** The site rows were `getLocation`'s, which serves a pack's row ahead of MAPS.BSA's, and Beautiful Villages resizes 3,240 grids (M'arg Manor 1x1 -> 3x3), Beautiful Cities 120. Online both are forced on, but a pack's fetch can fail with no retry and the client still plays: round 25 resized villages every wild neighbour pixel differed by over a metre, a median 15.2 m, 119.95 m at worst beside Gheghte Court - a split that before LANDFORM4 stayed inside the town's own pixel. | **Each site is its row as MAPS.BSA holds it**: a row the world-data door replaces is read again past it (`MapsFile.locationReplaced`, `readClassicLocation`; only those - reading every row again costs 339 ms at the mount). A village a pack enlarged stands a pull flat smaller than its town, and DFU's blend levels the pack's rect inside its pixel (Landforms.md, RESIDUES). |
+| D4 | Minor | **The sea was counted twice under a coastal town.** A site's level was the mean of its whole pixel, the sea and the beach as they stand; the pull took the town's land down to that sea-dragged mean, and DFU's blend after the kernel averaged the sea in again: six real coastal towns stood under the beach line where DFU stood them over it (Gothcroft 45.0 m on DFU's 58.3, Aldwall Rock 46.6 on 60.4, Ipspath, Longham, Cudogudax, Upmore) - lens D, on the snapshot and again on the A1 fix. | **A level is its pixel's LAND's mean**, the samples over the knee (`siteLevel`; a pixel with no land on the grid keeps the whole mean, so a site in the sea still holds the land it pulls at the floor). None of the six under the beach line now; Kalunnunu's town 109 -> 125 m (DFU's 137); over every coastal site the steps and the walls the same or less (A1's numbers are this law's). |
+| A8 | Minor | **LANDFORM6 brought engine-dependent maths into the ground** - Math.cos, Math.sin and Math.exp, which the language leaves each engine to approximate - the first ground to ask one; and LANDFORM2's arm weight squared with `**`. Clients on two engines could stand their hills ulps apart. | **The ground is one float in every engine**: the cosine, sine and exponential are series of correctly rounded steps (`cosPi`, `sinPi`, `expNeg`, within 4.5e-16 of V8's own), the square a multiply; no source of the ground asks an engine's own (pinned by its syntax tree). |
+| R7 | Nit | The site levels' cache was let go whole at 4,096 (A5), where the record said "the last 4,096": a reload of every level, 0.4 ms each. | The longest kept is let go first. |
+| A7 | Nit | `landShares` read its climate nodes off 128-sample pixels whatever the shaper's span; no caller passes another today. | The shaper's span, handed through `hillsAt`. |
+| B4 | Minor | `landformLiftField`'s null default was described as "the relief alone"; since LANDFORM5 it stands the woodlands' hills too, and no sites - 15-91 m off the built ground, had a caller used it. Nothing swept the tables' many hand-threaded constructions (THE ONE CONSTRUCTION SEAM). | The docblock says what the default stands on; every createLandforms, generatePixelTerrain and restrideGrid call in `src` is swept for the sites and the climates (or a built landforms), the default the one exception. |
+
+### Pinned
+
+| ID | Sev | Finding | Pin |
+|---|---|---|---|
+| C2 | Major | Nothing held a site's level to its own climate's land: `hillsAt(..., null)` in `siteLevel` survived - on the woodlands' hills a Mountain site's level moves a median 18.6 m, 110 m at most (3,282 sites), the wall LANDFORM4 took away. | A town's level on the mountains' land, the woodlands', and the land without hills, asked in turn of one world, so a level kept across tables fails too. |
+| C3 | Major | Nothing held the climate map's row direction or its smoothstep: an off-by-one row, a north-south flip and a linear share all survived (every table varied in x alone). | Twelve lone desert pixels, a swamp row north and a rainforest row south: the desert whole at the centre, smoothstep(0.25) of the woodlands a quarter pixel east and of the swamp's row a quarter north. |
+| C4 | Major | The seam pins "with the network" had no path near a site: a road's profile unpulled, and the ground noise unlevelled under a road through a town, survived. | A road through a town at its level, its banks and verges with it; every seam along the road beside an 8x8 town. The 5x5 of sites a pixel gathers proved a margin: a sample reads a neighbour's arm only at its last two profile points, where a site two pixels off stands its reach away - so its 3x3 mutant is recorded equivalent, and the docblock says why. |
+| C5 | Minor | How two sites share a sample, and the reach by the rect's longer side, were unpinned (`w4 = w`, `keep = min`, the shorter side all survived); 23 real sites have a neighbour site, 1,851 are not square. | THE PULL WRITTEN OUT round two towns side by side and a hamlet longer than wide, at every sample. |
+| C6 | Minor | The high ground's `upland`, the hills eased on the noisy height, and the client posting its own tables (a transfer would empty the main thread's) all survived. | Each land's tallest hill `upland` times its lowland's; the hills against `hillsAt` of the kernel's macro on a strand; the client's post through structuredClone with its transfer, its own tables whole after. |
+
+### The record
+
+| ID | Sev | Finding | Outcome |
+|---|---|---|---|
+| A3 | Minor | "Across the border the blend's steepest step is within the steeper land's own": on 1,000 real border strips the blend was steeper than both lands in 104, by 5.4 degrees at worst ((592, 31), woodlands into mountains). | FIXED (Landforms.md: the share's slope times the lands' difference, measured). |
+| R1 | Nit | "The stilling reaches a third of a pixel": it took every hill within half a pixel and faded out by 120 samples. | FIXED (the valley's own reach, C1). |
+| R2 | Nit | The ledger's ceiling "3,020 m" - the lift's alone; with the tallest hill 3,180 m. | FIXED. |
+| R3 = B3 | Nit | `TerrainGenClient.setSites` and the worker's `sites` message, in Landforms.md and the ledger: `setLandformTables` and `landform-tables` since LANDFORM6. | FIXED. |
+| R4 | Nit | The ocean land "the coastal pixels the boot's dilation gives a land climate": 44 land pixels are Ocean before the dilation, 0 after - no land sample wears it. | FIXED (the table's row). |
+| R5 | Nit | G1/G2's title and Testing.md row said the pile rides "down the cut" while, on LANDFORM5's stilling, the landing raised the river's floor 2.62 m. | FIXED by C1: the valley carves it down again, and the pin is strict once more. |
+| R6 | Nit | "Six times the flat-topped high ground": 5.25. | FIXED. |
+| R8 | Nit | Lane D's written-out law runs on `hills: false` since LANDFORM5, unsaid. | FIXED (the Testing.md row). |
+| R9 | Nit | LANDFORM4-6 "NOT MEASURED ON THE REAL DATA": this audit measured them; the tables of LANDFORM6 are still the synthetic field's. | FIXED (Landforms.md, RESIDUES; the ledger). |
+| B5 | Nit | THE FOUR HOSTS not refreshed for LANDFORM4-6. | FIXED (in the audit's first commit). |
+| R10 | Nit | The ledger's 36 tests in `auditlandforms.test.js` (37). | FIXED. |
+
+### Open
+
+| ID | Sev | Finding | Outcome |
+|---|---|---|---|
+| C7 | Minor | 4 of 60 real towns of 3x3 blocks or more stand land more than a degree steeper than their bare land's steepest 51 m grade (walled / pulled / bare: Wadijirius 64 / 39 / 30, Akhera-Korom 38 / 16 / 12, Crossley 31 / 34 / 31, Singwick 22 / 24 / 22): a level town on a steep mountainside gives its rise back within its reach (124 samples, 794 m). A wider reach needs the 7x7 of pixels round a sample and levels more of the land. | NAMED (Landforms.md, RESIDUES); for Mac. |
+| B2 | Minor | Main's WATER-NEXT, not the landforms': its bed halo classifies a location neighbour's tiles from the raw ghost kernel, but DFU's blend moves those samples across the band - 27 of 55 coastal-town/wild seams with water part, up to 2.96 units, the same with the landforms off. | NAMED for its owner (Audit-WATER-NEXT.md, F2's rest). |
+
+### Lens D - the body on the real ground
+
+Lens D read the body of the real map on the snapshot - every coastal site, every town's band, falls down the fall line
+with the game's own motor and collider, the cost - through a pipeline that matched `generatePixelTerrain` at all
+99,846 samples of six pixels. Its D1 is A1 (above), its D4 the D4 row; the rest, with its probes run again on the
+final code:
+
+- **D2, the towns' band** - the steepest 51 m grade in each of the 3,444 towns' pixels outside its rect: DFU p99 36.0
+  degrees, over 35/45/55/63 degrees 42/13/3/1; LANDFORM1-3 43.4, 66/27/6/2; the snapshot 48.2, 65/40/27/14 (60 towns a
+  step over 20 m inside their own pixel, every one a knee wall); now 34.9, 33/10/3/0, none - gentler than DFU's own.
+  A town stands under its level where its pixel's land falls toward the sea (its own land under the level is raised
+  by the ease, the high pulled down whole): 79 towns over 10 m under it, Naresa 49 m (its band 48 degrees on DFU's 66)
+  - the grade round them is the measure, and it is DFU's or gentler.
+- **The shot's town** is almost certainly Kalunnunu (754, 279), a 6x7 walled city in Lainlyn's rainforest - and its
+  wall was DFU's own south ramp (48 degrees, 120 m over 19 samples), the lift nothing there: Landforms.md's diagnosis
+  is corrected. Pulled, that ramp falls to about 18 degrees.
+- **D3, the lands on real slopes** (on the snapshot): the steepest 51 m grade over a town's 3x3 a median 11.9 degrees
+  (DFU 8.8, LANDFORM1-3 9.1), 69 towns over 45 (18, 37) - the hills ride DFU's slopes and the lift; the page's "no land
+  past 45 degrees" was the field's alone. No fall: the collider follows a 57-degree grade. RECORDED (Landforms.md, ON
+  THE REAL GROUND); for Mac.
+- **D5, the coast's tiles** - AUDIT LANDFORMS D3's "a tile parts from the shaped ground by at most 2.2 m": over 300
+  coastal location pixels, where DFU's blend is at or under the beach line, LANDFORM1-3 at most 0.41 m, the snapshot
+  9.5 m, now a median 0.48 m, 1.94 m at the 90th percentile, 3.9 m at most (Damasta-Korom). No water tile's ground stands over its DFU height.
+- **D6, the roads ride the lands** (on the snapshot): the grade along straight roads at the 95th percentile, the deserts
+  6.6 -> 16.5%, the mountains 21.0 -> 34.0%. RECORDED (Landforms.md).
+- **D7, two sites at once**: 13 pairs of sites in adjacent pixels (Privateer's Hold and Gothway Garden 279 m apart in
+  level); on the snapshot their grades over the beach rose 3-6 degrees - the knee walls (A1), now LANDFORM1-3's steps.
+  Pinned (C5).
+- **D8, the cost**: a whole job a median 19-26 ms by climate against DFU's 10.5-11.9 (about twice), the kernel alone
+  13-21 ms (the page's synthetic 9.6-14.8), a site's level 0.29 ms; a city's lift field on the main thread a median
+  21 ms (61-100 ms cold), nine town pixels about 190 ms (F3's 146). RECORDED (Landforms.md).
+- **Held**: 10,578 shared edge samples on 41 town pixels at climate borders, 0 differ; no sample crosses the knee; the
+  lattice's lines no crease (second differences 1.04-1.14 times off them); an inland town at its level (the median 0 m).
+- **Unmeasured**: the full-map scan (the share of land over 35-63 degrees by climate, the pixels over 63/68/72 degrees
+  against I1's 52/29/4) was stopped for this session's mutation run and its output lost.
+
+
+### Pins and mutants
+
+`test/auditlandforms3.test.js` (13): A1, A2, D4, B1, C1, C2, C3, C4, C5, C6, A7, A8, B4. PIN MOVED: LANDFORM4's rect law
+(`test/landform45.test.js` - at its level where its land stands over it, the ease written out under it), LANDFORM5's
+river (its valley's floor under the land without hills), LANDFORM3's cut and G1/G2's fall back to strict (C1), the
+dials (D8, the valley's), the host's classic rows (B1), the shore's FLOOR hold (a site in the sea now, D4).
+
+`tools/mutants/auditlandforms3.json` - 35: 34 dead, 1 recorded equivalent (C4's 3x3, above). Lens C's 21 mutants of
+its own, 15 of which survived the pins as they stood, judged again on the final code: all dead but that one. Six
+records the fixes moved re-aimed by content and killed again (`LANDFORM5-no-stilling` now `LANDFORM5-no-valley`,
+which only the new file's pin kills; the arm weight's three, A8's multiply; the lift's whole height; the ease on the
+woodlands' top). Judged on the final code with every `landforms.js` record of `landform.json` and `auditlandforms.json`
+and the whole of `landform45.json` and `landform6.json`: 160, 155 dead, 5 recorded equivalent, 0 survived.
+
 ## For Mac
 
 - I1 (AUDIT LANDFORMS II): asked, *"Is it too steep?"* - answered and, on *"Go ahead"*, fixed: the lift fades beside the
@@ -217,4 +329,6 @@ no longer equivalent). 24 records the fixes moved re-aimed by content and killed
 - C2: whether two builds in one room should be kept apart - a relay change (a ground law in the world hello, or a tag
   in `worldRoom`); no ground slice has done it before.
 - A2: whether OW-MOUNTAINS' steepness should read the lifted ground with the row on.
+- C7 (AUDIT LANDFORMS III): whether a big town on a steep mountainside should level more of its land - a reach past
+  the pixels beside its own, gathered from the 7x7 - or keep the land's own grade a few degrees steeper round it.
 - WATER2's lesson: none of this has been seen on a real GPU by a player - Mac's eye before the merge.

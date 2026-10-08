@@ -34,6 +34,8 @@ const woods = load(WOODS_BYTES.slice());
 const NET = network();
 const LF = createLandforms({ woods, roads: NET });
 const RELIEF = createLandforms({ woods });
+// LANDFORM7: the paths' own laws on the land without its hills - beside a road the hills are eased (test/landform7.test.js)
+const LF_BARE = createLandforms({ woods, roads: NET, hills: false }), RELIEF_BARE = createLandforms({ woods, hills: false });
 const dry = new Uint8Array(NET.roads.length);
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
@@ -72,11 +74,14 @@ test('AUDIT LANDFORMS E2: a channel is the water\'s - a road crossing a river st
   // and the road keeps its own bed across the river: the causeway's top, level at the road's grade
   for (const x of [63, 64, 65]) assert.ok(at(full, x, 64) > at(water, x, 64) + 1 / UNIT, `x=${x}: the causeway stands over the channel`);
   // away from the river the road's bank and verge are whole, as they were
-  const roadOnly = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry } }));
-  for (const x of [60, 58, 55]) assert.ok(Object.is(at(full, x, 20), at(roadOnly, x, 20)), `(${x}, 20): the road's own bank, off the channel`);
+  // (LANDFORM5: on the land without its hills - the painted water stills the hills about it, so taking the river away
+  // moves the land a third of a pixel round, not the road's cut)
+  const fullFlat = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const roadOnly = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry }, hills: false }));
+  for (const x of [60, 58, 55]) assert.ok(Object.is(at(fullFlat, x, 20), at(roadOnly, x, 20)), `(${x}, 20): the road's own bank, off the channel`);
   // and past the channel's bank top - in the river's verge - the road's bank is whole again: the channel is the floor and
   // the bank, not the river's whole reach
-  for (const y of [58, 70]) for (const x of [61, 67]) assert.ok(Object.is(at(full, x, y), at(roadOnly, x, y)), `(${x}, ${y}): in the river's verge the road's bank stands`);
+  for (const y of [58, 70]) for (const x of [61, 67]) assert.ok(Object.is(at(fullFlat, x, y), at(roadOnly, x, y)), `(${x}, ${y}): in the river's verge the road's bank stands`);
   // the painted water, as the pipeline paints it: every wet corner off the road's bed stands on the channel's floor
   const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: true });
   let wet = 0;
@@ -103,8 +108,8 @@ test('AUDIT LANDFORMS E1: a road on a hillside is cut into the high side and fil
   const net = network();
   for (let y = 400; y <= 420; y++) net.roads[y * MAP_WIDTH + 153] |= DIR.N | DIR.S;
   const px = 153, py = 410;
-  const cut = generateSamples(hill, px, py, H, createLandforms({ woods: hill, roads: net }));
-  const smooth = sampleKernel(hill, px, py, H, false, createLandforms({ woods: hill }));   // the lifted land, no ground noise
+  const cut = generateSamples(hill, px, py, H, createLandforms({ woods: hill, roads: net, hills: false }));   // PIN MOVED (LANDFORM7): the land without its hills, as the paths' laws are read
+  const smooth = sampleKernel(hill, px, py, H, false, createLandforms({ woods: hill, hills: false }));   // the lifted land, no ground noise
   const road = LANDFORM_DIALS.road, edge = road.flat + road.bank;
   for (const y of [30, 64, 96]) {
     const bed = at(cut, 64, y);
@@ -521,7 +526,23 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
     relief: { from: 200, full: 900, gain: 0.9 }, stream: { flat: 1, bank: 1.25, verge: 4, drop: 0.8 }, river: { flat: 2, bank: 1.5, verge: 6, drop: 1.92 },
     track: { flat: 1.25, bank: 2, verge: 5, drop: 0 }, road: { flat: 1.25, bank: 2.5, verge: 6, drop: 0 }, coast: 12, bankGrade: 0.5,
     cliff: { from: 1, full: 3 },   // PIN MOVED (AUDIT LANDFORMS II I1)
+    // PIN MOVED (LANDFORMS 4/5): the hills and a site's pull (test/landform45.test.js pins what they do)
+    hills: { uplandAt: 700, coast: 1.25, region: 2400, warp: 80, warpScale: 520, scales: [300, 125, 50], weights: [1, 0.36, 0.1] },
+    lands: {   // LANDFORM6 (test/landform6.test.js pins what each land does)
+      woodlands: { low: 4, high: 48, upland: 1.6, shape: 'rolling' }, mountainWoods: { low: 8, high: 56, upland: 1.6, shape: 'foothills' },
+      mountain: { low: 16, high: 80, upland: 1.6, shape: 'ridged' }, desert: { low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 },
+      desert2: { low: 6, high: 30, upland: 1.3, shape: 'desert', rockFrom: -0.1 },
+      rainforest: { low: 8, high: 50, upland: 1.4, shape: 'knolls', cell: 120, fill: 0.62, edge: 0.88, roll: 0.15 },
+      subtropical: { low: 6, high: 44, upland: 1.4, shape: 'knolls', cell: 210, fill: 0.6, edge: 1, roll: 0.7 },
+      swamp: { low: 2, high: 6, upland: 1, shape: 'hummocks' }, haunted: { low: 6, high: 40, upland: 1.5, shape: 'broken' },
+      ocean: { low: 2, high: 24, upland: 1.6, shape: 'rolling' },
+    },
+    valley: { river: 120, stream: 96 },   // PIN MOVED (AUDIT LANDFORMS III C1)
+    ease: { road: 40, track: 28, keep: 0.35 },   // PIN MOVED (LANDFORM7)
+    site: { reach: 40, per: 3, most: 124, grid: 8 },
   });
+  // the law below is the paths' on the land without its hills (LANDFORM5's own pins hold the hills)
+  const LF = createLandforms({ woods, roads: NET, hills: false });
   const pixels = [[350, 200], [351, 200], [352, 200], [352, 201], [352, 204], [353, 200], [354, 200], [354, 199], [354, 196], [355, 199],
     [356, 204], [357, 203], [358, 202], [358, 201], [358, 200], [300, 250], [300, 255], [301, 255], [293, 241], [312, 248], [312, 252], [100, 200], [101, 300], [102, 300]];
   let shaped = 0, worst = 0;
@@ -559,7 +580,7 @@ test('AUDIT LANDFORMS D12: the knee, said to the shaper itself - at or under it 
 });
 
 test('AUDIT LANDFORMS D5: the road bed is the macro height along the whole arm - the hand-over at each pixel edge included', () => {
-  const cut = generateSamples(woods, 300, 250, H, LF), macro = sampleKernel(woods, 300, 250, H, false, RELIEF);
+  const cut = generateSamples(woods, 300, 250, H, LF_BARE), macro = sampleKernel(woods, 300, 250, H, false, RELIEF_BARE);   // PIN MOVED (LANDFORM7)
   for (let y = 0; y <= 128; y++) assert.ok(Math.abs(at(cut, 64, y) - macro(64, y)) * UNIT < 1e-3, `y=${y}`);
 });
 
@@ -580,7 +601,7 @@ test('AUDIT LANDFORMS D4: the kernel hands the shaper its ground noise - past th
 });
 
 test('AUDIT LANDFORMS D9: the diagonal is graded between its profile points - a sample half a step along it lies halfway', () => {
-  const s = generateSamples(woods, 293, 241, H, LF), m = sampleKernel(woods, 293, 241, H, false, RELIEF);
+  const s = generateSamples(woods, 293, 241, H, LF_BARE), m = sampleKernel(woods, 293, 241, H, false, RELIEF_BARE);   // PIN MOVED (LANDFORM7)
   for (const k of [12, 20, 30, 40, 50, 80, 90, 100, 110]) {
     const half = (m(k, k) + m(k + 1, k + 1)) / 2;
     assert.ok(Math.abs(at(s, k, k + 1) - half) * UNIT < 1e-3, `(${k},${k + 1})`);
@@ -799,7 +820,8 @@ test('AUDIT LANDFORMS II J1: a track over a river is a ford, as it is painted - 
   }
   assert.ok(wet > 200 && onBed > 10, `the river's water tiles were read (${wet}), across the track's bed too (${onBed})`);
   // and off the river the track keeps its own bed, whole
-  const full = generateSamples(woods, px, py, H, LF), trackAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry } }));
+  // (LANDFORM5: on the land without its hills - taking the river away gives the hills about it back)
+  const full = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false })), trackAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry }, hills: false }));
   for (const y of [20, 108]) for (const x of [63, 64, 65, 61]) assert.ok(Object.is(at(full, x, y), at(trackAlone, x, y)), `(${x}, ${y}): the track's bed`);
 });
 
@@ -868,7 +890,7 @@ test('AUDIT LANDFORMS II I2: a bank is never a launch ramp - a track benched alo
   assert.ok(g1 - g0 <= LANDFORM_DIALS.bankGrade + 0.05, `a bank ${g1.toFixed(2)} on a hillside of ${g0.toFixed(2)} (${(Math.atan(g1) * 180 / Math.PI).toFixed(0)} degrees) - level across it stood 2.46`);
   // the law written out, held, is the shaper at every sample of the bench - and the hold is what it says there: unheld,
   // the law parts from it under the banks
-  const shape = lf.pixel(500, 250), law = lawOf(net, 500, 250, hill), loose = lawOf(net, 500, 250, hill, { held: false });
+  const shape = createLandforms({ woods: hill, roads: net, hills: false }).pixel(500, 250), law = lawOf(net, 500, 250, hill), loose = lawOf(net, 500, 250, hill, { held: false });   // the law on the land without its hills (LANDFORM5)
   const { base, noise } = kernelTerms(hill, 500, 250);
   let held = 0;
   for (let x = 0; x <= 128; x++) for (let y = 0; y <= 128; y++) {
@@ -921,7 +943,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   const before = job(null), after = job(NET);
   const cell = TERRAIN_SIZE / (H - 1), M = UNIT * STREAMING_TERRAIN_SCALE, x = sx * cell, z = sy * cell;
   const gB = before[sx * H + sy] * M, gA = after[sx * H + sy] * M;
-  assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);
+  assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);   // PIN MOVED BACK (AUDIT LANDFORMS III C1): LANDFORM5's stilling had the landing raise the floor 2.62 m over a dale; the valley carves it down
   const run = ({ grounded }) => {
     const loot = createDroppedLoot({ renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} }, getTexture: async () => ({ getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 64, getFrameCount: () => 1 }), uploadRecordFrame: () => {} });
     const pile = loot.dropPile([{ group: 'Gems', templateIndex: 0 }], [x, gB, z], key);
@@ -1140,7 +1162,7 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   const cw = load(bytes), byteAt = (x, y) => cw.getHeightMapValue(x, y);
   const net = network();
   for (let x = 96; x <= 108; x++) net.roads[430 * MAP_WIDTH + x] |= DIR.E | DIR.W;
-  const CUT = createLandforms({ woods: cw, roads: net }), RELIEF_ALONE = createLandforms({ woods: cw });
+  const CUT = createLandforms({ woods: cw, roads: net, hills: false }), RELIEF_ALONE = createLandforms({ woods: cw, hills: false });   // the lift's law, the hills left out (LANDFORM5 - held below)
   // the byte nodes: the sea's and the rim's none of the lift, two in half, three in all of it - in 1024ths, so the
   // kernel's cubic over them is exact (a node a diagonal or a knight's move from the sea too)
   assert.deepEqual([98, 99, 100, 101, 102, 103].map((x) => cliffFadeAt(byteAt, x, 430)), [0, 0, 0, 0.5, 1, 1]);
@@ -1170,6 +1192,9 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   };
   const gDfu = steepest(dfuAt), gFaded = steepest(reliefAt);
   assert.ok(gDfu > 1 && gFaded <= gDfu * 1.02, `the rim's steepest grade ${gFaded.toFixed(2)} against DFU's ${gDfu.toFixed(2)}`);
+  // LANDFORM5: and with the hills, as the ground ships - eased in by the height over the beach line, they leave the rim be
+  const gRolling = steepest((px) => generateSamples(cw, px, 430, H, createLandforms({ woods: cw })));
+  assert.ok(gRolling <= gDfu * 1.02, `the rim's steepest grade with the hills ${gRolling.toFixed(3)} against DFU's ${gDfu.toFixed(3)}`);
   // a road down over the rim is graded to the faded ground (the written-out law states the fade on its own), every sample
   for (const px of [99, 100, 101, 102, 103]) {
     const shape = CUT.pixel(px, 430), law = lawOf(net, px, 430, cw), terms = kernelTerms(cw, px, 430);
