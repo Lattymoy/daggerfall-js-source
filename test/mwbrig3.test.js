@@ -180,8 +180,8 @@ test('MW-BRIG3: the Steel Brigandine is fitted to the chest it hides, and the bu
   const w = composeWornArmor({ pieces: [{ templateIndex: RRI_JERKIN_TEMPLATE, material: ARMOR_MATERIAL.Steel }], armors: [], bodyPool: [] });
   assert.deepEqual(w.adds.map((a) => a.fitTo), ['chest']);
   assert.deepEqual(w.shadows, ['chest'], 'the part it is fitted to is the part it hides');
-  // MW-STEEL1: carried through ownBodyPart, the one reading both rigs share
+  // carried through ownBodyPart, beside the body it is skinned from
   const fp = sourceText('src/combat/fpArm.js');
-  assert.match(fp, /skinFrom: read\(p\.skinFrom\), fitTo: add\.fitTo \?\? null,/);
+  assert.match(fp, /\.filter\(\(b\) => b\.bytes\),\n    fitTo: add\.fitTo \?\? null,/);
   assert.match(fp, /\.\.\.ownBodyPart\(row, rows, find\) \}\);/);
 });

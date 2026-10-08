@@ -1,0 +1,153 @@
+[
+  {
+    "name": "MWSTEEL4-scene-a-unit-forward",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "export const SCENE_FROM_BIND = Object.freeze([0, 2.5, 98.55]);",
+    "new": "export const SCENE_FROM_BIND = Object.freeze([0, 3.5, 98.55]);",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ],
+    "note": "A unit off front to back: the forearm's line no longer runs through the cuffs."
+  },
+  {
+    "name": "MWSTEEL4-scene-a-unit-high",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "export const SCENE_FROM_BIND = Object.freeze([0, 2.5, 98.55]);",
+    "new": "export const SCENE_FROM_BIND = Object.freeze([0, 2.5, 99.55]);",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ],
+    "note": "A unit off in height: the cuffs ride under the forearm and the ankles stand too far over the soles."
+  },
+  {
+    "name": "MWSTEEL4-the-inverse-bind-taken-for-the-bind",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    bind.set(nif.records[ref].name, rigidInverse(affineOfTransform(tr)));",
+    "new": "    bind.set(nif.records[ref].name, affineOfTransform(tr));",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-bind-untransposed",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  const r = [a[0], a[3], a[6], a[1], a[4], a[7], a[2], a[5], a[8]];",
+    "new": "  const r = [a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]];",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-skirt-hangs-stiff",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "top: 84, bottom: 64.5, share: 0.7, centre: 4 }),",
+    "new": "top: 84, bottom: 64.5, share: 0, centre: 4 }),",
+    "tests": [
+      "test/mwsteel4.test.js",
+      "test/mwsteel1.test.js"
+    ],
+    "note": "The pelvis alone carries the skirt: the bake no longer makes the shipped skirt (mwsteel1's re-make), and a skirt re-baked so stands stiff on the hem (mwsteel4)."
+  },
+  {
+    "name": "MWSTEEL4-the-fingers-dropped",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]), bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),\n",
+    "new": "",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-gauntlet-named-for-the-other-hand",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  gauntlet_right: rig('Tri Right Hand', [R.forearm, ...R.hand]),",
+    "new": "  gauntlet_right: rig('Tri Left Hand', [R.forearm, ...R.hand]),",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ],
+    "note": "Rule 15's filter would take the right gauntlet's geometry for the left hand."
+  },
+  {
+    "name": "MWSTEEL4-no-joint-with-the-parent",
+    "file": "tools/skinWeights.mjs",
+    "old": "      if (dot(sub(p, b.from), axis[k]) < L) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
+    "new": "      if (false) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-no-joint-with-a-child",
+    "file": "tools/skinWeights.mjs",
+    "old": "      if (dot(sub(p, bones[j].from), axis[j]) > -L && (c < 0 || d[j] < d[c])) c = j;",
+    "new": "      if (dot(sub(p, bones[j].from), axis[j]) > L && (c < 0 || d[j] < d[c])) c = j;",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-a-linear-joint",
+    "file": "tools/skinWeights.mjs",
+    "old": "export const smoothstep = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));",
+    "new": "export const smoothstep = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x);",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-bias-ignored",
+    "file": "tools/skinWeights.mjs",
+    "old": "    const d = bones.map((b) => segmentDistance(p, b.from, b.to) - (b.bias ?? 0));",
+    "new": "    const d = bones.map((b) => segmentDistance(p, b.from, b.to));",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-no-weld",
+    "file": "tools/skinWeights.mjs",
+    "old": "    if (g === undefined) { g = first.length; at.set(k, g); first.push(v); }",
+    "new": "    { g = first.length; at.set(k, g); first.push(v); }",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ],
+    "note": "Each vertex its own group: a seam's two vertices weighted apart."
+  },
+  {
+    "name": "MWSTEEL4-the-hang-turned-round",
+    "file": "tools/skinWeights.mjs",
+    "old": "      const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));",
+    "new": "      const right = smoothstep((hang.centre - p[0]) / (2 * hang.centre));",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-bind-written-for-its-inverse",
+    "file": "tools/nifWrite.mjs",
+    "old": "      return { name: b.name, data: { transform: { rotation: inv.a, translation: inv.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
+    "new": "      return { name: b.name, data: { transform: { rotation: b.bind.a, translation: b.bind.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-skin-at-the-texture",
+    "file": "tools/nifWrite.mjs",
+    "old": "  const skinAt = at + (texture ? 6 : 5);",
+    "new": "  const skinAt = at + 5;",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL4-the-plate-solved-at-runtime-again",
+    "file": "src/formats/mwItemMap.js",
+    "old": "          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) });",
+    "new": "          skinFrom: own.skinFrom ?? ['chest'], fitTo: own.fitTo ?? null });",
+    "tests": [
+      "test/mwsteel4.test.js"
+    ],
+    "note": "A runtime skin for a piece shipped skinned: it goes to bindSkinnedFromBody and, with no body under it, is not drawn."
+  }
+]

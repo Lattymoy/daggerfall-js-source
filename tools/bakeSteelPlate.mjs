@@ -4,7 +4,7 @@
 //         re-make the shipped NIFs and DDSs from the committed sources
 //     node tools/bakeSteelPlate.mjs --import=<New_Ship.fbx>,<New_Ship1.fbx>
 //         take Mac's two exports into the committed sources first (tools/fbxStrip.mjs), and measure his scene's
-//         reference head and neck - the numbers characters/ownArmorModels.js fits the set by
+//         reference head and neck (SCENE_BODY)
 //
 // MW-STEEL1 (2026-10-06, Mac: "These 2 files are for the armor replacement of the morrowind steel armor with a varient
 // to toggle the helmet type"). The third of the port's own Morrowind models, and the first SET: a whole suit of steel
@@ -31,9 +31,7 @@
 //   THE BODY IT WAS FITTED ON IS NOT COMMITTED. The scene carries Morrowind's own Breton head and neck (out of a
 //   "Morrowind_TPose_Models" pack, wearing Morrowind's tx_b_n_breton_m_* pictures) as the body the armour sits on.
 //   Those are Bethesda's meshes, so --import strips them (fbxStrip.mjs - every other record copied byte for byte) and
-//   keeps only their BOUNDS, measured here and written into characters/ownArmorModels.js (STEEL_PLATE_SCENE): the set
-//   is fitted onto the wearer by them at bind time (formats/mwSkinTransfer.js fitShift), as MW-BRIG3 fitted the
-//   brigandine by the chest - the same lesson, that a modeller's scene is not the skeleton's rest, learned before.
+//   keeps only their BOUNDS (SCENE_BODY) - the evidence the scene's frame is read against, below.
 //
 //   THE SKIRT CAME WITH ITS PAINTING (MW-STEEL2, 2026-10-07, Mac: "This is the missing texture for the morrowind steel
 //   armor's skirt"). The scene keeps a skirt of plates under the breastplate (`Imperial_Silver_Cuirass_67_Male.011`,
@@ -43,18 +41,46 @@
 //   from the open helm's export like every shared piece (both of Mac's exports carry it, the same to the vertex).
 //
 //   THE CLOSED HELM IS TWO PICTURES ON ONE PART. Its shell wears the helm's texture and its visor and plume the
-//   faceplate's, so its NIF carries two shapes (tools/nifWrite.mjs meshesToNif). The second export is committed as the
-//   closed helm alone - the shared pieces are the first export's, byte for byte.
+//   faceplate's, so its NIF carries two shapes. The second export is committed as the closed helm alone - the shared
+//   pieces are the first export's, byte for byte.
+//
+// ═══ MW-STEEL4: RIGGED HERE, AS RETAIL'S ARMOUR IS ═══════════════════
+//
+// (2026-10-07, Mac: "I think the prior session to rig the new steel set on the morrowind model really fucked it up.
+// How hard is it to switch it out?", and asked how: "You do it properly".) Every piece ships SKINNED - a NiSkinInstance
+// over Morrowind's own Bip01 bones and a NiSkinData of their inverse binds and weights, the shape of a retail armour
+// piece - so the game takes it on the path it takes Morrowind's own (rule 12: rebound onto the wearer's skeleton by
+// the bones' names; rule 20: drawn by skinBatch). MW-STEEL1-3 shipped static meshes and rigged them at runtime against
+// the player's body; nothing of that is left.
+//
+//   THE BIND IS RETAIL'S OWN. Mac's scene stands its Breton in a T-pose, and a T-pose is exactly what Morrowind's
+//   skins are bound in: the skeleton file's "Tri Shadow" binds all 32 Bip01 bones there, the arms level (its rest is
+//   the idle's first frame, the arms hanging). The vendored retail hierarchy carries it (RETAIL_SKELETON, Greatness7's
+//   Weapon Sheathing skeleton - the retail nodes and their Tri Shadow verbatim), and retailBind reads each bone's bind
+//   off its inverse bind.
+//
+//   THE SCENE STANDS ON IT, MEASURED. The Tri Shadow's frame is its own (the pelvis 22 units under its origin); the
+//   scene's is Blender's (the soles on z = 0). Their axes agree - both upright, both facing +Y - and the scene is the
+//   bind moved by SCENE_FROM_BIND, read off the pieces themselves: the forearm's bone line runs through the middle of
+//   the gauntlets' cuffs, the neck bone through the scene's neck, the ankle stands over the boots' soles.
+//
+//   THE WEIGHTS ARE A RIGGER'S (tools/skinWeights.mjs jointWeights): each piece's own bones (PLATE_RIG), each vertex
+//   to the bone it covers, blended across a joint's width and nowhere else; the skirt hangs from the pelvis and swings
+//   with the thighs; the helms ride the head alone. Each shape is named for the slot it fills (rule 15's filter picks a
+//   skinned part's geometry by that name - "Tri Right Hand 0").
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx, childrenNamed, nodeAt, objectName } from './fbxRead.mjs';
 import { bakeMesh } from './fbxMesh.mjs';
 import { stripFbx, meshModelNames } from './fbxStrip.mjs';
 import { mipChain, writeDds } from './meshTexture.mjs';
-import { meshesToNif } from './nifWrite.mjs';
+import { skinnedMeshesToNif } from './nifWrite.mjs';
+import { jointWeights } from './skinWeights.mjs';
 import { previewSheet } from './meshSheets.mjs';
 import { readPng, writePng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
+import { parseNif } from '../src/formats/mwNifFile.js';
+import { affineOfTransform } from '../src/formats/mwAffine.js';
 
 /** Mac's two exports, as committed: the whole set with the open helm, and the closed helm alone. */
 export const SOURCE = Object.freeze({
@@ -86,6 +112,144 @@ export const SETTINGS = Object.freeze({ placement: 'scene', forward: '+y', up: '
 
 /** The reference body in Mac's scene - stripped from the committed sources, its bounds kept. */
 export const REFERENCE_PARTS = Object.freeze({ head: 'Breton_Male.003', neck: 'Breton_Male.006' });
+
+/** ...and those bounds (scene units, Morrowind's axes), as `--import` measured them: twelve numbers of Bethesda's
+ *  Breton, kept as the evidence SCENE_FROM_BIND is read against - the neck bone stands in this neck, the head bone in
+ *  this head. */
+export const SCENE_BODY = Object.freeze({
+  head: Object.freeze({ min: Object.freeze([-4.764463, -5.649226, 113.146219]), max: Object.freeze([4.764463, 9.197224, 129.199977]) }),
+  neck: Object.freeze({ min: Object.freeze([-3.895279, -4.097911, 109.962381]), max: Object.freeze([3.895279, 3.687286, 121.834567]) }),
+});
+
+/** MW-STEEL4: the retail skeleton whose bind the plate is skinned in - the retail hierarchy and its "Tri Shadow"
+ *  verbatim, vendored with Greatness7's Weapon Sheathing (vendor/weapon-sheathing/README.md). */
+export const RETAIL_SKELETON = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
+
+/**
+ * MW-STEEL4: WHERE MAC'S SCENE STANDS AGAINST THE BIND - the scene is the Tri Shadow's frame moved by this much (units;
+ * the axes agree). Read off the pieces, because the T-posed Breton's own meshes are not here to read:
+ *   - the forearm's bone line runs through the middle of each gauntlet's cuff: its cross-sections centre 2.6-3.0 in
+ *     front of the line and 98.3-98.8 above it (x 34-46, where the cuff is a clean tube);
+ *   - the neck bone stands mid-neck: the scene's neck is centred 1.9 in front of where the bind puts it;
+ *   - the bind's pelvis stands at the idle's height (76.37 - the 98.55), so the ankle bone stands 6.6 over the scene's
+ *     floor (6.8 over the boots' lowest point), as it stands 6.8-7.0 over the floor in the idle.
+ * Across, nothing: the bind and the plate are both mirrored about x = 0.
+ */
+export const SCENE_FROM_BIND = Object.freeze([0, 2.5, 98.55]);
+
+/** An affine of a rotation and a translation, inverted: (R^T, -R^T t). */
+const rigidInverse = ({ a, t }) => {
+  const r = [a[0], a[3], a[6], a[1], a[4], a[7], a[2], a[5], a[8]];
+  return { a: r, t: [-(r[0] * t[0] + r[1] * t[1] + r[2] * t[2]), -(r[3] * t[0] + r[4] * t[1] + r[5] * t[2]), -(r[6] * t[0] + r[7] * t[1] + r[8] * t[2])] };
+};
+
+/**
+ * MW-STEEL4: THE BIND, READ OFF RETAIL'S SKELETON. The file's own "Tri Shadow" is skinned over the whole Bip01 chain
+ * (never drawn - rule 59) with an identity skin transform on an identity shape, so each bone's inverse bind, undone,
+ * is where that bone stood when the skins were bound: the T-pose. Answers Map(bone name -> { a, t }) in the Tri
+ * Shadow's own frame. A skeleton whose shadow is missing, or turned, scaled or moved, is refused - its binds would
+ * stand somewhere else.
+ */
+export function retailBind(skeletonBytes) {
+  const nif = parseNif(new Uint8Array(skeletonBytes));
+  const shadow = nif.records.find((r) => r?.type === 'NiTriShape' && r.name === 'Tri Shadow' && r.skin >= 0);
+  if (!shadow) throw new Error('this skeleton carries no skinned "Tri Shadow" to read the bind from');
+  const skin = nif.records[shadow.skin];
+  const data = nif.records[skin.data];
+  const identity = (tr) => tr.scale === 1 && tr.translation.every((v) => v === 0) && [1, 0, 0, 0, 1, 0, 0, 0, 1].every((v, i) => tr.rotation[i] === v);
+  if (!identity(shadow) || !identity(data.transform)) throw new Error('the Tri Shadow is moved or turned - its binds stand in another frame');
+  const bind = new Map();
+  skin.bones.forEach((ref, i) => {
+    const tr = data.bones[i].transform;
+    if (Math.abs(tr.scale - 1) > 1e-6) throw new Error(`"${nif.records[ref].name}" is bound at scale ${tr.scale}`);
+    bind.set(nif.records[ref].name, rigidInverse(affineOfTransform(tr)));
+  });
+  return bind;
+}
+
+/** MW-STEEL4: the bind in the scene's frame - where every bone stood under Mac's plate. */
+export function plateBind(skeletonBytes) {
+  return new Map([...retailBind(skeletonBytes)].map(([name, m]) => [name, { a: Array.from(m.a), t: m.t.map((v, k) => v + SCENE_FROM_BIND[k]) }]));
+}
+
+/** A bone of a piece's rig: its name, where its segment ends (another bone's name - that bone's origin; `mid` -
+ *  halfway between two bones' origins; or `local` - a point in the bone's own frame at bind), and its joint with its
+ *  rig `parent`, `blend` units either side (tools/skinWeights.mjs). */
+const bone = (name, to, joint = null) => Object.freeze({ name, to, ...(joint ? { parent: joint[0], blend: joint[1] } : {}) });
+const SPINE = Object.freeze([
+  bone('Bip01 Pelvis', 'Bip01 Spine'),
+  bone('Bip01 Spine', 'Bip01 Spine1', ['Bip01 Pelvis', 3]),
+  bone('Bip01 Spine1', 'Bip01 Spine2', ['Bip01 Spine', 3]),
+  bone('Bip01 Spine2', 'Bip01 Neck', ['Bip01 Spine1', 3]),
+  bone('Bip01 Neck', 'Bip01 Head', ['Bip01 Spine2', 2]),
+]);
+/** One side's limbs, `S` 'R' or 'L'. The bones that end in nothing end where the body does: the hand at its
+ *  knuckles, a finger 2.5 past its last joint (along its X, the finger's own length axis), the foot at its ball (its
+ *  X runs down to the sole, its Y forward). */
+const limbs = (S) => {
+  const b = (n) => `Bip01 ${S} ${n}`;
+  return {
+    clavicle: (joint) => bone(b('Clavicle'), b('UpperArm'), joint),
+    upperArm: bone(b('UpperArm'), b('Forearm'), [b('Clavicle'), 2.5]),
+    forearm: bone(b('Forearm'), b('Hand')),
+    hand: [
+      bone(b('Hand'), { mid: [b('Finger1'), b('Finger2')] }, [b('Forearm'), 1.5]),
+      bone(b('Finger0'), b('Finger01'), [b('Hand'), 1]), bone(b('Finger01'), { local: [2.5, 0, 0] }, [b('Finger0'), 0.75]),
+      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]), bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),
+      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]), bone(b('Finger21'), { local: [2.5, 0, 0] }, [b('Finger2'), 0.75]),
+    ],
+    thigh: bone(b('Thigh'), b('Calf')),
+    calf: bone(b('Calf'), b('Foot'), [b('Thigh'), 3]),
+    foot: bone(b('Foot'), { local: [5.5, 9, 0] }, [b('Calf'), 2]),
+  };
+};
+const R = limbs('R');
+const L = limbs('L');
+const rig = (shape, bones, hang = null) => Object.freeze({ shape, bones: Object.freeze(bones), ...(hang ? { hang: Object.freeze(hang) } : {}) });
+
+/**
+ * MW-STEEL4: EACH PIECE'S RIG - the shape name rule 15's filter knows it by (the part's bone: "Tri Right Hand"; the
+ * helm fills the HAIR slot, whose filter is the word "hair", rule 15's exception), and its own bones, a modeller's
+ * vertex groups:
+ *   - the breastplate the spine from the pelvis to the neck, and the clavicles at its shoulders;
+ *   - the skirt hangs from the pelvis, the thighs taking up to 0.7 of its hem;
+ *   - a pauldron the clavicle at its root and the upper arm it covers;
+ *   - a gauntlet the forearm under its cuff, the hand and the three fingers Morrowind's hand has (the thumb, and two
+ *     pairs), so its fingers close as the hand's do;
+ *   - a greave the thigh and, past the knee, the calf; a boot the calf, the foot past the ankle, and the thigh at its
+ *     top, which stands over the knee;
+ *   - the helm the head alone - it is rigid on the skull, as a helmet is.
+ */
+export const PLATE_RIG = Object.freeze({
+  cuirass: rig('Tri Chest', [...SPINE, R.clavicle(['Bip01 Spine2', 2]), L.clavicle(['Bip01 Spine2', 2])]),
+  skirt: rig('Tri Groin', [SPINE[0], L.thigh, R.thigh], { root: 'Bip01 Pelvis', legs: ['Bip01 L Thigh', 'Bip01 R Thigh'], top: 84, bottom: 64.5, share: 0.7, centre: 4 }),
+  pauldron_right: rig('Tri Right Clavicle', [R.clavicle(), R.upperArm]),
+  pauldron_left: rig('Tri Left Clavicle', [L.clavicle(), L.upperArm]),
+  gauntlet_right: rig('Tri Right Hand', [R.forearm, ...R.hand]),
+  gauntlet_left: rig('Tri Left Hand', [L.forearm, ...L.hand]),
+  greave_right: rig('Tri Right Upper Leg', [R.thigh, R.calf]),
+  greave_left: rig('Tri Left Upper Leg', [L.thigh, L.calf]),
+  boot_right: rig('Tri Right Foot', [R.thigh, R.calf, R.foot]),
+  boot_left: rig('Tri Left Foot', [L.thigh, L.calf, L.foot]),
+  helm_open: rig('Tri Hair', [bone('Bip01 Head', { local: [10, 0, 0] })]),
+  helm_closed: rig('Tri Hair', [bone('Bip01 Head', { local: [10, 0, 0] })]),
+});
+
+/** A rig's bones as segments in `bind` (plateBind): `from` the bone's origin, `to` where its `to` names. */
+export function rigSegments(rigBones, bind) {
+  const origin = (name) => {
+    const m = bind.get(name);
+    if (!m) throw new Error(`the bind has no "${name}"`);
+    return m.t;
+  };
+  const end = (b) => {
+    if (typeof b.to === 'string') return origin(b.to);
+    if (b.to.mid) { const [p, q] = b.to.mid.map(origin); return [0, 1, 2].map((k) => (p[k] + q[k]) / 2); }
+    const m = bind.get(b.name); const l = b.to.local;
+    return [0, 1, 2].map((k) => m.a[k * 3] * l[0] + m.a[k * 3 + 1] * l[1] + m.a[k * 3 + 2] * l[2] + m.t[k]);
+  };
+  return rigBones.map((b) => ({ ...b, from: origin(b.name), to: end(b) }));
+}
 
 /** How far (any coordinate of its box) an object may stand from where its piece was read. */
 export const BOX_SLACK = 0.02;
@@ -141,11 +305,28 @@ export function bakeObject(tree, name, box = null) {
 }
 
 /**
- * The bake: the two committed exports and the eight paintings in, every piece's NIF and every texture's DDS out.
- * Pure - bytes in, bytes out.
+ * MW-STEEL4: one piece's shapes weighted to its rig in `bind` (plateBind) - one `[[bone, weight], ...]` list per vertex
+ * per shape (tools/skinWeights.mjs jointWeights), and the rig's bones at their binds, for skinnedMeshesToNif.
  */
-export function bakeSteelPlate({ open, closed, pngs }, { sheets = false } = {}) {
+export function pieceRig(id, meshes, bind) {
+  const r = PLATE_RIG[id];
+  if (!r) throw new Error(`no rig for the ${id}`);
+  const segments = rigSegments(r.bones, bind);
+  return {
+    shape: r.shape,
+    weights: meshes.map((m) => jointWeights(m.positions, segments, { hang: r.hang ?? null })),
+    bones: r.bones.map((b) => ({ name: b.name, bind: bind.get(b.name) })),
+  };
+}
+
+/**
+ * The bake: the two committed exports, the eight paintings and retail's skeleton in, every piece's NIF and every
+ * texture's DDS out. Each piece is skinned in the skeleton's bind (MW-STEEL4). Pure - bytes in, bytes out.
+ */
+export function bakeSteelPlate({ open, closed, pngs, skeleton }, { sheets = false } = {}) {
+  if (!skeleton) throw new Error('no skeleton to skin the plate in - the bake reads its bind (RETAIL_SKELETON)');
   const trees = { open: readFbx(Buffer.from(open)), closed: readFbx(Buffer.from(closed)) };
+  const bind = plateBind(skeleton);
   const textures = Object.keys(TEXTURES).map((tex) => {
     if (!pngs[tex]) throw new Error(`no painting for the ${tex} texture`);
     const png = readPng(pngs[tex]);
@@ -154,18 +335,20 @@ export function bakeSteelPlate({ open, closed, pngs }, { sheets = false } = {}) 
   const byTex = new Map(textures.map((t) => [t.tex, t]));
   const pieces = PIECES.map((p) => {
     const meshes = p.shapes.map((s) => bakeObject(trees[p.file], s.object, s.box));
-    const nif = meshesToNif(p.shapes.map((s, i) => ({ mesh: meshes[i], texture: textureName(s.texture) })), { node: `Steel Plate ${p.id}` });
-    const out = { id: p.id, meshes, nif };
+    const r = pieceRig(p.id, meshes, bind);
+    const nif = skinnedMeshesToNif(p.shapes.map((s, i) => ({ mesh: meshes[i], texture: textureName(s.texture), name: `${r.shape} ${i}`, weights: r.weights[i] })),
+      { node: `Steel Plate ${p.id}`, bones: r.bones });
+    const out = { id: p.id, meshes, weights: r.weights, nif };
     if (sheets) {
       const t = byTex.get(p.shapes[0].texture).png;
       out.sheet = writePng(previewSheet(meshes[0], 360, { width: t.width, height: t.height, data: t.data }));
     }
     return out;
   });
-  return { pieces, textures };
+  return { pieces, textures, bind };
 }
 
-/** The bounds of the scene's reference head and neck - what the set is fitted to the wearer by. */
+/** The bounds of the scene's reference head and neck (SCENE_BODY). */
 export function measureReference(tree) {
   return Object.fromEntries(Object.entries(REFERENCE_PARTS).map(([part, name]) => [part, bakeObject(tree, name).bounds]));
 }
@@ -210,7 +393,7 @@ if (isMain(import.meta.url)) {
     console.log(`${SOURCE.open}  ${r.open.length} bytes: ${meshModelNames(r.open).join(', ')}`);
     console.log(`${SOURCE.closed}  ${r.closed.length} bytes: ${meshModelNames(r.closed).join(', ')}`);
     console.log(`  ${r.shared.length} pieces the two exports share, the same in both`);
-    console.log('  the reference body, stripped - its bounds for ownArmorModels.js STEEL_PLATE_SCENE:');
+    console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
     for (const [part, b] of Object.entries(r.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
   }
   const missing = Object.entries(TEXTURES).filter(([, p]) => !existsSync(p)).map(([t]) => t);
@@ -219,6 +402,7 @@ if (isMain(import.meta.url)) {
   const r = bakeSteelPlate({
     open: readFileSync(SOURCE.open), closed: readFileSync(SOURCE.closed),
     pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
+    skeleton: readFileSync(RETAIL_SKELETON),
   }, { sheets: wantSheets });
   for (const p of r.pieces) {
     save(meshFile(p.id), p.nif);
