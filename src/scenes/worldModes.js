@@ -8095,8 +8095,14 @@ export function createWorldModes(host) {
     dungeon: loc.dungeon && { ...loc.dungeon, blocks: loc.dungeon.blocks?.map((b) => ({ ...b })) },
   });
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false, fromLoad = false } = {}) {
-    if (host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad))) return false;   // PVPDUNGEONS: the zone's tier rules - the hub's word on my lock is awaited
-    return gatedTransition((live) => dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad));   // AUDIT 68 X3-transition-build-race
+    return gatedTransition(async (live) => {   // AUDIT 68 X3-transition-build-race
+      // PVPDUNGEONS: the zone's tier rules - the hub's word on my lock is awaited INSIDE the gate (AUDIT 68 X3: awaited
+      // before it, a teleport, a recall or a load during the hub's four seconds did not stale the door, and the dungeon
+      // was built from wherever the world had moved to; a second press now waits its turn instead of racing the first)
+      if (host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad))) return false;
+      if (!live()) return false;   // the world moved during the hub's word: no build at all
+      return dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad);
+    });
   }
   async function dungeonTransition(hit, entries, preferEnterMarker, live, fromLoad = false) {
     // AUDIT 28 W4: SMALLER DUNGEONS - the location that gets BUILT is

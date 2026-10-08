@@ -2081,10 +2081,59 @@ export async function bootWorld(canvas, renderer, params, status) {
     _spawnUnroaded.clear();
   }
   const _spawnGround = createSpawnGround(woods);   // SPAWN-SHORE: dry ground under the plateau, never the sea's edge
+  // BOOT-TDZ2 (THE WROTHGARIAN ZONE): THE ZONE'S HALLS STAND FROM ABOVE THE BUILDER THAT ASKS THEM. The boot's first
+  // build asks spawnedDungeonAt of the player's own pixel, and in the zone that is a hall's stand - its day, its free
+  // ground, its picks, its templates. Declared with the rest of PVPDUNGEONS, fifteen thousand lines below the build,
+  // every one was in its dead zone on an online boot in the zone, and the builder's try swallowed the ReferenceError: no
+  // hall on a first pixel that has one (test/bootorder.test.js). The picks and the stand take the zone's mask from their
+  // caller - the builder hands them the one it just read off the maps (online off `params`, its own gate: the session's
+  // handles are declared far below too), play's callers the session's (wildActiveNow and wildHallStand, PVPDUNGEONS).
+  let _wdunSkew = 0;   // the hub's clock less mine, off its `st` (wdunWord)
+  const wdunDayNow = () => Math.floor((Date.now() + _wdunSkew) / WDUN_DAY_MS);
+  /** May a hall stand on this pixel: the game's own places never (not on one, not beside one), never the sea, never a
+   *  wet one - read off the map files every client holds alike (a mod's own rows are not, so they are not asked). */
+  const wildHallFree = (x, y) => {
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (_bountyLocPixels.has(`${x + dx},${y + dy}`)) return false;
+    return maps.getClimateIndex(x, y) !== CLIMATES.Ocean && _spawnGround(x, y);
+  };
+  let _wdCache = null;
+  /** The day's halls `[{ x, y, ring, key }]` over the zone's `mask` (null where there is no zone). */
+  const wildActiveOf = (mask) => {
+    if (!mask) return null;
+    const day = wdunDayNow();
+    if (_wdCache?.day === day && _wdCache.mask === mask) return _wdCache.active;
+    _wdCache = { day, mask, active: wildHallPicks(mask, wildHallFree, day) };
+    return _wdCache.active;
+  };
+  let _wildHallTemplates = null;
+  const _wildHallKeys = new Set();   // the pixels a hall stands on in the index - taken off when the day moves on
+  /** The hall on this pixel today over the zone's `mask`, stood in the index (a clone of a real dungeon - never a
+   *  graveyard's - on the zone's own lane of map ids, always elite, its tier on it), or null. */
+  const wildHallStandOf = (mask, px, py) => {
+    const hall = wildHallAt(wildActiveOf(mask), px, py);
+    if (!hall) return null;
+    const key = `${px},${py}`, day = wdunDayNow();
+    const had = locationIndex.get(key);
+    if (had?.wildHallDay === day) return had;
+    _wildHallTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon).filter(wildHallTemplateOk);
+    const template = pickTemplate(_wildHallTemplates, WDUN_SALT, px, py);
+    if (!template) return null;
+    const regionIndex = maps.getRegionIndexAt(px, py);
+    const loc = synthesizeDungeonLocation(template, { salt: WDUN_SALT, px, py, elite: true, where: {
+      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
+    } });
+    loc.wildHall = { ring: hall.ring, key };
+    loc.wildHallDay = day;
+    loc.name = `Elite ${template.name} (${px},${py})`;
+    locationIndex.set(key, loc);
+    _wildHallKeys.add(key);
+    _locIndexGen += 1;
+    return loc;
+  };
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
     try {
-      { const _wm = wildMaskOf(maps); if (_wm && wildInside(_wm, px, py)) return wildHallStand(px, py); }   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
+      { const _wm = wildMaskOf(maps); if (_wm && wildInside(_wm, px, py)) return wildHallStandOf(_wm, px, py); }   // BOOT-TDZ2: the stand over the mask just read, never the session's (declared far below this build)   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
       if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;
       // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
       // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
@@ -21027,7 +21076,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The day is the RELAY's (`st`), so every client stands the same halls; the hour's lock, who is inside, the empty hall's
   // reset and the crows are the hub's word. With no hub to ask (an older relay, a lost socket) the day falls back to this
   // machine's clock and the lock to this session's own memory - the halls still stand, the rules still hold for me.
-  let _wdunLink = null, _wdunHiAt = 0, _wdunSkew = 0, _wdunHeard = false;
+  let _wdunLink = null, _wdunHiAt = 0, _wdunHeard = false;   // (_wdunSkew, the hub's clock less mine, is declared above the pixel builder - BOOT-TDZ2)
   const _wdunLocks = new Map();   // hall -> until (this machine's clock)
   const _wdunCrows = new Map();   // hall -> until (this machine's clock)
   let _wdunWait = null;           // the entry asked of the hub: { h, done }
@@ -21276,7 +21325,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         .catch(() => { _giantsStood.delete(gi.g); });
     }
   };
-  const wdunDayNow = () => Math.floor((Date.now() + _wdunSkew) / WDUN_DAY_MS);
   /** The hub's word on the halls. */
   const wdunWord = (w) => {
     const now = Date.now();
@@ -21331,24 +21379,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const [h, u] of _wdunCrows) if (u <= now) _wdunCrows.delete(h);
     wildHallsRoll();
   };
-  /** May a hall stand on this pixel: the game's own places never (not on one, not beside one), never the sea, never a
-   *  wet one - read off the map files every client holds alike (a mod's own rows are not, so they are not asked). */
-  const wildHallFree = (x, y) => {
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (_bountyLocPixels.has(`${x + dx},${y + dy}`)) return false;
-    return maps.getClimateIndex(x, y) !== CLIMATES.Ocean && _spawnGround(x, y);
-  };
-  let _wdCache = null;
-  /** The day's halls `[{ x, y, ring, key }]` (null where there is no zone). */
-  const wildActiveNow = () => {
-    const mask = wildMapMask();
-    if (!mask) return null;
-    const day = wdunDayNow();
-    if (_wdCache?.day === day && _wdCache.mask === mask) return _wdCache.active;
-    _wdCache = { day, mask, active: wildHallPicks(mask, wildHallFree, day) };
-    return _wdCache.active;
-  };
-  let _wildHallTemplates = null;
-  const _wildHallKeys = new Set();   // the pixels a hall stands on in the index - taken off when the day moves on
+  /** The day's halls `[{ x, y, ring, key }]` (null where there is no zone) - over the session's mask (BOOT-TDZ2: the
+   *  picks themselves, wildActiveOf, are declared above the pixel builder that stands them). */
+  const wildActiveNow = () => wildActiveOf(wildMapMask());
   let _wildHallsDay = null;
   /** A day gone: its halls leave the index (the one I stand in stays until I leave it). */
   const wildHallsRoll = () => {
@@ -21357,29 +21390,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     _wildHallsDay = day;
     for (const key of [..._wildHallKeys]) if (locationIndex.get(key)?.wildHallDay !== day && !_insideSpawn(key)) { locationIndex.delete(key); _wildHallKeys.delete(key); _locIndexGen += 1; }
   };
-  /** The hall on this pixel today, stood in the index (a clone of a real dungeon - never a graveyard's - on the zone's
-   *  own lane of map ids, always elite, its tier on it), or null. */
-  const wildHallStand = (px, py) => {
-    const hall = wildHallAt(wildActiveNow(), px, py);
-    if (!hall) return null;
-    const key = `${px},${py}`, day = wdunDayNow();
-    const had = locationIndex.get(key);
-    if (had?.wildHallDay === day) return had;
-    _wildHallTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon).filter(wildHallTemplateOk);
-    const template = pickTemplate(_wildHallTemplates, WDUN_SALT, px, py);
-    if (!template) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = synthesizeDungeonLocation(template, { salt: WDUN_SALT, px, py, elite: true, where: {
-      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-    } });
-    loc.wildHall = { ring: hall.ring, key };
-    loc.wildHallDay = day;
-    loc.name = `Elite ${template.name} (${px},${py})`;
-    locationIndex.set(key, loc);
-    _wildHallKeys.add(key);
-    _locIndexGen += 1;
-    return loc;
-  };
+  /** The hall on this pixel today, or null - stood over the session's mask (BOOT-TDZ2: wildHallStandOf, above the pixel
+   *  builder that asks it first). */
+  const wildHallStand = (px, py) => wildHallStandOf(wildMapMask(), px, py);
   /** The halls as the maps' own place rows (ui/heldMap.js marks them as it marks every place - a door in the map's
    *  ink, seen by everyone in the zone, explored or not). */
   const wildHallSummaries = () => (wildActiveNow() ?? []).map((h) => {
@@ -21814,8 +21827,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const until = Date.now() + UNSTUCK_WAIT_MS;
     let el = null;
     if (typeof document !== 'undefined') {
-      el = document.createElement('div');
-      el.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:9999;min-width:260px;padding:8px 12px;background:rgba(10,13,17,0.92);border:1px solid #8f2216;color:#e9e4d9;font:600 13px Georgia,serif;text-align:center;pointer-events:auto';
+      el = document.createElement('div');   // z 30: the HUD's own tier (the gate banner's, the pace box's) - under every window, and under the asset picker (test/mwattach.test.js), never 9999
+      el.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:30;min-width:260px;padding:8px 12px;background:rgba(10,13,17,0.92);border:1px solid #8f2216;color:#e9e4d9;font:600 13px Georgia,serif;text-align:center;pointer-events:auto';
       const label = document.createElement('div'); label.className = 'unstuck-label';
       const track = document.createElement('div'); track.style.cssText = 'height:6px;margin:6px 0;background:#2a1c12';
       const fill = document.createElement('div'); fill.style.cssText = 'height:100%;width:0;background:#b3261a'; track.append(fill);

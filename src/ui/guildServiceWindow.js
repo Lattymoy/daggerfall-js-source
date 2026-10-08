@@ -221,10 +221,10 @@ export class GuildServiceWindow {
       ...(serviceBtn ? [serviceBtn] : []),              // Buttons.None -> no accelerator at all
       'GuildsExit',
     ];
-    if (this.hooks.healCurse && code === HEAL_CURSE_KEY) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return; }   // HEAL-CURSE
+    const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY;   // HEAL-CURSE: the temple's second row, its key H - ahead of every other, and the one sound below (AUDIT 26 D1)
     const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;   // LOOT9: the Reforge's row, its key F - the one sound below
     const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;   // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)
-    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
+    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
     if (hit === null) return;
     // F141 on the KEYBOARD side too: Talk/Service/Exit each play
     // ButtonClick in their OnKeyboardEvent's KeyDown arm (:299, :460,
@@ -242,6 +242,7 @@ export class GuildServiceWindow {
       case 'GuildsExit': this._close(); return;
       case 'Reforge': this._reforge(); return;   // LOOT9
       case 'Lift': this._lift(); return;   // LOOT16
+      case 'HealCurse': this._healCurse(); return;   // HEAL-CURSE
       default: this._service();   // whichever of the nineteen service buttons hit
     }
   }

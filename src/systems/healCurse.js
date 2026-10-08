@@ -31,7 +31,9 @@ export function curseOf(entity) {
   const blood = liveInfections(entity).filter((e) => /vamp|lycan|were/i.test(String(e.key ?? e.infection ?? '')));
   return { vampire: !!liveVampirism(entity), were: !!liveLycanthropy(entity), blood: blood.length };
 }
-export const isCursed = (entity) => { const c = curseOf(entity); return c.vampire || c.were || c.blood > 0; };
+// AUDIT 24 (one home): bearsCurse and healCurseLift, not isCursed and liftCurse - those names are lootRarity.js's and
+// lootCurse.js's, an ITEM's curse (a drawback the temple lifts off a piece); this is the BLOOD's, on the entity
+export const bearsCurse = (entity) => { const c = curseOf(entity); return c.vampire || c.were || c.blood > 0; };
 
 /** The rite's price at this temple: the base through the region's adjustment (per thousand) and the hall's quality. */
 export function healCursePrice({ priceAdjustment = 1000, quality = 10 } = {}) {
@@ -47,7 +49,7 @@ export function healCurseOffer(entity, deps = {}) {
 }
 
 /** The curse lifted (no payment - healCursePaid pays first). Answers what went: `{ vampire, were, blood }`. */
-export function liftCurse(entity, { nowMinutes = 0, advanceMinutes = null, refreshHead = null } = {}) {
+export function healCurseLift(entity, { nowMinutes = 0, advanceMinutes = null, refreshHead = null } = {}) {
   const went = { vampire: false, were: false, blood: 0 };
   for (const e of liveInfections(entity)) {
     if (!/vamp|lycan|were/i.test(String(e.key ?? e.infection ?? ''))) continue;
@@ -66,7 +68,7 @@ export function healCursePaid(entity, deps = {}) {
   if (offer.kind !== 'offer') return { kind: 'none' };
   if (totalGoldAmount(entity) < offer.cost) return { kind: 'notEnoughGold', cost: offer.cost };
   deductGold(entity, offer.cost);
-  return { kind: 'lifted', cost: offer.cost, went: liftCurse(entity, deps) };
+  return { kind: 'lifted', cost: offer.cost, went: healCurseLift(entity, deps) };
 }
 
 /** The priest's words, plain rows the popup stands as a box. */
