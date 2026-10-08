@@ -2841,7 +2841,9 @@ Smaller dungeons row); `tools/mutants/sd20g.json` (24, all dead). RE-AIMED BY CO
 audit24 wave37's law holds every read above `var modes`), `em3mapchoice.json` (`EM3-TRAIL-kept-across-a-new-layout`,
 `EM3-TRAIL-HideAll-keeps-the-trail` - the drops cleared on the same lines). PINS MOVED: `test/wayout1_wayout.test.js` (new cells attached
 at once - the way out along them within the second, the field built once; the build counted by `builds()`, the refield
-every WAY_REFIELD_S; the host hands the drops with the teleporters), `test/tier1_dungeontiers.test.js` (the tier kept by
+every WAY_REFIELD_S; the host hands the drops with the teleporters; and its pins on how many steps are asked hold the
+clock - CI's slower runner spent `WAY_ASK_MS` mid-build and asked the rest in the next aim, 98 for 76, so those pins
+read the count alone, and the clock's pace is `sd20g_delve`'s own), `test/tier1_dungeontiers.test.js` (the tier kept by
 place), `test/playerdeath.test.js` and `test/audit39_dungeonshared.test.js` (the bench's and the world's motor state
 carry the fall), `test/ft1_smallerdungeons.test.js` (the Smaller dungeons row's law), `test/features.test.js` (the
 notes' ceiling, +1).

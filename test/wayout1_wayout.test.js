@@ -27,6 +27,9 @@ function walk(points) {
 /** A corridor of cells along x from x0 to x1 at z, height y. */
 const run = (x0, x1, z = 0, y = 0) => Array.from({ length: Math.abs(x1 - x0) + 1 }, (_, i) => [x0 + Math.sign(x1 - x0) * i + 0.5, y, z + 0.5]);
 const ALL = () => true;
+// AUDIT SD III (D4, PIN MOVED): an aim's asks are paced by WAY_ASK_MS on the real clock too - a pin on how many steps
+// are asked holds the clock, so the count alone paces them (the clock's pace is sd20g_delve's own pin)
+const HELD = { clock: () => 0 };
 
 test('WAYOUT1: the constants', () => {
   assert.equal(WAY_PREF, 'dungeonWayOut');
@@ -236,7 +239,7 @@ test('AUDIT DELVE C4/C9: the reader - over the way in but a storey up is not the
   const wall = (p, q) => Math.floor(p[2]) === Math.floor(q[2]) || (p[0] > 19 && q[0] > 19);   // only at x 20 do they join
   let asks = 0;
   const counted = (p, q) => { asks++; return wall(p, q); };
-  const cutter = createWayOut();
+  const cutter = createWayOut(HELD);
   const aim = cutter.aim(pair, null, exitAt, [3.5, 0, 1.5], ALL, 0, counted);
   assert.equal(aim[1], 1.5, 'the mark runs down the player\'s own corridor, not through the wall');
   assert.ok(aim[0] > 3.5, 'toward the far end where the two join');
@@ -254,7 +257,7 @@ test('AUDIT DELVE C4/C9: the reader - over the way in but a storey up is not the
   assert.equal(stepHitCuts(0.9, 1), false, 'and at the far end');
   assert.equal(stepHitCuts(0.7, Math.SQRT2), true, 'a diagonal step\'s middle');
   assert.equal(stepHitCuts(Infinity, 1), false, 'nothing met');
-  const few = createWayOut({ stepAsks: 10 });
+  const few = createWayOut({ ...HELD, stepAsks: 10 });
   assert.equal(few.aim(pair, null, exitAt, [3.5, 0, 1.5], ALL, 0, wall)[1], 0.5, 'ten asks: the far steps not yet asked, taken as clear');
   let t = 0, last = null;
   for (let k = 0; k < 40; k++) last = few.aim(pair, null, exitAt, [3.5, 0, 1.5], ALL, t += 1, wall);
@@ -264,7 +267,7 @@ test('AUDIT DELVE C4/C9: the reader - over the way in but a storey up is not the
 test('AUDIT DELVE B2: the field is built again only when the player stands off it, or every WAY_REFIELD_S while the trail grows under a player on it', () => {
   const trail = walk(run(0, 20));
   const exitAt = [0.5, 0, 0.5];
-  const w = createWayOut();
+  const w = createWayOut(HELD);
   let asks = 0;
   const clear = () => { asks++; return true; };   // a build asks the new steps: the count says when one ran
   w.aim(trail, null, exitAt, [20.5, 0, 0.5], ALL, 0, clear);
