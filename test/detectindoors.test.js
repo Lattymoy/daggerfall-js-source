@@ -155,7 +155,7 @@ test('DT1: all four hosts name their kinds to the one walk', () => {
     'the join has ONE home in this host');
   // the dungeon: the RDB piles, the player’s drops, and its foes
   const dFeed = feed(d, 'const detectFeed = createDetectFeed');
-  assert.match(dFeed, /piles: \[\.\.\.lootPiles, \.\.\.droppedLoot\._piles\], foes \}/);
+  assert.match(dFeed, /piles: \[\.\.\.lootPiles, \.\.\.droppedLoot\._piles\], foes, searched: searchables \}/);   // DETECT-FINDS (the delve arc): and a searched object's find
   // the two exterior hosts
   assert.match(feed(w, 'const detectFeed = createDetectFeed'),
     /nearbyLootRecords\(\{ piles: droppedLoot\._piles, foes: exteriorFoePool\(\) \}\)/);

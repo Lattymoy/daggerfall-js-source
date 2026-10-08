@@ -1,0 +1,246 @@
+[
+  {
+    "name": "SD8B-an-echo-past-the-second",
+    "file": "src/net/wire.js",
+    "old": "if (m.k === 'ehit') return intIn(m.e, 0, SD_ECHOES - 1) ?",
+    "new": "if (m.k === 'ehit') return intIn(m.e, 0, SD_ECHOES) ?",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-heart-past-the-eighth",
+    "file": "src/net/wire.js",
+    "old": "if (m.k === 'xhit') return intIn(m.c, 0, SD_HEARTS_MAX - 1) ?",
+    "new": "if (m.k === 'xhit') return intIn(m.c, 0, SD_HEARTS_MAX) ?",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-hours-blow-from-a-body",
+    "file": "src/net/wire.js",
+    "old": "if ((m.clk != null && (!clk || clk.b !== SD_BODIES - 1))",
+    "new": "if ((m.clk != null && !clk)",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-bodys-blow-not-its-own",
+    "file": "src/net/wire.js",
+    "old": "  if ((B.mv != null && !mv) || (B.atk != null && (!atk || atk.b !== b))) return null;",
+    "new": "  if ((B.mv != null && !mv) || (B.atk != null && !atk)) return null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-hour-walks",
+    "file": "src/net/wire.js",
+    "old": "case 'mv': { const mv = intIn(m.b, 0, SD_BODIES - 2) ? sdMove(m) : null;",
+    "new": "case 'mv': { const mv = intIn(m.b, 0, SD_BODIES - 1) ? sdMove(m) : null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-echoes-unbounded",
+    "file": "src/net/wire.js",
+    "old": "        if (!Array.isArray(m.ec) || m.ec.length !== SD_ECHOES) return null;",
+    "new": "        if (!Array.isArray(m.ec)) return null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-stun-ended-before-it-began",
+    "file": "src/net/wire.js",
+    "old": "intIn(m.c, 0, SD_HEARTS_MAX - 1) && typeof m.n === 'string' && gateMs(m.at) ? { k: 'cxb', i: m.i, c: m.c, n: sanitizeName(m.n), at: m.at } : null;\n    case 'stun': return gateMs(m.at) && gateMs(m.until) && m.until > m.at ?",
+    "new": "intIn(m.c, 0, SD_HEARTS_MAX - 1) && typeof m.n === 'string' && gateMs(m.at) ? { k: 'cxb', i: m.i, c: m.c, n: sanitizeName(m.n), at: m.at } : null;\n    case 'stun': return gateMs(m.at) && gateMs(m.until) ?",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-any-refusal-word",
+    "file": "src/net/wire.js",
+    "old": "    case 'no': return SD_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;",
+    "new": "    case 'no': return typeof m.m === 'string' ? { k: 'no', m: m.m } : null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-volley-unbounded",
+    "file": "src/net/wire.js",
+    "old": "|| !Array.isArray(a.tg) || a.tg.length > SD_TARGETS_MAX) return null;",
+    "new": "|| !Array.isArray(a.tg) || a.tg.length > 99) return null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-record-swallowed",
+    "file": "src/net/wire.js",
+    "old": "  if (m.k !== 'ev') return validSdFightOut(m);   // SD8b: the realm's fight",
+    "new": "  return validSdFightOut(m);   // SD8b: the realm's fight",
+    "tests": [
+      "test/sd8b_fight.test.js",
+      "test/sd3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-in-from-anywhere",
+    "file": "server/src/index.js",
+    "old": "      if (!inArena(at.x, at.z, SD_ARENA_SLACK)) return;   // from the arena alone (AUDIT SD II, L4 C2: never the Steps)",
+    "new": "      if (false) return;   // from the arena alone (AUDIT SD II, L4 C2: never the Steps)",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-an-older-brain-let-in",
+    "file": "server/src/index.js",
+    "old": "      if (!(m.bv >= SD_BRAIN_MIN)) { no(SD_NO_WORDS[3]); return; }",
+    "new": "      if (false) { no(SD_NO_WORDS[3]); return; }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-hour-not-asked",
+    "file": "server/src/index.js",
+    "old": "      if (!rec || rec.s !== s || !sdHolds(rec, now)) { no(SD_NO_WORDS[0]); return; }",
+    "new": "      if (false) { no(SD_NO_WORDS[0]); return; }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-lost-fight-kept",
+    "file": "server/src/index.js",
+    "old": "      const fresh = !f || f.lost || now - f.lastTickAt >= SD_LOST_MS;",
+    "new": "      const fresh = !f;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-number-not-moved",
+    "file": "server/src/index.js",
+    "old": "newRemnantFight(s, (f?.fi ?? 0) + 1, now, sdMarksOf(s));",
+    "new": "newRemnantFight(s, 1, now, sdMarksOf(s));",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-dead-strike",
+    "file": "server/src/index.js",
+    "old": "    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;",
+    "new": "    const pose = a.pose ? this._arenaPoseOf(a.pose) : null;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-blow-before-in-not-junk",
+    "file": "server/src/index.js",
+    "old": "    if (!f || !f.players[a.sub]) { this._junk(ws); return; }\n    // AUDIT SD: no blow lands once the Hour no longer holds its slot",
+    "new": "    if (!f) { this._junk(ws); return; }\n    // AUDIT SD: no blow lands once the Hour no longer holds its slot",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-no-beat",
+    "file": "server/src/index.js",
+    "old": "    if (here && !f.fell && !f.lost) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }",
+    "new": "    if (false) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-fall-unsaid",
+    "file": "server/src/index.js",
+    "old": "    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n",
+    "new": "",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-hub-not-told-at-once",
+    "file": "server/src/index.js",
+    "old": "    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }\n    await this._sdTellFellOnce(f, now);",
+    "new": "    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-hubs-record-left-standing",
+    "file": "server/src/index.js",
+    "old": "      if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
+    "new": "      if (false) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-a-newcomer-after-the-kill",
+    "file": "server/src/index.js",
+    "old": "    if (f?.fell) return SD_NO_CLOSED;",
+    "new": "    if (false) return SD_NO_CLOSED;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-no-fight-at-the-hello",
+    "file": "server/src/index.js",
+    "old": "    if (!sf || sf.lost || sf.s !== s) return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-fight-unkept",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(SD_FIGHT_KEY, f);\n",
+    "new": "",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-no-brain-said",
+    "file": "src/net/online.js",
+    "old": "sendSdIn(lv) { return this._sdFightSend(validSdIn({ k: 'in', lv, bv: SD_BRAIN_V })); }",
+    "new": "sendSdIn(lv) { return this._sdFightSend(validSdIn({ k: 'in', lv })); }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-the-fight-heard-from-anywhere",
+    "file": "src/net/online.js",
+    "old": "else if (r && r.k !== 'ev') { if (room === this.room && isSdRoom(room)) this._deliver('sd', () => this.onSdFight?.(r, room)); }",
+    "new": "else if (r && r.k !== 'ev') { this._deliver('sd', () => this.onSdFight?.(r, room)); }",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD8B-no-bucket",
+    "file": "src/net/online.js",
+    "old": "    const gate = sdFightGate(this._sdFightBucket, this._now());\n    if (!gate.pass) return false;",
+    "new": "    const gate = sdFightGate(this._sdFightBucket, this._now());\n    if (false) return false;",
+    "tests": [
+      "test/sd8b_fight.test.js"
+    ]
+  }
+]

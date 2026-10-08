@@ -1,0 +1,308 @@
+[
+  {
+    "name": "SD19-the-air-never-thins",
+    "file": "src/systems/sdOmen.js",
+    "old": "export const sdAirNear = (d) => (Number.isFinite(d) ? 1 - smooth(SD_AIR.fullM, SD_AIR.edgeM, d) : 0);",
+    "new": "export const sdAirNear = (d) => (Number.isFinite(d) ? 1 : 0);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-air-everywhere",
+    "file": "src/systems/sdOmen.js",
+    "old": "export const sdAirNear = (d) => (Number.isFinite(d) ? 1 - smooth(SD_AIR.fullM, SD_AIR.edgeM, d) : 0);",
+    "new": "export const sdAirNear = (d) => (Number.isFinite(d) ? 1 - smooth(SD_AIR.fullM, SD_AIR.edgeM, d) : 1);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-no-dusk",
+    "file": "src/systems/sdOmen.js",
+    "old": "  return SD_AIR.base + (1 - SD_AIR.base) * k;\n",
+    "new": "  return SD_AIR.base;\n",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-day-unwrapped",
+    "file": "src/systems/sdOmen.js",
+    "old": "const m = ((Number(minute) || 0) % 1440 + 1440) % 1440, dm = Math.abs(((m - SD_AIR.duskAt + 720) % 1440 + 1440) % 1440 - 720);",
+    "new": "const m = Number(minute) || 0, dm = Math.abs(m - SD_AIR.duskAt);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-dusk-edge-hard",
+    "file": "src/systems/sdOmen.js",
+    "old": "const k = dm >= SD_AIR.duskHalf ? 0 : 0.5 + 0.5 * Math.cos((Math.PI * dm) / SD_AIR.duskHalf);",
+    "new": "const k = dm >= SD_AIR.duskHalf ? 0 : 1;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-weight-unlit",
+    "file": "src/systems/sdOmen.js",
+    "old": "SD_AIR.max * clamp01(light) * sdAirNear(d) * sdAirDusk(minute);",
+    "new": "SD_AIR.max * sdAirNear(d) * sdAirDusk(minute);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-weight-unbounded",
+    "file": "src/systems/sdOmen.js",
+    "old": "SD_AIR.max * clamp01(light) * sdAirNear(d) * sdAirDusk(minute);",
+    "new": "SD_AIR.max * light * sdAirNear(d) * sdAirDusk(minute);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-grade-one-brass",
+    "file": "src/world/sdBrassSky.js",
+    "old": "const [a, b, f] = l < s1.at ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))] : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];",
+    "new": "const [a, b, f] = [s1.color, s1.color, 0];",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-grade-unweighted",
+    "file": "src/world/sdBrassSky.js",
+    "old": "  return [0, 1, 2].map((i) => rgb[i] + (a[i] + (b[i] - a[i]) * f - rgb[i]) * k);",
+    "new": "  return [0, 1, 2].map((i) => a[i] + (b[i] - a[i]) * f);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-grade-in-place",
+    "file": "src/world/sdBrassSky.js",
+    "old": "  if (k === 0) return [rgb[0], rgb[1], rgb[2]];",
+    "new": "  if (k === 0) return rgb;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-light-untinted",
+    "file": "src/systems/sdOmen.js",
+    "old": "rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))",
+    "new": "rgb[i]",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-banner-nameless",
+    "file": "src/systems/sdOmen.js",
+    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "new": "`An Abyss Dungeon${w ? ` - ${w}` : ''}`",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-banner-stateless",
+    "file": "src/systems/sdOmen.js",
+    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "new": "`${name || 'An Abyss Dungeon'}`",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-the-marks-line-one-omen",
+    "file": "src/systems/sdOmen.js",
+    "old": "under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
+    "new": "under ${sdNameIn(O[0].name)}.",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-sky-brass-unclamped",
+    "file": "src/scenes/shared.js",
+    "old": "      brassW = Math.max(0, Math.min(1, Number(w) || 0));",
+    "new": "      brassW = Number(w) || 0;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-sky-haze-unbrassed",
+    "file": "src/scenes/shared.js",
+    "old": "      return brassW > 0 ? sdBrassGrade(d, brassW) : d;",
+    "new": "      return d;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-air-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if (!o?.hollow?.site || (modes?.mode ?? 'exterior') !== 'exterior' || !eye) return 0;",
+    "new": "    if (!o?.hollow?.site || !eye) return 0;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-air-at-the-origin",
+    "file": "src/scenes/world.js",
+    "old": "    return sdAirWeight(o.light, Math.hypot(eye[0] - x, eye[2] - z), minuteNow);",
+    "new": "    return sdAirWeight(o.light, Math.hypot(x, z), minuteNow);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-sky-never-told",
+    "file": "src/scenes/world.js",
+    "old": "    sky.setBrass?.(sdAirW);\n",
+    "new": "",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-key-unleaned",
+    "file": "src/scenes/world.js",
+    "old": "sdBrassLight(sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW));",
+    "new": "sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil));",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-banner-from-afar",
+    "file": "src/scenes/world.js",
+    "old": "    if (Math.hypot(f[0] - x, f[2] - z) > SD_BANNER_M) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-banner-once-gone",
+    "file": "src/scenes/world.js",
+    "old": "    if (!['risen', 'found', 'fell'].includes(sdHost.phase())) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-card-after-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "card: sdHost.phase() === 'fell' ? null : sdMarksCardModel(",
+    "new": "card: false ? null : sdMarksCardModel(",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-door-over-the-gate",
+    "file": "src/scenes/world.js",
+    "old": "    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });",
+    "new": "    drawGateBanner(sb?.text ?? _gateBannerWish ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-presence-never-framed",
+    "file": "src/scenes/world.js",
+    "old": "    if (gatePool || sdHost) presenceFrame();",
+    "new": "    if (gatePool) presenceFrame();",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-world-banner-follows-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);",
+    "new": "    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-card-gate-fades",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  if (mode !== 'gate') {\n",
+    "new": "  if (true) {\n",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-host-marks-unsaid",
+    "file": "src/scenes/sdHost.js",
+    "old": "const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }",
+    "new": "}",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-host-hour-while-risen",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (phase === 'found' && rec && hourSaidS !== rec.s &&",
+    "new": "    if ((phase === 'found' || phase === 'risen') && rec && hourSaidS !== rec.s &&",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-host-hour-any-time",
+    "file": "src/scenes/sdHost.js",
+    "old": "rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {",
+    "new": "rec.until > t) {",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-host-hour-every-frame",
+    "file": "src/scenes/sdHost.js",
+    "old": "{ hourSaidS = rec.s; say(sdHourLine(",
+    "new": "{ say(sdHourLine(",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-host-hour-unplaced",
+    "file": "src/scenes/sdHost.js",
+    "old": "      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s;",
+    "new": "      { hourSaidS = rec.s;",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-timers-no-next",
+    "file": "src/systems/eventTimers.js",
+    "old": "  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(",
+    "new": "  else if (false) coming(",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD19-timers-next-forever",
+    "file": "src/systems/eventTimers.js",
+    "old": "Number.isFinite(sdRec?.next) && sdRec.next > now) coming(",
+    "new": "Number.isFinite(sdRec?.next)) coming(",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  }
+]

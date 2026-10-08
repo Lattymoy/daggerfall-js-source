@@ -117,7 +117,7 @@ test('RVN7d THE STAND: asked once a visit, the first frame I stand there; this d
   assert.match(D, /if \(playerFeet && !_lairAsked\) \{ _lairAsked = true; standLairRevenant\(\)\.catch\(\(\) => null\); \}/);
   assert.match(D, /let _lairAsked = false;/);
   assert.match(D, /const r = revenantForLair\(playerEntity, lairPixel\(\)\);/);
-  assert.match(D, /const far = from && marks\.length \? marks\.reduce\(\(a, m\) => \(Math\.hypot\(m\.x - from\.x, m\.z - from\.z\) > Math\.hypot\(a\.x - from\.x, a\.z - from\.z\) \? m : a\)\) : marks\[0\] \?\? null;/);
+  assert.match(D, /const far = dungeonEndOf\(from, marks\);/);   // SD4b (PIN MOVED): the farthest-marker law lifted to world/dungeonEnd.js, where a Super dungeon's Rift reads it too - its behaviour pinned there (test/sd4b_rift.test.js)
   assert.match(D, /const from = dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null;/);
   assert.match(D, /const f = await spawnLooseFoe\(r\.mobileType, \[sp\.x, sp\.y, sp\.z\], \{ gender: so\.gender, level: so\.level, revenant: r, lairStand: true \}\)\.catch\(\(\) => null\);\n\s*if \(!f \|\| !f\.entity\?\.revenant\) \{ releaseRevenantStand\(r\); return null; \}/);
   assert.match(D, /f\._lairStand = true;\n\s*if \(f\.ai\) \{ f\.ai\.detected = false; f\.ai\.target = null; \}   \/\/ found resting/);

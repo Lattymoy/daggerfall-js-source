@@ -479,7 +479,7 @@ export function constrainMove(from, to, halfW, h, rayHit) {
  *  Rare-or-better item's own picture (scenes/lootLines.js, WBX3's form), and a Magic-or-better picture wears its tier's
  *  rim - the port's own, the foes' tell outline (systems/hitFlash.js setBatchGlint) in the tier's colour - stronger up
  *  the ladder. The body's own playRareDrop chimed at the kill; its items do not chime again. The mod draws no rarity. */
-export const PI_RIM = Object.freeze({ magic: 0.3, rare: 0.45, legendary: 0.6, aetheric: 0.7, artifact: 0.7 });
+export const PI_RIM = Object.freeze({ magic: 0.3, rare: 0.45, legendary: 0.6, aetheric: 0.7, artifact: 0.7, gilded: 0.8 });
 /** The rim an item wears - `[r, g, b, strength]` - or null (Common, or the rarity row off). */
 export function rarityRim(item) {
   if (!lootRarityOn()) return null;

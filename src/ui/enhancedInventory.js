@@ -3104,7 +3104,7 @@ function itemActs(picked, side, { qty = true } = {}) {
   }
   // LOOT9 (the Loot arc): a laddered piece SALVAGED into Welkynd Shards (systems/reforge.js) - the Reforge's coin - asked
   // first, as the dismantle is; never a worn one (taken off first), and a piece that will never break shows no button
-  if (side === 'local' && !line.equipped && salvageShards(picked) > 0 && !['off', 'aetheric', 'artifact', 'quest', 'bound'].includes(salvageRefusal(picked) ?? '')) {
+  if (side === 'local' && !line.equipped && salvageShards(picked) > 0 && !['off', 'aetheric', 'gilded', 'artifact', 'quest', 'bound'].includes(salvageRefusal(picked) ?? '')) {
     const v = el('button', 'act', 'Salvage');
     v.onclick = () => askSalvage(picked);
     acts.append(v);

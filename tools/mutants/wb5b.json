@@ -184,8 +184,8 @@
   {
     "name": "WB5b-the-gates-dropped-off-the-record",
     "file": "src/net/duelRecord.js",
-    "old": "{ wins: d.wins, losses: d.losses, ...gates } : null;",
-    "new": "{ wins: d.wins, losses: d.losses } : null;",
+    "old": "{ wins: d.wins, losses: d.losses, ...gates, ...more } : null;",
+    "new": "{ wins: d.wins, losses: d.losses, ...more } : null;",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]

@@ -45,7 +45,7 @@ function liftWorld(s) {
           collider, csaRuntime, csaOn, raycastColliders, RAY_DISTANCE, csaActivationModelOf, bedSleepingOn, csaCustomModelOf, BED_MODELS, CSA_TRIGGER_MODEL,
           getInteractionMode, DEFAULT_ACTIVATION_DISTANCE, CSA_ACTIVATION_DISTANCE, csaAboard, csaPeerActivate, toggleRest, _restFromBed, plaqueActionFor,
           csaBoatVerb, hasSailingCabin, csaOpenBoatMenu, csaCall, worldPlaqueOn, renderer, csaDrawParticlesOpaque, csaDrawParticlesBlended,
-          remotePlayers, peerRiders, peerWalkers, gateCourt, arenaBouts, cam } = s;
+          remotePlayers, peerRiders, peerWalkers, gateCourt, sdSpoilsPool, arenaBouts, cam } = s;   // SD9e: and the Brass Remnant's spoils (PIN MOVED)
     ${cutLine('  const _csaBuckets = new Map();')}${cutLine('  const csaBoatId = (boat) =>')}
     ${cut('  const csaShapeOf = (c) =>', ');\n')}${cutLine('  const CSA_RIGID_EPS =')}${cut('  function csaCarry(b, m) {')}
     ${cut('  function csaSyncColliders() {')}

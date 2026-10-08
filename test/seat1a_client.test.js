@@ -273,6 +273,6 @@ test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\
   assert.match(w, /const hung = bannersHung\(\);/);
   assert.match(w, /const seatCmd = parseSeatCommand\(text\);/);
   assert.match(src('src/ui/heldMap.js'), /seatAt: \(s\) => this\.deps\.seatAt\?\.\(s\) \?\? null,/);
-  assert.match(src('src/ui/heldMap.js'), /const hubRows = \[\.\.\.\(hub \? \[hubTitle\(hub\)\] : \[\]\), \.\.\.\(seat \? \[seatInfoLine\(seat, seat\.holder\?\.guild \?\? null\)\] : \[\]\)\];/);   // PIN MOVED (FIELD BUGS 2026-10-04e SEAT-TIP): the holder named
+  assert.match(src('src/ui/heldMap.js'), /const hubRows = \[\.\.\.\(hub \? \[hubTitle\(hub\)\] : \[\]\), \.\.\.\(seat \? \[seatInfoLine\(seat, seat\.holder\?\.guild \?\? null\)\] : \[\]\), \.\.\.\(tier \? \[tier\] : \[\]\)\];/);   // PIN MOVED (FIELD BUGS 2026-10-04e SEAT-TIP): the holder named; PIN MOVED (TIER1): a dungeon's tier after it
   for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) assert.doesNotMatch(src(f), /seatBook|createSeatBanners|deriveTownSeats/, `${f}: no seat there`);
 });

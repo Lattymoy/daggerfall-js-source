@@ -20,8 +20,8 @@
   {
     "name": "LOOT5-any-tier-wakes-it",
     "file": "src/systems/lootPowers.js",
-    "old": "const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null];",
-    "new": "const powerIds = (it) => [it?.legendary, it?.rarity === 'rare' ? it.imprint : null];",
+    "old": "const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
+    "new": "const powerIds = (it) => [it?.legendary, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
     "tests": [
       "test/loot5_powers.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "LOOT5-the-card-silent",
     "file": "src/systems/lootRarity.js",
-    "old": "  { const p = item.legendary ? powerOf(item.legendary) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief\n",
+    "old": "  { const p = item.legendary ? powerOf(item.legendary) : item.gilded ? powerOf(item.gilded) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief - GILDED1: a Gilded record's too\n",
     "new": "\n",
     "tests": [
       "test/loot5_powers.test.js"

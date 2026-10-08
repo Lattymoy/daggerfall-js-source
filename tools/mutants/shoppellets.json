@@ -1,0 +1,65 @@
+[
+  {
+    "name": "SHOP-PELLETS-the-weight-of-weapons-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(SHOP_PELLETS_MAX * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(SHOP_PELLETS_MAX * (chance > 0 ? 1 : most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-quality-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(SHOP_PELLETS_MAX * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(SHOP_PELLETS_MAX * (chance / most) * (q > 0 ? 1 : 0.5)));",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-a-shop-without-weapons",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (!(chance > 0)) return 0;\n  const most",
+    "new": "  if (!(chance > 0)) chance = 10;\n  const most",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-every-shelf",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
+    "new": "  if (shelfIndex >= 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-a-roll-drawn",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
+    "new": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n + Math.floor(rolls() * 0))); }",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-before-dfus-draws",
+    "file": "src/systems/shopStock.js",
+    "old": "  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];\n",
+    "new": "  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];\n  if (shelfIndex === 0 && shopPelletStack(buildingType, quality) > 0) items.push(createPellets(1));\n",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-PELLETS-the-stack-not-merged",
+    "file": "src/systems/shopStock.js",
+    "old": "if (n > 0) addItem(items, createPellets(n)); }",
+    "new": "if (n > 0) addItem(items, { ...createPellets(n), material: 1 }); }",
+    "tests": [
+      "test/shoppellets.test.js"
+    ]
+  }
+]

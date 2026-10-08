@@ -268,6 +268,12 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
+import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { sdMarksOf } from '../../src/net/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
+import { orreryOf, orreryStep, orreryLit, orreryFresh, orreryTurn, orreryShortest, orreryRightsFresh, orreryTurnerOf, orreryMayTurn, orreryTurned, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
+import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS, SD_POSE_FRESH_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
+import { mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S } from '../../src/net/sdReceipt.js';   // SD9a: the Hour's receipt - minted at the Remnant's fall, kept by the hub
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -316,6 +322,41 @@ const riteHelpersBy = (r, d, site) => {
 /** A kept rite record's shape (a cell's ledger or the hub's day): `{ d, c: { 'px,py': circle } }`. */
 const riteRecordOk = (v) => !!v && typeof v === 'object' && Number.isSafeInteger(v.d) && !!v.c && typeof v.c === 'object' && !Array.isArray(v.c);
 
+/** SD3: how long a realm keeps the hub's answer of its record before it asks again (a hello storm asks once), how soon a
+ *  hub beat that failed tries again, and how many region channels the census asks at once (each with its own deadline,
+ *  so a call the runtime queues behind others never times out unasked). */
+const SD_LIVE_FRESH_MS = 10_000;
+const SD_BEAT_RETRY_MS = 60_000;
+const SD_CENSUS_BATCH = 6;
+/** AUDIT SD II (L3 F2, L7 M5): a realm whose ask of the hub went unanswered asks again no sooner than this (every frame
+ *  asked again while the hub struggled - a full realm's 4,096 asks a second into the one object every tab holds), and
+ *  keeps the last answer it had this long through the misses (its phases are its own instants: it says itself when the
+ *  Hour no longer holds). */
+const SD_LIVE_MISS_MS = 2_000;
+const SD_LIVE_KEEP_MS = 5 * 60_000;
+/** AUDIT SD II (L7 M4): how long a cell believes the hub's last word on which slot its record holds - it tells no other
+ *  slot's find meanwhile (well inside the two hours between one Hollow's end and the next one's rise). */
+const SD_FIND_KNOWN_MS = 10 * 60_000;
+/** AUDIT SD II (L7 M3): how many of a realm's SD_FIGHTERS_MAX seats guests may hold at once (the census's law: a guest is
+ *  one click - 256 idle guest sockets held the Hour full for as long as they liked). */
+const SD_GUEST_SEATS = 64;
+/** AUDIT SD II (L7 H2): how often a refused turner is told so (its socket's own; the presses between are nothing). */
+const SD_PZ_WAIT_SAY_MS = 4_000;
+/** SD3: the hub's record of the Super dungeon, asked of the hub - the Worker's gate for a realm's key and the realm's own
+ *  hello read the same answer. Null when the hub does not answer in time: no realm is minted, and nobody admitted, on a
+ *  guess. */
+async function sdLiveAsk(rooms, s) {
+  if (!rooms?.idFromName || !rooms?.get) return null;
+  try {
+    const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_LIVE}`, { method: 'POST', body: JSON.stringify({ s }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+    if (!res?.ok) return undefined;   // AUDIT SD: no answer is not "no record" - the hub busy or away, asked again
+    return validSdRecord((await res.json())?.rec);
+  } catch (e) { console.warn('[sd] live', e?.message ?? e); return undefined; }
+}
+/** AUDIT SD: a realm's refusal while the hub does not answer - the hello's busy close, which the page tries again (never
+ *  "The Hour has closed.", which is for good: a deploy's hello storm cast fighters out mid-fight). */
+const SD_NO_BUSY = 'busy';
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -335,7 +376,13 @@ export default {
     // ARENA4b: an exhibition's room stands only for an hour the shared clock is in or has kept (the gate's law for a
     // key a client could otherwise mint at will: `arena:x<any hour>`)
     if (isArenaExhibitionRoom(key) && !exhibitionAdmits(arenaExhibitionHourOf(key), sharedClassicMinutes(Date.now()))) return json({ error: 'no such bout' }, 404);
+    // SD3: a Super dungeon's realm is `sd:<slot>` and nothing else (the keys the hub mints - net/sdLaw.js sdRoomKey)
+    if (key.startsWith('sd:') && !isSdRoom(key)) return json({ error: 'no such room' }, 404);
     if (String(request.headers.get('Upgrade') ?? '').toLowerCase() !== 'websocket') return json({ error: 'websocket only' }, 426);
+    // SD3: and it stands only while the hub's record holds its slot - found, or fallen and collapsing (the gate's law, read
+    // from the hub, after the socket's own check so no other request asks it): no object is minted for a slot the hub
+    // never raised, nor for one gone
+    if (isSdRoom(key)) { const s = sdSlotOfRoom(key); const rec = await sdLiveAsk(env.ROOMS, s); if (!(rec && rec.s === s && sdHolds(rec, Date.now()))) return json({ error: 'the Hour has closed' }, 404); }
     const id = env.ROOMS.idFromName(key);
     return env.ROOMS.get(id).fetch(request);
   },
@@ -456,6 +503,7 @@ export class Room {
     this._secrets = new Bounded(HUB_KEEP_MAX);
     this._asecrets = new Bounded(HUB_KEEP_MAX);   // SCALE2b: the hub's account id -> profile secret (null: none), read once and kept
     this._noGateRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: accounts the hub holds no gate receipt for (dropped whole when one is written)
+    this._noSdRcpt = new Bounded(HUB_KEEP_MAX);   // SD9a: and no Hour receipt (dropped whole when one is written)
     this._noRaidRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: and no raid receipts
     this._worldMemo = undefined;   // SCALE2b: the stored world, raw, as `_worldRaw` read it (undefined: not read this wake)
     this._parks = null;            // SCALE2b: a cell's parked teams, key -> record - a promise of the one list a wake
@@ -547,6 +595,10 @@ export class Room {
     if (path === RITE_INTERNAL_DAY) return this._riteDayInternal(request);   // WB12d: a breach's room asking the hub for the rite's helpers
     if (path === ARENA_INTERNAL_OPEN) return this._arenaOpenInternal(request);   // ARENA4: the hall opening a matched bout's room
     if (path === ARENA_INTERNAL_LIVE) return this._arenaLiveInternal(request);   // ARENA4: a bout telling the hall it stands (or is done)
+    if (path === SD_INTERNAL_CENSUS) return this._sdCensusInternal();   // SD3: the hub asking a region's channel how many stand in it
+    if (path === SD_INTERNAL_FOUND) return this._sdFoundInternal(request);   // SD3: a cell telling the hub a Hollow found
+    if (path === SD_INTERNAL_LIVE) return this._sdLiveInternal();   // SD3: the Worker or a realm asking the hub its record
+    if (path === SD_INTERNAL_FELL) return this._sdFellInternal(request);   // SD8b: a realm telling the hub its Remnant fell
     const key = roomOf(new URL(request.url).pathname);
     if (!key || (key.startsWith('owned:') && !privateInteriorOf(key))) return json({ error: 'no such private room' }, 404);
     // AUDIT WB A1: A SEAT IS A HELLO'S. A socket that opened and never said hello kept its seat for as long as it stood
@@ -1078,7 +1130,7 @@ export class Room {
    *  drain, re-armed by every later one - unless someone is in the room when it fires: a world parked in a room
    *  nobody plays would cost storage for ever, and the rooms a client can name are many. */
   async alarm() {
-    if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); await this._heraldBeat(Date.now()); await this._serpentHeraldBeat(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room; DISCORD-GATES: and its herald's posts; SERPENT2: and the serpent's
+    if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); await this._heraldBeat(Date.now()); await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room; DISCORD-GATES: and its herald's posts; SERPENT2: and the serpent's; SD3: and the Super dungeon's director
     // AUDIT 68 X8-park-registry-unbounded: an owner's registry (HCC-PARK) is one object per account and character a
     // client names - its word goes PARK_TTL_MS after it was said, as the cell's record it points at does
     const reg = await this.state.storage.get('reg');
@@ -1086,6 +1138,7 @@ export class Room {
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
+    if (await this._sdFightTick()) return;   // SD8b: a realm's alarm is its Remnant's beat while its fight lives
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
@@ -1102,7 +1155,8 @@ export class Room {
   /** The alarm's duties past the boss rooms' beats: a rite's tell to its hub, a cell's raids, a world room's forgetting. */
   async _alarmRest() {
     const riteDue = await this._riteTellHub(Date.now());   // WB12d: a broken rite its hub has not heard (AUDIT BROKER-CAGE R4: not riteOwed - that is the circle's own test)
-    if (await this._raidSweep(Date.now())) { if (riteDue) await this._riteArm(Date.now() + RITE_TELL_RETRY_MS); return; }   // RAID3: a cell's alarm is its raids' ends, and a cleanse its hub has not heard - never past the rite's retry
+    const sdOwed = await this._sdTellHub(Date.now());   // SD3: a Hollow found its hub has not heard
+    if (await this._raidSweep(Date.now())) { if (riteDue) await this._riteArm(Date.now() + RITE_TELL_RETRY_MS); if (sdOwed) await this._sdCellArm(Date.now() + SD_TELL_RETRY_MS); return; }   // RAID3: a cell's alarm is its raids' ends, and a cleanse its hub has not heard - never past the rite's retry, nor a find's
     for (const [, b] of this._all()) if (b.id) return;
     const m = await this.state.storage.list({ prefix: 'world:' });
     const dead = [...m.keys()];
@@ -1116,7 +1170,7 @@ export class Room {
    *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
    *  ACCOUNT_SWEEP_MS later from the start. */
   async _sweepHub(now) {
-    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc']));   // AUDIT WBX2 M9: one read
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc']));   // AUDIT WBX2 M9: one read
     const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null, gcur = cur.get('sweep:gaterc') ?? null, rcur = cur.get('sweep:raidrc') ?? null, scur = cur.get('sweep:serpentrc') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
     const dead = [], idle = []; let alast = null;
@@ -1145,9 +1199,14 @@ export class Room {
     const src = await this.state.storage.list({ prefix: SERPENT_RC_PREFIX, limit: SWEEP_PAGE, ...(scur ? { startAfter: scur } : {}) });
     let slast = null;
     for (const [k, r] of src) { slast = k; if (!r || typeof r !== 'object' || !(Number.isFinite(r.e) && now < r.e * 1000)) dead.push(k); }
+    // SD9a: and an Hour receipt (or its spent mark) kept for an account that never came back, once it has expired
+    const dcur = cur.get('sweep:sdrc') ?? null;
+    const drc = await this.state.storage.list({ prefix: SD_RC_PREFIX, limit: SWEEP_PAGE, ...(dcur ? { startAfter: dcur } : {}) });
+    let dlast = null;
+    for (const [k, v] of drc) { dlast = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
     for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
-    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE;
-    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null });
+    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null });
     await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
@@ -1395,8 +1454,13 @@ export class Room {
       // after ARENA_GONE_MS). A floor room's gate is spent after the token, by account, as a battle's (`_battleHelloGate`):
       // the session's members and the bout's fighters wait on themselves alone, everyone else on the stands' bucket
       const floor = isArenaFloorRoom(a.key);
+      // AUDIT SD II (L7 M1): AND A SUPER DUNGEON'S REALM NEITHER - forty junk tokens a second (the right shape, refused at
+      // their version) kept a fighter whose socket blinked out of her own fight for good (0 of 60 tries admitted), and
+      // every newcomer with her. A realm's gate is spent after the token, by account (`_battleHelloGate`): an account the
+      // realm has admitted before waits on itself alone, a newcomer on the room's bucket too
+      const realmRoom = isSdRoom(a.key);
       let gate = null;
-      if (!battle && !floor) {
+      if (!battle && !floor && !realmRoom) {
         // the room's hello gate (A6): a storm is 2N frames a cycle for everyone in a place; a channel's hello costs no roster, so its gate runs deeper - never off (AUDIT CHAT A1)
         gate = tokenGate(this._hellos, now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);   // SCALE2b: in memory - see `_hellos`
         this._hellos = gate.bucket;
@@ -1415,6 +1479,18 @@ export class Room {
       // player cast out and back) until the wrath's end. The Worker refused the key outside the window already; this is
       // the object's own word, for a socket that opened a moment before the seal.
       if (isGateRoom(a.key)) { const no = await this._gateAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }
+      // SD3: A SUPER DUNGEON'S REALM ADMITS while the hub's record holds its slot - a newcomer while it is found and its boss
+      // stands, one who entered it before (a reconnect, a fighter cast out and back) until it is gone - asked before anything
+      // is written (the gate's law; the Worker asked the hub already, and this is the object's own word for a socket that
+      // opened a moment before the Hour closed)
+      if (realmRoom) {
+        const known = !!who.subject && (await this._sdRealmOf(sdSlotOfRoom(a.key))).in.includes(who.subject);
+        gate = await this._battleHelloGate(who.subject ?? m.id, known ? 'fighter' : 'watch', now);   // AUDIT SD II (L7 M1)
+        if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
+        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');   // AUDIT SD II (L7 M3): a guest is counted as one
+        if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }   // AUDIT SD: the hub not answering - busy, tried again
+        if (no) { this._refuse(ws, no); return; }
+      }
       if (floor) {
         gate = await this._battleHelloGate(who.subject ?? m.id, (await this._floorOwn(a.key, who.subject)) ? 'fighter' : 'watch', now);   // AUDIT PRE-MERGE 1003b R2
         if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
@@ -1460,7 +1536,7 @@ export class Room {
       // AUDIT WB A1: ONE SEAT AN ACCOUNT in a gate's court. The fight is the account's (net/gateBrain.js - its players by
       // account, the newest socket speaking for it), so a second socket is never a second fighter, only a seat the court
       // cannot give anyone else: the older goes, replaced, its leave said.
-      if ((isGateRoom(a.key) || isBattleRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject) this._refuse(other, 'replaced', CLOSE_REPLACED);   // PVP-REF: and a siege's field, one fighter an account
+      if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject) this._refuse(other, 'replaced', CLOSE_REPLACED);   // PVP-REF: and a siege's field, one fighter an account; SD3: and a Super dungeon's realm
       // ONE-SEAT: A CLAIM TAKES THE SEAT - every other tab of this account in the hub is closed, the reason said first,
       // and its client leaves every room it holds (net/online.js `superseded`). Their leaves are said at the reap, as
       // every close this object makes is (AUDIT WORLD34 D1).
@@ -1478,7 +1554,8 @@ export class Room {
       if (!chat && (!this._looks.has(m.id) || JSON.stringify(this._looks.get(m.id)) !== JSON.stringify(m.look))) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // SCALE2b: and a look when it changed   // a channel keeps no look: nobody is drawn from it
       const guild = who.gi ? { gi: who.gi, gt: who.gt, gm: who.gm } : {};   // GUILD1c: the guild the token carried, when it carried one
       const arena = isArenaRoom(a.key) ? { ar: arenaRatingOk(who.ar), lk: who.kind === 'linked' ? 1 : 0, ...(Number.isSafeInteger(who.cl) && who.cl >= ARENA_CL_MIN && who.cl <= ARENA_CL_MAX ? { cl: who.cl } : {}) } : {};   // ARENA4: the hall queues by the signed rating, and a guest is queued for no rated bout   // ARENA4b: and a ladder bout's vitality is the signed character level's (`cl` - absent from a service before it)
-      const charLv = isCellRoom(a.key) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};   // AUDIT SERPENT E4: a cell's serpent fighter's level is never above the token's own character level (`cl` - absent from a service before ARENA4b)
+      const linked = (isRegionRoom(a.key) || realmRoom) && who.kind === 'linked' ? { lk: 1 } : {};   // SD3: a region's channel marks a registered account - the census counts those alone (a guest is one click); AUDIT SD II (L7 H2): and a realm's - its stones count every guest as one turner
+      const charLv = (isCellRoom(a.key) || realmRoom) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};   // AUDIT SERPENT E4: a cell's serpent fighter's level is never above the token's own character level (`cl` - absent from a service before ARENA4b); AUDIT SD II (L7 M2): and a realm's fighter's level IS it
       // AUDIT PRE-MERGE 1003b R5: A FLOOR'S PLACE MOVES WITH ITS RECONNECT - a replaced socket loses its id before its close,
       // so its leave frees no seat, and the new socket's `in` took another: every blip a seat gone from the stands (a full
       // session's sixty), every fighter's a second body. The place the old socket held is the new one's
@@ -1486,7 +1563,7 @@ export class Room {
       // AUDIT PRE-MERGE 1003b R4: a private session's floor is shown to its members - a socket that is none yet is shown
       // the sand when its join makes it one (`_sessionShow`)
       const shown = isArenaPrivateRoom(a.key) ? { shown: (await this._sessionOf())?.members?.[who.subject] ? 1 : 0 } : {};
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), gio: who.gio, sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now, ...arena, ...charLv })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), gio: who.gio, sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now, ...arena, ...charLv, ...linked })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -1518,6 +1595,8 @@ export class Room {
         if (isSocialRoom(a.key) && who.subject) { try { await this._serpentReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] serpent receipt failed', e?.message ?? e); } }
         // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
         if (isSocialRoom(a.key) && who.subject) { try { await this._gateReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
+        // SD9a: and this account's Hour receipt, while it is good (spent, it goes)
+        if (isSocialRoom(a.key) && who.subject) { try { await this._sdReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] sd receipt failed', e?.message ?? e); } }
         // WB12d: the faithful's rite broken while this player was away, while its circle still stands
         // BROKER-CAGE: and its faithful every one fallen - the Broker's cage open - until the Wrath's midnight (cageStands: a
         // Warden fallen early takes the circle, never her)
@@ -1542,6 +1621,9 @@ export class Room {
         // RAID-ROLL: and, while the hub holds no towns table its operator pinned, the ask for one by its hash - any
         // client whose own table hashes to it hands it over (the relay never holds the game's files)
         if (isSocialRoom(a.key)) { try { const h = await this._raidTownsWanted(); if (h) this._send(ws, JSON.stringify({ t: 'raid', k: 'tw', h })); } catch (e) { console.warn('[hub] raid towns ask failed', e?.message ?? e); } }
+        // SD3: and the Super dungeon's record - a Hollow risen, found, fallen or gone - so a player who joins mid-life stands it
+        // (or, inside one gone while they were away, is cast out); an older client drops a frame type it does not know
+        if (isSocialRoom(a.key)) { try { const r = await this._sdOf(); if (r && r.s > 0) this._send(ws, JSON.stringify({ t: 'sd', k: 'ev', ...r })); } catch (e) { console.warn('[hub] sd word failed', e?.message ?? e); } }
         return;
       }
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
@@ -1608,6 +1690,11 @@ export class Room {
           for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
         } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
+      // SD6b: the Orrery's hall as it stands - the stones, the fray, the dial and the Concord - to a soul entering the Hour,
+      // after the welcome that resets its session
+      if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; } catch (e) { console.warn('[sd] hall word failed', e?.message ?? e); } }
+      // SD8b: and its fight, while one lives or has fallen - a soul come in mid-fight sees the Remnant where it stands
+      if (isSdRoom(a.key)) { try { if (!(await this._sdHelloFight(ws, who.subject, sdSlotOfRoom(a.key), now))) return; } catch (e) { console.warn('[sd] fight word failed', e?.message ?? e); } }
       if (unseen) return;   // HOTFIX 1003f: a floor's hello said as anyone's - a private session's stranger's to nobody (a member's join says it: `_sessionShow`)
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: this._drawn({ sub: who.subject, pose: m.pose }, a.key).pose }, who));   // AUDIT-SEATS T2: and a spectator's join stands it nowhere
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id && (!S || S.members[b.sub])) this._send(other, join);   // AUDIT PRE-MERGE 1003b R4: a member's to the members alone
@@ -1998,6 +2085,37 @@ export class Room {
       try { await this._riteWord(ws, a, m, now); } catch (e) { console.warn('[rite] word failed', e?.message ?? e); }
       return;
     }
+    if (m.t === 'sd') {
+      // SD3: A HOLLOW FOUND - from a player at a risen Super dungeon's door, to the CELL it stands in (the rite's law): on its
+      // own bucket, in a cell alone (anywhere else junk), said under the VERIFIED name
+      const now = Date.now();
+      // SD6b: A TURN OF AN ENDING-STONE - in a Hollow's realm alone (anywhere else junk), on the hall's own bucket, judged
+      // by the Orrery's law from where the socket's own pose stands (_sdTurn)
+      if (m.k === 'pz') {
+        if (!this._spend(ws, now, sdPzRelayGate, 'sdPzBucket', 'sdPzDrops', 'too many turns')) return;
+        if (!isSdRoom(a.key)) { this._junk(ws); return; }
+        try { await this._sdTurn(ws, a, m, now); } catch (e) { console.warn('[sd] turn failed', e?.message ?? e); }
+        return;
+      }
+      // SD8b: THE LAST MOMENT'S FIGHT - in a Hollow's realm alone (anywhere else junk), on the fight's own bucket: an `in`
+      // joins it, a blow is believed by the Remnant's law from where the socket's own pose stands (_sdFightFrame)
+      if (m.k === 'in' || m.k === 'hit' || m.k === 'ehit' || m.k === 'xhit') {
+        if (!this._spend(ws, now, sdFightRelayGate, 'sdFightBucket', 'sdFightDrops', 'too many fight frames')) return;
+        if (!isSdRoom(a.key)) { this._junk(ws); return; }
+        try { await this._sdFightFrame(ws, a, m, now); } catch (e) { console.warn('[sd] fight failed', e?.message ?? e); }
+        return;
+      }
+      if (!this._spend(ws, now, sdRelayGate, 'sdBucket', 'sdDrops', 'too many sd frames')) return;
+      // SD9a: A SLOT'S SPOILS TAKEN - the hub's alone (anywhere else junk, the gate's `spent` law): its kept copy spent
+      if (m.k === 'spent') {
+        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+        try { await this._sdSpent(a.sub, m.s, now); } catch (e) { console.warn('[hub] sd spent failed', e?.message ?? e); }
+        return;
+      }
+      if (!isCellRoom(a.key)) { this._junk(ws); return; }
+      try { await this._sdFoundWord(ws, a, m, now); } catch (e) { console.warn('[sd] word failed', e?.message ?? e); }
+      return;
+    }
     if (m.t === 'raidtowns') {
       // RAID-ROLL: A PIECE OF THE TOWNS TABLE, to the hub that asked for it by its pinned hash (`raid` `tw` at the hello) -
       // on its own bucket (a whole table in one burst), in the hub alone
@@ -2293,7 +2411,7 @@ export class Room {
       if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;
       const step = battle ? await this._siegeStep(ws, a, m.p, now) : null;
       if (battle && !step) return;
-      const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {};
+      const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}), ...(isSdRoom(a.key) ? { pAt: now } : {}) } : {};   // AUDIT SD III (F3): an Hour's pose, stamped - the fight's census reads its age
       const met = battle ? this._metered(ws, a, true, { pose: m.p }, turned) : this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, turned, posed && !stopped);   // SCALE2b: a pose's write is lazy - a stop's is not, it is where the player stands
       if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
@@ -2306,6 +2424,7 @@ export class Room {
       if (step === 'eye') return;
       // ARENA4: a bout's room - a fighter's pose is the referee's (its speed checked, its place the reach's); HOTFIX 1003f: a
       // spectator's is fanned as anyone's - the stands are bodies (a private session's stranger's reaches nobody, below)
+      if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);   // SD-ONELIFE: a death in the Hour, kept
       if (isArenaFloorRoom(a.key) && m.t === 'pose') {   // ARENA4b: in an exhibition's room no socket is ever on the sand
         const cur = this._attach(ws);
         if (cur.af) { try { const st = await this._boutOf(); if (st && cur.afid) poseOf(st, cur.afid, m.p.x, m.p.z, now); } catch (e) { console.warn('[arena] pose', e?.message ?? e); } }
@@ -4564,6 +4683,597 @@ export class Room {
     } catch (e) { console.warn('[herald] serpent beat failed', e?.message ?? e); await this._hubArm(now + HERALD_RETRY_MS); }
   }
 
+  // ───────────────────────────── SD3: THE SUPER DUNGEON ─────────────────────────────
+  // bible/11-Multiplayer/Super-Dungeons.md sections 2-4 and 14. THE HUB keeps the one record (SD_KEY) and moves it on with
+  // net/sdLaw.js's moves on its alarm, beside the sweep and the heralds: the first beat (a hub with no record waits
+  // SD_FIRST_RISE_MS), a Hollow's time run out (gone - fanned), and a rise once the rest is over - the census asked of the 62
+  // region channels then, never on a timer. Every change is said to everyone online, and the record at every hello. A
+  // CELL hears a find from its own socket's pose (sdNearSite) and tells the hub until it answers; the hub believes it while
+  // its record says `risen` for that slot (sdFindBelieved). A REALM (`sd:<s>`) admits by the hub's record, asked.
+  /** The hub's record - the instance's, else storage's, through the wire's own law. */
+  async _sdOf() {
+    if (this._sdRec === undefined) { const v = validSdRecord(await this.state.storage.get(SD_KEY)); if (this._sdRec === undefined) this._sdRec = v; }
+    return this._sdRec;
+  }
+  /** AUDIT SD II (L3 F7, L5 F2): the highest slot the hub ever raised - the instance's, else storage's. A slot is a
+   *  Hollow's whole identity (its realm's object, its receipts' and spoils' keys); a record that would not read back
+   *  (a law's bound moved, a region past the count) made the director start again from slot 1, and every realm, receipt
+   *  and spent mark the old numbers held answered the new Hollows - with the old fall, "claimed", and no spoils. */
+  async _sdHwOf() {
+    if (this._sdHw === undefined) { const v = await this.state.storage.get(SD_SLOT_KEY); if (this._sdHw === undefined) this._sdHw = Number.isSafeInteger(v) && v > 0 ? v : 0; }
+    return this._sdHw;
+  }
+  /** The record kept - and the highest slot with it, in the one write. */
+  async _sdSave(rec) {
+    const hw = Math.max(await this._sdHwOf(), rec?.s ?? 0);
+    this._sdRec = rec; this._sdHw = hw;
+    await this.state.storage.put({ [SD_KEY]: rec, [SD_SLOT_KEY]: hw });
+  }
+  /** A record moved on, to everyone in the hub. */
+  _sdFan(rec) {
+    const said = JSON.stringify({ t: 'sd', k: 'ev', ...rec });
+    for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);
+  }
+  /** The hub's alarm armed for the director's next move, unless it is armed sooner. */
+  async _sdArm(now) {
+    const due = sdDue(await this._sdOf(), now);
+    await this._hubArm(due.act ? now : due.at);
+  }
+  /** THE DIRECTOR'S BEAT, on the hub's alarm: every move that is due made and fanned (a hub that slept past a Hollow's
+   *  end and its rest makes both), then the alarm armed for the next. A rise asks the census first, and reads the record
+   *  again after it - the census awaited other objects, and a find or a fall may have been said meanwhile. */
+  async _sdBeat(now) {
+    try { await this._sdHeldBeat(now); } catch (e) { console.warn('[sd] held beat failed', e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }   // AUDIT SD II (L5 F3)
+    try {
+      for (let step = 0; step < 4; step++) {
+        const rec = await this._sdOf();
+        const due = sdDue(rec, now);
+        // slot 0 is the hub's own: said to nobody. AUDIT SD II (L3 F7): a hub that raised Hollows before starts again from
+        // the highest it raised - its next rise is the one past it
+        if (due.act === 'first') { const hw = await this._sdHwOf(); await this._sdSave(hw > 0 ? { ...sdFirst(now), s: hw } : sdFirst(now)); continue; }
+        if (due.act === 'gone') { const g = sdGone(rec, now); if (!g) break; await this._sdSave(g); this._sdFan(g); continue; }
+        if (due.act === 'rise') {
+          const counts = await this._sdCensus();
+          const cur = await this._sdOf();
+          const risen = sdRise(cur, now, pickSdRegion((cur?.s ?? 0) + 1, counts, cur?.s ? cur.r : -1));
+          if (!risen) break;
+          await this._sdSave(risen); this._sdFan(risen);
+          continue;
+        }
+        if (due.at != null) await this._hubArm(due.at);
+        break;
+      }
+    } catch (e) { console.warn('[sd] beat failed', e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }
+  }
+  /** THE CENSUS: how many distinct registered accounts stand in each region's channel now, by region index - asked of
+   *  each channel's object, SD_CENSUS_BATCH at a time, each call bounded by ROOM_CALL_MS. A channel that does not answer
+   *  in time counts nobody; a relay built without the binding counts nobody anywhere (the Bay's great cities). */
+  async _sdCensus() {
+    const counts = new Array(SD_REGION_COUNT).fill(0);
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return counts;
+    for (let i = 0; i < SD_REGION_COUNT; i += SD_CENSUS_BATCH) {
+      await Promise.all(counts.slice(i, i + SD_CENSUS_BATCH).map(async (_, j) => {
+        const r = i + j;
+        try {
+          const res = await rooms.get(rooms.idFromName(chatRegionRoom(r))).fetch(new Request(`https://relay.internal${SD_INTERNAL_CENSUS}`, { method: 'POST', body: '{}', signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+          const v = res?.ok ? await res.json() : null;
+          if (Number.isSafeInteger(v?.n) && v.n >= 0) counts[r] = Math.min(v.n, CHAT_SOCKETS_MAX);
+        } catch (e) { console.warn('[sd] census', r, e?.message ?? e); }
+      }));
+    }
+    return counts;
+  }
+  /** A REGION CHANNEL'S HALF of the census: the distinct registered accounts among its sockets (`lk`, marked at their
+   *  hello - a guest is not counted). It reads the attachments it already holds; nothing is stored. */
+  async _sdCensusInternal() {
+    const subs = new Set();
+    for (const [, b] of this._all()) if (b.id && b.lk && typeof b.sub === 'string' && b.sub) subs.add(b.sub);
+    return json({ n: subs.size });
+  }
+  /** THE HUB'S HALF of a find: believed against the record (the slot risen, the finder near the claimed pixel's centre),
+   *  kept and fanned once. Answered ok whether believed or not - a cell tells a find once, and the hub's word is final -
+   *  with the slot the record holds (AUDIT SD II, L7 M4: the cell then tells no other slot's for a while) and when the next
+   *  may rise (AUDIT SD III, R3: the next slot's find told from then). */
+  async _sdFoundInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const c = validSdFoundTell(body);
+    if (!c) return json({ ok: false }, 400);
+    const now = Date.now();
+    const rec = await this._sdOf();
+    if (sdFindBelieved(rec, now, c, c)) {
+      const found = sdFind(rec, now, c.fb);
+      if (found) { await this._sdSave(found); this._sdFan(found); }
+    }
+    const held = await this._sdOf();
+    return json({ ok: true, s: held?.s ?? 0, ...(Number.isSafeInteger(held?.next) ? { next: held.next } : {}) });   // AUDIT SD III (R3): and when the next may rise
+  }
+  /** The hub's record, for the Worker's gate and a realm's hello - a Hollow that rose, or nothing. */
+  async _sdLiveInternal() {
+    const rec = await this._sdOf();
+    return json({ rec: rec && rec.s > 0 ? rec : null });
+  }
+  /** A CELL'S HALF of a find: the word from its own socket, believed from that socket's pose at the claimed pixel's centre
+   *  (the frame must be the cell's own pixel's - anywhere else junk), kept until the hub answers - the first finder's,
+   *  while it is owed. */
+  async _sdFoundWord(ws, a, m, now) {
+    if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }
+    if (!a.pose || !sdNearSite(m, a.pose) || typeof a.sub !== 'string' || !a.sub) return;   // not at its door: nothing kept, nothing said
+    // AUDIT SD II (L7 M4): A WORD THAT MOVES NOTHING TELLS NOTHING (the rite's AUDIT WB12d R4 law) - a slot this cell has
+    // told and the hub answered is never told again, and while the hub's last answer is fresh a find for any slot but the
+    // one it named is not told at all: one account in forty cells made forty hub requests a second, never struck
+    if (this._sdTold?.has(m.s)) return;
+    // AUDIT SD III (R3): save the NEXT slot once the hub's word says it may have risen (`next`, its record's not-before) -
+    // a word for the old slot told a minute before the rise held the new Hollow's every find at this door nine minutes
+    const known = this._sdHubSlot;
+    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s && !(m.s === known.s + 1 && now >= (known.next ?? Infinity))) return;
+    const had = await this._sdFoundOf();
+    if (had && had.s >= m.s) return;   // this slot's find is owed already - the first finder's (or a later slot's)
+    await this._sdFoundSave({ s: m.s, px: m.px, py: m.py, x: a.pose.x, z: a.pose.z, fb: sanitizeName(a.name ?? '') });
+    await this._sdTellHub(now);
+  }
+  /** The find a cell owes its hub - the instance's, else storage's. */
+  async _sdFoundOf() {
+    if (this._sdFound === undefined) { const v = validSdFoundTell(await this.state.storage.get(SD_FOUND_KEY)); if (this._sdFound === undefined) this._sdFound = v; }
+    return this._sdFound;
+  }
+  async _sdFoundSave(v) {
+    this._sdFound = v;
+    if (v) await this.state.storage.put(SD_FOUND_KEY, v);
+    else await this.state.storage.delete(SD_FOUND_KEY);
+  }
+  /** THE HUB TOLD of a find - the rite's law: one tell in flight (a word that lands meanwhile is the retry's), the retry
+   *  ARMED BEFORE it goes (a reset mid-tell still tells), the owed find let go once the hub answers. Answers whether a
+   *  tell is still owed. */
+  async _sdTellHub(now) {
+    const owed = await this._sdFoundOf();
+    if (!owed) return false;
+    if (this._sdTelling) { await this._sdCellArm(now + SD_TELL_RETRY_MS); return true; }
+    this._sdTelling = true;
+    try {
+      await this._sdCellArm(now + SD_TELL_RETRY_MS);
+      const ans = await this._sdTellHubOf(owed);
+      if (!ans) return true;
+      // AUDIT SD II (L7 M4): the slot told, and the hub's own, kept (a handful - the cell's memory, not its storage).
+      // AUDIT SD III (R1): A SLOT AHEAD OF THE HUB'S IS NOT TOLD FOR GOOD - its Hollow has not risen, and the hub's answer
+      // judged nothing of it. A premature word for the next slot (a guest's, at the pixel's centre) was kept as told and
+      // answered, and the cell never told that slot's real find once it rose: an hour of honest finds at its door, dropped.
+      if (!this._sdTold) this._sdTold = new Set();
+      if (this._sdTold.size >= 8) this._sdTold.delete(this._sdTold.values().next().value);
+      if (!(Number.isSafeInteger(ans.s) && owed.s > ans.s)) this._sdTold.add(owed.s);
+      if (Number.isSafeInteger(ans.s)) this._sdHubSlot = { s: ans.s, at: Date.now(), ...(Number.isSafeInteger(ans.next) ? { next: ans.next } : {}) };   // AUDIT SD III (R3): and when the next may rise
+      if (this._sdFound === owed) await this._sdFoundSave(null);   // a later slot's find said meanwhile is the next tell's
+      return !!this._sdFound;
+    } finally { this._sdTelling = false; }
+  }
+  /** The cell's alarm armed no later than `at` (never pushed off a sooner one). */
+  async _sdCellArm(at) {
+    try { const had = await this.state.storage.getAlarm(); if (had == null || had > at) await this.state.storage.setAlarm(at); }
+    catch (e) { console.warn('[sd] arm', e?.message ?? e); }
+  }
+  /** The hub's door: a relay built without the binding keeps the cell's own word. A find the hub refused FOR GOOD (a 4xx -
+   *  a body it will never take) is not told again. The hub's answer (AUDIT SD II, L7 M4: `{ s }` the slot its record
+   *  holds), or null while it is owed still. */
+  async _sdTellHubOf(body) {
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return {};
+    try {
+      const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_FOUND}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(SD_TELL_RETRY_MS) }));
+      if (!res || !(res.ok || (res.status >= 400 && res.status < 500))) return null;
+      try { const v = res.ok ? await res.json() : null; return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+    } catch (e) { console.warn('[sd] hub', e?.message ?? e); return null; }
+  }
+  /** A REALM'S record of the Hollow - the hub's, asked at most every SD_LIVE_FRESH_MS (a hello storm asks once).
+   *  AUDIT SD II (L3 F2, L7 M5): ONE ASK IN FLIGHT - every frame meanwhile waits on the same answer - and a miss neither
+   *  throws away the last answer (kept SD_LIVE_KEEP_MS: a hello is refused busy only when the realm never had one) nor is
+   *  asked again for SD_LIVE_MISS_MS. A miss is never "no record" (AUDIT SD R3). */
+  async _sdLiveOf(s, now) {
+    const had = this._sdLive?.s === s ? this._sdLive : null;
+    if (had && had.rec !== undefined && now - had.at < SD_LIVE_FRESH_MS) return had.rec;
+    const kept = had && had.rec !== undefined && now - had.at < SD_LIVE_KEEP_MS ? had.rec : undefined;
+    if (had && had.missAt != null && now - had.missAt < SD_LIVE_MISS_MS) return kept;
+    if (this._sdAsking?.s === s) return this._sdAsking.p;
+    const p = (async () => {
+      const rec = await sdLiveAsk(this.env?.ROOMS, s);
+      const at = Date.now();
+      if (rec !== undefined) { this._sdLive = { s, at, rec }; return rec; }
+      this._sdLive = { s, at: had?.at ?? 0, rec: had?.rec, missAt: at };
+      return kept;
+    })();
+    this._sdAsking = { s, p };
+    try { return await p; } finally { if (this._sdAsking?.p === p) this._sdAsking = null; }
+  }
+  /** The accounts a realm has admitted - `{ s, in: [sub] }` - the instance's, else storage's. */
+  async _sdRealmOf(s) {
+    if (this._sdRealm === undefined) {
+      const v = await this.state.storage.get(SD_REALM_KEY);
+      const strs = (xs) => (Array.isArray(xs) ? xs.filter((x) => typeof x === 'string').slice(0, SD_FIGHTERS_MAX) : []);
+      if (this._sdRealm === undefined) this._sdRealm = v && v.s === s && Array.isArray(v.in) ? { s, in: strs(v.in), gu: strs(v.gu), dead: strs(v.dead) } : { s, in: [], gu: [], dead: [] };   // SD-ONELIFE: `dead` the accounts that died in it   // AUDIT SD II (L7 M3): `gu` the guests among them
+    }
+    return this._sdRealm;
+  }
+  /** Why a hello into a realm is refused, or null to admit it: the Hour closed (the slot gone, or another's), a newcomer
+   *  after the kill (the hub's record, or SD8b the realm's own fight), the realm full. A newcomer admitted is kept - it may
+   *  come back until the Hollow is gone. `guest` - the token's account has no handle. */
+  async _sdAdmit(key, sub, now, guest = false) {
+    const s = sdSlotOfRoom(key);
+    const rec = await this._sdLiveOf(s, now);
+    if (rec === undefined) return SD_NO_BUSY;   // AUDIT SD: no answer - try again
+    if (!rec || rec.s !== s || !sdHolds(rec, now)) return SD_NO_CLOSED;
+    const realm = await this._sdRealmOf(s);
+    if (sub && (realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;   // SD-ONELIFE: one life a Hollow; AUDIT SD III (R2): past the list, its own key
+    if (sub && realm.in.includes(sub)) return null;
+    if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
+    const f = await this._sdFightOf();
+    if (f?.fell) return SD_NO_CLOSED;   // SD8b: the realm knows its own kill before the hub's word comes round
+    // AUDIT SD: THE SEATS FREE THEMSELVES (the gate's AUDIT WB A1 law): a full realm frees one held by an account with no
+    // socket here and no seat in its fight - a hello alone (a guest's, a watcher's) no longer holds a seat for the
+    // Hollow's whole life. (A receipt is a fighter's, and a newcomer after the kill was refused above.) AUDIT SD II (L3
+    // F3): a seat in a LIVING fight - a fight lost, or one no beat has moved for SD_LOST_MS, seats nobody
+    const living = f && !f.lost && !f.fell && now - (f.lastTickAt ?? 0) < SD_LOST_MS ? f : null;
+    const present = new Set([...this._all()].map(([, b]) => b.sub).filter(Boolean));
+    const guests = new Set(realm.gu);
+    const free = (pick) => {
+      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);
+      if (i < 0) return false;
+      const [x] = realm.in.splice(i, 1);
+      realm.gu = realm.gu.filter((g) => g !== x); guests.delete(x);
+      return true;
+    };
+    // AUDIT SD II (L7 M3): GUESTS HOLD AT MOST SD_GUEST_SEATS - an idle socket's seat is never freed (its owner is here),
+    // and guests cost a click each: 256 of them held the Hour full for as long as they cared to
+    if (sub && guest && realm.in.filter((x) => guests.has(x)).length >= SD_GUEST_SEATS && !free((x) => guests.has(x))) return SD_NO_FULL;
+    if (realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;
+    if (sub && !realm.in.includes(sub)) { realm.in.push(sub); if (guest) realm.gu.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
+    return null;
+  }
+  /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
+   *  worth"): the account whose dying pose (PCORPSE1's `dd`) came through a realm is kept as dead there - every hello of
+   *  its after is refused (SD_NO_FALLEN), whatever its page says. */
+  async _sdMarkFallen(key, sub) {
+    const realm = await this._sdRealmOf(sdSlotOfRoom(key));
+    if (realm.dead.includes(sub)) return;
+    if (realm.dead.length >= SD_FIGHTERS_MAX) { await this.state.storage.put(sdDeadKey(sub), 1); return; }   // AUDIT SD III (R2): past the list, one key an account - never forgotten
+    realm.dead.push(sub);
+    await this.state.storage.put(SD_REALM_KEY, realm);
+  }
+  /** SD6b: THE ORRERY'S HALL in a realm - `{ s, st, f, ok, last }`: the stones' hours, the fray, the Concord, and each
+   *  stone's last turn (the relay's clock) - the instance's, else storage's, else fresh from the slot's law. */
+  async _sdHallOf(s) {
+    if (this._sdHall === undefined || this._sdHall.s !== s) {
+      const v = await this.state.storage.get(SD_ORRERY_KEY);
+      const hour = (h) => Number.isInteger(h) && h >= 0 && h < SD_HOURS;
+      const kept = v && v.s === s && Array.isArray(v.st) && v.st.length === SD_STONES.length && v.st.every(hour) && Number.isInteger(v.f)
+        && v.f >= 0 && v.f <= SD_FRAY_MAX && typeof v.ok === 'boolean' && Array.isArray(v.last) && v.last.length === SD_STONES.length && v.last.every(Number.isSafeInteger);
+      if (this._sdHall === undefined || this._sdHall.s !== s) this._sdHall = kept ? { s, st: [...v.st], f: v.f, ok: v.ok, last: [...v.last] } : { s, ...orreryFresh(orreryOf(s)), last: SD_STONES.map(() => 0) };
+    }
+    return this._sdHall;
+  }
+  /** SD6b: the hall said - its stones, fray, dial and Concord, and a turn's own fields when one made it so. */
+  _sdHallWord(hall, turn = {}) {
+    return JSON.stringify({ t: 'sd', k: 'pz', s: hall.s, st: hall.st, f: hall.f, lit: orreryLit(orreryOf(hall.s), hall.st), ok: hall.ok, ...turn });
+  }
+  /**
+   * SD6b: A TURN OF AN ENDING-STONE, JUDGED (Super-Dungeons.md section 8): from a verified account alive in the realm, its
+   * own pose within reach of the stone (a metre's slack for a pose's lag), the Hour still holding its slot, the stone's
+   * gear settled (SD_STONE_SETTLE_MS since its last turn), the turn's number past the last this socket made (a word said
+   * twice is one turn) - then the Orrery's law turns it, the hall is kept, and every soul in the realm hears the stones,
+   * the fray, the dial and the Concord, with the turn and its turner (`x` when the Hour snapped back, and AUDIT SD II -
+   * L7 H2 - `ls` the peers its lash falls on). Anything else is nothing: no word, no strike. Once the Concord holds, a
+   * turn is nothing. AUDIT SD II (L7 H2): and THE STONES' RIGHTS (net/sdBrain.js orreryMayTurn) - a turner that has
+   * lengthened the road SD_TURN_LONG_MAX times this thread waits while others turn, told so (`w`, to its socket alone, at
+   * most every SD_PZ_WAIT_SAY_MS).
+   */
+  async _sdTurn(ws, a, m, now) {
+    if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
+    const s = sdSlotOfRoom(a.key), o = orreryOf(s);
+    if (!o) return;
+    const meter = this._meterOf(ws);
+    const [x, , z] = dungeonToRealm(a.pose.x, a.pose.y ?? 0, a.pose.z);
+    if (!stoneInReach(m.i, x, z, SD_STONE_REACH_SLACK)) return;
+    const rec = await this._sdLiveOf(s, now);
+    if (!rec || rec.s !== s || !sdHolds(rec, now)) return;
+    const hall = await this._sdHallOf(s);
+    // AUDIT SD II (L7 L1): judged at the instant it is judged - the asks above awaited other objects, and a turn of this
+    // socket's own may have been judged meanwhile
+    now = Date.now();
+    if (m.q <= (meter.pzq ?? -1) || hall.ok || now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;
+    const R = this._sdRightsOf(s), who = orreryTurnerOf(a.sub, !a.lk);
+    if (!orreryMayTurn(R, who, now)) {
+      if (!(now - (meter.pzw ?? -Infinity) < SD_PZ_WAIT_SAY_MS)) { meter.pzw = now; this._send(ws, this._sdHallWord(hall, { w: 1 })); }
+      return;
+    }
+    const road = orreryShortest(o, hall.st);
+    const res = orreryStep(o, hall, m.i, m.a);
+    if (!res) return;
+    meter.pzq = m.q;
+    orreryTurned(R, who, a.id, road, orreryShortest(o, orreryTurn(o, hall.st, m.i, m.a)), now);
+    const lash = res.x ? { x: 1, ls: orreryLashed(R, SD_FIGHTERS_MAX) } : {};
+    if (res.x) this._sdRights = { s, R: orreryRightsFresh() };   // the snap begins a fresh thread
+    hall.st = res.st; hall.f = res.f; hall.ok = res.ok; hall.last[m.i] = now;
+    await this.state.storage.put(SD_ORRERY_KEY, hall);
+    const word = this._sdHallWord(hall, { i: m.i, a: m.a, id: a.id, q: m.q, ...lash });
+    for (const [other, b] of [...this._all()]) if (b.id) this._send(other, word);
+  }
+  /** AUDIT SD II (L7 H2): the thread's rights (net/sdBrain.js orreryRightsFresh) - the realm's memory alone: a realm that
+   *  wakes begins a fresh thread's. */
+  _sdRightsOf(s) {
+    if (this._sdRights?.s !== s) this._sdRights = { s, R: orreryRightsFresh() };
+    return this._sdRights.R;
+  }
+
+  // ───────────────────────────── SD8b: THE LAST MOMENT'S FIGHT ─────────────────────────────
+  /** The realm's fight - the instance's, else storage's (the gate's law: one room, one fight). */
+  async _sdFightOf() {
+    if (this._sdFight === undefined) { const v = await this.state.storage.get(SD_FIGHT_KEY); if (this._sdFight === undefined) this._sdFight = v && typeof v === 'object' && Number.isSafeInteger(v.s) ? v : null; }
+    return this._sdFight;
+  }
+  /** The fight to storage - every CHECKPOINT_MS from the beat, at once on a join, the fall and the loss. */
+  async _sdFightSave(f, now, force) {
+    if (!force && now - (this._sdFightSavedAt ?? 0) < CHECKPOINT_MS) return;
+    this._sdFightSavedAt = now;
+    await this.state.storage.put(SD_FIGHT_KEY, f);
+  }
+  /** A pose of the dungeon's frame in the arena's (net/sdBrain.js dungeonToRealm, net/sdRemnant.js arenaOf). */
+  _arenaPoseOf(p) { const [x, , z] = dungeonToRealm(p.x, p.y ?? 0, p.z); const [ax, az] = arenaOf(x, z); return { x: ax, z: az }; }
+  /** The fight's bodies in the realm now - one a fighter, its NEWEST socket speaking for it (the gate's law): where its
+   *  last pose stands in the arena's frame, and whether that pose says it died. AUDIT SD III (F3): a pose older than
+   *  SD_POSE_FRESH_MS (its hello's time until it has posed) speaks for no body - a frozen page is absent, not standing. */
+  _sdFightBodies(f, now = Date.now()) {
+    const newest = new Map();
+    for (const [, b] of this._all()) {
+      if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
+      if (now - (b.pAt ?? b.since ?? 0) > SD_POSE_FRESH_MS) continue;
+      const had = newest.get(b.sub);
+      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
+    }
+    return [...newest.values()].map((b) => { const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }; });
+  }
+  /** The fight's frames to everyone in the realm, in order. */
+  _sdFightFan(frames) {
+    if (!frames.length) return;
+    const outs = frames.map((fr) => JSON.stringify({ t: 'sd', ...fr }));
+    for (const [ws, b] of [...this._all()]) if (b.id) for (const s of outs) if (!this._send(ws, s)) break;
+  }
+  /** The beat is armed now unless it already is, sooner. */
+  async _sdFightArm(now) {
+    const at = await this.state.storage.getAlarm();
+    if (at == null || at > now + BRAIN_TICK_MS) await this.state.storage.setAlarm(now + BRAIN_TICK_MS);
+  }
+  /** SD8b: a soul entering the realm told its fight, while one lives or has fallen - false when its socket is gone. AUDIT
+   *  SD II (L3 F5): a living fight's beat armed by the hello (a realm that had emptied slept, and its fight stood frozen
+   *  until someone's `in` or blow), and a fight no beat has moved for SD_LOST_MS lost now (the next `in` makes the fresh
+   *  one); (L3 F8) a fallen fight's earner handed its receipt again (an earner who stood here at the kill and whose page
+   *  reloaded inside the hub's hold had nothing until its next hub hello). */
+  async _sdHelloFight(ws, sub, s, now) {
+    const sf = await this._sdFightOf();
+    if (!sf || sf.lost || sf.s !== s) return true;
+    if (!sf.fell && now - sf.lastTickAt >= SD_LOST_MS) { sf.lost = { at: now }; await this._sdFightSave(sf, now, true); return true; }
+    if (!this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf) }))) return false;
+    if (!sf.fell) { await this._sdFightArm(now); return true; }
+    const r = sub ? sf.rc?.[sub] : null;
+    return !r || this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r }));
+  }
+  /**
+   * A FIGHT WORD in a realm (Super-Dungeons.md section 10): `in` - from a verified account alive in the arena, a game whose
+   * brain is the realm's, the Hour still holding its slot - joins the fight (a fight lost, or one no beat has moved for
+   * SD_LOST_MS - a realm that emptied - is done: the next is fresh, numbered on) and is answered with its whole state; a
+   * fight fallen answers with its state alone. A blow is believed by the Remnant's law from where the socket's own pose
+   * stands (the dead strike nothing), and keeps the beat as an `in` does.
+   */
+  async _sdFightFrame(ws, a, m, now) {
+    const s = sdSlotOfRoom(a.key);
+    let f = await this._sdFightOf();
+    if (f && f.s !== s) f = this._sdFight = null;
+    if (m.k === 'in') {
+      const no = (w) => { this._send(ws, JSON.stringify({ t: 'sd', k: 'no', m: w })); };
+      if (!(m.bv >= SD_BRAIN_MIN)) { no(SD_NO_WORDS[3]); return; }
+      const rec = await this._sdLiveOf(s, now);
+      if (rec === undefined) return;   // AUDIT SD: the hub did not answer - unanswered, the page says its `in` again
+      if (!rec || rec.s !== s || !sdHolds(rec, now)) { no(SD_NO_WORDS[0]); return; }
+      if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
+      if (!(await this._sdHallOf(s)).ok) return;   // AUDIT SD: past the Orrery alone - the Concord lays the only way to the arena
+      // AUDIT SD II (L3 F1): THE FIGHT READ AGAIN after the last await, and decided with none between - two `in`s that
+      // awaited the hub together each made a fresh fight off the one they had read before it, numbered alike, and the last
+      // replaced the first's fighter (its page fought on believing itself in, its blows junk, until its socket was closed
+      // for them). AUDIT SD II (L7 L1): and at the instant it is decided
+      now = Date.now();
+      f = this._sdFight ?? null;
+      if (f && f.s !== s) f = this._sdFight = null;
+      const at = this._arenaPoseOf(a.pose);
+      if (!inArena(at.x, at.z, SD_ARENA_SLACK)) return;   // from the arena alone (AUDIT SD II, L4 C2: never the Steps)
+      if (f?.fell) { this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) })); if (f.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: f.rc[a.sub] })); return; }   // SD9a: and its receipt again
+      const fresh = !f || f.lost || now - f.lastTickAt >= SD_LOST_MS;
+      if (fresh) f = this._sdFight = newRemnantFight(s, (f?.fi ?? 0) + 1, now, sdMarksOf(s));   // SD18a: its Hollow's marks
+      const known = !!f.players[a.sub];
+      const present = new Set();
+      for (const [, b] of this._all()) if (b.sub && b.id) present.add(b.sub);
+      // AUDIT SD II (L7 M2): THE LEVEL IS THE TOKEN'S - its character's, signed (`cl`); the claim stands only from a service
+      // that signs none. A claim of 60 from a level-5 character brought a level-60 share (34,125 health) into the Remnant,
+      // and a claim of 1 from a level-60 one earned the feat's whole roll for 63 points dealt
+      const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? a.cl : m.lv;
+      if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }
+      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone
+      await this._sdFightSave(f, now, fresh || !known);   // AUDIT SD: a known fighter's `in` again is no write (the gate's AUDIT WB A3)
+      await this._sdFightArm(now);
+      return;
+    }
+    if (!f || !f.players[a.sub]) { this._junk(ws); return; }
+    // AUDIT SD: no blow lands once the Hour no longer holds its slot (a page that stayed past its cast-out) - a hub that does
+    // not answer stops none
+    const live = await this._sdLiveOf(s, now);
+    // AUDIT SD II (L3 F1): a blow whose fight was replaced while it awaited the hub is dropped - not junk, it was fair when
+    // said (and a fall on the old fight would have been kept over the new one). AUDIT SD II (L7 L1): judged at the instant
+    // it lands - an earlier blow's answer coming after a later one's moved the purse's clock backwards, and the same seconds
+    // refilled twice (1,755 dealt over 5.25 s where the law allows 1,024)
+    if (this._sdFight !== f) return;
+    now = Date.now();
+    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;
+    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;
+    if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
+    else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
+    else {
+      applyRemnantHit(f, a.sub, m.d, m.r, pose, now, m.q);
+      if (f.fell && !f.said) { await this._sdFightFall(f, now); return; }
+    }
+    if (!f.fell && !f.lost && !(this._sdBeatArmedTo > now)) { this._sdBeatArmedTo = now + BRAIN_TICK_MS; await this._sdFightArm(now); }
+  }
+  /** ONE BEAT of a realm's alarm while its fight lives: the Remnant's law stepped over the bodies in the realm, its frames
+   *  fanned, the fall said once, the fight checkpointed (at once when it is lost) - and the next beat armed while someone
+   *  is here (a realm nobody stands in sleeps: an `in` after SD_LOST_MS finds its fight done). False when the realm holds
+   *  no living fight - the alarm is the room's other duties' then. */
+  async _sdFightTick() {
+    const f = await this._sdFightOf();
+    if (!f || f.lost || (f.said && f.told)) return false;
+    const now = Date.now();
+    try {
+      this._sdFightFan(stepRemnant(f, now, this._sdFightBodies(f, now), rand01));
+      if (f.fell && !f.said) await this._sdFightFall(f, now);
+      else if (f.said && !f.told) await this._sdTellFellOnce(f, now);
+      await this._sdFightSave(f, now, !!f.lost);
+    } catch (e) { console.warn('[sd] beat failed', e?.message ?? e); }
+    if (f.said && !f.told) { await this.state.storage.setAlarm(now + SD_TELL_RETRY_MS); return true; }
+    const here = [...this._all()].some(([, b]) => b.id);
+    if (here && !f.fell && !f.lost) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }
+    return false;
+  }
+  /** THE FALL, SAID ONCE (the gate's law, AUDIT WB A10 - kept before it is said): the fight checkpointed with its `said`,
+   *  then `fell` to everyone in the realm, then the hub told until it answers. One at a time (AUDIT WB12d L2). */
+  async _sdFightFall(f, now) {
+    if (this._sdFalling) return this._sdFalling;
+    this._sdFalling = this._sdFightFallOnce(f, now).finally(() => { this._sdFalling = null; });
+    return this._sdFalling;
+  }
+  async _sdFightFallOnce(f, now) {
+    if (f.said) return;
+    // SD9a: THE RECEIPTS - each fighter who earned it (the gate's `earned`: 2% of its own share dealt, or alive in the arena
+    // half the fight), minted before the fall is said and kept with it
+    const key = await this._receiptKeyOf(), nowS = Math.floor(now / 1000);
+    f.rc = {};
+    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {
+      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }
+      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }
+    }
+    f.said = true;   // kept before it is said
+    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first
+    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);
+    await this._sdFightSave(f, now, true);
+    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart
+    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }
+    await this._sdTellFellOnce(f, now);
+  }
+  /** The hub told of the fall, and it kept - once it has answered (a relay built without the binding keeps its own word).
+   *  AUDIT SD II (L3 F6): ONE TELL IN FLIGHT - the fall's own tell and the beat's retry raced, and the hub was told twice
+   *  (its receipts handed twice to the same sockets); a second asker waits on the first. */
+  async _sdTellFellOnce(f, now) {
+    if (f.told || !f.fell) return;
+    if (this._sdFellTelling) return this._sdFellTelling;
+    this._sdFellTelling = this._sdTellFellNow(f, now).finally(() => { this._sdFellTelling = null; });
+    return this._sdFellTelling;
+  }
+  async _sdTellFellNow(f, now) {
+    const rooms = this.env?.ROOMS;
+    let ok = !rooms?.idFromName || !rooms?.get;
+    if (!ok) {
+      try {
+        const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ s: f.s, at: f.fell.at, top: f.fell.top[0] ?? '', n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS) }));
+        ok = !!res && (res.ok || (res.status >= 400 && res.status < 500));
+      } catch (e) { console.warn('[sd] hub', e?.message ?? e); }
+    }
+    if (!ok) return;
+    f.told = true;
+    await this._sdFightSave(f, now, true);
+  }
+  /** SD8b: THE HUB HEARS A FALL - its record moved on (net/sdLaw.js sdFell: the collapse and the rest from now) and said to
+   *  everyone online, while it holds that slot found. */
+  async _sdFellInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const c = validSdFellTell(body);
+    if (!c) return json({ ok: false }, 400);
+    const rec = await this._sdOf();
+    if (rec && rec.s === c.s) {
+      // AUDIT SD II (L3 F4): a kill landed inside the Hour and told after the hub had already said the fade (its tells
+      // retried past SD_FADE_GRACE_MS) is the kill it was - the faded record is the found one it was at the kill's instant
+      const was = rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && c.at < rec.until ? { ...rec, ph: 'found' } : rec;
+      const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });   // AUDIT SD: at the fall's own instant - a kill heard late is no kill after its Hour
+      if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }   // AUDIT SD: and the director's next move armed from it (its collapse, its rest)
+    }
+    await this._sdKeepReceipts(c, Date.now());   // SD9a
+    return json({ ok: true });
+  }
+  /**
+   * SD9a: THE HUB KEEPS EACH EARNER'S HOUR RECEIPT (the gate's AUDIT WB A4 law) for its life, one key an account (its
+   * latest), and hands it to that account's next hello - never over a newer slot's, nor over its account's word that this
+   * slot's is spent (that word may come first). One that stood in the realm at the kill is held from its hellos
+   * SD_HERE_HOLD_MS (the realm's floor spends it); every other earner's newest socket here is handed it now.
+   */
+  async _sdKeepReceipts(c, now) {
+    const here = new Set(c.here);
+    const keep = [];
+    for (const [sub, r] of c.rc) { const cl = readSdReceipt(r); if (cl && cl.s === sub && cl.d === c.s) keep.push([sub, { s: c.s, r, e: cl.e, ...(here.has(sub) ? { hold: now + SD_HERE_HOLD_MS } : {}) }]); }
+    if (!keep.length) return;
+    this._noSdRcpt.clear();   // receipts are being written - nobody's 'none' stands
+    const had = new Map();
+    for (let i = 0; i < keep.length; i += 128) for (const [k, v] of await this.state.storage.get(keep.slice(i, i + 128).map(([sub]) => sdReceiptKey(sub)))) had.set(k, v);
+    const fresh = keep.filter(([sub]) => {
+      const v = had.get(sdReceiptKey(sub));
+      return !(v && typeof v === 'object' && Number.isSafeInteger(v.s) && (v.s > c.s || (v.s === c.s && v.spent)));
+    });
+    for (let i = 0; i < fresh.length; i += 128) await this.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([sub, v]) => [sdReceiptKey(sub), v])));
+    const owed = new Map(fresh.filter(([sub]) => !here.has(sub)));
+    for (const [sub, [ws]] of this._siegeSockets()) if (owed.has(sub)) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: owed.get(sub).r }));   // the account's newest socket (AUDIT SOC B9's law)
+    // AUDIT SD II (L5 F3): the held ones are handed on when their hold lapses - a fighter whose page crashed at the kill and
+    // came back inside the hold was handed nothing until some later hello, hours on
+    const held = fresh.filter(([sub]) => here.has(sub)).map(([sub, v]) => [sub, v.hold]);
+    if (held.length) {
+      const was = await this.state.storage.get(SD_HELD_KEY);
+      const by = new Map(Array.isArray(was) ? was.filter((e) => Array.isArray(e) && typeof e[0] === 'string' && Number.isSafeInteger(e[1])) : []);
+      for (const [sub, at] of held) by.set(sub, at);
+      await this.state.storage.put(SD_HELD_KEY, [...by].slice(-SD_FIGHTERS_MAX));
+      await this._hubArm(Math.min(...held.map(([, at]) => at)));
+    }
+  }
+  /** AUDIT SD II (L5 F3): THE HELD RECEIPTS' BEAT, on the hub's alarm: each whose hold has lapsed handed to its account's
+   *  newest socket here, unless spent meanwhile (an account with none here hears it at its next hello, as before); the
+   *  alarm armed for the next. */
+  async _sdHeldBeat(now) {
+    const was = await this.state.storage.get(SD_HELD_KEY);
+    const held = Array.isArray(was) ? was.filter((e) => Array.isArray(e) && typeof e[0] === 'string' && Number.isSafeInteger(e[1])) : [];
+    if (!held.length) return;
+    const rest = held.filter(([, at]) => at > now);
+    if (rest.length < held.length) {
+      const socks = this._siegeSockets();
+      for (const [sub] of held.filter(([, at]) => at <= now)) { const s = socks.get(sub); if (s) { this._noSdRcpt.delete(sub); await this._sdReceiptTo(s[0], sub, now); } }
+      if (rest.length) await this.state.storage.put(SD_HELD_KEY, rest); else await this.state.storage.delete(SD_HELD_KEY);
+    }
+    if (rest.length) await this._hubArm(Math.min(...rest.map(([, at]) => at)));
+  }
+  /** SD9a: an account's kept Hour receipt to its hello while it is good - an expired one forgotten, a spent one not said, a
+   *  realm fighter's held while its floor spends it. */
+  async _sdReceiptTo(ws, sub, now) {
+    if (this._noSdRcpt.has(sub)) return;
+    const k = sdReceiptKey(sub);
+    const v = await this.state.storage.get(k);
+    if (!v || typeof v !== 'object') { this._noSdRcpt.set(sub, 1); return; }
+    if (!(Number.isFinite(v.e) && now < v.e * 1000) || (!v.spent && typeof v.r !== 'string')) { await this.state.storage.delete(k); return; }
+    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;
+    this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: v.r }));
+  }
+  /** SD9a: the account's word that a slot's spoils are taken - REMEMBERED AS SPENT in its kept copy's place, for a receipt's
+   *  life (the gate's AUDIT WBX2 M3: the word may come before the kill's own, and must stand over it). A newer slot's is
+   *  left alone. */
+  async _sdSpent(sub, slot, now) {
+    // AUDIT SD II (L7 L2): no slot past the hub's own - a rising slot each frame was a storage write each frame, for ever
+    if (!(slot <= ((await this._sdOf())?.s ?? 0))) return;
+    const k = sdReceiptKey(sub);
+    const v = await this.state.storage.get(k);
+    const at = v && typeof v === 'object' && Number.isSafeInteger(v.s) ? v.s : null;
+    if (at !== null && (at > slot || (at === slot && v.spent === true))) return;
+    await this.state.storage.put(k, { s: slot, spent: true, e: Math.floor(now / 1000) + SD_RECEIPT_TTL_S });
+  }
+
   // ───────────────────────────── RAID3: A TOWN'S RAID ─────────────────────────────
   /** AUDIT RAID R6: a copy kept on the instance, the map bounded. */
   _raidKeep(id, led) { this._raids.set(id, led); }   // SCALE2b: bounded at RAID_CACHE_MAX (AUDIT RAID R6), the oldest first
@@ -5282,6 +5992,7 @@ export class Room {
       this._alarmArmed = true;
       await this.state.storage.put('hub', 1);
       if ((await this.state.storage.getAlarm()) == null) await this.state.storage.setAlarm(now + ACCOUNT_SWEEP_MS);
+      await this._sdArm(now);   // SD3: and the Super dungeon's director, when its next move comes first
       await this._heraldArm(now);   // DISCORD-GATES: and sooner, when the herald owes a post first (an alarm armed before it had a webhook)
     }
     let a = this._attach(ws);

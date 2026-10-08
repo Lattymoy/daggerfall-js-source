@@ -102,8 +102,8 @@
   {
     "name": "OW4D4-filed-dropped",
     "file": "src/scenes/world.js",
-    "old": "spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)],",
-    "new": "spawns: [...spawnedPixels(locationIndex)],",
+    "old": "isFound, spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)],",
+    "new": "isFound, spawns: [...spawnedPixels(locationIndex)],",
     "tests": [
       "test/tv6_dungeons.test.js"
     ],

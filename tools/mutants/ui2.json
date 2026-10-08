@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-UI-B6-the-wear-on-worn-pieces-alone",
     "file": "src/systems/quickslots.js",
-    "old": "  || item.group === 'Armor' || isEnchanted(item);",
-    "new": "  || (kind === 'wear' && (item.group === 'Armor' || isEnchanted(item)));",
+    "old": "  || item.group === 'Armor' || isEnchanted(item));",
+    "new": "  || (kind === 'wear' && (item.group === 'Armor' || isEnchanted(item))));",
     "tests": [
       "test/ui2_hotbar.test.js"
     ]

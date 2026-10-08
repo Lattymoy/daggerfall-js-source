@@ -110,8 +110,8 @@
   {
     "name": "WB4b-the-door-shut",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    return !!opts.onBossHit?.({ d: damage, r });",
-    "new": "    return false;",
+    "old": "    return sdRemnant ? sdRemnant.hit({ d: damage, r }) : !!opts.onBossHit?.({ d: damage, r });   // SD8c: the Remnant's, to the realm",
+    "new": "    return sdRemnant ? sdRemnant.hit({ d: damage, r }) : false;   // SD8c: the Remnant's, to the realm",
     "tests": [
       "test/wb4b_gate_blows.test.js"
     ]

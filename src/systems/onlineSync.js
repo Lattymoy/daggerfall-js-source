@@ -14,8 +14,9 @@
 //   - every DFU setting it forces (ONLINE_FORCED_SETTINGS),
 //   - every mod key the room owns (ONLINE_ROOM_MOD_KEYS), and (REALM P0.2) every key of a balance mod it owns whole
 //     (ONLINE_WHOLE_MODS) at the key's shipped default,
-//   - and the one layout rule that is not in a table: online a dungeon is always the whole dungeon
-//     (world/smallerDungeons.js useSmallerDungeon, AUDIT WORLD34 B2), so Smaller Dungeons is set off.
+//   - and the one layout rule that is not in a table: online a dungeon is always the room's size
+//     (world/smallerDungeons.js dungeonSizeFor, AUDIT WORLD34 B2 - SD-ONLINE: the world's own size for it, whose row,
+//     `world-dungeon-sizes`, the table forces on), and Smaller Dungeons, which would win over it offline, is set off.
 // WHAT IT DOES NOT COPY: the rules that are not switches at all (the real-time clock, the rest and the journey that
 // spend none of it), and everything the lane leaves to the player. (It skipped `mwArms`, the Morrowind arms' switch,
 // until MWA4 retired that switch: the attached files are the arms' switch now, the same online and off.)
@@ -32,7 +33,8 @@ import { labelOf } from '../ui/settingsCopy.js';
 
 export const ONLINE_SYNC_STORE_KEY = 'dagger.onlineSync.v1';
 
-/** The layout rule the lane keeps in code rather than a table: online every dungeon is full size. DFU's strings. */
+/** The layout rule the lane keeps in code rather than a table: online every dungeon is the room's size (SD-ONLINE: the
+ *  world's own size for it, the `world-dungeon-sizes` row forced on), never the setting's. DFU's strings. */
 export const ONLINE_LAYOUT_SETTINGS = Object.freeze({
   Experimental: Object.freeze({ SmallerDungeons: 'False' }),
 });

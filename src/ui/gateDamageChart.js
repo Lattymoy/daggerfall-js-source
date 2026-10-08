@@ -65,10 +65,11 @@ const sameName = (a, b) => typeof a === 'string' && typeof b === 'string' && a.t
  * share of the most anyone dealt), share of the whole, blows, best, crystals, falls, and whether it is mine. WB11c: under
  * the Legion-Lord (a row carries `a`), `hosted` and each row's share of his host, a column after the falls. GATE-HEAL:
  * where anyone healed another (a row carries `hl`), `healed` and what each row healed in others, the last column.
- * WB13c: `entering` its first CHART_IN_MS. Pure.
- * @param {any} fell @param {{ boss?: string, me?: string|null, since?: number, now?: number }} [o]
+ * WB13c: `entering` its first CHART_IN_MS. AUDIT SD II (L6 F11): `crystals` the crystals column's head (the Hour's
+ * Hearts), `theme` a look of the chart's own (`brass`, the Hour's). Pure.
+ * @param {any} fell @param {{ boss?: string, me?: string|null, since?: number, now?: number, crystals?: string, theme?: string|null }} [o]
  */
-export function damageChartModel(fell, { boss = 'The Warden', me = null, since = 0, now = 0 } = {}) {
+export function damageChartModel(fell, { boss = 'The Warden', me = null, since = 0, now = 0, crystals = DAMAGE_CHART_TEXT.head[6], theme = null } = {}) {
   const dm = Array.isArray(fell?.dm) ? fell.dm : null;
   if (!dm || !dm.length) return null;
   const age = now - since;
@@ -90,10 +91,11 @@ export function damageChartModel(fell, { boss = 'The Warden', me = null, since =
   const n = Math.max(Number.isSafeInteger(fell.n) ? fell.n : 0, dm.length);
   const more = n - rows.length - (mine ? 1 : 0);
   return {
-    key: `${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,
+    key: `${crystals}:${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,
     alpha: Math.round(alpha * 100) / 100, entering: shown < CHART_IN_MS,
     title: DAMAGE_CHART_TEXT.title, sub: DAMAGE_CHART_TEXT.sub(boss, n), hosted, healed,
-    head: healed ? [...DAMAGE_CHART_TEXT.head, hosted ? DAMAGE_CHART_TEXT.host : '', DAMAGE_CHART_TEXT.heal] : hosted ? [...DAMAGE_CHART_TEXT.head, DAMAGE_CHART_TEXT.host] : DAMAGE_CHART_TEXT.head,
+    head: ((h) => (healed ? [...h, hosted ? DAMAGE_CHART_TEXT.host : '', DAMAGE_CHART_TEXT.heal] : hosted ? [...h, DAMAGE_CHART_TEXT.host] : h))(crystals === DAMAGE_CHART_TEXT.head[6] ? DAMAGE_CHART_TEXT.head : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c))),
+    theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null,   // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's
     rows, mine, more: more > 0 ? DAMAGE_CHART_TEXT.more(more) : '',
   };
 }
@@ -124,6 +126,10 @@ export const DAMAGE_CHART_CSS = `
 .wb-dmg-fill { height: 100%; width: 0; background: #ff7a3a; border-radius: 0 2px 2px 0; }
 .wb-dmg-num { font-size: 12.5px; }
 .wb-dmg-mine { outline: 1px solid rgba(255,210,122,0.75); background: rgba(255,190,90,0.10); }
+/* AUDIT SD II (L6 F11): the Brass Remnant's chart in the Hour's brass, not Dagon's fire */
+.wb-dmg-chart.wb-dmg-brass { color: #f2e6c8; background: linear-gradient(180deg, rgba(30,22,6,0.93), rgba(12,9,3,0.9)); border-color: rgba(230,190,90,0.6); }
+.wb-dmg-chart.wb-dmg-brass .wb-dmg-title { color: #f0c060; }
+.wb-dmg-chart.wb-dmg-brass .wb-dmg-fill { background: #e8b84a; }
 .wb-dmg-gap { height: 6px; }
 .wb-dmg-more { font-size: 11px; text-align: center; opacity: 0.8; margin-top: 4px; font-style: italic; }
 .wb-dmg-row > .wb-dmg-host { display: none; }
@@ -269,7 +275,7 @@ export function drawGateDamageChart(model, { hidden = false, doc = globalThis.do
   if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
   if (!want || !model) return;
   // WB11c: the host's column shown or not; GATE-HEAL: the healed; WB13c: entering
-  const cls = `wb-dmg-chart${model.hosted ? ' wb-dmg-hosted' : ''}${model.healed ? ' wb-dmg-healed' : ''}${model.entering ? ' wb-dmg-in' : ''}`;
+  const cls = `wb-dmg-chart${model.hosted ? ' wb-dmg-hosted' : ''}${model.healed ? ' wb-dmg-healed' : ''}${model.entering ? ' wb-dmg-in' : ''}${model.theme ? ` wb-dmg-${model.theme}` : ''}`;
   if (root.className !== cls) root.className = cls;
   if (model.key !== shown.key) {
     shown.key = model.key;

@@ -56,6 +56,7 @@ import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: Factio
 import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './regionConditions.js';   // S42: the store S41's flag was waiting on
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
+import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -90,6 +91,29 @@ export const SHOP_ITEM_GROUPS = Object.freeze({
   // systems/decorFurnish.js, delivered and never carried).
   [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],
 });
+
+/**
+ * SHOP-PELLETS (2026-10-07, Mac: "allowing the purchase of the ammunition in stores"): THE THUNDERLOCK'S SHOT ON THE
+ * COUNTER. Daggerfall has no gun and no shot to shelve - the Dwarven Thunderlock is the port's own (systems/thunderlock.js)
+ * and stays a FIND: no shelf sells the gun. Its Dwemer Pellets are sold where Daggerfall sells weapons - every storefront
+ * whose pair table above carries the Weapons group (0x03: the Weapon Smith at 0x46, the Armorer and the General Store at
+ * 0x14, the Pawn Shop at 0x0A) - on the counter's shelf (shelfIndex 0, the one a counter sells from), from NO roll and
+ * after every draw of DFU's, so the classic stream is what it was. The stack is the shop's own weight of weapons: its
+ * Weapons chance over the Weapon Smith's, of SHOP_PELLETS_MAX, and a poor shop half of that (quality 1 half, 20 whole) -
+ * a Weapon Smith 25 to 50, an Armorer or a General Store 7 to 14, a Pawn Shop 4 to 7. It sells out and comes back with
+ * the day's restock, as the rest of the shelf does.
+ */
+export const SHOP_PELLETS_MAX = 50;
+const WEAPONS_GROUP_ID = 0x03;
+export function shopPelletStack(buildingType, quality) {
+  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [];
+  let chance = 0;
+  for (let i = 0; i + 1 < pairs.length; i += 2) if (pairs[i] === WEAPONS_GROUP_ID) chance = pairs[i + 1];
+  if (!(chance > 0)) return 0;
+  const most = SHOP_ITEM_GROUPS[BUILDING_TYPES.WeaponSmith][3];   // the Weapon Smith's own Weapons chance, 0x46
+  const q = Math.max(1, Math.min(20, Math.trunc(Number(quality)) || 1));
+  return Math.max(1, Math.round(SHOP_PELLETS_MAX * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));
+}
 
 // E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
 // groups each storefront BUYS from the player.
@@ -437,6 +461,8 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // every tier, Climates & Calories Off and offline too - after DFU's draws, from no roll. Online a purchase stands them
   // again (restockEndless); offline they sell out until the day's restock, as the rest of the shelf does (ENDLESS-STOCK F4)
   if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessProvisions(items);
+  // SHOP-PELLETS (above): the Thunderlock's shot on the counter of every shop that sells weapons - after DFU's draws, from no roll
+  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }
   // POTION-COMMON (2026-10-01, the field: "make health potions more common"): an alchemist's and a general store's day of
   // Potions of Healing (healingSupply.js) - at the shelf's end and from no roll, so DFU's own draws above are the same.
   // AUDIT ECON P1: on the shop's FIRST shelf alone, the one its counter sells from (worldModes.js openMerchantSell) -

@@ -56,7 +56,7 @@
   {
     "name": "AUDWB-A1-one-seat-an-account-everywhere",
     "file": "server/src/index.js",
-    "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
     "new": "      if (who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
     "tests": [
       "test/auditwb_relay.test.js"
@@ -65,7 +65,7 @@
   {
     "name": "AUDWB-A1-two-seats-an-account",
     "file": "server/src/index.js",
-    "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "old": "      if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key)) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
     "new": "      if (false) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
     "tests": [
       "test/auditwb_relay.test.js"

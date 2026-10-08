@@ -173,8 +173,8 @@
   {
     "name": "SET6-the-daedric-prefix",
     "file": "src/systems/itemInfo.js",
-    "old": "|| item?.legendary || item?.aetheric) return { name: base, material: '' };",
-    "new": "|| item?.legendary) return { name: base, material: '' };",
+    "old": "|| item?.legendary || item?.aetheric || item?.gilded) return { name: base, material: '' };",
+    "new": "|| item?.legendary || item?.gilded) return { name: base, material: '' };",
     "tests": [
       "test/set6_aetheric.test.js"
     ]

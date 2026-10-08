@@ -110,7 +110,7 @@
   {
     "name": "LOOT10-record-keeps-the-unknown",
     "file": "src/systems/lootCodex.js",
-    "old": "      if (kind === 'legendary' ? !legendaryById(id) : !aethericById(id)) continue;\n",
+    "old": "      if (!RECORD_OF[kind](id)) continue;\n",
     "new": "\n",
     "tests": [
       "test/loot10_codex.test.js"
@@ -128,7 +128,7 @@
   {
     "name": "LOOT10-save-forgets",
     "file": "src/systems/lootCodex.js",
-    "old": "  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric } }),",
+    "old": "  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric }, gilded: { ..._codex.gilded } }),",
     "new": "  getSaveData: () => empty(),",
     "tests": [
       "test/loot10_codex.test.js"
@@ -320,8 +320,8 @@
   {
     "name": "LOOT10-power-sleeps",
     "file": "src/systems/lootPowers.js",
-    "old": "it?.rarity === 'rare' ? it.imprint : null]",
-    "new": "null]",
+    "old": "it?.rarity === 'rare' ? it.imprint : null, it?.rarity",
+    "new": "null, it?.rarity",
     "tests": [
       "test/loot10_codex.test.js"
     ]

@@ -20,6 +20,7 @@ import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, m
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
+import { sdBrassGrade } from '../systems/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -267,6 +268,7 @@ export function createSkyController(gl, params) {
   // door back to the mod's raw ceil, bug for bug.
   if (dynamicSky) dynamicSky.bandDither = params.get('bands') !== 'raw';
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
+  let brassW = 0;   // SD19: the brass air's weight this frame (setBrass) - 0 is none, and nothing below changes
   let dreadW = 0;   // EVENT1: the live event's weight this frame (setDread) - 0 is no event, and nothing below changes
   let dreadGlow = 0;   // EVENT1: and the red strikes' glow in the cloud deck this frame (the composite's flash, beside the storm's)
   // SUNBABY1: the sun baby's weight this frame (setSunbaby) - 0 is no event, and nothing below changes - and its pass,
@@ -283,7 +285,9 @@ export function createSkyController(gl, params) {
   };
   /** EVENT1: a reflected sky ({zenith, horizon}) under the dread - the water mirrors the sky it is under, on either lane;
    *  SUNBABY1: and under the sun baby, its flower sky's blue. */
-  const dreaded = (ws) => sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil);   // SUNBABY2: the wrath's sky
+  /** AUDIT SD III (V8): and the water's sky brass as the sky over it is. */
+  const brassed = (ws) => (brassW > 0 ? { ...ws, zenith: sdBrassGrade(ws.zenith, brassW), horizon: sdBrassGrade(ws.horizon, brassW) } : ws);
+  const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -393,7 +397,8 @@ export function createSkyController(gl, params) {
     fogColorFor(fogNow) {
       const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
       const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;   // SUNBABY1: the land's haze is the flower sky's horizon (SUNBABY2: the wrath's, burning)
-      return dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      return brassW > 0 ? sdBrassGrade(d, brassW) : d;   // SD19: and brass near a standing Hollow
     },
     /** EVENT1: the live event's weight this frame, 0..1 (world/dreadSky.js createDread) - every pass that draws the sky
      *  grades its colour by it, the fog above takes the same grade, and while it is above 0 the sky wears the storm
@@ -403,6 +408,13 @@ export function createSkyController(gl, params) {
       dreadW = Math.max(0, Math.min(1, Number(w) || 0));
       dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
+    },
+    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/sdOmen.js sdAirWeight) - the fog and
+     *  the water's sky lean to it, and (AUDIT SD III, V8) every pass that draws the sky grades by it as the haze is graded:
+     *  the fogged land met the sky a step apart at the skyline. 0 is exactly the sky there was. */
+    setBrass(w) {
+      brassW = Math.max(0, Math.min(1, Number(w) || 0));
+      for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.brass = brassW;
     },
     /** SUNBABY1: the sun baby's weight this frame, 0..1 (world/sunbabySky.js createSunbaby) - its flower sky is drawn over
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
@@ -1015,11 +1027,21 @@ export const containerNearbyRecord = (c) => lootNearbyRecord({
  *  Treasure is actually cast. Each host now names its own kinds and
  *  this walk does the rest, which is the only shape in which "every
  *  active loot container" can be one sentence again. */
-export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {}) => [
+export const nearbyLootRecords = ({ piles = [], containers = [], foes = [], searched = [] } = {}) => [
   ...piles.map(lootNearbyRecord),
   ...containers.map(containerNearbyRecord),
   ...corpseNearbyRecords(foes),
+  ...searched.map(searchedNearbyRecord),
 ];
+
+/** DETECT-FINDS (the delve arc): A SEARCHED OBJECT'S FIND is a loot container too - SEARCH1's coffins, shelves, chests
+ *  and crates (systems/searchables.js) hold the room's rolled find in `items` until it is taken, the port's own
+ *  DaggerfallLoot - so the one loot walk carries it, at its box's middle. Unsearched, it holds nothing yet (the find is
+ *  rolled at the search) and GetLootFlags gives it no Treasure bit, exactly as an empty corpse. */
+export const searchedNearbyRecord = (sb) => lootNearbyRecord({
+  pos: sb?.aabb ? [(sb.aabb.min[0] + sb.aabb.max[0]) / 2, (sb.aabb.min[1] + sb.aabb.max[1]) / 2, (sb.aabb.min[2] + sb.aabb.max[2]) / 2] : null,
+  items: sb?.items ?? [],
+});
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed.

@@ -2,8 +2,8 @@
   {
     "name": "QREPAIR-the-lost-placement-left",
     "file": "src/systems/quest/questRepair.js",
-    "old": "          try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }",
-    "new": "          continue;",
+    "old": "    try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }",
+    "new": "    continue;",
     "tests": [
       "test/qrepair.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QREPAIR-the-held-set-unread",
     "file": "src/systems/quest/questRepair.js",
-    "old": "          if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
-    "new": "          if (it.ambiguous || goneOnPurpose(it.res, quest, env)) continue;",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (it.ambiguous || goneOnPurpose(it.res, quest, env)) continue;",
     "tests": [
       "test/qrepair.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QREPAIR-the-ambiguous-placed",
     "file": "src/systems/quest/questRepair.js",
-    "old": "          if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
-    "new": "          if (held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
     "tests": [
       "test/qrepair.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "QREPAIR-nothing-gone-on-purpose",
     "file": "src/systems/quest/questRepair.js",
-    "old": "          if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
-    "new": "          if (it.ambiguous || held.has(name)) continue;",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (it.ambiguous || held.has(name)) continue;",
     "tests": [
       "test/qrepair.test.js"
     ]

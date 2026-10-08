@@ -69,7 +69,7 @@
  {
   "name": "EM3-TRAIL-kept-across-a-new-layout",
   "file": "src/systems/automap.js",
-  "old": "    delete rec.trail; delete rec.trailAll;   // EM3-3D: the walked trail is of a layout that is gone\n",
+  "old": "    delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)\n",
   "new": "",
   "tests": [
    "test/em3_3d_dungeon.test.js",
@@ -90,7 +90,7 @@
  {
   "name": "EM3-TRAIL-HideAll-keeps-the-trail",
   "file": "src/systems/automap.js",
-  "old": "  rec.trail = new Set(); delete rec.trailAll;   // EM3-3D: nothing is known, so nothing was walked\n",
+  "old": "  rec.trail = new Set(); delete rec.trailAll; delete rec.drops;   // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)\n",
   "new": "",
   "tests": [
    "test/em3_3d_dungeon.test.js",
