@@ -1,0 +1,407 @@
+[
+  {
+    "name": "GATECROWD-default-twelve",
+    "file": "src/net/gateCrowd.js",
+    "old": "export const GATE_CROWD_DEFAULT = 0;",
+    "new": "export const GATE_CROWD_DEFAULT = 12;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-tiers-reordered",
+    "file": "src/net/gateCrowd.js",
+    "old": "export const GATE_CROWD_TIERS = Object.freeze([0, 12, 24]);",
+    "new": "export const GATE_CROWD_TIERS = Object.freeze([12, 24, 0]);",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-hold-three",
+    "file": "src/net/gateCrowd.js",
+    "old": "export const GATE_CROWD_HOLD_M = 4;",
+    "new": "export const GATE_CROWD_HOLD_M = 3;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-stray-kept",
+    "file": "src/net/gateCrowd.js",
+    "old": "(GATE_CROWD_TIERS.includes(v) ? v : GATE_CROWD_DEFAULT)",
+    "new": "(v ?? GATE_CROWD_DEFAULT)",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-one-over",
+    "file": "src/net/gateCrowd.js",
+    "old": "for (let i = 0; i < rest.length && out.size < max; i++)",
+    "new": "for (let i = 0; i < rest.length && out.size <= max; i++)",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-farthest-drawn",
+    "file": "src/net/gateCrowd.js",
+    "old": "rest.sort((a, b) => a.d - b.d ||",
+    "new": "rest.sort((a, b) => b.d - a.d ||",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-height-counted",
+    "file": "src/net/gateCrowd.js",
+    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
+    "new": "Math.hypot(f[0] - me[0], f[1] - me[1], f[2] - me[2])",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-mate-dropped",
+    "file": "src/net/gateCrowd.js",
+    "old": "if (mate(p.id)) { out.add(p.id); continue; }",
+    "new": "if (mate(p.id)) { continue; }",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-mates-uncounted",
+    "file": "src/net/gateCrowd.js",
+    "old": "i < rest.length && out.size < max",
+    "new": "i < rest.length && i < max",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-ties-unordered",
+    "file": "src/net/gateCrowd.js",
+    "old": "a.d - b.d || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0)",
+    "new": "a.d - b.d",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-no-count-cuts",
+    "file": "src/net/gateCrowd.js",
+    "old": "if (!(max > 0) || peers.length <= max) {",
+    "new": "if (peers.length <= max) {",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-no-hold",
+    "file": "src/net/gateCrowd.js",
+    "old": "- (was?.has(p.id) ? hold : 0)",
+    "new": "- 0",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-hold-to-newcomer",
+    "file": "src/net/gateCrowd.js",
+    "old": "(was?.has(p.id) ? hold : 0)",
+    "new": "(was?.has(p.id) ? 0 : hold)",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-hold-sign",
+    "file": "src/net/gateCrowd.js",
+    "old": "- (was?.has(p.id) ? hold : 0)",
+    "new": "+ (was?.has(p.id) ? hold : 0)",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-cut-everywhere",
+    "file": "src/net/gateCrowd.js",
+    "old": "if (!on) { held.clear(); return peers; }",
+    "new": "if (on === null) { held.clear(); return peers; }",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-places-never-forgotten",
+    "file": "src/net/gateCrowd.js",
+    "old": "if (!on) { held.clear(); return peers; }",
+    "new": "if (!on) { return peers; }",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-held-refilled-under-itself",
+    "file": "src/net/gateCrowd.js",
+    "old": "spare = held; held = now;",
+    "new": "held = now;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-new-list-every-frame",
+    "file": "src/net/gateCrowd.js",
+    "old": "      drawn.length = 0;\n      for (const p of peers) if (held.has(p.id)) drawn.push(p);\n      return drawn;",
+    "new": "      return peers.filter((p) => held.has(p.id));",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-order-lost",
+    "file": "src/net/gateCrowd.js",
+    "old": "for (const p of peers) if (held.has(p.id)) drawn.push(p);",
+    "new": "for (const p of peers) if (held.has(p.id)) drawn.unshift(p);",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-frame-cut-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "{ on: modes?.gateArenaDay?.() != null, me: player.pos,",
+    "new": "{ on: true, me: player.pos,",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-frame-count-unread",
+    "file": "src/scenes/world.js",
+    "old": "max: gateCrowdMax(getPref('gateCrowd')),",
+    "new": "max: gateCrowdMax(12),",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-frame-party-unasked",
+    "file": "src/scenes/world.js",
+    "old": "mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD",
+    "new": "mate: () => false });   // GATE-CROWD",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-pref-default-literal",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  gateCrowd: 0,\n",
+    "new": "  gateCrowd: 12,\n",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-row-gone",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  c.append(choiceRow('gateCrowd', 'Crowd in the Burning Court',",
+    "new": "  void (choiceRow('gateCrowd', 'Crowd in the Burning Court',",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-row-key",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "choiceRow('gateCrowd', 'Crowd in the Burning Court',",
+    "new": "choiceRow('gateCrowds', 'Crowd in the Burning Court',",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-tiers-twice",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "GATE_CROWD_TIERS.map((n) => [n, n ?",
+    "new": "[12, 24, 0].map((n) => [n, n ?",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-court-admitted",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate\n",
+    "new": "",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-every-dungeon-refused",
+    "file": "src/scenes/world.js",
+    "old": "if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate",
+    "new": "if (modes?.gateArenaDay) return null;   // GATE-ALONE: they wait outside the gate",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-cards-in-court",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it\n",
+    "new": "",
+    "tests": [
+      "test/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-under-fire",
+    "file": "src/scenes/world.js",
+    "old": "if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "if (_courtAloneSaid || modes?.transitioning || gamePaused()) return;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-through-the-door",
+    "file": "src/scenes/world.js",
+    "old": "if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "if (_courtAloneSaid || gateVeil?.busy || gamePaused()) return;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-under-a-window",
+    "file": "src/scenes/world.js",
+    "old": "if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy) return;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    _courtAloneSaid = true;\n    if (companionsWithYou() > 0)",
+    "new": "    if (companionsWithYou() > 0)",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-never-owed-again",
+    "file": "src/scenes/world.js",
+    "old": "if (modes?.gateArenaDay?.() == null) { _courtAloneSaid = false; return; }",
+    "new": "if (modes?.gateArenaDay?.() == null) { return; }",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-said-alone",
+    "file": "src/scenes/world.js",
+    "old": "if (companionsWithYou() > 0) setMidScreenText(COURT_TEXT.noCompanions",
+    "new": "if (companionsWithYou() >= 0) setMidScreenText(COURT_TEXT.noCompanions",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-short",
+    "file": "src/scenes/world.js",
+    "old": "setMidScreenText(COURT_TEXT.noCompanions, courtSaySeconds(COURT_TEXT.noCompanions));",
+    "new": "setMidScreenText(COURT_TEXT.noCompanions);",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-word-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    courtAloneFrame();   // GATE-ALONE: my companions wait outside - said as I step in\n",
+    "new": "",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATEALONE-words",
+    "file": "src/world/gateArena.js",
+    "old": "noCompanions: 'Your companions cannot follow you into the Deadlands.',",
+    "new": "noCompanions: 'Your companions wait outside.',",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-everyone-shown",
+    "file": "src/net/gateCrowd.js",
+    "old": "shows: (id) => !live || held.has(id),",
+    "new": "shows: () => true,",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-nobody-shown-outside",
+    "file": "src/net/gateCrowd.js",
+    "old": "shows: (id) => !live || held.has(id),",
+    "new": "shows: (id) => held.has(id),",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-court-never-marked",
+    "file": "src/net/gateCrowd.js",
+    "old": "      live = !!on;\n",
+    "new": "",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-pick-uncut",
+    "file": "src/scenes/world.js",
+    "old": "openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), SOCIAL_REACH",
+    "new": "openPeers(peersNear(), isPartyMate), SOCIAL_REACH",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-gift-uncut",
+    "file": "src/scenes/world.js",
+    "old": "p.id === duelMgr.opponent) && crowdDrawnHere(p));",
+    "new": "p.id === duelMgr.opponent));",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-spark-uncut",
+    "file": "src/scenes/world.js",
+    "old": "if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id)) {",
+    "new": "if (!p?.shown || !online.visible(p)) {",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-everyone-drawn-here",
+    "file": "src/scenes/world.js",
+    "old": "const crowdDrawnHere = (p) => gateCrowd.shows(p.id);",
+    "new": "const crowdDrawnHere = () => true;",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  }
+]
