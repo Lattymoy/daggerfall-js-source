@@ -18,6 +18,9 @@ import { setControllerLook } from '../src/player/lookFilter.js';
 import { _resetForTests } from '../src/systems/settings.js';
 import { setPref, resetPrefs } from '../src/systems/uiPrefs.js';
 import { padDoorCursorFrame, padDoorFrame, DOOR_CURSOR_DEADZONE } from '../src/ui/menuPad.js';
+import { padDoorCursorLaw } from '../src/systems/padCursor.js';
+import { UNITY_AXIS_DEAD } from '../src/systems/gamepad.js';
+import { readFileSync } from 'node:fs';
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 const run = (st, frames, opts) => { let dx = 0, dy = 0; for (let i = 0; i < frames; i++) { const s = stepPadCursor(st, opts); dx += s.dx; dy += s.dy; } return { dx, dy }; };
@@ -114,7 +117,7 @@ test('PAD-CURSOR in the pad layer: on by default on the classic skin - a flick e
 test('PAD-CURSOR at the front door: the stick brings the cursor out and steers it (screen y down), at rest with nothing near it stays; the stick no longer walks the focus; A with the cursor out presses what it stands on (mutants: the stick still walking the focus; A pressing the focus under a cursor)', () => {
   resetPrefs();
   const cur = { pos: null, out: false, feel: { vx: 0, vy: 0, full: 0 } };
-  const env = { near: () => null, bounds: { w: 800, h: 600 }, speed: 900 };
+  const env = { law: padDoorCursorLaw, near: () => null, bounds: { w: 800, h: 600 }, speed: 900 };
   const pad = (x, y, b = {}) => ({ axes: [x, y], buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: !!b[i] })) });
   assert.equal(padDoorCursorFrame(pad(0, 0), cur, 1 / 60, env), false, 'untouched: no cursor');
   assert.equal(cur.out, false);
@@ -141,8 +144,19 @@ test('PAD-CURSOR switch off: the door\'s cursor steps DFU\'s linear law and neve
   setPref('padCursorAssist', false);
   try {
     const cur = { pos: [100, 100], out: true, feel: { vx: 0, vy: 0, full: 0 } };
-    padDoorCursorFrame({ axes: [1, 0] }, cur, 1 / 60, { near: () => ({ x: 120, y: 90, w: 20, h: 20 }), bounds: { w: 800, h: 600 }, speed: 900 });
+    padDoorCursorFrame({ axes: [1, 0] }, cur, 1 / 60, { law: padDoorCursorLaw, near: () => ({ x: 120, y: 90, w: 20, h: 20 }), bounds: { w: 800, h: 600 }, speed: 900 });
     assert.ok(near(cur.pos[0], 115) && near(cur.pos[1], 100), `the full step at once: ${cur.pos}`);
-    assert.equal(padDoorCursorFrame({ axes: [0, 0] }, cur, 1 / 60, { near: () => ({ x: 120, y: 90, w: 20, h: 20 }), bounds: { w: 800, h: 600 } }), false, 'and no pull');
+    assert.equal(padDoorCursorFrame({ axes: [0, 0] }, cur, 1 / 60, { law: padDoorCursorLaw, near: () => ({ x: 120, y: 90, w: 20, h: 20 }), bounds: { w: 800, h: 600 } }), false, 'and no pull');
   } finally { resetPrefs(); }
+});
+
+test('PAD-CURSOR x DA12: the door\'s loop stays a LEAF - the desktop launcher serves it alone under its CSP, so it imports nothing and the cursor comes in from main.js; a page that hands no cursor keeps the stick on the focus walk; the restated dead zone is Unity\'s (mutants: an import in menuPad.js; the launcher losing its stick)', () => {
+  const src = readFileSync(new URL('../src/ui/menuPad.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /^\s*import\s|import\(/m, 'no static or dynamic import');
+  assert.equal(DOOR_CURSOR_DEADZONE, UNITY_AXIS_DEAD);
+  const focused = [];
+  const ui = { candidates: () => [{ el: 'a', rect: { x: 0, y: 0, w: 10, h: 10 } }, { el: 'b', rect: { x: 0, y: 100, w: 10, h: 10 } }], active: () => 'a', connected: () => true, focus: (el) => focused.push(el), press() {}, back() {}, step: () => false };
+  const state = { confirm: false, back: false, dir: null, heldAt: 0, lastRepeat: 0, lastEl: null, lastRect: null, lostAt: null };
+  padDoorFrame({ axes: [0, 1], buttons: [] }, ui, state, 0);
+  assert.deepEqual(focused, ['b'], 'no cursor handed in: the stick walks the focus, as the launcher always had');
 });

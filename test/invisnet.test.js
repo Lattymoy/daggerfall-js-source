@@ -70,6 +70,7 @@ test('INVIS-NET end to end: my invisibility leaves my session the moment it land
     const r = fakeRoom(ROOM);
     const relayMine = r.connect(), relayTheirs = r.connect();
     await r.hello(relayMine, 'ghost-0001', at); await r.hello(relayTheirs, 'seer-0001', at);
+    for (const f of relayMine.sent) mine.receive(f);   // SD-HELLO (PIN MOVED): my own welcome, off the real Room - a socket says nothing past its hello until it lands
     let heard = 0;
     const hear = () => { for (; heard < relayTheirs.sent.length; heard++) theirs.receive(relayTheirs.sent[heard]); };
     const relayLast = async () => {

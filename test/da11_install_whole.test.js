@@ -30,7 +30,8 @@ const main = rd('app/main.cjs');
 
 test('DA11 the built site is packed into app.asar, never shipped beside it as loose files', () => {
   const sets = b.files.filter((f) => typeof f === 'object');
-  assert.deepEqual(sets, [{ from: '../dist', to: 'dist' }], 'dist/ rides the app\'s own files - into the archive');
+  // DA12: and the game's pad loop, one module beside the launcher's page - into the archive too
+  assert.deepEqual(sets, [{ from: '../src/ui', to: 'launcher', filter: ['menuPad.js'] }, { from: '../dist', to: 'dist' }], 'dist/ rides the app\'s own files - into the archive');
   assert.notEqual(b.asar, false, 'the archive is what makes it one file');
   assert.equal(b.asarUnpack, undefined, 'and nothing is unpacked back out beside it');
   const extra = [b.extraResources, b.extraFiles, b.win?.extraResources, b.linux?.extraResources, b.mac?.extraResources]

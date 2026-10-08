@@ -92,7 +92,7 @@
     "tests": [
       "test/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir}/${name}.png`]));",
+    "old": "  const files = new Map(mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]));",
     "new": "  const files = new Map(mod.index.textures.map(([name]) => [name, `base/${name}.png`]));"
   },
   {

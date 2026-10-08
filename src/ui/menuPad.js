@@ -17,13 +17,13 @@
 // curve, the ramp, the boost, the slow over a control and the pull to its centre). A presses what it stands on; the
 // d-pad still walks the focus and carries the cursor onto the control it lands on, so there is one pointer. A real
 // mouse moved puts the pad cursor away. With the stick never touched, the door is the focus walk it always was.
+// THIS MODULE IMPORTS NOTHING (DA12: the desktop launcher serves it alone, as one file, under a strict CSP), so the
+// cursor's law and art come IN: main.js hands `cursor` (systems/padCursor.js's law, the gauntlet); a page that hands
+// none - the launcher - keeps the stick on the focus walk.
 //
 // A control covered by something drawn over it - the sign-in window's scrim over the home - is not a place the focus
 // can go: what a pad can press is what a finger could. And it STOPS when a game is chosen (main.js), where the
 // scene's own pad takes over; the two never read the same press.
-
-import { padCursorAssist, createPadCursorState, stepPadCursor, linearPadCursorStep, pullTargetAmong, PAD_CURSOR } from '../systems/padCursor.js';
-import { CURSOR_SPEED, UNITY_AXIS_DEAD } from '../systems/gamepad.js';
 
 /** The standard-mapping buttons this loop reads (the W3C Gamepad "standard" layout). */
 export const PAD = Object.freeze({ A: 0, B: 1, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 });
@@ -146,12 +146,14 @@ export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
   state.confirm = confirm; state.back = back; state.dir = dir;
 }
 
-/** PAD-CURSOR: the stick's dead zone at the door - Unity's per-axis clip, as the game's pad reads it. */
-export const DOOR_CURSOR_DEADZONE = UNITY_AXIS_DEAD;
+/** PAD-CURSOR: the stick's dead zone at the door - Unity's per-axis clip, as the game's pad reads it (systems/
+ *  gamepad.js UNITY_AXIS_DEAD - restated, not imported: this module is a leaf the launcher serves alone). */
+export const DOOR_CURSOR_DEADZONE = 0.19;
 
 /**
- * PAD-CURSOR: one frame of the door's cursor. `cur` carries { pos, out, feel }; `env` is { near(x, y) -> rect|null
- * (a control under or near the point), bounds: { w, h }, speed (px/s at a full lean) }. The left stick past the dead
+ * PAD-CURSOR: one frame of the door's cursor. `cur` carries { pos, out, feel }; `env` is { law (systems/padCursor.js's
+ * door law - main.js's padDoorCursorLaw), near(x, y) -> rect|null (a control under or near the point),
+ * bounds: { w, h }, speed (px/s at a full lean) }. The left stick past the dead
  * zone brings the cursor out (at the focused control's centre, else the middle) and steers it with the game's law;
  * out and at rest, the pull still settles it on a control. Answers whether it moved. Pure but for `cur`.
  */
@@ -160,12 +162,14 @@ export function padDoorCursorFrame(pad, cur, dt, env) {
   const live = Math.hypot(h, v) > DOOR_CURSOR_DEADZONE;
   if (!cur.out && !live) return false;
   if (!cur.out) { cur.out = true; cur.pos ??= [env.bounds.w / 2, env.bounds.h / 2]; }
+  const law = env.law;
+  const speed = env.speed ?? law.SPEED;
   let st;
-  if (padCursorAssist()) {
+  if (law.assist()) {
     const near = env.near?.(cur.pos[0], cur.pos[1]) ?? null;
-    const target = pullTargetAmong(near ? [near] : [], cur.pos[0], cur.pos[1]);
-    st = stepPadCursor(cur.feel, { h, v, dt, deadzone: DOOR_CURSOR_DEADZONE, speed: env.speed ?? CURSOR_SPEED, over: !!target?.inside, target, at: cur.pos });
-  } else if (live) st = linearPadCursorStep(h, v, dt, (env.speed ?? CURSOR_SPEED) / CURSOR_SPEED);
+    const target = law.pullTarget(near ? [near] : [], cur.pos[0], cur.pos[1]);
+    st = law.step(cur.feel, { h, v, dt, deadzone: DOOR_CURSOR_DEADZONE, speed, over: !!target?.inside, target, at: cur.pos });
+  } else if (live) st = law.linear(h, v, dt, speed / law.SPEED);
   else return false;
   if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) return false;
   cur.pos[0] = Math.min(env.bounds.w - 1, Math.max(0, cur.pos[0] + st.dx));
@@ -262,31 +266,39 @@ const PAD_FOCUS_CSS = '.pad-focus { outline: 2px solid #d9b25a !important; outli
 const DOOR_CURSOR_CSS = 'position:fixed;left:0;top:0;width:31px;height:32px;pointer-events:none;background-repeat:no-repeat;image-rendering:pixelated;display:none';
 
 /** Start the door's pad loop; answers the detach. Nothing happens until a pad is pressed - a page with no pad polls
- *  an empty list once a frame and does nothing. */
-export function attachMenuPad({ doc = globalThis.document, getPads = () => globalThis.navigator?.getGamepads?.() ?? [] } = {}) {
+ *  an empty list once a frame and does nothing. DA12: `focusStyle: false` for a page that draws its own focus and
+ *  whose CSP refuses a style written by script (the desktop launcher, app/launcher/pad.js). PAD-CURSOR: `cursor` is
+ *  { law, art } (main.js) - the stick's cursor; without it the stick walks the focus, as it always did. */
+export function attachMenuPad({ doc = globalThis.document, getPads = () => globalThis.navigator?.getGamepads?.() ?? [], focusStyle = true, cursor = null } = {}) {
   const win = doc?.defaultView;
   if (!win || typeof win.requestAnimationFrame !== 'function') return () => {};
   const ui = domDoorUi(doc);
-  const style = doc.createElement('style');
-  style.textContent = PAD_FOCUS_CSS;
-  doc.head.append(style);
+  const style = focusStyle ? doc.createElement('style') : null;
+  if (style) {
+    style.textContent = PAD_FOCUS_CSS;
+    doc.head.append(style);
+  }
   const state = { confirm: false, back: false, dir: null, heldAt: 0, lastRepeat: 0, lastEl: null, lastRect: null, lostAt: null };
-  // PAD-CURSOR: the door's cursor - out once the stick moves, away again when a real mouse does
-  const cur = { pos: null, out: false, feel: createPadCursorState() };
-  const el = doc.createElement('div');
-  el.className = 'pad-door-cursor';
-  el.style.cssText = DOOR_CURSOR_CSS;
-  el.style.zIndex = '2147483001';   // over every window, as the game's pad cursor stands - it takes no pointer events, so the asset picker above all (MWFIX 1) loses no click
-  doc.body.append(el);
-  import('./plusCursor.js').then((m) => { el.style.backgroundImage = `url("${m.GAUNTLET_POINT}")`; }).catch(() => {});
+  // PAD-CURSOR: the door's cursor - out once the stick moves, away again when a real mouse does; none without a law
+  const law = cursor?.law ?? null;
+  const cur = { pos: null, out: false, feel: law ? law.createState() : null };
+  const el = law ? doc.createElement('div') : null;
+  if (el) {
+    el.className = 'pad-door-cursor';
+    el.style.cssText = DOOR_CURSOR_CSS;
+    el.style.zIndex = '2147483001';   // over every window, as the game's pad cursor stands - it takes no pointer events, so the asset picker above all (MWFIX 1) loses no click
+    if (cursor.art) el.style.backgroundImage = `url("${cursor.art}")`;
+    doc.body.append(el);
+  }
   const show = () => {
+    if (!el) return;
     el.style.display = cur.out ? 'block' : 'none';
     if (cur.out && cur.pos) { el.style.left = `${cur.pos[0]}px`; el.style.top = `${cur.pos[1]}px`; }
   };
   const near = (x, y) => {
     let n = null;
     for (let i = -1; i < 8 && !n; i++) {
-      const a = (i / 8) * Math.PI * 2, r = i < 0 ? 0 : PAD_CURSOR.PULL_RADIUS;
+      const a = (i / 8) * Math.PI * 2, r = i < 0 ? 0 : law.PULL_RADIUS;
       n = doc.elementFromPoint(x + Math.cos(a) * r, y + Math.sin(a) * r)?.closest?.(FOCUSABLE) ?? null;
     }
     const b = n?.getBoundingClientRect?.();
@@ -299,7 +311,7 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
     hover = n;
     n?.classList?.add('pad-focus');
   };
-  ui.cursorOut = () => cur.out;
+  if (law) ui.cursorOut = () => cur.out;
   ui.pressAtCursor = () => {
     const n = cur.pos ? doc.elementFromPoint(cur.pos[0], cur.pos[1])?.closest?.(FOCUSABLE) : null;
     if (!n || n.disabled) return false;
@@ -320,7 +332,7 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
     if (e.isTrusted === false || !(e.movementX || e.movementY) || !cur.out) return;
     cur.out = false; cur.pos = [e.clientX, e.clientY]; hoverTo(null); show();
   };
-  win.addEventListener('mousemove', onMouse);
+  if (law) win.addEventListener('mousemove', onMouse);
   let raf = 0, live = true, last = null;
   const loop = () => {
     if (!live) return;
@@ -331,11 +343,11 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
     try { pad = pickDoorPad(getPads()); } catch { pad = null; }
     if (pad) {
       const bounds = { w: doc.documentElement.clientWidth, h: doc.documentElement.clientHeight };
-      if (padDoorCursorFrame(pad, cur, dt, { near, bounds, speed: CURSOR_SPEED })) {
+      if (law && padDoorCursorFrame(pad, cur, dt, { law, near, bounds })) {
         show();
         hoverTo(doc.elementFromPoint(cur.pos[0], cur.pos[1])?.closest?.(FOCUSABLE) ?? null);
       }
-      padDoorFrame(pad, ui, state, now, { stick: false });
+      padDoorFrame(pad, ui, state, now, { stick: !law });
     }
     raf = win.requestAnimationFrame(loop);
   };
@@ -343,9 +355,9 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
   return () => {
     live = false;
     win.cancelAnimationFrame(raf);
-    win.removeEventListener('mousemove', onMouse);
-    style.remove();
-    el.remove();
+    if (law) win.removeEventListener('mousemove', onMouse);
+    style?.remove();
+    el?.remove();
     doc.querySelector('.pad-focus')?.classList.remove('pad-focus');
   };
 }

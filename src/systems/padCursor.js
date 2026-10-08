@@ -121,3 +121,10 @@ export function pullTargetAmong(rects, x, y, radius = PAD_CURSOR.PULL_RADIUS) {
   }
   return best;
 }
+
+/** The front door's cursor law, handed IN to ui/menuPad.js (a leaf the desktop launcher serves alone - DA12 - so it
+ *  imports nothing): the switch, the state, the step, DFU's step, the pull's target, its radius and the full speed. */
+export const padDoorCursorLaw = Object.freeze({
+  assist: padCursorAssist, createState: createPadCursorState, step: stepPadCursor, linear: linearPadCursorStep,
+  pullTarget: pullTargetAmong, PULL_RADIUS: PAD_CURSOR.PULL_RADIUS, SPEED: CURSOR_SPEED,
+});

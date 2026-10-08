@@ -64,7 +64,7 @@ import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt, surfaceNormalAt, groundOffPlane, terrainSampleHeightAt, lowestGroundUnder } from '../world/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt, groundOffPlane, terrainSampleHeightAt, lowestGroundUnder } from '../world/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
@@ -86,7 +86,7 @@ import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js'; 
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize, isNatureArchive, NATURE_FLATS_Y } from '../world/rmbFlats.js'; import { blockHillSeat, seatNatureFlat } from '../world/townStandIns.js';   // TREES-SEATED: a block's trees on the hills drawn under them
 import { blockSolids } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids
 import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord, decodePng, decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
-import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
+import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
 import { farFlatVisibleAt } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
@@ -222,6 +222,11 @@ import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a
 import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOf, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
+import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
+import { createSnowfallHost, snowfallNetwork, authoredTiles, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
+import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flora batch's share of the mod's lean (its record's wind mask)
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -398,6 +403,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel oppon
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
+import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX } from '../systems/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
@@ -650,8 +656,9 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
+import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
@@ -2236,6 +2243,88 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  // HAZE1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): HEAT HAZE -
+  // built on the enhanced lane (a shader fault is a boot fault), its switch read per frame (hazeFrameSettings: the mod's
+  // own, and `?haze=off`). The state is the mod's per-frame law; the ring is drawn once the opaque world is whole.
+  const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;
+  const heatHaze = createHeatHaze();
+  // WINDFALL1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): WINDFALL -
+  // the enhanced outdoors' (scenes/windfallHost.js): ticked on every frame, outdoors and in; its law handed to the flats'
+  // call in WIND3's place while the mod is on, its leaves and snow drawn with the opaque world.
+  const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });
+  // SNOWFALL1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): SNOWFALL -
+  // the enhanced outdoors' snow (scenes/snowfallHost.js) on the streamed ground as it is DRAWN: each pixel's own
+  // surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the roads
+  // Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn after
+  // the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
+  // stream's bindings when it is asked, never here (they are declared below).
+  const _snowPixels = new Map();   // px * 1000 + py -> the built entry, this frame (cleared at the frame: a publish lands between frames)
+  const _snowIds = new WeakMap();
+  let _snowNextId = 0;
+  const snowIdOf = (o) => { if (!o) return 0; let id = _snowIds.get(o); if (id === undefined) { id = ++_snowNextId; _snowIds.set(o, id); } return id; };
+  const _snowG = [0, 0];
+  const snowGround = {
+    size: TERRAIN_SIZE,
+    get terrainDistance() { return state.terrainDistance; },
+    pixelAt(x, z) {
+      const c = state.compensation;
+      return snowGround.pixelOn(state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE));
+    },
+    pixelOn(px, py) {   // StreamingWorld.GetTerrainFromPixel: the built entry standing there, its ground published
+      if (px < 0 || px >= 1000 || py < 0 || py >= 500) return null;
+      const k = px * 1000 + py;
+      let p = _snowPixels.get(k);
+      if (p === undefined) { p = built.get(`${px},${py}`) ?? null; if (p && !(p.samples && p.tilemapBytes)) p = null; _snowPixels.set(k, p); }
+      return p;
+    },
+    pixelsNear(ring) {
+      const cur = state.current, out = [];
+      for (const p of built.values()) if (p.samples && p.tilemapBytes && Math.max(Math.abs(p.px - cur.x), Math.abs(p.py - cur.y)) <= ring) out.push(p);
+      return out.sort(nearestFirstFrom(cur));
+    },
+    translation: (p, out) => state.pixelTranslation(p.px, p.py, out),
+    height(p, lx, lz) {
+      if (p.deepWaters && deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return f; }   // DW-B: the floor is drawn there
+      const stride = p._stride ?? 1, h = surfaceHeightAt(p.samples, lx, lz, stride), d = p._bed?.depths, g = 128 / stride + 1;
+      return d ? h - gridValueAt(d, g, g, tileSide * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
+    },
+    normal: (p, lx, lz, out) => (p.groundNormals && (p._stride ?? 1) === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, p._stride ?? 1, out)),
+    tileMap: (p) => p._dwBytes ?? p.tilemapBytes,
+    climate: (p) => maps.getClimateIndex(p.px, p.py),
+    mapPixel: (p) => ({ x: p.px, y: p.py }),
+    stamp: (p) => `${p._stride ?? 1}/${snowIdOf(p._dwBytes ?? p.tilemapBytes)}/${snowIdOf(p.deepWaters)}/${snowIdOf(p._bed?.depths)}`,
+    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,   // DW-B: the carved sea has no ground to lie on
+    roads(p) {
+      const raw = terrainGen.roads();
+      const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;
+      if (!net) return null;
+      const loc = p.locationRect ? locationIndex.get(`${p.px},${p.py}`) : null;
+      const authored = loc?.exterior?.exteriorData && (net.roads | net.roadCorners | net.paths | net.pathCorners) !== 0 ? authoredTiles(loc, maps, blocks) : new Uint8Array(16384);
+      return { ...net, authored, rect: p.locationRect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 } };
+    },
+    toGlobal(x, z) {
+      const c = state.compensation;
+      _snowG[0] = state.mapOrigin.x * TERRAIN_SIZE + (x - c[0]);
+      _snowG[1] = (499 - state.mapOrigin.y) * TERRAIN_SIZE + (z - c[2]);
+      return _snowG;
+    },
+    settlements: (minX, minZ, maxX, maxZ) => settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
+  };
+  const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
+  /** SNOWFALL1: who walks the snow - the player (the fly camera: the tiers round the eye, no tracks), the street's foes
+   *  and its watch (an EnemyMotor's CharacterController), the town's people (a MobilePersonNPC: a citizen) - and the
+   *  bodies lying in it (the corpse markers, scene). */
+  const snowPlayer = () => (walkMode && playerSpawned
+    ? { x: player.pos[0], y: player.pos[1], z: player.pos[2], grounded: !!player.grounded, swimming: !!player.swimming, levitating: !!player.levitating }
+    : { x: cam.pos[0], y: cam.pos[1], z: cam.pos[2], grounded: false, swimming: false, levitating: true });
+  const snowNpcs = () => {
+    const out = [];
+    for (const f of exteriorFoes.foes) if (!f.dead && f.ai?.feet) out.push({ id: f, x: f.ai.feet[0], z: f.ai.feet[2], active: true, grounded: !!f.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const g of cityGuards.guards) if (!g.dead && g.ai?.feet) out.push({ id: g, x: g.ai.feet[0], z: g.ai.feet[2], active: true, grounded: !!g.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const seat of _livePersons) out.push({ id: seat.person, x: seat.pos[0], z: seat.pos[2], active: true, grounded: true, radius: 0, citizen: true });
+    return out;
+  };
+  const snowBodies = () => exteriorFoes.physicalCorpses().concat(cityGuards.physicalCorpses());
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
@@ -2440,7 +2529,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   }) : null;
   const _lptSets = [];   // LPT1: the frame's near pixels' tree sets (a scratch)
   const _lptSway = new Map();   // LPT1: a prototype's share of the wind's lean, as its far pictures' batch takes it
-  const _lptOpts = { skip: (set, i) => FELLED.has(set.centers[i]), swayOf: (proto) => _lptSway.get(proto) ?? 0, stamp: 0, planes: null };   // LPT1: the frame's, made once (a wind that is off is the flats' call's, uFlatWind zero)
+  const _lptWindfall = new Map();   // WINDFALL1: ...and its share under Windfall's law
+  const _lptOpts = { skip: (set, i) => FELLED.has(set.centers[i]), swayOf: (proto) => _lptSway.get(proto) ?? 0, windfallOf: (proto) => _lptWindfall.get(proto) ?? 0, stamp: 0, planes: null };   // LPT1: the frame's, made once (a wind that is off is the flats' call's, uFlatWind zero)
   mwViewAttachWagon({ getGpuMesh, cpuModels }); const EOTB_WAGON_PACK = Object.freeze({ dungeon: Object.freeze({ wagonPrompt: true }) });   // EOTB-IL: SpawnWagon's CreateDaggerfallMeshGameObject(41239) through this host's pipeline; CheckWagon's AllowDungeonWagonAccess() + dfuiOpenInventoryWindow (IL_228b-IL_229f). One line, so the cites below it hold
   let _surfPath = false;   // EOTB-IL: PlayerMotor.OnExteriorPath, as the frame's surface model last answered it (UpdateWagon's wobble reads it)
   // WM2b/WM2d: the vendored mill's two parts, uploaded on the first mill
@@ -2988,6 +3078,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   let tvFar = { at: null, near: -1, list: [] };   // TV5: the far places about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvDng = { at: null, dg: -1, list: [] };   // TV6: the dungeons about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvFind = { at: null, dg: -1, n: -1, list: [] };   // AUDIT OW5 D1: the find's own, uncapped (above its readers: BOOT-TDZ - a load empties it)
+  let tvDngModels = { at: null, dg: -1, n: -1, list: [] };   // OW-DUNGEONS: the dungeons standing as models under the Overworld (above its readers: BOOT-TDZ - a load empties it)
+  const _tvDngModel = new Map();   // OW-DUNGEONS: each one's model as loaded (tvDungeonModelLoad), held by its own place while it stands
+  pipeline.keepPlaces('owdungeon', TV_DUNGEON_MODELS_MAX);   // OW-DUNGEONS: a dungeon that leaves the set and comes back is not loaded again
   const _tvBountyHold = new Map();   // BOUNTY-OVERWORLD: each held bounty's kept scene point, by bounty id
   const _tvVendorHold = {};   // HOME-VENDOR: the trader's waypoint's kept scene point (tvSceneKept's holder)
   const _tvWaypointHold = new Map();   // WAYPOINTS: each flag's kept scene point (tvSceneKept's holders), by its id
@@ -5423,6 +5516,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         batch._box = flatBatchAabb(centers, far.size);
         batch.sway = floraSwayOf(archive, natureSet, plain.h);
         _lptSway.set(lpt, Math.max(_lptSway.get(lpt) ?? 0, batch.sway));
+        batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - the stock record's (Low Poly Trees' tree stands for it, not the season's picture)
+        _lptWindfall.set(lpt, Math.max(_lptWindfall.get(lpt) ?? 0, batch.windfall));
         unionBox(batch._box);
         batches.push(batch);
         if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
@@ -5433,6 +5528,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
         batch.sway = floraSwayOf(archive, natureSet, sib.size.h);   // WIND3: the season's trees lean too
+        batch.windfall = windfallResponse(archive, record, seasonPrefixOf(seasons.installedSeason, archive));   // WINDFALL1: the mod's table for the season's atlas
         unionBox(batch._box);
         batches.push(batch);
         if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
@@ -5443,6 +5539,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       batch.sway = floraSwayOf(archive, natureSet, size.h);   // WIND3: the flora lean with the wind, nothing else does
+      batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - every nature batch, as the mod patches them (TryPatchBatch: 500..511)
       unionBox(batch._box);
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
@@ -5610,6 +5707,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (deepWaters) deepWaters.published(built.get(key), dwResult);   // DW-B: the near promote stands with the pixel, or the pixel waits its turn
     if (dwDecor) dwDecor.onPromote(built.get(key));   // DW-E2: UnderwaterDecorations.HandlePromote, after the floor builder's (the subscription order)
     if (oceanHoles) oceanHoles.promoted(built.get(key));   // OH-B: DaggerfallTerrain.OnPromoteTerrainData -> OceanHoles.OnTerrainPromoted (its dependant, subscribed after both of the sea's)
+    snowfall.promoted(built.get(key));   // SNOWFALL1: OnPromoteTerrainData -> DynamicSnowController.HandleTerrainPromoted - its blanket to make, the nearer tiers over it again
     const dwRubbleKept = _dwRubbleCarry.get(key);   // AUDIT DW-F: a rebuilt pixel's rubble, on the entry that stands now
     if (dwRubbleKept) { _dwRubbleCarry.delete(key); const e = built.get(key); for (const r of dwRubbleKept) r.entry = e; _dwRubble.set(e, dwRubbleKept); }
     gatherHost?.onBuilt(built.get(key));   // PROF1/PROF2: the day's patches, veins and boulders, stood in the pixel's own list
@@ -9429,10 +9527,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  body may stand (the place's collider swept from the player's feet). None while the player is not afoot in it: a
    *  door or a load in flight, at a helm, in the travel view, or the naval arc off. GATE-ALONE (2026-10-07, Mac: "We need
    *  to not allow followers inside the oblivion gates"): and none in an Oblivion Gate's court - the layer lifts every
-   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it. */
+   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it.
+   *  SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): nor in the Shattered Hour, the
+   *  same way - lifted as the player steps through the Rift, stood behind them again out of the Hour. */
   function companionPlace({ crew = true } = {}) {   // REVENANT-COMPANION: the sworn's layer asks it without the naval arc's gate
     if ((crew && !navalOn()) || !walkMode || !playerSpawned || _loading || modes?.transitioning || travelView?.active || csaRuntime?.isSailing?.()) return null;
     if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate
+    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift - they wait outside the Hour
     const spotOf = (col) => (from, dx, dz) => { const p = [from[0], from[1], from[2]]; try { col?.move(p, dx, 0, dz, 1.8); } catch { /* the leader's own spot */ } return [p[0], p[1], p[2]]; };   // AUDIT CC-A3: the swept spot's own height (a slope's, a stair's)
     const mode = _mode();
     const standIn = (pool) => (mobile, feet, o) => pool.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, allied: true, loose: true, transient: true });
@@ -9553,6 +9654,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  his whole); none with the arc off. */
   function partyCompanions() {
     if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it
+    if (modes?.sdRealmSlot?.() != null) return [];   // SD-ALONE: and none in the Shattered Hour
     // AUDIT WK-U5: none while I sail - the party is lifted aboard (it stood its cards over the ship's plate on a phone)
     const party = navalOn() && !csaRuntime?.isSailing?.() ? naval?.companions?.party ?? [] : [];
     const sworn = swornCards?.() ?? [];   // REVENANT-COMPANION: the sworn's cards after the crew's
@@ -11504,7 +11606,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
     scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),   // DECOR-DUNGEON: the interior host's own constructor
     seasonal: () => (seasonsActive ? seasons : null),   // DECOR-OUTDOOR: a yard's trees in Seasons of the Iliac Bay's season, as the town's
-    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)) } : null,   // DECOR-LPT: a yard's tree as Low Poly Trees' own - its 3D tree in the near set (lowPolyTreesFrame)
+    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)), windfall: (proto, share) => _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, share)) } : null,   // DECOR-LPT: a yard's tree as Low Poly Trees' own - its 3D tree in the near set (lowPolyTreesFrame)
     character: () => characterIdOf(playerEntity),
     realm: () => (realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null),
     wallet: (region) => homeYardWallet(region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
@@ -11517,7 +11619,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
-  let _noticeReadT = 0;   // NOTICE1: the town underfoot is asked about once a second (the book's cache answers the rest)
+  /** SCALE4c: the town the street frame last found underfoot, and when (performance.now ms) - the heartbeat's board part
+   *  asks it, so the board is read exactly where and while the frame asked it before; and when the online lane last ran,
+   *  for the letterbox's part the same way. */
+  let _noticeTown = /** @type {{ mapId: number|null, at: number } | null} */ (null);
+  let _mailFrameAt = -Infinity;
+  const FRAME_LIVE_MS = 2500;
   /** BOUNTY-FARM / BOUNTY-TRAIL: how near its spot (the farmhouse, the second group's) the hunter must come before the
    *  group stands - under the camps' 200 m cull, so a group stood is never culled on the frame it stands. */
   const BOUNTY_GROUP_REACH_M = 150;
@@ -12729,6 +12836,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one
     riteHost?.destroyAll();   // WB12d: and the faithful's circle - its faithful went with the live pools; it stands again the next frame
     csaReanchor(state.initOffset);   // FIELD-CSA1: and every placed boat with it
+    // AUDIT ENVIRONS I2: AND THE SNOW, THE WIND AND THE HAZE, by the same move. Each keeps scene places a recentre
+    // carries (their offsetOrigin), and `state.init` gives none to ride: the snow's window and ring held the old place's
+    // tracks round the arrival - its first stamp a trench from the departure, written to the save at the arrival's
+    // places - and the leaves in the air blew on at the new pixel. The arrival's haze reads its layer afresh.
+    snowfall.offsetOrigin(state.initOffset);
+    windfall.offsetOrigin(state.initOffset);
+    hazeGl?.offsetOrigin(state.initOffset);
+    heatHaze.reset();
     _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
     // RESPAWN-GROUND (FIELD BUGS 2026-09-30, "Respawning high in the air after death"): THE EYE STANDS ON THE NEW PIXEL
     // WHILE IT BUILDS. The frames of the awaits below feed `cam.pos` to the streamer, which reads it in the new frame -
@@ -14694,6 +14809,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)
     travelView?.exit('load', true);   // AUDIT DEEP X-3: a load under the travel view cuts it first - its release put the head back over the camera the save restores
     _owSay.sp.clear(); _owSay.dg.clear();   // OW6L: nor what the abandoned run still owed its cell (the loaded ledger is the save's)
+    tvDngModels = { at: null, dg: -1, n: -1, list: [] }; for (const e of _tvDngModel.values()) e.hold.release(); _tvDngModel.clear();   // OW-DUNGEONS: nor their models, once the view is cut
     // AUDIT OW4 D3: NOR THE SPAWNS THE ABANDONED RUN WAS TOLD OF - the Overworld marks a spawn once its pixel's line was
     // said (tvSpawnKnown), and that set outlived every load: another save's character saw "?"s where the last one had
     // walked. The loaded character's own are in the store its save restored (the same crossing files them, syncTopics).
@@ -19515,10 +19631,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   // because bootWorld runs once per page. Online or not: a signed-in
   // player in a single-player world is still playing. A hidden page
   // does not knock, so a tab left in the background is not time played.
-  startPlayClock({
-    beat: accountPlayBeat({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+  // SCALE4c (Mac: "Do 1 2 and 3"): ONE HEARTBEAT FOR THE TAB'S THREE CLOCKS - the beat rides it (or goes alone when
+  // nothing will ride with it, a single-player world's case), the town's board and the letterbox join it below, each at
+  // its own pace and each answered as its own route answers (net/heartbeat.js, server-account/src/heartbeat.js). The
+  // FOUR HOSTS: this host alone keeps any of the three - exterior.js (the fixed city), worldModes.js (interiors, this
+  // host's own modes) and dungeonContext.js (the standalone dungeon) start no play clock, read no board and keep no box.
+  const heartbeat = createHeartbeat({
+    fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
+  // AUDIT SCALE B1: the hide seen at once, not at the next tick - a knock waiting as the page hides goes with it, kept
+  // alive past the page (a tab closed), where a second's tick may never come
+  globalThis.document?.addEventListener?.('visibilitychange', () => { heartbeat.tick(); });
+  startPlayClock({
+    beat: () => heartbeat.beat(),
+    visible: () => globalThis.document?.visibilityState !== 'hidden',
+  });
+  // the town's board, read where and while the street frame finds the player in a town (the frame stamps it each second)
+  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => (_noticeTown && performance.now() - _noticeTown.at < FRAME_LIVE_MS ? _noticeTown.mapId : null)));
   /** QUEST-PARTY (2026-09-26, Mac: "Party shares them"): THE PARTY'S LAW FOR A POOL'S QUEST FOES - one home for the
    *  open air's pool (onlineStart) and each building's (worldModes' interior pool, QUEST-PARTY phase 3b). A quest shared
    *  with the party streams its foes to the party, a member stands a party peer's, a peer's blow and a quest foe's hunt
@@ -20242,6 +20372,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
       onLetter: (event) => { chatLog.push(tab.id, { text: mailNoticeText(event), system: true }); },
     });
+    // SCALE4c: its looks ride the heartbeat - while the online lane runs, as its poll there ran
+    heartbeat.add('mail', whileLive(mail.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
     // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
     // account minted on first use as the bank window mints it.
@@ -21751,7 +21883,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     door: (key) => {
       if (_sdDoorAt && _sdDoorAt.key === key && _sdDoorAt.gen === doorGeneration) return _sdDoorAt.at;
       const e = buildingDoors.find((d) => d.pixelKey === key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
-      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(e.door) : null };
+      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(shiftedDoor(e)) : null };   // SD-SKY: in the scene's frame, the feet's own - the list holds each door in its pixel's frame (AUDIT 68 S22)
       return _sdDoorAt.at;
     },
     feet: () => (walkMode && playerSpawned && _mode() === 'exterior' ? player.feetAt() : null),   // SD2d: the find is the street's - the host frames in every mode now
@@ -21799,7 +21931,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdFightFrame(); sdVoiceFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdVoiceFrame(); };
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -21811,6 +21943,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     _sdOut = true;
     gateVeil?.flash('brass');   // AUDIT SD II (L6 F8): out of the Hour in its own brass
     if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+  };
+  /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
+   *  Shattered Hour (companionPlace answers none there, as in a gate's court - GATE-ALONE), and a player who steps
+   *  through the Rift with any at their side is told so - once each time they step in, when the step's veil has opened
+   *  over the Hour; owed again once they are out. */
+  let _sdAloneSaid = false;
+  const sdAloneFrame = () => {
+    if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }
+    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    _sdAloneSaid = true;
+    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);
   };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
@@ -24997,7 +25140,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     wedFrame();   // LEGACY7 part three: the wedding's clock, and the account's unions read again
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
-    mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
+    _mailFrameAt = performance.now();   // MAIL1: the letterbox looks while this lane runs - SCALE4c: on the heartbeat (its part, above), before the dead return as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
     sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
@@ -25651,7 +25794,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
     sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
     sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
-    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
+    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor),   // SD5a: out of the Hour - a death, its end - before the Hollow's door; SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not
@@ -26449,6 +26592,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // draws ride, so the handedness mirror is inside the planes too.
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
+  const snowOutside = (box, x, y, z) => aabbOutside(_planes, box, x, y, z);   // SNOWFALL1 (AUDIT ENVIRONS G6): a blanket tile's bounds against the frame's frustum
   const _pv = new Float32Array(16);
   /** PERF-LIGHTS: the night's lantern pool and the one translation triple
    *  it reads through - refilled every frame, never re-minted. */
@@ -27330,6 +27474,74 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       spawnFound: tvSpawnFound, spawnGone: (s) => tvSpawnGone(s.x, s.y) }).map(placed);
     tvDng = { at, dg, grid, n, list };
     return list;
+  }
+  /** OW-DUNGEONS (2026-10-08, Mac: "with dungeons on the overworld it doesnt show a dungeon model"; "Its own model,
+   *  enlarged"; systems/travelDungeonModels.js, bible/06-Systems/Travel-View.md OW-DUNGEONS): THE DUNGEONS STANDING AS
+   *  MODELS - TV6's own law (nearDungeons) with none left to TV2's grid (a found one there is a speck from the eye too)
+   *  and a standing Abyss Dungeon among the spawns (its own host stands and takes it - it is known from its rise), the
+   *  nearest TV_DUNGEON_MODELS_MAX; read again as TV6's is, when the pixel, the finds or the index move. */
+  function tvDungeonModelList() {
+    const at = playerTravelPixel(), dg = discoveryGeneration(), n = _locIndexGen;
+    if (tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) tvDngModels.at = null;   // AUDIT OW4 D2's law: a spawn whose time ran out goes
+    if (tvDngModels.at && tvDngModels.at.x === at.x && tvDngModels.at.y === at.y && tvDngModels.dg === dg && tvDngModels.n === n) return tvDngModels.list;
+    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),
+      spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s), spawnFound: tvSpawnFound,
+      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });
+    const list = dungeonModelSet(near).map((g) => ({ key: g.key, px: g.x, py: g.y, loc: g.loc, spawn: g.spawn }));
+    tvDngModels = { at, dg, n, list };
+    return list;
+  }
+  /** OW-DUNGEONS: a dungeon's model, loaded for the view - its blocks laid as its pixel's build lays them, its entrance
+   *  model picked (dungeonEntranceModel), held by its own place (PLACE-LRU `owdungeon`) and dressed in its climate and
+   *  the season as its pixel would (the bounty farm's way, BOUNTY-FARM); ready once its box is known. */
+  function tvDungeonModelLoad(g) {
+    const e = { key: g.key, px: g.px, py: g.py, ready: false, gpu: null, local: null, box: null, h: 0, texRemap: null, matrix: new Float32Array(16), hold: pipeline.holdPlace('owdungeon', g.key) };
+    _tvDngModel.set(g.key, e);
+    (async () => {
+      const lay = layoutLocation(g.loc, maps, blocks, { enhanced: isEnhanced(), windmills: false });
+      const tile = getLocationTerrainTileOrigin(g.loc);
+      const meshOf = (id) => { const i = arch.getRecordIndex(id); return i === -1 ? null : arch.getMesh(i); };
+      const pick = dungeonEntranceModel(lay.blocks, tile.x * tileSide, tile.y * tileSide, meshOf, isEnhanced());
+      if (!pick) return;
+      const gpu = await e.hold.getGpuMesh(pick.modelIdNum);
+      const cpu = cpuModels.get(pick.modelIdNum);
+      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;
+      const free = isClimateFreeModel(pick.modelIdNum);   // ARENA1's law, as the build's
+      const texRemap = free ? NO_CLIMATE_REMAP : new Map();
+      const climate = g.loc.climate?.climateType ?? getWorldClimateSettings(maps.getClimateIndex(g.px, g.py)).climateType;
+      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);
+      if (_tvDngModel.get(g.key) !== e) return;
+      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);
+      Object.assign(e, { ready: true, gpu, local: pick.local, box, h: Math.max(0.5, box[4] - Math.max(0, box[1])), texRemap });
+    })().catch((err) => console.warn('[overworld] a dungeon\'s model', g.key, err?.message ?? err));
+  }
+  /** OW-DUNGEONS: the set kept in step - a new one's model asked for, one gone released - and each drawn grown with the
+   *  eye's distance (owDungeonGrow) about its foot, where its real one stands: over a built pixel on the real model's
+   *  own level, past the grid on the far ring's ground. No giant's shadow (the view's law, WAGON-HITCH B2). Under the
+   *  view alone: in play the world's own entrance is the model. */
+  const _tvDngAt = [0, 0, 0];
+  function drawTvDungeonModels(eye) {
+    if (!eye) return;
+    const list = tvDungeonModelList();
+    const keep = new Set();
+    for (const g of list) { keep.add(g.key); if (!_tvDngModel.has(g.key)) tvDungeonModelLoad(g); }
+    for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }
+    for (const e of _tvDngModel.values()) {
+      if (!e.ready) continue;
+      const t = state.pixelTranslation(e.px, e.py, e.t ??= [0, 0, 0]);
+      const foot = (e.foot ??= modelFoot(e.box));
+      const level = built.get(`${e.px},${e.py}`)?.locOrigin ?? null;   // the real model's own level, where its pixel stands
+      _tvDngAt[0] = t[0] + foot[0]; _tvDngAt[2] = t[2] + foot[2];
+      if (level) _tvDngAt[1] = t[1] + level[1];
+      else {   // past the grid: the far ring's ground, asked again only as the ground moves (TV3's tvSceneKept's way)
+        const gen = tvGroundGenNow();
+        if (e.groundGen !== gen) { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }
+        _tvDngAt[1] = e.groundY;
+      }
+      const g = owDungeonGrow(Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2]), e.h);
+      if (!owDungeonDrawn(g, !!level)) continue;
+      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });
+    }
   }
   /** AUDIT OW5 D1 (the audit before the merge, 2026-09-29): THE FIND ASKS EVERY UNFOUND DUNGEON IN ITS REACH - never the
    *  plates' list above, which keeps TV_DUNGEON_MAX with the FOUND first (AUDIT OW4 D7), so a traveller who had found a
@@ -28674,6 +28886,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: the mod's coroutine clock, in every mode (a MonoBehaviour's Time.deltaTime)
       raidingPartiesFrame(gamePaused() ? 0 : dt);   // RAID1: indoors too - the day's roll, the region's news, a raid running out; nothing is stood (FindCurrentRaid wants the street)
       if (_bandChase.size) bandDrop();   // AUDIT OW4 B5: a door ends every chase, spent - the band frame never runs indoors, and a chase froze there to take up again on the way out
+      heatHaze.suppress();   // HAZE1: inside is no exterior - the strength is 0 at once (HeatHazeMod.Update), and eases up again outside
+      { const _wfPx = playerTravelPixel(); windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx, feet: player.pos, height: player.height }); }   // WINDFALL1: WindMod.Update indoors - the gust eases out, the sources fade, the leaves stop (AUDIT ENVIRONS W1: on the game's seconds)
+      { const _snPx = playerTravelPixel(); _snowPixels.clear(); snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_snPx.x, _snPx.y), corpses: snowBodies }); }   // SNOWFALL1: DynamicSnowController.Update indoors - the surfaces hidden, the snowpack and the refill kept by the event clock
       crewAshoreTick();   // CREW-COMPANIONS: the party stood indoors and underground too
       revenantAshoreTick();   // REVENANT-COMPANION: and the sworn
       hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too - the hotkeys' "outdoors only", the settings, the switch
@@ -29550,6 +29765,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21: the field keeps its own origin and follows this one - every cell stays where it grew (AUDIT 49 F2 / GR5 threw it away here and regrew it for three seconds)
       offsetTactics(r.offset);   // AUDIT TACT D3: the noted player and every live wind-up move with the world
+      hazeGl?.offsetOrigin(r.offset);   // HAZE1: the shimmer's noise stands on the land, not the scene
+      heatHaze.offsetOrigin(r.offset);   // HAZE1 (AUDIT ENVIRONS I7): and the ring's layer, held while airborne, with it
+      windfall.offsetOrigin(r.offset);   // WINDFALL1: the trees' places in the mod's wind, and its leaves, stand on the land
+      snowfall.offsetOrigin(r.offset);   // SNOWFALL1: FloatingOrigin.OnPositionUpdate - the tiers' centres, their tracks and their pending stamps stand on the land
       droppedLoot.offsetAll(r.offset);
       dwFish?.offsetAll(r.offset);   // DW-E3: the fish and their schools' centres (Port-Ledger A, the Iliac Puddle row)
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
@@ -29695,8 +29914,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
-    _noticeReadT -= dt;
-    if (noticeBook && _noticeReadT <= 0) { _noticeReadT = 1; const town = noticeTownHere(); if (town) noticeBook.read(town.mapId); }
+    // AUDIT SCALE B7: once a second by the wall clock, not by the frame's dt - the dt is clamped at 0.1 s, so at four
+    // frames a second or fewer that "second" outran FRAME_LIVE_MS and the board's part dropped out between stamps
+    const stampAt = performance.now();
+    if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000)) { const town = noticeTownHere(); _noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }   // SCALE4c: the heartbeat's board part reads it (above)
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     pump();
@@ -29825,6 +30046,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // DW-D: the water arm reads the sea's forged blockWaterLevel and isPlayerSubmerged - WaterGentle at the line, the bubbles under it
     ambience.update(dt, { playerPos: cam.pos, inside: false, underground: modes?.mode === 'dungeon', waterSurfaceY: dwPlayer?.waterLevelY ?? null, submerged: !!dwPlayer?.submerged });   // CRICKET-DUNGEON: no crickets under the ground   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
+    const _wfPx = playerTravelPixel();
+    const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
+      heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
+    _snowPixels.clear();
+    snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update - its tiers round the player, the tracks, the snowpack by the event clock
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
     // shipped DFU renders no flash (PlayLightningEffect is 0 on both
@@ -30053,6 +30279,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
+    if (tvf) drawTvDungeonModels(travelView?.eye ?? null);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
@@ -30254,6 +30481,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
+    // SNOWFALL1 (AUDIT ENVIRONS G7): THE SNOW BEFORE THE GROUND UNDER IT - GROUND-LAST's own law a layer up: an opaque
+    // surface over the ground (SNOW_LAYER keeps it over whichever is drawn first), so a ground fragment under the snow
+    // fails the depth test before its shader runs, and the picture is the same. By the ground's own program, the
+    // frame's lights and its deck; its blanket's tiles culled to the frustum (G6: each a renderer of its own in the
+    // mod, culled by its bounds); never under the travel view (its eye is the traveller's, its tiers the walker's).
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
+    if (!tvf) snowfall.draw(cullOn ? snowOutside : null);
     // GROUND-LAST: the ground of every visible pixel, after every opaque
     // mesh of every pixel (see the queue above). Before the sky, the ring,
     // the water and the flats, as it always was: the water reads its depth
@@ -30352,7 +30586,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), walkMode && playerSpawned ? player.pos : cam.pos));   // TACT4: a foe's wind-up on the ground, under the bodies
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)
-    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
+    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
     magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
@@ -30834,6 +31068,19 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         wind: Math.min(1, wd.strength01 * wd.gust),
         fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, focus: renderer._focus },
       })) renderer.markForeignPass();
+    }
+    // HAZE1: HEAT HAZE - the mod's GrabPass at Transparent-100: the opaque world whole (the ground, the models, the flats,
+    // the grass and the banners), what falls and every translucent thing still to come. Not under the travel view's
+    // camera: the ring stands round the player's feet, and that eye is hundreds of metres over them.
+    // WINDFALL1: WINDFALL's LEAVES AND SNOW - cutouts that write depth, so with the opaque world and before the haze grabs
+    // it; lit as the flats round the player are. Not under the travel view's camera (they ride the player's place).
+    if (windfall.particles && !tvf && windfall.draw(proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();
+    if (hazeGl) {
+      const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;
+      const _hzPx = playerTravelPixel();
+      const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * worldTimeScale(), exterior: true, climate: maps.getClimateIndex(_hzPx.x, _hzPx.y), weather, minuteOfDay: minute,
+        foot: _hzFoot, grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4: the ease on the real clock (unscaledDeltaTime), the shimmer on the game's (_Time.y)
+      if (hz.visible && !tvf && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass

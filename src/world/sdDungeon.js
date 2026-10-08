@@ -25,6 +25,7 @@
 
 import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN, SD_COLLAPSE_MS } from '../net/sdLaw.js';
 import { timerText } from '../systems/eventTimers.js';
+import { RDB_SIDE } from './rdbLayout.js';   // SD-REACH: a dungeon block's side - which block's square holds a marker
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -96,15 +97,34 @@ export const SD_RETURN_GAP_M = 1.2;
 /** The plaque's words (World Tooltips' title and its row). */
 export const SD_END_TEXT = Object.freeze({ rift: 'The Rift', riftTo: 'To the Shattered Hour', ret: 'The Return', retTo: 'To the way in' });
 
+/** SD-REACH: a border block - the caps DFU closes a dungeon's layout with - by its name, GetRandomBlock's own test
+ *  (world/smallerDungeons.js getRandomBlock). */
+export const SD_BORDER_BLOCK_RE = /^b/i;
+
 /**
- * The end's candidates: the layout's enemy markers (each once - a list's Elite copies left out) and every block's start
- * markers, in the dungeon's frame ({ x, y, z }).
+ * The end's candidates, in the dungeon's frame ({ x, y, z }): the layout's enemy markers, each once (a list's Elite
+ * copies left out). SD-REACH (2026-10-08, the Discord, of a Rift: "In a place with absolutely no connection to the other
+ * blocks... was this done on purpose?"): NEVER A BLOCK'S START MARKERS - DFU reads them off the starting block alone
+ * (FindMarkers), and a block's first carries its water level and castle flag (SetRDBResourceData), set down wherever its
+ * maker put the data, pockets no walk reaches among them - and AN INTERIOR BLOCK'S FIRST: a border block (its name
+ * begins B) is a cap DFU closes the layout with, and the caps ring it, so the point farthest from the way in all but
+ * always stood in one. A marker is a block's whose square (its origin, RDB_SIDE a side) holds it. With no interior
+ * enemy marker, every enemy marker; with no enemy marker at all, every block's start markers, as SD4b had it - a Rift
+ * somewhere, never none.
  * @param {Array<{ x: number, y: number, z: number, eliteCopy?: boolean }> | null | undefined} enemies
- * @param {Array<{ originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }> } }> | null | undefined} blocks
+ * @param {Array<{ name?: string, originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }> } }> | null | undefined} blocks
  */
 export function sdEndMarks(enemies, blocks) {
+  const marks = [];
+  for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });
+  const blockOf = (m) => (blocks ?? []).find((b) => {
+    const ox = b?.originX ?? 0, oz = b?.originZ ?? 0;
+    return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;
+  });
+  const inner = marks.filter((m) => !SD_BORDER_BLOCK_RE.test(blockOf(m)?.name ?? ''));
+  if (inner.length) return inner;
+  if (marks.length) return marks;
   const out = [];
-  for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) out.push({ x: e.x, y: e.y, z: e.z });
   for (const b of blocks ?? []) {
     for (const m of b?.layout?.startMarkers ?? []) {
       if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });

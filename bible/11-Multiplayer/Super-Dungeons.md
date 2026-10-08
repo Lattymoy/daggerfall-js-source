@@ -204,8 +204,11 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
 
 ## 6. The end - the Rift and the Return
 
-**The end** is the dungeon's enemy or start marker farthest from its entrance (RVN7's lair law, the one law
-`dungeonEndOf` both the Rift and the Return read), on a floor the collider finds, the same on every client.
+**The end** is the dungeon's enemy marker farthest from its entrance (RVN7's lair law, the one law `dungeonEndOf`
+both the Rift and the Return read), on a floor the collider finds, the same on every client - an interior block's
+first (SD-REACH: never a block's start markers, its maker's data set down anywhere, nor a border cap's, which ring the
+layout and so held the farthest point - the Rift stood in pockets no walk reaches); every enemy marker with none there,
+and the start markers only with no enemy marker at all.
 
 - **The Rift** - the large otherworldly portal: a ring of brass light up to 7 m across - as large as its hall allows,
   never under 2.6 m (`world/sdDungeon.js` `sdRiftFit`) - turning slowly about a black-gold membrane, its sound a bell
@@ -219,7 +222,10 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
   banner says it (SD20e T6) - *Collapses in 2:31* in its collapse (SD11f: a Hollow unbeaten closed on everyone in it with no count anywhere inside).
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
-  out with it.
+  out with it. Every way out of the Hollow or its Hour lands before the Hollow's door - and, its door gone (the Hollow
+  taken down at its end), where the player stood outside as they went in, never the Hour's own frame read in the
+  street's (SD-LAND). The door is read in the street's own frame: the world host's door list keeps each door in its
+  pixel's, and read raw it stood the player the streamer's vertical shift over the Hollow, in the sky (SD-SKY).
 
 ## 7. The Shattered Hour - the place the Warp left
 
@@ -247,6 +253,8 @@ the Deadlands' law) so every screen shows the same moment.
 
 The realm refuses what the Court refuses: rest, save, map, a Mark and a Recall, regeneration (`courtRules`) - and
 Levitate (SD7b: a Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown).
+And as the court does (GATE-ALONE), it takes no companion through the Rift: the crew's hands and the sworn wait outside
+the Hour, and come back to the player's side out of it (SD-ALONE, section 16).
 
 **Its music** (SD13, `systems/sdScore.js`): the Hollow and the Hour have a score of their own - C minor and a clock
 where the Warden's is D minor and fire. Its one motif is the Westminster quarters struck in the minor and BROKEN, the
@@ -601,6 +609,10 @@ it is good and to an earner's seat at the fall; `spent {s}` in, to the hub alone
 bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receipt] each) and who stood in the realm
 (`here`).
 
+SD-HELLO: a page says nothing into `sd:<s>` but its hello (and the runtime's own ping) until the realm welcomes the
+socket. The realm's hello asks the hub (`/internal/sd/live`) before it names the socket, and a Durable Object takes the
+socket's next frame while that fetch is out: a pose read then is a pose before hello, refused for good.
+
 ## 15. The four hosts
 
 | host | what it carries |
@@ -630,6 +642,10 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | SD-ONELIFE | one life a Hollow |
 | SD13-SD19 | the detail past the gates: the score, the voice, the air and the motes, the arena read, the blows seen, the body moved, the marks, the Hollow's presence |
 | SD20 | AUDIT SD III |
+| SD-ALONE | no companion through the Rift |
+| SD-REACH, SD-LAND | the Rift where a walk reaches; never out in the Hour's sky |
+| SD-SKY | the way out of the Hour, and the find's door, in the street's own frame |
+| SD-HELLO | a socket says nothing past its hello until the realm welcomes it (the page's half) |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -2852,3 +2868,140 @@ THE FOUR HOSTS: `scenes/worldModes.js` WIRED (its `motorState` hands the fall un
 WIRED (the trail tick given the fall; the way out given the drops); `scenes/world.js` WIRED (a shared quest laid with
 the item I carry; the tier kept by place); `scenes/exterior.js` FLAGGED - the `?exterior` bench has no dungeon, no trail
 and no way out (the `?dungeon` bench, `scenes/dungeon.js`, hands its motor's fall as the world's dungeon lane does).
+
+### SD-ALONE - shipped 2026-10-08 (no companion through the Rift)
+
+Mac: *"We need to make sure companions dont enter the rift"*. A player's companions - the crew's hands ashore
+(CREW-COMPANIONS) and the sworn revenants (REVENANT-COMPANION) - followed them through the Rift as through any door:
+the companion layer (`scenes/crewAshore.js`) stands its party in whatever place the player is in, and the Hour is a
+dungeon. The Burning Court had kept them out since GATE-ALONE (`World-Bosses.md` section 21); the Hour, made on the
+court's pattern, never took that rule. Now it has the court's law whole:
+
+- The place the layer asks for (`scenes/world.js companionPlace`) is none while the player stands in the Hour
+  (`sdRealmSlot`), asked beside the court's, for the crew's layer and the sworn's alike. The layer lifts every companion
+  as the player steps through - a door's own lift, the health and the spells carried - and stands none inside, however
+  long. Out of the Hour (the way back to the Abyss Dungeon's Rift, the way home, a death or the end cast out) the next
+  place stands them behind the player again, through their portals. The Abyss Dungeon itself, before its Rift, still
+  takes them.
+- They stay the player's: the party, the slots, the sworn's loyalty and their rest are untouched.
+- The party panel draws no card for them in the Hour (`partyCompanions`).
+- The Hour says so once as a player steps through with any at their side - *"Your companions cannot follow you through
+  the Rift."* (`world/sdRealm.js SD_REALM_TEXT.noCompanions`) - through its own voice, once the step's veil has opened
+  (`sdAloneFrame`, in the Hour's frame after the realm's own): never through the door, under the veil or under a
+  window, and owed again the next time through.
+
+No relay change (`world/sdRealm.js` is the page's alone) and nothing in the account service.
+
+Pins: `test/sd21_alone.test.js` (4 - the place, through the real companion layer, the party panel, the word);
+`tools/mutants/sd21_alone.json` (13, all dead). PINS MOVED: `test/sd5a_realm.test.js` (the realm's words carry the
+companions' refusal; the Hour's frame says it after the realm's own).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the place none in the Hour, the party's cards none there, the word);
+`scenes/worldModes.js` FLAGGED - its `sdRealmSlot` answers the world host, unchanged; `scenes/dungeonContext.js`
+FLAGGED - the layer stands its bodies in the dungeon's pool through the place the world host answers, unchanged;
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hour, and no Rift to step through.
+
+### SD-REACH and SD-LAND - shipped 2026-10-08 (the Rift where a walk reaches; never out in the Hour's sky)
+
+The Discord, of a live Abyss Dungeon (ValenValarys, with two pictures - the Rift and its Return in a small walled room,
+and the same room alone in the dark): *"In a place with absolutely no connection to the other blocks... was this done
+on purpose?"*; asked how they got there: *"ahh it first warped me in a room I ve never seen before but suddenly I am
+flying"* (a third picture: high over the forest by the Hollow's column of light). Mac: *"The return teleport is bugged
+also."* Two defects, each read off the code:
+
+| | what was wrong | now |
+|---|---|---|
+| R1 | THE RIFT IN A SEALED POCKET. SD4b's end was the farthest of the layout's enemy markers AND every block's start markers. DFU reads start markers off the starting block alone (FindMarkers), and a block's first carries its water level and castle flag (SetRDBResourceData) - its maker's data, set down anywhere; and the border blocks, the caps DFU closes a layout with (names beginning B), ring it, so the point farthest from the way in all but always stood in one - a cap's pocket that no corridor reaches. A 7 m ring stood there could show through its walls, be stepped into from the corridor, and the way back from the Hour landed inside the pocket | the candidates are the layout's enemy markers, an interior block's first (`world/sdDungeon.js` `sdEndMarks`, `SD_BORDER_BLOCK_RE`: a marker is the block's whose square holds it); every enemy marker with none there; a block's start markers only with no enemy marker at all - a Rift somewhere, never none |
+| R2 | OUT IN THE HOUR'S SKY. The way out of a dungeon lands before its door (PositionPlayerToDungeonExit); out of the Hour, before the Hollow's (`sdHollowDoors`). With no door found - the Hollow taken down at its end, its door gone with it - the landing was nothing and the exit never moved the player: they stood at the dungeon's own coordinates read in the street's frame, the Hour's islands high over the Hollow's pixel | every dungeon entry keeps where the player stood outside as they went in (`scenes/worldModes.js` `dungeonReturn.from`, the door landing's own shape, taken before the start marker moves them in), and the door's way out lands there when it finds no door - the arena floor's law (AUDIT PRE-MERGE 1003b C7) for every dungeon |
+
+The Return itself carries the player to the start marker, the walk-in's own point (DE1's TransitionDungeonInterior), as
+it did; it was the Rift's pocket that made it a room never seen, and the exit's empty landing that put them in the sky.
+Not changed: an interior enemy marker can still stand somewhere only a teleporter or a lever's door reaches - a
+reachability walk over the collider would answer that, and the navmesh's bake (5-11 s and up to 1.3 GB on the largest
+whole layouts, ENHANCED AI 3b) is no price for every player's Rift; recorded here should a report come.
+
+Pins: `test/sd22_reach.test.js` (7 - no start marker beside the enemy markers; an interior block's first, the
+screenshot's layout; which block holds a marker; a Rift somewhere, never none; the host's call unchanged; the way out
+with no door found; the spot outside taken before the player is moved in); `tools/mutants/sd22_reach.json` (13, all
+dead). PINS MOVED: `test/sd4b_rift.test.js` (the candidates: no start markers beside the enemy markers, those placed
+alone when there is none), `test/sd5a_realm.test.js` (the way out of the Hour: its door's landing, else `from`). The gate's records rerun beside them: `wb3b.json` 36 of 37 dead - its
+`WB3b-the-omen-deaf-to-the-kill` survives on main alone too (main's own gap, not this slice's).
+
+THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the end asked over the new candidates - its call unchanged);
+`scenes/worldModes.js` WIRED (the record's `from`, the way out's last resort); `scenes/world.js` FLAGGED - its Hollow's
+doors (`sdHollowDoors`) answer as before, the fallback is the mode machine's; `scenes/exterior.js` FLAGGED - the
+`?exterior` bench has no dungeon, and `scenes/dungeon.js` (the `?dungeon` bench) exits to no street.
+
+### SD-SKY - shipped 2026-10-08 (the way out of the Hour in the street's own frame)
+
+The Discord again, with SD-REACH and SD-LAND live (the deployed page's build tag was 1978e937, their merge): maya,
+*"WHY DID I GET TPED HERE WHEN I WENT INTO THE RIFT"*, and ValenValarys, *"now I really find the portal but portal keep
+teleporting me out of dungeon"* - each picture high over the Hollow by its column of light, maya's under its door's own
+banner, *The Clockless Deep - fades in 1d 20h*, her sworn companion stood back at her side on the ground below. The
+Hollow stood, so SD-LAND's empty landing could not be it: the door was FOUND, in the wrong frame.
+
+| | what was wrong | now |
+|---|---|---|
+| K1 | THE WAY OUT IN THE PIXEL'S FRAME. The world host's door list (`buildingDoors`) keeps each door in its PIXEL's frame; `doorTargets` hands the mode machine every door moved by its pixel's translation (`shiftedDoor`, AUDIT 68 S22), and `sdHollowDoors` read the list raw. The way out of the Hour (`returnLanding`, `exitDungeonNow`) stood the player at the door's native height - the streamer's vertical shift (`StreamingWorldState.compensation[1]`: minus the eye's height at each recentre past 500 m, and kept through every teleport) over the Hollow. Every way out did it: the realm room's refusal (`sdRealmFrame`), the end's cast-out, the way home, `/unstuck` in the Hour. SD-LAND's picture was this one - the Hollow it came from was standing, and SD-LAND's FOUR HOSTS line left `sdHollowDoors` "as before" | `sdHollowDoors` maps the list through `shiftedDoor`, as `doorTargets` does; the list's own doors stay their pixel's (the living world and the talk read them so) |
+| K2 | THE FIND'S DOOR IN THE PIXEL'S FRAME. The sdHost's `door` seam measured the feet (the scene's) against the door read raw - right only on the pixel the player stands in, whose translation is the vertical shift alone; a Hollow's door on the pixel beside it stood a pixel's width off, and no find was said from beside it | the same `shiftedDoor` (its cache keyed on the door generation, which every origin move bumps) |
+
+Not changed, and why:
+- WHAT SENT THEM OUT was the realm room's hello, refused under the page's own first pose - SD-HELLO, below.
+- TWO PLAYERS, TWO RIFTS (ValenValarys: *"player cant see what I see"*, the other player standing in the ring) were two
+  builds: a tab kept open from before SD-REACH stands the Rift in its old pocket. The end reads the layout alone. The
+  species stood at its markers differ by client (the level's band, Varied Dungeon Monsters), but the water-species veto
+  that drops a marker fires on a fixed marker alone, the same everywhere: only the underwater table holds a water
+  species, and a random marker that draws from it stands under the water the veto asks it to be above.
+- THE COMPANION in maya's picture was stood beside her because she was outside the Hour (SD-ALONE, as designed).
+
+Pins: `test/sd23_sky.test.js` (3 - the world host's own `shiftedDoor`, `sdHollowDoors` and `door` seam read off its
+text, over a streamer shifted 560 m down and a Hollow entrance the real `getStaticDoors` mints: the way out on the
+ground before the door, the raw door 560 m up; the same through the mode machine's own `returnLanding`, its door gone
+where I went in, a Hollow a pixel east by that pixel's translation; the find's door a pixel's width off beside mine);
+`tools/mutants/sd23_sky.json` (4, all dead). PINS MOVED: `test/sd5a_realm.test.js` (`sdHollowDoors` through
+`shiftedDoor` - the old pin held the raw list's text, the defect itself).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (both of the Hollow's door seams through `shiftedDoor`);
+`scenes/worldModes.js` FLAGGED - `returnLanding` asks the world host's doors as before, now the street's;
+`scenes/dungeonContext.js` FLAGGED - the end and the Rift unchanged (the layout's markers, every client's);
+`scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no Hour.
+
+### SD-HELLO - shipped 2026-10-08 (the page's half: a socket says nothing past its hello until the realm welcomes it)
+
+What threw the Discord's players out of the Hour (SD-SKY's pictures: *"portal keep teleporting me out of dungeon"*, on
+every try) - found by a model of the relay's own objects, each line of it read again in the tree:
+
+1. The page's socket opens; it says its hello and counts itself open (`net/online.js` `_bind`, `status` 'open'), so the
+   very next frame's pose goes down it (`sendPose` asked only that).
+2. The realm's hello asks the hub for its record before it names the socket (`server/src/index.js` `_sdAdmit` ->
+   `_sdLiveOf` -> `sdLiveAsk`, a fetch to the hub's object; the socket's id is attached only at the hello's end).
+3. A Durable Object takes the socket's next frame while a fetch is out (its input gate closes for storage alone). The
+   pose, read then, found no id on its socket: *pose before hello* (`net/wire.js` `parseClient`), refused with
+   `CLOSE_POLICY` - a terminal close.
+4. The page, terminal in the Hour, was cast out (`scenes/world.js` `sdRealmFrame`) with *"The way to the Shattered Hour
+   is lost."* - before SD-SKY, into the sky.
+
+The realm keeps the hub's answer 10 s (`SD_LIVE_FRESH_MS`), so a step taken minutes after the last asked again and lost
+again - every try - while a player stepping in within 10 s of another got in. The court never raced: its admission reads
+storage alone (`_gateAdmit`). And a fighter whose socket blinked in the arena said its `in` and its blows the same way
+(`sdOk` is the last welcome's, never reset).
+
+| | what was wrong | now |
+|---|---|---|
+| H1 | A FRAME AHEAD OF ITS WELCOME. A socket said whatever came next the moment it had said its hello | `net/online.js` keeps the sockets their room has welcomed (`_welcomed`, a WeakSet - the mark travels with the socket through a halo's promotion and AURA-LIVE's replacement): `_send` holds every frame but the hello and the runtime's ping until it, and so do the pose's halo copies, the last pose, a cell's foes, the Orrery's turns and the fight's words |
+
+Not changed: THE RELAY'S HALF. A tab kept open from before this build still races (the build's own notice asks it to
+reload). The relay could take a frame that comes during a hello as after it (each socket's frames in their order), or
+keep the hub's ask off the hello's path - a relay change, which moves `RELAY_VERSION`, and its deploy drops every
+connected player once: Mac's call, open.
+
+Pins: the five that sent ahead of a welcome now deliver one and say what waits - `test/online.test.js` (ONLINE1: a pose
+before the welcome held), `test/chat1.test.js` (CHAT1: a line before it held), `test/relayh1.test.js`,
+`test/htwaistnet_peers.test.js` and `test/invisnet.test.js` (the real Room's own welcome handed to the sender);
+`tools/mutants/sd24_hello.json` (3 - the gate gone, the hello held by it, the welcome marking nothing - all dead).
+Unpinned beside them: the gate at the pose's halo copies, the last pose, a cell's foes and the realm's own words, the same
+law at each. RE-AIMED BY CONTENT: `tools/mutants/sd6b.json`'s `SD6B-a-turn-from-a-cell` (the Orrery's turn guard grew the
+welcome; still dead).
+
+THE FOUR HOSTS: none touched - the session is the hosts' one (`net/online.js`); `scenes/world.js`'s `sdRealmFrame` casts
+out on a terminal close as before, and no longer meets one of its own page's making.

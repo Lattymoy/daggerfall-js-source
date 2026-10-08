@@ -767,7 +767,7 @@ test('LPT1 the frame: the near set gathered and handed on, again only when the e
   // the run as the renderer reads it (AUDIT LPT D5): the prototype's root scale, its standing size, its sway, and each
   // submesh's buffer range, atlas texture, alpha, colour and faces
   const p = h.proto, at = d.lpt._lpt.meshes[p.mesh].subs;
-  assert.deepEqual({ ...f.runs[0], run: null, subs: null }, { run: null, scale: p.scale, size: [p.size.w, p.size.h], sway: 0.4, subs: null, drawStart: 0, drawCount: 2 });
+  assert.deepEqual({ ...f.runs[0], run: null, subs: null }, { run: null, scale: p.scale, size: [p.size.w, p.size.h], sway: 0.4, windfall: 0, subs: null, drawStart: 0, drawCount: 2 });   // WINDFALL1: its share under Windfall's law (no windfallOf handed: none)
   assert.deepEqual(f.runs[0].subs.map((s) => [s.count, s.alpha, s.color, s.cull]), p.subs.map((s, i) => [at[i][1], lptAlphaOf(s), s.color, s.cull]));
   assert.deepEqual(f.runs[0].subs.map((s) => s.tex), p.subs.map((s) => d.lpt._atlases.get(`${s.atlas}|`).tex));
   assert.equal(LPT_REGATHER_M, 3);

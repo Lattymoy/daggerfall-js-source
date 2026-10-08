@@ -38,7 +38,7 @@
   {
     "name": "PERF-EXT1-5-the-replay-asks-the-sphere-alone",
     "file": "src/render/shadowPass.js",
-    "old": "          if (b._place && !placementsInVolume(b, quadRadius(wl, b), planes)) { this.stats.culled++; continue; }\n",
+    "old": "          if (b._place && !placementsInVolume(b, quadRadius(r, wl, law, b), planes)) { this.stats.culled++; continue; }\n",
     "new": "",
     "tests": [
       "test/perfexta.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "PERF-EXT1-6-a-lantern-is-held-by-the-woods-sphere",
     "file": "src/render/shadowPass.js",
-    "old": "          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;\n          if (!b._shSway) return DYN_MOVER;",
+    "old": "          if (b._place && !placementsInCube(b, quadRadius(r, wl, law, b), pos[0], pos[1], pos[2], far)) continue;\n          if (!b._shSway) return DYN_MOVER;",
     "new": "          if (!b._shSway) return DYN_MOVER;",
     "tests": [
       "test/perfexta.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "PERF-EXT1-7-the-static-signature-counts-the-woods-sphere",
     "file": "src/render/shadowPass.js",
-    "old": "            if (quads && b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }\n",
+    "old": "            if (quads && b._place) { if (rad < 0) rad = quadRadius(r, wl, law, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }\n",
     "new": "",
     "tests": [
       "test/perfexta.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "PERF-EXT1-11-the-quad-bound-forgets-the-wind",
     "file": "src/render/shadowPass.js",
-    "old": "return placementRadius(placedHalfDiagonal(b), b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0);",
+    "old": "return placementRadius(placedHalfDiagonal(b), crownLean(r, wl, law, b, h < 0 ? -h : h));",
     "new": "return placementRadius(placedHalfDiagonal(b), 0);",
     "tests": [
       "test/perfexta.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "PERF-EXT3-4-the-cube-forgets-the-quads-reach",
     "file": "src/render/shadowPass.js",
-    "old": "if (rad < 0) rad = quadRadius(wl, b);",
+    "old": "if (rad < 0) rad = quadRadius(r, wl, law, b);",
     "new": "if (rad < 0) rad = 0;",
     "tests": [
       "test/perfexta.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "PERF-EXT-R9-an-upside-down-quad-leans-by-its-signed-height",
     "file": "src/render/shadowPass.js",
-    "old": "swayLean(wl, b.sway, h < 0 ? -h : h)",
-    "new": "swayLean(wl, b.sway, h)",
+    "old": "crownLean(r, wl, law, b, h < 0 ? -h : h)",
+    "new": "crownLean(r, wl, law, b, h)",
     "tests": [
       "test/perfexta.test.js"
     ]

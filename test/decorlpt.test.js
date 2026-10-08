@@ -184,7 +184,7 @@ test('DECOR-LPT a yard\'s near set, as the world reads one (yardTreeSet): a hand
 
 test('DECOR-LPT the hosts: the world hands its Low Poly Trees to the yards and gathers their near sets with its pixels\'; the yards hand it to their nature - THE FOUR HOSTS: the yards stand in world.js alone (mutant: DECORLPT-world-unwired)', () => {
   const world = src('src/scenes/world.js');
-  assert.match(world, /trees: lowPolyTrees \? \{ door: lowPolyTrees, sway: \(proto, share\) => _lptSway\.set\(proto, Math\.max\(_lptSway\.get\(proto\) \?\? 0, share\)\) \} : null,/);
+  assert.match(world, /trees: lowPolyTrees \? \{ door: lowPolyTrees, sway: \(proto, share\) => _lptSway\.set\(proto, Math\.max\(_lptSway\.get\(proto\) \?\? 0, share\)\), windfall: \(proto, share\) => _lptWindfall\.set\(proto, Math\.max\(_lptWindfall\.get\(proto\) \?\? 0, share\)\) \} : null,/);   // WINDFALL1: and its share under Windfall's law
   assert.match(world, /for \(const set of yards\?\.treeSets\(\) \?\? \[\]\) _lptSets\.push\(set\);/);
   assert.match(src('src/scenes/homeYards.js'), /createYardNature\(\{[^}]*trees: deps\.trees \?\? null \}\)/);
   for (const host of ['src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(src(host), /createHomeYards\(/, `${host} stands no yard`);

@@ -67,8 +67,8 @@
   {
     "name": "AUDIT31-svc-ghost-bid-sold",
     "file": "server-account/src/market.js",
-    "old": "if (!Number(a.live) || !Number(a.room)) {",
-    "new": "if (!Number(a.room)) {",
+    "old": "    if (!Number(a.live) || !room) {",
+    "new": "    if (!room) {",
     "tests": [
       "test/audit31_service.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT31-svc-grace-never",
     "file": "server-account/src/market.js",
-    "old": "        AND (NOT ${live('a')} OR ${room('a', netSql('high'))} OR ends_at + ?3 <= ?1)",
-    "new": "        AND (NOT ${live('a')} OR ${room('a', netSql('high'))} OR (ends_at + ?3 <= ?1 AND 0))",
+    "old": "OR ${balance('a')} + ${leastNetSql('high')} <= ?2 OR ends_at + ?3 <= ?1)\n",
+    "new": "OR ${balance('a')} + ${leastNetSql('high')} <= ?2 OR (ends_at + ?3 <= ?1 AND 0))\n",
     "tests": [
       "test/audit31_service.test.js"
     ]

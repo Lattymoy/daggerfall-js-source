@@ -666,6 +666,74 @@ contents; the fix is measured on the Linux package.
 **Pinned** in `test/da11_install_whole.test.js` (2): the site in the
 archive and nowhere beside it, and the shell reading it there.
 
+## Past the front door, and a pad at it (DA12, 2026-10-08)
+
+Mac: *"is it possible to integrate the launcher inside the game? ...
+some game managers, like PlayNite, don't reconigze the launcher as a
+game and also I can't control the Launcher with a controller."*
+
+The launcher was never a second program (DA8: the shell's first window,
+one process, one exe). What a game manager trips on is that a game
+manager starts a game and watches its PROCESS: a launcher waiting for a
+press it cannot give, and an update installed before play - the app
+quits, the silent installer reopens it, a process the manager never
+started - read as the game having quit. An update cannot install INSIDE
+a running game: the installer replaces the files the game runs from, so
+the app must close for it either way. So:
+
+- **`--play`** (`app/lib/launcherState.cjs` directPlay, `app/main.cjs`
+  runDirect): a copy started with it goes straight into the game - the
+  argument a game manager's entry or a Steam shortcut adds. Updates are
+  the game's, as they always were after Play: the launch check and the
+  hourly re-check inside DA6's two gates, the HUD line, the install at
+  QUIT (`autoInstallOnAppQuit` - the process the manager watches simply
+  ends) or from File > Restart to Update. What the launcher must still
+  ASK is still asked: with no game files chosen (the first run) the
+  launcher opens as it would; a saved folder is judged first, in a
+  process of its own (R2-D1), and one that is not whole opens the
+  launcher, whose card names what is wrong. The game's own picker,
+  chosen once and kept (`arena2InGame`), goes straight in. The version
+  played is kept as Play keeps it, for the launcher's NEW marks.
+- **The launcher answers a controller** (`app/launcher/pad.js`): the
+  game's own front-door loop (`src/ui/menuPad.js`, PAD-DOOR) over the
+  page's own controls - the d-pad or left stick moves the focus, A or
+  Start presses it, B is Escape. ONE module: the shell serves it at
+  `dagger://launcher/menuPad.js` (`MENU_PAD`) - packed beside the page
+  (`app/package.json` build.files), the source tree's own unpacked. The
+  page's CSP refuses a style written by script, so `attachMenuPad`
+  takes `focusStyle: false` and the focus is the page's own
+  (`launcher.css` `.pad-focus`).
+
+Pinned in `test/da12_directplay.test.js`; `tools/mutants/da12.json`:
+14, all dead. Driven for real by `tools/appShellProbe.mjs` (DA12's four
+scenarios, a pad the page reads in place of a real one): the d-pad moves
+the launcher's focus and A presses Play, with no page error under its
+CSP; `--play` opens the game first with no launcher beside it, the
+saved folder judged and served; `--play` with nothing chosen, or a
+folder that is not whole, opens the launcher's card. Green on the dev
+shell and on the PACKAGED Linux build (`electron-builder --linux dir`,
+`DAGGER_SHELL_EXE`), whose app.asar carries `launcher/menuPad.js`.
+
+**AUDIT DA12 (2026-10-08, Mac: "Audit this").** One fix: `runDirect`
+awaited `createWindow()` - the page's whole load, and the reload a pick's
+clear asks for - before the update check, and a load that failed skipped
+the check and left an unhandled rejection. The window stands from
+createWindow's first line, so the check no longer waits on it (pinned,
+DA12-14). Read and left, said out loud:
+- A button HELD as the launcher opens counts as a press on its first
+  frame (menuPad's edges start released) - a couch launcher started with
+  A, update checks off (Play enabled and focused at once), goes straight
+  into the game. The same is true of the game's own front door; a
+  pressed Play is what that player asked for.
+- A second launch focuses the running copy and exits (DA3's single
+  instance) - a game manager that starts the game while it is already
+  open sees that second process end at once.
+- File > Restart to Update still closes the app and reopens it from the
+  installer, outside the game manager - the player's own choice, asked
+  first.
+- Not driven: a real controller, Playnite itself, and the Windows
+  portable exe's forwarding of `--play` to the app it unpacks.
+
 ## Finding the game files (DA9, 2026-09-29)
 
 **A2-WHOLE, still open in the app.** The shell's test for "this is

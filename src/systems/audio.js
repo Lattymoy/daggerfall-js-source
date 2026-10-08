@@ -547,6 +547,54 @@ export class AudioEngine {
     return ch;
   }
 
+  /**
+   * WINDFALL1: A PLAIN UNITY AudioSource, KEPT - a 2D source a mod holds for the session (Windfall's
+   * WindEnvironmentEffects.CreateAudioSource: spatialBlend 0, no loop) and plays one-shots on. What a fire-and-forget
+   * playOneShot cannot give is the source's own state: `volume` is LIVE (Unity scales every one-shot still playing on
+   * the source by it - the mod fades a passage out indoors by lowering it), `pitch` likewise, `isPlaying` holds while
+   * any shot it started runs, and `stop()` ends them all. One gain node on the bus (SoundVolume is the bus's, as
+   * everywhere), made on the first shot a running context can play; a shot that cannot start (no context yet, no such
+   * clip) leaves the source idle, as a null clip does. `volume` clamps to 0..1 as Unity's does.
+   */
+  source() {
+    const engine = this;
+    let gain = null, vol = 1, rate = 1;
+    const live = new Set();
+    const node = () => {
+      if (!engine._ready()) return null;
+      if (!gain || gain.context !== engine.ctx) { gain = engine.ctx.createGain(); gain.connect(engine._out()); }
+      gain.gain.value = vol;
+      return gain;
+    };
+    return {
+      get volume() { return vol; },
+      set volume(v) { vol = Math.max(0, Math.min(1, Number(v) || 0)); if (gain) gain.gain.value = vol; },
+      get pitch() { return rate; },
+      set pitch(p) { rate = Number(p) || 1; for (const s of live) s.playbackRate.value = rate; },
+      get isPlaying() { return live.size > 0; },
+      /** PlayOneShot(clip): answers the clip's duration at this pitch, or undefined when nothing started. */
+      playOneShot(key) {
+        const g = node();
+        const buf = g ? engine._buffer(key) : null;
+        if (!buf) return undefined;
+        const s = engine.ctx.createBufferSource();
+        s.buffer = buf;
+        s.playbackRate.value = rate;
+        s.connect(g);
+        s.onended = () => { live.delete(s); try { s.disconnect(); } catch { /* gone */ } };
+        s.start();
+        live.add(s);
+        return buf.duration / rate;
+      },
+      stop() {
+        for (const s of live) { try { s.stop(); } catch { /* already stopped */ } try { s.disconnect(); } catch { /* gone */ } }
+        live.clear();
+      },
+      /** EVERY ALLOCATION HAS AN OWNER: the shots and the gain node, for the owner's teardown. */
+      dispose() { this.stop(); if (gain) { try { gain.disconnect(); } catch { /* gone */ } gain = null; } },
+    };
+  }
+
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
    *  AudioSource. The default profile is the DaggerfallAudioSource
    *  shape (min 1 / max 500, logarithmic - WebAudio 'inverse' is the

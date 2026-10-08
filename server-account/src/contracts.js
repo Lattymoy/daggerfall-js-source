@@ -100,16 +100,23 @@ function contractReturn(db, id, nowS) {
 }
 /** THE CONTRACTS PAST THEIR DAYS, closed, and every closed contract's escrow home - anyone's Work read runs it; at most
  *  WRIT_SETTLE_MAX a read, one batch each; a treasury the cap cannot take waits. */
-async function closeContracts({ db, nowS }) {
+export async function closeContracts(ctx) {
+  const { db, nowS } = ctx;
   const { results: due = [] } = await db.prepare(`SELECT id FROM guild_contracts WHERE (state = 'open' AND expires_at <= ?1)
       OR (state != 'open' AND returned = 0 AND (escrow = 0 OR COALESCE((SELECT balance FROM guild_marks WHERE guild_id = guild_contracts.guild_id), 0) + escrow <= ?2))
     ORDER BY expires_at LIMIT ${WRIT_SETTLE_MAX}`).bind(nowS, MARKS_MAX).all();
+  let moved = 0;
   for (const c of due) {
-    await db.batch([
+    if (ctx.budget && !ctx.budget()) break;   // AUDIT SCALE A2: the clock's firing keeps under D1's statements an invocation
+    const out = await db.batch([
       db.prepare(`UPDATE guild_contracts SET state = 'expired', closed_at = ?2 WHERE id = ?1 AND state = 'open' AND expires_at <= ?2`).bind(c.id, nowS),
       ...contractReturn(db, c.id, nowS),
     ]);
+    if (out.some((r) => Number(r?.meta?.changes ?? 0) > 0)) moved++;
   }
+  // SCALE4b: the service's clock asks again while a full page closed. AUDIT SCALE A2: the contracts MOVED, never the
+  // ones picked (writs.js closeGuildWrits's own rule)
+  return moved;
 }
 
 // ─── THE WORK TAB'S READ ─────────────────────────────────────────────

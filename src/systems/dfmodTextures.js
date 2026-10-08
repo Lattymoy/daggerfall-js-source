@@ -487,7 +487,7 @@ function install() {
       if (/\.IMG$/.test(up)) { if (!_img.has(up)) _img.set(up, { key, name }); continue; }
       if (/\.(CIF|RCI)_\d+-\d+(_[A-Z]+)?$/.test(up) && !_cifRci.has(up)) _cifRci.set(up, { key, name });   // DFMOD2: with a metal suffix too (a handheld weapon's frames)
     }
-    _prio.push({ key, names, arrays });
+    _prio.push({ key, names, arrays, looseGround: new Set(index.looseGround ?? []) });   // ALIKR1: the archives a loose pack's ground decides (groundSource)
   }
   const n = setBundleTextures(entries);
   if (Object.keys(table).length) registerBillboardXml('dfmod', table); else unregisterBillboardXml('dfmod');
@@ -652,6 +652,15 @@ export function groundSource(archive) {
   const a = Number(archive);
   if (looseTextureExists(a, 0, 0)) return { kind: 'records' };
   for (const m of _prio) {
+    // ALIKR1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments seamlessly"):
+    // A PACK THAT IS A LOOSE FOLDER IN DFU. Sands of the Alik'r is a folder of loose pictures in Daggerfall Unity - no
+    // bundle, no array, no record 0 - and DFU builds TEXTURE.002 out of loose records only while no mod's array claims
+    // the archive (TryImportTextureArray asks the mods first, and Vanilla Enhanced's Base carries `002-TexArray`): a pack
+    // shipped on by default under a Base on by default would never be seen. So a shipped pack whose index names the
+    // archive in `looseGround` decides it, at its place in the walk, as DFU's loose folder would with no array over it:
+    // the set is made of the records - the player's own loose file first, then the pack's, then Daggerfall's own - at
+    // the classic size (groundLayers: no record 0 replaced). A mod loaded after it still decides first.
+    if (m.looseGround.has(a)) return { kind: 'records', pack: m.key };
     const arr = m.arrays.get(a);
     if (arr) return { kind: 'array', key: m.key, name: arr.name, depth: arr.depth };
     if (m.names.has(textureKey(a, 0, 0))) return { kind: 'records' };
@@ -662,14 +671,15 @@ export function groundSource(archive) {
 export const hasDfmodGround = (archive, recordCount = 56) => !!groundSource(archive) || recordOwners(archive, recordCount).some(Boolean);
 
 /** VE2: TryImportTexture(archive, record, 0) for each record: the loose file, else the first mod switched on - in
- *  TryGetAsset's order - that carries the name. Null where neither does. */
-function recordOwners(archive, recordCount) {
+ *  TryGetAsset's order - that carries the name. Null where neither does. ALIKR1: `pack`, a loose pack's set - its own
+ *  records alone after the loose file's (groundSource), Daggerfall's own where it carries none. */
+function recordOwners(archive, recordCount, pack = null) {
   if (!textureReplacementEnabled()) return [];
   const a = Number(archive);
   return Array.from({ length: recordCount }, (_, r) => {
     if (looseTextureExists(a, r, 0)) return { loose: true };
     const k = textureKey(a, r, 0);
-    const m = _prio.find((p) => p.names.has(k));
+    const m = _prio.find((p) => (pack === null || p.key === pack) && p.names.has(k));
     return m ? { key: m.key, name: m.names.get(k) } : null;
   });
 }
@@ -754,7 +764,7 @@ async function groundLayers(archive, tex, decode) {
     }
     console.warn(`[dfmod] ${src.name}: expected depth ${n} but got ${src.depth} - the records are sought instead`);
   }
-  const owners = recordOwners(archive, n);
+  const owners = recordOwners(archive, n, src?.pack ?? null);   // ALIKR1: a loose pack's set is its own records
   if (!owners.some(Boolean)) return { layers: null, whole: true };
   // the records decode a few at once, as an archive's preload does (PRELOAD_CONCURRENCY) - 56 PNGs of an HD pack
   // decoded together would hold every one of them at once
