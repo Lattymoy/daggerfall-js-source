@@ -91,6 +91,7 @@ import { hallWrits, hallWritCount, hallWritId, hallHidden, HALL_WRIT_REP } from 
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
 import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
+import { receiptAsks } from './npcReceipts.js';   // CHAP2b: a chapter's receipt asks beside its writs
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -1481,6 +1482,7 @@ export async function listWrits({ db, nowS }, player, env, { character, region }
   return {
     region, day, endsAt: (day + 1) * DAY_S,
     writs: results.filter(shown).map((w) => writView(w, player.id)),
+    receipts: await receiptAsks(db, player, env, character, region, nowS),   // CHAP2b: the region's chapters' receipt asks
     today: { filled: await writsToday(db, player.id, day), max: COURT_WRITS_PER_DAY },
   };
 }

@@ -8,8 +8,8 @@ audit on everything so far before we continue") read CHAP0 and CHAP1 through fiv
 CHAP2a BUILT (2026-10-07, Mac: "Do it"; the halls witnessed and their delivery writs - section 4, its record at the
 foot); AUDIT CHAP2 (2026-10-08, Mac: "Lets do a deep comprehensive audit on everything so far") read all of it through
 six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its two questions decided at Mac's word
-("You can decide whatever is best": 3.6, 5.1). CHAP2b (the
-receipt writs) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
+("You can decide whatever is best": 3.6, 5.1). CHAP2b BUILT (2026-10-08, Mac: "Keep going with the arc/slices"; a
+receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3 (Merit and Strength) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
 
 Its neighbours: `11-Multiplayer/Seats-Arc.md` (SEAT0 - the week, the Season, the Tides and the witnessed influence this
@@ -167,7 +167,7 @@ claim as the page went, which never landed - the realm session gives its lease u
 |---|---|---|---|
 | A hall writ delivered (section 4) | Service-witnessed (the Stores took the units) or relay-signed (a receipt) | +2 with the posting guild | The writ supply and the account's 3 a day |
 | Anything DFU's law moves on the client - a guild quest (DFU's +5; QFAIL-FREE: a failure costs nothing online), a donation, the ally and enemy spread | Client-reported, bounded | What moved | 15 a guild faction a character a UTC day, from every claim together |
-| A gate or raid receipt in a region where the character's guild keeps a chapter (AUDIT CHAP2 R24: a serpent's names no region - section 11) | Relay-signed | +1 with each guild the character belongs to | Under `MARKS_COMBAT`'s day |
+| A gate or raid receipt in a region where the character's guild keeps a chapter (AUDIT CHAP2 R24: a serpent's names no region - section 11) | Relay-signed | +1 with each guild the character belongs to (BUILT, CHAP2b - and +2 more for the chapter's receipt writ, its first of the day there, section 4) | The receipt's own day (a gate one a day, a raid `RAID_CLAIMS_DAY_MAX`) |
 | Any LOSS of reputation (a crime against a guild; AUDIT CHAP2 D5: a probation and an expulsion move no reputation - `Guild.cs` only drops the membership) | Client-reported | DFU's law | None - a client that lies against itself is believed |
 
 BUILT (CHAP1), narrowed: the first draft gave the quest and the donation caps of their own (3 quests and 1 donation a
@@ -330,6 +330,34 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
   own daily writ for its chapter, rolled over the character, inside the account's three. The shared writs stay as built
   for their pay and standing; nothing changes before CHAP3.
 
+BUILT, CHAP2b (2026-10-08, Mac: "Keep going with the arc/slices") - the receipt half, and the record's calls in it:
+
+- **A receipt's standing** (3.3, as decided): a gate closed or a raided town defended, by a realm character in a region
+  where a guild it is a member of on the Roll keeps a chapter, is +1 to that guild (`RECEIPT_REP`) - every such guild,
+  whatever its row asks. A gate's region is the claim's (the client's, as the seats take it - Seats-Arc 4.2), a raid's
+  its key's (`contractRegionOfRaid`); a serpent's receipt names no region and credits no chapter (section 11).
+- **The receipt writs** (the table's receipt rows): each chapter whose guild's row asks receipts posts its asks on the
+  region's Work tab - "Hold the gate in Anticlere, for the Fighters Guild", "Defend a raided town of Anticlere, for the
+  Knights of the Dragon" (`hallReceiptKindsOf`: the Fighters a raid and a gate, the Mages a gate, the Brotherhood's
+  contract at either, the temples a gate, the orders both). DECIDED: a member's FIRST such receipt of the UTC day in the
+  region fills its guild's ask for that member - `HALL_WRIT_REP` more (+2) - each member its own (E4's rule, never a
+  race); no Marks of its own (the receipt struck its silver); OUTSIDE the three a day, which bound what mints (CALL 8),
+  since the receipt is bounded by its own day (a gate one an account a day, a raid `RAID_CLAIMS_DAY_MAX`). So a member's
+  gate or raid in a chapter's region is worth +3 to the guild the first time that day and +1 after; a non-member's,
+  nothing. The card has no Take - the receipt is the relay's - and says the member's own state ("Done today", "Your next
+  one here fills it", "For members of the ..."); a hidden guild's asks are its members' alone, as its writs are.
+- **After the receipt, never instead of it** (`server-account/src/npcReceipts.js` creditReceipt): the claim's own row
+  first, the credit after it in the claim's answer (`chapters`), as the seats' gate influence is; a credit that fails is
+  answered `counted: false` and the claim stands. Each line is kept once by its id (`npc_receipt_credits`, migration
+  `0092_npc_receipts`: a receipt's `gate:<day>` or `raid:<key>`, a member's day's writ `wgate:<day>`, `wraid:<day>`), so
+  a receipt claimed again credits nothing. The Roll's head moves under the credit's own tag (a claim that read it
+  before is refused its write), the claim sequence untouched (AUDIT CHAP2 C1); never past 100, what is owed trimmed; only
+  while the character stands; the tab refreshes and says "The Fighters Guild will remember it." (`hallRememberLine`).
+- **The fence, DECIDED against**: the Thieves Guild's row asked delivery "to a fence's board in another town". The
+  service cannot witness which board a delivery is made at (PROF0 11, AUDIT 31 R6), so the other town adds nothing a
+  modified client could not say; the Thieves' chapters keep their delivery writs, and ask no receipt.
+- **Merit** rides these from CHAP3 (5.1): a receipt in the chapter's region while a member, and the member's own writ.
+
 ## 5. Merit and Strength (CHAP3)
 
 ### 5.1 Merit
@@ -478,7 +506,8 @@ DECIDED.
   of faction 0, its id). BUILT (CHAP2a, migration `0091_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
   with `kind` ('court', 'hall') and `faction`, `UNIQUE (day, region, kind, faction, slot)`; `hall_writ_days` (day,
   region, posted, at); AUDIT CHAP2: `npc_hall_strikes` (map_id, by, at) and `npc_roll_heads.kseq`, the claim sequence
-  (C1). Still drawn: `npc_chapters` (key -
+  (C1). BUILT (CHAP2b, migration `0092_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
+  tag, at - one line a guild a receipt, one a guild a member a day for its writ). Still drawn: `npc_chapters` (key -
   guild faction and region - strength, event, event_state JSON, doctrine, focus); `npc_chapter_merit` (week, key,
   account, char_id, source, amount, ref - `UNIQUE (source, ref)`); `npc_chapter_seats` (key, seat, char_id, since);
   `npc_chapter_history` (seq, key, week, kind, data JSON).
@@ -504,8 +533,8 @@ DECIDED.
    memberships for realm characters; the layer; the bounded claims and the daily ceiling; customs' cap. Port-Ledger
    section A row added.
 2. **CHAP2 - hall writs.** The chapters derived and witnessed; their writs on the board; the pay. CHAP2a BUILT
-   (2026-10-07): the halls witnessed, the delivery writs, the +2, the join's floor (section 4). CHAP2b: the receipt
-   writs.
+   (2026-10-07): the halls witnessed, the delivery writs, the +2, the join's floor (section 4). CHAP2b BUILT
+   (2026-10-08): a receipt's standing and the receipt writs; the fence decided against.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
@@ -568,7 +597,7 @@ is Mac's to overrule.
 | A claim's line | 1 to 200 either way (`ROLL_DELTA_MAX`) | 3.3 |
 | A claim's pace | at most one a minute (`ROLL_CLAIM_MS`) - CHAP2a: at once, even with nothing moved, after a hall writ (`refresh`) - asked again after 30 seconds doubling to 15 minutes; AUDIT CHAP2 E2: the service's own bound, 120 claims a character an hour (`ROLL_CLAIMS_HOUR`, `roll-rate`) | 3.3 |
 | The memberships a claim may carry | one a guild faction, at most two temples and two orders (`ROLL_BOOKS` - the mortal's book and the vampire's, AUDIT CHAP2 E3) | 3.2 |
-| Receipt, reputation | +1 a guild | 3.3 |
+| Receipt, reputation | +1 a guild (`RECEIPT_REP`); +2 more for the chapter's receipt writ, a member's first of the kind a UTC day in the region (`HALL_WRIT_REP`) | 3.3, 4 |
 | Customs reputation cap | 40 (`ROLL_CUSTOMS_CAP`), for a customs crossing made from `ROLL_EPOCH_S` - 1,791,417,600, 2026-10-08 00:00 UTC - and never under a member's rank's band (`rollRankKeepOf`: its need up to the next rank's line less one, never past 79 - a rank 8 or 9 too, AUDIT CHAP2 E6 - AUDIT CHAP C3, D1; AUDIT CHAP2 D3) | 3.6 |
 | A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5) | 3.2 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
@@ -706,3 +735,23 @@ reveals them (D4). Two questions were Mac's: a rank-8 or rank-9 crossing's 80 or
 (section 4, E4) - DECIDED as the record recommended (Mac: "You can decide whatever is best"): a rank-8/9 crossing keeps
 79, and CHAP3's Merit writs are each member's own. `test/audit_chap2.test.js` (34) pins every fix and the pins lens's gaps; `tools/mutants/audit_chap2.json`
 mutates it.
+
+## CHAP2b - the receipts' standing and the receipt writs, as built (2026-10-08, Mac: "Keep going with the arc/slices")
+
+The second slice's receipt half; section 4 carries the law and its calls (BUILT, CHAP2b).
+
+- **The law.** `src/net/npcChapterLaw.js`: the kinds (`RECEIPT_KINDS`), a guild's asks (`hallReceiptKindsOf`), a
+  receipt's own and its writ's ids (`receiptRef`, `receiptWritRef`), what one receipt credits (`receiptCreditsOf`) and
+  the line it says (`hallRememberLine`).
+- **The service.** `server-account/src/npcReceipts.js` over migration `0092_npc_receipts`: `creditReceipt`, run by the
+  gate and raid claim routes after the receipt's own row (`server-account/src/index.js`), and `receiptAsks`, the board's
+  asks beside its writs (`professions.js` listWrits). A realm character's delete and an undone customs take its lines.
+  Still `acct94` - nothing of the arc has shipped.
+- **The client.** `src/ui/noticeWindow.js` (an ask's card, no Take); `src/scenes/world.js` (the gate and raid carriers
+  hand a credited answer to the tab's refresh and say the guilds' memory).
+- **Pins.** `test/chap2b_receipts.test.js`, 12 tests: the law against literals; a gate and raids through the real
+  routes over the real migrations (the credit, the head and the claim sequence, a repeat, the writ once a day, a raid's
+  region, a region with no chapter); nothing for a non-member, no chapter, the switch shut or a gate with no region;
+  the bounds (100 and the owed, another account's character, a dead one, a receipt credited once, a store that throws);
+  a lost race; the board's asks (the rows, a member's state, the hidden two, the switch); the delete; the card in a DOM;
+  the wiring. `tools/mutants/chap2b.json`: 29 mutants, 28 dead, 1 equivalent as recorded.

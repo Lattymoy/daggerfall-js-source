@@ -372,6 +372,52 @@ export function hallFamiliesOf(/** @type {number} */ faction) {
  *  the Roll alone. */
 export const hallHidden = (/** @type {unknown} */ faction) => faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;
 
+// ═══ CHAP2b - THE RECEIPTS' STANDING AND THE RECEIPT WRITS (Chapters-Arc 3.3, 4) ═══
+//
+// A gate closed or a raided town defended is relay-signed - a witnessed act. Where the region it stood in keeps a
+// chapter of a guild the character is a member of on the Roll, the guild remembers it: RECEIPT_REP on the Roll (3.3),
+// outside the claims' pace. And a chapter whose guild's row of section 4's table asks receipts posts that ask on the
+// region's boards - "Hold the gate", "Defend a raided town" - which a member's first such receipt of the UTC day in the
+// region fills for that member, HALL_WRIT_REP more: each member its own (AUDIT CHAP2 E4 - never a race), no Marks of
+// its own (the receipt struck its silver), outside the three a day (it is the receipt's, bounded by the receipt's own
+// day). A serpent's receipt names no region (section 11): no chapter's. The Thieves Guild asks none.
+
+/** The receipt kinds a chapter may ask - a gate closed, a raided town defended. */
+export const RECEIPT_KINDS = Object.freeze(['gate', 'raid']);
+/** A receipt's standing with each guild of the character's that keeps a chapter where it stood (3.3). */
+export const RECEIPT_REP = 1;
+/** A guild's receipt asks, by section 4's table: the Fighters a raid and a gate, the Mages a gate, the Brotherhood's
+ *  contract at a gate or a raid, the temples a gate, the orders a gate and a raid; the Thieves Guild none. */
+export function hallReceiptKindsOf(/** @type {number} */ faction) {
+  if (faction === GUILD_FACTION_IDS.FightersGuild) return ['gate', 'raid'];
+  if (faction === GUILD_FACTION_IDS.MagesGuild) return ['gate'];
+  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return ['gate', 'raid'];
+  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];
+  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['gate', 'raid'];
+  return [];
+}
+/** A receipt's own credit's id: `gate:<day>` (a gate is one an account a day) or `raid:<key>` (one a raid an account). */
+export const receiptRef = (/** @type {string} */ kind, /** @type {string | number} */ id) => `${kind}:${id}`;
+/** A receipt writ's id for a member's UTC day: `wgate:<day>`, `wraid:<day>` - one a guild a member a day. */
+export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) => `w${kind}:${day}`;
+/**
+ * WHAT ONE RECEIPT CREDITS: `{ kind, id, day, members, chapters }` - the receipt's kind and own id, the UTC day, the
+ * guild factions the character is a member of on the Roll and the guilds keeping a chapter in its region. Answers
+ * `[{ faction, ref, amount }]`: RECEIPT_REP a member guild with a chapter there, and HALL_WRIT_REP more under the day's
+ * writ where that guild asks this kind - each line kept once by its id.
+ * @param {{ kind: string, id: string | number, day: number, members: number[], chapters: number[] }} o
+ */
+export function receiptCreditsOf({ kind, id, day, members, chapters }) {
+  if (!RECEIPT_KINDS.includes(kind) || !Number.isSafeInteger(day)) return [];
+  const here = new Set(chapters ?? []);
+  const out = [];
+  for (const f of [...new Set(members ?? [])].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {
+    out.push({ faction: f, ref: receiptRef(kind, id), amount: RECEIPT_REP });
+    if (hallReceiptKindsOf(f).includes(kind)) out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });
+  }
+  return out;
+}
+
 /** The orders as DFU captions their halls (Internal_Strings en id 63 - systems/topicTree.js REGIONAL_BUILDING_NAMES). */
 const ORDER_NAMES = Object.freeze({
   Raven: 'Order of the Raven', Dragon: 'Knights of the Dragon', Owl: 'Knights of the Owl', Candle: 'Order of the Candle',
@@ -391,6 +437,15 @@ export function hallPosterName(/** @type {number} */ faction) {
   if (divine) return `Temple of ${divine}`;
   const order = Object.keys(ORDERS).find((k) => ORDERS[/** @type {keyof typeof ORDERS} */ (k)] === faction);
   return order ? ORDER_NAMES[/** @type {keyof typeof ORDER_NAMES} */ (order)] : null;
+}
+
+/** CHAP2b: the line a credited receipt says - "The Fighters Guild and the Knights of the Dragon will remember it." -
+ *  or null where no guild is named. */
+export function hallRememberLine(/** @type {number[]} */ factions) {
+  const names = [...new Set(factions ?? [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
+  if (!names.length) return null;
+  const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)} will remember it.`;
 }
 
 /**

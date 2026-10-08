@@ -619,7 +619,7 @@ import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -20927,8 +20927,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SILVER-WAYS: the claiming character always - its guild's deed asks it, where the scan has not found the region
     return site ? { region: site.region, character } : character ? { character } : null;
   };
+  /** CHAP2b (Chapters-Arc 3.3, 4): a receipt the service credited to the character's chapters moved its Roll on the
+   *  service - the tab asks the Roll's word at once (npcRollTracker.js refresh) and the guilds' memory is said. */
+  const rollHeard = (/** @type {any} */ a) => {
+    const c = a?.ok ? a.data?.chapters : null;
+    if (c?.counted) {
+      rollTracker?.refresh();
+      const line = hallRememberLine((c.credited ?? []).map((x) => x.f));
+      if (line) chatNotice(line);
+    }
+    return a;
+  };
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: (r) => _accountGates.claim(r, gateSeatWord(r)),
+    claim: (r) => _accountGates.claim(r, gateSeatWord(r)).then(rollHeard),
     me: _accountGates.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -21006,7 +21017,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  standing here (another's track moved, not this one's - RENOWN-CHAR: as before RENOWN-ACCOUNT). */
   const _accountRaids = accountRaids({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const raidClaims = params.has('online') ? createRaidClaims({
-    claim: _accountRaids.claim,
+    claim: (...a) => _accountRaids.claim(...a).then(rollHeard),   // CHAP2b: and the town defended remembered by its chapters
     me: _accountRaids.me,
     nowS: relayNowS,
     store: _spoilsStore,

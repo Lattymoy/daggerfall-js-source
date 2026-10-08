@@ -485,6 +485,20 @@ export function mountNoticeBoard(host, deps) {
     return li;
   }
 
+  /** CHAP2b: A CHAPTER'S RECEIPT ASK - "Hold the gate in Anticlere, for the Fighters Guild" - filled by a member's own
+   *  first receipt of the kind in the region today (each member its own; the service's npcReceipts.js), so it has no
+   *  Take: the receipt is the relay's, and the guild's standing its pay. */
+  function receiptNode(a) {
+    const poster = hallPosterName(a.faction) ?? 'guild';
+    const li = el('li', `notice-card notice-writ seal-guild${a.done ? ' done' : ''}`);
+    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Hall writ'));
+    li.append(el('p', 'writ-need', a.kind === 'raid' ? `Defend a raided town of ${work.regionName}, for the ${poster}` : `Hold the gate in ${work.regionName}, for the ${poster}`));
+    li.append(el('p', 'writ-pay', `Pays standing with the ${poster}, once a day a member`));
+    li.append(el('p', 'writ-left', a.done ? 'Done today' : a.member ? 'Your next one here fills it' : `For members of the ${poster}`));
+    li.append(el('span', 'notice-seal', ''));
+    return li;
+  }
+
   async function takeWrit(w) {
     if (busy || workBusy) return;
     busy = true; render();
@@ -514,6 +528,7 @@ export function mountNoticeBoard(host, deps) {
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];
     for (const w of list) grid.append(writNode(w));
+    for (const a of writs?.receipts ?? []) grid.append(receiptNode(a));   // CHAP2b: the chapters' receipt asks
     // PROF6: this region's guild writs and commissions in the Court's own grid (AUDIT 31 U14 - the Court's stood alone)
     const more = workMore ? workMore.cards(writs) : [];
     for (const c of more) grid.append(c);

@@ -1,0 +1,265 @@
+[
+  {
+    "name": "CHAP2B-KINDS-MAGES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (faction === GUILD_FACTION_IDS.MagesGuild) return ['gate'];",
+    "new": "  if (faction === GUILD_FACTION_IDS.MagesGuild) return ['gate', 'raid'];",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-KINDS-THIEVES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];",
+    "new": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood || faction === GUILD_FACTION_IDS.ThievesGuild) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-KINDS-TEMPLES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];\n  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['gate', 'raid'];\n  return [];",
+    "new": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['gate', 'raid'];\n  return [];",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-REP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const RECEIPT_REP = 1;",
+    "new": "export const RECEIPT_REP = 2;",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-HERE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
+    "new": "].filter((x) => isRollFaction(x)).sort((a, b) => a - b)) {",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ROLL-ONLY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
+    "new": "].filter((x) => here.has(x)).sort((a, b) => a - b)) {",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-WRIT-KIND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    if (hallReceiptKindsOf(f).includes(kind)) out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });",
+    "new": "    out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-WRIT-DAY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) => `w${kind}:${day}`;",
+    "new": "export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) => `w${kind}:${day}:${Math.random()}`;",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-KIND-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!RECEIPT_KINDS.includes(kind) || !Number.isSafeInteger(day)) return [];\n  const here",
+    "new": "  if (!Number.isSafeInteger(day)) return [];\n  const here",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-LINE-JOIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;",
+    "new": "  const said = names.join(' and ');",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-SWITCH",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "    if (!chaptersOpenFor(player, env)) return { counted: false, why: 'chapters-closed' };\n    if (!RECEIPT_KINDS",
+    "new": "    if (!RECEIPT_KINDS",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-MEMBERS-PLAYER",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1\n    AND EXISTS",
+    "new": "WHERE char_id = ?1 AND member = 1\n    AND EXISTS",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ],
+    "equivalent": true,
+    "why": "the standing-character check on the same query asks the realm character by id AND player, so the row's own player clause is the second of two"
+  },
+  {
+    "name": "CHAP2B-MEMBERS-DEAD",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL)`).bind(character, player).all();",
+    "new": "`).bind(character, player).all();",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-STOOD",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "    if (credits.every((c) => stood.has(`${c.faction}|${c.ref}`))) return { counted: false, why: 'credited' };\n",
+    "new": "",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-TAG",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7 WHERE ${tagged}`)",
+    "new": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7`)",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-CAP",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ${sum}),",
+    "new": "db.prepare(`UPDATE npc_roll SET rep = MAX(?4, rep + ${sum}),",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-OWED",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "        owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ${sum}))) WHERE",
+    "new": "        owed = owed WHERE",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-CATCH",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "  } catch {\n    return { counted: false, why: 'server' };\n  }",
+    "new": "  } catch (e) {\n    throw e;\n  }",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ASKS-HIDDEN",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "    if (hallHidden(f) && !members.has(f)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ASKS-DONE",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "done: done.has(`${f}|${receiptWritRef(kind, day)}`) });",
+    "new": "done: false });",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ASKS-SWITCH",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "  if (!chaptersOpenFor(player, env) || !regionOk(region)) return [];",
+    "new": "  if (!regionOk(region)) return [];",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ROUTE-GATE",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.recorded && !r.rite && body.region != null) answer.chapters = await creditReceipt(",
+    "new": "        if (false) answer.chapters = await creditReceipt(",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-ROUTE-RAID-REGION",
+    "file": "server-account/src/index.js",
+    "old": "kind: 'raid', id: r.key, region: contractRegionOfRaid(r.key) });",
+    "new": "kind: 'raid', id: r.key, region: 21 });",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-LIST",
+    "file": "server-account/src/professions.js",
+    "old": "    receipts: await receiptAsks(db, player, env, character, region, nowS),",
+    "new": "    receipts: [],",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-HOST-REFRESH",
+    "file": "src/scenes/world.js",
+    "old": "      rollTracker?.refresh();\n      const line = hallRememberLine(",
+    "new": "      const line = hallRememberLine(",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-HOST-RAID",
+    "file": "src/scenes/world.js",
+    "old": "    claim: (...a) => _accountRaids.claim(...a).then(rollHeard),",
+    "new": "    claim: _accountRaids.claim,",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-CARD-RAID",
+    "file": "src/ui/noticeWindow.js",
+    "old": "a.kind === 'raid' ? `Defend a raided town of ${work.regionName}, for the ${poster}` :",
+    "new": "a.kind === 'gate' ? `Defend a raided town of ${work.regionName}, for the ${poster}` :",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-CARD-STATE",
+    "file": "src/ui/noticeWindow.js",
+    "old": "a.done ? 'Done today' : a.member ? 'Your next one here fills it' : `For members of the ${poster}`",
+    "new": "a.member ? 'Your next one here fills it' : `For members of the ${poster}`",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2B-DELETE",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave\n    db.prepare('DELETE FROM realm_characters",
+    "new": "    db.prepare('DELETE FROM realm_characters",
+    "tests": [
+      "test/chap2b_receipts.test.js"
+    ]
+  }
+]
