@@ -27,6 +27,9 @@
 // notice crossing the bridge. Each runs its own shell over its own temp
 // userData and HOME, so the player's real machine is never read.
 //
+// DA12: and the launcher driven by a pad (one the page reads in place of a real one), and `--play` - straight into
+// the game, or the launcher when it has something to ask.
+//
 //   npm run build && xvfb-run -a node tools/appShellProbe.mjs
 
 import { _electron } from 'playwright';
@@ -183,7 +186,7 @@ try {
 // ---- DA8/DA9: the launcher, driven ------------------------------------
 const WHOLE = ['ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'MONSTER.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL'];
 /** A shell over its own temp userData and HOME - the player's machine is never read. */
-async function scenario(name, { setup = () => {}, env = {} } = {}, body) {
+async function scenario(name, { setup = () => {}, env = {}, args = [], first = 'dagger://launcher/**' } = {}, body) {
   const dirs = { userData: fs.mkdtempSync(path.join(os.tmpdir(), 'dagger-la-ud-')), home: fs.mkdtempSync(path.join(os.tmpdir(), 'dagger-la-home-')) };
   let shell = null;
   try {
@@ -191,12 +194,12 @@ async function scenario(name, { setup = () => {}, env = {} } = {}, body) {
     const exe = process.env.DAGGER_SHELL_EXE;
     shell = await _electron.launch({
       executablePath: exe ?? electronPath,
-      args: exe ? ['--no-sandbox'] : ['--no-sandbox', path.join(root, 'app')],
+      args: [...(exe ? ['--no-sandbox'] : ['--no-sandbox', path.join(root, 'app')]), ...args],
       env: { ...process.env, HOME: dirs.home, USERPROFILE: dirs.home, XDG_CONFIG_HOME: '', XDG_DATA_HOME: '', DAGGER_USER_DATA: dirs.userData, DAGGER_NO_UPDATE_CHECK: '1', ...env },
     });
     const launcherPage = await shell.firstWindow();
     // AUDIT INSTALL L5-20: its own document, not the about:blank a new window starts on
-    await launcherPage.waitForURL('dagger://launcher/**', { timeout: 20000 }).catch(() => {});
+    await launcherPage.waitForURL(first, { timeout: 20000 }).catch(() => {});
     await launcherPage.waitForLoadState('domcontentloaded');
     await body(shell, launcherPage, dirs);
   } catch (err) {
@@ -438,6 +441,77 @@ await scenario('the front door', {
   check(games === 1, `and once - an event after Play opened a second game (got ${games})`);
   await waitFor(() => configOf(dirs).lastPlayed === APP_VERSION);
   check(configOf(dirs).lastPlayed === APP_VERSION, 'and the version played is kept - the next launch marks what came since');
+});
+
+// ---- DA12: past the front door, and a pad at it ----------------------------
+/** A standard-mapped pad the page reads in place of the real one; press(i) holds button i for a few frames. */
+const fakePad = async (p) => {
+  await p.evaluate(() => {
+    const pad = { connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+    window.__probePad = pad;
+    navigator.getGamepads = () => [pad];
+  });
+  // a press that hands over closes the page under it - the release then has nowhere to land, and needs none
+  const hold = (i, on) => p.evaluate(([b, v]) => { window.__probePad.buttons[b].pressed = v; }, [i, on]).catch(() => {});
+  return async (i) => { await hold(i, true); await new Promise((r) => setTimeout(r, 150)); await hold(i, false); await new Promise((r) => setTimeout(r, 150)); };
+};
+const focusedId = (p) => p.evaluate(() => document.activeElement?.id || document.activeElement?.textContent?.trim() || '');
+
+await scenario('DA12: the launcher answers a controller', {
+  setup: ({ userData }) => fs.writeFileSync(path.join(userData, 'config.json'), JSON.stringify({ arena2InGame: true })),
+}, async (shell, lp) => {
+  const errors = [];
+  lp.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await lp.waitForSelector('#play:not([disabled])', { timeout: 20000 });
+  await waitFor(async () => (await focusedId(lp)) === 'play');
+  const press = await fakePad(lp);
+  await press(12);   // up: off Play, into the options
+  const up = await focusedId(lp);
+  check(up && up !== 'play', `up on the d-pad moves the focus off Play (got ${up})`);
+  check(await lp.evaluate(() => document.activeElement?.classList.contains('pad-focus')), 'and marks it - the game\'s own pad loop (menuPad.js) runs on the launcher\'s page');
+  for (let i = 0; i < 6 && (await focusedId(lp)) !== 'play'; i++) await press(13);   // down, back to Play
+  check(await focusedId(lp) === 'play', 'down brings it back to Play');
+  await press(0);    // A
+  const game = await gameWindow(shell);
+  check(game.url() === 'dagger://game/play/index.html', 'A presses Play - the game, from the controller alone');
+  check(errors.length === 0, `no page error - the module loaded under the launcher's CSP, no refused style (got ${errors.join(' | ')})`);
+});
+
+await scenario('DA12: --play goes straight into the game', {
+  setup: ({ userData, home }) => {
+    const a2 = path.join(home, 'Games', 'DAGGER', 'ARENA2');
+    fs.mkdirSync(a2, { recursive: true });
+    for (const n of WHOLE) fs.writeFileSync(path.join(a2, n), n === 'ART_PAL.COL' ? 'palette-bytes' : 'x');
+    fs.writeFileSync(path.join(userData, 'config.json'), JSON.stringify({ arena2Path: a2 }));
+  },
+  args: ['--play'],
+  first: 'dagger://game/**',
+}, async (shell, first, dirs) => {
+  check(first.url() === 'dagger://game/play/index.html', `the first window is the game (got ${first.url()})`);
+  const everLauncher = await shell.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some((w) => w.webContents.getURL().startsWith('dagger://launcher/')));
+  check(!everLauncher, 'and no launcher stands beside it');
+  const served = await first.evaluate(async () => { const r = await fetch('./arena2/ART_PAL.COL'); return r.ok ? r.text() : `HTTP ${r.status}`; });
+  check(served === 'palette-bytes', `the saved folder, judged whole, is served (got ${served})`);
+  await waitFor(() => configOf(dirs).lastPlayed === APP_VERSION);
+  check(configOf(dirs).lastPlayed === APP_VERSION, 'the version played is kept, as Play keeps it');
+});
+
+await scenario('DA12: --play with nothing chosen is the launcher\'s first run', { args: ['--play'] }, async (shell, lp) => {
+  check(lp.url() === 'dagger://launcher/index.html', `the launcher opens to ask (got ${lp.url()})`);
+  check(await waitTitle(lp, 'Where is Daggerfall?') === 'Where is Daggerfall?', 'with its first-run card');
+});
+
+await scenario('DA12: --play with a folder that is not whole opens the launcher', {
+  setup: ({ userData, home }) => {
+    const a2 = path.join(home, 'Half', 'ARENA2');
+    fs.mkdirSync(a2, { recursive: true });
+    fs.writeFileSync(path.join(a2, 'ART_PAL.COL'), 'x');
+    fs.writeFileSync(path.join(userData, 'config.json'), JSON.stringify({ arena2Path: a2 }));
+  },
+  args: ['--play'],
+}, async (shell, lp) => {
+  check(lp.url() === 'dagger://launcher/index.html', `the launcher, not a game that dies on ARCH3D.BSA (got ${lp.url()})`);
+  check(await waitTitle(lp, 'Your Daggerfall folder is not whole') === 'Your Daggerfall folder is not whole', 'and its card says what is wrong');
 });
 
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nall shell probes green');

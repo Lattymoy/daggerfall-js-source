@@ -75,8 +75,8 @@
   {
     "name": "DA10-11-the-version-last-played-is-never-kept",
     "file": "app/main.cjs",
-    "old": "  saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });\n",
-    "new": "",
+    "old": "  launcherDispatch({ type: 'launching' });\n  saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });\n",
+    "new": "  launcherDispatch({ type: 'launching' });\n",
     "tests": ["test/da10_launcher.test.js"],
     "note": "Every version is NEW for ever, or none is - the marks say nothing."
   },
@@ -177,8 +177,8 @@
   {
     "name": "DA10-25-a-dock-click-skips-the-launcher",
     "file": "app/main.cjs",
-    "old": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) runLauncher(); });\n",
-    "new": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });\n",
+    "old": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0 && !directStarting) runLauncher(); });\n",
+    "new": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0 && !directStarting) createWindow(); });\n",
     "tests": ["test/da10_launcher.test.js"]
   },
   {
