@@ -15093,9 +15093,18 @@ AUDIT LANDFORMS II (2026-10-07) added one and named one:
   median 2.04 m - until the arrays land (`03-World/Landforms.md`, RESIDUES).
   When they land, what lies on the ground rides the rebuilt ground (G1/G2).
 
+AUDIT LANDFORMS III (2026-10-07) added one:
+- B1, ONE GROUND WHATEVER THE PACKS: LANDFORM4's sites were read through the
+  world-data door, so a client whose Beautiful Villages or Beautiful Cities
+  pack failed to load (one fetch, no retry; the client still plays) stood the
+  wild ground round the 3,360 towns the packs resize up to 120 m off its
+  room's. Each site is its row as MAPS.BSA holds it now
+  (`MapsFile.locationReplaced`, `readClassicLocation`), on every client.
+
 Pins: `test/landform.test.js`, `test/auditlandforms.test.js` (C3: the backoff
 and the host's landing, online and off; C4; G3: the fetch's timeout; J7: the
-retry on its own defaults), `test/modsonline.test.js` (the
+retry on its own defaults), `test/auditlandforms3.test.js` (B1: the door
+asked, the host's classic rows), `test/modsonline.test.js` (the
 count, 47; the named key), `test/onlinelane.test.js` (the contrast re-aimed a
 third time, at the roads a travel map only draws),
 `test/uxb1e_onlinesync.test.js`; mutants: `tools/mutants/landform.json` (36,
