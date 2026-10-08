@@ -8488,6 +8488,10 @@ export function createWorldModes(host) {
         arena: hit.arenaFloor ?? null,   // ARENA2: the floor's way out lands before the Herald
         arenaFrom: hit.arenaFrom ?? null,   // AUDIT PRE-MERGE 1003b C7: or, with no Herald streamed in, where it was entered from
         sdHollow: hit.sdHollow ?? null,   // SD5a: out of the Hour - a death, its end - before the Hollow's door
+        // SD-LAND (2026-10-08, the Discord, out of an Abyss Dungeon: "suddenly I am flying"): where I stood outside as I
+        // went in - the way out lands there when it finds no door to land before (a Hollow taken down at its end, its door
+        // gone with it), as the arena's floor does (AUDIT PRE-MERGE 1003b C7) - never the dungeon's own frame read outside
+        from: { pos: [player.pos[0], player.pos[1] + CAPSULE_HEIGHT / 2, player.pos[2]], normal: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)] },
       };
       // DE1: WHICH DFU MEMBER THIS IS. Walking in through the door is
       // TransitionDungeonInterior, which uses the START marker and
@@ -8783,7 +8787,7 @@ export function createWorldModes(host) {
   const dungeonPose = () => weaponPoseOf(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null);
   /** WB3b: where a dungeon's exit lands - the entrance door the player came in by (PositionPlayerToDungeonExit), or,
    *  out of the Burning Court, before its gate (the host's gateLanding - world/gateArena.js gateLandingFor). */
-  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)));   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
+  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)) ?? dungeonReturn.from ?? null);   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
   function exitDungeonNow() {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
