@@ -1373,6 +1373,8 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     /** AUDIT CHAP2 E1: a developer's - a region's towns and the audit list, and a false town struck */
     halls: (region) => post('/v1/chapters/halls', { region }),
     strike: (key) => post('/v1/chapters/strike', { key }),
+    /** CHAP3b: the chapter sheet - every chapter's Strength and band (the halls' prices read it, CHAP3c) */
+    list: () => post('/v1/chapters/list', {}),
   };
 }
 

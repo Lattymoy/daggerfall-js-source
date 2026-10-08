@@ -561,3 +561,56 @@ export function meritLineOf(m, nowS) {
   if (m.elsewhere) return `Your Merit with the ${name} this week is another chapter's`;
   return `Merit with the ${name} here this week: ${Number(m.merit).toLocaleString('en-US')} of ${Number(m.max).toLocaleString('en-US')}`;
 }
+
+// ─── CHAP3b: STRENGTH (Chapters-Arc 5.2) ────────────────────────────
+// What a chapter's members did, a week's Merit at a time: each chapter's Strength, 0 to 100 from 50, moved at the
+// Turning toward its week's Merit - up to STRENGTH_STEP_MAX for a week whose Merit meets the target ten times over, down
+// STRENGTH_IDLE for a week with none - and halfway back toward 50 at a Season's end. Its band is what the chapter's halls
+// give (the prices and the shelf, CHAP3c; the writs, here). The service settles it (server-account/src/npcChapters.js).
+
+/** A chapter's Strength before its first Turning. */
+export const STRENGTH_START = 50;
+/** A chapter's Strength's bounds. */
+export const STRENGTH_MIN = 0;
+export const STRENGTH_MAX = 100;
+/** The most a week's Merit moves a chapter's Strength. */
+export const STRENGTH_STEP_MAX = 10;
+/** A week with no Merit at all: this much lost. */
+export const STRENGTH_IDLE = 3;
+/** The Merit a point of Strength costs, for each hundred accounts active in the week (the hall writs' own scale). */
+export const STRENGTH_TARGET = 60;
+/** A week's target: STRENGTH_TARGET for each hundred active accounts, never under one hundred's. */
+export const strengthTarget = (/** @type {unknown} */ active) => STRENGTH_TARGET * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
+/**
+ * A CHAPTER'S STRENGTH AFTER A WEEK: `prev` its Strength, `merit` the week's Merit of all its members, `target` the
+ * week's (strengthTarget) - `+ min(10, floor(merit / target))`, or `- 3` for a week with no Merit at all; inside 0-100.
+ * @param {number} prev @param {number} merit @param {number} target
+ */
+export function strengthAfter(prev, merit, target) {
+  const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;
+  const m = Number.isFinite(merit) ? Math.max(0, merit) : 0;
+  const moved = m > 0 ? s + Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target))) : s - STRENGTH_IDLE;
+  return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));
+}
+/** A Season's end (Seats-Arc 9.1's soft reset): halfway back toward 50, rounded toward 50. */
+export const strengthSeasonEnd = (/** @type {number} */ s) => STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);
+/** THE BANDS (5.2's table), each from its floor: Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100. */
+export const CHAPTER_BANDS = Object.freeze([
+  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5 }),
+  Object.freeze({ band: 'steady', name: 'Steady', from: 20, price: 1, writs: 1 }),
+  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5 }),
+  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9, writs: 1.5 }),
+]);
+/** A Strength's band (CHAPTER_BANDS' row) - Steady's for a number that is none. */
+export function chapterBandOf(/** @type {unknown} */ strength) {
+  if (typeof strength !== 'number' || !Number.isFinite(strength)) return CHAPTER_BANDS[1];
+  let at = CHAPTER_BANDS[0];
+  for (const b of CHAPTER_BANDS) if (strength >= b.from) at = b;
+  return at;
+}
+/** A chapter's hall writs a day by its band: half (never none) Failing, half again Thriving and Ascendant. */
+export const hallWritCountIn = (/** @type {unknown} */ active, /** @type {unknown} */ strength) => Math.max(1, Math.round(hallWritCount(active) * chapterBandOf(strength).writs));
+/** The board's line for a chapter - "The Fighters Guild here is Thriving (Strength 74)". */
+export function chapterLineOf(/** @type {{ faction: number, strength: number }} */ c) {
+  return `The ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;
+}

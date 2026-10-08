@@ -52,7 +52,7 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName, isChapterWrit, meritLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit
+import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions
@@ -532,6 +532,7 @@ export function mountNoticeBoard(host, deps) {
     // AUDIT CHAP2 C5: "Writs" - the count is every writ the account filled today, the Court's and the halls' (CALL 8)
     body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));   // CHAP3a: the account's Merit here
+    for (const c of writs?.chapters ?? []) body.append(el('p', 'notice-chapter', chapterLineOf(c)));   // CHAP3b: the chapters here, their Strength
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];

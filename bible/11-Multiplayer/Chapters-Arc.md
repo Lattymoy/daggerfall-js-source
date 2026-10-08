@@ -10,8 +10,9 @@ foot); AUDIT CHAP2 (2026-10-08, Mac: "Lets do a deep comprehensive audit on ever
 six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its two questions decided at Mac's word
 ("You can decide whatever is best": 3.6, 5.1). CHAP2b BUILT (2026-10-08, Mac: "Keep going with the arc/slices"; a
 receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3a BUILT (2026-10-08, the same
-words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b (Strength at the
-Turning, the bands on the halls, the sheet) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
+words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b BUILT (2026-10-08, Mac:
+"Continue"; Strength at the Turning, its band on the hall writs, the sheet - sections 5.2 and 5.3, its record at the
+foot). CHAP3c (the bands on the halls' prices and shelf) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
 arc's migrations are `0091_npc_roll` to `0094_npc_merit` and its service `acct95` - the records below name the numbers
 they were built under.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
@@ -419,11 +420,39 @@ Merit at all. Between Seasons it moves halfway back toward 50 (as a seat's Stand
 
 DFU's own price law stays the base; Strength is a multiplier laid over it online, never written into it.
 
+BUILT (CHAP3b, 2026-10-08), and where building it asked, narrowed here:
+
+- **The target**: `STRENGTH_TARGET`, 60 Merit a point of Strength for each hundred accounts active in the week
+  (`strengthTarget`, the hall writs' own scale) - the realm's accounts, not the region's: the service keeps no region
+  an account plays in. Its active accounts are the registered ones that played in the week before its Turning or
+  since (a player's last play is all it keeps). One account at its 600 moves a quiet realm's chapter the whole 10; a
+  realm of a thousand needs ten.
+- **The step** is whole: `+ min(10, floor(merit / target))` - a week of some Merit under the target holds the chapter
+  where it stands; only a week of none at all is the `- 3`. A chapter starts at 50 at its first Turning (`STRENGTH_START`).
+- **The Season's end**: the Turning that ends a Season moves every chapter halfway back toward 50 after its week's own
+  step (`strengthSeasonEnd`, rounded toward 50 as the seats' Standing is).
+- **The Turning is the Chapters' own** (`server-account/src/npcChapters.js` settleChapterWeek, settleChaptersDue), on the
+  seats' week by the seats' lazy law - the week settled the first time anything asks after its boundary, one batch keyed
+  on the week, at most eight weeks a read, a week that fails the next read's first - but keyed on its own row
+  (`npc_chapter_weeks`), not inside `settleWeek` (section 11 drew it there): neither switch waits on the other. It is
+  asked by the sheet, by a board read where the Chapters are the reader's, and before a region's hall writs are written
+  down for the day (so a chapter's writs are its band's whoever reads first). The week's chapters are every one confirmed
+  when it settles, every one with Merit that week, every one already on the sheet.
+- **The bands' writs** stand now (`hallWritCountIn`): a chapter's hall writs a day halved Failing (never none), half again
+  Thriving and Ascendant. Their prices and shelf are CHAP3c's - the numbers are the law's (`CHAPTER_BANDS`) already.
+
 ### 5.3 The chapter sheet
 
 DECIDED. `/v1/chapters/list` publishes every chapter: its Strength and band, its seats' holders, its Season's event
 and that event's standing. The client caches it as it caches the seats' list. It is the one thing the living world
 reads from the service (9).
+
+BUILT (CHAP3b): `/v1/chapters/list` answers `{ week, chapters: [{ f, region, strength, band }] }` (`chapterSheet`), the
+Turnings due settled first, behind `CHAPTERS_OPEN`; the client's door is `accountRoll.list`. Its seats and events are
+CHAP4's and CHAP6's to add, and its cache CHAP3c's, the halls' first reader. NARROWED: the Thieves Guild's and the Dark
+Brotherhood's chapters are never on it - a public sheet would name where the underworld keeps its halls, which their
+writs and receipt asks keep to their members (AUDIT CHAP2 S2). The board says the region's chapters' state beside its
+writs ("The Fighters Guild here is Thriving (Strength 74)", `chapterLineOf`), a hidden guild's to its members alone.
 
 ## 6. The seats - ranks 8 and 9 (CHAP4)
 
@@ -546,10 +575,13 @@ DECIDED.
   `npc_chapter_history` (seq, key, week, kind, data JSON).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
-  CHAP2 E1, a developer's); `list` (the sheet), `standings` (a chapter's Merit), `history` still drawn; the hall writs
+  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet); `standings` (a chapter's Merit), `history` still drawn; the hall writs
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
-  Season's boundary the events resolved and drawn.
+  Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
+  keyed on its own row (`npc_chapter_weeks`, migration `0095_npc_chapters`), beside `settleWeek` rather than in it -
+  5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the draft's event, doctrine and
+  focus are CHAP4's and CHAP6's to add) and `npc_chapter_weeks` (week, active, target, chapters, at).
 - **The relay**: AUDIT CHAP R5 - this said "no change: the gate, raid and serpent receipts already name an account and a
   region". Only the raid's names a region (`w`); a gate's region is taken from its claims, as the Seats take it (Seats-Arc
   4.2: the region three of the day's receipts agree on), and a serpent's has none - so CHAP2b credits a gate in the Seats'
@@ -569,8 +601,8 @@ DECIDED.
    (2026-10-07): the halls witnessed, the delivery writs, the +2, the join's floor (section 4). CHAP2b BUILT
    (2026-10-08): a receipt's standing and the receipt writs; the fence decided against.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
-   CHAP3a BUILT (2026-10-08): a member's own writ and the week's Merit (5.1). CHAP3b: the Turning's Strength, the bands,
-   the sheet.
+   CHAP3a BUILT (2026-10-08): a member's own writ and the week's Merit (5.1). CHAP3b BUILT (2026-10-08): the Turning's
+   Strength, the bands on the hall writs, the sheet (5.2, 5.3). CHAP3c: the bands on the halls' prices and shelf.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
@@ -637,7 +669,7 @@ is Mac's to overrule.
 | A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5) | 3.2 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
 | Receipt writ's own Marks | 0 | 4 |
-| Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving - CHAP2a: `2 x max(1, ceil(active / 100))` a chapter (`hallWritCount`) until Strength | 4 |
+| Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving - CHAP2a: `2 x max(1, ceil(active / 100))` a chapter (`hallWritCount`); CHAP3b: by its band, x0.5 Failing (never none), x1.5 Thriving and Ascendant (`hallWritCountIn`) | 4 |
 | A hall witnessed | kind `npchall`, keyed `1:<mapId>` (`HALL_REPORT_V`), three accounts a week old (`WITNESS`), 24 towns an hour an account (`HALL_WITNESS_HOUR`), a town once a UTC day a device until counted, then never again (`npcHallBook.js` `HALL_DONE`, AUDIT CHAP2 E9); an account ignored for a week after three unmatched answers in one (the seats' `SEAT_WITNESS_UNMATCHED_MAX`) | 4 |
 | A region's chapters kept | 60 seconds an isolate (`CHAPTERS_KEPT_MS`, `server-account/src/npcHalls.js`) | 4 |
 | The join's floor | 0 (`RANK_REQ_REPUTATION[0]`, `joinRecordable`) | 3.4 |
@@ -645,8 +677,10 @@ is Mac's to overrule.
 | A receipt, Merit | 50 a chapter its own receipt line credits (`MERIT_RECEIPT`) | 5.1 |
 | Merit tenure | 7 days on the Roll (`MERIT_TENURE_S`, from `joined_at`) | 5.1 |
 | Merit cap | 600 an account a chapter a week (`MERIT_CAP_WEEK`); one chapter of a guild an account a seat week (`meritWeekOf`) | 5.1 |
-| Strength | 0-100, start 50; `+ min(10, merit / target)`; -3 an idle week; halfway to 50 at a Season's end | 5.2 |
-| Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 | 5.2 |
+| Strength | 0-100, start 50 (`STRENGTH_START`); `+ min(10, floor(merit / target))` (`STRENGTH_STEP_MAX`, `strengthAfter`); -3 a week with no Merit (`STRENGTH_IDLE`); halfway to 50 at a Season's end (`strengthSeasonEnd`) | 5.2 |
+| Strength's target | 60 Merit a point for each hundred active accounts (`STRENGTH_TARGET`, `strengthTarget`) | 5.2 |
+| The Turnings a read settles | 8 at most (`CHAPTER_WEEKS_MAX`, `server-account/src/npcChapters.js`); every region's chapters kept 60 seconds an isolate (`ALL_CHAPTERS_KEPT_MS`) | 5.2 |
+| Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 (`CHAPTER_BANDS`, `chapterBandOf`) | 5.2 |
 | Failing price | x1.25 | 5.2 |
 | Thriving and Ascendant price | x0.9 | 5.2 |
 | Seats | 1 Master, 3 officers a chapter | 6 |
@@ -819,3 +853,30 @@ The third slice's first half; section 5.1 carries the law and what building it n
   wiring. `tools/mutants/chap3a.json`: 73 mutants. CHAP2a's and CHAP2b's pins the member's own writ moved (the host's
   refresh, the board's poster, a receipt's answer, the table list - PIN MOVED); AUDIT CHAP2's `T-MIG-WRITS-UNIQUE`
   re-aimed at the key with its owner.
+
+## CHAP3b - Strength and the chapter sheet, as built (2026-10-08, Mac: "Continue")
+
+The third slice's second half; sections 5.2 and 5.3 carry the law and what building it narrowed (BUILT, CHAP3b).
+
+- **The law.** `src/net/npcChapterLaw.js`: Strength's numbers (`STRENGTH_START`, `STRENGTH_MIN`, `STRENGTH_MAX`,
+  `STRENGTH_STEP_MAX`, `STRENGTH_IDLE`, `STRENGTH_TARGET`), a week's target and step (`strengthTarget`, `strengthAfter`),
+  a Season's end (`strengthSeasonEnd`), the bands (`CHAPTER_BANDS`, `chapterBandOf`), a chapter's writs by its band
+  (`hallWritCountIn`) and the board's line (`chapterLineOf`).
+- **The service.** `server-account/src/npcChapters.js` over migration `0095_npc_chapters`: every region's chapters in one
+  read (`allChapters`), a week's Turning (`settleChapterWeek` - one batch, the week's key first, every chapter in one
+  statement over a bound JSON array), the Turnings due (`settleChaptersDue`), a region's Strengths (`regionStrengths`)
+  and the sheet (`chapterSheet`, `/v1/chapters/list` in `server-account/src/index.js`). `professions.js` settles before a
+  region's hall writs and a board read, posts a chapter's writs by its band, and answers the region's chapter lines.
+  Still `acct95` - nothing of the arc has shipped.
+- **The client.** `src/net/accountClient.js` (`accountRoll.list`); `src/ui/noticeWindow.js` (the chapters' lines under
+  the Merit lines).
+- **Pins.** `test/chap3b_strength.test.js`, 11 tests: the law against literals (the numbers, the step, the cap, the idle
+  week, the bounds, a Season's end, the bands, the writs by band, the line); every region's chapters at once (an
+  unconfirmed town, a town confirmed for another region, the isolate's minute); a week settled (the week's Merit alone, a
+  chapter with Merit and no town, the key - never twice - and the next week from the last); the week's scale (the accounts
+  that played, never a guest, the window); the Turnings due (the first, the order, the eight, a week that fails stopping
+  the count); a Season's end; the sheet through its route (the settle, the hidden two left off, a chapter no Turning has
+  settled, the switch at the route and in the module); the board (the writs by band, the lines, the hidden rule, a Turning
+  passed after the day's writs, the writs by band for a reader the switch keeps out); the wiring.
+  `tools/mutants/chap3b.json`: 58 mutants, 58 dead. AUDIT CHAP2's `T-POST-COUNT-ACTIVE` and CHAP2a's `CHAP2-WRIT-SCALE`
+  re-aimed at the writs' count by band and the hall writs' scale (`strengthTarget` repeats its text), both dead.

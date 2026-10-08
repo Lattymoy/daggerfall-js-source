@@ -1213,8 +1213,8 @@
   {
     "name": "T-POST-COUNT-ACTIVE",
     "file": "server-account/src/professions.js",
-    "old": "hallWrits(day, region, f, hallWritCount(active), table)",
-    "new": "hallWrits(day, region, f, 2, table)",
+    "old": "hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table)",
+    "new": "hallWrits(day, region, f, hallWritCountIn(0, strengths.get(f)), table)",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",

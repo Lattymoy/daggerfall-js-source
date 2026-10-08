@@ -79,7 +79,7 @@ import {
 import { CLIMATES } from '../../src/formats/mapsTables.js';
 import { seatsOpenFor } from './townSeats.js';   // SEAT1d: the Levy, where the seats are this account's
 import { levyAt } from './seatHolding.js';
-import { levyOf, seatWeekOf } from '../../src/net/townSeatLaw.js';
+import { levyOf, seatWeekOf, seasonZeroOf } from '../../src/net/townSeatLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: the land's Tide (9.3)
 import { tideYield } from '../../src/net/tideLaw.js';
 import { stationSteps } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): a seat's crafting halls
@@ -87,12 +87,13 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
-import { hallWrits, hallWritCount, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
+import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
 import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
 import { receiptAsks, membersOf } from './npcReceipts.js';   // CHAP2b: a chapter's receipt asks beside its writs; CHAP3a: the reader's guilds
 import { meritStatement, meritOfAct, meritAsks } from './npcMerit.js';   // CHAP3a: a member's own writ's Merit, the board's Merit lines
+import { settleChaptersDue, regionStrengths } from './npcChapters.js';   // CHAP3b: the Turning before a chapter's writs, its band
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -1421,9 +1422,10 @@ async function activeBefore(db, dayStartS) {
 /**
  * A REGION'S WRITS FOR THE DAY, written down on the day's first read: how many (`active` then) and each writ (nodeLaw
  * courtWrits over the region's witnessed ground in the day's season). A region whose ground nobody has witnessed posts
- * nothing yet, and nothing is written down - a later read posts once there is ground.
+ * nothing yet, and nothing is written down - a later read posts once there is ground. CHAP3b: a chapter's hall writs by
+ * its band (npcChapterLaw.js hallWritCountIn), the week's Turning settled first (`zero` the week Season 0 began, or null).
  */
-async function postWrits(db, day, region, nowS) {
+async function postWrits(db, day, region, nowS, zero = null) {
   const courtDone = !!(await db.prepare('SELECT 1 FROM writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first());
   // CHAP2a: and the region's chapters' hall writs, written down once a day beside the Court's (hall_writ_days) - none
   // while the region has no witnessed chapter, so a chapter confirmed later in the day posts that day
@@ -1448,7 +1450,9 @@ async function postWrits(db, day, region, nowS) {
     );
   }
   if (chapters.length) {
-    const halls = chapters.flatMap((f) => hallWrits(day, region, f, hallWritCount(active), table).map((w) => ({ ...w, faction: f })));
+    await settleChaptersDue(db, nowS, zero);
+    const strengths = await regionStrengths(db, region, chapters);
+    const halls = chapters.flatMap((f) => hallWrits(day, region, f, hallWritCountIn(active, strengths.get(f)), table).map((w) => ({ ...w, faction: f })));
     stmts.push(
       db.prepare('INSERT OR IGNORE INTO hall_writ_days (day, region, posted, at) VALUES (?1, ?2, ?3, ?4)').bind(day, region, halls.length, nowS),
       ...halls.map((w) => db.prepare(`INSERT OR IGNORE INTO writs (id, kind, day, region, faction, slot, material, tier, qty, pay, renown, expires_at)
@@ -1480,6 +1484,14 @@ async function postMemberWrits(db, day, region, nowS, character, members) {
     .bind(memberWritId(day, region, f, character), day, region, f, character, w.material, w.tier, w.units, w.pay, w.renown, (day + 1) * DAY_S)));
 }
 
+/** CHAP3b: THE BOARD'S CHAPTER LINES - each chapter of the region, `{ faction, strength, band }`, a hidden guild's to its
+ *  members alone (`members`, the reader's guilds on its Roll) as its writs are. */
+async function chapterLines(db, region, nowS, members) {
+  const chapters = (await regionChapters(db, region, nowS * 1000)).filter((f) => !hallHidden(f) || members.includes(f));
+  const strengths = await regionStrengths(db, region, chapters);
+  return chapters.map((f) => ({ faction: f, strength: strengths.get(f), band: chapterBandOf(strengths.get(f)).band }));
+}
+
 /** CHAP2a: the hidden guilds (npcChapterLaw.js hallHidden) this character is a member of on its Roll - their chapters'
  *  writs are its alone. None for a character with no Roll. */
 async function hiddenMemberships(db, player, character) {
@@ -1490,14 +1502,17 @@ async function hiddenMemberships(db, player, character) {
 
 /** THE WORK TAB'S WRITS for a region's board: today's Court writs and its chapters' hall writs (CHAP2a), each open, mine
  *  or taken, and the account's day - the one allowance both share. CHAP3a: and the reader's own writ for each of its
- *  guilds' chapters here (kind `member`, shown to its owner alone), and its account's Merit in them this week. */
+ *  guilds' chapters here (kind `member`, shown to its owner alone), and its account's Merit in them this week. CHAP3b:
+ *  and the region's chapters' Strength and band, the underworld's to its members alone, after the Turnings due. */
 export async function listWrits({ db, nowS }, player, env, { character, region } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
   if (!regionOk(region)) return { error: 'bad-region' };
   const day = utcDay(nowS);
-  await postWrits(db, day, region, nowS);
   const halls = chaptersOpenFor(player, env);   // CHAP2a: a chapter's writs only where the Roll is open to the account
+  const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);
+  if (halls) await settleChaptersDue(db, nowS, zero);   // CHAP3b: the chapters' Strength as this week's Turning left it
+  await postWrits(db, day, region, nowS, zero);
   const members = halls ? await membersOf(db, player.id, character) : [];   // CHAP3a: the reader's guilds on its Roll
   await postMemberWrits(db, day, region, nowS, character, members);
   // CHAP3a: a member's own writ to its owner alone - never another's, never another character's of the account - and only
@@ -1513,6 +1528,7 @@ export async function listWrits({ db, nowS }, player, env, { character, region }
     writs: results.filter(shown).map((w) => writView(w, player.id)),
     receipts: await receiptAsks(db, player, env, character, region, nowS),   // CHAP2b: the region's chapters' receipt asks
     merit: await meritAsks(db, player.id, character, region, nowS, members),   // CHAP3a: the account's Merit in the chapters here
+    chapters: halls ? await chapterLines(db, region, nowS, members) : [],   // CHAP3b: the chapters here, their Strength
     today: { filled: await writsToday(db, player.id, day), max: COURT_WRITS_PER_DAY },
   };
 }

@@ -110,6 +110,7 @@
 //   POST /v1/chapters/witness { hall: { key, region, factions } } -> { ok, counted, why? }   (CHAP2a: a town's guild halls, witnessed as a seat is)
 //   POST /v1/chapters/halls { region } -> { region, towns: [{ key, state, region, factions, witnesses, audit }], ignored }   (AUDIT CHAP2 E1: a developer's audit list)
 //   POST /v1/chapters/strike { key } -> { ok, key, reports }   (AUDIT CHAP2 E1: a false town struck, a developer's)
+//   POST /v1/chapters/list {} -> { week, chapters: [{ f, region, strength, band }] }   (CHAP3b: the chapter sheet, the Turnings due settled first)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)
@@ -182,6 +183,7 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
+import { chapterSheet } from './npcChapters.js';   // CHAP3b: the chapter sheet
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
@@ -1060,12 +1062,14 @@ const service = {
       // lease the playing tab's. Behind CHAPTERS_OPEN; shut, the save keeps
       // the standing as it did before CHAP1.
       if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim' || path === '/v1/chapters/witness'
-        || path === '/v1/chapters/halls' || path === '/v1/chapters/strike') {
+        || path === '/v1/chapters/halls' || path === '/v1/chapters/strike' || path === '/v1/chapters/list') {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);
         // CHAP2a: and a town's guild halls witnessed, as a seat is (npcHalls.js); AUDIT CHAP2 E1: a region's audit list
         // and a false town struck, a developer's
-        const r = path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
+        // CHAP3b: and the chapter sheet - every chapter's Strength and band, after the Turnings due (npcChapters.js)
+        const r = path === '/v1/chapters/list' ? await chapterSheet(ctx, who.player, env)
+          : path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
           : path === '/v1/chapters/halls' ? await listHalls(ctx, who.player, env, body)
             : path === '/v1/chapters/strike' ? await strikeHall(ctx, who.player, env, body)
               : path === '/v1/chapters/roll' ? await readRoll(ctx, who.player, body) : await claimRoll(ctx, who.player, body);

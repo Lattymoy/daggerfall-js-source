@@ -2,8 +2,8 @@
   {
     "name": "CHAP2-WRIT-SCALE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.ceil(Math.max(0, Number(active) || 0) / 100));",
-    "new": "Math.ceil(Math.max(0, Number(active) || 0) / 200));",
+    "old": "export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 200));",
     "tests": [
       "test/chap2_halls.test.js"
     ]
