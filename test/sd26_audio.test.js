@@ -1,14 +1,21 @@
 // AUDIT SD IV, SD26 (2026-10-08, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md "AUDIT SD IV"): THE
 // HOUR HEARD, AUDITED A FOURTH TIME - the audio lens's findings, each reproduced and pinned here: the Remnant's grunt
-// outside time (A1); the Hearts a page away missed (A2).
+// outside time (A1); the Hearts a page away missed (A2); the Brass of Numidium's powers through the index door (A3).
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createSdRemnantVoice, SD_VOICE_CUES, SD_HURT_GAP_MS, SD_VOICE_AWAY_MS } from '../src/scenes/sdRemnantVoice.js';
 import { createSdRemnantBlows } from '../src/scenes/sdRemnantBlows.js';
 import { SD_BLOWS, SD_BODY } from '../src/net/sdRemnant.js';
 import { BOSS_CUES } from '../src/world/gateBoss.js';
+import { AudioEngine } from '../src/systems/audio.js';
+import { SOUND } from '../src/systems/soundClips.js';
+import { SPELL_CAST_SOUND } from '../src/systems/enemySpells.js';
+import { SD_HALL_SOUNDS } from '../src/scenes/sdHall.js';
 
+const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+const W = read('src/scenes/world.js');
 const T0 = 1_800_000_000_000;
 
 /** A fight the test turns, a clock it moves, an engine that hears (sd14a's rig). */
@@ -89,4 +96,20 @@ test('SD26 THE HEARTS A PAGE AWAY MISSED ARE NOT HEARD AT ONCE (A2): AUDIT SD II
   h.s.cx = { i: 10, m: 400, c: eight().map((q, k) => [q[0], q[1], k < 2 ? 0 : 50]) };
   h.step(SD_VOICE_AWAY_MS - 1000);
   assert.equal(breaks(h), 2, 'a hitch: heard');
+});
+
+test('SD26 THE BRASS\'S POWERS SOUND THE HALL\'S OWN RECORDS (A3): SD_HALL_SOUNDS are DAGGER.SND record INDEXES - the hall, the brass veil, the Rift\'s bell and the Remnant\'s voice all play them so, and Unbroken one line above plays 433 so - but the set voice sent Gearward\'s clunk and The Hour Turns\' toll through the ID door, which plays whatever record carries that ID (AUDIT 58: the two are unrelated) or nothing. world.js\'s own voice, run on the engine over an archive whose IDs are not its indexes: each power plays the hall\'s record (mutants: the clunk by ID; the toll by ID)', () => {
+  const at = W.indexOf('  setSetPowersVoice({ sound: (name) => {');
+  assert.ok(at > 0);
+  const text = W.slice(at, W.indexOf('\n  } });\n', at) + 8);
+  const e = new AudioEngine(), played = [];
+  e.snd = { getRecordIndex: (id) => id - 3 };   // index 0 carries ID 3 (audio.js soundIndexForId)
+  e.playOneShot = (index) => { played.push(index); };
+  let voice = null;
+  new Function('setSetPowersVoice', 'audio', 'SOUND', 'SPELL_CAST_SOUND', 'SD_HALL_SOUNDS', text)((v) => { voice = v; }, e, SOUND, SPELL_CAST_SOUND, SD_HALL_SOUNDS);
+  const heard = (name) => { played.length = 0; voice.sound(name); return played.slice(); };
+  assert.deepEqual(heard('unbroken'), [SOUND.Parry6]);
+  assert.deepEqual(heard('gear'), [SD_HALL_SOUNDS.clunk], 'Gearward: the Orrery\'s own clunk');
+  assert.deepEqual(heard('hour'), [SD_HALL_SOUNDS.toll], 'The Hour Turns: the Hour\'s bell');
+  assert.deepEqual(heard('wrath'), [SPELL_CAST_SOUND[0] - 3], 'a spell\'s cast sound is an ID, and stays one');
 });

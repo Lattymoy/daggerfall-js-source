@@ -52,5 +52,23 @@
     "tests": [
       "test/sd26_audio.test.js"
     ]
+  },
+  {
+    "name": "SD26-A3-the-clunk-by-id",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'gear') audio.playOneShot(SD_HALL_SOUNDS.clunk, 1);",
+    "new": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A3-the-toll-by-id",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'hour') audio.playOneShot(SD_HALL_SOUNDS.toll, 1);",
+    "new": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
   }
 ]
