@@ -289,14 +289,14 @@ import { defaultActionTemplates } from './actions.js';
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { SECONDS_PER_WEEK } from '../gameDate.js';
-import { Quest, nextUid } from './quest.js';
+import { Quest, nextUid, isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
 import { Task } from './task.js';
 import { Person } from './person.js';
 import { Place } from './place.js';
 import { Item } from './item.js';
 import { Foe } from './foe.js';
 import { Clock } from './clock.js';
-import { questDataOnThisClock } from './questStamps.js';   // TIME3: a party member's copy, on this character's clock
+import { questDataOnThisClock, shiftQuestStamps } from './questStamps.js';   // TIME3: a party member's copy, on this character's clock; QUEST-SHELF: a reclaimed quest's, by the time it was set aside
 import { BUILDING_TYPES } from '../../world/buildingNames.js';   // DISC28-I: IsActiveQuestBuilding's House1-House6
 import { adoptLinkedDungeonSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E5: the size a quest's markers were chosen on
 
@@ -723,6 +723,7 @@ export class QuestMachine {
     // scene half rides alongside now.
     this.lastNPCClickedHost = host;
     for (const quest of this.quests.values()) {
+      if (isShelved(quest)) continue;   // QUEST-SHELF: a quest set aside hears no click
       for (const resource of quest.resources.values()) {
         if (resource.isPerson && this.isNPCDataEqual(resource.questorData, npcData)) {
           resource.setPlayerClicked();
@@ -741,6 +742,7 @@ export class QuestMachine {
   activeQuestor(npcData) {
     let found = null;
     for (const quest of this.quests.values()) {
+      if (isShelved(quest)) continue;   // QUEST-SHELF: its questor is nobody's while it is set aside
       const questorSymbols = quest.getQuestors();
       if (!questorSymbols || questorSymbols.length === 0) continue;
       for (const symbol of questorSymbols) {
@@ -808,6 +810,9 @@ export class QuestMachine {
     const clicked = this.getLastNPCClicked();
     for (const quest of this.quests.values()) {
       if (quest.questComplete) continue;
+      // QUEST-SHELF (Themicles' K'avar, the guild's door shut while a quest stood stuck): a quest set aside opens its
+      // questor's door - the guild offers work again
+      if (isShelved(quest)) continue;
       for (const resource of quest.resources.values()) {
         if (!resource.isPerson || !resource.isQuestor) continue;
         if (this.isNPCDataEqual(resource.questorData, clicked)) {
@@ -950,6 +955,7 @@ export class QuestMachine {
   _forEachAction(fn) {
     for (const list of [this.quests.values(), this.questsToInvoke]) {
       for (const quest of list) {
+        if (isShelved(quest)) continue;   // QUEST-SHELF: its actions arm on nothing while it is set aside
         for (const task of quest.tasks?.values?.() ?? []) {
           for (const action of task.actions) fn(action);
         }
@@ -966,6 +972,7 @@ export class QuestMachine {
   getAllQuestLogMessages() {
     const questMessages = [];
     for (const quest of this.quests.values()) {
+      if (isShelved(quest)) continue;   // QUEST-SHELF: the journal's active page holds what runs; the Abandoned list the rest
       const logEntries = quest.getLogMessages();
       if (!logEntries || logEntries.length === 0) continue;
       for (const logEntry of logEntries) {
@@ -1101,7 +1108,7 @@ export class QuestMachine {
    *  would otherwise miss every time, silently. */
   getShareableQuestData(uid) {
     const quest = this.quests.get(Number(uid));
-    if (!quest) return null;
+    if (!quest || isShelved(quest)) return null;   // QUEST-SHELF: a quest set aside is not handed on
     quest.shareId ??= mintShareId();   // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried
     return quest.getSaveData();
   }
@@ -1281,6 +1288,7 @@ export class QuestMachine {
   updateSharedQuest(questName, questData) {
     const quest = this.sharedCandidateNamed(questName);
     if (!quest) return null;
+    if (isShelved(quest)) return null;   // QUEST-SHELF: a copy set aside takes no partner's state - reclaimed, it is as it was
     // AUDIT DROPS A2: a quest this player has FINISHED is never dragged back into play by a partner who is behind
     if (quest.questComplete || quest.questTombstoned) return null;
     // AUDIT DISC28 QS-4: A COPY ALREADY ENDING TAKES NO ENVELOPE. Quest.EndQuest's two ticks of grace (ticksToEnd, no
@@ -1499,7 +1507,7 @@ export class QuestMachine {
     const questsToTombstone = [], questsToRemove = [];
     for (const quest of this.quests.values()) {
       try {
-        if (!quest.questComplete) quest.update();
+        if (!quest.questComplete && !isShelved(quest)) quest.update();   // QUEST-SHELF: a quest set aside does not run
       } catch (e) {
         console.warn(`[quest] QuestMachine encountered an exception in quest ${quest.questName}: ${e?.message ?? e}`);
         if (!isProtectedQuest(quest)) questsToRemove.push(quest);
@@ -1513,6 +1521,66 @@ export class QuestMachine {
 
     for (const quest of questsToTombstone) this.tombstoneQuest(quest);
     for (const quest of questsToRemove) this.removeQuest(quest);
+  }
+
+  /**
+   * QUEST-SHELF (2026-10-08, Mac: "All quests should be able to be abandoned and reclaimed"): ABANDON - THE QUEST SET
+   * ASIDE, KEPT WHOLE. Never a tombstone: its items stay in the pack (the load's orphan sweep keeps a quest it still
+   * holds), its topics and journal stay its own, its clocks stop where they stand. It stops running (tick, clicks,
+   * actions), its questor's door opens (isLastNPCClickedAnActiveQuestor - a guild offers work again), a named NPC it
+   * held is home again, its site links are set aside by Place (what it stood in a scene no longer stands; reclaimed,
+   * they stand again), a wave in flight is let go, its faction listeners go (its task asks again once it runs), and a
+   * shared copy leaves the party's step (Share it again once reclaimed). Its sites stay reserved (getAllActiveQuestSites
+   * still answers them), so the building or dungeon is its own when it comes back. Refused: a quest gone, ending or
+   * already set aside; the world's own quests (PROTECTED_QUESTS - the main quest's backbone, the curse, the tutorial);
+   * and whatever the host's `refuse` names. Answers `{ ok, reason?, quest? }`.
+   */
+  shelveQuest(uid, { refuse = null } = {}) {
+    const quest = this.quests.get(Number(uid));
+    if (!quest || quest.questComplete || quest.questTombstoned) return { ok: false, reason: 'gone' };
+    if (isShelved(quest)) return { ok: false, reason: 'shelved' };
+    if (quest.ticksToEnd > 0) return { ok: false, reason: 'ending' };
+    if (isProtectedQuest(quest)) return { ok: false, reason: 'protected' };
+    const why = refuse?.(quest) ?? null;
+    if (why) return { ok: false, reason: why };
+    const now = Math.floor(this.deps.nowSeconds?.() ?? 0);
+    quest.shelvedAt = now !== 0 ? now : 1;   // 0 reads as never set aside
+    quest.shelvedSites = [...new Set(this.siteLinks.filter((l) => l.questUID === quest.uid).map((l) => l.placeSymbol?.name).filter(Boolean))];
+    this.siteLinks = this.siteLinks.filter((l) => l.questUID !== quest.uid);
+    for (const [factionID, owner] of [...this.factionListeners]) if (owner?.parentQuest === quest) this.factionListeners.delete(factionID);
+    for (const task of quest.tasks.values()) {
+      for (const action of task.actions) if (action?.typeName === 'CreateFoe') { action.pendingFoes = null; action.spawnInProgress = false; }
+    }
+    this.sharedQuestNames.delete(quest.questName);
+    this.deps.forceTopicListsUpdate?.();
+    return { ok: true, quest };
+  }
+
+  /**
+   * QUEST-SHELF: RECLAIM - the quest set aside, back as it was. Its own clock's stamps (its clocks' samples, a wave's
+   * timing, a sound's, a daily guard's - questStamps.js QUEST_OWN_SECOND_KEYS) move on by the time it was set aside, so
+   * no deadline ran down while it was away: the quest is restored from its own envelope moved by that time, as a load
+   * restores one (TIME3's law, one home). Its site links stand again by Place, and a scene it stands in mounts its
+   * people, things and foes once more the next time it is built. Answers `{ ok, reason?, quest? }`.
+   */
+  reclaimQuest(uid) {
+    const quest = this.quests.get(Number(uid));
+    if (!quest || quest.questTombstoned) return { ok: false, reason: 'gone' };
+    if (!isShelved(quest)) return { ok: false, reason: 'running' };
+    const now = Math.floor(this.deps.nowSeconds?.() ?? 0);
+    const away = Math.max(0, now - quest.shelvedAt);
+    const sites = quest.shelvedSites ?? [];
+    const data = JSON.parse(JSON.stringify(quest.getSaveData()));
+    data.shelvedAt = null;
+    data.shelvedSites = null;
+    shiftQuestStamps(data, away, { own: true });
+    quest.restoreSaveData({ ...data, uid: quest.uid }, this._saveResolvers());
+    for (const name of sites) {
+      const place = quest.getPlace?.({ name });
+      if (place?.siteDetails && !this.siteLinks.some((l) => l.questUID === quest.uid && l.placeSymbol?.name === name)) this.createSiteLink(quest, place.symbol);
+    }
+    this.deps.forceTopicListsUpdate?.();
+    return { ok: true, quest };
   }
 
   /** Dispose resources then task actions (Quest.cs Dispose order,
@@ -1684,7 +1752,7 @@ export class QuestMachine {
   activeFactionPersons(factionID) {
     const found = [];
     for (const quest of this.quests.values()) {
-      if (quest.questComplete) continue;
+      if (quest.questComplete || isShelved(quest)) continue;   // QUEST-SHELF: a named NPC a quest set aside held is home again
       for (const resource of quest.resources.values()) {
         if (resource.isPerson && resource.factionId === factionID) found.push(resource);
       }

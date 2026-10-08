@@ -61,10 +61,12 @@
 // than ^, the famous precedence, kept; gender is flags & 32; the
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
-import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
+import { QuestMachine, TICKS_PER_SECOND, PROTECTED_QUESTS, questNameIn } from '../systems/quest/machine.js';
 import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
 import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E1: online, every dungeon is whole
+import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
+import { WA_RAID_QUESTS } from '../systems/warmAshesShips.js';   // QUEST-SHELF: a raid the world runs is never set aside
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
 import { PlayerNotebook } from '../systems/notebook.js';
@@ -215,6 +217,22 @@ export const QUEST_CTX_REQUIRED = Object.freeze(['data']);
  *  listener beside the bridge's own one-time recording, and the shipping
  *  host declines it - so its absence is not worth a word. */
 export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'hasQuestTopics']);   // QREPAIR: only a host with a topic tree can say whether a quest has its topics
+
+/** QUEST-SHELF: the protected quests' test (machine.js PROTECTED_QUESTS - the main quest's backbone, the curse, the
+ *  tutorial: the world's own quests, never set aside). */
+const isProtectedQuestName = (name) => questNameIn(PROTECTED_QUESTS, name);
+/** QUEST-SHELF: why a quest could not be set aside or reclaimed, in words. */
+export function shelfRefusalText(reason) {
+  switch (reason) {
+    case 'gone': return 'That quest is over.';
+    case 'shelved': return 'That quest is already abandoned.';
+    case 'running': return 'That quest is not abandoned.';
+    case 'ending': return 'That quest is ending.';
+    case 'protected': return 'That quest cannot be abandoned.';
+    case 'raid': return 'Not while the raid is on.';
+    default: return 'That cannot be done now.';
+  }
+}
 
 /**
  * What this host did not wire. Returned as well as logged, so a caller
@@ -416,7 +434,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // a uid a later quest could be minted under (the uid counter is re-derived from the loaded quests, Q4-iv)
     if (questTracker.pinned != null) {
       const q = machine.quests.get(Number(questTracker.pinned));
-      if (!q || q.questComplete) questTracker.pinned = null;
+      if (!q || q.questComplete || isShelved(q)) questTracker.pinned = null;   // QUEST-SHELF: one set aside is let go too
     }
     if (!follow && (questTracker.views.length || questTracker.follow != null)) questTracker.forget();
     if (!herald && !follow) { lookedLast = false; return; }
@@ -483,6 +501,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // _createFinishedQuest). The quest lens reads it to say how a
       // quest it was showing ended.
       const ended = [];
+      // QUEST-SHELF (2026-10-08): the quests set aside - walked as the running ones are, their clocks as they stopped
+      // (frozen: no time counts while one is away), for the journal's Abandoned list and its Reclaim
+      const shelved = [];
       for (const q of machine.quests.values()) {
         if (q.questComplete) {
           notebook?.unhideQuest?.(q.uid);   // JOURNAL-CLEAN: an ended quest is no longer hidden (one that filed no entry never reached addFinishedQuest's drop)
@@ -512,19 +533,19 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         for (const r of q.resources.values()) {
           if (r.waitsShort) continue;   // REST8
           if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds) && clockCounts(q, r)) {   // DEAD-CLOCK
-            const left = r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through
+            const left = isShelved(q) ? r.remainingTimeInSeconds : r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through; QUEST-SHELF: set aside, as it stopped
             clockSeconds = clockSeconds == null ? left : Math.min(clockSeconds, left);
             clocks.push({ name: r.symbol?.name ?? '', seconds: left });
           }
         }
-        active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, clocks, messages, steps });
+        (isShelved(q) ? shelved : active).push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, clocks, messages, steps });
       }
       // JOURNAL-CLEAN: `hidden` is the uids the player hid from the journal. The rows stay in `active` - the lens,
       // the tracker and the marks read this walk and a hidden quest still runs - and the journal's rail
       // (ui/questRail.js) is what leaves them out.
       // AUDIT JOURNAL-CLEAN F3: an id hidden for a quest no longer running is dropped - whatever ended it
       notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
-      return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [] };
+      return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved };
     },
 
     /**
@@ -550,6 +571,27 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       },
       hide: (id) => notebook?.hideQuest(id) ?? false,
       unhide: (id) => notebook?.unhideQuest(id) ?? false,
+      /**
+       * QUEST-SHELF (2026-10-08, Mac: "All quests should be able to be abandoned and reclaimed"): ABANDON - the quest
+       * set aside, kept (machine.js shelveQuest; its words, shelfRefusalText). Beside the journal's tidy-ups, so every host
+       * that hands its pause window `journalClean` hands these too. Refused for a raid the world runs (WA_RAID_QUESTS - the
+       * sea's own, ended by its fight) and for one that is not running. Answers `{ ok, reason?, text }`.
+       */
+      abandon(id) {
+        const r = machine.shelveQuest(Number(id), { refuse: (q) => (WA_RAID_QUESTS.includes(q.questName) ? 'raid' : null) });
+        if (r.ok && questTracker.pinned != null && Number(questTracker.pinned) === Number(id)) questTracker.pinned = null;
+        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.` : shelfRefusalText(r.reason) };
+      },
+      /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest). Answers `{ ok, reason?, text }`. */
+      reclaim(id) {
+        const r = machine.reclaimQuest(Number(id));
+        return { ...r, quest: undefined, text: r.ok ? `Reclaimed: ${r.quest.displayName || r.quest.questName}.` : shelfRefusalText(r.reason) };
+      },
+      /** QUEST-SHELF: whether the quest may be abandoned now - the journal draws the button only where it is. */
+      canAbandon(id) {
+        const q = machine.quests.get(Number(id));
+        return !!q && !q.questComplete && !q.questTombstoned && !isShelved(q) && !(q.ticksToEnd > 0) && !isProtectedQuestName(q.questName) && !WA_RAID_QUESTS.includes(q.questName);
+      },
     },
 
     /** SetLayoutData's direct overload for a host that has a quest

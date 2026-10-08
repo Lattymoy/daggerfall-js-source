@@ -218,6 +218,8 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
+  // QUEST-SHELF (2026-10-08): a copy I set aside takes no partner's share or step - reclaimed, it is as I left it
+  if (machine.sharedCandidateNamed?.(questName)?.shelvedAt != null) return { ok: false, reason: 'shelved' };
   if (machine.hasActiveQuestNamed(questName)) {
     // QUEST1 LIVE SYNC: a resync of a quest ALREADY kept in sync with the
     // party (shared out earlier, or received before) updates the existing

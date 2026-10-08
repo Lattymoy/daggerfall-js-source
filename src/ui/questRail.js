@@ -215,12 +215,19 @@ export function questRail(log, readLines = journalLines) {
     };
   }).filter((q) => q.entries.length);
   const finished = (log?.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
+  // QUEST-SHELF (2026-10-08): the quests set aside - the walk's `shelved` - each with its journal as it stood, for the
+  // Abandoned list and its Reclaim (key `s:<id>`; a quest set aside before it wrote a line still shows, by its name)
+  const shelved = (log?.shelved ?? []).map((q, i) => ({
+    key: `s:${q.id ?? i}`, id: q.id ?? null, name: q.name || `Quest ${i + 1}`, questName: q.questName ?? '', main: isMainQuest(q.questName),
+    clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
+    entries: (q.messages ?? []).map((message) => readLines(message, null, q) ?? []).filter((lines) => lines.length),
+  }));
   // JOURNAL-CLEAN (2026-09-30, Discord: "...clean both finished and unfinished quests from your journal"): a quest
   // the player HID (the walk's `hidden` uids, the notebook's list) leaves `active` for `hidden` - the journal faces
   // draw `active`, and the pause tab's "Show hidden" draws `hidden`. A log with no `hidden` (the lens hands none)
   // hides nothing.
   const hiddenIds = new Set((log?.hidden ?? []).map(String));
-  if (!hiddenIds.size) return { active, finished, hidden: [] };
+  if (!hiddenIds.size) return { active, finished, hidden: [], shelved };
   const isHidden = (q) => q.id != null && hiddenIds.has(String(q.id));
-  return { active: active.filter((q) => !isHidden(q)), finished, hidden: active.filter(isHidden) };
+  return { active: active.filter((q) => !isHidden(q)), finished, hidden: active.filter(isHidden), shelved };
 }

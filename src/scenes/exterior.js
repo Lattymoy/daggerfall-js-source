@@ -3255,7 +3255,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // empty answer, not a plate this host raises.
       stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
         getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])]
-          .filter((q) => !q.questTombstoned).map((q) => q.uid),
+          .filter((q) => !q.questTombstoned && q.shelvedAt == null).map((q) => q.uid),   // QUEST-SHELF: a quest set aside is no live one
         getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
       }, dfLocation.mapTableData?.mapId ?? 0);
       if (!townMapDoorReady()) return;   // EM4: the skin fork's gate

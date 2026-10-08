@@ -199,6 +199,13 @@ export function getQuestInfoResourceType(questResource) {
   return QUEST_INFO_RESOURCE_TYPE.NotSet;
 }
 
+/** QUEST-SHELF (2026-10-08): a quest's info whose quest is set aside (systems/quest/quest.js isShelved) - its topics kept
+ *  whole (their hints, their discovery) and offered by no list while it is away. */
+const shelvedQuestInfo = (questInfo) => {
+  for (const info of questInfo?.resourceInfo?.values?.() ?? []) return info?.questResource?.parentQuest?.shelvedAt != null;
+  return false;
+};
+
 export class TopicTree {
   constructor(deps = {}) {
     this.deps = deps;
@@ -573,6 +580,7 @@ export class TopicTree {
     this.listTopicTellMeAbout.push(newListItem({ questionType: QUESTION_TYPE.News, caption: EN.anyNews }));
     this.listTopicTellMeAbout.push(newListItem({ questionType: QUESTION_TYPE.WhereAmI, caption: EN.whereAmI }));
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (shelvedQuestInfo(questInfo)) continue;   // QUEST-SHELF: a quest set aside offers no topic (kept, for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         const itemQuestTopic = newListItem({});
         let captionString = '';
@@ -655,6 +663,7 @@ export class TopicTree {
     // the quest-residence General section
     let alreadyCreatedGeneralSubSection = false;
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (shelvedQuestInfo(questInfo)) continue;   // QUEST-SHELF: a quest set aside offers no topic (kept, for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         if (info.resourceType !== QUEST_INFO_RESOURCE_TYPE.Location) continue;
         const place = info.questResource;
@@ -764,6 +773,7 @@ export class TopicTree {
   assembleTopicListPerson() {
     this.listTopicPerson = [];
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (shelvedQuestInfo(questInfo)) continue;   // QUEST-SHELF: a quest set aside offers no topic (kept, for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         if (info.resourceType !== QUEST_INFO_RESOURCE_TYPE.Person) continue;
         const person = info.questResource;

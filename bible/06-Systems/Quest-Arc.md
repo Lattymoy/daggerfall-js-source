@@ -6551,3 +6551,43 @@ the port gives Abandon to bounties and revenant hunts alone. `test/kvarhold.test
 (12), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): drawn among the few nearest the Hold it leaves, never
 this client's player (every shared copy the same); a `local dungeon` rescued too; the new site fitted to the size its
 link builds once the link stands there (`fitSiteToBuild`); a reveal that throws leaves the move and the link standing. PIN MOVED: `test/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).
+
+## QUEST-SHELF - every quest abandoned and reclaimed (2026-10-08)
+
+Mac: *"All quests should be able to be abandoned and reclaimed."* Daggerfall has no abandon (DFU's console `endquest`
+tombstones a quest for good); the port's Abandon SETS A QUEST ASIDE, KEPT WHOLE, and Reclaim brings the same quest back
+as it was. A DEPARTURE (Port-Ledger A), the port's own.
+
+- **The state** (`systems/quest/quest.js`): `shelvedAt` - the character-clock second it was set aside, saved and read
+  back like `shareId` (an older envelope: never set aside) and listed in `questStamps.js QUEST_OWN_SECOND_KEYS`, so a
+  party member's copy and a TIME3 envelope move it with its clocks; `shelvedSites` - the Places whose site links it
+  held, by name. `isShelved(quest)`.
+- **Abandon** (`machine.js shelveQuest`): never a tombstone - its items stay in the pack (the load's orphan sweep keeps a
+  quest the machine still holds), its topics, notebook and journal stay its own. It stops running (the tick), hears no
+  click (`setLastNPCClicked`, `_forEachAction`), its questor's door opens (`isLastNPCClickedAnActiveQuestor`,
+  `activeQuestor` - Themicles' guild offers work again), a named NPC it held is home (`activeFactionPersons`), its site
+  links are set aside, a wave in flight is let go, its faction listeners go (its task asks again once it runs), it
+  leaves the party's step (`sharedQuestNames`; a partner's share or step is refused quietly, `questShare.js` 'shelved',
+  `updateSharedQuest`), and is handed on to nobody (`getShareableQuestData`). Its sites stay RESERVED
+  (`getAllActiveQuestSites` still answers them), so the building or dungeon is its own when it comes back. In a scene
+  (`resourceBehaviour.js update`, each frame): its people and things are put out of sight, its questor stands, and its
+  FOES stand and still count their deaths - a foe put away would leave its wave's `killed` unreachable; a click on any
+  of them falls through to talk and guild routing (`doClick`). Its topics are offered by no list (`topicTree.js`),
+  guidance marks nothing of it (`questGuidance.js questEnded`), the hosts' live quest ids leave it out. Refused: gone,
+  ending, already set aside, the world's own quests (`PROTECTED_QUESTS` - the main quest's backbone, the curse, the
+  tutorial), and a raid the sea runs (`WA_RAID_QUESTS`, the bridge's word). The main story's own quests may be set aside.
+- **Reclaim** (`machine.js reclaimQuest`): its envelope moved on by the time it was away (`shiftQuestStamps`, TIME3's
+  law - its clocks' samples, a wave's timing, a sound's, a daily guard's) and restored as a load restores one, so no
+  deadline ran down while it was set aside; its site links stand again by Place; a scene it stands in mounts its
+  people, things and foes the next time it is built (or at once, where its things were only put out of sight). It does
+  not rejoin the party's step: Share it again.
+- **The journal** (`scenes/questBridge.js`): the one walk files a quest set aside in `shelved` (its clock as it stopped),
+  the rail under ABANDONED (`ui/questRail.js`), and the pause window's Quests tab draws Abandon quest (twice, BOUNTY1's
+  arming) where the bridge allows it (`journalClean.canAbandon`) and Reclaim quest (once) on an abandoned one, saying
+  what happened (`shelfRefusalText`). The doors ride `journalClean`, so all four hosts' pause windows carry them -
+  `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js` (through world.js's host) and `scenes/dungeonContext.js`.
+  The classic skin's logbook is DFU's native window and draws no button (THE NATIVE-WINDOW RULE: no DFU geometry to cite
+  for one); a quest set aside leaves its active page. The chronicle (the L key) is read-only and leaves it out.
+
+`test/questshelf.test.js` (4); `tools/mutants/questshelf.json` (36), all dead. PINS MOVED: `test/questbridge.test.js`,
+`test/rest8_questwaits.test.js`, `test/journal_clean.test.js`, `test/time3_quests.test.js`, `test/enhancedPause.test.js`.

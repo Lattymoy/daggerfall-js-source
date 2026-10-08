@@ -18143,7 +18143,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // topic tree reads it, and so does the exterior automap's
   // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
   // set.
-  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid);
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned && q.shelvedAt == null).map((q) => q.uid);   // QUEST-SHELF: a quest set aside is no live one
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
     getAllActiveQuestIds: activeQuestIds,
@@ -20377,6 +20377,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         return;
       }
       if (result.reason === 'finished') return;   // DISC28-I: a partner's finish of a quest I never had - nothing to say
+      if (result.reason === 'shelved') return;   // QUEST-SHELF: a copy I set aside - the party's step is not mine while it is away
       // AUDIT DISC28 QS-3: nor any refusal of a FINAL - a partner's finish is no offer: to a member who ended the copy
       // already (both delivered; a timer that ran out in every world on the same tick), holds one of their own, or never
       // took it, it is news of nothing - and a sync's 'done' is a copy I finished myself. Said, it told a party that had
