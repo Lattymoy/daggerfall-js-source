@@ -89,5 +89,13 @@
     "old": "const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menuPad.js');\n",
     "new": "const MENU_PAD = path.join(LAUNCHER_DIR, 'menuPad.js');\n",
     "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-14-the-update-check-waits-on-the-page",
+    "file": "app/main.cjs",
+    "old": "    createWindow().catch(() => {});\n  } finally { directStarting = false; }\n",
+    "new": "    await createWindow();\n  } finally { directStarting = false; }\n",
+    "tests": ["test/da12_directplay.test.js"],
+    "note": "AUDIT DA12: the check held until the page and a clear's reload had loaded - and skipped, with an unhandled rejection, when the load failed."
   }
 ]

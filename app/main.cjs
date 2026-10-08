@@ -1418,7 +1418,9 @@ async function runDirect(dir) {
       setArena2(r.dir);
     } else setArena2(null);
     saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });
-    await createWindow();
+    // AUDIT DA12: not awaited - the window stands from createWindow's first line, and its load (and a clear's reload)
+    // is no reason to hold the update check, nor its failure a reason to skip it
+    createWindow().catch(() => {});
   } finally { directStarting = false; }
   if (!updateChecksEnabled()) return;
   if (currentUpdateTransport() === 'updater') askUpdater().catch(() => {});

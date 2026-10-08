@@ -705,8 +705,34 @@ the app must close for it either way. So:
   (`launcher.css` `.pad-focus`).
 
 Pinned in `test/da12_directplay.test.js`; `tools/mutants/da12.json`:
-13, all dead. Not driven with a real pad or a real game manager here -
-the shell probe has neither.
+14, all dead. Driven for real by `tools/appShellProbe.mjs` (DA12's four
+scenarios, a pad the page reads in place of a real one): the d-pad moves
+the launcher's focus and A presses Play, with no page error under its
+CSP; `--play` opens the game first with no launcher beside it, the
+saved folder judged and served; `--play` with nothing chosen, or a
+folder that is not whole, opens the launcher's card. Green on the dev
+shell and on the PACKAGED Linux build (`electron-builder --linux dir`,
+`DAGGER_SHELL_EXE`), whose app.asar carries `launcher/menuPad.js`.
+
+**AUDIT DA12 (2026-10-08, Mac: "Audit this").** One fix: `runDirect`
+awaited `createWindow()` - the page's whole load, and the reload a pick's
+clear asks for - before the update check, and a load that failed skipped
+the check and left an unhandled rejection. The window stands from
+createWindow's first line, so the check no longer waits on it (pinned,
+DA12-14). Read and left, said out loud:
+- A button HELD as the launcher opens counts as a press on its first
+  frame (menuPad's edges start released) - a couch launcher started with
+  A, update checks off (Play enabled and focused at once), goes straight
+  into the game. The same is true of the game's own front door; a
+  pressed Play is what that player asked for.
+- A second launch focuses the running copy and exits (DA3's single
+  instance) - a game manager that starts the game while it is already
+  open sees that second process end at once.
+- File > Restart to Update still closes the app and reopens it from the
+  installer, outside the game manager - the player's own choice, asked
+  first.
+- Not driven: a real controller, Playnite itself, and the Windows
+  portable exe's forwarding of `--play` to the app it unpacks.
 
 ## Finding the game files (DA9, 2026-09-29)
 
