@@ -102,7 +102,7 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name
 import { isLocalPlayerTarget } from '../characters/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
-import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
+import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
@@ -126,6 +126,8 @@ import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice,
 import { exhaustionOutcome } from '../systems/rest.js';   // AUDIT 23 (C5); SWIM-SPENT: the water's line is the outcome's
 import { preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { createRestWindow } from '../ui/restDoor.js';   // RESTDOOR1: the enhanced/native fork, same law as ui/tradeDoor.js
+import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { restAilmentLines } from '../systems/restWarning.js';   // REST-WARN: the fourth host's rest asks too
 import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn } from '../systems/encounters.js';
 import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRoutSweep, revenantRoutedEvent } from '../systems/revenant.js';   // REVENANT: the world host's twin - who comes back, and what the player is told
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
@@ -189,7 +191,8 @@ import { preloadTransportArt } from '../ui/transportWindow.js';   // MAC-K3: MOV
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
-import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
+import { getInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it; MODE-WHEEL: the pad's unbound mode actions
+import { modeWheel } from '../ui/modeWheel.js';   // MODE-WHEEL: the mouse steers it while it is open
 import { randomEpitaph } from '../systems/gravestoneLore.js';   // GRAVE1: Info mode's graveyard flavour line
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -237,6 +240,14 @@ import { foeFrameDt } from '../characters/enemyMotor.js';   // AUDIT TACT: the f
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units (GR2's slider inside it); the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
+import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
+import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
+import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
+import { gridValueAt } from '../world/terrainSurface.js';   // SNOWFALL1: the bed carved under the town's water, off the snow's ground
+import { BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SNOWFALL1: a foe's controller, as its track's width reads it
+import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flora batch's share of the mod's lean
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
@@ -509,6 +520,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
+  const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;   // HAZE1: Heat Haze on the enhanced lane (world.js's twin note) - this host's one city has no floating origin to shift it
+  const heatHaze = createHeatHaze();
+  const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });   // WINDFALL1: world.js's twin note - this host's one city has no floating origin to shift it
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance
@@ -931,6 +945,41 @@ export async function bootExterior(canvas, renderer, params, status) {
     return renderer.createTerrainSurface(positions, normals, indices);
   })();
   const identityMatrix = trs(0, 0, 0, 0, 0, 0);
+  // SNOWFALL1 (world.js's twin note): THE TOWN'S SNOW - its one tile is its map pixel's 128 x 128, the town's tiles
+  // laid where the streamed world lays them (TerrainHelper.GetLocationTerrainTileOrigin) and nothing past them (this
+  // host draws no ground there: bare), on the flat ground DFU lays and the bed WATER-NEXT carves under its water. No
+  // floating origin; no road but the town's own paving (authored ground, never Basic Roads'); its one location the
+  // settlement.
+  const snowOrigin = getLocationTerrainTileOrigin(dfLocation), snowTileUnits = RMB_SIDE / GROUND_TILE_DIM;   // TILE_WORLD's law (below)
+  const snowW = loc.width * GROUND_TILE_DIM, snowH = loc.height * GROUND_TILE_DIM;
+  const snowTileMap = new Uint8Array(128 * 128);
+  for (let ty = 0; ty < snowH; ty++) for (let tx = 0; tx < snowW; tx++) snowTileMap[(snowOrigin.y + ty) * 128 + snowOrigin.x + tx] = tilemapBytes[tx + ty * tilemapDim];
+  const snowSW = [-snowOrigin.x * snowTileUnits, 0, -snowOrigin.y * snowTileUnits];   // the 128's south-west corner, scene
+  const snowPixel = { x: _locPixel.x, y: _locPixel.y }, snowTile = { snowPixel };
+  const _snowG = [0, 0];
+  const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: {
+    size: TERRAIN_SIZE,
+    terrainDistance: 1,
+    pixelAt: (x, z) => (x >= snowSW[0] && x < snowSW[0] + TERRAIN_SIZE && z >= snowSW[2] && z < snowSW[2] + TERRAIN_SIZE ? snowTile : null),
+    pixelsNear: () => [snowTile],
+    pixelOn: (x, y) => (x === snowPixel.x && y === snowPixel.y ? snowTile : null),
+    translation: (p, out) => { out[0] = snowSW[0]; out[1] = 0; out[2] = snowSW[2]; return out; },
+    height: (p, lx, lz) => {
+      const x = lx + snowSW[0], z = lz + snowSW[2];
+      const inTown = x >= 0 && z >= 0 && x <= snowW * snowTileUnits && z <= snowH * snowTileUnits;
+      return GROUND_OFFSET * 0.025 - (townBed && inTown ? gridValueAt(townBed.depths, townBed.gx, townBed.gz, snowTileUnits, x, z) : 0);
+    },
+    normal: (p, lx, lz, out) => { out[0] = 0; out[1] = 1; out[2] = 0; return out; },
+    tileMap: () => snowTileMap,
+    climate: () => locClimateIndex,
+    mapPixel: () => snowPixel,
+    bare: (p, lx, lz) => {
+      const tx = Math.floor(lx / snowTileUnits) - snowOrigin.x, ty = Math.floor(lz / snowTileUnits) - snowOrigin.y;
+      return tx < 0 || ty < 0 || tx >= snowW || ty >= snowH;
+    },
+    toGlobal: (x, z) => { _snowG[0] = snowPixel.x * TERRAIN_SIZE + (x - snowSW[0]); _snowG[1] = (499 - snowPixel.y) * TERRAIN_SIZE + (z - snowSW[2]); return _snowG; },
+    settlements: (a, b, c, d) => settlementsIn((x, y) => (x === snowPixel.x && y === snowPixel.y ? dfLocation : null), a, b, c, d),
+  } });
   const townWater = waterOn ? (() => {
     const idx = buildWaterIndices(tilemapBytes, 1, undefined, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);
     return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.sheetDepths } : { terrain: groundSurface }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
@@ -1035,7 +1084,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, getTexture,
     seasonal: seasons ? { key: (a) => (seasons.lookup(a, 1) ? `s${seasons.installedSeason}.${seasons.generation}` : ''), picture: (a, r) => seasons.lookup(a, r)?.texture ?? null, generation: () => seasons.generation } : null,   // AUDIT LPT C2: the season only where it re-skins the tree's own archive (world.js)
   }) : null;
-  const lptHandles = [], lptGroups = [], lptSway = new Map();
+  const lptHandles = [], lptGroups = [], lptSway = new Map(), lptWindfall = new Map();   // WINDFALL1: and its share under Windfall's law
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
     const t = textureFiles.get(archive);
@@ -1051,7 +1100,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       batch.farH = plain.h;   // AUDIT LPT A8 (as world.js)
       batch._box = flatBatchAabb(centers, far.size);
       batch.sway = floraSwayOf(archive, natureArchive, plain.h);
+      batch.windfall = windfallResponse(archive, record);   // WINDFALL1: the stock record's mask (Low Poly Trees' tree stands for it)
       lptSway.set(lpt, batch.sway);
+      lptWindfall.set(lpt, batch.windfall);
       billboardBatches.push(batch);
       flatCount += centers.length;
       if (isCoverFlat(archive, record, plain)) collider.cover.add('tact1:flats', centers.flatMap((c) => coverProxies(c, plain, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) })));
@@ -1061,6 +1112,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
       batch._box = flatBatchAabb(centers, sib.size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
+      batch.windfall = windfallResponse(archive, record, seasonPrefixOf(seasons.installedSeason, archive));   // WINDFALL1: the mod's table for the season's atlas
       billboardBatches.push(batch);
       flatCount += centers.length;
       if (isCoverFlat(archive, record, sib.size)) collider.cover.add('tact1:flats', centers.flatMap((c) => coverProxies(c, sib.size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) })));   // TACT1; AUDIT TACT B2: a tree's trunk and crown
@@ -1070,6 +1122,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
     batch._box = flatBatchAabb(centers, size);   // EV3: world-space here - this host has no floating origin
     batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
+    batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask (every nature batch, as the mod patches them)
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     flatCount += centers.length;
@@ -1078,7 +1131,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   const lptSets = lptGroups.length ? [{ ox: 0, oy: 0, oz: 0, handles: lptHandles, ...buildTreeSet(0, 0, lptGroups) }] : [];   // LPT1: the location's 3D trees, gatherNear's one set
   const _lptPlanes = new Float32Array(24);
-  const lptOpts = { swayOf: (proto) => lptSway.get(proto) ?? 0, planes: cullOn ? _lptPlanes : null };
+  const lptOpts = { swayOf: (proto) => lptSway.get(proto) ?? 0, windfallOf: (proto) => lptWindfall.get(proto) ?? 0, planes: cullOn ? _lptPlanes : null };
 
   // AUDIT 26 (F019): the street StaticNPCs' identity + extent, once
   // their archives are loaded (they are flats, so the batch pass above
@@ -2364,7 +2417,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (lines) townTalk.showOverlay(new ActionTextBox(lines));
       return;
     }
-    townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    // REST-WARN: poisoned or diseased, the rest asks first (systems/restWarning.js) - the window opens on its Yes, once
+    // the box has left the slot (the world host's own order; THE FOUR HOSTS RULE: this host had been left out)
+    const restNow = () => townTalk.showOverlay(createRestWindow(outdoorRestDeps));
+    const ail = restAilmentLines(playerEntity);
+    if (ail) { let yes = false; townTalk.showOverlay(new DecisionBoxWindow({ rows: ail, onYes: () => { yes = true; } }), () => { if (yes) restNow(); }); return; }
+    restNow();
   };
   // G2: arrest + court through the townTalk overlay seam.
   //
@@ -3607,6 +3665,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // HOVER before the look gate refuses the unlocked pointer.
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
+    if (modeWheel.isOpen()) return;   // MODE-WHEEL: while it is open the mouse steers it (its own listener), not the view
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
     // weapon control, and whether this host or worldModes owns the
     // swing, it is never a look. The old line gated the whole thing on
@@ -3676,6 +3735,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     dial: isEnhanced(),
     enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    padAction: (act) => (MODE_ACTIONS[act] ? townTalk.pickMode(MODE_ACTIONS[act]) : false),   // MODE-WHEEL: PAD-BINDS' door for an action on no key - the four mode actions ship unbound, so the pad's NextMode lands here
     overlayActive: () => townTalk.overlayActive,
     // AUDIT 62 F7: the finger's pause gate - the same predicate the
     // mouse arms carry (the mousemove look needs the pointer lock a
@@ -4773,6 +4833,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
+  /** SNOWFALL1: who walks the town's snow, and the bodies lying in it (world.js's twin). */
+  const snowPlayer = () => (walkMode
+    ? { x: player.pos[0], y: player.pos[1], z: player.pos[2], grounded: !!player.grounded, swimming: !!player.swimming, levitating: !!player.levitating }
+    : { x: cam.pos[0], y: cam.pos[1], z: cam.pos[2], grounded: false, swimming: false, levitating: true });
+  const snowNpcs = () => {
+    const out = [];
+    for (const f of exteriorFoes.foes) if (!f.dead && f.ai?.feet) out.push({ id: f, x: f.ai.feet[0], z: f.ai.feet[2], active: true, grounded: !!f.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const g of cityGuards.guards) if (!g.dead && g.ai?.feet) out.push({ id: g, x: g.ai.feet[0], z: g.ai.feet[2], active: true, grounded: !!g.ai.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false });
+    for (const seat of _livePersons) out.push({ id: seat.person, x: seat.pos[0], z: seat.pos[2], active: true, grounded: true, radius: 0, citizen: true });
+    return out;
+  };
+  const snowBodies = () => exteriorFoes.physicalCorpses().concat(cityGuards.physicalCorpses());
   function frame(now) {
     // AUDIT-WH L4: THE PLAQUE DIES WITH THE LOOP THAT RAISED IT. This
     // is the host's only unwind point - a later boot or an unwind has
@@ -4919,6 +4991,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AudioSource stops. The mills fall silent with it and start
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
+      heatHaze.suppress();   // HAZE1: inside, the strength is 0 at once (world.js's twin note)
+      windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel, feet: player.pos, height: player.height });   // WINDFALL1: WindMod.Update indoors (world.js's twin; AUDIT ENVIRONS W1: on the game's seconds)
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
@@ -4929,6 +5003,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
+      snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update indoors (world.js's twin)
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -5441,6 +5516,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
+    const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
+      heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin (AUDIT ENVIRONS W1)
+    snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -5717,6 +5795,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // cloud and for the shadow it casts. Null when there is no enhanced
     // sky, which is the classic skin and every interior.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
+    snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground under it, by the ground's own program (world.js's twin)
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
@@ -5754,7 +5833,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (const b of arenaBouts.batches()) _visBatches.push(b);   // ARENA-FIX 12: the crowd in the colosseum's tiers, and what it throws
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     if (lowPolyTrees && lptSets.length) { if (cullOn) spherePlanes(_pv, _lptPlanes); lowPolyTrees.frame(lptSets, cam.pos[0], cam.pos[1], cam.pos[2], lptOpts); }   // LPT1: the near 3D trees, for the flats' call below - culled to the frame's view (AUDIT LPT B4)
-    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
+    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
@@ -5830,6 +5909,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       camps.tick(dt); personBatches.push(...camps.batches());   // SURV3
       if (hcc.enabled) personBatches.push(...hcc.batches());   // HCC: the horse on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
+    }
+    // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
+    if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
+    // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
+    if (hazeGl) {
+      const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
+        grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
+      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     const precipShown = enhancedFront ? fx.shown : precipMode;
@@ -5922,7 +6009,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const swing = {};   // AUDIT DISC19: one swing, one attack grunt, however many pools it is offered to
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:"for (let i = 0; i < n; i++)"'s order, and the order
+          // BEFORE civilians - world.js:"// X-slice: encounter foes resolve after the watch, before civilians"'s order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {

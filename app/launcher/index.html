@@ -7,7 +7,8 @@
        no remote request, no inline code. The one thing it can say to the
        shell is window.daggerLauncher (app/launcherPreload.cjs).
        DA10: the game's front door - the patch notes, the player's options,
-       the update in the bar, and Play. -->
+       the update in the bar, and Play.
+       DA12: and a controller - the game's own front-door pad loop (pad.js). -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self' data:">
   <title>Daggerfall Online</title>
   <link rel="stylesheet" href="launcher.css">
@@ -74,5 +75,6 @@
     </footer>
   </div>
   <script src="launcher.js"></script>
+  <script type="module" src="pad.js"></script>
 </body>
 </html>

@@ -283,6 +283,7 @@ test('THE MERGE (OW6) the world host, run: with the sea fight on my raider word 
     player: { feetAt: () => [0, 0, 0] }, getPref: () => false, playerEntity: {}, warmAshesOn: () => true, csaOn: () => true, raidQuarry: () => true,
     RAIDER_CONTACT_M, RAIDER_CHASE_MPS, exteriorFoes: { foes: [] }, foeHostile: () => false, SIGHT_RADIUS: 60,
     me: { x: 0, y: 0 }, marks: [], pixelOfNative: () => ({ x: 0, y: 0 }), tvSceneKept: (_h, x, z) => [x, 0, z], RAIDER_LABEL: 'Pirates',
+    _wildStrangers: [],   // WILD3: out of the open zone no stranger slows a journey (wildStrangersFrame's list, empty off the zone)
   };
   d.state.terrainDistance = 3;
   const names = Object.keys(d);

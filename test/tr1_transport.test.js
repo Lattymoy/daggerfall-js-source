@@ -11,7 +11,7 @@ import {
 } from '../src/systems/transport.js';
 import { SMALL_CART_TEMPLATE, TRANSPORT_HORSE_TEMPLATE } from '../src/systems/inventorySession.js';
 import {
-  PlayerMotor, rideSpeed, runSpeed, walkSpeed, crouchSpeed, DF_WALK_BASE,
+  PlayerMotor, rideSpeed, runSpeed, walkSpeed, crouchSpeed, sneakSpeed, DF_WALK_BASE,
   EYE_HEIGHT, RIDE_EYE_HEIGHT, RIDE_HEIGHT, CAPSULE_HEIGHT, HEIGHT_TIMER_FAST, HEIGHT_TIMER_MEDIUM,
 } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
@@ -124,7 +124,7 @@ test('TR1: the motor rides - the mount\'s speed, no sprint, no climb, and the cr
   m.transportMode = TRANSPORT_MODES.Horse;
   m.crouching = true;
   m.update(1 / 60, { ...still, forward: 1 }, 0);
-  assert.ok(near(m.speed, crouchSpeed(50)), 'the DFU order, kept');
+  assert.ok(near(m.speed, sneakSpeed(crouchSpeed(50))), 'the DFU order, kept (CROUCH-SNEAK: a crouch is a sneak, so the sneak arm rides on it)');
 });
 
 test('TR1: the wiring - the climb gate, the Horse bob style, and no Running tally from a saddle', () => {

@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-C6-two-of-it",
     "file": "src/systems/revenantCompanions.js",
-    "old": "revenantsWithYou().filter((r) => !held(r.id)).map(memberOf)",
-    "new": "revenantsWithYou().map(memberOf)",
+    "old": "get party() { const list = revenantsWithYou().filter((r) => !held(r.id));",
+    "new": "get party() { const list = revenantsWithYou();",
     "tests": [
       "test/revenant_audit.test.js"
     ]

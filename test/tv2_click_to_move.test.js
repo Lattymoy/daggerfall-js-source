@@ -31,6 +31,17 @@ import { TRAVEL_HELD_TEXT } from '../src/ui/enhancedTravelControl.js';   // AUDI
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 const norm = (v) => { const n = Math.hypot(...v); return v.map((c) => c / n); };
+/** MOUNTAINS WALKABLE (the owner, the Wrothgarian zone's merge - bible/11-Multiplayer/Wild-Zone.md): the Overworld's
+ *  on-foot mountain restriction is REMOVED everywhere - travelRoute.js openStepBlocked refuses no step, and the host's
+ *  ground (routeGround) refuses none and names no peak. The PLANNER still honours a ground that refuses: planRoute's
+ *  `openBlocked`, the start's own range flood-filled over `peakAt` (AUDIT OW4 J1), the goal's exemption (AUDIT OW3 J5).
+ *  Those are driven below by OW-MOUNTAINS' law as it stood before the merge - kept HERE, a stand-in ground and never
+ *  the port's - so the planner's own machinery stays pinned (tools/mutants/ow2.json, ow4j.json). */
+const oldPeaksLaw = (climateAt, heightAt, ax, ay, bx, by, leaving = false) => {
+  if (leaving) return false;
+  if (climateAt(bx, by) === TV_MOUNTAIN_CLIMATE) return true;
+  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;
+};
 
 // ── THE CLICK'S GROUND ──────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -531,8 +542,9 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   assert.match(w, /if \(tvHeld != null\) \{ tvHeld = null; if \(journey\) setWorldTimeScale\(travelAsked\); \}\n\s*tvHeldWhy = null; journeySlowSaid\(null\);[^\n]*\n\s*if \(tvWalking\) \{[^\n]*\n\s*travelGovernor\.reset\(\);/, 'the mod\'s own ask back (PIN MOVED, TV-WASD: the keys\' travel let go beside it - test/tv_wasd.test.js)');
   // OW6: the classic skin's journey (and First-Person Travel's) is the mod's own ask under the enemies' cap alone - nothing near,
   // the ask handed back whole, never over the helm's own time step; under the view the lower of the ground's cap and the enemies'
-  assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : foePaced\(foes\.cap, travelAsked\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
-  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want \}\);\n\s*const foeCap = foePaced\(foes\.cap, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
+  // PIN MOVED (WILD3/PVPNEAR, the Wrothgarian zone's merge): the enemies' cap, and under it a near stranger's own pace
+  assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : \(foes\.strangerRate \? Math\.min\(foePaced\(foes\.cap, travelAsked\), foes\.strangerRate\) : foePaced\(foes\.cap, travelAsked\)\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
+  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want \}\);\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foePaced\(foes\.cap, want\), foes\.strangerRate\) : foePaced\(foes\.cap, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
   // AUDIT TV A2: the ASK is the mod's - its ground's rate (RATE-LAW; it was the spinner) and its own caps (the ring walk's
   // x15, an interrupt's x1), recorded where the mod sets the clock - so the governor never lifts a journey past the mod's
   assert.doesNotMatch(w, /onTimeAccelerationChanged/, 'RATE-LAW: no spinner to tell the host');
@@ -548,19 +560,23 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   assert.match(rd('src/ui/enhancedStyle.js'), /\.travelpanel-accel\.held \{/);
 });
 
-test('OW-MOUNTAINS (Mac: "You shouldnt be able to navigate mountains"): an open step into the Mountain climate or up or down a steep rise is refused - the route goes round; a road over the pass is still walked; only the traveller\'s OWN peaks are left freely (AUDIT OW4 J1: the start\'s connected range, `peakAt`), and the step onto the goal is exempt only for a place (AUDIT OW3 J5)', () => {
+test('OW-MOUNTAINS (Mac: "You shouldnt be able to navigate mountains"), then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): NO open step is refused on foot any more - into the Mountain climate, up or down a steep rise: walked (openStepBlocked), and the route goes straight over the peaks; the PLANNER still honours a ground that refuses (OW-MOUNTAINS\' old law, a stand-in): the route goes round, a road over the pass is walked, only the traveller\'s OWN peaks are left freely (AUDIT OW4 J1: the start\'s connected range, `peakAt`), and the step onto the goal is exempt only for a place (AUDIT OW3 J5)', () => {
   assert.equal(TV_MOUNTAIN_CLIMATE, 226);
   assert.equal(TV_STEEP_RISE, 16);
   const climate = (x, y) => (x === 10 && y >= 2 && y <= 8 ? TV_MOUNTAIN_CLIMATE : 231);
   const flat = () => 20;
-  assert.equal(openStepBlocked(climate, flat, 9, 5, 10, 5), true, 'into the range');
+  // MOUNTAINS WALKABLE: the law refuses nothing - it refused the first and the last two of these
+  assert.equal(openStepBlocked(climate, flat, 9, 5, 10, 5), false, 'MOUNTAINS WALKABLE: into the range - walked');
   assert.equal(openStepBlocked(climate, flat, 9, 1, 10, 1), false, 'round its end');
   const cliff = (x) => (x >= 20 ? 20 + TV_STEEP_RISE + 1 : 20);
-  assert.equal(openStepBlocked(() => 231, cliff, 19, 0, 20, 0), true, 'up a cliff');
-  assert.equal(openStepBlocked(() => 231, cliff, 20, 0, 19, 0), true, 'or down it');
-  assert.equal(openStepBlocked(() => 231, (x) => (x >= 20 ? 20 + TV_STEEP_RISE : 20), 19, 0, 20, 0), false, 'a rise the height of the threshold: walked');
+  assert.equal(openStepBlocked(() => 231, cliff, 19, 0, 20, 0), false, 'MOUNTAINS WALKABLE: up a cliff - walked');
+  assert.equal(openStepBlocked(() => 231, cliff, 20, 0, 19, 0), false, 'or down it');
   const W = 30, H = 12;
-  const blocked = (ax, ay, bx, by) => openStepBlocked(climate, flat, ax, ay, bx, by);
+  const law = (ax, ay, bx, by, leaving) => openStepBlocked(climate, flat, ax, ay, bx, by, leaving);
+  const over = planRoute({ x: 6, y: 5 }, { x: 14, y: 5 }, { width: W, height: H, openBlocked: law, peakAt: (x, y) => climate(x, y) === TV_MOUNTAIN_CLIMATE });
+  assert.deepEqual(over.pixels.map((p) => [p.x, p.y]), [6, 7, 8, 9, 10, 11, 12, 13, 14].map((x) => [x, 5]), 'MOUNTAINS WALKABLE: the law asked of every step, and straight over the peaks');
+  // the planner over a ground that refuses (OW-MOUNTAINS' old law, the stand-in)
+  const blocked = (ax, ay, bx, by) => oldPeaksLaw(climate, flat, ax, ay, bx, by);
   const straight = planRoute({ x: 6, y: 5 }, { x: 14, y: 5 }, { width: W, height: H });
   assert.ok(straight.pixels.some((p) => p.x === 10 && p.y === 5), 'without the law: straight over the peaks');
   const round = planRoute({ x: 6, y: 5 }, { x: 14, y: 5 }, { width: W, height: H, openBlocked: blocked });
@@ -575,7 +591,7 @@ test('OW-MOUNTAINS (Mac: "You shouldnt be able to navigate mountains"): an open 
   // flood-filled by `peakAt` - never "the first step" alone, nor every peak's step); bound for a TOWN among them: the last
   // step is the goal's exemption (a place's; a spot's is asked - AUDIT OW3 J5, below)
   const ring = (x, y) => Math.abs(x - 10) <= 1 && Math.abs(y - 5) <= 1;
-  const ringed = (ax, ay, bx, by, leaving) => openStepBlocked((x, y) => (ring(x, y) ? TV_MOUNTAIN_CLIMATE : 231), flat, ax, ay, bx, by, leaving);
+  const ringed = (ax, ay, bx, by, leaving) => oldPeaksLaw((x, y) => (ring(x, y) ? TV_MOUNTAIN_CLIMATE : 231), flat, ax, ay, bx, by, leaving);
   assert.ok(planRoute({ x: 10, y: 5 }, { x: 14, y: 5 }, { width: W, height: H, openBlocked: ringed, peakAt: ring }), 'out of the range, though every step about the start is a peak');
   assert.equal(planRoute({ x: 10, y: 5 }, { x: 14, y: 5 }, { width: W, height: H, openBlocked: ringed }), null, 'told nothing of the start\'s peaks: held in them - no step out of a peak is free by itself');
   assert.ok(planRoute({ x: 7, y: 5 }, { x: 10, y: 5 }, { width: W, height: H, openBlocked: blocked }), 'into a town in it');
@@ -627,13 +643,17 @@ test('OW-ONLY (Mac: "Remove the ground travel alltogether. Now selecting a locat
   // PIN MOVED (OW-TOGGLE, AUDIT OW5 T1): First-Person Travel on, the Overworld owns none - read live (test/ow_toggle.test.js mounts it both ways)
   assert.match(w, /function tvOwnsJourneys\(\) \{ return !!travelOptions && !modSetting\(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions\.FirstPersonTravel'\) && isEnhanced\(\) && !!travelView; \}/, 'AUDIT OW3 J2: the Overworld owns the walked trip on the enhanced interface');
   assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(opts\?\.playerControlled && tvRoutesJourneys\(\)\) return;\n\s*if \(isOnlinePage\(\) && !opts\?\.travelShip\) \{ townTalk\.say\(ONLINE_LAND_TRAVEL_REFUSAL\); hudFade\.clearFade\(\); \} else fastTravelTo\(pick, opts, computed\);/, 'AUDIT OW3 J2: a walk the Overworld refused never falls through to a paid teleport');   // PIN MOVED (AUDIT TRAVEL-ONLINE T7): and online a trip over land never reaches it
-  assert.match(w, /onTravelToCoords: \(pick, opts\) => \{ if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\) && !tvRoutesJourneys\(\)\) townTalk\.say\('You cannot travel there now\.'\); \},/, 'AUDIT OW3 J2: its refusal said once, in its own words');
+  // PIN MOVED (TESTBUILD): a test build's god mode teleports first (TEST_GODMODE false in the shipped build)
+  assert.match(w, /onTravelToCoords: \(pick, opts\) => \{ if \(TEST_GODMODE && staffPowers\(\)\.god && pick\?\.pixel\) \{ teleportTo\(pick\); return; \} if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\) && !tvRoutesJourneys\(\)\) townTalk\.say\('You cannot travel there now\.'\); \},/, 'AUDIT OW3 J2: its refusal said once, in its own words');
+  assert.match(w, /^const TEST_GODMODE = false;/m, 'TESTBUILD: the shipped build has no god mode');
   // AUDIT OW3 J1: stopped THROUGH the panel (the mod's Camp) - a bare interrupt left it up, the journey "active"
   // PIN MOVED (OW-TOGGLE): and only the Overworld's journey - a first-person one walks on
   assert.match(w, /onLower: \(why\) => \{ if \(\(why === 'button' \|\| why === 'escape' \|\| why === 'key'\) && travelOptions\?\.isTravelActive && tvOwnsJourneys\(\)\) travelOptions\.messages\.pauseTravel\(\); \},/, 'brought down by the player: the journey stops (the map\'s resume takes it up again)');
   // PIN MOVED (OW-TOGGLE): the Overworld's journey alone is raised - the door asks the enhanced interface and the view itself
   assert.match(w, /if \(!tvOwnsJourneys\(\) \|\| travelView\.state !== 'off' \|\| !travelOptions\.isTravelActive \|\| !travelOptions\.state\?\.autopilot\) return;\n\s*if \(gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\) \|\| duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\) \|\| !travelViewAllowed\(\)\.ok\) return;\n\s*travelView\.enter\(\);/, 'any journey raises the view, silently, once nothing forbids it');
   assert.match(w, /tvJourneyUp\(\);   \/\/ OW-ONLY[^\n]*\n\s*const tvHeadEye/, 'every frame, before the view\'s own');
+  // MOUNTAINS WALKABLE: the line stands, but the host's ground names no peak now (routeGround's peakAt) - it says nothing
+  // on the real map (test/fb0929d_toroads.test.js walks a spot on a Mountain pixel); over a ground that refuses, it would
   assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/, 'OW-MOUNTAINS: a spot among the peaks refused (AUDIT OW4 D1: a spawn\'s door is a place\'s - tv6_dungeons; OW-WOD-PATH: the ground\'s own peaks - the Mountain climate and a World of Daggerfall massif)');
   assert.match(w, /\.\.\.tvRouteGround\(\), sea: tvSeaAsk\(means, 'land'\) \}\);   \/\/ OW-MOUNTAINS: never across the peaks/, 'a place\'s route round them');
   assert.equal(TRAVEL_VIEW_TEXT.mountains, 'The mountains cannot be crossed on foot.');
@@ -643,45 +663,45 @@ test('OW-ONLY (Mac: "Remove the ground travel alltogether. Now selecting a locat
 // teleport, the resume rejoining the road, the spot's line its walk, the peaks' law the ground's, and the pins that hold
 // them (the grown Morrowind body: test/prbow1_bow.test.js, test/mwhead1_window.test.js, test/eotb_view.test.js) ────────
 
-test('AUDIT OW3 J5 (AUDIT OW4 J1): a Mountain pixel is never ENTERED from outside it (a one-pixel ridge beside the start is not crossed, a cliff out of the start is not climbed), every step out of the TRAVELLER\'S OWN range is walked (a traveller deep in the peaks walks out), and a SPOT on a plateau is refused up its cliff while a place there is still reached', () => {
+test('AUDIT OW3 J5 (AUDIT OW4 J1), then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): the law refuses no step - in the traveller\'s own range or one a road led into, into a range, off its edge down a drop; over a ground that refuses (OW-MOUNTAINS\' old law, a stand-in) the planner never ENTERS a Mountain pixel from outside it (a one-pixel ridge beside the start is not crossed, a cliff out of the start is not climbed), walks every step out of the TRAVELLER\'S OWN range (a traveller deep in the peaks walks out), and refuses a SPOT on a plateau up its cliff while a place there is still reached', () => {
   const W = 30, H = 12;
   const flat = () => 20;
-  // the law itself: out of the traveller's own range (or on through it: `leaving`, planRoute's flood fill) never refused;
-  // into the peaks always; AUDIT OW4 J1: from any OTHER peak (one a road led into) the ground's law, steep test and all
+  // MOUNTAINS WALKABLE - the law itself: every step walked, `leaving` or not (it refused peak to peak in a range a road
+  // led into, the drop off it, and the step into it - AUDIT OW4 J1's law)
   const band = (x) => (x >= 8 && x <= 16 ? TV_MOUNTAIN_CLIMATE : 231);
-  assert.equal(openStepBlocked((x) => band(x), flat, 12, 5, 13, 5, true), false, 'peak to peak, in the traveller\'s own range: walked');
-  assert.equal(openStepBlocked((x) => band(x), flat, 12, 5, 13, 5), true, 'AUDIT OW4 J1: peak to peak in a range a road led into: refused');
-  assert.equal(openStepBlocked((x) => band(x), flat, 16, 5, 17, 5, true), false, 'out of the own range: walked');
-  assert.equal(openStepBlocked((x) => band(x), (x) => (x === 17 ? 90 : 20), 16, 5, 17, 5, true), false, 'out of it down a drop: walked (every step in the range is steep)');
-  assert.equal(openStepBlocked((x) => band(x), (x) => (x === 17 ? 90 : 20), 16, 5, 17, 5), true, 'AUDIT OW4 J1: down the drop off a range a road led into: the steep test');
-  assert.equal(openStepBlocked((x) => band(x), flat, 16, 5, 17, 5), false, '...and gently off it: walked');
-  assert.equal(openStepBlocked((x) => band(x), flat, 7, 5, 8, 5), true, 'into it: refused');
-  // a one-pixel ridge the height of the map beside the start: the step onto it was the exempt first one
-  const ridge = (ax, ay, bx, by) => openStepBlocked((x) => (x === 7 ? TV_MOUNTAIN_CLIMATE : 231), flat, ax, ay, bx, by);
+  const drop = (x) => (x === 17 ? 90 : 20);
+  for (const [ground, ax, bx, what] of [[flat, 12, 13, 'peak to peak'], [drop, 16, 17, 'down the drop off the range'], [flat, 16, 17, 'gently off it'], [flat, 7, 8, 'into it']]) {
+    for (const leaving of [true, false]) assert.equal(openStepBlocked((x) => band(x), ground, ax, 5, bx, 5, leaving), false, `MOUNTAINS WALKABLE: ${what}${leaving ? ', in the traveller\'s own range' : ''} - walked`);
+  }
+  // the planner over the stand-in: a one-pixel ridge the height of the map beside the start - the step onto it was the
+  // exempt first one
+  const ridge = (ax, ay, bx, by) => oldPeaksLaw((x) => (x === 7 ? TV_MOUNTAIN_CLIMATE : 231), flat, ax, ay, bx, by);
   assert.equal(planRoute({ x: 6, y: 5 }, { x: 12, y: 5 }, { width: W, height: H, openBlocked: ridge }), null, 'the ridge is not crossed on foot');
   const roads = new Uint8Array(W * H);
   for (let x = 6; x < 12; x++) { roads[5 * W + x] |= DIR.E; roads[5 * W + x + 1] |= DIR.W; }
   assert.ok(planRoute({ x: 6, y: 5 }, { x: 12, y: 5 }, { width: W, height: H, roads, openBlocked: ridge }).kinds.every((k) => k === 'road'), 'a road over it is walked');
   // deep in the peaks, no road out: every destination had no way (the first step alone was exempt)
-  const deep = (ax, ay, bx, by, leaving) => openStepBlocked((x) => band(x), flat, ax, ay, bx, by, leaving);
+  const deep = (ax, ay, bx, by, leaving) => oldPeaksLaw((x) => band(x), flat, ax, ay, bx, by, leaving);
   const out = planRoute({ x: 12, y: 5 }, { x: 22, y: 5 }, { width: W, height: H, openBlocked: deep, peakAt: (x) => band(x) === TV_MOUNTAIN_CLIMATE });
   assert.ok(out, 'a traveller among the peaks walks out');
   assert.ok(out.pixels.every((p, i) => i === 0 || band(out.pixels[i - 1].x) === TV_MOUNTAIN_CLIMATE || band(p.x) !== TV_MOUNTAIN_CLIMATE), 'and never back in');
   // a cliff beside the start: routed round it, never up it
   const pillar = (x, y) => (x === 7 && y >= 3 && y <= 7 ? 60 : 20);
-  const cliff = (ax, ay, bx, by) => openStepBlocked(() => 231, pillar, ax, ay, bx, by);
+  const cliff = (ax, ay, bx, by) => oldPeaksLaw(() => 231, pillar, ax, ay, bx, by);
   const round = planRoute({ x: 6, y: 5 }, { x: 9, y: 5 }, { width: W, height: H, openBlocked: cliff });
   assert.ok(round && !round.pixels.some((p) => pillar(p.x, p.y) === 60), 'round the cliff, not up it out of the start');
   // a plateau: its pixel 60 over every neighbour (the rise Mac's lag and fall came from)
   const plateau = (x, y) => (x === 15 && y === 5 ? 80 : 20);
-  const up = (ax, ay, bx, by) => openStepBlocked(() => 231, plateau, ax, ay, bx, by);
+  const up = (ax, ay, bx, by) => oldPeaksLaw(() => 231, plateau, ax, ay, bx, by);
   assert.equal(planRoute({ x: 10, y: 5 }, { x: 15, y: 5 }, { width: W, height: H, openBlocked: up, goalExempt: false }), null, 'a spot on it: no way up');
   assert.ok(planRoute({ x: 10, y: 5 }, { x: 15, y: 5 }, { width: W, height: H, openBlocked: up }), 'a place on it: its own pixel stays exempt');
   const w = rd('src/scenes/world.js');
   // PIN MOVED (AUDIT OW5 S3): a let
   assert.match(w, /let plan = planRoute\(from, pix, \{ roads: wnet\?\.roads \?\? null, tracks: wnet\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), goalExempt: !!door, sea: seaAsk \}\);/, 'the spot\'s journey asks its last step (AUDIT OW3 J8: and the peaks\' law at all)');
   // AUDIT OW4 J3: the law bound to the world's own climate and heightmap, read once (routeGround: its behaviour pinned below)
-  assert.match(w, /const tvRouteGround = \(\) => \{ \(_tvRouteGround \?\?= routeGround\(\(x, y\) => maps\.getClimateIndex\(x, y\), \(x, y\) => woods\.getHeightMapValue\(x, y\), WATER_BYTE\)\)\.setRocks\(tvWodRocks\(\)\); return _tvRouteGround; \};/, 'AUDIT OW3 J8: the law bound to the world\'s own climate and heightmap (OW-WOD-PATH: and the World of Daggerfall massifs)');
+  // PIN MOVED (WILD1): the open zone's pixels read as flat dry ground (the sea still the sea), the tables read again as
+  // the zone comes or goes - and outside it the world's own climate and heightmap, as before
+  assert.match(w, /const tvRouteGround = \(\) => \{\n\s*const wildOn = !!wildMapMask\(\);\n\s*if \(wildOn !== _tvGroundWild\) \{ _tvGroundWild = wildOn; _tvRouteGround = null; \}[^\n]*\n\s*\(_tvRouteGround \?\?= routeGround\(\n\s*\(x, y\) => \(tvWildFree\(x, y\) && woods\.getHeightMapValue\(x, y\) > WATER_BYTE \? 0 : maps\.getClimateIndex\(x, y\)\),\n\s*\(x, y\) => \{ const h = woods\.getHeightMapValue\(x, y\); return tvWildFree\(x, y\) && h > WATER_BYTE \? WATER_BYTE \+ 8 : h; \},[^\n]*\n\s*WATER_BYTE\)\)\.setRocks\(tvWodRocks\(\)\);\n\s*return _tvRouteGround;\n\s*\};/, 'AUDIT OW3 J8: the law bound to the world\'s own climate and heightmap (OW-WOD-PATH: and the World of Daggerfall massifs)');
 });
 
 test('AUDIT OW3 J3: a resumed road journey REJOINS the road - from the start pixel the join is made again from where the traveller stands, knocked off the road mid-run it walks back to the run\'s nearest point, the join\'s own pixel aimed; then the leg; open ground has nothing to rejoin', () => {
@@ -769,7 +789,7 @@ test('AUDIT OW3 J4: a SPOT\'s drawn route is its walk - one point a leg through 
 // planned again, the ground journey held to walking pace (the grown Morrowind body's lean: test/prbow1_bow.test.js; the
 // disease stop through the panel: test/to1_travelOptions.test.js) ─────────────────────────────────────────────────────
 
-test('AUDIT OW4 J1 (Mac: "Bumping into a mountain can cause insane lag ... You shouldnt be able to navigate mountains"): a route that ENTERS a range by a road walks no further in it - no open step from peak to peak, none down its edge past the steep law - while the start\'s OWN connected peaks are still walked out of freely', () => {
+test('AUDIT OW4 J1 (Mac: "Bumping into a mountain can cause insane lag ... You shouldnt be able to navigate mountains"), then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): the host\'s own ground walks on across the range a road led into, straight; over a ground that refuses (OW-MOUNTAINS\' old law, a stand-in) a route that ENTERS a range by a road walks no further in it - no open step from peak to peak, none down its edge past the steep law - while the start\'s OWN connected peaks are still walked out of freely', () => {
   const M = TV_MOUNTAIN_CLIMATE;
   // the audit's probe: a DEAD-END road into the middle of a 21x101 Mountain block, 100 high over a plain of 20
   const BW = 70, BH = 110;
@@ -780,11 +800,16 @@ test('AUDIT OW4 J1 (Mac: "Bumping into a mountain can cause insane lag ... You s
   for (let x = 10; x < 30; x++) { roads[55 * BW + x] |= DIR.E; roads[55 * BW + x + 1] |= DIR.W; }
   const offPeaks = (r) => r.kinds.filter((k, i) => k === 'open' && peakAt(r.pixels[i].x, r.pixels[i].y)).length;
   const from = { x: 10, y: 55 }, to = { x: 55, y: 55 };
-  // OW3 J5's law - every step out of ANY peak free: the road in, then across the block on foot and down its far edge
-  const ow3 = (ax, ay, bx, by) => (climate(ax, ay) === M ? false : openStepBlocked(climate, height, ax, ay, bx, by));
+  // MOUNTAINS WALKABLE: the host's own ground over the block (routeGround: the one law, the peaks it names) - the road in,
+  // and on across the block on foot and down its far edge, straight
+  const walked = planRoute(from, to, { width: BW, height: BH, roads, ...routeGround(climate, height, 0, BW, BH) });
+  assert.ok(walked.pixels.every((p) => p.y === 55), 'MOUNTAINS WALKABLE: straight along the road and across the block');
+  assert.ok(offPeaks(walked) >= 10, `MOUNTAINS WALKABLE: ${offPeaks(walked)} open steps across the peaks`);
+  // the stand-in. OW3 J5's law - every step out of ANY peak free: the road in, then across the block on foot and down its far edge
+  const ow3 = (ax, ay, bx, by) => (climate(ax, ay) === M ? false : oldPeaksLaw(climate, height, ax, ay, bx, by));
   const was = planRoute(from, to, { width: BW, height: BH, roads, openBlocked: ow3 });
   assert.ok(offPeaks(was) >= 10, `OW3: ${offPeaks(was)} open steps off the peaks`);
-  const law = (ax, ay, bx, by, leaving) => openStepBlocked(climate, height, ax, ay, bx, by, leaving);
+  const law = (ax, ay, bx, by, leaving) => oldPeaksLaw(climate, height, ax, ay, bx, by, leaving);
   const now = planRoute(from, to, { width: BW, height: BH, roads, openBlocked: law, peakAt });
   assert.ok(now, 'a way round the block (51 pixels out: the whole map\'s rung, AUDIT OW4 J3)');
   assert.equal(offPeaks(now), 0, 'no open step off a peak');
@@ -794,9 +819,9 @@ test('AUDIT OW4 J1 (Mac: "Bumping into a mountain can cause insane lag ... You s
   const W2 = 30, H2 = 12, ridge = (x) => (x === 7 ? M : 231);
   const up = new Uint8Array(W2 * H2);
   up[5 * W2 + 6] |= DIR.E; up[5 * W2 + 7] |= DIR.W;
-  const onRidge = (h) => (ax, ay, bx, by, leaving) => openStepBlocked(ridge, h, ax, ay, bx, by, leaving);
+  const onRidge = (h) => (ax, ay, bx, by, leaving) => oldPeaksLaw(ridge, h, ax, ay, bx, by, leaving);
   const sheer = (x) => (x === 7 ? 60 : 20), gentle = (x) => (x === 7 ? 30 : 20);
-  const ow3edge = (ax, ay, bx, by) => (ridge(ax) === M ? false : openStepBlocked(ridge, sheer, ax, ay, bx, by));
+  const ow3edge = (ax, ay, bx, by) => (ridge(ax) === M ? false : oldPeaksLaw(ridge, sheer, ax, ay, bx, by));
   const trip = [{ x: 4, y: 5 }, { x: 10, y: 5 }];
   assert.ok(planRoute(...trip, { width: W2, height: H2, roads: up, openBlocked: ow3edge }), 'OW3: up the road and off the far side');
   assert.equal(planRoute(...trip, { width: W2, height: H2, roads: up, openBlocked: onRidge(sheer), peakAt: (x) => ridge(x) === M }), null, 'now: the drop of 40 refused - no way on foot');
@@ -806,15 +831,15 @@ test('AUDIT OW4 J1 (Mac: "Bumping into a mountain can cause insane lag ... You s
   const twoC = (x) => (two(x) ? M : 231);
   const into = new Uint8Array(W2 * H2);
   for (let x = 8; x < 13; x++) { into[5 * W2 + x] |= DIR.E; into[5 * W2 + x + 1] |= DIR.W; }
-  const twoLaw = (ax, ay, bx, by, leaving) => openStepBlocked(twoC, () => 20, ax, ay, bx, by, leaving);
+  const twoLaw = (ax, ay, bx, by, leaving) => oldPeaksLaw(twoC, () => 20, ax, ay, bx, by, leaving);
   const twoOpts = { width: W2, height: H2, roads: into, openBlocked: twoLaw, peakAt: (x) => two(x) };
   assert.ok(planRoute({ x: 4, y: 5 }, { x: 9, y: 5 }, twoOpts), 'out of the own range, across the plain');
   assert.equal(planRoute({ x: 4, y: 5 }, { x: 20, y: 5 }, twoOpts), null, 'but not on through the range the road ends in');
   assert.ok(planRoute({ x: 13, y: 5 }, { x: 20, y: 5 }, twoOpts), 'standing in THAT one, it is the traveller\'s own: walked out of');
 });
 
-test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea, the peaks\' law and the peaks off two byte tables - what the host\'s reads answered); a range wider than the 60-pixel box is gone round (the whole map\'s rung); a pick with no way by land is answered once its first box has none (no wider box searched), and never wrongly', () => {
-  // the tables answer as the host's reads did, everywhere
+test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea off a byte table - what the host\'s reads answered; MOUNTAINS WALKABLE, the owner\'s Wrothgarian merge: no peak and no step refused, the one law\'s answer, wherever the Mountain climate lies); a range wider than the 60-pixel box is gone round (the whole map\'s rung, over a ground that refuses - the old law, a stand-in); a pick with no way by land (MOUNTAINS WALKABLE: the sea alone parts the land now) is answered once its first box has none (no wider box searched), and never wrongly', () => {
+  // the tables answer as the host's reads did, everywhere - MOUNTAINS WALKABLE: no pixel a peak, no step refused
   const W3 = 40, H3 = 20;
   const cl = (x, y) => (x === 20 && y < 17 ? TV_MOUNTAIN_CLIMATE : 223 + ((x * 7 + y * 3) % 9));
   const ht = (x, y) => (x * 3 + y * 7) % 60;
@@ -822,30 +847,34 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea, th
   let wrong = 0;
   for (let y = 0; y < H3; y++) {
     for (let x = 0; x < W3; x++) {
-      if (gr.isWater(x, y) !== (ht(x, y) <= 3) || gr.peakAt(x, y) !== (cl(x, y) === TV_MOUNTAIN_CLIMATE)) wrong++;
+      if (gr.isWater(x, y) !== (ht(x, y) <= 3) || gr.peakAt(x, y) !== false) wrong++;
       for (const [, dx, dy] of DIR_DELTA) {
         const bx = x + dx, by = y + dy;
         if (bx < 0 || by < 0 || bx >= W3 || by >= H3) continue;
-        if (gr.openBlocked(x, y, bx, by) !== openStepBlocked(cl, ht, x, y, bx, by) || gr.openBlocked(x, y, bx, by, true)) wrong++;
+        if (gr.openBlocked(x, y, bx, by) !== openStepBlocked(cl, ht, x, y, bx, by) || gr.openBlocked(x, y, bx, by) || gr.openBlocked(x, y, bx, by, true)) wrong++;
       }
     }
   }
-  assert.equal(wrong, 0, 'every pixel and every step as the reads answer it');
+  assert.equal(wrong, 0, 'every pixel and every step as the reads answer it (MOUNTAINS WALKABLE: the Mountain column at x 20 no peak, no step into it refused)');
   assert.ok(gr.isWater(-1, 0) && gr.isWater(W3, 0) && gr.isWater(0, H3), 'off the map: the sea (the host\'s tvWater)');
   // THE WHOLE MAP'S RUNG: a range 262 pixels long, open past its south end - past every box the old ladder searched
   assert.deepEqual([...ROUTE_MARGINS], [6, 20, 60, 1000], 'the last rung is the whole map');
   const wall = (x, y) => x === 100 && y < 262;
-  const wl = (ax, ay, bx, by, leaving) => openStepBlocked((x, y) => (wall(x, y) ? TV_MOUNTAIN_CLIMATE : 231), () => 20, ax, ay, bx, by, leaving);
+  const wl = (ax, ay, bx, by, leaving) => oldPeaksLaw((x, y) => (wall(x, y) ? TV_MOUNTAIN_CLIMATE : 231), () => 20, ax, ay, bx, by, leaving);
   assert.equal(planRoute({ x: 90, y: 100 }, { x: 110, y: 100 }, { width: 300, height: 300, openBlocked: wl, margins: [6, 20, 60] }), null, 'the old ladder: "no way by land"');
   const round = planRoute({ x: 90, y: 100 }, { x: 110, y: 100 }, { width: 300, height: 300, openBlocked: wl });
   assert.ok(round && round.pixels.some((p) => p.y >= 262), 'the whole map\'s rung: round its end');
   // a rung the map's edges clamp to the last one's box is that search again: not made
   const asked = (margins) => { let n = 0; planRoute({ x: 2, y: 2 }, { x: 20, y: 9 }, { width: 24, height: 12, margins, isWater: (x) => { n++; return x === 10; } }); return n; };
   assert.equal(asked([1000, 2000, 5000]), asked([1000]), 'the same box, searched once');
-  // THE LAND'S PIECES: a Mountain wall the map's height splits it - a pick across it answered at once; a road over it
-  // joins the two; bound for a town ON it, or standing on it (the start's own peaks), the search answers
+  // THE LAND'S PIECES - MOUNTAINS WALKABLE: a Mountain wall the map's height parts nothing now (one piece, walked across);
+  // a STRAIT of sea the map's height does - a pick across it answered at once; bound for a harbour town IN it, or standing
+  // in it (a pixel no step enters), the search answers; a road laid over it joins nothing (the sea is never walked)
   const PW = 60, PH = 40;
-  const g2 = routeGround((x) => (x === 30 ? TV_MOUNTAIN_CLIMATE : 231), () => 20, 3, PW, PH);
+  const peaks = routeGround((x) => (x === 30 ? TV_MOUNTAIN_CLIMATE : 231), () => 20, 3, PW, PH);
+  assert.equal(peaks.apart({ x: 20, y: 20 }, { x: 40, y: 20 }), false, 'MOUNTAINS WALKABLE: a Mountain wall the map\'s height parts no land');
+  assert.ok(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...peaks }).pixels.some((p) => p.x === 30), '...walked straight across');
+  const g2 = routeGround(() => 231, (x) => (x === 30 ? 0 : 20), 3, PW, PH);
   let searched = 0;
   const counted = (x, y) => { searched++; return g2.isWater(x, y); };
   const across = (opts) => { searched = 0; const r = planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...g2, isWater: counted, ...opts }); return [r, searched]; };
@@ -863,22 +892,22 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea, th
     return n;
   };
   assert.equal(readsOf({}), readsOf({ apart: null }), 'routed in the first box: the pieces never folded');
-  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 30, y: 20 }), false, 'a town ON the wall: a neighbour on this side (the goal step a place\'s)');
+  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 30, y: 20 }), false, 'a harbour town IN the strait: a neighbour on this side (the goal step a place\'s)');
   assert.ok(planRoute({ x: 20, y: 20 }, { x: 30, y: 20 }, { width: PW, height: PH, ...g2 }), '...reached');
-  assert.equal(g2.apart({ x: 30, y: 20 }, { x: 40, y: 20 }), false, 'from the wall itself: the traveller\'s own peaks - the search answers');
-  assert.ok(planRoute({ x: 30, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...g2 }), '...and walks off it');
+  assert.equal(g2.apart({ x: 30, y: 20 }, { x: 40, y: 20 }), false, 'from the strait itself: a pixel no step enters - its neighbours\' pieces asked, the search answers');
+  assert.ok(planRoute({ x: 30, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...g2 }), '...and wades out');
   const pass = new Uint8Array(PW * PH);
   for (let x = 25; x < 35; x++) { pass[20 * PW + x] |= DIR.E; pass[20 * PW + x + 1] |= DIR.W; }
-  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), false, 'a road over the pass joins the pieces (folded again for its network)');
-  assert.ok(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 }), '...and is walked');
-  // NEVER A FALSE "NO WAY": on seeded rough ground - a range two pixels thick the map's height, a sound across the east,
-  // scattered peaks and cliffs, a few roads in the west - every pick the pieces refuse has no route in an unbounded search
-  // of the whole map, a place's or a spot's
+  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), true, 'a road laid over the strait joins nothing (folded again for its network: the same answer)');
+  assert.equal(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 }), null, '...and no way');
+  // NEVER A FALSE "NO WAY": on seeded rough ground - a strait two pixels thick the map's height, a sound across the east,
+  // scattered pools, peaks (walked - MOUNTAINS WALKABLE) and cliffs, a few roads in the west - every pick the pieces refuse
+  // has no route in an unbounded search of the whole map, a place's or a spot's
   let seed = 7;
   const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
   const RW = 36, RH = 24;
-  const hs = Array.from({ length: RW * RH }, (_, i) => ((i % RW) > 14 && [16, 17].includes(Math.floor(i / RW)) ? 0 : 5 + Math.floor(rnd() * 30)));
-  const cs = Array.from({ length: RW * RH }, (_, i) => ([12, 13].includes(i % RW) || rnd() < 0.1 ? TV_MOUNTAIN_CLIMATE : 231));
+  const hs = Array.from({ length: RW * RH }, (_, i) => ([12, 13].includes(i % RW) || ((i % RW) > 14 && [16, 17].includes(Math.floor(i / RW))) || rnd() < 0.1 ? 0 : 5 + Math.floor(rnd() * 30)));
+  const cs = Array.from({ length: RW * RH }, () => (rnd() < 0.1 ? TV_MOUNTAIN_CLIMATE : 231));
   const rr = new Uint8Array(RW * RH);
   for (let k = 0; k < 12; k++) {
     let x = Math.floor(rnd() * RW), y = Math.floor(rnd() * RH);

@@ -83,15 +83,18 @@ test('ARENA4b the dungeon\'s host numbers its blows and routes a spell on my opp
   const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(D, /const nextArenaQ = \(\) => \(_arenaQ = \(_arenaQ \+ 1\) & 0x7fffffff\);/);
   assert.match(D, /const landOnRival = \(rb, damage, kind\) => !!opts\.onArenaHit\?\.\(\{ i: rb\.rival, d: damage, kind, w: [^\n]*, q: _arenaQ \}\);/, 'the rival\'s claim carries the sequence');
-  assert.match(D, /function resolvePlayerHit\(eye, inViewFn, playerFeet, lookDir\) \{\n\s+nextArenaQ\(\);/, 'a swing is one number, every body it meets');
+  // PVPDUNGEON: the open zone's fair player takes the swing first (opts.wildStrike, the defender resolves it - no referee
+  // there); the number is still drawn before every body the referee hears of
+  assert.match(D, /function resolvePlayerHit\(eye, inViewFn, playerFeet, lookDir\) \{\n(?:\s*\/\/[^\n]*\n)*\s+if \(opts\.wildBodies && opts\.wildStrike\) \{\n[^]{0,900}?\n\s+if \(best && opts\.wildStrike\(best, [^\n]*\) return true;\n\s+\}\n\s+nextArenaQ\(\);/, 'a swing is one number, every body it meets');
   assert.match(D, /if \(rv && missileHitsCapsule\(m\.pos, rv\.ai\.feet, rv\.ai\.height, rv\.ai\.radius\)\) \{\n\s+nextArenaQ\(\);/, 'a shaft on my opponent its own');
   assert.match(D, /if \(missileHitsFoe\(m\.pos, f\)\) \{[^\n]*\n\s+nextArenaQ\(\);/, 'a shaft on a relay\'s fighter its own');
   // a relay fighter's claim: a swing's or a shaft's sequence; a spell's damage (the sinks' kind 'spell', no record) claimed
   // as a spell - never a swing held to a sword's reach - under its cast's one number, every body of the blast sharing it
   assert.match(D, /const cast = kind === 'spell' \|\| !!spell;\n\s+if \(fromPlayer && damage >= 0\) opts\.onArenaHit\?\.\(\{ i: `a\$\{foe\._ownI\}`, d: damage, kind: kind === 'arrow' \? 'arrow' : cast \? 'spell' : 'melee', [^\n]*, q: cast \? arenaSpellQ\(\) : _arenaQ \}\);/, 'a relay fighter\'s claim carries its sequence, a spell as a spell');
   assert.match(D, /const arenaSpellQ = \(\) => \{\n\s+if \(_arenaSpellQ == null\) \{ _arenaSpellQ = nextArenaQ\(\); void Promise\.resolve\(\)\.then\(\(\) => \{ _arenaSpellQ = null; \}\); \}\n\s+return _arenaSpellQ;\n\s+\};/, 'one number a cast: the cast engine\'s one run, then a new one');
-  assert.match(D, /duelMark: opts\.arenaRival \? \(\) => \{ const rb = arenaRivalBody\(\); return rb \? \{ id: rb\.rival, name: rb\.entity\?\.name \?\? '', feet: rb\.ai\.feet, height: rb\.ai\.height \} : null; \} : null,/);
-  assert.match(D, /castAtDuel: opts\.arenaRival \? \(_id, sp\) => spellOnRival\(sp\) : null,/);
+  // PVPDUNGEON: with no bout the seam is the open zone's (its fair players, wildSpellOut) - the arena's branch unchanged
+  assert.match(D, /duelMark: opts\.arenaRival \? \(\) => \{ const rb = arenaRivalBody\(\); return rb \? \{ id: rb\.rival, name: rb\.entity\?\.name \?\? '', feet: rb\.ai\.feet, height: rb\.ai\.height \} : null; \} : \(opts\.wildSpellMarks \? \(\) => opts\.wildSpellMarks\(\) : null\),/);
+  assert.match(D, /castAtDuel: opts\.arenaRival \? \(_id, sp\) => spellOnRival\(sp\) : \(opts\.wildSpellOut \? \(id, sp\) => opts\.wildSpellOut\(id, sp\) : null\),/);
   const fn = D.slice(D.indexOf('function spellOnRival(sp) {'), D.indexOf('function spellOnRival(sp) {') + 900);
   assert.match(fn, /applySpell\(harm, playerEntity\.level, rb\.entity, sinks/, 'the one door every spell lands through, against their stand-in');
   assert.match(fn, /nextArenaQ\(\);\n\s+return landOnRival\(rb, dealt, 'spell'\);/, 'its own sequence, to the referee as a spell');

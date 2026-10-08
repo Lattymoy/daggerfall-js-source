@@ -1021,6 +1021,9 @@ redrawn); `tools/mutants/tv3.json` and `tv5.json` (the OVERWORLD-NAMES records).
   it was laid (over the passes); the step out of the start and onto the goal are never refused. A spot journey is now
   routed too (to the spot's pixel round the peaks, then to the spot), and a spot among the peaks is refused ("The
   mountains cannot be crossed on foot.").
+  RETIRED 2026-10-08 by the owner, in the Wrothgarian zone's merge (MOUNTAINS WALKABLE): `openStepBlocked` refuses
+  no step and the ground calls no pixel a peak - the mountains are walked on foot everywhere
+  (`11-Multiplayer/Wild-Zone.md` section 19).
 
 **Proof.** `test/tv2_click_to_move.test.js` (three more), `tools/mutants/ow2.json` (18 records, all dead).
 
@@ -1759,6 +1762,8 @@ the rock scaled by a million 83 km under it (`03-World/World-Of-Daggerfall.md`, 
   peaks: an open step into one is refused, the start's own is walked out of, a spot inside one is refused as among the
   peaks. The rock fields are not massifs (their pieces within ~350 m; a tenth of the map) - the traveller's steering
   rounds them. A massif's rocks reach past its pixel; the pixel is what the planner refuses, the steering the rest.
+  RETIRED with OW-MOUNTAINS 2026-10-08 (MOUNTAINS WALKABLE): the host still hands `setRocks` its table, and the
+  planner no longer reads it (`11-Multiplayer/Wild-Zone.md` section 19).
 - **OW-TOWN-RING, the road round the town (3).** Basic Roads' bytes meet at the hub of a location's pixel - Daggerfall
   (207,213) and Wayrest (859,244) are N|SE|W - while the painter stops the arms at the town and paves its border ring.
   The route's legs were aimed at pixel middles, so a route through a town pixel aimed a leg at the town's heart.
@@ -1770,7 +1775,8 @@ the rock scaled by a million 83 km under it (`03-World/World-Of-Daggerfall.md`, 
   (`setLocationTiles`, from the location's blocks when the pixel is not built yet). A resume in the town's pixel skips
   no ring point, and no ring point is taken for a road join.
 
-**Left as it is, recorded.** The planner still prices no climb on open ground: its terrain law is OW-MOUNTAINS' - the
+**Left as it is, recorded.** (Since 2026-10-08 the planner has no terrain law at all - MOUNTAINS WALKABLE, above.)
+The planner still prices no climb on open ground: its terrain law is OW-MOUNTAINS' - the
 Mountain climate and a steep step (TV_STEEP_RISE 16) between two pixels' small-heightmap bytes. MountainWoods (230),
 a rise under 16 a pixel however long, and the large heightmap's relief inside a pixel pass it. The heightmaps are the
 player's own (WOODS.WLD); none is in this workspace, so no threshold was tuned blind. A journey that starts inside a

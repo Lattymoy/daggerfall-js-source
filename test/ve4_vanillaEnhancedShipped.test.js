@@ -41,6 +41,10 @@ const INDEX = json('vendor/vanilla-enhanced/vanilla-enhanced.index.json');
 const BASE = 'dfmod/vanilla enhanced - base.dfmod';
 const MASKED = 'dfmod/vanilla enhanced - masked roads.dfmod';
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
+// ALIKR1 / SNOWFALL1 (2026-10-08): the two environment packs ship through the same door, on by default and built on the
+// Base (test/environs_texturePacks.test.js holds their own law); a pin over the whole door names them in their places
+const SANDS = 'dfmod/sands of the alikr.dfmod';
+const SNOWFALL = 'dfmod/snowfall.dfmod';
 const ROAD_SLICE = /^\d{3}-TexArray_\d+\.png$/;
 
 // ---- the fake network: each picture is the URL it came from ---------------------------------------------------------
@@ -131,16 +135,17 @@ test('VE4 the door: the shipped mods register beside the attached in one load or
   // PIN MOVED (AUDIT VE, Mac: "Ensure this is on by default"): VE4 shipped every mod OFF until worn
   fresh();
   installVanillaEnhancedPack();
-  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled]), [[BASE, true, true], [MASKED, true, false], [SNOWLESS, true, false]], 'in load order: the Base on, its add-ons off');
+  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled]), [[BASE, true, true], [SANDS, true, true], [SNOWFALL, true, true], [MASKED, true, false], [SNOWLESS, true, false]], 'in load order: the Base on, its add-ons off; the environment packs, built on it, on');
+  setDfmodEnabled([SANDS, SNOWFALL], false);   // ALIKR1/SNOWFALL1: the Base's own names below
   assert.equal(bundleTextureCount(), 1238, 'the Base\'s names on the doors from the start - its 1,246 PNGs but the eight World of Daggerfall biome pictures, which are not archive-named');
   const gen = dfmodGeneration();
   installVanillaEnhancedPack();
   assert.equal(dfmodGeneration(), gen, 'the same list again changes nothing');
   setDfmodEnabled(BASE, false);
-  assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [BASE]: false }, 'a shipped mod\'s switch is the player\'s choice');
+  assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [SANDS]: false, [SNOWFALL]: false, [BASE]: false }, 'a shipped mod\'s switch is the player\'s choice');
   assert.equal(bundleTextureCount(), 0, 'switched off: nothing on the doors');
   setDfmodEnabled(BASE, true);
-  assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [BASE]: true });
+  assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [SANDS]: false, [SNOWFALL]: false, [BASE]: true });
   assert.deepEqual(getPref(DFMOD_OFF_PREF), [], 'and the attached shelf entry is untouched');
   assert.equal(bundleTextureCount(), 1238);
   const name = INDEX.Mods[0].index.textures.find(([n]) => /^500_/.test(n))[0];
@@ -157,11 +162,11 @@ test('VE4 the door: the shipped mods register beside the attached in one load or
   const load = async (k) => store.get(k) ?? (k === BASE ? new Uint8Array([1]) : null);
   const opts = { open: async () => attachedBase, saveIndex: async (k, j) => { store.set(k, new TextEncoder().encode(j)); }, background: false };
   await setDfmodSources([BASE], load, opts);
-  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled, m.version]), [[BASE, false, true, '3.5.0'], [MASKED, true, false, '3.4.7'], [SNOWLESS, true, false, '3.4.7']], 'the attached copy in the shipped one\'s place');
+  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled, m.version]), [[BASE, false, true, '3.5.0'], [SANDS, true, false, '2'], [SNOWFALL, true, false, '1.0.5'], [MASKED, true, false, '3.4.7'], [SNOWLESS, true, false, '3.4.7']], 'the attached copy in the shipped one\'s place');
   assert.equal(bundleTextureCount(), 1, 'the attached copy\'s names, not the shipped Base\'s');
   // removed: the shipped Base again, as its own switch left it
   await setDfmodSources([], load, opts);
-  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled]), [[BASE, true, true], [MASKED, true, false], [SNOWLESS, true, false]]);
+  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped, m.enabled]), [[BASE, true, true], [SANDS, true, false], [SNOWFALL, true, false], [MASKED, true, false], [SNOWLESS, true, false]]);
   assert.equal(bundleTextureCount(), 1238);
   // an add-on the port does not ship, attached by the player and built on the shipped Base, loads after it - one order
   const WINTER = 'dfmod/vanilla enhanced - winter tracks.dfmod';
@@ -169,23 +174,24 @@ test('VE4 the door: the shipped mods register beside the attached in one load or
   const wload = async (k) => store.get(k) ?? (k === WINTER ? new Uint8Array([1]) : null);
   const wopts = { ...opts, open: async () => winter };
   await setDfmodSources([WINTER], wload, wopts);   // indexed at the attach
-  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped]), [[BASE, true], [MASKED, true], [SNOWLESS, true], [WINTER, false]], 'AutoSortMods over the attached and the shipped together');
+  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped]), [[BASE, true], [SANDS, true], [SNOWFALL, true], [MASKED, true], [SNOWLESS, true], [WINTER, false]], 'AutoSortMods over the attached and the shipped together');
   await setDfmodSources([], wload, wopts);
   await setDfmodSources([WINTER], wload, wopts);   // a boot, from the stored index
-  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, MASKED, SNOWLESS, WINTER], 'and at every boot after');
+  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, SANDS, SNOWFALL, MASKED, SNOWLESS, WINTER], 'and at every boot after');
   clearDfmodSources();
-  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, MASKED, SNOWLESS], 'a clear of the attached leaves what ships');
+  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, SANDS, SNOWFALL, MASKED, SNOWLESS], 'a clear of the attached leaves what ships');
   setShippedDfmods([]);
   assert.deepEqual(attachedDfmods(), [], 'another list replaces it');
   // the pack put in AFTER an attached add-on registered (AUDIT VE R2: a menu may read the store first) - one order still
   await setDfmodSources([WINTER], wload, wopts);
   installVanillaEnhancedPack();
-  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, MASKED, SNOWLESS, WINTER], 'the pack put in after the attached: AutoSortMods over both');
+  assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, SANDS, SNOWFALL, MASKED, SNOWLESS, WINTER], 'the pack put in after the attached: AutoSortMods over both');
 });
 
 test('VE4 the ground, over the real index: the Base\'s arrays dress the terrain from its own records; Masked Roads, loaded after it, decides its arrays - the Base\'s tiles but its road tiles; its 403 array, 57 deep, is refused and 403 is made of records - the Base\'s and its own three road records; Snowless Swamps, loaded last, decides 402 (DFU: TryImportTextureArray, the first mod in TryGetAsset\'s walk)', async () => {
   fresh();
   installVanillaEnhancedPack();
+  setDfmodEnabled([SANDS, SNOWFALL], false);   // ALIKR1/SNOWFALL1: Vanilla Enhanced's law alone - the packs' over it is test/environs_texturePacks.test.js
   setDfmodEnabled(BASE, false);   // PIN MOVED (AUDIT VE): the Base is on by default - switched off, the classic set
   assert.equal(await dfmodGroundLayers(302, classicTex(56)), null, 'off: the classic set');
   setDfmodEnabled(BASE, true);
@@ -249,22 +255,24 @@ test('VE4 the card over the shipped pack: Vanilla Enhanced is a fresh game\'s lo
   const tex = OVERHAUL_PANELS.find((p) => p.id === 'texture');
   const [classic, ve] = tex.options;
   assert.equal(currentOption(tex), ve, 'a fresh game wears Vanilla Enhanced');
-  assert.deepEqual(ve.addons().map((m) => m.title), ['Vanilla Enhanced - Masked Roads', 'Vanilla Enhanced - Snowless Swamps and Jungles']);
+  // ALIKR1/SNOWFALL1: the environment packs are built on the Base, so the card offers them beside its own add-ons - on by
+  // default (Mac: "These should be on by default"), kept across Classic as the add-ons are
+  assert.deepEqual(ve.addons().map((m) => m.title), ['Sands of the Alik\'r', 'Snowfall', 'Vanilla Enhanced - Masked Roads', 'Vanilla Enhanced - Snowless Swamps and Jungles']);
   wearVanillaEnhanced();
   assert.ok(veWorn());
-  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, false, false], 'the Base alone');
+  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, true, true, false, false], 'the Base, and the environment packs on by default');
   setVeAddon(MASKED, true);
-  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, true, false]);
+  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, true, true, true, false]);
   assert.deepEqual(getPref(VE_ADDONS_PREF), [MASKED]);
   wearClassicTextures();
-  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [false, false, false]);
+  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [false, false, false, false, false]);
   assert.equal(currentOption(tex), classic);
-  assert.deepEqual(getPref(VE_ADDONS_PREF), [MASKED], 'kept across Classic');
+  assert.deepEqual(getPref(VE_ADDONS_PREF), [SANDS, SNOWFALL, MASKED], 'kept across Classic');
   ve.apply();
-  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, true, false], 'worn again as it was');
+  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [true, true, true, true, false], 'worn again as it was');
   setVeAddon(MASKED, false);
-  assert.deepEqual(veAddons().map((m) => m.enabled), [false, false]);
-  assert.deepEqual(getPref(VE_ADDONS_PREF), []);
+  assert.deepEqual(veAddons().map((m) => m.enabled), [true, true, false, false]);
+  assert.deepEqual(getPref(VE_ADDONS_PREF), [SANDS, SNOWFALL]);
   assert.equal(currentOption(tex), ve, 'the Base is the look');
   setDfmodEnabled(BASE, false);
   setDfmodEnabled(SNOWLESS, true);

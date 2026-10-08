@@ -94,7 +94,8 @@ import {
 } from './paperDoll.js';
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
-  isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for
+  isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for}
+  swapHands, canSwapHands,   // SWAP-HANDS
 } from '../systems/equip.js';
 import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { statFlip } from './statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
@@ -350,7 +351,7 @@ export function remoteModel(deps = {}, state = {}) {
       : deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';   // SHIP-STORE: the player's own storage
   return {
     kind,
-    title: REMOTE_TITLE[kind],
+    title: (kind === 'reward' && typeof state.chooseOne?.title === 'string' && state.chooseOne.title) || REMOTE_TITLE[kind],   // WILD1: a choice may name itself (a fallen player's gear)
     items,
     count: items.length,
     weight: totalWeight(items),
@@ -885,6 +886,44 @@ function stowIntent(item) {
   if (plan.ok) return { kind: 'stow', label: STOW_LABEL[remote.kind] };
   return plan.refusal?.text ? { kind: 'stow', label: null, speaks: true } : { kind: 'nope', label: null };
 }
+/** HAND-DRAG (2026-10-08, the owner: "dragging and dropping the left hand weapon to the right hand one or when empty
+ *  should be possible in the inventory"): A HAND'S OWN PANEL AS A TARGET. A piece held in one hand, released on the
+ *  other hand's panel, moves there - into the empty hand, or trading places with what that hand holds - wherever the
+ *  hand law lets it (systems/equip.js canSwapHands: a shield keeps the left, a two-hander the right). A weapon carried
+ *  out of the pack onto a hand's panel is put in THAT hand. Null off the hand panels. */
+const HAND_OF = Object.freeze({ rhand: EQUIP_SLOTS.RightHand, lhand: EQUIP_SLOTS.LeftHand });
+function handIntent(item, over, source) {
+  const panel = over?.closest?.('.wornrow');
+  const to = panel ? HAND_OF[panel.dataset?.fam] : undefined;
+  if (to == null) return null;
+  const label = to === EQUIP_SLOTS.RightHand ? 'Right hand' : 'Left hand';
+  if (source === 'worn') {
+    if (item.equipSlot !== EQUIP_SLOTS.RightHand && item.equipSlot !== EQUIP_SLOTS.LeftHand) return null;
+    if (item.equipSlot === to) return { kind: 'none', label: '' };
+    return canSwapHands(deps.entity).ok ? { kind: 'hand', label, to } : { kind: 'nope', label: null };
+  }
+  if (item.group !== 'Weapons' && !(item.group === 'Armor' && getEquipSlot(deps.entity, item) === EQUIP_SLOTS.LeftHand)) return null;
+  const act = localPrimaryAct(item, deps.entity);
+  return act?.kind === 'wear' ? { kind: 'hand', label, to } : { kind: 'nope', label: null };
+}
+/** HAND-DRAG: the release - a held piece moved to the other hand, or a pack piece worn and set in the hand it was
+ *  dropped on (worn where the table puts it, then the hands traded if that was the other one and the law allows). */
+function dropOnHand(item, to) {
+  notice = null;
+  if (!isEquipped(item)) {
+    const before = getEquipSlot(deps.entity, item);
+    wear(item);
+    if (!isEquipped(item)) return;   // the wear refused (and said why)
+    if (item.equipSlot !== to && before !== EQUIP_SLOTS.None && canSwapHands(deps.entity).ok) swapHands(deps.entity);
+  } else if (item.equipSlot !== to) {
+    const r = swapHands(deps.entity);
+    if (!r.ok) notice = r.why;
+  }
+  refresh();
+  refreshFigure();
+  picked = null;
+  render();
+}
 function dropIntent(item, over, fromItem, source = 'local') {
   // MAC-M2 (2026-09-16, Mac: "Hold to drag enhanced functionality
   // doesn't work when trying to take items off your character"): A DRAG
@@ -903,6 +942,8 @@ function dropIntent(item, over, fromItem, source = 'local') {
   // dock the answer is the same "never mind" the pack's chrome gives.
   const hot = hotbarIntent(item, over);   // HB1: the hotbar, before either side's law
   if (hot) return hot;
+  const hand = handIntent(item, over, source);   // HAND-DRAG: a weapon onto a hand's own panel
+  if (hand) return hand;
   if (source === 'worn') {
     const act = localPrimaryAct(item, deps.entity);
     return over?.closest?.('.pack-dock') && act
@@ -954,7 +995,8 @@ function dragTo(x, y) {
   const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item, drag.source);
   drag.want = want;
   ghostAt(x, y, want?.label ?? null);
-  if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap, .wornshelf')?.classList.add('dragover');
+  if (want?.kind === 'hand') document.elementFromPoint?.(x, y)?.closest?.('.wornrow')?.classList.add('dragover');   // HAND-DRAG: the hand it would go to
+  else if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap, .wornshelf')?.classList.add('dragover');
   // MAC-M2: the other direction lights the DOCK - the pack is one
   // target the way the map is one, not a grid of twelve tiles.
   else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
@@ -1013,7 +1055,8 @@ function dragStop(commit) {
   // no longer owned.
   if (!(deps.items?.() ?? []).includes(d.item)) return;
   const want = dropIntent(d.item, overAtRelease, d.item, d.source);
-  if (want?.kind === 'body') dropOnBody(d.item);
+  if (want?.kind === 'hand') dropOnHand(d.item, want.to);   // HAND-DRAG
+  else if (want?.kind === 'body') dropOnBody(d.item);
   // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
   // act its own card offers, exactly as one carried onto it does, so
   // the two directions cannot answer differently - and the closed act
@@ -2026,6 +2069,7 @@ function wornPanel(fam, byLabel, area) {
   // collision of that shape in the arc after `.detail`/`.packcol`.
   if (!filled.length) {
     const d = el('div', 'wornrow wornempty');
+    d.dataset.fam = fam.id;   // HAND-DRAG: which panel a release lands on
     d.title = fam.slots.join(' \u00b7 ');
     if (area) d.style.gridArea = area;
     const txt = el('span', 'worntext');
@@ -2037,6 +2081,7 @@ function wornPanel(fam, byLabel, area) {
   const top = filled.find((r) => r.item === picked) ?? filled[0];
   const line = itemLine(top.item, deps.entity);
   const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
+  b.dataset.fam = fam.id;   // HAND-DRAG: which panel a release lands on
   markItemFrame(b, top.item);   // RARITY-UI / SIGIL-UI: the piece the panel shows wears its tier and its rune
   // MAC-M1: the WORN map's hover carries the rating too, and this is
   // the surface Mac's second sentence is about - "not sure if armor
@@ -2348,6 +2393,45 @@ function showTip(item, from, row) {
   fitTip(tipEl);   // AUDIT SET U13
   placeBeside(tipEl, row);
 }
+/** SHOP-HOVER (2026-10-08, the owner: "hovering over items in all shops shows the same it does in your inventory"): THE
+ *  PACK'S HOVER CARD for a window that is not the pack - the shop counter's both lists. `ctx` is that window's own
+ *  `{ entity, getQuest }`, held for the card's build (and its late picture's) and never left behind; `side` 'local' for
+ *  the player's own piece (it says Worn), 'shop' for the shelf's. The same card, the same comparison against what is worn. */
+export function showItemHover(item, ctx, row, side = 'shop') {
+  if (!item || !row || getPref('plusItemHover') === false) return;
+  hideTip();
+  const before = deps;
+  let built;
+  deps = { ...before, ...ctx };
+  try { built = infoCard(item, side, () => { if (tipEl && tipFor === item) showItemHover(item, ctx, row, side); }); } finally { deps = before; }
+  tipEl = el('div', 'inv-tip');
+  tipFor = item;
+  tipEl.setAttribute('role', 'tooltip');
+  tipEl.append(built.c);
+  document.body.append(tipEl);
+  fitTip(tipEl);
+  placeBeside(tipEl, row);
+  // SHOP-SIDES (2026-10-08, the owner: "tooltip of hovering on item in your inventory should be on the left side of shop
+  // window and what the shop has on the right"): the card stands OUTSIDE the window - the player's own piece to its left,
+  // the shelf's to its right - never over either list. A screen too narrow for the side it wants takes the other, then
+  // the old place beside the row.
+  const win = row.closest?.('.trade-win, .px-win');
+  if (win) placeOutside(tipEl, win, row, side === 'local' ? 'left' : 'right');
+}
+function placeOutside(node, win, row, want) {
+  const vw = window.innerWidth, vh = window.innerHeight, r = node.getBoundingClientRect(), w = win.getBoundingClientRect();
+  const leftAt = w.left - r.width - 10, rightAt = w.right + 10;
+  const fitsLeft = leftAt >= 8, fitsRight = rightAt + r.width <= vw - 8;
+  let left = null;
+  if (want === 'left') left = fitsLeft ? leftAt : fitsRight ? rightAt : null;
+  else left = fitsRight ? rightAt : fitsLeft ? leftAt : null;
+  if (left == null) return false;
+  let top = row.getBoundingClientRect().top;
+  if (top + r.height > vh - 8) top = vh - r.height - 8;
+  node.style.left = `${Math.round(left)}px`; node.style.top = `${Math.round(Math.max(8, top))}px`;
+  return true;
+}
+export const hideItemHover = () => hideTip();
 function openMenu(item, from, x, y) {
   hideTip(); closeMenu();
   // WHERE-ROBES: the menu is the RIGHT click (a long press, the pad's Y), and DFU's right click on a loot row is the
@@ -2973,7 +3057,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
     else pair('Worn', line.equipped ? 'yes' : 'no');
     if (line.equipped && hoodCapable(picked)) pair('Hood', hoodUp(picked) ? 'up' : 'down');   // HOOD-SAID: the hood a worn cloak or robe is drawn with, as a light says Lit
   }
-  else pair('Where', remote.title);
+  else if (side !== 'shop') pair('Where', remote?.title ?? '');   // SHOP-HOVER: a shelf's piece says no Where (the counter is the where)
   into.append(dl);
   // AC-COMPARE: WHAT WEARING IT WOULD CHANGE, under its own stats - the card is the hover's and the pick's alike (the
   // pack's one way of showing an item), so the comparison needs no key: what it would replace, then its damage and the

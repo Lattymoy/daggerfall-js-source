@@ -293,9 +293,14 @@ const fileResponse = (p, mime) => net.fetch(pathToFileURL(p).toString(), { bypas
 // storage, and the same traversal law.
 const LAUNCHER_DIR = path.join(__dirname, 'launcher');
 const LAUNCHER_URL = 'dagger://launcher/index.html';
+// DA12: the controller loop is the game's own front door's (src/ui/menuPad.js) - ONE module, packed beside the
+// launcher's page (package.json build.files) and read from the source tree when the shell runs unpacked.
+const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menuPad.js');
 async function serveLauncherFile(parts) {
-  const p = path.normalize(path.join(LAUNCHER_DIR, parts.length ? parts.join('/') : 'index.html'));
-  if (!p.startsWith(LAUNCHER_DIR + path.sep)) return new Response('forbidden', { status: 403 });
+  const p = parts.length === 1 && parts[0] === 'menuPad.js'
+    ? MENU_PAD
+    : path.normalize(path.join(LAUNCHER_DIR, parts.length ? parts.join('/') : 'index.html'));
+  if (p !== MENU_PAD && !p.startsWith(LAUNCHER_DIR + path.sep)) return new Response('forbidden', { status: 403 });
   try {
     const body = await fs.promises.readFile(p);
     return new Response(body, { headers: { 'Content-Type': MIME[path.extname(p).toLowerCase()] ?? 'application/octet-stream' } });
@@ -392,7 +397,7 @@ const { UNLOAD_ASK, leaves, restartAsk, reinstallAsk, installFailedAsk, goesAhea
 const { latestDownloadUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
-  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor,
+  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay,
 } = require('./lib/launcherState.cjs');
 
 /** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
@@ -1399,6 +1404,30 @@ function runLauncher() {
   advanceLauncher();
 }
 
+/** DA12: `--play` - the game without the launcher (launcherState directPlay). The saved folder is judged in a
+ *  process of its own first, as the launcher's is (R2-D1); one that is not whole opens the launcher instead,
+ *  whose card names what is wrong. Then the game, and the update check the launcher would have run - its
+ *  answer the game's to hear (onUpdaterEvent, tellNotice), installed at quit (autoInstallOnAppQuit). */
+let directStarting = false;
+async function runDirect(dir) {
+  directStarting = true;
+  try {
+    if (dir) {
+      const r = folderAnswer(await askArena2({ op: 'judge', dir }, { deadline: JUDGE_DEADLINE_MS }));
+      if (!r.dir) { runLauncher(); return; }
+      setArena2(r.dir);
+    } else setArena2(null);
+    saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });
+    // AUDIT DA12: not awaited - the window stands from createWindow's first line, and its load (and a clear's reload)
+    // is no reason to hold the update check, nor its failure a reason to skip it
+    createWindow().catch(() => {});
+  } finally { directStarting = false; }
+  if (!updateChecksEnabled()) return;
+  if (currentUpdateTransport() === 'updater') askUpdater().catch(() => {});
+  else noticeCheck().then(tellNotice, () => {});
+  startRechecks();
+}
+
 // The launcher's two words. Only ITS window is heard, and only these
 // actions; a link is a name from LAUNCHER_LINKS, never a URL from the page.
 ipcMain.on('launcher:ready', (e) => { if (fromLauncher(e)) renderLauncher(); });
@@ -1507,9 +1536,12 @@ app.whenReady().then(() => {
   // game. It used to be a native folder dialog before any window, and a
   // check that installed on quit and told no one. DA10: and it waits for
   // Play, with the patch notes and the player's options.
-  runLauncher();
+  // DA12: `--play` (a game manager's, a couch's) goes past it, straight into the game, when there is nothing to ask.
+  const direct = directPlay(process.argv, loadConfig());
+  if (direct === null) runLauncher();
+  else runDirect(direct);
   // DA10: a dock click with no window open (macOS keeps the app alive) opens the launcher, as a launch does
-  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) runLauncher(); });
+  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0 && !directStarting) runLauncher(); });
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

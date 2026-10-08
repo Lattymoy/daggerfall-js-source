@@ -49,6 +49,7 @@
  * @property {number[]|null} [origin]                 a per-frame translation of the whole batch (missiles, peers, markers); null means the centers as uploaded
  * @property {number|null} [frame]                    FA1: null for a still flat, a frame INDEX for an animated one, folded into the texture key
  * @property {number} [sway]                          WIND3: this batch's share of the wind's lean - the flora have one, nothing else does
+ * @property {number} [windfall]                      WINDFALL1: its share under Windfall's law - its record's wind mask (systems/windfall.js windfallResponse), the nature archives' alone
  * @property {number[]} [tip]                         PROF4: a felled tree's fall - [x, z] the way it falls, the angle it has leaned
  * @property {object|null} [conceal]                  ECV1: the concealment visual, which moves the batch into the blended pass
  * @property {number} [hitFlash]                     HITFLASH1: a struck body's red, 0..1 - read by both billboard shaders, over any concealment

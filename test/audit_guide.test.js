@@ -145,6 +145,10 @@ function eventsOf(b) {
 // H1 / L2 - a deadline is one the journal names
 // ---------------------------------------------------------------
 
+/** TRACK-ONLY (2026-10-08): the card shows a TRACKED quest alone - these pins read the card for the quest the journal
+ *  follows, so they track it first, as a player does with the journal's Track button. */
+const pinFrame = () => { const t = questTracker.tracked(); if (t && !questTracker.isPinned(t.id)) questTracker.toggle(t.id); return questTracker.frame(); };
+
 test('AUDIT GUIDE H1/L2: the HUD\'s faces count down only a clock the quest\'s own journal NAMES (a `=clock_` in a logged entry) - a closing clock started after the player is done is no deadline: no "Under a day left", no gold time on the card; the pause tab\'s "Time remains" keeps main\'s tightest counting clock (DEAD-CLOCK, PX5) (mutants: the named test dropped; the tightest kept for the lens)', () => withSwitches(() => {
   resetUid(); ensureUidAtLeast(1000);
   const clock = { now: 50000 };
@@ -163,8 +167,8 @@ test('AUDIT GUIDE H1/L2: the HUD\'s faces count down only a clock the quest\'s o
   assert.ok(v.clockSeconds > 2 * 86400, `the closing hour is not the deadline: ${v.clockSeconds}`);
   assert.equal(v.urgent, false, 'not urgent');
   assert.ok(!events.some((e) => e.startsWith('urgent')), `no deadline news: ${events}`);
-  assert.match(questTracker.frame()?.time ?? '', /^2 days 2\d hours left$/, 'the card counts the named deadline, not the closing hour');
-  assert.equal(questTracker.frame()?.urgent, false, 'no gold');
+  assert.match(pinFrame()?.time ?? '', /^2 days 2\d hours left$/, 'the card counts the named deadline, not the closing hour');
+  assert.equal(pinFrame()?.urgent, false, 'no gold');
   const row = b.questLog().active.find((r) => r.questName === '__ANAMED');
   assert.ok(row.clockSeconds <= 3600, 'the pause tab keeps DEAD-CLOCK\'s tightest counting clock (main\'s, PX5 - Mac\'s call)');
 
@@ -260,6 +264,7 @@ test('AUDIT GUIDE O1/T7/H9: the hide door a dungeon window takes (hud.js hideHud
   try {
     questHerald.hear({ quests: [], events: [{ type: 'completed', id: '1', title: 'Q' }] });
     questTracker.hear({ quests: [{ id: '2', title: 'Card', latest: { lines: [' A line.'] }, updatedAt: 1 }], events: [] });
+    questTracker.toggle('2');   // TRACK-ONLY
     drawQuestHerald({ dt: 0.1, doc });
     drawQuestTracker({ doc });
     const card = doc.getElementById('enhanced-questtracker');
@@ -319,7 +324,7 @@ test('AUDIT GUIDE L8/T8: after a stretch with every face off, the first look is 
   beat(b, clock, 3);
   switches({ tracker: true });
   beat(b, clock, 2);
-  assert.equal(questTracker.frame()?.title, 'Quest X', 'the quest the journal changed last');
+  assert.equal(questTracker.tracked()?.title, 'Quest X', 'the quest the journal changed last (TRACK-ONLY: followed by the journal, shown only once tracked)');
 }, { tracker: true }));
 
 test('AUDIT GUIDE H11: the herald\'s baseline is the lens\'s - switched on while the tracker\'s look ran, there is no backlog, and the news of the tick it came on in is heard (the bridge\'s own flag dropped that tick); switched on after a stretch with no look, the backlog is the baseline (mutant: the first tick dropped)', () => withSwitches(() => {
@@ -509,7 +514,7 @@ test('AUDIT GUIDE L6: the lens reads a kept entry again each game hour, so a lin
   beat(b, clock, 2);
   start(b, '__ANAMED');
   beat(b, clock, 3);
-  assert.match(questTracker.frame()?.opening ?? '', /I have 3 days/, 'day one');
+  assert.match(pinFrame()?.opening ?? '', /I have 3 days/, 'day one');
   clock.now += 2 * 86400;
   beat(b, clock, 3);
   assert.match(questTracker.frame()?.opening ?? '', /I have 1 days/, `two days on, the journal's own words: ${questTracker.frame()?.opening}`);
@@ -571,6 +576,7 @@ test('AUDIT GUIDE H10/U11: a main quest is SAID - the herald\'s kind row names i
   h.hear({ quests: [hv('7')], events: [{ type: 'started', id: '7', title: 'Lady Brisienna', main: true }, { type: 'started', id: '8', title: 'Side', main: false }] });
   assert.deepEqual(said(h).map((r) => r[0]), ['New quest - Main Quest', 'New quest']);
   questTracker.hear({ quests: [{ id: '1', title: 'Lady Brisienna', main: true, updatedAt: 1, latest: { lines: [' a'] }, clockSeconds: null }], events: [] });
+  if (!questTracker.isPinned('1')) questTracker.toggle('1');   // TRACK-ONLY
   assert.equal(questTracker.frame().time, 'Main Quest', 'the time row says it, a clock or none');
   questTracker.hear({ quests: [{ id: '1', title: 'Lady Brisienna', main: true, updatedAt: 1, latest: { lines: [' a'] }, clockSeconds: 90000 }], events: [] });
   assert.match(questTracker.frame().time, /^Main Quest - 1 day/);
@@ -639,6 +645,7 @@ test('AUDIT GUIDE U8: the card\'s top clears the compass and the foe frame at th
     doc.querySelector = (sel) => (sel === '.hud' ? hud : null);
     try {
       questTracker.hear({ quests: [{ id: '1', title: 'Q', updatedAt: 1, latest: { lines: [' a'] } }], events: [] });
+      questTracker.toggle('1');   // TRACK-ONLY
       drawQuestTracker({ doc });
       assert.equal(doc.getElementById('enhanced-questtracker').style['--hud-scale'], '1.5', 'the HUD\'s own scale, on the card');
     } finally { _resetQuestTrackerForTests(); globalThis.document = was; }
@@ -657,6 +664,7 @@ test('AUDIT GUIDE O5/T4/U2: the card re-measures whenever its box changes (a pho
   globalThis.ResizeObserver = class { constructor(fn) { this.fn = fn; observers.push(this); } observe(n) { this.node = n; } disconnect() { this.gone = true; } };
   try {
     questTracker.hear({ quests: [{ id: '1', title: 'Q', updatedAt: 1, latest: { lines: [' a'] } }], events: [] });
+    questTracker.toggle('1');   // TRACK-ONLY
     drawQuestTracker({ doc });
     const card = doc.getElementById('enhanced-questtracker');
     const root = doc.documentElement;

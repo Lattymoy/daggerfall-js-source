@@ -271,8 +271,8 @@
   {
     "name": "QP3C-dungeon-door-hands-nothing",
     "file": "src/scenes/world.js",
-    "old": "    onDungeonLeave: () => { const n = handOverRoomFoes();",
-    "new": "    onDungeonLeave: () => { const n = 0;",
+    "old": "    onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes();",
+    "new": "    onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = 0;",
     "tests": ["test/questparty3c.test.js"]
   },
   {
