@@ -160,7 +160,7 @@ export const PROVINCES = Object.freeze([
     rings: Object.freeze([ring(coastRun('c21', 'c36'), rev(B('mw_bm')), rev(B('cy_mw')), rev(B('sk_mw'))), ISLANDS.vvardenfell]),
   }),
   Object.freeze({
-    key: 'Imperial', name: 'Imperial Province', race: null, climate: 231, label: [166, 112],
+    key: 'Imperial', name: 'Imperial Province', race: null, climate: 231, label: [172, 124],
     rings: Object.freeze([ring(B('sk_cy'), B('cy_mw'), B('cy_bm'), coastRun('c47', 'c48'), B('cy_el'), B('cy_vw'), rev(B('cy_hf')))]),
   }),
   Object.freeze({
@@ -176,7 +176,7 @@ export const PROVINCES = Object.freeze([
     rings: Object.freeze([ring(coastRun('c54', 'c62'), rev(B('hf_vw')), rev(B('cy_vw')), B('el_vw'))]),
   }),
   Object.freeze({
-    key: 'Sumurset', name: 'Sumurset Isle', race: 'HighElf', climate: 229, label: [46, 142],
+    key: 'Sumurset', name: 'Sumurset Isle', race: 'HighElf', climate: 229, label: [44, 146],
     rings: Object.freeze([ISLANDS.sumurset, ISLANDS.auridon]),
   }),
 ]);
@@ -211,9 +211,9 @@ export const RIVERS = Object.freeze([
 
 /** The seas, where their names sit. */
 export const SEAS = Object.freeze([
-  Object.freeze({ name: 'Eltheric Ocean', at: [26, 66] }),
+  Object.freeze({ name: 'Eltheric Ocean', at: [22, 88] }),
   Object.freeze({ name: 'Sea of Ghosts', at: [170, 10] }),
-  Object.freeze({ name: 'Padomaic Ocean', at: [306, 112] }),
+  Object.freeze({ name: 'Padomaic Ocean', at: [298, 126] }),
   Object.freeze({ name: 'Abecean Sea', at: [72, 150] }),
   Object.freeze({ name: 'Topal Bay', at: [200, 157] }),
   Object.freeze({ name: 'Inner Sea', at: [259, 57] }),
@@ -292,8 +292,8 @@ export const CITIES = Object.freeze([
   { name: 'Southpoint', province: 'Valenwood', at: [112, 176] },
   { name: 'Arenthia', province: 'Valenwood', at: [136, 132] },
   // Sumurset Isle
-  { name: 'Alinor', province: 'Sumurset', at: [40, 150], capital: true },
-  { name: 'Cloudrest', province: 'Sumurset', at: [50, 140] },
+  { name: 'Alinor', province: 'Sumurset', at: [38, 154], capital: true },
+  { name: 'Cloudrest', province: 'Sumurset', at: [56, 138] },
   { name: 'Dusk', province: 'Sumurset', at: [52, 162] },
   { name: 'Lillandril', province: 'Sumurset', at: [36, 134] },
   { name: 'Shimmerene', province: 'Sumurset', at: [46, 128] },
