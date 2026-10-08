@@ -253,6 +253,12 @@ export function createLefayMonument({
     /** For the tests and the probes. */
     state: () => ({ at, collider: colAt !== null, mesh: !!mesh, flowers: flowers ? (flowers.sizes ? 'loaded' : 'failed') : (flowerLoad ? 'loading' : null), laid: [...laidBatches.keys()], tosses: tosses.length }),
     destroyAll,
+    /** AUDIT LEFAY1 B1: a load replaces the character - what is in flight is the old one's and lands nowhere (laid, it
+     *  would land in the loaded pile, or another character's). Its batches freed, nothing laid. */
+    dropFlights() {
+      for (const f of tosses) { f.landed = true; if (f.batch) renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }
+      tosses = [];
+    },
     /** The scene ends: its mesh and every batch freed (EVERY ALLOCATION HAS AN OWNER). */
     dispose() {
       destroyAll();

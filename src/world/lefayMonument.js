@@ -8,8 +8,8 @@
 // in every read of it - Daggerfall's own layout or a pack's - at the open ground nearest the middle of its block grid.
 // The town's own navgrid says what is open (world/cityNavigation.js: DFU's CityNavigation carve, every automap byte a
 // building, a tree or a lamp has drawn closed, the water closed): the spot is the nearest cell to the grid's middle
-// whose whole MONUMENT_CLEAR_M round it is open ground, a road counted against it (a monument stands on a green, not
-// across a street, where the town has one). A function of the layout alone, so every client stands it on one spot.
+// whose every cell centred within MONUMENT_CLEAR_M of it is open ground, a road counted against it (a monument stands on
+// a green, not across a street, where the town has one). A function of the layout alone, so every client stands it on one spot.
 // The spot is carved out of the wandering people's navgrid (carveLefay), so they walk round it.
 //
 // WHAT: three octagonal granite steps, a marble pedestal with a bronze plaque on each face, and a marble obelisk
@@ -60,8 +60,10 @@ export const LEFAY_ROWS = Object.freeze([
 export const LEFAY_KEY = 'lefay:monument';
 
 // ── THE SPOT ─────────────────────────────────────────────────────────────────────────────────────────────────────
-/** Open ground the monument needs round its middle, metres: its lowest step (MONUMENT_STEPS[0].r) and the flowers'
- *  ring at its foot, and a pace to walk round it. */
+/** Open ground the monument needs round its middle, metres: every navgrid cell whose centre is this near is open. AUDIT
+ *  LEFAY1 B6: that is open ground to 3.39 m from its middle at the least (the diagonals, where the next cell's nearest
+ *  corner is) - past its lowest step (MONUMENT_STEPS[0].r) and the flowers' ring at its foot (FLOWER_RINGS' last, 3.3),
+ *  and more on the axes (4.0). */
 export const MONUMENT_CLEAR_M = 4.0;
 /** How far from the grid's middle a spot is looked for, navgrid cells (one block's side is 64). */
 export const MONUMENT_SEARCH_CELLS = 48;
@@ -83,8 +85,8 @@ const CLEAR_DISC = discCells(MONUMENT_CLEAR_M);
 const CARVE_DISC = discCells(MONUMENT_CARVE_M);
 
 /**
- * WHERE IT STANDS on a navgrid: the cell nearest the grid's middle with all of MONUMENT_CLEAR_M round it open (weight
- * over 0), each road cell under it MONUMENT_ROAD_COST further; ties to the lower row, then the lower column. Null when
+ * WHERE IT STANDS on a navgrid: the cell nearest the grid's middle with every cell centred within MONUMENT_CLEAR_M of
+ * it open (weight over 0), each road cell under it MONUMENT_ROAD_COST further; ties to the lower row, then the lower column. Null when
  * no cell within MONUMENT_SEARCH_CELLS is open enough. `x`, `z` the cell's centre in the location's frame (metres
  * from its origin - navToWorld's). Pure.
  * @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav
@@ -311,7 +313,8 @@ export const FLOWER_RINGS = Object.freeze([
  * A throw's rest: the ring the first draw names (by FLOWER_RINGS' shares), its bearing within TOSS_SPREAD of the
  * thrower's (`bearing`, radians - atan2 of east over north from the monument to the thrower), and how far across the
  * ring - as the record's entry `[deg, kind, ring, across]` (whole degrees, the flower's index in LEFAY_FLOWERS, the
- * ring's index, tenths across it), which is what a save keeps. `rand` three draws in [0, 1). Pure.
+ * ring's index, tenths across it), which is what a save keeps. `rand` four draws in [0, 1) - the ring, the spread,
+ * the flower, the place across. Pure.
  * @param {number} bearing @param {() => number} rand
  */
 export function tossRest(bearing, rand) {

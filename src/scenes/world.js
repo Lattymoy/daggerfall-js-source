@@ -14746,6 +14746,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       modes?.abortTransition?.();
       await modes?.transitionSettled?.();
       if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD of the save's player (SaveLoadManager.cs:1378, the restore at :1497) - its StopSailing hands a lent ship back, and after restorePlayer it took the loaded character's own
+      lefay?.dropFlights();   // AUDIT LEFAY1 B1: a flower still in the air is the replaced character's - never laid in the loaded pile (no await from here to the restore, so no frame lands one)
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
@@ -14838,7 +14839,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         droppedTorches.restore(restandAt('position')(w.droppedTorches), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
         bountyFarms?.destroyAll();   // BOUNTY-FARM: a load - the farms stand again from the loaded bounties
         quays?.destroyAll();   // QUAYS: and the quays, off the harbours found again
-        lefay?.destroyAll();   // LEFAY1: and the monument, its flowers in flight laid before the loaded character's pile is read
+        lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (its flights were dropped before the restore: AUDIT LEFAY1 B1)
         camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back
         camps.restore(restandAt('pos')(w.camps), campFromNatives);   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,

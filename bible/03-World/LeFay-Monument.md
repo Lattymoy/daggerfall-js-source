@@ -13,11 +13,13 @@ departure, Ledger A (LEFAY).
 name in `REGION_NAMES`, the town by its own - a pack's read of the town keeps both), in every read of it. The spot is
 the open ground nearest the middle of the town's block grid, read off the town's own navgrid
 (`world/cityNavigation.js`, DFU's CityNavigation carve: every automap byte a building, a tree or a lamp draws is closed,
-and the water with it): the nearest cell whose whole `MONUMENT_CLEAR_M` (4 m) round it is open, each road cell under it
+and the water with it): the nearest cell whose every cell centred within `MONUMENT_CLEAR_M` (4 m) of it is open - open
+ground to 3.39 m from its middle at the least, at the diagonals, past the flowers' ring at its foot - each road cell under it
 costing `MONUMENT_ROAD_COST` (0.3 cells) of distance, so it stands on a green beside a street rather than across one
-where the town has a green (`lefaySpot`, `lefaySpotOf`). A function of the layout alone: every client stands it on the
-same spot. The wandering people's navgrid is closed within `MONUMENT_CARVE_M` (3.2 m) of it (`carveLefay`), so they
-walk round it.
+where the town has a green (`lefaySpot`, `lefaySpotOf`). It is read on the enhanced water table always (the classic
+table walks the shallows), whichever lane a client plays. A function of the layout alone: every client stands it on the
+same spot. The wandering people's navgrid is closed within `MONUMENT_CARVE_M` (3.6 m) of it - the cells of its clear
+disc (`carveLefay`) - so they walk round it, a walker's sprite clear of the flowers at its foot.
 
 **What.** Three octagonal granite steps (corner radii 2.8, 2.15 and 1.5 m, tops at 0.3, 0.6 and 0.9 m, the lowest sunk
 0.4 m below the ground so a gentle slope never shows light under it), a marble pedestal (its base moulding, its die and
@@ -57,8 +59,8 @@ lie."), and anything else throws a flower ("You lay flowers for Julian LeFay.", 
 
 ## The four hosts
 
-- `scenes/world.js` - WIRED. The pixel's build finds the spot (`lefaySpotOf` over the laid-out town, the water
-  switch the people's navgrid is carved under) and keeps it on the pixel (`lefay`, the location frame); the people's
+- `scenes/world.js` - WIRED. The pixel's build finds the spot (`lefaySpotOf` over the laid-out town, on the enhanced
+  water table whatever the water switch says) and keeps it on the pixel (`lefay`, the location frame); the people's
   navgrid is carved before they are made. The pool (`scenes/lefayMonumentHost.js`) is made beside the Sigil Broker,
   framed before the lights and the world pass, drawn in it, its flowers on the live flats' axis; taken down at a change
   of place, a re-anchor and a load, and stood again by the next frame that finds Gothway Garden built.
@@ -80,17 +82,45 @@ unseen, and the count still counts.
 
 ## Verification
 
-- `test/lefay1_monument.test.js` (13): the town; the spot (the middle, round a building, beside a road, all road, none);
-  a laid-out town's spot equal to the people's own navgrid's; the carve; the stone's faces by picture and all wound
+- `test/lefay1_monument.test.js` (18): the town; the spot (the middle, round a building, beside a road, all road, none);
+  a laid-out town's spot equal to the people's own navgrid's on the enhanced lane; the carve; the stone's faces by picture and all wound
   outward; the plaque's face (its picture's top-left at the plaque's top, on the viewer's left, on all four faces); the
   art (deterministic, opaque, every letter drawn, every line fitting, the cut texels counted); a throw's rest and
   flight; the tribute and its round trip through the save; the pool (its ground, bucket, boxes, recentre, its town gone,
   no ground; held back from a body; the press's arms, the flight, the landing, the cooldown, the hover, a loaded pile,
-  dispose); and the wiring in the hosts and the save.
-- `tools/mutants/lefay1.json`: 34 mutants, 34 dead.
+  dispose); and the wiring in the hosts and the save. Five more hold AUDIT LEFAY1's lens B (below).
+- `tools/mutants/lefay1.json`: 72 mutants, 72 dead (34 at the slice, 4 by lens A, 34 by lens B). Three more were
+  run by lens B and left out as equivalent: the carve's bounds check (the clear disc is always in bounds and holds the
+  carve's), `flowerPlace`'s ring fallback (an entry is normalised before it is placed) and `tossPoint`'s low clamp (a
+  flight's k is never under 0 - a clock stepped back lands it).
 - `tools/lefayProbe.mjs`: the monument drawn in a real WebGL2 context with the back faces culled - every part drawn
   from outside, a plaque on each face, and the inscription read back off the screen against its own picture (0.90
   correlation as drawn, 0.17 mirrored, -0.03 upside down).
+
+## AUDIT LEFAY1 (2026-10-08)
+
+**Lens A - the stone as the game draws it** (`4b9bfbf6c`). A1 (blocker): the world is DFU's, left-handed, and drawn so
+(`world/mat4.js` THE HANDEDNESS LAW) - the plaque's u ran right to left on screen and every face read backwards; the
+probe had drawn with a plain projection, the mirror of the game's, and certified it. It now draws with the game's
+mirrored projection and clockwise front faces, and fails the old mapping. A2 (major): the cornice overhung the die with
+no underside - the sky showed through it from the ground; capped. A3 (minor): the spot is read on the enhanced water
+table always - on the classic table it could stand in the shallows, and a client on each lane stood it elsewhere. A4:
+the people's carve is the clear disc (3.6 m), a walker's sprite clear of the ground ring. A5: a hole in a saved entry
+and a NaN bearing refused.
+
+**Lens B - the pool's lifecycle, its tests and its record** (an adversarial reviewer's 34 mutants against the slice's
+pins, 31 of them surviving, and the record read against the code). B1 (major): a flower still in the air at a quick
+load was laid in the LOADED character's pile - `restorePlayer` ran before the load's `destroyAll`, which lands what is
+in flight - so a quickload within 850 ms of a throw added a flower to the save loaded, or to another character.
+The pool's `dropFlights` frees what is in flight and lays nothing, and `worldQuickLoad` calls it on the line before
+the restore, with no await between (the dungeon's load and the boot's never have it standing). B2-B5: the pins the
+survivors showed missing - the pool's own laws (a flight laid when its town goes, the lit row over the mode, no "0
+flowers" line, the ground, the collider and the pile's batches made once, `dispose` freeing the pile), the A5 bearing,
+the draws' order, every edge of a saved entry and the save's 48, the search's round bound, and the plaque READ off its
+picture (its letters the right way round and up, centred inside its bevel - the slice counted cut texels, which a
+mirrored or upside-down glyph keeps). B6: "all of 4 m round it open" overclaimed - the clear disc holds open ground to
+3.39 m at the diagonals; the words and the ground ring's pin now say so (the ring, 3.3, is inside it). The record's
+carve (3.2), its water switch and its counts were stale after lens A; corrected.
 
 ## Not done / open
 

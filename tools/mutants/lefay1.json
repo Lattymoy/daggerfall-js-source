@@ -340,5 +340,311 @@
     "tests": [
       "test/lefay1_monument.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-SEARCH-SHORT",
+    "file": "src/world/lefayMonument.js",
+    "old": "export const MONUMENT_SEARCH_CELLS = 48;",
+    "new": "export const MONUMENT_SEARCH_CELLS = 20;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-SEARCH-SQUARE",
+    "file": "src/world/lefayMonument.js",
+    "old": "if (d > MONUMENT_SEARCH_CELLS || d >= bestScore) continue;",
+    "new": "if (d >= bestScore) continue;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-TIE-LAST",
+    "file": "src/world/lefayMonument.js",
+    "old": "if (score < bestScore) { bestScore = score;",
+    "new": "if (score <= bestScore) { bestScore = score;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-SKIP-TOO-EARLY",
+    "file": "src/world/lefayMonument.js",
+    "old": "|| d >= bestScore) continue;",
+    "new": "|| d + MONUMENT_ROAD_COST >= bestScore) continue;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ROAD-COST-0.25",
+    "file": "src/world/lefayMonument.js",
+    "old": "export const MONUMENT_ROAD_COST = 0.3;",
+    "new": "export const MONUMENT_ROAD_COST = 0.25;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-KIND-OFF-BY-ONE",
+    "file": "src/world/lefayMonument.js",
+    "old": "kind >= LEFAY_FLOWERS.length",
+    "new": "kind > LEFAY_FLOWERS.length",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-KIND-NEGATIVE",
+    "file": "src/world/lefayMonument.js",
+    "old": "kind < 0 || ",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ACROSS-NEGATIVE",
+    "file": "src/world/lefayMonument.js",
+    "old": "across < 0 || ",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-DEG-NEGATIVE",
+    "file": "src/world/lefayMonument.js",
+    "old": "if (deg < 0 || ",
+    "new": "if (",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-TRIBUTE-UNCAPPED",
+    "file": "src/world/lefayMonument.js",
+    "old": ".filter(Boolean).slice(-MONUMENT_FLOWERS_KEPT)",
+    "new": ".filter(Boolean)",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ENTRY-LONG",
+    "file": "src/world/lefayMonument.js",
+    "old": "e.length !== 4",
+    "new": "e.length < 4",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-COUNT-FRACTION",
+    "file": "src/world/lefayMonument.js",
+    "old": "Number.isSafeInteger(t?.count) && t.count > 0",
+    "new": "Number.isFinite(t?.count) && t.count > 0",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-DRAWS-SWAPPED",
+    "file": "src/world/lefayMonument.js",
+    "old": "  const kind = Math.min(LEFAY_FLOWERS.length - 1, Math.floor(rand() * LEFAY_FLOWERS.length));\n  const across = Math.min(9, Math.floor(rand() * 10));",
+    "new": "  const across = Math.min(9, Math.floor(rand() * 10));\n  const kind = Math.min(LEFAY_FLOWERS.length - 1, Math.floor(rand() * LEFAY_FLOWERS.length));",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-GLYPH-MIRRORED",
+    "file": "src/world/lefayArt.js",
+    "old": "(k * (GLYPH_W + 1) + gx) * s + sx",
+    "new": "(k * (GLYPH_W + 1) + (GLYPH_W - 1 - gx)) * s + sx",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-GLYPH-FLIPPED",
+    "file": "src/world/lefayArt.js",
+    "old": "y = top + gy * s + sy",
+    "new": "y = top + (GLYPH_H - 1 - gy) * s + sy",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-LEFT-ALIGNED",
+    "file": "src/world/lefayArt.js",
+    "old": "left = Math.round((W - lineWidth(text, s)) / 2)",
+    "new": "left = 0",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-TOP",
+    "file": "src/world/lefayArt.js",
+    "old": "let top = Math.round((H - total) / 2);",
+    "new": "let top = 0;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-J-BACKWARDS",
+    "file": "src/world/lefayArt.js",
+    "old": "J: ['..###', '...#.', '...#.', '...#.', '...#.', '#..#.', '.##..'],",
+    "new": "J: ['###..', '.#...', '.#...', '.#...', '.#...', '.#..#', '..##.'],",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-BEVEL-SWAPPED",
+    "file": "src/world/lefayArt.js",
+    "old": "put(img, x, y, lit ? LIT : SHADOW);",
+    "new": "put(img, x, y, lit ? SHADOW : LIT);",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-ART-NO-LIP",
+    "file": "src/world/lefayArt.js",
+    "old": "    else if ((x > 0 && cut[y * W + x - 1]) || (y > 0 && cut[(y - 1) * W + x])) put(img, x, y, LIP);",
+    "new": "    else if (false) put(img, x, y, LIP);",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-GROUND-NEVER-REREAD",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": " || frameN - groundAtXZ[2] >= LEFAY_GROUND_EVERY) {",
+    "new": ") {",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-PILE-EVERY-FRAME",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    if (laidFrom === laid) return;\n",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-COLLIDER-EVERY-FRAME",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    if (colAt && at && colAt[0] === at[0] && colAt[1] === at[1] && colAt[2] === at[2]) return;\n",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-PILE-LEAKS",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "      for (const b of laidBatches.values()) renderer?.destroyBillboardBatch?.(b);\n",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-INFO-OVERRIDES-ROW",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "(verb == null && mode === 'info')",
+    "new": "mode === 'info'",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-STEAL-OVERRIDES-ROW",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "if (verb == null && mode === 'steal')",
+    "new": "if (mode === 'steal')",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-ZERO-COUNT",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "...(n > 0 ? [LEFAY_TEXT.count(n)] : [])",
+    "new": "LEFAY_TEXT.count(n)",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-SITE-GONE-DROPS",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "if (at) { at = null; standCollider(); for (const f of tosses) land(f); tosses = []; }",
+    "new": "if (at) { at = null; standCollider(); tosses = []; }",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-FLIGHT-LEAK-ON-LAND",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    if (f.batch) renderer?.destroyBillboardBatch?.(f.batch);\n",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-NO-EYE-NAN",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "bearing = Number.isFinite(b) ? b : 0;",
+    "new": "bearing = b;",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B-POOL-TRAPPED-NO-HEIGHT",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": " && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1]",
+    "new": "",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B1-load-keeps-flights",
+    "file": "src/scenes/world.js",
+    "old": "      lefay?.dropFlights();   // AUDIT LEFAY1 B1",
+    "new": "      // AUDIT LEFAY1 B1",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B1-drop-lays",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "      for (const f of tosses) { f.landed = true; if (f.batch)",
+    "new": "      for (const f of tosses) { land(f); if (f.batch)",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LEFAY1-B6-ground-ring-past-open",
+    "file": "src/world/lefayMonument.js",
+    "old": "Object.freeze({ y: 0, r0: 2.95, r1: 3.3, share: 0.15 })",
+    "new": "Object.freeze({ y: 0, r0: 2.95, r1: 3.5, share: 0.15 })",
+    "tests": [
+      "test/lefay1_monument.test.js"
+    ]
   }
 ]

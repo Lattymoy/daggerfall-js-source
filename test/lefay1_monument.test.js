@@ -235,7 +235,15 @@ test('LEFAY1: A THROW\'S REST - the ring by its share, the thrower\'s side, a fl
   assert.ok(FLOWER_RINGS[0].r0 > PEDESTAL.baseHalf * Math.SQRT2 && FLOWER_RINGS[0].r1 < apothem(steps[2].r) && FLOWER_RINGS[0].y === steps[2].top);
   assert.ok(FLOWER_RINGS[1].r0 > steps[2].r && FLOWER_RINGS[1].r1 < apothem(steps[1].r) && FLOWER_RINGS[1].y === steps[1].top);
   assert.ok(FLOWER_RINGS[2].r0 > steps[1].r && FLOWER_RINGS[2].r1 < apothem(steps[0].r) && FLOWER_RINGS[2].y === steps[0].top);
-  assert.ok(FLOWER_RINGS[3].r0 > steps[0].r && FLOWER_RINGS[3].r1 < MONUMENT_CLEAR_M && FLOWER_RINGS[3].y === 0);
+  // AUDIT LEFAY1 B6: the ground ring inside the ground the spot's search holds open - the nearest point of any cell
+  // outside the clear disc (3.39 m, at the diagonals), not MONUMENT_CLEAR_M itself
+  const inDisc = new Set(discCells(MONUMENT_CLEAR_M).map(([dx, dy]) => `${dx},${dy}`));
+  let openTo = Infinity;
+  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+    if (!inDisc.has(`${dx},${dy}`)) openTo = Math.min(openTo, Math.hypot(Math.max(Math.abs(dx) - 0.5, 0), Math.max(Math.abs(dy) - 0.5, 0)) * NAV_CELL);
+  }
+  assert.ok(Math.abs(openTo - 1.5 * Math.SQRT2 * NAV_CELL) < 1e-9, `open to ${openTo.toFixed(3)} m`);
+  assert.ok(FLOWER_RINGS[3].r0 > steps[0].r && FLOWER_RINGS[3].r1 < openTo && FLOWER_RINGS[3].y === 0);
   // the flight: from the hand to the rest, its arc TOSS_ARC over the line at its middle
   const from = [4, 1.4, 0], to = [1.3, 0.9, 0];
   assert.deepEqual(tossPoint(from, to, 0), from);
@@ -430,4 +438,142 @@ test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand it, the street pre
   assert.match(save, /snap\.lefayTribute = normalTribute\(entity\.lefayTribute\);/);
   assert.match(save, /entity\.lefayTribute = normalTribute\(snap\.lefayTribute\);/);
   assert.equal(LEFAY_KEY.startsWith('lefay:'), true, 'the press\'s arm reads its key\'s prefix');
+});
+
+// ── AUDIT LEFAY1 (lens B): the host's lifecycle, the pool's own laws, the plaque read as a reader reads it ──────────
+test('AUDIT LEFAY1 B1: a load drops what is in flight - never laid in the loaded pile; the quick load drops it before the restore', async () => {
+  const { log, st, deps } = rig();
+  const m = createLefayMonument(deps);
+  m.frame();
+  await new Promise((r) => setTimeout(r, 0));
+  m.frame();
+  m.activate(LEFAY_KEY, 'grab', 'flowers');
+  const flight = m.batches().at(-1);
+  st.tribute = normalTribute({ count: 4, laid: [[0, 0, 0, 0]] });   // the loaded character's own pile
+  const loaded = st.tribute;
+  m.dropFlights();
+  assert.ok(log.destroyed.includes(flight), 'its batch freed');
+  assert.equal(m.state().tosses, 0);
+  st.t += TOSS_MS; m.frame(); m.destroyAll();
+  assert.equal(st.tribute, loaded, 'nothing laid in the loaded pile, by a frame or a transition');
+  // the quick load: the drop before the restore, no await between them
+  const world = read('src/scenes/world.js');
+  const load = world.slice(world.indexOf('async function worldQuickLoad('), world.indexOf('const extras = restorePlayer(playerEntity, snap, spellsByIndex);') + 80);
+  const tail = load.slice(load.indexOf('lefay?.dropFlights();'));
+  assert.ok(load.includes('lefay?.dropFlights();') && /^lefay\?\.dropFlights\(\);[^\n]*\n\s*const extras = restorePlayer\(playerEntity, snap, spellsByIndex\);/.test(tail), 'dropped on the line before the restore');
+});
+
+test('AUDIT LEFAY1 B2: THE POOL\'S OWN LAWS - a flight laid when its town goes, the lit row over the mode, no count line before a flower, the work done once', async () => {
+  const { log, st, deps } = rig();
+  let grounds = 0;
+  deps.groundAt = () => { grounds++; return st.ground; };
+  let adds = 0;
+  const col = deps.collider(), add = col.addMesh;
+  col.addMesh = (...a) => { adds++; return add(...a); };
+  const m = createLefayMonument(deps);
+  m.frame();
+  await new Promise((r) => setTimeout(r, 0));
+  m.frame();
+  // no flower yet: no "You have laid 0 flowers here"
+  assert.deepEqual(m.hoverName(LEFAY_KEY).subs, ['1965 - 2025', 'Father of The Elder Scrolls']);
+  // the lit Throw row throws in Info and in Steal (the row is the verb; the mode speaks only with no row lit)
+  m.activate(LEFAY_KEY, 'info', 'flowers');
+  assert.equal(log.sounds, 1);
+  assert.deepEqual(log.say, [], 'nothing read');
+  st.t += TOSS_EVERY_MS;
+  m.activate(LEFAY_KEY, 'steal', 'flowers');
+  assert.equal(log.sounds, 2);
+  assert.equal(log.mid.includes(LEFAY_TEXT.steal), false);
+  // its town goes with two in the air: both laid, counted
+  st.site = null; m.frame();
+  assert.equal(st.tribute.count, 2);
+  assert.equal(m.state().tosses, 0);
+  // the work done once: the ground read on a move and every LEFAY_GROUND_EVERY frames, the collider and the pile's
+  // batches made again only when they change
+  st.site = [100, 50]; m.frame();
+  const g0 = grounds, a0 = adds, b0 = log.batches.length;
+  for (let i = 0; i < 29; i++) m.frame();
+  assert.equal(grounds, g0, 'not read again within its frames');
+  m.frame();
+  assert.equal(grounds, g0 + 1, 'read again at LEFAY_GROUND_EVERY');
+  assert.equal(adds, a0, 'the collider stood once');
+  assert.equal(log.batches.length, b0, 'the pile\'s batches made once');
+  // dispose frees the pile's batches too
+  const pile = m.batches().slice();
+  assert.ok(pile.length > 0);
+  m.dispose();
+  for (const b of pile) assert.ok(log.destroyed.includes(b), 'every pile batch freed');
+});
+
+test('AUDIT LEFAY1 B3: A THROW WITH NO BEARING (the eye\'s NaN) lands straight on, counted - and a saved entry out of range at any edge reads as none', async () => {
+  const { st, deps } = rig();
+  const m = createLefayMonument(deps);
+  m.frame();
+  st.eye = [NaN, 3.6, NaN];
+  m.activate(LEFAY_KEY, 'grab');
+  st.t += TOSS_MS; m.frame();
+  assert.deepEqual(st.tribute, { count: 1, laid: [tossRest(0, deps.rand)] });
+  // the draws in their order: the ring, the spread, the flower, the place across
+  const seq = (...v) => { let i = 0; return () => v[i++]; };
+  assert.deepEqual(tossRest(0, seq(0, 0.5, 0.99999, 0)), [0, LEFAY_FLOWERS.length - 1, 0, 0]);
+  assert.deepEqual(tossRest(0, seq(0, 0.5, 0, 0.99999)), [0, 0, 0, 9]);
+  // every edge of a saved entry
+  const K = LEFAY_FLOWERS.length, R = FLOWER_RINGS.length;
+  for (const bad of [[0, K, 0, 0], [0, -1, 0, 0], [-1, 0, 0, 0], [0, 0, R, 0], [0, 0, -1, 0], [0, 0, 0, -1], [0, 0, 0, 0, 0], [0, 0, 0]]) {
+    assert.deepEqual(normalTribute({ laid: [bad] }).laid, [], `${JSON.stringify(bad)} reads as none`);
+  }
+  assert.deepEqual(normalTribute({ laid: [[359, K - 1, R - 1, 9]] }).laid, [[359, K - 1, R - 1, 9]], 'the far edge of each is kept');
+  assert.equal(normalTribute({ count: 2.5, laid: [] }).count, 0, 'a count not whole reads as none');
+  // a save holding more than it keeps: the newest MONUMENT_FLOWERS_KEPT
+  const many = Array.from({ length: MONUMENT_FLOWERS_KEPT + 3 }, (_, i) => [i, 0, 0, 0]);
+  const t = normalTribute({ count: 99, laid: many });
+  assert.equal(t.laid.length, MONUMENT_FLOWERS_KEPT);
+  assert.deepEqual(t.laid[0], [3, 0, 0, 0]);
+});
+
+test('AUDIT LEFAY1 B4: THE SPOT\'S SEARCH - found as far as MONUMENT_SEARCH_CELLS, never past it; nearest by distance, the road\'s cost after', () => {
+  const ring = (w, open) => { const n = navOf(w, w, 0); for (const [x, y] of open) for (const [dx, dy] of discCells(MONUMENT_CLEAR_M)) n.set(x + dx, y + dy, 12); return n; };
+  const near = lefaySpot(ring(160, [[80 + 40, 80]]));
+  assert.deepEqual([near.gx, near.gy], [120, 80], '40 cells out: found');
+  assert.equal(lefaySpot(ring(160, [[80 + 50, 80]])), null, '50 cells out: past the search');
+  assert.equal(lefaySpot(ring(160, [[80 + 40, 80 + 40]])), null, '40 cells out on both axes (56.6 cells): past the search, which is round');
+  assert.equal(MONUMENT_ROAD_COST, 0.3, 'a road cell under it costs 0.3 cells');
+  // two greens: the nearer one stands it even though a cell further would cost the same road as it
+  const two = ring(128, [[65, 58], [69, 64]]);
+  const s = lefaySpot(two);
+  assert.deepEqual([s.gx, s.gy], [69, 64], 'the nearer (5.52 cells) over the further (5.70)');
+});
+
+test('AUDIT LEFAY1 B5: THE PLAQUE READS - its letters the right way round and the right way up, centred inside its bevel (read off the picture, not the glyph table)', () => {
+  const img = lefayPlaqueArt(), W = img.width, H = img.height;
+  const dark = (x, y) => { const k = (y * W + x) * 4; return img.colors[k] === 34 && img.colors[k + 1] === 22 && img.colors[k + 2] === 10; };
+  const runs = (n, has) => { const out = []; let a = -1; for (let i = 0; i <= n; i++) { const on = i < n && has(i); if (on && a < 0) a = i; if (!on && a >= 0) { out.push([a, i - 1]); a = -1; } } return out; };
+  const bands = runs(H, (y) => { for (let x = 0; x < W; x++) if (dark(x, y)) return true; return false; });
+  assert.deepEqual(bands.map(([a, b]) => b - a + 1), [14, 14, 7, 7], 'four lines: the name and the years twice the size');
+  // centred, inside the bevel
+  const top = bands[0][0], bottom = H - 1 - bands[3][1];
+  assert.ok(Math.abs(top - bottom) <= 1 && top > 4, `centred top to bottom (${top}, ${bottom})`);
+  const letters = bands.map(([y0, y1]) => runs(W, (x) => { for (let y = y0; y <= y1; y++) if (dark(x, y)) return true; return false; }));
+  for (const [i, ls] of letters.entries()) {
+    const l = ls[0][0], r = W - 1 - ls.at(-1)[1];
+    assert.ok(Math.abs(l - r) <= 2 && l > 4, `line ${i} centred across (${l}, ${r})`);
+  }
+  // "JULIAN LEFAY": eleven letters, the space wider than the gaps between letters
+  const name = letters[0];
+  assert.equal(name.length, 11);
+  const gaps = name.slice(1).map((g, k) => g[0] - name[k][1]);
+  assert.equal(gaps.indexOf(Math.max(...gaps)), 5, 'the space after JULIAN');
+  const [y0, y1] = bands[0];
+  const box = (k) => ({ x0: name[k][0], x1: name[k][1], y0, y1 });
+  // J: its bar at the top right, its hook at the bottom left; L: its stroke on the left, its foot at the bottom; F: its
+  // arm at the top right, nothing at the bottom right
+  const J = box(0), L = box(2), F = box(8);
+  assert.ok(dark(J.x1, J.y0) && !dark(J.x0, J.y0) && dark(J.x0, J.y1 - 2), 'J reads right');
+  assert.ok(dark(L.x0, L.y0) && !dark(L.x1, L.y0) && dark(L.x1, L.y1), 'L reads right');
+  assert.ok(dark(F.x1, F.y0) && dark(F.x0, F.y1) && !dark(F.x1, F.y1), 'F reads right');
+  // the bevel lit along its top and left, in shadow along its bottom and right; a cut letter's lip below and right of it
+  const is = (x, y, c) => { const k = (y * W + x) * 4; return img.colors[k] === c[0] && img.colors[k + 1] === c[1] && img.colors[k + 2] === c[2]; };
+  const LIT = [176, 138, 76], SHADOW = [44, 30, 14], LIP = [196, 160, 92];
+  assert.ok(is(1, H >> 1, LIT) && is(W >> 1, 1, LIT) && is(W - 2, H >> 1, SHADOW) && is(W >> 1, H - 2, SHADOW), 'the light from the top left');
+  assert.ok(is(L.x0 + 2, L.y0, LIP), 'the lip right of L\'s stroke');
 });
