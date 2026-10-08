@@ -1,0 +1,342 @@
+[
+  {
+    "name": "TAMRIEL1-offset-scaled",
+    "file": "src/world/tamrielFrame.js",
+    "old": "return [x + BAY_ORIGIN.x, y + BAY_ORIGIN.y];",
+    "new": "return [x * 1.01 + BAY_ORIGIN.x, y + BAY_ORIGIN.y];",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-picture-to-bay-forgets-the-origin",
+    "file": "src/world/tamrielFrame.js",
+    "old": "return [px * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.x, py * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.y];",
+    "new": "return [px * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.x, py * PIXELS_PER_PICTURE_UNIT];",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-inBay-off-by-one",
+    "file": "src/world/tamrielFrame.js",
+    "old": "return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H;",
+    "new": "return x >= 0 && y >= 0 && x <= BAY_W && y < BAY_H;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-frame-in-bay-unsigned",
+    "file": "src/world/tamrielFrame.js",
+    "old": "return { x0, y0, w: TAMRIEL_W, h: TAMRIEL_H };",
+    "new": "return { x0: -x0, y0, w: TAMRIEL_W, h: TAMRIEL_H };",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-a-ring-left-open",
+    "file": "src/world/tamrielGeography.js",
+    "old": "rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')), rev(B('cy_el')))]),",
+    "new": "rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')))]),",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-classify-a-three-owner-edge-as-a-border",
+    "file": "src/world/tamrielGeography.js",
+    "old": "else if (o.length === 2 && o[0] !== o[1]) border.set(k, o);",
+    "new": "else if (o.length >= 2) border.set(k, o);",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-point-in-ring-inverted",
+    "file": "src/world/tamrielGeography.js",
+    "old": "if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
+    "new": "if ((a.y > y) !== (b.y > y) && x > ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
+    "tests": [
+      "test/tamriel.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent: even-odd counts the crossings on ONE side of the point, and a closed ring crosses a horizontal line an even number of times, so the parity to the right is the parity to the left - the mutant answers every point the same"
+  },
+  {
+    "name": "TAMRIEL1-a-city-moved-across-its-border",
+    "file": "src/world/tamrielGeography.js",
+    "old": "{ name: 'Markarth', province: 'Skyrim', at: [124, 48] },",
+    "new": "{ name: 'Markarth', province: 'Skyrim', at: [110, 48] },",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-clip-keeps-the-inside-run",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    } else if (!prevIn && nowIn) {\n      run.push(lerpPt(a, b, cross ? cross[0] : 0)); flush();",
+    "new": "    } else if (!prevIn && nowIn) {\n      run.push(lerpPt(a, b, cross ? cross[0] : 0), b); flush();",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-clip-cuts-nowhere-near-the-edge",
+    "file": "src/ui/tamrielInk.js",
+    "old": "      run.push(lerpPt(a, b, cross ? cross[1] : 1), b);",
+    "new": "      run.push(b);",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-clip-never-joins-the-wrap",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (closed && out.length > 1 && !insideRect(pts0[0], r)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-fret-moves-the-vertices-too",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const d = k === 0 ? 0 : (octaveNoise(noise, p.x * 0.9, p.y * 0.9, 3) - 0.5)",
+    "new": "const d = (octaveNoise(noise, p.x * 0.9, p.y * 0.9, 3) - 0.5)",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-fret-not-calm-at-the-bay",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const calm = Math.min(1, Math.max(0, (distToRectEdge(p.x, p.y, calmRect) - 1) / FRET_CALM));",
+    "new": "const calm = 1;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-stitch-across-edges",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (f.used || edgeOf(f) !== e) continue;",
+    "new": "if (f.used) continue;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-stitch-reuses-an-end",
+    "file": "src/ui/tamrielInk.js",
+    "old": "best.used = true; joined++;",
+    "new": "joined++;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-stitch-ignores-reach",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (!e) return p;\n    let best = null, bd = reach;",
+    "new": "    if (!e) return p;\n    let best = null, bd = Infinity;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-bay-ends-off-the-edge",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const onEdge = (p) => p.x === 0 || p.x === BAY_W || p.y === 0 || p.y === BAY_H;",
+    "new": "const onEdge = (p) => true;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-paints-on-the-bay",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (!ink || !viewLeavesBay(view, paperW, paperH)) return false;",
+    "new": "if (!ink) return false;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-view-leaves-bay-misses-the-east",
+    "file": "src/ui/tamrielInk.js",
+    "old": "return view.ox < 0 || view.oy < 0 || view.ox + paperW / s > BAY_W || view.oy + paperH / s > BAY_H;",
+    "new": "return view.ox < 0 || view.oy < 0 || view.oy + paperH / s > BAY_H;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-continent-at-the-fit",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export const onContinent = (scale, bayFit) => scale < bayFit * CONTINENT_BELOW;",
+    "new": "export const onContinent = (scale, bayFit) => scale <= bayFit * CONTINENT_BELOW;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-every-city-on-the-continent",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (!c.capital && !all) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-cities-inside-the-bay-kept",
+    "file": "src/ui/tamrielInk.js",
+    "old": ".filter((c) => !inBay(c.x, c.y));",
+    "new": ";",
+    "tests": [
+      "test/tamriel.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent on the shipping data: no authored city stands in the Bay's rectangle (the geography pin holds every city outside it), so the filter drops nothing today - it guards a later author's city"
+  },
+  {
+    "name": "TAMRIEL1-the-hover-names-the-bay-too",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (inBay(mx, my)) return null;\n  if (ink) {",
+    "new": "if (ink) {",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-hover-reach-in-map-pixels",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const reach = CITY_HIT_PX / view.scale;",
+    "new": "const reach = CITY_HIT_PX;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-one-model-a-call",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (!ink) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
+    "new": "ink = buildTamrielInk({ bayCoast: key });",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-raster-sea-climate",
+    "file": "src/world/tamrielRaster.js",
+    "old": "const climate = new Uint8Array(n).fill(CLIMATES.Ocean);",
+    "new": "const climate = new Uint8Array(n).fill(CLIMATES.Woodlands);",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-raster-range-flat",
+    "file": "src/world/tamrielGround.js",
+    "old": "if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
+    "new": "if (false) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-compose-past-the-bay",
+    "file": "src/world/tamrielRaster.js",
+    "old": "if (bx < 0 || by < 0 || bx >= BAY_W || by >= BAY_H) continue;",
+    "new": "if (bx < 0 || by < 0) continue;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-compose-takes-the-edge-climate",
+    "file": "src/world/tamrielRaster.js",
+    "old": "if (typeof c === 'number' && c >= 0) raster.climate[i] = c;",
+    "new": "if (typeof c === 'number') raster.climate[i] = c;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-clamp-origin-dropped",
+    "file": "src/ui/inkMap.js",
+    "old": "return Math.min(lo + map - visible, Math.max(lo, o));",
+    "new": "return Math.min(lo + map - visible, Math.max(0, o));",
+    "tests": [
+      "test/tamriel.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-clamp-rest-off-the-frame",
+    "file": "src/ui/inkMap.js",
+    "old": "if (visible >= map) return lo + (map - visible) / 2;",
+    "new": "if (visible >= map) return (map - visible) / 2;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-region-names-on-the-continent",
+    "file": "src/ui/inkMap.js",
+    "old": "if (band !== 'near' && !opts.continent && opts.regionNames) {",
+    "new": "if (band !== 'near' && opts.regionNames) {",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-carets-not-thinned-on-the-continent",
+    "file": "src/ui/inkMap.js",
+    "old": "const caretBand = opts.continent ? CONTINENT_BAND : band;",
+    "new": "const caretBand = band;",
+    "tests": [
+      "test/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-switch-off-by-default",
+    "file": "src/ui/mapSkin.js",
+    "old": "export const tamrielMapOn = () => getPref('tamrielMap') !== false && !tamrielUrlOff();",
+    "new": "export const tamrielMapOn = () => getPref('tamrielMap') === true && !tamrielUrlOff();",
+    "tests": [
+      "test/tamriel.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent on the shipping tree: the Features row's initial true is the prefs default (FEATURE_PREF_DEFAULTS), so the pref is never undefined and === true reads as !== false does; the row's own pin holds the default"
+  },
+  {
+    "name": "TAMRIEL1-window-home-is-the-frame",
+    "file": "src/ui/heldMap.js",
+    "old": "? viewCentredOn(this._size.width / 2, this._size.height / 2, this._bayFit(lim), lim)",
+    "new": "? null",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-window-frame-ignored",
+    "file": "src/ui/heldMap.js",
+    "old": "if (frame) return { mapW: frame.w, mapH: frame.h, mapX0: frame.x0, mapY0: frame.y0, paperW: this._paper.w, paperH: this._paper.h };",
+    "new": "if (frame) return { mapW: frame.w, mapH: frame.h, paperW: this._paper.w, paperH: this._paper.h };",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "TAMRIEL1-window-hover-silent-beyond-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "return place ? { label: place, cursor: '' } : null;",
+    "new": "return null;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  }
+]

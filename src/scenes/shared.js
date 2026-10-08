@@ -852,6 +852,16 @@ export function landformsOn(search) {
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
 
+/** TAMRIEL2: THE LAND BEYOND THE BAY'S SWITCH - the Features row (`tamrielLand`) on the enhanced skin, and online as
+ *  the player's own (the relay carries no pose past the map, so a room never has to agree on ground nobody shares):
+ *  the streamed world goes on past the Bay's edge over the authored continent (world/tamrielGround.js). `?tamrielland=off`
+ *  the kill door. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the classic
+ *  skin - the edge of the world is DFU's: empty. */
+export function tamrielLandOn(search) {
+  if (pageParam('tamrielland', search) === 'off') return false;
+  return !!getPref('tamrielLand') && (isOnlinePage(search) || isEnhanced(search));
+}
+
 /** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
  *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`
  *  the kill door, offline. The world host reads it once, at its mount. */
