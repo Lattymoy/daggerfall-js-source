@@ -104,7 +104,8 @@ import { makeInteriorPersonHost as makeStaticNpcHost } from './interiorContext.j
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
+import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';
+import { REGULAR_HEAD_M as CARD_REGULAR_HEAD_M } from '../world/cardRegulars.js';   // CARDS4b: a seated regular's line over his head   // LW2: the living world's streets - residents with days, where DFU's pool stood
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
 import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
@@ -2735,6 +2736,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
    *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
   let familyStreet = null, familyRoom = null;
+  /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/cardRegulars.js) - stood by the interior host each frame on layers of
+   *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
+  let cardRegularBodies = null, _cardBarks = [];
   const makeFamilyBodies = () => createFamilyBodies({
     dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
     bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
@@ -9150,12 +9154,20 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  matrices, on the crew's one layer by its range, sight and names. The building mode's HUD pass calls it
    *  (`host.livingSpeech`); nothing before the living world has stood a room. */
   function livingRoomLines(proj, view, eye, dt = 0) {
-    if (!livingIndoors || typeof document === 'undefined') return;
+    if ((!livingIndoors && !_cardBarks.length) || typeof document === 'undefined') return;   // CARDS4b: a card table's regulars talk with the living world off too
     const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
     const points = [];
     if (!covered) {
       const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h);
-      for (const l of livingIndoors.speech(eye)) {
+      // CARDS4b: the regulars' play over their seated heads, on the crew's one layer with the room's talk
+      for (const b of _cardBarks) {
+        const over = [b.feet[0], b.feet[1] + CARD_REGULAR_HEAD_M, b.feet[2]];
+        const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+        const at = projectToScreen(over, w, h, proj, view, rect);
+        if (d > CREW_SAY_RANGE || !at.front) continue;
+        points.push({ x: at.x, y: at.y, text: b.text, who: `card:${b.id}`, kind: 'talk', distance: d, name: firstNameOf(b.name) });
+      }
+      for (const l of livingIndoors?.speech(eye) ?? []) {
         const id = l.person.living?.id;
         if (!id || !l.person.pos) continue;
         const over = [l.person.pos[0], l.person.pos[1] + LIVING_HEAD_M, l.person.pos[2]];
@@ -19610,6 +19622,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onHoldem = (f) => modes?.cardOnlineFrame?.(f);   // CARDS5: the relay's card table, to the room's host
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
@@ -24468,7 +24481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  size - a speck at 330 m under the name that stood over it. Each is grown by the same law at its own feet; 1 off
    *  the view. */
   const peerGrow = (f) => { const e = travelView?.active ? travelView.eye : null; return e ? tvOwnGrow(Math.hypot(e[0] - f[0], e[1] - f[1], e[2] - f[2])) : 1; };
-  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
+  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); if (_mode() === 'interior') cardRegularBodies?.draw(canvas, { proj, view, eye }); };   // CARDS4b: the card table's regulars   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peerBodies.js drawVeiled), with the camera its body pass took. */
   const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
@@ -24574,6 +24587,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
+    cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
@@ -24622,7 +24636,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),   // CSA-C: ...and its lit lanterns (CABIN-HULL: none lights her cabin from outside)
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
-    livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    livingBillboards: () => [...(livingIndoors?.batches() ?? []), ...(cardRegularBodies?.batches() ?? [])],   // LW8: the residents inside, on the building's own pass; CARDS4b: and the card table's regulars
+    cardRegulars: (list, dt, eye) => {
+      if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.clear(); cardRegularBodies = null; } _cardBarks = []; return; }
+      cardRegularBodies ??= makeFamilyBodies();
+      cardRegularBodies.begin();
+      for (const m of list) cardRegularBodies.stand(m.res, m.feet, m.yaw, false, m.st);
+      cardRegularBodies.end(dt, eye);
+      _cardBarks = list.filter((m) => m.say).map((m) => ({ id: m.res.id, name: m.res.name, feet: m.feet, text: m.say }));
+    },
     livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),   // LW8: ...and the street's own talk ray on them
     livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),   // LW8b: ...and what they say, over their heads
     csaDrawWindWidget: () => csaDrawWindWidget(),   // CSA-E: the wind widget over a mode's HUD

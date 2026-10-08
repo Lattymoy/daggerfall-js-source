@@ -952,7 +952,7 @@
   {
     "name": "A2-deal-no-settle",
     "file": "src/systems/cardTableSession.js",
-    "old": "    this._think(now, settleMs(live.length * 2));",
+    "old": "    this._think(now, settleMs(live.length * 2) + Math.round(RIFFLE_S * 1000));",
     "new": "    this._think(now);",
     "tests": [
       "test/auditcards2_cloth.test.js",

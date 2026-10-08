@@ -21,12 +21,12 @@ export const cardFace = (c) => (isCard(c)
 
 /**
  * The panel's model.
- * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null}} p
+ * @param {{phase: 'buyin'|'playing'|'over', view?: any, legal?: any, buyIn?: {min: number, max: number}|null, stakes: {sb: number, bb: number}, friendly?: boolean, log?: string[], why?: string|null, online?: {waiting: boolean, clock: number, error: string|null}|null}} p
  */
-export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null }) {
+export function cardHudModel({ phase, view = null, legal = null, buyIn = null, stakes, friendly = false, log = [], why = null, online = null }) {
   const unit = friendly ? 'chips' : 'gold';
   const title = `Card table - ${stakes.sb}/${stakes.bb} ${unit}`;
-  const note = friendly ? 'A friendly game: online, no gold changes hands at a patrons\' table.' : null;
+  const note = online ? 'A friendly game with the room: the relay deals, and no gold changes hands.' : friendly ? 'A friendly game: online, no gold changes hands at a patrons\' table.' : null;
   if (phase === 'buyin') {
     return {
       phase, title, note,
@@ -53,6 +53,8 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
     };
   });
   const pot = hand ? hand.seats.reduce((a, s) => a + s.total, 0) : sd ? sd.result.pots.reduce((a, p) => a + p.amount, 0) : 0;
+  // CARDS5: a relay table's empty chairs are no seats to show
+  const present = seats.filter((_, i) => view.seats[i].kind !== 'empty');
   const actions = [];
   if (phase === 'playing' && legal) {
     actions.push({ id: 'fold', label: 'Fold', enabled: true });
@@ -63,16 +65,19 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
       actions.push({ id: 'allin', label: `All in (${legal.raise.max})`, enabled: true, to: legal.raise.max });
     }
   }
+  // CARDS5: alone at the relay's table, the regulars are a game too
+  if (online?.waiting) actions.push({ id: 'regulars', label: 'Play the regulars', enabled: true });
   actions.push({ id: 'stand', label: phase === 'over' ? 'Leave the table' : 'Stand up', enabled: true });
   const message = phase === 'over'
     ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : 'You leave the table.')
     : sd ? showdownLine(sd, view.seats.map((x) => x.name), you)
-      : !hand ? 'The next hand is being dealt...' : legal ? 'Your turn.' : `Waiting on ${seats.find((s) => s.state === 'to act')?.name ?? 'the table'}...`;
+      : online?.waiting ? 'Waiting for another player to sit down.'
+      : !hand ? 'The next hand is being dealt...' : legal ? (online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.') : `Waiting on ${seats.find((s) => s.state === 'to act')?.name ?? 'the table'}...`;
   return {
-    phase, title, note, seats, pot,
+    phase, title, note, seats: present, pot,
     board: hand ? hand.board.map(cardFace) : sd ? sd.board.map(cardFace) : [],
     street: hand?.street ?? (sd ? 'showdown' : null),
-    actions, message, log: log.slice(-6),
+    actions, message: online?.error && !legal ? `${message} (${HOLDEM_REFUSALS[online.error] ?? 'The table refused that.'})` : message, log: log.slice(-6),
   };
 }
 
@@ -107,6 +112,9 @@ export function showdownLine(sd, names, you = -1) {
   return lines.length ? lines.join(' ') : 'The hand is over.';
 }
 
+/** CARDS5: the relay's refusals as the panel says them. */
+export const HOLDEM_REFUSALS = Object.freeze({ taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.' });
+
 /** A one-line account of a session event for the panel's log (`names` this.seats' names; `you` the player's index, said in
  *  the second person - AUDIT CARDS-2 L10). */
 export function eventLine(e, names, you = -1) {
@@ -116,13 +124,15 @@ export function eventLine(e, names, you = -1) {
   switch (e.t) {
     case 'hand': return `Hand ${e.hand}: ${e.button === you ? 'you deal' : `${names[e.button] ?? 'someone'} deals`}.`;
     case 'act':
+      if (e.timeout) return `${who} ${me ? 'are' : 'is'} out of time and ${e.type === 'check' ? (me ? 'check' : 'checks') : (me ? 'fold' : 'folds')}.`;   // CARDS5: the seat's clock
       if (e.allIn) return `${who} ${me ? 'go' : 'goes'} all in${e.paid > 0 ? ` (${e.paid})` : ''}.`;
       if (e.type === 'raise') return e.bet ? `${who} bet${s} ${e.to}.` : `${who} raise${s} to ${e.to}.`;
       if (e.type === 'call') return `${who} call${s} ${e.paid}.`;
       return `${who} ${e.type}${s}.`;
     case 'street': return `The ${e.street}.`;
     case 'showdown': return showdownLine(e, names, you);
-    case 'leave': return `${e.name} is broke and leaves for the night.`;
+    case 'leave': return e.broke === undefined ? `${e.name} is broke and leaves for the night.` : e.broke ? `${e.name} is out of chips and stands up.` : `${e.name} stands up.`;   // CARDS5: a player at the relay's table, not a regular
+    case 'sit': return `${e.name} sits down.`;
     case 'over': return e.why === 'broke' ? 'You are broke.' : e.why === 'empty' ? 'The table has emptied.' : 'You stand up.';
     default: return '';
   }
@@ -239,6 +249,8 @@ export function createCardTableHud({ onPress, doc = document }) {
     },
     /** A new hand forgets the last raise's slider. */
     resetSlider() { sliderValue = null; },
+    /** CARDS3b: the slider's value (the raise a drag of chips carries), or null when untouched. */
+    sliderValue: () => sliderValue,
     destroy() { if (!alive) return; alive = false; root.remove?.(); },
   };
 }

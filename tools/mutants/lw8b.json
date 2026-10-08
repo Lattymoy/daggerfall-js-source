@@ -385,8 +385,8 @@
   {
     "name": "LW8b-host-unstood",
     "file": "src/scenes/world.js",
-    "old": "    if (!livingIndoors || typeof document === 'undefined') return;",
-    "new": "    if (typeof document === 'undefined') return;",
+    "old": "      for (const l of livingIndoors?.speech(eye) ?? []) {",
+    "new": "      for (const l of []) {",
     "tests": [
       "test/lw8b_talk.test.js"
     ]

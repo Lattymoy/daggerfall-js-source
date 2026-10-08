@@ -12,6 +12,7 @@ import { CardTableSession } from '../systems/cardTableSession.js';
 import { createCardTableDraw } from '../render/cardTableDraw.js';
 import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { heldMatrices } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them
 
 const params = new URLSearchParams(location.search);
 const T = Number(params.get('t') ?? 14);
@@ -108,6 +109,12 @@ function frameDraw(withCards = true, asBacks = false) {
   renderer.drawMesh(tableMesh, IDENT, null);
   for (const m of legs) renderer.drawMesh(m, IDENT, null);
   const p = scene.poses(T, session.view());
+  // CARDS3b: from the seat, the player's settled two held up (`peek` 0..1 from the page's query), as worldModes cardDrawGame
+  if (camKind === 'seat') {
+    const held = p.cards.filter((c) => c.seat === 0 && c.settled && Math.cos(c.roll) > 0.5).sort((a, b) => (a.id < b.id ? -1 : 1));
+    const mats = heldMatrices(view, held.length, Number(params.get('peek') ?? 0));
+    p.cards = [...p.cards.filter((c) => !held.includes(c)), ...held.map((c, i) => ({ card: c.card, matrix: mats[i] }))];
+  }
   if (withCards) draw.draw(asBacks ? { ...p, cards: p.cards.map((c) => ({ ...c, card: -1 })) } : p);
 }
 // The table alone, its cards drawn every one as a back, then as dealt: the pixels the cards and chips change, and the

@@ -268,6 +268,8 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+import { holdemGate } from './relay.js';   // CARDS5: the card table's gate
+import { newTable, sit as holdemSit, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -1086,6 +1088,7 @@ export class Room {
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
+    if (await this._holdemTick()) return;   // CARDS5: a card table's seat clock, or its next deal
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
@@ -2357,6 +2360,19 @@ export class Room {
       await this._sayLine(ws, a, m.ch, { t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);   // MOD1: the verified account beside the line; EMOTE1: and an action said as one
       return;
     }
+    if (m.t === 'holdem') {
+      // ═══ CARDS5 — THE RELAY DEALS ══════════════════════════════════
+      //
+      // Tavern-Cards section 5: a deck said by a client is a deck the client chose. A building's room keeps its card
+      // tables (net/holdemTable.js): the relay shuffles from its own CSPRNG, keeps the deck in the table, tells each
+      // seat its own hole cards alone and the room the public hand, runs whose turn it is and the seat's clock (the
+      // alarm), and folds a leaver out of turn. A tavern is an interior: only an interior's room keeps a table.
+      const now = Date.now();
+      if (!String(a.key ?? '').startsWith('interior:')) return;
+      if (!this._spend(ws, now, holdemGate, 'holdemBucket', 'holdemDrops', 'too many card words', CHAT_STRIKES_MAX)) return;
+      await this._holdemWord(ws, a, m, now);
+      return;
+    }
     if (m.t === 'roll') {
       // ═══ DICE1 — THE RELAY ROLLS ════════════════════════════════════
       //
@@ -2642,11 +2658,81 @@ export class Room {
     if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)
     if (isBattleRoom(a.key) && a.sub) { try { await this._siegeGone(ws, a.sub, Date.now()); } catch (e) { console.warn('[siege] leave failed', e?.message ?? e); } }   // AUDIT-SEATS T3: a fighter's place kept from now
     if (isSocialRoom(a.key) && a.acct) { try { await this._leaveAccount(ws, a, Date.now()); } catch (e) { console.warn('[hub] leave failed', e?.message ?? e); } }   // SOC1: last seen stamped, the friends and the party told
+    if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._holdemLeave(a, Date.now()); } catch (e) { console.warn('[holdem] leave failed', e?.message ?? e); } }   // CARDS5: folded out of turn, stood up at the hand's end
     if (isArenaRoom(a.key) && a.sub) { try { await this._arenaLeave(ws, a, Date.now()); } catch (e) { console.warn('[arena] leave failed', e?.message ?? e); } }   // ARENA4: out of the queue, off the sand, out of the stands
   }
 
 
   // ───────────────────────────── ARENA4: THE ARENA ─────────────────────────────
+  // ═══ CARDS5 — THE ROOM'S CARD TABLES ═══════════════════════════════════════════════════════════════════════════
+  /** The room's tables (index -> table), read from storage once a wake - a hibernated room keeps its hands. */
+  async _holdemOf() {
+    if (!this._holdem) {
+      const kept = await this.state.storage.get('holdem');
+      this._holdem = new Map(kept && typeof kept === 'object' ? Object.entries(kept).map(([k, v]) => [Number(k), v]) : []);
+    }
+    return this._holdem;
+  }
+  /** The tables checkpointed (the empty ones forgotten), and the alarm armed for the soonest one due. */
+  async _holdemSave() {
+    const tables = this._holdem;
+    if (!tables) return;
+    for (const [k, t] of tables) if (holdemEmpty(t)) tables.delete(k);
+    if (tables.size) await this.state.storage.put('holdem', Object.fromEntries(tables));
+    else await this.state.storage.delete('holdem');
+    let at = Infinity;
+    for (const t of tables.values()) { const n = holdemNextAt(t); if (n != null) at = Math.min(at, n); }
+    if (Number.isFinite(at)) await this._boutArm(Date.now(), at);
+  }
+  /** A table's messages sent: the room's to every socket in it, a seat's to that player's sockets alone. */
+  _holdemSend(index, msgs, now) {
+    for (const { to, frame } of msgs) {
+      const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });
+      for (const [w, b] of this._all()) if (b.id && (to == null || b.id === to)) this._send(w, out);
+    }
+  }
+  /** One player's word to a table: sit (a table opens at the first sitter's chairs and stakes), stand, act, look. */
+  async _holdemWord(ws, a, m, now) {
+    const tables = await this._holdemOf();
+    let t = tables.get(m.table);
+    const refuse = (error) => this._send(ws, JSON.stringify({ t: 'holdem', table: m.table, now, error }));
+    let msgs;
+    if (m.op === 'look') msgs = t ? holdemLook(t, a.id, now) : [];
+    else if (m.op === 'sit') {
+      if (!t) { t = newTable({ chairs: m.chairs, bb: m.bb }); if (!t) { refuse('bad table'); return; } tables.set(m.table, t); }
+      for (const [k, other] of tables) if (k !== m.table) msgs = [...(msgs ?? []), ...holdemStand(other, { id: a.id, now }).map((x) => ({ ...x, table: k }))];   // one seat in a room at a time
+      const r = holdemSit(t, { id: a.id, name: a.name ?? '', chair: m.chair, now });
+      if (typeof r === 'string') { refuse(r); return; }
+      for (const x of msgs ?? []) this._holdemSend(x.table, [x], now);
+      msgs = r;
+    } else if (!t) { refuse('no table'); return; }
+    else if (m.op === 'stand') msgs = holdemStand(t, { id: a.id, now });
+    else {
+      const r = holdemAct(t, { id: a.id, action: m.action, now });
+      if (typeof r === 'string') { refuse(r); return; }
+      msgs = r;
+    }
+    this._holdemSend(m.table, msgs, now);
+    if (m.op !== 'look') await this._holdemSave();
+  }
+  /** A player gone from the room: up from every table (folded out of turn where a hand holds him). */
+  async _holdemLeave(a, now) {
+    const tables = await this._holdemOf();
+    if (!tables.size) return;
+    let moved = false;
+    for (const [k, t] of tables) { const msgs = holdemStand(t, { id: a.id, now }); if (msgs.length) { moved = true; this._holdemSend(k, msgs, now); } }
+    if (moved) await this._holdemSave();
+  }
+  /** The alarm's turn at the tables: a seat whose clock ran out acts by the law's timeout, a paused table deals. True
+   *  when the room keeps a table (the alarm is theirs while it does). */
+  async _holdemTick() {
+    const tables = await this._holdemOf();
+    if (!tables.size) return false;
+    const now = Date.now();
+    for (const [k, t] of tables) { const msgs = holdemTick(t, now, rand32); if (msgs.length) this._holdemSend(k, msgs, now); }
+    await this._holdemSave();
+    return true;
+  }
   /** An arena word to one socket. */
   _arenaSend(ws, w) { return this._send(ws, JSON.stringify({ t: 'arena', ...w })); }
   /** The hello'd sockets of an account in this room. */

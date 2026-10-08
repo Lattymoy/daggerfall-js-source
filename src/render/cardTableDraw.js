@@ -188,7 +188,7 @@ export function createCardTableDraw(renderer, { doc = globalThis.document } = {}
       if (!alive) return;
       build();
       if (!faces) return;
-      for (const c of cards) renderer.drawMesh(isCard(c.card) ? faces[c.card] : back, cardMatrix(c.pos, c.yaw, c.roll), null, { noShadow: true });
+      for (const c of cards) renderer.drawMesh(isCard(c.card) ? faces[c.card] : back, c.matrix ?? cardMatrix(c.pos, c.yaw, c.roll), null, { noShadow: true });   // CARDS3b: a held card brings its own matrix
       for (const d of discs) { const i = CHIP_VALUES.indexOf(d.value); if (i >= 0) renderer.drawMesh(chips[i], cardMatrix(d.pos, 0), null, { noShadow: true }); }
     },
     destroy() {

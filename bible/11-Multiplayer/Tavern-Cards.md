@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle). Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -78,8 +78,9 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
   player at the table sees the same card land in the same place - the room's picture, not each client's own.
 - **DECIDED: the player's own hand** is held up in the seat view, fanned, and can be peeked (lifted at the corner) or
   squeezed. Mouse over a card lifts it; a drag slides chips into the pot; a click on the cards checks, a push folds.
-  **NOT BUILT (recorded at AUDIT CARDS-2):** the fanned hand, the peek and squeeze, the mouse on the cards and the
-  chips - the panel's buttons act (section 14); the player's own two lie face up on the cloth before him.
+  **BUILT at CARDS3b (section 19):** the hand held up and fanned in the seat view, the peek (the cursor over it, or a
+  press held on it), a drag of chips from the stack into the betting ground. **NOT BUILT:** the squeeze, a click on the
+  cards to check and a push to fold - the panel's buttons do both.
 - **MEASURE (CARDS3):** the frame cost. Fifty-two plates and a few dozen chips is small, but the interior frame is
   already measured against phones; the slice reports the cost on the probe before it ships.
 
@@ -182,9 +183,9 @@ Each ships alone and is verifiable without the next.
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
 | **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
 | **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
-| **CARDS3** SHIPPED (part) | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15). OPEN: the fanned hand and the peek, the mouse on the cards, the riffle, the frame cost measured on a phone. |
+| **CARDS3** SHIPPED | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15); CARDS3b the held hand, the peek, the chips dragged, the riffle (section 19). OPEN: the squeeze, the frame cost measured on a phone. |
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
-| **CARDS5** | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables. |
+| **CARDS5** SHIPPED | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables (section 17). |
 | **CARDS6** | Online stakes: buy-in and cash-out escrowed by the realm service. |
 | **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. |
 | **CARDS8** | The catalog and the art pipeline: the first set of cards, the Card Binder, the starter deck, the deckbuilder window. |
@@ -437,3 +438,77 @@ changed, here:
   `auditcards2_host` 9, `auditcards2_cloth` 6. Mutants: cards1 48, cards2 56, cards2b 40, cards3 15, cards4 17 - all dead
   (one equivalent as recorded) - and `tools/mutants/auditcards2.json` 95 dead, one equivalent.
 - **Before a pull request:** merge main (three conflicts; `tryExit`'s seat line stays first - the audit record says why).
+
+## 17. CARDS5 (2026-10-08): the relay deals
+
+Mac: **"Do 3 4 and 5"**. Section 5 built for the friendly table: players in one tavern play one another, and the relay
+holds every card.
+
+- **The relay's table** (`src/net/holdemTable.js`, pure and plain data - one home for the relay and its pins; with
+  `net/cardLaw.js` it joins the relay's bundle, `world176`, undeployed, re-hashed in place). A building's room keeps its
+  card tables by the table's index; A TABLE'S SEATS ARE ITS CHAIRS (the chair the client took - every client computes the
+  same chairs from the same room, so every eye maps the cloth alike). The relay shuffles from its own CSPRNG
+  (`shuffleDeck` over the dice's unbiased draw) and keeps the deck in the table, which no frame carries; each seat is
+  told its own hole cards in a message to it alone, the room the public hand (`viewFor`'s spectator's view) with every
+  event; the seat to act is told what it may do and its clock (`HOLDEM_CLOCK_MS`, section 5's 30 s - checked if it can
+  be, folded if not, `timeoutAction`); a player who stands or leaves the room is folded out of turn (`foldSeat`) and
+  stood up at the hand's end; a seat out of chips stands up. The hand's `seed` travels with the deal: one picture.
+- **Friendly** (section 5): every seat sits with `HOLDEM_CHIPS_BB` big blinds of chips at the stakes the first sitter's
+  tavern sets (`HOLDEM_BBS`, the taverns' own); no gold moves. Real stakes are CARDS6's escrow.
+- **The wire** (`net/wire.js`): the `holdem` frame (`validHoldemIn` - sit, stand, act, look; `HOLDEM_FRAME_MAX`,
+  `holdemGate`), sent only to a relay at `HOLDEM_RELAY_MIN` (a relay before it closes on it); the relay's words checked by
+  `validHoldemOut`. The table's state rides a frame as `state`, never a second `table` (the frame's `table` is its index -
+  found by the first pin, a spread would have written the one over the other).
+- **The relay** (`server/src/index.js`): only an interior's room keeps a table; the tables checkpointed to storage (a
+  hibernated room keeps its hands) and the alarm armed for the soonest clock or deal; a socket's leave stands it up.
+- **The client** (`src/systems/cardRemoteTable.js`): the relay's frames folded into the very shapes the offline evening
+  offers (`view`, `legal`, `drain`), the relay's clock moved onto this one, a hand already under way told as the events
+  it took (`CATCH_UP_MS`) so a newcomer's cloth lies at rest at once. The host (`worldModes.js`): online, sitting joins
+  the relay's table (no buy-in); the panel says whose turn and my clock, the relay's refusals in words; alone, "Play the
+  regulars" stands up from it and plays the friendly game; the stand names its table. THE ROOM WATCHES (section 2): every
+  table a player does not sit at is laid on its own cloth from the room's frames - a scene and a draw of its own, let go
+  when its last seat stands, the room changes or the interior is left.
+- **Not yet:** spectators near the table only (the whole room watches every table); a seat a player takes after the
+  regulars began is the regulars' game, not the relay's; real stakes (CARDS6).
+- **Pins:** `test/cards5_relay.test.js` 6 (the table, the deal's privacy, the clock and the leaver, the words both ways,
+  the client's session, the relay end to end on the fake room - three players, a hibernation), `test/cards5_client.test.js`
+  3 (the remote table, three hosts over an in-process relay, the regulars instead). `tools/mutants/cards5.json`: 25, all
+  dead.
+
+## 18. CARDS4b (2026-10-08): the regulars in their chairs
+
+The same ask. CARDS4's regulars were names on the panel; now they sit at the table.
+
+- **Their bodies** (`src/world/cardRegulars.js`): each regular's look minted from the seed that names him (the town, the
+  building, the order - CARDS4's namer, which now answers its seeds too): his region's people (the name bank's race), a
+  face, and a tavern-goer's clothes from Daggerfall's own templates in the slots they are worn in (`REGULAR_CLOTHES` - a
+  shirt or tunic, trousers or a skirt, or a gown; shoes or boots). The interior host hands world.js its regulars every
+  frame (`host.cardRegulars` - none outside a building, none at a relay's table), and world.js stands them on layers of
+  their own (world/familyBodies.js's, which now take a seat: `st`) - a Morrowind body posed seated through the pose's own
+  byte, as a seated peer is; the sprite lane stands at the chair, CARDS2c's open. They are freed the moment none sit.
+- **Their voices**: each action, a win and a broke regular's leaving said over his head for `BARK_MS` (`regularBark`), on
+  the crew's one speech layer with the room's talk - with the living world off too.
+- **Pins:** `test/cards4b_regulars.test.js` 4, and the host block's own run in `auditcards2_host` (stood in the chairs,
+  seated, a play voiced). `tools/mutants/cards4b.json`: 10, all dead.
+
+## 19. CARDS3b (2026-10-08): the hand held, the chips dragged, the riffle
+
+The same ask; section 3's DECIDED hand and chips.
+
+- **The held hand** (`src/world/cardHand.js`): the player's two, once landed and turned on the cloth, are drawn held
+  before the eye (`heldMatrices` - the camera's own frame composed), low and a little right of the middle, fanned with the
+  screen's right-hand card in front, leaning back the shy way; PEEKED - the cursor over them, or a press held on them -
+  they come up toward the eye and spread (`PEEK_RATE` easing). Seen in the lab (`?cam=seat&peek=1`) and checked by the
+  probe's face pixels: the faces upright and unmirrored (the world's mirror puts the view's +X on the screen's left, which
+  the first cut put the hand on).
+- **The chips** (`tablePoint`, `onStack`, `inBetZone`, `dragBet`): a press on his own stack picks up the panel's bet - the
+  raise slider's (clamped to the law), else the call - carried on the cloth under the cursor and let go in the betting
+  ground (nearer the middle than his cards) as the bet; anywhere else, it goes back. The press is taken at the capture
+  phase, before the seat's "a swing stands you up" hears it; a press on the panel is the panel's; the listeners are the
+  game's and go with it.
+- **The riffle** (`riffleAt`, `RIFFLE_S`): the dealer riffles at his deck place before every deal - two halves part and
+  fall one card from each in turn into one pile - and the deal begins when it is done; the evening's first patron waits
+  it out.
+- **Recorded:** a thrown card's last centimetres may skim a seat's chip stack for a frame (the pin on chips through cards
+  is a pin on cards at rest).
+- **Pins:** `test/cards3b_hand.test.js` 5. `tools/mutants/cards3b.json`: 14, all dead.

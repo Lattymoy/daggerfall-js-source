@@ -154,7 +154,8 @@ test('AUDIT CARDS-2 L4, L5, L6: board neighbours on their own planes, the burn c
     seed: 3, seconds: 160,
     frame: (p, t, events, scene) => {
       if (Math.round(t * 60) % 30) return;
-      const holes = scene.cards.filter((c) => c.seat >= 0).map((c) => scene._poseOf(c, t)).filter((q) => !q.held);
+      // cards at rest (a throw's last centimetres may skim a stack - recorded in Tavern-Cards section 19)
+      const holes = scene.cards.filter((c) => c.seat >= 0 && t >= c.motions[c.motions.length - 1].t1).map((c) => scene._poseOf(c, t));
       for (const ch of p.chips) for (const q of holes) {
         const dx = ch.pos[0] - q.pos[0], dz = ch.pos[2] - q.pos[2];
         const across = Math.abs(dx * Math.cos(q.yaw) - dz * Math.sin(q.yaw)), along = Math.abs(dx * Math.sin(q.yaw) + dz * Math.cos(q.yaw));

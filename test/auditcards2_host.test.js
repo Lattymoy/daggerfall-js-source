@@ -18,6 +18,8 @@ import * as hudm from '../src/ui/cardTableHud.js';
 import { holdCursor, cursorHeld } from '../src/player/pointerLock.js';
 import { nearestFreeSeat, takenSeats } from '../src/world/cardTables.js';
 import { HAND_NAMES } from '../src/net/cardLaw.js';
+import { regularsToStand, regularBark, BARK_MS } from '../src/world/cardRegulars.js';
+import { RemoteCardTable } from '../src/systems/cardRemoteTable.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WM = read('src/scenes/worldModes.js');
@@ -58,10 +60,11 @@ function host({ gold = 5000, online = false, realmAct = null, seats = 4, peers =
     isOnlinePage: () => online,
     mwViewFirstPerson: () => said.push('<head>'), homeTownOf: (b) => b?.townMapId || 0,
     worldMinutes: () => clock.minutes, MINUTES_PER_DAY: 1440,
+    RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners,
   };
   const state = { interiorCtx: { tables: [{ aabb: {} }], collider: null }, interiorBuilding: building };
   const api = new Function('S', ...Object.keys(scope), `let interiorCtx = S.interiorCtx, interiorBuilding = S.interiorBuilding;\n${BLOCK}\n
-    return { sitAtCardTable, standFromCardTable, cardGameFrame, closeCardGame, get cardGame() { return cardGame; }, get cardSeat() { return cardSeat; } };`)(state, ...Object.values(scope));
+    return { sitAtCardTable, standFromCardTable, cardGameFrame, closeCardGame, cardRegularsNow, get cardGame() { return cardGame; }, get cardSeat() { return cardSeat; } };`)(state, ...Object.values(scope));
   const panel = () => doc.body.children.filter((n) => n.className === 'dfcards' && !n.removed).at(-1);
   const walk = (n, f, out = []) => { if (!n) return out; if (f(n)) out.push(n); for (const c of n.children ?? []) walk(c, f, out); return out; };
   const button = (label) => walk(panel(), (n) => n.tag === 'button' && n.textContent.startsWith(label))[0];
@@ -85,6 +88,13 @@ test('AUDIT CARDS-2 the host: a sitting from the purse and back, the buy-in clam
   assert.equal(g.session.seats[0].stack, 1000, 'the buy-in is the chips the player sits with');
   assert.equal(h.playerEntity.goldPieces, 4000, 'and the purse paid it, clamped to the range\'s top');
   assert.equal(g.session.seats.length, 4, 'a regular in every other chair');
+  // CARDS4b: the regulars stood in those chairs - seated - and their play voiced over their heads as it comes
+  const stood = h.api.cardRegularsNow(0);
+  assert.deepEqual(stood.map((r) => r.res.name), g.names);
+  assert.ok(stood.every((r) => r.st > 0), 'seated');
+  let voiced = false;
+  for (let t = 100; t < 30000 && !voiced; t += 100) { h.api.cardGameFrame(t); voiced = h.api.cardRegularsNow(t).some((r) => r.say); }
+  assert.ok(voiced, 'a regular says his play');
   // a second deal is refused: no second payment
   g.hud.render(hudm.cardHudModel({ phase: 'buyin', buyIn: g.buyIn, stakes: g.stakes }));
   h.press('Deal me in');

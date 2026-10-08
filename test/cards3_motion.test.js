@@ -168,7 +168,7 @@ test('CARDS3 the deal on the cloth: two cards a seat in the deal\'s order, the p
   // told every card (a careless host's holeOf): the cloth still turns up only the player's - the others are backs
   const hit = play(r, { stop: (e) => e.t === 'hand', holeOf: (seat, k) => { const i = r.session.handSeats.indexOf(seat); return r.session.hand && i >= 0 ? r.session.hand.seats[i].hole[k] : -1; } });
   const t = hit.now / 1000;
-  const early = r.scene.poses(t + 0.05, r.session.view()).cards;
+  const early = r.scene.poses(t + 0.05, r.session.view()).cards.filter((c) => c.id);   // the dealt cards (the riffle's deck carries no id)
   assert.ok(early.length < 8, 'cards still in the dealer\'s hand at the start');
   const settled = r.scene.poses(t + 5, r.session.view()).cards;
   assert.equal(settled.length, 8, 'four seats, two cards each');

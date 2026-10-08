@@ -1,0 +1,102 @@
+[
+  {
+    "name": "C4b-race-ignored",
+    "file": "src/world/cardRegulars.js",
+    "old": "race: RACE_OF_BANK[bank] ?? 'Breton'",
+    "new": "race: 'Breton'",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-gown-with-skirt",
+    "file": "src/world/cardRegulars.js",
+    "old": "  else { put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes); put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes); }",
+    "new": "  put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes); put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes);",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-barefoot",
+    "file": "src/world/cardRegulars.js",
+    "old": "  put(pick(r, kit.feet), EQUIP_SLOTS.Feet);\n",
+    "new": "\n",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-gone-drawn",
+    "file": "src/world/cardRegulars.js",
+    "old": "    if (s.kind !== 'patron' || s.gone) return;",
+    "new": "    if (s.kind !== 'patron') return;",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-standing",
+    "file": "src/world/cardRegulars.js",
+    "old": "feet: chair.feet, yaw: chair.yaw, st: seatTopByte(chair.top) });",
+    "new": "feet: chair.feet, yaw: chair.yaw, st: 0 });",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-shown-unseated",
+    "file": "src/world/familyBodies.js",
+    "old": "mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });",
+    "new": "mv: moving ? 1 : 0 });",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-host-no-barks",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (line) g.log.push(line); cardBark(g, e, now); }",
+    "new": "if (line) g.log.push(line); }",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-host-wrong-chairs",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const seatOf = g.session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : cardSeat.free[i - 1]));\n    return regularsToStand(",
+    "new": "    const seatOf = g.session.seats.map((s, i) => i);\n    return regularsToStand(",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-host-online-regulars",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!g?.session || g.remote || !cardSeat) return [];",
+    "new": "    if (!g?.session || !cardSeat) return [];",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  },
+  {
+    "name": "C4b-world-not-freed",
+    "file": "src/scenes/world.js",
+    "old": "if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.clear(); cardRegularBodies = null; } _cardBarks = []; return; }",
+    "new": "if (!list?.length) { _cardBarks = []; return; }",
+    "tests": [
+      "test/cards4b_regulars.test.js",
+      "test/auditcards2_host.test.js"
+    ]
+  }
+]

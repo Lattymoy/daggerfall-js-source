@@ -15216,3 +15216,12 @@ Of every location in the world, the start cell holds one: Daggerfall's Privateer
 
 - **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
   FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.
+
+## CARDS5 (2026-10-08, Mac: "Do 3 4 and 5") - the relay deals
+
+The relay's newest authority, beside the gate's boss and the arena's bout: a building's room keeps its card tables
+(`net/holdemTable.js`, with `net/cardLaw.js` in the bundle - `world176`, undeployed, re-hashed in place). The `holdem`
+frame asks (sit, stand, act, look - `validHoldemIn`, `holdemGate`, `HOLDEM_RELAY_MIN`); the relay shuffles from its own
+CSPRNG, keeps the deck, tells each seat its own cards alone and the room the public hand, runs the seat clock on the alarm
+and folds a leaver out of turn; the tables checkpointed to storage. Friendly - no gold moves. The whole record is
+`11-Multiplayer/Tavern-Cards.md` section 17.

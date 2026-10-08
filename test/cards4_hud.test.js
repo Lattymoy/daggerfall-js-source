@@ -108,7 +108,7 @@ test('CARDS4 the painted panel: presses handed back, never reaching the game; go
 test('CARDS4 the interior host: the table on the seat, the purse only off the online lane, the evening under any window, the cash-out on every road off the seat', () => {
   const src = read('src/scenes/worldModes.js');
   const has = (s, why) => assert.ok(src.includes(s), why ?? s);
-  has("    say('You take a seat at the card table.');\n    if (cardSeat.free.length) openCardGame(cardSeat.free.length + 1);", 'sitting opens the table - sized to the free chairs');
+  has("    say('You take a seat at the card table.');\n    if (cardSeat.free.length || host.cardOnline?.ok?.()) openCardGame(cardSeat.free.length + 1);", 'sitting opens the table - sized to the free chairs; online the relay\'s table needs none');
   has('    closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out', 'standing closes it - press, step, swing, Escape, a hit, the forced exit and the door all stand through standFromCardTable');
   has('    const friendly = !!host.realmAct || isOnlinePage();', 'a realm character, or any online page, plays a friendly game');
   has('    const buyIn = buyInRange(friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);');
@@ -119,7 +119,7 @@ test('CARDS4 the interior host: the table on the seat, the purse only off the on
   has('    const stakes = stakesFor(interiorBuilding?.quality ?? 10);', 'the tavern\'s quality sets the stakes');
   has("    if (game !== cardGame) return;   // a press from a panel already gone");
   // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD: the game slot is null before the session leaves and the panel goes.
-  const close = src.slice(src.indexOf('  function closeCardGame({ cashOut = true } = {}) {'), src.indexOf('  function closeCardGame({ cashOut = true } = {}) {') + 900);
+  const close = src.slice(src.indexOf('  function closeCardGame({ cashOut = true } = {}) {'), src.indexOf('  function closeCardGame({ cashOut = true } = {}) {') + 1600);
   assert.ok(close.indexOf('cardGame = null;') < close.indexOf('g.session.leave(') && close.indexOf('cardGame = null;') < close.indexOf('g.hud?.destroy();'));
   has('  const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];', 'the table\'s own source');
   // Every road that drops the seat goes through standFromCardTable, never a bare clear that would keep the gold.

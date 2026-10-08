@@ -132,6 +132,6 @@ test('CARDS3 the interior host: the cloth\'s picture made with the deal, fed eve
   assert.match(body('cardSceneFor'), /s\.kind === 'player' \? cardSeat\.seat : others\[i - 1\]/);
   assert.match(src, /const cardHoleOf = \(session\) => \(seat, r\) => \{\n\s+const v = session\.view\(\)/, 'the holes the player may see come from their own view');
   // drawn in the room's own pass, after the solid room's models and the decor's
-  const draw = src.indexOf('if (cardGame?.scene) cardGame.draw.draw(cardGame.scene.poses(performance.now() / 1000, cardGame.session.view()));');
+  const draw = src.indexOf('if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);');
   assert.ok(draw > src.indexOf('decorTool.drawMounts(renderer);') && draw < src.indexOf('interiorCtx.flatAnims.tick(dt);'));
 });

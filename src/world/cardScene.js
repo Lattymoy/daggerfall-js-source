@@ -12,7 +12,7 @@
 // through its middle; the burn at the board's head; the muck and the pot either side of the board.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { CARD_W, CARD_L, CARD_T, DEAL_LIFT, DEAL_STAGGER, dealMotion, flipMotion, flipShift, chipDiscs, pushAt, hashSeed, PUSH_S, SCOOP_LIFT } from './cardMotion.js';
+import { CARD_W, CARD_L, CARD_T, DEAL_LIFT, DEAL_STAGGER, dealMotion, flipMotion, flipShift, chipDiscs, pushAt, hashSeed, PUSH_S, SCOOP_LIFT, RIFFLE_S, riffleAt } from './cardMotion.js';
 import { SEAT_OUT } from '../player/seatPose.js';
 
 /** MEASURE (CARDS3): the places on the cloth, metres in from a seat's edge of the table. */
@@ -62,6 +62,7 @@ export function tablePlaces(frame, seats, seatOf) {
       holes: [inward(HOLE_IN, -CARD_W * 0.56), inward(HOLE_IN, CARD_W * 0.56)],
       bet: inward(BET_IN), stack: inward(STACK_IN, STACK_SIDE),
       deal: [...inward(0).slice(0, 1), top + DEAL_LIFT, inward(0)[2]],   // the dealer's hand over the edge before him
+      deck: inward(BET_IN * 0.7, -CARD_W * 2.2),   // CARDS3b: where he riffles the deck, to the left of his bet
     };
   };
   return {
@@ -91,6 +92,7 @@ export class CardScene {
     this.pushes = [];   // { amount, from, to, t0, yaw }
     this.lastBets = new Map();   // session seat -> its bet on the street, for the push at the street's end
     this.busyUntil = 0;          // the clock the cloth's last throw or turn ends on - the next street waits for it
+    this.riffle = null;          // CARDS3b: the dealer's riffle before the deal - { t0, at, yaw }
   }
 
   /** The pose a card has at `t` - the motion in force (the last begun). */
@@ -120,16 +122,20 @@ export class CardScene {
       this.lastBets.clear();
       this.busyUntil = t;
       this.handNo = e.hand;
+      if (Number.isInteger(e.seed)) this.tableSeed = e.seed >>> 0;   // CARDS5: the relay's deal names the cloth's seed - one picture for the room
       this.board = 0;
       this.dealer = e.button;
       const n = e.seats.length, btn = e.seats.indexOf(e.button);
       const from = this.places.seats[e.button].deal;
+      // CARDS3b: the dealer riffles the deck first; the deal begins when the riffle is done
+      this.riffle = { t0: t, at: this.places.seats[e.button].deck, yaw: this.places.seats[e.button].yaw };
+      const dealAt = t + RIFFLE_S;
       let order = 0;
       for (let r = 0; r < 2; r++) for (let k = 1; k <= n; k++) {
         const seat = e.seats[(btn + k) % n];
         const place = this.places.seats[seat];
         const mine = seat === this.playerSeat;
-        const m = dealMotion({ from, to: this._rest(place.holes[r], r), yaw: place.yaw, roll: Math.PI, t0: t + DEAL_STAGGER * order++, seed: hashSeed(this.tableSeed, this.handNo, seat, r) });
+        const m = dealMotion({ from, to: this._rest(place.holes[r], r), yaw: place.yaw, roll: Math.PI, t0: dealAt + DEAL_STAGGER * order++, seed: hashSeed(this.tableSeed, this.handNo, seat, r) });
         const motions = /** @type {any[]} */ ([m]);
         if (mine) motions.push(flipMotion({ pos: m.rest, yaw: m.at(Infinity).yaw, fromRoll: Math.PI, t0: m.t1 + TURN_DELAY, pivot: 'middle' }));   // he turns his own up where they lie
         this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: mine ? holeOf(seat, r) : -1, seat, motions });
@@ -217,8 +223,9 @@ export class CardScene {
     for (const c of this.cards) {
       const p = this._poseOf(c, t);
       if (p.held) continue;   // still in the dealer's hand
-      cards.push({ card: c.card, pos: p.pos, yaw: p.yaw, roll: p.roll });
+      cards.push({ card: c.card, pos: p.pos, yaw: p.yaw, roll: p.roll, id: c.id, seat: c.seat, settled: t >= c.motions[c.motions.length - 1].t1 });   // CARDS3b: whose, and at rest - the player's settled two are his to hold
     }
+    if (this.riffle) cards.push(...riffleAt(t, this.riffle.t0, this.riffle.at, this.riffle.yaw));
     const chips = [];
     const live = this.pushes.filter((p) => t < p.t0 + PUSH_S);
     // a push is drawn once it begins; a pot share waiting its turn is still in the pot's pile (below)

@@ -206,9 +206,13 @@ import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE, tableFrame } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
 import { seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seat on the pose
 import { CardTableSession, stakesFor, buyInRange, seatPatrons, regularsFor, regularsAfter } from '../systems/cardTableSession.js';   // CARDS4: the table's evening
-import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';   // CARDS4: its panel
+import { RemoteCardTable } from '../systems/cardRemoteTable.js';   // CARDS5: the relay's table as this client sees it
+import { regularsToStand, regularBark, BARK_MS } from '../world/cardRegulars.js';   // CARDS4b: the regulars in their chairs
+import { heldMatrices, tablePoint, onStack, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged
+import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';   // CARDS3b: the cursor's ray, and the hand on the screen
+import { createCardTableHud, cardHudModel, eventLine, showdownWinners } from '../ui/cardTableHud.js';   // CARDS4: its panel
 import { tablePlaces, CardScene } from '../world/cardScene.js';   // CARDS3: the cards on the cloth
-import { hashSeed } from '../world/cardMotion.js';   // CARDS3: and its throws' seeds (AUDIT CARDS-2 L9: the town's too)
+import { hashSeed, chipDiscs } from '../world/cardMotion.js';   // CARDS3: and its throws' seeds (AUDIT CARDS-2 L9: the town's too)
 import { createCardTableDraw } from '../render/cardTableDraw.js';   // CARDS3: and their bodies on the GL
 import { residentName } from '../systems/livingWorld/census.js';   // CARDS4: the tavern's regulars, named as the living world names its people
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
@@ -501,7 +505,7 @@ export function createWorldModes(host) {
     cam.pitch = seats[k].pitch;
     mwViewFirstPerson();   // AUDIT CARDS-2 L11: the seat's view is the head's (section 12) - the frame's head-hold keeps it there
     say('You take a seat at the card table.');
-    if (cardSeat.free.length) openCardGame(cardSeat.free.length + 1);
+    if (cardSeat.free.length || host.cardOnline?.ok?.()) openCardGame(cardSeat.free.length + 1);   // CARDS5: online, the relay's table needs no regular's chair
     else say('There is no chair left at this table for a regular.');
   }
   /** `cashOut` false: a load's road - the save's purse is already the character's, and the chips were bought in the
@@ -526,10 +530,12 @@ export function createWorldModes(host) {
    *  seed of the town and the building's key: AUDIT CARDS-2 L9, a building key is its block's, alike in every town), as
    *  many as the table's free chairs. */
   const cardTableKey = () => `${homeTownOf(interiorBuilding) >>> 0}:${(interiorBuilding?.buildingKey ?? 0) >>> 0}:${cardSeat?.table ?? 0}`;
-  const tavernRegulars = (n) => {
+  const tavernRegulars = (n) => regularSeeds(n).map((r) => residentName(r.seed, r.bank, r.gender));
+  /** CARDS4b: each regular's seed, bank and gender - the namer's own, so the same seed dresses him (world/cardRegulars.js). */
+  const regularSeeds = (n) => {
     const b = interiorBuilding, bank = getNameBankOfRegion(b?.regionIndex ?? 0);
     const town = Math.imul(homeTownOf(b) >>> 0, 0x9E3779B1) >>> 0;
-    return Array.from({ length: n }, (_, i) => residentName((((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) ^ town) >>> 0, bank, i % 2));
+    return Array.from({ length: n }, (_, i) => ({ seed: (((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) ^ town) >>> 0, bank, gender: i % 2 }));
   };
   const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);
   /** CARDS4: the friendly game's chips - a stake to play with, never gold. */
@@ -539,20 +545,48 @@ export function createWorldModes(host) {
     const stakes = stakesFor(interiorBuilding?.quality ?? 10);
     const friendly = !!host.realmAct || isOnlinePage();
     const buyIn = buyInRange(friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
-    const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), key: cardTableKey(), day: cardDay(), session: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer) };   // CARDS3: the draw makes nothing until the first card
+    const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), regulars: null, barks: new Map(), key: cardTableKey(), day: cardDay(), session: null, remote: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer), paintedAt: 0 };   // CARDS3: the draw makes nothing until the first card
     cardGame = game;
     game.hud = createCardTableHud({ onPress: (id, v) => cardPress(game, id, v) });
+    game.regulars = new Map(regularSeeds(game.names.length).map((r, i) => [game.names[i], r]));   // CARDS4b: who each regular is, to draw him
+    game.unlisten = cardPointerListen(game);   // CARDS3b: the cursor on the hand and the chips - its listeners the game's, gone with it
+    // CARDS5: online, a relay that deals runs this table - the player sits at it with the friendly chips, the room sees
+    // it, and the other players at it play him; alone, he may play the regulars instead (the friendly game, below)
+    if (host.cardOnline?.ok?.()) {
+      // the game's table first, the word after - the relay's answer may come before the next line runs
+      closeCardWatch(cardSeat.table);   // the cloth is the game's now, not a watcher's
+      game.remote = new RemoteCardTable({ myId: host.cardOnline.id(), chair: cardSeat.seat });
+      game.table = cardSeat.table;
+      game.scene = cardSceneFor(game.remote);
+      game.phase = 'playing';
+      if (!host.cardOnline.send({ op: 'sit', table: cardSeat.table, chair: cardSeat.seat, chairs: cardSeatsOf(cardSeat.table).length, bb: stakes.bb })) { game.remote = null; game.scene = null; game.phase = 'buyin'; }
+    }
     paintCardGame();
   }
   function paintCardGame() {
     const g = cardGame;
     if (!g) return;
-    g.hud.render(cardHudModel({ phase: g.phase, view: g.session?.view() ?? null, legal: g.session?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why }));
+    const table = g.remote ?? g.session;
+    g.paintedAt = performance.now();
+    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
+      online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error } : null }));
   }
   function cardPress(game, id, value) {
     if (game !== cardGame) return;   // a press from a panel already gone
     const now = performance.now();
     if (id === 'stand') { standFromCardTable(); return; }
+    if (game.remote) {
+      // CARDS5: the relay's table - an action is a word to it, and the relay answers with the table; alone, the regulars
+      if (id === 'regulars') {
+        host.cardOnline?.send({ op: 'stand', table: cardSeat.table });
+        game.remote = null; game.scene = null; game.phase = 'buyin'; game.log = [];
+      } else if (['fold', 'check', 'call', 'raise'].includes(id)) {
+        host.cardOnline?.send({ op: 'act', table: cardSeat.table, action: id === 'raise' ? { type: 'raise', to: Math.floor(Number(value) || 0) } : { type: id } });
+        game.hud.resetSlider();
+      }
+      paintCardGame();
+      return;
+    }
     if (id === 'deal') {
       if (game.phase !== 'buyin' || !game.buyIn) return;
       // AUDIT CARDS-2 M2: the purse read again at the press - deductGold never refuses (it empties the purse and the
@@ -581,14 +615,16 @@ export function createWorldModes(host) {
   /** CARDS4: the frame's turn of the table - the patrons' thought and the deal, the events into the log. */
   function cardGameFrame(now) {
     if (cardSeat && !(playerEntity.health > 0)) { standFromCardTable(); return; }   // AUDIT CARDS-2: the exhaustion's collapse sets health to 0 past every hurt listener - the dead do not sit at cards
+    cardWatchFrame();
     const g = cardGame;
+    if (g?.remote) { cardRemoteFrame(g, now); return; }
     if (!g?.session) return;
     g.session.tick(now);
     const events = g.session.drain();
     if (!events.length) return;
     const names = g.session.seats.map((x) => x.name);
     const holeOf = cardHoleOf(g.session);
-    for (const e of events) { g.scene?.onEvent(e, holeOf); const line = eventLine(e, names, g.session.playerSeat); if (line) g.log.push(line); }
+    for (const e of events) { g.scene?.onEvent(e, holeOf); const line = eventLine(e, names, g.session.playerSeat); if (line) g.log.push(line); cardBark(g, e, now); }
     g.log = g.log.slice(-12);
     if (g.session.over && g.phase !== 'over') { g.phase = 'over'; g.why = g.session.over; }
     if (!g.friendly && events.some((e) => e.t === 'showdown')) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);   // the book after every hand: a save mid-evening is refused, but the purses are the table's
@@ -600,6 +636,7 @@ export function createWorldModes(host) {
     const g = cardGame;
     if (!g) return;
     cardGame = null;
+    if (g.remote) host.cardOnline?.send({ op: 'stand', table: g.table });   // CARDS5: up from the relay's table - folded out of turn there if a hand holds him (the game's own table: the seat is already empty)
     const chips = g.session ? g.session.leave(performance.now()) : 0;
     if (!cashOut) { /* a load's road: the table belonged to the game the load threw away - its chips and its book with it */ }
     else if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }
@@ -607,6 +644,7 @@ export function createWorldModes(host) {
     if (cashOut && g.session && !g.friendly) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);
     g.hud?.destroy();
     g.draw?.destroy();   // CARDS3: the atlas and the meshes go with the table (EVERY ALLOCATION HAS AN OWNER)
+    g.unlisten?.();   // CARDS3b: and the cursor's listeners
     if (g.releaseCursor?.()) host.relock?.();
   }
   /** CARDS3: the cloth's picture for a session - the player in the seat they took, the regulars round the others in
@@ -614,11 +652,155 @@ export function createWorldModes(host) {
   function cardSceneFor(session) {
     const t = cardSeat && interiorCtx?.tables?.[cardSeat.table];
     if (!t) return null;
+    if (session instanceof RemoteCardTable) return cardSceneForTable(cardSeat.table, null, cardSeat.seat);   // CARDS5: the relay's table - every chair a seat
     const seats = cardSeatsOf(cardSeat.table);
     const others = cardSeat.free ?? [];
     const seatOf = session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : others[i - 1]));
     if (seatOf.some((k) => k === undefined)) return null;
     return new CardScene({ places: tablePlaces(tableFrame(t), seats, seatOf), playerSeat: session.playerSeat, tableSeed: hashSeed(homeTownOf(interiorBuilding) >>> 0, (interiorBuilding?.buildingKey ?? 0) >>> 0, cardSeat.table) });
+  }
+  /** CARDS4b: a regular says his play - over his head for BARK_MS (world/cardRegulars.js regularBark); a showdown's
+   *  winner his win. */
+  function cardBark(g, e, now) {
+    const roll = (cardRand32() >>> 0) / 2 ** 32;
+    const seatsOf = (e.t === 'act' || e.t === 'leave') ? [e.seat] : e.t === 'showdown' ? showdownWinners(e).flatMap((w) => w.seats) : [];
+    for (const i of seatsOf) {
+      if (g.session?.seats[i]?.kind !== 'patron') continue;
+      const text = regularBark(e.t === 'showdown' ? { t: 'won' } : e, roll);
+      if (text) g.barks.set(i, { text, until: now + BARK_MS });
+    }
+  }
+  /** CARDS4b: the regulars at this table to stand this frame - none at a relay's table or a game not dealt. */
+  function cardRegularsNow(now) {
+    const g = cardGame;
+    if (!g?.session || g.remote || !cardSeat) return [];
+    const seats = cardSeatsOf(cardSeat.table);
+    const seatOf = g.session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : cardSeat.free[i - 1]));
+    return regularsToStand({ session: g.session, seats, seatOf, regulars: g.regulars, key: g.key }).map((r) => {
+      const i = Number(r.key.split(':').pop());
+      const b = g.barks.get(i);
+      return { ...r, say: b && now < b.until ? b.text : null };
+    });
+  }
+  // CARDS3b (bible/11-Multiplayer/Tavern-Cards.md section 19): THE HAND HELD AND THE CHIPS UNDER THE CURSOR. The
+  // player's two, landed and turned, are drawn held before the eye (world/cardHand.js heldMatrices) - peeked, they come
+  // up and spread, when the cursor is over them or a press is held on them; a press on his own stack picks up the
+  // panel's bet (dragBet), carried on the cloth under the cursor (tablePoint), let go in the betting ground (inBetZone)
+  // as the bet. The press is taken at the capture phase, before the seat's "a swing stands you up" ever hears it; a
+  // press on the panel is the panel's.
+  const cardMouseAt = (e) => { const r = canvas.getBoundingClientRect?.() ?? { left: 0, top: 0 }; return [e.clientX - r.left, e.clientY - r.top]; };
+  /** The cloth's point under the cursor at the last drawn frame, or null. */
+  function cardTableAt(g, mouse) {
+    const f = g.frame, place = g.scene?.places;
+    if (!f || !mouse || !place) return null;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    return tablePoint(f.eye, rayDirFromScreen(mouse[0], mouse[1], w, h, f.proj, f.view, f.eye, worldViewportRect(w, h)), place.board[0][1]);
+  }
+  /** True when the cursor is over the held hand (near either card's middle on the screen). */
+  function cardHandHovered(g) {
+    const f = g.frame;
+    if (!f || !g.mouse || !g.heldAt?.length) return false;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    return g.heldAt.some((p) => { const s = projectToScreen(p, w, h, f.proj, f.view, worldViewportRect(w, h)); return s.front && Math.hypot(s.x - g.mouse[0], s.y - g.mouse[1]) < h * 0.09; });
+  }
+  function cardPointerListen(g) {
+    if (typeof window === 'undefined' || !window.addEventListener) return null;
+    const mine = () => g === cardGame && !!cardSeat;
+    const onPanel = (e) => !!e.target?.closest?.('.dfcards');
+    const move = (e) => { if (!mine()) return; g.mouse = cardMouseAt(e); if (g.drag) g.drag.point = cardTableAt(g, g.mouse) ?? g.drag.point; };
+    const down = (e) => {
+      if (!mine() || onPanel(e)) return;
+      g.mouse = cardMouseAt(e);
+      const place = g.scene?.places.seats[g.scene.playerSeat];
+      const table = g.remote ?? g.session;
+      const p = cardTableAt(g, g.mouse);
+      const view = table?.view?.();
+      const myBet = view?.hand ? view.hand.seats[view.handSeats.indexOf(g.scene.playerSeat)]?.bet ?? 0 : 0;
+      const bet = place && onStack(p, place) ? dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet) : null;
+      if (bet) g.drag = { bet, point: p };
+      else if (cardHandHovered(g)) g.peekHeld = true;
+      else return;
+      e.stopImmediatePropagation?.(); e.preventDefault?.();   // a press on the stack or the hand is never a swing that stands you up
+    };
+    const up = (e) => {
+      if (!mine()) return;
+      g.peekHeld = false;
+      const d = g.drag;
+      if (!d) return;
+      g.drag = null;
+      e.stopImmediatePropagation?.();
+      const place = g.scene?.places.seats[g.scene.playerSeat];
+      if (place && inBetZone(d.point, place)) cardPress(g, d.bet.id, d.bet.value);   // let go in the betting ground: the bet
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mousedown', down, true);
+    window.addEventListener('mouseup', up, true);
+    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mousedown', down, true); window.removeEventListener('mouseup', up, true); };
+  }
+  /** The table's picture this frame: the cloth, the player's settled two held before the eye (peeked as the cursor asks),
+   *  and a bet being carried under the cursor. */
+  function cardDrawGame(g, proj, view, eye) {
+    const now = performance.now();
+    const p = g.scene.poses(now / 1000, (g.remote ?? g.session).view());
+    const dt = Math.min(0.1, Math.max(0, (now - (g.drawnAt ?? now)) / 1000));
+    g.drawnAt = now;
+    g.frame = { proj, view: Float32Array.from(view), eye: eye.slice() };
+    const mine = g.scene.playerSeat;
+    const held = mine >= 0 ? p.cards.filter((c) => c.seat === mine && c.settled && Math.cos(c.roll) > 0.5).sort((a, b) => (a.id < b.id ? -1 : 1)) : [];
+    g.peek = (g.peek ?? 0) + (((g.peekHeld || cardHandHovered(g)) ? 1 : 0) - (g.peek ?? 0)) * Math.min(1, dt * PEEK_RATE);
+    const mats = heldMatrices(view, held.length, g.peek);
+    g.heldAt = mats.map((m) => [m[12], m[13], m[14]]);
+    const cards = [...p.cards.filter((c) => !held.includes(c)), ...held.map((c, i) => ({ card: c.card, matrix: mats[i] }))];
+    const place = g.scene.places.seats[mine];
+    const chips = g.drag?.point && place ? [...p.chips, ...chipDiscs(g.drag.bet.amount, [g.drag.point[0], g.drag.point[1] + DRAG_LIFT, g.drag.point[2]], place.yaw)] : p.chips;
+    g.draw.draw({ cards, chips });
+  }
+  /** CARDS5: the relay's table's turn of the frame - its events onto the cloth and into the log, the panel repainted
+   *  as they come and once a second while my clock runs. */
+  function cardRemoteFrame(g, now) {
+    const events = g.remote.drain();
+    const names = g.remote.state ? g.remote.state.seats.map((x) => x?.name ?? '') : [];
+    for (const e of events) { g.scene?.onEvent(e, (seat, r) => g.remote.holeOf(seat, r)); const line = eventLine(e, names, g.remote.playerSeat); if (line) g.log.push(line); }
+    g.log = g.log.slice(-12);
+    if (events.length || (g.remote.legal() && now - g.paintedAt > 1000)) paintCardGame();
+  }
+  // CARDS5: THE ROOM'S OTHER TABLES, WATCHED (section 2: a player standing near a table sees the community cards and
+  // the pot, never a hand). The relay tells the whole room every table's events; a table this player does not sit at is
+  // laid on its cloth all the same - a scene and a draw of its own, freed when its last seat stands, the room changes or
+  // the interior is left (EVERY ALLOCATION HAS AN OWNER: the watch map, closeCardWatch).
+  const cardWatches = new Map();   // table index -> { remote, scene, draw, ctx }
+  function closeCardWatch(i) { const w = cardWatches.get(i); if (!w) return; cardWatches.delete(i); w.draw.destroy(); }
+  function closeCardWatches() { for (const i of [...cardWatches.keys()]) closeCardWatch(i); }
+  /** A frame from the relay's card table: the seated game's, or a watched one's. */
+  function cardOnlineFrame(f) {
+    if (mode !== 'interior' || !interiorCtx || !Number.isInteger(f?.table)) return;
+    if (cardGame?.remote && f.table === cardSeat?.table) { cardGame.remote.ingest(f); return; }
+    if (!f.state && !cardWatches.has(f.table)) return;   // a hole or a turn is a seat's - nothing to watch
+    let w = cardWatches.get(f.table);
+    if (!w) {
+      const remote = new RemoteCardTable({ myId: host.cardOnline?.id?.() ?? null });
+      const scene = cardSceneForTable(f.table, f.state?.chairs, -1);
+      if (!scene) return;
+      w = { remote, scene, draw: createCardTableDraw(renderer), ctx: interiorCtx };
+      cardWatches.set(f.table, w);
+    }
+    w.remote.ingest(f);
+  }
+  /** The watched tables' turn of the frame: their events onto their cloths; a table emptied, or of another room, let go. */
+  function cardWatchFrame() {
+    for (const [i, w] of cardWatches) {
+      if (w.ctx !== interiorCtx) { closeCardWatch(i); continue; }
+      for (const e of w.remote.drain()) w.scene.onEvent(e, () => -1);
+      if (w.remote.state && w.remote.seated === 0 && !w.remote.state.hand) closeCardWatch(i);
+    }
+  }
+  /** CARDS5: a cloth for table `i` with every chair its own seat (the relay's seats ARE the chairs), `mine` the chair I
+   *  sit in (-1 watching) - or null when this room's chairs are not the relay's table's. */
+  function cardSceneForTable(i, chairs, mine) {
+    const t = interiorCtx?.tables?.[i];
+    const seats = t ? cardSeatsOf(i) : [];
+    if (!t || !seats.length || (chairs != null && chairs !== seats.length)) return null;
+    return new CardScene({ places: tablePlaces(tableFrame(t), seats, seats.map((_, k) => k)), playerSeat: mine, tableSeed: 0 });
   }
   /** CARDS3: the hole cards the player may see - their own; the rest are backs (-1) until a showdown says them. */
   const cardHoleOf = (session) => (seat, r) => {
@@ -6065,7 +6247,7 @@ export function createWorldModes(host) {
    * the next line - so the sixth mode turns the suite red rather than
    * leaking a street.
    */
-  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };
+  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; closeCardWatches(); } };   /* CARDS5: the watched tables' cloths go with the interior */
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -9053,6 +9235,7 @@ export function createWorldModes(host) {
     seatHallsFrame(performance.now());   // AUDIT SEATS-2 C1: the seat halls, known late
     decorTool.frame({ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' });   // DECOR1d: the button, the panel's scan, the free camera
     if (mode === 'interior') cardGameFrame(performance.now());   // CARDS4: the card table's patrons think and deal on, under any window
+    host.cardRegulars?.(mode === 'interior' ? cardRegularsNow(performance.now()) : [], dt, cam.pos);   // CARDS4b: the regulars in their chairs, drawn as peers are (world.js) - none outside a building
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
     // machine's OWN tick freezes under a paused window - PauseGame
@@ -9720,7 +9903,8 @@ export function createWorldModes(host) {
     if (mwStamp !== _decorMwStamp) { _decorMwStamp = mwStamp; interiorDecor.refreshMounts(); }
     interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room
     decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung
-    if (cardGame?.scene) cardGame.draw.draw(cardGame.scene.poses(performance.now() / 1000, cardGame.session.view()));   // CARDS3: the cards and chips on the cloth
+    if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);   // CARDS3: the cards and chips on the cloth - CARDS3b: the player's own two held before the eye
+    for (const w of cardWatches.values()) if (w.remote.state) w.draw.draw(w.scene.poses(performance.now() / 1000, w.remote.view()));   // CARDS5: and the tables this player watches
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
@@ -12189,7 +12373,8 @@ export function createWorldModes(host) {
     get footstepKind() { return _modeFootstepKind; },
     /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
      *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */
-    cardTableLive: () => !!cardGame?.session,   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave)
+    cardTableLive: () => !!cardGame?.session,
+    cardOnlineFrame,   // CARDS5: the relay's card table's frames (world.js online.onHoldem)   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave)
     seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),   // AUDIT CARDS B1: and never outside a building, whatever road left it
     // PARTY-REST DROP (AUDIT DROPS D1, kept): world.js reads `modes?.restState` - THIS object. The party-rest
     // drop wrote the getter below onto interiorKeyCtx, the interior KEY table's own ctx, which this factory

@@ -196,3 +196,33 @@ export function pushAt(from, to, t0, t, lift = 0) {
   const u = smooth((t - t0) / PUSH_S);
   return [lerp(from[0], to[0], u), lerp(from[1], to[1], u) + lift * 4 * u * (1 - u), lerp(from[2], to[2], u)];
 }
+
+/** MEASURE (CARDS3b): the dealer's riffle - its length, the cards in each half, how far the halves part. */
+export const RIFFLE_S = 0.8;
+export const RIFFLE_HALF = 8;
+export const RIFFLE_PART = 0.05;
+
+/**
+ * The dealer's riffle at `at` (a point on the cloth before him), facing `yaw`, from `t0`: the deck cut into two halves
+ * that part and bend, then fall card by card, one from each in turn, into one pile, squared at the end - the cards'
+ * poses at `t` (`[{card: -1, pos, yaw, roll}]`, backs up), none before t0 or after RIFFLE_S.
+ * @param {number} t @param {number} t0 @param {number[]} at @param {number} yaw
+ */
+export function riffleAt(t, t0, at, yaw) {
+  const u = (t - t0) / RIFFLE_S;
+  if (!(u >= 0 && u < 1)) return [];
+  const r = [Math.cos(yaw), 0 - Math.sin(yaw)];
+  const n = RIFFLE_HALF * 2;
+  const part = smooth(Math.min(1, u / 0.25)) * (1 - smooth((u - 0.8) / 0.2));   // apart, then together
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const side = k % 2 ? 1 : -1;                         // the halves, interleaved as they fall
+    const fall = 0.25 + 0.55 * (k / n);                  // the moment card k leaves its half
+    const fallen = smooth((u - fall) / 0.06);
+    const inHalf = Math.floor(k / 2);
+    const off = side * RIFFLE_PART * part * (1 - fallen);
+    const layer = fallen > 0.5 ? k : RIFFLE_HALF + inHalf;
+    out.push({ card: -1, pos: [at[0] + r[0] * off, at[1] + CARD_T * (0.5 + layer) + 0.012 * (1 - fallen) * part, at[2] + r[1] * off], yaw, roll: Math.PI + side * 0.35 * part * (1 - fallen) });
+  }
+  return out;
+}

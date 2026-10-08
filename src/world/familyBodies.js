@@ -20,7 +20,7 @@ export const familyPeerId = (resId) => `fam:${resId}`;
 
 /** A member's pose as the peer layers read one: the scene's own point (the layers' `toScene` is the identity here), the
  *  yaw, the move bit. */
-export const familyShown = (feet, yaw, moving) => ({ x: feet[0], y: feet[1], z: feet[2], yaw: Number.isFinite(yaw) ? yaw : 0, mv: moving ? 1 : 0 });
+export const familyShown = (feet, yaw, moving, st = 0) => ({ x: feet[0], y: feet[1], z: feet[2], yaw: Number.isFinite(yaw) ? yaw : 0, mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });   // CARDS4b: `st` seated (a card table's regular), the pose's own byte
 const sceneOf = (/** @type {any} */ s) => [s.x, s.y, s.z];
 
 /**
@@ -36,11 +36,11 @@ export function createFamilyBodies({ dolls, bodies = null }) {
     /**
      * One of the line at `feet` (the scene's frame), facing `yaw`, walking or not. True when they are drawn here - the
      * caller draws its own sprite for them no more this frame. A resident with no look is not.
-     * @param {any} res @param {number[]} feet @param {number} yaw @param {boolean} moving
+     * @param {any} res @param {number[]} feet @param {number} yaw @param {boolean} moving @param {number} [st] seated - the pose's seat byte
      */
-    stand(res, feet, yaw, moving) {
+    stand(res, feet, yaw, moving, st = 0) {
       if (!res?.look || !feet) return false;
-      peers.push({ id: familyPeerId(res.id), look: res.look, shown: familyShown(feet, yaw, moving) });
+      peers.push({ id: familyPeerId(res.id), look: res.look, shown: familyShown(feet, yaw, moving, st) });
       return true;
     },
     /** The frame ends: the Morrowind bodies first, then a class sprite or a paperdoll for whoever stands in none. */
