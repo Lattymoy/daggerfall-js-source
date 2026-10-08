@@ -153,6 +153,7 @@ import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPag
 import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
 import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
+import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage } from './collectionsPage.js';   // COLLECTIONS: the codex and the cards
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
 import { affiliations } from '../systems/affiliations.js';
@@ -320,7 +321,7 @@ let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear'
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
 let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall
-let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores
+let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores | collections
 let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
 let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
 
@@ -3689,6 +3690,7 @@ function pauseHoldings(body) {
     companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf }),   // COMPANION-ROSTER
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
+    collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),   // COLLECTIONS: the codex and the cards
   }[holdSec];
   draw?.(detail);
   wrap.append(detail);
@@ -3845,7 +3847,7 @@ const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id 
 const statsSections = () => [...STATS_SECTIONS, ...(profPagesShown() ? PROF_STATS_SECTIONS : []), ...(vendorPageShown() ? VENDOR_PAGE_SECTIONS : [])];   // HOME-VENDOR: the Vendor page, under the Professions
 /** HOLDINGS: the Holdings rail's pages - what the player owns (the Stable, the Fleet while ships sail, the Stores
  *  online) and who follows them (the Companions, the Revenants), each while it has a thing to show. */
-const holdingsSections = () => [...(stablePageShown() ? STABLE_PAGE_SECTIONS : []), ...(fleetPageShown() ? FLEET_PAGE_SECTIONS : []), ...(companionPageShown() ? COMPANION_PAGE_SECTIONS : []), ...(revenantPageShown(playerEntity) ? REVENANT_PAGE_SECTIONS : []), ...(profPagesShown() ? PROF_HOLD_SECTIONS : [])];
+const holdingsSections = () => [...(stablePageShown() ? STABLE_PAGE_SECTIONS : []), ...(fleetPageShown() ? FLEET_PAGE_SECTIONS : []), ...(companionPageShown() ? COMPANION_PAGE_SECTIONS : []), ...(revenantPageShown(playerEntity) ? REVENANT_PAGE_SECTIONS : []), ...(profPagesShown() ? PROF_HOLD_SECTIONS : []), ...(collectionsPageShown(playerEntity) ? COLLECTION_PAGE_SECTIONS : [])];   // COLLECTIONS
 
 function pauseStats(body) {
   const m = sheetModel(playerEntity);
@@ -4960,7 +4962,7 @@ export function mountEnhancedMenu(host, {
   holdSec = 'stable';   // HOLDINGS: the Holdings rail opens on its first page
   famSec = 'tree';   // LEGACY3: the Family rail opens on the tree, centred on the one played
   resetFamilyPages();
-  resetHoldingsPages(); resetFleetPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
+  resetHoldingsPages(); resetFleetPage(); resetCollectionsPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
   statsAllSkills = false;
   sysSec = 'save';
   category = CATEGORIES[0].id;

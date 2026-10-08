@@ -76,10 +76,10 @@ test('AUDIT CARDS-4 C3: a receipt the storage would not keep is not acked - the 
 
 test('AUDIT CARDS-4 C6: past the bound a sat stake goes first and a receipt never; a stake past what anything can bring home goes; a request the device cannot keep is never asked', async () => {
   const r = rig();
+  const unsat = await r.book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 });   // the oldest, never sat
   const first = await r.book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 });
-  r.book.seated(first.id);
-  for (let i = 1; i < CARD_KEPT_MAX; i++) await r.book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 });
-  const unsat = r.store.get(CARD_STAKES_KEY).filter((x) => !x.sat)[0];
+  r.book.seated(first.id);   // a later one, sat
+  for (let i = 2; i < CARD_KEPT_MAX; i++) await r.book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 });
   await r.book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 });
   const kept = r.store.get(CARD_STAKES_KEY);
   assert.equal(kept.length, CARD_KEPT_MAX);

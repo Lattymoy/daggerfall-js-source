@@ -15,6 +15,9 @@ slices, and a slice that ships one records any change here first.**
   where you can see other players sprites."**
 - answering this record (section 9): the order **"Hold'em first"**; the collectible rules **"Iliac Hand as
   proposed"**; the stakes **"Real gold"**; offline play **"Yes, patrons play"**.
+- Mac, 2026-10-08: **"So what about card collections? I think we add a new tab in holdings for the weapon codex and card
+  collection"**; asked, he answered: **"One 'Collections' tab"** (a Codex | Cards switch on one Holdings entry), the
+  collectible cards **"Painted in code"**, and the scope **"Tab + CARDS7 + CARDS8"** (section 26).
 
 ## How to read this page
 
@@ -201,8 +204,9 @@ Each ships alone and is verifiable without the next.
 4. **Offline play.** ANSWERED: tavern patrons play.
 5. **The card art.** ANSWERED for the house deck (2026-10-08, Mac: "give the cards daggerfall especially themes instead of
    the simple hearts queens and kings"; then, asked: the suits the Iliac Bay's kingdoms, the courts their royals, the ace
-   the crown's seal): the Hold'em deck is the Bay's, painted in code from paths (section 21). OPEN for the collectible
-   cards: who paints them, and in what style - needed by CARDS8, not before.
+   the crown's seal): the Hold'em deck is the Bay's, painted in code from paths (section 21). ANSWERED for the
+   collectible cards (2026-10-08, asked with CARDS8): **"Painted in code"** - each card a framed emblem of what it
+   pictures in its tier's colours, our own paths (section 26).
 
 ## 10. CARDS1 (2026-10-07): the cards' law
 

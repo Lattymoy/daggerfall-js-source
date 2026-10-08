@@ -79,6 +79,7 @@ test('AUDIT CARDS-4 M relay: owed cash-outs - told on a sit, never past their li
   for (let i = 0; i < 70; i++) { const o = await order(r, nowS(), { s: 'acct-peer-b' }); js.push(o.cj); await word(r, b, { op: 'void', table: 0, stake: o.stake }); }
   const kept = r.store.get('cashout:acct-peer-b').map((x) => x.j);
   assert.equal(kept.at(-1), js.at(-1), 'the newest kept');
+  assert.deepEqual(kept, js.slice(-64), 'the bound: the newest sixty-four');
   assert.ok(!kept.includes(v.cj), 'the oldest gone past the bound');
   // past their life, never told
   tick((CARD_RECEIPT_TTL_S + 60) * 1000);
