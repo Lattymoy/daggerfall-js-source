@@ -47,7 +47,7 @@ const DEVS = (v('DEVELOPER_HANDLES') ?? '').split(',').map((h) => h.trim()).filt
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SERAPH-WINGS vocabulary: the wings join AURAS last, "Seraph Wings" in words, their button in the Founder\'s gold; a look of their own - the fifth kind, their own mesh and motes, added whole (no shade); gold, white-hot at the heart (mutants: the word, the paint, the kind)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour'], 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour'], 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
   assert.equal(AURA_TEXT.seraphwings, 'Seraph Wings');
   assert.equal(AURA_PAINT.seraphwings, 'founder', 'the button in gold - the developer\'s own paint is a red');
   assert.ok(TITLES.includes(AURA_PAINT.seraphwings));

@@ -90,9 +90,9 @@ const find = (n, cls) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('AEGIS vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS after Dagon\'s Fire; "Aegis of Oblivion" and "Oblivion Ward" in words; a gradient out of the void into the ward\'s light - three violets, darkest first - edged in black, its middle the title\'s one colour and the glyph\'s; no other title\'s colour, apart from the Apostle\'s and the Protector\'s purples; the tendrils darker than the word; a classic mark of its own (mutants: the gradient turned round; the glyph in another colour; the edge dropped; a mark another glyph has)', () => {
-  assert.deepEqual(TITLES.slice(-4), ['aegis', 'primarch', 'crystalfist', 'hourbreaker'], 'the vocabulary\'s newest when it came - PRIMARCH\'s after it, CRYSTAL-FIST\'s after that, SD9b\'s Hourbreaker last (PIN MOVED)');
+  assert.deepEqual(TITLES.slice(-5), ['aegis', 'primarch', 'crystalfist', 'hourbreaker', 'hoursfirst'], 'the vocabulary\'s newest when it came - PRIMARCH\'s after it, CRYSTAL-FIST\'s after that, SD9b\'s Hourbreaker, then HOURS-FIRST\'s Hour\'s First last (PIN MOVED)');
   assert.deepEqual(GLYPHS.slice(-3), ['aegis', 'primarch', 'crystalfist']);
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour'], 'the Broker\'s fire, then the ward - PRIMARCH\'s radiance after it, SHADOW-CLOAK\'s cloak after that, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour'], 'the Broker\'s fire, then the ward - PRIMARCH\'s radiance after it, SHADOW-CLOAK\'s cloak after that, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
   assert.equal(TITLE_TEXT.aegis, 'Aegis of Oblivion', 'the owner: "Title: Aegis of Oblivion"');
   assert.equal(AURA_TEXT.oblivionward, 'Oblivion Ward');
   assert.equal(GLYPH_LABEL.aegis, 'Aegis of Oblivion', 'named on the account card');

@@ -58,7 +58,7 @@ const TAU = 2 * Math.PI;
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SHADOW-CLOAK vocabulary: the cloak joins AURAS after the radiance (SERAPH-WINGS\' wings after it), "Holo Shadow Cloak" in words, its button in the Shadow Fang\'s paint; a look of its own - the fourth kind, its own mesh, and it SHADES; its colours the title\'s own black and crimson (mutants: the word, the paint, the kind, the colour)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour'], 'the Broker\'s fire, the ward, the radiance, then the cloak - SERAPH-WINGS\' wings after it, CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour'], 'the Broker\'s fire, the ward, the radiance, then the cloak - SERAPH-WINGS\' wings after it, CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
   assert.equal(AURA_TEXT.shadowcloak, 'Holo Shadow Cloak', 'the owner\'s words: "A holo shadow cloak"');
   assert.equal(AURA_PAINT.shadowcloak, 'shadowfang', 'its button in the Shadow Fang\'s black and crimson');
   assert.ok(TITLES.includes(AURA_PAINT.shadowcloak));
