@@ -199,13 +199,18 @@ test('SERPENT-SET the hoard: every hoard - a ship that dealt and one that stood 
     assert.equal(list[list.length - 1].kind, 'gold', 'the gold last');
     assert.equal(list[list.length - 2].item, ember[0].item, 'the embers just before it');
   }
-  // the seed's own, pinned whole: a dealer's seed 2 at level 12 finds Constrictor's Grip, after the hoard's own two
+  // the seed's own, pinned whole: a dealer's seed 2 at level 12 - the hoard's own two, the broadsword carrying CAST-SPEED's
+  // line off its last pass (PIN MOVED (CAST-SPEED): that draw moved the Coilscale roll after it, which found Constrictor's
+  // Grip before; seed 12345 at level 20 finds the set piece now - serpent1_client's hoard pin)
   const h = rollSerpentSpoils(2, 12, 'dealt');
   assert.deepEqual([h.gold, h.pieces.map((p) => [p.item.name, p.tier])], [2100, [
-    ["Warrior's Broadsword of Skill", 'rare'], ["Porter's Amulet", 'magic'], ["Constrictor's Grip", 'aetheric'],
+    ["Warrior's Broadsword of Skill", 'rare'], ["Porter's Amulet", 'magic'],
   ]]);
+  assert.deepEqual(h.pieces[0].item.affixes.at(-1), { id: 'castSpeed', value: 8 }, 'the last pass\'s line, the kind that moved the roll');
   assert.deepEqual(rollSerpentSpoils(2, 12, 'dealt'), h, 'the same seed, the same hoard');
-  assert.ok(validLootItem(JSON.parse(JSON.stringify(h.pieces[2].item))));
+  const grip = rollSerpentSpoils(12345, 20, 'dealt').pieces[2];
+  assert.equal(grip.tier, AETHERIC, 'a dealer\'s set piece, last');
+  assert.ok(validLootItem(JSON.parse(JSON.stringify(grip.item))));
   const stood = rollSerpentSpoils(2, 12, 'stood');
   assert.deepEqual([stood.gold, stood.pieces.map((p) => p.tier)], [1260, ['magic']], 'a stander: the Magic piece alone');
   let dealt = 0, coil = 0, stander = 0;
