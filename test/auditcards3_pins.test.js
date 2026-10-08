@@ -223,11 +223,16 @@ test('CARDS-TIDY a room frame names only what changed: the delta law, its check,
   me.ingest({ t: 'holdem', table: 0, now: 1, events: [], delta: d, at: 1 });
   assert.equal(me.needLook, true);
   assert.equal(me.state, null);
-  me.ingest({ t: 'holdem', table: 0, now: 1, events: [], state: a, at: 1 });
+  me.ingest({ t: 'holdem', table: 0, now: 1, events: [], state: a, at: 1, n: 4 });
   assert.equal(me.needLook, false);
-  me.ingest({ t: 'holdem', table: 0, now: 2, events: [], delta: d, at: 2 });
+  // AUDIT CARDS-4 D1 (PIN MOVED): a room frame is numbered - a change laid only on the frame just before it
+  me.ingest({ t: 'holdem', table: 0, now: 2, events: [], delta: d, at: 2, n: 6 });
+  assert.equal(me.needLook, true, 'a frame skipped: asked for whole');
+  assert.deepEqual(me.state, a, 'and the change not laid on the stale table');
+  me.needLook = false;
+  me.ingest({ t: 'holdem', table: 0, now: 2, events: [], delta: d, at: 2, n: 5 });
   assert.deepEqual(me.state, b);
-  me.ingest({ t: 'holdem', table: 0, now: 3, events: [], delta: { chairs: 3 }, at: 3 });
+  me.ingest({ t: 'holdem', table: 0, now: 3, events: [], delta: { chairs: 3 }, at: 3, n: 6 });
   assert.equal(me.needLook, true, 'a merge that is no table (two seats in three chairs) is asked for whole');
   assert.deepEqual(me.state, b, 'and never taken');
 });

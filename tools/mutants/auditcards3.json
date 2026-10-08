@@ -334,8 +334,8 @@
   {
     "name": "D-out-bb-any",
     "file": "src/net/holdemTable.js",
-    "old": "    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb);",
-    "new": "    && t.seats.every(seatOk);",
+    "old": "    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb) && handShapeOk(t);",
+    "new": "    && t.seats.every(seatOk) && handShapeOk(t);",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -343,6 +343,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -350,6 +353,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -400,8 +404,8 @@
   {
     "name": "D-relay-empties-kept",
     "file": "server/src/index.js",
-    "old": "    for (const [k, t] of tables) if (holdemEmpty(t)) { tables.delete(k); this._holdemSaid?.delete(k); }",
-    "new": "    for (const [k, t] of tables) if (false) { tables.delete(k); this._holdemSaid?.delete(k); }",
+    "old": "    for (const [k, t] of tables) if (holdemEmpty(t) && !t.cashouts?.length) {",
+    "new": "    for (const [k, t] of tables) if (false) {",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -409,6 +413,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -416,6 +423,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -1854,7 +1862,7 @@
   {
     "name": "D7-never-looks",
     "file": "src/scenes/worldModes.js",
-    "old": "cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16);",
+    "old": "cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && interiorCtx.tables?.length) cardLooksDue.push(0);",
     "new": "cardLooksDue = [];",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -1863,6 +1871,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -1870,6 +1881,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -2492,8 +2504,8 @@
   {
     "name": "TIDY-wiped",
     "file": "src/world/cardScene.js",
-    "old": "      this.cards = left.map((c, i) =>",
-    "new": "      this.cards = [].map((c, i) =>",
+    "old": "        ...left.map((c, i) =>",
+    "new": "        ...[].map((c, i) =>",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -2501,6 +2513,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -2508,6 +2523,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -2558,7 +2574,7 @@
   {
     "name": "TIDY-no-pile",
     "file": "src/world/cardScene.js",
-    "old": "    if (this.deck && !(t >= this.riffle?.t0 && t < this.deck.upTo)) cards.push(...this._deckPile(t));",
+    "old": "    if (this._pileShown(t)) cards.push(...this._deckPile(t));",
     "new": "    void this.deck;",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -2567,6 +2583,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -2574,6 +2593,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -2624,8 +2644,8 @@
   {
     "name": "TIDY-whole-every-frame",
     "file": "server/src/index.js",
-    "old": "        if (delta) frame = { events: f.events, delta };",
-    "new": "        void delta;",
+    "old": "        frame = delta ? { events: f.events, delta, n } : { ...f, n };",
+    "new": "        frame = { ...f, n };",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -2633,6 +2653,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -2640,6 +2663,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -2668,8 +2692,8 @@
   {
     "name": "TIDY-delta-unchecked",
     "file": "src/systems/cardRemoteTable.js",
-    "old": "      if (!merged || !validHoldemOut({ table: 0, events: [], state: merged })) { this.needLook = true; return; }",
-    "new": "      if (!merged) { this.needLook = true; return; }",
+    "old": "      if (!validHoldemOut({ table: 0, events: [], state: merged })) { this.needLook = true; return; }",
+    "new": "      if (false) { this.needLook = true; return; }",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -2677,6 +2701,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -2684,6 +2711,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },
@@ -2712,8 +2740,8 @@
   {
     "name": "TIDY-never-asks",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (f.delta && !cardWatches.has(f.table)) { if (!cardLooksDue.includes(f.table)) cardLooksDue.push(f.table); return; }",
-    "new": "    if (f.delta && !cardWatches.has(f.table)) return;",
+    "old": "if (!cardLooksDue.includes(f.table) && cardTableNear(f.table, CARD_WATCH_M)) cardLooksDue.push(f.table); return; }",
+    "new": "return; }",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",
@@ -2721,6 +2749,9 @@
       "test/auditcards3_host.test.js",
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards3_draw.test.js",
       "test/cards3_motion.test.js",
       "test/cards3b_hand.test.js",
@@ -2728,6 +2759,7 @@
       "test/cards4b_regulars.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
+      "test/cards6b_topup.test.js",
       "test/cardsbay_faces.test.js"
     ]
   },

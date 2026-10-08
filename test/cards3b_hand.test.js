@@ -214,8 +214,14 @@ test('CARDS-TIDY the deck is one thing on the cloth: the last hand gathered to i
   assert.ok(pile(9).every((c) => Math.hypot(c.pos[0] - deck[0], c.pos[2] - deck[2]) < 1e-9), 'at the dealer\'s deck place');
   // the next hand: the cloth's cards gathered to the new dealer's deck, never wiped
   const before = scene.poses(9.9, null).cards.filter((c) => c.seat >= 0).map((c) => c.pos);
+  const lay = pile(9.999);
   scene.onEvent({ t: 'hand', hand: 2, button: 2, seats: [0, 1, 2], at: 10000 }, (s, r) => (s === 0 ? r : -1));
-  const gathered = scene.poses(10.0, null).cards.filter((c) => c.seat === -4);
+  const gathered = scene.poses(10.0, null).cards.filter((c) => c.seat === -4 && c.id.startsWith('g'));
+  // AUDIT CARDS-4 D5: the last pile goes with them as it lay - never a whole deck at the new place in the same frame
+  const plates = scene.poses(10.0, null).cards.filter((c) => c.seat === -4 && c.id.startsWith('p'));
+  assert.equal(plates.length, lay.length, 'the pile as it lay');
+  assert.ok(plates.every((c, k) => Math.hypot(c.pos[0] - lay[k].pos[0], c.pos[2] - lay[k].pos[2]) < 1e-9), 'from where it lay');
+  assert.equal(pile(10.0).length + pile(10 + GATHER_S * 0.5).length, 0, 'no deck at the new place while it is gathered');
   assert.equal(scene.poses(10 + GATHER_S * 0.5, null).cards.filter((c) => !c.id).length, 0, 'no riffle while the last hand is gathered');
   assert.equal(gathered.length, before.length, 'every card of the last hand still on the cloth');
   const to = places.seats[2].deck;
@@ -225,5 +231,5 @@ test('CARDS-TIDY the deck is one thing on the cloth: the last hand gathered to i
   assert.ok(Math.min(...scene.cards.filter((c) => c.seat >= 0).map((c) => c.motions[0].t0)) >= 10 + GATHER_S + RIFFLE_S, 'riffled after the gathering, dealt after the riffle');
   // a hand on top of one still gathering: those cards join the deck at once - nothing piles up
   scene.onEvent({ t: 'hand', hand: 3, button: 0, seats: [0, 1, 2], at: 10100 }, (s, r) => (s === 0 ? r : -1));
-  assert.equal(scene.cards.filter((c) => c.seat === -4).length, 6, 'hand 2\'s six gathered from the dealer\'s hand; hand 1\'s, still on their way, joined the deck');
+  assert.equal(scene.cards.filter((c) => c.seat === -4).length, 6, 'hand 2\'s six gathered from the dealer\'s hand; hand 1\'s, still on their way, joined the deck (and hand 2\'s pile, not yet lying, with it)');
 });

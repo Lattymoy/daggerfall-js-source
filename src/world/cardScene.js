@@ -123,7 +123,13 @@ export class CardScene {
       // join it), then he riffles - the cloth is never wiped in one frame
       const deckAt = this.places.seats[e.button].deck, deckYaw = this.places.seats[e.button].yaw;
       const left = this.cards.filter((c) => c.seat !== -4);   // cards still on their way from the hand before join the deck now
-      this.cards = left.map((c, i) => ({ ...c, id: `g${e.hand}:${i}`, seat: -4, motions: [...c.motions, gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, DECK_PLATES + i * 0.1), yaw: deckYaw, t0: t })] }));
+      // AUDIT CARDS-4 D5: and the last hand's pile goes with them, as it lies - never a full deck at the new dealer's place
+      // in the same frame, the old one gone from under it
+      const pile = this._pileShown(t) ? this._deckPile(t) : [];
+      this.cards = [
+        ...pile.map((p, k) => ({ card: -1, id: `p${e.hand}:${k}`, seat: -4, motions: [gatherMotion({ from: p, to: this._rest(deckAt, k), yaw: deckYaw, t0: t })] })),
+        ...left.map((c, i) => ({ ...c, id: `g${e.hand}:${i}`, seat: -4, motions: [...c.motions, gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, DECK_PLATES + i * 0.1), yaw: deckYaw, t0: t })] })),
+      ];
       const gather = this.cards.length ? GATHER_S : 0;
       this.pushes = [];
       this.lastBets.clear();
@@ -137,7 +143,7 @@ export class CardScene {
       // CARDS3b: the dealer riffles the deck first; the deal begins when the riffle is done
       this.riffle = { t0: t + gather, at: deckAt, yaw: deckYaw };
       const dealAt = t + gather + RIFFLE_S;
-      this.deck = { at: deckAt, yaw: deckYaw, from: t, upTo: dealAt };   // CARDS-TIDY: the squared deck lies there, but while the riffle holds it
+      this.deck = { at: deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt };   // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered
       let order = 0;
       for (let r = 0; r < 2; r++) for (let k = 1; k <= n; k++) {
         const seat = e.seats[(btn + k) % n];
@@ -213,6 +219,9 @@ export class CardScene {
     }
   }
 
+  /** CARDS-TIDY: whether the squared deck lies on the cloth at `t` - not while the riffle holds it, nor (AUDIT CARDS-4 D5)
+   *  while the last hand is gathered to it. */
+  _pileShown(t) { return !!this.deck && t >= this.deck.from && !(t >= this.riffle?.t0 && t < this.deck.upTo); }
   /** CARDS-TIDY: the deck's plates at `t` - DECK_PLATES for a full deck, fewer as its cards leave the dealer's hand (every
    *  card of this hand thrown by then), never fewer than one while a card is still to come. */
   _deckPile(t) {
@@ -250,7 +259,7 @@ export class CardScene {
       cards.push({ card: c.card, pos: p.pos, yaw: p.yaw, roll: p.roll, id: c.id, seat: c.seat, settled: t >= c.motions[c.motions.length - 1].t1 });   // CARDS3b: whose, and at rest - the player's settled two are his to hold
     }
     if (this.riffle) cards.push(...riffleAt(t, this.riffle.t0, this.riffle.at, this.riffle.yaw));
-    if (this.deck && !(t >= this.riffle?.t0 && t < this.deck.upTo)) cards.push(...this._deckPile(t));   // CARDS-TIDY: the squared deck, thinning as it is dealt
+    if (this._pileShown(t)) cards.push(...this._deckPile(t));   // CARDS-TIDY: the squared deck, thinning as it is dealt
     const chips = [];
     const live = this.pushes.filter((p) => t < p.t0 + PUSH_S);
     // a push is drawn once it begins; a pot share waiting its turn is still in the pot's pile (below)

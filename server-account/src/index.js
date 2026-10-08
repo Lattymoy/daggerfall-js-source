@@ -1315,7 +1315,9 @@ const service = {
         if (!act) return no('not-found', 404, origin);
         const r = await act();
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
-        return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+        // AUDIT CARDS-4 A4: and why a receipt was refused - the device keeps one refused on its signature or clock
+        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, 400, origin);
+        return json(r, 200, origin);
       }
 
       // ═══ PROF5: THE MARKET ══════════════════════════════════════════

@@ -7,7 +7,8 @@
 //         s the account (the identity token's sub)   j the stake (the service's id, net/identityToken.js stake order)
 //         r the gold the seat leaves with (its stack; 0 out of chips)
 //         w why: 'stood' (up, or gone from the room), 'broke', 'refused' (the sit never took - the whole stake back),
-//           'void' (an order past its minute the room never sat - the whole stake back)
+//           'void' (an order past its minute the room never sat - the whole stake back), 'joined' (a top-up: its chips
+//           went onto a seat's stack, and come home in that seat's own receipt - nothing back by this one)
 //         i issued, epoch seconds   e expires (i + CARD_RECEIPT_TTL_S)
 //
 // ONE STAKE, ONE RECEIPT: the room spends a stake's id once (its seat, its refusal or its void), and the service pays a
@@ -33,7 +34,7 @@ export const CARD_RECEIPT_TTL_S = 30 * 24 * 3600;
 /** The bound on a receipt's length on the wire. */
 export const CARD_RECEIPT_MAX = 400;
 /** Why a seat's stake came back. */
-export const CARD_RECEIPT_WHY = Object.freeze(['stood', 'broke', 'refused', 'void']);
+export const CARD_RECEIPT_WHY = Object.freeze(['stood', 'broke', 'refused', 'void', 'joined']);
 /** The most one seat can leave with: every seat's deepest stake (the whole table's chips). */
 export const CARD_CASHOUT_MAX = STAKE_GOLD_MAX * HOLDEM_SEATS_MAX;
 
@@ -52,7 +53,7 @@ export function cardReceiptValid(c) {
   if (typeof c.j !== 'string' || !STAKE_ID_RE.test(c.j)) return false;
   if (!Number.isSafeInteger(c.r) || c.r < 0 || c.r > CARD_CASHOUT_MAX) return false;
   if (!CARD_RECEIPT_WHY.includes(c.w)) return false;
-  if (c.w === 'broke' && c.r !== 0) return false;   // out of chips is nothing back
+  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > CARD_RECEIPT_TTL_S) return false;
   return true;
@@ -96,10 +97,11 @@ export function readCardReceipt(r) {
  * the version first, the signature before the content.
  * @param {unknown} r
  * @param {CryptoKey} publicKey the relay's Ed25519 public half
- * @param {{subtle: SubtleCrypto, nowS: number, skewS?: number}} env
+ * @param {{subtle: SubtleCrypto, nowS: number, skewS?: number, anyAge?: boolean}} env - `anyAge`: a receipt past its `e`
+ *   still reads (AUDIT CARDS-4 A3: the service's cash-out, where the stake's row spends it once)
  * @returns {Promise<{ok: true, claims: any} | {ok: false, why: string}>}
  */
-export async function verifyCardReceipt(r, publicKey, { subtle, nowS, skewS = SKEW_S }) {
+export async function verifyCardReceipt(r, publicKey, { subtle, nowS, skewS = SKEW_S, anyAge = false }) {
   if (typeof r !== 'string' || r.length > CARD_RECEIPT_MAX) return { ok: false, why: 'shape' };
   const parts = r.split('.');
   if (parts.length !== 3) return { ok: false, why: 'shape' };
@@ -117,7 +119,7 @@ export async function verifyCardReceipt(r, publicKey, { subtle, nowS, skewS = SK
   try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
   if (!cardReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
-  if (nowS >= claims.e) return { ok: false, why: 'expired' };
+  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };
   if (claims.i > nowS + skewS) return { ok: false, why: 'future' };
   return { ok: true, claims };
 }

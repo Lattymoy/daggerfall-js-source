@@ -15,8 +15,11 @@ import { HOLDEM_REFUSALS } from '../src/ui/cardTableHud.js';
 
 const { subtle } = webcrypto;
 const ROOM = 'interior:m100.200';
-async function withRoom(fn) {
+// AUDIT CARDS-4 B3: a room seats a stake only when it can sign its cash-out - the relay's gate key, as the deploy holds it
+const gateKey = subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']).then(async (kp) => Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64'));
+async function withRoom(fn, { gate = true } = {}) {
   const r = fakeRoom(ROOM);
+  if (gate) r.env.GATE_SIGNING_KEY = await gateKey;
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
   _tick = (ms) => { clock += ms; };
   try { await fn({ r, tick: (ms) => { clock += ms; }, nowS: () => Math.floor(clock / 1000) }); } finally { Date.now = realNow; _tick = () => {}; }
@@ -76,8 +79,17 @@ test('CARDS6 the doors: every seat staked or none; a sit refused after its stake
   b.sent.length = 0;
   await word(r, b, { op: 'sit', table: 2, chair: 0, chairs: 2, bb: 10, stake: elsewhere.stake });
   assert.equal(holdem(b).find((m) => m.error)?.error, 'stake elsewhere');
-  assert.deepEqual(receipts(b).map((x) => [x.j, x.r, x.w]), [[elsewhere.cj, 500, 'refused']]);
-  await word(r, b, { op: 'ack', table: 2, j: elsewhere.cj });
+  // AUDIT CARDS-4 A2/B1 (PIN MOVED): another room's order is that room's - unspent here, nothing handed back (a refund here
+  // while the room it names still seated it was the stake paid twice)
+  assert.deepEqual(receipts(b), [], 'another room\'s order: nothing handed back');
+  assert.equal(r.store.get(`cstake:${elsewhere.cj}`), undefined, 'and not spent - its own room voids it');
+  // this room's own order at another table: spent here and handed back whole
+  const wrongTable = await order(r, nowS(), { s: 'acct-peer-b', ct: 5 });
+  b.sent.length = 0;
+  await word(r, b, { op: 'sit', table: 2, chair: 0, chairs: 2, bb: 10, stake: wrongTable.stake });
+  assert.equal(holdem(b).find((m) => m.error)?.error, 'stake elsewhere');
+  assert.deepEqual(receipts(b).map((x) => [x.j, x.r, x.w]), [[wrongTable.cj, 500, 'refused']]);
+  await word(r, b, { op: 'ack', table: 2, j: wrongTable.cj });
   const theirs = await order(r, nowS(), { s: 'acct-peer-c' });
   b.sent.length = 0;
   await word(r, b, { op: 'sit', table: 2, chair: 0, chairs: 2, bb: 10, stake: theirs.stake });
@@ -165,3 +177,60 @@ test('CARDS6 a dropped player back at a gold table mid-hand: his own chair, his 
   assert.equal(t.seats[0].leaving, undefined, 'his own chair, back');
   assert.ok(!holdem(a).some((m) => m.error), 'no stake asked of him');
 }));
+
+test('AUDIT CARDS-4 B3: a room that cannot sign a cash-out seats no stake - its receipt would go out unsigned and the gold stay held', () => withRoom(async ({ r, nowS }) => {
+  const b = await join(r, 'peer-b');
+  const o = await order(r, nowS(), { s: 'acct-peer-b' });
+  await word(r, b, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: o.stake });
+  assert.equal(holdem(b).find((m) => m.error)?.error, 'stakes closed');
+  assert.equal(r.store.get(`cstake:${o.cj}`), undefined, 'not spent');
+}, { gate: false }));
+
+test('AUDIT CARDS-4 B2: two staked first sits at once on one new table - both seated at ONE table, both stakes come home', () => withRoom(async ({ r, nowS }) => {
+  const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
+  const oa = await order(r, nowS(), { s: 'acct-peer-a' }), ob = await order(r, nowS(), { s: 'acct-peer-b' });
+  await Promise.all([word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: oa.stake }), word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: ob.stake })]);
+  const kept = r.store.get('holdem')?.[0];
+  assert.deepEqual(kept.seats.map((x) => x?.stake ?? null), [oa.cj, ob.cj], 'both stakes seated at the one table');
+  await word(r, a, { op: 'stand', table: 0 });
+  await word(r, b, { op: 'stand', table: 0 });
+  const back = [...receipts(a), ...receipts(b)].filter((x, i, all) => all.findIndex((y) => y.j === x.j) === i);
+  assert.equal(back.reduce((n, x) => n + x.r, 0), 1000, 'every chip the stakes brought, home');
+  assert.deepEqual(back.map((x) => x.j).sort(), [oa.cj, ob.cj].sort());
+}));
+
+test('AUDIT CARDS-4 B4: a cash-out whose write threw stays queued with its table, and is signed and owed at the next save - never dropped', () => withRoom(async ({ r, nowS }) => {
+  const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
+  const o = await order(r, nowS(), { s: 'acct-peer-a' });
+  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: o.stake });
+  const put = r.state.storage.put.bind(r.state.storage);
+  let threw = 0;
+  r.state.storage.put = async (k, v) => { if (typeof k === 'string' && k.startsWith('cashout:') && !threw++) throw new Error('storage down'); return put(k, v); };
+  await word(r, a, { op: 'stand', table: 0 });
+  assert.equal(threw, 1);
+  assert.deepEqual(receipts(a), [], 'not signed and kept yet');
+  assert.equal(r.room._holdem.get(0)?.cashouts?.length, 1, 'still queued, the table kept for it');
+  await word(r, b, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10 });   // the next save
+  assert.deepEqual(receipts(a).map((x) => [x.j, x.r, x.w]), [[o.cj, 500, 'stood']], 'signed and owed');
+  assert.equal(r.room._holdem.get(0), undefined, 'and the table gone with its last cash-out');
+}));
+
+test('AUDIT CARDS-4 B3/C6: a void too needs a room that can sign; and a void takes an order a receipt\'s life old, not a week', async () => {
+  await withRoom(async ({ r, nowS }) => {
+    const b = await join(r, 'peer-b');
+    const o = await order(r, nowS(), { s: 'acct-peer-b' });
+    await word(r, b, { op: 'void', table: 0, stake: o.stake });
+    assert.equal(holdem(b).find((m) => m.error)?.error, 'stakes closed');
+    assert.equal(r.store.get(`cstake:${o.cj}`), undefined);
+  }, { gate: false });
+  await withRoom(async ({ r, nowS }) => {
+    const b = await join(r, 'peer-b');
+    const fortnight = await order(r, nowS() - 20 * 24 * 3600, { s: 'acct-peer-b' });
+    await word(r, b, { op: 'void', table: 0, stake: fortnight.stake });
+    assert.deepEqual(receipts(b).map((x) => [x.j, x.w]), [[fortnight.cj, 'void']], 'twenty days on, still voided back');
+    b.sent.length = 0;
+    const stale = await order(r, nowS() - 31 * 24 * 3600, { s: 'acct-peer-b' });
+    await word(r, b, { op: 'void', table: 0, stake: stale.stake });
+    assert.equal(holdem(b).find((m) => m.error)?.error, 'stake too old');
+  });
+});

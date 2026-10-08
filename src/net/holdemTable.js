@@ -46,6 +46,9 @@ const seatView = (s) => (s ? { id: s.id, name: s.name, stack: s.stack, ...(s.lea
  *  BUY_IN_MIN_BB, BUY_IN_MAX_BB; equal by pin, the relay's bundle never carries the session). */
 export const HOLDEM_STAKE_MIN_BB = 20;
 export const HOLDEM_STAKE_MAX_BB = 100;
+/** CARDS6 follow-up (Tavern-Cards section 24): the least a top-up adds, in big blinds - a seat tops up between hands to
+ *  no more than HOLDEM_STAKE_MAX_BB. */
+export const HOLDEM_TOPUP_MIN_BB = 5;
 /** CARDS6: the most cash-outs a table keeps waiting for the relay to sign. */
 export const HOLDEM_CASHOUTS_MAX = 64;
 
@@ -189,6 +192,25 @@ export function sit(t, { id, name, chair, now, stake = null }) {
 }
 
 /**
+ * CARDS6 follow-up (section 24): THE TOP-UP - a gold table's seat adds a stake of its own account's to its stack, never
+ * while a hand holds it (the chips in play are the hand's) and never past HOLDEM_STAKE_MAX_BB. `stake` `{ j, sub, amount
+ * }`, its spend the relay's. `check` alone: the refusal word or null, nothing moved. Answers the messages, or a word.
+ * @param {any} t @param {{id: string, stake: {j: string, sub: string, amount: number}, now: number}} p @param {boolean} [check]
+ */
+export function topUp(t, { id, stake, now }, check = false) {
+  const chair = chairOf(t, id);
+  const seat = chair >= 0 ? t.seats[chair] : null;
+  if (!seat || seat.leaving) return 'not seated';
+  if (!t.gold || !seat.stake) return 'friendly table';
+  if (stake.sub !== seat.sub) return 'stake refused';
+  if (t.hand && t.handSeats.includes(chair)) return 'in hand';
+  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';
+  if (check) return null;
+  seat.stack += stake.amount;
+  return [room(t, [{ t: 'topup', seat: chair, name: seat.name, amount: stake.amount, at: now }])];
+}
+
+/**
  * A player stands (or leaves the room): folded out of turn if a hand holds him, stood up at its end; at once if not.
  * Answers the messages - none when he was not seated.
  * @param {any} t @param {{id: string, now: number}} p
@@ -272,7 +294,7 @@ export function tableLook(t, id, now) {
   return out;
 }
 
-const HOLDEM_OPS = Object.freeze(['sit', 'stand', 'act', 'look', 'void', 'ack']);   // CARDS6: a stake never sat given back; a cash-out heard
+const HOLDEM_OPS = Object.freeze(['sit', 'stand', 'act', 'look', 'void', 'ack', 'topup']);   // CARDS6: a stake never sat given back; a cash-out heard; a seat's top-up
 /** CARDS6: the longest a stake order (or a receipt's id) may be on the wire. */
 export const HOLDEM_STAKE_MAX = 1024;
 const ACTION_TYPES = Object.freeze(['fold', 'check', 'call', 'raise']);
@@ -297,6 +319,7 @@ export function validHoldemIn(m) {
     return { op: 'sit', table: m.table, chair: m.chair, chairs: m.chairs, bb: m.bb, ...(m.stake !== undefined ? { stake: m.stake } : {}) };
   }
   if (m.op === 'void') return stakeWordOk(m.stake) ? { op: 'void', table: m.table, stake: m.stake } : null;   // CARDS6
+  if (m.op === 'topup') return stakeWordOk(m.stake) ? { op: 'topup', table: m.table, stake: m.stake } : null;   // CARDS6 follow-up
   if (m.op === 'ack') return typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null;   // CARDS6
   if (m.op === 'act') {
     const a = m.action;
@@ -315,6 +338,7 @@ export function validHoldemIn(m) {
 export function validHoldemOut(m) {
   if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX) return false;
   if (typeof m.error === 'string') return m.error.length <= 40;   // the relay's refusal of a word (a chair taken, not your turn)
+  if (m.n !== undefined && !(Number.isSafeInteger(m.n) && m.n >= 0)) return false;   // AUDIT CARDS-4 D1: the table's frame number
   if (m.cashout !== undefined) return typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX;   // CARDS6: a staked seat's receipt (net/cardReceipt.js reads it)
   if (m.hole) return Number.isInteger(m.hole.handNo) && Array.isArray(m.hole.cards) && m.hole.cards.length === 2 && m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52);
   if (m.turn) return Number.isInteger(m.turn.handNo) && !!m.turn.legal && typeof m.turn.legal === 'object' && Number.isFinite(m.turn.clockAt);
@@ -330,5 +354,20 @@ export function validHoldemOut(m) {
   if (!m.state || typeof m.state !== 'object') return false;
   const t = m.state;
   return Number.isInteger(t.chairs) && t.chairs >= HOLDEM_SEATS_MIN && t.chairs <= HOLDEM_SEATS_MAX && Array.isArray(t.seats) && t.seats.length === t.chairs
-    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb);
+    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb) && handShapeOk(t);
+}
+/** AUDIT CARDS-4 D6: the rest of a table's shape - what the client's catch-up and panel read off it (a merge of a delta
+ *  is checked whole here: a `handSeats` of null threw in the catch-up). Fields a state never had stay unasked. */
+function handShapeOk(t) {
+  const chair = (x) => Number.isInteger(x) && x >= 0 && x < t.chairs;
+  if (t.handNo !== undefined && !(Number.isSafeInteger(t.handNo) && t.handNo >= 0)) return false;
+  if (t.button !== undefined && !(t.button === -1 || chair(t.button))) return false;
+  if (t.seed !== undefined && !Number.isSafeInteger(t.seed)) return false;
+  if (t.clockAt !== undefined && !Number.isFinite(t.clockAt)) return false;
+  if (t.gold !== undefined && typeof t.gold !== 'boolean') return false;
+  if (t.handSeats !== undefined && !(Array.isArray(t.handSeats) && t.handSeats.length <= t.chairs && t.handSeats.every(chair))) return false;
+  if (t.hand === undefined || t.hand === null) return true;
+  const h = t.hand;
+  return typeof h === 'object' && Array.isArray(h.board) && h.board.length <= 5 && h.board.every((c) => Number.isInteger(c) && c >= 0 && c < 52)
+    && Array.isArray(h.seats) && Array.isArray(t.handSeats) && h.seats.length === t.handSeats.length && h.seats.every((s) => s && typeof s === 'object');
 }

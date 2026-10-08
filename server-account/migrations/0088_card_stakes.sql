@@ -9,7 +9,8 @@
 -- buy-in at a relay's gold table leaves its record and is HELD here
 -- (server-account/src/cards.js stakeCards); the relay's cash-out receipt
 -- for it pays the record and turns it PAID, once (cashoutCards). `rid` is
--- the client's request id - a stake asked twice is one stake.
+-- the client's request id - a stake asked twice is one stake. `region` the
+-- one it was staked from: its cash-out goes home there (AUDIT CARDS-4 A7).
 
 CREATE TABLE IF NOT EXISTS card_stakes (
   id TEXT PRIMARY KEY,
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS card_stakes (
   paid INTEGER,
   at INTEGER NOT NULL,
   paid_at INTEGER,
+  region INTEGER NOT NULL DEFAULT 0,
   UNIQUE (player, rid)
 );
 CREATE INDEX IF NOT EXISTS idx_card_stakes_player ON card_stakes (player, status);

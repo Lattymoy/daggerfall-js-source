@@ -63,7 +63,7 @@ test('CARDS6 the stake: the buy-in off the realm record and held, the service\'s
   assert.equal(again.body.id, r.body.id, 'the same stake');
   assert.equal(t.gold(ann), before - 500, 'no gold moved twice');
   // the bounds: the tavern's buy-in at the stakes, a real room and table, a realm character
-  for (const [extra, err] of [[{ amount: 199 }, 'bad-buy-in'], [{ amount: 1001 }, 'bad-buy-in'], [{ bb: 7 }, 'bad-stakes'], [{ table: 16 }, 'bad-table'], [{ room: 'world:1.2' }, 'bad-room'], [{ rid: 'x' }, 'bad-rid']]) {
+  for (const [extra, err] of [[{ amount: 199 }, 'bad-buy-in'], [{ amount: 1001 }, 'bad-buy-in'], [{ bb: 7 }, 'bad-stakes'], [{ table: 16 }, 'bad-table'], [{ table: -1 }, 'bad-table'], [{ room: 'world:1.2' }, 'bad-room'], [{ rid: 'x' }, 'bad-rid']]) {
     const no = await t.stake(ann, extra);
     assert.equal(no.body?.error, err, JSON.stringify(extra));
   }
@@ -97,6 +97,8 @@ test('CARDS6 the cash-out: the relay\'s receipt paid into the character that sta
   // refused or voided: the whole stake, never more or less
   const c = (await t.stake(ann)).body;
   assert.equal((await t.cashout(ann, await t.receipt({ s: ann.id, j: c.id, r: 400, w: 'refused' }))).body.error, 'cards-receipt');
+  assert.equal((await t.cashout(ann, await t.receipt({ s: ann.id, j: c.id, r: 501, w: 'refused' }))).body.error, 'cards-receipt', 'a refusal hands back no more than the stake');
+  assert.equal((await t.cashout(ann, await t.receipt({ s: ann.id, j: c.id, r: 499, w: 'void' }))).body.error, 'cards-receipt', 'a void hands back the whole stake, no less');
   const g1 = t.gold(ann);
   assert.equal((await t.cashout(ann, await t.receipt({ s: ann.id, j: c.id, r: 500, w: 'void' }))).body.gold, 500);
   assert.equal(t.gold(ann), g1 + 500);
@@ -122,4 +124,52 @@ test('CARDS6 the cash-out refuses: another\'s receipt, another character, a stak
   const c = (await t.stake(ann)).body;
   const R2 = await seatRealm(t.s.env, ann.secret, 'ann2', { name: 'ann2', level: 5, items: [], goldPieces: 10 });
   assert.equal((await t.cashout({ ...ann, character: R2.id, at: R2.at }, await t.receipt({ s: ann.id, j: c.id, r: 500, w: 'stood' }))).body.error, 'cards-other-character');
+});
+
+test('AUDIT CARDS-4 A1, A3, A4, A6, A7: a repeat is the same order; a receipt pays whenever brought; the wire says why one was refused; the cash-out goes home to the region staked from; a character with a stake held is not deleted', async () => {
+  const t = await stand();
+  const ann = await t.seated('ann');
+  const a = (await t.stake(ann, { rid: 'stake-ann-a1-01' })).body;
+  const at = Number(t.row(a.id).at);
+  _now += 9 * 24 * 3600;
+  const again = (await t.stake(ann, { rid: 'stake-ann-a1-01' })).body;
+  assert.equal(again.repeat, true);
+  const claimsOf = (o) => JSON.parse(Buffer.from(o.split('.')[1], 'base64url').toString());
+  assert.equal(claimsOf(again.stake).i, at, 'A1: the order minted at the stake\'s own instant - never a fresh minute to sit on');
+  assert.equal(again.stake, a.stake, 'the same order');
+  // A4: a refusal's why on the wire
+  const unsigned = await mintCardReceipt({ s: ann.id, j: a.id, r: 500, w: 'stood' }, null, { subtle, nowS: _now });
+  assert.deepEqual((await t.cashout(ann, unsigned)).body, { error: 'cards-receipt', why: 'unsigned' });
+  // A3: brought past its thirty days, a receipt still pays its stake once
+  const late = await t.receipt({ s: ann.id, j: a.id, r: 500, w: 'stood' });
+  _now += 31 * 24 * 3600;
+  // A3: and while it is held the character is not deleted
+  assert.equal((await t.s.call('/v1/realm/delete', { id: ann.character }, ann.secret)).body.error, 'cards-held');
+  // A7: the region the client names is not where it goes - the stake's own
+  const before = t.gold(ann);
+  const paid = await t.cashout(ann, late, { region: DF + 1 });
+  assert.equal(paid.body.gold, 500, JSON.stringify(paid.body));
+  assert.equal(t.gold(ann), before + 500, 'home to the region it was staked from');
+  assert.equal(Number(t.row(a.id).region), DF);
+  // A6: a zero receipt's settle that fails is said, never answered paid
+  const b = (await t.stake(ann, { rid: 'stake-ann-a6-01' })).body;
+  const db = t.s.env.DB, batch = db.batch.bind(db);
+  db.batch = async () => { throw new Error('d1 down'); };
+  const broke = await t.cashout(ann, await t.receipt({ s: ann.id, j: b.id, r: 0, w: 'broke' }));
+  db.batch = batch;
+  assert.equal(broke.body.error, 'cards-cashout-failed');
+  assert.equal(t.row(b.id).status, 'held');
+});
+
+test('AUDIT CARDS-4 E6: a claim that landed, asked again at the sequence it was asked at - answered where the record stands (seq), never a quiet repeat', async () => {
+  const t = await stand();
+  const ann = await t.seated('ann');
+  const a = (await t.stake(ann)).body;
+  const rec = await t.receipt({ s: ann.id, j: a.id, r: 700, w: 'stood' });
+  const where = ann.at();
+  const paid = await t.s.call('/v1/cards/cashout', { character: ann.character, realm: where, receipt: rec }, ann.secret);
+  assert.equal(paid.body.gold, 700);
+  const again = await t.s.call('/v1/cards/cashout', { character: ann.character, realm: where, receipt: rec }, ann.secret);
+  assert.equal(again.body.error, 'seq', JSON.stringify(again.body));
+  assert.equal((await t.cashout(ann, rec)).body.repeat, true, 'at the record\'s own sequence: the repeat');
 });

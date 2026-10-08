@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere). Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -612,24 +612,32 @@ player, the service's word one way and the relay's the other, each signed:
   else - one stake, one seat, ever. The first sitter's stake makes the table a GOLD TABLE (`publicView.gold`); every seat
   at it is staked, and a friendly table seats no stake ('gold table', 'friendly table'). A seat sits with its stake's
   chips. A sit refused after its stake was spent - a chair taken, a table of other chairs, the gate - hands the whole
-  stake back; an order for another room, table or stakes is spent and handed back ('stake elsewhere'); another account's
-  is refused and left unspent.
+  stake back; an order for this room at another table or stakes is spent and handed back ('stake elsewhere'); another
+  room's is that room's - left unspent, nothing handed back (AUDIT CARDS-4 A2/B1: each room remembers only its own
+  spends, so a refund here while the room it names still seated it was the stake paid twice); another account's is
+  refused and left unspent. A room that cannot sign a cash-out seats and voids no stake ('stakes closed', B3).
 - **THE CASH-OUT** (`net/cardReceipt.js`, `c1`, the relay's fourth signature under GATE_SIGNING_KEY): a staked seat gone
   from the table - stood up, out of chips, gone from the room - leaves with a receipt for its stack (`stood`, `broke`); a
   refused sit's and a void's are the whole stake (`refused`, `void`). A leaver folded out of a hand that goes on is cashed
   out AT ONCE with his stack behind (he can win nothing more, and he is walking out of the room), never again at the
   hand's end, and his chair is not his to play again ('cashed out'). The table queues what its seats leave with
   (`t.cashouts`, kept with the table) and the relay signs it before the tables are saved; each receipt is sent to the
-  account's sockets and OWED to it in the room (`cashout:<account>`, a week's worth) until its client says it holds it
-  (`ack`) - told again at every look and sit there.
-- **THE CLAIM** (`cashoutCards`, `/v1/cards/cashout`): the receipt pays the character that staked it, into the region's
-  account it is claimed at (`creditSave`), and turns the row PAID in the same batch - once. A stake handed back whole is
+  account's sockets and OWED to it in the room (`cashout:<account>`, each a receipt's life, `HOLDEM_OWED_MAX` of them)
+  until its client says it holds it (`ack`) - told again at every look and sit there. A cash-out leaves the table's
+  queue only once it is signed and kept, and a table is never forgotten with one unsigned (B4).
+- **THE CLAIM** (`cashoutCards`, `/v1/cards/cashout`): the receipt pays the character that staked it, into the account
+  of the region it was staked from (`creditSave`; AUDIT CARDS-4 A7), and turns the row PAID in the same batch - once,
+  whenever it is brought (A3: its row spends it, so its age keeps no gold), where the record stands asked first (E6). A
+  refusal says why (A4), and the device keeps one refused on its signature or its clock. A character with a stake held
+  is not deleted ('cards-held'). A stake handed back whole is
   the stake, never more or less; a seat leaves with no more than every seat's deepest stake at its stakes; another
   account's receipt, another character's, an unsigned or rewritten one pay nothing.
 - **A STAKE NEVER SAT** (the sit never sent, its answer lost, the game closed while the service answered): the device
   keeps its order (`net/cardStakes.js`), and once its minute is past (no room can sit it) hands it to the room it names
-  (`void`) - spent there, the whole of it back in a `void` receipt. A lost stake answer is asked again by the same
-  request: the same stake, no gold held twice.
+  (`void`) - spent there, the whole of it back in a `void` receipt, for as long as a receipt lives (AUDIT CARDS-4 C6:
+  `HOLDEM_STAKE_VOID_S`, not a week). A lost stake answer is asked again by the same request: the same stake, the SAME
+  order (A1: minted at the stake's own instant - a repeat is never a fresh minute to sit on), the purse paying it then
+  if the service takes it then (C1).
 - **ON THE DEVICE** (`net/cardStakes.js`, world.js `cardStakes`): the stake is the record's own act (realmSaves.js
   `realmGoldAct` - the purse checkpointed, the gold held out while asked); the request kept first, the order till the
   relay sits it; each receipt kept, its stake let go, acked to the room and claimed as the record's act. A cash-out frame
@@ -639,8 +647,49 @@ player, the service's word one way and the relay's the other, each signed:
   stake comes back exactly once - in the receipt of its seat, its refusal or its void. A receipt never brought leaves its
   stake held at the service: gold that left the record for the table (a loser's stake is already in the winners'
   receipts). A player who never returns to a room where a receipt is owed him (he left before its frame reached him)
-  finds it there when he does.
-- **Not yet:** a gold table's stake topped up mid-evening (stand and buy in again); the panel's list of stakes owed in
-  other rooms.
+  finds it there when he does, within a receipt's life and the room's bound on what it owes one account (AUDIT CARDS-4
+  D7); the host says on each visit what other rooms still owe him (section 24).
+- **Then:** the top-up and gold owed elsewhere (section 24); AUDIT CARDS-4 over all of it (section 25).
 - **Pins:** `test/cards6_service.test.js` 3 (on the real Worker over SQLite), `test/cards6_relay.test.js` 6 (the fake
-  room), `test/cards6_client.test.js` 4, `test/cards6_law.test.js` 2. `tools/mutants/cards6.json`: 36, all dead.
+  room), `test/cards6_client.test.js` 4, `test/cards6_law.test.js` 2. `tools/mutants/cards6.json`: 36, all dead. AUDIT
+  CARDS-4 added to them (section 25).
+
+## 24. CARDS6b (2026-10-08): the top-up, and gold owed elsewhere
+
+Mac: **"2 and 3"** - section 23's "Not yet", built after AUDIT CARDS-4 (section 25) found its fixes in the same code.
+
+- **THE TOP-UP** (`net/holdemTable.js` `topUp`, relay `_holdemTopUp`, the `topup` word): a gold table's seat adds a
+  stake of its own account's between hands - never while a hand holds it (the chips in play are the hand's: 'in hand'),
+  from `HOLDEM_TOPUP_MIN_BB` and never past `HOLDEM_STAKE_MAX_BB` ('bad stake'). The order is a stake order like a
+  buy-in's (the service holds a top-up from `HOLDEM_TOPUP_MIN_BB`, `topup: true`); the relay checks it against the seat
+  BEFORE it spends it - a refusal spends nothing, and the device voids it back in its room after its minute - reads the
+  table again after the order's await, spends it, adds it to the stack, and settles it AT ONCE in a `joined` receipt
+  (`net/cardReceipt.js`: nothing back by it - its chips come home in the seat's own receipt). The panel offers "Top up
+  N" between hands (the most from the purse to the table's most); the log says it.
+- **GOLD OWED ELSEWHERE** (`net/cardStakes.js` `elsewhere`, worldModes `cardElsewhereSay`): the device keeps a sat stake
+  (AUDIT CARDS-4 C4) and the words for where it was staked (the building and its town). Each room keeps its own spends
+  and its own cash-outs, so only that room hands a cash-out over or voids a stake back; on each visit to a card room the
+  host says what other rooms still owe this character ("Gold you staked waits at card tables elsewhere - 500 at The
+  Bilge, Wayrest. Each table hands it over when you return."). What nothing can bring home any more (past a receipt's
+  life) the device lets go (`prune`).
+- **Pins:** `test/cards6b_topup.test.js` 3. Its mutants are in `tools/mutants/auditcards4.json` (the `AC4-T-` records).
+
+## 25. AUDIT CARDS-4 (2026-10-08): the gold tables audited
+
+Mac: **"2 and 3"**. Five lanes over a frozen snapshot of sections 22-23, one of them the device, the relay and the
+service at once over about 14,000 gold evenings - the record is `01-Overview/Audit-Cards-4.md`. What it changed here:
+
+- **A stake asked again** after a lost answer is paid from the purse when the service takes it then (C1 - it was paid
+  twice); kept on any word but the service's own refusal (C2); its repeat is the SAME order (A1).
+- **Another room's order** is left unspent and nothing is handed back; its own room voids it (A2/B1). The table is read
+  again after an order's await (B2); a room that cannot sign a receipt seats and voids no stake (B3); a cash-out leaves
+  the queue only once kept (B4); a void reaches a receipt's life (C6).
+- **A receipt** is acked only once kept (C3), filed to the character that staked it (C4), paid whenever it is brought
+  (A3), let go only when refused for what it is (A4/A5), claimed where the record stands first (E6); a character with a
+  stake held is not deleted.
+- **The frames** are numbered per table, a delta laid only on the one before it (D1); a far table's change asks nothing
+  (D2); the approach has the watch's slack (D3); the watch closes at the sit (D4); the last pile goes with the gathered
+  cards (D5); a table's hand shape is checked (D6).
+- **Recorded:** a staked player all in who drops while another must act is folded and forfeits (B7, the law's leaver).
+- **Pins:** `test/auditcards4_client.test.js`, `_pins`, `_tidy` and additions across the cards' tests;
+  `tools/mutants/auditcards4.json` - every fix's record and every lane survivor's, three equivalent with why.

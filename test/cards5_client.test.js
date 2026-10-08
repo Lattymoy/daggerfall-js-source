@@ -430,3 +430,51 @@ test('CARDS-TIDY a table\'s change with no table under it is asked for whole', (
   cat.api.cardGameFrame(1);
   assert.deepEqual(words, ['look:1']);
 });
+
+test('AUDIT CARDS-4 D2/D3 and lane D\'s host mutants: a watch kept within its slack and asked for once an approach; a watch that missed a frame asks again; a seated table that did, once the gate lets it go and no oftener than CARD_LOOK_AGAIN_MS; a far table\'s change asks nothing', () => {
+  clockMs = 0;
+  const relay = fakeRelay();
+  const ann = host(relay, 'ann', 'Ann'), bob = host(relay, 'bob', 'Bob');
+  const where = [2, 0, 0];
+  const cat = host(relay, 'cat', 'Cat', { pos: where });
+  const words = [];
+  cat.gate = (w) => { words.push(`${w.op}:${w.table}`); return true; };
+  ann.api.sitAtCardTable(0); bob.api.sitAtCardTable(0);
+  relay.advance(HOLDEM_FIRST_MS);
+  cat.api.cardGameFrame(0);
+  assert.ok(cat.api.watches.has(0), 'watched from near');
+  words.length = 0;
+  where[0] = 6.5;   // past the watch's distance, within its slack
+  cat.api.cardGameFrame(1);
+  assert.ok(cat.api.watches.has(0), 'kept within its slack');
+  where[0] = 5.9;
+  cat.api.cardGameFrame(2);
+  assert.deepEqual(words, [], 'back over the line: not asked again');
+  // a frame missed: the watch asks for the whole
+  cat.api.watches.get(0).remote.needLook = true;
+  cat.api.cardGameFrame(3); cat.api.cardGameFrame(3.5);   // queued this frame, said the next
+  assert.deepEqual(words, ['look:0']);
+  // a far table's change asks nothing
+  words.length = 0;
+  where[0] = 40;
+  cat.api.cardGameFrame(4);
+  cat.api.cardOnlineFrame({ t: 'holdem', table: 1, now: 0, events: [], delta: { clockAt: 5 }, n: 3, at: 0 });
+  cat.api.cardGameFrame(5);
+  assert.deepEqual(words, [], 'a table across the room: no look');
+  // seated, a frame missed: asked once the gate lets it go, and no oftener than CARD_LOOK_AGAIN_MS
+  clockMs = 9_000; ann.api.cardGameFrame(9_000);   // her visit's own looks said first
+  const said = [];
+  let open = false;
+  ann.gate = (w) => { if (w.op === 'look') { said.push(clockMs); return open; } return true; };
+  ann.api.cardGame.remote.needLook = true;
+  clockMs = 10_000; ann.api.cardGameFrame(10_000);
+  open = true;
+  clockMs = 10_100; ann.api.cardGameFrame(10_100);
+  assert.equal(said.length, 1, 'not asked again inside CARD_LOOK_AGAIN_MS');
+  clockMs = 12_100; ann.api.cardGameFrame(12_100);
+  assert.equal(said.length, 2, 'the gate kept it: asked again');
+  assert.equal(ann.api.cardGame.remote.needLook, false, 'and once it went, done');
+  clockMs = 15_000; ann.api.cardGameFrame(15_000);
+  assert.equal(said.length, 2);
+  for (const h of [ann, bob]) h.api.standFromCardTable();
+});

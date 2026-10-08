@@ -46,7 +46,11 @@ test('CARDS6 the stake: kept first, the purse held out while asked, the order ke
   assert.equal(kept.length, 1);
   assert.deepEqual([kept[0].order, kept[0].id, kept[0].room, kept[0].table, kept[0].c], [got.stake, got.id, 'interior:m1.2', 0, 'CH1']);
   r.book.seated(got.id);
-  assert.deepEqual(r.store.get(CARD_STAKES_KEY), [], 'sat: nothing of it to keep');
+  // AUDIT CARDS-4 C4 (PIN MOVED): sat, KEPT - whose it is and where from, for its receipt; never voided; where gold is owed
+  assert.deepEqual(r.store.get(CARD_STAKES_KEY).map((x) => [x.id, x.sat, x.c]), [[got.id, true, 'CH1']], 'sat: kept for its receipt');
+  r.tick(CARD_VOID_AFTER_MS);
+  assert.deepEqual(r.book.voidable('interior:m1.2'), [], 'a sat stake is never voided');
+  assert.deepEqual(r.book.owed(), [{ room: 'interior:m1.2', amount: 300, at: kept[0].at }], 'owed at its room');
   const no = rig({ answers: { stake: () => ({ ok: false, error: 'realm-gold' }) } });
   const refused = await no.book.stake({ room: 'interior:m1.2', table: 0, bb: 10, amount: 300 });
   assert.deepEqual([refused.ok, refused.error], [false, 'realm-gold']);
@@ -93,14 +97,26 @@ test('CARDS6 the cash-out: kept and its stake let go, claimed into the account i
   assert.deepEqual(r.log.filter((x) => x[0] === 'bank'), [['bank', 17, 777]], 'into the account it was staked from');
   assert.deepEqual(r.store.get(CARD_RECEIPTS_KEY), [], 'claimed: let go');
   // the answers: a repeat pays nothing here (the record had it); never-payable ends it; another character's waits for it
-  const other = rig({ answers: { cashout: () => ({ ok: false, error: 'cards-other-character' }) } });
+  // AUDIT CARDS-4 C4 (PIN MOVED): a receipt of a stake this device never kept is the account's - asked under whoever plays,
+  // kept on 'another character' for the one that staked it
+  const other = rig({ answers: { cashout: (req) => (req.character === 'CH2' ? { ok: true, data: { gold: 777 } } : { ok: false, error: 'cards-other-character' }) } });
   other.book.receive(receipt);
   await other.book.claim();
   assert.equal(other.store.get(CARD_RECEIPTS_KEY).length, 1, 'kept for the character that staked it');
   other.setCharacter('CH2');
-  const calls = other.log.filter((x) => x[0] === 'cashout').length;
   await other.book.claim();
-  assert.equal(other.log.filter((x) => x[0] === 'cashout').length, calls, 'another character playing: not even asked');
+  assert.deepEqual(other.store.get(CARD_RECEIPTS_KEY), [], 'claimed by the character that staked it');
+  // one whose stake this device kept is that character's alone
+  const mine = rig({ answers: { stake: (req) => ({ ok: true, data: { stake: `order-${req.rid}`, id: 'abcdabcdabcdabcdab12' } }) } });
+  const st = await mine.book.stake({ room: 'interior:m1.2', table: 0, bb: 10, amount: 300 });
+  const mr = await mintCardReceipt({ s: 'acct-me', j: st.id, r: 300, w: 'stood' }, null, { subtle, nowS: 1000 });
+  mine.book.seated(st.id);
+  mine.setCharacter('CH2');
+  assert.equal(mine.book.receive(mr), st.id);
+  assert.equal(mine.store.get(CARD_RECEIPTS_KEY)[0].c, 'CH1', 'filed to the character that staked it, not the one playing');
+  const asked = mine.log.filter((x) => x[0] === 'cashout').length;
+  await mine.book.claim();
+  assert.equal(mine.log.filter((x) => x[0] === 'cashout').length, asked, 'another character playing: not even asked');
   const done = rig({ answers: { cashout: () => ({ ok: false, error: 'cards-no-stake' }) } });
   done.book.receive(receipt);
   await done.book.claim();
@@ -114,7 +130,7 @@ test('CARDS6 the cash-out: kept and its stake let go, claimed into the account i
 test('CARDS6 the hosts: a realm character online sits at a gold table with the service\'s stake; a cash-out from any socket is kept, acked and claimed; voids said on a visit', () => {
   const wm = read('src/scenes/worldModes.js'), w = read('src/scenes/world.js'), on = read('src/net/online.js');
   assert.match(wm, /const goldOnline = !!host\.cardOnline\?\.ok\?\.\(\) && !!host\.cardStakes\?\.goldOk\?\.\(\);/);
-  assert.match(wm, /const r = await host\.cardStakes\.stake\(\{ room: host\.cardOnline\.room\(\), table: cardSeat\.table, bb: g\.stakes\.bb, amount \}\);/);
+  assert.match(wm, /const r = await host\.cardStakes\.stake\(\{ room: host\.cardOnline\.room\(\), table: cardSeat\.table, bb: g\.stakes\.bb, amount, place: cardPlaceName\(\) \}\);/);   // CARDS6b: where it was staked (PIN MOVED)
   assert.match(wm, /\.\.\.\(g\.stakeWord \? \{ stake: g\.stakeWord \} : \{\}\) \}\);   \/\/ CARDS6/);
   assert.match(wm, /if \(r\.confirmed && g\.stakeId && !g\.stakeSeated\) \{ g\.stakeSeated = true; host\.cardStakes\?\.seated\(g\.stakeId\); \}/);
   assert.match(wm, /if \(typeof f\?\.cashout === 'string'\) \{\n\s*const j = host\.cardStakes\?\.receive\(f\.cashout\);\n\s*if \(j\) \{ host\.cardOnline\?\.send\(\{ op: 'ack', table: f\.table, j \}\); host\.cardStakes\.claim\(\); \}/);

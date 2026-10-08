@@ -70,17 +70,21 @@
   {
     "name": "C6-broke-with-chips",
     "file": "src/net/cardReceipt.js",
-    "old": "  if (c.w === 'broke' && c.r !== 0) return false;   // out of chips is nothing back\n",
+    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's\n",
     "new": "",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -104,17 +108,21 @@
   {
     "name": "C6-receipt-forever",
     "file": "src/net/cardReceipt.js",
-    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };\n",
+    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n",
     "new": "",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -257,17 +265,21 @@
   {
     "name": "C6-stake-anywhere",
     "file": "server/src/index.js",
-    "old": "    if (c.cr !== a.key || c.ct !== m.table || c.cb !== m.bb) return { no: 'stake elsewhere', back };",
+    "old": "    if (c.ct !== m.table || c.cb !== m.bb) return { no: 'stake elsewhere', back };   // this room's own, at another table or stakes",
     "new": "    void back;",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -291,17 +303,21 @@
   {
     "name": "C6-void-twice",
     "file": "server/src/index.js",
-    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }",
-    "new": "    void c;",
+    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }\n    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
+    "new": "    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -410,17 +426,21 @@
   {
     "name": "C6-svc-any-buy-in",
     "file": "server-account/src/cards.js",
-    "old": "amount < HOLDEM_STAKE_MIN_BB * bb || ",
+    "old": "amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || ",
     "new": "",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -495,34 +515,42 @@
   {
     "name": "C6-svc-no-credit",
     "file": "server-account/src/cards.js",
-    "old": "(save) => (creditSave(save, c.r, { bank: region }) ? null : 'bad-gold')",
+    "old": "(save) => (creditSave(save, c.r, { bank: home }) ? null : 'bad-gold')",
     "new": "(save) => null",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
   {
     "name": "C6-book-no-hold",
     "file": "src/net/cardStakes.js",
-    "old": "      ...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : {}),",
-    "new": "      ...{},",
+    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply:",
+    "new": "...(first ? {} : { apply:",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
@@ -546,34 +574,42 @@
   {
     "name": "C6-book-not-kept-first",
     "file": "src/net/cardStakes.js",
-    "old": "      write(CARD_STAKES_KEY, [...read(CARD_STAKES_KEY), { rid, room, table, bb, amount, c, reg, at: now() }]);\n",
+    "old": "      write(CARD_STAKES_KEY, [...read(CARD_STAKES_KEY), { rid, room, table, bb, amount, c, reg, at: now(), ...(topup ? { topup: true } : {}), ...(place ? { place: String(place).slice(0, 80) } : {}) }]);\n",
     "new": "",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },
   {
     "name": "C6-book-any-character",
     "file": "src/net/cardStakes.js",
-    "old": "read(CARD_RECEIPTS_KEY).filter((x) => x.c === character())",
-    "new": "read(CARD_RECEIPTS_KEY)",
+    "old": "(x.c == null || x.c === character()) && !tried.has(x.j)",
+    "new": "!tried.has(x.j)",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6_client.test.js",
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
       "test/identitytoken.test.js"
     ]
   },

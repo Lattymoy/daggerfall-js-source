@@ -270,7 +270,7 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
 import { holdemGate, holdemSitRoomGate } from './relay.js';   // CARDS5: the card table's gate; AUDIT CARDS-3 A4: the room's sits
-import { newTable, sit as holdemSit, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
+import { newTable, topUp as holdemTopUp, sit as holdemSit, stand as holdemStand, actAt as holdemAct, tick as holdemTick, nextAt as holdemNextAt, emptyTable as holdemEmpty, tableLook as holdemLook, stateDelta as holdemDelta } from '../../src/net/holdemTable.js';   // CARDS5: THE RELAY DEALS - the room's card tables (holdemTable.js imports only cardLaw.js, which imports only dice.js)
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -361,11 +361,13 @@ const secretKey = (id) => `secret:${id}`;
 // CARDS6: a stake the room spent (its seat, its refusal, its void), and the cash-outs an account is owed in this room
 const stakeKeyOf = (j) => `cstake:${j}`;
 const cashoutKeyOf = (sub) => `cashout:${sub}`;
-/** CARDS6: the oldest stake order a void takes (a week), and how long the room remembers a spent stake past that. */
-const HOLDEM_STAKE_VOID_S = 7 * 24 * 3600;
+/** CARDS6: the oldest stake order a void takes, and how long the room remembers a spent stake past that. AUDIT CARDS-4
+ *  C6: a receipt's life (net/cardReceipt.js CARD_RECEIPT_TTL_S), not a week - a player away a fortnight still voids. */
+const HOLDEM_STAKE_VOID_S = CARD_RECEIPT_TTL_S;
 const HOLDEM_STAKE_KEEP_S = HOLDEM_STAKE_VOID_S + 24 * 3600;
-/** CARDS6: the most cash-outs an account is owed in one room. */
-const HOLDEM_OWED_MAX = 16;
+/** CARDS6: the most cash-outs an account is owed in one room (AUDIT CARDS-4 B5: each one a stake of at least
+ *  HOLDEM_STAKE_MIN_BB big blinds, so the bound is the account's gold, and past it the oldest goes). */
+const HOLDEM_OWED_MAX = 64;
 const WORLD_META = 'world:meta';
 const worldChunkKey = (i) => `world:${i}`;
 // SOC1: the hub's keys - an account's record, its secret, a party
@@ -763,8 +765,10 @@ export class Room {
     const tables = await this._holdemOf();   // AUDIT CARDS-3 A3: no seat outlives an empty room - the secrets go, so its id is anyone's
     if (tables.size && this._holdemGhosts(tables, Date.now(), true)) await this._holdemSave();
     // CARDS6: a spent stake remembered past the oldest order a void takes, then forgotten
-    const old = Math.floor(Date.now() / 1000) - HOLDEM_STAKE_KEEP_S;
-    for (const [k, at] of await this.state.storage.list({ prefix: 'cstake:' })) if (!(at > old)) dead.push(k);
+    // AUDIT CARDS-4 B6: read a page at a time (AUDIT SOC A4), and an account's owed cash-outs all past their life go too
+    const nowS = Math.floor(Date.now() / 1000), old = nowS - HOLDEM_STAKE_KEEP_S;
+    for (const k of await this._keysOf('cstake:')) if (!((await this.state.storage.get(k)) > old)) dead.push(k);
+    for (const k of await this._keysOf('cashout:')) if (!((await this.state.storage.get(k)) ?? []).some((x) => x && x.e > nowS)) dead.push(k);
     this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);   // SOC1: the parties go with the drain; acct: and asecret: stay (AUDIT SOC A4: listed in pages - an unbounded list of a namespace a client can grow is the isolate's memory)
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
   }
@@ -2694,7 +2698,7 @@ export class Room {
     const tables = this._holdem;
     if (!tables) return;
     await this._holdemCashouts(tables);   // CARDS6: what the staked seats left with, signed before the tables are kept
-    for (const [k, t] of tables) if (holdemEmpty(t)) { tables.delete(k); this._holdemSaid?.delete(k); }   // CARDS-TIDY: a table gone, the room told of it afresh
+    for (const [k, t] of tables) if (holdemEmpty(t) && !t.cashouts?.length) { tables.delete(k); this._holdemSaid?.delete(k); }   // CARDS-TIDY: a table gone, the room told of it afresh; AUDIT CARDS-4 B4: never with a cash-out unsigned
     if (tables.size) await this.state.storage.put('holdem', Object.fromEntries(tables));
     else await this.state.storage.delete('holdem');
     let at = Infinity;
@@ -2707,10 +2711,13 @@ export class Room {
     for (const { to, frame: f } of msgs) {
       let frame = f;
       if (to == null && f.state) {
-        const delta = holdemDelta(this._holdemSaid.get(index), f.state);
-        this._holdemSaid.set(index, f.state);
-        if (delta) frame = { events: f.events, delta };   // the changed fields alone (a look's whole state is its asker's)
-      }
+        // AUDIT CARDS-4 D1: and NUMBERED, a table's room frames one after another - a socket that missed one (a new socket in
+        // the same room, a frame dropped) sees the gap and asks for the table whole rather than laying a change on a stale one
+        const said = this._holdemSaid.get(index), n = (said?.n ?? -1) + 1;
+        const delta = holdemDelta(said?.state, f.state);
+        this._holdemSaid.set(index, { state: f.state, n });
+        frame = delta ? { events: f.events, delta, n } : { ...f, n };   // the changed fields alone (a look's whole state is its asker's)
+      } else if (f.state) frame = { ...f, n: this._holdemSaid.get(index)?.n };   // a look: whole, at the number the room was last told
       const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });
       for (const [w, b] of this._all()) if (b.id && (to == null || b.id === to)) this._send(w, out);
     }
@@ -2723,6 +2730,7 @@ export class Room {
     let msgs;
     if (m.op === 'ack') { await this._holdemAck(a, m.j); return; }   // CARDS6: a cash-out the client holds, kept no longer
     if (m.op === 'void') { await this._holdemVoid(ws, a, m, now, refuse); return; }   // CARDS6
+    if (m.op === 'topup') { await this._holdemTopUp(a, m, now, refuse); return; }   // CARDS6 follow-up: a seat's top-up
     if (m.op === 'look') { msgs = t ? holdemLook(t, a.id, now) : []; await this._holdemOwed(ws, a, m.table); }   // CARDS6: and the cash-outs owed this account here
     else if (m.op === 'sit') {
       // CARDS6: A STAKED SIT - the service's order checked and its stake spent first; a sit refused after that hands the
@@ -2735,6 +2743,9 @@ export class Room {
         if (v.no) { if (v.back) await this._holdemReceipt(m.table, a.id, { ...v.back, w: 'refused' }); refuse(v.no); return; }
         stake = v.stake;
       }
+      // AUDIT CARDS-4 B2: the table as it stands NOW - the order's check opened the room to other words (a crypto await is no
+      // storage operation), and a table another sitter opened, or the last stand closed, meanwhile is not the one read above
+      t = tables.get(m.table);
       const no = async (why) => { if (stake) await this._holdemReceipt(m.table, a.id, { j: stake.j, s: stake.sub, r: stake.amount, w: 'refused' }); refuse(why); };
       if (t && (t.chairs !== m.chairs || t.bb !== m.bb)) { await no('table differs'); return; }   // AUDIT CARDS-3 A5: the first sitter never decides another cloth's chairs
       if (a.sub && this._holdemAccountSeated(tables, a)) { await no('account seated'); return; }   // AUDIT CARDS-3 A2: one seat an account - two tabs never see two hands
@@ -2772,21 +2783,48 @@ export class Room {
    *  back. A stake is spent once, ever: its seat, its refusal or its void. */
   async _holdemStake(a, m, now) {
     await this._loadKey();
-    if (!this._verifyKey || !a.sub) return { no: 'stakes closed' };
+    // AUDIT CARDS-4 B3: and a room that cannot sign a cash-out seats no stake - its receipt would be unsigned, the gold held
+    if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) return { no: 'stakes closed' };
     const v = await verifyOrder(m.stake, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'stake' });
     if (!v.ok || v.claims.s !== a.sub) return { no: 'stake refused' };
     const c = v.claims;
+    // AUDIT CARDS-4 A2/B1: another room's order is that room's to spend - left unspent and nothing handed back here (each
+    // room remembers its own spends, so a refund here while the room it names still seats it was a stake paid twice)
+    if (c.cr !== a.key) return { no: 'stake elsewhere' };
     if (await this.state.storage.get(stakeKeyOf(c.cj))) return { no: 'stake spent' };
     await this.state.storage.put(stakeKeyOf(c.cj), Math.floor(now / 1000));
     const back = { j: c.cj, s: c.s, r: c.ca };
-    if (c.cr !== a.key || c.ct !== m.table || c.cb !== m.bb) return { no: 'stake elsewhere', back };
+    if (c.ct !== m.table || c.cb !== m.bb) return { no: 'stake elsewhere', back };   // this room's own, at another table or stakes
     return { stake: { j: c.cj, sub: c.s, amount: c.ca } };
+  }
+  /** CARDS6 follow-up (Tavern-Cards section 24): A SEAT'S TOP-UP - an order of this account's for this room, table and
+   *  stakes, checked against the seat before its stake is spent (a refusal spends nothing: the device voids it back), the
+   *  table read again after the order's await (AUDIT CARDS-4 B2), then spent, onto the stack, and settled at once in a
+   *  'joined' receipt - its chips come home in the seat's own. */
+  async _holdemTopUp(a, m, now, refuse) {
+    await this._loadKey();
+    if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) { refuse('stakes closed'); return; }
+    const v = await verifyOrder(m.stake, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'stake' });
+    if (!v.ok || v.claims.s !== a.sub) { refuse('stake refused'); return; }
+    const c = v.claims;
+    const t = (await this._holdemOf()).get(m.table);
+    if (c.cr !== a.key || c.ct !== m.table || !t || c.cb !== t.bb) { refuse('stake elsewhere'); return; }
+    const stake = { j: c.cj, sub: c.s, amount: c.ca };
+    const no = holdemTopUp(t, { id: a.id, stake, now }, true);
+    if (no) { refuse(no); return; }
+    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }
+    await this.state.storage.put(stakeKeyOf(c.cj), Math.floor(now / 1000));
+    const msgs = holdemTopUp(t, { id: a.id, stake, now });
+    if (typeof msgs === 'string') { await this._holdemReceipt(m.table, a.id, { j: c.cj, s: c.s, r: c.ca, w: 'refused' }); refuse(msgs); return; }   // moved under the spend: the whole of it back
+    await this._holdemReceipt(m.table, a.id, { j: c.cj, s: c.s, r: 0, w: 'joined' });
+    this._holdemSend(m.table, msgs, now);
+    await this._holdemSave();
   }
   /** A stake never sat given back: an order of this account for this room, of any age (one past its minute can never be
    *  sat on), whose stake the room never spent - spent now, the whole of it back in a 'void' receipt. */
   async _holdemVoid(ws, a, m, now, refuse) {
     await this._loadKey();
-    if (!this._verifyKey || !a.sub) { refuse('stakes closed'); return; }
+    if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) { refuse('stakes closed'); return; }   // AUDIT CARDS-4 B3
     const v = await verifyStakeOrderAnyAge(m.stake, this._verifyKey, { subtle: crypto.subtle });
     if (!v.ok || v.claims.s !== a.sub || v.claims.cr !== a.key) { refuse('stake refused'); return; }
     const c = v.claims, nowS = Math.floor(now / 1000);
@@ -2799,13 +2837,14 @@ export class Room {
    *  the seat's sockets now. */
   async _holdemReceipt(index, id, { j, s, r, w }) {
     let receipt;
-    try { receipt = await mintCardReceipt({ s, j, r, w }, await this._receiptKeyOf(), { subtle: crypto.subtle, nowS: Math.floor(Date.now() / 1000) }); } catch (e) { console.warn('[holdem] a cash-out would not mint', e?.message ?? e); return; }
+    try { receipt = await mintCardReceipt({ s, j, r, w }, await this._receiptKeyOf(), { subtle: crypto.subtle, nowS: Math.floor(Date.now() / 1000) }); } catch (e) { console.warn('[holdem] a cash-out would not mint', e?.message ?? e); return false; }
     const key = cashoutKeyOf(s), nowS = Math.floor(Date.now() / 1000);
     const kept = ((await this.state.storage.get(key)) ?? []).filter((x) => x && x.e > nowS && x.j !== j);
     kept.push({ j, receipt, e: nowS + CARD_RECEIPT_TTL_S });
     await this.state.storage.put(key, kept.slice(-HOLDEM_OWED_MAX));
     const out = JSON.stringify({ t: 'holdem', table: index, now: Date.now(), cashout: receipt });
     for (const [w, b] of this._all()) if (b.id && (b.id === id || b.sub === s)) this._send(w, out);
+    return true;
   }
   /** The cash-outs this account is owed in this room, told to the asking socket (a look - the room's way in). */
   async _holdemOwed(ws, a, index) {
@@ -2826,8 +2865,13 @@ export class Room {
   async _holdemCashouts(tables) {
     for (const [k, t] of tables) {
       if (!t.cashouts?.length) continue;
-      const due = t.cashouts.splice(0);
-      for (const c of due) await this._holdemReceipt(k, c.to, c);
+      // AUDIT CARDS-4 B4: each off the queue only once it is signed and kept - a write that threw kept the rest unsigned
+      while (t.cashouts.length) {
+        let done = false;
+        try { done = await this._holdemReceipt(k, t.cashouts[0].to, t.cashouts[0]); } catch (e) { console.warn('[holdem] a cash-out was not kept', e?.message ?? e); }
+        if (!done) break;
+        t.cashouts.shift();
+      }
     }
   }
   /** AUDIT CARDS-3 A3: every seat whose player has no hello'd socket in the room stood up (folded out of turn where a hand

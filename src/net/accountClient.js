@@ -610,6 +610,7 @@ export const REFUSALS = Object.freeze({
   'cards-no-stake': 'The realm holds no stake for that cash-out.',
   'cards-other-character': 'That cash-out belongs to another of your characters - it is paid to the one that staked it.',
   'cards-cashout-failed': 'The cash-out could not be paid. Try again.',
+  'cards-held': 'This character has gold staked at a card table. Collect it before the character is deleted.',
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw
