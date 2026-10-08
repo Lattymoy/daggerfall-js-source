@@ -682,7 +682,10 @@ alone, every player stepping their own foes - which is safe, and is why the orde
 
 Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's
 players, until it reloads. Offline, a dungeon no quest holds follows the switches unless the world's sizes are asked
-for (the sync asks for them).
+for (the sync asks for them). MEDIUM-DISTINCT (2026-10-08, `03-World/Delve-Arc.md`) moved the medium layout of every
+dungeon whose two interior draws repeated, inside the same `.m` room: its memory from before is the old layout's, and
+a page from before shares the room laying the old one until it reloads - OPEN for Mac (a tag of its own is a relay
+version).
 
 ### TIER1 - shipped 2026-10-05
 

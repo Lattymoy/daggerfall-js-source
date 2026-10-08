@@ -27,7 +27,7 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { ONLINE_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online
+import { ONLINE_DUNGEONS_STATE, MEDIUM_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -149,6 +149,18 @@ export function relayOnlineDungeons(machine, env = {}) {
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
   if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;
+  const { moved, unread } = relayDungeonPlaces(quest);
+  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
+  if (!moved) return false;
+  putBackPlacements(quest, env);
+  return true;
+}
+
+/** A quest's dungeon Places, each compared with the dungeon its world builds now: a Place whose markers come out
+ *  otherwise has them enumerated again there and its targets let go (putBackPlacements stands them again). Answers
+ *  whether any moved, and whether a dungeon could not be read (no world, no such location, a throw). The two re-lays'
+ *  one body (relayQuestOnline, relayMovedLayouts). */
+function relayDungeonPlaces(quest) {
   const world = quest.hooks?.world ?? null;
   let moved = false, unread = false;
   for (const r of quest.resources?.values?.() ?? []) {
@@ -164,10 +176,30 @@ export function relayQuestOnline(quest, env = {}) {
     r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
     moved = true;
   }
-  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
-  if (!moved) return false;
-  putBackPlacements(quest, env);
-  return true;
+  return { moved, unread };
+}
+
+/**
+ * MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together"): A LAYOUT THE LAW MOVED.
+ * A medium build no longer lays one interior block twice (world/smallerDungeons.js distinctInterior), so a dungeon whose
+ * draws repeated is another layout now, and a running quest that chose its markers on the old one holds a marker in
+ * its second interior block that addresses a block no longer there - its item in rock, its foe in the void. At every
+ * load, online and off (after relayOnlineDungeons), a running quest stamped at one of the two sizes whose builds are
+ * medium - MEDIUM_DUNGEONS_STATE and the world's sizes, ONLINE_DUNGEONS_STATE - has each dungeon Place compared with
+ * the dungeon its world builds now and enumerated again where it differs, its placements put back; its stamp is
+ * untouched (the size is the same size). DFU's stamps are left alone: neither of their builds moved. Answers the count
+ * of quests re-laid. Not a DFU member.
+ */
+export function relayMovedLayouts(machine, env = {}) {
+  let relaid = 0;
+  for (const quest of machine?.quests?.values?.() ?? []) {
+    if (!questRunning(quest)) continue;
+    if (quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== ONLINE_DUNGEONS_STATE) continue;
+    if (!relayDungeonPlaces(quest).moved) continue;
+    putBackPlacements(quest, env);
+    relaid++;
+  }
+  return relaid;
 }
 
 /**

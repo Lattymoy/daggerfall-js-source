@@ -63,7 +63,7 @@
 
 import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
 import { clockCounts } from '../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
-import { repairActiveQuests, relayOnlineDungeons } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
+import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
 import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E1: online, every dungeon is whole
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
@@ -698,6 +698,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // at another offline has its dungeon markers enumerated again on the room's build (questRepair.js
       // relayOnlineDungeons) - before anything mounts
       if (isOnlinePage()) relayOnlineDungeons(machine, { carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false });
+      // MEDIUM-DISTINCT: a medium dungeon that laid one interior block twice lays two now, so a quest at a medium size
+      // has its markers enumerated again where its dungeon's layout moved (questRepair.js relayMovedLayouts) - online and off
+      relayMovedLayouts(machine, { carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false });
       // AUDIT 26 F102: DFU restores the notebook only when the save
       // CARRIES one (`if (!string.IsNullOrEmpty(notebookDataJson))`,
       // SaveLoadManager.cs:1451-1456) - the empty-block substitute

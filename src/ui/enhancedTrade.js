@@ -47,7 +47,7 @@ import { audio } from '../systems/audio.js';
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
-  tradeCost, getTradePrice, tradeDecision, sellProceeds, creditRows, creditRefusalRows,
+  tradeCost, getTradePrice, tradeDecision, sellProceeds,
   localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
@@ -572,9 +572,9 @@ function castIdentifySpell() {
   render();
 }
 
-function confirmTrade(price, credit = null) {
+function confirmTrade(price) {
   const isSelling = selling();
-  const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : credit;   // SHIP-CREDIT: a purchase on the bank's credit
+  const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;
   deps.commit?.(mode, [...stagedForCost()], price, proceeds);
   if (inBuy()) basket.length = 0;
   else if (isSelling) staged.length = 0;
@@ -682,14 +682,7 @@ function modeAction() {
   const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces);   // FB0929: a purchase asks a gold a piece at least
   const d = tradeDecision(mode, { cost: c, tradePrice: price, gold: deps.gold?.() ?? 0 });
   if (d.kind === 'notEnoughGold') {
-    // SHIP-CREDIT (Mac: "Buy on credit"): a boat the purse falls short of, offered on the bank's credit - or why not
-    const credit = mode === 'Buy' ? deps.credit?.([...stagedForCost()], price) ?? null : null;
-    if (credit?.kind === 'credit') {
-      box = { rows: creditRows(credit, price, deps.gold?.() ?? 0), buttons: 'YesNo', onYes: () => confirmTrade(price, credit) };
-      render();
-      return;
-    }
-    box = { rows: [...d.textIds.flatMap((id) => rowsFor(id, price)), ...(credit?.kind === 'refuse' ? creditRefusalRows(credit, credit.lines) : [])], buttons: null };
+    box = { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };
     render();
     return;
   }

@@ -47,7 +47,8 @@ export const SMALLER_DUNGEON_THRESHOLD = 5;
  * Enhanced label"): THE MEDIUM SIZE. Smaller Dungeons is DFU's all-or-nothing: a dungeon of twelve blocks becomes five.
  * Medium is the step between - a dungeon of more than MEDIUM_DUNGEON_THRESHOLD blocks is regenerated, by
  * GenerateSmallerDungeon's own law (its own block list, DFRandom seeded on its MapId, so the same every visit), as
- * MEDIUM_LAYOUT: two interior blocks side by side (the starting block first) and the six border blocks that close them.
+ * MEDIUM_LAYOUT: two interior blocks side by side (the starting block first; two different ones where its pool holds two -
+ * MEDIUM-DISTINCT, distinctInterior) and the six border blocks that close them.
  * Every quest guard Smaller Dungeons keeps, Medium keeps: main story, the arena's undercroft and a quest's frozen size.
  * Smaller Dungeons, when it is on, wins. Not a DFU member.
  *
@@ -75,6 +76,10 @@ export const SMALLER_DUNGEON_THRESHOLD = 5;
  */
 export const MEDIUM_DUNGEON_THRESHOLD = 8;
 export const MEDIUM_DUNGEONS_STATE = 3;
+/** MEDIUM-DISTINCT (2026-10-08): the save stamp of a medium build whose second interior block was taken again
+ *  (distinctInterior, below) - its own value past the online sizes' 4, never a quest's frozen size: the layout the
+ *  stamp 3 named laid that block twice, so a save made in it stands at the start rather than in a block that moved. */
+export const MEDIUM_DISTINCT_STAMP = 5;
 /** The prefs key (the `medium-dungeons` Features row). */
 export const MEDIUM_DUNGEONS_PREF = 'mediumDungeons';
 /** The player's ask, on the enhanced skin. */
@@ -250,11 +255,45 @@ function generateRdbBlock(x, z, borderBlock, startingBlock, dfLocation) {
 }
 
 /**
+ * MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together"): NO INTERIOR BLOCK LAID
+ * TWICE. GetRandomBlock draws with replacement, and the medium size draws its two interior blocks from a pool of two to
+ * four (a dungeon of 10 to 22 blocks; MAPS.BSA repeats names in a list as well), so a quarter to a half of them laid
+ * the same block twice side by side - one area and its copy. An interior block that repeats one already laid takes, in
+ * its place, the pool's next block round from the repeated one's first place in it that is not laid - no draw of its
+ * own, so every later row draws as it did and a layout whose draws never repeated is the layout it always was. A pool
+ * with no other block keeps the repeat. Border blocks are left as drawn: they are the ends, and Daggerfall's own
+ * dungeons repeat them. The five-block plus lays one interior block, so it never meets this and stays DFU's, draw for
+ * draw. Mutates `layout` (the clone's own array); answers whether a block was taken again. Not a DFU member.
+ */
+function distinctInterior(layout, dfLocation) {
+  const pool = dfLocation.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName));
+  const laid = new Set();
+  let taken = false;
+  for (let i = 0; i < layout.length; i++) {
+    const b = layout[i];
+    if (/^b/i.test(b.blockName)) continue;
+    if (laid.has(b.blockName)) {
+      const at = pool.findIndex((p) => p.blockName === b.blockName);
+      for (let k = 1; k < pool.length; k++) {
+        const other = pool[(at + k) % pool.length];
+        if (laid.has(other.blockName)) continue;
+        layout[i] = { ...other, x: b.x, z: b.z, isStartingBlock: b.isStartingBlock };
+        taken = true;
+        break;
+      }
+    }
+    laid.add(layout[i].blockName);
+  }
+  return taken;
+}
+
+/**
  * GenerateSmallerDungeon's body (:1366-1400) at a layout, NON-MUTATING: a clone of the location whose dungeon is `rows`
  * ([x, z, border], the first the starting block) drawn in order from its own pools, or the location itself at or under
  * `threshold`. Throws on a main-story dungeon, verbatim (:1372-1373). `mark` is the clone's size (FT1: the clone SAYS
  * its size, so the save stamp below can read the build rather than re-deriving it from deps it no longer has).
- * AUDIT DELVE A4: the one body both sizes draw through.
+ * AUDIT DELVE A4: the one body both sizes draw through. MEDIUM-DISTINCT: no interior block laid twice (distinctInterior),
+ * the clone saying so (`distinct`) when one was taken again.
  */
 function regenerateDungeon(dfLocation, threshold, rows, mark, member) {
   if (isMainStoryDungeon(dfLocation.mapTableData?.mapId)) {
@@ -265,7 +304,8 @@ function regenerateDungeon(dfLocation, threshold, rows, mark, member) {
   // DFRandom.Seed = (uint)MapId (:1389) - the same layout every visit.
   setSeed(dfLocation.mapTableData.mapId);
   const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));
-  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true } };
+  const distinct = distinctInterior(layout, dfLocation);   // MEDIUM-DISTINCT: never one interior block twice
+  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...(distinct ? { distinct: true } : {}) } };
 }
 
 /**
@@ -322,7 +362,9 @@ export function builtDungeonSize(dfLocation) {
  * the stamp answers about the build.
  */
 export function smallerDungeonsStamp(dfLocation) {
-  if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;   // DSIZE1: the build, at its own value
+  // DSIZE1: the build, at its own value - MEDIUM-DISTINCT: and a medium build whose interior block was taken again, at
+  // its own, so a save made in the layout that laid it twice (3) is another layout's
+  if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;
   return isSmallerDungeon(dfLocation) ? SMALLER_DUNGEONS_STATE.Enabled : SMALLER_DUNGEONS_STATE.Disabled;
 }
 
