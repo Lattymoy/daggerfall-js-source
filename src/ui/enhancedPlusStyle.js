@@ -1441,6 +1441,9 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 /* BOARD-UI: the day's count over the cards, on its own dark strip */
 .notice-worktoday { margin: 0 4px 12px; padding: 6px 10px; font-size: 13px; letter-spacing: 0.04em; color: #e9e1cf;
   background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); }
+/* CHAP3a: the account's Merit in a chapter here, under the day's count, on the guild seal's strip */
+.notice-merit { margin: -8px 4px 12px; padding: 4px 10px; font-size: 12px; letter-spacing: 0.03em; color: #e9e1cf;
+  background: rgba(12,10,8,0.6); border-left: 2px solid rgba(120,150,190,0.6); }
 .prof-cols { display: grid; grid-template-columns: minmax(180px, 0.9fr) 1.4fr; gap: 14px; }
 .prof-list { display: flex; flex-direction: column; gap: 4px; }
 .prof-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 4px 8px; text-align: left; font: inherit; font-size: 12px;

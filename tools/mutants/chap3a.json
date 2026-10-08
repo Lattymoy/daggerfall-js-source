@@ -1,0 +1,679 @@
+[
+  {
+    "name": "CHAP3A-WRIT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MERIT_WRIT = 100;",
+    "new": "export const MERIT_WRIT = 90;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RECEIPT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MERIT_RECEIPT = 50;",
+    "new": "export const MERIT_RECEIPT = 40;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-TENURE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MERIT_TENURE_S = 7 * 86_400;",
+    "new": "export const MERIT_TENURE_S = 6 * 86_400;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MERIT_CAP_WEEK = 600;",
+    "new": "export const MERIT_CAP_WEEK = 700;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SOURCES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MERIT_SOURCES = Object.freeze(['writ', ...RECEIPT_KINDS]);",
+    "new": "export const MERIT_SOURCES = Object.freeze(['writ', 'gate']);",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-WEEK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> seatWeekOf(nowS * 1000);",
+    "new": "=> seatWeekOf(nowS * 1000 + 86_400_000);",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SHARE-CLAMP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
+    "new": "Math.max(0, /** @type {number} */ (own))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SHARE-FLOOR0",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
+    "new": "Math.min(q, /** @type {number} */ (own))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SHARE-ROUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return Math.floor((MERIT_WRIT * Math.max(0,",
+    "new": "return Math.round((MERIT_WRIT * Math.max(0,",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SHARE-QTY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "/** @type {number} */ (qty) < 1 ||",
+    "new": "/** @type {number} */ (qty) < 0 ||",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SHARE-OWNINT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;",
+    "new": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || own == null) return 0;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> `m:${day}:${region}:${faction}:${character}`;",
+    "new": "=> `m:${day}:${faction}:${region}:${character}`;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DICE-CHAR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k)",
+    "new": "gateHash(MEMBER_WRIT_SALT, day, region, faction, slot, k)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DICE-SALT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const MEMBER_WRIT_SALT = 0x3e17;",
+    "new": "export const MEMBER_WRIT_SALT = 0x4a11;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-KINDS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const w = courtWrits(day, region, 2, own.length ? own : table,",
+    "new": "const w = courtWrits(day, region, 2, table,",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SLOT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "/ 4294967296)[1];\n  return w ? { ...w, slot: 0 } : null;",
+    "new": "/ 4294967296)[0];\n  return w ? { ...w, slot: 0 } : null;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-REALM",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length) return null;",
+    "new": "if (!isRollFaction(faction) || typeof character !== 'string' || !table?.length) return null;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ISCHAPTER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> kind === 'hall' || kind === 'member';",
+    "new": "=> kind === 'hall';",
+    "tests": [
+      "test/chap3a_merit.test.js",
+      "test/chap2_halls.test.js",
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LINE-DAYS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const days = Math.ceil((m.from - nowS) / 86_400);",
+    "new": "const days = Math.floor((m.from - nowS) / 86_400);",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LINE-ORDER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (m.from != null && m.from > nowS) {\n    const days",
+    "new": "  if (m.from != null && m.from > nowS && !m.elsewhere) {\n    const days",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LINE-NOW",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (m.from != null && m.from > nowS) {",
+    "new": "if (m.from != null && m.from >= nowS) {",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-TENURE",
+    "file": "server-account/src/npcMerit.js",
+    "old": " AND member = 1 AND joined_at <= ?8 - ?10)",
+    "new": " AND member = 1)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-TENURE-EDGE",
+    "file": "server-account/src/npcMerit.js",
+    "old": "AND joined_at <= ?8 - ?10)",
+    "new": "AND joined_at < ?8 - ?10)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-MEMBER",
+    "file": "server-account/src/npcMerit.js",
+    "old": "AND faction_id = ?3 AND member = 1 AND joined_at",
+    "new": "AND faction_id = ?3 AND joined_at",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-PLAYER",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3",
+    "new": "WHERE char_id = ?2 AND faction_id = ?3",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "The character's standing clause beside it asks the account (realm_characters: id = the character AND player = the account), and a Roll row's player is always its character's account (npcRoll.js writes a character's rows only under its own account; a delete or an undone crossing takes them with it) - so a Roll row of the character with another account's name cannot stand beside a realm character of this one."
+  },
+  {
+    "name": "CHAP3A-SQL-DEAD",
+    "file": "server-account/src/npcMerit.js",
+    "old": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)\n",
+    "new": "",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-ELSEWHERE",
+    "file": "server-account/src/npcMerit.js",
+    "old": "\n      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`)",
+    "new": "`)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-ELSEWHERE-WEEK",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)",
+    "new": "WHERE account = ?1 AND faction = ?3 AND region <> ?4)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-CAP-ACCOUNT",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
+    "new": "WHERE week = ?5 AND char_id = ?2 AND faction = ?3 AND region = ?4), 0))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-CAP-REGION",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
+    "new": "WHERE week = ?5 AND account = ?1 AND faction = ?3), 0))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "The week's one chapter of a guild (the NOT EXISTS clause beside it) lets no line through while the account holds a line of the guild in another region this week, so whenever a line can be written the guild's lines this week are all this region's: the cap's sum over every region equals its sum over this one."
+  },
+  {
+    "name": "CHAP3A-SQL-CAP-WEEK",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
+    "new": "WHERE account = ?1 AND faction = ?3 AND region = ?4), 0))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-GOT",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE got >= 1 AND ${guard}",
+    "new": "WHERE got >= 0 AND ${guard}",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "Merit's table holds CHECK (amount >= 1) and the line is an INSERT OR IGNORE: a line of 0 the looser bound lets through is the CHECK's to refuse, and the IGNORE drops that one row as the WHERE did - no row, no error, either way."
+  },
+  {
+    "name": "CHAP3A-SQL-CAST",
+    "file": "server-account/src/npcMerit.js",
+    "old": "(SELECT CAST(MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
+    "new": "(SELECT MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS got)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-GUARD",
+    "file": "server-account/src/npcMerit.js",
+    "old": "WHERE got >= 1 AND ${guard}",
+    "new": "WHERE got >= 1",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-SQL-WEEKBIND",
+    "file": "server-account/src/npcMerit.js",
+    "old": ".bind(player, character, faction, region, meritWeekOf(nowS), source,",
+    "new": ".bind(player, character, faction, region, meritWeekOf(nowS) + 1, source,",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ASKS-ELSEWHERE",
+    "file": "server-account/src/npcMerit.js",
+    "old": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) !== region)",
+    "new": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) === region)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ASKS-FROM",
+    "file": "server-account/src/npcMerit.js",
+    "old": "from: from !== null && from > nowS ? from : null",
+    "new": "from",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ASKS-REGION",
+    "file": "server-account/src/npcMerit.js",
+    "old": "merit: Number(mine.find((/** @type {any} */ r) => Number(r.region) === region)?.n ?? 0)",
+    "new": "merit: Number(mine[0]?.n ?? 0)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ASKS-WEEK",
+    "file": "server-account/src/npcMerit.js",
+    "old": "FROM npc_chapter_merit WHERE week = ?1 AND account = ?2 GROUP BY faction, region",
+    "new": "FROM npc_chapter_merit WHERE ?1 = ?1 AND account = ?2 GROUP BY faction, region",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-ASKS-CHAPTERS",
+    "file": "server-account/src/npcMerit.js",
+    "old": "const here = members.filter((f) => chapters.has(f));",
+    "new": "const here = members;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RCPT-MERIT",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {",
+    "new": "...credits.filter(() => false).map((c) => meritStatement(db, {",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RCPT-WRITREF",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {",
+    "new": "...credits.map((c) => meritStatement(db, {",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RCPT-TAG",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "AND ref = ?7 AND tag = ?12)', binds: [MERIT_RECEIPT, tag],",
+    "new": "AND ref = ?7 AND ?12 = ?12)', binds: [MERIT_RECEIPT, tag],",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "A receipt's lines are claimed once (the gate's and the raid's own rows answer a repeat 'claimed' before any credit) and written once on their key (INSERT OR IGNORE), and its Merit once on the act's (UNIQUE (char_id, faction, source, ref)): a credit line of this receipt that stands from an earlier write is this receipt's own, so the Merit it guards is the same act's - the tag names which write made it, which no path through the routes can make differ from this one (creditReceipt answers 'credited' where every line stood)."
+  },
+  {
+    "name": "CHAP3A-RCPT-ANSWER",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "merit: await meritOfAct(db, character, kind, receiptRef(kind, id)),",
+    "new": "merit: [],",
+    "tests": [
+      "test/chap3a_merit.test.js",
+      "test/chap2_halls.test.js",
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RCPT-SOURCE",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "player: player.id, character, faction: c.faction, region, source: kind, ref: c.ref,",
+    "new": "player: player.id, character, faction: c.faction, region, source: 'gate', ref: c.ref,",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-RCPT-AMOUNT",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "binds: [MERIT_RECEIPT, tag],",
+    "new": "binds: [MERIT_WRIT, tag],",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-POST-CALL",
+    "file": "server-account/src/professions.js",
+    "old": "  await postMemberWrits(db, day, region, nowS, character, members);\n",
+    "new": "",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-POST-CHAPTERS",
+    "file": "server-account/src/professions.js",
+    "old": "const want = members.filter((f) => chapters.has(f));",
+    "new": "const want = members;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-POST-ONCE",
+    "file": "server-account/src/professions.js",
+    "old": "const missing = want.filter((f) => !posted.has(f));",
+    "new": "const missing = want;",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "A member's own writ's id is its key (memberWritId, INSERT OR IGNORE): a writ drawn again for a guild already posted today is the same writ under the same id, and is ignored - the read spares the region's ground read, never a second row."
+  },
+  {
+    "name": "CHAP3A-POST-MEMBERS",
+    "file": "server-account/src/professions.js",
+    "old": "const members = halls ? await membersOf(db, player.id, character) : [];",
+    "new": "const members = await membersOf(db, player.id, character);",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LIST-OWNER",
+    "file": "server-account/src/professions.js",
+    "old": "AND (owner = '' OR owner = ?3) ORDER BY kind, faction, slot\")",
+    "new": "ORDER BY kind, faction, slot\")",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LIST-MEMBER",
+    "file": "server-account/src/professions.js",
+    "old": "(w.kind === 'member' ? members.includes(Number(w.faction))",
+    "new": "(w.kind === 'member' ? true",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-OWNER",
+    "file": "server-account/src/professions.js",
+    "old": "if (w.kind === 'member' && (w.owner !== character || !(await membersOf(",
+    "new": "if (w.kind === 'member' && (!(await membersOf(",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-MEMBER",
+    "file": "server-account/src/professions.js",
+    "old": "(w.owner !== character || !(await membersOf(db, player.id, character)).includes(Number(w.faction)))) return { error: 'no-writ' };",
+    "new": "(w.owner !== character)) return { error: 'no-writ' };",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-HIDDEN",
+    "file": "server-account/src/professions.js",
+    "old": "if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(",
+    "new": "if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ],
+    "equivalent": true,
+    "why": "A member's own writ is refused 'no-writ' just above to any character not on its Roll as the guild's member (membersOf, the owner's own account, standing), which a hidden guild's member check (hiddenMemberships) can only repeat for the same row."
+  },
+  {
+    "name": "CHAP3A-DELIVER-CLOSED",
+    "file": "server-account/src/professions.js",
+    "old": "if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
+    "new": "if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-MERIT",
+    "file": "server-account/src/professions.js",
+    "old": "...(w.kind === 'member' ? [meritStatement(db, {",
+    "new": "...(false ? [meritStatement(db, {",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-BOUGHT",
+    "file": "server-account/src/professions.js",
+    "old": "(qty - MIN(qty, COALESCE((SELECT b.qty FROM prof_stores b",
+    "new": "(qty - MIN(0, COALESCE((SELECT b.qty FROM prof_stores b",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-SCALE",
+    "file": "server-account/src/professions.js",
+    "old": "binds: [id, nonce, MERIT_WRIT],",
+    "new": "binds: [id, nonce, 50],",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-ANSWER",
+    "file": "server-account/src/professions.js",
+    "old": "...(w.kind === 'member' ? { merit: (await meritOfAct(db, w.filled_char, 'writ', w.id))[0]?.amount ?? 0 } : {}),",
+    "new": "...({}),",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-DELIVER-REP",
+    "file": "server-account/src/professions.js",
+    "old": "...(w.kind !== 'court' ? [   // CHAP3a: a member's own writ as a hall writ",
+    "new": "...(w.kind === 'hall' ? [   // CHAP3a: a member's own writ as a hall writ",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-LIST-MERIT",
+    "file": "server-account/src/professions.js",
+    "old": "merit: await meritAsks(db, player.id, character, region, nowS, members),",
+    "new": "merit: [],",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-HOST-REFRESH",
+    "file": "src/scenes/world.js",
+    "old": "if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();",
+    "new": "if (d.writ?.kind === 'hall') rollTracker?.refresh();",
+    "tests": [
+      "test/chap3a_merit.test.js",
+      "test/chap2_halls.test.js",
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-HOST-MERIT",
+    "file": "src/scenes/world.js",
+    "old": "const merit = hall && Number(d.merit) > 0 ?",
+    "new": "const merit = hall && Number(d.merit) >= 0 ?",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-CARD-KIND",
+    "file": "src/ui/noticeWindow.js",
+    "old": "el('span', 'writ-kind', own ? 'Your writ' : poster ? 'Hall writ' : 'Court writ')",
+    "new": "el('span', 'writ-kind', poster ? 'Hall writ' : 'Court writ')",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-CARD-POSTER",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const poster = isChapterWrit(w.kind) ? hallPosterName(w.faction) ?? 'guild' : null;",
+    "new": "const poster = w.kind === 'hall' ? hallPosterName(w.faction) ?? 'guild' : null;",
+    "tests": [
+      "test/chap3a_merit.test.js",
+      "test/chap2_halls.test.js",
+      "test/chap2b_receipts.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-CARD-PAY",
+    "file": "src/ui/noticeWindow.js",
+    "old": "${own ? `, standing and Merit with the ${poster}` : poster",
+    "new": "${own ? ` and standing with the ${poster}` : poster",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-CARD-LINES",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));   // CHAP3a: the account's Merit here\n",
+    "new": "",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-MIG-KIND",
+    "file": "server-account/migrations/0091_npc_halls.sql",
+    "old": "CHECK (kind IN ('court', 'hall', 'member'))",
+    "new": "CHECK (kind IN ('court', 'hall'))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-MIG-OWNER",
+    "file": "server-account/migrations/0091_npc_halls.sql",
+    "old": "UNIQUE (day, region, kind, faction, owner, slot)",
+    "new": "UNIQUE (day, region, kind, faction, slot)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-MIG-MERIT-UNIQUE",
+    "file": "server-account/migrations/0093_npc_merit.sql",
+    "old": "  UNIQUE (char_id, faction, source, ref)\n",
+    "new": "  ref2 TEXT\n",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-MIG-MERIT-KEY",
+    "file": "server-account/migrations/0093_npc_merit.sql",
+    "old": "  UNIQUE (char_id, faction, source, ref)",
+    "new": "  UNIQUE (faction, source, ref)",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "CHAP3A-MIG-MERIT-SOURCE",
+    "file": "server-account/migrations/0093_npc_merit.sql",
+    "old": "CHECK (source IN ('writ', 'gate', 'raid'))",
+    "new": "CHECK (source IN ('writ', 'gate'))",
+    "tests": [
+      "test/chap3a_merit.test.js"
+    ]
+  }
+]

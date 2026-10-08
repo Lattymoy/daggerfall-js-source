@@ -192,8 +192,8 @@
   {
     "name": "CHAP2-LIST-SWITCH",
     "file": "server-account/src/professions.js",
-    "old": "const shown = (w) => w.kind !== 'hall' || (halls && (",
-    "new": "const shown = (w) => w.kind !== 'hall' || (true && (",
+    "old": "const shown = (w) => w.kind === 'court' || (halls && (",
+    "new": "const shown = (w) => w.kind === 'court' || (true && (",
     "tests": [
       "test/chap2_halls.test.js"
     ]
@@ -201,7 +201,7 @@
   {
     "name": "CHAP2-DELIVER-SWITCH",
     "file": "server-account/src/professions.js",
-    "old": "  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
+    "old": "  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
     "new": "  void chaptersOpenFor;",
     "tests": [
       "test/chap2_halls.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "CHAP2-CREDIT",
     "file": "server-account/src/professions.js",
-    "old": "    ...(w.kind === 'hall' ? [",
-    "new": "    ...(false ? [",
+    "old": "    ...(w.kind !== 'court' ? [   // CHAP3a",
+    "new": "    ...(false ? [   // CHAP3a",
     "tests": [
       "test/chap2_halls.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "CHAP2-WIRE-REFRESH",
     "file": "src/scenes/world.js",
-    "old": "    if (d.writ?.kind === 'hall') rollTracker?.refresh();\n",
+    "old": "    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();\n",
     "new": "",
     "tests": [
       "test/chap2_halls.test.js",
@@ -328,8 +328,8 @@
   {
     "name": "CHAP2-HIDDEN-LIST",
     "file": "server-account/src/professions.js",
-    "old": "(!hallHidden(Number(w.faction)) || hidden?.has(Number(w.faction)) || w.filled_by === player.id)",
-    "new": "(true || hidden?.has(Number(w.faction)) || w.filled_by === player.id)",
+    "old": ": !hallHidden(Number(w.faction)) || hidden?.has(Number(w.faction)))));",
+    "new": ": true || hidden?.has(Number(w.faction)))));",
     "tests": [
       "test/chap2_halls.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "CHAP2-HIDDEN-MEMBER",
     "file": "server-account/src/professions.js",
-    "old": "|| hidden?.has(Number(w.faction)) ||",
-    "new": "|| false ||",
+    "old": "!hallHidden(Number(w.faction)) || hidden?.has(Number(w.faction)))));",
+    "new": "!hallHidden(Number(w.faction)) || false)));",
     "tests": [
       "test/chap2_halls.test.js"
     ]

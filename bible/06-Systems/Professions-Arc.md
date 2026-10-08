@@ -1224,7 +1224,7 @@ the billboard cull's shadow arm, no board's), left to their own arcs. Probe: `no
   1.2, and Renown XP 25 x tier x units / 10 (MERGE 2: at main's RENOWN-ACCOUNT rate, three quarters floored -
   `net/professionLaw.js` writRenown - and to the delivering character's own track since RENOWN-CHAR; MERGE 2 had paid
   the ACCOUNT's one Renown). Each writ is filled once, by the first to deliver; at most **3** an
-  account a day (CHAP2a: hall writs and Court writs together, one allowance - Chapters-Arc CALL 8). (The economy model, Appendix C, set 3 and 1.2: at 5 and 1.5 the Marks minted ran at 2.3 times the
+  account a day (CHAP2a: hall writs and Court writs together, one allowance - Chapters-Arc CALL 8; CHAP3a: and a member's own writ for its chapter). (The economy model, Appendix C, set 3 and 1.2: at 5 and 1.5 the Marks minted ran at 2.3 times the
   Marks burnt.)
 - **Guild and seat writs**: their pay is escrowed from the guild's Marks treasury, so posting one is a withdrawal:
   the **Guildmaster** posts them (GUILD1's law: only the Guildmaster withdraws), or an **Officer** within a weekly
@@ -4050,7 +4050,7 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Auctions (PROF5b) | Masterworks only; 24 h; opening bid 1-1,000,000 Marks, a bid up to 10,000,000 (the Marks cap); the next bid the opening, else the standing bid + max(1, ceil(5%)); a bid within 120 s of the end adds 120 s, as often as bids come; fee a listing's on the opening, tax a sale's on the winning bid; among the account's 30; twenty closed a read |
 | A piece's wear (PROF5) | its condition over its most, in thousandths (1-1,000); the buyer's piece minted at that share, at least 1; read "worn to N%", 99 at most (AUDIT 30) |
 | Marks | ~10 gold of play; balance cap 10,000,000; Bank: 1 Mark -> 8 gold, 300 a day |
-| Faucets | Court writs 3 a day (from PROF1; CHAP2a: hall writs inside the same 3); gate 50 a receipt, raid 30 a receipt, together at most 150 a UTC day an account (SILVER-WAYS - the gate was 2 a day); a guild deed 25 to the treasury, 3 accounts of 7 days on one raid or gate, 4 a guild a day; Honours 50 / 25; Motherlode 10, one a day |
+| Faucets | Court writs 3 a day (from PROF1; CHAP2a: hall writs inside the same 3; CHAP3a: a member's own writ too); gate 50 a receipt, raid 30 a receipt, together at most 150 a UTC day an account (SILVER-WAYS - the gate was 2 a day); a guild deed 25 to the treasury, 3 accounts of 7 days on one raid or gate, 4 a guild a day; Honours 50 / 25; Motherlode 10, one a day |
 | Guild contracts (SILVER-WAYS) | raids alone; 1-50 silver a defender, 1-500 defenders, 7 days, 5 open a guild, 3 paid a claim (the best first); the Officers' one writ budget; the 5% running tax; never the posting guild's Officers or Guildmaster |
 | Court writs | 6 x max(1, ceil(active / 100)) a region a day, witnessed materials only, 10-50 units, pay x 1.2, Renown 25 x tier x units / 10 at three quarters (MERGE 2), the account's |
 | Writ influence | own units at their value, from a 7-day member bound to the guild; bought at Tribute's rate in its cap; counter goods never; a Siege Camp spent at the Turning (a Ram Kit to the siege it won, the rest burnt) |

@@ -22,16 +22,22 @@
 // so the row moves by this write's credits alone. The claim sequence
 // (`kseq`) is untouched: the service's own credit, additive (AUDIT CHAP2
 // C1). Only while the character stands.
+//
+// CHAP3a: AND ITS MERIT - MERIT_RECEIPT to each chapter the receipt's own
+// line (never the receipt writ's) credited, in the same batch under the
+// same tag (npcMerit.js meritStatement asks the tenure, the week's one
+// chapter of a guild and the cap).
 // ═══════════════════════════════════════════════════════════════════
 
 import { chaptersOpenFor } from './npcRoll.js';
+import { meritStatement, meritOfAct } from './npcMerit.js';   // CHAP3a: a receipt's Merit
 import { regionChapters } from './npcHalls.js';
 import { REALM_ID_RE } from './realm.js';
 import { regionOk } from '../../src/net/nodeLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { MAX_REPUTATION } from '../../src/systems/guildFactions.js';
 import {
-  RECEIPT_KINDS, receiptCreditsOf, receiptWritRef, hallReceiptKindsOf, hallHidden,
+  RECEIPT_KINDS, receiptCreditsOf, receiptRef, receiptWritRef, hallReceiptKindsOf, hallHidden, MERIT_RECEIPT,
 } from '../../src/net/npcChapterLaw.js';
 
 /** A write's own tag: eight random bytes, hex (npcRoll.js mints its own the same way). */
@@ -44,7 +50,7 @@ function mintTag(/** @type {((b: Uint8Array) => Uint8Array) | undefined} */ rand
 
 /** The guild factions a realm character of the account is a member of on its Roll - none with no Roll, for another
  *  account's character, or for one dead. */
-async function membersOf(/** @type {any} */ db, /** @type {string} */ player, /** @type {unknown} */ character) {
+export async function membersOf(/** @type {any} */ db, /** @type {string} */ player, /** @type {unknown} */ character) {
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return [];
   const { results = [] } = await db.prepare(`SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1
     AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL)`).bind(character, player).all();
@@ -54,7 +60,7 @@ async function membersOf(/** @type {any} */ db, /** @type {string} */ player, /*
 /**
  * A RECEIPT REMEMBERED: `{ character, kind, id, region }` - the realm character that fought, 'gate' or 'raid', the
  * receipt's own id (a gate's day, a raid's key) and the region it stood in. Answers `{ counted: true, credited: [{ f,
- * amount }] }`, or `{ counted: false, why }`: 'chapters-closed', 'no-receipt', 'no-region', 'no-member' (no Roll, no
+ * amount }], merit: [{ f, amount }] }` (CHAP3a: the Merit its chapters count it, npcMerit.js), or `{ counted: false, why }`: 'chapters-closed', 'no-receipt', 'no-region', 'no-member' (no Roll, no
  * guild on it, another account's character or a dead one), 'no-chapter' (none of its guilds keeps one there), 'credited' (this receipt's lines already stand),
  * 'busy' (a race lost - the receipt stands; its credit is asked by no one again), 'server'.
  * @param {{ db: any, nowS: number, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string }} player @param {any} env @param {any} body
@@ -83,11 +89,19 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
       // never past DFU's 100, what is owed trimmed to the room left - as a hall writ's credit (professions.js deliverWrit)
       ...[...new Set(credits.map((c) => c.faction))].map((f) => db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ${sum}),
         owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ${sum}))) WHERE char_id = ?1 AND faction_id = ?3 AND ${tagged}`).bind(character, tag, f, MAX_REPUTATION)),
+      // CHAP3a: the receipt's Merit to each chapter whose receipt line this write made
+      ...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {
+        player: player.id, character, faction: c.faction, region, source: kind, ref: c.ref, nowS, amountSql: '?11',
+        guard: 'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)', binds: [MERIT_RECEIPT, tag],
+      })),
     ]);
     const { results: got = [] } = await db.prepare('SELECT faction_id AS f, SUM(amount) AS amount FROM npc_receipt_credits WHERE char_id = ?1 AND tag = ?2 GROUP BY faction_id ORDER BY faction_id')
       .bind(character, tag).all();
     if (!got.length) return { counted: false, why: 'busy' };
-    return { counted: true, credited: got.map((/** @type {any} */ r) => ({ f: Number(r.f), amount: Number(r.amount) })) };
+    return {
+      counted: true, credited: got.map((/** @type {any} */ r) => ({ f: Number(r.f), amount: Number(r.amount) })),
+      merit: await meritOfAct(db, character, kind, receiptRef(kind, id)),
+    };
   } catch {
     return { counted: false, why: 'server' };
   }

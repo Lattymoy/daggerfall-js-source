@@ -108,7 +108,7 @@ test('CHAP2b a gate closed: +1 to each of the character\'s guilds with a chapter
   const g = await s.gate();
   assert.equal(g.status, 200, JSON.stringify(g.body));
   assert.equal(g.body.recorded, true);
-  assert.deepEqual(g.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }] });
+  assert.deepEqual(g.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }], merit: [] });   // PIN MOVED (CHAP3a: and its Merit - none inside a new member's week)
   assert.deepEqual([s.rep(41).rep, s.rep(368).rep, s.rep(108).rep], [13, 8, 0], 'a Brotherhood chapter there - but no member');
   const day = utcDay(_now);
   assert.deepEqual(s.credits(), [
@@ -127,9 +127,9 @@ test('CHAP2b raids: the town defended credits by its key\'s region; the day\'s w
   const s = await stand();
   const a = await s.raid(7);
   assert.equal(a.status, 200, JSON.stringify(a.body));
-  assert.deepEqual(a.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }] });
+  assert.deepEqual(a.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }], merit: [] });   // PIN MOVED (CHAP3a)
   const b = await s.raid(8);
-  assert.deepEqual(b.body.chapters, { counted: true, credited: [{ f: 41, amount: 1 }, { f: 368, amount: 1 }] }, 'the day\'s writ is filled: the receipt\'s own +1');
+  assert.deepEqual(b.body.chapters, { counted: true, credited: [{ f: 41, amount: 1 }, { f: 368, amount: 1 }], merit: [] }, 'the day\'s writ is filled: the receipt\'s own +1');   // PIN MOVED (CHAP3a)
   assert.deepEqual([s.rep(41).rep, s.rep(368).rep], [14, 9]);
   const elsewhere = await s.raid(9, 17);
   assert.deepEqual(elsewhere.body.chapters, { counted: false, why: 'no-chapter' }, 'Daggerfall keeps no chapter of its guilds');

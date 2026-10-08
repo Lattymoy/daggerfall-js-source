@@ -9,7 +9,9 @@ CHAP2a BUILT (2026-10-07, Mac: "Do it"; the halls witnessed and their delivery w
 foot); AUDIT CHAP2 (2026-10-08, Mac: "Lets do a deep comprehensive audit on everything so far") read all of it through
 six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its two questions decided at Mac's word
 ("You can decide whatever is best": 3.6, 5.1). CHAP2b BUILT (2026-10-08, Mac: "Keep going with the arc/slices"; a
-receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3 (Merit and Strength) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
+receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3a BUILT (2026-10-08, the same
+words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b (Strength at the
+Turning, the bands on the halls, the sheet) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
 
 Its neighbours: `11-Multiplayer/Seats-Arc.md` (SEAT0 - the week, the Season, the Tides and the witnessed influence this
@@ -374,6 +376,32 @@ chapter a day, rolled over the character (the shared writs, first come first ser
   (Seats-Arc's per-account war, applied to a guild).
 - **Cap**: **600 Merit an account a chapter a week**, whatever number of its characters play.
 
+BUILT (CHAP3a, 2026-10-08), and where building it asked, narrowed here:
+
+- **A member's own writ.** Kind `member` on the board's `writs` table, its `owner` the realm character: one a day for
+  each of the character's guilds keeping a chapter in the region whose board it reads, written down on that read
+  (`memberWrit` - the chapter's law over the guild's own kinds, the day's top slot left the Court's, AUDIT CHAP2 E5 -
+  from the member's own dice, keyed by its realm id). Shown to its owner alone and only while it is the guild's member
+  on the Roll; delivered by it alone (`no-writ` to any other, its account's other characters too); paid as a hall writ
+  is - Marks, Renown, XP and the guild's +2 - inside the account's three a day.
+- **Its Merit**: `MERIT_WRIT`, 100, for its units - the share of them the member's own: the bought are spent first
+  (`professions.js` spendStatements), so what they leave is the own share, rounded down; a writ filled with bought units
+  alone pays and earns none (E13).
+- **A receipt's Merit**: `MERIT_RECEIPT`, 50, to each chapter whose own receipt line a gate or a raid credits (CHAP2b's
+  +1; the receipt writ's line earns none of its own) - every receipt, as its +1 is.
+- **The bounds are the line's own.** Each Merit line is one INSERT in its act's own batch
+  (`server-account/src/npcMerit.js` meritStatement), so the act and its Merit stand or fall together and two of an
+  account's acts cannot race past a bound: the tenure from `npc_roll.joined_at` - the service's first sight of the
+  membership, so a member brought in from a save waits its week from its first claim; the character standing; the
+  account's one chapter of a guild a seat week (`meritWeekOf` is townSeatLaw.js `seatWeekOf`, so CHAP3b's Turning
+  settles both); the 600, the line cut to the room left. Whole Merit only (the SQL's CAST).
+- **The board says it.** Beside the writs, `merit`: for each of the reader's guilds keeping a chapter there, its
+  account's Merit in that chapter this week of the 600, or why it earns none here - the week's chapter of the guild is
+  another region's, or the day its tenure ends (`meritLineOf`). A delivered writ says its Merit with the guild's memory.
+- **Merit outlives the character.** A realm character's delete and an undone customs leave its lines: the acts were
+  witnessed and the chapter's, and the account's week's bounds stand on them - as a seat's influence lines stay.
+- **Still drawn**: `standings`, a chapter's whole Merit, whose readers are CHAP3b's sheet and CHAP4's seats.
+
 ### 5.2 Strength
 
 DECIDED. Each chapter has a **Strength**, 0 to 100, starting at 50. At each Turning it moves toward what its members
@@ -504,17 +532,20 @@ DECIDED.
   `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at); `npc_rep_events` (seq,
   char_id, player, faction_id, asked, credited, rid, at - AUDIT CHAP2 S6: a claim with no reputation line leaves a line
   of faction 0, its id). BUILT (CHAP2a, migration `0091_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
-  with `kind` ('court', 'hall') and `faction`, `UNIQUE (day, region, kind, faction, slot)`; `hall_writ_days` (day,
+  with `kind` ('court', 'hall'; CHAP3a: 'member'), `faction` and (CHAP3a) `owner`, `UNIQUE (day, region, kind,
+  faction, owner, slot)`; `hall_writ_days` (day,
   region, posted, at); AUDIT CHAP2: `npc_hall_strikes` (map_id, by, at) and `npc_roll_heads.kseq`, the claim sequence
   (C1). BUILT (CHAP2b, migration `0092_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
-  tag, at - one line a guild a receipt, one a guild a member a day for its writ). Still drawn: `npc_chapters` (key -
-  guild faction and region - strength, event, event_state JSON, doctrine, focus); `npc_chapter_merit` (week, key,
-  account, char_id, source, amount, ref - `UNIQUE (source, ref)`); `npc_chapter_seats` (key, seat, char_id, since);
+  tag, at - one line a guild a receipt, one a guild a member a day for its writ). BUILT (CHAP3a, migration
+  `0093_npc_merit`): `npc_chapter_merit` (week, faction, region, account, char_id, source - 'writ', 'gate', 'raid' -
+  amount, ref, at; `UNIQUE (char_id, faction, source, ref)`, the draft's `(source, ref)` narrowed to one line a
+  character an act a guild). Still drawn: `npc_chapters` (key - guild faction and region - strength, event, event_state
+  JSON, doctrine, focus); `npc_chapter_seats` (key, seat, char_id, since);
   `npc_chapter_history` (seq, key, week, kind, data JSON).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
   CHAP2 E1, a developer's); `list` (the sheet), `standings` (a chapter's Merit), `history` still drawn; the hall writs
-  ride the board's own writ endpoints.
+  ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn.
 - **The relay**: AUDIT CHAP R5 - this said "no change: the gate, raid and serpent receipts already name an account and a
@@ -536,6 +567,8 @@ DECIDED.
    (2026-10-07): the halls witnessed, the delivery writs, the +2, the join's floor (section 4). CHAP2b BUILT
    (2026-10-08): a receipt's standing and the receipt writs; the fence decided against.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
+   CHAP3a BUILT (2026-10-08): a member's own writ and the week's Merit (5.1). CHAP3b: the Turning's Strength, the bands,
+   the sheet.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
@@ -606,8 +639,10 @@ is Mac's to overrule.
 | A hall witnessed | kind `npchall`, keyed `1:<mapId>` (`HALL_REPORT_V`), three accounts a week old (`WITNESS`), 24 towns an hour an account (`HALL_WITNESS_HOUR`), a town once a UTC day a device until counted, then never again (`npcHallBook.js` `HALL_DONE`, AUDIT CHAP2 E9); an account ignored for a week after three unmatched answers in one (the seats' `SEAT_WITNESS_UNMATCHED_MAX`) | 4 |
 | A region's chapters kept | 60 seconds an isolate (`CHAPTERS_KEPT_MS`, `server-account/src/npcHalls.js`) | 4 |
 | The join's floor | 0 (`RANK_REQ_REPUTATION[0]`, `joinRecordable`) | 3.4 |
-| Merit tenure | 7 days | 5.1 |
-| Merit cap | 600 an account a chapter a week | 5.1 |
+| A member's own writ, Merit | 100 for its units, its own units' share, rounded down (`MERIT_WRIT`, `meritOfWrit`); one a member a chapter a UTC day (`memberWrit`, `memberWritId`, `MEMBER_WRIT_SALT`) | 5.1 |
+| A receipt, Merit | 50 a chapter its own receipt line credits (`MERIT_RECEIPT`) | 5.1 |
+| Merit tenure | 7 days on the Roll (`MERIT_TENURE_S`, from `joined_at`) | 5.1 |
+| Merit cap | 600 an account a chapter a week (`MERIT_CAP_WEEK`); one chapter of a guild an account a seat week (`meritWeekOf`) | 5.1 |
 | Strength | 0-100, start 50; `+ min(10, merit / target)`; -3 an idle week; halfway to 50 at a Season's end | 5.2 |
 | Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 | 5.2 |
 | Failing price | x1.25 | 5.2 |
@@ -757,3 +792,28 @@ The second slice's receipt half; section 4 carries the law and its calls (BUILT,
   the wiring. `tools/mutants/chap2b.json`: 29 mutants, 28 dead, 1 equivalent as recorded. The host's gate and raid
   carriers' wiring pins moved (`test/auditonline2.test.js`, `test/raid4_rewards.test.js`, `test/wb5b_gate_claim.test.js`,
   PIN MOVED); their mutant lists hold, 70 dead. The full suite: 22977 tests, 0 failing once they moved.
+
+## CHAP3a - a member's own writ and the week's Merit, as built (2026-10-08, Mac: "Keep going with the arc/slices")
+
+The third slice's first half; section 5.1 carries the law and what building it narrowed (BUILT, CHAP3a).
+
+- **The law.** `src/net/npcChapterLaw.js`: Merit's numbers (`MERIT_WRIT`, `MERIT_RECEIPT`, `MERIT_TENURE_S`,
+  `MERIT_CAP_WEEK`, `MERIT_SOURCES`), its week (`meritWeekOf`), a writ's own share (`meritOfWrit`), a member's own writ
+  (`memberWrit`, `memberWritId`), a chapter's writ (`isChapterWrit`) and the board's line (`meritLineOf`).
+- **The service.** `server-account/src/npcMerit.js` over migration `0093_npc_merit` (and 0091's writs rebuild, grown in
+  place - nothing of it shipped - by the kind `member` and its `owner`): `meritStatement`, the Merit line with its every
+  bound, in the act's own batch; `meritOfAct`, an act's lines; `meritAsks`, the board's. `professions.js` posts, lists
+  and delivers a member's own writ (postMemberWrits, listWrits, deliverWrit); `npcReceipts.js` creditReceipt adds a
+  receipt's Merit and answers it. Still `acct94` - nothing of the arc has shipped.
+- **The client.** `src/ui/noticeWindow.js` (a member's own card - "Your writ" - and the Merit lines under the day's
+  count); `src/scenes/world.js` (a member's own writ refreshes the Roll as a hall writ does, and says its Merit).
+- **Pins.** `test/chap3a_merit.test.js`, 13 tests: the law against literals (the numbers, the week, the share, the
+  draw and its dice, the line); the board's own writ through the real routes over the real migrations (one a guild with
+  a chapter, written once, its owner's alone - another account's reader, the account's other character and a second
+  member of it each see their own or none - gone once no member, the switch shut before and after it was posted); a
+  delivery (its pay, the +2, the Merit and its repeat, the three a day, the board's line); bought units; the owner and
+  the tenure; a receipt's Merit; the week's bounds through a receipt (the cap across an account's characters, the
+  week's chapter, last week's no bar); the Merit line's every clause against the real schema; the card in a DOM; the
+  wiring. `tools/mutants/chap3a.json`: 73 mutants. CHAP2a's and CHAP2b's pins the member's own writ moved (the host's
+  refresh, the board's poster, a receipt's answer, the table list - PIN MOVED); AUDIT CHAP2's `T-MIG-WRITS-UNIQUE`
+  re-aimed at the key with its owner.

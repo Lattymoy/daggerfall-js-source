@@ -621,8 +621,8 @@
   {
     "name": "T-MIG-WRITS-UNIQUE",
     "file": "server-account/migrations/0091_npc_halls.sql",
-    "old": "UNIQUE (day, region, kind, faction, slot)",
-    "new": "UNIQUE (day, region, kind, slot)",
+    "old": "UNIQUE (day, region, kind, faction, owner, slot)",
+    "new": "UNIQUE (day, region, kind, owner, slot)",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -633,7 +633,7 @@
   {
     "name": "T-LIST-KIND-ARM",
     "file": "server-account/src/professions.js",
-    "old": "const shown = (w) => w.kind !== 'hall' || (halls &&",
+    "old": "const shown = (w) => w.kind === 'court' || (halls &&",
     "new": "const shown = (w) => (halls &&",
     "tests": [
       "test/audit_chap1.test.js",
@@ -1255,8 +1255,8 @@
   {
     "name": "T-LIST-FILLED-ARM",
     "file": "server-account/src/professions.js",
-    "old": " || w.filled_by === player.id));",
-    "new": "));",
+    "old": "(halls && (w.filled_by === player.id || (w.kind",
+    "new": "(halls && ((w.kind",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -1367,8 +1367,8 @@
   {
     "name": "T-BOARD-PAY-STANDING",
     "file": "src/ui/noticeWindow.js",
-    "old": "${poster ? ` and standing with the ${poster}` : ''}",
-    "new": "",
+    "old": " : poster ? ` and standing with the ${poster}` : ''}`",
+    "new": " : ''}`",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -1433,7 +1433,7 @@
   {
     "name": "T-WIRE-REMEMBER-LINE",
     "file": "src/scenes/world.js",
-    "old": "${hall ? ` The ${hall} will remember it.` : ''}",
+    "old": "${hall ? ` The ${hall} will remember it${merit}.` : ''}",
     "new": "",
     "tests": [
       "test/audit_chap1.test.js",
@@ -1582,8 +1582,8 @@
   {
     "name": "AUDIT-CHAP2-C1-REPEAT-REFRESH",
     "file": "src/scenes/world.js",
-    "old": "    if (d.writ?.kind === 'hall') rollTracker?.refresh();",
-    "new": "    if (d.writ?.kind === 'hall' && !d.repeat) rollTracker?.refresh();",
+    "old": "    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();",
+    "new": "    if (isChapterWrit(d.writ?.kind) && !d.repeat) rollTracker?.refresh();",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -1630,8 +1630,8 @@
   {
     "name": "AUDIT-CHAP2-C7-HELD",
     "file": "src/scenes/world.js",
-    "old": "const hall = d.writ?.kind === 'hall' && !d.repeat && rollTracker?.held ? hallPosterName",
-    "new": "const hall = d.writ?.kind === 'hall' && !d.repeat ? hallPosterName",
+    "old": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat && rollTracker?.held ? hallPosterName",
+    "new": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat ? hallPosterName",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -1956,8 +1956,8 @@
   {
     "name": "AUDIT-CHAP2-S2-ORACLE",
     "file": "server-account/src/professions.js",
-    "old": "  if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a\n  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };",
-    "new": "  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };\n  if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a",
+    "old": "  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a\n  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };",
+    "new": "  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };\n  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",

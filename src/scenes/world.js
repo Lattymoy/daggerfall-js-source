@@ -619,7 +619,7 @@ import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -23419,9 +23419,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // word at once (net/npcRollTracker.js refresh), so the standing on this page is the Roll's before the next claim
     // AUDIT CHAP2 C1: a repeat too - it is the answer of a delivery whose first answer was lost, so nobody asked then;
     // C7: the guild's memory said only to a character the Roll holds (one without is paid, and nothing more)
-    if (d.writ?.kind === 'hall') rollTracker?.refresh();
-    const hall = d.writ?.kind === 'hall' && !d.repeat && rollTracker?.held ? hallPosterName(d.writ.faction) : null;
-    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${hall ? ` The ${hall} will remember it.` : ''}${rose}`;
+    // CHAP3a: a member's own writ as a hall writ, and the Merit its chapter counted it
+    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();
+    const hall = isChapterWrit(d.writ?.kind) && !d.repeat && rollTracker?.held ? hallPosterName(d.writ.faction) : null;
+    const merit = hall && Number(d.merit) > 0 ? `, ${Number(d.merit).toLocaleString('en-US')} Merit to its chapter here` : '';
+    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${hall ? ` The ${hall} will remember it${merit}.` : ''}${rose}`;
   };
   /** NOTICE1: the server's word on the Oblivion Gate while it stands - the map's own mark (WB1), under the red seal. */
   const noticeGateCard = () => {

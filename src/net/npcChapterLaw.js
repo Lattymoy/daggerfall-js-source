@@ -63,6 +63,8 @@ import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RAN
 import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
+import { seatWeekOf } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both)
+import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
  *  order at most. */
@@ -497,3 +499,65 @@ export function parseHallReport(/** @type {unknown} */ text) {
  *  (GuildManager.cs:53-66, no eligibility test - ThievesGuild.cs:180-187), so their joins are recorded as DFU makes them. */
 export const joinRecordable = (/** @type {unknown} */ rep, /** @type {unknown} */ faction = null) => hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];
 
+
+// ─── CHAP3a: MERIT (Chapters-Arc 5.1) ───────────────────────────────
+// What a member did for its chapter, a week's: witnessed acts alone - its own writ for the chapter filled with its own
+// units, a receipt in the chapter's region - never a quest's claim. Each bound is asked by the line's own write
+// (server-account/src/npcMerit.js): the member's tenure on the Roll, the account's one chapter of a guild a week, the
+// account's cap a chapter a week. CHAP3b's Turning reads the week's sum.
+
+/** A member's own writ filled whole with its own units: this Merit (bought units earn none - E13, Seats-Arc 4.2). */
+export const MERIT_WRIT = 100;
+/** A receipt (a gate closed, a raided town defended) in the chapter's region, while a member. */
+export const MERIT_RECEIPT = 50;
+/** A member earns Merit after this long in the guild on the Roll (Seats-Arc 4.2's new member). */
+export const MERIT_TENURE_S = 7 * 86_400;
+/** The Merit an account earns a chapter a week, whatever number of its characters play. */
+export const MERIT_CAP_WEEK = 600;
+/** Merit's sources - a member's own writ, a gate, a raid. */
+export const MERIT_SOURCES = Object.freeze(['writ', ...RECEIPT_KINDS]);
+/** Merit's week: the seats' (townSeatLaw.js seatWeekOf), so one Turning settles both. */
+export const meritWeekOf = (/** @type {number} */ nowS) => seatWeekOf(nowS * 1000);
+/** A member's own writ's Merit: MERIT_WRIT over its units, for the share of them its own (`own`, the units left once the
+ *  bought ones are spent - spent first, professions.js spendStatements), rounded down. */
+export function meritOfWrit(/** @type {unknown} */ qty, /** @type {unknown} */ own) {
+  if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;
+  const q = /** @type {number} */ (qty);
+  return Math.floor((MERIT_WRIT * Math.max(0, Math.min(q, /** @type {number} */ (own)))) / q);
+}
+
+/** A member's own writ's dice salt - its own, never a hall writ's. */
+export const MEMBER_WRIT_SALT = 0x3e17;
+/** A member's own writ's id: `m:<day>:<region>:<faction>:<realm id>` - one a member a chapter a day. */
+export const memberWritId = (/** @type {number} */ day, /** @type {number} */ region, /** @type {number} */ faction, /** @type {string} */ character) => `m:${day}:${region}:${faction}:${character}`;
+/**
+ * A MEMBER'S OWN WRIT for the day (AUDIT CHAP2 E4: one a member a chapter a day, never the shared writs' race): the
+ * chapter's law (hallWrits - the guild's own kinds, the Court's top slot left the Court's) drawn from the member's own
+ * dice, keyed by its realm id. `{ slot: 0, material, tier, units, pay, renown }`, or null for no guild, no realm
+ * character or no ground.
+ * @param {number} day @param {number} region @param {number} faction @param {unknown} character @param {any[]} table
+ */
+export function memberWrit(day, region, faction, character, table) {
+  if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length) return null;
+  const families = hallFamiliesOf(faction);
+  const own = table.filter((m) => families.includes(material(m.material)?.family));
+  const id = [1, 8, 15].map((at) => parseInt(character.slice(at, at + 7), 16));
+  const w = courtWrits(day, region, 2, own.length ? own : table, (slot, k) => gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k) / 4294967296)[1];
+  return w ? { ...w, slot: 0 } : null;
+}
+/** A chapter's writ - a hall writ, or a member's own: paid as one, its guild's standing too. */
+export const isChapterWrit = (/** @type {unknown} */ kind) => kind === 'hall' || kind === 'member';
+/**
+ * THE BOARD'S MERIT LINE for one of the reader's guilds here (the service's npcMerit.js meritAsks: `{ faction, merit,
+ * max, elsewhere, from }`) - "Merit with the Fighters Guild here this week: 150 of 600", or why it earns none here.
+ * @param {{ faction: number, merit: number, max: number, elsewhere: boolean, from: number | null }} m @param {number} nowS
+ */
+export function meritLineOf(m, nowS) {
+  const name = hallPosterName(m?.faction) ?? 'guild';
+  if (m.from != null && m.from > nowS) {
+    const days = Math.ceil((m.from - nowS) / 86_400);
+    return `The ${name} counts your Merit after a week in the guild - ${days === 1 ? 'tomorrow' : `in ${days} days`}`;
+  }
+  if (m.elsewhere) return `Your Merit with the ${name} this week is another chapter's`;
+  return `Merit with the ${name} here this week: ${Number(m.merit).toLocaleString('en-US')} of ${Number(m.max).toLocaleString('en-US')}`;
+}

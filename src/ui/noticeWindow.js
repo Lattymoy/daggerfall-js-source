@@ -51,7 +51,7 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named
+import { hallPosterName, isChapterWrit, meritLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions
@@ -460,15 +460,19 @@ export function mountNoticeBoard(host, deps) {
   }
 
   /** A Court writ's card: its need, pay and Renown, its time left, what the Stores hold of it, and Take. CHAP2a: a hall
-   *  writ's the same, under the guild's seal and name (npcChapterLaw.js hallPosterName) - its pay its guild's standing too. */
+   *  writ's the same, under the guild's seal and name (npcChapterLaw.js hallPosterName) - its pay its guild's standing too.
+   *  CHAP3a: a member's own writ ("Your writ") its own, its pay Merit too. */
   function writNode(w) {
-    const poster = w.kind === 'hall' ? hallPosterName(w.faction) ?? 'guild' : null;
+    const poster = isChapterWrit(w.kind) ? hallPosterName(w.faction) ?? 'guild' : null;
+    const own = w.kind === 'member';
     const li = el('li', `notice-card notice-writ ${poster ? 'seal-guild' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`);
-    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', poster ? 'Hall writ' : 'Court writ'));
-    li.append(el('p', 'writ-need', poster
-      ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
-      : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
-    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${poster ? ` and standing with the ${poster}` : ''}`));
+    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', own ? 'Your writ' : poster ? 'Hall writ' : 'Court writ'));
+    li.append(el('p', 'writ-need', own
+      ? `Yours to fill: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
+      : poster
+        ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
+        : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
+    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`));
     li.append(el('p', 'writ-left', w.state === 'mine' ? 'Taken by you' : w.state === 'taken' ? 'Filled by another' : timeLeftText(w.expiresAt, nowS())));
     const held = work.book.held(w.material);
     const take = el('div', 'writ-take');
@@ -524,6 +528,7 @@ export function mountNoticeBoard(host, deps) {
     const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
     // AUDIT CHAP2 C5: "Writs" - the count is every writ the account filled today, the Court's and the halls' (CALL 8)
     body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
+    for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));   // CHAP3a: the account's Merit here
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];

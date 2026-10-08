@@ -40,12 +40,17 @@ CREATE INDEX IF NOT EXISTS idx_world_witness_region ON world_witness (kind, regi
 -- stay the table's own, so a hall writ and a Court writ share the one
 -- allowance (Chapters-Arc CALL 8). Rebuilt to admit the kind and the key;
 -- no trigger, view or foreign key in any migration names either table.
+-- CHAP3a (unshipped, so this rebuild grew in place): and the kind `member`,
+-- a member's OWN writ for its chapter (Chapters-Arc 5.1, AUDIT CHAP2 E4) -
+-- its `owner` the realm character it was drawn for ('' for every writ the
+-- board posts to all), in the day's key, so each member has its own.
 CREATE TABLE IF NOT EXISTS writs_new (
   id          TEXT PRIMARY KEY,
-  kind        TEXT NOT NULL CHECK (kind IN ('court', 'hall')),
+  kind        TEXT NOT NULL CHECK (kind IN ('court', 'hall', 'member')),
   day         INTEGER NOT NULL,
   region      INTEGER NOT NULL,
   faction     INTEGER NOT NULL DEFAULT 0,
+  owner       TEXT NOT NULL DEFAULT '',
   slot        INTEGER NOT NULL,
   material    TEXT NOT NULL,
   tier        INTEGER NOT NULL,
@@ -58,7 +63,7 @@ CREATE TABLE IF NOT EXISTS writs_new (
   filled_at   INTEGER,
   rid         TEXT,
   n           TEXT,
-  UNIQUE (day, region, kind, faction, slot)
+  UNIQUE (day, region, kind, faction, owner, slot)
 );
 INSERT INTO writs_new (id, kind, day, region, faction, slot, material, tier, qty, pay, renown, expires_at, filled_by, filled_char, filled_at, rid, n)
   SELECT id, kind, day, region, 0, slot, material, tier, qty, pay, renown, expires_at, filled_by, filled_char, filled_at, rid, n FROM writs;
