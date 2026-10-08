@@ -184,7 +184,7 @@ export function realmCobbleArt(seed = 0x5d55) {
   for (let n = 0; n < 2; n++) {
     let x = r() * S, y = r() * S;
     const dx = r() - 0.5, len = 18 + Math.floor(r() * 14);
-    for (let i = 0; i < len; i++) { put(albedo, x, y, step(Br, 2)); put(albedo, x + 1, y, step(Br, 1)); x += dx + (r() - 0.5) * 0.8; y += 1; }
+    for (let i = 0; i < len; i++) { put(albedo, x, y, step(Br, 1)); put(albedo, x + 1, y, step(Br, 0)); x += dx + (r() - 0.5) * 0.8; y += 1; }
   }
   quantize(albedo, paletteOf(Co, Br));
   return { albedo, emission };
@@ -203,6 +203,7 @@ export function realmEdgeArt() {
 
 /** Every texture the realm wears, by record: `[record, { albedo, emission }]` (records as world/sdRealm.js names them -
  *  SD-LOOK's two after the Remnant's, 31 and 32). */
+/** @returns {Array<[number, { albedo: import('./sdPixelKit.js').Img, emission: import('./sdPixelKit.js').Img }]>} */
 export const realmArt = () => [
   [0, realmFloorArt()], [1, realmBrassArt()], [2, realmRootArt()], [3, realmDialArt()], [4, realmArenaArt()],
   [31, realmCobbleArt()], [32, realmEdgeArt()],

@@ -144,5 +144,140 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-a-fold-turned",
+    "file": "src/render/sdSky.js",
+    "old": "if (n.y < 0.0) p = (1.0 - abs(n.zx)) *",
+    "new": "if (n.y < 0.0) p = (1.0 - abs(n.xz)) *",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-face-high-again",
+    "file": "src/render/sdSky.js",
+    "old": "Object.freeze({ az: 0, elev: 0.2, r: 0.34,",
+    "new": "Object.freeze({ az: 0, elev: 0.38, r: 0.34,",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-glyph-row",
+    "file": "src/world/sdSkyArt.js",
+    "old": "V: Object.freeze({ w: 5, rows: Object.freeze([17, 17, 17, 10, 10, 4, 4]) }),",
+    "new": "V: Object.freeze({ w: 5, rows: Object.freeze([4, 4, 10, 10, 17, 17, 17]) }),",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-numeral-misspelled",
+    "file": "src/world/sdSkyArt.js",
+    "old": "'III', 'IV', 'V',",
+    "new": "'III', 'IIII', 'V',",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-posterize-skipped",
+    "file": "src/render/sdSky.js",
+    "old": "  o = vec4(sdPixel(col, cellF, uSteps), 1.0);",
+    "new": "  o = vec4(col, 1.0);",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-void-lifted",
+    "file": "src/render/sdSky.js",
+    "old": "float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) :",
+    "new": "float k = e >= 0.0 ? 0.95 :",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-short-line",
+    "file": "src/world/sdDungeon.js",
+    "old": "(reach[b] + reach[b + 4]) - (reach[a] + reach[a + 4]) || a - b",
+    "new": "(reach[a] + reach[a + 4]) - (reach[b] + reach[b + 4]) || a - b",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-pillar-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "    if (room >= size / 2 + SD_RIFT_AIR_M) return [...BEARINGS[k]];",
+    "new": "    if (room >= 0) return [...BEARINGS[k]];",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-collapse-uncounted",
+    "file": "src/world/sdDungeon.js",
+    "old": ", lit = Math.ceil(left * 24);",
+    "new": ", lit = 24;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-newcomer-let-see-in",
+    "file": "src/world/sdDungeon.js",
+    "old": "aperture: entered ? 1 / 3 + (2 / 3) * left : 0,",
+    "new": "aperture: 1 / 3 + (2 / 3) * left,",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-leaves-short-of-the-heart",
+    "file": "src/world/sdRiftModel.js",
+    "old": "const ro = P.iris1 * R, rv = a * ro * 0.97;",
+    "new": "const ro = P.iris1 * R, rv = (0.1 + a) * ro * 0.88;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-wide-leaves-in-the-window",
+    "file": "src/world/sdRiftModel.js",
+    "old": "const ro = P.iris1 * R, rv = a * ro * 0.97;",
+    "new": "const ro = P.iris1 * R, rv = a * ro * 0.8;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-ring-forward",
+    "file": "src/scenes/sdEnd.js",
+    "old": "rift.n[N_RING] = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6)",
+    "new": "rift.n[N_RING] = L.tickHz > 0 ? ((tolls - 1) + jolt) * (Math.PI / 6)",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-turning-part-casting",
+    "file": "src/scenes/sdEnd.js",
+    "old": "        gear: standMesh(buildRiftGear(size), true),",
+    "new": "        gear: standMesh(buildRiftGear(size), false),",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-ripple-unguarded",
+    "file": "src/render/sdRiftPass.js",
+    "old": "  float wave = uRipple.z > 0.0 ? uRipple.z * exp(-uRipple.w * 2.5) * sin(length(rp) * 18.0 - uRipple.w * 14.0) * exp(-length(rp) * 2.0) : 0.0;",
+    "new": "  float wave = uRipple.z * exp(-uRipple.w * 2.5) * sin(length(rp) * 18.0 - uRipple.w * 14.0) * exp(-length(rp) * 2.0);",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

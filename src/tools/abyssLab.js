@@ -17,7 +17,7 @@ import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
 import { EL_LANE, dungeonFog, dungeonTrilight, dungeonAmbient, exposureFor } from '../render/enhancedLighting.js';
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { skyGain } from '../render/deadlands.js';
-import { SdSkyRenderer } from '../render/sdSky.js';
+import { SdSkyRenderer, SD_SKY_STEPS, SD_SKY_MODE } from '../render/sdSky.js';
 import { SdMotesRenderer } from '../render/sdMotes.js';
 import { SD_HOUR_GRADE } from '../world/sdLook.js';
 import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
@@ -27,8 +27,11 @@ import { createSdHall } from '../scenes/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
 import { createSdEnd } from '../scenes/sdEnd.js';
+import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
+import { SdRiftRenderer } from '../render/sdRiftPass.js';
+import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
 import { realmToDungeon, SD_ORRERY, SD_ARENA } from '../net/sdBrain.js';
-import { sdMarksOf } from '../net/sdMarks.js';
+import { sdMarksOf, SD_ENDINGS } from '../net/sdMarks.js';
 import { DUNGEON_AMBIENT } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { perspective, lookAt, identity, mirrorProjectionX } from '../world/mat4.js';
@@ -52,6 +55,9 @@ const VIEWS = {
   overview: { at: [70, 60, 60], yaw: -60, pitch: -28 },
   sky: { at: [0, 1.7, SD_ARRIVE_Z], yaw: 20, pitch: 45 },
   hollow: { at: [0, 1.7, -7.5], yaw: 0, pitch: 0, hollow: true },
+  'hollow-side': { at: [-4.6, 1.7, 3.6], yaw: 50, pitch: 4, hollow: true },
+  'hollow-ret': { at: [2.2, 1.7, 5.0], yaw: 20, pitch: 6, hollow: true },
+  'hollow-close': { at: [0, 2.6, 2.6], yaw: 0, pitch: 8, hollow: true },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }
@@ -60,6 +66,8 @@ if (params.has('t')) $('t').value = params.get('t');
 if (params.get('lane') === 'off') $('lane').checked = false;
 if (params.has('still')) $('still').checked = true;
 
+/** The Hour's anchored clock, as the lab pins or runs it - read by the stands below, so it is the page's first. */
+let clock = Number($('t').value);
 const cam = { pos: [0, 0, 0], yaw: 0, pitch: 0, hollow: false };
 function setView(name) {
   const v = VIEWS[name] ?? VIEWS.threshold;
@@ -94,8 +102,8 @@ const steps = createSdSteps({ renderer });
 steps.stand({ dynamicDraws, collider: null });
 const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(LAB_SLOT)[0] });
 remnant.stand({ dynamicDraws });
-const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon' });
-wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null });
+const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock });
+wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws });
 const sky = new SdSkyRenderer(gl);
 const motes = new SdMotesRenderer(gl);
 
@@ -142,9 +150,48 @@ function buildRoom() {
 }
 const roomMesh = renderer.createMesh(buildRoom());
 const RIFT_AT = [0, 0, ROOM.len / 2 - 3.2];
-const hollowEnd = createSdEnd({ renderer, riftCount: () => 'Fades in 1d 20h' });
-hollowEnd.stand({ rift: { at: RIFT_AT, size: 7 }, retAt: [3.4, 0, RIFT_AT[2] + 0.6] });
+/** The made room as the collider answers it: its floor at 0, its walls and ceiling a box. */
+const roomProbe = {
+  floor: () => 0,
+  ray: (o, d, max) => {
+    let t = Infinity;
+    const planes = [[0, -ROOM.halfW], [0, ROOM.halfW], [2, -ROOM.len / 2], [2, ROOM.len / 2], [1, 0], [1, ROOM.h]];
+    for (const [ax, at] of planes) { if (Math.abs(d[ax]) < 1e-9) continue; const k = (at - o[ax]) / d[ax]; if (k > 1e-6) t = Math.min(t, k); }
+    return t <= max ? t : null;
+  },
+};
+/** SD-LOOK: the Rift's state from the query - ?rift=open|notyet|collapse|closed|refused, &left=<share of the collapse> */
+const RIFT_LOOKS = { open: SD_RIFT_OPEN_LOOK, notyet: SD_RIFT_NOT_YET, closed: SD_RIFT_CLOSED, refused: SD_RIFT_REFUSED };
+function labRiftLook() {
+  const st = params.get('rift') ?? 'open';
+  if (st === 'collapse') { const left = Number(params.get('left') ?? 0.5), lit = Math.ceil(left * 24); return { state: 'collapse', aperture: params.has('newcomer') ? 0 : 1 / 3 + (2 / 3) * left, tickHz: 2, studs: lit, ember: 24 - lit, tone: params.has('newcomer') ? 'ember' : 'gold', light: 0.5 + 0.5 * left }; }
+  return RIFT_LOOKS[st] ?? SD_RIFT_OPEN_LOOK;
+}
+const RIFT_SIZE = Number(params.get('riftSize') ?? 7);
+const hollowDraws = [];
+const hollowEnd = createSdEnd({ renderer, riftCount: () => 'Fades in 1d 20h', look: labRiftLook, clock: () => clock });
+hollowEnd.stand({ rift: { at: RIFT_AT, size: RIFT_SIZE, face: sdRiftFace(RIFT_AT, RIFT_SIZE, roomProbe) }, retAt: [3.4, 0, RIFT_AT[2] + 0.6], dynamicDraws: hollowDraws, probe: roomProbe });
+const riftPass = new SdRiftRenderer(gl);
+const halo = new SdHaloRenderer(gl);
 const TORCHES = [[-ROOM.halfW + 0.4, 3, -4], [ROOM.halfW - 0.4, 3, -4], [-ROOM.halfW + 0.4, 3, 4], [ROOM.halfW - 0.4, 3, 4]];
+
+/** The dungeon arm's draw options (render/renderer.js drawMesh), made once. */
+const NO_SHADOW = Object.freeze({ noShadow: true }), WITH_SHADOW = Object.freeze({ noShadow: false });
+/** The sky's look: the pixel law's steps on this lane, the Hollow's own Ending and its light. */
+const skyLook = (lane) => { const i = SD_ENDINGS.findIndex((E) => E.id === sdMarksOf(LAB_SLOT)[0]); return { steps: lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, ending: SD_ENDINGS[i]?.light ?? null, endingIdx: i }; };
+/** SD-LOOK: the sky's word for the fight, from the query - ?fight=reset&rt=<s of 8> | break | end | live&ft=<share>
+ *  [&last] | ?collapse=<s of 180> - as the host hands it from the fight's own clocks. */
+const _labClock = new Float32Array(4);
+function labClock() {
+  const f = params.get('fight'), c = params.get('collapse');
+  _labClock.fill(0);
+  if (c != null) { _labClock[0] = SD_SKY_MODE.collapse; _labClock[1] = Math.min(1, Number(c) / 180); _labClock[3] = 12 - Math.floor(Number(c) / 15); }
+  else if (f === 'reset') { _labClock[0] = SD_SKY_MODE.reset; _labClock[1] = Math.min(1, Number(params.get('rt') ?? 4) / 8); }
+  else if (f === 'break') _labClock[0] = SD_SKY_MODE.break;
+  else if (f === 'end') _labClock[0] = SD_SKY_MODE.end;
+  else if (f === 'live') { _labClock[0] = SD_SKY_MODE.fight; _labClock[1] = Number(params.get('ft') ?? 0.4); _labClock[2] = params.has('last') ? 1 : 0; }
+  return _labClock;
+}
 
 // ── the frame ────────────────────────────────────────────────────────────────────────────────────────────────────
 const EMPTY_LIT = { data: new Float32Array(0), colors: new Float32Array(0), carried: new Uint8Array(0) };
@@ -165,8 +212,10 @@ canvas.addEventListener('pointermove', (e) => {
 });
 canvas.addEventListener('pointerup', () => { drag = null; });
 
-let last = performance.now(), clock = Number($('t').value);
+let last = performance.now();
 window.__frame = 0;
+/** The lab's parts, for a probe's questions. */
+window.__labParts = { renderer, sky, riftPass, halo, hollowEnd, wayBack };
 window.__lab = {
   view: (name) => { viewSel.value = name; setView(name); },
   eye: (x, y, z, yawDeg, pitchDeg) => { cam.pos = [x, y, z]; cam.yaw = yawDeg * Math.PI / 180; cam.pitch = pitchDeg * Math.PI / 180; },
@@ -200,14 +249,21 @@ function frame(now) {
     renderer.setMoonlight(null);
     renderer.setLighting(new Float32Array(dungeonAmbient(lane, DUNGEON_AMBIENT)), 0);
     applyFog(renderer, dungeonFog(lane, DUNGEON_FOG));
-    const data = new Float32Array(TORCHES.length * 4), colors = new Float32Array(TORCHES.length * 3);
-    TORCHES.forEach((t, i) => { data.set([t[0], t[1], t[2], 9], i * 4); colors.set([1, 0.72, 0.42], i * 3); });
-    renderer.setPointLights(data, null, colors);
+    // a Hollow has no fires (the Hour is cold): the Rift's light alone - ?torches stands the made room's four
+    hollowEnd.frame(null, cam.pos);
+    const lit = [...(params.has('torches') ? TORCHES.map((t) => ({ x: t[0], y: t[1], z: t[2], range: 9, color: [1, 0.72, 0.42] })) : []), ...hollowEnd.lights()];
+    const data = new Float32Array(Math.max(1, lit.length) * 4), colors = new Float32Array(Math.max(1, lit.length) * 3);
+    lit.forEach((l, i) => { data.set([l.x, l.y, l.z, l.range], i * 4); colors.set(l.color, i * 3); });
+    renderer.setPointLights(data.subarray(0, lit.length * 4), null, colors.subarray(0, lit.length * 3));
     renderer.setClearColor(INTERIOR_CLEAR);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);
     renderer.drawMesh(roomMesh, identity(), null);
-    hollowEnd.frame(null);
-    renderer.drawBillboards(hollowEnd.batches(), camRight, UP_Y);
+    for (const d of hollowDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? null, d.noShadow ? NO_SHADOW : WITH_SHADOW);
+    const vp = renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight];
+    sky.paint(clock, { color: SD_REALM_FOG.color }, skyLook(lane), vp);
+    const look = hollowEnd.look(cam.pos, { map: sky.map.texture, seconds: clock, gain: 1, clock: labClock() }, Number(params.get('hour') ?? 12));
+    if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
+    if (halo.draw(proj, view, hollowEnd.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
   } else {
     // the Hour, as the dungeon arm draws the realm
     const rl = realmLighting(), rt = dungeonTrilight(lane, rl.tri);
@@ -225,9 +281,12 @@ function frame(now) {
     wayBack.frame(null);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);
     renderer.drawMesh(realmMesh, identity(), null);
-    for (const d of dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, null);
-    if (sky.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();
-    renderer.drawBillboards(wayBack.batches(), camRight, UP_Y);
+    for (const d of dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? null, d.noShadow ? NO_SHADOW : WITH_SHADOW);
+    sky.paint(clock, courtFogNow(), skyLook(lane), renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]);
+    if (sky.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), labClock())) renderer.markForeignPass();
+    const look = wayBack.look(cam.pos, { map: sky.map.texture, seconds: clock, gain: skyGain(renderer._fogColor, SD_REALM_FOG.color), clock: labClock() });
+    if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
+    if (halo.draw(proj, view, wayBack.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
     if (motes.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();
   }
   renderer.resolveFrame();

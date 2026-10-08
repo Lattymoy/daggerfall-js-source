@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const shots = process.env.ABYSS_SHOTS ?? '/tmp';
 const extra = process.env.ABYSS_Q ?? '';
-const VIEWS = ['threshold', 'back', 'orrery', 'steps', 'arena', 'overview', 'sky', 'hollow'];
+const VIEWS = ['threshold', 'back', 'orrery', 'steps', 'arena', 'overview', 'sky', 'hollow', 'hollow-side', 'hollow-ret', 'hollow-close'];
 const want = process.argv.slice(2).filter((a) => VIEWS.includes(a));
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };

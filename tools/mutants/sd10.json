@@ -92,8 +92,8 @@
   {
     "name": "SD10-stood-twice",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (ret || !at) return false;\n      const ago",
-    "new": "      if (!at) return false;\n      const ago",
+    "old": "      if (ret || !at) return false;",
+    "new": "      if (!at) return false;",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD10-carried-off-where-it-rises",
     "file": "src/scenes/sdEnd.js",
-    "old": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n      wasRet = null;\n",
-    "new": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n",
+    "old": "      ret = { ...standRet(at, yaw), risesAt: now() - ago, pressed: true, up: false };\n      wasRet = null;\n",
+    "new": "      ret = { ...standRet(at, yaw), risesAt: now() - ago, pressed: true, up: false };\n",
     "tests": [
       "test/sd10_collapse.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "SD10-the-way-home-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity);",
+    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
     "new": "if (home && !sdEnd.ret) void home;",
     "tests": [
       "test/sd10_collapse.test.js"

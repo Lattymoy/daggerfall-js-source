@@ -128,7 +128,7 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
   assert.deepEqual(e.targets().map((t) => t.key), [SD_RIFT_KEY]);
   assert.equal(e.standReturn([10, 0, 20]), true);
   assert.equal(e.standReturn([0, 0, 0]), false, 'once while it stands');
-  assert.deepEqual(e.ret, { at: [10, 0, 20] });
+  assert.deepEqual(e.ret, { at: [10, 0, 20], foot: 0 });   // SD-LOOK (PIN MOVED): and its foot - risen at once, with no age
   const t = e.targets().find((x) => x.key === SD_RETURN_KEY);
   assert.deepEqual(t.aabb, { min: [10 - SD_RETURN_SIZE.w / 2, 0, 20 - SD_RETURN_SIZE.w / 2], max: [10 + SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h, 20 + SD_RETURN_SIZE.w / 2] });
   assert.deepEqual(e.hoverName(SD_RETURN_KEY), { title: 'The Way Home', subs: ['To the Abyss Dungeon\'s door'] });   // AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
@@ -172,8 +172,8 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
 
 test('SD10 THE HOSTS: the dungeon host stands the Hour\'s way home where the outer host says and takes it down when it says none (never the Hollow\'s Return check in the Hour); the mode machine hands both doors through; the world host says where - the Remnant\'s fall, its body sunk, one place a fall (AUDIT SD), clear of the pillars - and carries a player out of the Hour before the Hollow\'s door under the veil; the Hollow host is handed the readouts\' voice and the Hour\'s question (mutants: the way home unstood; never taken down; stood before the body sank; out with no veil; the readouts unvoiced)', () => {
   const D = strip(read('src/scenes/dungeonContext.js'));
-  assert.match(D, /: _sdRealm \? createSdEnd\(\{ renderer, audio, riftTo: SD_REALM_TEXT\.wayBack, onRift: \(\) => opts\.sdWayBack\?\.\(\), onReturn: \(\) => opts\.sdWayHome\?\.\(\), retTitle: SD_HOME_TEXT\.title, retTo: SD_HOME_TEXT\.to \}\) : null;/);
-  assert.match(D, /if \(_sdRealm\) \{ const home = opts\.sdHomeAt\?\.\(\) \?\? null; if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity\); else if \(!home && sdEnd\.ret\) sdEnd\.returnOut\(\); \}\n\s*else if \(sdEnd\.ret && t >= _sdEndCheckAt\)/);   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): stood with how long ago it rose
+  assert.match(D, /: _sdRealm \? createSdEnd\(\{ renderer, audio, riftTo: SD_REALM_TEXT\.wayBack, onRift: \(\) => opts\.sdWayBack\?\.\(\), onReturn: \(\) => opts\.sdWayHome\?\.\(\), retTitle: SD_HOME_TEXT\.title, retTo: SD_HOME_TEXT\.to, clock: sdEndClock \}\) : null;/);   // SD-LOOK (PIN MOVED): on the realm's clock
+  assert.match(D, /if \(_sdRealm\) \{ const home = opts\.sdHomeAt\?\.\(\) \?\? null; if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity, \{ dynamicDraws \}\); else if \(!home && sdEnd\.ret\) sdEnd\.returnOut\(\); \}\n\s*else if \(sdEnd\.ret && t >= _sdEndCheckAt\)/);   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): stood with how long ago it rose
   const M2 = strip(read('src/scenes/worldModes.js'));
   assert.match(M2, /sdWayHome: \(\) => host\.sdWayHome\?\.\(\),/);
   assert.match(M2, /sdHomeAt: \(\) => host\.sdHomeAt\?\.\(\) \?\? null,/);

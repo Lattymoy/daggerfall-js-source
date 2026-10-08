@@ -164,3 +164,176 @@ test('SD-LOOK THE ISLANDS: the Threshold the Bay\'s cobbles and its compass rose
   const s = m.subMeshes.find((x) => x.textureRecord === SD_REALM_ARENA_RECORD);
   assert.equal(s.primitiveCount, SD_ISLAND_SIDES * SD_ARENA_BANDS * 2);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S3 - THE HOUR'S SKY: a painted map, the fetch over it.
+// ---------------------------------------------------------------------------------------------------------------------
+import { glslFunctions } from './glsl.mjs';
+import {
+  octEncode, octDecode, SD_OCT_GLSL, SD_SKY_PAINT_FS, SD_SKY_FS, SD_SKY_FETCH_GLSL, SD_CLOCK_FACE, SD_CLOCK_TOP, SD_SHARD_TOP,
+  SD_SKY_SHARDS, SD_SKY_MAP, SD_SKY_STEPS, SD_SKY_MODE, CLOCK_BASIS,
+} from '../src/render/sdSky.js';
+import { numeralCell, numeralWidth, SD_HOUR_NUMERALS, sdSkySigns, SD_SKY_SIGN_GRID } from '../src/world/sdSkyArt.js';
+import { SD_SIGNS } from '../src/world/sdHallArt.js';
+
+test('SD-LOOK THE SKY MAP: the octahedral map\'s two ways round (a direction to its place and back, the shaders\' own and the JS pinned equal), every texel about Daggerfall\'s own sky density (pi/512 a pixel); the face lowered - centre at 0.20, 0.34 across - every city still wholly over it (mutants: a fold turned; the face high again)', () => {
+  const f = glslFunctions(SD_OCT_GLSL);
+  for (const d0 of [[0, 1, 0], [0, 0, 1], [1, 0, 0], [0.3, -0.8, 0.2], [-0.7, 0.1, -0.7], [0.01, -1, 0.01], [-0.4, 0.4, 0.82]]) {
+    const l = Math.hypot(...d0), d = d0.map((v) => v / l);
+    const js = octEncode(d), gl = f.octEncode(d);
+    assert.ok(Math.abs(js[0] - gl[0]) < 1e-9 && Math.abs(js[1] - gl[1]) < 1e-9, `encode ${d0}`);
+    const back = octDecode(js), gb = f.octDecode(js);
+    assert.ok(back.every((v, k) => Math.abs(v - d[k]) < 1e-9) && gb.every((v, k) => Math.abs(v - d[k]) < 1e-9), `round trip ${d0}`);
+  }
+  // density: neighbouring texels of the upper diamond a fraction of a degree apart
+  const a = octDecode([0.5 + 3 / SD_SKY_MAP, 0.7]), b = octDecode([0.5 + 4 / SD_SKY_MAP, 0.7]);
+  const ang = Math.acos(a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
+  assert.ok(ang > 0.2 * (Math.PI / 512) && ang < 2 * (Math.PI / 512), `a texel ${(ang * 180 / Math.PI).toFixed(2)} degrees`);
+  assert.deepEqual([SD_CLOCK_FACE.elev, SD_CLOCK_FACE.r], [0.2, 0.34]);
+  assert.ok(Math.abs(CLOCK_BASIS.centre[1] - Math.sin(0.2)) < 1e-12);
+  for (const s of SD_SKY_SHARDS) assert.ok(SD_SHARD_TOP - s.depth > SD_CLOCK_TOP, `${s.name} over the face`);
+});
+
+test('SD-LOOK THE FACE IN STARS: its twelve hours written in Roman numerals plotted in stars - the paint\'s glyph table the very cells world/sdSkyArt.js numeralCell lights, every hour, every cell; the six Endings\' signs sampled into the strip it reads as constellations (mutants: a glyph\'s row; a numeral misspelled)', () => {
+  const f = glslFunctions(SD_SKY_PAINT_FS, { uTime: 0, uHaze: [0.2, 0.15, 0.07], uSteps: 10, uEnding: [0, 0, 0], uEndingIdx: -1, vUv: [0.5, 0.5], texelFetch: () => [0, 0, 0, 0] });
+  assert.deepEqual(SD_HOUR_NUMERALS, ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']);
+  for (let h = 0; h < 12; h++) {
+    const s = SD_HOUR_NUMERALS[h], w = numeralWidth(s);
+    assert.equal(f.numeralWidth(h), w, `${s}'s width`);
+    let lit = 0;
+    for (let cy = 0; cy < 7; cy++) for (let cx = 0; cx < w; cx++) { const want = numeralCell(s, cx, cy); assert.equal(f.numeralLit(h, cx, cy) > 0.5, want, `${s} cell ${cx},${cy}`); if (want) lit++; }
+    assert.ok(lit >= 7, `${s} drawn`);
+  }
+  assert.equal(numeralCell('V', 0, 0) && numeralCell('V', 2, 6) && !numeralCell('V', 2, 0), true, 'a V points down at its foot');
+  const sg = sdSkySigns(), N = SD_SKY_SIGN_GRID;
+  assert.deepEqual([sg.width, sg.height], [N * SD_SIGNS.length, N]);
+  for (let i = 0; i < SD_SIGNS.length; i++) { let n = 0; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (sg.data[y * sg.width + i * N + x] === 255) n++; assert.ok(n >= 6 && n < N * N * 0.8, `sign ${i}: a constellation (${n} stars)`); }
+});
+
+test('SD-LOOK THE PAINT IS PIXEL ART: every texel it paints posterized to the pixel law\'s steps through the ordered dither (its brightest channel a whole step), the void black overhead (L0), the haze meeting the fog at the horizon; the fetch adds the hands on the escapement, the Reset sweeping them to XII (mutants: the posterize skipped; the void lifted)', () => {
+  const f = glslFunctions(SD_SKY_PAINT_FS, { uTime: 40, uHaze: [0.2, 0.15, 0.07], uSteps: SD_SKY_STEPS.lane, uEnding: [0, 0, 0], uEndingIdx: -1, vUv: [0.5, 0.5], o: [0, 0, 0, 0], texelFetch: () => [1, 0, 0, 0] });
+  let zenith = 0, whole = 0, n = 0;
+  for (const uv of [[0.5, 0.5], [0.51, 0.5], [0.5, 0.93], [0.3, 0.6], [0.7, 0.4], [0.5, 0.97], [0.05, 0.05], [0.9, 0.95], [0.62, 0.88], [0.45, 0.91]]) {
+    f.globals.vUv = uv; f.main(); n++;
+    const c = f.globals.o, l = Math.max(c[0], c[1], c[2]);
+    if (Math.abs(l * SD_SKY_STEPS.lane - Math.round(l * SD_SKY_STEPS.lane)) < 1e-6) whole++;
+    if (uv[0] === 0.5 && uv[1] === 0.5) zenith = l;
+  }
+  assert.equal(whole, n, 'every texel a whole step');
+  assert.ok(zenith <= 0.1, `the zenith black (${zenith})`);
+  assert.ok(SD_SKY_FS.includes(SD_SKY_FETCH_GLSL), 'the sky\'s pass is the fetch');
+  const g = glslFunctions(SD_SKY_FETCH_GLSL, { uTime: 333.3, uGain: 1, uClock: [SD_SKY_MODE.reset, 1, 0, 0], texelFetch: () => [0, 0, 0, 1] });
+  const up = (x) => [0, 1, 2].map((j) => CLOCK_BASIS.centre[j] * Math.cos(x * SD_CLOCK_FACE.r) + CLOCK_BASIS.up[j] * Math.sin(x * SD_CLOCK_FACE.r));
+  assert.ok(Math.max(...g.skyFaceLive(up(0.45), [3, 3])) > 0.5, 'the Reset landed: both hands at XII');
+  g.globals.uClock = [0, 0, 0, 0];
+  const tk = g.skyTick(333.3);
+  assert.ok(Math.abs(tk - 333) < 1e-9 || tk > 333, 'the escapement held after its ease');
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S4 - THE RIFT AND THE RETURN: the astrolabe and its window.
+// ---------------------------------------------------------------------------------------------------------------------
+import { sdRiftFace, riftLook, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED, SD_RIFT_PROBE_M } from '../src/world/sdDungeon.js';
+import { irisPositions, SD_RIFT_PARTS, riftCentreY } from '../src/world/sdRiftModel.js';
+import { createSdEnd } from '../src/scenes/sdEnd.js';
+import { SD_WINDOW_FS, SD_FLOOR_FS } from '../src/render/sdRiftPass.js';
+import { sdRise, sdFind, sdFell, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
+
+/** A box hall the collider answers: x0..x1, z0..z1, floor 0, ceiling h; `pillar` { x, z, half } a square column. */
+function boxHall({ x0 = -5, x1 = 5, z0 = -15, z1 = 15, h = 8, pillar = null } = {}) {
+  return {
+    floor: () => 0,
+    ray: (o, d, max) => {
+      let t = Infinity;
+      for (const [ax, at] of [[0, x0], [0, x1], [2, z0], [2, z1], [1, 0], [1, h]]) { if (Math.abs(d[ax]) < 1e-9) continue; const k = (at - o[ax]) / d[ax]; if (k > 1e-6) t = Math.min(t, k); }
+      if (pillar) for (let k = 0.05; k < t; k += 0.05) { const x = o[0] + d[0] * k, z = o[2] + d[2] * k; if (Math.abs(x - pillar.x) < pillar.half && Math.abs(z - pillar.z) < pillar.half) { t = k; break; } }
+      return t <= max ? t : null;
+    },
+  };
+}
+
+test('SD-LOOK THE RIFT\'S FACE: square to its hall\'s long line - the opposite pair of chest rays that reaches farthest (a miss its probe\'s length), the first of a tie - unless a pillar stands in its own plane, then the next; the same on every client (mutants: the short line; the pillar unasked)', () => {
+  assert.deepEqual(sdRiftFace([0, 0, 0], 7, boxHall()), [Math.cos(Math.PI / 2), 0, 1], 'a hall along z: its face along z');
+  assert.deepEqual(sdRiftFace([0, 0, 0], 7, boxHall({ x0: -15, x1: 15, z0: -5, z1: 5 })), [1, 0, 0], 'along x');
+  assert.deepEqual(sdRiftFace([0, 0, 0], 5, boxHall({ x0: -20, x1: 20, z0: -20, z1: 20 })), [Math.cos(Math.PI / 4), 0, Math.sin(Math.PI / 4)], 'square: its diagonal, the longest line it has (the first of the two)');
+  // a pillar in the ring's plane (across the long line, at half its height) turns it to the next pair
+  assert.deepEqual(sdRiftFace([0, 0, 0], 5, boxHall({ x0: -9, x1: 9, z0: -15, z1: 15 })), [Math.cos(Math.PI / 2), 0, 1], 'a broad hall\'s long line, never its diagonal');
+  const p = boxHall({ x0: -9, x1: 9, z0: -15, z1: 15, pillar: { x: 2.2, z: 0, half: 0.4 } });
+  assert.notDeepEqual(sdRiftFace([0, 0, 0], 5, p), [Math.cos(Math.PI / 2), 0, 1], 'the pillar asked');
+  assert.ok(SD_RIFT_PROBE_M > 0);
+});
+
+test('SD-LOOK THE RIFT\'S LOOK IS ITS STATE (riftLook): found - the iris wide, the gear ticking once a second, its studs the hours left (all past a day); risen or unheard - a pinhole, still, at 30%; the collapse - the gear twice a second, a stud gone ember each 7.5 s, wide to a third for one who went in, shut and ember for a newcomer; gone or another slot - shut and cold; refused for good - shut and red (mutants: the collapse uncounted; a newcomer let see in)', () => {
+  const T0 = 1_800_000_000_000, H = 3_600_000;
+  const risen = sdRise(null, T0, 0), found = sdFind(risen, T0 + 1000);
+  assert.deepEqual(riftLook(null, 1, T0), SD_RIFT_NOT_YET);
+  assert.deepEqual(riftLook(risen, risen.s, T0 + 10), SD_RIFT_NOT_YET);
+  assert.deepEqual(riftLook(found, found.s + 1, T0 + 2000), SD_RIFT_CLOSED);
+  assert.deepEqual(riftLook(found, found.s, T0 + 2000, { fallen: true }), SD_RIFT_REFUSED);
+  const open = riftLook(found, found.s, T0 + 2000);
+  assert.deepEqual([open.state, open.aperture, open.tickHz, open.tone], ['open', 1, 1, 'gold']);
+  assert.equal(open.studs, Math.max(1, Math.min(24, Math.ceil((found.until - T0 - 2000) / H))));
+  const fell = sdFell(found, T0 + 5000);
+  for (const [k, studs] of [[0.0, 24], [7.5, 23], [90, 12], [179, 1]]) {
+    const L = riftLook(fell, fell.s, fell.fellAt + k * 1000, { entered: true });
+    assert.deepEqual([L.state, L.tickHz, L.studs, L.ember], ['collapse', 2, studs, 24 - studs], `${k} s into the collapse`);
+    assert.ok(L.aperture >= 1 / 3 - 1e-9 && L.aperture <= 1, 'wide to a third');
+  }
+  const newcomer = riftLook(fell, fell.s, fell.fellAt + 1000);
+  assert.deepEqual([newcomer.aperture, newcomer.tone], [0, 'ember']);
+  assert.equal(riftLook(fell, fell.s, fell.fellAt + SD_COLLAPSE_MS + 1).state, 'closed');
+});
+
+test('SD-LOOK THE IRIS: eight leaves whose aperture is the state - shut, they meet over the heart; wide, every leaf behind the hour-ring\'s lip; the same vertices at every aperture (written in place while it eases) (mutants: the leaves short of the heart; wide leaves in the window)', () => {
+  const R = 3.5, count = irisPositions(7, 0).positions.length;
+  for (const a of [0, 0.07, 0.4, 1]) assert.equal(irisPositions(7, a).positions.length, count);
+  const minR = (a) => { const p = irisPositions(7, a).positions; let m = Infinity; for (let i = 0; i < p.length; i += 3) m = Math.min(m, Math.hypot(p[i], p[i + 1])); return m; };
+  assert.ok(minR(0) < 1e-6, 'shut: they meet at the heart');
+  assert.ok(minR(1) * Math.cos(Math.PI / 8) >= SD_RIFT_PARTS.ring0 * R - 1e-6, `wide: behind the lip (${(minR(1) / R).toFixed(3)} R)`);
+  assert.ok(minR(0.07) > 0 && minR(0.07) < 0.1 * R, 'not yet: a pinhole');
+  assert.ok(SD_RIFT_PARTS.iris1 <= SD_RIFT_PARTS.ring1, 'the leaves never past the hour-ring');
+});
+
+test('SD-LOOK THE RIFT TURNS: on the realm\'s clock its gear ticks a tooth FORWARD each second and holds; its hour-ring ratchets an hour BACK on each toll; every part that turns casts nothing (noShadow), the crater, plinth and claws cast; shut and cold its parts swap to the cold records; its light before its face in gold, none when closed (mutants: the teeth still; the ring forward; a turning part casting)', () => {
+  let ms = 100_000, sec = 1000;
+  const r = { uploadTexture() {}, uploadEmissionTexture() {}, createMesh: (m) => ({ m }), destroyMesh() {}, updateMeshVertices() {} };
+  let L = SD_RIFT_OPEN_LOOK;
+  const end = createSdEnd({ renderer: r, now: () => ms, clock: () => sec, look: () => L });
+  const draws = [];
+  end.stand({ rift: { at: [0, 0, 0], size: 6, face: [0, 0, 1] }, retAt: null, dynamicDraws: draws });
+  assert.deepEqual(draws.map((d) => !!d.noShadow).filter((v) => !v).length, 1, 'one part casts - the static one');
+  const at = (s) => { sec = s; ms += 16; end.frame(null); return end.parts; };
+  const g0 = at(1000.5).gearAngle, g1 = at(1001.5).gearAngle, g1b = at(1001.9).gearAngle;
+  const pitch = (Math.PI * 2) / SD_RIFT_PARTS.teeth;
+  assert.ok(Math.abs(g1 - g0 - pitch) < 1e-9, 'a tooth a second');
+  assert.ok(g1 > g0, 'forward');
+  assert.equal(g1b, g1, 'held after its ease');
+  const ring = [];
+  for (let k = 0; k < 4; k++) { sec += 6.5; ms += 16; ring.push(end.parts.ringAngle); end.frame(null); }   // no bell: the realm's clock tolls it
+  ring.push(end.parts.ringAngle);
+  assert.ok(ring.slice(1).every((v, i) => v <= ring[i] + 1e-9) && ring.at(-1) < ring[0], 'back, toll by toll');
+  L = SD_RIFT_CLOSED; end.frame(null);
+  assert.ok(draws.filter((d) => d.noShadow !== undefined && d.texRemap).length >= 4, 'cold records swapped in');
+  assert.equal(end.lights().length, 0, 'closed: no light');
+  L = SD_RIFT_OPEN_LOOK; end.frame(null);
+  const [light] = end.lights();
+  assert.ok(light.z < 0 && Math.abs(light.y - riftCentreY(6)) < 1e-9, 'before its face (-z), at its heart\'s height');
+  assert.ok(light.color[0] > light.color[2], 'gold');
+});
+
+test('SD-LOOK THE WINDOW: the Hour\'s own painted sky through the iris (the fetch the sky\'s pass reads), along the eye\'s own ray - and a step through\'s ripple never NaN when no step has been (an infinite age blanked every ray); the floor light\'s gear spokes and toll pulse (mutants: the ripple unguarded)', () => {
+  assert.ok(SD_WINDOW_FS.includes(SD_SKY_FETCH_GLSL), 'the same fetch');
+  assert.match(SD_WINDOW_FS, /rw = normalize\(wp - uEye\)/, 'the eye\'s own ray');
+  let bad = 0;
+  const f = glslFunctions(SD_WINDOW_FS, { uModel: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 3, 8, 1], uToLocal: [1, 0, 0, 0, 1, 0, 0, 0, 1], uSize: [3, 3], uEye: [0, 1.7, -7], uLight: 1, uEmber: 0, uSteps: 10, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 1.7, -7], uFogColor: [0, 0, 0], uFocus: [0, 0, 0, 0], uTime: 40, uGain: 1, uClock: [0, 0, 0, 0], vDisc: [0.3, 0.2], vWorld: [0, 3, 8], o: [0, 0, 0, 0], texelFetch: (s, p) => { if (!p.every(Number.isFinite)) bad++; return [0.5, 0.4, 0.2, 1]; } });
+  for (const age of [9, 1.5, 0.3]) {
+    f.globals.uRipple = [0, 0, age < 1.5 ? 1 : 0, age];
+    f.main();
+    assert.ok(f.globals.o.every(Number.isFinite), `a number at age ${age}`);
+  }
+  f.globals.uRipple = [0, 0, 0, Infinity]; f.main();
+  assert.ok(f.globals.o.every(Number.isFinite), 'no step at all: still a number');
+  assert.equal(bad, 0, 'and every tap of the sky a texel, never a NaN');
+  for (const g of [[0, 0], [0.3, 0.2], [-0.9, 0.1]]) assert.ok(f.windowRay(g).every(Number.isFinite), `the window's ray at ${g}, no step at all`);
+  assert.match(SD_FLOOR_FS, /fract\(\(ha - uGear\) \/ TAU \* 36\.0\)/, 'the gear\'s 36 teeth as spokes');
+});

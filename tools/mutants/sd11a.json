@@ -458,8 +458,8 @@
   {
     "name": "SD11A-L2F11-the-hidden-drawn",
     "file": "src/scenes/worldModes.js",
-    "old": "for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(",
-    "new": "for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(",
+    "old": "for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(",
+    "new": "for (const d of dungeonCtx.dynamicDraws) if (!d.culled) renderer.drawMesh(",
     "tests": [
       "test/sd11a_scenes.test.js"
     ],
@@ -570,7 +570,7 @@
   {
     "name": "SD11A-L2F15-the-face-in-raw-azimuth",
     "file": "src/render/sdSky.js",
-    "old": "  return t * (acos(clamp(dot(d, CENTRE), -1.0, 1.0)) / max(length(t), 1e-6)) / ${f6(SD_CLOCK_FACE.r)};",
+    "old": "  return t * (acos(clamp(dot(d, FACE_CENTRE), -1.0, 1.0)) / max(length(t), 1e-6)) / ${f6(SD_CLOCK_FACE.r)};",
     "new": "  return vec2(atan(d.x, d.z) - ${f6(SD_CLOCK_FACE.az)}, asin(clamp(d.y, -1.0, 1.0)) - ${f6(SD_CLOCK_FACE.elev)}) / ${f6(SD_CLOCK_FACE.r)};",
     "tests": [
       "test/sd11a_scenes.test.js"
@@ -581,7 +581,7 @@
     "name": "SD11A-L2F15-the-shards-hung-low",
     "file": "src/render/sdSky.js",
     "old": "export const SD_SHARD_TOP = SD_CLOCK_TOP + SD_SHARD_CLEAR + Math.max(...SD_SKY_SHARDS.map((s) => s.depth));",
-    "new": "export const SD_SHARD_TOP = 1.02;",
+    "new": "export const SD_SHARD_TOP = 0.7;",
     "tests": [
       "test/sd11a_scenes.test.js"
     ],

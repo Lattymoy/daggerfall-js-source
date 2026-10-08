@@ -180,14 +180,65 @@ export function sdRiftPlace(foot, probe) {
   let best = { at: [foot[0], foot[1], foot[2]], size: fitAt(foot, probe) };
   for (const r of [SD_RIFT_SHIFT_M, 2 * SD_RIFT_SHIFT_M]) {
     for (const dir of BEARINGS) {
-      if (best.size >= SD_RIFT_SIZE_M) return best;
+      if (best.size >= SD_RIFT_SIZE_M) return { ...best, face: sdRiftFace(best.at, best.size, probe) };
       const at = besideOn(foot, dir, r, probe);
       if (!at) continue;
       const size = fitAt(at, probe);
       if (size > best.size) best = { at, size };
     }
   }
-  return best;
+  return { ...best, face: sdRiftFace(best.at, best.size, probe) };
+}
+
+/**
+ * SD-LOOK (2026-10-08, bible/11-Multiplayer/Super-Dungeons-Look.md section 1): THE RIFT'S FACE - square to its hall's
+ * long line, so the walk down the hall meets it face on. Of the four opposite pairs of the eight chest-height bearings,
+ * the one whose two rays reach farthest together (each asked to SD_RIFT_FACE_M, a miss counted that) is the hall's long
+ * line - the first of a tie - and its face lies along it; unless a ray along the ring's own plane, at half its height, falls short of half
+ * its size and its air (a pillar the chest rays did not see), when the next pair is taken. Answers the face's direction
+ * [x, 0, z] - the same on every client (the law's rays, the law's order). The walk-in and the press do not move
+ * (inSdPortal's cylinder and its box are round and square).
+ * @param {number[]} at
+ * @param {number} size
+ * @param {SdProbe} probe
+ */
+export const SD_RIFT_FACE_M = 2 * SD_RIFT_PROBE_M;   // a hall's long line is asked farther than its walls are: past 12 m every long hall's diagonals tie
+export function sdRiftFace(at, size, probe) {
+  const reach = BEARINGS.map((dir) => probe.ray([at[0], at[1] + SD_CHEST_M, at[2]], dir, SD_RIFT_FACE_M) ?? SD_RIFT_FACE_M);
+  const pairs = [0, 1, 2, 3].sort((a, b) => (reach[b] + reach[b + 4]) - (reach[a] + reach[a + 4]) || a - b);
+  for (const k of pairs) {
+    const along = BEARINGS[(k + 2) % 8], back = BEARINGS[(k + 6) % 8], half = [at[0], at[1] + size / 2, at[2]];
+    const room = Math.min(probe.ray(half, along, size) ?? Infinity, probe.ray(half, back, size) ?? Infinity);
+    if (room >= size / 2 + SD_RIFT_AIR_M) return [...BEARINGS[k]];
+  }
+  return [...BEARINGS[pairs[0]]];
+}
+
+/** SD-LOOK: THE RIFT'S LOOK - what its state shows, read off what the page holds (`sdRiftWord`'s inputs): `state` open,
+ *  notyet, collapse, closed or refused; the iris's `aperture` (0 shut .. 1 wide - the state itself); the gear's ticks a
+ *  second; `studs` lit (how many hours its Hour stands, all 24 past a day) and `ember` going (one each 7.5 s of the
+ *  collapse); the brass's `tone` (gold, ember, cold or red) and its `light` (0..1). Readable from 30 m, no plaque. */
+export const SD_RIFT_OPEN_LOOK = Object.freeze({ state: 'open', aperture: 1, tickHz: 1, studs: 24, ember: 0, tone: 'gold', light: 1 });
+export const SD_RIFT_NOT_YET = Object.freeze({ state: 'notyet', aperture: 0.07, tickHz: 0, studs: 0, ember: 0, tone: 'gold', light: 0.3 });
+export const SD_RIFT_CLOSED = Object.freeze({ state: 'closed', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'cold', light: 0 });
+export const SD_RIFT_REFUSED = Object.freeze({ state: 'refused', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'red', light: 0.3 });
+/**
+ * @param {import('../net/sdLaw.js').SdRecord | null | undefined} rec
+ * @param {number} s the Hollow's slot
+ * @param {number} now
+ */
+export function riftLook(rec, s, now, { entered = false, fallen = false } = {}) {
+  if (!rec) return SD_RIFT_NOT_YET;   // the hub's record not heard: not yet
+  if (rec.s !== s) return SD_RIFT_CLOSED;
+  if (fallen) return SD_RIFT_REFUSED;
+  const ph = sdPhase(rec, now);
+  if (ph === 'found') return { ...SD_RIFT_OPEN_LOOK, studs: Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000))) };
+  if (ph === 'risen') return SD_RIFT_NOT_YET;
+  if (ph === 'fell') {
+    const left = Math.max(0, Math.min(1, (rec.fellAt + SD_COLLAPSE_MS - now) / SD_COLLAPSE_MS)), lit = Math.ceil(left * 24);
+    return { state: 'collapse', aperture: entered ? 1 / 3 + (2 / 3) * left : 0, tickHz: 2, studs: lit, ember: 24 - lit, tone: entered ? 'gold' : 'ember', light: entered ? 0.5 + 0.5 * left : 0.3 };
+  }
+  return SD_RIFT_CLOSED;
 }
 
 /**

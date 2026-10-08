@@ -207,7 +207,6 @@ const NO_PERSON = Object.freeze({
   'src/scenes/navalFlames.js': 'a ship\'s flames',
   'src/scenes/portalFx.js': 'a portal',
   'src/scenes/riteHost.js': 'a rite\'s fire',
-  'src/scenes/sdEnd.js': 'a Super dungeon\'s Rift and Return',   // SD4b
   'src/scenes/siegeNpcs.js': 'a siege\'s fighters as mobile units',
   'src/scenes/sigilBrokerPool.js': 'the Sigil broker as a mobile unit',
   'src/scenes/spoilsPool.js': 'a boss\'s spoils',

@@ -12,10 +12,10 @@ import {
   sdEndMarks, sdRiftFit, sdRiftPlace, sdReturnPlace, sdRiftWord, sdReturnStands, inSdPortal,
   SD_RIFT_SIZE_M, SD_RIFT_MIN_M, SD_RIFT_AIR_M, SD_RETURN_GAP_M, SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT,
 } from '../src/world/sdDungeon.js';
-import {
-  createSdEnd, riftFrame, returnFrame, ensureSdEndArt, RIFT_ARCHIVE, RETURN_ARCHIVE, RIFT_FRAMES, RETURN_FRAMES, RIFT_TEX,
-  SD_RIFT_KEY, SD_RETURN_KEY,
-} from '../src/scenes/sdEnd.js';
+import { createSdEnd, ensureSdEndArt, SD_RIFT_KEY, SD_RETURN_KEY } from '../src/scenes/sdEnd.js';
+import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_ATLAS } from '../src/world/sdRiftArt.js';   // SD-LOOK: the astrolabe's art (its billboard frames retired)
+import { riftCentreY } from '../src/world/sdRiftModel.js';
+import { SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
 import { buildRiftBell, startRiftBell, RIFT_BELL_KEY, RIFT_BELL_RATE, RIFT_BELL_SECONDS, RIFT_BELL_RMS, RIFT_BELL_RECORDS, RIFT_BELL_LOWPASS_HZ, RIFT_BELL_RANGE } from '../src/systems/sdRiftSound.js';
 import { rms } from '../src/systems/arenaSound.js';
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, SD_COLLAPSE_MS, SD_NO_RIFT, SD_NO_CLOSED } from '../src/net/sdLaw.js';
@@ -75,7 +75,7 @@ test('SD4b the Rift\'s size: 7 m at most, the hall\'s own less its air, never un
   assert.equal(sdRiftFit(1, 1), SD_RIFT_MIN_M, 'never under the least');
   assert.equal(sdRiftFit(undefined, Infinity), SD_RIFT_SIZE_M, 'an unmeasured side asks nothing');
   // a great hall: the end itself, the whole ring
-  assert.deepEqual(sdRiftPlace([20, 0, 20], hall({ x1: 40, z1: 40, h: 12 })), { at: [20, 0, 20], size: 7 });
+  assert.deepEqual(sdRiftPlace([20, 0, 20], hall({ x1: 40, z1: 40, h: 12 })), { at: [20, 0, 20], size: 7, face: [Math.cos(Math.PI / 4), 0, Math.sin(Math.PI / 4)] });   // SD-LOOK (PIN MOVED): and its face - a square hall's longest line, its first diagonal
   // a corner: the diagonal three metres out, where its walls stand furthest
   const r = sdRiftPlace([1, 0, 1], hall());
   const s = 1 + 3 * Math.SQRT1_2;
@@ -136,41 +136,30 @@ test('SD4b the Rift\'s word: not yet found - "will not take you yet"; found - th
   assert.deepEqual(SD_END_TEXT, { rift: 'The Rift', riftTo: 'To the Shattered Hour', ret: 'The Return', retTo: 'To the way in' });
 });
 
-test('SD4b the art: the Rift a ring of brass about a near-black membrane, clear outside it, turning an eighth of a turn over its frames so the loop meets itself; the Return an oval of pale light (mutants: the ring never turns)', () => {
-  const f0 = riftFrame(0);
-  assert.equal(f0.width, RIFT_TEX); assert.equal(f0.height, RIFT_TEX);
-  const px = (f, x, y) => { const o = (y * f.width + x) * 4; return [...f.colors.slice(o, o + 4)]; };
-  assert.equal(px(f0, 0, 0)[3], 0, 'clear outside the ring');
-  const c = RIFT_TEX / 2;
-  const heart = px(f0, c, c);
-  assert.ok(heart[3] > 200 && heart[0] < 120 && heart[0] >= heart[1] && heart[1] >= heart[2], `the membrane near black: ${heart}`);
-  // the ring's teeth: across its band at every bearing, brass - red over green over blue, and bright
-  const ringX = Math.round(c + 0.87 * c);
-  const brass = px(f0, ringX, c);
-  assert.ok(brass[3] > 200 && brass[0] > 150 && brass[0] > brass[1] && brass[1] > brass[2], `brass: ${brass}`);
-  assert.deepEqual(riftFrame(RIFT_FRAMES), f0, 'the loop meets itself');
-  assert.notDeepEqual(riftFrame(4).colors, f0.colors, 'and it turns');
-  assert.notDeepEqual(px(riftFrame(4), ringX, c), brass, 'its teeth turn - the ring\'s own, not only the membrane\'s swirl');
-  const r0 = returnFrame(0);
-  const rc = px(r0, 20, 32);
-  assert.ok(rc[3] > 200 && rc[2] >= rc[0] && rc[0] > 180, `pale light: ${rc}`);
-  assert.equal(px(r0, 0, 0)[3], 0);
-  assert.deepEqual(returnFrame(RETURN_FRAMES), r0);
-  // uploaded once a renderer, as albedo and as its own emission (self-lit underground)
+test('SD4b the art - SD-LOOK (PIN MOVED: the billboard frames retired for the astrolabe): one atlas painted three times - lit (its numerals\' bevels and the blocks\' gap lips alight in gold), cold (darker, no light of its own) and red (a crack across, alight) - every numeral face its glyph; uploaded once a renderer, as albedo and as its own emission, with the realm\'s records it wears beside it (a Hollow is no realm) (mutants: the cold record alight)', () => {
+  const art = sdRiftArt(), S = SD_RIFT_ATLAS.size;
+  assert.deepEqual(art.map(([r]) => r), [SD_RIFT_RECORD.lit, SD_RIFT_RECORD.cold, SD_RIFT_RECORD.red]);
+  for (const [, a] of art) assert.ok(a.albedo.width === S && a.emission.width === S && a.albedo.colors.length === S * S * 4);
+  const lit = (img, [x0, y0, w, h]) => { let n = 0; for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (img.colors[(y * S + x) * 4] > 0) n++; return n; };
+  for (let i = 0; i < 12; i++) assert.ok(lit(art[0][1].emission, SD_RIFT_ATLAS[`n${i}`]) > 20, `numeral ${i}: its glyph alight`);
+  assert.equal(lit(art[1][1].emission, [0, 0, S, S]), 0, 'cold: no light of its own');
+  assert.ok(lit(art[2][1].emission, SD_RIFT_ATLAS.leaf) > 10, 'red: the crack across the leaves alight');
+  const red = art[2][1].emission.colors, at = red.findIndex((v, k) => k % 4 === 0 && v > 0);
+  assert.ok(red[at] > 2 * red[at + 2], 'and red');
   const up = [], em = [];
   const rr = { uploadTexture: (a, k) => up.push(`${a}/${k}`), uploadEmissionTexture: (a, k, c32, o) => em.push(`${a}/${k}/${o?.white}`) };
   ensureSdEndArt(rr); ensureSdEndArt(rr);
-  assert.equal(up.length, RIFT_FRAMES + RETURN_FRAMES);
-  assert.equal(em.length, RIFT_FRAMES + RETURN_FRAMES);
-  assert.ok(up.includes(`${RIFT_ARCHIVE}/0`) && up.includes(`${RETURN_ARCHIVE}/${RETURN_FRAMES - 1}`) && em.every((e) => e.endsWith('/true')));
+  assert.equal(up.length, 7, 'its three records and the four of the realm\'s it wears');
+  assert.equal(em.length, 7);
+  assert.ok(up.every((u) => u.startsWith(`${SD_REALM_ARCHIVE}/`)) && em.every((e) => e.endsWith('/true')));
 });
 
 /** A renderer and an engine that only keep what was asked of them. */
 function fakes({ archive = true } = {}) {
   const r = { made: [], freed: [] };
   r.uploadTexture = () => {}; r.uploadEmissionTexture = () => {};
-  r.createBillboardBatch = (archiveName, record, size) => { const b = { archive: archiveName, record, size }; r.made.push(b); return b; };
-  r.destroyBillboardBatch = (b) => r.freed.push(b);
+  r.createMesh = (m) => { const g = { m }; r.made.push(g); return g; };   // SD-LOOK (PIN MOVED): meshes, not batches
+  r.destroyMesh = (g) => r.freed.push(g);
   const bell = new Float32Array(6000).map((_, i) => Math.sin(i / 2.3) * Math.exp(-i / 2500));
   const a = {
     reg: [], loops: [],
@@ -184,15 +173,20 @@ function fakes({ archive = true } = {}) {
 test('SD4b the Rift and the Return stood: two batches at their feet, the ring its size, the bell looped at the ring\'s middle through the engine\'s low-pass; their keys in the ray at a door\'s reach and their names on the plaque; gone with the dungeon (mutants: the bell unrung; the Return\'s box the Rift\'s)', () => {
   const { r, a } = fakes();
   const end = createSdEnd({ renderer: r, audio: a });
-  assert.ok(end.stand({ rift: { at: [10, 0, 5], size: 6 }, retAt: [15, 0, 5] }));
+  const draws = [];
+  assert.ok(end.stand({ rift: { at: [10, 0, 5], size: 6 }, retAt: [15, 0, 5], dynamicDraws: draws }));
   assert.equal(end.stand({ rift: { at: [0, 0, 0], size: 3 }, retAt: null }), false, 'once');
-  assert.deepEqual(r.made.map((b) => [b.archive, b.size.w, b.size.h]), [[RIFT_ARCHIVE, 6, 6], [RETURN_ARCHIVE, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h]]);
-  assert.deepEqual(r.made[0].origin, [10, 0, 5], 'the batch is drawn from its base - the ring stands on the floor');
-  assert.equal(r.made[0].conceal.mode, 3);
-  assert.equal(end.batches().length, 2);
+  // SD-LOOK (PIN MOVED): its parts among the draws - the static part (the one that casts) stood at its foot, every part
+  // that turns about its centre, a hand's breadth over the floor; the Return's arch at its own
+  assert.equal(draws.length, r.made.length);
+  const casts = draws.filter((d) => !d.noShadow);
+  assert.deepEqual(casts.map((d) => [...d.object.matrix.slice(12, 15)]), [[10, 0, 5], [15, 0, 5]], 'the crater and the Return\'s arch cast, at their feet - nothing that turns does');
+  const turned = draws.filter((d) => d.noShadow && Math.abs(d.object.matrix[13] - riftCentreY(6)) < 1e-6);
+  assert.ok(turned.length >= 3, 'the gear, the hour-ring and the iris about its centre');
+  assert.equal(end.batches().length, 0, 'no billboard');
   assert.deepEqual(a.reg.map((x) => [x.key, x.rate]), [[RIFT_BELL_KEY, RIFT_BELL_RATE]]);
   assert.equal(a.loops.length, 1);
-  assert.deepEqual(a.loops[0].at, [10, 3, 5], 'heard from the ring\'s middle');
+  assert.deepEqual(a.loops[0].at, [10, riftCentreY(6), 5], 'heard from the ring\'s middle');   // SD-LOOK (PIN MOVED): its middle a hand's breadth higher - it hovers
   assert.equal(a.loops[0].o.lowpass, RIFT_BELL_LOWPASS_HZ, 'under water');
   assert.equal(a.loops[0].o.maxDistance, RIFT_BELL_RANGE.maxDistance);
   const t = end.targets();
@@ -204,9 +198,9 @@ test('SD4b the Rift and the Return stood: two batches at their feet, the ring it
   assert.equal(end.hoverName('loot:0'), null);
   assert.equal(end.hoverName(7), null, 'a namer is handed every key');
   end.clear();
-  assert.equal(r.freed.length, 2);
+  assert.equal(r.freed.length, r.made.length, 'every mesh freed');
+  assert.deepEqual(draws, [], 'and out of the draws');
   assert.ok(a.loops[0].stopped);
-  assert.equal(end.batches().length, 0);
   assert.equal(end.targets().length, 0);
   // no archive yet (or no engine): it stands, silent
   const quiet = fakes({ archive: false });
@@ -257,15 +251,14 @@ test('SD4b the step: walking INTO either hands it to the host once - standing in
   assert.deepEqual(got.slice(-2), ['rift', 'return']);
   // the Return goes out
   end.returnOut();
-  assert.equal(r.freed.length, 1);
-  assert.equal(end.batches().length, 1);
+  assert.equal(r.freed.length, 2, 'its arch and its hand');
   assert.deepEqual(end.targets().map((x) => x.key), [SD_RIFT_KEY]);
   assert.equal(end.hoverName(SD_RETURN_KEY), null);
   assert.equal(end.press(SD_RETURN_KEY), false);
   walk([6, 0, 3]); walk([6, 0, 1]);
   assert.equal(walk([6, 0, 0.3]), null, 'its step gone with it');
   assert.equal(end.ret, null);
-  assert.deepEqual(end.rift, { at: [0, 0, 0], size: 7 });
+  assert.deepEqual(end.rift, { at: [0, 0, 0], size: 7, face: [0, 0, 1] });
   // a narrow ring's step is a quarter of its size across, not more
   const small = createSdEnd({ renderer: r, audio: null, now: () => clock, onRift: () => got.push('small') });
   small.stand({ rift: { at: [50, 0, 50], size: 2.6 }, retAt: null });
@@ -323,9 +316,9 @@ test('SD4b the host\'s steps, run from its own text: into the Rift its word firs
 
 test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alone, the first frame I stand there; the Return asked about once a second; the ray, the plaque, the drops\' pass, the press and the destroy; the mode machine\'s press arm and its forward; the world host\'s word off the hub\'s record (mutants: stood in every dungeon; the press unrouted; the forward lost; the word off no record)', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null \}\)[^\n]*\n\s*: _sdRealm \? createSdEnd\([^\n]*\) : null;/);   // SD5a (PIN MOVED): the Shattered Hour stands its way back with the same set; AUDIT SD II (SD11f, L6 F5, PIN MOVED): the Hollow's plaque counts its Hour
+  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: \(\) => sdEndWord\(\)\?\.look \?\? null, clock: sdEndClock \}\)[^\n]*\n\s*: _sdRealm \? createSdEnd\([^\n]*\) : null;/);   // SD5a (PIN MOVED): the Shattered Hour stands its way back with the same set; AUDIT SD II (SD11f, L6 F5, PIN MOVED): the Hollow's plaque counts its Hour
   assert.match(D, /const sdEndWord = \(\) => opts\.superRift\?\.\(dfLocation\?\.sdSlot\) \?\? null;/);
-  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there; AUDIT SD II (L6 F18, PIN MOVED): past it, never on its foot
+  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt, dynamicDraws, probe \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there; AUDIT SD II (L6 F18, PIN MOVED): past it, never on its foot
   assert.match(D, /if \(playerFeet && !_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}/);
   assert.match(D, /if \(sdEnd\.ret && t >= _sdEndCheckAt\) \{ _sdEndCheckAt = t \+ 1000; const w = sdEndWord\(\); if \(w && !w\.returns\) sdEnd\.returnOut\(\); \}/);
   assert.match(D, /if \(playerFeet && !_lairAsked\) \{[^\n]*\n {4}if \(sdEnd\) sdEndFrame\(playerFeet\);/, 'the frame, beside the lair\'s stand');
@@ -339,7 +332,7 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   assert.ok(arm > 0 && arm < W.indexOf("    if (!key.startsWith('exit:')) {\n      dungeonCtx.actions.activate(key"), 'before the press falls through to the action objects');
   assert.match(W, /superRift: \(s\) => host\.superRift\?\.\(s\) \?\? null,/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /return \{ word: sdRiftWord\(rec, s, now, \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \}\), returns: sdReturnStands\(rec, s, now\), count: sdRiftCount\(rec, s, now\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour; SD-ONELIFE (PIN MOVED): and the Hours I died in
+  assert.match(w, /const seen = \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \};\n\s*return \{ word: sdRiftWord\(rec, s, now, seen\), returns: sdReturnStands\(rec, s, now\), count: sdRiftCount\(rec, s, now\), look: riftLook\(rec, s, now, seen\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour; SD-ONELIFE (PIN MOVED): and the Hours I died in
   assert.match(w, /const rec = sdHost\.record\(\), now = Date\.now\(\) \+ _sharedOffsetMs;/, 'the hub\'s record, on the shared clock the Hollow\'s host reads');
   assert.match(w, /superRift: \(s\) => sdRiftOf\(s\),/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4b - shipped 2026-10-07/);

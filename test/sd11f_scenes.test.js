@@ -72,14 +72,14 @@ test('SD11f THE WAY HOME RISES, TOLLED (L6 F16): it stands up out of the floor o
   const tolls = () => audio.log.filter((x) => x[0] === 'toll');
   assert.equal(tolls().length, 0, 'the Rift loops; nothing tolled yet');
   e.standReturn([10, 2, 20], 0);
-  const ret = renderer.batches.find((b) => b.archive === 'fxsdreturn');
-  assert.ok(Math.abs(ret.origin[1] - (2 - SD_RETURN_SIZE.h)) < 1e-9, 'under the floor as it begins');
+  // SD-LOOK (PIN MOVED): its foot as its arch is stood, a mesh now (it was a billboard's origin)
+  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h)) < 1e-6, 'under the floor as it begins');
   clock += SD_HOME_RISE_MS / 2; e.frame(null);
-  assert.ok(Math.abs(ret.origin[1] - (2 - SD_RETURN_SIZE.h / 2)) < 1e-9, `halfway at half its time (${ret.origin[1]})`);
+  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h / 2)) < 1e-6, `halfway at half its time (${e.ret.foot})`);
   clock += SD_HOME_RISE_MS; e.frame(null);
-  assert.equal(ret.origin[1], 2, 'risen: its foot on the floor');
+  assert.equal(e.ret.foot, 2, 'risen: its foot on the floor');
   clock += 5000; e.frame(null);
-  assert.equal(ret.origin[1], 2, 'and held');
+  assert.equal(e.ret.foot, 2, 'and held');
   assert.equal(tolls().length, 1, 'tolled once');
   const [, key, at, opts] = tolls()[0];
   assert.equal(key, RIFT_BELL_KEY, 'the Rift\'s own bell');
@@ -92,7 +92,7 @@ test('SD11f THE WAY HOME RISES, TOLLED (L6 F16): it stands up out of the floor o
   const late = createSdEnd({ renderer: r2, audio: a2, now: () => clock });
   late.stand({ rift: { at: [0, 0, -4], size: 4 }, retAt: null });
   late.standReturn([10, 2, 20], SD_HOME_SAY_MS + 1);
-  assert.equal(r2.batches.find((b) => b.archive === 'fxsdreturn').origin[1], 2, 'risen');
+  assert.equal(late.ret.foot, 2, 'risen');
   assert.equal(a2.log.filter((x) => x[0] === 'toll').length, 0, 'untolled');
   late.returnOut(); late.standReturn([1, 0, 1]);
   assert.equal(a2.log.filter((x) => x[0] === 'toll').length, 0, 'no age: a way home long risen');
@@ -105,7 +105,7 @@ test('SD11f THE WAY HOME RISES, TOLLED (L6 F16): it stands up out of the floor o
   const own = createSdEnd({ renderer: r3, audio: a3, now: () => clock });
   own.stand({ rift: { at: [0, 0, 0], size: 4 }, retAt: [5, 1, 0] });
   own.frame(null);
-  assert.equal(r3.batches.find((b) => b.archive === 'fxsdreturn').origin[1], 1);
+  assert.equal(own.ret.foot, 1);
   assert.equal(a3.log.filter((x) => x[0] === 'toll').length, 0);
 });
 
@@ -137,7 +137,7 @@ test('SD11f THE WAY HOME SAID AS IT RISES (L6 F16), the world host from its own 
   h.set(null, T0);
   assert.equal(h.sdHomeAge(), null);
   const D = read('src/scenes/dungeonContext.js'), M2 = read('src/scenes/worldModes.js');
-  assert.match(D, /if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity\);/);
+  assert.match(D, /if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity, \{ dynamicDraws \}\);/);
   assert.match(M2, /sdHomeAge: \(\) => host\.sdHomeAge\?\.\(\) \?\? null,/);
   assert.match(W, /sdHomeAge: \(\) => sdHomeAge\(\),/);
 });
@@ -173,8 +173,8 @@ test('SD11f THE RIFT COUNTS ITS HOUR (L6 F5): its plaque\'s second row - found o
   assert.deepEqual(createSdEnd({}).hoverName(SD_RIFT_KEY), null);
   // the hosts: the Hollow's Rift asks the world host's word for it; the Hour's own Rift counts nothing (its readouts do)
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null \}\)/);
-  assert.match(W, /count: sdRiftCount\(rec, s, now\), enter: \(\) => sdEnterRealm\(s\) \};/);
+  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: \(\) => sdEndWord\(\)\?\.look \?\? null, clock: sdEndClock \}\)/);
+  assert.match(W, /count: sdRiftCount\(rec, s, now\), look: riftLook\(rec, s, now, seen\), enter: \(\) => sdEnterRealm\(s\) \};/);
 });
 
 // ── L8 D1, G15: a Hollow's foes fit the frame ─────────────────────────

@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SdSkyRenderer, SD_SKY_VS, SD_SKY_FS, SD_SKY_PERIOD, sdSkyClock, SD_CLOCK_FACE, SD_SKY_SHARDS, SD_SHARD_TOP, SD_AURORA } from '../src/render/sdSky.js';
+import { SdSkyRenderer, SD_SKY_VS, SD_SKY_FS, SD_SKY_PAINT_FS, SD_SKY_PERIOD, sdSkyClock, SD_CLOCK_FACE, SD_SKY_SHARDS, SD_SHARD_TOP, SD_AURORA } from '../src/render/sdSky.js';
 import { DEAD_NOISE_GLSL } from '../src/render/deadlands.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -16,33 +16,37 @@ test('SD5b the clock: wrapped to its period, every rate a whole number of cycles
   assert.equal(sdSkyClock(SD_SKY_PERIOD + 5), 5);
   assert.equal(sdSkyClock(-5), SD_SKY_PERIOD - 5);
   for (const k of [SD_CLOCK_FACE.hourTurns, SD_CLOCK_FACE.minuteTurns, SD_AURORA.turns, ...SD_SKY_SHARDS.map((s) => s.turns)]) assert.ok(Number.isInteger(k) && k !== 0, `${k} whole turns`);
-  assert.match(SD_SKY_FS, new RegExp(`const float PERIOD = ${SD_SKY_PERIOD.toFixed(1)};`));
-  assert.equal((SD_SKY_FS.match(/uTime \/ PERIOD/g) ?? []).length, 2 + SD_SKY_SHARDS.length, 'the hands\' turn, the aurorae\'s drift and each shard\'s, all over the one period');
+  // SD-LOOK (PIN MOVED): the paint carries the aurorae's drift and each city's, the fetch the hands - one period each
+  assert.match(SD_SKY_PAINT_FS, new RegExp(`const float PERIOD = ${SD_SKY_PERIOD.toFixed(1)};`));
+  assert.equal((SD_SKY_PAINT_FS.match(/uTime \/ PERIOD/g) ?? []).length, 1 + SD_SKY_SHARDS.length, 'the aurorae\'s drift and each city\'s, over the one period');
+  assert.match(SD_SKY_FS, new RegExp(`const float SKY_PERIOD = ${SD_SKY_PERIOD.toFixed(1)};`));
+  assert.equal((SD_SKY_FS.match(/\* tk \/ SKY_PERIOD/g) ?? []).length, 2, 'the hands\' turn over it');
 });
 
 test('SD5b the clock-face hangs over the arena (+z, the realm\'s forward), its hands turning BACKWARDS - the Hour unwinding; the minute hand twelve times the hour\'s (mutants: the hands run forwards)', () => {
   assert.equal(SD_CLOCK_FACE.az, 0, 'toward the arena');
   assert.ok(SD_CLOCK_FACE.elev > 0 && SD_CLOCK_FACE.elev + SD_CLOCK_FACE.r < Math.PI / 2, 'above the horizon, under the zenith');
-  assert.match(SD_SKY_FS, /float back = -TAU \* uTime \/ PERIOD;/, 'backwards');
+  assert.match(SD_SKY_FS, /float hourA = -SKY_TAU \* [\d.]+ \* tk \/ SKY_PERIOD, minA = -SKY_TAU \* [\d.]+ \* tk \/ SKY_PERIOD;/, 'backwards');   // SD-LOOK (PIN MOVED): on the escapement
+  assert.match(SD_SKY_FS, /float secA = -floor\(uTime\) \* SKY_TAU \/ 60\.0;/, 'the second hand a tick back each second');
   assert.equal(SD_CLOCK_FACE.minuteTurns, 12 * SD_CLOCK_FACE.hourTurns);
-  assert.match(SD_SKY_FS, /float az = atan\(d\.x, d\.z\);/, 'azimuth from +z');
+  assert.match(SD_SKY_PAINT_FS, /float az = atan\(d\.x, d\.z\);/, 'azimuth from +z');
 });
 
 test('SD5b the shards: Daggerfall\'s towers, Sentinel\'s domes and Wayrest\'s bridge, hanging from the upper sky, round the sides and behind - never over the arena\'s clock - drifting their own ways (mutants: a shard over the clock-face)', () => {
-  assert.deepEqual(SD_SKY_SHARDS.map((s) => s.name), ['daggerfall', 'sentinel', 'wayrest']);
+  assert.deepEqual(SD_SKY_SHARDS.map((s) => s.name), ['daggerfall', 'sentinel', 'wayrest', 'orsinium', 'underking', 'blades']);   // SD-LOOK (PIN MOVED): six cities
   for (const s of SD_SKY_SHARDS) {
     assert.ok(Math.abs(Math.atan2(Math.sin(s.az - SD_CLOCK_FACE.az), Math.cos(s.az - SD_CLOCK_FACE.az))) > SD_CLOCK_FACE.r + s.halfW, `${s.name} clear of the clock at the clock's zero`);
     assert.ok(SD_SHARD_TOP - s.depth > 0.4, `${s.name} hangs in the upper sky`);
   }
   assert.ok(new Set(SD_SKY_SHARDS.map((s) => Math.sign(s.turns))).size === 2, 'not all one way');
-  for (let i = 0; i < SD_SKY_SHARDS.length; i++) assert.match(SD_SKY_FS, new RegExp(`float skyline${i}\\(float u, float v\\)`));
+  for (let i = 0; i < SD_SKY_SHARDS.length; i++) assert.match(SD_SKY_PAINT_FS, new RegExp(`float skyline${i}\\(float u, float v\\)`));
   assert.ok(SD_AURORA.low > 0 && SD_AURORA.high < Math.PI / 2 && SD_AURORA.low < SD_AURORA.high);
 });
 
 test('SD5b the shaders: the Deadlands\' ray and noise, one triangle at the far plane, the uniforms the draw sets (mutants: the sky off the far plane)', () => {
   assert.match(SD_SKY_VS, /gl_Position = vec4\(aPos, 1\.0, 1\.0\);/, 'at the far plane');
   assert.match(SD_SKY_VS, /vRay = uRight \* \(\(aPos\.x \+ uProj\.z\) \/ uProj\.x\) \+ uUp \* \(\(aPos\.y \+ uProj\.w\) \/ uProj\.y\) \+ uFwd;/, 'the Deadlands\' own ray');
-  assert.ok(SD_SKY_FS.includes(DEAD_NOISE_GLSL), 'the Deadlands\' noise');
+  assert.ok(SD_SKY_PAINT_FS.includes(DEAD_NOISE_GLSL), 'the Deadlands\' noise');   // SD-LOOK (PIN MOVED): in its paint
   for (const u of ['uTime', 'uHaze', 'uGain']) assert.match(SD_SKY_FS, new RegExp(`uniform [a-z0-9]+ ${u};`));
   assert.match(SD_SKY_FS, /^#version 300 es\nprecision highp float;/);
 });

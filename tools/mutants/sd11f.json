@@ -11,8 +11,8 @@
   {
     "name": "SD11f-every-return-pressed-alone",
     "file": "src/scenes/sdEnd.js",
-    "old": "SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };",
-    "new": "SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: true };",
+    "old": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: false, up: true };",
+    "new": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: true, up: true };",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD11f-never-risen",
     "file": "src/scenes/sdEnd.js",
-    "old": "    ret.batch.origin[1] = ret.at[1] - SD_RETURN_SIZE.h * (1 - k);",
-    "new": "    ret.batch.origin[1] = ret.at[1];",
+    "old": "    n[0] = -SD_RETURN_SIZE.h * (1 - k);",
+    "new": "    n[0] = 0;",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD11f-risen-at-once",
     "file": "src/scenes/sdEnd.js",
-    "old": "    const k = clamp01((t - ret.risesAt) / SD_HOME_RISE_MS);",
-    "new": "    const k = 1;",
+    "old": "    const k0 = ret.pressed ? (t - ret.risesAt) / SD_HOME_RISE_MS : 1,",
+    "new": "    const k0 = 1,",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD11f-the-rise-left-halfway",
     "file": "src/scenes/sdEnd.js",
-    "old": "    ret.up = k >= 1;",
-    "new": "    ret.up = true;",
+    "old": "k = k0 < 0 ? 0 : k0 > 1 ? 1 : k0, n = ret.n;",
+    "new": "k = k0 < 0 ? 0 : k0, n = ret.n;",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD11f-stood-with-no-age",
     "file": "src/scenes/dungeonContext.js",
-    "old": "sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity);",
-    "new": "sdEnd.standReturn(home);",
+    "old": "sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
+    "new": "sdEnd.standReturn(home, Infinity, { dynamicDraws });",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD11f-the-count-unhanded",
     "file": "src/scenes/world.js",
-    "old": "returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), enter:",
-    "new": "returns: sdReturnStands(rec, s, now), enter:",
+    "old": "returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look:",
+    "new": "returns: sdReturnStands(rec, s, now), look:",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD11f-the-count-unasked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "onReturn: () => sdReturnStep(), riftCount: () => sdEndWord()?.count ?? null })",
-    "new": "onReturn: () => sdReturnStep() })",
+    "old": "riftCount: () => sdEndWord()?.count ?? null, look:",
+    "new": "look:",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]

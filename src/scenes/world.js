@@ -297,7 +297,9 @@ import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBa
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
-import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
+import { SdSkyRenderer, SD_SKY_STEPS } from '../render/sdSky.js';   // SD5b: the Hour's sky
+import { SdRiftRenderer } from '../render/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
+import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
 import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
 import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
@@ -305,7 +307,7 @@ import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT, SD_HOME_SAY_MS } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
-import { sdRiftWord, sdReturnStands, sdRiftCount, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -336,7 +338,7 @@ import { sdBeamDraws, sdKeptList } from './sdRemnantRig.js';   // SD17: the Hour
 /** AUDIT SD III (V5): the beams a frame draws, a list kept and filled in place (a frame of a sweep made 3.4 KB). */
 const _sdBeamDraws = sdKeptList(), NO_SD_BEAMS = Object.freeze([]);
 import { sdMarksCardModel, sdEndingStoneLight } from '../ui/sdMarksView.js';   // SD18b: the Hour's marks as a fighter steps in, and its Ending's stone lit
-import { sdMarksOf, sdEndingOf } from '../net/sdMarks.js';   // SD18b: a Hollow's marks by its slot
+import { sdMarksOf, sdEndingOf, SD_ENDINGS } from '../net/sdMarks.js';   // SD18b: a Hollow's marks by its slot
 import { SdBeamRenderer } from '../render/sdBeam.js';
 import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
 import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
@@ -21789,6 +21791,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_sdSkyPass === undefined) { try { _sdSkyPass = new SdSkyRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s sky could not be built', e); _sdSkyPass = null; } }
     return _sdSkyPass;
   };
+  /** SD-LOOK: the Rift's pass and the halos (render/sdRiftPass.js, render/sdHalo.js) - made the first time a Super dungeon's
+   *  end is drawn, null where a context cannot (its meshes stand regardless). */
+  let _sdRiftPass, _sdHaloPass;
+  const sdRiftPassOf = () => {
+    if (_sdRiftPass === undefined) { try { _sdRiftPass = new SdRiftRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Rift\'s window could not be built', e); _sdRiftPass = null; } }
+    return _sdRiftPass;
+  };
+  const sdHaloPassOf = () => {
+    if (_sdHaloPass === undefined) { try { _sdHaloPass = new SdHaloRenderer(renderer.gl); } catch (e) { console.warn('[sd] the halos could not be built', e); _sdHaloPass = null; } }
+    return _sdHaloPass;
+  };
+  /** SD-LOOK: the Hour's sky's look - the pixel law's steps on this lane; in the Hour, its Hollow's own Ending burning in
+   *  its light on the face (a Hollow's: its marks by its slot). */
+  const sdSkyLookNow = () => {
+    const s = modes?.sdRealmSlot?.() ?? modes?.dungeonLocation?.sdSlot ?? null, E = s == null ? null : sdEndingOf(sdMarksOf(s));
+    return { steps: renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, ending: E?.light ?? null, endingIdx: E ? SD_ENDINGS.indexOf(E) : -1 };
+  };
   /** SD17: the Hour-Hand's beam (render/sdBeam.js) - made the first time one sweeps, null where a context cannot. */
   let _sdBeamPass;
   const sdBeamPassOf = () => {
@@ -21877,7 +21896,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count
+    const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
+    return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record
   };
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
@@ -25539,7 +25559,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // haze and at its light's gain (skyGain over the realm's fog)
     drawSdSky: ({ proj, view }) => {
       const p = sdSkyPassOf();
+      p?.paint(deadlandsSeconds(), courtFogNow(), sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // SD-LOOK: the map's next quadrant, before the fetch
       if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();
+    },
+    // SD-LOOK (Super-Dungeons-Look.md sections 1-2): THE RIFT'S WINDOW, ITS FLOOR LIGHT AND ITS HEART, THE RETURN'S WINDOW HOME -
+    // after the flats, in the place's own air: the window reads the Hour's own painted sky (the very map, painted here a
+    // quadrant a frame in the Hollow - in the Hour the sky's own paint keeps it), the Return's the world's hour
+    drawSdRift: ({ proj, view, eye, end }) => {
+      const sky = sdSkyPassOf(), pass = sdRiftPassOf(), fog = courtFogNow(), inHour = modes?.sdRealmSlot?.() != null;
+      if (sky && !inHour) sky.paint(deadlandsSeconds(), { color: SD_REALM_FOG.color }, sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);
+      const look = end.sdEndLook?.(eye, sky ? { map: sky.map.texture, seconds: deadlandsSeconds(), gain: inHour ? skyGain(renderer._fogColor, SD_REALM_FOG.color) : 1, clock: null } : null, minuteNow() / 60);
+      let drew = !!sky && !inHour;
+      if (look && pass?.draw(proj, view, look, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) drew = true;
+      if (sdHaloPassOf()?.draw(proj, view, end.sdEndHalos?.() ?? [], fog, renderer.lightingLane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) drew = true;
+      if (drew) renderer.markForeignPass();
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light

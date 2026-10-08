@@ -29,7 +29,7 @@ import { handMatrix } from '../src/world/sdHall.js';
 import { mintSdReceipt, readSdReceipt } from '../src/net/sdReceipt.js';
 import { spoilsLevel } from '../src/scenes/spoilsPool.js';
 import { sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT } from '../src/systems/sdSpoils.js';
-import { sdRiftWord, sdReturnStands, sdRiftCount } from '../src/world/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook } from '../src/world/sdDungeon.js';
 import { sdFell, sdRoomKey, isSdRoom, SD_NO_CLOSED, SD_NO_FULL, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
 import { dungeonSizeFor, onlineDungeonSize } from '../src/world/smallerDungeons.js';
 import { orreryOf } from '../src/net/sdBrain.js';
@@ -171,7 +171,7 @@ function riftHost({ rec = null, entered = true, s = 7 } = {}) {
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
+    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
     SD_REALM_TEXT: { lost: 'lost' }, setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async () => log.push('pixel'), _sdEntered: new Set(), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): the Hour's lines through its voice
   };
@@ -283,32 +283,28 @@ test('AUDIT SD CLEAR OF THE PILLARS: a place on the arena\'s floor inside a pill
 });
 
 /** A renderer that keeps what it is asked to make (SD4b's). */
-function endFakes() {
-  const r = { made: [], freed: [] };
-  r.uploadTexture = () => {}; r.uploadEmissionTexture = () => {};
-  r.createBillboardBatch = (archiveName, record, size) => { const b = { archive: archiveName, record, size }; r.made.push(b); return b; };
-  r.destroyBillboardBatch = (b) => r.freed.push(b);
-  return r;
-}
 
 test('AUDIT SD NOTHING MADE A FRAME FOR NOTHING: the Rift\'s and the Return\'s batches one list frame after frame, made again only as a portal stands or goes - the Hour\'s way home stood alone among them, the Return gone out of them, none once cleared; the Orrery\'s hands drawn where the stones are at the first word, and a hand at rest keeps its matrix; the Steps\' places into one scratch (mutants: a portal stood unlisted; a gone one still listed; the list kept past the clear; a hand drawn at its start; a matrix made every frame; a step\'s place made every frame)', () => {
-  const r = endFakes();
+  // SD-LOOK (PIN MOVED): no batches now - the Rift's parts and the Return's stand among the host's dynamic draws, each
+  // with one matrix kept frame after frame, gone out of them as each goes, every mesh freed at the clear
+  const r = { made: [], freed: [], uploadTexture() {}, uploadEmissionTexture() {}, createMesh: (m) => { const g = { m }; r.made.push(g); return g; }, destroyMesh: (g) => r.freed.push(g) };
   const end = createSdEnd({ renderer: r });
   assert.deepEqual(end.batches(), []);
-  end.stand({ rift: { at: [10, 0, 5], size: 6 }, retAt: [15, 0, 5] });
-  const both = end.batches();
-  assert.deepEqual(both, [r.made[0], r.made[1]]);
+  const endDraws = [];
+  end.stand({ rift: { at: [10, 0, 5], size: 6 }, retAt: [15, 0, 5], dynamicDraws: endDraws });
+  const n = endDraws.length, matrices = endDraws.map((d) => d.object.matrix);
+  assert.ok(n >= 10, `the Rift's parts and the Return's arch and hand among the draws (${n})`);
   end.frame([50, 0, 50]);
-  assert.equal(end.batches(), both, 'the same list, frame after frame');
+  end.frame([50, 0, 50]);
+  assert.ok(endDraws.length === n && endDraws.every((d, i) => d.object.matrix === matrices[i]), 'the same draws and their one matrix each, frame after frame');
   end.returnOut();
-  const one = end.batches();
-  assert.deepEqual(one, [r.made[0]], 'the Return gone out of it');
-  assert.equal(end.batches(), one);
+  assert.equal(endDraws.length, n - 2, 'the Return\'s arch and hand gone out of them');
   end.clear();
-  assert.deepEqual(end.batches(), [], 'none once cleared');
-  const home = createSdEnd({ renderer: r });
-  home.standReturn([1, 0, 1]);
-  assert.deepEqual(home.batches(), [r.made.at(-1)], 'the way home, stood alone');
+  assert.deepEqual(endDraws, [], 'none once cleared');
+  assert.equal(r.freed.length, r.made.length, 'every mesh it made, freed');
+  const home = createSdEnd({ renderer: r }), alone = [];
+  home.standReturn([1, 0, 1], Infinity, { dynamicDraws: alone });
+  assert.equal(alone.length, 2, 'the way home, stood alone');
   // the hall's hands
   const o = orreryOf(1);
   const renderer = { createMesh: (m) => ({ m }), destroyMesh: () => {}, uploadTexture: () => {}, uploadEmissionTexture: () => {} };

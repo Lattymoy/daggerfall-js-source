@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-SD-C4-entered-unpassed",
     "file": "src/scenes/world.js",
-    "old": "sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen",
-    "new": "sdRiftWord(rec, s, now, { fallen",
+    "old": "const seen = { entered: _sdEntered.has(s), fallen",
+    "new": "const seen = { fallen",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };\n      rebatch();",
-    "new": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };",
+    "old": "    mine.push(d);\n    draws?.push(d);",
+    "new": "    mine.push(d);",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-SD-C6-the-way-home-unlisted",
     "file": "src/scenes/sdEnd.js",
-    "old": "      wasRet = null;\n      rebatch();",
-    "new": "      wasRet = null;",
+    "old": "      draws = dynamicDraws ?? draws ?? [];\n      const ago",
+    "new": "      const ago",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-SD-C6-a-gone-one-listed",
     "file": "src/scenes/sdEnd.js",
-    "old": "ret = null; wasRet = null; rebatch(); },",
-    "new": "ret = null; wasRet = null; },",
+    "old": "dropMesh(ret.arch); dropMesh(ret.hand); ret = null;",
+    "new": "ret = null;",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-SD-C6-the-list-past-the-clear",
     "file": "src/scenes/sdEnd.js",
-    "old": "      rift = null; ret = null; _batches = NONE;",
-    "new": "      rift = null; ret = null;",
+    "old": "      for (const d of [...mine]) dropMesh(d);\n",
+    "new": "",
     "tests": [
       "test/sd10b_audit.test.js"
     ]

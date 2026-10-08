@@ -37,7 +37,7 @@ import { SD_FIGHT_EMPTY } from '../src/net/sdFightLink.js';
 import { sdAnyInFlight, sdBlowsInFlight } from '../src/scenes/sdRemnantBlows.js';
 import { SD_STEPS_COURSE, SD_CHECKPOINTS, SD_COURSE_END, SD_GUST_EVERY, SD_GUST_WARN, SD_GUST_FOR, gustAt, breathSeen, spanAt } from '../src/world/sdSteps.js';
 import { SD_BREATH, stepTris } from '../src/world/sdStepsModel.js';
-import { SD_SKY_FS, SD_SKY_SHARDS, SD_SHARD_TOP, SD_CLOCK_FACE, SD_CLOCK_RING_W, SD_CLOCK_TOP, SD_SKY_PERIOD, CLOCK_BASIS, sdSkyBasisInto } from '../src/render/sdSky.js';
+import { SD_SKY_PAINT_FS, SD_SKY_SHARDS, SD_SHARD_TOP, SD_CLOCK_FACE, SD_CLOCK_RING_W, SD_CLOCK_TOP, SD_SKY_PERIOD, CLOCK_BASIS, sdSkyBasisInto } from '../src/render/sdSky.js';
 import { skyBasis, DEAD_NOISE_GLSL } from '../src/render/deadlands.js';
 import { AURA_FS } from '../src/render/auraRing.js';
 import { SHADOW_POINT_NEAR } from '../src/render/shadowPass.js';
@@ -298,12 +298,12 @@ test('AUDIT SD II L2 F6: EVERY FACE TURNED OUT - both kerbs\' tops face up (the 
 
 /** The sky's own functions, run (test/glsl.mjs) - every pow answered NaN for a negative base, as D3D's does (GLSL ES
  *  leaves it undefined). */
-const skyRun = (t = 100) => glslFunctions(SD_SKY_FS.replace(/\bpow\(/g, 'spow(').replace('precision highp float;\n', 'precision highp float;\nfloat spow(float x, float y) { return x < 0.0 ? 0.0 / 0.0 : pow(x, y); }\n'), { uTime: t, uHaze: [0.2, 0.15, 0.07], uGain: 1, vRay: [0, 0.5, 1] });
+const skyRun = (t = 100) => glslFunctions(SD_SKY_PAINT_FS.replace(/\bpow\(/g, 'spow(').replace('precision highp float;\n', 'precision highp float;\nfloat spow(float x, float y) { return x < 0.0 ? 0.0 / 0.0 : pow(x, y); }\n'), { uTime: t, uHaze: [0.2, 0.15, 0.07], uSteps: 10, uEnding: [0, 0, 0], uEndingIdx: -1, vUv: [0.5, 0.5], texelFetch: () => [0, 0, 0, 0] });   // SD-LOOK (PIN MOVED): the sky's laws are its paint's now (render/sdSky.js SD_SKY_PAINT_FS)
 
 test('AUDIT SD II L2 F7: THE AURORAE WHOLE ROUND - their curtain\'s noise read round a circle, as the Deadlands\' ridges are: either side of the azimuth\'s leap from PI to -PI (toward -z) the curtain is one, at every height of the band and every drift - it read the raw azimuth and was cut there by a hard seam (mutants: the raw azimuth)', () => {
   const f = skyRun();
-  assert.match(SD_SKY_FS, /float curtain = auroraCurtain\(az, e, drift\);/, 'the sky\'s curtain is this one');
-  assert.ok(SD_SKY_FS.includes(DEAD_NOISE_GLSL), 'on the Deadlands\' noise');
+  assert.match(SD_SKY_PAINT_FS, /float curtain = auroraCurtain\(az, e, drift\);/, 'the sky\'s curtain is this one');
+  assert.ok(SD_SKY_PAINT_FS.includes(DEAD_NOISE_GLSL), 'on the Deadlands\' noise');
   let worst = 0, lo = Infinity, hi = -Infinity;
   for (const e of [0.35, 0.5, 0.7, 0.9, 1.1]) {
     for (const drift of [0, 1.3, 2.6, 4.4]) {
@@ -316,9 +316,9 @@ test('AUDIT SD II L2 F7: THE AURORAE WHOLE ROUND - their curtain\'s noise read r
 });
 
 test('AUDIT SD II L2 F12: NO POW OF A NEGATIVE in the arc\'s shaders - Wayrest\'s arches squared (pow(2.0 * cell - 1.0, 2.0) was negative over half of every span: undefined in GLSL ES, NaN on D3D), and the Turning Hour\'s gleam on a base kept off the negative (a cos a hair under -1): the sky\'s skylines run with D3D\'s pow are numbers everywhere (mutants: the arch a pow; the gleam unguarded)', () => {
-  assert.doesNotMatch(SD_SKY_FS, /\bpow\(/, 'the sky takes no pow at all');
+  assert.doesNotMatch(SD_SKY_PAINT_FS, /\bpow\(/, 'the sky takes no pow at all');
   const f = skyRun();
-  for (let u = -1; u <= 1; u += 0.01) for (let v = -0.05; v < 1; v += 0.05) for (const k of [0, 1, 2]) assert.ok(Number.isFinite(f[`skyline${k}`](u, v)), `skyline${k}(${u.toFixed(2)}, ${v.toFixed(2)})`);
+  for (let u = -1; u <= 1; u += 0.01) for (let v = -0.05; v < 1; v += 0.05) for (let k = 0; k < SD_SKY_SHARDS.length; k++) assert.ok(Number.isFinite(f[`skyline${k}`](u, v)), `skyline${k}(${u.toFixed(2)}, ${v.toFixed(2)})`);   // SD-LOOK (PIN MOVED): six cities
   const turning = AURA_FS.slice(AURA_FS.indexOf('vec3 turningGround('), AURA_FS.indexOf('vec3 turningWall('));
   const bases = [...turning.matchAll(/\bpow\(/g)].map((m) => turning.slice(m.index + 4, m.index + 8));
   assert.ok(bases.length >= 1 && bases.every((b) => b === 'max('), `every pow of the Turning Hour's ground on a base kept off the negative (${bases})`);
@@ -332,7 +332,7 @@ test('AUDIT SD II L2 F15: THE CLOCK-FACE ROUND ON THE SKY, AND NO SHARD EVER OVE
   const twelve = f.clockFaceAt(along(0, R)), three = f.clockFaceAt(along(Math.PI / 2, R));
   assert.ok(near(twelve, [0, 1], 1e-4) && near(three, [1, 0], 1e-4), 'the twelfth up, the third to the right');
   assert.ok(near(B.right, [Math.cos(SD_CLOCK_FACE.az), 0, -Math.sin(SD_CLOCK_FACE.az)]) && B.up[1] > 0.9, 'its right the growing azimuth (the screen\'s right toward +z), its up toward the zenith');
-  assert.match(SD_SKY_FS, /vec2 p = clockFaceAt\(d\);/, 'the face drawn in it');
+  assert.match(SD_SKY_PAINT_FS, /vec2 p = clockFaceAt\(d\);/, 'the face drawn in it');
   // the shards over the whole period: their every drawn point (the shader's box: |du| < 1, -0.05 < dv < 1) against the
   // face's every drawn point (the ring's outer edge, 1 + SD_CLOCK_RING_W radii) - in the face's own frame, the shader's
   const faceR = (az, e) => { const d = [Math.cos(e) * Math.sin(az), Math.sin(e), Math.cos(e) * Math.cos(az)]; return Math.acos(Math.max(-1, Math.min(1, dot(d, B.centre)))) / R; };
@@ -513,7 +513,7 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   const W = read('src/scenes/worldModes.js');
   const arm = W.slice(W.indexOf("if (mode === 'dungeon') {"), W.indexOf('// Whole-pipeline swap: interior draws'));
   const pose = arm.indexOf('if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);');
-  const draws = arm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);');
+  const draws = arm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);');   // SD-LOOK (PIN MOVED): a draw's own remap, shadow and cull
   assert.ok(pose > 0 && pose < arm.indexOf('renderer.beginFrame(') && pose < draws, 'posed before the frame and its draws');
   assert.ok(draws < arm.indexOf('dungeonCtx.drawFoes('), 'the draws before drawFoes');
   assert.match(read('src/render/renderer.js'), /if \(!wire && !noShadow && this\._casting\) this\._shadows\.recordMesh\(/, 'a drawMesh is what records a shadow');
