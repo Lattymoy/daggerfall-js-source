@@ -162,7 +162,7 @@ test('CARDS2b the peer\'s seat: its feet, facing and top, kept while still, rebu
 test('CARDS2b by source: the pose the seat says, the request to the peers\' rigs, a hit and Escape', () => {
   const wm = read('src/scenes/worldModes.js');
   const has = (src, s, why) => assert.ok(src.includes(s), why ?? s);
-  has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };");
+  has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, free: ");
   has(wm, "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });", 'a hit stands you up');
   const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }");   // KB1: the registry's Escape, never its raw code
   assert.ok(esc > 0 && esc < wm.indexOf('    // U43: THE ONE DISPATCH.'), 'Escape stands you up, spent above the one dispatch');

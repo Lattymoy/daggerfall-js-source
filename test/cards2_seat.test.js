@@ -156,9 +156,9 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   const seat = src.indexOf("    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();");
   assert.ok(over > 0 && seat > over, 'the seated eye after the body\'s and the decorator\'s, held off while a death screen sinks the eye');
   // AUDIT CARDS E1: standing up does what it says - the slot empties and the eye goes home
-  has("  function standFromCardTable() {\n    if (!cardSeat) return;\n    cardSeat = null;\n    cam.pos = player.eyeAt();", 'the stand empties the seat and gives the body its eye back');
+  has("  function standFromCardTable({ cashOut = true } = {}) {\n    if (!cardSeat) return;\n    cardSeat = null;\n    cam.pos = player.eyeAt();", 'the stand empties the seat and gives the body its eye back');
   // AUDIT CARDS B1: every road out of a building empties the seat - the mode's change (a load, a teleport, a respawn), a new room
-  has("        standFromCardTable();   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out\n        interiorCtx = null; interiorBuilding = null; interiorCabin = null;", 'the forced road out empties the seat');
+  has("        standFromCardTable({ cashOut: !load });   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out\n        interiorCtx = null; interiorBuilding = null; interiorCabin = null;", 'the forced road out empties the seat');
   has("      standFromCardTable();   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet - CARDS4: and an old table\'s chips come home\n      interiorBuilding = building;", 'a new room seats nobody');
   has("    seatPose: () => (mode === 'interior' && cardSeat ?", 'and the pose never says a seat outside a building');
   has("    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));", 'AUDIT CARDS B3: another player\'s seat is taken');

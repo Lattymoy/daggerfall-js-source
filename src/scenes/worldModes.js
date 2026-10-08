@@ -205,9 +205,10 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE, tableFrame } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
 import { seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seat on the pose
-import { CardTableSession, stakesFor, buyInRange, seatPatrons } from '../systems/cardTableSession.js';   // CARDS4: the table's evening
+import { CardTableSession, stakesFor, buyInRange, seatPatrons, regularsFor, regularsAfter } from '../systems/cardTableSession.js';   // CARDS4: the table's evening
 import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';   // CARDS4: its panel
 import { tablePlaces, CardScene } from '../world/cardScene.js';   // CARDS3: the cards on the cloth
+import { hashSeed } from '../world/cardMotion.js';   // CARDS3: and its throws' seeds (AUDIT CARDS-2 L9: the town's too)
 import { createCardTableDraw } from '../render/cardTableDraw.js';   // CARDS3: and their bodies on the GL
 import { residentName } from '../systems/livingWorld/census.js';   // CARDS4: the tavern's regulars, named as the living world names its people
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
@@ -492,17 +493,24 @@ export function createWorldModes(host) {
     const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));   // AUDIT CARDS B3: another player's seat is theirs
     if (k < 0) { say('Every seat at this table is taken.'); return; }
     const st = seats[k];
-    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };
+    // AUDIT CARDS-2 L7: the regulars take only the chairs nobody else sits in (a peer's chair is theirs, as the
+    // player's own pick already knew)
+    const taken = takenSeats(seats, host.seatedPeers?.() ?? []);
+    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, free: seats.map((_, j) => j).filter((j) => j !== k && !taken.includes(j)) };
     cam.yaw = seats[k].yaw;
     cam.pitch = seats[k].pitch;
+    mwViewFirstPerson();   // AUDIT CARDS-2 L11: the seat's view is the head's (section 12) - the frame's head-hold keeps it there
     say('You take a seat at the card table.');
-    openCardGame(seats.length);
+    if (cardSeat.free.length) openCardGame(cardSeat.free.length + 1);
+    else say('There is no chair left at this table for a regular.');
   }
-  function standFromCardTable() {
+  /** `cashOut` false: a load's road - the save's purse is already the character's, and the chips were bought in the
+   *  game the load threw away (AUDIT CARDS-2 H1). */
+  function standFromCardTable({ cashOut = true } = {}) {
     if (!cardSeat) return;
     cardSeat = null;
     cam.pos = player.eyeAt();   // EV1: back to the body's own eye
-    closeCardGame();   // CARDS4: every road off the seat cashes the table out
+    closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out
   }
   // CARDS4 (bible/11-Multiplayer/Tavern-Cards.md section 14; Mac: "Hold'em first", "Real gold", "Yes, patrons play"):
   // THE TABLE'S EVENING ON THE SEAT. Sitting down opens the table's panel (ui/cardTableHud.js - the port's own, not a
@@ -515,11 +523,15 @@ export function createWorldModes(host) {
   let cardGame = null;   // { hud, releaseCursor, stakes, friendly, buyIn, names, session, log, phase, why, scene, draw } while the panel stands
   const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];   // the table's own source - DFU's one stream is never stirred
   /** CARDS4: the tavern's regulars - the same names every evening at this building (the living world's own namer, on a
-   *  seed of the building's key), as many as the table seats less the player. */
+   *  seed of the town and the building's key: AUDIT CARDS-2 L9, a building key is its block's, alike in every town), as
+   *  many as the table's free chairs. */
+  const cardTableKey = () => `${homeTownOf(interiorBuilding) >>> 0}:${(interiorBuilding?.buildingKey ?? 0) >>> 0}:${cardSeat?.table ?? 0}`;
   const tavernRegulars = (n) => {
     const b = interiorBuilding, bank = getNameBankOfRegion(b?.regionIndex ?? 0);
-    return Array.from({ length: n }, (_, i) => residentName(((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) >>> 0, bank, i % 2));
+    const town = Math.imul(homeTownOf(b) >>> 0, 0x9E3779B1) >>> 0;
+    return Array.from({ length: n }, (_, i) => residentName((((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) ^ town) >>> 0, bank, i % 2));
   };
+  const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);
   /** CARDS4: the friendly game's chips - a stake to play with, never gold. */
   const FRIENDLY_CHIPS_BB = 100;
   function openCardGame(seatCount) {
@@ -527,7 +539,7 @@ export function createWorldModes(host) {
     const stakes = stakesFor(interiorBuilding?.quality ?? 10);
     const friendly = !!host.realmAct || isOnlinePage();
     const buyIn = buyInRange(friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
-    const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), session: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer) };   // CARDS3: the draw makes nothing until the first card
+    const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), key: cardTableKey(), day: cardDay(), session: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer) };   // CARDS3: the draw makes nothing until the first card
     cardGame = game;
     game.hud = createCardTableHud({ onPress: (id, v) => cardPress(game, id, v) });
     paintCardGame();
@@ -543,9 +555,18 @@ export function createWorldModes(host) {
     if (id === 'stand') { standFromCardTable(); return; }
     if (id === 'deal') {
       if (game.phase !== 'buyin' || !game.buyIn) return;
+      // AUDIT CARDS-2 M2: the purse read again at the press - deductGold never refuses (it empties the purse and the
+      // letters of credit, and answers the shortfall), so a purse that shrank since the seat is asked first
+      if (!game.friendly) game.buyIn = buyInRange(goldAmount(playerEntity), game.stakes);
+      if (!game.buyIn) { paintCardGame(); return; }
       const amount = Math.min(game.buyIn.max, Math.max(game.buyIn.min, Math.floor(Number(value) || 0)));
-      if (!game.friendly && deductGold(playerEntity, amount) > 0) return;   // never more than the purse holds (deductGold answers what it could not take)
-      game.session = new CardTableSession({ player: { id: 'you', name: playerEntity.name || 'You', stack: amount }, patrons: seatPatrons(game.names, game.stakes, cardRand32), stakes: game.stakes, rand32: cardRand32, now });
+      if (!game.friendly && amount > goldAmount(playerEntity)) { paintCardGame(); return; }
+      // AUDIT CARDS-2 H2: today's regulars from the book - their purses as the last evening left them; a friendly game's
+      // are its own and never written
+      const patrons = game.friendly ? seatPatrons(game.names, game.stakes, cardRand32) : regularsFor(playerEntity.cardRegulars, game.key, game.day, game.names, game.stakes, cardRand32);
+      if (!patrons.length) { say('The regulars have lost their purses for tonight. Come back tomorrow.'); return; }
+      if (!game.friendly) deductGold(playerEntity, amount);
+      game.session = new CardTableSession({ player: { id: 'you', name: playerEntity.name || 'You', stack: amount }, patrons, stakes: game.stakes, rand32: cardRand32, now });
       game.scene = cardSceneFor(game.session);
       game.phase = 'playing';
       game.hud.resetSlider();
@@ -559,6 +580,7 @@ export function createWorldModes(host) {
   }
   /** CARDS4: the frame's turn of the table - the patrons' thought and the deal, the events into the log. */
   function cardGameFrame(now) {
+    if (cardSeat && !(playerEntity.health > 0)) { standFromCardTable(); return; }   // AUDIT CARDS-2: the exhaustion's collapse sets health to 0 past every hurt listener - the dead do not sit at cards
     const g = cardGame;
     if (!g?.session) return;
     g.session.tick(now);
@@ -566,20 +588,23 @@ export function createWorldModes(host) {
     if (!events.length) return;
     const names = g.session.seats.map((x) => x.name);
     const holeOf = cardHoleOf(g.session);
-    for (const e of events) { g.scene?.onEvent(e, holeOf); const line = eventLine(e, names); if (line) g.log.push(line); }
+    for (const e of events) { g.scene?.onEvent(e, holeOf); const line = eventLine(e, names, g.session.playerSeat); if (line) g.log.push(line); }
     g.log = g.log.slice(-12);
     if (g.session.over && g.phase !== 'over') { g.phase = 'over'; g.why = g.session.over; }
+    if (!g.friendly && events.some((e) => e.t === 'showdown')) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);   // the book after every hand: a save mid-evening is refused, but the purses are the table's
     paintCardGame();
   }
   /** CARDS4: the table closes - the hand folded out of turn, the chips back into gold, the panel and the cursor let go.
    *  The slot is emptied first: the panel's last press may ask for it. */
-  function closeCardGame() {
+  function closeCardGame({ cashOut = true } = {}) {
     const g = cardGame;
     if (!g) return;
     cardGame = null;
     const chips = g.session ? g.session.leave(performance.now()) : 0;
-    if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }
+    if (!cashOut) { /* a load's road: the table belonged to the game the load threw away - its chips and its book with it */ }
+    else if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }
     else if (g.session) say(g.friendly ? 'You leave the friendly game.' : 'You leave the table with nothing.');
+    if (cashOut && g.session && !g.friendly) playerEntity.cardRegulars = regularsAfter(playerEntity.cardRegulars, g.key, g.day, g.names, g.stakes, g.session.seats);
     g.hud?.destroy();
     g.draw?.destroy();   // CARDS3: the atlas and the meshes go with the table (EVERY ALLOCATION HAS AN OWNER)
     if (g.releaseCursor?.()) host.relock?.();
@@ -590,10 +615,10 @@ export function createWorldModes(host) {
     const t = cardSeat && interiorCtx?.tables?.[cardSeat.table];
     if (!t) return null;
     const seats = cardSeatsOf(cardSeat.table);
-    const others = seats.map((_, k) => k).filter((k) => k !== cardSeat.seat);
+    const others = cardSeat.free ?? [];
     const seatOf = session.seats.map((s, i) => (s.kind === 'player' ? cardSeat.seat : others[i - 1]));
     if (seatOf.some((k) => k === undefined)) return null;
-    return new CardScene({ places: tablePlaces(tableFrame(t), seats, seatOf), playerSeat: session.playerSeat, tableSeed: ((interiorBuilding?.buildingKey ?? 0) * 31 + cardSeat.table) >>> 0 });
+    return new CardScene({ places: tablePlaces(tableFrame(t), seats, seatOf), playerSeat: session.playerSeat, tableSeed: hashSeed(homeTownOf(interiorBuilding) >>> 0, (interiorBuilding?.buildingKey ?? 0) >>> 0, cardSeat.table) });
   }
   /** CARDS3: the hole cards the player may see - their own; the rest are backs (-1) until a showdown says them. */
   const cardHoleOf = (session) => (seat, r) => {
@@ -9384,7 +9409,7 @@ export function createWorldModes(host) {
     // the walk hosts - one eye law, this context's own collider.
     const mwv = mwViewFrame({
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-      dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
+      dt, riding: !!player.riding || !!cardSeat,   // AUDIT CARDS-2 L11: a seat holds the head as the saddle does; AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
       spherecast: (o, r, d, m) => { const h = player.collider?.sphereCast?.(o, r, d, m)?.dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
     });
@@ -12023,7 +12048,7 @@ export function createWorldModes(host) {
         // the stack holds (ROAD-B B1).
         interiorWindows.reconcile(interiorOverlay);
         interiorWindows.clear((w) => w.dispose?.());
-        standFromCardTable();   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out
+        standFromCardTable({ cashOut: !load });   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out
         interiorCtx = null; interiorBuilding = null; interiorCabin = null; interiorHome = null; interiorSeatHall = null; interiorOverlay = null; exteriorDoor = null; _seatHallVisit = false;   // HOME1: the visit's home with the identity
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
@@ -12164,6 +12189,7 @@ export function createWorldModes(host) {
     get footstepKind() { return _modeFootstepKind; },
     /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
      *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */
+    cardTableLive: () => !!cardGame?.session,   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave)
     seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),   // AUDIT CARDS B1: and never outside a building, whatever road left it
     // PARTY-REST DROP (AUDIT DROPS D1, kept): world.js reads `modes?.restState` - THIS object. The party-rest
     // drop wrote the getter below onto interiorKeyCtx, the interior KEY table's own ctx, which this factory

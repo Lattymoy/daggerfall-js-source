@@ -19,12 +19,18 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { newHand, act, foldSeat, legalActions, viewFor, shuffleDeck, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../net/cardLaw.js';
 import { patronDecision, unit, PATRON_TEMPERS } from './cardPatrons.js';
+import { DEAL_STAGGER, THROW_LAND_S, FLIP_S } from '../world/cardMotion.js';
 
 /** MEASURE (CARDS4): a patron's thought before he acts, and its spread - a table with a rhythm. */
 export const THINK_MS = 900;
 export const THINK_SPREAD_MS = 1300;
 /** MEASURE (CARDS4): the pause after a hand's end before the next deal - the showdown seen, the pot pushed. */
 export const HAND_GAP_MS = 3000;
+/** The streets by the board's length - one event for each one crossed. */
+export const STREET_OF = Object.freeze({ 3: 'flop', 4: 'turn', 5: 'river' });
+/** AUDIT CARDS-2 M6: how long the cloth takes to show `cards` thrown (the deal's pace, the last one landing, a board's
+ *  turn) - no patron acts on cards still in the air. */
+export const settleMs = (cards, turned = false) => (cards > 0 ? Math.round(((cards - 1) * DEAL_STAGGER + THROW_LAND_S + (turned ? FLIP_S : 0)) * 1000) : 0);
 /** MEASURE (CARDS4): the stakes a tavern's quality sets (its building's quality byte, 1..20) - the big blind in gold;
  *  the small blind half of it. */
 export const TABLE_STAKES = Object.freeze([
@@ -35,6 +41,8 @@ export const TABLE_STAKES = Object.freeze([
 /** MEASURE (CARDS4): a buy-in in big blinds - at least, at most, and a patron's purse's range. */
 export const BUY_IN_MIN_BB = 20;
 export const BUY_IN_MAX_BB = 100;
+/** The buy-in the panel offers first. */
+export const BUY_IN_START_BB = 40;
 export const PURSE_MIN_BB = 30;
 export const PURSE_MAX_BB = 120;
 
@@ -68,6 +76,66 @@ export function seatPatrons(names, { bb }, rand32, seats = HOLDEM_SEATS_MAX) {
   }));
 }
 
+// AUDIT CARDS-2 H2: THE REGULARS' BOOK. A tavern's regulars keep their purses and their tempers for the game day - a
+// regular you broke is gone till tomorrow, and standing up and sitting down again seats the same purses, never fresh
+// ones (the audit's sim refilled them at every sitting and farmed them without end). The book rides the character's
+// save (systems/save.js, beside the arena's ladder), so a load puts the regulars back as it puts the purse back.
+/** MEASURE: the taverns the book remembers - the oldest day goes first. */
+export const REGULARS_BOOK_MAX = 24;
+
+/**
+ * The regulars at a table today: the book's own for `key` (a building) on `day` at these stakes, else a fresh evening's
+ * from seatPatrons. Answers patrons with chips (a broke one stays out). Never writes the book.
+ * @param {any} book
+ * @param {string} key
+ * @param {number} day
+ * @param {string[]} names
+ * @param {{bb: number}} stakes
+ * @param {() => number} rand32
+ * @param {number} [seats]
+ */
+export function regularsFor(book, key, day, names, stakes, rand32, seats = HOLDEM_SEATS_MAX) {
+  const fresh = seatPatrons(names, stakes, rand32, seats);
+  const kept = book?.[key];
+  if (!kept || kept.day !== day || kept.bb !== stakes.bb || !Array.isArray(kept.purses)) return fresh;
+  return fresh.flatMap((p, i) => {
+    const stack = Math.floor(Number(kept.purses[i]));
+    const temper = PATRON_TEMPERS[kept.tempers?.[i]] ? kept.tempers[i] : p.temper;
+    return Number.isSafeInteger(stack) && stack > 0 ? [{ ...p, temper, stack }] : [];
+  });
+}
+
+/**
+ * The book after an evening at `key` on `day`: every regular's purse as the table left it (a broke one at 0), by the
+ * names' order. A new book; the oldest days dropped past REGULARS_BOOK_MAX.
+ * @param {any} book
+ * @param {string} key
+ * @param {number} day
+ * @param {string[]} names
+ * @param {{bb: number}} stakes
+ * @param {{name: string, stack: number, temper?: string, kind: string}[]} seats  the session's seats
+ */
+export function regularsAfter(book, key, day, names, stakes, seats) {
+  const by = new Map(seats.filter((s) => s.kind === 'patron').map((s) => [s.name, s]));
+  const kept = book?.[key]?.day === day && book[key].bb === stakes.bb ? book[key] : null;
+  const purses = names.map((n, i) => (by.has(n) ? Math.max(0, by.get(n).stack) : (kept?.purses?.[i] ?? 0)));
+  const tempers = names.map((n, i) => by.get(n)?.temper ?? kept?.tempers?.[i] ?? null);
+  const next = { ...(book && typeof book === 'object' ? book : {}), [key]: { day, bb: stakes.bb, purses, tempers } };
+  const keys = Object.keys(next).sort((a, b) => (next[b].day ?? 0) - (next[a].day ?? 0));
+  return Object.fromEntries(keys.slice(0, REGULARS_BOOK_MAX).map((k) => [k, next[k]]));
+}
+
+/** The book as the save keeps it, and back - only well-formed entries, never more than REGULARS_BOOK_MAX. */
+export function regularsBookRestore(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(raw).slice(0, REGULARS_BOOK_MAX)) {
+    if (!v || !Number.isSafeInteger(v.day) || !Number.isSafeInteger(v.bb) || !Array.isArray(v.purses) || v.purses.length > HOLDEM_SEATS_MAX) continue;
+    out[k] = { day: v.day, bb: v.bb, purses: v.purses.map((x) => Math.max(0, Math.floor(Number(x)) || 0)), tempers: Array.isArray(v.tempers) ? v.tempers.map((t) => (PATRON_TEMPERS[t] ? t : null)) : [] };
+  }
+  return out;
+}
+
 /** @typedef {{ id: string, name: string, stack: number, kind: 'player'|'patron', temper?: string, gone?: boolean }} TableSeat */
 
 /**
@@ -90,6 +158,7 @@ export class CardTableSession {
     this.nextDealAt = now;     // the first hand deals at once
     this.thinkUntil = 0;       // the patron to act acts at this clock
     this.over = null;          // why the evening ended, once it has
+    this.lastShowdown = null;  // the last hand's end, until the next deal - what beat you (AUDIT CARDS-2 M7)
     this.events = [];
   }
 
@@ -115,26 +184,33 @@ export class CardTableSession {
     this.button = live[at < 0 ? 0 : at];
     this.handSeats = live;
     this.handNo++;
+    this.lastShowdown = null;
     this.hand = newHand({
       seats: live.map((i) => ({ id: this.seats[i].id, stack: this.seats[i].stack })),
       button: live.indexOf(this.button), sb: this.stakes.sb, bb: this.stakes.bb, deck: shuffleDeck(this.rand32),
     });
     this._say({ t: 'hand', hand: this.handNo, button: this.button, seats: live.slice() }, now);
-    this._think(now);
-    this._afterAction(null, now);
+    this._think(now, settleMs(live.length * 2));   // the first to act waits for the deal to land
+    this._afterAction(null, now);   // a hand the blinds settled at the deal still turns its streets (AUDIT CARDS-2 L2)
   }
 
-  /** The patron to act thinks from now. */
-  _think(now) { this.thinkUntil = now + THINK_MS + Math.floor(unit(this.rand32) * THINK_SPREAD_MS); }
+  /** The patron to act thinks from now - and never before the cloth has shown what he is thinking about. */
+  _think(now, settle = 0) { this.thinkUntil = now + Math.max(settle, THINK_MS + Math.floor(unit(this.rand32) * THINK_SPREAD_MS)); }
 
   /** After an action (or the deal): a street turned, the hand's end. */
   _afterAction(prev, now) {
     const h = this.hand;
-    if (prev && h.board.length !== prev.board.length) this._say({ t: 'street', street: h.street, board: h.board.slice() }, now);
+    // AUDIT CARDS-2 L1: one event for every street crossed - an all-in runs the flop, the turn and the river out in one
+    // action, and each is a street of its own on the cloth (its burn, its cards) and in the log
+    const from = prev ? prev.board.length : 0;
+    for (const len of [3, 4, 5]) if (from < len && h.board.length >= len) this._say({ t: 'street', street: STREET_OF[len], board: h.board.slice(0, len) }, now);
+    if (h.board.length > from && !h.result) this.thinkUntil = Math.max(this.thinkUntil, now + settleMs(h.board.length - from, true));
     if (h.result) {
       // The chips go home to the seats; a broke patron leaves.
       h.seats.forEach((s, k) => { this.seats[this.handSeats[k]].stack = s.stack; });
-      this._say({ t: 'showdown', hand: this.handNo, seats: this.handSeats.slice(), result: structuredClone(h.result), board: h.board.slice(), holes: viewFor(h, -1).seats.map((s) => s.hole) }, now);
+      const end = { t: 'showdown', hand: this.handNo, seats: this.handSeats.slice(), result: structuredClone(h.result), board: h.board.slice(), holes: viewFor(h, -1).seats.map((s) => s.hole) };
+      this.lastShowdown = structuredClone(end);
+      this._say(end, now);
       for (const i of this.handSeats) {
         const s = this.seats[i];
         if (s.kind === 'patron' && s.stack <= 0 && !s.gone) { s.gone = true; this._say({ t: 'leave', seat: i, name: s.name }, now); }
@@ -153,7 +229,8 @@ export class CardTableSession {
     if (!next) return false;
     this.hand = next;
     const paid = next.seats[k].total - prev.seats[k].total;
-    this._say({ t: 'act', seat, type: action.type, to: action.to ?? null, paid }, now);
+    // a raise into no bet is a bet; a seat left with nothing is all in (AUDIT CARDS-2 L10: the log says which)
+    this._say({ t: 'act', seat, type: action.type, to: action.to ?? null, paid, bet: action.type === 'raise' && prev.currentBet === 0, allIn: next.seats[k].allIn && !prev.seats[k].allIn }, now);
     this._think(now);
     this._afterAction(prev, now);
     return true;
@@ -192,6 +269,7 @@ export class CardTableSession {
       seats: this.seats.map((s) => ({ id: s.id, name: s.name, kind: s.kind, stack: s.stack, gone: !!s.gone })),
       handSeats: this.handSeats.slice(),
       hand: this.hand ? viewFor(this.hand, k) : null,
+      showdown: this.lastShowdown ? structuredClone(this.lastShowdown) : null,
     };
   }
 

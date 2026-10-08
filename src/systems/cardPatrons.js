@@ -28,6 +28,20 @@ export const PATRON_TEMPERS = Object.freeze({
   bluffer: Object.freeze({ play: 0.35, raise: 0.62, bluff: 0.25, edge: 0 }),
 });
 export const TEMPER_NAMES = Object.freeze(Object.keys(PATRON_TEMPERS));
+/** MEASURE (AUDIT CARDS-2 H2): the price and the bettor. Before the flop the line a hand plays from rises by
+ *  PRICE_PER_DOUBLING for each doubling of the call past PRICE_FREE_BB big blinds (an open's price) - a shove is called
+ *  by a shover's hands, not a
+ *  limper's; after it, equity weighed against a random hand is bent by the bet's size (strength ^ (1 + BETTOR_BEND x
+ *  bet / pot before it, at most BETTOR_BET_MAX)) - a big bet is a strong hand's, and top pair is not good against it.
+ *  Without them a nut-only shover took +350 big blinds an hour off the regulars (AUDIT CARDS-2 lane F). */
+export const PRICE_PER_DOUBLING = 0.05;
+export const PRICE_FREE_BB = 3;
+/** MEASURE (AUDIT CARDS-2 H2): and a cheap price is defended - the line falls by DEFEND x how far the pot's odds are
+ *  under DEFEND_ODDS (a min-raise into the blinds no longer takes them two times in three). */
+export const DEFEND = 0.6;
+export const DEFEND_ODDS = 0.33;
+export const BETTOR_BEND = 0.5;
+export const BETTOR_BET_MAX = 3;
 
 /** A uniform number in [0, 1) off the source - one 32-bit draw. */
 export const unit = (rand32) => (rand32() >>> 0) / 2 ** 32;
@@ -103,7 +117,10 @@ export function patronDecision({ view, seat, legal, temper, rand32, samples = EQ
   const strength = preflop ? chenScore(me.hole) / 20 : equity(me.hole, view.board, opponents, rand32, samples);
   const call = legal.call;
   const odds = call > 0 ? call / (pot + call) : 0;   // the share of the pot after the call this call buys
-  const strong = strength >= temper.raise;
+  // facing a bet after the flop, what the hand is worth against the bettor - for the raise as for the call
+  const pot0 = Math.max(1, pot - call);
+  const facing = !preflop && call > 0 ? strength ** (1 + BETTOR_BEND * Math.min(BETTOR_BET_MAX, call / pot0)) : strength;
+  const strong = facing >= temper.raise;
   // A bet or a raise: sized off the pot - a half to the whole of it, more the stronger - clamped to what the law allows.
   const raiseTo = () => {
     const want = view.currentBet + Math.round(pot * (0.5 + Math.min(1, Math.max(0, strength - temper.raise) * 2)));
@@ -112,7 +129,10 @@ export function patronDecision({ view, seat, legal, temper, rand32, samples = EQ
   if (legal.raise && (strong || bluffing)) return raiseTo();
   if (legal.check) return { type: 'check' };
   // Facing a bet: before the flop, a hand under his temper's line folds; after it, a call wants its odds and his edge.
-  const plays = preflop ? strength >= temper.play : strength >= odds + temper.edge;
+  const bb = Math.max(1, view.bb || 1);
+  const plays = preflop
+    ? strength >= temper.play + PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) - DEFEND * Math.max(0, DEFEND_ODDS - odds)
+    : facing >= odds + temper.edge;
   if (plays || call <= 0) return { type: 'call' };
   return { type: 'fold' };
 }

@@ -1,0 +1,1828 @@
+[
+  {
+    "name": "E-chen-gap2",
+    "file": "src/systems/cardPatrons.js",
+    "old": "gap === 2 ? 2 :",
+    "new": "gap === 2 ? 1 :",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-chen-gap3",
+    "file": "src/systems/cardPatrons.js",
+    "old": "gap === 3 ? 4 : 5",
+    "new": "gap === 3 ? 3 : 5",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-chen-connector-queen",
+    "file": "src/systems/cardPatrons.js",
+    "old": "if (gap <= 1 && hi < 10) s += 1;",
+    "new": "if (gap <= 1 && hi <= 10) s += 1;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-odds-no-call",
+    "file": "src/systems/cardPatrons.js",
+    "old": "const odds = call > 0 ? call / (pot + call) : 0;",
+    "new": "const odds = call > 0 ? call / pot : 0;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-opp-count-folded",
+    "file": "src/systems/cardPatrons.js",
+    "old": "view.seats.filter((s, i) => i !== seat && !s.folded).length",
+    "new": "view.seats.filter((s, i) => i !== seat).length",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-raise-size-flat",
+    "file": "src/systems/cardPatrons.js",
+    "old": "Math.round(pot * (0.5 + Math.min(1, Math.max(0, strength - temper.raise) * 2)))",
+    "new": "Math.round(pot * 0.5)",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-purse-offbyone",
+    "file": "src/systems/cardTableSession.js",
+    "old": "(PURSE_MAX_BB - PURSE_MIN_BB + 1)",
+    "new": "(PURSE_MAX_BB - PURSE_MIN_BB)",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-leave-chips-seat",
+    "file": "src/systems/cardTableSession.js",
+    "old": "const chips = this.hand && k >= 0 ? this.hand.seats[k].stack : this.seats[p].stack;",
+    "new": "const chips = this.seats[p].stack;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-leave-hand-stack-kept",
+    "file": "src/systems/cardTableSession.js",
+    "old": "if (this.hand && k >= 0) this.hand.seats[k].stack = 0;",
+    "new": ";",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-leave-no-afterAction",
+    "file": "src/systems/cardTableSession.js",
+    "old": "this._say({ t: 'act', seat: p, type: 'fold', to: null, paid: 0 }, now); this._afterAction(prev, now); }",
+    "new": "this._say({ t: 'act', seat: p, type: 'fold', to: null, paid: 0 }, now); }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-foldseat-no-reeval",
+    "file": "src/net/cardLaw.js",
+    "old": "next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;",
+    "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-allin-state",
+    "file": "src/ui/cardTableHud.js",
+    "old": "h.allIn ? 'all in' : ",
+    "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-out-state",
+    "file": "src/ui/cardTableHud.js",
+    "old": "!h ? (hand ? 'out' : '') :",
+    "new": "!h ? '' :",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-folded-backs",
+    "file": "src/ui/cardTableHud.js",
+    "old": ": h && !h.folded ? [cardFace(-1), cardFace(-1)] : []",
+    "new": ": h ? [cardFace(-1), cardFace(-1)] : []",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-empty-msg",
+    "file": "src/ui/cardTableHud.js",
+    "old": "why === 'empty' ? 'The table has emptied - every patron is broke.' :",
+    "new": "why === 'empty' ? 'You leave the table.' :",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-allin-press",
+    "file": "src/ui/cardTableHud.js",
+    "old": "else if (a.id === 'allin') onPress('raise', a.to);",
+    "new": "else if (a.id === 'allin') onPress('allin');",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-raise-press-min",
+    "file": "src/ui/cardTableHud.js",
+    "old": "b.addEventListener('click', () => onPress('raise', Number(range.value)));",
+    "new": "b.addEventListener('click', () => onPress('raise', a.min));",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-hud-bet-label",
+    "file": "src/ui/cardTableHud.js",
+    "old": "label: bet ? 'Bet' : 'Raise to'",
+    "new": "label: 'Raise to'",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-street-no-push",
+    "file": "src/world/cardScene.js",
+    "old": "    if (e.t === 'street') {\n      this._pushBets(t);",
+    "new": "    if (e.t === 'street') {",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-coming-ignored",
+    "file": "src/world/cardScene.js",
+    "old": "const stack = (h ? h.stack : s.stack) - coming, bet",
+    "new": "const stack = (h ? h.stack : s.stack), bet",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-boardyaw",
+    "file": "src/world/cardScene.js",
+    "old": "boardYaw: frame.axisYaw + Math.PI / 2,",
+    "new": "boardYaw: frame.axisYaw,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-stack-side",
+    "file": "src/world/cardScene.js",
+    "old": "stack: inward(STACK_IN, STACK_SIDE),",
+    "new": "stack: inward(STACK_IN, 0),",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-dealer-from-player",
+    "file": "src/world/cardScene.js",
+    "old": "const from = this.places.seats[e.button].deal;",
+    "new": "const from = this.places.seats[this.playerSeat].deal;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-street-dealer",
+    "file": "src/world/cardScene.js",
+    "old": "      const from = this.places.seats[this.dealer].deal;",
+    "new": "      const from = this.places.seats[0].deal;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-muck-not-flagged",
+    "file": "src/world/cardScene.js",
+    "old": "        c.seat = -3;",
+    "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-burn-layer",
+    "file": "src/world/cardScene.js",
+    "old": "to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length)",
+    "new": "to: this._rest(this.places.burn)",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-motion-slide-half",
+    "file": "src/world/cardMotion.js",
+    "old": "const slide = Math.min(dist * 0.5, SLIDE_MIN + js * SLIDE_SPREAD);",
+    "new": "const slide = SLIDE_MIN + js * SLIDE_SPREAD;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-motion-yaw-jitter-off",
+    "file": "src/world/cardMotion.js",
+    "old": "const yawRest = yaw + (jx - jz) * YAW_JITTER;",
+    "new": "const yawRest = yaw;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-draw-edge-uv-face",
+    "file": "src/render/cardTableDraw.js",
+    "old": "const s = [[su0, sv0], [su1, sv0], [su1, sv1], [su0, sv1]];",
+    "new": "const s = [[fu0, fv0], [fu1, fv0], [fu1, fv1], [fu0, fv1]];",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-draw-chip-cap-uv",
+    "file": "src/render/cardTableDraw.js",
+    "old": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBody);",
+    "new": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBand);",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-draw-texture-not-released",
+    "file": "src/render/cardTableDraw.js",
+    "old": "      renderer.releaseTexture?.(CARD_ARCHIVE, CARD_RECORD);\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-regulars-count",
+    "file": "src/scenes/worldModes.js",
+    "old": "names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1)))",
+    "new": "names: tavernRegulars(Math.max(1, Math.min(5, seatCount)))",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-no-relock",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (g.releaseCursor?.()) host.relock?.();",
+    "new": "    g.releaseCursor?.();",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-no-cursor-hold",
+    "file": "src/scenes/worldModes.js",
+    "old": "releaseCursor: holdCursor(), stakes, friendly",
+    "new": "releaseCursor: null, stakes, friendly",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-no-reset-slider",
+    "file": "src/scenes/worldModes.js",
+    "old": "      game.phase = 'playing';\n      game.hud.resetSlider();",
+    "new": "      game.phase = 'playing';",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-buyin-unclamped",
+    "file": "src/scenes/worldModes.js",
+    "old": "const amount = Math.min(game.buyIn.max, Math.max(game.buyIn.min, Math.floor(Number(value) || 0)));",
+    "new": "const amount = Math.floor(Number(value) || 0);",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-double-deal",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (game.phase !== 'buyin' || !game.buyIn) return;",
+    "new": "      if (!game.buyIn) return;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-over-never",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (g.session.over && g.phase !== 'over') { g.phase = 'over'; g.why = g.session.over; }",
+    "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-friendly-chips-zero",
+    "file": "src/scenes/worldModes.js",
+    "old": "const FRIENDLY_CHIPS_BB = 100;",
+    "new": "const FRIENDLY_CHIPS_BB = 0;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-player-name",
+    "file": "src/scenes/worldModes.js",
+    "old": "player: { id: 'you', name: playerEntity.name || 'You', stack: amount }",
+    "new": "player: { id: 'you', name: 'You', stack: 0 }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-play-strict",
+    "file": "src/systems/cardPatrons.js",
+    "old": "    ? strength >= temper.play + PRICE_PER_DOUBLING",
+    "new": "    ? strength > temper.play + PRICE_PER_DOUBLING",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-think-no-spread",
+    "file": "src/systems/cardTableSession.js",
+    "old": "Math.max(settle, THINK_MS + Math.floor(unit(this.rand32) * THINK_SPREAD_MS))",
+    "new": "Math.max(settle, THINK_MS + 0 * unit(this.rand32))",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-pot-push-now",
+    "file": "src/world/cardScene.js",
+    "old": "      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT;",
+    "new": "      const at = t;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-scene-pot-while-sliding",
+    "file": "src/world/cardScene.js",
+    "old": "shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
+    "new": "shares.reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-scene-seed-const",
+    "file": "src/scenes/worldModes.js",
+    "old": "tableSeed: hashSeed(homeTownOf(interiorBuilding) >>> 0, (interiorBuilding?.buildingKey ?? 0) >>> 0, cardSeat.table) });",
+    "new": "tableSeed: 0 });",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-uncontested-to-nobody",
+    "file": "src/net/cardLaw.js",
+    "old": "    let winners = shown ? pot.eligible : st.seats.flatMap((s, i) => (s.folded ? [] : [i]));",
+    "new": "    let winners = pot.eligible;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-one-street-event",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    for (const len of [3, 4, 5]) if (from < len && h.board.length >= len) this._say(",
+    "new": "    for (const len of [5]) if (from < len && h.board.length >= len) this._say(",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-deal-no-streets",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    this._afterAction(null, now);   // a hand the blinds settled",
+    "new": "    if (this.hand.result) this.hand.board.length = this.hand.board.length;   // a hand the blinds settled",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-showdown-not-kept",
+    "file": "src/systems/cardTableSession.js",
+    "old": "      this.lastShowdown = structuredClone(end);\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-showdown-never-cleared",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    this.handNo++;\n    this.lastShowdown = null;\n",
+    "new": "    this.handNo++;\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-deal-no-settle",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    this._think(now, settleMs(live.length * 2));",
+    "new": "    this._think(now);",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-street-no-settle",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    if (h.board.length > from && !h.result) this.thinkUntil = Math.max(this.thinkUntil, now + settleMs(h.board.length - from, true));\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-bet-flag",
+    "file": "src/systems/cardTableSession.js",
+    "old": "bet: action.type === 'raise' && prev.currentBet === 0,",
+    "new": "bet: action.type === 'raise',",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-allin-flag",
+    "file": "src/systems/cardTableSession.js",
+    "old": "allIn: next.seats[k].allIn && !prev.seats[k].allIn }",
+    "new": "allIn: false }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-book-fresh-always",
+    "file": "src/systems/cardTableSession.js",
+    "old": "  if (!kept || kept.day !== day || kept.bb !== stakes.bb || !Array.isArray(kept.purses)) return fresh;",
+    "new": "  return fresh;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-book-broke-back",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    return Number.isSafeInteger(stack) && stack > 0 ? [{ ...p, temper, stack }] : [];",
+    "new": "    return [{ ...p, temper, stack: stack > 0 ? stack : p.stack }];",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-book-unbounded",
+    "file": "src/systems/cardTableSession.js",
+    "old": "keys.slice(0, REGULARS_BOOK_MAX).map(",
+    "new": "keys.map(",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-book-restore-trusts",
+    "file": "src/systems/cardTableSession.js",
+    "old": "purses: v.purses.map((x) => Math.max(0, Math.floor(Number(x)) || 0)),",
+    "new": "purses: v.purses,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-save-no-book",
+    "file": "src/systems/save.js",
+    "old": "  snap.cardRegulars = regularsBookRestore(entity.cardRegulars);\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-load-no-book",
+    "file": "src/systems/save.js",
+    "old": "  entity.cardRegulars = regularsBookRestore(snap.cardRegulars);",
+    "new": "  entity.cardRegulars = entity.cardRegulars ?? {};",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-no-price",
+    "file": "src/systems/cardPatrons.js",
+    "old": "+ PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb)))",
+    "new": "+ 0",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-price-from-bb",
+    "file": "src/systems/cardPatrons.js",
+    "old": "Math.max(1, call / (PRICE_FREE_BB * bb))",
+    "new": "Math.max(1, call / bb)",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-no-defend",
+    "file": "src/systems/cardPatrons.js",
+    "old": " - DEFEND * Math.max(0, DEFEND_ODDS - odds)",
+    "new": "",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-no-bend",
+    "file": "src/systems/cardPatrons.js",
+    "old": "  const facing = !preflop && call > 0 ? strength ** (1 + BETTOR_BEND",
+    "new": "  const facing = false ? strength ** (1 + BETTOR_BEND",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-raise-unbent",
+    "file": "src/systems/cardPatrons.js",
+    "old": "  const strong = facing >= temper.raise;",
+    "new": "  const strong = strength >= temper.raise;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-load-pays",
+    "file": "src/scenes/worldModes.js",
+    "old": "        standFromCardTable({ cashOut: !load });",
+    "new": "        standFromCardTable();",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-cashout-ignored",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!cashOut) { /* a load's road",
+    "new": "    if (false) { /* a load's road",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-save-allowed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    cardTableLive: () => !!cardGame?.session,",
+    "new": "    cardTableLive: () => false,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-world-save-ignores",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-purse-stale",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!game.friendly) game.buyIn = buyInRange(goldAmount(playerEntity), game.stakes);\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-pays-short",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!game.friendly && amount > goldAmount(playerEntity)) { paintCardGame(); return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-no-book-read",
+    "file": "src/scenes/worldModes.js",
+    "old": ": regularsFor(playerEntity.cardRegulars, game.key, game.day, game.names, game.stakes, cardRand32);",
+    "new": ": seatPatrons(game.names, game.stakes, cardRand32);",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-empty-pays",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!patrons.length) { say('The regulars have lost their purses for tonight. Come back tomorrow.'); return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-no-book-write",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cashOut && g.session && !g.friendly) playerEntity.cardRegulars = regularsAfter(",
+    "new": "    if (false) playerEntity.cardRegulars = regularsAfter(",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-peer-chairs",
+    "file": "src/scenes/worldModes.js",
+    "old": "filter((j) => j !== k && !taken.includes(j)) };",
+    "new": "filter((j) => j !== k) };",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-town-same",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const town = Math.imul(homeTownOf(b) >>> 0, 0x9E3779B1) >>> 0;",
+    "new": "    const town = 0;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-dead-sit",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardSeat && !(playerEntity.health > 0)) { standFromCardTable(); return; }",
+    "new": "    if (false) { standFromCardTable(); return; }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-no-head",
+    "file": "src/scenes/worldModes.js",
+    "old": "      dt, riding: !!player.riding || !!cardSeat,",
+    "new": "      dt, riding: !!player.riding,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-host-log-third",
+    "file": "src/scenes/worldModes.js",
+    "old": "const line = eventLine(e, names, g.session.playerSeat);",
+    "new": "const line = eventLine(e, names);",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-hud-uncalled-wins",
+    "file": "src/ui/cardTableHud.js",
+    "old": "  const contested = sd.result.shown ? pots.filter((p) => p.eligible.length > 1) : pots.slice(0, 1);",
+    "new": "  const contested = pots;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-hud-no-showdown",
+    "file": "src/ui/cardTableHud.js",
+    "old": "  const sd = !hand ? view?.showdown ?? null : null;",
+    "new": "  const sd = null;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-hud-keys-all",
+    "file": "src/ui/cardTableHud.js",
+    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
+    "new": "{ e.stopPropagation(); }",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-hud-wide",
+    "file": "src/ui/cardTableHud.js",
+    "old": "min-width:min(520px,calc(100vw - 32px));",
+    "new": "min-width:520px;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-hud-third-person",
+    "file": "src/ui/cardTableHud.js",
+    "old": "  const me = e.seat === you;",
+    "new": "  const me = false;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-fold-from-rest",
+    "file": "src/world/cardScene.js",
+    "old": "        const at = this._poseOf(c, t);\n        c.motions.push(dealMotion({ from: at.pos,",
+    "new": "        const at = this._restOf(c);\n        c.motions.push(dealMotion({ from: at.pos,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-fold-held",
+    "file": "src/world/cardMotion.js",
+    "old": "      const lying = fromYaw !== undefined;",
+    "new": "      const lying = false;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-closer-unnoted",
+    "file": "src/world/cardScene.js",
+    "old": "    if (e.t === 'act' && e.paid > 0) this.lastBets.set(e.seat, (this.lastBets.get(e.seat) ?? 0) + e.paid);",
+    "new": "    if (e.t === 'act' && e.paid > 0) void 0;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-streets-together",
+    "file": "src/world/cardScene.js",
+    "old": "      const t0 = Math.max(t, this.busyUntil);\n      const from = this.places.seats[this.dealer].deal;",
+    "new": "      const t0 = t;\n      const from = this.places.seats[this.dealer].deal;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-board-one-plane",
+    "file": "src/world/cardScene.js",
+    "old": "this._rest(this.places.board[i], i & 1)",
+    "new": "this._rest(this.places.board[i])",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-burn-close",
+    "file": "src/world/cardScene.js",
+    "old": "    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0),",
+    "new": "    burn: at(-((BOARD_SLOTS + 1) / 2) * BOARD_GAP, 0),",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-stack-centred",
+    "file": "src/world/cardScene.js",
+    "old": "        chips.push(...chipDiscs(stack, place.stack, place.yaw, true));",
+    "new": "        chips.push(...chipDiscs(stack, place.stack, place.yaw));",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-places-unfit",
+    "file": "src/world/cardScene.js",
+    "old": "    const fit = Math.max(PLACE_FIT_MIN, Math.min(1, (room - clear) / BET_IN));",
+    "new": "    const fit = 1;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-flip-wrong-edge",
+    "file": "src/world/cardMotion.js",
+    "old": "roll: edge ? fromRoll - a : fromRoll + a,",
+    "new": "roll: fromRoll + a,",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-flip-own-yaw",
+    "file": "src/world/cardScene.js",
+    "old": "t0: m.t1 + TURN_DELAY, acrossYaw: this.places.boardYaw });",
+    "new": "t0: m.t1 + TURN_DELAY });",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "A2-scoop-flat",
+    "file": "src/world/cardScene.js",
+    "old": "p.potShare ? SCOOP_LIFT : 0",
+    "new": "0",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "E-host-holeof-all",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return v.hand && i >= 0 && v.hand.seats[i].hole ? v.hand.seats[i].hole[r] : -1;",
+    "new": "    return session.hand && i >= 0 ? session.hand.seats[i].hole[r] : -1;",
+    "tests": [
+      "test/auditcards2_cloth.test.js",
+      "test/auditcards2_host.test.js",
+      "test/auditcards2_table.test.js",
+      "test/cards1_cardlaw.test.js",
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js",
+      "test/cards3_draw.test.js",
+      "test/cards3_motion.test.js",
+      "test/cards4_hud.test.js",
+      "test/cards4_patrons.test.js",
+      "test/cards4_session.test.js"
+    ],
+    "equivalent": true,
+    "why": "the cloth turns up only the player's own cards whatever holeOf tells it (CardScene's `mine ? holeOf(seat, r) : -1`, pinned in cards3_motion by a careless holeOf) - and a showdown says its hands itself"
+  }
+]

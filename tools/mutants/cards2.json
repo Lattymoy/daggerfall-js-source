@@ -408,7 +408,7 @@
   {
     "name": "CS-host-seat-outlives-forced-exit",
     "file": "src/scenes/worldModes.js",
-    "old": "        standFromCardTable();   // CARDS2b (AUDIT CARDS B1): the forced road out",
+    "old": "        standFromCardTable({ cashOut: !load });   // CARDS2b (AUDIT CARDS B1): the forced road out",
     "new": "        // CARDS2b (AUDIT CARDS B1): the forced road out",
     "tests": [
       "test/cards2_seat.test.js"

@@ -21,7 +21,7 @@ const patronCount = Math.max(1, Math.min(5, Number(params.get('patrons') ?? 3)))
 
 const canvas = document.getElementById('c');
 canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
 const renderer = new Renderer(canvas);
 
 /** A flat colour as a 4x4 color32. */
@@ -79,7 +79,7 @@ for (let now = 0; now <= T * 1000; now += 50) {
   session.tick(now);
   const l = session.legal();
   if (l) session.playerAct(l.check ? { type: 'check' } : { type: 'call' }, now);
-  for (const e of session.drain()) { scene.onEvent(e, holeOf); const line = eventLine(e, session.seats.map((s) => s.name)); if (line) log.push(line); }
+  for (const e of session.drain()) { scene.onEvent(e, holeOf); const line = eventLine(e, session.seats.map((s) => s.name), session.playerSeat); if (line) log.push(line); }
   scene.poses(now / 1000, session.view());
 }
 
@@ -88,7 +88,10 @@ if (!params.has('nohud')) {
   hud.render(cardHudModel({ phase: 'playing', view: session.view(), legal: session.legal(), stakes: { sb: 5, bb: 10 }, log }));
 }
 
-function frameDraw() {
+/** AUDIT CARDS-2 M10: the frame read back - what the probe can check of the picture itself. */
+const readFrame = () => { const px = new Uint8Array(canvas.width * canvas.height * 4); gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
+
+function frameDraw(withCards = true, asBacks = false) {
   const aspect = canvas.width / canvas.height;
   const proj = mirrorProjectionX(perspective((60 * Math.PI) / 180, aspect, 0.02, 100));
   const s = seats[0];
@@ -104,8 +107,21 @@ function frameDraw() {
   renderer.drawMesh(floorMesh, IDENT, null);
   renderer.drawMesh(tableMesh, IDENT, null);
   for (const m of legs) renderer.drawMesh(m, IDENT, null);
-  draw.draw(scene.poses(T, session.view()));
-  window.__cardsReady = true;
-  window.__cardsState = { street: session.view().hand?.street ?? null, cards: scene.poses(T, session.view()).cards.length, chips: scene.poses(T, session.view()).chips.length, log: log.slice(-4), ambient: INTERIOR_AMBIENT };
+  const p = scene.poses(T, session.view());
+  if (withCards) draw.draw(asBacks ? { ...p, cards: p.cards.map((c) => ({ ...c, card: -1 })) } : p);
 }
-frameDraw();
+// The table alone, its cards drawn every one as a back, then as dealt: the pixels the cards and chips change, and the
+// pixels a FACE paints (the dealt frame against the all-backs one) - a frame that culls or loses the faces has none of
+// those, and the probe fails it
+const differ = (a, b, i) => Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) >= 24;
+frameDraw(false);
+const bare = readFrame();
+frameDraw(true, true);
+const backs = readFrame();
+frameDraw(true);
+const shown = readFrame();
+let cardPixels = 0, facePixels = 0;
+for (let i = 0; i < shown.length; i += 4) { if (differ(shown, bare, i)) cardPixels++; if (differ(shown, backs, i)) facePixels++; }
+const poses = scene.poses(T, session.view());
+window.__cardsReady = true;
+window.__cardsState = { street: session.view().hand?.street ?? null, cards: poses.cards.length, faceUp: poses.cards.filter((c) => Math.cos(c.roll) > 0.5).length, chips: poses.chips.length, cardPixels, facePixels, log: log.slice(-4), ambient: INTERIOR_AMBIENT };

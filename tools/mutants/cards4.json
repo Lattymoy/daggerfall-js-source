@@ -47,9 +47,10 @@
   {
     "name": "CP-odds-ignored",
     "file": "src/systems/cardPatrons.js",
-    "old": "strength >= odds + temper.edge;",
-    "new": "strength >= temper.edge;",
+    "old": "    : facing >= odds + temper.edge;",
+    "new": "    : facing >= temper.edge;",
     "tests": [
+      "test/auditcards2_table.test.js",
       "test/cards4_patrons.test.js"
     ]
   },
@@ -119,8 +120,8 @@
   {
     "name": "CH-raise-line",
     "file": "src/ui/cardTableHud.js",
-    "old": "`${who} raises to ${e.to}.`",
-    "new": "`${who} raises ${e.to}.`",
+    "old": "`${who} raise${s} to ${e.to}.`",
+    "new": "`${who} raise${s} ${e.to}.`",
     "tests": [
       "test/cards4_hud.test.js"
     ]
@@ -128,17 +129,18 @@
   {
     "name": "CH-keys-leak",
     "file": "src/ui/cardTableHud.js",
-    "old": "root.addEventListener('keydown', (e) => e.stopPropagation());",
-    "new": "root.addEventListener('keydown', () => {});",
+    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
+    "new": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) void 0; }",
     "tests": [
+      "test/auditcards2_host.test.js",
       "test/cards4_hud.test.js"
     ]
   },
   {
     "name": "CH-host-purse-online",
     "file": "src/scenes/worldModes.js",
-    "old": "if (!game.friendly && deductGold(playerEntity, amount) > 0) return;",
-    "new": "if (deductGold(playerEntity, amount) > 0) return;",
+    "old": "      if (!game.friendly) deductGold(playerEntity, amount);",
+    "new": "      deductGold(playerEntity, amount);",
     "tests": [
       "test/cards4_hud.test.js"
     ]

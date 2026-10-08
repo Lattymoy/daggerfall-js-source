@@ -31,11 +31,18 @@ export const REST_JITTER = 0.008;
 export const YAW_JITTER = 0.12;
 /** MEASURE (CARDS3): a turn over the long edge, and how high the edge lifts. */
 export const FLIP_S = 0.32;
+/** MEASURE (CARDS3): one card thrown after another - the deal's pace; and the longest a throw takes to land and stop
+ *  across a tavern table (a metre and a half at FLIGHT_SPEED, the slide's longest) - the session waits it out
+ *  (AUDIT CARDS-2 M6: a patron who folded before his cards had landed snatched them out of the air). */
+export const DEAL_STAGGER = 0.11;
+export const THROW_LAND_S = 0.7;
 /** MEASURE (CARDS3): a chip - a disc 39 mm across, 3.3 mm thick (the casino's); a push's length. */
 export const CHIP_R = 0.0195;
 export const CHIP_T = 0.0033;
 export const CHIP_STACK_MAX = 20;
 export const PUSH_S = 0.45;
+/** MEASURE (AUDIT CARDS-2 L5): a pot's scoop to its winner rises this high at its middle, over the cards in its way. */
+export const SCOOP_LIFT = 0.03;
 /** The chips' values, highest first - a bet is stacked greedily from them. */
 export const CHIP_VALUES = Object.freeze([500, 100, 25, 5, 1]);
 
@@ -66,10 +73,12 @@ const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
  * A card thrown from `from` to rest at `to` (both world points; `to` on the cloth), face `roll` (0 up, PI down), at
  * `yaw` once settled, starting at `t0` seconds, its differences from `seed`. Answers `{t0, land, t1, rest, at(t)}`:
  * `t1` the clock it settles on, `rest` the jittered point it settles at, and `at(t)` its pose then -
- * `{pos, yaw, roll, moving}`. Before t0 it is in the dealer's hand.
- * @param {{from: number[], to: number[], yaw: number, roll?: number, t0: number, seed: number}} p
+ * `{pos, yaw, roll, moving}`. Before t0 it is in the dealer's hand - unless `fromYaw` says it already lies somewhere (a
+ * fold to the muck, AUDIT CARDS-2 M6): then it starts where it is, at that yaw and `fromRoll`, turns as it flies, and is
+ * never hidden.
+ * @param {{from: number[], to: number[], yaw: number, roll?: number, t0: number, seed: number, fromYaw?: number, fromRoll?: number}} p
  */
-export function dealMotion({ from, to, yaw, roll = Math.PI, t0, seed }) {
+export function dealMotion({ from, to, yaw, roll = Math.PI, t0, seed, fromYaw = undefined, fromRoll = roll }) {
   const [jx, jz, js] = seedUnits(seed);
   const rest = [to[0] + (jx - 0.5) * 2 * REST_JITTER, to[1], to[2] + (jz - 0.5) * 2 * REST_JITTER];
   const dx = rest[0] - from[0], dz = rest[2] - from[2];
@@ -88,11 +97,13 @@ export function dealMotion({ from, to, yaw, roll = Math.PI, t0, seed }) {
   return {
     t0, land: tLand, t1, rest,
     at(t) {
-      if (t <= t0) return { pos: from.slice(), yaw: yawRest + spin, roll, moving: false, held: true };
+      const lying = fromYaw !== undefined;
+      if (t <= t0) return lying ? { pos: from.slice(), yaw: fromYaw, roll: fromRoll, moving: false } : { pos: from.slice(), yaw: yawRest + spin, roll, moving: false, held: true };
       if (t < tLand) {
         const u = (t - t0) / flight;
         const y = lerp(from[1], land[1], u) + ARC_HEIGHT * 4 * u * (1 - u);
-        return { pos: [lerp(from[0], land[0], u), y, lerp(from[2], land[2], u)], yaw: yawRest + spin * (1 - u) + spinLeft(v0) * 1, roll, moving: true };
+        const turn = lying ? lerp(fromYaw, yawRest + spinLeft(v0), u) : yawRest + spin * (1 - u) + spinLeft(v0);
+        return { pos: [lerp(from[0], land[0], u), y, lerp(from[2], land[2], u)], yaw: turn, roll: lerp(fromRoll, roll, smooth(u)), moving: true };
       }
       if (t < t1) {
         const s = t - tLand, v = v0 - SLIDE_DECEL * s;
@@ -108,10 +119,11 @@ export function dealMotion({ from, to, yaw, roll = Math.PI, t0, seed }) {
  * A card at rest at `pos` turned over, from `fromRoll` to `fromRoll + PI`, over FLIP_S from `t0`. `pivot` 'edge' (the
  * dealer's turn): the edge it turns on stays on the cloth, the far edge lifts and comes over, and the card lies a width
  * across (flipShift - a dealer throws a card a width short of where it is to lie); 'middle' (a player's own turn of his
- * cards, a hand shown): it lifts at its middle and turns where it lies. Answers `{t0, t1, at(t)}`.
- * @param {{pos: number[], yaw: number, fromRoll?: number, t0: number, pivot?: 'edge'|'middle'}} p
+ * cards, a hand shown): it lifts at its middle and turns where it lies. `acrossYaw` the way across it moves (the board's
+ * own axis, so a jittered card still turns onto its slot - AUDIT CARDS-2 L4). Answers `{t0, t1, at(t)}`.
+ * @param {{pos: number[], yaw: number, fromRoll?: number, t0: number, pivot?: 'edge'|'middle', acrossYaw?: number}} p
  */
-export function flipMotion({ pos, yaw, fromRoll = Math.PI, t0, pivot = 'edge' }) {
+export function flipMotion({ pos, yaw, fromRoll = Math.PI, t0, pivot = 'edge', acrossYaw = yaw }) {
   const t1 = t0 + FLIP_S;
   return {
     t0, t1,
@@ -119,10 +131,13 @@ export function flipMotion({ pos, yaw, fromRoll = Math.PI, t0, pivot = 'edge' })
       const u = smooth((t - t0) / FLIP_S);
       const a = u * Math.PI;   // the turn so far
       // The card pivots on its right long edge: its middle rises by half a width times sin, and moves in by
-      // half a width times (1 - cos) - across it, the yaw's right.
-      const r = [Math.cos(yaw), 0 - Math.sin(yaw)];
-      const lift = (CARD_W / 2) * Math.sin(a), across = pivot === 'edge' ? (CARD_W / 2) * (1 - Math.cos(a)) : 0;
-      return { pos: [pos[0] + r[0] * across, pos[1] + lift, pos[2] + r[1] * across], yaw, roll: fromRoll + a, moving: u > 0 && u < 1 };
+      // half a width times (1 - cos) - across it, the yaw's right. The roll turns the far (left) edge up and over:
+      // trs's Rz turns +X toward +Y for a positive roll, so the edge that stays down wants it negative (AUDIT
+      // CARDS-2 M5: positive, the pivot edge rose and the far edge skidded a width and a half on the cloth).
+      const r = [Math.cos(acrossYaw), 0 - Math.sin(acrossYaw)];
+      const edge = pivot === 'edge';
+      const lift = (CARD_W / 2) * Math.sin(a), across = edge ? (CARD_W / 2) * (1 - Math.cos(a)) : 0;
+      return { pos: [pos[0] + r[0] * across, pos[1] + lift, pos[2] + r[1] * across], yaw, roll: edge ? fromRoll - a : fromRoll + a, moving: u > 0 && u < 1 };
     },
   };
 }
@@ -148,31 +163,36 @@ export function chipStacks(amount) {
 
 /**
  * The chips of `amount` laid at `at` (a point on the cloth), facing `yaw`: each disc's centre, in columns of at most
- * CHIP_STACK_MAX, the columns side by side across the yaw's right - `[{value, pos}]`, bottom first.
+ * CHIP_STACK_MAX, the columns side by side across the yaw's right - centred on `at`, or (`outward`) growing away from
+ * it to the right, so a seat's stack never spreads back over its cards (AUDIT CARDS-2 L5) - `[{value, pos}]`, bottom
+ * first.
  * @param {number} amount
  * @param {number[]} at
  * @param {number} yaw
+ * @param {boolean} [outward]
  */
-export function chipDiscs(amount, at, yaw) {
+export function chipDiscs(amount, at, yaw, outward = false) {
   const r = [Math.cos(yaw), 0 - Math.sin(yaw)];
   const columns = [];
   for (const { value, count } of chipStacks(amount)) for (let left = count; left > 0; left -= CHIP_STACK_MAX) columns.push({ value, count: Math.min(CHIP_STACK_MAX, left) });
   const out = [];
   columns.forEach((c, i) => {
-    const off = (i - (columns.length - 1) / 2) * CHIP_R * 2.15;
+    const off = (outward ? i : i - (columns.length - 1) / 2) * CHIP_R * 2.15;
     for (let k = 0; k < c.count; k++) out.push({ value: c.value, pos: [at[0] + r[0] * off, at[1] + CHIP_T * (k + 0.5), at[2] + r[1] * off] });
   });
   return out;
 }
 
 /**
- * A push from `from` to `to` (chips into the pot, a pot to its winner) over PUSH_S from `t0`, eased: the point between.
+ * A push from `from` to `to` (chips into the pot, a pot to its winner) over PUSH_S from `t0`, eased: the point between -
+ * `lift` its arc's rise at the middle (a pot scooped to its winner passes over his cards, AUDIT CARDS-2 L5).
  * @param {number[]} from
  * @param {number[]} to
  * @param {number} t0
  * @param {number} t
+ * @param {number} [lift]
  */
-export function pushAt(from, to, t0, t) {
+export function pushAt(from, to, t0, t, lift = 0) {
   const u = smooth((t - t0) / PUSH_S);
-  return [lerp(from[0], to[0], u), lerp(from[1], to[1], u), lerp(from[2], to[2], u)];
+  return [lerp(from[0], to[0], u), lerp(from[1], to[1], u) + lift * 4 * u * (1 - u), lerp(from[2], to[2], u)];
 }

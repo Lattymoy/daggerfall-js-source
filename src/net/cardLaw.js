@@ -366,7 +366,9 @@ function finish(st, shown) {
   const payouts = new Array(n).fill(0);
   const order = Array.from({ length: n }, (_, k) => (st.button + 1 + k) % n);
   const awarded = pots.map((pot) => {
-    let winners = pot.eligible;
+    // AUDIT CARDS-2 A1: uncontested, every pot is the one seat still in - a pot only folded seats reached (both blinds
+    // folded out of turn, the rest to a seat that put nothing in) is forfeit to it, never to nobody
+    let winners = shown ? pot.eligible : st.seats.flatMap((s, i) => (s.folded ? [] : [i]));
     if (shown && winners.length > 1) {
       let best = null;
       for (const i of winners) if (!best || compareHands(hands[i], best) > 0) best = hands[i];

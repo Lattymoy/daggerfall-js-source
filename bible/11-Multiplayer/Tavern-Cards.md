@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"). Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -67,6 +67,8 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 
 - **DECIDED (Mac): actual detailed card physics.** A card is a body: a thin rigid plate (63 x 88 mm, the poker size, a
   quarter millimetre thick) with a front, a back and an edge, drawn by the WebGL2 renderer as its own pass.
+  **AS BUILT (CARDS3, recorded at AUDIT CARDS-2):** drawn a millimetre thick (`CARD_T`, so the cloth never shows
+  through), and in the room's own pass after the decor (`drawMesh`, no pass of its own) - section 15.
 - **DECIDED: the physics is the picture, never the rules.** What a card IS (whose, face up or down, which card) is the
   game's state, settled by the law in section 5. The physics only decides how it gets there: a dealt card flies on an
   arc, spins, lands, slides on the cloth's friction and settles; a flipped card turns over its long edge; a mucked hand
@@ -76,6 +78,8 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
   player at the table sees the same card land in the same place - the room's picture, not each client's own.
 - **DECIDED: the player's own hand** is held up in the seat view, fanned, and can be peeked (lifted at the corner) or
   squeezed. Mouse over a card lifts it; a drag slides chips into the pot; a click on the cards checks, a push folds.
+  **NOT BUILT (recorded at AUDIT CARDS-2):** the fanned hand, the peek and squeeze, the mouse on the cards and the
+  chips - the panel's buttons act (section 14); the player's own two lie face up on the cloth before him.
 - **MEASURE (CARDS3):** the frame cost. Fifty-two plates and a few dozen chips is small, but the interior frame is
   already measured against phones; the slice reports the cost on the probe before it ships.
 
@@ -162,7 +166,9 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
 ## 7. What the record refuses
 
 - **No card game from a menu.** The table is the game (Mac: "needing to be in a tavern").
-- **No client-dealt card online, ever.** The relay shuffles, or nobody plays.
+- **No client-dealt card online, ever.** The relay shuffles, or nobody plays. **Between players** (AUDIT CARDS-2,
+  reconciling CARDS4): a patrons' table online is one player's own, nobody else's cards are dealt there and no gold
+  moves (section 14's friendly game) - the refusal is of a table players share, which only the relay deals (CARDS5).
 - **No card art from ARENA2.**
 - **No paid packs.** A pack costs gold earned in the game.
 
@@ -176,7 +182,7 @@ Each ships alone and is verifiable without the next.
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
 | **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
 | **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
-| **CARDS3** SHIPPED | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
+| **CARDS3** SHIPPED (part) | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15). OPEN: the fanned hand and the peek, the mouse on the cards, the riffle, the frame cost measured on a phone. |
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables. |
 | **CARDS6** | Online stakes: buy-in and cash-out escrowed by the realm service. |
@@ -354,7 +360,10 @@ the house's regulars until you stand, go broke or empty the table.
 - **The panel** (`src/ui/cardTableHud.js`). The port's own panel, not a pausing window - the patrons play on - holding
   the cursor while it stands: the seats, the cards each may see, the pot, the buttons the law allows, a raise slider,
   the log. It swallows its own presses and keys (a slider's arrow is never a step that stands you up).
-- **The host** (`worldModes.js`, the interior only - a tavern is an interior). Sitting opens the panel; dealing in
+- **The host** (`worldModes.js` - THE FOUR HOSTS, AUDIT CARDS-2 L13: the interior mode machine both `world.js` and
+  `exterior.js` mount through `createWorldModes`, so the table stands in either's taverns; `dungeonContext.js` has no
+  tavern and the `?interior` viewer no body; the save's refusal while chips are on the table is `world.js`'s, the one
+  host that saves). Sitting opens the panel; dealing in
   takes the buy-in from the purse; the frame runs the patrons under any window; every road off the seat (the stand, a
   hit, the door, a new room, a forced exit) goes through `standFromCardTable` and cashes the table out - the three bare
   seat clears that would have dropped the chips are gone. The regulars are named by the living world's namer on a seed
@@ -397,3 +406,34 @@ table's throws are its own.
 - **Not verified in a live tavern** (no ARENA2 here): the lab's table stands for the room's.
 - **Pins:** `test/cards3_motion.test.js` 8, `test/cards3_draw.test.js` 6. `tools/mutants/cards3.json`: 15, all dead
   (two survived the first pass - a short throw's least flight and a careless `holeOf`; both pinned).
+
+## 16. AUDIT CARDS-2 (2026-10-08): the arc audited again
+
+Mac: **"Lets do a deep comprehensive audit on everything so far. Perfection"**. Six lanes over a frozen snapshot, every
+finding reproduced on the live tree before and after its fix; the whole record is `01-Overview/Audit-Cards-2.md`. What it
+changed, here:
+
+- **The gold (H1, M2).** A load's road stands up WITHOUT cashing out (the save's purse is already the character's; the
+  chips were the discarded game's), and the save refuses while chips are on the table. The buy-in reads the purse again
+  at the press.
+- **The regulars (H2).** Their purses and tempers are kept by the game day in a book on the character's save
+  (`regularsFor`, `regularsAfter`, `REGULARS_BOOK_MAX`): a re-sit seats the same purses, a broke regular "leaves for the
+  night", and a table every regular has lost to refuses the deal until tomorrow. Their play takes the price
+  (`PRICE_PER_DOUBLING` past `PRICE_FREE_BB` big blinds), defends a cheap one (`DEFEND` under `DEFEND_ODDS`) and bends a
+  hand by the bettor's bet (`BETTOR_BEND`, at most `BETTOR_BET_MAX` pots) for the raise as for the call. Lane F's
+  money-printers now lose or break even at 5/10 (exploit -0.5, nut-shover -20, stealer +18 bb/h).
+- **The law and the clock (M1, L1, L2, M6, M7).** An uncontested pot is the one seat still in's; every street crossed
+  is its own event; a patron waits for the cloth (`settleMs`); the last showdown stays in the view until the next deal.
+- **The panel (M3, M7, M8, L8, L10, L15).** Phone-width; the showdown shown with its hands named; only contested pots
+  won; only the slider's keys swallowed; the player in the second person; the street named.
+- **The cloth (M4, M5, L3-L6).** Every chip drawn once on every frame; the edge flip on its edge; a fold from where the
+  card is; the closing call slid in; the run-out's streets in turn and the pot after the river; board layers and the
+  burn clear; stacks away from the cards, a pot scooped over them; a small table's places fit.
+- **The probe (M10).** It reads the frame back and fails a face-up card that paints no face; it measures no frame cost.
+- **The seat (L7, L9, L11, the dead).** The regulars only in free chairs, named by the town; the seat holds the head; the
+  dead stand up.
+- **Counts as of this audit** (the slices' sections give theirs as they shipped): cards1 15 tests, cards2 10, cards2b 8,
+  cards3_motion 8, cards3_draw 6, cards4_patrons 4, cards4_session 5, cards4_hud 6; the audit's `auditcards2_table` 9,
+  `auditcards2_host` 9, `auditcards2_cloth` 6. Mutants: cards1 48, cards2 56, cards2b 40, cards3 15, cards4 17 - all dead
+  (one equivalent as recorded) - and `tools/mutants/auditcards2.json` 95 dead, one equivalent.
+- **Before a pull request:** merge main (three conflicts; `tryExit`'s seat line stays first - the audit record says why).

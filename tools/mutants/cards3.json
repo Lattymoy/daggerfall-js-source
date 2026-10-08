@@ -38,8 +38,8 @@
   {
     "name": "CS3-board-no-shift",
     "file": "src/world/cardScene.js",
-    "old": "to: flipShift(this._rest(this.places.board[i]), this.places.boardYaw)",
-    "new": "to: this._rest(this.places.board[i])",
+    "old": "to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw)",
+    "new": "to: this._rest(this.places.board[i], i & 1)",
     "tests": [
       "test/cards3_motion.test.js"
     ]

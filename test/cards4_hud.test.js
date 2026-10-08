@@ -73,12 +73,12 @@ test('CARDS4 the log\'s lines', () => {
   assert.deepEqual([
     { t: 'hand', hand: 3, button: 1 }, { t: 'act', seat: 2, type: 'raise', to: 40, paid: 30 }, { t: 'act', seat: 0, type: 'call', paid: 30 },
     { t: 'act', seat: 1, type: 'fold' }, { t: 'act', seat: 0, type: 'check' }, { t: 'street', street: 'turn' },
-    { t: 'showdown', seats: [0, 2], result: { payouts: [0, 90] } }, { t: 'showdown', seats: [0, 2], result: { payouts: [45, 45] } },
+    { t: 'showdown', seats: [0, 2], result: { shown: false, pots: [{ amount: 90, eligible: [1], winners: [1] }], payouts: [0, 90] } }, { t: 'showdown', seats: [0, 2], result: { shown: true, pots: [{ amount: 90, eligible: [0, 1], winners: [0, 1] }], payouts: [45, 45], hands: {} } },
     { t: 'leave', name: 'Bors' }, { t: 'over', why: 'empty' },
-  ].map((e) => eventLine(e, names)), [
-    'Hand 3: Ana deals.', 'Bors raises to 40.', 'You calls 30.', 'Ana folds.', 'You checks.', 'The turn.',
-    'Bors takes the pot.', 'You and Bors split the pot.', 'Bors is broke and leaves the table.', 'The table has emptied.',
-  ]);
+  ].map((e) => eventLine(e, names, 0)), [
+    'Hand 3: Ana deals.', 'Bors raises to 40.', 'You call 30.', 'Ana folds.', 'You check.', 'The turn.',
+    'Bors takes the pot.', 'You and Bors split the pot.', 'Bors is broke and leaves for the night.', 'The table has emptied.',
+  ]);   // AUDIT CARDS-2 L10: the player in the second person
 });
 
 test('CARDS4 the painted panel: presses handed back, never reaching the game; gone once', () => {
@@ -92,8 +92,8 @@ test('CARDS4 the painted panel: presses handed back, never reaching the game; go
   buttons[0].fire('click');
   buttons[1].fire('click');
   assert.deepEqual(pressed, [['deal', 400], ['stand', undefined]]);
-  // A press or a key on the panel stops there.
-  for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+  // A press on the panel stops there (a key only when it is the slider's - AUDIT CARDS-2 L8, auditcards2_host).
+  for (const t of ['pointerdown', 'mousedown', 'click', 'wheel']) {
     let stopped = false;
     hud.root.fire(t, { stopPropagation() { stopped = true; } });
     assert.ok(stopped, `${t} stops at the panel`);
@@ -108,17 +108,18 @@ test('CARDS4 the painted panel: presses handed back, never reaching the game; go
 test('CARDS4 the interior host: the table on the seat, the purse only off the online lane, the evening under any window, the cash-out on every road off the seat', () => {
   const src = read('src/scenes/worldModes.js');
   const has = (s, why) => assert.ok(src.includes(s), why ?? s);
-  has("    say('You take a seat at the card table.');\n    openCardGame(seats.length);", 'sitting opens the table');
-  has('    closeCardGame();   // CARDS4: every road off the seat cashes the table out', 'standing closes it - press, step, swing, Escape, a hit, the forced exit and the door all stand through standFromCardTable');
+  has("    say('You take a seat at the card table.');\n    if (cardSeat.free.length) openCardGame(cardSeat.free.length + 1);", 'sitting opens the table - sized to the free chairs');
+  has('    closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out', 'standing closes it - press, step, swing, Escape, a hit, the forced exit and the door all stand through standFromCardTable');
   has('    const friendly = !!host.realmAct || isOnlinePage();', 'a realm character, or any online page, plays a friendly game');
   has('    const buyIn = buyInRange(friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);');
-  has("      if (!game.friendly && deductGold(playerEntity, amount) > 0) return;", 'the buy-in from the purse, never more than it holds, never online');
-  has("    if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }", 'the chips back into gold, never online');
+  has("      if (!game.friendly && amount > goldAmount(playerEntity)) { paintCardGame(); return; }", 'the buy-in from the purse, never more than it holds, never online');
+  has("      if (!game.friendly) deductGold(playerEntity, amount);");
+  has("    else if (chips > 0 && !g.friendly) { addGold(playerEntity, chips); say(`You leave the table with ${chips} gold.`); }", 'the chips back into gold, never online, never on a load');
   has("    if (mode === 'interior') cardGameFrame(performance.now());   // CARDS4", 'the patrons play on under any window');
   has('    const stakes = stakesFor(interiorBuilding?.quality ?? 10);', 'the tavern\'s quality sets the stakes');
   has("    if (game !== cardGame) return;   // a press from a panel already gone");
   // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD: the game slot is null before the session leaves and the panel goes.
-  const close = src.slice(src.indexOf('  function closeCardGame() {'), src.indexOf('  function closeCardGame() {') + 600);
+  const close = src.slice(src.indexOf('  function closeCardGame({ cashOut = true } = {}) {'), src.indexOf('  function closeCardGame({ cashOut = true } = {}) {') + 900);
   assert.ok(close.indexOf('cardGame = null;') < close.indexOf('g.session.leave(') && close.indexOf('cardGame = null;') < close.indexOf('g.hud?.destroy();'));
   has('  const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];', 'the table\'s own source');
   // Every road that drops the seat goes through standFromCardTable, never a bare clear that would keep the gold.

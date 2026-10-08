@@ -11,6 +11,7 @@ import {
   CARD_W, CARD_L, CARD_T, DEAL_LIFT, FLIGHT_SPEED, FLIGHT_MIN_S, ARC_HEIGHT, SLIDE_DECEL, REST_JITTER, FLIP_S, CHIP_T, CHIP_STACK_MAX, PUSH_S, CHIP_VALUES,
   hashSeed, seedUnits, dealMotion, flipMotion, flipShift, chipStacks, chipDiscs, pushAt,
 } from '../src/world/cardMotion.js';
+import { cardMatrix } from '../src/render/cardTableDraw.js';
 import { tablePlaces, CardScene, HOLE_IN, BET_IN } from '../src/world/cardScene.js';
 import { tableFrame, cardTableSeats } from '../src/world/cardTables.js';
 import { SEAT_OUT } from '../src/player/seatPose.js';
@@ -68,8 +69,25 @@ test('CARDS3 a turn over the long edge: the card comes over and lies face up a w
   const half = f.at(1 + FLIP_S / 2);
   assert.ok(Math.abs(half.pos[1] - (0.8 + CARD_W / 2)) < 1e-9, 'standing on its edge at the half');
   const end = f.at(5);
-  assert.deepEqual([r6(end.pos[0]), r6(end.pos[1]), r6(end.pos[2]), r6(end.roll)], [r6(CARD_W), 0.8, 0, r6(2 * Math.PI)]);
+  assert.deepEqual([r6(end.pos[0]), r6(end.pos[1]), r6(end.pos[2])], [r6(CARD_W), 0.8, 0]);
   assert.ok(Math.cos(end.roll) > 0.999, 'face up');
+  // AUDIT CARDS-2 M5: through the card's own matrix (the one the GL draws), the edge it turns on stays on the cloth, in
+  // place, all the way over, and the far edge rises and comes across - at every facing (the first cut rolled the other
+  // way: the pivot edge rose a width and the far edge skidded a width and a half along the cloth)
+  for (const yaw of [0, 0.7, 1.9, Math.PI, 4.4]) {
+    const g = flipMotion({ pos: [2, 0.8, 3], yaw, t0: 0 });
+    const edgeAt = (p, x) => { const m = cardMatrix(p.pos, p.yaw, p.roll); return [m[0] * x + m[12], m[1] * x + m[13], m[2] * x + m[14]]; };
+    // face down (roll PI) the card's local -X is its right-hand edge on the cloth - the one it turns on
+    const pivot0 = edgeAt(g.at(0), -CARD_W / 2);
+    let farTop = 0;
+    for (let k = 0; k <= 20; k++) {
+      const p = g.at((k / 20) * FLIP_S);
+      const e = edgeAt(p, -CARD_W / 2);
+      assert.ok(Math.hypot(e[0] - pivot0[0], e[1] - pivot0[1], e[2] - pivot0[2]) < 1e-6, `the pivot edge stays put at yaw ${yaw}, step ${k}`);
+      farTop = Math.max(farTop, edgeAt(p, CARD_W / 2)[1]);
+    }
+    assert.ok(farTop > 0.8 + CARD_W * 0.99, `the far edge comes up and over at yaw ${yaw}: ${farTop}`);
+  }
   // thrown a width short (flipShift), the dealer's turn lays it on its place
   for (const yaw of [0, 0.7, Math.PI / 2, -2.3]) {
     const to = [3, 0.8, 4], f2 = flipMotion({ pos: flipShift(to, yaw), yaw, t0: 0 }).at(9).pos;
