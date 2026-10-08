@@ -498,6 +498,12 @@ export class LivingTown {
     return 0;
   }
 
+  /** AUDIT LW-STIR: a stranger's own town by name, where the roads know it (a visitor's trip's home), else null.
+   *  @param {{ id: string }} res @returns {string | null} */
+  _homeOf(res) {
+    return this._roads?.visitorOf?.get(res.id)?.trip?.from?.name || null;
+  }
+
   /** A visitor's lodging: one of the town's taverns, by their id (none: the square). */
   _lodging(res) {
     const taverns = [...this.places.doors.entries()].filter(([k]) => this.places.types.get(k) === BUILDING_TYPES.Tavern).map(([, s]) => s);
@@ -1263,7 +1269,7 @@ export class LivingTown {
       const own = this._inStir.get(id)?.inc ?? null;
       const inc = own ?? this._stirVoice.get(id) ?? null;
       if (inc) {
-        const line = stirLine(inc, this._now, lineMin, ctx);
+        const line = stirLine(inc, this._now, lineMin, inc.kind === 'gate' || inc.kind === 'challenge' ? { ...ctx, home: this._homeOf(inc.members[1]) } : ctx);   // AUDIT LW-STIR: the stranger's own town
         if (line && line.who.id === id && inc.members.every((m) => standing.has(m.id)) && standing.has(id)) {
           out.push({ person: p, text: line.text, kind: line.loud ? 'shout' : 'talk' });
           continue;

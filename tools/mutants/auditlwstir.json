@@ -1,0 +1,29 @@
+[
+  {
+    "name": "AUDIT-LWSTIR-F1-home-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "stirLine(inc, this._now, lineMin, inc.kind === 'gate' || inc.kind === 'challenge' ? { ...ctx, home: this._homeOf(inc.members[1]) } : ctx);",
+    "new": "stirLine(inc, this._now, lineMin, ctx);",
+    "tests": [
+      "test/auditlwstir.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-F1-home-every-word",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const place = (inc.kind === 'gate' || inc.kind === 'challenge') && ctx.home ? ctx.home",
+    "new": "const place = ctx.home ? ctx.home",
+    "tests": [
+      "test/auditlwstir.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-F1-trip-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return this._roads?.visitorOf?.get(res.id)?.trip?.from?.name || null;",
+    "new": "return null;",
+    "tests": [
+      "test/auditlwstir.test.js"
+    ]
+  }
+]

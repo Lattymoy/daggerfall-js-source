@@ -259,9 +259,10 @@ export const stirHas = (inc, ids) => inc.members.some((m) => ids.has(m.id)) || (
 
 /**
  * LW-STIR: the line an incident is saying at minute `t` - its script a line every `lineMin` from its `from`, each by
- * its part (`a`, `b`, `g`) - or null: gathering, or done.
+ * its part (`a`, `b`, `g`) - or null: gathering, or done. AUDIT LW-STIR: the gate's and the watch's {place} is the
+ * stranger's own town where the roads know it (`ctx.home`: they named a town of this one's own travels as theirs).
  * @param {Incident} inc @param {number} t @param {number} lineMin
- * @param {{ town?: string, region?: string, places?: readonly string[] | null }} [ctx]
+ * @param {{ town?: string, region?: string, places?: readonly string[] | null, home?: string | null }} [ctx]
  * @returns {{ who: StirWho, text: string, loud: boolean, index: number } | null}
  */
 export function stirLine(inc, t, lineMin, ctx = {}) {
@@ -271,7 +272,8 @@ export function stirLine(inc, t, lineMin, ctx = {}) {
   if (!line) return null;
   const who = line.by === 'g' ? inc.guard : inc.members[line.by === 'a' ? 0 : 1];
   if (!who) return null;
-  const place = ctx.places?.length ? ctx.places[lwSeed(inc.seed, 0x706c6163) % ctx.places.length] : null;   // 'plac'
+  const place = (inc.kind === 'gate' || inc.kind === 'challenge') && ctx.home ? ctx.home
+    : ctx.places?.length ? ctx.places[lwSeed(inc.seed, 0x706c6163) % ctx.places.length] : null;   // 'plac'
   const text = fillLine(line.text, { town: ctx.town, region: ctx.region, place, a: firstNameOf(inc.members[0].name), b: firstNameOf(inc.members[1].name) });
   return { who, text, loud: line.loud, index };
 }
