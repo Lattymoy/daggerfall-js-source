@@ -319,8 +319,8 @@
   {
     "name": "LW1-fields-seen",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));",
-    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'fields']));",
+    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));",
+    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate', 'fields']));",
     "tests": [
       "test/lw1_livingWorld.test.js"
     ],

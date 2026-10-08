@@ -47,8 +47,8 @@ export const GEAR_MIN = 30;
 /** A gap between two stays this much longer than the walk home and back (minutes) is spent at home. */
 export const HOME_GAP = 30;
 
-/** The kinds seen in the street. */
-export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));
+/** The kinds seen in the street (LW-STIR: `gate`, a stranger halted at a gate the watch keeps, come in by it). */
+export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));
 
 /**
  * @typedef {import('./places.js').Spot} Spot
@@ -59,7 +59,7 @@ export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall
  * @typedef {{ kind: string, at: Spot, t0: number, t1: number, from?: Spot, to?: Spot, armed?: boolean, duty?: boolean, pair?: 0|1|null }} Entry -
  *   minutes on the clock (classic minutes, the day's own numbers); a walk carries `from` and `to`, `at` its end; WATCH-DAY
  *   `duty` one of the watch on duty (in uniform), `pair` his place in a patrol's pair
- * @typedef {{ t0: number, t1: number, exit?: Spot|null, armed?: boolean }} Away
+ * @typedef {{ t0: number, t1: number, exit?: Spot|null, armed?: boolean, halt?: number }} Away
  */
 
 /** The minute an hour of `day` begins (hours past 24 run into the small hours of the next calendar day). */
@@ -488,14 +488,21 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       break;
     }
     case 'labourer': case 'courier': {
-      let t = h(7);
+      let t = h(7), lunch = false;
       for (let i = 0, n = rollInt(rng, 3, 5); i < n; i++) {
         const shop = fav.shops.length && rng() < 0.3;
         const spots = [...places.market, ...places.social];
-        I(shop ? 'work' : 'stall', shop ? fav.shops[Math.floor(rng() * fav.shops.length)] : (spots.length ? spots[Math.floor(rng() * spots.length)] : null),
-          t, rollInt(rng, 25, 60));
+        const at = shop ? fav.shops[Math.floor(rng() * fav.shops.length)] : (spots.length ? spots[Math.floor(rng() * spots.length)] : null);
+        const dur = rollInt(rng, 25, 60);
+        I(shop ? 'work' : 'stall', at, t, dur);
         t += 120;
-        if (i === 1 && rng() < 0.3) I('tavern', fav.tavern, h(12), 30);
+        // LW-ROOMS: the lunch at the tavern after the stint at eleven - laid after the one at nine, the three in ten who
+        // lunch there walked on from it and waited in the tavern for noon wherever home was too far to go between; AUDIT
+        // LW-ROOMS: from the stint's own end (laid at noon, one done at 11:25 waited there for it - six of the town of
+        // sixteen blocks' came in at 11:40-11:57), the three in ten drawn where the first cut drew them (the day's every
+        // later roll as it was)
+        if (i === 1) lunch = rng() < 0.3;
+        if (i === 2 && lunch) I('tavern', fav.tavern, t - 120 + dur, 30);
       }
       evening();
       break;
@@ -611,8 +618,10 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
 /**
  * The intents laid on the clock: each begins when the walk to it allows and not before its hour (nor more than its
  * slack after it - a morning's work is not done at dusk), stays its minutes (and not past its `until`, nor past the
- * walk home before bed, nor into the next away window's going); between two the resident stays where they were - at
- * home asleep before waking and after bed; every minute of the day covered once (WATCH-DAY: a walk out across the day's
+ * walk home before bed, nor into the next away window's going); between two a long gap is spent at home and a short
+ * one going on at once and waiting at the next (AUDIT LW-ROOMS: "stays where they were", this said - never so but out of
+ * doors, where one stands on between two at one place, and at the same place indoors before LW-ROOMS) - at home asleep
+ * before waking and after bed; every minute of the day covered once (WATCH-DAY: a walk out across the day's
  * turn, morningWalk, the one entry both days carry). An away window cuts the day: the walk
  * out (armed, after gearing at home where they go armed) arrives as it opens, and the walk home leaves as it closes.
  * WATCH-DAY: `start` where the day begins when it is not at home (the morning after the night's watch: his post or his
@@ -668,13 +677,16 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
       go(exit, w.t0, { armed: !!w.armed }, 'away');
     }
     const back = exit && exit !== home ? walkMinutes(exit, home, mpm) : 0;
+    // LW-STIR: a stranger come in at a gate the watch keeps halts there first (stir.js gateHalt) - questioned
+    const halt = exit && exit !== home && w.halt && w.halt > 0 ? w.halt : 0;
     let t1 = Math.min(D1, w.t1);
     // AUDIT-G5: a walk home that would run past the day's end is never begun - away to the end, the next day's plan has
     // them home (its own day drops the window; the walk cut at 04:00 left the street mid-step, in plain view)
-    if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;
+    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;
     if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });
     cursor = Math.max(cursor, t1);
     at = exit ?? home; atKind = 'away';
+    if (cursor < D1 && halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }
     if (cursor < D1 && back > 0) {
       push('walk', home, cursor, cursor + back, { from: exit, to: home, armed: !!w.armed });
       cursor += back;
@@ -707,8 +719,11 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
     const end = Math.min(start + it.dur, it.until ?? Infinity, homeBy, awayBy, watchBy, D1);
     if (end - start < MIN_STAY) continue;
     // between two places, never lingering where the last stay ended (a shop shut at six is left at six): a long gap
-    // is spent at home, a short one going on at once and waiting at the next
-    if (at !== home && at !== it.at) {
+    // is spent at home, a short one going on at once and waiting at the next - LW-ROOMS: and a long one between two stays
+    // at the same place indoors too (a sellsword with no hall of their guild sat in the tavern from one o'clock to the
+    // evening's drink, a labourer from their lunch to it); AUDIT LW-ROOMS: out of doors one stands on there between two,
+    // as ever (sent home too, the street's evening stood a quarter thinner, its talk a fifth quieter)
+    if (at !== home && (at !== it.at || !OUTDOOR.has(it.kind))) {
       if (start - cursor > walkMinutes(at, home, mpm) + walkMinutes(home, it.at, mpm) + HOME_GAP) go(home, cursor);
       else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind, it.mark ?? null);
     }

@@ -3050,7 +3050,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       floorAt: (x, y, z) => { const d = modes?.interiorCollider?.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
       origin: () => modes?.interiorCtx?.landing ?? null,   // AUDIT-E4: the landing of the building's first door - a load made inside, another door, a peer: the room laid out the same
       waysIn: () => modes?.interiorCtx?.waysIn ?? [],   // ...and every door's landing kept clear
-      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),   // AUDIT-E7: and the quest's people
+      staticFeet: () => (modes?.interiorCtx?.people ?? []).map((p) => [p.x, p.y, p.z]),   // AUDIT LW-ROOMS: every one, at their post at the hour or not
+      questFeet: () => modes?.interiorQuestFeet?.() ?? [],   // AUDIT-E7: and the quest's people - AUDIT LW-ROOMS: kept clear when one is placed, the reader's own
+      doorsShut: (fn) => ((actions) => (actions?.withDoorsShut ? actions.withDoorsShut(fn) : fn()))(modes?.interiorCtx?.actions),   // AUDIT LW-ROOMS: the room measured as its build hung it
       clock: skyMinutes,
       ready: () => !_loading && !modes?.transitioning,
       beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...
@@ -9506,7 +9508,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;
         const key = `live:${id}`;
         if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a wall, unheard
-        points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
+        points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: l.kind ?? 'talk', distance: d });   // LW-STIR: a shout, a song
       }
     }
     // LW3: the road's - a party's own talk, a traveller's word to the player (their bodies stand in the world's frame)
@@ -26749,7 +26751,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
     livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
-    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),   // LW8: ...and the street's own talk ray on them
+    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), Math.min(nearer, modes?.interiorCollider?.raycast(eye, dir, 80) ?? Infinity)),   // LW8: ...and the street's own talk ray on them - AUDIT LW-ROOMS: never through the room's walls (a bare wall is nothing to press, so the ray reached a drinker behind it)
     livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),   // LW8b: ...and what they say, over their heads
     csaDrawWindWidget: () => csaDrawWindWidget(),   // CSA-E: the wind widget over a mode's HUD
     csaOnPlayerDeath: () => { if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath()); },   // CSA-J (the audit): PlayerEntity.OnDeath and OnExhausted reach ComeSailAway.OnPlayerDeath in every mode (Start 1059-1060)
