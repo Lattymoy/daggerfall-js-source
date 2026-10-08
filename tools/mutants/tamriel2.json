@@ -2,8 +2,8 @@
   {
     "name": "TAMRIEL2-the-sea-stands-on-the-shore",
     "file": "src/world/tamrielGround.js",
-    "old": "if (!provinceAt(px, py)) return 0;",
-    "new": "if (!provinceAt(px, py)) return SHORE_BYTE;",
+    "old": "if (!provinceKeyAt(px, py)) return 0;",
+    "new": "if (!provinceKeyAt(px, py)) return SHORE_BYTE;",
     "tests": [
       "test/tamriel2.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "TAMRIEL2-the-plain-never-rises",
     "file": "src/world/tamrielGround.js",
-    "old": "const inland = Math.min(1, coastDistance(px, py) / PLAIN_REACH);",
+    "old": "const inland = Math.min(1, coastDistanceAt(px, py) / PLAIN_REACH);",
     "new": "const inland = 0;",
     "tests": [
       "test/tamriel2.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "TAMRIEL2-the-climate-past-the-bay-is-woodlands",
     "file": "src/world/tamrielGround.js",
-    "old": "return p ? (provinceByKey(p.key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
-    "new": "return p ? CLIMATES.Woodlands : CLIMATES.Ocean;",
+    "old": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
+    "new": "return key ? CLIMATES.Woodlands : CLIMATES.Ocean;",
     "tests": [
       "test/tamriel2.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "TAMRIEL2-the-sea-wears-a-climate",
     "file": "src/world/tamrielGround.js",
-    "old": "return p ? (provinceByKey(p.key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
-    "new": "return p ? (provinceByKey(p.key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Woodlands;",
+    "old": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
+    "new": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Woodlands;",
     "tests": [
       "test/tamriel2.test.js"
     ]

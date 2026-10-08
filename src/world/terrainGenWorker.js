@@ -14,7 +14,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../formats/woodsFile.js';
-import { groundWoods } from './tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
+import { groundWoods, dropGroundCache } from './tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
+import { setTamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land
+import { setTamrielFit } from './tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
@@ -40,6 +42,8 @@ function handle(m) {
     // LANDFORM4/6: the landforms' tables - the sites and the climates - arrive once, after init and before any job (the
     // client posts them as the world mounts), and ride every job and every promotion from then on; null clears them.
     if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }
+    // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
+    if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
     // from then on. null clears it (a new game with a different archive).
     // AUDIT ROADS F2: the network is BUILT HERE, not shipped here. The

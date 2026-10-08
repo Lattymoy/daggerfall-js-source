@@ -24,6 +24,10 @@ import { ImgFile } from '../src/formats/imgFile.js';
 import { WoodsFile } from '../src/formats/woodsFile.js';
 import { PakFile } from '../src/formats/pakFile.js';
 import { raceAtPickerPoint } from '../src/ui/chargenArt.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
+import { traceTamrielPicture, paletteReader } from '../src/ui/tamrielTrace.js';   // TAMRIEL3: the trace the world host makes
+import { fitBayToPicture, setTamrielTrace, provinceKeyAt, PROVINCE_OF_ID } from '../src/world/tamrielLand.js';
+import { setTamrielFit, tamrielFit } from '../src/world/tamrielFrame.js';
 import { isWaterPixel } from '../src/ui/overworldModel.js';
 import { PROVINCES, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, provinceAt } from '../src/world/tamrielGeography.js';
 import { bayPictureRect, bayToPicture, BAY_W, BAY_H, BAY_ORIGIN, PIXELS_PER_PICTURE_UNIT } from '../src/world/tamrielFrame.js';
@@ -84,6 +88,7 @@ const heightBytes = woods.heightMapBuffer;
 const climateAt = (x, y) => climate.getValue(x + 1, y);   // MapsFile.getClimateIndex's own +1 column
 const dataLand = landAt({ heightBytes, width: BAY_W, climateAt });
 const authoredLand = (x, y) => { const [px, py] = bayToPicture(x, y); return provinceAt(px, py) !== null; };
+const seam = (landAtPicture, label) => {
 const edges = {
   north: (i) => [i, 0], south: (i) => [i, BAY_H - 1], west: (i) => [0, i], east: (i) => [BAY_W - 1, i],
 };
@@ -94,7 +99,7 @@ for (const [name, at] of Object.entries(edges)) {
   let cur = null;
   for (let i = 0; i < n; i++) {
     const [x, y] = at(i);
-    const d = dataLand(x, y), a = authoredLand(x + 0.5, y + 0.5);
+    const d = dataLand(x, y), a = landAtPicture(x + 0.5, y + 0.5);
     const k = `${d ? 'land' : 'water'}/${a ? 'land' : 'water'}`;
     if (cur && cur.k === k) cur.to = i; else { cur = { k, from: i, to: i }; runs.push(cur); }
   }
@@ -107,5 +112,39 @@ for (const [name, at] of Object.entries(edges)) {
 }
 const bayCoast = coastChains({ heightBytes, width: BAY_W, height: BAY_H, climateAt });
 const ink = buildTamrielInk({ bayCoast });
-console.log(`seam: ${disagree} edge pixels disagree; the Bay's coast ends on its edge: ${ink.bayEnds}, joined within ${STITCH_REACH} px: ${ink.joined}`);
-console.log(`frame: BAY_ORIGIN (${BAY_ORIGIN.x}, ${BAY_ORIGIN.y}) at ${PIXELS_PER_PICTURE_UNIT} Bay px a picture px - move these in world/tamrielFrame.js if the overlay says so`);
+console.log(`seam (${label}): ${disagree} edge pixels disagree; the Bay's coast ends on its edge: ${ink.bayEnds}, joined within ${STITCH_REACH} px: ${ink.joined}${ink.traced ? '; the ink is the trace\'s' : ''}`);
+return disagree;
+};
+seam(authoredLand, 'authored');
+console.log(`frame: BAY_ORIGIN (${BAY_ORIGIN.x}, ${BAY_ORIGIN.y}) at ${PIXELS_PER_PICTURE_UNIT} Bay px a picture px - the authored defaults`);
+
+// ── 4. THE TRACE AND THE FIT (TAMRIEL3) ──────────────────────────
+// What the world host does at boot: trace the two files, fit the Bay's land on the picture's, install both - then the
+// seam again on the trace, and `trace.ppm`: the traced land tinted by province, the sea blue, the fitted Bay's
+// rectangle black. The fit's numbers are what the player's game runs on; nothing here is committed.
+const artPal = new DFPalette();
+artPal.load(file('ART_PAL.COL'), 'ART_PAL.COL');
+const trace = traceTamrielPicture(pick, bmp, paletteReader(picture.palette ?? artPal));
+if (!trace) { console.log('trace: the picture traced to nothing (the two files differ in size?)'); }
+else {
+  const landPx = trace.land.reduce((n, v) => n + v, 0);
+  const byProvince = {};
+  for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) byProvince[PROVINCE_OF_ID[trace.province[i]]] = (byProvince[PROVINCE_OF_ID[trace.province[i]]] ?? 0) + 1;
+  console.log(`trace: ${landPx} land pixels of ${trace.w * trace.h}; by province: ${Object.entries(byProvince).map(([k, n]) => `${k} ${n}`).join(', ')}`);
+  const t0 = Date.now();
+  const fit = fitBayToPicture({ bayLand: dataLand, trace });
+  console.log(`fit: the Bay at picture (${fit.ox}, ${fit.oy}) x${fit.ppu} - ${fit.score} of ${fit.cells} cells agree (${Math.round((100 * fit.score) / fit.cells)}%), ${Date.now() - t0} ms; authored (${(BAY_ORIGIN.x / PIXELS_PER_PICTURE_UNIT).toFixed(1)}, ${(BAY_ORIGIN.y / PIXELS_PER_PICTURE_UNIT).toFixed(1)}) x${PIXELS_PER_PICTURE_UNIT}`);
+  setTamrielTrace(trace);
+  setTamrielFit({ ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu });
+  seam((x, y) => { const [px, py] = bayToPicture(x, y); return provinceKeyAt(px, py) !== null; }, 'traced');
+  const TINT = { HighRock: [200, 170, 120], Hammerfell: [220, 190, 110], Skyrim: [190, 200, 210], Morrowind: [170, 130, 120], Sumurset: [210, 200, 150], Valenwood: [140, 180, 120], Elsweyr: [220, 200, 140], BlackMarsh: [120, 150, 120], Imperial: [200, 180, 160] };
+  const out = new Uint8Array(W * H * 3);
+  for (let i = 0; i < W * H; i++) { const c = trace.land[i] ? TINT[PROVINCE_OF_ID[trace.province[i]]] ?? [255, 0, 255] : [60, 90, 160]; out[i * 3] = c[0]; out[i * 3 + 1] = c[1]; out[i * 3 + 2] = c[2]; }
+  const f = tamrielFit();
+  const rr = { x0: f.ox / f.ppu, y0: f.oy / f.ppu, x1: (f.ox + BAY_W) / f.ppu, y1: (f.oy + BAY_H) / f.ppu };
+  const dot = (x, y) => { const px = Math.round(x), py = Math.round(y); if (px < 0 || py < 0 || px >= W || py >= H) return; const i = (py * W + px) * 3; out[i] = 0; out[i + 1] = 0; out[i + 2] = 0; };
+  for (let x = rr.x0; x <= rr.x1; x += 0.5) { dot(x, rr.y0); dot(x, rr.y1); }
+  for (let y = rr.y0; y <= rr.y1; y += 0.5) { dot(rr.x0, y); dot(rr.x1, y); }
+  writeFileSync(join(outDir, 'trace.ppm'), Buffer.concat([Buffer.from(`P6\n${W} ${H}\n255\n`), Buffer.from(out)]));
+  console.log(`trace: ${join(outDir, 'trace.ppm')} - the traced land by province, the fitted Bay in black`);
+}

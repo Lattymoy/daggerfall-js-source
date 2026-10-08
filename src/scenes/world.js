@@ -266,7 +266,9 @@ import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
 import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
-import { landformsOn, tamrielLandOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's
+import { landformsOn, tamrielLandOn, tamrielTraceOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door
+import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
+import { fitBayToPicture } from '../world/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it
 import { groundWoods, groundClimateIndex } from '../world/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
 import { tamrielFrameInBay, inBay as onTheBay } from '../world/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
 import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
@@ -6940,6 +6942,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   preloadTravelMapArt({ renderer, fetchBytes, palette })   // W1: TRAV0I00/01/03/04 + the FMAP palette warm at boot
     .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
+  // TAMRIEL3 (Mac: "It doesnt look like the map thats in daggerfall"): THE CONTINENT OFF THE PLAYER'S OWN PICTURE.
+  // TMAP00I0 and TAMRIEL2 traced to a land and a province mask (ui/tamrielTrace.js), the Bay's place and scale on the
+  // picture FIT by laying its own land over the picture's (world/tamrielLand.js fitBayToPicture), and both installed in
+  // the land module and the frame for every reader - the held map's ink, the ground beyond the Bay on this thread and
+  // on the worker (terrainGen.setTamriel), the stream's frame. Until it lands the authored shape stands; a missing
+  // file leaves it standing and says so. `?tamrieltrace=off` the door.
+  if (tamrielTraceOn()) {
+    preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {
+      if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
+      const fit = fitBayToPicture({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+      const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
+      terrainGen.setTamriel({ trace, fit: fitPx });
+      StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
+      console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells agreeing`);
+    }).catch((e) => console.warn('[tamriel] TMAP00I0/TAMRIEL2 unavailable; the authored continent stands:', e?.message ?? e));
+  }
   // TO1: the mod's own control strip, beside it. Its own loader
   // swallows a missing file - the panel then draws its text on the
   // bare screen, which is what the mod's `Debug.LogError` arm leaves.

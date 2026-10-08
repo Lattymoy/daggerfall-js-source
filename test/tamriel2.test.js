@@ -230,7 +230,7 @@ test('TAMRIEL2 worker: the client says the reader has the continent round it off
   assert.equal(posted[posted.length - 1].tamriel, false, 'a bare reader says so');
   assert.ok(plain);
   const worker = read('src/world/terrainGenWorker.js');
-  assert.match(worker, /import \{ groundWoods \} from '\.\/tamrielGround\.js';/);
+  assert.match(worker, /import \{ groundWoods, dropGroundCache \} from '\.\/tamrielGround\.js';/);   // TAMRIEL3: and the cache dropped when the trace lands
   assert.match(worker, /woods = m\.tamriel \? groundWoods\(w\) : w;/, 'composed on init, as the host composes');
   const ground = read('src/world/tamrielGround.js');
   for (const bad of ['document', 'globalThis.', 'fetch(', 'localStorage', 'getPref']) assert.ok(!ground.includes(bad), `pure: no ${bad}`);

@@ -26,6 +26,9 @@
 //    directly and can overlap a pump build mid-flight.
 // ═══════════════════════════════════════════════════════════════════
 
+import { setTamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the trace, for the fallback kernel
+import { setTamrielFit } from './tamrielFrame.js';
+import { dropGroundCache } from './tamrielGround.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and the promotion's grid, on either thread
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 
@@ -133,6 +136,18 @@ export class TerrainGenClient {
    *  whose lands they stand (world/landforms.js landformSites, landformClimates) - kept here for the same-thread kernel,
    *  COPIES posted to the worker (the RA1 law). Handed once as the world mounts, before its first job, so no pixel is
    *  ever cut without them; null clears either. */
+  /** TAMRIEL3: the picture's own land and the Bay's fit on it (world/tamrielLand.js, world/tamrielFrame.js) - set
+   *  HERE for the fallback kernel (the modules' own state) and posted to the worker, which sets its own copies the
+   *  same way; the ground's cache dropped on both. `trace` null puts the authored shape back. */
+  setTamriel({ trace = null, fit = null } = {}) {
+    setTamrielTrace(trace);
+    setTamrielFit(fit);
+    dropGroundCache();
+    if (!this._worker) return;
+    const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice() } : null;
+    this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer] : []);
+  }
+
   setLandformTables({ sites = null, climates = null } = {}) {
     this._sites = sites;
     this._climates = climates;
