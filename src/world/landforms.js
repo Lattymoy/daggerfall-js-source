@@ -190,6 +190,10 @@ export const LANDFORM_DIALS = Object.freeze({
   // AUDIT LANDFORMS III C1: A RIVER CUTS ITS VALLEY - how far from a painted river's or stream's centre line (samples) the
   // hills ease down to the deepest dale their land can stand: the water lies under every hill across its valley
   valley: Object.freeze({ river: 120, stream: 96 }),
+  // LANDFORM7: A ROAD EASES THE HILLS - within `road` samples of a road's centre line (`track` of a track's) the hills
+  // ease down to `keep` of themselves at the line (1 - smoothstep of the distance), so a road finds the smooth ground
+  // through the country rather than climbing every hill
+  ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),
   // LANDFORM4: a site's pull - it reaches `reach` samples past its rect plus `per` times its rect's half-extent, never
   // more than `most` (so no further than the pixels beside its own); `grid` the stride of the level's mean over its pixel.
   site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),
@@ -928,6 +932,42 @@ export function createLandforms({ woods, roads = null, sites = null, hills = tru
   return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim), rivers: cutRivers };
 }
 
+/** AUDIT LANDFORMS III C1, LANDFORM7: one network layer's arms from the pixels within `around` of (px, py), each a
+ *  segment from its pixel's centre to its edge, in world samples (x east, y north). */
+function armsAbout(net, px, py, around, span, half) {
+  const segs = [];
+  for (let qy = py - around; qy <= py + around; qy++) {
+    if (qy < 0 || qy >= MAP_H) continue;
+    for (let qx = px - around; qx <= px + around; qx++) {
+      if (qx < 0 || qx >= MAP_W) continue;
+      const mask = net[qy * MAP_W + qx];
+      if (!mask) continue;
+      const cx = qx * span + half, cy = (MAP_H - qy) * span + half;
+      for (const [bit, mdx, mdy] of DIR_DELTA) {
+        if (!(mask & bit)) continue;
+        const len = half * Math.sqrt(mdx * mdx + mdy * mdy);
+        segs.push({ ax: cx, ay: cy, ux: (mdx * half) / len, uy: (-mdy * half) / len, len });
+      }
+    }
+  }
+  return segs;
+}
+
+/** The squared distance from a world sample to the nearest of `segs`, `r2` if none is nearer - order-free, so a seam's
+ *  sample is one number from both pixels. */
+function nearestD2(segs, gx, gy, r2) {
+  let d2 = r2;
+  for (let si = 0; si < segs.length; si++) {
+    const sg = segs[si];
+    const vx = gx - sg.ax, vy = gy - sg.ay;
+    let t = vx * sg.ux + vy * sg.uy;
+    if (t < 0) t = 0; else if (t > sg.len) t = sg.len;
+    const qx = vx - sg.ux * t, qy = vy - sg.uy * t, q = qx * qx + qy * qy;
+    if (q < d2) d2 = q;
+  }
+  return d2;
+}
+
 /** One pixel's shaper: its paths' segments gathered from the 3x3 pixels round it, the sites about it, and the closure
  *  the kernel calls. */
 function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim) {
@@ -953,41 +993,42 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
   const valleys = [];
   if (hill !== NO_HILLS) {
     for (const [li, radius] of [[0, LANDFORM_DIALS.valley.stream], [1, LANDFORM_DIALS.valley.river]]) {
-      const net = nets[li];
-      if (!net) continue;
-      const segs = [];
-      for (let qy = py - 2; qy <= py + 2; qy++) {
-        if (qy < 0 || qy >= MAP_H) continue;
-        for (let qx = px - 2; qx <= px + 2; qx++) {
-          if (qx < 0 || qx >= MAP_W) continue;
-          const mask = net[qy * MAP_W + qx];
-          if (!mask) continue;
-          const cx = qx * span + half, cy = (MAP_H - qy) * span + half;
-          for (const [bit, mdx, mdy] of DIR_DELTA) {
-            if (!(mask & bit)) continue;
-            const len = half * Math.sqrt(mdx * mdx + mdy * mdy);
-            segs.push({ ax: cx, ay: cy, ux: (mdx * half) / len, uy: (-mdy * half) / len, len });
-          }
-        }
-      }
+      const segs = nets[li] ? armsAbout(nets[li], px, py, 2, span, half) : [];
       if (segs.length) valleys.push({ segs, radius, r2: radius * radius });
     }
   }
+  // LANDFORM7: A ROAD EASES THE HILLS. The hills rode into a road's profile whole, so a road climbed every one: on the
+  // real map the grade along a straight road at the 95th percentile rose from the bare land's 7.5% to 18.5% in the
+  // deserts, 7.2% to 15.6% in the haunted woods, 22.6% to 28.8% in the mountains. Within `ease` of a road's or a
+  // track's centre line the hills ease down to `keep` of themselves at the line, so the road and its verges lie on the
+  // smooth ground through the country and the hills rise again beside it. The arms are the 3x3's: a sample, or a
+  // profile point a sample reads (within two samples of a shared edge), lies nearer no arm of a pixel two off than 116
+  // samples. Before the valleys' carve, which takes the water to its dale whatever the road does.
+  const easeways = [];
+  if (hill !== NO_HILLS && LANDFORM_DIALS.ease.keep < 1) {
+    for (const [li, radius] of [[2, LANDFORM_DIALS.ease.track], [3, LANDFORM_DIALS.ease.road]]) {
+      const segs = nets[li] ? armsAbout(nets[li], px, py, 1, span, half) : [];
+      if (segs.length) easeways.push({ segs, radius, r2: radius * radius });
+    }
+  }
+  /** LANDFORM7: the share of the hills a world sample keeps beside the roads - `keep` on a centre line, all of it past
+   *  the way's reach; the nearest way's. */
+  const easeAt = (gx, gy) => {
+    let e = 1;
+    for (let vi = 0; vi < easeways.length; vi++) {
+      const v = easeways[vi], d2 = nearestD2(v.segs, gx, gy, v.r2);
+      if (!(d2 < v.r2)) continue;
+      const k = 1 - (1 - LANDFORM_DIALS.ease.keep) * (1 - smooth01(Math.sqrt(d2) / v.radius));
+      if (k < e) e = k;
+    }
+    return e;
+  };
   /** AUDIT LANDFORMS III C1: the hills `h` at a world sample carved down toward `deep` (the deepest dale its lands can
    *  stand) by its nearest painted water - never above `h`, never under `-deep`. */
   const carve = (gx, gy, h, deep) => {
     let out = h;
     for (let vi = 0; vi < valleys.length; vi++) {
-      const v = valleys[vi];
-      let d2 = v.r2;
-      for (let si = 0; si < v.segs.length; si++) {
-        const sg = v.segs[si];
-        const vx = gx - sg.ax, vy = gy - sg.ay;
-        let t = vx * sg.ux + vy * sg.uy;
-        if (t < 0) t = 0; else if (t > sg.len) t = sg.len;
-        const qx = vx - sg.ux * t, qy = vy - sg.uy * t, q = qx * qx + qy * qy;
-        if (q < d2) d2 = q;
-      }
+      const v = valleys[vi], d2 = nearestD2(v.segs, gx, gy, v.r2);
       if (!(d2 < v.r2)) continue;
       const k = smooth01(Math.sqrt(d2) / v.radius);
       const c = h * k - deep * (1 - k);
@@ -996,12 +1037,14 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
     return out;
   };
   const deepOut = new Float64Array(1);
-  /** LANDFORMS 1, 4, 5: the land at a world sample - DFU's height, the lift, the hills (carved into the painted water's
-   *  valleys) - pulled to the sites about it; `kept[0]` the share of the land's own left (so of its ground noise). */
+  /** LANDFORMS 1, 4, 5, 7: the land at a world sample - DFU's height, the lift, the hills (eased beside the roads,
+   *  carved into the painted water's valleys) - pulled to the sites about it; `kept[0]` the share of the land's own left
+   *  (so of its ground noise). */
   const landAt = (gx, gy, h, macro, low, fade, list) => {
     let hh = 0;
     if (hill !== NO_HILLS) {
       hh = hill(gx, gy, macro, low, lattice, deepOut);
+      if (easeways.length) hh *= easeAt(gx, gy);
       if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);
     }
     const l = h + reliefLift(low) * fade + hh;

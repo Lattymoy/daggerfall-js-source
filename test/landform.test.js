@@ -194,10 +194,10 @@ test('LANDFORM1-3: a seam is one number from both pixels - every shared edge and
 });
 
 test('LANDFORM2: a road is graded level across to the kernel\'s own macro height - the ground noise cut away, the land untouched past its verge', () => {
-  const px = 300, py = 250;
-  const cut = generateSamples(woods, px, py, H, LF);
-  const lifted = generateSamples(woods, px, py, H, RELIEF);
-  const macro = sampleKernel(woods, px, py, H, false, RELIEF);   // the lift on the two bicubic terms, no ground noise
+  const px = 300, py = 250;   // PIN MOVED (LANDFORM7): on the land without its hills, as the paths' laws are read - beside a road the hills are eased (test/landform7.test.js)
+  const cut = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const lifted = generateSamples(woods, px, py, H, FLAT);
+  const macro = sampleKernel(woods, px, py, H, false, FLAT);   // the lift on the two bicubic terms, no ground noise
   const { flat, bank, verge } = LANDFORM_DIALS.road;
   assert.deepEqual([flat, bank, verge, LANDFORM_DIALS.road.drop], [1.25, 2.5, 6, 0]);
   let cutAway = 0;

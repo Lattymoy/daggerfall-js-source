@@ -545,7 +545,59 @@ were the knee's walls (A1) alone. The roads ride them too: the grade along 50
 straight road pixels a climate at the 95th percentile, LANDFORM1-3 -> shipped,
 the deserts 6.6 -> 16.5%, the haunted woods 6.7 -> 15.6, the rainforest 9.1 ->
 13.9, the mountains 21.0 -> 34.0 (the worst a desert road at 25 degrees, a
-mountain track at 44).
+mountain track at 44) - which LANDFORM7 eases (below).
+
+WHERE THE STEEPNESS COMES FROM (measured for LANDFORM7, the final code): not
+the hills stacking on DFU's slopes. Over the 300 steepest pixels of the map (by
+their bytes' rise) the share of 51 m grades over 45 degrees is 2.19% on the bare
+land (LANDFORM1-3) and 2.53% with the hills, the steepest 79 degrees either way;
+over 300 random land pixels no grade passes 45 with the hills or without, and at
+every grade of the bare land the median grade with the hills is the bare's own
+(24.1 -> 24.0 degrees where the bare land stands 20-30). The hills add their
+roughness evenly; the steep ground is DFU's and the lift's, and a mountain's own
+ridgelines (24 degrees at the 99th percentile on flat ground, by design). The
+lens's town figures are the steepest sample over nine pixels. Hills shrunk by
+the land's slope would have taken the detail off the steep ground for a third of
+a point of grades over 45 degrees, and were not made; where the hills did bite
+was the roads.
+
+## LANDFORM7 - A ROAD EASES THE HILLS
+
+(2026-10-08, Mac, of the hills on the real ground: *"Do your thing"*.) A road's
+profile is the land with its hills, so a road climbed every hill the country
+wore: the grade along a straight road at the 95th percentile, on the real map
+and the vendored network, rose from the bare land's 7.5% to 18.5% in the
+deserts, 7.2 to 15.6 in the haunted woods, 8.4 to 15.5 in the mountain woods,
+8.5 to 14.7 in the rainforest, 22.6 to 28.8 in the mountains.
+
+THE LAW (`easeAt`, `LANDFORM_DIALS.ease`): within `road` samples (40, 256 m) of
+a road's centre line, `track` (28, 179 m) of a track's, the hills ease down to
+`keep` (0.35) of themselves on the line - 1 - smoothstep of the distance, the
+nearest way's where two reach - so a road and its verges lie on the smooth
+ground through the country and the hills rise again beside it, a road through a
+dune sea a gentle corridor, over a ridge a saddle. The road's profile reads the
+eased land like any sample, so the cut is the same cut on it. Before the
+valleys' carve (AUDIT LANDFORMS III C1), which takes a river to its dale
+whatever a road does: where a road crosses a river the water's floor is the
+floor without the road, to the bit. The arms are the 3x3's - a sample, or a
+profile point a sample reads (within two samples of a shared edge), lies nearer
+no arm of a pixel two off than 116 samples - and the nearest is order-free, so a
+seam is one number from both pixels. A pull, a level and the far ring take none
+of it (a site's level is one number however the network stands).
+
+ON THE REAL MAP (the freeware ARENA2 and the vendored network, in scratch): the
+grade along a straight road at the 95th percentile now 9.9% in the deserts
+(bare 7.5), 8.9 in the haunted woods (7.2), 10.8 in the mountain woods (8.4),
+10.1 in the rainforest (8.5), 24.1 in the mountains (22.6), 7.6 in Dak'fron
+(6.9); the woodlands, the subtropics and the swamps all but unmoved (their hills
+were already gentle along the roads). The steepest 51 m step along any road
+read, a mountain road at (602, 4): 37.5 degrees (36.2 before, 31.5 bare). THE
+SEAMS: 247,680 shared edge samples beside 240 road and track pixels and their
+neighbours - 0 differ. COST: a whole job on a road or track pixel 22.0 -> 22.2
+ms (median of 120, the arms of the 3x3 read once a pixel). The towns' band and
+the coast unmoved: the steepest 51 m grade round 3,444 towns over 35/45/55/63
+degrees 33/9/3/0, the steps over 10/20/30 m at 914 coastal sites 24/3/0. NOT
+SEEN IN THE RUNNING GAME - Mac's eye.
 
 ## THE SAVES: EVERY HEIGHT IN DFU'S FRAME
 
@@ -620,18 +672,19 @@ headless boot died on it before the push).
   restride's ghost rows, the gate's beacon, the far ring and the travel view, every record's height written in DFU's
   frame, and the re-stand. LANDFORM4-6: the sites and the climates made once at the location index's fill and handed to
   both kernels (`setLandformTables`), and carried by this thread's own landforms (`landformsHere` - the gate, the
-  re-stand) and its restride; the far ring and the travel view take neither (RESIDUES).
+  re-stand) and its restride; the far ring and the travel view take neither (RESIDUES). LANDFORM7 adds no wiring: the
+  ease reads the network every one of those landforms already holds.
 - `scenes/worldModes.js` - its own heights NOT WIRED, by design (AUDIT LANDFORMS C1): the heights the world host hands
   it are DFU's frame already, and its interior cache is in the building's frame. A legacy cache (raw scene positions,
   written before TERRAIN-SCALE1 carried the frame) is stood again through the world host's `restandSceneHeight` - the
   re-stand, the lift with it (AUDIT LANDFORMS II J13: this line said NOT WIRED alone) - and since LANDFORM4-6 the pull
-  and the hills with it, the same field.
+  and the hills with it, the same field (and LANDFORM7's eased hills beside a road).
 - `scenes/dungeonContext.js` - NOT WIRED, by design: the camps left standing outside reach its save through the world
   host's `outerCampsSave`, in DFU's frame. LANDFORM4-6 change nothing here: the pull and the hills are in the frame's
-  field like the lift.
+  field like the lift; LANDFORM7's ease the same.
 - `scenes/exterior.js` - NOT WIRED, by design: the fixed-city bench runs no terrain kernel at all (no tile pipeline,
   Roads.md's MODS AUDIT); it stands its one city on the location's flat ground - DFU's ground, which is the frame
-  every record is written in. LANDFORM4-6 the same: no kernel, no sites, no climates.
+  every record is written in. LANDFORM4-7 the same: no kernel, no sites, no climates, no roads eased.
 
 ## ON THE REAL WOODS.WLD (2026-10-07)
 
@@ -728,7 +781,9 @@ Roads network, in scratch, with the slice's own functions:
   120 samples round its centre line and a stream's 96 (AUDIT LANDFORMS III R1:
   this said "a third of a pixel" of the stilling, which reached half a pixel
   whole and faded out by 120), so when Basic Roads' arrays land after a pixel's
-  first build, the ground there moves by its valley as well as its channel. WHAT LIES ON THE GROUND RIDES THE NETWORK'S LANDING
+  first build, the ground there moves by its valley as well as its channel -
+  and beside a road or a track by its eased hills (LANDFORM7: within 40
+  samples of a road's line, 28 of a track's). WHAT LIES ON THE GROUND RIDES THE NETWORK'S LANDING
   (G1/G2, above) carries it; the counts measured there are the cuts' alone.
 - TWO BUILDS IN ONE ROOM (C2, below) now part by the hills and the pulls as
   well as the lift, until the older side reloads.

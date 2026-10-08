@@ -181,13 +181,15 @@ test('LANDFORM5: the land rolls - hills over every land sample, a pure function 
   for (let gx = 0; gx < 120000; gx += 9000) for (let gy = 0; gy < 60000; gy += 9000) spans.push(amp(gx, gy));
   spans.sort((a, b) => a - b);
   assert.ok(spans[spans.length - 1] > 3 * spans[0], `country varies (${spans[0].toFixed(1)} to ${spans[spans.length - 1].toFixed(1)} units across 13 km squares)`);
-  // the kernel takes them: a lowland pixel moves by them and a road is graded to them - its bed the land with its hills
+  // the kernel takes them: a lowland pixel moves by them and a road is graded to them - its bed the land with its hills,
+  // eased to LANDFORM7's `keep` of themselves on its centre line (PIN MOVED: they rode the bed whole)
   const flat = generateSamples(woods, 300, 250, H, createLandforms({ woods, roads: NET, hills: false })), roll = generateSamples(woods, 300, 250, H, createLandforms({ woods, roads: NET }));
-  const smooth = sampleKernel(woods, 300, 250, H, false, createLandforms({ woods }));
+  const smooth = sampleKernel(woods, 300, 250, H, false, createLandforms({ woods })), bare = sampleKernel(woods, 300, 250, H, false, createLandforms({ woods, hills: false }));
   let moved = 0;
   for (let y = 0; y <= 128; y += 4) {
     if (Math.abs(at(roll, 20, y) - at(flat, 20, y)) * UNIT > 1) moved++;
-    assert.ok(Math.abs(at(roll, 64, y) - smooth(64, y)) * UNIT < 1e-3, `y=${y}: the road's bed is the rolling land's macro`);
+    const eased = bare(64, y) + LANDFORM_DIALS.ease.keep * (smooth(64, y) - bare(64, y));
+    assert.ok(Math.abs(at(roll, 64, y) - eased) * UNIT < 1e-3, `y=${y}: the road's bed is the rolling land's macro, its hills eased`);
   }
   assert.ok(moved > 10, `off the road the land rolls (${moved} of 33)`);
   // along a painted river the hills are carved into its valley (AUDIT LANDFORMS III C1 - the first law stilled them to

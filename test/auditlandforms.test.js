@@ -34,6 +34,8 @@ const woods = load(WOODS_BYTES.slice());
 const NET = network();
 const LF = createLandforms({ woods, roads: NET });
 const RELIEF = createLandforms({ woods });
+// LANDFORM7: the paths' own laws on the land without its hills - beside a road the hills are eased (test/landform7.test.js)
+const LF_BARE = createLandforms({ woods, roads: NET, hills: false }), RELIEF_BARE = createLandforms({ woods, hills: false });
 const dry = new Uint8Array(NET.roads.length);
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
@@ -106,8 +108,8 @@ test('AUDIT LANDFORMS E1: a road on a hillside is cut into the high side and fil
   const net = network();
   for (let y = 400; y <= 420; y++) net.roads[y * MAP_WIDTH + 153] |= DIR.N | DIR.S;
   const px = 153, py = 410;
-  const cut = generateSamples(hill, px, py, H, createLandforms({ woods: hill, roads: net }));
-  const smooth = sampleKernel(hill, px, py, H, false, createLandforms({ woods: hill }));   // the lifted land, no ground noise
+  const cut = generateSamples(hill, px, py, H, createLandforms({ woods: hill, roads: net, hills: false }));   // PIN MOVED (LANDFORM7): the land without its hills, as the paths' laws are read
+  const smooth = sampleKernel(hill, px, py, H, false, createLandforms({ woods: hill, hills: false }));   // the lifted land, no ground noise
   const road = LANDFORM_DIALS.road, edge = road.flat + road.bank;
   for (const y of [30, 64, 96]) {
     const bed = at(cut, 64, y);
@@ -536,6 +538,7 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
       ocean: { low: 2, high: 24, upland: 1.6, shape: 'rolling' },
     },
     valley: { river: 120, stream: 96 },   // PIN MOVED (AUDIT LANDFORMS III C1)
+    ease: { road: 40, track: 28, keep: 0.35 },   // PIN MOVED (LANDFORM7)
     site: { reach: 40, per: 3, most: 124, grid: 8 },
   });
   // the law below is the paths' on the land without its hills (LANDFORM5's own pins hold the hills)
@@ -577,7 +580,7 @@ test('AUDIT LANDFORMS D12: the knee, said to the shaper itself - at or under it 
 });
 
 test('AUDIT LANDFORMS D5: the road bed is the macro height along the whole arm - the hand-over at each pixel edge included', () => {
-  const cut = generateSamples(woods, 300, 250, H, LF), macro = sampleKernel(woods, 300, 250, H, false, RELIEF);
+  const cut = generateSamples(woods, 300, 250, H, LF_BARE), macro = sampleKernel(woods, 300, 250, H, false, RELIEF_BARE);   // PIN MOVED (LANDFORM7)
   for (let y = 0; y <= 128; y++) assert.ok(Math.abs(at(cut, 64, y) - macro(64, y)) * UNIT < 1e-3, `y=${y}`);
 });
 
@@ -598,7 +601,7 @@ test('AUDIT LANDFORMS D4: the kernel hands the shaper its ground noise - past th
 });
 
 test('AUDIT LANDFORMS D9: the diagonal is graded between its profile points - a sample half a step along it lies halfway', () => {
-  const s = generateSamples(woods, 293, 241, H, LF), m = sampleKernel(woods, 293, 241, H, false, RELIEF);
+  const s = generateSamples(woods, 293, 241, H, LF_BARE), m = sampleKernel(woods, 293, 241, H, false, RELIEF_BARE);   // PIN MOVED (LANDFORM7)
   for (const k of [12, 20, 30, 40, 50, 80, 90, 100, 110]) {
     const half = (m(k, k) + m(k + 1, k + 1)) / 2;
     assert.ok(Math.abs(at(s, k, k + 1) - half) * UNIT < 1e-3, `(${k},${k + 1})`);
