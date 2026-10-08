@@ -1,0 +1,144 @@
+name: Server post
+
+# SERVER-POST (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause
+# menu. It should show notifications whenever players have a message. First use is to utilize it for players being
+# granted items.") - A MESSAGE FROM THE DEVELOPERS TO NAMED ACCOUNTS, WITH AN ITEM IN IT IF YOU LIKE. Nothing a player
+# can do writes the server's post (server-account/src/post.js), so a send is written here, by hand, from the Actions tab:
+#
+#   1. with apply off (the default): a DRY RUN. The run's summary names the accounts the names found and whether each
+#      already holds this send. A name that finds no registered account fails the run. Nothing is written.
+#   2. read it; then run again with apply on. One piece to each, once a send an account: the same send run twice
+#      sends once.
+#
+# The item is NAMED, never typed: tools/sendServerPost.mjs mints it with the game's own code (POST_ITEMS - the Hourlock
+# as its drop mints it). Each player claims it from the mailbox beside the hourglass into the online character they
+# are playing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      handles:
+        description: "The players' usernames, comma-separated (case does not matter)"
+        required: true
+        type: string
+      batch:
+        description: "This send's name - lower-case words and hyphens (hours-first-hourlock). Once a name an account."
+        required: true
+        type: string
+      item:
+        description: "What it holds"
+        required: true
+        default: none
+        type: choice
+        options:
+          - none
+          - hourlock
+      subject:
+        description: "Its subject (up to 80 characters)"
+        required: true
+        type: string
+      message:
+        description: "Its words (up to 1200 characters; \\n for a new line)"
+        required: true
+        type: string
+      apply:
+        description: "Send it. Leave it off for a dry run that only reports."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+      # The inputs reach the scripts as ENVIRONMENT, never pasted into them: an input spliced into a `run:` line is a
+      # shell command anybody who can start the run can type (account-recovery.yml's law).
+      HANDLES: ${{ inputs.handles }}
+      BATCH: ${{ inputs.batch }}
+      ITEM: ${{ inputs.item }}
+      SUBJECT: ${{ inputs.subject }}
+      MESSAGE: ${{ inputs.message }}
+      APPLY: ${{ inputs.apply }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # The tool checks every input and mints the item - the statements are the tested ones (test/serverpost_send.test.js),
+      # not ones written again here.
+      - name: Write the statements
+        run: |
+          set -euo pipefail
+          node tools/sendServerPost.mjs --names "$HANDLES" > "$RUNNER_TEMP/names.txt"
+          node tools/sendServerPost.mjs --look "$HANDLES" "$BATCH" > "$RUNNER_TEMP/look.sql"
+          node tools/sendServerPost.mjs --sql "$HANDLES" "$BATCH" "$ITEM" "$SUBJECT" "$MESSAGE" > "$RUNNER_TEMP/send.sql"
+
+      # The deploy's own resolution (account-deploy.yml), read-only: this job never creates a database.
+      - name: Resolve the database id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          id=$($WRANGLER d1 list --json | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::there is no database named $DB_NAME"
+            exit 1
+          fi
+          echo "::add-mask::$id"
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || { echo "::error::$toml no longer carries the sentinel"; exit 1; }
+          sed -i "s|\"$sentinel\"|\"$id\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+
+      - name: Read the recipients
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          out=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$(cat "$RUNNER_TEMP/look.sql")")
+          rows=$(echo "$out" | jq -c '[.[] | (.results // [])[]]')
+          missing=$(jq -R -s -c --argjson rows "$rows" 'split("\n") | map(select(length > 0)) - ($rows | map(.handle_lc))' "$RUNNER_TEMP/names.txt")
+          if [ "$(echo "$missing" | jq -r 'length')" != "0" ]; then
+            echo "::error::no registered account is named $(echo "$missing" | jq -r 'join(", ")') - nothing was sent"
+            exit 1
+          fi
+          echo "$rows" | jq -r --arg batch "$BATCH" --arg item "$ITEM" --arg subject "$SUBJECT" '"**\($subject)** (\($batch)), holding: \($item)", "",
+            "| player | already sent |", "|---|---|", (.[] | "| \(.handle) | \(if .sent > 0 then "yes" else "" end) |"), ""' >> "$GITHUB_STEP_SUMMARY"
+          if [ "$APPLY" != "true" ]; then
+            { echo "**A dry run: nothing was sent.** Run again with apply on to send it."; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # RETURNING names the pieces the statement wrote; a player who already holds this send is skipped, never sent twice.
+      - name: Send the post
+        if: env.APPLY == 'true'
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          out=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$(cat "$RUNNER_TEMP/send.sql")")
+          sent=$(echo "$out" | jq -r '[.[] | (.results // [])[]] | length')
+          named=$(grep -c . "$RUNNER_TEMP/names.txt")
+          echo "**Sent.** $sent of $named players were sent it now; the rest already held it." | tee -a "$GITHUB_STEP_SUMMARY"
