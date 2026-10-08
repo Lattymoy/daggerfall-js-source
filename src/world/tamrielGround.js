@@ -23,7 +23,8 @@
 // band toward SNOW_BYTE by its gain; a lattice hash of ±2 keeps a plain from reading as a contour. Pure, deterministic,
 // cached a pixel (the stream asks the same few hundred pixels many times).
 // ═══════════════════════════════════════════════════════════════════
-import { provinceAt, coastDistance, rangeLift, provinceByKey } from './tamrielGeography.js';
+import { rangeLift, provinceByKey } from './tamrielGeography.js';
+import { provinceKeyAt, coastDistanceAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
 import { bayToPicture, inBay, BAY_W, BAY_H } from './tamrielFrame.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 
@@ -50,8 +51,8 @@ export function groundHash(x, y, salt = 0x51ed) {
 
 /** THE AUTHORED HEIGHT at a picture-grid point, in WOODS bytes: 0 at sea, SHORE_BYTE and up on land. */
 export function authoredHeightByte(px, py, noise = 0) {
-  if (!provinceAt(px, py)) return 0;
-  const inland = Math.min(1, coastDistance(px, py) / PLAIN_REACH);
+  if (!provinceKeyAt(px, py)) return 0;
+  const inland = Math.min(1, coastDistanceAt(px, py) / PLAIN_REACH);
   let h = SHORE_BYTE + (INLAND_BYTE - SHORE_BYTE) * inland + noise;
   const lift = rangeLift(px, py);
   if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);
@@ -87,8 +88,8 @@ export function tamrielHeightByte(x, y) {
 /** The climate at a Bay-coordinate pixel beyond the Bay: the province's, or the Ocean's at sea. */
 export function tamrielClimateAt(x, y) {
   const [px, py] = bayToPicture(x + 0.5, y + 0.5);
-  const p = provinceAt(px, py);
-  return p ? (provinceByKey(p.key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;
+  const key = provinceKeyAt(px, py);
+  return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;
 }
 
 /** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: a

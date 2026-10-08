@@ -2,8 +2,8 @@
   {
     "name": "TAMRIEL1-offset-scaled",
     "file": "src/world/tamrielFrame.js",
-    "old": "return [x + BAY_ORIGIN.x, y + BAY_ORIGIN.y];",
-    "new": "return [x * 1.01 + BAY_ORIGIN.x, y + BAY_ORIGIN.y];",
+    "old": "return [x + _fit.ox, y + _fit.oy];",
+    "new": "return [x * 1.01 + _fit.ox, y + _fit.oy];",
     "tests": [
       "test/tamriel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TAMRIEL1-picture-to-bay-forgets-the-origin",
     "file": "src/world/tamrielFrame.js",
-    "old": "return [px * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.x, py * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.y];",
-    "new": "return [px * PIXELS_PER_PICTURE_UNIT - BAY_ORIGIN.x, py * PIXELS_PER_PICTURE_UNIT];",
+    "old": "return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];",
+    "new": "return [px * _fit.ppu - _fit.ox, py * _fit.ppu];",
     "tests": [
       "test/tamriel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TAMRIEL1-frame-in-bay-unsigned",
     "file": "src/world/tamrielFrame.js",
-    "old": "return { x0, y0, w: TAMRIEL_W, h: TAMRIEL_H };",
-    "new": "return { x0: -x0, y0, w: TAMRIEL_W, h: TAMRIEL_H };",
+    "old": "return { x0, y0, w, h };",
+    "new": "return { x0: -x0, y0, w, h };",
     "tests": [
       "test/tamriel.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "TAMRIEL1-cities-inside-the-bay-kept",
     "file": "src/ui/tamrielInk.js",
-    "old": ".filter((c) => !inBay(c.x, c.y));",
-    "new": ";",
+    "old": ".filter((c) => c && !inBay(c.x, c.y));",
+    "new": ".filter((c) => c);",
     "tests": [
       "test/tamriel.test.js"
     ],
@@ -222,7 +222,7 @@
   {
     "name": "TAMRIEL1-one-model-a-call",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (!ink) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
+    "old": "if (!ink || ink.version !== v) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
     "new": "ink = buildTamrielInk({ bayCoast: key });",
     "tests": [
       "test/tamriel.test.js"
