@@ -1823,6 +1823,108 @@ causes, each fixed at its root, and the one risk the first fix made, closed (`te
   86 records naming those two files judged again, all dead; and after the sight, the 106 records on `livingIndoors.js`
   judged again, all dead. AUDIT LW-ROOMS's pins and re-judge: `Audit-LW-Rooms.md`.
 
+## LW-STIR - the street stirs (2026-10-08)
+
+Mac: "While we're at it. I say we improve the living world and go deeper. Having spontaneous interactions, like a
+traveller being hostile with a guard and other smaller details that make the world feel more alive". The street's people
+stood alone or talked in circles (LW-TALK), and greeted the player; nobody spoke to anyone in any other way, and the
+street had no voice of its own. LW-STIR deals THE DAY'S INCIDENTS AT EACH SPOT from the plans - every stay of the day at
+it, the spot's key, the day and the clock's rate (`systems/livingWorld/stir.js spotIncidents`) - and THE SMALL VOICES
+from the plan entry one is in and the clock (`smallVoice`): every reader alike, nothing sent. The words are
+`systems/livingWorld/lines.js`'s (GATE_SCRIPTS, CHALLENGE_SCRIPTS, QUARREL_SCRIPTS, BREAK_UP_LINES, HAGGLE_SCRIPTS,
+PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
+
+- **The gate.** Mac's own: a stranger come in at a gate the watch keeps halts there - GATE_SHARE (0.6) of the arrivals,
+  a party together (`gateHalt`: the gate's, the day's and the minute's draw) - as long as the gate's longest word
+  (GATE_LINES) whole in one round of the gate's, waiting for the next round's start when theirs is too short (their
+  turn). The plans hold it (`dayPlan.js schedule`: a `gate` stay at the exit before the walk in, a kind of the street's)
+  where one of the town's watch posted at that gate keeps it through the halt (`livingTown.js _gateHalt`; WATCH-DAY: a
+  gate's post for each nine blocks past nine - a town of nine blocks posts none and halts nobody), never off a ship. The
+  post questions one of the party, the draw's: their answer by their humour that day (`humourOf`: civil, curt or
+  hostile by HUMOURS - a stranger's 0.5, 0.3 and 0.2, a sellsword's and a sailor's 0.3, 0.35 and 0.35), the hostile
+  shouting. Found first: the watch never met a stranger. A patrol keeps its district all shift (WATCH-DAY's beat) and the
+  strangers stand at the square of an afternoon and the market of a morning - in two days of Daggerfall, Wayrest and
+  Ripmarket with twelve visitors a day, not one stop of a patrol's met one; the four gates of a city are posted round the
+  clock, and every stranger comes in by one.
+- **The watch on its rounds.** A stop of a patrol's where a stranger stands - CHALLENGE_SHARE (0.5) of the stops, the
+  stranger the draw's - stops them (CHALLENGE_SCRIPTS); the second of a pair never speaks for it, a stranger is stopped
+  once a day at a spot, and one halted at a gate is the gate's. Rare, by the districts: one in three days of three
+  cities.
+- **Two of the town.** One of the town at a spot falls out with another of it there, the draw's: QUARREL_SHARE (0.03) of
+  their stays there, QUARREL_EVENING (4) times it from six between two who drink (DRINKER); never a stranger, the watch,
+  nor one working a stall or begging. Each one's own draw, so a busy spot's falling out grows with its people, not their
+  pairs: dealt by the pair, an evening's spot of ten in the synthetic town fell out three times in half an hour. The
+  watch on duty standing there through it steps in (BREAK_UP_LINES), the one who began it having the last word. One come
+  to a spot with stalls haggles at one of them (HAGGLE_SHARE 0.2), at the stall - one who does not may still fall out
+  there (the first cut's haggle sent every one at a spot with a stall past the quarrel's draw); a beggar asks one
+  standing near (PLEA_SHARE 0.1 of each - at 0.2 one more on the open town's square stood two a metre apart across a
+  walker's lane, past LW-SPACE's measure: recorded below). One a day between the same two at a spot.
+- **One at a spot a round, the round's places as they were.** An incident falls whole in a round of its spot
+  (`meetups.js spotRound`) - from the next round's start when the one they meet in is too short - one at a spot a round,
+  the gate's first. The street takes its two out of the round's circles (their places there left empty, as the struck
+  down's: the round's deal and its circles' places are the ones they were) and stands them with those alone at the spot
+  (`_spaceAlone`): the one who keeps their stand - the watch at its post, a beggar, a stall's keeper, else the one there
+  first (`anchor`) - where they stand, the other FACE_M (CIRCLE_APART, 1.25 m) before them (`meetups.js besideStand`,
+  `aloneStands`' `beside`: at their own turn, or just after the one they come to where that one comes later), the two
+  turned to each other. The first cut laid the two as one more circle after the round's: when one began within a round
+  the places of those alone at the spot moved (LW-SPACE's "kept their place as others came" caught it), and a stall's
+  keeper left the stall for the pair's place, the two walking through each other on the way (the open town's walkers
+  inside another 0.34% -> 0.48%, LW-SPACE's limit 0.5%). Laid so, 0.34%, as before LW-STIR; and the post keeps their stand
+  to the centimetre (a stranger halted at a gate was bound for it since their time away began, laid before the post -
+  bound since they came now: `_spaceAlone` reads no stay out of town).
+- **Said aloud.** An incident's line every LINE from its first, by its part (`stirLine`: a and b its two, g the watch
+  stepping in), said while both its two stand on this street (as a circle's are); a shouted line a shout (`speech` kind
+  `shout`); the watch stepping in by its own voice (`_stirVoice`). While it is shouted (`stirLoud`) the spot's circles
+  hush and its others turn to look (`_stirAt`, `where`: a post keeps the road).
+- **The small voices** (`smallVoice`, each now and then on their own draws of the clock, a word up VOICE_S): the night
+  watch on duty calls the hour (WATCH_HOURS, nine at night to five; CALL_SHARE 0.6 of the hours, within CALL_SPREAD_MIN
+  of it, by the weather - WATCH_CALLS); a stall cries its wares eight to six (CRY_EVERY_MIN, CRY_SHARE); a beggar calls
+  (BEG_EVERY_MIN, BEG_SHARE); one who drinks deep (SONG_DRINK 0.8) sings on a walk from a tavern's door nine to three
+  (SONG_EVERY_MIN, SONG_SHARE 0.35 - the first cut's 0.7 and 0.5 sang 150 to 250 songs a night in a city).
+- **Measured** (`stir.js` over the day's plans, three days; twelve visitors a day of another town in at the four gates
+  through the day; a day's count):
+
+  | town (its people) | at the gate | a patrol's stop | quarrels | haggles | pleas | hostile of the strangers | songs | stall cries | beggar calls | the hour called |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | synthetic 3 x 3 (151) | - (no post) | - | 5.3 | 13 | - | - | 83 | 283 | - | 5 |
+  | Daggerfall (329) | 9 | 0 | 6.3 | 11 | 1 | 7 of 27 | 65 | 558 | 61 | 30 |
+  | Wayrest (329) | 9 | 0.3 | 3.3 | 15 | 1 | 7 of 28 | 80 | 594 | 97 | 24 |
+  | Ripmarket (317) | 6.7 | 0 | 7 | 19 | 3.3 | 4 of 20 | 105 | 739 | 149 | 23 |
+
+  Every halt questioned (Daggerfall, four days of twelve: 36 halted, 36 questioned, each by the post keeping its gate);
+  every incident's two FACE_M apart in the middle of it. A word lasts some 25 real seconds.
+- **Recorded, not changed.** How many strangers a town has a day is the roads' (LW3's trips) - twelve is the measure's.
+  The step aside (LW-SPACE's `_dodge`) crosses its own line through one standing on it where the only side free is the
+  far one - two standing a metre apart across a walker's lane, as the plea at 0.2 stood them: LW-SPACE's to settle.
+- **The four hosts.** LW-STIR is the living town's (`stir.js`, `lines.js`, `livingTown.js`, `meetups.js`,
+  `dayPlan.js`): `scenes/world.js` - WIRED: its line layer passes each line's kind through (`livingLinePoints`: a shout
+  a shout, a song a song - `ui/navalHud.js` draws each its own way; the street's lines were all talk);
+  `scenes/worldModes.js` - FLAGGED: no incident indoors yet (a room's talk is LW8b's, all talk); `scenes/exterior.js` -
+  FLAGGED as LW2 has it (no living town); `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwstir_street.test.js` (11: the gate - the halt's share, length and round, the plan's stay, the
+  post's word to one of a party, none without a post through it, off duty, nor one of the town, the gate's word first in
+  its round; the town at its gates - the plans' halt where a post keeps the gate, none where a post would leave within
+  it, nor in a town of nine blocks, nor off a ship, every halt's word by its post, the post's stand kept, the two turned
+  to each other, the party turned to the shouting; the watch on its rounds - its share, the second of a pair, the town's
+  own, once a day, the one there first; two of the town - the quarrel's day, evening and drinkers, by the person (ten
+  fall out some five times as two, not forty-five), never a stranger, the watch, a stall or a beggar, the watch
+  stepping in, the haggle and the plea at their stands, once a day, one a round, any order; the humour and the words;
+  the small voices; on the street - out of the circles, FACE_M before, SPACE_M from the rest, said by its speaker while
+  both stand, shouted, the hush, the turn, the watch's own voice, a circle's gather waiting for none of the two; the
+  places before; every reader alike; the host; the game's own cities, where ARENA2_PATH names the data) and
+  `tools/mutants/lwstir.json` (55, all dead). PIN MOVED:
+  `lwtalk_town` (the facing at half past six counts the two of an incident, turned to each other - an evening's quarrel
+  takes its two out of their circles; the census keeps an incident's two whole, `keepUnits`) and `lwspace_street` (a
+  round's places: an incident's two are the round's too).
+  `tools/mutants/lw1.json` LW1-fields-seen, `lwfix3.json` LW-FIX3-walk-held, `lwspace.json` LW-SPACE-alone-space-unread,
+  -alone-earlier-unkept, -host-circles-not-taken, -host-since-the-stay and -host-circles-laid-one-by-one, `lwtalk.json`
+  LW-TALK-not-dropped and -keep-street-first and `watchday.json` WATCH-DAY-post-not-out and -post-faces-in re-aimed by
+  content, each dead. The 1,164 records of the 37 lists on the files LW-STIR touched (`livingTown.js`, `meetups.js`,
+  `dayPlan.js`, `lines.js`) re-judged: 1,156 dead, 7 equivalent as recorded, and one it left unkilled -
+  `lwspace.json` LW-SPACE-alone-turns-untried, whose pin was the street's own measure of bodies inside another, its
+  scene moved by the incidents: pinned now in `lwspace_street`'s aloneStands (one whose own place is taken stands on
+  another bearing), dead; `lwtalk.json` and `lwstir.json` judged again after the last edits, all dead.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

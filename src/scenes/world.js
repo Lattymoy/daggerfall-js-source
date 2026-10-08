@@ -9299,7 +9299,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!at.front || at.x < -80 || at.x > w + 80 || at.y < -40 || at.y > h + 40) continue;
         const key = `live:${id}`;
         if (crewSight.blocked(player.collider, eye, key, over)) continue;   // behind a wall, unheard
-        points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
+        points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: l.kind ?? 'talk', distance: d });   // LW-STIR: a shout, a song
       }
     }
     // LW3: the road's - a party's own talk, a traveller's word to the player (their bodies stand in the world's frame)

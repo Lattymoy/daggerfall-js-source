@@ -2,8 +2,8 @@
   {
     "name": "LW-SPACE-alone-space-unread",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);\n  for (const id of ids) {",
-    "new": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => x === x && z === z;\n  for (const id of ids) {",
+    "old": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);\n  /** @type {Map<string, string[]>} those waiting",
+    "new": "  const free = (/** @type {number} */ x, /** @type {number} */ z) => x === x && z === z;\n  /** @type {Map<string, string[]>} those waiting",
     "tests": [
       "test/lwspace_street.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW-SPACE-alone-earlier-unkept",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "    got ??= own;\n    out.set(id, got);\n    placed.push(got);",
-    "new": "    got ??= own;\n    out.set(id, got);",
+    "old": "    out.set(id, got);\n    placed.push(got);\n    for (const w of waiting",
+    "new": "    out.set(id, got);\n    for (const w of waiting",
     "tests": [
       "test/lwspace_street.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW-SPACE-host-circles-not-taken",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      const ids = who.map((w) => w.id), taken = circled.get(k) ?? [];",
-    "new": "      const ids = who.map((w) => w.id), taken = [];",
+    "old": "      const ids = who.map((w) => w.id), taken = circled.get(k) ?? [], by = beside.get(k) ?? null;",
+    "new": "      const ids = who.map((w) => w.id), taken = [], by = beside.get(k) ?? null;",
     "tests": [
       "test/lwspace_street.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "LW-SPACE-host-since-the-stay",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        while (j > 0 && plan[j - 1].at === e.at && plan[j - 1].kind !== 'walk') j--;",
+    "old": "        while (j > 0 && plan[j - 1].at === e.at && plan[j - 1].kind !== 'walk' && isOutdoor(plan[j - 1])) j--;",
     "new": "        while (j < 0) j--;",
     "tests": [
       "test/lwspace_street.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "LW-SPACE-host-circles-laid-one-by-one",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id)) this._inCircle.set(m.id, { circle, place: places[i], spot }); });",
-    "new": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id)) this._inCircle.set(m.id, { circle, place: circleStands(spot, dealt, this._street)[i], spot }); });",
+    "old": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id) && !inInc(m.id)) this._inCircle.set(m.id, { circle, place: places[i], spot }); });",
+    "new": "        dealt.members.forEach((m, i) => { if (!absent.has(m.id) && !inInc(m.id)) this._inCircle.set(m.id, { circle, place: circleStands(spot, dealt, this._street)[i], spot }); });",
     "tests": [
       "test/lwspace_street.test.js"
     ]

@@ -78,10 +78,12 @@ test('LW-TALK the facing: a resident standing keeps the way they face - the walk
   const seats = run(t, 20);
   let checked = 0;
   for (const s of seats) {
-    const c = t.town._inCircle.get(s.person.living.id);
+    // LW-STIR: PIN MOVED - and the two of an incident, toward each other (an evening's quarrel takes its two out of
+    // their circles: at half past six, three in circles stood in view)
+    const c = t.town._inCircle.get(s.person.living.id) ?? t.town._inStir.get(s.person.living.id);
     if (!c || s.person.moving) continue;
     const o = mobileOrientation(s.person.yaw, s.person.pos, t.eye);
-    assert.deepEqual([s.out.record, s.out.flip], [MOVE_RECORDS[o], MOVE_FLIPS[o]], `${s.person.living.id}: toward their circle`);
+    assert.deepEqual([s.out.record, s.out.flip], [MOVE_RECORDS[o], MOVE_FLIPS[o]], `${s.person.living.id}: toward their circle (or the other of their incident)`);
     checked++;
   }
   assert.ok(checked >= 4, `circles standing (${checked})`);
@@ -269,7 +271,7 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
     const two = { k: 'two' }, of2 = (id) => (id === 'h' || id === 'i' ? two : undefined);
     assert.deepEqual([4.5, 6].map((at) => [...keepUnits([{ res: g, d: 2 }, { res: h, d: at }, { res: i, d: at + 1 }], of2, 2)].map((r) => r.id).sort().join('')), ['hi', 'g'],
       'a circle within the ring of one alone before them; beyond it, after');
-    assert.match(rd('src/systems/livingWorld/livingTown.js'), /const keep = keepUnits\(wanted, \(id\) => this\._inCircle\.get\(id\)\?\.circle, this\.maxPopulation\);/, 'the census keeps by it');
+    assert.match(rd('src/systems/livingWorld/livingTown.js'), /const keep = keepUnits\(wanted, \(id\) => this\._inCircle\.get\(id\)\?\.circle \?\? this\._inStir\.get\(id\)\?\.pair, this\.maxPopulation\);/, 'the census keeps by it');   // LW-STIR: PIN MOVED - an incident's two kept whole too
   }
   // stepped past them (no arrival), out of the player's sight: their rows to the nearer
   {
