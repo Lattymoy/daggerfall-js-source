@@ -32,7 +32,7 @@ import { TEMPLATES, isPotion } from './useItem.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 import { insideUnitCircle } from '../world/passiveFish.js';   // Random.insideUnitCircle's one home
 import { rangeFloat } from './unleveledLoot.js';   // Random.Range(float, float)'s
-import { planStore, applyTransfer } from './itemTransfer.js';
+import { planStore, applyTransfer, isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from './itemTransfer.js';
 import { lockRefuses, lockedText } from './itemLock.js';
 import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from './itemBound.js';
 import { bagMayLeave } from './materialsBag.js';
@@ -516,8 +516,9 @@ export const diedRecently = (entity, at = Date.now()) => { const t = entity && t
 // ---- the shift-drop's refusals ---------------------------------------------------------------------------------------
 
 /** LocalItemLeftClickPrefix [IL_0565]: ItemGroups.Transportation (23) - DFU's "cannotRemoveItem" (its one home,
- *  systems/createItem.js). */
-export const shiftDropRefusal = (item) => (item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT } : null);
+ *  systems/createItem.js). KEEP-SPELLBOOK (the port's own, systems/itemTransfer.js): and the character's spellbook. */
+export const shiftDropRefusal = (item) => (item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }
+  : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null);
 
 /**
  * THE SHIFT-DROP, ONE LAW FOR BOTH PACKS (ui/nativeInventory.js, ui/enhancedInventory.js): QueueInventoryPhysicalDrop

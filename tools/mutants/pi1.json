@@ -272,8 +272,8 @@
   {
     "name": "PI1-transport-refused-silently",
     "file": "src/systems/physicalItems.js",
-    "old": "(item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT } : null)",
-    "new": "null",
+    "old": "(item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }",
+    "new": "(false ? { text: CANNOT_REMOVE_ITEM_TEXT }",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]

@@ -1,5 +1,6 @@
 // PVPDUNGEONS + the owner's game changes (2026-10-08): the pure laws under them - the zone's halls (where they stand and
-// what stands in them), Heal Curse, the rest's warning, the hands swapped, and Gothway Garden's side boards.
+// what stands in them), Heal Curse, the rest's warning, the hands swapped, Gothway Garden's side boards, and the spellbook
+// kept (KEEP-SPELLBOOK).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildWildMask, WILD_REGION } from '../src/systems/wildZone.js';
@@ -10,6 +11,14 @@ import { restAilmentLines } from '../src/systems/restWarning.js';
 import { readFileSync } from 'node:fs';
 import { equipItem, swapHands, canSwapHands, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../src/systems/gothwayBoards.js';
+import { planStore, REFUSAL, isKeptSpellbook } from '../src/systems/itemTransfer.js';   // KEEP-SPELLBOOK
+import { shiftDrop } from '../src/systems/physicalItems.js';
+import { setLocked } from '../src/systems/itemLock.js';
+import { assignStartingGear } from '../src/systems/startingGear.js';
+import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
+import { mountEnhancedTrade } from '../src/ui/enhancedTrade.js';
+import { tabAccepts } from '../src/ui/nativeInventory.js';
+import { withDom } from './invdrag.mjs';
 
 const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy + 0.15 * Math.sin(x / 5) < 1; };
 const mask = buildWildMask({ width: 1000, height: 500, regionAt: (x, y) => (blob(x, y) ? WILD_REGION : 3) });
@@ -238,4 +247,85 @@ test('WILD-KEEPOUT: Wrothgaria and the ground about it are never the zone - the 
     shifts.add(w1 - w0);
   }
   assert.ok(Math.max(...shifts) - Math.min(...shifts) <= 1, 'one shift all along the west (a pixel for a row\'s own bays)');
+});
+
+// ── KEEP-SPELLBOOK (2026-10-08, the owner: "a player dropped his spellbook apparently") ──
+
+/** A new character's spellbook, off the producer that hands it over (startingGear.js, the bag's first piece). */
+const newSpellbook = () => {
+  const e = { items: [] };
+  assignStartingGear(e, { rolls: () => 0, torchesFromItems: false });
+  const book = e.items.find((it) => it.group === 'MiscItems' && it.templateIndex === 132);
+  assert.ok(book, 'the producer hands over a spellbook');
+  return { e, book };
+};
+
+test('KEEP-SPELLBOOK the law: the spellbook never leaves the pack - not to the ground, a pile, a body or a chest, not by the shift-drop, not even asked dry - and the own wagon still takes it; a quest\'s book is the quest\'s, and the rest of the bag goes as ever (mutants: the store rung gone, the wagon refused, the shift-drop unguarded, the quest\'s book kept)', () => {
+  const { e, book } = newSpellbook();
+  assert.equal(REFUSAL.spellbook.text, 'Your spellbook never leaves you.', 'the words, as prose');
+  assert.equal(planStore(book, { remote: [] }).refusal, REFUSAL.spellbook, 'the ground, a pile, a body, a chest');
+  assert.equal(planStore(book, { remote: [], dryRun: true }).refusal, REFUSAL.spellbook, 'a view asking whether to draw the button');
+  assert.equal(planStore(book, { remote: [], usingWagon: true }).ok, true, 'the wagon is still mine');
+  let dropped = null;
+  const r = shiftDrop(book, { items: e.items, entity: e, drop: (list) => { dropped = list; } });
+  assert.equal(r.refusal?.text, REFUSAL.spellbook.text, 'the shift-drop says why');
+  assert.ok(e.items.includes(book) && dropped === null, 'and the book stays in the pack');
+  setLocked(book, true);
+  assert.equal(shiftDrop(book, { items: e.items, entity: e, drop: () => {} }).refusal?.text, REFUSAL.spellbook.text,
+    'a locked book says its own reason, not "unlock it first" - unlocking it would not let it go');
+  setLocked(book, false);
+  const quests = { ...book, questItem: true };
+  assert.equal(isKeptSpellbook(quests), false, 'a quest\'s book is not the character\'s');
+  assert.notEqual(planStore(quests, { remote: [], dryRun: true }).refusal, REFUSAL.spellbook);
+  const shirt = e.items.find((it) => it !== book && it.group === 'MensClothing');
+  assert.equal(planStore(shirt, { remote: [] }).ok, true, 'a shirt drops as ever');
+});
+
+const SB_ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
+const sbHooks = (mode, bag) => ({
+  mode, shelfItems: () => [], packItems: () => bag, entity: { items: bag }, accepts: () => true, enchanted: () => true,
+  priceCtx: () => ({ quality: 10, skills: { mercantile: 50, personality: 50 } }), gold: () => 1000,
+  rows: (id) => [{ text: `#${id}`, center: true }], weight: () => ({ carriedWeightKg: 0, maxEncumbranceKg: 1e9 }),
+  commit: () => {}, icons: SB_ICONS,
+});
+const SB_PAGES = Object.freeze({ weapons: 'Weapons & Armor', magic: 'Magic Items', clothing: 'Clothing & Misc', ingredients: 'Ingredients' });
+const sbPageOf = (item) => Object.keys(SB_PAGES).find((t) => tabAccepts(item, t));
+
+test('KEEP-SPELLBOOK the counters: the classic counter\'s Sell and Sell Magic refuse the spellbook in words and keep it, a shirt sells; the enhanced counter the same, quoting it no price (mutants: the classic counter sells it; the enhanced counter sells it; the enhanced counter quotes it)', () => {
+  for (const mode of ['Sell', 'SellMagic']) {
+    const { e, book } = newSpellbook();
+    const bag = e.items;
+    const shirt = bag.find((it) => it !== book && it.group === 'MensClothing');
+    const pick = (it) => {
+      const w = new NativeTradeWindow(sbHooks(mode, bag));
+      w.tab = sbPageOf(it);
+      const at = w.localList().indexOf(it);
+      assert.ok(at >= 0, `${mode}: ${it.name} is on the counter's list`);
+      w._pickLocal(at);
+      return { said: w.box?.rows?.[0]?.text ?? null, staged: w.staged.includes(it) };
+    };
+    assert.deepEqual(pick(book), { said: REFUSAL.spellbook.text, staged: false }, `${mode}: the classic counter refuses it in words`);
+    assert.ok(bag.includes(book), `${mode}: it stays in the pack`);
+    if (mode === 'Sell') assert.equal(pick(shirt).staged, true, 'a shirt sells');
+  }
+  const textOf = (n) => `${n.textContent ?? ''}${(n.children ?? []).map(textOf).join('')}`;
+  for (const mode of ['Sell', 'SellMagic']) {
+    const { e, book } = newSpellbook();
+    const bag = e.items;
+    withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const view = mountEnhancedTrade(host, { ...sbHooks(mode, bag), gold: () => 100000 });
+      try {
+        host.querySelectorAll('.packtab').find((b) => b.textContent === SB_PAGES[sbPageOf(book)]).onclick();
+        const row = host.querySelectorAll('.itemrow').find((r) => textOf(r).includes(book.name));
+        assert.ok(row, `${mode}: the spellbook is on the counter's list`);
+        row.onclick({ timeStamp: 5000 });
+        assert.doesNotMatch(textOf(host), /Sell for/, `${mode}: no price quoted for a sale the counter refuses`);
+        host.querySelectorAll('.act.primary').find((b) => b.textContent === 'Sell').onclick();
+        assert.ok(bag.includes(book), `${mode}: the enhanced counter keeps it in the pack`);
+        assert.deepEqual(host.querySelectorAll('.px-note').map((n) => n.textContent), [REFUSAL.spellbook.text], `${mode}: and says why`);
+      } finally { view.unmount(); }
+    });
+  }
 });

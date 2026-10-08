@@ -629,6 +629,16 @@ each is a line here, findable by its tag.
 - PVPFIX (the owner: "Undeniable Access/lockpicking should actually work on locked crates"): an armed Open spell fires
   on the next lock touched, a crate's as a door's, and the pick is tried in Grab mode too
   (`dungeonContext.js:"Access/lockpicking"`).
+- KEEP-SPELLBOOK (the owner: "a player dropped his spellbook apparently"; the hotfix of the same day): the character's
+  spellbook (MiscItems 132, not a quest's - `isKeptSpellbook`, `itemTransfer.js:"export const isKeptSpellbook"`) leaves
+  the pack for nowhere but the character's own wagon. The store ladder refuses it everywhere else - the ground, a pile,
+  a body, a chest, a companion's pack - in its own words, "Your spellbook never leaves you." (`REFUSAL.spellbook`,
+  `itemTransfer.js:"if (isKeptSpellbook(item) && !usingWagon)"`), and so does the shift-drop, ahead of a lock's
+  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:"isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT }"`).
+  Neither counter puts it up for Sell or Sell Magic (`nativeTrade.js:"&& isKeptSpellbook(item)) {"`;
+  `enhancedTrade.js:"if (selling() && isKeptSpellbook(item)) {"`, and the enhanced counter quotes it no price - its
+  `saleRefused`). A death in the zone already kept it (section 4, `wildCanLose`). The player trade's table
+  (`tradePack.js` `tradeRefusal`) is untouched: the hotfix closed the ground, the containers and the counters.
 
 ## 22. Known limits
 
@@ -663,7 +673,7 @@ The zone landed without a run of the suite. Four of what it caught were the sour
 `test/wild1_zone.test.js`, `test/wild1_wire.test.js`, `test/wild1_fight.test.js`, `test/wild2_rings.test.js`,
 `test/pvpdungeons_game.test.js` (the halls' placement and foes, HEAL-CURSE, REST-WARN, SWAP-HANDS, GOTHWAY-BOARDS,
 ZONE-GIANTS' walks and the hub's giants, GIANT-FIELDS, GIANT-LEASH, CROW-NEWS, DUNGEON-RESPAWN, GREATER-GIANT,
-WILD-KEEPOUT), `test/pvpdungeons_hub.test.js` (the `wdun` wire, the lock, the way back, the reset, the crows, the
+WILD-KEEPOUT, KEEP-SPELLBOOK - `tools/mutants/keepspellbook.json`, 9, all dead), `test/pvpdungeons_hub.test.js` (the `wdun` wire, the lock, the way back, the reset, the crows, the
 relay's hub and no friend's take); the host seams of section 23 in `test/bootorder.test.js`,
 `test/audit68_worldmodes.test.js`, `test/mapkeep.test.js`, `test/mwattach.test.js`, `test/audit26_uiwindows.test.js`
 and `test/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`.
