@@ -886,3 +886,6 @@ reproduced against the real code before it was fixed.
   with no tavern to load into). The walk costs 16-59 ms
   in node on rooms of 264 to 48k triangles, once a visit, inside the async build.
 - **Pins:** `test/taverntable.test.js` 17; `tools/mutants/taverntable.json` 80 (79 dead, 1 equivalent).
+- **The merge.** #707 went in with `[skip ci]` on the owner's word ("Skip ci and merge"), before its own verify had
+  run - and `[skip ci]` on a merge skips the deploy too. The merge after it, which records this, runs the deploy (its
+  own verify gates the publish); a dispatch of `deploy.yml` from this session is refused (403).
