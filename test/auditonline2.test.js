@@ -60,8 +60,8 @@ test('AUDIT ONLINE2 F2: A RECEIPT\'S LIFE IS THE RELAY\'S CLOCK - the raid and g
   const w = rd('src/scenes/world.js');
   assert.match(w, /const relayNowS = \(\) => \(_sharedClockHeard \? Math\.floor\(\(Date\.now\(\) \+ _sharedOffsetMs\) \/ 1000\) : null\);/);
   assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; _sharedClockHeard = true;/);
-  assert.match(w, /createGateClaims\(\{\n\s*claim: \(r\) => _accountGates\.claim\(r, gateSeatWord\(r\)\)\.then\(rollHeard\),\n\s*me: _accountGates\.me,\n\s*nowS: relayNowS,/);   // PIN MOVED (CHAP2b): the answer handed on to the Roll's refresh
-  assert.match(w, /createRaidClaims\(\{\n\s*claim: \(\.\.\.a\) => _accountRaids\.claim\(\.\.\.a\)\.then\(rollHeard\),[^\n]*\n\s*me: _accountRaids\.me,\n\s*nowS: relayNowS,/);   // PIN MOVED (CHAP2b)
+  assert.match(w, /createGateClaims\(\{\n\s*claim: \(r\) => \(gateClaimReady\(\) \? _accountGates\.claim\(r, gateSeatWord\(r\)\)\.then\(rollHeard\) : Promise\.resolve\(\{ ok: false, error: 'offline' \}\)\),\n\s*me: _accountGates\.me,\n\s*nowS: relayNowS,/);   // PIN MOVED (CHAP2b): the answer handed on to the Roll's refresh; PIN MOVED (AUDIT CHAP3 C3): a kept claim waits for the gate's scan
+  assert.match(w, /createRaidClaims\(\{\n(?:\s*\/\/[^\n]*\n)*\s*claim: \(r, ch, \.\.\.a\) => _accountRaids\.claim\(r, ch, \.\.\.a\)\.then\([^\n]*\n\s*me: _accountRaids\.me,\n\s*nowS: relayNowS,/);   // PIN MOVED (CHAP2b); PIN MOVED (AUDIT CHAP3 C4): the line on the fighting character's page
   assert.equal(RAID_CLAIMS_KEY, 'raid4.raidClaims');
 });
 
