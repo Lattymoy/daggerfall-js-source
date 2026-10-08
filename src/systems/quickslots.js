@@ -50,6 +50,7 @@ import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, i
 import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 import { isEnchanted } from './inventory.js';   // UI2: an enchanted piece shows its wear (its powers spend its condition - the pack's rule)
+import { isAmmunition } from './itemTemplates.js';   // THUNDERLOCK-ART: a stack of shot shows its count, never a wear bar (the pack's rule)
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { racialSuppressInventory, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it; HB-LYCFREE: the curse's free spell
@@ -145,6 +146,7 @@ function computeKey(item) {
   const affixes = Array.isArray(item.affixes) && item.affixes.length ? JSON.stringify(item.affixes) : '';
   return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', item.potionRecipeKey ?? '',
     item.legendary ?? '', ench, custom, affixes, item.aetheric ?? ''].join('|')   // SET6: an Aetheric piece's record, as a Legendary's
+    + (item.gilded ? `|g${item.gilded}` : '')   // GILDED1: a Gilded piece's record - only when set, so a save's keys still resolve
     + (item.potent ? `|p${item.potent}` : '');   // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve
 }
 
@@ -1118,9 +1120,11 @@ export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY
 
 /** UI2: which slots show their piece's wear - the kinds that wear in use (a weapon, a shield, a light), and of the worn
  *  pieces what the pack's tile shows a bar on (armour, and anything enchanted: its powers spend its condition). Never
- *  a gem, a book or a potion - a bar on everything is the noise the bar exists to cut. */
-const showsWear = (kind, item) => kind === 'weapon' || kind === 'shield' || kind === 'light'
-  || item.group === 'Armor' || isEnchanted(item);   // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)
+ *  a gem, a book or a potion - a bar on everything is the noise the bar exists to cut. THUNDERLOCK-ART: and never
+ *  ammunition, the pack's own word (ui/enhancedInventory.js wearPct: "an arrow is spent, not worn") - a stack of arrows
+ *  or pellets slotted as a weapon drew a bar under its count, the two on top of each other. */
+const showsWear = (kind, item) => !isAmmunition(item) && (kind === 'weapon' || kind === 'shield' || kind === 'light'
+  || item.group === 'Armor' || isEnchanted(item));   // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)
 
 /** Point one of the diamond's own slots at `entry` for the length of
  *  `fn`, then put it back - the whole of how the hotbar reaches the

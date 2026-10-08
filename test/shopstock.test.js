@@ -12,6 +12,7 @@ import {
 } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { OIL_TEMPLATE } from '../src/systems/inventory.js';   // AUDIT 58: the oil-bottle stack clause
+import { PELLET_TEMPLATE } from '../src/characters/thunderlockIds.js';   // SHOP-PELLETS: the counter's shot
 
 test('itemTemplates: the 288-row table + group enum mapping + material values', () => {
   assert.equal(ITEM_TEMPLATES.length, 288);
@@ -45,24 +46,24 @@ test('shopStock: the stock law - rarity gate, chance, gender swap, horse+cart', 
   // rolls always 0 -> every Dice100 passes -> a weaponsmith at quality
   // 21 stocks EVERY weapon and armor template (rarity <= 21 always)
   const all = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 }, { level: 1 }, { rolls: () => 0 });
-  const weaponCount = all.filter((it) => it.group === 'Weapons').length;
+  const weaponCount = all.filter((it) => it.group === 'Weapons' && it.templateIndex !== PELLET_TEMPLATE).length;   // PIN MOVED (SHOP-PELLETS): DFU's own weapons - the counter's Dwemer Pellets beside them are the port's (shopstock_pellets below)
   const armorCount = all.filter((it) => it.group === 'Armor').length;
   assert.equal(weaponCount, GROUP_TEMPLATE_INDICES.Weapons.length);
   assert.equal(armorCount, GROUP_TEMPLATE_INDICES.Armor.length);
   for (const it of all) assert.ok(it.value >= 1, `every shelf item carries a value: ${JSON.stringify(it)}`);
   // rolls always ~1 -> nothing stocks (chance*5*(21-rarity)/100 < 100)
   const none = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.equal(none.length, 0);
+  assert.deepEqual(none.map((it) => it.templateIndex), [PELLET_TEMPLATE], 'PIN MOVED (SHOP-PELLETS): nothing of DFU\'s - the counter\'s pellets alone, from no roll');
   // the rarity gate: quality 1 refuses templates rarer than 1
   const q1 = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 1 }, { level: 1 }, { rolls: () => 0 });
-  for (const it of q1) {
+  for (const it of q1.filter((x) => x.templateIndex !== PELLET_TEMPLATE)) {   // PIN MOVED (SHOP-PELLETS): the stock law's - the counter's shot stands outside it, in every tier
     const t = ITEM_TEMPLATES[it.templateIndex];
     assert.ok(t.rarity <= 1, `${t.name} rarity ${t.rarity} on a quality-1 shelf`);
   }
   // general stores ALWAYS shelve the horse + small cart - and books
   // ride the quality ladder with NO Dice100 gate (q5 -> 3 books)
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 5 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.deepEqual(gs.map((it) => it.templateIndex), [TRANSPORT_HORSE, TRANSPORT_SMALL_CART, 277, 541, 531, 83]);   // PIN MOVED (ENDLESS PROVISIONS, 2026-10-04): the counter's Campfire Kit (541) and Rations (531), every tier, before the healing supply   // POTION-COMMON: and its day of Potions of Healing (the Glass Bottle, 83) at the shelf's end   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
+  assert.deepEqual(gs.map((it) => it.templateIndex), [TRANSPORT_HORSE, TRANSPORT_SMALL_CART, 277, 541, 531, PELLET_TEMPLATE, 83]);   // PIN MOVED (SHOP-PELLETS, 2026-10-07): and the counter's Dwemer Pellets (561), after DFU's draws and the provisions, before the healing supply   // PIN MOVED (ENDLESS PROVISIONS, 2026-10-04): the counter's Campfire Kit (541) and Rations (531), every tier, before the healing supply   // POTION-COMMON: and its day of Potions of Healing (the Glass Bottle, 83) at the shelf's end   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
   assert.equal(gs[2].stackCount, 3);
   // the gender swap: a female player sees WomensClothing at the clothier
   const cs = stockShopShelf({ buildingType: BUILDING_TYPES.ClothingStore, quality: 21 }, { level: 1, gender: 'female' }, { rolls: () => 0 });

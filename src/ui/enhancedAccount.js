@@ -34,6 +34,7 @@ import { gateRecordText } from '../net/gateClaims.js';   // WB5b: and its gates-
 import { marksText } from '../net/marksLaw.js';   // MARKS1: and its Marks row
 import { raidRecordText } from '../net/raidClaims.js';   // RAID4: and its towns-defended row
 import { serpentRecordText } from '../net/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
+import { sdRecordText } from '../net/sdClaims.js';   // SD9b: and its Hours-broken row
 
 /** RENOWN-CHAR (Mac: "Can we make renown per character again"): the card's Renown tracks as the service sends them -
  *  its characters', the most recently played first - or none: none earned yet, or a service from RENOWN-ACCOUNT's day
@@ -561,6 +562,10 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       // service counted once (net/serpentClaims.js carries the receipts). A service from before it says nothing.
       const serpents = serpentRecordText(flow.account.serpents);
       if (serpents) row('Serpents slain', serpents);
+      // SD9b: the Hours this account broke - each a Brass Remnant's fall the relay signed and this service counted once
+      // (net/sdClaims.js carries the receipts). A service from before it says nothing.
+      const hours = sdRecordText(flow.account.sds);
+      if (hours) row('Hours broken', hours);
       // MARKS1: the account's Marks - the server's currency, struck for acts a server witnessed (PROF0 10.5). Null where
       // Marks are not this account's (a guest, the service's switch), and a service from before it says nothing.
       if (Number.isSafeInteger(flow.account.marks)) row('Silver', marksText(flow.account.marks));

@@ -82,7 +82,7 @@ test('WB5 the glow, WBX3 a line: Loot Rarity\'s own colours, a SMALL line out of
   assert.deepEqual(tierColour('rare').map((c) => Math.round(c * 255)), [0xe4, 0xc3, 0x4f], 'Rare\'s #e4c34f');
   assert.deepEqual(tierColour('magic').map((c) => Math.round(c * 255)), [0x6f, 0x9e, 0xe8]);
   assert.deepEqual(tierColour('nonsense'), tierColour('common'));
-  const order = ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'];   // SET6: the Aetheric's rung
+  const order = ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded'];   // SET6: the Aetheric's rung; GILDED1: the top one
   assert.deepEqual(order, [...RARITY_ORDER], 'every tier of the ladder stands a line');
   for (let i = 1; i < order.length; i++) assert.ok(SPOILS_LINE_H[order[i]] > SPOILS_LINE_H[order[i - 1]], `${order[i]} taller than ${order[i - 1]}`);
   for (const t of order) { assert.ok(RARITIES[t], t); assert.ok(SPOILS_LINE_H[t] <= 2.5, `${t}: small - a line, not WB5's 8 m beam`); }

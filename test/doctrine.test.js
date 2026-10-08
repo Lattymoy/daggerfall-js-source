@@ -75,6 +75,11 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
+  // THUNDERLOCK-ART + GILDED1 (2026-10-07): the gun's list picture and the Hourlock's gold pair, each DERIVED from the
+  // doll layer above by tools/gunIcons.mjs (test/thunderlockart.test.js re-runs it and holds them pixel for pixel)
+  ['public/art/gun-icon.png', "OURS - gun-paperdoll.png (Mac's own art) with the fist's gap healed from its own pixels and trimmed, by tools/gunIcons.mjs; no ARENA2 pixel in it"],
+  ['public/art/gun-icon-gilded.png', 'OURS - gun-icon.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s list picture); no ARENA2 pixel in it'],
+  ['public/art/gun-paperdoll-gilded.png', 'OURS - gun-paperdoll.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s doll layer); no ARENA2 pixel in it'],
   ['public/sfx/SOURCES.md', 'documentation - where every sound in this folder came from, with its license'],
   ['public/sfx/spell-heal.wav', "IMPACTFX HEAL-FILE: the owner's chosen heal sound (02_Heal_02.wav, 2026-10-05), softened; 22050Hz 16-bit mono - SOURCE/LICENSE TO BE CONFIRMED in public/sfx/SOURCES.md"],
   ['public/sfx/fire-shotgun.wav', 'CC0 (Freesound 473846, LilMati), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
@@ -403,6 +408,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Pellet_Shot.fbx', "OURS - Mac's own Blender export of the Dwarven Thunderlock, committed so the two files below are a DERIVATION the gate can re-run rather than a blob"],
   ['src/assets/mw/meshes/thunderlock.nif', "OURS - Mac's own Dwarven Thunderlock model, baked to a Morrowind NIF by tools/nifWrite.mjs; a Bethesda format, no Bethesda data"],
   ['src/assets/mw/textures/thunderlock.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs (position, normal and cast occlusion); no image input, no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/meshes/thunderlock_gilded.nif', "OURS - the same baked mesh as thunderlock.nif (GILDED1, the Hourlock's twin), naming its own texture, by tools/bakeThunderlock.mjs; a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/thunderlock_gilded.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs on its gold-leaf bands (GILDED_BANDS); no image input, no ARENA2 or Morrowind pixel in it'],
   // MW-BRIG1 (2026-09-29): the Steel Brigandine, the port's own worn
   // model, supplied by Mac for the Morrowind body. Unlike the
   // Thunderlock it carries a PAINTED texture (the FBX names it

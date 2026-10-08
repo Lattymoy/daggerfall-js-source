@@ -150,7 +150,7 @@ test('AUDIT-DW F3: under DoubleScaleTextures a `w_` hit draws into the doubled b
 
 test('AUDIT-DW F4 (named, not changed): DFU keeps the first template\'s custom frames within a class and metal; the port keys the atlas by the name it is asked by', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? '' : atlasFileName\(item, WEAPON_FILE\[type\] \?\? ''\)\}`;/);
+  assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? \(gilded \? 'gilded' : ''\) : atlasFileName\(item, WEAPON_FILE\[type\] \?\? ''\)\}`;/);
   assert.match(rig, /WHICH IS WHAT DFU DOES \(AUDIT-DW\n\s+\/\/ F4, a named departure\): FPSWeapon reloads its atlas only when\n\s+\/\/ WeaponType or MetalType change \(FPSWeapon\.cs:138\)/, 'the departure is named where the key is');
   assert.match(rd('bible/05-Combat/Diverse-Weapons.md'), /## AUDIT-DW/, 'and recorded');
 });

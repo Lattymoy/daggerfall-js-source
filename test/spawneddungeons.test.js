@@ -112,7 +112,7 @@ test('SPAWNED-DUNGEONS3 by source: the player\'s OWN pixel, once, with the dista
   assert.match(fn, /const t = state\.pixelTranslation\(px, py, _announceT\);\s*\n\s*const \[lx, lz\] = spawnedLocationCentreLocal\(loc\);\s*\n\s*const dx = t\[0\] \+ lx - feet\[0\], dz = t\[2\] \+ lz - feet\[2\];/, 'the pixel\'s frame plus the centred location, less the feet');
   assert.equal((fn.match(/tvSay\(/g) ?? []).length, 1, 'one spelling now: the distance and the direction');
   // OW-DUNGEON-SAID: through tvSay, held five seconds at the scale it is said at (a plain say stood 1/35 s at x35)
-  assert.match(fn, /tvSay\(dungeonSightLine\(Math\.hypot\(dx, dz\), _capitalize\(directionHintString\(dx, dz\)\), !!loc\.elite\), 5\);/, 'scene x is east and scene z is north - the pair directionHintString takes, no sign flipped');
+  assert.match(fn, /tvSay\(dungeonSightLine\(Math\.hypot\(dx, dz\), _capitalize\(directionHintString\(dx, dz\)\), dungeonTier\(loc\)\), 5\);/, 'scene x is east and scene z is north - the pair directionHintString takes, no sign flipped (PIN MOVED, TIER1: the tier the line says, not a flag)');
   assert.doesNotMatch(fn, /You see a Dungeon/, 'the words live in the pure law');
 });
 

@@ -177,8 +177,8 @@
   {
     "name": "CRAFT4-law-legendary-open",
     "file": "src/net/temperLaw.js",
-    "old": "export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact']);",
-    "new": "export const TEMPER_SHUT = Object.freeze(['aetheric', 'artifact']);",
+    "old": "export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);",
+    "new": "export const TEMPER_SHUT = Object.freeze(['aetheric', 'artifact', 'gilded']);",
     "tests": [
       "test/craft4_temper.test.js"
     ]

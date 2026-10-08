@@ -28,7 +28,7 @@ import * as relay from '../server/src/relay.js';
 import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { roomKeyFor, OnlineSession } from '../src/net/online.js';
 import { MAIN_STORY_DUNGEON_IDS, isMainStoryDungeon } from '../src/world/dungeonTextures.js';
-import { useSmallerDungeon, SMALLER_DUNGEONS_STATE } from '../src/world/smallerDungeons.js';
+import { useSmallerDungeon, dungeonSizeFor, onlineDungeonSize, SMALLER_DUNGEONS_STATE } from '../src/world/smallerDungeons.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -205,13 +205,14 @@ test('AUDIT WORLD34 D3: sendWorld is under the room\'s guard like every other ou
   assert.equal(s.stats.worlds, 0);
 });
 
-test('AUDIT WORLD34 B2: online, the whole dungeon - the layout the room addresses by index is one layout, whatever a client\'s Smaller Dungeons setting or a quest\'s frozen copy of it says', () => {
+test('AUDIT WORLD34 B2: online, ONE layout - the layout the room addresses by index is one layout, whatever a client\'s Smaller Dungeons setting or a quest\'s frozen copy of it says (SD-ONLINE: the world\'s size for the dungeon, where it was the whole dungeon - PIN MOVED)', () => {
   const loc = { hasDungeon: true, mapTableData: { mapId: 12345 }, dungeon: { blocks: Array.from({ length: 12 }, (_, i) => ({ blockName: i ? `B${i}` : 'S0' })) } };
   assert.equal(useSmallerDungeon(loc, { setting: true }), true, 'offline: the setting');
   assert.equal(useSmallerDungeon(loc, { setting: true, online: true }), false, 'online: never');
   const machine = { getSiteLinks: () => [{ questUID: 1 }], getQuest: () => ({ smallerDungeonsState: SMALLER_DUNGEONS_STATE.Enabled }) };
   assert.equal(useSmallerDungeon(loc, { setting: false, questMachine: machine }), true, 'offline: the quest\'s frozen state wins');
   assert.equal(useSmallerDungeon(loc, { setting: false, questMachine: machine, online: true }), false, 'online: not even the quest\'s');
+  assert.equal(dungeonSizeFor(loc, { setting: true, medium: false, questMachine: machine, online: true }), onlineDungeonSize(loc), 'SD-ONLINE: the world\'s one size for it - no setting and no quest\'s copy reaches it');
   const m = rd('src/scenes/worldModes.js'), w = rd('src/scenes/world.js');
   assert.match(m, /dungeonLocationFor\(hit\.dfLocation, \{ questMachine: questBridge\?\.machine, online: host\.dungeonOnline\?\.\(\) \?\? false \}\)/, 'the entry seam asks');
   assert.match(w, /dungeonOnline: \(\) => onlineOn,/, 'and the world host answers');

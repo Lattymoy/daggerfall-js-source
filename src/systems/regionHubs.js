@@ -53,8 +53,9 @@ export function hubClaim(loc, regionName) {
   return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, -(loc.locationIndex | 0)];
 }
 
-/** Whether claim `a` outranks claim `b`: the first place they differ decides. */
-function outranks(a, b) {
+/** Whether claim `a` outranks claim `b`: the first place they differ decides. SD2: exported - the Super dungeon's
+ *  cities are ranked by the hubs' own claim (systems/sdSite.js). */
+export function outranks(a, b) {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i];
   return false;
 }

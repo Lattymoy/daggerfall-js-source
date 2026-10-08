@@ -53,7 +53,7 @@ export const REMAINS_ROW = Object.freeze({
 registerCustomTemplates([REMAINS_ROW]);
 
 const HEIR_GROUPS = new Set(['Weapons', 'Armor']);
-const NEVER_RARITY = new Set(['aetheric', 'artifact']);
+const NEVER_RARITY = new Set(['aetheric', 'artifact', 'gilded']);
 
 /** Whether a worn piece may become an heirloom. */
 export function heirloomEligible(it) {

@@ -297,7 +297,8 @@ function tellHurt(entity, dmg, before, after, saved = false) {
  * leaves them at ONE instead, and `spare(entity)` is told (the duel's law: the side that falls says so and has lost);
  * the avoid-death hook and the death presenter are never reached, because nobody died. Only the duel's own doors pass
  * it (a strike resolved from the opponent, the opponent's spell and its damage over time); anything else - a wolf in
- * the ring - kills as it always has.
+ * the ring - kills as it always has. AUDIT SD III (F10): and the Hour's own costs (scenes/world.js sdCastBack, the void;
+ * sdHallHeard, the Orrery's lash) - a setback with one life a Hollow, never the death that ends it.
  */
 export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } = {}) {
   tellDoorOpen(entity);   // AUDIT FINAL F10: first - whatever the door says below, this call is its word

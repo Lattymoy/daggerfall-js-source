@@ -30,6 +30,12 @@ export const ELITE_FOE_DAMAGE_MULT = 3;
 /** ...and in an Elite Dungeon, where every foe is already doubled: a partial stack, not 10x / 6x. */
 export const ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT = 7;
 export const ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT = 4;
+/** SD4a (bible/11-Multiplayer/Super-Dungeons.md section 5): ...and in a Super dungeon, where every foe is x4 / x2.5
+ *  already - the Elite Dungeon's stack read the same way: the health the dungeon's and the elite's added (2 + 5 = 7
+ *  there, 4 + 5 = 9 here), the damage the dungeon's and the elite's extra over a plain blow (2 + 2 = 4 there, 2.5 + 2 =
+ *  4.5 here). */
+export const ELITE_FOE_SUPER_DUNGEON_HEALTH_MULT = 9;
+export const ELITE_FOE_SUPER_DUNGEON_DAMAGE_MULT = 4.5;
 /** How much larger the sprite is drawn. */
 export const ELITE_FOE_SIZE = 1.25;
 /** The chance a foe in the open world stands as an elite. ELITE-RATES (2026-10-03, Mac: "Feel like they are too
@@ -76,7 +82,7 @@ export const isEliteFoe = (entity) => !!entity?.eliteFoe;
  *  word (the record's `k`), so only the blows, the size and the glow are stood here (and its owner already asked
  *  eliteEligible). Idempotent. ELITE-FLOOR: answers whether it stands as an elite - false for a foe eliteEligible
  *  refuses, which is then built as it would have been. */
-export function promoteEliteFoe(entity, { own = true, eliteDungeon = false, checkLevel = true } = {}) {
+export function promoteEliteFoe(entity, { own = true, eliteDungeon = false, superDungeon = false, checkLevel = true } = {}) {
   if (!entity) return false;
   if (entity.eliteFoe) return true;
   if (own && !eliteEligible(entity, { checkLevel })) return false;
@@ -84,13 +90,13 @@ export function promoteEliteFoe(entity, { own = true, eliteDungeon = false, chec
   // the hosts promote BEFORE any other scaling (and in place of the Elite Dungeon's doubling), so this is the foe's own
   // roll: an elite is 5x, not 10x
   if (own) {
-    const hm = eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT : ELITE_FOE_HEALTH_MULT;
+    const hm = superDungeon ? ELITE_FOE_SUPER_DUNGEON_HEALTH_MULT : eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT : ELITE_FOE_HEALTH_MULT;   // SD4a: a Super dungeon's
     entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * hm));
     entity.health = entity.maxHealth;
     entity.healthMult = (entity.healthMult ?? 1) * hm;   // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
   }
   const prior = Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1;
-  entity.damageScale = prior * (eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT : ELITE_FOE_DAMAGE_MULT);
+  entity.damageScale = prior * (superDungeon ? ELITE_FOE_SUPER_DUNGEON_DAMAGE_MULT : eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT : ELITE_FOE_DAMAGE_MULT);   // SD4a: a Super dungeon's
   return true;
 }
 
@@ -119,13 +125,14 @@ export function eliteRng(seed) {
 /**
  * THE DUNGEON'S PICK (normal dungeons: 0 or 1, see below): which records of the dungeon's (already expanded) foe list are elites - 3 or 4 of them,
  * never an ally or a passive foe, the same on every client (seeded by `key`, the dungeon's location id). Marks them
- * `eliteFoe: true` in place and answers how many.
+ * `eliteFoe: true` in place and answers how many. SD4a: `count` a number of the caller's own - a Super dungeon's
+ * SUPER_ELITE_FOES (world/sdDungeon.js).
  */
-export function pickDungeonElites(enemies, key, { elite = true } = {}) {
+export function pickDungeonElites(enemies, key, { elite = true, count = null } = {}) {
   if (!Array.isArray(enemies) || !enemies.length) return 0;
   const rng = eliteRng(eliteHash(elite ? 'elite-dungeon' : 'normal-dungeon', key));
-  // an Elite Dungeon: 3 or 4; a normal one: at most 1, one time in five
-  const want = elite
+  // an Elite Dungeon: 3 or 4; a normal one: at most 1, one time in five; SD4a: a Super dungeon its own `count` (six)
+  const want = Number.isInteger(count) ? Math.max(0, count) : elite
     ? ELITE_FOE_DUNGEON_MIN + Math.floor(rng() * (ELITE_FOE_DUNGEON_MAX - ELITE_FOE_DUNGEON_MIN + 1))
     : (rng() < ELITE_FOE_NORMAL_DUNGEON_CHANCE ? 1 : 0);
   const pool = [];

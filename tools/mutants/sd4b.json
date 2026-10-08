@@ -1,0 +1,291 @@
+[
+  {
+    "name": "SD4B-the-last-of-a-tie",
+    "file": "src/world/dungeonEnd.js",
+    "old": "  return list.reduce((a, m) => (d(m) > d(a) ? m : a));",
+    "new": "  return list.reduce((a, m) => (d(m) >= d(a) ? m : a));",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-height-asked",
+    "file": "src/world/dungeonEnd.js",
+    "old": "Math.hypot(m.x - from.x, m.z - from.z);",
+    "new": "Math.hypot(m.x - from.x, /** @type {any} */ (m).y ?? 0, m.z - from.z);",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-lair-off-the-law",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const far = dungeonEndOf(from, marks);",
+    "new": "    const far = marks[0] ?? null;",
+    "tests": [
+      "test/sd4b_rift.test.js",
+      "test/rvn7d_stand.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-copies-counted",
+    "file": "src/world/sdDungeon.js",
+    "old": "if (e && !e.eliteCopy && Number.isFinite(e.x)",
+    "new": "if (e && Number.isFinite(e.x)",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-start-markers-unplaced",
+    "file": "src/world/sdDungeon.js",
+    "old": "out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });",
+    "new": "out.push({ x: m.x, y: m.y, z: m.z });",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-walls-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h, w));",
+    "new": "  return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h));",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-no-least-ring",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h, w));",
+    "new": "  return Math.min(SD_RIFT_SIZE_M, h, w);",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-ring-never-moved",
+    "file": "src/world/sdDungeon.js",
+    "old": "  for (const r of [SD_RIFT_SHIFT_M, 2 * SD_RIFT_SHIFT_M]) {",
+    "new": "  for (const r of []) {",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-through-a-wall",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-onto-another-floor",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return y != null && Math.abs(y - from[1]) <= SD_STEP_M ? [x, y, z] : null;",
+    "new": "  return y != null ? [x, y, z] : null;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return-inside-the-ring",
+    "file": "src/world/sdDungeon.js",
+    "old": "  for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {",
+    "new": "  for (const r of [SD_RETURN_GAP_M, 1.5]) {",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-a-newcomer-after-the-kill",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (ph === 'found' || (ph === 'fell' && entered)) return null;",
+    "new": "  if (ph === 'found' || ph === 'fell') return null;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-through-before-the-find",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return ph === 'risen' ? SD_NO_RIFT : SD_NO_CLOSED;",
+    "new": "  return ph === 'risen' ? null : SD_NO_CLOSED;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-closed-with-nothing-heard",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (!rec) return SD_NO_RIFT;",
+    "new": "  if (!rec) return SD_NO_CLOSED;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-another-slot-through",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "new": "  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return-after-the-kill",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return ph === 'risen' || ph === 'found';\n}",
+    "new": "  return ph === 'risen' || ph === 'found' || ph === 'fell';\n}",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-every-frame-inside",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      const enteredRift = inRift && wasRift === false && !gap;",
+    "new": "      const enteredRift = inRift && !gap;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-a-jump-a-step",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || ",
+    "new": "      const gap = false && ",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return-kept",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; rebatch(); },",
+    "new": "    returnOut() { if (!ret) return; free(ret.batch); },",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-bell-unrung",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);",
+    "new": "      bell = null;",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return's-box-the-Rift's",
+    "file": "src/scenes/sdEnd.js",
+    "old": "aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h)",
+    "new": "aabb: boxOf(ret.at, rift.size / 2, rift.size)",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-teeth-still",
+    "file": "src/scenes/sdEnd.js",
+    "old": "  const turn = ((k / n) * 2 * Math.PI) / 8;   // the teeth's eighth of a turn",
+    "new": "  const turn = 0;   // the teeth's eighth of a turn",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-not-under-water",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "distanceModel: 'linear', lowpass: RIFT_BELL_LOWPASS_HZ })",
+    "new": "distanceModel: 'linear', lowpass: 0 })",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-bell-undarkened",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole\n",
+    "new": "",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-stood-in-every-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const sdEnd = _superTier ? createSdEnd(",
+    "new": "  const sdEnd = true ? createSdEnd(",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-word-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (word == null) {\n      const went = w?.enter?.();",
+    "new": "    if (w) {\n      const went = w?.enter?.();",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-refusal-unsaid",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!opts.sdSay?.(word ?? SD_NO_RIFT)) setMidScreenText(word ?? SD_NO_RIFT);   // AUDIT SD II (SD11d): through the Hour's voice\n",
+    "new": "",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return-to-the-enter-marker",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const at = api.startSpawn({ preferEnterMarker: false });",
+    "new": "    const at = api.startSpawn({ preferEnterMarker: true });",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-Return-never-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (w && !w.returns) sdEnd.returnOut(); }",
+    "new": "if (w && w.returns) sdEnd.returnOut(); }",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-press-unrouted",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }",
+    "new": "    if (key.startsWith('sdrift:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-forward-lost",
+    "file": "src/scenes/worldModes.js",
+    "old": "          superRift: (s) => host.superRift?.(s) ?? null,",
+    "new": "          superRift: () => null,",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD4B-the-word-off-no-record",
+    "file": "src/scenes/world.js",
+    "old": "    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
+    "new": "    return { word: sdRiftWord(null, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
+    "tests": [
+      "test/sd4b_rift.test.js"
+    ]
+  }
+]

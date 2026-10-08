@@ -87,8 +87,8 @@
   {
     "name": "ROBES-name-dungeon-namer-reverted",
     "file": "src/scenes/worldModes.js",
-    "old": "        const st = dungeonQuestFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res),",
-    "new": "        const st = dungeonQuestFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
+    "old": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(questStandItem(res),",
+    "new": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
     "tests": [
       "test/fb1004c_robes.test.js"
     ]
@@ -123,7 +123,7 @@
   {
     "name": "ROBES-surface-containment-dropped",
     "file": "src/player/activate.js",
-    "old": "      if (!boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], 0.15)) continue;\n      d = Math.max(d, firstHit.dist);",
+    "old": "      if (!boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;\n      d = Math.max(d, firstHit.dist);",
     "new": "      d = Math.max(d, firstHit.dist);",
     "tests": [
       "test/fb1004c_robes.test.js"

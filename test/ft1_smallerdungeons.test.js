@@ -20,7 +20,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SMALLER_DUNGEONS_STATE, generateSmallerDungeon, dungeonLocationFor,
-  isSmallerDungeon, smallerDungeonsStamp, needsStartWarp,
+  isSmallerDungeon, smallerDungeonsStamp, needsStartWarp, isMediumDungeon, MEDIUM_DUNGEONS_STATE, onlineDungeonSize, builtDungeonSize,
 } from '../src/world/smallerDungeons.js';
 import { FEATURES, checkFeature, featureForControl } from '../src/systems/features.js';
 import { setValue, resetToDefaults } from '../src/systems/settings.js';
@@ -55,7 +55,7 @@ test('FT1: the stamp is the BUILD - Enabled for the plus, Disabled for anything 
   assert.equal(Enabled, 2); assert.equal(Disabled, 1); assert.equal(NotSet, 0);   // DFU's order (F-B3) - the save format
 });
 
-test('FT1: the departure, driven - online builds full whatever the setting says, and the stamp says full', () => {
+test('FT1: the departure, driven - online builds the room\'s size whatever the setting says, and the stamp says what was built', () => {
   resetToDefaults();
   setValue('Experimental', 'SmallerDungeons', 'True');
   try {
@@ -69,6 +69,16 @@ test('FT1: the departure, driven - online builds full whatever the setting says,
     // in the full layout and this build is the plus.
     assert.equal(needsStartWarp(smallerDungeonsStamp(online), offline), true, 'the case DFU\'s raw-setting stamp missed');
     assert.equal(needsStartWarp(smallerDungeonsStamp(offline), offline), false, 'and a save made offline loads offline without a warp');
+    // SD-ONLINE (PIN MOVED): online every dungeon has the world's own size now - this seven-block dungeon's draw is the
+    // medium size, which it is at or under, so it stands whole online (above); a bigger one is laid medium, and its
+    // stamp says the build
+    const huge = loc([...BIG, 'W0000007.RDB', 'B0000008.RDB', 'B0000009.RDB']);
+    const onlineHuge = dungeonLocationFor(huge, { online: true });
+    assert.equal(onlineDungeonSize(huge), 'medium', 'map 777\'s draw');
+    assert.equal(builtDungeonSize(onlineHuge), onlineDungeonSize(huge), 'online, the world\'s size for it');
+    assert.equal(isMediumDungeon(onlineHuge), true, '...over eight blocks: the medium build');
+    assert.equal(smallerDungeonsStamp(onlineHuge), MEDIUM_DUNGEONS_STATE);
+    assert.equal(needsStartWarp(smallerDungeonsStamp(onlineHuge), dungeonLocationFor(huge)), true, 'a save made in it online, loaded offline at the small size, stands at the start');
   } finally { resetToDefaults(); }
 });
 
@@ -95,7 +105,9 @@ test('FT1: the dungeon host stamps and warps through the two exports, and holds 
   const ctx = read('src/scenes/dungeonContext.js');
   assert.match(ctx, /import \{ smallerDungeonsStamp, needsStartWarp \} from '\.\.\/world\/smallerDungeons\.js';/);
   assert.match(ctx, /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/, 'the stamp');
-  assert.match(ctx, /if \(extras\.locationKey === _locationKey && setPlayerPos && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\)\) \{/, 'the warp');
+  // AUDIT DELVE E2 (PIN MOVED): the law read once, before the world record, which a load at another size leaves unapplied
+  assert.match(ctx, /const otherLayout = extras\.locationKey === _locationKey && needsStartWarp\(extras\.smallerDungeonsState, dfLocation\);/, 'the warp\'s law');
+  assert.match(ctx, /if \(otherLayout && setPlayerPos\) \{/, 'the warp');
   assert.ok(!/getBool\('Experimental', 'SmallerDungeons'\)/.test(ctx), 'the host no longer reads the raw setting for either');
   assert.ok(!/smallerDungeonsState === 2|\? 2 : 1/.test(ctx), 'ONE DFU MEMBER, ONE EXPORT - no literal 2 for Enabled');
   // and the departure is RECORDED where the doctrine gate looks
@@ -110,7 +122,8 @@ test('FT1: the registry row - DFU Classic, over the settings key, sound', () => 
   assert.deepEqual(f.kinds, ['classic'], 'DFU\'s own feature; it wears Enhanced too the day the port builds on it');
   assert.deepEqual(f.control, { store: 'settings', key: 'Experimental/SmallerDungeons' });
   assert.equal(f.title, 'Smaller dungeons');
-  assert.match(f.note, /five blocks/); assert.match(f.note, /Main-story dungeons and dungeons a quest sends you to keep their full size/); assert.match(f.note, /online every dungeon is full size/);
+  assert.match(f.note, /five blocks/); assert.match(f.note, /Main-story dungeons keep full size; a quest keeps the size it was set up at/);   // AUDIT SD III (SD20g D8, PIN MOVED): the law - a quest started with the switch on builds small after it is turned off
+  assert.match(f.note, /Online every dungeon has its own size instead\./, 'SD-ONLINE (PIN MOVED): online the world\'s size for each dungeon, which is not this switch');
   assert.match(f.effect, /next dungeon you enter/);
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('settings', 'Experimental/SmallerDungeons'), f);

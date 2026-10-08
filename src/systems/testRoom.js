@@ -38,6 +38,7 @@ import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
 import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
+import { mintHourlock } from './gilded.js';   // GILDED1: the top rung's one record, to be seen and fired (its shot: createPellets, below)
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
 
@@ -337,6 +338,10 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // LOOT21 (section 13): the two Ayleid stones, found at the deepest sources - here to be used
   put(welkyndStone());
   put(varlaStone());
+  // GILDED1 (bible/06-Systems/Gilded.md): THE HOURLOCK, the Gilded rung's one record - minted whole, as the Brass Remnant
+  // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before
+  put(mintHourlock());
+  put(createPellets(30));
   return added;
 }
 /** LOOT14: the room's garments - a Formal Cloak and an Evening Gown, minted as a shelf mints clothing. */

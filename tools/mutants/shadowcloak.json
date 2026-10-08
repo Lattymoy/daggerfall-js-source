@@ -11,8 +11,8 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker' });",
     "tests": [
       "test/shadowcloak.test.js"
     ],
@@ -68,8 +68,8 @@
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour']);",
     "tests": [
       "test/shadowcloak.test.js"
     ],

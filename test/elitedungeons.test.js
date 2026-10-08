@@ -40,7 +40,8 @@ test('ELITE: the clone keeps the template look, says Elite in its name and carri
   assert.equal(plain.name, 'Old Ruin (10,20)');
   assert.strictEqual(elite.dungeon.blocks, template.dungeon.blocks, 'same blocks - the same look');
   assert.deepEqual(elite.exterior.exteriorData.blockNames, template.exterior.exteriorData.blockNames);
-  assert.match(dungeonSightLine(410, 'North', true), /^You see an Elite Dungeon 410 metres to the North!$/);
+  assert.match(dungeonSightLine(410, 'North', 'elite'), /^You see an Elite Dungeon 410 metres to the North!$/);   // PIN MOVED (TIER1): the tier, not a flag
+  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see an Abyss Dungeon 410 metres to the North!$/);
   assert.match(dungeonSightLine(410, 'North'), /^You see a Dungeon 410 metres/);
 });
 
@@ -85,7 +86,7 @@ test('ELITE: a foe with damageScale 2 lands double; the player and scale-1 foes 
 test('ELITE by source: the dungeon host expands an elite list and scales every foe it mints', async () => {
   const { readFile } = await import('node:fs/promises');
   const src = await readFile(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(src, /dfLocation\?\.elite\s*\?\s*expandEliteEnemies\(/, 'elite spawns expand the layout list');
+  assert.match(src, /dfLocation\?\.elite \|\| _superTier\s*(?:\/\/[^\n]*)?\n\s*\?\s*expandEliteEnemies\(/, 'elite spawns expand the layout list');   // SD4a (PIN MOVED): and a Super dungeon, the Elite's three at a marker
   assert.equal((src.match(/applyEliteScaling\(entity, e\);/g) ?? []).length, 2, 'both the class and the monster branch scale');
   assert.match(src, /entity\.maxHealth \* ELITE_HEALTH_SCALE/);
   assert.match(src, /entity\.damageScale = ELITE_DAMAGE_SCALE/);
@@ -104,14 +105,14 @@ test('ELITE: loot - +20% item drop chance and +20% rarity odds, caps unchanged',
   const dc = await src(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both foe branches');
   assert.match(dc, /itemChanceScale: ELITE_LOOT_DROP_MULT/, 'the treasure piles drop more');
-  assert.match(dc, /qualityMult: elite \? ELITE_LOOT_QUALITY_MULT : 1/, 'and roll better');
+  assert.match(dc, /qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1/, 'and roll better');   // SD4a (PIN MOVED): a Super dungeon's +50% before the Elite's
   const hc = await src(new URL('../src/scenes/hostCombat.js', import.meta.url), 'utf8');
   assert.match(hc, /\* lootDropMult;/);
   assert.match(hc, /qualityMult: lootQualityMult/);
 });
 
-test('ELITE: the plaque over an elite dungeon reads "Elite Dungeon"', async () => {
+test('ELITE: the plaque over an elite dungeon reads "Elite Dungeon" (TIER1, PIN MOVED: the host names the tier - test/tier1_dungeontiers.test.js)', async () => {
   const { staticDoorName } = await import('../src/systems/worldTooltips.js');
-  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Elite Old Ruin (10,20)', elite: true }), { title: 'Elite Dungeon', subs: ['To Old Ruin (10,20)'] });
-  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Old Ruin (10,20)' }), { title: 'To\nOld Ruin (10,20)' }, 'a normal one is unchanged');
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Elite Old Ruin (10,20)', tier: 'elite' }), { title: 'Elite Dungeon', subs: ['To Old Ruin (10,20)'] });
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Old Ruin (10,20)' }), { title: 'To\nOld Ruin (10,20)' }, 'with no tier named, the mod\'s own');
 });

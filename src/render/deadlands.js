@@ -306,7 +306,7 @@ void main() {
   vec3 zenith = vec3(0.075, 0.01, 0.008) * uGain;
   vec3 mid = vec3(0.3, 0.045, 0.022) * uGain;
   vec3 col = mix(mid, zenith, smoothstep(0.08, 1.2, e));
-  col = mix(col, deadHorizon(d), smoothstep(0.22, 0.0, e));
+  col = mix(col, deadHorizon(d), 1.0 - smoothstep(0.0, 0.22, e));   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL
 
   // ── the clouds: a deck over the court, read where the ray meets it, turned into the vortex
   float up = max(d.y, 0.0);
@@ -450,7 +450,7 @@ void main() {
   float crust = smoothstep(0.445, 0.49, n);
   float cr = 1.0 - abs(2.0 * dfbm(uv * 0.22 + warp * 3.0, 3) - 1.0);
   float crack = smoothstep(0.9, 0.985, cr) * crust;
-  float core = smoothstep(0.33, 0.21, n);                      // the hottest of the channels, far from any plate
+  float core = 1.0 - smoothstep(0.21, 0.33, n);                      // the hottest of the channels, far from any plate
   float edge = 1.0 - smoothstep(0.0, 0.035, abs(n - 0.462));  // where the melt meets a plate it burns brightest
   float pulse = 0.86 + 0.14 * sin(uTime * ${w(SEA_PULSE_TURNS)} + n * 11.0);
   vec3 molten = mix(vec3(0.8, 0.17, 0.025), vec3(1.0, 0.7, 0.26), core) * pulse;

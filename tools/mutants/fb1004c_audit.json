@@ -47,7 +47,7 @@
   {
     "name": "AUDIT-ROBES-skin-taken-away",
     "file": "src/player/activate.js",
-    "old": "eye[2] + dir[2] * firstHit.dist], 0.15)) continue;",
+    "old": "eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;",
     "new": "eye[2] + dir[2] * firstHit.dist], 0)) continue;",
     "tests": [
       "test/fb1004c_audit.test.js"

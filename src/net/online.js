@@ -82,6 +82,9 @@ import { privateInteriorOf } from './privateInterior.js';   // NET-SMOOTH: an ow
 import { isArenaRoom, validArenaIn } from './arenaLaw.js';   // ARENA4: the arena's hall and its bouts
 import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, arenaGate, relaySupportsArena, readArenaOut } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 import { RAID_TOWNS_CHUNK } from './raidLaw.js';   // RAID-ROLL: the towns table's pieces
+import { dungeonRoomTag } from './wire.js';   // SD-ONLINE: a dungeon's room carries the size it was built at
+import { validSdIn, validSdOut, sdGate, sdPzGate, relaySupportsSd, sdFightGate, SD_BRAIN_V } from './wire.js';   // SD3: the Super dungeon's frame - a find out, the hub's record in; SD6b: a turn out, the realm's Orrery in
+import { isSdRoom } from './sdLaw.js';   // SD6b: the realm's room, where the Orrery's turns go
 import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX } from './wire.js';
 import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
@@ -202,14 +205,15 @@ export const slug = (s) => String(s ?? '').replace(/[^A-Za-z0-9_.-]+/g, '_').sli
  * @param {number} [p.buildingKey] the interior's building
  * @param {{x:number,y:number}} [p.mapPixel] the player's map pixel (the streaming world's overworld)
  * @param {string|null} [p.layout] the interior's town's layout stamp (WD3 - its room is its layout's)
+ * @param {string|null} [p.size] the dungeon's built size (smallerDungeons.js builtDungeonSize - SD-ONLINE: its room is its layout's)
  */
-export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null, layout = null }) {
+export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null, layout = null, size = null }) {
   // AUDIT WORLD34 A1: the map id is MAPS.BSA's 32-bit integer read SIGNED (formats/mapsFile.js getInt32), so one with
   // bit 31 set read negative here and fell to the name slug - a room the wire keeps no world for. The UNSIGNED value
   // is the id, the same on every client; 0 alone is "no map row" (the probe's fixture)
   const id = Number.isFinite(mapId) ? mapId >>> 0 : 0;
   const loc = id > 0 ? `m${id}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
-  if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;
+  if (mode === 'dungeon') return loc ? `dungeon:${loc}${dungeonRoomTag(size)}` : null;   // SD-ONLINE: a re-laid dungeon's room is its layout's, `.m` or `.s` (wire.js WORLD_ROOM)
   const bk = Number.isFinite(buildingKey) ? buildingKey >>> 0 : 0;   // AUDIT WORLD6a B5: unsigned, as the id is - the memory's key (interiorLocationKey) spells it so, and the two must agree by construction
   if (mode === 'interior') return loc && bk ? `interior:${loc}.${layoutRoomKey(bk, layout)}` : null;   // WD3 (AUDIT WD3 B3): the building's room in its town's layout (world/interiorShared.js)   // a door the directory cannot key (0) is no room, not a pool of them
   if (host === 'exterior') return loc ? `town:${loc}` : null;
@@ -573,6 +577,10 @@ export class OnlineSession {
     this._siegeBucket = null;
     this.raidOk = false;          // RAID3: the relay that welcomed my primary socket keeps a raid's ledger (relaySupportsRaid) - an older one CLOSES the socket on the frame, and RAID2's law runs the raid
     this.onRite = null;           // WB12d: (word, room) => void - the hub's word of a broken rite, projected by the wire's validRiteOut
+    this.onSd = null;             // SD3: (word, room) => void - the hub's word of the Super dungeon (its record), projected by the wire's validSdOut
+    this.onSdHall = null;         // SD6b: (word, room) => void - the realm's word of its Orrery (the stones, the fray, the dial, the Concord), from my own realm alone
+    this.onSdFight = null;        // SD8b: (word, room) => void - the realm's word of its fight (net/wire.js validSdOut's fight kinds), from my own realm alone
+    this.onSdReceipt = null;      // SD9a: (receipt, room) => void - my Hour receipt (an `h1`), from my own realm at the fall or from the hub
     this.onWatch = null;          // SEAT1b: (receipt, claims) => void - the Watch's tick the relay signed for my account in my own cell (net/watchReceipt.js), carried to the account service by the seats' book
     this.onRaid = null;           // RAID3: (frame, room) => void - a cell's word about a raid (its ledger, its cleanse, my receipt) or the hub's (a cleanse anywhere, the day's cleanses), projected by the wire's validRaidOut
     this._raidBucket = null;      // RAID3: my own raid words out - raidGate's law
@@ -582,6 +590,10 @@ export class OnlineSession {
     this.onSerpent = null;        // SERPENT1: (word, room) => void - the serpent's cell's word (its state, its swim, its blows, my receipt) or the hub's (its kill, Bay-wide), projected by the wire's validSerpentOut
     this._serpentBucket = null;   // SERPENT1: my own serpent words out - serpentGate's law
     this._riteBucket = null;      // WB12d: my own rite words out - riteGate's law
+    this._sdBucket = null;        // SD3: my own Super dungeon words out - sdGate's law
+    this._sdPzBucket = null;      // SD6b: my own turns of the Orrery's stones - sdPzGate's law
+    this._sdTurnQ = 0;            // SD6b: my last turn's number (the realm takes a number once: a word said twice is one turn)
+    this._sdFightBucket = null;   // SD8b: my own fight words - sdFightGate's law
     this.foeInventoryOk = false;
     this.owOk = false;            // OW6L: the relay that welcomed my primary socket keeps a cell's overworld ledger (relaySupportsOverworld) - an older one CLOSES the socket on the frame, so nothing is said to it
     this.onOverworld = null;      // OW6L: (msg, room) => void - a cell's word on its overworld ledger, `{k:'sp', ids}` or `{k:'dg', rows}` (validOwOut), from my own cell or a halo's, its welcome's half by half
@@ -693,11 +705,11 @@ export class OnlineSession {
       // status is the SOCKET's - open, or still connecting (an 'error' after a relay error frame is a close on its way)
       // AUDIT WB12d (C6): each socket's own relay's word goes with it - the cell crossed into keeps the raid and the rite
       // its welcome said it keeps, and the one stepped down keeps its own (sendRaid/sendRite read the socket's word)
-      const old = { ws: this._ws, status: this.status === 'open' ? 'open' : 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS, since: this._now(), raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, foeInventoryOk: this.foeInventoryOk };   // SERPENT1: and the serpent's
+      const old = { ws: this._ws, status: this.status === 'open' ? 'open' : 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS, since: this._now(), raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk: this.foeInventoryOk };   // SERPENT1: and the serpent's
       this._halo.delete(room);
       this._halo.set(this.room, old);
       this._ws = h.ws; this.status = h.status; this.error = null; this._retryAt = h.retryAt; this._backoff = h.backoff;
-      this.raidOk = !!h.raidOk; this.riteOk = !!h.riteOk; this.serpentOk = !!h.serpentOk;
+      this.raidOk = !!h.raidOk; this.riteOk = !!h.riteOk; this.serpentOk = !!h.serpentOk; this.sdOk = !!h.sdOk;   // SD3: and the find's
       this.foeInventoryOk = !!h.foeInventoryOk;
       this.room = room;
       this._pose = pose ?? this._pose;
@@ -1362,6 +1374,64 @@ export class OnlineSession {
     this._riteBucket = gate.bucket; this.stats.sent++;
     return true;
   }
+
+  /** SD3: a Super dungeon found (net/wire.js validSdIn - its slot and the map pixel I stand on at its door) - down the
+   *  socket of the CELL that pixel is in (my own cell's or a halo's, the rite's law), SD_HZ_MAX a second, never at a relay
+   *  that would close the socket for it. TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendSdFound(word, cell) {
+    const w = validSdIn({ ...word, k: 'found' });
+    if (!w || typeof cell !== 'string' || !isCellRoom(cell)) return false;
+    const halo = cell !== this.room ? this._halo.get(cell) : null;
+    if (!(cell === this.room ? this.sdOk : halo?.sdOk)) return false;
+    const ws = cell === this.room ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);
+    if (!ws) return false;
+    const gate = sdGate(this._sdBucket, this._now());
+    if (!gate.pass) return false;
+    try { ws.send(JSON.stringify({ t: 'sd', ...w })); } catch { return false; }
+    this._sdBucket = gate.bucket; this.stats.sent++;
+    return true;
+  }
+
+  /** SD6b: a turn of an Ending-stone (net/wire.js validSdIn - stone `i`, `a` 1 forward or -1 back, my turn's number) - down
+   *  my own socket in the Hour's realm, at a relay that keeps it, SD_PZ_HZ a second (the realm strikes past it). The realm
+   *  judges it from my own pose and says the hall back to everyone (onSdHall). TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendSdTurn(i, a) {
+    const w = validSdIn({ k: 'pz', i, a, q: this._sdTurnQ + 1 });
+    if (!w || !this.sdOk || !isSdRoom(this.room) || this.status !== 'open' || !this._ws) return false;
+    const gate = sdPzGate(this._sdPzBucket, this._now());
+    if (!gate.pass) return false;
+    try { this._ws.send(JSON.stringify({ t: 'sd', ...w })); } catch { return false; }
+    this._sdPzBucket = gate.bucket; this._sdTurnQ = w.q; this.stats.sent++;
+    return true;
+  }
+
+  /** SD9a: a slot's spoils taken - said to the hub on my own hub socket (net/wire.js validSdIn `spent`), which keeps that
+   *  slot's receipt spent and hands it to no other device of mine. TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendSdSpent(s) {
+    const w = validSdIn({ k: 'spent', s });
+    if (!w || !this.acct || !this.sdOk || !isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;
+    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's
+    if (!toll.pass) return false;
+    try { this._ws.send(JSON.stringify({ t: 'sd', ...w })); } catch { return false; }
+    this._sdBucket = toll.bucket; this.stats.sent++;
+    return true;
+  }
+  /** SD8b: a fight word down my own socket in the Hour's realm (net/wire.js validSdIn - `in` with my level and my game's
+   *  brain; a blow on the Remnant, an Echo or a Heart), at a relay that keeps it, on the fight's own bucket. */
+  _sdFightSend(w) {
+    if (!w || !this.sdOk || !isSdRoom(this.room) || this.status !== 'open' || !this._ws) return false;
+    const gate = sdFightGate(this._sdFightBucket, this._now());
+    if (!gate.pass) return false;
+    try { this._ws.send(JSON.stringify({ t: 'sd', ...w })); } catch { return false; }
+    this._sdFightBucket = gate.bucket; this.stats.sent++;
+    return true;
+  }
+  /** SD8b: I step into the Last Moment's fight - my level, my game's brain (the realm answers with the whole fight, or
+   *  `no`). TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendSdIn(lv) { return this._sdFightSend(validSdIn({ k: 'in', lv, bv: SD_BRAIN_V })); }
+  /** SD8b: a blow in the Last Moment - `k` 'hit' (the Remnant), 'ehit' (Echo `e`), 'xhit' (Heart `c`), its number `q`, its
+   *  damage `d`, its kind `r` (net/gateBrain.js HIT_KINDS). TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendSdBlow(k, fields) { return this._sdFightSend(validSdIn({ ...fields, k })); }
 
   /** RAID-ROLL: the towns table to the hub that asked for it by its pinned hash (`raid` `tw`), in pieces the wire's own
    *  projection takes (net/raidLaw.js RAID_TOWNS_CHUNK) - down this hub socket alone. Answers whether it all went. */
@@ -2268,6 +2338,8 @@ export class OnlineSession {
       else { const h = this._halo.get(room); if (h) h.raidOk = relaySupportsRaid(relayV); }   // AUDIT RAID R8b: a halo says for itself
       if (primary) this.riteOk = relaySupportsRite(relayV);   // WB12d: the cell keeps the rite - an older relay closes the socket on `rite`
       else { const h = this._halo.get(room); if (h) h.riteOk = relaySupportsRite(relayV); }
+      if (primary) this.sdOk = relaySupportsSd(relayV);   // SD3: the cell hears a Hollow found - an older relay closes the socket on `sd`
+      else { const h = this._halo.get(room); if (h) h.sdOk = relaySupportsSd(relayV); }
       if (primary) this.serpentSiteOk = relaySupportsSerpentSite(relayV);   // SERPENT2: the hub's serpent herald
       if (primary) this.serpentOk = relaySupportsSerpent(relayV);   // SERPENT1: the cell holds a serpent's fight - an older relay closes the socket on `serpent`
       else { const h = this._halo.get(room); if (h) h.serpentOk = relaySupportsSerpent(relayV); }
@@ -2436,6 +2508,15 @@ export class OnlineSession {
       // own law; from any other room it is dropped
       const r = validRiteOut(m);
       if (r && isSocialRoom(room)) this._deliver('rite', () => this.onRite?.(r, room));
+    } else if (m.t === 'sd') {
+      // SD3: the hub's word of the Super dungeon - its record, at my hello and on every move - projected by the wire's own
+      // law; from any other room it is dropped. What it means is the world's to decide (systems/sdWorld.js)
+      const r = validSdOut(m);
+      // SD6b: the realm's word of its Orrery, from the realm I stand in alone - never a hub's, never another room's
+      if (r?.k === 'pz') { if (room === this.room && isSdRoom(room)) this._deliver('sd', () => this.onSdHall?.(r, room)); }
+      else if (r?.k === 'rcpt') { if ((room === this.room && isSdRoom(room)) || isSocialRoom(room)) this._deliver('sd', () => this.onSdReceipt?.(r.r, room)); }   // SD9a: my receipt - my own realm's, or the hub's
+      else if (r && r.k !== 'ev') { if (room === this.room && isSdRoom(room)) this._deliver('sd', () => this.onSdFight?.(r, room)); }   // SD8b: the realm's fight, from my own realm alone
+      else if (r && isSocialRoom(room)) this._deliver('sd', () => this.onSd?.(r, room));
     } else if (m.t === 'watch') {
       // SEAT1b (Seats-Arc 4.2): THE WATCH'S TICK - my own cell's alone (the relay ticks the socket that stands there, never a
       // halo's), a well-formed `k1` receipt or nothing; what it is worth is the account service's to say

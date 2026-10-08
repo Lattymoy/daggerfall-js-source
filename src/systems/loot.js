@@ -33,6 +33,7 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from './itemFields.js';   // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
 import { validSetMarks } from './aetheric.js';   // AUDIT SET D6: the wire's cross-checks of a sigil and an Aetheric piece
+import { validGildedMarks } from './gilded.js';   // GILDED1: and a Gilded piece's - its record's exactly
 import { validImprint, validCurse, validSocket } from './lootRarity.js';   // LOOT10: and of a Rare's imprint; LOOT16: and of a curse; LOOT20: and of a socket
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
@@ -579,6 +580,7 @@ export function validLootItem(v) {
   // answers a missing value with the template's own).
   if (!validItemFields(out)) return null;
   if (!validSetMarks(out)) return null;   // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric
+  if (!validGildedMarks(out)) return null;   // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery
   if (!validImprint(out)) return null;   // LOOT10: an imprint only as the Reforge makes one
   if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one
   if (!validSocket(out)) return null;   // LOOT20: a socket only as the pass and the Reforge make one

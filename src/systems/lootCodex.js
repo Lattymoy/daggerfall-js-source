@@ -31,10 +31,18 @@
 //
 // It rides the character's save (a mod record). OFF IS DFU EXACTLY: no
 // find is said, no imprint is made, and an imprint sleeps.
+//
+// GILDED1 (2026-10-07): and the GILDED rung's records (systems/gilded.js -
+// the Hourlock, one Brass Remnant's spoils in fifty) - the rarest find in
+// the game is said as the rest are ("The Hourlock - a Gilded piece! It
+// joins your codex.") and listed at the page's head, over the Legendaries,
+// as its rung stands over theirs. A save from before it carries no
+// `gilded` map and reads as none found.
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn, allLegendaries, legendaryById, powerOf, foundAmong, powerFits, recordFitsGroup } from './lootRarity.js';
 import { AETHERIC_RECORDS, aethericById } from './aetheric.js';
+import { GILDED_RECORDS, gildedById } from './gilded.js';   // GILDED1: the top rung's records
 import { registerTakeListener } from './inventory.js';
 import { registerModSaveData } from './modSaveData.js';
 import { registerMagicRoundHook, worldMinutes } from './worldTick.js';
@@ -47,8 +55,11 @@ import { totalGoldAmount, deductGold } from './court.js';
 import { shardsHeld, spendShards } from './reforge.js';
 
 // ── the record ──────────────────────────────────────────────────────
-/** `{ legendary: { id: day }, aetheric: { id: day } }` - what this character has found, and the day it first did. */
-const empty = () => ({ legendary: {}, aetheric: {} });
+/** `{ legendary: { id: day }, aetheric: { id: day }, gilded: { id: day } }` - what this character has found, and the
+ *  day it first did. */
+const empty = () => ({ legendary: {}, aetheric: {}, gilded: {} });
+/** GILDED1: each kind's record door - the one table a kind's ids are checked against. */
+const RECORD_OF = Object.freeze({ legendary: legendaryById, aetheric: aethericById, gilded: gildedById });
 let _codex = empty();
 /** A save without the codex fills it silently at its first sweep. */
 let _backfill = false;
@@ -60,14 +71,15 @@ export const foundDay = (kind, id) => _codex[kind]?.[id] ?? null;
 /** The ids found, of a kind. */
 export const foundIds = (kind) => Object.keys(_codex[kind] ?? {});
 
-/** What a piece is to the codex: `{ kind, id }` (a Legendary's record, an Aetheric piece's), or null. */
+/** What a piece is to the codex: `{ kind, id }` (a Legendary's record, an Aetheric piece's, a Gilded one's), or null. */
 export function codexKey(item) {
   if (item?.rarity === 'legendary' && typeof item.legendary === 'string' && legendaryById(item.legendary)) return { kind: 'legendary', id: item.legendary };
   if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric)) return { kind: 'aetheric', id: item.aetheric };
+  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded)) return { kind: 'gilded', id: item.gilded };   // GILDED1
   return null;
 }
 /** The first find's words: "Wyrmbane - a Legendary! It joins your codex." */
-export const CODEX_FIND = (name, kind) => `${name} - ${kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! It joins your codex.`;
+export const CODEX_FIND = (name, kind) => `${name} - ${kind === 'gilded' ? 'a Gilded piece' : kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! It joins your codex.`;
 
 /** NOTE A PIECE: into the codex if it is a record not yet there - said and heard unless `quiet`. Answers whether it
  *  was new. */
@@ -77,7 +89,7 @@ export function noteFind(item, { quiet = false } = {}) {
   if (!key || foundDay(key.kind, key.id) != null) return false;
   _codex[key.kind][key.id] = _day();
   if (!quiet) {
-    const rec = key.kind === 'legendary' ? legendaryById(key.id) : aethericById(key.id);
+    const rec = RECORD_OF[key.kind](key.id);
     hudText(CODEX_FIND(rec?.name ?? item.name ?? '', key.kind));
     audio.playOneShot?.(SOUND.LevelUp, 1);
   }
@@ -101,12 +113,12 @@ const ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 /** A record off a save: each kind a map of known ids to whole days; anything else dropped. */
 export function validCodexRecord(r) {
   const out = empty();
-  for (const kind of ['legendary', 'aetheric']) {
+  for (const kind of Object.keys(RECORD_OF)) {
     const m = r && typeof r === 'object' ? r[kind] : null;
     if (!m || typeof m !== 'object' || Array.isArray(m)) continue;
     for (const [id, day] of Object.entries(m)) {
       if (!ID_RE.test(id) || !Number.isSafeInteger(day) || day < 0) continue;
-      if (kind === 'legendary' ? !legendaryById(id) : !aethericById(id)) continue;
+      if (!RECORD_OF[kind](id)) continue;
       out[kind][id] = day;
     }
   }
@@ -116,7 +128,7 @@ export function validCodexRecord(r) {
  *  first sweep takes in what the character already carries without a word; a new game has its own door, and is empty. */
 registerModSaveData(CODEX_SAVE_VENDOR, {
   newSaveData: () => ({ ...empty(), fill: true }),
-  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric } }),
+  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric }, gilded: { ..._codex.gilded } }),
   restoreSaveData: (r) => { _codex = validCodexRecord(r); _backfill = !r || typeof r !== 'object' || r.fill === true; },
   newGame: () => { _codex = empty(); _backfill = false; },
 });
@@ -151,8 +163,18 @@ export function codexSets() {
   }
   return [...sets].map(([set, pieces]) => ({ set, pieces }));
 }
+/** GILDED1: where a Gilded record is said to be - the Hourlock's, the Brass Remnant's spoils (systems/sdSpoils.js). */
+export const GILDED_HINT = 'Said to lie in the brass of the Hour, once in a long while';
+/** GILDED1: the Gilded rows, the records' order: `{ id, kind, name, group, found, day, hint, power, lore }` - as a
+ *  Legendary's row is, a found one whole and an unfound one by its hint alone. */
+export function codexGilded() {
+  return GILDED_RECORDS.map((r) => {
+    const day = foundDay('gilded', r.id), found = day != null;
+    return { id: r.id, kind: 'gilded', name: found ? r.name : null, group: r.group, found, day, hint: GILDED_HINT, power: found ? r.power : null, lore: found ? r.lore : null };
+  });
+}
 /** How many found, of how many. */
-export const codexCount = () => ({ legendary: codexRows().filter((r) => r.found).length, legendaries: allLegendaries().length, aetheric: foundIds('aetheric').length, aetherics: AETHERIC_RECORDS.length });   // AUDIT LOOT F8: of the rows the page lists
+export const codexCount = () => ({ legendary: codexRows().filter((r) => r.found).length, legendaries: allLegendaries().length, aetheric: foundIds('aetheric').length, aetherics: AETHERIC_RECORDS.length, gilded: foundIds('gilded').length, gildeds: GILDED_RECORDS.length });   // AUDIT LOOT F8: of the rows the page lists
 
 // ── the imprint ─────────────────────────────────────────────────────
 export const IMPRINT_PRICE = Object.freeze({ shards: 20, gold: 5000 });

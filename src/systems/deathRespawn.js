@@ -25,6 +25,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../f
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
 import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js';   // DISC28-E: the dead live no minutes
+import { SD_REALM_TEXT } from '../world/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -104,6 +105,9 @@ const FLAVOR = Object.freeze({
     'You wake in the open air, the dungeon door standing behind you and no memory of the walk out.',
     'Something dragged you out before the dark could keep you. You come to just outside the entrance.',
   ],
+  // AUDIT SD II (L6 F4): a death in the Shattered Hour is the Hour's own - its words, as the gate's court casts out in
+  // its own ("You are cast out of the Burning Court.")
+  hour: [SD_REALM_TEXT.died],
 });
 
 /** One flavor line for the kind that took the player back - `roll`

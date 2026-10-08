@@ -1,0 +1,479 @@
+[
+  {
+    "name": "SD20C-V1-the-floor-unsaid",
+    "file": "src/scenes/sdFx.js",
+    "old": "  const add = (p, at0, kd, color, floor = SD_FX_FLOOR_Y) => {",
+    "new": "  const add = (p, at0, kd, color, floor = NaN) => {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V4-felt-anywhere",
+    "file": "src/scenes/sdFx.js",
+    "old": " if (!(SD_SHAKE[kd]?.[1] > 0) && !inArena(m[0], m[1], SD_ARENA_SLACK)) return;",
+    "new": "",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V4-the-slack-unread",
+    "file": "src/scenes/sdFx.js",
+    "old": "!inArena(m[0], m[1], SD_ARENA_SLACK)) return;",
+    "new": "!inArena(m[0], m[1])) return;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V4-the-reach-gated-too",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (!(SD_SHAKE[kd]?.[1] > 0) && !inArena(",
+    "new": "if (!inArena(",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-the-band-never-drawn",
+    "file": "src/render/sdBeam.js",
+    "old": "      if (point3(g.f0) && point3(g.f1) && g.w > 0) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-the-band-at-the-ribbons-width",
+    "file": "src/render/sdBeam.js",
+    "old": "        gl.uniform2f(U.uW, g.w, g.w);",
+    "new": "        gl.uniform2f(U.uW, SD_BEAM_W[0], SD_BEAM_W[1]);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-the-band-turned-to-the-eye",
+    "file": "src/render/sdBeam.js",
+    "old": "  if (uFlat == 1) across = vec3(along.z, 0.0, -along.x);   // the band: level across the floor\n",
+    "new": "",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-the-band-narrowed-by-the-eye",
+    "file": "src/render/sdBeam.js",
+    "old": "  float w = uFlat == 1 ? mix(uW.x, uW.y, aP.y) : max(mix(uW.x, uW.y, aP.y), length(toEye) * uMinRad);",
+    "new": "  float w = max(mix(uW.x, uW.y, aP.y), length(toEye) * uMinRad);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-the-band-reversed",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "toDungeon(d.f0, g.f0); toDungeon(d.f1, g.f1);",
+    "new": "toDungeon(d.f0, g.f1); toDungeon(d.f1, g.f0);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V2-precisions-differ",
+    "file": "src/render/sdBeam.js",
+    "old": "uniform highp int uFlat;",
+    "new": "uniform int uFlat;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V6-turned-in-a-frame",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    else if (facing[k] !== p.yw) facing[k] = p.yw = sdTurnToward(facing[k], p.yw, dt);",
+    "new": "    else facing[k] = p.yw;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V6-the-long-way-round",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  const d = wrapYaw(to - was), step = rate * Math.max(0, dt || 0);",
+    "new": "  const d = to - was, step = rate * Math.max(0, dt || 0);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V6-lost-at-its-start",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      const [x, z] = s.rem ? sdBodyAt(s.rem, s.lost) : SD_REM_START;",
+    "new": "      const [x, z] = SD_REM_START;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V6-the-lost-echo-gone",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  if (L && L.h > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V12-the-bearing-unread",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "ct = Math.cos(yaw - Math.PI / 2), st = Math.sin(yaw - Math.PI / 2);",
+    "new": "ct = Math.cos(-Math.PI / 2), st = Math.sin(-Math.PI / 2);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V12-spun-backward",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const c = Math.cos(-spin), s = Math.sin(-spin), ct",
+    "new": "const c = Math.cos(spin), s = Math.sin(spin), ct",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V12-the-flight-bearing-off",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "      g.yaw = Math.atan2(q[0] - fx, q[1] - fz);",
+    "new": "      g.yaw = Math.atan2(q[1] - fz, q[0] - fx);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V12-the-set-unturned",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw);",
+    "new": "gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-classic-sky-ungraded",
+    "file": "src/render/skyRenderer.js",
+    "old": "  outColor = vec4(brassGrade(dreadGrade(mix(color, uFogColor, uFogMix), uDread), uBrass), 1.0);",
+    "new": "  outColor = vec4(dreadGrade(mix(color, uFogColor, uFogMix), uDread), 1.0);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-enhanced-sky-ungraded",
+    "file": "src/render/enhancedSky.js",
+    "old": "  outColor = vec4(brassGrade(dreadGrade(out3, uDread), uBrass), 1.0);",
+    "new": "  outColor = vec4(dreadGrade(out3, uDread), 1.0);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-dynamic-sky-ungraded",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "  outColor = vec4(brassGrade(dreadGrade(enc, uDread), uBrass), 1.0);",
+    "new": "  outColor = vec4(dreadGrade(enc, uDread), 1.0);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-clouds-ungraded",
+    "file": "src/render/volumetricClouds.js",
+    "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op : c.rgb;",
+    "new": "dreadGrade(c.rgb / op, uDread) * op : c.rgb;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-weight-never-uploaded",
+    "file": "src/render/enhancedSky.js",
+    "old": "    gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)\n",
+    "new": "",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-gpu-grade-unweighted",
+    "file": "src/world/sdBrassSky.js",
+    "old": "  return mix(c, g, clamp(w, 0.0, 1.0));",
+    "new": "  return mix(c, g, clamp(w * 0.9, 0.0, 1.0));",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-gpu-luma-flat",
+    "file": "src/world/sdBrassSky.js",
+    "old": "  float l = dot(c, vec3(${LUMA.map(f).join(', ')}));",
+    "new": "  float l = dot(c, vec3(0.3333, 0.3333, 0.3333));",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-water-unbrassed",
+    "file": "src/scenes/shared.js",
+    "old": "  const dreaded = (ws) => brassed(sunbabyWaterSky(",
+    "new": "  const dreaded = (ws) => (sunbabyWaterSky(",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V8-the-passes-never-told",
+    "file": "src/scenes/shared.js",
+    "old": "      for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.brass = brassW;\n",
+    "new": "",
+    "tests": [
+      "test/sd19_presence.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V14-the-beams-end-reversed",
+    "file": "src/render/sdBeam.js",
+    "old": "  float ends = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.985, 1.0, y));",
+    "new": "  float ends = smoothstep(0.0, 0.015, y) * smoothstep(1.0, 0.985, y);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V14-the-clock-ring-reversed",
+    "file": "src/render/sdSky.js",
+    "old": "      float ring = (1.0 - smoothstep(0.0, ${f4(SD_CLOCK_RING_W)}, abs(r - 1.0))) * 0.5;",
+    "new": "      float ring = smoothstep(${f4(SD_CLOCK_RING_W)}, 0.0, abs(r - 1.0)) * 0.5;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V15-a-list-at-nought",
+    "file": "src/systems/sdOmen.js",
+    "old": "(!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array(",
+    "new": "(false ? rgb : new Float32Array(",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V13-never-warmed",
+    "file": "src/scenes/world.js",
+    "old": "    if (inRealm && !_sdPassesWarm) { _sdPassesWarm = true; sdBeamPassOf(); sdFx?.warm?.(renderer.gl); sdBlows?.warm?.(); }\n",
+    "new": "",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V13-the-sparks-unwarmed",
+    "file": "src/scenes/sdFx.js",
+    "old": "    warm(gl) {\n      if (!passTried && gl) {",
+    "new": "    warm(gl) {\n      if (false) {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V13-tried-each-time",
+    "file": "src/scenes/sdFx.js",
+    "old": "    warm(gl) {\n      if (!passTried && gl) { passTried = true;",
+    "new": "    warm(gl) {\n      if (gl) { passTried = true;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V13-the-telegraph-unwarmed",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    warm() {\n      if (!passTried && gl) {",
+    "new": "    warm() {\n      if (false) {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V9-the-extras-first",
+    "file": "src/world/sdRealm.js",
+    "old": "sorted = !!eye && m > SD_LIGHTS_CAP && k <= _litIdx.length;",
+    "new": "sorted = false;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V9-sorted-by-centre",
+    "file": "src/world/sdRealm.js",
+    "old": "      const key = Math.max(0, Math.sqrt(dx * dx + dy * dy + dz * dz) - l.range);",
+    "new": "      const key = Math.sqrt(dx * dx + dy * dy + dz * dz);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-sweep-arc",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  const u = H.sw * (r - Math.PI) + H.arc / 2;\n  if (!(u + half >= H.a0",
+    "new": "  const u = H.sw * (r - Math.PI) + H.arc;\n  if (!(u + half >= H.a0",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-sweep-width",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "out.w2 = S.width / 2;",
+    "new": "out.w2 = S.width;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-walks-shade-ignored",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "          if (cut && t0 < 1) inside = false;",
+    "new": "          if (false) inside = false;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-a-slab-of-a-pillar",
+    "file": "src/net/sdRemnant.js",
+    "old": "      const a = (pz - w - oz) / dz, b = (pz + w - oz) / dz;",
+    "new": "      const a = (pz - w - oz) / dz, b = (pz + 2 * w - oz) / dz;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-a-step-of-the-marks-walk",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      if (!inside) { bm = m; bx = dx; bz = dz; break; }",
+    "new": "      if (!inside) { bm = m + SD_PERIL_STEP_M; bx = dx; bz = dz; break; }",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-arena-unsquared",
+    "file": "src/net/sdRemnant.js",
+    "old": "x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad);",
+    "new": "x * x + z * z <= SD_ARENA.r + pad;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-keep-made",
+    "file": "src/net/sdRemnant.js",
+    "old": "  const d = Math.sqrt(x * x + z * z), o = out ?? [0, 0];",
+    "new": "  const d = Math.sqrt(x * x + z * z), o = [0, 0];",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-gears-made-each-frame",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;",
+    "new": "      const gears = live(s) ? sdGearsAt(s, t) : NONE;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-beams-made-each-frame",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "  const beams = sdBeamsAt(s, t, out ? _beamsAt : null);",
+    "new": "  const beams = sdBeamsAt(s, t, null);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-stone-light-made",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  const o = out ?? { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], stone: -1 };",
+    "new": "  const o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], stone: -1 };",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-landings-lights-made",
+    "file": "src/scenes/sdFx.js",
+    "old": "    if (!o) { o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] }; litPool[nLit] = o; }",
+    "new": "    o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] };",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-marks-walk-stepped",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "    for (let k = 1; k <= PERIL_STEPS; k++) {\n      const m = k * SD_PERIL_STEP_M;\n      if (m >= bm) break;\n      const x = fx + dx * m, z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
+    "new": "    for (let m = SD_PERIL_STEP_M; m <= SD_PERIL_REACH_M && m < bm; m += SD_PERIL_STEP_M) {\n      const x = fx + dx * m, z = fz + dz * m;\n      if (x * x + z * z > R2) break;\n      let inside = false;",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-the-hearts-walked-by-a-closure",
+    "file": "src/scenes/sdFx.js",
+    "old": "for (let j = 0; j < X.c.length; j++) { const q = X.c[j]; if ((k.hearts[j] ?? 0) > 0 && !(q[2] > 0)) heartBurst(s, t, q, SD_FX_KINDS.heartBreak); k.hearts[j] = q[2]; }",
+    "new": "X.c.forEach((q, j) => { if ((k.hearts[j] ?? 0) > 0 && !(q[2] > 0)) heartBurst(s, t, q, SD_FX_KINDS.heartBreak); k.hearts[j] = q[2]; });",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V5-a-body-made",
+    "file": "src/net/sdFightLink.js",
+    "old": "  const o = out ?? [0, 0];\n  if (!B) {",
+    "new": "  const o = [0, 0];\n  if (!B) {",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V14-the-veils-sparks-reversed",
+    "file": "src/render/gateVeil.js",
+    "old": "(1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5)))",
+    "new": "smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5))",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V14-the-skys-near-reversed",
+    "file": "src/render/enhancedSky.js",
+    "old": "    float near = 1.0 - smoothstep(0.0, 0.28, dir.y);",
+    "new": "    float near = smoothstep(0.28, 0.0, dir.y);",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  },
+  {
+    "name": "SD20C-V14-the-sun-babys-horns-reversed",
+    "file": "src/world/sunbabySky.js",
+    "old": "(0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc)))",
+    "new": "(0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc))",
+    "tests": [
+      "test/sd20c_render.test.js"
+    ]
+  }
+]

@@ -69,6 +69,7 @@ export function createTownMapWindow(deps = {}) {
         boards: deps.townBoards ?? null,   // TOWN-MARKS: the Notice Boards, feet in the location's frame (the classic window ignores them)
         homes: deps.townHomes ?? null,   // TOWN-MARKS: the player housing, by building key
         homesVersion: deps.townHomesVersion ?? null,
+        questBuildings: deps.townQuestBuildings ?? null,   // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names here
         title: deps.locationName ?? '',
       },
     });

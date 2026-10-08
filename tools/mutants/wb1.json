@@ -247,7 +247,7 @@
   {
     "name": "WB1-the-ring-lost-at-the-far-zoom",
     "file": "src/ui/inkMap.js",
-    "old": "  const r = Math.max(10, g.r * view.scale);\n  ctx.save();",
+    "old": "  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);\n  ctx.save();",
     "new": "  const r = g.r * view.scale;\n  ctx.save();",
     "tests": [
       "test/wb1_gate_omen.test.js"

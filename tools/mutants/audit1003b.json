@@ -38,8 +38,8 @@
   {
     "name": "AUDIT1003b-R2-GATE-BEFORE-TOKEN",
     "file": "server/src/index.js",
-    "old": "      if (!battle && !floor) {",
-    "new": "      if (!battle) {",
+    "old": "      if (!battle && !floor && !realmRoom) {",
+    "new": "      if (!battle && !realmRoom) {",
     "tests": [
       "test/audit1003b_relay.test.js"
     ]

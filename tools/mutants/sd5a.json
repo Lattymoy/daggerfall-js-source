@@ -1,0 +1,218 @@
+[
+  {
+    "name": "SD5A-a-stage-moved",
+    "file": "src/net/sdBrain.js",
+    "old": "export const SD_ORRERY = Object.freeze({ x: 0, z: 42, r: 18 });",
+    "new": "export const SD_ORRERY = Object.freeze({ x: 0, z: 40, r: 18 });",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-court's-id",
+    "file": "src/world/sdRealm.js",
+    "old": "export const SD_REALM_LOCATION_ID = 0x7ffff200;",
+    "new": "export const SD_REALM_LOCATION_ID = 0x7ffff000;",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-slot-unread",
+    "file": "src/world/sdRealm.js",
+    "old": "export const isSdRealm = (loc) => Number.isSafeInteger(loc?.sdRealm) && ",
+    "new": "export const isSdRealm = (loc) => ",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-marker-off-the-Threshold",
+    "file": "src/world/sdRealm.js",
+    "old": "  const [x, , z] = realmToDungeon(0, 0, SD_ARRIVE_Z);",
+    "new": "  const [x, , z] = realmToDungeon(0, 0, 30);",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-dial-off-the-hall",
+    "file": "src/world/sdRealm.js",
+    "old": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD,",
+    "new": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_FLOOR_RECORD,",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-no-root",
+    "file": "src/world/sdRealm.js",
+    "old": "    f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
+    "new": "    if (false) f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-a-floor-left-out",
+    "file": "src/world/sdRealm.js",
+    "old": "  disc(SD_THRESHOLD);\n  disc(SD_ORRERY);\n",
+    "new": "  disc(SD_THRESHOLD);\n",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-walk-unwalked",
+    "file": "src/world/sdRealm.js",
+    "old": "  Object.freeze({ kind: 'band', ...SD_WALK }),\n",
+    "new": "",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-inset-ignored",
+    "file": "src/world/sdRealm.js",
+    "old": "rr = Math.max(0, fl.r - inset);",
+    "new": "rr = fl.r;",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-lamps-outside-the-rims",
+    "file": "src/world/sdRealm.js",
+    "old": "0, cz + Math.sin(a) * (r - 1)]);",
+    "new": "0, cz + Math.sin(a) * (r + 2)]);",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-dial's-twelfth-unlit",
+    "file": "src/world/sdRealmArt.js",
+    "old": "(Math.round(hour) % 12 === 0 ? 0.035 : 0.02)",
+    "new": "(Math.round(hour) % 12 === 0 ? 0.02 : 0.02)",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-a-rest-in-the-Hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (_sdRealm) { hudText.add(SD_REALM_TEXT.noRest); return; }   // SD5a: nor a rest\n",
+    "new": "",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-way-back-unstood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }",
+    "new": "    if (false) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-Hour-unstood",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (hit.sdRealm != null) standSdRealm(ctx);   // SD5a",
+    "new": "      if (false) standSdRealm(ctx);   // SD5a",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-room-a-dungeon's",
+    "file": "src/scenes/worldModes.js",
+    "old": " isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } :",
+    "new": "",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-out-at-no-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door))",
+    "new": "dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door))",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-word-not-asked-again",
+    "file": "src/scenes/world.js",
+    "old": "      const word = sdRiftOf(s)?.word;\n      if (word) { sdSay(word); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-way-back-never-at-the-Rift",
+    "file": "src/scenes/world.js",
+    "old": "      if (at) modes?.setPlayerLocalPosition?.(at);\n",
+    "new": "",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-a-Recall-out-of-the-Hour",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noRecall); return; }",
+    "new": "    if (false) { sdSay(SD_REALM_TEXT.noRecall); return; }",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-left-in-a-room-that-refused-me",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
+    "new": "    void SD_REALM_TEXT;",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-edge-lost",
+    "file": "src/scenes/world.js",
+    "old": "    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "new": "    if (false) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-regeneration-in-the-Hour",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) setCourtRules(true);",
+    "new": "    if (false) setCourtRules(true);",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-Hollow-forgets-its-Hour",
+    "file": "src/scenes/world.js",
+    "old": " || modes?.dungeonLocation?.sdRealm === loc?.sdSlot),",
+    "new": "),",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  },
+  {
+    "name": "SD5A-the-world-room-a-dungeon's",
+    "file": "src/scenes/world.js",
+    "old": "    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);",
+    "new": "    else if (false) key = sdRoomKey(modes?.roomIdentity?.()?.s);",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ]
+  }
+]

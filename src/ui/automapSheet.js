@@ -56,6 +56,7 @@ import { boundarySegments, linkSegments, fitView, toPaper, toMap, viewCentredOn,
 import { tryAddOrEditUserNote, setUserNote, automapTrailPoints } from '../systems/automap.js';
 import { aabbContains } from '../systems/automapModel.js';   // TP-SEEN
 import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies, in this frame
+import { QUEST_MARK_LIFT, QUEST_FOLLOWED_TEXT, QUEST_LEGEND_TEXT } from './questMarks.js';   // AUDIT DELVE D3/D4: where the diamond stands, and what it says
 import {
   paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip, paintFloorStripParty, paintStairs,
 } from './inkAutomap.js';
@@ -148,6 +149,9 @@ const _frames = new WeakMap();   // rows -> { bounds, floors, field, links, shee
  *   portals?: Map<string, {entrance?: {pos: number[]}, exit?: {pos: number[]}}>
  *     | (() => Map<string, {entrance?: {pos: number[]}, exit?: {pos: number[]}}>|null),
  *   fires?: ReadonlyArray<number[]> | (() => ReadonlyArray<number[]>|null),
+ *   echoes?: ReadonlyArray<number[]> | (() => ReadonlyArray<number[]>|null),
+ *   quests?: ReadonlyArray<{at: number[], name?: string, followed?: boolean}>
+ *     | (() => ReadonlyArray<{at: number[], name?: string, followed?: boolean}>|null),
  * }} deps
  */
 export function createAutomapSheet(deps = {}) {
@@ -451,6 +455,55 @@ export function createAutomapSheet(deps = {}) {
       const [x, z] = toPlan(p[0], p[2]);
       out.push({ x, z, y: p[1], kind: 'fire', name: 'Campfire' });
     }
+    // AUDIT DELVE D1: the solid map draws every storey's marks, and laid flat two storeys' marks fall on one paper spot -
+    // so an echo or a quest off the floor in view says which floor it is on (the teleporter's `to Floor N` idiom)
+    const floorOf = (y) => {
+      const s = sheetAt(f, y);
+      return solidOn && s >= 0 && s !== index ? ` \u00b7 ${f.sheets[s].label}` : '';
+    };
+    // ECHO1 (the delve arc): where a chain moved something out of sight, until it is found - seen or not, because the
+    // press told the player which way, and the mark is where it said
+    for (const p of echoesHere()) {
+      if (!mine(p[1])) continue;
+      const [x, z] = toPlan(p[0], p[2]);
+      out.push({ x, z, y: p[1], kind: 'echo', name: `Moved${floorOf(p[1])}` });
+    }
+    // GUIDE8 (the delve arc): the Exact tier's quest marks - where a quest resource stands, the quest debugger's
+    // knowledge, asked for by name (the `quest-guidance` row) - the followed quest's filled
+    for (const q of questsHere()) {
+      const p = q.at;
+      if (!mine(p[1])) continue;
+      const [x, z] = toPlan(p[0], p[2]);
+      out.push({ x, z, y: p[1], kind: 'quest', name: `${q.name ?? ''}${floorOf(p[1])}`, followed: !!q.followed });
+    }
+    return out;
+  }
+
+  /** AUDIT DELVE D11: does an echo breathe on the sheet in view - the live storey's, or any on the solid map (which
+   *  draws them all)? An echo upstairs is not on the flat plan, and the plan repainted on its beat for nothing. */
+  function echoesBreathe() {
+    const all = echoesHere();
+    if (!all.length) return false;
+    if (solidOn) return true;
+    const f = ensureFrame();
+    return f.sheets.length > 0 && all.some((p) => sheetAt(f, p[1]) === index);
+  }
+  /** ECHO1: the host's echoes ([x, y, z], scene frame), or none. */
+  function echoesHere() {
+    const all = typeof deps.echoes === 'function' ? deps.echoes() : deps.echoes;
+    return Array.isArray(all) ? all.filter((p) => Array.isArray(p) && p.length >= 3) : [];
+  }
+  /** GUIDE8: the host's quest marks ({ at: [x, y, z], name, followed }), or none. */
+  function questsHere() {
+    const all = typeof deps.quests === 'function' ? deps.quests() : deps.quests;
+    return Array.isArray(all) ? all.filter((q) => Array.isArray(q?.at) && q.at.length >= 3) : [];
+  }
+  /** GUIDE8: the sheets the quest marks stand on - listed on the strip whether walked or not, and marked there. */
+  function questSheets() {
+    const f = ensureFrame();
+    const out = new Set();
+    if (!f.sheets.length) return out;
+    for (const q of questsHere()) out.add(sheetAt(f, q.at[1]));
     return out;
   }
 
@@ -800,7 +853,10 @@ export function createAutomapSheet(deps = {}) {
     let best = null, bestD = MARK_REACH * MARK_REACH;
     for (const m of marksHere()) {
       const [x, y] = markPaper(m);
-      const d = (x - px) * (x - px) + (y - py) * (y - py);
+      let d = (x - px) * (x - px) + (y - py) * (y - py);
+      // AUDIT DELVE D3: a quest's diamond stands QUEST_MARK_LIFT above its spot (inkMap.js paintQuestMark) - the
+      // pointer on the diamond is on the mark, as the world map's own pick has it (heldMap.js _questAt)
+      if (m.kind === 'quest') d = Math.min(d, (x - px) * (x - px) + (y - QUEST_MARK_LIFT - py) * (y - QUEST_MARK_LIFT - py));
       if (d < bestD) { bestD = d; best = m; }
     }
     return best;
@@ -848,6 +904,7 @@ export function createAutomapSheet(deps = {}) {
     const you = youSheet();
     if (you >= 0) keep.add(you);
     keep.add(index);
+    for (const q of questSheets()) keep.add(q);   // GUIDE8: a quest's floor is on the strip before it is walked
     return f.sheets.filter((s) => keep.has(s.index));
   }
   const listed = (i) => listedSheets().some((s) => s.index === i);
@@ -1329,7 +1386,7 @@ export function createAutomapSheet(deps = {}) {
         paperH: env.paperH,
         reserveTop: env.reserveTop ?? 0,   // EM5: below the tab strip's band
         hands: env.reserveHands ?? null,   // DISC25-A: ...and above the right gauntlet
-        you: youSheet(), exit: exitSheet(), seen: c?.seen ?? null,
+        you: youSheet(), exit: exitSheet(), seen: c?.seen ?? null, quest: questSheets(),   // GUIDE8: the floors a quest mark stands on
         measure: ctx?.measureText ? (t) => { ctx.font = stripFont(env.paperW); return ctx.measureText(t).width; } : null,
       });
       lastPaper = env.paperW;
@@ -1415,6 +1472,9 @@ export function createAutomapSheet(deps = {}) {
       const mark = nearestMark(px, py);
       // NOTE-PIN: a waypoint lights up and says how to change it
       if (mark?.kind === 'note') { hoverNote = mark.id; return { label: `${mark.name || 'Note'} - click to rename, empty to remove`, cursor: 'pointer' }; }
+      // AUDIT DELVE D4: the dungeon sheet has no legend (heldMap.js mounts it on the world's sheet), so the hover says
+      // what a filled diamond is and a hollow one - AUDIT GUIDE U16's words, underground
+      if (mark?.kind === 'quest') return { label: `${mark.name || QUEST_LEGEND_TEXT} - ${mark.followed ? QUEST_FOLLOWED_TEXT : QUEST_LEGEND_TEXT}`, cursor: 'pointer' };
       if (mark) return { label: mark.name || (deps.title ?? ''), cursor: 'pointer' };
       // DISC25-A: a stair names where it goes
       const stair = solidOn ? null : nearestStair(px, py);
@@ -1459,7 +1519,7 @@ export function createAutomapSheet(deps = {}) {
     /** DISC22-G: the way in breathes while it is on the sheet, so the window repaints on its beat. DISC23-A: and so
      *  does a party with anyone in this level - on ANY floor, so a member who climbs onto this one appears within a
      *  beat rather than when something else next repaints. */
-    breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0 || hoverRow != null || hoverNote != null || (solidOn && (!!(hoverStair || hoverButton) || solidBlitted)); },   // EM3-3D fix: a scaled blit is redrawn once the zoom rests   // EM3-3D: a hovered stair's name and a hovered button are inked on the beat
+    breathes() { return !!entranceHere() || echoesBreathe() || readPartyBodies(deps.party).length > 0 || hoverRow != null || hoverNote != null || (solidOn && (!!(hoverStair || hoverButton) || solidBlitted)); },   // EM3-3D fix: a scaled blit is redrawn once the zoom rests   // EM3-3D: a hovered stair's name and a hovered button are inked on the beat
 
     /** DISC25-A: what the window's foot says while this sheet is up. */
     hint() { return solidOn ? AUTOMAP_HINT_3D : AUTOMAP_HINT; },

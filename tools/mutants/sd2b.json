@@ -1,0 +1,172 @@
+[
+  {
+    "name": "SD2b-the-welcome-announced",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (first) return;",
+    "new": "",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "What happened while I was away is no news."
+  },
+  {
+    "name": "SD2b-stood-while-gone",
+    "file": "src/scenes/sdHost.js",
+    "old": "    const h = sdStands(phase) ? hollowOf(rec) : null;",
+    "new": "    const h = hollowOf(rec);",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A Hollow stands while its phase says so."
+  },
+  {
+    "name": "SD2b-the-ground-pulled",
+    "file": "src/scenes/sdHost.js",
+    "old": "      if (!inside(stood.loc)) { unstand(stood.key); stood = null; }",
+    "new": "      if (true) { unstand(stood.key); stood = null; }",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "Never from under a player standing in it. SD2d (re-aimed by content): the guard has a line of its own beside the cast-out."
+  },
+  {
+    "name": "SD2b-found-from-afar",
+    "file": "src/scenes/sdHost.js",
+    "old": "<= SD_FOUND_NEAR_M) {",
+    "new": "<= SD_FOUND_NEAR_M * 10) {",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "The find is said at its door."
+  },
+  {
+    "name": "SD2b-never-again",
+    "file": "src/scenes/sdHost.js",
+    "old": "(foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)",
+    "new": "(foundSentS !== stood.s)",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A find the hub did not take is said again."
+  },
+  {
+    "name": "SD2b-again-at-once",
+    "file": "src/scenes/sdHost.js",
+    "old": "t - foundSentAt >= SD_FOUND_RESEND_MS)",
+    "new": "t - foundSentAt >= 0)",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "Again every SD_FOUND_RESEND_MS, not every frame."
+  },
+  {
+    "name": "SD2b-after-the-find",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (phase === 'risen' && stood",
+    "new": "    if (phase !== 'gone' && stood",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "Never once the hub's word says found."
+  },
+  {
+    "name": "SD2b-another-slots-find",
+    "file": "src/scenes/sdHost.js",
+    "old": "&& stood && stood.s === rec?.s && (",
+    "new": "&& stood && (",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "The find is for the record's own slot."
+  },
+  {
+    "name": "SD2b-a-line-said-twice",
+    "file": "src/scenes/sdHost.js",
+    "old": "if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell')))",
+    "new": "if (rec.ph === 'found')",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "Each move said once."
+  },
+  {
+    "name": "SD2b-the-fading-after-a-kill",
+    "file": "src/scenes/sdHost.js",
+    "old": "if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was",
+    "new": "if (rec.ph === 'gone' && rec.foundAt != null && was",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A collapse after a kill is no fading."
+  },
+  {
+    "name": "SD2b-a-line-lost",
+    "file": "src/scenes/sdHost.js",
+    "old": "if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
+    "new": "if (!h) return;",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A line waiting on the scan is said past the wait, never lost."
+  },
+  {
+    "name": "SD2b-an-older-word-kept",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (rec && w.s < rec.s) return;   // an older slot's word: the hub moved on\n",
+    "new": "",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "An older slot's word is no word."
+  },
+  {
+    "name": "SD2b-two-at-once",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (h && !stood) {",
+    "new": "    if (h && (!stood || stood.s !== h.s)) {",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "One Hollow at a time."
+  },
+  {
+    "name": "SD2b-the-ledger-notes-a-hollow",
+    "file": "src/scenes/world.js",
+    "old": "    if (locationIndex.get(key)?.superTier) return;   // SD2b: never a Hollow's - its life is the hub's record, not a spawn's clocks\n",
+    "new": "",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A Hollow's life is the hub's record."
+  },
+  {
+    "name": "SD2b-the-ledger-clears-a-hollow",
+    "file": "src/scenes/world.js",
+    "old": "    if (locationIndex.get(key).superTier) return;   // SD2b: a Hollow's life is the hub's record - a cleared one is not two days from gone\n",
+    "new": "",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "A cleared Hollow is not two days from gone."
+  },
+  {
+    "name": "SD2b-the-pixel-never-rebuilt",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdLate.size && !building) sweepSdLate();   // SD2b: the Hollow's pixel, the same way\n",
+    "new": "",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "The Hollow's pixel is built again when it rises or goes on ground that stands."
+  },
+  {
+    "name": "SD2b-the-record-unheard",
+    "file": "src/scenes/world.js",
+    "old": "      if (tab.room === SOCIAL_ROOM) link.onSd = (w) => sdHost?.heard(w);",
+    "new": "      if (tab.room === SOCIAL_ROOM) link.onSd = null;",
+    "tests": [
+      "test/sd2b_world.test.js"
+    ],
+    "note": "The hub's link hears the record."
+  }
+]

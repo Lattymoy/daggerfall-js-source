@@ -140,7 +140,7 @@ export const pickTemplate = (templates, salt, px, py) => (templates?.length ? te
  * property of WHERE it stands - region, politic, climate (`where`, from the host, which owns the map files).
  * `locationIndex` is -1: the quest machine and the music read it as "a real table row", and this is none.
  * @param {object} template a real, non-main-story location with hasDungeon
- * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}}} o
+ * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean}} o
  */
 export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false }) {
   const mapId = spawnedMapId(salt, px, py);
@@ -220,9 +220,11 @@ export function spawnedLocationCentreLocal(loc) {
 }
 
 /** The line, with the distance to the nearest ten metres and the compass word the host resolved. */
-export function dungeonSightLine(metres, direction, elite = false) {
+export function dungeonSightLine(metres, direction, tier = 'regular') {
   const m = Math.max(10, Math.round(metres / 10) * 10);
-  return `You see ${elite ? 'an Elite Dungeon' : 'a Dungeon'} ${m} metres to the ${direction}!`;
+  // TIER1 (Super-Dungeons.md section 12): the tier's words - an Elite's and (SD2) a Super's; a regular spawn is "a Dungeon"
+  const what = tier === 'super' ? 'an Abyss Dungeon' : tier === 'elite' ? 'an Elite Dungeon' : 'a Dungeon';
+  return `You see ${what} ${m} metres to the ${direction}!`;
 }
 
 // ---------------------------------------------------------------- TTL1

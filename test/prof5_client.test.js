@@ -278,7 +278,7 @@ test('PROF5 wiring: the host builds the market book online, its answers told to 
   assert.match(w, /now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, marks: marksBook,\n\s*stores: \{ apply: \(st\) => profBook\?\.applyStore\(st\) \},/);   // AUDIT 30 U1: the Stores told too (AUDIT 31: its holds after)
   assert.match(w, /const market = marketBook && profBook && profBook\.state\.open !== false && marksBook\?\.state\?\.open !== false && Number\.isInteger\(region\) \? \{/);   // AUDIT 30 U11; MARKET-AUDIT (PIN MOVED: `=== true` - the tab stands while the professions' read is unanswered)
   // GUILD1e: the board's window built by the host's one builder (showNoticeWindow), which adds the book and the character
-  assert.match(w, /gate: \(\) => noticeGateCard\(\), answer: \(note\) => answerNote\(note\), work, market,\n/);
+  assert.match(w, /gate: \(\) => noticeGateCard\(\), sd: \(\) => noticeSdCard\(\), answer: \(note\) => answerNote\(note\), work, market,\n/);   // PIN MOVED (SD2c): a found Super dungeon's note beside the gate's
   assert.match(w, /book: noticeBook, character: \(\) => characterIdOf\(playerEntity\),/);
   assert.match(w, /if \(heldProvenances\(\)\.has\(piece\.provenance\)\) return;\n\s*const it = mintPiece\(piece, piece\.provenance\);\n\s*if \(!it\) return;\n\s*if \(it\.maxCondition > 0\) it\.currentCondition = wearCondition\(it\.maxCondition, piece\.wear\);/);
   assert.match(w, /\.filter\(\(it\) => it\?\.provenance && asMinted\(it\) && !tradeRefusal\(it\) && !isLocked\(it\) && !pieceKept\(it\.provenance\)\)/);   // AUDIT 30 C2

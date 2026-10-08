@@ -49,6 +49,7 @@ import { decodedTextureTopDown, preloadTextureRecord, textureReplacementRect } f
 import { dfmodImgImage, dfmodCifRciImage, dfmodGeneration, resampleRgba, dfmodCarriesDollArt } from '../systems/dfmodTextures.js';   // DFMOD1: an attached mod's backdrop, body, head and hi-res items   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
 import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
 import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
+import { ownItemImage } from '../systems/itemTemplates.js';   // THUNDERLOCK-ART: a weapon of the port's own wears its own doll layer
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 
@@ -163,6 +164,9 @@ export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = 
     return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
   }
   if (item.group === 'Weapons') {
+    // THUNDERLOCK-ART (systems/itemTemplates.js ownItemImage): a weapon of the port's own wears its own doll layer - a Gilded piece's gold one
+    const own = ownItemImage(item, { forPaperDoll: true });
+    if (own) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES[item.material ?? 0] ?? DYE_COLORS.Unchanged, target: DYE_TARGETS.WeaponsAndArmor };
     let record = t.playerTextureRecord;
     // an Either-hand weapon worn RIGHT uses the +1 record
     if (item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;

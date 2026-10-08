@@ -56,8 +56,8 @@
   {
     "name": "WB6a-the-horizon-not-the-skys",
     "file": "src/render/deadlands.js",
-    "old": "  col = mix(col, deadHorizon(d), smoothstep(0.22, 0.0, e));",
-    "new": "  col = mix(col, mid, smoothstep(0.22, 0.0, e));",
+    "old": "  col = mix(col, deadHorizon(d), 1.0 - smoothstep(0.0, 0.22, e));",
+    "new": "  col = mix(col, mid, 1.0 - smoothstep(0.0, 0.22, e));",
     "tests": [
       "test/wb6a_deadlands.test.js"
     ]

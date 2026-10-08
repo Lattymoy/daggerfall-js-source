@@ -36,6 +36,9 @@ export const GROUND_EDGE_STEP = 0.02;
 export const PERIL_EDGE = Object.freeze([0.25, 0.7]);
 export const PERIL_EDGE_NOW = 0.9;
 export const PERIL_ARROW_R = 72;
+/** AUDIT SD III (T2): its ring on a phone held sideways (px) - at 72 the chevron pointing ahead stood on the boss bar's
+ *  plate. */
+export const PERIL_ARROW_R_LOW = 36;
 export const PERIL_ARROW_STEP = 3;
 /** The words. */
 export const GROUND_VIEW_TEXT = Object.freeze({
@@ -79,6 +82,7 @@ export const GROUND_VIEW_CSS = `
 .wb-ground-arrow { position: fixed; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 30; }
 .wb-ground-arrow svg { position: absolute; left: -14px; top: ${-PERIL_ARROW_R - 14}px; width: 28px; height: 28px;
   filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 6px rgba(0,0,0,0.9)); }
+@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }
 `;
 /** WB13a: the way out, a chevron - drawn pointing up (ahead) and turned about the crosshair. */
 const ARROW_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 22 16h-6v6H8v-6H2z"/></svg>';
