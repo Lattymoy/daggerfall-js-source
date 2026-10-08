@@ -16,7 +16,8 @@ foot). CHAP3c BUILT (2026-10-08, the same word; the bands on the halls' prices a
 the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the seats placed at the Turning, the book's
 rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
-CHAP4c (the titles, the Chronicle's reader, the Focus) is next. Merged with main
+CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
+`world177` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
 past the Super Dungeons arc and then past SCALE4 (2026-10-08): the arc's migrations are `0092_npc_roll` to
 `0097_npc_seats` and its service `acct96` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -574,7 +575,27 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   Records - is CHAP4c's, with the titles.
 - **Hidden guilds** are placed as any chapter is; nothing of their seats is public (the sheet and the board name none).
 - **Still to build**: the titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay
-  first, Seats-Arc 7.4, worded without gender); the Focus and the Chronicle's reader (CHAP4c).
+  first, Seats-Arc 7.4, worded without gender) - BUILT, below; the Focus and the Chronicle's reader (CHAP4d).
+
+BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
+
+- **Three generic ids** on the token (`net/identityToken.js` CHAPTER_TITLES, the closed list's last): `chaptermaster`,
+  `chapterofficer`, `formermaster` - each with the seats' bounded claim (`ts`, [the chapter's key, the Season]; the key
+  its guild faction x 100 + its region, `chapterTitleKey`), refused without it and the claim refused beside any title
+  that rides alone (`titleClaimed`). The relay stamps and reads the claim as a seat title's (`net/wire.js` badged,
+  readBadge) - a relay change: `world177`, NOT YET DEPLOYED.
+- **Worded without gender** (Seats-Arc 7.4) - "Master of the Fighters Guild, Anticlere", "Officer of the Mages Guild,
+  Daggerfall", "Former Master of the Knights of the Dragon, Daggerfall" (`chapterTitleText`); NARROWED from the draft's
+  "Former Master of the <Region> Chapter": a region keeps a chapter of every guild with a hall there, so the guild is
+  named. The guild's own rank titles (Archmage, Patriarch and Matriarch) stay the hall's own window's, where DFU knows
+  the character. A hidden guild's seat gives no title (its seats are its members' alone).
+- **Derived at the mint** (`server-account/src/npcChapters.js` chapterTitlesOfAccount): an account holds a title while
+  one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
+  Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
+  Master's seat again; a token signs it, with its claim, only for a character that holds it.
+- **The order of the deploy** (the SHADOW-FANG order): the relay `world177` first, by hand - a token with a title the
+  live relay does not know is refused at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`,
+  shipped `"off"`; `chapterTitlesOpenFor`).
 
 BUILT (CHAP4b, 2026-10-08), the seat on the page:
 
@@ -727,7 +748,8 @@ DECIDED.
    and shelf (5.2).
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows. CHAP4a BUILT
    (2026-10-08): the seats placed at the Turning, the Roll's rank stopped at 7, the Chronicle's rows (section 6). CHAP4b
-   BUILT (2026-10-08): the book held at 7 online, a seat's rank at its chapter's halls, the seats said (3.5, 6).
+   BUILT (2026-10-08): the book held at 7 online, a seat's rank at its chapter's halls, the seats said (3.5, 6). CHAP4c
+   BUILT (2026-10-08): the seats' titles on the token, behind `CHAPTER_TITLES` (6).
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
@@ -1102,3 +1124,24 @@ The fourth slice's client half; sections 3.5 and 6 carry the law and what buildi
   under the ceiling through updateRank and the push effects; the teleport's gate at a seat's rank; the tab holding the
   book and saying the seats through two answers; the hosts' wiring. `tools/mutants/chap4b.json`: 34 mutants, all dead.
   G8's wiring pin moved (the ceiling beside the reveal, PIN MOVED).
+
+## CHAP4c - the seats' titles, as built (2026-10-08, Mac: "Your call")
+
+The fourth slice's titles; section 6 carries the law and what building it narrowed (BUILT, CHAP4c).
+
+- **The token and the relay.** `src/net/identityToken.js`: CHAPTER_TITLES, last in TITLES, and `titleClaimed` (a seat's
+  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world177`, its
+  law recorded in `test/relayversion.test.js`; forty-one tests' version pins moved with it (PIN MOVED).
+- **The law.** `src/net/npcChapterLaw.js`: the key (`chapterTitleKey`, `chapterOfTitleKey`), the words
+  (`chapterTitleText`) and the titles a character's seats give it (`chapterTitlesOf`).
+- **The service.** `server-account/src/npcChapters.js` (`chapterTitlesOpenFor`, `chapterTitlesOfAccount`);
+  `titles.js` holds them off the row's `chapterTitles`; `index.js` lays them on the wardrobe's and the mint's row and
+  signs one only for its character. `wrangler.toml`: `CHAPTER_TITLES = "off"`. Still `acct96`.
+- **The client.** `src/ui/playerBadge.js`: the words off the claim, the plain words, three colours.
+- **Pins.** `test/chap4c_titles.test.js`, 7 tests: the vocabulary and the claim's law, the relay's stamp and read; the
+  key and the words (and none for a hidden guild, no guild, no region); the titles a character's seats give it (the
+  order, the Former Master's guards, the hidden); the badge; the service shut and open (the wardrobe, the signed claims,
+  another character's none, a hidden guild's none), a Former Master through the Season's floor, held again, an officer's
+  seat lost, a dead character; the wiring. `tools/mutants/chap4c.json`: 28 mutants, all dead. Pins moved: the
+  vocabulary's newest (acc3titles, aegis, primarch, crystalfist), SHADOW-FANG's widest token (the longest claimed title
+  now a chapter's), SEAT1c's mint line.

@@ -49,7 +49,8 @@
 // SOC4's party green already crosses that seam.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, SEAT_TITLES } from '../net/identityToken.js';
+import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToken.js';
+import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
@@ -96,6 +97,11 @@ export const TITLE_TEXT = Object.freeze({
   primarch: 'Primarch',              // PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own
   crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
   hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
+  // CHAP4c (2026-10-08, the Chapters arc): a chapter's seats' - worded off their claim (npcChapterLaw.js chapterTitleText,
+  // "Master of the Fighters Guild, Anticlere"); these where the claim names no chapter this client knows
+  chaptermaster: 'Chapter Master',
+  chapterofficer: 'Chapter Officer',
+  formermaster: 'Former Master',
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -227,6 +233,11 @@ export const TITLE_RGBA = Object.freeze({
   // royal purple and the Apostle's periwinkle, darker and bluer than the Hierophant's rose
   crystalfist: CRYSTAL_PURPLE,
   hourbreaker: HOUR_GOLD,   // SD9b: the Remnant's bar's gold
+  // CHAP4c: a chapter's seats' - a guild banner's steel blue for its Master, paler for an officer, weathered grey for a
+  // Master who lost the seat; lighter and greyer than the Herald's azure, darker than the Champion's silver
+  chaptermaster: Object.freeze([0.498, 0.698, 0.898, 1]),   // #7fb2e5
+  chapterofficer: Object.freeze([0.659, 0.769, 0.867, 1]),  // #a8c4dd
+  formermaster: Object.freeze([0.604, 0.627, 0.659, 1]),    // #9aa0a8
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -420,8 +431,9 @@ export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, 
 export function titleBadge(peer) {
   const key = peer?.title;
   if (typeof key !== 'string' || !TITLES.includes(key)) return null;
-  // SEAT1c: a seat title worded off its claim where this client knows the place, else its plain word
-  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : null) ?? TITLE_TEXT[key];
+  // SEAT1c: a seat title worded off its claim where this client knows the place, else its plain word; CHAP4c: and a
+  // chapter's seat's
+  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];
   if (!text) return null;
   return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null };   // PENITENT: `edge`
 }

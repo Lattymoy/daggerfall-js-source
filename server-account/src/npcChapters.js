@@ -37,10 +37,10 @@
 import { chaptersOpenFor } from './npcRoll.js';
 import { allRegionChapters } from './npcHalls.js';
 import { agreedGateRegions } from './seatInfluence.js';   // AUDIT CHAP3 E1: a gate's region, as three of the day's claims agree on it
-import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt, seasonZeroOf } from '../../src/net/townSeatLaw.js';
+import { seatWeekStartMs, SEAT_WEEK_MS, seasonEndingAt, seasonZeroOf, seasonOf, SEASON_WEEKS } from '../../src/net/townSeatLaw.js';
 import {
   STRENGTH_START, strengthAfter, strengthTarget, strengthSeasonEnd, chapterBandOf, meritWeekOf, hallHidden, chaptersSwitchOf,
-  SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf,
+  SEAT_MERIT_WEEKS, seatEligibleAt, chapterSeatPlan, seatChangesOf, chapterTitlesOf,
 } from '../../src/net/npcChapterLaw.js';
 
 /** The most weeks one read settles - a service asleep for longer starts its count again from there (the seats' own). */
@@ -171,6 +171,35 @@ async function seatsPlaced(db, week, turning, open, opened) {
     rows: plan.map((p) => [p.faction, p.region, p.char, p.account, p.seat, since.get(`${p.faction}|${p.region}|${p.char}`) ?? week]),
     changes: seatChangesOf(sitting, plan).map((c) => [c.faction, c.region, c.char, c.from, c.to]),
   };
+}
+
+/** CHAP4c: whether the chapters' titles are minted for this account - the Chapters open to it and CHAPTER_TITLES on. The
+ *  relay must carry the three ids (RELAY_VERSION world177) before this is turned on: a token with a title the relay does
+ *  not know is refused at the hello. */
+export const chapterTitlesOpenFor = (/** @type {any} */ player, /** @type {any} */ env) => env?.CHAPTER_TITLES === 'on' && chaptersOpenFor(player, env);
+
+/** CHAP4c: the first week of the Season `week` falls in - the counted Season's, or with none counted the eight-week
+ *  block's (the seats' stand-in). A Former Master's title holds from its loss to the Season's end. */
+const seasonStartOf = (/** @type {number} */ week, /** @type {number | null} */ zero) => seasonOf(week, zero)?.start ?? Math.floor(week / SEASON_WEEKS) * SEASON_WEEKS;
+
+/**
+ * CHAP4c: THE CHAPTERS' TITLES OF AN ACCOUNT'S STANDING CHARACTERS, `[{ char, title, ts }]` - each character's, best
+ * first (npcChapterLaw.js chapterTitlesOf): its seats now, and the Masters' seats it lost this Season (the Chronicle's
+ * rows from the Season's first week). `character` narrows it to one.
+ * @param {any} db @param {string} playerId @param {number} nowS @param {number | null} [zero] @param {string | null} [character]
+ */
+export async function chapterTitlesOfAccount(db, playerId, nowS, zero = null, character = null) {
+  const week = meritWeekOf(nowS);
+  const who = 'JOIN realm_characters c ON c.id = x.char_id AND c.player = ?1 AND c.dead_at IS NULL WHERE (?2 IS NULL OR x.char_id = ?2)';
+  const { results: seats = [] } = await db.prepare(`SELECT x.char_id, x.faction, x.region, x.seat FROM npc_chapter_seats x ${who}`).bind(playerId, character).all();
+  const { results: lost = [] } = await db.prepare(`SELECT x.char_id, x.faction, x.region FROM npc_chapter_history x ${who}
+    AND x.kind = 'seat' AND json_extract(x.data, '$.from') = 'master' AND x.week >= ?3`).bind(playerId, character, seasonStartOf(week, zero)).all();
+  const season = seasonOf(week, zero)?.n ?? 0;
+  const chars = [...new Set([...seats, ...lost].map((r) => String(r.char_id)))].sort();
+  return chars.flatMap((ch) => chapterTitlesOf(
+    seats.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region), seat: String(r.seat) })),
+    lost.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region) })), season,
+  ).map((t) => ({ char: ch, ...t })));
 }
 
 /** CHAP4a: A CHARACTER'S SEATS, `[{ f, region, seat, since }]` by guild then region - the Roll's answer carries them. */

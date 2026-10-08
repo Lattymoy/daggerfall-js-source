@@ -171,7 +171,7 @@ import {
   duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -183,7 +183,7 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
-import { chapterSheet, chapterSeatsOf } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats
+import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
@@ -212,7 +212,10 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
 
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
-const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
+const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player, env);
+/** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). */
+const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => (chapterTitlesOpenFor(player, env)
+  ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
@@ -749,15 +752,20 @@ const service = {
         // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - its glyphs on every member of the named character's guild, and a seat
         // title worn only by the guildmaster character this token is minted for, with its claim (`ts`) beside it
         const seats = seatsOpenFor(who.player, env);
-        const worn = seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player;
+        const worn = await withChapterTitles(ctx, seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player, env);   // CHAP4c: and a chapter's
         const zero = seasonZeroOf(env.SEASON_ZERO_WEEK);   // SEASON1: the Season on a title's claim
         const seatBadge = seats && renownCharacterOk(body.character) ? await seatBadgeOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)?.n ?? 0) : null;
         const wornT = titleWorn(worn, env);
         // CROWN1 part two: the champion's is the account's own, kept for good - no guildmaster's; SEASON1: and so are a
         // Season's crowned and keeper (seatRoyal.js keptTitleOf)
         const kept = seats && KEPT_TITLES.includes(wornT) ? await keptTitleOf(ctx.db, who.player.id, wornT, zero) : null;
+        // CHAP4c: a chapter's seat's title worn only by a character of the account that holds it, with its claim - the
+        // named character's own first, else none (a title a character does not hold is not signed for it)
+        const chapterT = CHAPTER_TITLES.includes(wornT) && renownCharacterOk(body.character)
+          ? (await chapterTitlesOfAccount(ctx.db, who.player.id, nowS, zero, body.character)).find((t) => t.title === wornT) ?? null : null;
         const seatT = KEPT_TITLES.includes(wornT) ? (kept ? { t: wornT, ts: kept.ts } : {})
-          : SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {}) : (wornT ? { t: wornT } : {});
+          : SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {})
+            : CHAPTER_TITLES.includes(wornT) ? (chapterT ? { t: wornT, ts: chapterT.ts } : {}) : (wornT ? { t: wornT } : {});
         // SEASON1 part two (Seats-Arc 9.1): AND A SEASON'S BANNER RIBBON - the named character's, where its guild kept a
         // seat through the Season before and it was a member at that Season's last Turning (seatRibbons.js ribbonOf)
         const rb = seats && renownCharacterOk(body.character) ? await ribbonOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)) : null;

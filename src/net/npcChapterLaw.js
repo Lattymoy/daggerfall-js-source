@@ -816,3 +816,40 @@ export function bookCappedLine(/** @type {unknown} */ factions) {
   const one = names.length === 1, said = listed(names);
   return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 as ${one ? 'its' : 'their'} chapters' seats, won by Merit - your rank there is 7.`;
 }
+
+// ─── CHAP4c: THE CHAPTERS' TITLES (Chapters-Arc 6) ──────────────────
+// A seat's title on the token, as the seats' are (Seats-Arc 7.4): a generic id (net/identityToken.js CHAPTER_TITLES) and
+// a bounded claim, `ts` [the chapter's key, the Season], worded by the client - worded without gender (nothing about a
+// player is guessed), so not the guild's own rank titles (Archmage, Matriarch), which the hall's own window keeps.
+// A Master who loses the seat is its Former Master for the rest of the Season. A hidden guild's seat gives no title.
+
+/** A chapter's key on a title's claim: its guild faction x 100 + its region (both whole, the region under 100). */
+export const chapterTitleKey = (/** @type {number} */ f, /** @type {number} */ region) => f * 100 + region;
+/** The chapter a title's key names, or null. */
+export const chapterOfTitleKey = (/** @type {unknown} */ k) => (typeof k === 'number' && Number.isSafeInteger(k) && k >= 0 ? { f: Math.floor(k / 100), region: k % 100 } : null);
+const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Officer', formermaster: 'Former Master' });
+/** A chapter's title worded off its claim - "Master of the Fighters Guild, Anticlere" - null for a claim that names no
+ *  chapter (or a hidden guild's). */
+export function chapterTitleText(/** @type {unknown} */ title, /** @type {unknown} */ ts) {
+  const words = typeof title === 'string' ? /** @type {Record<string, string>} */ (CHAPTER_TITLE_WORDS)[title] : null;
+  const c = Array.isArray(ts) ? chapterOfTitleKey(ts[0]) : null;
+  if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;
+  return `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}`;
+}
+/**
+ * THE TITLES A CHARACTER'S SEATS GIVE IT: `seats` `[{ f, region, seat }]` it holds now, `lost` `[{ f, region }]` the
+ * chapters whose Master's seat it lost this Season - `[{ title, ts }]`, best first: a Master's seat's ('chaptermaster'),
+ * an officer's ('chapterofficer'), a Master's seat lost and not held again ('formermaster'), each by guild then region;
+ * never a hidden guild's. `season` the Season on the claim.
+ * @param {Iterable<any>} seats @param {Iterable<any>} lost @param {number} season
+ */
+export function chapterTitlesOf(seats, lost, season) {
+  const held = [...seats].filter((s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region));
+  const masterAt = new Set(held.filter((s) => s.seat === 'master').map((s) => `${s.f}|${s.region}`));
+  const by = (/** @type {any} */ a, /** @type {any} */ b) => a.f - b.f || a.region - b.region;
+  const rows = (/** @type {any[]} */ list, /** @type {string} */ title) => list.sort(by).map((s) => ({ title, ts: [chapterTitleKey(s.f, s.region), season] }));
+  const former = [...lost].filter((s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region) && !masterAt.has(`${s.f}|${s.region}`));
+  const once = new Map(former.map((s) => [`${s.f}|${s.region}`, s]));
+  return [...rows(held.filter((s) => s.seat === 'master'), 'chaptermaster'), ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),
+    ...rows([...once.values()], 'formermaster')];
+}
