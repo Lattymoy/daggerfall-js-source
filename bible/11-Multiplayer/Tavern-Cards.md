@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -144,7 +144,7 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
 - **DECIDED: rarity is the loot's.** A card carries a tier of `RARITY_ORDER` (`src/systems/lootRarity.js`: common,
   magic, rare, legendary, aetheric, artifact) and draws with that tier's treatment, the way an item does.
 - **DECIDED: the art is ours.** A card's picture can never be an ARENA2 sprite or a render of one (Port-Doctrine, "A
-  RENDER OF GAME DATA IS GAME DATA"). MEASURE: who paints them, and in what style - section 9.
+  RENDER OF GAME DATA IS GAME DATA"). ANSWERED (section 9 Q5): painted in code (section 26).
 
 ### 6.3 Collecting
 
@@ -191,8 +191,8 @@ Each ships alone and is verifiable without the next.
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** SHIPPED | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables (section 17). |
 | **CARDS6** SHIPPED | Online stakes: buy-in and cash-out escrowed by the realm service (section 23). |
-| **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. |
-| **CARDS8** | The catalog and the art pipeline: the first set of cards, the Card Binder, the starter deck, the deckbuilder window. |
+| **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. SHIPPED 2026-10-08 (section 26). |
+| **CARDS8** | The catalog and the art pipeline: the first set of cards, the Card Binder, the starter deck, the deckbuilder window. SHIPPED 2026-10-08 (section 26): the deck builder is the Holdings rail's Collections page. |
 | **CARDS9** | Collecting: foe drops, tavern packs, quest and boss cards, cards in the trade and the market. |
 | **CARDS10** | Iliac Hand at the table, offline against patrons and online through the relay; the season ladder. |
 
@@ -697,3 +697,59 @@ service at once over about 14,000 gold evenings - the record is `01-Overview/Aud
 - **Recorded:** a staked player all in who drops while another must act is folded and forfeits (B7, the law's leaver).
 - **Pins:** `test/auditcards4_client.test.js`, `_pins`, `_tidy` and additions across the cards' tests;
   `tools/mutants/auditcards4.json` - every fix's record and every lane survivor's, three equivalent with why.
+
+## 26. COLLECTIONS, CARDS7 and CARDS8 (2026-10-08): the codex and the cards, Iliac Hand's rules, the first set
+
+Mac: **"So what about card collections? I think we add a new tab in holdings for the weapon codex and card
+collection"**; asked, **"One 'Collections' tab"**, the collectible cards **"Painted in code"**, and **"Tab + CARDS7 +
+CARDS8"**.
+
+- **THE COLLECTIONS PAGE** (`ui/collectionsPage.js`, the Holdings rail's last entry): a Codex | Cards switch. The CODEX
+  part draws LOOT10's own rows (`systems/lootCodex.js`: every Legendary found and not, a row opened whole - its lines,
+  power, lore and the day found - then the Aetheric sets), the rows the Reforge's Codex page draws, so the two never
+  disagree; the pack's Codex button still opens that window. The CARDS part is the binder's (below). The page shows while
+  Loot rarity makes Legendaries or a binder is carried.
+- **CARDS7, THE RULES** (`net/iliacHand.js`, pure - it imports only `cardLaw.js`, `dice.js` and the catalog, so the
+  relay can run it later): section 6.1 as built. Two decks of 30 (two of a card, one of a Legendary or rarer); three
+  holdings drawn from the locations; magicka the turn's number to ten (and a card's bonus); a hand of four, a card drawn
+  a turn, seven at most; four cards a side of a holding. Both players COMMIT hidden, then the turn is revealed together -
+  the player with more power showing first (a face-down card counts for nothing, so the order says nothing of it). After
+  the sixth turn two holdings held wins, else the greater power across all three, else a draw. The only randomness is
+  the injected `rand32` at the deal (the holdings, the two shuffles): the same seed and plays are the same game. A small
+  effect language (`reveal`, `ongoing`, `end`; `buff`, `weaken`, `destroy`, `move`, `draw`, `magicka`, `summon`,
+  `transform`, and the ongoing `room`, `veil`, `nospell`, `discount`; targets by side and holding, filtered by tag or
+  cost, the weakest or the strongest) - and every card's text is its effects' own words (`fxText`), pinned equal. The
+  locations bend their holdings: Daggerfall's knights, Sentinel's sun, Wayrest's walls, Shornhelm, Orsinium's orcs,
+  Betony and Evermor's gifts, Castle Daggerfall and Privateer's Hold (no spells; the Hold's cards face down till the
+  end), the Mages Guild Hall's cheaper spells, the vampire's crypt. Its numbers are MEASURE (section 6): in 3,000 random
+  games each seat won over a thousand, about 85% decided on holdings, 1.5% drawn.
+- **CARDS8, THE FIRST SET** (`net/iliacCards.js`): 82 cards - 57 units, 14 spells (six of them the artifacts: Mehrunes'
+  Razor, the Wabbajack, Azura's Star, the Oghma Infinium, Chrysamere, the Sanguine Rose), 11 Princes - and 11
+  locations, drawn from Daggerfall itself (its creatures, guilds, temples, knightly orders and Princes; King Gothryd).
+  Rarity is the loot's tiers (common 26, magic 23, rare 13, legendary 12, aetheric 2 - Mehrunes Dagon and Molag Bal -
+  artifact 6); a card's power follows what it is (a Lich outranks an Orc, the Giant stands tallest). The STARTER DECK:
+  thirty commons and magics.
+- **THE FACES** (`render/iliacCardFaces.js`; section 9 Q5, "Painted in code"): the frame the tier's colour
+  (`lootRarity.js` RARITIES), heavier up the tiers - studs, a double rule, an aetheric glow; the kind by its window (a
+  unit's square, a spell's rounded, a Prince's arch, a location's landscape); a magicka gem, a power shield; one of 35
+  emblems drawn from paths; the name banner and the rules box; the back a compass rose of the Bay. No ARENA2 pixel, no
+  raster.
+- **THE CARDS AS ITEMS** (`systems/iliacItems.js`; section 6.3): a card is template 581 named by its `card` - two of one
+  card stack, two cards never (`inventory.js` stacksWith), a split keeps it (splitStack); its name is the catalog's
+  ("Card: Rat"), never stored; weightless, worth a coin, not bound (CARDS9 brings it into the trade and the market). The
+  CARD BINDER is template 582, the Wallet's shape (bound, pack-only, refused by the realm's trade - `BOUND_TEMPLATES`):
+  it organizes - the cards stay in the pack's own `items`, never a second list, and leave the pages for the binder's
+  sheet while it is carried - and holds the DECKS (`decks`, declared item fields, replaced whole when they change). Every
+  character is given a binder and the starter deck's thirty cards once (`binderGift`: at chargen, and on an older save's
+  load), the starter deck laid in it.
+- **THE DECK BUILDER** (`ui/cardBinderPage.js`, the Collections page's Cards): the collection in a grid of the painted
+  faces - a held card at its count, an unheld one dim (what is still to find) - narrowed by kind; the decks with the
+  rules' word on each and the pack's (a deck needs the cards it names); a deck built a press at a time (a card in the
+  grid goes in, never more than the binder holds; one in the deck comes out) and kept once lawful; a deck taken apart on a
+  second press, its cards staying in the binder.
+- **Not yet:** where cards come from (foes, tavern packs, quests, winning, the trade and the market - CARDS9) and Iliac
+  Hand at the table against patrons and online (CARDS10). A card minted offline that walks into the realm is worth
+  nothing to its gold law today; CARDS9 decides its customs before cards change hands there.
+- **Pins:** `test/cards7_rules.test.js` 27, `test/cards8_catalog.test.js` 8, `test/cards8_faces.test.js` 7,
+  `test/cards8_binder.test.js` 5. `tools/mutants/cards8.json` 20, all dead; the engine's own 22 were run by its
+  builder, all caught.

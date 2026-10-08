@@ -1,0 +1,282 @@
+[
+  {
+    "name": "C8-cards-stack-any",
+    "file": "src/systems/inventory.js",
+    "old": "    (a.locked === true) === (b.locked === true) &&\n    // CARDS8 (the port's own field, Ledger A): a card stacks only with its own card - two Rats, never a Rat and a Lich\n    (a.card ?? null) === (b.card ?? null);",
+    "new": "    (a.locked === true) === (b.locked === true);",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-split-forgets-card",
+    "file": "src/systems/inventory.js",
+    "old": "  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
+    "new": "",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-binder-tradeable",
+    "file": "src/net/realmTradeLaw.js",
+    "old": "Object.freeze([570, 571, 572, 580, 582]);",
+    "new": "Object.freeze([570, 571, 572, 580]);",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-name-stored",
+    "file": "src/systems/itemInfo.js",
+    "old": "  if (isIliacCard(item)) return iliacCardName(item);   // CARDS8",
+    "new": "  if (false) return iliacCardName(item);   // CARDS8",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-lines-unsaid",
+    "file": "src/systems/itemInfo.js",
+    "old": "  else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8\n",
+    "new": "",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-binder-not-bound",
+    "file": "src/systems/iliacItems.js",
+    "old": "  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,\n  bound: true, packOnly: true,",
+    "new": "  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-unknown-minted",
+    "file": "src/systems/iliacItems.js",
+    "old": "  if (!cardById(id) || !(Number.isInteger(count) && count >= 1)) return null;",
+    "new": "  if (!(Number.isInteger(count) && count >= 1)) return null;",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-two-binders",
+    "file": "src/systems/iliacItems.js",
+    "old": "  if (binderOf(entity.items)) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-gift-every-load",
+    "file": "src/systems/iliacItems.js",
+    "old": "  if ((Number.isSafeInteger(entity.binderGift) ? entity.binderGift : 0) >= BINDER_GIFT) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-no-starter-deck",
+    "file": "src/systems/iliacItems.js",
+    "old": "mintBinder([{ name: 'Starter Deck', cards: [...STARTER_DECK] }])",
+    "new": "mintBinder([])",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-held-any",
+    "file": "src/systems/iliacItems.js",
+    "old": "  for (const [id, n] of need) if ((have.get(id) ?? 0) < n) return 'not held';",
+    "new": "  void need;",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-decks-mutated",
+    "file": "src/systems/iliacItems.js",
+    "old": "  const decks = Array.isArray(binder.decks) ? binder.decks.slice() : [];",
+    "new": "  const decks = Array.isArray(binder.decks) ? binder.decks : [];",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-decks-unbounded",
+    "file": "src/systems/iliacItems.js",
+    "old": " || (i === decks.length && decks.length >= BINDER_DECKS_MAX)) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-pack-pages-cards",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  const held = new Set([...(wallet?.held ?? []), ...(binder?.held ?? [])]);",
+    "new": "  const held = new Set([...(wallet?.held ?? [])]);",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-builder-past-held",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "    else if (inDeck >= held) _said =",
+    "new": "    else if (false) _said =",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-keep-unlawful",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "  keep.disabled = !!why;",
+    "new": "  keep.disabled = false;",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-drop-at-once",
+    "file": "src/ui/cardBinderPage.js",
+    "old": "      if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-gift-unsaved",
+    "file": "src/systems/save.js",
+    "old": "  snap.binderGift = Number.isSafeInteger(entity.binderGift) ? entity.binderGift : BINDER_GIFT;",
+    "new": "  snap.binderGift = 0;",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "C8-chargen-no-binder",
+    "file": "src/systems/chargenSession.js",
+    "old": "  assignStartingEquipment(playerEntity, { classIndex });\n  giveBinderGift(playerEntity);   // CARDS8",
+    "new": "  assignStartingEquipment(playerEntity, { classIndex });",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  },
+  {
+    "name": "COLL-rail-hidden",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "...(collectionsPageShown(playerEntity) ? COLLECTION_PAGE_SECTIONS : [])];",
+    "new": "];",
+    "tests": [
+      "test/auditrealm.test.js",
+      "test/cards7_rules.test.js",
+      "test/cards8_binder.test.js",
+      "test/cards8_catalog.test.js",
+      "test/cards8_faces.test.js",
+      "test/holdings.test.js"
+    ]
+  }
+]

@@ -56,6 +56,11 @@ export const validEnchantment = (e) => !!e && typeof e === 'object' && !Array.is
 export const validRepairData = (r) => !!r && typeof r === 'object' && !Array.isArray(r)
   && typeof r.buildingKey === 'string' && Number.isInteger(r.timeStarted) && Number.isInteger(r.repairTime);
 
+/** CARDS8: a Card Binder's deck (systems/iliacItems.js) - a name and the catalog ids of its cards, a deck's worth. */
+export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isArray(d)
+  && typeof d.name === 'string' && d.name.length <= 40 && Array.isArray(d.cards) && d.cards.length <= 40
+  && d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);
+
 /** The declared fields, by name. Frozen: a new field is a new line here, not a reader's private knowledge. */
 export const ITEM_FIELDS = Object.freeze({
   // identity (DaggerfallUnityItem's, minted by every factory)
@@ -133,6 +138,9 @@ export const ITEM_FIELDS = Object.freeze({
   kitMetal: int({ min: 0, max: 9 }),
   // REPAIR-EASE: a Field Repair Kit (systems/smithItems.js) - found in loot, mends any metal; true, or absent
   fieldKit: bool(),
+  // CARDS8 (bible/11-Multiplayer/Tavern-Cards.md section 26): a card's catalog id (net/iliacCards.js); a Card Binder's decks
+  card: str(),
+  decks: list(rec(validBinderDeck)),
   // AUDIT 31 H3: the recipe a crafted piece was minted of (recipeLaw's id) - an Ebony and a Warforged piece share their
   // template and material, so a commission's picker reads this before any look-alike
   recipe: str(),

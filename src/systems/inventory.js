@@ -246,7 +246,9 @@ export function stacksWith(a, b) {
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0) &&
     // AUDIT MERGE-PLUS C4 (LOCK1 - the port's own field, Ledger A): a locked stack merges only with a locked one. Thirty
     // locked arrows stowed in a wagon holding five came out as thirty-five unlocked, and dropped.
-    (a.locked === true) === (b.locked === true);
+    (a.locked === true) === (b.locked === true) &&
+    // CARDS8 (the port's own field, Ledger A): a card stacks only with its own card - two Rats, never a Rat and a Lich
+    (a.card ?? null) === (b.card ?? null);
 }
 
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
@@ -372,6 +374,7 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
   if (priced && stack.worldTextureRecord != null) picked.worldTextureRecord = stack.worldTextureRecord;
   if (stack.timeForItemToDisappear) picked.timeForItemToDisappear = stack.timeForItemToDisappear;
   if (stack.locked === true) picked.locked = true;   // AUDIT MERGE-PLUS C4: the part split off keeps the stack's lock
+  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was
   if (stack.bound === true) picked.bound = true;   // AUDIT SS: and its binding (systems/itemBound.js) - never the Broker's price, which a dismantle pays out of
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;

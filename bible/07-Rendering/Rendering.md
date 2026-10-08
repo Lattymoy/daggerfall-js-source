@@ -171,6 +171,13 @@ directory by `test/audit18_bible_docs.test.js`:
   medallion on the back - every face painted from canvas paths in code (no
   ARENA2 pixel, no font glyph); one painter for the cloth's atlas and the
   panel's little cards.
+- `iliacCardFaces.js` - CARDS8 THE COLLECTIBLE CARDS' FACES (2026-10-08,
+  `11-Multiplayer/Tavern-Cards.md` section 26; Mac: "Painted in code"): each
+  Iliac Hand card framed in its loot tier's colour (studs, a double rule, an
+  aetheric glow up the tiers), its kind by its window (a unit's square, a
+  spell's rounded, a prince's arch, a location's landscape), a magicka gem and
+  a power shield, one of 35 emblems drawn from paths, the name banner and the
+  rules box; the back a compass rose of the Bay - no ARENA2 pixel, no raster.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
   its view-space box touches, uploaded as two integer textures (the grid's
