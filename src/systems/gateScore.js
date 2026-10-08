@@ -171,10 +171,19 @@ const RANK = { programChange: 0, controller: 0, noteOn: 1 };
 function makeSong(name, bpm, bars, write, level = 1, press = null) {
   const events = [];
   const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ);
+  // AUDIT SD III (A8): ONE NOTE A KEY A MOMENT - a note laid where the same voice already strikes it (a theme's note on
+  // its bar's own chord tone) is one note, its loudest and its longest: two note-ons as one doubled the hit or cut the
+  // first short, twenty-five times over the war's three songs (the Hour's score, systems/sdScore.js, keeps the same law)
+  const struck = new Map();
   const w = {
     note(voice, bar, beat, beats, n, velocity) {
-      const note = typeof n === 'number' ? n : midiNote(n);
-      events.push({ tick: tick(bar, beat), type: 'noteOn', channel: SCORE_CHANNELS[voice], note, velocity: Math.max(1, Math.min(127, Math.round(velocity))), duration: Math.max(1, Math.round(beats * SCORE_TPQ)) });
+      const note = typeof n === 'number' ? n : midiNote(n), at = tick(bar, beat), channel = SCORE_CHANNELS[voice];
+      const v = Math.max(1, Math.min(127, Math.round(velocity))), duration = Math.max(1, Math.round(beats * SCORE_TPQ));
+      const key = (at * 16 + channel) * 128 + note, was = struck.get(key);
+      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }
+      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };
+      struck.set(key, e);
+      events.push(e);
     },
     hit(key, bar, beat, velocity) { w.note('kit', bar, beat, 0.25, KIT[key], velocity); },
   };

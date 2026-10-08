@@ -210,7 +210,8 @@ object's own door (`_adopt`), as `fetch` does.
 
 Mac, 2026-10-08, asked "How can we continue to improve server performance and overall game performance", and then, of
 the list it was answered with, "Do 1 2 and 3": the account service's two reads made one (SCALE4a), SCALE4 (here 4b and
-4c), and SCALE3. The service is **acct94** with migration **0090**; it deploys with the site, which waits for it. No
+4c), and SCALE3. The service is **acct95** with migration **0091** (acct94 and 0090 until the merge with main, where SD9b had taken
+both); it deploys with the site, which waits for it. No
 relay change.
 
 ### SCALE3: the load harness (the local half)
@@ -332,7 +333,8 @@ could be served by a D1 read replica. And the tables nothing swept grew for ever
   too, which finds it done: a read never answers from a world the clock has not caught up with.
 - **Every hour** (`HOUR_JOBS`): the sweeps the reads no longer run, each its module's own law exported beside its table
   (`sweepBoard`, `sweepGuildNotes`, `sweepHarvests`, `pruneMarketHistory`), and the retention the tables never had - a
-  rate window a day past its start, a session idle past `SESSION_IDLE_S` (migration 0090 indexes `last_seen`), and a
+  rate window a day past its start, a session idle past `SESSION_IDLE_S` (the table walked - an index on `last_seen` would cost a written row at every
+  stale touch, AUDIT SCALE A6), and a
   guild invitation past its week.
 - A job never stops another; each writes one metrics point (`cron:<job>`); a service held for maintenance runs nothing.
 - The market's, the Work tab's and every guild's read used to issue their updates (expiry, the commissions, the

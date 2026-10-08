@@ -48,8 +48,8 @@
   {
     "name": "GATE-RELOAD-the-window-said-in-a-no",
     "file": "server/src/index.js",
-    "old": "if (no) { this._refuse(ws, no); return; } }",
-    "new": "if (no) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no })); return; } }",
+    "old": "if (isGateRoom(a.key)) { const no = await this._gateAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }",
+    "new": "if (isGateRoom(a.key)) { const no = await this._gateAdmit(a.key, who.subject, now); if (no) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no })); return; } }",
     "tests": [
       "test/gatereload.test.js"
     ]

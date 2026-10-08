@@ -1146,6 +1146,24 @@ export function accountSerpents({ fetch, storage }) {
   };
 }
 
+/** SD9b: a Brass Remnant's receipt the relay signed for this account, carried to the service - `{ recorded, slot, title,
+ *  aura, broken }`, or `{ recorded: false, why }` (`claimed`, `guest`). */
+export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receipt });
+
+/**
+ * SD9b: THE HOURS' ONE CALL, bound to this device's stored session (the gates' own shape). With no session there is no
+ * account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/sdClaims.js keeps the receipt for
+ * when there is one.
+ */
+export function accountSds({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt) => { const i = io(); return i ? claimSdReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
+    /** The signed-in account's id - the receipts this device may offer are its alone (AUDIT WB A9's law). */
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /**
  * ARENA4: THE ARENA (server-account/src/arena.js) through the one door - a bout's receipt the relay signed, carried here
  * by an account it names (`claim`); the boards, counted from the rows (`board` - the season's ratings, the climb, the

@@ -396,8 +396,8 @@ vec3 sbSun(vec3 col, vec2 uv, float px, float t, float evil, float todd, sampler
   // the rim, then the face
   col = mix(col, rimC * (1.0 - 0.15 * smoothstep(0.9, 1.06, r)), sbFill(r - 1.06, px));
   vec3 skinC = ${v3(SUNBABY_SKIN)} * baby + ${v3(SUNBABY_WRATH_SKIN)} * evil + ${v3(SUNBABY_TODD_SKIN)} * todd;
-  vec3 skin = skinC * (1.0 - 0.10 * pow(r / 0.9, 4.0)) + 0.06 * smoothstep(0.5, 0.0, length(uv - vec2(-0.25, 0.35)));
-  skin *= 1.0 - 0.08 * todd * smoothstep(-0.15, -0.6, uv.y);   // Todd's five o'clock shadow
+  vec3 skin = skinC * (1.0 - 0.10 * pow(r / 0.9, 4.0)) + 0.06 * (1.0 - smoothstep(0.0, 0.5, length(uv - vec2(-0.25, 0.35))));
+  skin *= 1.0 - 0.08 * todd * (1.0 - smoothstep(-0.6, -0.15, uv.y));   // Todd's five o'clock shadow
   col = mix(col, skin, sbFill(r - 0.9, px));
   // THE BABY: the blush, squeezed up by the laugh
   for (int s = -1; s <= 1; s += 2) {
@@ -440,7 +440,7 @@ vec3 sbSun(vec3 col, vec2 uv, float px, float t, float evil, float todd, sampler
       vec2 h = q - vec2(0.40, 0.70);
       float hy = clamp(h.y / 0.46, 0.0, 1.0), hc = 0.20 * hy * hy;
       float horn = max(abs(h.x - hc) - 0.13 * (1.0 - hy), max(-h.y, h.y - 0.46));
-      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc)), evil * sbFill(horn, px));
+      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc))), evil * sbFill(horn, px));
     }
     float x2 = uv.x * uv.x;
     float top = -0.20 + 0.55 * x2, bot = -0.40 - 0.10 * giggle + 0.95 * x2;

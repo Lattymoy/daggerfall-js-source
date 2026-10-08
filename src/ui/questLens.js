@@ -227,6 +227,11 @@ export function entryTarget(message, where = {}) {
     // the player in it) - the town's own name (`__p_`) never unlocks it
     regionName: onMap === true || here || said.has(MACRO_TYPES.NameMacro4) ? (REGION_NAMES[regionIndex] ?? site.regionName ?? null) : null,
     buildingName: said.has(MACRO_TYPES.NameMacro1) ? (site.buildingName ?? null) : null,
+    // GUIDE8's Town tier (AUDIT DELVE, systems/questGuidance.js): the building the entry NAMES (its `_p_`, as the name
+    // above), by its town's map id and its key - what the town map rings and the compass points at while the player is
+    // in that town; null where the entry does not name it, or the place is no building
+    building: said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building && site.buildingKey > 0
+      ? { mapId: site.mapId ?? 0, buildingKey: site.buildingKey } : null,
     onMap,
     here,
     find: onMap === true && !hereByName ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName } : null,

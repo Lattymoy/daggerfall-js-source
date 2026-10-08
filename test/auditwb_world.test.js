@@ -113,7 +113,9 @@ test('AUDIT WB C4 the seam: the world\'s omen is ready when the relay\'s clock i
 
 test('AUDIT WB C5 the countdown is never over the step\'s fire, nor frozen over a held frame', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /banner: \(text\) => drawGateBanner\(text, \{ hidden: gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy \}\),/);
+  // SD19 (PIN MOVED): the pool's banner a wish the presence frame draws, hidden by the same three
+  assert.match(world, /banner: \(text\) => \{ _gateBannerWish = text; \},/);
+  assert.match(world, /hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy;\n\s*drawGateBanner\(_gateBannerWish \?\? sb\?\.text \?\? null, \{ hidden, look: _gateBannerWish == null && sb \? 'brass' : 'gate' \}\);/);   // AUDIT SD III (T3, PIN MOVED): a Hollow's door in its own brass
   // WB9a/WB9d: the marks' card and his ground's rim go with it; GATE-UX: and the damage chart
   assert.match(world, /if \(frameHeld\(\)\) \{ frameAbort\(\); hideWorldPlaque\(\); last = now; requestAnimationFrame\(frame\); drawGateBanner\(null\); drawGateMarksCard\(null\); drawGateDamageChart\(null\); drawGateGround\(null\);( travelView\?\.exit\('video', true\);)? return; \}/);
 });

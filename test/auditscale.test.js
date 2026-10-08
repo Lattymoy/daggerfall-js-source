@@ -168,7 +168,7 @@ test('AUDIT SCALE A2: a firing keeps under D1\'s thousand statements an invocati
   assert.ok(capped.every((j) => j.ok), JSON.stringify(capped.map((j) => [j.name, j.ok, j.statements])));
 });
 
-test('AUDIT SCALE A3 A5: the clock\'s reads by an index - the contracts past their days or owed their escrow (closeContracts, every minute; the table is never pruned) by 0090\'s pair, and an old auction\'s bids (pruneMarketHistory, and the cascade its delete sets off) by 0090\'s idx_market_bids_auction; every delete of the History\'s prune takes a page at most', async () => {
+test('AUDIT SCALE A3 A5: the clock\'s reads by an index - the contracts past their days or owed their escrow (closeContracts, every minute; the table is never pruned) by 0091\'s pair, and an old auction\'s bids (pruneMarketHistory, and the cascade its delete sets off) by 0091\'s idx_market_bids_auction; every delete of the History\'s prune takes a page at most', async () => {
   const [due] = await sqlOf((db) => closeContracts({ db, nowS: T0 }));
   const contracts = planOf(due);
   assert.doesNotMatch(contracts, /SCAN guild_contracts/, contracts);

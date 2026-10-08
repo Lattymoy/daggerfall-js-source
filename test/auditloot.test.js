@@ -218,7 +218,7 @@ test('AUDIT LOOT F8: every Legendary a power - the Thunderlock\'s Last Lock too,
   for (const r of CX.codexRows()) assert.ok(r.hint, `${r.id}: a hint`);
   CX.noteFind(lock, { quiet: true });
   assert.deepEqual([row().found, row().name, row().power?.name], [true, 'The Last Lock', 'Dwemer Defiance'], 'found, whole');
-  assert.deepEqual(CX.codexCount(), { legendary: 1, legendaries: CX.codexRows().length, aetheric: 0, aetherics: CX.codexCount().aetherics }, 'the count, the rows\'');
+  assert.deepEqual(CX.codexCount(), { legendary: 1, legendaries: CX.codexRows().length, aetheric: 0, aetherics: CX.codexCount().aetherics, gilded: 0, gildeds: CX.codexGilded().length }, 'the count, the rows\'');
   assert.ok(CX.imprintChoices(rareOf(createWeapon(120, 1))).some((r) => r.id === 'the-last-lock'), 'its power a found one to imprint');
 });
 

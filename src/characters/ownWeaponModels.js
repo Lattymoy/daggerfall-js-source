@@ -102,12 +102,27 @@ export const OWN_MW_MODELS = Object.freeze({
   }),
 });
 
+/**
+ * GILDED1 (2026-10-07): A GILDED PIECE'S OWN TWIN - the same mesh and the same everything a rig asks (the bone, the
+ * borrowed animation, the ammunition it does not borrow, the speed), in its own file with its own texture
+ * (tools/bakeThunderlock.mjs bakes both from the one FBX: `thunderlock_gilded.nif` names `thunderlock_gilded.dds`, the
+ * gold leaf of meshTexture.mjs GILDED_BANDS). 'gilded' is lootRarity.js's tier id; this file is a leaf, so it names it.
+ */
+export const OWN_MW_GILDED = Object.freeze({
+  [THUNDERLOCK_TEMPLATE]: Object.freeze({
+    ...OWN_MW_MODELS[THUNDERLOCK_TEMPLATE],
+    model: 'thunderlock_gilded.nif',
+    id: 'daggerfall_hourlock',
+    name: 'The Hourlock',
+  }),
+});
+
 /** The model this item wears, or null for everything that resolves
- *  through Morrowind's own records. */
+ *  through Morrowind's own records. GILDED1: a Gilded piece wears its gold twin. */
 export const ownWeaponModelFor = (item) =>
-  (item && OWN_MW_MODELS[item.templateIndex]) || null;
+  (item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) || null;
 
 /** Every model path this table can ask for, so a preload and a coverage
  *  walk can both be DERIVED rather than typed out again. */
 export const ownWeaponModelPaths = () =>
-  Object.values(OWN_MW_MODELS).map((m) => `meshes/${m.model}`);
+  [...Object.values(OWN_MW_MODELS), ...Object.values(OWN_MW_GILDED)].map((m) => `meshes/${m.model}`);

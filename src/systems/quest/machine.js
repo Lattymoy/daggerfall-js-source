@@ -298,6 +298,7 @@ import { Foe } from './foe.js';
 import { Clock } from './clock.js';
 import { questDataOnThisClock } from './questStamps.js';   // TIME3: a party member's copy, on this character's clock
 import { BUILDING_TYPES } from '../../world/buildingNames.js';   // DISC28-I: IsActiveQuestBuilding's House1-House6
+import { adoptLinkedDungeonSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E5: the size a quest's markers were chosen on
 
 const HOUSE1 = BUILDING_TYPES.House1, HOUSE6 = BUILDING_TYPES.House6;
 
@@ -653,6 +654,7 @@ export class QuestMachine {
    *  the corpus fires at startup all over - operated on nothing. */
   startQuestImmediate(quest) {
     quest.start();
+    adoptLinkedDungeonSize(quest, this);   // AUDIT DELVE E5: where the medium size is either side, the size its markers know
     this.deps.addQuestTopics?.(quest);
     // QUEST-UID1 (2026-09-24, found tracing "two letters from the queen"): `quests.Add(quest.UID, quest)` (:725) is a
     // Dictionary.Add - a UID already on the live table THROWS, and the quest standing there stays. `set` replaced it

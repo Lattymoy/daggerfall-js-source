@@ -1,0 +1,380 @@
+[
+  {
+    "name": "SD8A-the-share-the-Wardens",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_TTK_S = 420;",
+    "new": "export const SD_TTK_S = 240;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-share-unweighted",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_SHARE_X = 1.25;",
+    "new": "export const SD_SHARE_X = 1;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-a-heart-for-every-living",
+    "file": "src/net/sdRemnant.js",
+    "old": "SD_HEARTS[0] + Math.floor(Math.max(0, n) / 2)",
+    "new": "SD_HEARTS[0] + Math.max(0, n)",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-pulse-unchanging",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const pulsePct = (n) => pulseStepPct(SD_PULSE_STEP, n);",
+    "new": "export const pulsePct = (n) => SD_PULSE_PCT;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-share-at-full",
+    "file": "src/net/sdRemnant.js",
+    "old": "  f.hp += share * frac;\n  rescaleEchoes(f);",
+    "new": "  f.hp += share;\n  rescaleEchoes(f);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-bucket-always-full",
+    "file": "src/net/sdRemnant.js",
+    "old": "bucket: fresh ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
+    "new": "bucket: BUCKET_DEPTH_X * dpsRef(level),",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-floor",
+    "file": "src/net/sdRemnant.js",
+    "old": "const floorOf = (f) => (f.phase === 1 ? SD_PHASE_AT[0] * f.max : f.phase === 2 ? SD_PHASE_AT[1] * f.max : 0);",
+    "new": "const floorOf = (f) => 0;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-stun-unweighted",
+    "file": "src/net/sdRemnant.js",
+    "old": "d * (now < f.stunUntil ? SD_STUN_HIT_X : 1)",
+    "new": "d",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-melee-from-anywhere",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, B.x, B.z) - SD_REM.r > MELEE_REACH + POSE_SLACK) return 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-awake-from-the-birth",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2",
+    "new": "export const remnantOpen = (f, now) => !over(f, now) && f.phase !== 2",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-struck-outside-time",
+    "file": "src/net/sdRemnant.js",
+    "old": "&& now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);",
+    "new": "&& now >= f.op && now >= (f.outUntil ?? 0);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-walk-in",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (B.atk.a === SD_BLOWS.hand.id || B.atk.a === SD_BLOWS.volley.id) B.walkUntil = now + SD_WALK_IN_MS;",
+    "new": "    if (false) B.walkUntil = now + SD_WALK_IN_MS;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-stomp-from-afar",
+    "file": "src/net/sdRemnant.js",
+    "old": "ringPct: 0.3, ringBase: 8, aim: 'self', range: 5, w: 2 })",
+    "new": "ringPct: 0.3, ringBase: 8, aim: 'self', range: 40, w: 2 })",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-volley-at-everyone",
+    "file": "src/net/sdRemnant.js",
+    "old": "    tg = live.slice(0, P.volleyMax).map(",
+    "new": "    tg = live.map(",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-hand-one-way",
+    "file": "src/net/sdRemnant.js",
+    "old": "b === SD_BODY.gold ? 1 : rng() < 0.5 ? 1 : -1)) : 0;",
+    "new": "b === SD_BODY.gold ? 1 : 1)) : 0;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-echoes-the-whole-left",
+    "file": "src/net/sdRemnant.js",
+    "old": "const m = Math.max(0, f.hp - SD_PHASE_AT[1] * f.max) / 2, up = now + SD_BREAK_MS;",
+    "new": "const m = f.hp / 2, up = now + SD_BREAK_MS;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-rise",
+    "file": "src/net/sdRemnant.js",
+    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < sdProfileOf(f).pairMs) continue;",
+    "new": "        if (true) continue;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-rise-whole",
+    "file": "src/net/sdRemnant.js",
+    "old": "        X.h = X.m / 2;",
+    "new": "        X.h = X.m;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-a-blow-on-an-echo-not-off-the-whole",
+    "file": "src/net/sdRemnant.js",
+    "old": "  E.h -= got;\n  f.hp -= got;",
+    "new": "  E.h -= got;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-hand-from-one",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (due && standing.every((X) => !X.body.atk || now >= X.body.atk.until) && here.length) pairHand(f, standing, now, here, rng, out);",
+    "new": "    if (false) pairHand(f, standing, now, here, rng, out);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-pair-each-its-own-hand",
+    "file": "src/net/sdRemnant.js",
+    "old": "  const out = CHOSEN.filter((A) => gap <= A.range && !(pair && A === SD_BLOWS.hand));",
+    "new": "  const out = CHOSEN.filter((A) => gap <= A.range);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-hold-for-the-pair",
+    "file": "src/net/sdRemnant.js",
+    "old": "{ hold: due, pair: both }",
+    "new": "{ hold: false, pair: both }",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-pair-at-once-again",
+    "file": "src/net/sdRemnant.js",
+    "old": "  f.ecHandAt = now + sdProfileOf(f).pairHandMs;",
+    "new": "  f.ecHandAt = now;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-reset-never",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-reset-shortened",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const windupFor = (A, phase, body) => (CHOSEN.includes(A) && (",
+    "new": "export const windupFor = (A, phase, body) => ((",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-heal-forgotten",
+    "file": "src/net/sdRemnant.js",
+    "old": "      f.hp = Math.min(f.max, f.hp + SD_RESET_HEAL * f.max);\n",
+    "new": "",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-hearts-open-to-the-end",
+    "file": "src/net/sdRemnant.js",
+    "old": "&& now < f.rem.atk.at - SD_HEARTS_CLOSE_MS;",
+    "new": "&& now < f.rem.atk.at;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-hearts-on-the-pillars",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (SD_PILLARS.some(([px, pz]) => dist(px, pz, x, z) < SD_HEART.pillarGap)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-stun",
+    "file": "src/net/sdRemnant.js",
+    "old": "    f.stunUntil = now + SD_STUN_MS;",
+    "new": "    f.stunUntil = now;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-next-reset-forgotten",
+    "file": "src/net/sdRemnant.js",
+    "old": "    f.resetAt = f.stunUntil + sdProfileOf(f).resetMs;",
+    "new": "    f.resetAt = 0;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-last-moment-not-faster",
+    "file": "src/net/sdRemnant.js",
+    "old": "P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed",
+    "new": "P.remSpeed : P.echoSpeed",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-pulse-from-the-birth",
+    "file": "src/net/sdRemnant.js",
+    "old": "clock: null, pulses: 0, pulseAt: op + P.pulseMs,",
+    "new": "clock: null, pulses: 0, pulseAt: now + P.pulseMs,",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-end-never-again",
+    "file": "src/net/sdRemnant.js",
+    "old": "    } else if (now >= f.clock.at) clockBlow(f, E, f.clock.at + SD_END_EVERY_MS, out);",
+    "new": "    } else if (false) clockBlow(f, E, f.clock.at + SD_END_EVERY_MS, out);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-blows-believed-past-the-Hour",
+    "file": "src/net/sdRemnant.js",
+    "old": "const over = (f, now) => !!(f.fell || f.lost || now >= f.endsAt);",
+    "new": "const over = (f, now) => !!(f.fell || f.lost);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-never-lost",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-dead-counted-living",
+    "file": "src/net/sdRemnant.js",
+    "old": "  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && inArena(b.x, b.z, SD_ARENA_SLACK));",
+    "new": "  const here = bodies.filter((b) => f.players[b.sub] && inArena(b.x, b.z, SD_ARENA_SLACK));",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-ring-from-the-centre",
+    "file": "src/net/sdRemnant.js",
+    "old": "  return Math.min(A.r1, A.r + (A.wave * k) / 1000);",
+    "new": "  return Math.min(A.r1, (A.wave * k) / 1000);",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-ring-no-width",
+    "file": "src/net/sdRemnant.js",
+    "old": "  return was && d <= stompFrontAt(atk, t1);",
+    "new": "  return was && d <= stompFrontAt(atk, t1) + SD_BLOWS.stomp.width / 2;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-hand-the-wrong-way",
+    "file": "src/net/sdRemnant.js",
+    "old": "  return wrapYaw(atk.yw + (atk.sw ?? 1) * (-A.arc / 2 + A.arc * k));",
+    "new": "  return wrapYaw(atk.yw - (atk.sw ?? 1) * (-A.arc / 2 + A.arc * k));",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-swept-past-its-length",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if (d > A.len) return false;\n",
+    "new": "",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-no-shade",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (t0 < 1) return true;",
+    "new": "    if (false) return true;",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD8A-the-fights-number-dropped",
+    "file": "src/net/sdRemnant.js",
+    "old": "k: 'st', s: f.s, fi: f.fi,",
+    "new": "k: 'st', s: f.s,",
+    "tests": [
+      "test/sd8a_remnant.test.js"
+    ]
+  }
+]

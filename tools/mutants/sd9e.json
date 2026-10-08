@@ -1,0 +1,407 @@
+[
+  {
+    "name": "SD9E-the-gold",
+    "file": "src/systems/sdSpoils.js",
+    "old": "export const SD_SPOILS_GOLD_PER_LEVEL = 400;",
+    "new": "export const SD_SPOILS_GOLD_PER_LEVEL = 250;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-gold-narrowed",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const gold = Math.round(SD_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
+    "new": "  const gold = Math.round(SD_SPOILS_GOLD_PER_LEVEL * lv * (0.9 + 0.2 * rolls()));",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-share",
+    "file": "src/systems/sdSpoils.js",
+    "old": "export const SD_SPOILS_LEGENDARY = 0.25;",
+    "new": "export const SD_SPOILS_LEGENDARY = 0.1;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-a-magic-piece",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  return rolls() * c.rare < c.legendary ? 'legendary' : 'rare';",
+    "new": "  return rolls() * c.rare < c.legendary ? 'legendary' : 'magic';",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-source",
+    "file": "src/systems/sdSpoils.js",
+    "old": "export const SD_SPOILS_SOURCE = Object.freeze({ boss: true, tier: 24, luck: 70 });",
+    "new": "export const SD_SPOILS_SOURCE = Object.freeze({ boss: true, tier: 21, luck: 50 });",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-brass-before-the-last-pass",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n",
+    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(pieces.map((p) => p.item), rolls);\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-two-before-the-first",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n",
+    "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-hourlock-before-the-brass",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n",
+    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-no-brass",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-a-level-unfloored",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(SD_SPOILS",
+    "new": "  const lv = Math.floor(Number(level) || 1);\n  const gold = Math.round(SD_SPOILS",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-list-gold-first",
+    "file": "src/systems/sdSpoils.js",
+    "old": "    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-a-piece-undressed",
+    "file": "src/systems/sdSpoils.js",
+    "old": "    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n",
+    "new": "    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-look-stream",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const look = seededRng(((seed >>> 0) ^ 0x5eed) >>> 0);",
+    "new": "  const look = seededRng(seed >>> 0);",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-gate-keys",
+    "file": "src/systems/sdSpoils.js",
+    "old": "export const SD_SPOILS_KEYS = Object.freeze({ store: 'sd9.spoils', day: 'sd9.spoilsDay' });",
+    "new": "export const SD_SPOILS_KEYS = Object.freeze({ store: 'wb5.spoils', day: 'wb5.spoilsDay' });",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-a-slot-misread",
+    "file": "src/systems/sdSpoils.js",
+    "old": "/^sd:(\\d{1,9})$/",
+    "new": "/^sd:(\\d+)/",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-slot-zero",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  return Number.isSafeInteger(s) && s >= 1 ? s : null;",
+    "new": "  return Number.isSafeInteger(s) && s >= 0 ? s : null;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-roll-unread-at-the-burst",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
+    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-gates-words",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (left) say(gathered);",
+    "new": "      if (left) say(SPOILS_TEXT.gathered);",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-spewed-at-the-fall",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "&& t >= s.fell.at + SD_SPEW_AT_MS) {",
+    "new": "&& t >= s.fell.at) {",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-spewed-twice",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "          spewedFi = s.fi;\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-another-slots-receipt",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "        if (c && c.d === here) {",
+    "new": "        if (c) {",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-level-unbounded",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "          const lv = spoilsLevel(level(), c.l);",
+    "new": "          const lv = level();",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-gates-roll",
+    "file": "src/scenes/sdSpoils.js",
+    "old": ", keep: SD_SPOILS_KEEP, roll: () => sdSpoilsList(c.c, lv) })",
+    "new": ", keep: SD_SPOILS_KEEP })",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-off-the-floor",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "acct: c.s, keep: SD_SPOILS_KEEP,",
+    "new": "acct: c.s, keep: null,",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-rim",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "r: SD_ARENA.r - SD_SPEW_RIM_M,",
+    "new": "r: SD_ARENA.r + 12,",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-from-its-height-unsunk",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink)",
+    "new": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST)",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-bearing-away",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "Math.atan2(f[0] - at[0], f[2] - at[2])",
+    "new": "Math.atan2(at[0] - f[0], at[2] - f[2])",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-said-at-once",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "&& t >= s.fell.at + SD_RECEIPT_WAIT_MS &&",
+    "new": "&& t >= s.fell.at &&",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-said-to-a-watcher",
+    "file": "src/scenes/sdSpoils.js",
+    "old": " && link.counted?.()) {",
+    "new": ") {",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-said-twice",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "          saidFi = s.fi;\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-never-gathered",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "      return pool.gather();",
+    "new": "      return 0;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-pool-never-flown",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "      pool.frame();\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-counted-off-the-fight",
+    "file": "src/net/sdFightLink.js",
+    "old": "    counted: () => state.fi > 0 && mine === state.fi,",
+    "new": "    counted: () => state.fi > 0,",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-gates-keys-in-the-host",
+    "file": "src/scenes/world.js",
+    "old": "    keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,",
+    "new": "    keys: RAID_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-spent-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    onSpent: (day) => { const s = sdSpoilsSlot(day); return s == null || socialLink()?.sendSdSpent?.(s) === true; },",
+    "new": "    onSpent: () => {},",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-burst-receipt-granted",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-no-crash-door",
+    "file": "src/scenes/world.js",
+    "old": "    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => sdSpoilsPool.adopt(rec), key: SD_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SD_SPOILS_TEXT.recovered); }",
+    "new": "    try { }",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-never-loaded",
+    "file": "src/scenes/world.js",
+    "old": "  onSlotLoaded((characterId) => { sdSpoilsPool.loaded(characterId); });",
+    "new": "  onSlotLoaded(() => {});",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-court-pool-in-the-hour",
+    "file": "src/scenes/world.js",
+    "old": "  const floorPool = () => (modes?.sdRealmSlot?.() != null ? sdSpoilsPool : spoilsPool);",
+    "new": "  const floorPool = () => spoilsPool;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-unlit",
+    "file": "src/scenes/world.js",
+    "old": "      const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx =",
+    "new": "      const lit = NO_SD_LIGHTS, fx =",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-lines-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog);",
+    "new": "lines = false;",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-never-gathered-in-the-host",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }",
+    "new": "    if (false) { sdSpoilsBurst?.leave(); saveSoon.changed(); }",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-unframed",
+    "file": "src/scenes/world.js",
+    "old": "    if (inRealm) { try { sdSpoilsBurst?.frame(); }",
+    "new": "    if (false) { try { sdSpoilsBurst?.frame(); }",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-realm-targets-unstood",
+    "file": "src/scenes/worldModes.js",
+    "old": "    ctx.addActivationTargets(() => (host.spoilTargets?.() ?? NO_TARGETS));\n",
+    "new": "",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-realm-unlit",
+    "file": "src/scenes/worldModes.js",
+    "old": "realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos)",
+    "new": "realmLightsWith(_dgLit, NO_LIGHTS, cam.pos)",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  }
+]

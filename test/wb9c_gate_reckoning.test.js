@@ -518,7 +518,7 @@ test('WB9c the seams, by source: the relay judges an `xhit` by applyCrystalHit a
   assert.match(dc, /if \(f\.crystal != null\) return bossSight\(eye, inViewFn, f\);/);
   assert.match(dc, /for \(const cr of gateCrystalBodies\(\)\) \{ cr\._backFacing = false; live\.push\(cr\); \}/);
   assert.match(dc, /if \(foe\.crystal != null\) \{ hitEnemy = true; swingOnCrystal\(foe, damage\); continue; \}/);
-  assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => !!opts\.onCrystalHit\?\.\(\{ c: cr\.crystal, d: damage, r \}\);/);
+  assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => \(sdRemnant \? sdRemnant\.heartHit\(\{ c: cr\.crystal, d: damage, r \}\) : !!opts\.onCrystalHit\?\.\(\{ c: cr\.crystal, d: damage, r \}\)\);/);   // PIN MOVED (SD8c): a Heart's of the Reset in the Hour
   assert.match(dc, /return landOnCrystal\(cr, dealt, HIT_KINDS\.Spell\);/);
   const hm = read('src/scenes/hostMagic.js');
   assert.match(hm, /if \(mark\?\.crystal != null\) \{ try \{ return !!castAtCrystal\?\.\(sp, mark\.crystal\); \} catch \{ return false; \} \}/);

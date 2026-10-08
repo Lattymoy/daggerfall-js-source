@@ -286,5 +286,5 @@ test('SUNBABY2 host: the sky controller hands the face to the pass, and world.js
   assert.match(world, /const sunbabyGround = \(x, z\) => \{ const h = heightAt\(x, z\); return Number\.isFinite\(h\) \? h : player\.pos\[1\]; \};/);
   const told = world.indexOf('sky.setSunbabyFace(sunbabyFace.evil, sunbabyFace.todd);');
   assert.ok(told > world.indexOf('sky.setSunbaby(sunbabyW, sunbaby.on);') && told < world.indexOf('sky.use(('), 'before the sky\'s frame');
-  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\)\);/);
+  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\)\);/);   // SD19 moved it: the key leaning brass near a Hollow (PIN MOVED)
 });

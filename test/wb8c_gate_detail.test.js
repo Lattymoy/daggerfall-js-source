@@ -274,7 +274,7 @@ test('WB8c the seams, by source: the relay births each fight on the day\'s marks
   const w = read('src/scenes/world.js');
   assert.match(w, /save: \(e, el = 'fire'\) => \{ const w = GATE_SAVES\[el\] \?\? GATE_SAVES\.fire; return savingThrow\(w\[0\], w\[1\], e\); \},/);
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /const GATE_STRIKE_CAST = Object\.freeze\(\{ frost: SPELL_CAST_SOUND\[1\], poison: SPELL_CAST_SOUND\[2\], shock: SPELL_CAST_SOUND\[3\] \}\);/);
+  assert.match(dc, /const GATE_STRIKE_CAST = Object\.freeze\(\{ frost: SPELL_CAST_SOUND\[1\], poison: SPELL_CAST_SOUND\[2\], shock: SPELL_CAST_SOUND\[3\], magic: SPELL_CAST_SOUND\[4\] \}\);/);   // SD18b (PIN MOVED): the Underking's magic beside them
   const gc = read('src/scenes/gateCourt.js');
   assert.match(gc, /const P = profileOf\(s\);   \/\/ WB8b: the fight's marks, as law/);
   assert.match(gc, /judge\(s, t, P\);/); assert.match(gc, /burn\(s, t, P\);/); assert.match(gc, /cue\(s, t, P\);/); assert.match(gc, /drawBody\(s, t, P\);/);

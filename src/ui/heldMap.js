@@ -104,13 +104,14 @@ import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js
 import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
 import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
+import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './sdMapMark.js';   // SD2c: the Super dungeon's ring once it is found, in its omen's brass
 import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
 import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
 import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './questMarks.js';   // GUIDE5: where the quests point
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
-  viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
+  viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK, GATE_RING_MIN_PX,
   markKind, markInks, mapKeyGroups, KIND_WORD, paintKeyChip, KEY_CHIP_PX,   // MAP-KEY: the key, and each kind in its classic hue
   PEN,   // AUDIT GUIDE U16: the followed quest's diamond is the pen's ink, in the legend as on the sheet
 } from './inkMap.js';
@@ -161,6 +162,7 @@ import { bindings } from './input.js';
 import { actionsForCode } from '../systems/inputActions.js';   // UXB1-S: every action its key carries, shared or not
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 import { hubMapWord, hubTitle } from '../systems/regionHubs.js';   // HUB1: a region hub's word on the label and its title in the box
+import { tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier and size on the label and in the box, online
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, TV_KIN_LEGEND, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, playerShown } from '../systems/travelViewFilters.js';   // OW-WHO / OW-KIN: the players' filters and colours, the Overworld's own
 import { seatInfoLine, seatTipOf } from '../net/townSeatLaw.js';   // SEAT1a: a seat's Charter in the box
 
@@ -645,6 +647,9 @@ export class HeldMapWindow {
     // SERPENT1: the sea serpent's ring - the host's `serpent`, read as the gate's is
     this._serpent = null;
     this._serpentKey = '';
+    // SD2c: the Super dungeon's ring - the host's `sd`, read as the gate's is, once it is found (a find before that)
+    this._sd = null;
+    this._sdKey = '';
     // BOUNTY1: the held bounties' black circles - the host's `bounties`, read on the same poll
     this._bounties = [];
     this._bountiesKey = '';
@@ -1221,6 +1226,7 @@ export class HeldMapWindow {
           })),
           gate: this._gate,   // WB1
           serpent: this._serpent,   // SERPENT1
+          sd: this._sd,   // SD2c
           bounties: this._bounties,   // BOUNTY1
           revenants: this._revenants,   // RVN7c
           raids: this._raids,   // EVENT-TIP: the towns under attack
@@ -1723,6 +1729,10 @@ export class HeldMapWindow {
     const serpent = readGateMark(this.deps.serpent, this._size);
     const serpentKey = gateMarkKey(serpent);
     if (serpentKey !== this._serpentKey) { this._serpentKey = serpentKey; this._serpent = serpent; gateMoved = true; this._dirty = true; }
+    // SD2c: and the Super dungeon's, on its own key
+    const sd = readGateMark(this.deps.sd, this._size);
+    const sdKey = gateMarkKey(sd);
+    if (sdKey !== this._sdKey) { this._sdKey = sdKey; this._sd = sd; gateMoved = true; this._dirty = true; }
     // BOUNTY1: the circles ride the gate's poll and its repaint - a bounty taken or paid with the map open
     const bounties = readBountyMarks(this.deps.bounties, this._size);
     const bKey = bountyMarksKey(bounties);
@@ -1779,7 +1789,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playerShown(t));   // OW-WHO: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._vendor) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._vendor) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -1805,6 +1815,11 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = SERPENT_RING_MAP_CSS;
       leg.append(dot, el('span', 'hmlegtext', SERPENT_LEGEND_TEXT));
+    }
+    if (this._sd) {   // SD2c: and the Super dungeon's
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = SD_RING_MAP_CSS;
+      leg.append(dot, el('span', 'hmlegtext', SD_LEGEND_TEXT));
     }
     if (this._bounties.length) {   // BOUNTY1: the black circle explains itself
       const dot = el('span', 'hmlegdot');
@@ -2111,8 +2126,26 @@ export class HeldMapWindow {
    *  inside it is the gate's. */
   _gateAt(sx, sy) {
     const [mx, my] = toMap(this._view, sx, sy);
-    for (const g of [this._gate, this._serpent]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= g.r) return g;   // SERPENT1: the sea serpent's ring answers as the gate's does
+    // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
+    const least = GATE_RING_MIN_PX / this._view.scale;
+    for (const g of [this._gate, this._serpent, this._sd]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
+  }
+
+  /** AUDIT SD III (T7): A RING'S OWN CENTRE IS A PLACE ON THE MAP - the ring under the pointer whose centre is nearer it
+   *  than the nearest mark `m` is, or null. An Abyss Dungeon stands two to four pixels out from its city, and its ring
+   *  answered only where no mark did: at a far zoom the city's mark took its whole ring, and its card was unreachable. */
+  _ringCoreAt(sx, sy, m) {
+    let best = null, bestD = Infinity;
+    if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
+    const scale = this._view.scale;
+    for (const g of [this._gate, this._serpent, this._sd]) {
+      if (!g) continue;
+      const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+      const r = Math.max(GATE_RING_MIN_PX, g.r * scale);
+      if (d <= r * r && d < bestD) { best = g; bestD = d; }
+    }
+    return best;
   }
 
   /** EVENT-TIP: THE CARD - a world event's words at the pointer, kept on the screen (ui/eventMapMarks.js placeTip),
@@ -2284,7 +2317,8 @@ export class HeldMapWindow {
     // HUB1: what the place is to its region, online - known whether or not its buildings are
     const hub = this.deps.hubAt?.(summary) ?? null;
     const seat = this.deps.seatAt?.(summary) ?? null;   // SEAT1a: and its Charter, a seat's
-    const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : [])];   // SEAT-TIP: a held seat names its holder (it read "unheld" whoever held it)
+    const tier = tierPhrase(this.deps.tierAt?.(summary) ?? null);   // TIER1: a dungeon's tier and size, online
+    const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];   // SEAT-TIP: a held seat names its holder (it read "unheld" whoever held it)
     if (!info) {
       this._info = { title: '', rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
     } else {
@@ -3327,15 +3361,19 @@ export class HeldMapWindow {
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };
+    const core = this._ringCoreAt(sx, sy, m);   // AUDIT SD III (T7)
+    if (core) return { label: core.label, cursor: '', tip: core.tip };
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
       // UpdateRegionLabel's own "Region : Location" reading - HUB1: and a hub's word after it, online
       const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';
+      // TIER1 (Super-Dungeons.md section 12): a dungeon's tier and its size, online - the host's word (deps.tierAt)
+      const tier = tierPhrase(this.deps.tierAt?.(m.summary) ?? null);
       // SEAT-TIP (FIELD BUGS 2026-10-04e): a seat - a town that can be taken - answers with its card: who holds it, and
       // this week's battle (the mark's seat is the one the poll dressed; the EVENT-TIP card shows it)
       const tip = m.seat ? readTip(seatTipOf(m.seat), { textMax: SEAT_TIP_TEXT_MAX }) : null;
-      return { label: (region && name ? `${region} : ${name}` : name) + hub, cursor: 'pointer', ...(tip ? { tip } : {}) };
+      return { label: (region && name ? `${region} : ${name}` : name) + hub + (tier ? ` (${tier})` : ''), cursor: 'pointer', ...(tip ? { tip } : {}) };
     }
     // EVENT-TIP: the gate's ring holds an area - anywhere in it that is not a place answers with the gate's card
     const g = this._gateAt(sx, sy);

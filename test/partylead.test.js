@@ -23,6 +23,8 @@ test('PARTY-LEAD wire: the act names an account, as a kick does; the relay that 
   assert.equal(relaySupportsPartyLead('world163'), false, 'SUNBABY1\'s relay closes the socket on it');
   assert.equal(relaySupportsPartyLead('world164'), true);
   assert.equal(relaySupportsPartyLead('world170'), true);
+  assert.equal(relaySupportsPartyLead('world171'), true);
+  assert.equal(relaySupportsPartyLead('world172'), true);
   assert.equal(relaySupportsPartyLead(null), false);
   assert.ok(relayVersionAtLeast(164), 'the relay this tree builds knows it');
   assert.equal(relaySupportsPartyLead(RELAY_VERSION), true);

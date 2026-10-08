@@ -121,8 +121,8 @@
   {
     "name": "SUNBABY1-host-light-unlifted",
     "file": "src/scenes/world.js",
-    "old": "      sunbabyLight(dreadLight(withMoonAmbient(",
-    "new": "      ((x) => x)(dreadLight(withMoonAmbient(",
+    "old": "sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(",
+    "new": "sdBrassLight(((x) => x)(dreadLight(withMoonAmbient(",
     "tests": ["test/sunbaby1_event.test.js"]
   },
   {

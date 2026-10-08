@@ -706,6 +706,6 @@ test('RAID3 the world host by source: the raid system is told whether the relay 
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onRaid = \(f, room\) => \(f\.k === 'tw' \? offerRaidTowns\(link, f\.h\) : raidRelayWord\(f, room\)\);/);   // RAID-ROLL: the hub's ask for the towns table beside it
   const relay = rd('server/src/index.js');
   assert.match(relay, /if \(path === RAID_INTERNAL_CLEAN\) return this\._raidCleanInternal\(request\);/);
-  assert.match(relay, /if \(await this\._raidSweep\(Date\.now\(\)\)\) \{ if \(riteDue\) await this\._riteArm\(Date\.now\(\) \+ RITE_TELL_RETRY_MS\); return; \}/);   // WB12d: never past the rite's retry (AUDIT BROKER-CAGE R4: the local renamed off riteOwed)
+  assert.match(relay, /if \(await this\._raidSweep\(Date\.now\(\)\)\) \{ if \(riteDue\) await this\._riteArm\(Date\.now\(\) \+ RITE_TELL_RETRY_MS\); if \(sdOwed\) await this\._sdCellArm\(Date\.now\(\) \+ SD_TELL_RETRY_MS\); return; \}/);   // WB12d: never past the rite's retry (AUDIT BROKER-CAGE R4: the local renamed off riteOwed)
   assert.match(relay, /if \(!this\._spend\(ws, now, raidGate, 'raidBucket', 'raidDrops', 'too many raid frames'\)\) return;\n\s+if \(!isCellRoom\(a\.key\)\) \{ this\._junk\(ws\); return; \}/);
 });

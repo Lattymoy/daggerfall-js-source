@@ -209,6 +209,7 @@ import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from
 import { createTownMapWindow, townMapDoorReady } from '../ui/townMapDoor.js';
 import { WORLD_PER_PX } from '../ui/inkTown.js';   // EM4: the town plan's own scale
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
+import { townTierOn, townQuestBuildings, townBuildingLocal } from '../systems/questGuidance.js';   // GUIDE8's Town tier (AUDIT DELVE): the building a quest's journal names, in its town
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; PEER-FS1: pickFootstepKind for the pose's own `fk`
 import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/immersiveFootsteps.js';
@@ -291,12 +292,27 @@ import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, 
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
+import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
+import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
+import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
+import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
+import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
+import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
+import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
+import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
+import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
+import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
+import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
+import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
+import { SD_HOME_TEXT, SD_HOME_SAY_MS } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
+import { sdRiftWord, sdReturnStands, sdRiftCount, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
 import { createBrokerOverlay, closeBrokerDoor } from '../ui/brokerDoor.js';   // SET7: her window, a lazy chunk behind its door
 import { brokerStock, brokerDay, brokerBought, makeBrokerSale, spendableStonesIn, lockedStonesIn, stoneCount, insigniaSale, stonesText } from '../systems/sigilBroker.js';   // SET7: the day's stock, the record, the sale   // SS1: the stones counted over their stacks
 import { drawGateBanner } from '../ui/gateBanner.js';
-import { drawGateGround } from '../ui/gateGroundView.js';   // WB9d: his ground's rim and warning - hidden with a held frame (the court draws it)
+import { drawGateGround } from '../ui/gateGroundView.js';   // WB9d: his ground's rim and warning - hidden with a held frame (the court draws it); SD15: and the Hour's
 import { drawGateDamageChart } from '../ui/gateDamageChart.js';   // GATE-UX: the kill's damage chart (the court draws it - scenes/gateCourt.js); a held frame hides it with the rest
 import { drawGateMarksCard } from '../ui/gateMarksView.js';   // WB9a: tonight's marks over the screen - by the gate before it is entered (and in the court as a fighter steps in: scenes/gateCourt.js)
 import { createGateLink, GATE_NO_TEXT, gateRefusalText } from '../net/gateLink.js'; import { readReceipt } from '../net/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
@@ -309,17 +325,39 @@ import { findSerpentSite } from '../systems/serpentSite.js';   // SERPENT1: wher
 import { createSerpentLink } from '../net/serpentLink.js'; import { readSerpentReceipt } from '../net/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
+import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
+import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
+import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body and its Echoes heard
+import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds and its far events
+import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's motes
+import { sdPerilAt, sdGroundModel, createSdBeats } from './sdArenaRead.js';   // SD15: the arena read - in it, and the fight's beats
+import { createSdFx } from './sdFx.js';   // SD16: the blows seen - bursts, shakes and lights
+import { sdBeamDraws, sdKeptList } from './sdRemnantRig.js';   // SD17: the Hour-Hand's beam in the air
+/** AUDIT SD III (V5): the beams a frame draws, a list kept and filled in place (a frame of a sweep made 3.4 KB). */
+const _sdBeamDraws = sdKeptList(), NO_SD_BEAMS = Object.freeze([]);
+import { sdMarksCardModel, sdEndingStoneLight } from '../ui/sdMarksView.js';   // SD18b: the Hour's marks as a fighter steps in, and its Ending's stone lit
+import { sdMarksOf, sdEndingOf } from '../net/sdMarks.js';   // SD18b: a Hollow's marks by its slot
+import { SdBeamRenderer } from '../render/sdBeam.js';
+import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
+import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
+import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
+import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
 import { playSerpentSound } from '../systems/serpentSounds.js';   // SERPENT1: its voice - DAGGER.SND's own, pitched for its size
 import { serpentSpoilsList, serpentSpoilsDay, SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
 import { createSerpentClaims } from '../net/serpentClaims.js';   // SERPENT1: its receipts carried to the account service
+import { createSdClaims } from '../net/sdClaims.js';   // SD9b: the Hour's receipts carried to the account service
+import { readSdReceipt } from '../net/sdReceipt.js';   // SD9e: my Hour receipt, read for its spoils
+import { SD_SPOILS_KEYS, SD_SPOILS_RECORDS_MAX, SD_SPOILS_TEXT, sdSpoilsDay, sdSpoilsSlot, sdSpoilsList } from '../systems/sdSpoils.js';   // SD9e: the Brass Remnant's spoils
+import { createSdSpoils, clearOfPillars } from './sdSpoils.js';   // SD9e: thrown from where it fell; AUDIT SD: the way home clear of the arena's pillars
 import { slainLine, serpentBossOf, serpentBossById, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
 import { createGateCourt, courtSaySeconds } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
-import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_TEXT } from './spoilsPool.js';
+import { sdScoreSongs, createHourScore, sdScorePlace, SD_SCORE_SILENCE } from '../systems/sdScore.js';   // SD13: the Hour's own score
+import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_TEXT, SPOILS_SPENT_RESEND_MS } from './spoilsPool.js';
 import { breachBookFor, BREACH_BOOK_TEXT } from '../systems/breachBook.js';   // WB12c: the first ember brings the Guild's book
 import { bossPlace } from '../world/gateBoss.js';   // AUDIT WBX F3: where he fell - a charge's head, a leap's flight - frozen by the link's fold   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { itemIconColor32 } from '../ui/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
@@ -360,6 +398,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel oppon
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
+import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX } from '../systems/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
@@ -587,7 +626,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
+import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -611,7 +650,7 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
@@ -619,7 +658,9 @@ import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/r
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
-import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
+import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
+import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
+import { dungeonTierLabel } from '../world/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
 import { seatTipOf } from '../net/townSeatLaw.js';   // SEAT-TIP: a seat's card on the Overworld's plate
@@ -703,7 +744,7 @@ import { isLocked } from '../systems/itemLock.js';   // PROF5: a locked piece is
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine, profileRaidLine, profileSerpentLine, profileSdLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
 import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
@@ -910,6 +951,7 @@ const GATE_SAVES = Object.freeze({
   frost: Object.freeze([ELEMENTS.Frost, EFFECT_FLAGS.Frost]),
   shock: Object.freeze([ELEMENTS.Shock, EFFECT_FLAGS.Shock]),
   poison: Object.freeze([ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Poison]),
+  magic: Object.freeze([ELEMENTS.Magic, EFFECT_FLAGS.Magic]),   // SD18b: the Underking's Ending - the Remnant's blows in magic
 });
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
@@ -1017,6 +1059,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (name === 'mark') audio.playOneShot(SOUND.DrawWeapon, 1);   // RAID4b: No Escape - a blade drawn for the next of them
     else if (name === 'ward') audio.playOneShot(SOUND.EquipMaceOrHammer, 1);   // RAID4b: Iron Hide - iron closing over you
     else if (name === 'shed') audio.playOneShot(SOUND.SplashLarge, 1);   // SERPENT-SET: Shed Skin - the old skin into the sea
+    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);   // SD9d: Gearward - the gear catching the blow (the Orrery's own clunk)
+    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);   // SD9d: The Hour Turns - the Hour's bell, turned back
   } });
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
@@ -1286,6 +1330,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...again.sort(nearestFirstFrom(state.current)));
     console.log(`[wod] ${again.length} pixel(s) named by a region that landed late - built again on the list in its order`);
   }
+  // SD2b: THE HOLLOW'S PIXEL, BUILT AGAIN when it rises or goes on ground that already stands (scenes/sdHost.js stand and
+  // unstand) - sweepWodLate's shape: between builds, a pixel in flight let finish first, the player's own pixel held.
+  const _sdLate = new Set();
+  function sweepSdLate() {
+    const again = [];
+    for (const k of _sdLate) {
+      const p = built.get(k);
+      if (p) { again.push({ px: p.px, py: p.py }); _sdLate.delete(k); }
+      else if (!inFlight.has(k)) _sdLate.delete(k);   // not standing: it builds on the index as it is now
+    }
+    if (!again.length) return;
+    const under = `${state.current.x},${state.current.y}`;
+    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
+    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
+    queue.push(...again.sort(nearestFirstFrom(state.current)));
+  }
   // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
   // road|track mask - so only Hazelnut's own arrays answer; the port's
   // generated fallback is not his mod, and with it the static stays 0.
@@ -1398,6 +1458,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // GATE-SEEN's law) - a world-data mod's rows are appended where Replace Game Artwork is on, which is each client's own
   // switch: Roleplay & Realism's forts barred a band's pixel on one client and not another. (AUDIT OW5b B3 found the same:
   // this is its one fix.)
+  // SD2b: THE HOLLOW'S CITIES AND TEMPLATES (systems/sdSite.js), over the SAME rows - the game's own, so every client finds the
+  // same city and clones the same deep place - kept here, before the rows go: the populated places alone, and the dungeons
+  // a Hollow may clone. Online alone.
+  const _sdCityRows = params.has('online') ? _hubRows.filter((loc) => !!hubClaim(loc, maps.getRegionName(loc.regionIndex))) : [];
+  const _sdTemplateRows = params.has('online') ? sdTemplates(_hubRows, isMainStoryDungeon) : [];
   // HUB1: every region's main city, one answer on every client (systems/regionHubs.js) - read online alone
   const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
@@ -1871,7 +1936,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // OW-DUNGEON-SAID (2026-09-29, the player: "i have the feeling i dont get nearby dungeons messages"): through tvSay, held
     // its five seconds AT THE SCALE IT IS SAID AT (AUDIT OW5 G2's law) - a HUD line counts down in game time, so said plain
     // at a journey's x35 this one-time line stood for a thirty-fifth of a second and was never read
-    tvSay(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz)), !!loc.elite), 5);
+    tvSay(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz)), dungeonTier(loc)), 5);   // TIER1: the tier's words
   }
   let _spawnTemplates = null;
   // TTL1: what this client has met, and when. The roll above is a pure
@@ -1909,6 +1974,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const p = playerTravelPixel();
     const key = `${p.x},${p.y}`;
     if (!locationIndex.get(key)?.spawned) return;
+    if (locationIndex.get(key).superTier) return;   // SD2b: a Hollow's life is the hub's record - a cleared one is not two days from gone
     _spawnLedger.clear(key, _spawnClock());
     owSayRow(key);   // OW6L: and the cell hears the short clock start
   };
@@ -1965,6 +2031,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** OW6L: a spawn's first sight here - its long clock started, and the cell told (a sight already in my ledger - my own,
    *  or the cell's merged in - starts nothing and says nothing). */
   function _spawnSeen(key) {
+    if (locationIndex.get(key)?.superTier) return;   // SD2b: never a Hollow's - its life is the hub's record, not a spawn's clocks
     const fresh = !_spawnLedger.wireRow(key);
     _spawnLedger.note(key, _spawnClock());
     if (fresh) owSayRow(key);
@@ -2922,6 +2989,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   let tvFar = { at: null, near: -1, list: [] };   // TV5: the far places about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvDng = { at: null, dg: -1, list: [] };   // TV6: the dungeons about the traveller (above its readers: BOOT-TDZ - a load empties it)
   let tvFind = { at: null, dg: -1, n: -1, list: [] };   // AUDIT OW5 D1: the find's own, uncapped (above its readers: BOOT-TDZ - a load empties it)
+  let tvDngModels = { at: null, dg: -1, n: -1, list: [] };   // OW-DUNGEONS: the dungeons standing as models under the Overworld (above its readers: BOOT-TDZ - a load empties it)
+  const _tvDngModel = new Map();   // OW-DUNGEONS: each one's model as loaded (tvDungeonModelLoad), held by its own place while it stands
+  pipeline.keepPlaces('owdungeon', TV_DUNGEON_MODELS_MAX);   // OW-DUNGEONS: a dungeon that leaves the set and comes back is not loaded again
   const _tvBountyHold = new Map();   // BOUNTY-OVERWORLD: each held bounty's kept scene point, by bounty id
   const _tvVendorHold = {};   // HOME-VENDOR: the trader's waypoint's kept scene point (tvSceneKept's holder)
   const _tvWaypointHold = new Map();   // WAYPOINTS: each flag's kept scene point (tvSceneKept's holders), by its id
@@ -9362,10 +9432,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  body may stand (the place's collider swept from the player's feet). None while the player is not afoot in it: a
    *  door or a load in flight, at a helm, in the travel view, or the naval arc off. GATE-ALONE (2026-10-07, Mac: "We need
    *  to not allow followers inside the oblivion gates"): and none in an Oblivion Gate's court - the layer lifts every
-   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it. */
+   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it.
+   *  SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): nor in the Shattered Hour, the
+   *  same way - lifted as the player steps through the Rift, stood behind them again out of the Hour. */
   function companionPlace({ crew = true } = {}) {   // REVENANT-COMPANION: the sworn's layer asks it without the naval arc's gate
     if ((crew && !navalOn()) || !walkMode || !playerSpawned || _loading || modes?.transitioning || travelView?.active || csaRuntime?.isSailing?.()) return null;
     if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate
+    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift - they wait outside the Hour
     const spotOf = (col) => (from, dx, dz) => { const p = [from[0], from[1], from[2]]; try { col?.move(p, dx, 0, dz, 1.8); } catch { /* the leader's own spot */ } return [p[0], p[1], p[2]]; };   // AUDIT CC-A3: the swept spot's own height (a slope's, a stair's)
     const mode = _mode();
     const standIn = (pool) => (mobile, feet, o) => pool.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, allied: true, loose: true, transient: true });
@@ -9486,6 +9559,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  his whole); none with the arc off. */
   function partyCompanions() {
     if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it
+    if (modes?.sdRealmSlot?.() != null) return [];   // SD-ALONE: and none in the Shattered Hour
     // AUDIT WK-U5: none while I sail - the party is lifted aboard (it stood its cards over the ship's plate on a phone)
     const party = navalOn() && !csaRuntime?.isSailing?.() ? naval?.companions?.party ?? [] : [];
     const sworn = swornCards?.() ?? [];   // REVENANT-COMPANION: the sworn's cards after the crew's
@@ -13030,6 +13104,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  mode's inside half, one record. */
   function setRecallAnchor() {
     if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }   // WB3b: a mark in a place that ends with the day
+    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noMark); return; }   // SD5a: nor in the Shattered Hour
     const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     // A DUNGEON's local frame is its own, so its world coordinates
@@ -13098,6 +13173,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ARENA-LADDER A5: NO RECALL OFF THE SAND - my bout holds me as its doors do (the duel's law: no door, no rest, no
     // travel). Recall tore the floor down under a losing bout, which went unsaid: no loss, no run lost, the climb untouched.
     if (arenaBouts.holds()) { townTalk.say(ARENA_TEXT.refuse.travel); return; }
+    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noRecall); return; }   // SD5a (Super-Dungeons.md section 7): nothing answers a Recall in the Hour - its ways are the Rift's
     const anchor = playerEntity.anchorPosition;
     const plan = teleportPlan(anchor, {
       ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
@@ -13602,6 +13678,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
+    const diedInHour = modes?.sdRealmSlot?.() != null;   // AUDIT SD II (L6 F4): a death in the Shattered Hour is the Hour's - its veil and its words, read while the Hour stands
     // AUDIT OH-F B5: a death in the drowned dungeon wakes at ITS door - the pit (the dungeon's own pixel is the borrowed
     // template's, perhaps across the map), stood on the entrance as the way up stands it. Read before the exit clears it.
     const ohReturn = wasInDungeon ? ohAbyss?.returnPoint() ?? null : null;
@@ -13661,6 +13738,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this is idempotent rather than a second mercy.
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
+      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
@@ -14628,6 +14706,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)
     travelView?.exit('load', true);   // AUDIT DEEP X-3: a load under the travel view cuts it first - its release put the head back over the camera the save restores
     _owSay.sp.clear(); _owSay.dg.clear();   // OW6L: nor what the abandoned run still owed its cell (the loaded ledger is the save's)
+    tvDngModels = { at: null, dg: -1, n: -1, list: [] }; for (const e of _tvDngModel.values()) e.hold.release(); _tvDngModel.clear();   // OW-DUNGEONS: nor their models, once the view is cut
     // AUDIT OW4 D3: NOR THE SPAWNS THE ABANDONED RUN WAS TOLD OF - the Overworld marks a spawn once its pixel's line was
     // said (tvSpawnKnown), and that set outlived every load: another save's character saw "?"s where the last one had
     // walked. The loaded character's own are in the store its save restored (the same crossing files them, syncTopics).
@@ -15259,6 +15338,14 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  half of one and a refusal for a fifth - gone before it was read. Held the time asked, at the scale it is said at.
    *  Declared, not a const: the map's doors say through it from closures (BOOT-TDZ). */
   function tvSay(line, seconds = HUD_TEXT_POP_DELAY) { townTalk.say(line, seconds * Math.max(1, worldTimeScale())); }
+  /** TIER1 (Super-Dungeons.md section 12): ONE LINE ON ENTERING A DUNGEON, ONLINE - its tier and the size the room built
+   *  it at ("Elite Dungeon, Small"), the dungeon's own word (world/dungeonLabel.js); none over a place the port made.
+   *  The page's flag, not `onlineOn`: a load into a dungeon can stand before that is declared (questWorld's reason). */
+  function dungeonTierSay() {
+    if (!params.has('online')) return;
+    const line = tierPhrase(dungeonTierLabel(modes?.dungeonLocation ?? null));
+    if (line) townTalk.say(line, 4);
+  }
   /** OW-ONLY: whether a walked trip is the OVERWORLD's (the enhanced interface, Travel Options on) - its refusal then is
    *  the answer, never the classic ground journey's nor DFU's fast travel (AUDIT OW3 J2: one question, both doors; since
    *  TO-ROADS a first-person route refuses so too, and the doors ask tvRoutesJourneys, below).
@@ -15454,6 +15541,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the skin inside this one seam - the host says what it HAS
    *  (woods rides along for the overworld's relief) and never which
    *  map that adds up to. */
+  /** AUDIT SD III (D7): the held map's tier labels, by place (`region:index`) - a dungeon's tier and size are its own
+   *  for good, read once a page. */
+  const _tierLabels = new Map();
   function buildTravelMapWindow(extra = {}) {
     // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
     // use the map, it should transition you to first person and then
@@ -15493,6 +15583,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
       raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null }) : []),   // TIME1: online the withdrawal in local time
       serpent: () => serpentOmen?.mapMark() ?? null,   // SERPENT1: the sea serpent's ring, in the sea's colours - the held map alone draws it
+      sd: () => sdHost?.mapMark() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it
       // GUIDE5: WHERE THE QUESTS POINT - every active quest's place the player's map holds, the followed one filled
       // (ui/questMarks.js); a function for the gate's reason (a step logged while the map stands open). The enhanced
       // map alone draws them: a player who chose DFU's own maps chose DFU's look.
@@ -15505,6 +15596,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
       // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
       hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
+      // TIER1: a dungeon's tier and size on the label and in the I box - online alone, where the tiers differ
+      // AUDIT SD III (D7): kept by place - the maps hand a fresh location each ask, so the label's own memory never held
+      // one, and every pointer move over a dungeon read its record again (a large one's layout drawn again with it)
+      tierAt: params.has('online') ? (summary) => {
+        if (!summary) return null;
+        const key = `${summary.regionIndex}:${summary.locationIndex ?? summary.mapIndex}`;
+        if (!_tierLabels.has(key)) _tierLabels.set(key, dungeonTierLabel(maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex)));
+        return _tierLabels.get(key);
+      } : null,
       // SEAT1a: each seat's ring (and a crown's crown, a March's and a Free Land's second ring) - while the seats are open
       seatAt: seatBook ? (summary) => seatHere(summary?.mapID ?? summary?.mapId) : null,
       carriageAt: (summary) => carriageTown(summary?.mapID ?? summary?.mapId),   // OW-HUBS: a carriage town's wheel
@@ -15687,6 +15787,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // TOWN-MARKS (ui/townMapMarks.js): the town's Notice Boards, while the board is open (the boards noticeCountPoints
       // counts over), with its unread count; and its player housing - the online homes and the bank's house
       townBoards: () => townBoardMarks(b),
+      // GUIDE8's Town tier (AUDIT DELVE, systems/questGuidance.js): the buildings a quest's journal names in this town
+      townQuestBuildings: () => (townTierOn() ? townQuestBuildings(questTracker.views, dfLoc.mapTableData?.mapId, questTracker.tracked()?.id ?? null) : []),
       townHomes: () => townHomeRows({
         buildings: summaries, mapId: dfLoc.mapTableData?.mapId, regionIndex: dfLoc.regionIndex, houses: playerEntity.houses ?? null,
         homeAt: onlineHomes ? (mapId, buildingKey) => {
@@ -15805,6 +15907,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         gate: { place: gateOmen?.current?.()?.site?.place ?? null, fellAt: (day) => gateLink?.fellAt?.(day) ?? null },
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
+        // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
+        sd: sdHost ? { rec: sdHost.record(), name: sdHost.hollow()?.loc?.name ?? null, place: sdHost.hollow()?.site?.cityName ?? null } : null,
         seatsOpen: seatBook?.open === true,   // AUDIT TIMERS1 D5: the seat week's rows are for an account the seats are open to
         seats: seatBook?.open === true ? (seatBook.data?.seats ?? null) : null,
         zero: seatBook?.open === true ? seatBook.zero : null,
@@ -17490,7 +17594,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     maps: Object.create(maps, {
       // the page flag off `params`, not `onlineOn` - that const is declared far below, and a quest parsed at chargen
       // asks for its dungeon before it is ("Parsing quest FAILED! Cannot access 'onlineOn' before initialization")
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online') }) },   // AUDIT WORLD34 B2: online, the whole dungeon
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online') }) },   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
       getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: params.has('online') }) },
     }),
     getBlock: (name) => blocks.getBlockByName(name),
@@ -18144,7 +18248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quest topic mark its dialog-linked resources. Unset, every %hnt
     // answer printed its macros raw; it is the mill's seam, one home.
     expandQuestTokens,
-    getNewsOrRumors: (session) => revenantRumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),   // RVN7b (bible/12-Enhanced-AI/Feud-Arc.md 18.2): a revenant's lair near, the news may be of it
+    getNewsOrRumors: (session) => sdHost?.rumor(rumorHere(), session) ?? revenantRumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),   // RVN7b (bible/12-Enhanced-AI/Feud-Arc.md 18.2): a revenant's lair near, the news may be of it; SD2c: a Super dungeon by this city first - the taverns' word of it
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     /** ROAD-B B4: GameManager.IsPlayerInsideCastle (GameManager.cs:420-423)
      *  is PlayerEnterExit.IsPlayerInsideDungeonCastle and nothing else, and
@@ -19661,6 +19765,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
+    online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
+    online.onSdFight = (w) => sdFightHeard(w);   // SD8c: the realm's word on the Last Moment's fight
+    online.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted; SD9e: and its spoils
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -19824,6 +19931,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (tab.room === SOCIAL_ROOM) link.onClock = (offsetMs) => online?.onClock?.(offsetMs);
       if (tab.room === SOCIAL_ROOM) link.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the hub's word of a sea serpent's kill, Bay-wide, and the day's at my hello
       if (tab.room === SOCIAL_ROOM) link.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's word of a broken rite, and at my hello
+      if (tab.room === SOCIAL_ROOM) link.onSd = (w) => sdHost?.heard(w);   // SD2b: the hub's record of the Super dungeon - at my hello and at every move
+      if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // AUDIT SD: the hub's hand of my Hour receipt - at the kill when I stood outside its realm, and at my hello - to the account service and the spoils, as the realm's is
       if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table
       if (tab.id === 'region') {   // TV3: the region's travellers, into the book
         link.onTraveller = (f) => travellerBook.put(f, Date.now());
@@ -19873,11 +19982,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // temples, windmills and the like, same as any building door).
       onSend: (tabId, text) => {
         if (/^\/unstuck$/i.test(text.trim())) {
-          const moved = modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
-          chatLog.push(tabId, {
-            text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
-            system: true,
-          });
+          // AUDIT SD III (H10): in the Shattered Hour, the Hour's own way out - under its veil, in its words, as every other
+          // way out of it is (it left unveiled and unsaid); refused there (the dead's is the death's), nothing more said
+          const hour = modes?.sdRealmSlot?.() != null;
+          const moved = hour ? sdWayHome() : modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
+          if (moved || !hour) {
+            chatLog.push(tabId, {
+              text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
+              system: true,
+            });
+          }
           return true;
         }
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
@@ -20096,6 +20210,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const who = name || 'A party member';
       const result = receiveSharedQuest(questBridge?.machine, questBridge?.questLists, quest.questName, quest.data, {
         memberships: activeMemberships(playerEntity),
+        // AUDIT SD III (D5): the copy laid on this world's sizes - a quest item I carry never laid again
+        carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) => it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),
       });
       const label = quest.displayName || quest.questName;
       if (result.ok) {
@@ -20679,7 +20795,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const inSiegeRoom = () => !!online?.room && online.room === siegeSession?.room();
   /** AUDIT-SEATS G5: the cast engine's word on a spell here (hostMagic.js spellRefusal) - a siege's wards. */
   const battleSpellRefusal = (sp) => (inSiegeRoom() && siegeSpellBarred(sp) ? SIEGE_SPELL_BARRED_TEXT : null);
-  registerLevitateWard(() => inSiegeRoom());   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room
+  registerLevitateWard(() => inSiegeRoom() || modes?.sdRealmSlot?.() != null);   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room; SD7b: nor in the Shattered Hour - its Steps are walked, not flown
   /** AUDIT-SEATS G4 (Seats-Arc 6.6, 19: "a free camera (WASD, the mouse, the pad's sticks); nothing they do reaches the
    *  fight"): whether I watch a battle - a siege or a Royal Tourney, on a spectator's pass - from its own room. */
   const spectatingHere = () => {
@@ -20823,7 +20939,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
     v = _profileView;
     const rec = _profileSub ? duelRecords.get(_profileSub) : null;
-    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer
+    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec), raids: profileRaidLine(rec), serpents: profileSerpentLine(rec), hours: profileSdLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer   // AUDIT SD II (L5 F1): and the towns defended, the serpents slain and the Hours broken - laid by no host before
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
@@ -20999,6 +21115,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
     },
   }) : null;
+  /** SD9b: THE HOUR'S RECEIPTS THIS DEVICE CARRIES TO THE ACCOUNT SERVICE (net/sdClaims.js) - each Brass Remnant's fall
+   *  the relay signed for me, kept on the device until the service has counted it (the gate's own carrier, its store). */
+  const _accountSds = accountSds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  const sdClaims = params.has('online') ? createSdClaims({
+    claim: _accountSds.claim,
+    me: _accountSds.me,
+    nowS: relayNowS,
+    store: _spoilsStore,
+    say: (text) => chatNotice(text),
+  }) : null;
   // SILVER-FINDS (bible/06-Systems/Professions-Arc.md 10.5): A LOOT FIND - every host's loot door rolls its container once
   // (systems/silverFinds.js: a body, a treasure pile, a search's find) and a find asks the marks book, whose service's
   // dice strike it under the day's count. Each answered find its card where the feed stands (the world walked, nothing
@@ -21054,7 +21180,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore,
     who: () => characterIdOf(playerEntity),
     iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),   // WBX3: each piece as its own picture - the pack's; AUDIT WBX S6: drawn for its wearer, as the pack draws it
-    onSpent: (day) => { socialLink()?.sendGateSpent?.(day); },   // AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again
+    onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,   // AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again; AUDIT SD II (L5 F4): whether it went - a word that did not is owed
+    me: _accountGates.me,   // AUDIT SD II (L5 F4): said on its own account's socket alone
     itemName: (item) => lootPileName([item]),   // WB9f: a piece's word on the plaque, the loot piles' own (.cs:534-548)
   });
   /** RAID4b: A TOWN'S THANKS (systems/raidSpoils.js) - the spoils pool's door with no floor, under keys of its own (a
@@ -21068,8 +21195,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   onSlotSaved((characterId) => { try { spoilsPool.saved(characterId); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } });
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
-  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard
-  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } };
+  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils
+  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } };
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
@@ -21078,6 +21205,43 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,
   });
   onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1
+  /** SD9e: THE BRASS REMNANT'S SPOILS (systems/sdSpoils.js) - thrown on the arena's floor from where it fell
+   *  (scenes/sdSpoils.js, the court's burst), under keys of their own; a spent receipt said to the hub as its slot, so no
+   *  other tab or device gives it again. Made online or not, as the pools are: it keeps the crash's records a save clears. */
+  /** AUDIT SD II (L6 F2, F3, F13; SD11d): THE HOUR'S VOICE (scenes/sdVoice.js) - every line the arc says over the
+   *  screen, each standing for its length and none cut by a less urgent one: the fight's turns, then the floor's words,
+   *  then the readouts. `sdNearArena` - (L6 F15) the fight's lines are said to whoever stands near its arena (the Steps
+   *  heard the Dragon Break and the End, which never touch them). */
+  const sdVoice = createSdVoice({ show: (t, secs) => setMidScreenText(t, secs), now: () => performance.now() });
+  const sdSay = (t, rank = SD_VOICE_RANK.turn, key = null) => { sdVoice.say(t, rank, key); return true; };
+  const sdNearArena = () => {
+    if (modes?.sdRealmSlot?.() == null) return false;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    return sdBarNear(x, z);
+  };
+  let _sdVoiceIn = false;
+  /** One frame of the voice - and what waits for the Hour let go as it is left (a readout of a collapse I am out of; its
+   *  turns, the way out's words among them, still said - AUDIT SD III, H5). */
+  const sdVoiceFrame = () => {
+    const inHour = modes?.sdRealmSlot?.() != null;
+    if (_sdVoiceIn && !inHour) sdVoice.leave();
+    _sdVoiceIn = inHour;
+    sdVoice.frame();
+  };
+  const sdSpoilsPool = createSpoilsPool({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },   // the Hour's own floors and pillars
+    // AUDIT SD II (L6 F14): what the floor still held, gathered as I leave, said in the chat - over the screen it took the
+    // place of the way home's line, or the cast-out's, a frame after it was said
+    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : sdSay(text, SD_VOICE_RANK.note)),
+    store: _spoilsStore, who: () => characterIdOf(playerEntity),
+    iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),
+    onSpent: (day) => { const s = sdSpoilsSlot(day); return s == null || socialLink()?.sendSdSpent?.(s) === true; },   // AUDIT SD II (L5 F4): whether it went
+    me: _accountGates.me,
+    keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,
+    itemName: (item) => lootPileName([item]), gathered: SD_SPOILS_TEXT.gathered,
+  });
+  onSlotSaved((characterId) => { try { sdSpoilsPool.saved(characterId); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } });   // SD9e
   /** AUDIT WBX S4: the spoils given outside a court, one tab at a time - two tabs of one account on one device each
    *  checked the store before the other had written it, and both gave them (the Web Locks API; without it, at once). */
   const spoilsLock = (fn) => { const locks = globalThis.navigator?.locks; return locks?.request ? locks.request('wb5.spoils', () => fn()) : Promise.resolve().then(fn); };
@@ -21106,6 +21270,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SERPENT1: THE OLD COIL'S HOARD, off a receipt the relay signed at the kill - given when the account service says
    *  this claim is the (serpent, account)'s (net/serpentClaims.js onSpoils), rolled at the level the character fought at
    *  and by how it earned it, straight into the pack when that character stands here - else kept for it. */
+  /** SD9e: MY HOUR RECEIPT'S SPOILS - one from my own realm, while I stand in it, is kept for the burst on the arena's
+   *  floor (scenes/sdSpoils.js - SD_SPEW_AT_MS into the fall); any other (the hub's at a hello, a realm I have left) is
+   *  its spoils straight into the pack, rolled at the level the fight admitted and mine, once a receipt and account, one
+   *  tab at a time. */
+  const _sdReceipts = new Map();
+  function sdSpoilsReceipt(r, room) {
+    const c = readSdReceipt(r);
+    if (!c) return;
+    // AUDIT SD II (L1 F4, L5 C2): a receipt for the Hour I stand in waits for its throw WHICHEVER link handed it - the
+    // hub's (my realm's socket blinking at the kill) went straight into the pack, and the floor then said "No spoils"
+    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
+    grantSdSpoils(c);
+  }
+  /** Its spoils straight into the pack - once a receipt and account (the pool refuses one already thrown or given). */
+  function grantSdSpoils(c) {
+    const level = spoilsLevel(playerEntity.level ?? 1, c.l);
+    spoilsLock(() => sdSpoilsPool.grant({ day: sdSpoilsDay(c.d), acct: c.s, roll: () => sdSpoilsList(c.c, level), text: SD_SPOILS_TEXT.granted }))
+      .catch((e) => console.warn('[sd] spoils', e?.message ?? e));
+  }
+  /** AUDIT SD: OUT OF THE REALM, a receipt kept for a burst that never came (left before it - the way back, a death, the
+   *  Hour's end) is its spoils straight into the pack, not a week's wait for the hub's next hello. */
+  function sdReceiptsLeft() {
+    for (const r of _sdReceipts.values()) { const c = readSdReceipt(r); if (c) grantSdSpoils(c); }
+    _sdReceipts.clear();
+  }
   function grantSerpentSpoils(entry) {
     const c = readSerpentReceipt(entry?.r);
     if (!c) return undefined;
@@ -21136,6 +21325,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
    *  beds in the dungeon's frame, where their loops burn. */
   const deadlandsAir = createDeadlandsAir(audio);
+  const sdAir = createSdAir(audio);   // SD14b: the Shattered Hour's air, on the sky's own clock
   /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
    *  braziers, and the frame's fog (one object, filled from the renderer's own as it stands) */
   const _courtSea = courtToDungeon(0, LAVA_Y, 0), _courtCentre = courtToDungeon(0, 0, 0);
@@ -21156,15 +21346,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec), inSave: _spoilsInSave })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }   // AUDIT WBX S3: in the pack now - the next save clears it
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(RAID_SPOILS_TEXT.recovered); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); }   // RAID4b: a town's thanks, the same door
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's
+    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => sdSpoilsPool.adopt(rec), key: SD_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SD_SPOILS_TEXT.recovered); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); }   // SD9e: the Brass Remnant's spoils, the same door
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
   // let go of what they held in the old one, and the crash's door asks again for the loaded character (a town's thanks
   // given, a load of a save from before them, then a save: the record cleared with its pieces in no pack at all)
   onSlotLoaded((characterId) => { spoilsPool.loaded(characterId); raidSpoils.loaded(characterId); serpentSpoils.loaded(characterId); _spoilsAskedFor = null; });   // AUDIT SERPENT D5: and the Old Coil's hoard
+  onSlotLoaded((characterId) => { sdSpoilsPool.loaded(characterId); });   // SD9e: and the Brass Remnant's spoils
   /** WB9b: the court's floor as the dungeon arm asks for it each frame - the fight's crossings and the relay's clock */
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
+  const _realmArena = realmArena();   // SD5a: the Shattered Hour's floors, as far as they are laid
+  const _realmArenaHeld = realmArena(SD_ARENA_FLOORS);   // AUDIT SD III (F2): the arena's rim alone - a fighter held in while its fight lives
+  const _realmArenaBridged = realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS, ...SD_STEPS_FLOORS]);   // SD6c: and with the Concord, the bridge and the first step; SD7b: and past it the Steps' band - the void's to take, the cast-back its edge - and the arena
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
     now: () => Date.now() + _sharedOffsetMs,
@@ -21233,6 +21428,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
   };
+  /** AUDIT SD II (L5 F4): THE SPENT WORDS A POOL STILL OWES THE HUB (scenes/spoilsPool.js `resendSpent`) - said again
+   *  every few seconds while the hub's link stands: a word that could not go (the link between sockets, its bucket spent)
+   *  was never said again, and past the hold another device of the account was handed the receipt and granted the same
+   *  spoils. */
+  let _spentResendAt = -Infinity;
+  const resendSpentWords = () => {
+    const t = performance.now();
+    if (t - _spentResendAt < SPOILS_SPENT_RESEND_MS) return;
+    _spentResendAt = t;
+    if (socialLink()?.status !== 'open') return;
+    try { spoilsPool.resendSpent(); sdSpoilsPool.resendSpent(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }
+  };
   /** GATE-ALONE (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates"): no companion stands in a
    *  gate's court (companionPlace answers none there), and a fighter who steps in with any at their side is told so -
    *  once each time they step in, when the step's fire has opened over the court (the veil covers the HUD); owed again
@@ -21249,6 +21456,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
     gateClaims?.tick();   // WB5b: what the account service has not counted yet, offered again on its own clock
     if (gateOmen) reportGateSite();   // DISCORD-GATES: where the gate stands, to the hub
+    resendSpentWords();   // AUDIT SD II (L5 F4): the spent words a pool still owes the hub
     raidClaims?.tick();   // RAID4: and the raids' receipts, on theirs
     if (profBook?.state.open === true) { try { motherlodeBook?.tick({ sense: profBook.track('mining').specs?.[100] === 'motherlode-sense' }); } catch (e) { console.warn('[motherlode] frame', e?.message ?? e); } }   // PROF2b: the day's Motherlodes read, warned of and stood
     if (seatBook?.claimWatchDue()) seatBook.claimWatch();   // SEAT1b: the Watch's kept ticks, claimed a claim's worth or ten minutes at a time   // AUDIT-SEATS C12: asked in sync first - no Promise a frame
@@ -21258,8 +21466,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (royalClaims?.due()) royalClaims.offer();   // AUDIT-SEATS C5: and a bout's - before its week is over and the service answers `royal-over`
     siegeHerald?.tick();   // AUDIT-SEATS G1: the battles announced in red, at their marks
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { leaveBattle(); _watchedFrom = null; }   // AUDIT-SEATS C1: the dead fight in no battle - its HUD stood frozen over the death screen (the battle's tick is the living online frame's); G4: and a spectator's spot is the respawn's to replace
-    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
-    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none
+    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone (SD19: and a Hollow's door's)
+    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none (SD18b: the Hour draws its own marks on it)
     // WB3b: the court stands until its gate's day is over - then it comes apart around whoever is in it, who land
     // before the gate; out of it, its state is forgotten (its falls and receipts are kept)
     const courtDay = modes?.gateArenaDay?.() ?? null;
@@ -21371,6 +21579,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // herald names the place from the bells on, and posts the kill at the site the most accounts agree on
     try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
     serpentClaims?.tick();
+    sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
     if (!serpentHost) return;
     const street = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.();
     let fight = false;
@@ -21399,13 +21608,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  does not run then. */
   /** WB7: THE WARDEN'S SCORE (systems/gateScore.js) - while the court stands under me its music is the fight's, not the
    *  director's: the war song of his phase, his fall's fanfare, then quiet. The songs are made the first time a court
-   *  is stood in; the music is let go the frame the court is gone (the song stopped, so the director's next frame hears
-   *  it ended and plays its own). Answers whether the court holds the music this frame. */
+   *  is stood in; the music is let go the frame the court is gone (the song faded - AUDIT SD III, A4: it was cut - and
+   *  the director's next frame plays its own, as the fade ends). Answers whether the court holds the music this frame. */
   let _scoreHeld = false, _scoreMade = false;
   const _courtScore = createCourtScore();   // AUDIT WB D2: the fanfare played whole from its own start
   const gateScoreFrame = () => {
     if (modes?.gateArenaDay?.() == null) {
-      if (_scoreHeld) { _scoreHeld = false; music.stop(); }
+      if (_scoreHeld) { _scoreHeld = false; music.fadeOut(); }
       return false;
     }
     if (!_scoreMade) { _scoreMade = true; for (const song of Object.values(gateScoreSongs())) music.registerSong(song.name, song); }
@@ -21414,14 +21623,46 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);   // AUDIT WB D2: the quiet after the fanfare is its ending, faded - not a cut
     return true;
   };
+  /** SD13: THE SCORE OF THE HOUR (systems/sdScore.js) - while I stand in a Hollow or its Hour the music is theirs, not
+   *  the director's: the Hollow's walk; in the Hour the hall's, the Steps', the arena's war by its phase and its last
+   *  minute, the fall's song, then the collapse's - which the Hollow plays too while it collapses. The songs are made
+   *  the first time either is stood in; let go (the song faded, the director's next frame plays its own) the frame I
+   *  stand in neither. Answers whether the Hour holds the music this frame. AUDIT SD III: held through the veil while
+   *  the world moves under it (A1 - a Rift's step played the street's song between the Hollow's and the hall's, cut
+   *  both ways); let go by a fade, never a cut (A4); silent while I lie dead in it (A5 - the war played on over the
+   *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
+  let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
+  const _hourScore = createHourScore();
+  const sdScoreWhere = () => {
+    if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
+    if (modes?.sdRealmSlot?.() != null) { const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return (_hourPlace = sdScorePlace(x, z, _hourPlace)); }
+    return (_hourPlace = modes?.dungeonLocation?.superTier ? 'hollow' : null);
+  };
+  const hourScoreFrame = () => {
+    const place = sdScoreWhere();
+    if (place == null) {
+      if (_hourScoreHeld && (modes?.stepping || modes?.transitioning)) return true;   // A1: the world moving under the veil
+      if (_hourScoreHeld) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut
+      return false;
+    }
+    if (!_hourScoreMade) { _hourScoreMade = true; for (const song of Object.values(sdScoreSongs())) music.registerSong(song.name, song); }
+    _hourScoreHeld = true;
+    const slot = modes?.dungeonLocation?.sdSlot ?? modes?.sdRealmSlot?.() ?? null;
+    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.() ?? null;
+    const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';
+    const want = !(playerEntity.health > 0) ? SD_SCORE_SILENCE : _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);   // A5: no war over the dead
+    if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
+    return true;
+  };
   /** ARENA2: THE ARENA'S MUSIC (systems/arenaScore.js) - while a bout is heard here, the march, then the fanfare, then
-   *  quiet through the healers; let go (the song stopped, the director's next frame plays its own) the frame there is
-   *  none. The songs are made the first time a bout is heard. Answers whether the arena holds the music this frame. */
+   *  quiet through the healers; let go (the song faded - AUDIT SD III, A4: it was cut - the director's next frame plays
+   *  its own) the frame there is none. The songs are made the first time a bout is heard. Answers whether the arena
+   *  holds the music this frame. */
   let _arenaScoreHeld = false, _arenaScoreMade = false;
   const arenaScoreFrame = () => {
     const want = arenaBouts.scoreWant();
     if (want == null) {
-      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.stop(); }
+      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.fadeOut(); }
       return false;
     }
     if (!_arenaScoreMade) { _arenaScoreMade = true; for (const song of Object.values(arenaScoreSongs())) music.registerSong(song.name, song); }
@@ -21430,6 +21671,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   };
   const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
+  /** SD14b: THE HOUR'S AIR (scenes/sdAir.js) - its beds and its far events while I stand in the Shattered Hour, on the sky's
+   *  clock; silent, nothing left looping, the frame I do not. */
+  const sdAirFrame = () => { if (modes?.sdRealmSlot?.() != null) sdAir.frame(deadlandsSeconds(), cam.pos); else sdAir.stop(); };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
    *  answers "not yet" until the relay can hold a gate's arena (WB3). */
@@ -21468,8 +21712,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now() + _sharedOffsetMs,
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     say: (text) => setMidScreenText(text),
-    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // AUDIT WB C5: never over the step's fire
-    marks: (card) => drawGateMarksCard(card, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // WB9a: tonight's marks beside the countdown - never over the step's fire
+    banner: (text) => { _gateBannerWish = text; },   // AUDIT WB C5: never over the step's fire - SD19: shared with a Hollow's door (presenceFrame)
+    marks: (card) => { _gateMarksWish = card; },   // WB9a: tonight's marks beside the countdown - never over the step's fire (SD19: presenceFrame)
     ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
     landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in a rising horn's root, set down before the gate
     enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
@@ -21514,6 +21758,439 @@ export async function bootWorld(canvas, renderer, params, status) {
     loot: { seed: (items, feet, pixelKey) => droppedLoot.seedPile(items, feet, { archive: RANDOM_TREASURE_ARCHIVE, record: 0 }, null, pixelKey, { unsaved: true, drawn: false }), keyOf: (p) => `droppedLoot:${p.id}` },   // the casket is its picture, and its name
     level: () => playerEntity.level ?? 1,
   }) : null;
+  /** SD2b: THE HOLLOW IN THE WORLD (scenes/sdHost.js) - online alone: the hub's record of the Super dungeon (its hub link's
+   *  onSd), the Hollow it names found over this client's own map files (the gate's scan, the game's own rows) and stood in
+   *  the index at its pixel while its phase stands - built there as a spawned dungeon is, its pixel built again when it
+   *  rises or goes on ground that stands (sweepSdLate) - the find said at its mouth to the cell its pixel is in, and the
+   *  chat's lines for its find, its kill and its fading. */
+  let _sdDoorAt = null;
+  const sdHost = params.has('online') ? createSdHost({
+    now: () => Date.now() + _sharedOffsetMs,
+    scan: () => gateScanOf(),
+    warmScan: () => warmGateScan(),
+    cities: (r) => sdCities(_sdCityRows, r, { regionNameOf: (i) => maps.getRegionName(i) }),
+    templates: () => _sdTemplateRows,
+    where: (px, py) => { const regionIndex = maps.getRegionIndexAt(px, py); return { regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }; },
+    stand: (key, loc) => { _locIndexGen += 1; locationIndex.set(key, loc); _sdLate.add(key); warmGateVeil(); },   // AUDIT SD III (H9): its Rift's veil built ahead, as a gate's is (AUDIT WB D5) - a session no gate stood in paid for its program as the first step began
+    unstand: (key) => { if (locationIndex.get(key)?.superTier) { _locIndexGen += 1; locationIndex.delete(key); } _sdLate.add(key); },
+    inside: (loc) => (modes?.mode ?? 'exterior') === 'dungeon' && (modes?.dungeonLocation?.sdSlot === loc?.sdSlot || modes?.dungeonLocation?.sdRealm === loc?.sdSlot),   // SD5a: or in its Hour - the end casts me out of either
+    // its mouth: the dungeon entrance its pixel's blocks stood (the doors' list - kept a door generation)
+    door: (key) => {
+      if (_sdDoorAt && _sdDoorAt.key === key && _sdDoorAt.gen === doorGeneration) return _sdDoorAt.at;
+      const e = buildingDoors.find((d) => d.pixelKey === key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
+      _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(e.door) : null };
+      return _sdDoorAt.at;
+    },
+    feet: () => (walkMode && playerSpawned && _mode() === 'exterior' ? player.feetAt() : null),   // SD2d: the find is the street's - the host frames in every mode now
+    sendFound: (word, cell) => !!online?.sendSdFound?.(word, cell),
+    say: (text) => chatNotice(text),
+    regionName: (r) => (r >= 0 ? maps.getRegionName(r) : ''),
+    // SD2d: its end with me inside - cast out before its door by the dungeon's own way out (the mode machine's exit,
+    // drained at its safe point: PositionPlayerToDungeonExit's landing) and the closing line said; a dead player is the
+    // death's (its own door wakes them), and the Hollow goes the frame they are out
+    // AUDIT SD II (L1 F2): false when it could not act - the host asks again, so one raised where they lay is cast out
+    // then; (L1 F9) out of the Hour under its veil, as every other way out of it is
+    castOut: () => {
+      if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;
+      const hour = modes?.sdRealmSlot?.() != null;
+      if (!modes?.unstuck?.()) return false;
+      if (hour) gateVeil?.flash('brass');
+      sdSay(SD_CAST_OUT_LINE);
+      return true;
+    },
+    // AUDIT SD II (L1 F3): the Hollow or the Hour I stand in, by the dungeon I stand in - its end judged against it
+    standing: () => ((modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonLocation?.sdSlot ?? modes?.dungeonLocation?.sdRealm ?? null) : null),
+    // SD10: the collapse's readouts over the screen, in the Hour's words while I stand in it
+    warn: (text) => sdSay(text, SD_VOICE_RANK.readout),   // AUDIT SD II (SD11d): the readouts wait for the fight's turns and the floor's words
+    inHour: () => modes?.sdRealmSlot?.() != null,
+  }) : null;
+  /** SD5b: the Hour's sky pass - built the first time the Hour is drawn; null when it would not build (its sky then the
+   *  frame's clear colour, never the Hour's floors). */
+  let _sdSkyPass;
+  const sdSkyPassOf = () => {
+    if (_sdSkyPass === undefined) { try { _sdSkyPass = new SdSkyRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s sky could not be built', e); _sdSkyPass = null; } }
+    return _sdSkyPass;
+  };
+  /** SD17: the Hour-Hand's beam (render/sdBeam.js) - made the first time one sweeps, null where a context cannot. */
+  let _sdBeamPass;
+  const sdBeamPassOf = () => {
+    if (_sdBeamPass === undefined) { try { _sdBeamPass = new SdBeamRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour-Hand\'s beam could not be built', e); _sdBeamPass = null; } }
+    return _sdBeamPass;
+  };
+  /** SD14c: the Hour's motes (render/sdMotes.js) - made the first time the Hour is drawn, null where a context cannot. */
+  let _sdMotesPass;
+  const sdMotesPassOf = () => {
+    if (_sdMotesPass === undefined) { try { _sdMotesPass = new SdMotesRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s motes could not be built', e); _sdMotesPass = null; } }
+    return _sdMotesPass;
+  };
+  /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
+   *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
+   *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdAloneFrame(); sdFightFrame(); sdVoiceFrame(); };
+  /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
+   *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
+   *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
+   *  never left standing in a room nobody else can reach. A player dead there is the death's. */
+  let _sdOut = false;
+  const sdRealmFrame = () => {
+    if (modes?.sdRealmSlot?.() == null) { _sdOut = false; return; }
+    if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
+    _sdOut = true;
+    gateVeil?.flash('brass');   // AUDIT SD II (L6 F8): out of the Hour in its own brass
+    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+  };
+  /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
+   *  Shattered Hour (companionPlace answers none there, as in a gate's court - GATE-ALONE), and a player who steps
+   *  through the Rift with any at their side is told so - once each time they step in, when the step's veil has opened
+   *  over the Hour; owed again once they are out. */
+  let _sdAloneSaid = false;
+  const sdAloneFrame = () => {
+    if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }
+    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    _sdAloneSaid = true;
+    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);
+  };
+  /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
+   *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
+   *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
+   *  Null offline - no Hollow stands there. */
+  /** A set of Hollows' slots kept on the device under `key`, its last SD_ENTERED_MAX (a store that refuses: the session's).
+   *  AUDIT SD III (H1): ONE ACCOUNT'S - under the signed-in account's own key (`<key>:<id>`; with none, the device's, as it
+   *  was), as the realm keeps its dead by the token's account (SD_NO_FALLEN): one account's death refused another on the
+   *  same device a Hollow its realm would admit. And READ AS IT IS ASKED - a second tab's write merged, never written
+   *  over: each tab wrote its own boot-time copy back over the other's. A read the store has not changed is not parsed
+   *  again. */
+  const sdSlotsKept = (key) => {
+    const read = new Map(), own = new Map();   // per key: the store's last read ({ raw, set }), and this session's own adds
+    const keyNow = () => { const me = _accountSds.me(); return me ? `${key}:${me}` : key; };
+    const stored = (k) => {
+      let raw = null;
+      try { raw = appStorage()?.getItem?.(k) ?? null; } catch { raw = null; }
+      let r = read.get(k);
+      if (!r || r.raw !== raw) {
+        let list = [];
+        try { const v = JSON.parse(raw ?? '[]'); if (Array.isArray(v)) list = v.filter(Number.isSafeInteger); } catch { list = []; }
+        r = { raw, set: new Set(list) };
+        read.set(k, r);
+      }
+      return r.set;
+    };
+    return {
+      has: (s) => { const k = keyNow(); return stored(k).has(s) || !!own.get(k)?.has(s); },
+      add: (s) => {
+        const k = keyNow();
+        if (!own.has(k)) own.set(k, new Set());
+        own.get(k).add(s);
+        const now = stored(k);
+        if (now.has(s)) return;
+        try { appStorage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }
+      },
+    };
+  };
+  /** AUDIT SD: the Hollows' slots whose Hour I went through - during its collapse the Rift admits me again
+   *  (world/sdDungeon.js sdRiftWord's `entered`; the realm keeps me as it does - SD4b, section 6). AUDIT SD II (L6 F17):
+   *  kept on the device, the last few slots (SD_ENTERED_KEY) - a reload forgot it, and the Rift said "The Hour has
+   *  closed." to a fighter its realm would have admitted. */
+  const _sdEntered = sdSlotsKept(SD_ENTERED_KEY);
+  /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
+   *  worth"): the Hollows' slots whose Hour I died in - their Rift refuses me for good (the realm's door refuses the
+   *  account too: SD_NO_FALLEN). */
+  const _sdFallen = sdSlotsKept(SD_FALLEN_KEY);
+  const sdRiftOf = (s) => {
+    if (!sdHost) return null;
+    const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
+    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count
+  };
+  /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
+   *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
+   *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
+   *  before), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
+   *  law again (SD3). The Rift's word is asked once more under the veil: the Hour can close while it does. Answers whether
+   *  the step began - AUDIT SD III (H6): null while another step is under way (the way back's landing, still under its
+   *  veil): not refused, not yet. The step refused it in silence, and its walk-in was spent. */
+  function sdEnterRealm(s) {
+    const h = sdHost?.hollow();
+    if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
+    if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)
+    const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
+    const site = { climateBase: h.loc.climate?.climateType ?? 2, season: INTERIOR_SEASON, climate: h.loc.climate, regionIndex: h.loc.regionIndex ?? -1, regionName: h.loc.regionName ?? '' };
+    modes?.stepThroughFire(async () => {
+      if ((modes?.mode ?? 'exterior') !== 'dungeon' || !(playerEntity.health > 0)) return false;
+      const word = sdRiftOf(s)?.word;
+      if (word) { sdSay(word); return false; }
+      modes?.forceExitToExterior();
+      await _teleportToPixel(hollow.px, hollow.py);
+      // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, at its pixel)
+      const late = sdRiftOf(s)?.word;
+      if (late) { sdSay(late); return false; }
+      if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
+      sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
+      return false;
+    }, 'brass');   // AUDIT SD II (L6 F8): through the Hour's own veil
+    return true;
+  }
+  /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
+   *  sunk (scenes/sdRemnant.js SD_REM_SINK_MS), on the arena's floor, for as long as the fight this page holds says it
+   *  fell - one place a fall; null otherwise (the dungeon host takes it down). */
+  let _sdHome = null;
+  const sdHomeAt = () => {
+    const s = sdFightLink?.state();
+    if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;
+    // AUDIT SD: one place a FALL (its instant - a fight's number begins again in every Hollow's Hour), clear of the pillars
+    if (_sdHome?.fell !== s.fell.at) {
+      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);
+      _sdHome = { fell: s.fell.at, at: sdRealmToDungeon(SD_ARENA.x + x, 0, SD_ARENA.z + z) };
+      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(SD_HOME_TEXT.rises);   // AUDIT SD II (L6 F16): said as it rises, never long after
+    }
+    return _sdHome.at;
+  };
+  /** AUDIT SD II (L6 F16): how long ago the way home began to rise (ms, the fight's clock) - its rise drawn from it
+   *  (scenes/sdEnd.js standReturn); null while the fight this page holds has not fallen. */
+  const sdHomeAge = () => {
+    const s = sdFightLink?.state();
+    return s?.fell ? sdFightLink.now() - (s.fell.at + SD_REM_SINK_MS) : null;
+  };
+  /** AUDIT SD III (F2): whether the arena holds me now - joined to its living fight and standing inside its rim. */
+  const sdArenaHeld = () => {
+    if (!sdFightLink?.joined?.()) return false;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    return arenaHolds(true, x, z);
+  };
+  /** SD10: THE WAY HOME, walked into or pressed - out of the Hour under the veil, before the Hollow's door outside (the
+   *  mode machine's own exit: the realm's way out lands there, as its end casts a player out), the floor's spoils
+   *  gathered as the Hour is left. Answers whether it carried me. */
+  function sdWayHome() {
+    if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0) || modes?.deathUp?.()) return false;
+    gateVeil?.flash('brass');
+    if (!modes?.unstuck?.()) return false;
+    sdSay(SD_HOME_TEXT.taken);
+    return true;
+  }
+  /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
+   *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
+   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
+   *  a door that would not open: outside, at its pixel. AUDIT SD III (H6): null while another step is under way. */
+  function sdWayBack() {
+    const loc = modes?.dungeonLocation;
+    if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
+    if (modes?.stepping) return null;
+    const back = loc.sdHollow;
+    modes?.stepThroughFire(async () => {
+      if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0)) return false;
+      modes?.forceExitToExterior();
+      if (!back) return true;
+      await _teleportToPixel(back.px, back.py);
+      if (sdHost?.hollow()?.key !== back.key) return true;   // its end overtook the step: outside, where it stood
+      if (!(await modes?.startInDungeon?.())) return true;
+      const at = modes?.dungeonCtx?.sdRiftLanding?.();
+      if (at) modes?.setPlayerLocalPosition?.(at);
+      return true;
+    }, 'brass');   // AUDIT SD II (L6 F8)
+    return true;
+  }
+  /** SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL, as its realm says it - the last word (the stones, the fray,
+   *  the dial, the Concord), kept for the hall's set to read every frame (dungeonContext.js, through the mode machine).
+   *  A word that says the Hour SNAPPED BACK lashes me if I stand in the hall - a quarter of my health, no save (no shield
+   *  takes it) - and is said to everyone in the realm. AUDIT SD II (L7 H2): it lashes me only if the realm names me (`ls`
+   *  - I turned this thread and brought the Concord no nearer: whoever mended a griefer's turns, or never touched a stone,
+   *  stands); a word to me alone that the stones refused my turn (`w`) says why. */
+  let _sdHall = null;
+  function sdHallHeard(w) {
+    _sdHall = w;
+    if (modes?.sdRealmSlot?.() !== w.s) return;
+    if (w.w === 1) { sdSay(SD_TURN_WAIT_LINE); return; }
+    if (w.x !== 1) return;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    if (playerEntity.health > 0 && inOrreryHall(x, z) && !!online?.id && (w.ls ?? []).includes(online.id)) {
+      const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_FRAY_LASH));
+      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });   // AUDIT SD III (F10): it leaves me at one, never dead - one life a Hollow
+      flashPlayerDamage(dmg);
+    }
+    sdSay(SD_HALL_TEXT.snap);
+  }
+  /** SD7b: THE HOUR CASTS ME BACK (the mode machine has stood me on my span's checkpoint - scenes/sdSteps.js): what the
+   *  void costs, a share of my health no shield takes, and the line. */
+  function sdCastBack() {
+    if (playerEntity.health > 0) {
+      const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_CAST_BACK_LOSS));
+      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });   // AUDIT SD III (F10): a setback, never a death - one life a Hollow
+      flashPlayerDamage(dmg);
+    }
+    sdSay(SD_STEPS_TEXT.cast);
+  }
+  /** SD8c (Super-Dungeons.md section 10): THE LAST MOMENT'S FIGHT, as the page holds it (net/sdFightLink.js) - online alone:
+   *  the realm's words folded (from the realm I stand in, its own slot's), its turns said over the screen, my place in it
+   *  kept; the arena's set reads it (dungeonContext.js, through the mode machine) and sends my `in` and my blows by the
+   *  doors below. Out of the realm it is forgotten. */
+  const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t, key) => { if (sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); } }) : null;   // AUDIT SD II (L6 F15): to whoever stands near its arena
+  let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false;   // SD15: the ground's rim and the Hour's card up
+  let _sdMarksSince = null, _sdMarksUp = false;   // SD18b: when I stepped into the Hour (its marks' card), and the card up
+  const sdBeats = createSdBeats();   // SD15: the fight's turns, as this page sees them
+  /** SD8d (Super-Dungeons.md section 10): ITS BLOWS ON ME (scenes/sdRemnantBlows.js) - each one on the arena's floor as it
+   *  winds up and lands, heard, and judged on my own feet through the dungeon context's door (the gate court's way); its
+   *  fall and the fight's damage chart. Online alone, beside the link. */
+  const sdBlows = sdFightLink ? createSdRemnantBlows({
+    gl: renderer.gl, audio, link: sdFightLink,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    grounded: () => !!player.grounded,
+    player: () => playerEntity,
+    strike: (dmg, how) => { modes?.dungeonCtx?.strikePlayer?.(dmg, how); },   // the door every blow lands by, the court's
+    say: (t, everyone = false, key = null) => { if (everyone || sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); },   // AUDIT SD II (L6 F15): near its arena - its fall to the whole Hour
+    me: () => (online ? online.name ?? null : null),   // my row of the chart
+    hudHidden: () => gamePaused() || !!townTalk.hudHidden,
+    save: (e, el) => { const w = GATE_SAVES[el]; return w ? savingThrow(w[0], w[1], e) : 100; },   // SD18b: the throw against its Ending's element (the gate's)
+  }) : null;
+  /** SD14a (Super-Dungeons.md section 10): ITS VOICE (scenes/sdRemnantVoice.js) - its body and its Echoes heard, off the
+   *  fight this page holds: strides, growls, grunts, its wake and its turns, the stun, the release of each blow, a Volley
+   *  aimed at my feet. Online alone, beside the link. */
+  const sdRemVoice = sdFightLink ? createSdRemnantVoice({ audio, link: sdFightLink, feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null) }) : null;
+  /** AUDIT SD III (V5): the Hour's light channel's kept list and its stone's kept light (sdRealmLights) - filled in place. */
+  const NO_SD_LIGHTS = Object.freeze([]), _sdHourLights = [], _sdStoneLight = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], stone: -1 };
+  /** SD16 (Super-Dungeons.md section 10): ITS BLOWS SEEN (scenes/sdFx.js) - each landing and turn a burst of sparks on the
+   *  gate's own spark pass, the camera shaken by how near it fell, the floor lit. Online alone, beside the link. */
+  const sdFx = sdFightLink ? createSdFx({
+    link: sdFightLink,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    shake: (k) => betterAmbience.weaponKick(k),   // the gate's door (WB13d): under the player's own maxShake
+  }) : null;
+  /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
+   *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
+   *  floor. Online alone, beside the link. */
+  const sdSpoilsBurst = sdFightLink ? createSdSpoils({
+    link: sdFightLink, pool: sdSpoilsPool,
+    slot: () => modes?.sdRealmSlot?.() ?? null,
+    receipt: (slot) => _sdReceipts.get(slot) ?? null,
+    level: () => playerEntity.level ?? 1,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    say: (t) => sdSay(t, SD_VOICE_RANK.note),
+  }) : null;
+  /** SD9e: the floor a press, a plaque and the ray ask of - the Hour's pool in the Hour, the court's anywhere else (the two
+   *  are never stood in at once). */
+  const floorPool = () => (modes?.sdRealmSlot?.() != null ? sdSpoilsPool : spoilsPool);
+  function sdFightHeard(w) {
+    const slot = modes?.sdRealmSlot?.();
+    if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;
+    _sdFightHeld = true;
+    sdFightLink.word(w);
+  }
+  /** One online frame of the fight: forgotten out of the realm; its bar (ui/sdRemnantBar.js - the gate's, in brass) over
+   *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
+  let _sdPassesWarm = false;
+  const sdFightFrame = () => {
+    if (!sdFightLink) return;
+    const inRealm = modes?.sdRealmSlot?.() != null;
+    if (!inRealm && _sdReceipts.size) sdReceiptsLeft();   // AUDIT SD: a receipt that never burst - its spoils into the pack
+    // SD9e: whatever is still on the arena's floor into the pack - and AUDIT SD II (L5 F5): a checkpoint asked at once (the
+    // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
+    if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
+    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }
+    if (!inRealm) _sdHall = null;   // AUDIT SD II (L2 F17): the hall's word forgotten out of the realm - kept, the next visit to the slot's Hour turned its stones from stale places and chimed a Concord reached meanwhile
+    // AUDIT SD III (V13): the fight's passes built as the Hour is first stood in - the beam, the sparks and the floor's
+    // telegraph each compiled on its first use, a stall in the frame its first blow landed in
+    if (inRealm && !_sdPassesWarm) { _sdPassesWarm = true; sdBeamPassOf(); sdFx?.warm?.(renderer.gl); sdBlows?.warm?.(); }
+    if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
+    if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard; AUDIT SD III (A5): never by the dead
+    if (inRealm) { try { sdFx?.frame(); } catch (e) { console.warn('[sd] fx', e?.message ?? e); } }   // SD16: its blows seen
+    if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
+    let bar = null, ground = null, card = null;
+    if (inRealm) {
+      const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+      const s = sdFightLink.state(), now = sdFightLink.now();
+      if (sdBarNear(x, z)) bar = remnantBarModel(s, now);
+      // SD15: THE ARENA READ (scenes/sdArenaRead.js) - a blow still to land on my feet, and the burning brass under them,
+      // on the gate's own rim and warning; the fight's turns on the Hour's own card
+      const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw, !!sdBlows?.over?.()) : null;   // AUDIT SD III (F8): over a pillar's top, the Hand's shade gone
+      ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), el: sdBlows?.burningEl?.() ?? null, now, peril });   // SD18b: in its element
+      const beat = sdBeats.frame(s, now);
+      card = beat ? titleCardModel(beat, now) : null;
+    } else sdBeats.leave();
+    // SD18b: THE HOUR'S MARKS (ui/sdMarksView.js) - its Ending and its omens on the gate's own card as I step into the Hour
+    let marks = null;
+    if (inRealm) {
+      const nowMs = performance.now();
+      if (_sdMarksSince === null && !gateVeil?.busy) _sdMarksSince = nowMs;   // AUDIT SD III (T18): its nine seconds from the veil's opening - they ran out under it
+      marks = _sdMarksSince === null ? null : sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes?.sdRealmSlot?.() ?? null), { since: _sdMarksSince, now: nowMs });   // AUDIT SD III: guarded on the object - this runs above `var modes` (audit24 wave37's law)
+    } else _sdMarksSince = null;
+    const hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;   // AUDIT SD III (T18): the Hour's readouts under the veil as the court's are (scenes/gateCourt.js)
+    if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden }); _sdBarUp = !!bar; }
+    if (ground || _sdGroundUp) { drawGateGround(ground, { hidden }); _sdGroundUp = !!ground; }
+    if (card || _sdCardUp) { drawSdTitleCard(card, { hidden }); _sdCardUp = !!card; }
+    if (marks || _sdMarksUp) { drawGateMarksCard(marks, { hidden }); _sdMarksUp = !!marks; }   // SD18b
+  };
+  /** No online frame: the Remnant's bar put away. */
+  const sdFightAway = () => {
+    if (_sdBarUp) { drawGateBossBar(null); _sdBarUp = false; }
+    if (_sdGroundUp) { drawGateGround(null); _sdGroundUp = false; }   // SD15
+    if (_sdCardUp) { drawSdTitleCard(null); _sdCardUp = false; }
+    if (_sdMarksUp) { drawGateMarksCard(null); _sdMarksUp = false; }   // SD18b
+  };
+  /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
+  const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
+  const sdConcordHere = () => !!sdHallWord()?.ok;
+  /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
+   *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
+   *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
+   *  (GATE-SEEN's law, its own memo - a slot's pixel never moves). The pass is built the first time a column stands. */
+  let _sdOmenPass;   // undefined until asked; null when it would not build
+  const sdOmenPassOf = () => {
+    if (_sdOmenPass === undefined) { try { _sdOmenPass = new SdOmenPassRenderer(renderer.gl); } catch (e) { console.warn('[sd] the omen could not be built', e); _sdOmenPass = null; } }
+    return _sdOmenPass;
+  };
+  let _sdFoot = { key: '', local: 0 };
+  const sdOmenNow = () => {
+    const o = sdHost?.omen();
+    if (!o || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const p = playerTravelPixel();
+    const { site, loc, key } = o.hollow;
+    if (!sdOmenSeen(site, p.x, p.y)) return null;
+    const t = state.pixelTranslation(site.px, site.py);
+    const [lx, lz] = spawnedLocationCentreLocal(loc);
+    let y = heightAt(t[0] + lx, t[2] + lz);
+    if (!Number.isFinite(y)) {
+      if (_sdFoot.key !== key) { const k = woods ? sampleKernel(woods, site.px, site.py) : null; _sdFoot = { key, local: k ? k(lx / heightCell, lz / heightCell) * worldHeight : 0 }; }
+      y = _sdFoot.local + t[1];
+    }
+    return { origin: [t[0] + lx, y, t[2] + lz], fade: o.light };
+  };
+  /** SD19: a standing Hollow's centre in THIS scene - `[x, z]` - or null (the compass's and the air's). */
+  const sdHollowAt = (h) => { const t = state.pixelTranslation(h.site.px, h.site.py), [lx, lz] = spawnedLocationCentreLocal(h.loc); return [t[0] + lx, t[2] + lz]; };
+  /** SD19: THE BRASS AIR (systems/sdOmen.js sdAirWeight) - by its column's light, the eye's distance and the hour; 0 with no
+   *  Hollow standing, or anywhere but outside. */
+  const sdAirNow = (eye, minuteNow) => {
+    const o = sdHost?.omen();
+    if (!o?.hollow?.site || (modes?.mode ?? 'exterior') !== 'exterior' || !eye) return 0;
+    const [x, z] = sdHollowAt(o.hollow);
+    return sdAirWeight(o.light, Math.hypot(eye[0] - x, eye[2] - z), minuteNow);
+  };
+  /** SD19: THE BANNER AT ITS DOOR (systems/sdOmen.js sdBannerText) and its marks on the gate's own card ('gate' mode) -
+   *  within SD_BANNER_M of its centre while it stands; `{ text, card }` or null. */
+  const sdBannerNow = () => {
+    const h = sdHost?.hollow(), rec = sdHost?.record();
+    if (!h?.site || !rec || rec.s !== h.s || !walkMode || !playerSpawned || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    if (!['risen', 'found', 'fell'].includes(sdHost.phase())) return null;
+    const [x, z] = sdHollowAt(h), f = player.feetAt();
+    if (Math.hypot(f[0] - x, f[2] - z) > SD_BANNER_M) return null;
+    const t = Date.now() + _sharedOffsetMs;
+    return { text: sdBannerText(h.loc?.name, rec, t), card: sdHost.phase() === 'fell' ? null : sdMarksCardModel(sdMarksOf(h.s), { mode: 'gate' }) };
+  };
+  /** SD19: the banner and the marks card outside - the gate's wish first (its fire's countdown), else a Hollow's door's. */
+  let _gateBannerWish = null, _gateMarksWish = null;
+  const presenceFrame = () => {
+    const sb = sdHost ? sdBannerNow() : null, hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;
+    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });   // AUDIT SD III (T3): an Abyss Dungeon's door in the Hour's brass
+    drawGateMarksCard(_gateMarksWish ?? sb?.card ?? null, { hidden });
+  };
+  /** SD2c: the compass's mark - a found Hollow's centre, in THIS scene, while the player stands outside within
+   *  SD_COMPASS_M of it (section 4's kilometre); before it is found it is a find, and nothing points at it. */
+  const sdCompassMark = () => {
+    const h = sdHost?.mapMark() ? sdHost.hollow() : null;
+    if (!h?.site || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const t = state.pixelTranslation(h.site.px, h.site.py);
+    const [lx, lz] = spawnedLocationCentreLocal(h.loc);
+    const at = [t[0] + lx, t[2] + lz];
+    const f = player.feetAt();
+    return Math.hypot(at[0] - f[0], at[1] - f[2]) <= SD_COMPASS_M ? at : null;
+  };
   /** SET7: THE SIGIL BROKER (scenes/sigilBrokerPool.js) - BROKER-CAGE: caged at the faithful's circle from the omen to
    *  midnight, and free once every one of them fell (scenes/riteHost.js isCleared), online alone as the gate is: her
    *  body, her cage, her post, her box and her name, and the press that opens her window (ui/brokerDoor.js). The stock is
@@ -21665,6 +22342,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     const t = state.pixelTranslation(p.x, p.y);
     return [t[0] + TERRAIN_SIZE / 2, t[2] + TERRAIN_SIZE / 2];
   };
+  /** GUIDE8's Town tier (AUDIT DELVE, systems/questGuidance.js): THE BUILDING ON THE COMPASS - the one the tracked
+   *  quest's latest entry names, while the player stands in its town, at the building's own place in THIS scene's frame
+   *  (the town map's frame - the location's own - turned back by the translation and the origin the map opens with).
+   *  The building's place is read once a building and town (its summaries are the town map's). */
+  let _townQuestAt = { key: '', at: null };
+  const townQuestCompassMark = () => {
+    if (!townTierOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const bld = questTracker.tracked()?.target?.building;
+    if (!bld) return null;
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key), b = built.get(key);
+    if (!dfLoc || !b?.locBlocks || !b.locOrigin || ((dfLoc.mapTableData?.mapId ?? -1) >>> 0) !== (Number(bld.mapId) >>> 0)) return null;
+    const ck = `${key}|${bld.buildingKey}`;
+    if (_townQuestAt.key !== ck) {
+      const s = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks, { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 })
+        .find((x) => x.buildingKey === bld.buildingKey);
+      _townQuestAt = { key: ck, at: s ? townBuildingLocal(s, RMB_SIDE) : null };
+    }
+    if (!_townQuestAt.at) return null;
+    const t = state.pixelTranslation(px.x, px.y);
+    return [_townQuestAt.at[0] + t[0] + b.locOrigin[0], _townQuestAt.at[1] + t[2] + b.locOrigin[2]];
+  };
   const gateCompassMark = () => {
     const g = gateOmen?.standing();
     const mark = g ? gateOmen.mapMark() : null;
@@ -21696,6 +22396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
     if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
+    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;   // AUDIT SD III (F2): standing in it, joined to its living fight, the arena's rim holds me   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them; SD6c: with the Concord, the bridge and the first step among them
     if (!player.arena) player.arena = arenaBouts.ring(); if (!player.arena) { const s = arenaOnline?.session?.(); player.arena = standsRail(modes?.arenaFloorStage?.()?.centre?.() ?? null, player.feetAt()[1], !!s && (s.state ? s.state.h === 1 : !!s.host)); }   // ARENA2: my bout's ring on the arena's sand (the duel's clamp); HOTFIX 1003i: else the stands' rail - no watcher jumps down onto the sand (the session's host may)
     duelPrompt?.render();
   };
@@ -23209,7 +23910,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     } : null;
     return showNoticeWindow({
       town: { name: town.name, mapId: town.mapId }, rumour: rumour ?? [], bountyLine: !!town.bountyLine,
-      gate: () => noticeGateCard(), answer: (note) => answerNote(note), work, market,
+      gate: () => noticeGateCard(), sd: () => noticeSdCard(), answer: (note) => answerNote(note), work, market,
       vendors: market ? vendorBoardHost(region) : null,   // HOME-VENDOR: the region's traders, searched, a waypoint set on one
       guilds: true,   // GUILD1e: the Guilds tab - the town's recruitment posters, and the reader's own guild's board
       seatBattle: (st, f) => siegeEnter(st, f), seatRoyal: (st, r, w) => royalEnter(st, r, w), seatRecords: (st) => openRecordsFromBoard(st), seat: seatAt ? { seat: seatAt, book: seatBook, nameOf: (k) => seatAtMapId(townSeats, k)?.name ?? null, port: coastalAt(town.px, town.py, seaPixel, csaIsPortTown(town.px, town.py)), countName: materialCountLabel } : null,   // SEAT1b: a seat town's standings   // SEAT2a part four: the battle's door
@@ -23362,6 +24063,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const prof = professionName(d.track?.profession) || 'profession';
     return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${rose}`;
   };
+  /** SD2c: the server's word on a found Super dungeon while it stands - the map's own mark, under the red seal. */
+  const noticeSdCard = () => sdNoticeCard(sdHost?.mapMark() ?? null, sdHost?.hollow()?.site?.cityName ?? '');
   /** NOTICE1: the server's word on the Oblivion Gate while it stands - the map's own mark (WB1), under the red seal. */
   const noticeGateCard = () => {
     const mark = gateOmen?.mapMark?.();
@@ -24335,6 +25038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _mailFrameAt = performance.now();   // MAIL1: the letterbox looks while this lane runs - SCALE4c: on the heartbeat (its part, above), before the dead return as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
+    sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
     peerMenuFrame();   // PEERMENU1: the bind's hold timer
     peerFxFrame();   // PEERFX1: the others' blows and hurts, played
@@ -24358,6 +25062,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
+      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)
       if (online.room) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
@@ -24375,7 +25080,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // caster's pose) as new, and rose the instant it fell
       if (!_respawning) {
         if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
-        const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
+        const rez = social?.acct && modes?.sdRealmSlot?.() == null ? rezFor(social.others(), social.acct, _rezSeen) : null;   // SD-ONELIFE: no Resurrect in the Hour - one life (AUDIT SD III: asked of the call, so the rise stays MWBODY1's `if (rez)`)
         if (rez) { resurrectInPlace(rez); return; }
       }
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
@@ -24390,6 +25095,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
     else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
+    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'arena') key = arenaFloorRoomOf(modes?.roomIdentity?.()?.o);   // ARENA4: a relay's bout's floor is its room (ARENA4b: the hour's exhibition's, `x<hour>`, its own)
     else {
       const ident = modes?.roomIdentity?.();
@@ -24404,6 +25110,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         locationName: ident?.kind === 'dungeon' ? ident.name : (loc?.name ?? ''),
         buildingKey: ident?.buildingKey ?? 0,
         layout: ident?.layout ?? null,   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
+        size: ident?.kind === 'dungeon' ? (ident.size ?? null) : null,   // SD-ONLINE: and a dungeon's (`dungeon:m<id>.m` or `.s`, re-laid medium or small)
       });
     }
     // the pose: MapsFile's frame in the overworld (the floating origin's
@@ -24799,7 +25506,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
     // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
     // merge of the two hands their batches here too)
-    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors (CABIN-HULL: never in a ship's cabin - the fleet's are the street's)
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(sdSpoilsPool?.batches() ?? []), ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors (CABIN-HULL: never in a ship's cabin - the fleet's are the street's)
     drawModeMeshes: () => { if (csaOn() && !modes?.sailingCabin) { csa.draw(renderer); csaDrawParticlesOpaque(); } },   // CSA-C: a boat placed on a dungeon's water (UpdateBoatVisibility's inside arm keeps it active there); CSA-F: its wake's and splashes' quads and its flag; CABIN-HULL: never in a ship's cabin - the fleet kept afloat there is the street's, and her hull drawn round the room cut its floor into planks and holes
     csaDrawParticlesBlended: () => { if (csaOn() && !modes?.sailingCabin) csaDrawParticlesBlended(); },   // CSA-F: ...and its drops, after the mode's last world draw (CABIN-HULL: none below deck)
     modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),   // CSA-C: ...and its lit lanterns (CABIN-HULL: none lights her cabin from outside)
@@ -24826,16 +25533,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     arenaRival: () => arenaRivalBody(),   // ARENA4: my opponent on a relay's sand, as a body my blows meet
     onArenaHit: (hit) => !!arenaOnline?.hit(hit),   // ARENA4: a blow's number on them, out to the referee
     // WB9f: HIS SPOILS ON THE FLOOR, pressed - the pool's resting pieces as targets, their words and their items for the
-    // plaque, and the press that takes one into the pack (the court's dungeon arm, worldModes.js standCourt)
-    spoilTargets: () => spoilsPool?.targets() ?? null,
-    spoilName: (key) => spoilsPool?.nameOf(key) ?? null,
-    spoilContents: (key) => spoilsPool?.contentsOf(key) ?? null,
-    takeSpoil: (key) => !!spoilsPool?.pick(key),
+    // plaque, and the press that takes one into the pack (the court's dungeon arm, worldModes.js standCourt); SD9e: in the
+    // Hour, the Brass Remnant's (standSdRealm) - the floor of the place I stand in
+    spoilTargets: () => floorPool()?.targets() ?? null,
+    spoilName: (key) => floorPool()?.nameOf(key) ?? null,
+    spoilContents: (key) => floorPool()?.contentsOf(key) ?? null,
+    takeSpoil: (key) => !!floorPool()?.pick(key),
+    sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
+      const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : NO_SD_LIGHTS;
+      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);   // SD18b: the Ending's stone in the hall
+      if (!fx.length && !stone) return lit;
+      // AUDIT SD III (V5): one kept list, filled in place - three spreads and a light made every frame (1.4 KB)
+      _sdHourLights.length = 0;
+      for (let i = 0; i < lit.length; i++) _sdHourLights.push(lit[i]);
+      for (let i = 0; i < fx.length; i++) _sdHourLights.push(fx[i]);
+      if (stone) _sdHourLights.push(stone);
+      return _sdHourLights;
+    },
     // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
       const d = deadlandsPass();
       if (d?.draw(proj, view, _courtSea, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+    },
+    // SD5b (Super-Dungeons.md section 7): THE HOUR'S SKY (render/sdSky.js) - after the realm's solid geometry, before its
+    // flats, on the realm's anchored clock (the Deadlands' own, anchored to the relay's - every screen one moment), in its
+    // haze and at its light's gain (skyGain over the realm's fog)
+    drawSdSky: ({ proj, view }) => {
+      const p = sdSkyPassOf();
+      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
@@ -24846,6 +25572,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       const lived = deadlandsPass()?.drawLife(proj, view, _courtCentre, deadlandsSeconds(), fog, glow, _courtBeds, renderer.worldViewportPx?.[3]);
       if (told || lived) renderer.markForeignPass();
     },
+    // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is; SD9e:
+    // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light;
+    // SD16: and its blows' sparks (scenes/sdFx.js, the gate's spark pass) on the fight's clock; SD17: and the Hour-Hand's
+    // beam (render/sdBeam.js) out of its pointing hand
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); const beams = sdFightLink ? sdBeamDraws(sdFightLink.state(), sdFightLink.now(), _sdBeamDraws) : NO_SD_BEAMS; const beam = beams.length > 0 && !!sdBeamPassOf()?.draw(beams, proj, view, eye, t, fog); if (blows || lines || motes || sparks || beam) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,
@@ -24890,7 +25621,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onDungeonLeave: () => { const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); keepSoloMemory(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
-    onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss?.onDungeonEntered(ohDungeonOf(ctx)); csaOnTransition(); navalTransition(); restoreSoloMemory(); },   // PlayerEnterExit.OnTransitionDungeonInterior (CSA-C: Come Sail Away's OnTransition after OceanHoles' - the mods' load order)
+    onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss?.onDungeonEntered(ohDungeonOf(ctx)); csaOnTransition(); dungeonTierSay(); navalTransition(); restoreSoloMemory(); },   // PlayerEnterExit.OnTransitionDungeonInterior (CSA-C: Come Sail Away's OnTransition after OceanHoles' - the mods' load order); TIER1: the tier said, online
     onFailedTransition: () => { ohAbyss?.onTransitionFailed(); },   // PlayerEnterExit.OnFailedTransition
     onTransitionDungeonExterior: () => { navalStow(); ohAbyss?.onDungeonExited(); csaOnTransition(); navalTransition(); },   // PlayerEnterExit.OnTransitionDungeonExterior (and Come Sail Away's)
     onEnemySpawn: (rec) => { const d = ohDungeonOf(modes?.dungeonCtx); if (d) ohAbyss?.onEnemySpawned(d, d.foeView(rec)); },   // OH-E: GameManager.OnEnemySpawn
@@ -24945,7 +25676,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     spawnLedger: () => _spawnLedger,   // TTL1: so a save made INSIDE a dungeon carries the clocks too
     legacyWillRise: () => legacyHost?.willRise() ?? false,   // AUDIT LEGACY B5: Project Legacy will raise this death - Privateer's Hold's start-marker arm takes it offline too
     legacyRiseLine: () => { const o = legacyHost?.deathOutcome(); return o?.kind === 'rise' ? o.line : null; },   // ...and presents the outcome there: the toll's word
-    dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
+    dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
+    superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
+    sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
+    sdWayHome: () => sdWayHome(),   // SD10: the way home, out of the Hour to the Hollow's door
+    sdHomeAt: () => sdHomeAt(),   // SD10: where it stands - where the Remnant fell, its body sunk
+    sdHomeAge: () => sdHomeAge(),   // AUDIT SD II (L6 F16): how long ago it began to rise
+    sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
+    sdSay: (t, rank) => sdSay(t, rank),   // AUDIT SD II (SD11d): the Hour's voice, for the hall and the Rift
+    sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
+    sdCastBack: () => sdCastBack(),   // SD7b: the Unmoored Steps' void - stood back on the checkpoint, what it costs
+    sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
+    sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
+    sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
+    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not
@@ -26625,6 +27369,74 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvDng = { at, dg, grid, n, list };
     return list;
   }
+  /** OW-DUNGEONS (2026-10-08, Mac: "with dungeons on the overworld it doesnt show a dungeon model"; "Its own model,
+   *  enlarged"; systems/travelDungeonModels.js, bible/06-Systems/Travel-View.md OW-DUNGEONS): THE DUNGEONS STANDING AS
+   *  MODELS - TV6's own law (nearDungeons) with none left to TV2's grid (a found one there is a speck from the eye too)
+   *  and a standing Abyss Dungeon among the spawns (its own host stands and takes it - it is known from its rise), the
+   *  nearest TV_DUNGEON_MODELS_MAX; read again as TV6's is, when the pixel, the finds or the index move. */
+  function tvDungeonModelList() {
+    const at = playerTravelPixel(), dg = discoveryGeneration(), n = _locIndexGen;
+    if (tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) tvDngModels.at = null;   // AUDIT OW4 D2's law: a spawn whose time ran out goes
+    if (tvDngModels.at && tvDngModels.at.x === at.x && tvDngModels.at.y === at.y && tvDngModels.dg === dg && tvDngModels.n === n) return tvDngModels.list;
+    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),
+      spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s), spawnFound: tvSpawnFound,
+      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });
+    const list = dungeonModelSet(near).map((g) => ({ key: g.key, px: g.x, py: g.y, loc: g.loc, spawn: g.spawn }));
+    tvDngModels = { at, dg, n, list };
+    return list;
+  }
+  /** OW-DUNGEONS: a dungeon's model, loaded for the view - its blocks laid as its pixel's build lays them, its entrance
+   *  model picked (dungeonEntranceModel), held by its own place (PLACE-LRU `owdungeon`) and dressed in its climate and
+   *  the season as its pixel would (the bounty farm's way, BOUNTY-FARM); ready once its box is known. */
+  function tvDungeonModelLoad(g) {
+    const e = { key: g.key, px: g.px, py: g.py, ready: false, gpu: null, local: null, box: null, h: 0, texRemap: null, matrix: new Float32Array(16), hold: pipeline.holdPlace('owdungeon', g.key) };
+    _tvDngModel.set(g.key, e);
+    (async () => {
+      const lay = layoutLocation(g.loc, maps, blocks, { enhanced: isEnhanced(), windmills: false });
+      const tile = getLocationTerrainTileOrigin(g.loc);
+      const meshOf = (id) => { const i = arch.getRecordIndex(id); return i === -1 ? null : arch.getMesh(i); };
+      const pick = dungeonEntranceModel(lay.blocks, tile.x * tileSide, tile.y * tileSide, meshOf, isEnhanced());
+      if (!pick) return;
+      const gpu = await e.hold.getGpuMesh(pick.modelIdNum);
+      const cpu = cpuModels.get(pick.modelIdNum);
+      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;
+      const free = isClimateFreeModel(pick.modelIdNum);   // ARENA1's law, as the build's
+      const texRemap = free ? NO_CLIMATE_REMAP : new Map();
+      const climate = g.loc.climate?.climateType ?? getWorldClimateSettings(maps.getClimateIndex(g.px, g.py)).climateType;
+      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), pipeline);
+      if (_tvDngModel.get(g.key) !== e) return;
+      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);
+      Object.assign(e, { ready: true, gpu, local: pick.local, box, h: Math.max(0.5, box[4] - Math.max(0, box[1])), texRemap });
+    })().catch((err) => console.warn('[overworld] a dungeon\'s model', g.key, err?.message ?? err));
+  }
+  /** OW-DUNGEONS: the set kept in step - a new one's model asked for, one gone released - and each drawn grown with the
+   *  eye's distance (owDungeonGrow) about its foot, where its real one stands: over a built pixel on the real model's
+   *  own level, past the grid on the far ring's ground. No giant's shadow (the view's law, WAGON-HITCH B2). Under the
+   *  view alone: in play the world's own entrance is the model. */
+  const _tvDngAt = [0, 0, 0];
+  function drawTvDungeonModels(eye) {
+    if (!eye) return;
+    const list = tvDungeonModelList();
+    const keep = new Set();
+    for (const g of list) { keep.add(g.key); if (!_tvDngModel.has(g.key)) tvDungeonModelLoad(g); }
+    for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }
+    for (const e of _tvDngModel.values()) {
+      if (!e.ready) continue;
+      const t = state.pixelTranslation(e.px, e.py, e.t ??= [0, 0, 0]);
+      const foot = (e.foot ??= modelFoot(e.box));
+      const level = built.get(`${e.px},${e.py}`)?.locOrigin ?? null;   // the real model's own level, where its pixel stands
+      _tvDngAt[0] = t[0] + foot[0]; _tvDngAt[2] = t[2] + foot[2];
+      if (level) _tvDngAt[1] = t[1] + level[1];
+      else {   // past the grid: the far ring's ground, asked again only as the ground moves (TV3's tvSceneKept's way)
+        const gen = tvGroundGenNow();
+        if (e.groundGen !== gen) { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }
+        _tvDngAt[1] = e.groundY;
+      }
+      const g = owDungeonGrow(Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2]), e.h);
+      if (!owDungeonDrawn(g, !!level)) continue;
+      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });
+    }
+  }
   /** AUDIT OW5 D1 (the audit before the merge, 2026-09-29): THE FIND ASKS EVERY UNFOUND DUNGEON IN ITS REACH - never the
    *  plates' list above, which keeps TV_DUNGEON_MAX with the FOUND first (AUDIT OW4 D7), so a traveller who had found a
    *  dozen about them never found another on approach. The dungeons within TV_FIND_REACH map pixels of the traveller's
@@ -27044,7 +27856,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const marks = [];
     for (const p of travelViewPlaces()) {
       if (p.key === endKey) continue;
-      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, kind: 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: seatTipAt(p.summary.mapId) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card
+      const tier = params.has('online') ? tierPhrase(dungeonTierLabel(p.summary.loc)) : '';   // TIER1: a dungeon's tier and size under its name, online
+      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: seatTipAt(p.summary.mapId) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card
     }
     // TV5: the far places, held at the edge with their distance (the journey's own end is the flag's)
     const farEnd = endKey ? `far:${tvTrip.plan.summary.mapId}` : null;
@@ -27061,7 +27874,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (g.found) {
         if (!g.spawn && `far:${g.row.mapID}` === farEnd) continue;
         const km = (Math.hypot(g.x - here.x, g.z - here.z) / 32768) * PIXEL_KM;
-        marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: farDistanceText(km), kind: 'far dungeon', pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
+        const tier = params.has('online') ? tierPhrase(dungeonTierLabel(g.loc)) : '';   // TIER1: the tier and size before the distance, online
+        marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: tier ? `${tier} - ${farDistanceText(km)}` : farDistanceText(km), kind: 'far dungeon', pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
       } else marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: '?', kind: 'lair' });
     }
     // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingRoads.js)
@@ -27781,11 +28595,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (oceanHoles) { _ohTime += gamePaused() ? 0 : dt * worldTimeScale(); oceanHoles.checkSettings(); ohAbyss?.update(); }
     csaDrawHelmPanel();   // CSA-L: the helm panel, once a frame in every mode
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
+    sdAirFrame();   // SD14b: and the Hour's, the same way
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
     arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too
-    setCourtRules(modes?.gateArenaDay?.() != null);   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
+    setCourtRules(modes?.gateArenaDay?.() != null);
+    if (modes?.sdRealmSlot?.() != null) setCourtRules(true);   // SD5a: nor in the Shattered Hour - the court's law (Super-Dungeons.md section 7)   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
     // LOAD1: THE LOADING SCREEN STANDS WHILE THE WORLD IS MOVED - AUDIT 68 S22's one question (every mover's latch, the
     // teleport core's window, the abyss) and a door's build in this host's modes. Above the mode's return, so every
     // drawn frame asks; below the video's wait (AUDIT 39 #160's head, and AUDIT 28 W7's tick on the frame's dt) - a
@@ -27814,7 +28630,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -29062,6 +29878,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (roadsSweepDue && !building) { roadsSweepDue = false; sweepRoadless(); }   // FIX-C: the roads sweep, on the frame, between builds
     if (_wodLate.size && !building) sweepWodLate();   // WOD6: a late region's pixels, the same way
     if (!building) sweepGateClear();   // GATE-CLEAR: the gate the clock is about turned - its clearing in, the last one's rock back
+    if (_sdLate.size && !building) sweepSdLate();   // SD2b: the Hollow's pixel, the same way
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     refreshHomeLooks();   // HOME-LOOK: a look landed or changed repaints the home where it stands
     // W1/S41: the DRAIN ticks on the exterior frame, which is
@@ -29197,13 +30014,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     sky.setSunbaby(sunbabyW, sunbaby.on);   // SUNBABY1: its flower sky, and the clear day the sky wears while it is staged
     sky.setSunbabyFace(sunbabyFace.evil, sunbabyFace.todd);   // SUNBABY2: the face it wears, and the wrath's burning sky
     sky.setDread(skyDreadW, dreadCloudGlow(boltFrame.bolts));   // EVENT1: the sky's grade, and the red strikes' glow in its deck; WBX8: the gate's, where it is the greater
+    const sdAirW = sdHost ? sdAirNow(tvStand, minute) : 0;   // SD19: the brass air near a standing Hollow - its haze and its light
+    sky.setBrass?.(sdAirW);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
+    // SD19: the land's light leaning to brass near a standing Hollow (sdBrassLight, both lights)
     renderer.setLighting(
-      sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW),   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
-      sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil));   // SUNBABY2: the key reddened under the wrath
+      sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW),   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
+      sdBrassLight(sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW));   // SUNBABY2: the key reddened under the wrath; SD19: brass near a Hollow
     // DW-C: the distance fog's own "under" (UnderwaterDistanceFog.TryGetUnderwaterPresentation) - the surfaces'
     // _DeepWatersUnderwater and UnderwaterPresentationEffects' light suppression read it too, so it is taken
     // here, before the lights, from this frame's camera and capsule
@@ -29259,6 +30079,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
     try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
+    if (gatePool || sdHost) presenceFrame();   // SD19: the banner and the card - the gate's, else a Hollow's door's
     try { sigilBroker?.frame(dt); } catch (e) { console.warn('[broker] pool', e?.message ?? e); }   // SET7: the Broker stands where the clock stands her - BROKER-CAGE: in her cage at the faithful's circle
     try { riteHost?.frame(); } catch (e) { console.warn('[rite] host', e?.message ?? e); }   // WB12d: the faithful's circle, before the lights (its braziers light the ground)
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
@@ -29340,6 +30161,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
+    if (tvf) drawTvDungeonModels(travelView?.eye ?? null);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
@@ -30142,6 +30964,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WB12d: the rite's pillar of smoke, the gate's fire's eye and fog - from the omen, before the gate stands
     if (riteHost?.smoking() && riteHost.drawSmoke(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only while it shows
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, light: (renderer._ambient[0] + renderer._ambient[1] + renderer._ambient[2]) / 3 + 0.6 * renderer._sunScale })) renderer.markForeignPass();   // AUDIT WB12d (G8): lit as the rain's curtains are
+    // SD2c: THE HOLLOW'S OMEN - a Super dungeon's column of brass-gold light, after the gate's fire, the same eye and fog
+    const sdo = sdHost ? sdOmenNow() : null;
+    if (sdo && sdOmenPassOf()?.draw([sdo], proj, view, new Float32Array(mwv.eye), now / 1000,
+      { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus })) renderer.markForeignPass();
     // LOOT11 (the Loot arc): THE LINES OF LIGHT over my bodies and the street's piles holding a Rare or better - after the
     // gate's fire, the same eye and fog (scenes/lootLines.js: the nearest eight within 40 m)
     if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()], proj, view, new Float32Array(mwv.eye), now / 1000,
@@ -30457,7 +31283,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           gate: gateCompassMark(),   // WB1: the Oblivion Gate on the compass, while the player stands in its ring
           serpent: serpentCompassMark(),   // SERPENT1: the sea serpent on the compass, while the player sails in its ring
-          quest: vendorCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set
+          sd: sdCompassMark(),   // SD2c: a found Super dungeon on the compass, while the player stands within SD_COMPASS_M of it
+          quest: vendorCompassMark() ?? townQuestCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set; GUIDE8: the Town tier's building, in its town
           party: partyCompass(),   // COMPASS-PARTY: the party's marks - the bodies drawn here, the rest where their poses say
           ships: navalOn() && _mode() === 'exterior' ? naval?.compassShips() ?? null : null, boats: csaRuntime && _mode() === 'exterior' ? boatCompassPoints(csaRuntime.AllBoats, csaBoatUnderMe(), enchantFeet(), state, TERRAIN_SIZE) : null,   // AUDIT NAV1 (the helm): the sea's ships on the compass; BOAT-MARK: my own boats, from anywhere on the street (under the travel view too), the one at my helm left out
           nodes: professionMarks(),   // NODE-MARKS: every profession's nodes near (PROF2: a Prospector's veins within 200 m, PROF0 3.3); PROF7: a Tracker's animals within 100 m

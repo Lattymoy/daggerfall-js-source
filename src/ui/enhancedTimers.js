@@ -11,7 +11,7 @@
 import { eventTimerRows, timerText, localWhenText } from '../systems/eventTimers.js';
 
 /** A row's kind -> its marker class (colour in the sheet). */
-export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'raid', 'battle', 'seat', 'reset']);   // SERPENT-TIMERS: the sea serpent's
+export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']);   // SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found
 
 /**
  * The hourglass, the button beside the profile mark.
@@ -22,7 +22,7 @@ export function timersMark(doc, { onOpen, open = false }) {
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-timersmark';
-  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, raids, battles and resets');
+  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Abyss Dungeon, raids, battles and resets');   // SD2c: its row
   b.setAttribute('aria-haspopup', 'dialog');   // AUDIT TIMERS1 UI-6
   b.setAttribute('aria-expanded', open ? 'true' : 'false');
   b.title = 'Timers';

@@ -209,8 +209,8 @@
   {
     "name": "SERPENT2-beat-off-alarm",
     "file": "server/src/index.js",
-    "old": "await this._serpentHeraldBeat(Date.now()); return; }",
-    "new": "return; }",
+    "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); return; }",
     "tests": [
       "test/serpent2_herald.test.js"
     ]
@@ -425,11 +425,12 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'raid', 'battle', 'seat', 'reset']",
+    "old": "['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
       "test/serpent2_herald.test.js"
-    ]
+    ],
+    "note": "SD2c (re-aimed by content): the Super dungeon's kind stands after the serpent's."
   },
   {
     "name": "SERPENT2-timers-colour-missing",

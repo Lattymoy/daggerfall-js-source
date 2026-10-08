@@ -43,6 +43,7 @@ import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
 import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
+import { SD_BRASS_GLSL } from '../world/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -198,7 +199,7 @@ export function sunOcclusion(state) {
   // - without it, a sun below ~16 degrees took up to half again as much
   // light off the ground as off the disc the player can still see, and
   // those are the hours the palette is built around.
-  const near = smoothstep(0.28, 0, d[1]);
+  const near = 1 - smoothstep(0, 0.28, d[1]);   // AUDIT SD III (V14): the shader's own, edges rising
   // EE2 F4: thins exactly as the shader does - mix(cover, 1, 0.75)
   const thin = state.cloudCover + (1 - state.cloudCover) * 0.75;
   return cov * (1 - near) + cov * thin * near;
@@ -466,9 +467,11 @@ uniform float uFogMix;
 uniform vec3 uStarPole;
 uniform float uStarAngle;
 uniform float uDread;   // EVENT1: the live event's grade, 0 = none
+uniform float uBrass;   // AUDIT SD III (V8): the brass air's, 0 = none
 
 out vec4 outColor;
 ${DREAD_GLSL}
+${SD_BRASS_GLSL}
 
 float hash21(vec2 p) { p = mod(p, ${DECK_LATTICE}.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }   // CLK1 review: the lattice has a period
 float vnoise(vec2 p) {
@@ -625,7 +628,7 @@ void main() {
   // the rim's pows. The gate skips exactly that, so the picture is the
   // same to the byte; a real cover takes the path it always took.
   if (dir.y > 0.0 && uCloudCover > 0.0) {
-    float near = smoothstep(0.28, 0.0, dir.y);
+    float near = 1.0 - smoothstep(0.0, 0.28, dir.y);   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL
     vec2 hi = deck(dir, 0.95, uDrift * 0.55, uCloudCover * 0.75, uCloudSoft * 1.5, 0.0);
     vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.0);
     // The low deck covers the high one where it is; what is left of the
@@ -671,7 +674,7 @@ void main() {
   // the standard for exactly this and is three constants.
   float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
   out3 += (ign - 0.5) / 255.0;
-  outColor = vec4(dreadGrade(out3, uDread), 1.0);   // EVENT1
+  outColor = vec4(brassGrade(dreadGrade(out3, uDread), uBrass), 1.0);   // EVENT1; AUDIT SD III (V8): the brass air's after it
 }`;
 
 /** The pass. Same contract as SkyRenderer: draw(yaw, pitch, fovY, aspect)
@@ -685,7 +688,7 @@ export class EnhancedSkyRenderer {
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle', 'uDread']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle', 'uDread', 'uBrass']) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -699,6 +702,8 @@ export class EnhancedSkyRenderer {
     this.fogMix = 0;
     /** EVENT1: the live event's grade over the dome, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
+    /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/sdBrassSky.js) - the host's. */
+    this.brass = 0;
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
     this.clearColor = new Float32Array([0.66, 0.78, 0.92]);
     this.fillColor = new Float32Array([0.17, 0.35, 0.72]);
@@ -759,6 +764,7 @@ export class EnhancedSkyRenderer {
     gl.uniform3fv(u.uStarPole, s.starPole);
     gl.uniform1f(u.uStarAngle, s.starAngle);
     gl.uniform1f(u.uDread, this.dread);   // EVENT1
+    gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
     // HANDEDNESS: as the classic pass - the triangle winds CCW under a
     // CW front face, so culling is off for it.
     gl.disable(gl.CULL_FACE);

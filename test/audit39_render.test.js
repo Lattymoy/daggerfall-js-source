@@ -296,13 +296,13 @@ test('audit39 F53: the bright star layer draws - a zero intra-cell offset could 
 test('audit39 F54: sunOcclusion applies the shader\'s horizon term, so the ground and the disc agree', () => {
   const fs = src('src/render/enhancedSky.js');
   // The shader line the twin now mirrors, and the mirror itself.
-  assert.match(fs, /float near = smoothstep\(0\.28, 0\.0, dir\.y\);/);
+  assert.match(fs, /float near = 1\.0 - smoothstep\(0\.0, 0\.28, dir\.y\);/);   // AUDIT SD III (V14, PIN MOVED): its edges rising, the same curve
   // EE2 F4: the deck is no longer thinned to a quarter at the horizon.
   // The law this pin holds - the ground's occlusion applies the SAME
   // horizon term the shader does - is unchanged and asserted on both
   // sides of the new thinning.
   assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/);
-  assert.match(fs, /const near = smoothstep\(0\.28, 0, d\[1\]\);/);
+  assert.match(fs, /const near = 1 - smoothstep\(0, 0\.28, d\[1\]\);/);   // AUDIT SD III (V14, PIN MOVED): the shader's own
   assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/, 'the CPU occlusion must thin exactly as the shader does');
   assert.match(fs, /return cov \* \(1 - near\) \+ cov \* thin \* near;/);
   // A LOW sun is the case that moved: below ~16.3 degrees the shader

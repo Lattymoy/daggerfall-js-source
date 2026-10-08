@@ -2,7 +2,8 @@
 
 Mac: *"Do a comprehensive audit on this and ensure perfection"*, of SCALE3 (the load harness), SCALE4a (a session and
 its player in one read), SCALE4b (the service's own clock) and SCALE4c (one heartbeat for a tab's three clocks),
-`11-Multiplayer/Scale-Arc.md`. Five lenses:
+`11-Multiplayer/Scale-Arc.md`. The service was acct94 with migration 0090 at the audit; the merge with main renumbered
+them acct95 and 0091, past SD9b's. Five lenses:
 
 - **live, in real workerd** (this session's own): `npm run account` 46/46 on the pushed head; both crons fired by
   `wrangler dev --test-scheduled` over a migrated local D1, every job's own metrics point read back (all thirteen 200; a
@@ -30,10 +31,10 @@ comment.
 |---|---|---|---|
 | A1 | Major | **An auction won under a seat's Tithe could be picked every minute and closed never - and hold every auction behind it.** The due SELECT judged the seller's room by the proceeds with no Tithe (netSql's MARKET_TITHE_PCT is 0); both decisions guard on the proceeds less the seat's real Tithe. A seller within the Tithe of the Marks cap saw the sale wait out the whole grace (seven days) though it fitted, then be picked by every read and every firing - the SELECT said no room, the unsold close said room, nothing changed. Twenty of them filled `LIMIT 20`: no auction after them closed. On main already; the clock asked it every minute. | FIXED (`market.js` closeAuctions): the room decided in JS after the Tithe, by the `gets` both decisions guard on; the candidates every auction that COULD close - unbid, past the grace, or with room at the least any Tithe could leave (`TITHE_PCT_MOST`, 18: the crown's cap and a Market Hall's whole rise) - the surely closable first, so one that waits never holds the page. |
 | A2 | Major | **A firing could spend thousands of statements, and repeat a page that changed nothing.** The closers answered what they PICKED, so `rounds()` asked a stuck page again 25 times a minute (A1's twenty: 2,025 statements a minute, 2.9 million a day - the whole database ran 17.4 million the day before YARD-SHED); and with no budget a backlog of sold auctions ran past D1's thousand queries an invocation, failing that job and every one after it. | FIXED: the closers answer what they MOVED (the decisions' own changes); `cron.js` FIRING_STATEMENTS_MAX (600) split among a list's jobs, a settler stopping between items once its share is spent - a firing runs at most that and one item a job, held under the thousand by a pin. |
-| A3 | Minor | **closeContracts walked guild_contracts every minute**, a table nothing prunes - neither half of its OR could use 0071's index. | FIXED: 0090 `idx_guild_contracts_open_due` and `idx_guild_contracts_unreturned`, guild_writs' own pair (0043). |
+| A3 | Minor | **closeContracts walked guild_contracts every minute**, a table nothing prunes - neither half of its OR could use 0071's index. | FIXED: 0091 `idx_guild_contracts_open_due` and `idx_guild_contracts_unreturned`, guild_writs' own pair (0043). |
 | A4 | Minor | **The arena's clock counted the season's whole board every eight minutes, whatever the play** - 180 counts a day on a world nobody played in, where readers alone made 144 at most; at 20,000 bouts a count walks 80,000 rows. | FIXED (`cron.js` arena-champion): the board moves through a bout alone (claimArena counts it at once; no route deletes an account), so a kept word no bout is newer than is stamped again, not counted. |
-| A5 | Minor | **The History's hourly prune was one unbounded batch**, and its auctions' delete walked every bid twice per auction (market_bids had only a partial index): 2,000 old auctions over 80,000 bids ran 21 s, and a batch past D1's 30 s rolls back and only grows. | FIXED: each table's delete a page (`rowid IN (... LIMIT ?)`), asked again while one took a full page; 0090 `idx_market_bids_auction` (the cascade's lookup too). |
-| A6 | Minor | **0090's index on sessions(last_seen) doubled the index rows every stale touch writes** - writes D1 bills at a thousand times a read - to spare an hourly walk that finds nothing to delete before 2027-09-21. | FIXED before it shipped: 0090 no longer creates it; the sessions' sweep walks the table. |
+| A5 | Minor | **The History's hourly prune was one unbounded batch**, and its auctions' delete walked every bid twice per auction (market_bids had only a partial index): 2,000 old auctions over 80,000 bids ran 21 s, and a batch past D1's 30 s rolls back and only grows. | FIXED: each table's delete a page (`rowid IN (... LIMIT ?)`), asked again while one took a full page; 0091 `idx_market_bids_auction` (the cascade's lookup too). |
+| A6 | Minor | **0091's index on sessions(last_seen) doubled the index rows every stale touch writes** - writes D1 bills at a thousand times a read - to spare an hourly walk that finds nothing to delete before 2027-09-21. | FIXED before it shipped: 0091 no longer creates it; the sessions' sweep walks the table. |
 | A7 | Minor | **One heartbeat part's throw failed the whole heartbeat** (a D1 error on the board's read: the box lost with it, the beat credited and its answer lost), and the client asked all three again three times. | FIXED (`server-account/src/heartbeat.js`): each part answered on its own - a throw is that part's `{ error: 'server' }`, its route's 500. |
 | A8 | Nit | The guild boards' and invitations' hourly sweeps walk their tables. | NAMED: cheaper than the per-read walk they replace, and both tables small; an index would cost a written row at every note and invitation. |
 | A9 | Nit | A schedule the module does not name ran nothing, silently; the Motherlodes' memo is per isolate. | FIXED, the first: `jobsFor` says so (the wrangler.toml-to-cron.js pin already holds the two names together). NAMED, the second: two statements a minute on a cold isolate. |
@@ -41,7 +42,7 @@ comment.
 Held, among the rest: WHO_SQL's split and its exits; every job's signature and environment; the reads that stopped
 sweeping filter on their own (`expires_at > now`, `day = today`, the History's own window); every overRate window an
 hour or less; `scheduled()` awaited by the runtime and handed the firing's moment; the maintenance hold; the
-heartbeat's body checks and the per-account bound it sits behind; acct94 and 0090 consistent.
+heartbeat's body checks and the per-account bound it sits behind; acct94 and 0090 consistent (acct95 and 0091 after the merge).
 
 ## Lane B - the client's heartbeat
 

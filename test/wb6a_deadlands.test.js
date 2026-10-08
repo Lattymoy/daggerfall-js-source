@@ -84,7 +84,7 @@ test('WB6a the sea: a disc facing up, no hole under the court, its rim inside th
   assert.ok(SEA_FADE[0] < SEA_FADE[1] && SEA_FADE[1] <= SEA_R, 'the rim has become the horizon before the disc ends');
   for (const s of [DEAD_SKY_FS, DEAD_SEA_FS]) assert.ok(s.includes(HORIZON_GLSL), 'the one horizon, in both');
   assert.match(DEAD_SEA_FS, /col = mix\(col, deadHorizon\(normalize\(vWorld - uCamPos\)\), rimT\);/, 'the rim becomes it');
-  assert.match(DEAD_SKY_FS, /col = mix\(col, deadHorizon\(d\), smoothstep\(0\.22, 0\.0, e\)\);/, 'and the sky\'s horizon is it');
+  assert.match(DEAD_SKY_FS, /col = mix\(col, deadHorizon\(d\), 1\.0 - smoothstep\(0\.0, 0\.22, e\)\);/, 'and the sky\'s horizon is it');   // AUDIT SD III (V14, PIN MOVED): its edges rising, the same curve
   assert.match(DEAD_SEA_FS, /col = mix\(uHaze, col, fogFactorAt\(vWorld\)\);/, 'fogged by the frame\'s own fog');
 });
 
@@ -175,7 +175,7 @@ test('WB6a the seams, by source: the court is lit as itself before the frame beg
   const dark = wm.indexOf('renderer.setMoonlight(null);');
   const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
   assert.ok(dark > 0 && dark < light && light < begin, 'after the dungeon\'s dark, before the frame reads it');
-  const dyn = wm.indexOf('for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);');
+  const dyn = wm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);');   // AUDIT SD II (L2 F11 - PIN MOVED): a hidden draw skipped
   const back = wm.indexOf('\n      if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });');
   const flats = wm.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches');
   const statics = wm.indexOf('if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);');

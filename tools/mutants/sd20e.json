@@ -1,0 +1,371 @@
+[
+  {
+    "name": "SD20E-T1-what-it-is-back",
+    "file": "src/systems/sdOmen.js",
+    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "new": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T1-nowrap-back",
+    "file": "src/ui/gateBanner.js",
+    "old": "width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; }",
+    "new": "white-space: nowrap; }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-banner-never-brass",
+    "file": "src/ui/gateBanner.js",
+    "old": "const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';",
+    "new": "const cls = 'wb-gate-banner';",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-brass-never-taken-off",
+    "file": "src/ui/gateBanner.js",
+    "old": "if (cls !== shownCls) { shownCls = cls; node.className = cls; }",
+    "new": "if (cls !== shownCls && look === 'brass') { shownCls = cls; node.className = cls; }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-world-never-asks-brass",
+    "file": "src/scenes/world.js",
+    "old": "drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden, look: _gateBannerWish == null && sb ? 'brass' : 'gate' });",
+    "new": "drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden });",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-card-unmodelled",
+    "file": "src/ui/sdMarksView.js",
+    "old": "alpha: Math.round(alpha * 100) / 100, look: 'brass',",
+    "new": "alpha: Math.round(alpha * 100) / 100,",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-class-unput",
+    "file": "src/ui/gateMarksView.js",
+    "old": "const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`;",
+    "new": "const mode = model.mode;",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-omens-red",
+    "file": "src/ui/gateMarksView.js",
+    "old": "look === 'brass' ? '#e8c060' : '#ffb27a'",
+    "new": "'#ffb27a'",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T3-the-plus-glow-over-the-outline",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "body .wb-gate-banner.sd-brass { text-shadow: ${OUTLINED}; }",
+    "new": "body .wb-gate-banner.sd-brass { }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T2-the-card-on-the-chips",
+    "file": "src/ui/sdTitleCard.js",
+    "old": ".sd-title-card { top: 40%; }",
+    "new": ".sd-title-card { top: 30%; }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T2-the-sideways-card",
+    "file": "src/ui/sdTitleCard.js",
+    "old": ".sd-title-card { top: 46%; }",
+    "new": ".sd-title-card { top: 48%; }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T2-the-foot-stays",
+    "file": "src/ui/sdTitleCard.js",
+    "old": "@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*=\"display: none\"])) .wb-boss-foot { display: none; } }\n",
+    "new": "",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T2-the-chevron-on-the-plate",
+    "file": "src/ui/gateGroundView.js",
+    "old": "@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }\n",
+    "new": "",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T4-the-card-in-the-serif",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "body .sd-title-card { ${PIXEL_FONT_CSS} color: #efe8d6;",
+    "new": "body .sd-title-card { color: #efe8d6;",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T5-the-count-in-the-head",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`,",
+    "new": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`,",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T10-the-gates-word",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "fallen: !!s.fell, fallenText: SD_BAR_TEXT.undone, callout,",
+    "new": "fallen: !!s.fell, callout,",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T10-the-bar-deaf-to-it",
+    "file": "src/ui/gateBossBar.js",
+    "old": "model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen :",
+    "new": "model.fallen ? BOSS_BAR_TEXT.fallen :",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T6-a-count-of-its-own",
+    "file": "src/world/sdDungeon.js",
+    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "return SD_COUNT_TEXT.fades(`${Math.floor((rec.until - now) / 3_600_000)}h ${String(Math.ceil(((rec.until - now) % 3_600_000) / 60_000)).padStart(2, '0')}m`);",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T7-the-mark-first",
+    "file": "src/ui/heldMap.js",
+    "old": "    const core = this._ringCoreAt(sx, sy, m);   // AUDIT SD III (T7)\n    if (core) return { label: core.label, cursor: '', tip: core.tip };\n",
+    "new": "",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T7-the-ring-its-map-radius",
+    "file": "src/ui/heldMap.js",
+    "old": "const least = GATE_RING_MIN_PX / this._view.scale;",
+    "new": "const least = 0;",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T7-the-core-unbounded",
+    "file": "src/ui/heldMap.js",
+    "old": "if (d <= r * r && d < bestD) { best = g; bestD = d; }",
+    "new": "if (d < bestD) { best = g; bestD = d; }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T9-the-old-signature",
+    "file": "src/net/sdMarks.js",
+    "old": "sig: 'The Dragon\\'s Haste',",
+    "new": "sig: 'The Dragon\\'s Break',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T14-the-beat-another-form",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "export const sdBreakSub = (ms) => `Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other`;",
+    "new": "export const sdBreakSub = (ms) => `Strike both Echoes down within ${Math.round(ms / 1000)} seconds`;",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T14-a-fixed-fifteen",
+    "file": "src/net/sdFightLink.js",
+    "old": "SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs)",
+    "new": "SD_FIGHT_TEXT.dragonBreak(15_000)",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T14-the-tip-another-form",
+    "file": "src/ui/sdMarksView.js",
+    "old": "blades: 'Fell Gold and Silver within ten seconds of each other.',",
+    "new": "blades: 'Strike down both Echoes together.',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T11-the-capitals-back",
+    "file": "src/systems/sdOmen.js",
+    "old": "- ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
+    "new": "- ${E.sig} - under ${O.map((o) => o.name).join(' and ')}.",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T12-toward-it",
+    "file": "src/systems/sdOmen.js",
+    "old": "turn their heads toward the walls',",
+    "new": "turn their heads toward it',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T13-garbled-again",
+    "file": "src/net/sdMarks.js",
+    "old": "text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.'",
+    "new": "text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.'",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T15-the-hollows-door",
+    "file": "src/scenes/sdEnd.js",
+    "old": "to: 'To the Abyss Dungeon\\'s door',",
+    "new": "to: 'To the Hollow\\'s door',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T15-the-collapse-the-hollows",
+    "file": "src/scenes/sdHost.js",
+    "old": "The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`",
+    "new": "The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T15-the-cast-out-the-hollows",
+    "file": "src/net/sdLaw.js",
+    "old": "'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'",
+    "new": "'The Hour closes, and the Hollow folds in on itself behind you.'",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T15-the-fade-closes",
+    "file": "src/scenes/sdHost.js",
+    "old": "'The Abyss Dungeon fades'",
+    "new": "'The Hollow closes'",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T15-the-way-back-the-hollows",
+    "file": "src/world/sdRealm.js",
+    "old": "wayBack: 'To the Abyss Dungeon',",
+    "new": "wayBack: 'To the Hollow',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T16-the-slip-back",
+    "file": "src/systems/features.js",
+    "old": "+ 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '",
+    "new": "+ 'visit. Smaller dungeons wins when both are on, this over medium. A quest keeps the size it '",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T16-the-quest-unsaid",
+    "file": "src/systems/features.js",
+    "old": "this row wins over Medium dungeons. A quest keeps the size it '\n      + 'was set up at. Online it is always on.',",
+    "new": "this row wins over Medium dungeons. '\n      + 'Online it is always on.',",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T16-switching",
+    "file": "src/systems/features.js",
+    "old": "In a dungeon, selecting Info mode makes",
+    "new": "In a dungeon, switching to Info mode makes",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T18-the-clock-under-the-veil",
+    "file": "src/scenes/world.js",
+    "old": "if (_sdMarksSince === null && !gateVeil?.busy) _sdMarksSince = nowMs;",
+    "new": "if (_sdMarksSince === null) _sdMarksSince = nowMs;",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T18-the-bar-under-the-veil",
+    "file": "src/scenes/world.js",
+    "old": "const hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;   // AUDIT SD III (T18)",
+    "new": "const hidden = gamePaused() || !!townTalk.hudHidden;   // AUDIT SD III (T18)",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T19-the-region-after-near",
+    "file": "src/net/sdLaw.js",
+    "old": "region ? `in the ${region} region` : 'near the Iliac Bay'",
+    "new": "region ? `near ${region}` : 'near the Iliac Bay'",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T19-the-hour-unwhere",
+    "file": "src/systems/sdOmen.js",
+    "old": "${sdWhere(near, region)} will fade within the hour.",
+    "new": "near ${near || 'the Iliac Bay'} will fade within the hour.",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  },
+  {
+    "name": "SD20E-T19-the-host-unregioned",
+    "file": "src/scenes/sdHost.js",
+    "old": "near: hh?.site?.cityName || '', region: regionName(rec.r) || '' }",
+    "new": "near: hh?.site?.cityName || '' }",
+    "tests": [
+      "test/sd20e_text.test.js"
+    ]
+  }
+]

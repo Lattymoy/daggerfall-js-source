@@ -1,0 +1,132 @@
+[
+  {
+    "name": "SD2-the-world-salt",
+    "file": "src/systems/sdSite.js",
+    "old": "export const sdSalt = (s) => SD_SALT_BASE + 1 + ((Math.max(1, s | 0) - 1) % (SALT_MAX - SD_SALT_BASE));",
+    "new": "export const sdSalt = (s) => 1;",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A Hollow's id is never a spawned dungeon's - its room and memory are its own."
+  },
+  {
+    "name": "SD2-a-mod-row-counts",
+    "file": "src/systems/sdSite.js",
+    "old": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
+    "new": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex)) continue;",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A world-data mod's rows are not on every client."
+  },
+  {
+    "name": "SD2-the-great-cities-any-place",
+    "file": "src/systems/sdSite.js",
+    "old": "    if (r < 0 && loc.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;\n",
+    "new": "",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "With no region, the Bay's great CITIES."
+  },
+  {
+    "name": "SD2-the-smallest-first",
+    "file": "src/systems/sdSite.js",
+    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex));",
+    "new": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? 1 : outranks(b.claim, a.claim) ? -1 : a.loc.regionIndex - b.loc.regionIndex));",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "Where population is at its most: the largest first."
+  },
+  {
+    "name": "SD2-all-the-cities",
+    "file": "src/systems/sdSite.js",
+    "old": "  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.loc);",
+    "new": "  return rows.map((x) => x.loc);",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "Eight great cities, not every one."
+  },
+  {
+    "name": "SD2-the-great-cities-always-the-first",
+    "file": "src/systems/sdSite.js",
+    "old": "  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;",
+    "new": "  const start = 0;",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "The slot's roll picks among the great cities."
+  },
+  {
+    "name": "SD2-a-city-with-no-ring-ends-it",
+    "file": "src/systems/sdSite.js",
+    "old": "    if (!pixels?.length) continue;",
+    "new": "    if (!pixels?.length) return null;",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A city with no suitable pixel passes to the next."
+  },
+  {
+    "name": "SD2-always-the-first-pixel",
+    "file": "src/systems/sdSite.js",
+    "old": "    const id = pixels[sdRoll(rec.s, 4) % pixels.length];",
+    "new": "    const id = pixels[0];",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "The slot's roll moves the site round the city."
+  },
+  {
+    "name": "SD2-a-small-template",
+    "file": "src/systems/sdSite.js",
+    "old": "export const SD_TEMPLATE_MIN_BLOCKS = 12;",
+    "new": "export const SD_TEMPLATE_MIN_BLOCKS = 11;",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A deep place: twelve blocks or more."
+  },
+  {
+    "name": "SD2-a-ruin-for-a-template",
+    "file": "src/systems/sdSite.js",
+    "old": "    && SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) && l.exterior?.exteriorData && !l.spawned",
+    "new": "    && l.exterior?.exteriorData && !l.spawned",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A labyrinth or a keep."
+  },
+  {
+    "name": "SD2-a-wide-template",
+    "file": "src/systems/sdSite.js",
+    "old": "    && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);",
+    "new": "    );",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "A spawn's clearance: the exterior is crossed into from no pixel edge inside 300 m."
+  },
+  {
+    "name": "SD2-the-main-story-cloned",
+    "file": "src/systems/sdSite.js",
+    "old": "    && !isMain(l.mapTableData?.mapId)\n",
+    "new": "",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "Never the main story's."
+  },
+  {
+    "name": "SD2-the-Hollow-no-Super",
+    "file": "src/systems/sdSite.js",
+    "old": "  return { ...loc, name: sdNameOf(rec.s, site.cityName), superTier: true, sdSlot: rec.s };",
+    "new": "  return { ...loc, name: sdNameOf(rec.s, site.cityName), sdSlot: rec.s };",
+    "tests": [
+      "test/sd2_sdsite.test.js"
+    ],
+    "note": "The Hollow is Super."
+  }
+]

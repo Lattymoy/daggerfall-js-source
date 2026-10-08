@@ -44,6 +44,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R } from './inkMap.js';
+import { paintQuestMark, paintQuestDiamond } from './inkMap.js';   // GUIDE8: the world map's quest diamond - its gold is inkMap's, so no colour is invented here
 import { STRIP, stripScale, grabHit } from './mapStrip.js';
 
 /** What each thing on a dungeon plan is drawn in. Every one of these is
@@ -241,6 +242,19 @@ export function paintNotePin(ctx, x, y, lit = false) {
   ctx.restore?.();
 }
 
+/** ECHO1/GUIDE8: a mark's name under it, haloed - the teleporter's and the fire's own hand. */
+function paintMarkName(ctx, name, x, y, pen) {
+  if (!name) return;
+  ctx.font = `11px ${NAME_FACE}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.lineWidth = 2 * HALO_PEN;
+  ctx.strokeStyle = PLAN_PEN.halo;
+  ctx.strokeText(name, x, y);
+  ctx.fillStyle = pen;
+  ctx.fillText(name, x, y);
+}
+
 export function paintPlanOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
   const { paperW, paperH, dpr = 1 } = opts;
@@ -289,6 +303,29 @@ export function paintPlanOverlay(ctx, view, opts) {
         x1 = hx + NOTE_PIN.head + 7 + (Number.isFinite(w) ? w : m.name.length * 6.5);
       }
       opts.noteBoxes?.push({ id: m.id, x0: hx - NOTE_PIN.head - 3, y0: hy - NOTE_PIN.head - 3, x1: x1 + 2, y1: y + 3 });
+      continue;
+    }
+    if (m.kind === 'echo') {
+      // ECHO1: where a chain moved something out of sight - a ring with four rays breaking out of it, in the way-in's
+      // pen (it is somewhere to go), the rays breathing on the beacon's beat, named under it like a teleporter
+      const k = MARK_R * (2 + pulse * 0.6);
+      ctx.strokeStyle = PLAN_PEN.beacon;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(x, y, MARK_R * 0.9, 0, Math.PI * 2);
+      for (const [ux, uy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        ctx.moveTo(x + ux * MARK_R * 1.3, y + uy * MARK_R * 1.3);
+        ctx.lineTo(x + ux * k, y + uy * k);
+      }
+      ctx.stroke();
+      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)
+      continue;
+    }
+    if (m.kind === 'quest') {
+      // GUIDE8: a quest resource's place - the world map's own diamond (inkMap.js paintQuestMark: tied to its spot,
+      // gold edged in ink, the followed quest's filled), its name under the spot
+      paintQuestMark(ctx, view, { x: m.x, y: m.z, tracked: !!m.followed });
+      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)
       continue;
     }
     if (m.kind === 'fire') {
@@ -397,7 +434,8 @@ export const FLOOR_STRIP_MIN = 3;
  * @param {Array<{index:number, label:string}>} floors - bottom first, as the sheet answers
  * @param {number} live
  * @param {{paperW?:number, paperH?:number, measure?:Function|null, reserveTop?:number,
- *          hands?:Array<{x0:number,x1:number,y0:number,y1:number}>|null, you?:number, exit?:number, seen?:Set<number>|null}} [opts]
+ *          hands?:Array<{x0:number,x1:number,y0:number,y1:number}>|null, you?:number, exit?:number, seen?:Set<number>|null,
+ *          quest?:Set<number>|null}} [opts] - GUIDE8: `quest`, the floors a quest mark stands on
  */
 export function floorStripLayout(floors, live, opts = {}) {
   const { paperW = STRIP.refPaper, measure = null } = opts;
@@ -414,7 +452,16 @@ export function floorStripLayout(floors, live, opts = {}) {
   const top = (opts.reserveTop ?? 0) + padY;
   const all = floors ?? [];
   const widest = all.reduce((m, f) => Math.max(m, width(f.label)), 0);
-  const left = paperW - padX - widest;
+  // AUDIT DELVE D2: THE MARKS AFTER THE WORD HAVE ROOM. A floor carrying you, the way out and a quest needs 30 strip
+  // units after its word and the pad is 26 - the quest's diamond stood half off the paper on the commonest floor of
+  // all (the way in's, with the quest on it). The words stand in from the edge by the widest row's marks when the pad
+  // will not hold them.
+  const marksW = (i) => {
+    const r = FLOOR_MARK.r * scale, g = FLOOR_MARK.gap * scale;
+    return g + (i === opts.you ? r * 1.6 + g : 0) + (i === opts.exit ? r * 2 + g : 0) + (opts.quest?.has?.(i) ? r * 2.4 : 0);
+  };
+  const room = Math.max(padX, ...all.map((f) => marksW(f.index) + FLOOR_MARK.gap * scale));
+  const left = paperW - room - widest;
   // DISC25-A: the room above the right hand, in rows
   let max = FLOOR_STRIP_MAX;
   for (const h of opts.hands ?? []) {
@@ -432,10 +479,11 @@ export function floorStripLayout(floors, live, opts = {}) {
     const w = width(f.label);
     push({
       index: f.index, label: f.label, w,
-      x: paperW - padX - w,
+      x: paperW - room - w,
       live: f.index === live,
       you: f.index === opts.you,
       exit: f.index === opts.exit,
+      quest: !!opts.quest?.has?.(f.index),   // GUIDE8: a quest mark stands on this floor
       faint: !!opts.seen && !opts.seen.has(f.index) && f.index !== live,
     });
   }
@@ -534,6 +582,12 @@ export function paintFloorStrip(ctx, layout, { font = null } = {}) {
       ctx.lineWidth = 1.6 * s;
       ctx.strokeStyle = PLAN_PEN.beacon;
       ctx.stroke();
+      mx += k * 2 + FLOOR_MARK.gap * s;
+    }
+    if (r.quest) {
+      // GUIDE8: a quest's floor - the diamond, gold edged in ink (inkMap's own)
+      const k = FLOOR_MARK.r * s * 1.2;
+      paintQuestDiamond(ctx, mx + k, my, k, s);
     }
   }
   ctx.restore();

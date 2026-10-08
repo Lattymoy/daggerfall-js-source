@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-GUIDE-T2-the-faces-on-the-card-alone",
     "file": "src/ui/questTracker.js",
-    "old": "export const followOn = () => trackerOn() || marksOn();",
-    "new": "export const followOn = () => trackerOn() || (marksOn() && false);",
+    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
+    "new": "export const followOn = () => trackerOn() || (marksOn() && false) || guidanceTier() !== 'journal';",
     "tests": [
       "test/audit_guide.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "AUDIT-GUIDE-U16-the-gold-fill",
     "file": "src/ui/inkMap.js",
-    "old": "  if (m.tracked) { ctx.fillStyle = PEN.line; ctx.fill(); }",
-    "new": "  if (m.tracked) { ctx.fillStyle = QUEST_MARK_CSS; ctx.fill(); }",
+    "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
+    "new": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? QUEST_MARK_CSS : null);",
     "tests": [
       "test/audit_guide.test.js",
       "test/guide5_marks.test.js"

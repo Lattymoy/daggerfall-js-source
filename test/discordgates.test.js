@@ -14,7 +14,7 @@ import {
 } from '../src/net/gateHerald.js';
 import { gateTimes, gateBossOf, gateModsOf, GATE_COLLAPSE_MS } from '../src/net/gateLaw.js';
 import {
-  validGateIn, parseClient, gatePlaceWire, relaySupportsGateSite, GATE_SITE_RELAY_MIN, GATE_PLACE_MAX, GATE_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, ACCOUNT_SWEEP_MS,
+  validGateIn, parseClient, gatePlaceWire, relaySupportsGateSite, GATE_SITE_RELAY_MIN, GATE_PLACE_MAX, GATE_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, ACCOUNT_SWEEP_MS, SD_KEY,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { OnlineSession } from '../src/net/online.js';
@@ -157,6 +157,10 @@ async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD
   r.room._serpentHeraldBeat = async () => {}; r.room._serpentHeraldArm = async () => {};
   const realNow = Date.now, realFetch = globalThis.fetch;
   let clock = start;
+  // SD3: the Super dungeon's director beats on the hub's one alarm too (server/src/index.js _sdBeat) - its record seeded
+  // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
+  // sd3_relay.test.js's)
+  r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }), during: null };
   Date.now = () => clock;

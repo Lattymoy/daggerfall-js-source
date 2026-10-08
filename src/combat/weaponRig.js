@@ -34,7 +34,7 @@ import { ownWerewolfSkin } from '../systems/ownGlyphs.js';   // SHADOW-FANG: the
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
-import { createRecoil, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm
+import { createRecoil, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS, armGunPose } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm; MW-GUN-FEEL: the arm's kick and reload
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
@@ -752,11 +752,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // keys by the name the atlas is asked by: the mod's per-template art
     // is what the mod is for, and its author's tables are honoured over
     // DFU's cache slot.
-    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
+    const gilded = thunderlock && item?.rarity === 'gilded';   // GILDED1: the Hourlock's frames in gold leaf (thunderlockArt.js gildFrame)
+    const key = `${type}:${item?.material ?? 0}:${thunderlock ? (gilded ? 'gilded' : '') : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
     if (!cache.has(key)) {
       cache.set(key, null);
       (thunderlock
-        ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic })
+        ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic, gilded })
         : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0, item))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));
@@ -979,6 +980,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // -1 while dark. The classic lane reads the glow curve off the machine's frame, which counts from the CLICK;
   // under the arm the shot is the arm's release key, so the curve counts from that instead, on the same tick.
   let _tlFlashClock = -1;
+  // MW-GUN-FEEL: the machine's clock at the last shot, -1 when no shot's reload is owed. The reload - its clacks and the
+  // arm's pump - runs from the SHOT to the weapon's ready: under the arm the shot is the arm's release, which can come
+  // after the machine's cooldown has begun (its six frames end 0.43s after the click; a crossbow's wind-up is longer).
+  let _tlShotAt = -1;
+  /** MW-GUN-FEEL: when the breech opens after its shot - the machine's own frames after its hit (the smoke clearing,
+   *  THUNDERLOCK_NUM_FRAMES on GUN_FEEL's tick), which is exactly when the classic lane's cooldown begins. Under the arm
+   *  the cooldown began before the shot, so the open - and the arm's pump with it - waits for this instead. */
+  const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? 6) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS));
   const flashFromClock = (dt) => {
     if (_tlFlashClock < 0) return 0;
     const frame = Math.floor(_tlFlashClock / GUN_TICK_SECONDS);
@@ -992,8 +1001,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function thunderlockVoice(dt, { armShoots = false, fired = false } = {}) {
     const type = weaponTypeForItem(playerWeapon.weapon);
     if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) {
-      _tlState = 'Idle'; _tlOpened = false; _tlClosed = false; _tlFlashClock = -1;
+      _tlState = 'Idle'; _tlOpened = false; _tlClosed = false; _tlFlashClock = -1; _tlShotAt = -1;
       if (entity) entity._thunderlockFlash = 0;   // FIELD-GUN13: put the lamp out with the weapon
+      fpArm.setGunFeel(null);   // MW-GUN-FEEL: and the arm's kick and pump with it
       return;
     }
     if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
@@ -1024,6 +1034,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // movement is the recoil spring above.
       betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
       _tlFlashClock = 0;
+      _tlShotAt = m.now;   // MW-GUN-FEEL: the reload is owed from here
     }
     // FIELD-GUN13: THE FRAME'S GLOW, PARKED WHERE THE HOSTS CAN READ
     // IT - the torch's own arrangement (systems/playerTorch.js parks
@@ -1038,7 +1049,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     _tlState = m.state;
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
-    if (!cooling) { _tlOpened = false; _tlClosed = false; return; }
+    if (!cooling) {
+      if (_tlOpened) _tlShotAt = -1;   // MW-GUN-FEEL: that shot's reload is done
+      _tlOpened = false; _tlClosed = false; return;
+    }
+    // MW-GUN-FEEL: THE PUMP FOLLOWS ITS SHOT. AUDIT FIELD-GUN-MW recorded it and left it: under the arm the cooldown
+    // begins at the machine's last frame, before a crossbow's release - so the breech was heard opening before the bang.
+    // The open waits for its shot's smoke now (tlReloadFrom); the classic lane, whose cooldown begins exactly there,
+    // hears exactly what it did.
+    if (_tlShotAt < 0 || m.now < tlReloadFrom(m) - 1e-9) return;
     if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, GUN_FEEL.sfxVolume * 0.9, gunPitch()); }
     if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch()); }
   }
@@ -1162,6 +1181,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // when both are true: a shot fired on the same frame the weapon is
     // put away leaves, it does not dip.
     const sheathed = !!playerWeapon.sheathed;
+    // MW-GUN-FEEL (combat/gunFeel.js): the Morrowind arm takes the SAME spring - stepped above, once - and the reload's
+    // share of its clock, from the breech's open (tlReloadFrom) to the ready, as one pose over its viewmodel - the
+    // classic lane's dip runs on the same span. Sheathed, it takes none.
+    const from = _tlShotAt >= 0 ? tlReloadFrom(m) : Infinity;
+    const share = reloading && m.now >= from && m.cooldownUntil > from ? (m.now - from) / (m.cooldownUntil - from) : null;
+    fpArm.setGunFeel(sheathed ? null : armGunPose(-_tlKick.y, share));
     gunRigStep(_tlRig, gunWidgetSettings(), dt, {
       screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 },
       motion: frame?.motion ?? gunMotion({}),

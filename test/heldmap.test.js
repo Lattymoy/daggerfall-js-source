@@ -1327,6 +1327,42 @@ test('HUB1 window: online a region hub\'s mark reads "Region : Location (Hub)" -
   });
 });
 
+test('TIER1 window: online a dungeon\'s mark reads "Region : Location (Elite Dungeon, Small)" and the I box opens with the same phrase before DFU\'s refusal; offline, and on a place the host names no tier for, the label and the box are DFU\'s own (mutants: the tier unread on the label, or in the box)', () => {
+  withDocument(() => {
+    const mapDict = new Map();
+    const dun = summaryOf(3, 3, LOCATION_TYPES.DungeonLabyrinth);
+    const other = summaryOf(7, 7, LOCATION_TYPES.DungeonKeep);
+    for (const s of [dun, other]) mapDict.set(s.id, s);
+    const maps = { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Old Ruin'] }), getPoliticIndex: () => 128 };
+    const run = (tierAt) => {
+      const win = open(mkWin({ mapDict, maps, ...(tierAt ? { tierAt } : {}) }));
+      win._sheet.ensure();
+      win._view.scale = 8;
+      const at = (x) => toPaper(win._view, x + 0.5, x + 0.5);
+      const label = (x) => win._hoverLabel(...at(x))?.label;
+      win._pickAt(...at(3));
+      win._displayLocationInfo();
+      const rows = win._info?.rows ?? [];
+      win._info = null;
+      win._pickAt(...at(7));
+      win._displayLocationInfo();
+      const otherRows = win._info?.rows ?? [];
+      const out = { label: label(3), otherLabel: label(7), rows, otherRows };
+      win.dispose();
+      return out;
+    };
+    const online = run((s) => (s.mapID === dun.mapID ? { tier: 'elite', text: 'Elite Dungeon', size: 'Small' } : null));
+    assert.equal(online.label, 'Daggerfall : Old Ruin (Elite Dungeon, Small)');
+    assert.equal(online.otherLabel, 'Daggerfall : Old Ruin', 'a place the host names no tier for reads as DFU reads it');
+    assert.equal(online.rows[0], 'Elite Dungeon, Small', 'the box opens with the tier - a dungeon\'s box is DFU\'s refusal, and the tier is known all the same');
+    assert.match(online.rows[1], /^You have no knowledge of /, '...and the refusal stays');
+    assert.ok(!online.otherRows.includes('Elite Dungeon, Small'));
+    const offline = run(null);
+    assert.equal(offline.label, 'Daggerfall : Old Ruin', 'offline no tier is named');
+    assert.deepEqual(offline.rows, offline.otherRows, 'and the box is DFU\'s for both');
+  });
+});
+
 test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search glides to its pick, and the layout lays the sheet on PAPER of a 4:3 stage (mutants: pan-unclamped, zoom-not-at-cursor, layout-off-paper)', () => {
   withDocument(() => {
     globalThis.innerWidth = 1600; globalThis.innerHeight = 900;

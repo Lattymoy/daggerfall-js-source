@@ -554,7 +554,7 @@
   },
   {
     "name": "AUDIT-SCALE-A3-contracts-unindexed",
-    "file": "server-account/migrations/0090_scale4.sql",
+    "file": "server-account/migrations/0091_scale4.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_guild_contracts_open_due ON guild_contracts (state, expires_at);\nCREATE INDEX IF NOT EXISTS idx_guild_contracts_unreturned ON guild_contracts (returned, state);\n",
     "new": "",
     "tests": [
@@ -564,7 +564,7 @@
   },
   {
     "name": "AUDIT-SCALE-A5-bids-unindexed",
-    "file": "server-account/migrations/0090_scale4.sql",
+    "file": "server-account/migrations/0091_scale4.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_market_bids_auction ON market_bids (auction);\n",
     "new": "",
     "tests": [
@@ -594,7 +594,7 @@
   },
   {
     "name": "AUDIT-SCALE-A6-sessions-indexed",
-    "file": "server-account/migrations/0090_scale4.sql",
+    "file": "server-account/migrations/0091_scale4.sql",
     "old": "-- NOT HERE: an index on sessions(last_seen)",
     "new": "CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions (last_seen);\n-- NOT HERE: an index on sessions(last_seen)",
     "tests": [

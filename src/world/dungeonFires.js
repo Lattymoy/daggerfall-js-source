@@ -348,12 +348,15 @@ export const inFireWard = (fires, spot) => !!spot && (fires ?? []).some((q) => S
 
 /**
  * The whole law in one call, for the scene: `blocks` the layout's, `probe` the collider's answers, `doors` the
- * dungeon's door positions, `existing` its own fires, `seed` its locationId, `elite` an elite copy. An arena stands
- * none (the caller says so); a palace none (AUDIT REST II F2, layoutFireCount). Returns `{ fires, doorFire, candidates,
+ * dungeon's door positions, `existing` its own fires, `seed` its locationId, `elite` an elite copy, `cold` a Super
+ * dungeon (SD4a, bible/11-Multiplayer/Super-Dungeons.md section 5 - none, and the layout's own brazier by the door is
+ * no campfire of the law's). An arena stands none (the caller says so); a palace none (AUDIT REST II F2,
+ * layoutFireCount). Returns `{ fires, doorFire, candidates,
  * valid }`: the fires placed ([[x, y, z], ...], in pick order), the layout fire adopted as the entrance's or null (F5),
  * and the candidates' and the landed ones' counts (tools/dungeonFireProbe.mjs reports them off this one call).
  */
-export function dungeonFirePlan({ blocks, probe, doors = [], existing = [], seed = 0, elite = false } = {}) {
+export function dungeonFirePlan({ blocks, probe, doors = [], existing = [], seed = 0, elite = false, cold = false } = {}) {
+  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 };   // SD4a: a Super dungeon - the Hour is cold, no ray cast
   const count = layoutFireCount(blocks, elite);
   const cands = fireCandidates(blocks);
   const valid = count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }) : [];

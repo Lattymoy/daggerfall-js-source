@@ -31,6 +31,7 @@ import { BOOK_ID_TITLES } from '../src/systems/booksData.js';
 import { splitStack, addItem, ARROW_TEMPLATE } from '../src/systems/inventory.js';
 import { ITEM_TEMPLATES, templateByIndex } from '../src/systems/itemTemplates.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { PELLET_TEMPLATE } from '../src/characters/thunderlockIds.js';   // SHOP-PELLETS
 import { BookFile } from '../src/formats/bookFile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -246,7 +247,7 @@ test('A2: the shelf draws RandomMaterial for an arrow too - C# evaluates the ARG
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 }, { level: 1 }, { rolls: counting });
   assert.equal(n, armorDraws + weaponDraws,
     'one material draw per WEAPON template, arrows included - drop the arrow\'s and this is 62');
-  assert.equal(shelf.filter((it) => it.group === 'Weapons').length, 19);
+  assert.equal(shelf.filter((it) => it.group === 'Weapons' && it.templateIndex !== PELLET_TEMPLATE).length, 19);   // PIN MOVED (SHOP-PELLETS): DFU's nineteen - the counter's pellets beside them draw nothing (the count above is unmoved)
   assert.equal(shelf.filter((it) => it.group === 'Armor').length, 11);
   // and the site is ONE CreateWeapon call, not a re-spelling of its
   // arrow branch (ONE DFU MEMBER, ONE EXPORT)

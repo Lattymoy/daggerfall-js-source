@@ -107,6 +107,7 @@ export const ITEM_FIELDS = Object.freeze({
   rarity: oneOf(RARITY_ORDER),
   legendary: str(),
   aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia
+  gilded: str(),   // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock
   affixes: list(validAffix),
   exalted: bool(),   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): a Legendary minted Exalted - one line more, true or absent
   untaken: bool(),   // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought

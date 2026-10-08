@@ -533,8 +533,8 @@
   {
     "name": "RAID4b-pool-keys-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',\n}) {\n  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
-    "new": "  onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',\n}) {\n  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
+    "old": "  me = () => null,\n}) {\n  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
+    "new": "  me = () => null,\n}) {\n  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
     "tests": [
       "test/raid4b_sets.test.js"
     ]
@@ -542,11 +542,12 @@
   {
     "name": "RAID4b-pool-roll-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);",
-    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);",
+    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
     "tests": [
       "test/raid4b_sets.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the burst's line takes a pool's own roll too - re-aimed by content to the grant's."
   },
   {
     "name": "RAID4b-pool-gate-words",

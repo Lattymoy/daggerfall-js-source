@@ -447,7 +447,7 @@ export async function closeAuctions(ctx) {
  * (server-account/src/cron.js, each hour); the History view pruned first, nine writes on a read. AUDIT SCALE A5: each
  * table's delete takes `rows` at most, and the clock asks again while one took a full page - one unbounded batch, a
  * backlog's worth, could outrun D1's thirty seconds a batch, roll back, and only grow (the auctions' delete walked every
- * bid for each auction it took, until 0090 indexed market_bids by its auction). Answers `{ changed, full }`.
+ * bid for each auction it took, until 0091 indexed market_bids by its auction). Answers `{ changed, full }`.
  * @param {any} db @param {number} nowS @param {number} rows
  */
 export async function pruneMarketHistory(db, nowS, rows) {
