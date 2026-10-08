@@ -55,7 +55,8 @@
 // LW-ROOMS (2026-10-08, Mac: "With living world integration, NPCs still group up in taverns"): THE WHOLE ROOM. The first
 // cut sounded twelve ways out to 6.6 m from the way in, at its height - the door's middle: a tavern's every drinker stood
 // within a few strides of its door, one crowd, and the sounding passed over the tables onto their tops. Now its floor is
-// walked wherever it goes on (`soundRoom`), its tables fill apart (`spreadTables`, TABLE_GAP_M), it holds one to every
+// walked wherever it goes on (`soundRoom`), a table's people see one another (`inSight` - two places a lattice step
+// apart may stand either side of a wall), its tables fill apart (`spreadTables`, TABLE_GAP_M), it holds one to every
 // INDOOR_FLOOR_M2 of floor, and one who stirs makes for a place of their own (`stirPlace`).
 // ═══════════════════════════════════════════════════════════════════
 import { WITNESS_M, GREET_RANGE, GREET_REST_MIN, GREET_S, LINE_RANGE } from '../systems/livingWorld/livingTown.js';
@@ -87,8 +88,10 @@ export const INDOOR_SEEN_M = 14;
 /** LW8b: spots this near one another share a table (m), and the most at one. */
 export const TABLE_M = 2.2;
 export const TABLE_MAX = 3;
-/** LW-ROOMS: how far apart the room's tables are filled, while it has room for it (m, middle to middle). */
+/** LW-ROOMS: how far apart the room's tables are filled, while it has room for it (m, middle to middle), and the height
+ *  over the floor two at a table see one another at (m: over the tables and the counters, never through a wall). */
 export const TABLE_GAP_M = 4;
+export const TABLE_SIGHT_M = 1.4;
 /** LW-LODGE: how far beside their bed a lodger stands (m, the nearer first) and the ways about it tried. */
 export const BED_STEP_M = Object.freeze([0.9, 1.3]);
 export const BED_FAN = 8;
@@ -210,12 +213,14 @@ export function bedsOf(ids, beds, key, rented = -1) {
 
 /**
  * LW8b: THE ROOM'S TABLES - its spots grouped where people stand together. In the building's deal (`order`), each spot
- * not yet at a table opens one and takes the nearest of the rest within TABLE_M of every one already at it, to
- * TABLE_MAX. Pure over the spots and the deal.
+ * not yet at a table opens one and takes the nearest of the rest within TABLE_M of every one already at it - LW-ROOMS:
+ * and in sight of each (`sees`: no wall between; the room's whole floor its places now, two of them a lattice step apart
+ * stand either side of a wall) - to TABLE_MAX. Pure over the spots, the deal and the sight.
  * @param {readonly number[][]} spots @param {readonly number[]} order
+ * @param {(i: number, j: number) => boolean} [sees]
  * @returns {number[][]} - each table's spots, the opener first
  */
-export function tablesOf(spots, order) {
+export function tablesOf(spots, order, sees = () => true) {
   const at = new Int32Array(spots.length).fill(-1);
   /** @type {number[][]} */
   const tables = [];
@@ -227,13 +232,26 @@ export function tablesOf(spots, order) {
     const near = order.filter((j) => at[j] < 0 && apart(i, j) <= TABLE_M).sort((a, b) => apart(i, a) - apart(i, b) || a - b);
     for (const j of near) {
       if (table.length >= TABLE_MAX) break;
-      if (!table.every((k) => apart(j, k) <= TABLE_M)) continue;
+      if (!table.every((k) => apart(j, k) <= TABLE_M && sees(j, k))) continue;
       table.push(j);
       at[j] = tables.length;
     }
     tables.push(table);
   }
   return tables;
+}
+
+/**
+ * LW-ROOMS: WHETHER TWO PLACES SEE ONE ANOTHER - the line between them TABLE_SIGHT_M over the floor clear of the room's
+ * collider: over its tables and its counters, never through a wall. A collider that casts no ray hides nothing.
+ * @param {{ raycast?: (origin: number[], dir: number[], maxDist: number) => (number|null) } | null} collider
+ * @param {readonly number[]} a @param {readonly number[]} b
+ */
+export function inSight(collider, a, b) {
+  const d = Math.hypot(b[0] - a[0], b[2] - a[2]);
+  if (!collider?.raycast || !(d > 0)) return true;
+  const hit = collider.raycast([a[0], a[1] + TABLE_SIGHT_M, a[2]], [(b[0] - a[0]) / d, 0, (b[2] - a[2]) / d], d);
+  return !(hit != null && Number.isFinite(hit));
 }
 
 /**
@@ -404,9 +422,9 @@ export function createLivingIndoors(deps) {
         const collider = deps.collider();
         const spots = collider ? soundRoom(origin, collider, deps.floorAt, deps.staticFeet(), deps.waysIn?.() ?? []) : [];
         const cx = spots.reduce((s, p) => s + p[0], 0) / Math.max(1, spots.length), cz = spots.reduce((s, p) => s + p[2], 0) / Math.max(1, spots.length);
-        // LW8b: the room fills table by table - the tables in the building's deal, each its spots in turn (LW-ROOMS: the
-        // deal's tables apart first)
-        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length)));
+        // LW8b: the room fills table by table - the tables in the building's deal, each its spots in turn (LW-ROOMS: a
+        // table's people in sight of one another, and the deal's tables apart first)
+        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length), (i, j) => inSight(collider, spots[i], spots[j])));
         const tableOf = new Array(spots.length).fill(-1);
         groups.forEach((tb, ti) => { for (const i of tb) tableOf[i] = ti; });
         // LW-LODGE: where a lodger stands by each of the room's beds
@@ -633,6 +651,8 @@ export function createLivingIndoors(deps) {
     beds: () => room?.beds ?? [],
     /** The room's spots (the probes; the pins). */
     spots: () => room?.spots ?? [],
+    /** LW-ROOMS: the table each of the room's spots is at (the probes; the pins). */
+    tableOf: () => room?.tableOf ?? [],
     clear,
     get size() { return stood.size; },
   };

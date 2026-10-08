@@ -22,7 +22,7 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { schedule, walkMinutes, DAY_MIN, DAY_START_MIN, HOME_GAP } from '../src/systems/livingWorld/dayPlan.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import {
-  createLivingIndoors, soundRoom, spreadTables, stirPlace,
+  createLivingIndoors, soundRoom, spreadTables, stirPlace, tablesOf, inSight, TABLE_SIGHT_M,
   INDOOR_REACH_M, INDOOR_CELLS, INDOOR_ARRIVE_M, INDOOR_LEVEL_M, INDOOR_APART_M, INDOOR_DOOR_M, INDOOR_MAX, INDOOR_FLOOR_M2, TABLE_GAP_M, INDOOR_WALK_M,
 } from '../src/scenes/livingIndoors.js';
 
@@ -135,8 +135,8 @@ test('LW-ROOMS two places stand INDOOR_APART_M apart, to a centimetre: the latti
   assert.ok(!spots.some((p) => Math.abs(Math.abs(p[0]) - 5) < 1e-9), 'none drawn in by the wall');
 });
 
-test('LW-ROOMS the room fills its tables apart: in the building\'s deal, each next the first whose middle stands TABLE_GAP_M from every one before it, then the rest in the deal\'s order; twelve come in stand at four tables, each TABLE_GAP_M from every other (mutants: the gap, the rest, the spread unread)', () => {
-  assert.equal(TABLE_GAP_M, 4);
+test('LW-ROOMS the room fills its tables apart: in the building\'s deal, each next the first whose middle stands TABLE_GAP_M from every one before it, then the rest in the deal\'s order; twelve come in stand at four tables, each TABLE_GAP_M from every other; a table\'s people see one another - TABLE_SIGHT_M over the floor, over a table, never through a wall - so no table stands either side of a partition (mutants: the gap, the rest, the spread unread, the sight, its height, the sight unread)', () => {
+  assert.deepEqual([TABLE_GAP_M, TABLE_SIGHT_M], [4, 1.4]);
   const row = Array.from({ length: 10 }, (_, i) => [i, 0, 0]);
   assert.deepEqual(spreadTables(row, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]), [[0, 1], [4, 5], [8, 9], [2, 3], [6, 7]]);
   assert.deepEqual(spreadTables(row, [[2, 3], [0, 1], [8, 9], [6, 7], [4, 5]]), [[2, 3], [8, 9], [0, 1], [6, 7], [4, 5]], 'the deal\'s own order');
@@ -155,6 +155,25 @@ test('LW-ROOMS the room fills its tables apart: in the building\'s deal, each ne
   assert.equal(tables.size, 4, 'four tables of three');
   const mids = [...tables.values()].map((at) => [at.reduce((a, p) => a + p[0], 0) / at.length, 0, at.reduce((a, p) => a + p[2], 0) / at.length]);
   for (const a of mids) for (const b of mids) if (a !== b) assert.ok(apart(a, b) >= TABLE_GAP_M, `tables at ${a} and ${b} apart`);
+  // the sight, on the port's own collider: over a table, never through a wall
+  const h = tavernHall({ partition: 3 });
+  assert.equal(inSight(h.collider, [-3, 0, -2.4], [-3, 0, 0.4]), true, 'over a table (the one at -3, -1)');
+  assert.equal(inSight(h.collider, [2.4, 0, -4], [4, 0, -4]), false, 'never through the partition');
+  assert.equal(inSight({ move() {} }, [0, 0, 0], [3, 0, 0]), true, 'a collider that casts no ray hides nothing');
+  assert.equal(inSight(box({}).collider, [0, 0, 0], [3, 0, 0]), true, 'nor one whose ray meets nothing');
+  assert.equal(tablesOf([[0, 0, 0], [1.3, 0, 0]], [0, 1], () => false).length, 2, 'out of sight: two tables');
+  // a partitioned hall: its places either side of the wall a lattice step apart, and none of its tables across it
+  const sprites2 = { sync() {}, persons: () => [], batches: () => [], clear() {} };
+  const town2 = { insideAt: () => [], dayOf: (t) => Math.floor((t - 240) / DAY_MIN), o: { relations: () => null } };
+  const parted = createLivingIndoors({ sprites: sprites2, building: () => ({ key: 7000, town: town2 }), collider: () => h.collider, floorAt: h.floorAt, origin: () => h.landing, waysIn: () => [h.landing], staticFeet: () => [], clock: () => H(20) });
+  parted.frame(0.016, h.door, Math.PI, [h.door[0], 1.6, h.door[2]]);
+  const sp = parted.spots(), of = parted.tableOf();
+  const west = (p) => p[0] < 3, walled = (p) => p[2] < h.d / 2 - 3;
+  assert.ok(sp.some((p) => west(p) && walled(p) && sp.some((q) => !west(q) && walled(q) && apart(p, q) <= INDOOR_APART_M + 0.01)), 'places a step apart either side of it');
+  const tables2 = new Map();
+  sp.forEach((p, i) => tables2.set(of[i], [...(tables2.get(of[i]) ?? []), p]));
+  assert.ok(tables2.size > 40, `the hall's tables (${tables2.size})`);
+  for (const at of tables2.values()) if (at.every(walled)) assert.ok(at.every(west) || !at.some(west), `a table either side of the wall (${at.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' | ')})`);
 });
 
 test('LW-ROOMS a room holds what its floor does: one to every INDOOR_FLOOR_M2 of its places (a lattice cell each), INDOOR_MAX in all; one up in their room by their bed is on none of the floor (mutants: the hold, the cap, the lodger)', () => {

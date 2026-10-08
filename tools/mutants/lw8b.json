@@ -20,7 +20,7 @@
   {
     "name": "LW8b-every-one",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M)) continue;",
+    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M && sees(j, k))) continue;",
     "new": "      void 0;",
     "tests": [
       "test/lw8b_talk.test.js"

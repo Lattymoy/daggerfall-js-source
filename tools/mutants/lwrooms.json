@@ -101,8 +101,8 @@
   {
     "name": "LW-ROOMS-spread-unread",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length)));",
-    "new": "        const groups = tablesOf(spots, dealOf(b.key, spots.length));",
+    "old": "        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length), (i, j) => inSight(collider, spots[i], spots[j])));",
+    "new": "        const groups = tablesOf(spots, dealOf(b.key, spots.length), (i, j) => inSight(collider, spots[i], spots[j]));",
     "tests": [
       "test/lwrooms_tavern.test.js"
     ]
@@ -173,5 +173,61 @@
     ],
     "equivalent": true,
     "why": "the walk's `noStep` spares the collider's step ladder, nothing else: a lip the capsule's sphere rides over (2 cm to 30 cm on the port's collider, measured) is ridden over either way, and a step up is refused by the level either way - the same cells at near half the cost (the synthetic hall of 24 by 18, tools/livingRoomProbe.mjs: 31 ms a sounding, 56 with the ladder)"
+  },
+  {
+    "name": "LW-ROOMS-sight",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (!table.every((k) => apart(j, k) <= TABLE_M && sees(j, k))) continue;",
+    "new": "      if (!table.every((k) => apart(j, k) <= TABLE_M)) continue;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-sight-low",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const TABLE_SIGHT_M = 1.4;",
+    "new": "export const TABLE_SIGHT_M = 0.5;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-sight-high",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "export const TABLE_SIGHT_M = 1.4;",
+    "new": "export const TABLE_SIGHT_M = 5;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-sight-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length), (i, j) => inSight(collider, spots[i], spots[j])));",
+    "new": "        const groups = spreadTables(spots, tablesOf(spots, dealOf(b.key, spots.length)));",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-sight-ray",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  return !(hit != null && Number.isFinite(hit));",
+    "new": "  return true;",
+    "tests": [
+      "test/lwrooms_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-ROOMS-sight-rayless",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  if (!collider?.raycast || !(d > 0)) return true;",
+    "new": "  if (!(d > 0)) return true;",
+    "tests": [
+      "test/lwrooms_tavern.test.js",
+      "test/lwlooks_town.test.js",
+      "test/lw8c_astir.test.js"
+    ]
   }
 ]

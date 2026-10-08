@@ -2,7 +2,8 @@
 // (player/collider.js) - the room the living world's pins and probes stand residents in, with no game data: a hall of `w`
 // by `d` metres, its floor at 0 and four walls, its way in the middle of the south wall (shut: a building's door is a face
 // of its wall, as DFU's interiors draw it), a counter by the north wall, nine tables scaled to the hall and a stair up the
-// north-west corner (a quarter metre a step).
+// north-west corner (a quarter metre a step); and where asked a partition across it, a doorway through it by the north
+// wall (`partition`: the wall's x, 0.3 m thick).
 import { Collider } from '../src/player/collider.js';
 
 const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -21,9 +22,9 @@ export const TABLE_TOP = 0.8;
 /**
  * The hall: its collider, the floor under a point (the host's own: a ray down, world.js livingIndoorsStep), and its way
  * in - `landing` as the host hands it (the door's middle, ~1 m up: interiorLanding's door centre), `door` on the floor.
- * @param {{ w?: number, d?: number, tables?: boolean, stair?: boolean }} [o]
+ * @param {{ w?: number, d?: number, tables?: boolean, stair?: boolean, partition?: number | null }} [o]
  */
-export function tavernHall({ w = 24, d = 18, tables = true, stair = true } = {}) {
+export function tavernHall({ w = 24, d = 18, tables = true, stair = true, partition = null } = {}) {
   const collider = new Collider(() => -100);
   const pos = [], idx = [];
   boxInto(pos, idx, -w / 2 - 1, -0.5, -d / 2 - 1, w / 2 + 1, 0, d / 2 + 1);   // the floor
@@ -35,6 +36,7 @@ export function tavernHall({ w = 24, d = 18, tables = true, stair = true } = {})
     boxInto(pos, idx, w / 2 - 7, 0, d / 2 - 2.2, w / 2 - 1, 1.1, d / 2 - 1.4);   // the counter
     for (const [fx, fz] of HALL_TABLES) { const x = (fx * w) / 24, z = (fz * d) / 18; boxInto(pos, idx, x - 0.7, 0, z - 0.5, x + 0.7, TABLE_TOP, z + 0.5); }
   }
+  if (partition != null) boxInto(pos, idx, partition, 0, -d / 2, partition + 0.3, 4, d / 2 - 3);   // the doorway the last 3 m
   if (stair) for (let i = 0; i < 12; i++) boxInto(pos, idx, -w / 2, 0, d / 2 - 4, -w / 2 + 1.4, 0.25 * (i + 1), d / 2 - 4 + 0.3 * (i + 1));
   collider.addMesh('interior', new Float32Array(pos), new Uint32Array(idx), I4);
   const floorAt = (x, y, z) => { const r = collider.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(r) ? y - r : null; };

@@ -1695,7 +1695,7 @@ every one the day had in a room stood within a few strides of its door, and a ro
 biggest crowd - people within 2.5 m of one another, chained - 12 of the 12 on the way in, 9.0-9.7 on average through ten
 minutes of the room astir); and the day sat people in the tavern for hours they never meant to spend there (the town of
 sixteen blocks: 22 inside before noon; twelve stays of four hours and more in five days). Five causes, each fixed at its
-root (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
+root, and the one risk the first fix made, closed (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
 
 - **The room was a fan by its door.** LW8's sounding walked twelve ways out to 6.6 m from the way in and no farther - a
   hall of 24 by 18 m kept 26 places, every one within 6.6 m of its door - and walked them at the way in's own height:
@@ -1710,15 +1710,20 @@ root (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
 - **The room filled side by side.** It filled the deal's tables as they came, and two of them side by side stood as one
   crowd. It fills them apart now (`spreadTables`): in the building's deal, each next the first whose middle stands
   TABLE_GAP_M (4 m) from every table before it, while any does, then the rest in the deal's order.
+- **A table across a wall** - the risk the whole floor brings: two places a lattice step apart stand either side of a
+  wall wherever the floor goes on round it (an inner wall with a doorway), and a table takes the nearest. A table's
+  people see one another now (`tablesOf`'s `sees`, `inSight`): the line between them TABLE_SIGHT_M (1.4 m) over the floor
+  clear of the room's collider - over its tables and counters, never through a wall (a collider that casts no ray hides
+  nothing). Measured on the synthetic hall with a partition: some 200 rays a room, under a millisecond.
 - **Any room held twelve.** INDOOR_MAX stood twelve in a closet of a shop's as in a great hall. A room's floor holds one
   to every INDOOR_FLOOR_M2 (8 m²) of its places now (a lattice cell each), INDOOR_MAX in all; one up in their room by
   their bed (LW-LODGE) is on none of the floor.
 - **A stir made for anywhere.** LW8c's dice took any free place within INDOOR_WALK_M, beside a table of strangers too,
   so the room's stirs drew it back into one crowd. One who stirs with no company to go to makes for a place of their
   own now (`stirPlace`): TABLE_GAP_M from everyone else's (where they stand, or make for), their dice's pick of those;
-  where none in reach is, the farthest from everyone that any is; else any, as before. Found on the way, by
-  `lwlodge_tavern`: a lodger up by their bed has no place of the room (`spot` -1), and the first reading of everyone's
-  places threw on it.
+  where none in reach is, the farthest from everyone that any is; else any, as before. A lodger up by their bed has no
+  place of the room (`spot` -1) and counts nowhere - this slice's first reading of everyone's places threw on one, and
+  `lwlodge_tavern` caught it.
 - **The day sat people in the tavern.** A long gap between two stays at ONE place was waited out at it: the schedule's
   "a long gap is spent at home" (`dayPlan.js schedule`) held between two places only, so a sellsword whose guild keeps
   no hall in the town sat in the tavern from one o'clock to the evening's drink, a labourer from their lunch to it. A
@@ -1751,8 +1756,8 @@ root (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
   The great town's stays left are its one tavern's: two hours' walk and more from much of the town, the gap waited out
   because home and back is longer than it. A real city keeps a tavern near home (`favourites`: one of the two nearest).
 - **Recorded, not changed: the evening.** A third of a town drinks at its tavern of an evening (LW1: a drink over 0.55,
-  three evenings in four), so a town of one tavern has 23-32 in it at once of an evening: the room stands what its floor holds of them,
-  the first by their ids, as LW8 stood its twelve.
+  three evenings in four), so a town of one tavern has 23-32 in it at once of an evening: the room stands what its floor
+  holds of them, the first by their ids, as LW8 stood its twelve.
 - **The four hosts.** LW-ROOMS is the living town's plan and the room's layer (`dayPlan.js`, `scenes/livingIndoors.js`):
   `scenes/worldModes.js` - WIRED through the host as LW8 has it (the building's collider, its landing and ways in, its
   beds: no change); `scenes/world.js` - runs the layer and the plans it lays (no host change); `scenes/exterior.js` -
@@ -1763,21 +1768,23 @@ root (`test/lwrooms_tavern.test.js`, `tools/mutants/lwrooms.json`).
   noon; the floor walked - the four ways, a long hall to its far wall and every corner, the reach, the cells, the floor
   under the way in; level - off a stair, up a ramp to 1.2 m and no farther, a step stopped short none; apart to a
   centimetre, the lattice's own and one a wall drew in; the tables apart - the deal's, the rest after, twelve at four
-  tables four metres apart; the hold - a small room's three, a great hall's twelve, a lodger by their bed on none of
+  tables four metres apart - and in sight, over a table and never through a wall, a partitioned hall's none across
+  it; the hold - a small room's three, a great hall's twelve, a lodger by their bed on none of
   the floor; a place of their own - the dice's, the farthest, a lodger counting nowhere; the synthetic hall on the
   port's collider - on the floor, in no table, clear of the way in, a table's own crowd at the most) and
-  `tools/mutants/lwrooms.json` (19: 18 dead, one equivalent as recorded - the walk's `noStep`). PIN MOVED:
+  `tools/mutants/lwrooms.json` (25: 24 dead, one equivalent as recorded - the walk's `noStep`). PIN MOVED:
   `lw8_indoors` (the room sounded: the lattice's, apart to a centimetre), `lw8b_talk` (the word to the player: they come
   in from out of reach of every place), `lw8c_astir` (where they make for: not drawn to their own table, a place of
   their own), `lwlooks_town` (the court's still pictures on the way in: her place looked at), `lwtalk_town` (the facing
   at half past six; every reader alike in the town of sixteen blocks - a long gap at one place spent at home, the small
   town has no pair in the square's sight at a spot of three circles); `tools/mutants/lw8.json` (LW8-fan the lattice's
   four ways, LW8-spread the reach, LW8-walls, LW8-floor-unread, LW8-other-floor, LW8-door-crowded, LW8-apart-unchecked,
-  LW8-clear-unchecked, LW8-cap), `lw8b.json` LW8b-fill-deal and `lw8c.json` LW8c-dice and LW8c-line re-aimed by
-  content. The 270 records of the lists on the files LW-ROOMS touched (`dayPlan.js`, `livingIndoors.js`) and naming the
-  pins it moved, re-judged: 269 dead, one equivalent as recorded (LW8-inside-outdoor); two it left unkilled, their pins'
-  scenes moved (`lw8b.json` LW8b-greet-circle, `lwlooks.json` LW-LOOKS-court-way-in) and the 84 records naming those
-  two files judged again, all dead.
+  LW8-clear-unchecked, LW8-cap), `lw8b.json` LW8b-fill-deal and LW8b-every-one and `lw8c.json` LW8c-dice and LW8c-line
+  re-aimed by content. The 270 records of the lists on the files LW-ROOMS touched (`dayPlan.js`, `livingIndoors.js`)
+  and naming the pins it moved, re-judged: 267 dead, one equivalent as recorded (LW8-inside-outdoor), and two it left
+  unkilled - `lw8b.json` LW8b-greet-circle and `lwlooks.json` LW-LOOKS-court-way-in, their pins' scenes moved, then the
+  84 records naming those two files judged again, all dead; and after the sight, the 106 records on `livingIndoors.js`
+  judged again, all dead.
 
 ## The four hosts
 
