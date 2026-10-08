@@ -172,7 +172,7 @@ function traceMask(inside, w, h) {
  *  from any outside pixel, which is the one place a label sits clear
  *  of every coastline. A centroid would land in the Iliac Bay for
  *  High Rock, whose provinces wrap around it. */
-function labelPoint(inside, w, h) {
+export function labelPoint(inside, w, h) {   // TAMRIEL3: the continent's province names hang on the same point
   // one chebyshev pass out from the edge, then one back - cheap, and
   // exact enough for a label
   const dist = new Int32Array(w * h);
@@ -210,7 +210,7 @@ function labelPoint(inside, w, h) {
 /** Which palette entries the painting uses for water. Blue-dominant
  *  by a clear margin, so a brown river bank does not qualify - the
  *  test is on the PALETTE, once, not on 64,000 pixels. */
-function seaIndices(palette) {
+export function seaIndices(palette) {   // TAMRIEL3: the held map's trace of the picture reads the sea the same way
   const sea = new Uint8Array(256);
   if (!palette) return sea;
   for (let i = 0; i < 256; i++) {
@@ -227,7 +227,7 @@ function seaIndices(palette) {
  * @param picture TMAP00I0's DFBitmap, or null.
  * @param palette (index) => [r,g,b] for that bitmap's palette.
  */
-function inlandRemainder(data, w, h, picture, palette) {
+export function inlandRemainder(data, w, h, picture, palette) {   // TAMRIEL3: and finds the Imperial Province the same way
   if (!picture?.data?.length || picture.data.length !== data.length) return null;
   const sea = seaIndices(palette);
   const open = new Uint8Array(w * h);

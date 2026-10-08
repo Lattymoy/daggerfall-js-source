@@ -6601,6 +6601,9 @@ export function createWorldModes(host) {
     // the bench host stands none. The ray's distance, half a door's reach carried beside it.
     const graves = host.graveTargets?.() ?? [];
     graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: SEARCH_REACH }));
+    // LEFAY1 (scenes/lefayMonumentHost.js): Gothway Garden's monument to Julian LeFay - both exterior hosts stand it
+    // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
+    for (const t of host.monumentTargets?.() ?? []) targets.push(t);
     _extList = { entries, npcs, boards, graves, targets };
     _extMark = mark;
     return _extList;
@@ -7079,6 +7082,10 @@ export function createWorldModes(host) {
     if (typeof key === 'string' && key.startsWith('grave:')) {   // SEARCH1: a headstone - too far speaks the refusal
       if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
       return host.activateGrave?.(graves[Number(key.split(':')[1])], getInteractionMode()) ?? true;
+    }
+    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
+      if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
+      return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
     if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
