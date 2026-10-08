@@ -90,11 +90,19 @@ test('LEFAY1: THE SPOT OF A LAID-OUT TOWN - its blocks carved as the people\'s n
   const s = lefaySpotOf(loc);
   // the same answer as the people's own navgrid carved by hand
   const nav = new CityNavigation(2, 1);
-  for (const b of loc.blocks) nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles[tx][ty].textureRecord);
+  for (const b of loc.blocks) nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles[tx][ty].textureRecord, { enhancedWater: true });
   assert.deepEqual(s, lefaySpot(nav));
   // open land begins at x 80 (block 1's water to 79): the middle (64) is shut both ways, so the first clear cell east
   assert.deepEqual([s.gx, s.gy], [82, 31]);
   assert.equal(lefaySpotOf({ width: 0, height: 0, blocks: [] }), null);
+  // AUDIT LEFAY1 A3: the shallows the classic table walks (record 8, a shore the player wades) are water to it on every
+  // lane - one spot for every client, never in the water
+  const shallows = { width: 1, height: 1, blocks: [block(0, auto(() => false), tiles((tx, ty) => (tx >= 6 && tx < 10 && ty >= 6 && ty < 10 ? 8 : 2)))] };
+  const dry = lefaySpotOf(shallows);
+  for (const [dx, dy] of discCells(MONUMENT_CLEAR_M)) {
+    const gx = dry.gx + dx, gy = 63 - (dry.gy + dy);   // the block's own row (setBlockData flips it)
+    assert.equal(gx >= 24 && gx < 40 && gy >= 24 && gy < 40, false, 'none of its disc in the shallows');
+  }
 });
 
 test('LEFAY1: THE CARVE - the people\'s navgrid closed within MONUMENT_CARVE_M of its middle, and only there', () => {
@@ -104,10 +112,12 @@ test('LEFAY1: THE CARVE - the people\'s navgrid closed within MONUMENT_CARVE_M o
   const n = carveLefay(nav, spot);
   const disc = discCells(MONUMENT_CARVE_M);
   assert.equal(n, disc.length);
-  assert.equal(disc.length, 13, 'within 3.2 m - two cells - of its centre');
+  assert.equal(disc.length, 21, 'within 3.6 m of its centre - its clear disc\'s cells (AUDIT LEFAY1 A4: a walker\'s sprite clear of the ground ring)');
   for (const [dx, dy] of disc) assert.equal(nav.weightAt(30 + dx, 20 + dy), 0);
   assert.equal(nav.weightAt(30 + 3, 20), 12, 'beyond it the ground stays');
   assert.equal(nav.weightAt(32, 22), 12, 'the disc\'s corner stays');
+  assert.equal(nav.weightAt(32, 21), 0, 'the knight\'s move closed');
+  assert.ok(Math.hypot(2, 2) * NAV_CELL - 3.3 > 1, 'the nearest open cell\'s centre a metre past the ground ring');
   assert.equal(carveLefay(nav, spot), 0, 'twice is once');
   assert.ok(MONUMENT_CARVE_M <= MONUMENT_CLEAR_M);
 });
@@ -118,12 +128,12 @@ test('LEFAY1: THE STONE - three granite steps, a marble pedestal with four bronz
   const per = Object.fromEntries(m.subMeshes.map((s) => [s.textureRecord, s.primitiveCount]));
   assert.deepEqual(per, {
     [LEFAY_GRANITE]: 3 * 8 * 3,   // three octagons: two triangles a side and one of the cap
-    [LEFAY_MARBLE]: 3 * 4 * 3 + 4 * 2,   // the pedestal's three blocks, the obelisk's four sides
+    [LEFAY_MARBLE]: 3 * 4 * 3 + 4 + 4 * 2,   // the pedestal's three blocks and the cornice's underside, the obelisk's four sides
     [LEFAY_GILT]: 4,   // the point
     [LEFAY_PLAQUE]: 4 * 2,
     [LEFAY_BRONZE]: 4 * 4 * 2,
   });
-  assert.equal(tris, 72 + 44 + 4 + 8 + 32);
+  assert.equal(tris, 72 + 48 + 4 + 8 + 32);
   assert.ok(m.subMeshes.every((s) => s.textureArchive === LEFAY_ARCHIVE));
   assert.equal(LEFAY_ARCHIVE, 38211);
   // its extent: the lowest step's corners, its foot sunk, its gilt point
@@ -132,20 +142,22 @@ test('LEFAY1: THE STONE - three granite steps, a marble pedestal with four bronz
   assert.ok(Math.abs(lo[1] + MONUMENT_FOOT) < 1e-6 && Math.abs(hi[1] - OBELISK.apex) < 1e-6);
   assert.ok(hi[0] <= MONUMENT_STEPS[0].r + 1e-6 && hi[0] > MONUMENT_STEPS[0].r * 0.9);
   assert.deepEqual(MONUMENT_BOXES.map((b) => [...b]), [[-2.8, 0, -2.8, 2.8, 0.9, 2.8], [-0.84, 0, -0.84, 0.84, OBELISK.apex, 0.84]], 'its steps, and its column - not the air between');
-  // EVERY FACE OUTWARD (the renderer culls the back): a side away from the axis, a top up, only the plaques' feet down
-  let down = 0;
+  // EVERY FACE OUTWARD (the renderer culls the back): a side away from the axis, a top up, only the plaques' feet and
+  // the cornice's underside down (AUDIT LEFAY1 A2: it overhangs the die - without it the sky showed through it)
+  let down = 0, underCornice = 0;
   for (let t = 0; t < tris; t++) {
     const i = t * 9, n = [m.normals[i], m.normals[i + 1], m.normals[i + 2]];
     const c = [0, 1, 2].map((k) => (m.positions[i + k] + m.positions[i + 3 + k] + m.positions[i + 6 + k]) / 3);
     assert.ok(Math.abs(Math.hypot(...n) - 1) < 1e-5, `triangle ${t} has a normal`);
-    if (n[1] < -0.5) { down++; continue; }
+    if (n[1] < -0.5) { down++; if (Math.abs(c[1] - PEDESTAL.dieTop) < 1e-6) underCornice++; continue; }
     if (n[1] > 0.5) continue;
     assert.ok(n[0] * c[0] + n[2] * c[2] > 0, `triangle ${t} faces its axis`);
   }
-  assert.equal(down, 4 * 2, 'the plaques\' four feet, and nothing else faces down');
+  assert.equal(down, 4 * 2 + 4, 'the plaques\' four feet and the cornice\'s underside, and nothing else faces down');
+  assert.equal(underCornice, 4, 'the cornice\'s underside at the die\'s top');
 });
 
-test('LEFAY1: THE PLAQUE\'S FACE - its picture\'s top-left at the plaque\'s top, on the viewer\'s left, on every face', () => {
+test('LEFAY1: THE PLAQUE\'S FACE - its picture\'s top-left at the plaque\'s top, on the viewer\'s left, on every face (the world left-handed, as the game draws it)', () => {
   const m = buildLefayModel();
   const sm = m.subMeshes.find((s) => s.textureRecord === LEFAY_PLAQUE);
   const faces = new Map();
@@ -159,7 +171,9 @@ test('LEFAY1: THE PLAQUE\'S FACE - its picture\'s top-left at the plaque\'s top,
   assert.equal(faces.size, 4, 'one plaque to a face of the die');
   for (const { n, verts } of faces.values()) {
     // the viewer stands out along n, looking back at it
-    const right = [n[2], 0, -n[0]];   // looking back along -n, up +y: right is (-n) x up
+    // AUDIT LEFAY1 A1: the world is DFU's, LEFT-handed, and drawn so (world/mat4.js THE HANDEDNESS LAW: +x lands
+    // screen-right) - facing north, east is on the right; facing back along -n, the right is (-n.z, n.x)
+    const right = [-n[2], 0, n[0]];
     for (const { p, uv } of verts) {
       const across = p[0] * right[0] + p[2] * right[2];
       assert.equal(uv[0], across > 0 ? 1 : 0, 'u runs left to right as the viewer sees it');
@@ -233,7 +247,7 @@ test('LEFAY1: A THROW\'S REST - the ring by its share, the thrower\'s side, a fl
 test('LEFAY1: THE TRIBUTE - the count and the newest MONUMENT_FLOWERS_KEPT where they lay; junk reads as none laid', () => {
   assert.deepEqual(normalTribute(undefined), { count: 0, laid: [] });
   assert.deepEqual(normalTribute('junk'), { count: 0, laid: [] });
-  assert.deepEqual(normalTribute({ count: -3, laid: [[10, 0, 0, 0], [360, 0, 0, 0], [1, 9, 0, 0], [1, 0, 4, 0], [1, 0, 0, 10], [1.5, 0, 0, 0], 'x', [1, 1, 1]] }), { count: 1, laid: [[10, 0, 0, 0]] }, 'only the whole entries in range, and never fewer counted than kept');
+  assert.deepEqual(normalTribute({ count: -3, laid: [[10, 0, 0, 0], [360, 0, 0, 0], [1, 9, 0, 0], [1, 0, 4, 0], [1, 0, 0, 10], [1.5, 0, 0, 0], 'x', [1, 1, 1], new Array(4)] }), { count: 1, laid: [[10, 0, 0, 0]] }, 'only the whole entries in range, and never fewer counted than kept');
   let t = undefined;
   for (let i = 0; i < MONUMENT_FLOWERS_KEPT + 5; i++) t = layFlower(t, [i % 360, i % LEFAY_FLOWERS.length, i % FLOWER_RINGS.length, i % 10]);
   assert.equal(t.count, MONUMENT_FLOWERS_KEPT + 5);
@@ -396,7 +410,7 @@ test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand it, the street pre
   const world = read('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), modes = read('src/scenes/worldModes.js'), save = read('src/systems/save.js');
   const dungeon = read('src/scenes/dungeonContext.js');
   for (const [name, src] of [['world.js', world], ['exterior.js', ext]]) {
-    assert.match(src, /lefaySpotOf\(loc, \{ enhancedWater: waterSwitchOn\(\) \}\)/, `${name} finds the spot off the town's own navgrid`);
+    assert.match(src, /lefaySpotOf\(loc\)/, `${name} finds the spot off the town's own navgrid`);
     assert.match(src, /if \(lefaySpot\) carveLefay\((nav|cityNav), lefaySpot\);/, `${name} carves the people's navgrid`);
     assert.match(src, /createLefayMonument\(\{/, `${name} makes the pool`);
     assert.match(src, /lefay\??\.frame\(\)/, `${name} frames it`);

@@ -1,9 +1,11 @@
 // LEFAY1 - THE MONUMENT TO JULIAN LEFAY, DRAWN IN A REAL BROWSER.
 //
 // node holds its law (test/lefay1_monument.test.js: the spot, the faces outward, the plaque's corners, the art); what
-// node cannot answer is what lands on the pixels with the back faces culled as the world's pass culls them: its steps,
-// its pedestal and its obelisk all drawn from outside, and the plaque's inscription READING the right way round - not
-// mirrored, not upside down - when it is looked at. So: the repo's own modules served as they are, the stone drawn with
+// node cannot answer is what lands on the pixels drawn AS THE GAME DRAWS (world/mat4.js THE HANDEDNESS LAW: the
+// projection mirrored in x, the front faces clockwise on screen) with the back faces culled: its steps, its pedestal,
+// the cornice's underside and its obelisk all drawn from outside, and the plaque's inscription READING the right way
+// round - not mirrored, not upside down - where the viewer sees it on the screen. AUDIT LEFAY1 A1: the first cut drew
+// with a plain projection, the mirror of the game's, and so certified a plaque the game shows backwards. So: the repo's own modules served as they are, the stone drawn with
 // its own art by a stand-in shader (riteProbe.mjs's), the flowers' rests marked by small swatches (their pictures are
 // the player's ARENA2, which no probe carries), and the frame read back.
 //
@@ -21,6 +23,7 @@ const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildLefayModel, flowerPlace, FLOWER_RINGS, PLAQUE, PEDESTAL } from '/src/world/lefayMonument.js';
 import { lefayArt, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H } from '/src/world/lefayArt.js';
+import { mirrorProjectionX } from '/src/world/mat4.js';
 const m = buildLefayModel();
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es
@@ -52,9 +55,9 @@ const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c
 const ux = (k) => gl.getUniformLocation(pr, k);
 /** one frame from \`eye\` at \`centre\`, culled as the world's pass culls; \`lit\` off draws the art flat (for the plaque's read) */
 window.draw = ({ eye, centre, up, fov = 0.9, lit = true, at = [] }) => {
-  gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); gl.frontFace(gl.CCW);
+  gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); gl.frontFace(gl.CW);   // the renderer's own (HANDEDNESS)
   gl.clearColor(0.62, 0.72, 0.86, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  const proj = persp(fov, 640 / 480, 0.05, 1000), view = look(eye, centre, up), vp = mul(proj, view);
+  const proj = mirrorProjectionX(persp(fov, 640 / 480, 0.05, 1000)), view = look(eye, centre, up), vp = mul(proj, view);   // the game's lens
   gl.useProgram(pr); gl.uniformMatrix4fv(ux('vp'), false, vp); gl.uniform1i(ux('alb'), 0); gl.uniform1f(ux('lit'), lit ? 1 : 0);
   gl.uniform4f(ux('uFlat'), 0.32, 0.36, 0.2, 1); gl.bindVertexArray(ground); gl.drawArrays(gl.TRIANGLES, 0, 6);
   gl.disable(gl.CULL_FACE); gl.uniform4f(ux('uFlat'), 0.85, 0.12, 0.2, 1); gl.bindVertexArray(flowers); gl.drawArrays(gl.TRIANGLES, 0, fl.length / 3); gl.enable(gl.CULL_FACE);
@@ -66,20 +69,23 @@ window.draw = ({ eye, centre, up, fov = 0.9, lit = true, at = [] }) => {
   const px = ([x, y]) => { const i = ((480 - 1 - Math.round(y)) * 640 + Math.round(x)) * 4; return [all[i], all[i + 1], all[i + 2]]; };
   return { error: gl.getError(), at: at.map((p) => px(scr(p))), scr: at.map(scr) };
 };
-/** THE PLAQUE READ BACK: looked at square from out along +x, its face's texels sampled off the screen and set against
- *  the picture as drawn, mirrored, and upside down - each a correlation of luminance */
-window.readPlaque = () => {
-  const d = PEDESTAL.dieHalf + PLAQUE.proud;
-  window.draw({ eye: [d + 1.6, PLAQUE.mid, 0], centre: [d, PLAQUE.mid, 0], lit: false });
+/** THE PLAQUE READ BACK, on each face: looked at square, the plaque's rectangle ON THE SCREEN found from its corners,
+ *  and the screen sampled across it left to right and top to bottom - what the viewer reads - set against the picture
+ *  as drawn, mirrored, and upside down: each a correlation of luminance. Nothing here asks the mesh where a texel is. */
+window.readPlaque = (k = 0) => {
+  const d = PEDESTAL.dieHalf + PLAQUE.proud, a = (k * Math.PI) / 2, c = Math.cos(a), s = Math.sin(a);
+  const eye = [c * (d + 1.6), PLAQUE.mid, s * (d + 1.6)], centre = [c * d, PLAQUE.mid, s * d];
+  window.draw({ eye, centre, lit: false });
   const all = new Uint8Array(640 * 480 * 4); gl.readPixels(0, 0, 640, 480, gl.RGBA, gl.UNSIGNED_BYTE, all);
-  const vp = mul(persp(0.9, 640 / 480, 0.05, 1000), look([d + 1.6, PLAQUE.mid, 0], [d, PLAQUE.mid, 0]));
-  const scr = ([x, y, z]) => { const c = [0, 1, 2, 3].map((r) => vp[r] * x + vp[4 + r] * y + vp[8 + r] * z + vp[12 + r]); return [(c[0] / c[3] * 0.5 + 0.5) * 640, (0.5 - c[1] / c[3] * 0.5) * 480]; };
+  const vp = mul(mirrorProjectionX(persp(0.9, 640 / 480, 0.05, 1000)), look(eye, centre));
+  const scr = ([x, y, z]) => { const q = [0, 1, 2, 3].map((r) => vp[r] * x + vp[4 + r] * y + vp[8 + r] * z + vp[12 + r]); return [(q[0] / q[3] * 0.5 + 0.5) * 640, (0.5 - q[1] / q[3] * 0.5) * 480]; };
+  const corners = [-1, 1].flatMap((sa) => [-1, 1].map((sy) => scr([c * d - s * sa * PLAQUE.w / 2, PLAQUE.mid + sy * PLAQUE.h / 2, s * d + c * sa * PLAQUE.w / 2])));
+  const left = Math.min(...corners.map((p) => p[0])), right = Math.max(...corners.map((p) => p[0]));
+  const top = Math.min(...corners.map((p) => p[1])), bottom = Math.max(...corners.map((p) => p[1]));
   const lumAt = (img, x, y) => { const i = (y * img.width + x) * 4; return img.colors[i] + img.colors[i + 1] + img.colors[i + 2]; };
   const seen = [], drawn = [], mirrored = [], flipped = [];
   for (let ty = 2; ty < LEFAY_PLAQUE_H; ty += 3) for (let tx = 2; tx < LEFAY_PLAQUE_W; tx += 3) {
-    // the texel's centre on the face: u across to the viewer's right (-z from +x), v down
-    const u = (tx + 0.5) / LEFAY_PLAQUE_W, v = (ty + 0.5) / LEFAY_PLAQUE_H;
-    const [sx, sy] = scr([d, PLAQUE.mid + PLAQUE.h / 2 - v * PLAQUE.h, PLAQUE.w / 2 - u * PLAQUE.w]);
+    const sx = left + ((tx + 0.5) / LEFAY_PLAQUE_W) * (right - left), sy = top + ((ty + 0.5) / LEFAY_PLAQUE_H) * (bottom - top);
     const i = ((480 - 1 - Math.round(sy)) * 640 + Math.round(sx)) * 4;
     seen.push(all[i] + all[i + 1] + all[i + 2]);
     drawn.push(lumAt(plaqueImg, tx, ty)); mirrored.push(lumAt(plaqueImg, LEFAY_PLAQUE_W - 1 - tx, ty)); flipped.push(lumAt(plaqueImg, tx, LEFAY_PLAQUE_H - 1 - ty));
@@ -125,11 +131,16 @@ try {
     const r = await page.evaluate(({ eye, p }) => window.draw({ eye, centre: [0, 2.6, 0], at: [p] }), { eye, p });
     check(`the ${n} face's plaque drawn`, r.at[0][0] > r.at[0][2] + 20, JSON.stringify(r.at[0]));
   }
-  // THE INSCRIPTION READS: looked at square, the face is the picture - not its mirror, not upside down
-  const read = await page.evaluate(() => window.readPlaque());
-  await shot('plaque');
-  check('the inscription reads the right way round', read.drawn > 0.6 && read.drawn > read.mirrored + 0.3 && read.drawn > read.flipped + 0.3,
-    `as drawn ${read.drawn.toFixed(2)}, mirrored ${read.mirrored.toFixed(2)}, upside down ${read.flipped.toFixed(2)}`);
+  // THE INSCRIPTION READS, on every face: looked at square, the face is the picture - not its mirror, not upside down
+  for (let k = 0; k < 4; k++) {
+    const read = await page.evaluate((k) => window.readPlaque(k), k);
+    if (k === 0) await shot('plaque');
+    check(`face ${k}: the inscription reads the right way round`, read.drawn > 0.6 && read.drawn > read.mirrored + 0.3 && read.drawn > read.flipped + 0.3,
+      `as drawn ${read.drawn.toFixed(2)}, mirrored ${read.mirrored.toFixed(2)}, upside down ${read.flipped.toFixed(2)}`);
+  }
+  // AUDIT LEFAY1 A2: the cornice's underside, from the ground under its overhang - stone, never the sky through it
+  const under = await page.evaluate(() => window.draw({ eye: [3, 1.7, 0], centre: [0.78, 2.45, 0], at: [[0.78, 2.449, 0], [0.78, 2.449, 0.3]] }));
+  for (const c of under.at) check('the cornice\'s underside drawn, marble', !near(c, SKY) && c[0] > 60, JSON.stringify(c));
   if (shotsAt) {
     await page.evaluate(() => window.draw({ eye: [7, 3.2, 6], centre: [0, 2.4, 0] }));
     await shot('quarter');

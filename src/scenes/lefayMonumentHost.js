@@ -156,7 +156,7 @@ export function createLefayMonument({
     if (t - lastToss < TOSS_EVERY_MS) return false;
     lastToss = t;
     const e = eye();
-    const bearing = e ? Math.atan2(e[0] - at[0], e[2] - at[2]) : 0;
+    const b = e ? Math.atan2(e[0] - at[0], e[2] - at[2]) : 0, bearing = Number.isFinite(b) ? b : 0;   // AUDIT LEFAY1 A5: no eye's NaN laid as nothing
     const entry = tossRest(bearing, rand);
     const to = flowerPlace(entry);
     const from = e ? [e[0] - at[0], e[1] - TOSS_HAND_DROP - at[1], e[2] - at[2]] : [to[0] * 1.6, to[1] + 1.5, to[2] * 1.6];

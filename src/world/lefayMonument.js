@@ -68,8 +68,10 @@ export const MONUMENT_SEARCH_CELLS = 48;
 /** What a road cell under it costs, in cells of distance from the middle (CityNavigation's Road family is weight 15). */
 export const MONUMENT_ROAD_COST = 0.3;
 export const ROAD_WEIGHT = 15;
-/** The navgrid closed under it for the wandering people, metres from its middle: its lowest step and a little. */
-export const MONUMENT_CARVE_M = 3.2;
+/** The navgrid closed under it for the wandering people, metres from its middle: its lowest step and the flowers at its
+ *  foot (AUDIT LEFAY1 A4: at 3.2 a walker's centre came within 3.58 m, its sprite over the ground ring's 3.3) - the
+ *  cells of its clear disc, so the nearest a walker's centre comes is 4.5 m. */
+export const MONUMENT_CARVE_M = 3.6;
 
 /** The cell offsets within `m` metres of a cell's centre, nearest first. Pure. */
 export function discCells(m) {
@@ -113,18 +115,19 @@ export function lefaySpot(nav) {
 
 /**
  * The spot in a laid-out location (world/locationLayout.js layoutLocation's `{width, height, blocks}`): its navgrid
- * carved as the wandering people's is (world.js and exterior.js both carve it so), then lefaySpot. Pure.
+ * carved as the wandering people's is, then lefaySpot. AUDIT LEFAY1 A3: ALWAYS on the enhanced lane's water table
+ * (cityNavigation.js WATER-NPC) - the classic table walks seven records the player wades in (8, 23, 33-36, 49), so on
+ * it the monument could stand in the shallows, and a client on each lane would stand it in a different place. Pure.
  * @param {{width: number, height: number, blocks: any[]}} loc
- * @param {{enhancedWater?: boolean}} [o] the water switch the people's navgrid is carved under
  */
-export function lefaySpotOf(loc, { enhancedWater = false } = {}) {
+export function lefaySpotOf(loc) {
   if (!loc?.blocks?.length || !(loc.width > 0) || !(loc.height > 0)) return null;
   const nav = new CityNavigation(loc.width, loc.height);
   for (const b of loc.blocks) {
     const fld = b.dfBlock?.rmbBlock?.fldHeader;
     if (!fld?.autoMapData || !fld.groundData?.groundTiles) continue;
     const tiles = fld.groundData.groundTiles;
-    nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater });
+    nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
   }
   return lefaySpot(nav);
 }
@@ -204,9 +207,10 @@ function faces() {
 /**
  * A prism or a frustum about the y axis: `sides` faces from radius `r0` at `y0` to `r1` at `y1` (radii to a corner),
  * turned so a face looks down +x (and, for four or eight sides, down every axis); its top capped flat when `cap`, in
- * `capRec` (or its own picture). Its sides wear `rec` a tile every STONE_TILE_M.
+ * `capRec` (or its own picture), and its foot when `under` (a piece that overhangs the one under it). Its sides wear
+ * `rec` a tile every STONE_TILE_M.
  */
-function frustum(f, rec, sides, r0, r1, y0, y1, { cap = true, capRec = rec } = {}) {
+function frustum(f, rec, sides, r0, r1, y0, y1, { cap = true, capRec = rec, under = false } = {}) {
   const turn = Math.PI / sides;
   const at = (k, r, y) => { const a = (k / sides) * Math.PI * 2 - turn; return [Math.cos(a) * r, y, Math.sin(a) * r]; };
   const edge = 2 * Math.sin(Math.PI / sides);
@@ -216,26 +220,27 @@ function frustum(f, rec, sides, r0, r1, y0, y1, { cap = true, capRec = rec } = {
     const u0 = (r0 * edge) / STONE_TILE_M, u1 = (r1 * edge) / STONE_TILE_M;
     if (r1 > 0) f.quad(rec, b0, t0, t1, b1, [0, v], [(u0 - u1) / 2, 0], [(u0 + u1) / 2, 0], [u0, v]);
     else f.tri(rec, b0, t0, b1, [0, v], [u0 / 2, 0], [u0, v]);   // a point: the quad's first triangle would have no area
-    if (cap && r1 > 0) {
-      const c = [0, y1, 0], uv = (p) => [0.5 + p[0] / STONE_TILE_M, 0.5 + p[2] / STONE_TILE_M];
-      f.tri(capRec, c, t1, t0, uv(c), uv(t1), uv(t0));
-    }
+    const uv = (p) => [0.5 + p[0] / STONE_TILE_M, 0.5 + p[2] / STONE_TILE_M];
+    if (cap && r1 > 0) { const c = [0, y1, 0]; f.tri(capRec, c, t1, t0, uv(c), uv(t1), uv(t0)); }
+    if (under) { const c = [0, y0, 0]; f.tri(capRec, c, b0, b1, uv(c), uv(b0), uv(b1)); }   // its foot, facing down
   }
 }
 
-/** A square block about the y axis, half its side `h`, from `y0` to `y1` - its top capped. */
-const block = (f, rec, h, y0, y1) => frustum(f, rec, 4, h * Math.SQRT2, h * Math.SQRT2, y0, y1);
+/** A square block about the y axis, half its side `h`, from `y0` to `y1` - its top capped, and its foot when `under`. */
+const block = (f, rec, h, y0, y1, under = false) => frustum(f, rec, 4, h * Math.SQRT2, h * Math.SQRT2, y0, y1, { under });
 
 /** A plaque proud of the die's face at angle `a` (0 looks down +x, a quarter turn at a time): its face the whole
  *  engraving, its edges plain bronze. */
 function plaque(f, a) {
   const c = Math.cos(a), s = Math.sin(a);
   const { w, h, mid, proud } = PLAQUE, d0 = PEDESTAL.dieHalf, d1 = d0 + proud;
-  // the face's frame: out (c, s), across (-s, c) - so seen from outside, "across" runs to the viewer's left
+  // the face's frame: out (c, s), across (-s, c). AUDIT LEFAY1 A1: the world is DFU's, LEFT-handed, and the game draws
+  // it so (world/mat4.js THE HANDEDNESS LAW: world +x lands screen-RIGHT) - so seen from outside, "across" runs to the
+  // viewer's RIGHT, and the picture's left edge is at -across
   const P = (out, across, y) => [c * out - s * across, y, s * out + c * across];
   const y0 = mid - h / 2, y1 = mid + h / 2, hw = w / 2;
   // the face: its top-left (seen from outside) at the picture's top-left - v down the plaque, u across it
-  f.quad(LEFAY_PLAQUE, P(d1, hw, y1), P(d1, hw, y0), P(d1, -hw, y0), P(d1, -hw, y1), [0, 0], [0, 1], [1, 1], [1, 0]);
+  f.quad(LEFAY_PLAQUE, P(d1, hw, y1), P(d1, hw, y0), P(d1, -hw, y0), P(d1, -hw, y1), [1, 0], [1, 1], [0, 1], [0, 0]);
   const e = [0, 0], g = [1, 0.1];
   f.quad(LEFAY_BRONZE, P(d0, hw, y1), P(d1, hw, y1), P(d1, -hw, y1), P(d0, -hw, y1), e, g, g, e);   // its top
   f.quad(LEFAY_BRONZE, P(d0, -hw, y0), P(d1, -hw, y0), P(d1, hw, y0), P(d0, hw, y0), e, g, g, e);   // its foot
@@ -270,7 +275,7 @@ export function buildLefayModel() {
   const P = PEDESTAL;
   block(f, LEFAY_MARBLE, P.baseHalf, y, P.baseTop);
   block(f, LEFAY_MARBLE, P.dieHalf, P.baseTop, P.dieTop);
-  block(f, LEFAY_MARBLE, P.corniceHalf, P.dieTop, P.corniceTop);
+  block(f, LEFAY_MARBLE, P.corniceHalf, P.dieTop, P.corniceTop, true);   // AUDIT LEFAY1 A2: it overhangs the die - its underside seen from the ground
   const O = OBELISK;
   frustum(f, LEFAY_MARBLE, 4, O.footHalf * Math.SQRT2, O.topHalf * Math.SQRT2, P.corniceTop, O.top, { cap: false });
   frustum(f, LEFAY_GILT, 4, O.topHalf * Math.SQRT2, 0, O.top, O.apex, { cap: false });
@@ -339,7 +344,7 @@ export function tossPoint(from, to, k, out = [0, 0, 0]) {
 
 /** A laid entry as a save may hold it - four whole numbers in range - or null. Pure. */
 const normalEntry = (e) => {
-  if (!Array.isArray(e) || e.length !== 4 || !e.every(Number.isSafeInteger)) return null;
+  if (!Array.isArray(e) || e.length !== 4 || ![0, 1, 2, 3].every((i) => Number.isSafeInteger(e[i]))) return null;   // AUDIT LEFAY1 A5: a hole is no number
   const [deg, kind, ring, across] = e;
   if (deg < 0 || deg >= 360 || kind < 0 || kind >= LEFAY_FLOWERS.length || ring < 0 || ring >= FLOWER_RINGS.length || across < 0 || across > 9) return null;
   return [deg, kind, ring, across];

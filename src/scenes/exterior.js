@@ -650,7 +650,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const staticBuildings = [];
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
-  const lefaySpot = isLefayTown(dfLocation) ? lefaySpotOf(loc, { enhancedWater: waterSwitchOn() }) : null;   // LEFAY1: world.js's spot - this host's frame is the location's own
+  const lefaySpot = isLefayTown(dfLocation) ? lefaySpotOf(loc) : null;   // LEFAY1: world.js's spot - this host's frame is the location's own
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (b.blockName === ARENA_BLOCK && isArenaCity(dfLocation)) arenaCityOrigin = [b.originX, 0, b.originZ];   // ARENA-FIX 12
