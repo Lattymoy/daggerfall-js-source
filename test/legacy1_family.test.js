@@ -12,7 +12,10 @@ import {
   siblingsOf, isCustomCareer, MODELS, NO_LINEAGE, DESCENDANTS, SIBLINGS_MAX_DEFAULT, SIBLINGS_CHANCE_DEFAULT, ESTATE_MAX,
   RACE_INHERIT_CHANCE, CAREER_INHERIT_CHANCE, BLOOD_MAX, HEARTH_MAX, personOf,
 } from '../src/systems/legacy/family.js';
-import { ageOf, payToll, spanOf, startAgeOf, tollYears, isElder, isSpent, YEAR_MINUTES, SPANS } from '../src/systems/legacy/age.js';
+import { ageOf, payToll, tollLine, spanOf, startAgeOf, tollYears, isElder, isSpent, YEAR_MINUTES, SPANS } from '../src/systems/legacy/age.js';
+import { createVampirismCurse, cureVampirism } from '../src/systems/vampirism.js';   // AGELESS-CURSE: the curses as their producers mint them
+import { createLycanthropyCurse, cureLycanthropy } from '../src/systems/lycanthropy.js';
+import { LYCANTHROPY_TYPES, VAMPIRE_CLANS } from '../src/systems/infection.js';
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies, newestSaveOf, BIRTH_MAX_AGE_MS } from '../src/systems/legacy/store.js';
 import { birthSearch, loadSearch, nearestTown, townAt } from '../src/systems/legacy/places.js';
 import { layoutTree } from '../src/systems/legacy/tree.js';
@@ -211,6 +214,18 @@ test('LEGACY2: the span and Arkay\'s toll - an Enduring death costs years, and t
   assert.equal(spanOf('Imperial'), 90, 'an unknown race reads as a Breton\'s span');
 });
 
+test('AGELESS-CURSE the law: the curse in the blood holds Arkay\'s hand - no years taken, no span spent, the cursed always rise, even with the span spent; cured, the toll is theirs again; the rise says why (mutants: the toll taken from the cursed; a spent vampire dies of years; the line the toll\'s)', () => {
+  const p = { race: 'Breton', startAge: startAgeOf('Breton'), toll: 10 };
+  assert.deepEqual(payToll(p, 0.06, 0, { ageless: true }), { final: false, years: 0, age: 33, spent: false, ageless: true });
+  assert.equal(p.toll, 10, 'no years taken');
+  p.toll = 80;   // 103 of a Breton's 90: spent
+  assert.equal(isSpent(p, 0), true);
+  assert.equal(payToll(p, 0.06, 0, { ageless: true }).final, false, 'a spent vampire still rises');
+  assert.equal(payToll(p, 0.06, 0).final, true, 'cured, the spent die of their years');
+  assert.equal(tollLine('Ysolde', { years: 0, age: 33, spent: false, ageless: true }), 'The curse in Ysolde\'s blood keeps Arkay at bay. No years are taken.');
+  assert.equal(tollLine('Ysolde', { years: 5, age: 28, spent: false }), 'Arkay takes 5 years for the road back. Ysolde is 28.', 'the uncursed line unchanged');
+});
+
 test('LEGACY1: the store keeps the newer copy, and a birth waits across the reload for its own person until the born member is saved', () => {
   const s = memStore(), tab = memStore();
   const f = foundFamily(entity(), { id: 'fam-st' });
@@ -405,6 +420,32 @@ test('LEGACY2: an Enduring death rises with the toll, until the span is spent', 
   assert.equal(last.kind, 'fall');
   assert.equal(p.died.cause, 'years');
   assert.equal(last.newborn, p.heir === true);
+});
+
+test('AGELESS-CURSE at the death door: an Enduring vampire, werewolf or wereboar rises with no toll - their span spent or not - and cured, pays it again and dies of their years (mutants: the host asks no curse; the vampire\'s curse forgotten; the lycanthrope\'s forgotten)', () => {
+  const curses = [
+    ['vampire', (e) => createVampirismCurse(e, VAMPIRE_CLANS.Lyrezi), (e) => cureVampirism(e)],
+    ['werewolf', (e) => createLycanthropyCurse(e, LYCANTHROPY_TYPES.Werewolf, { rolls: () => 0 }), (e) => cureLycanthropy(e)],
+    ['wereboar', (e) => createLycanthropyCurse(e, LYCANTHROPY_TYPES.Wereboar, { rolls: () => 0 }), (e) => cureLycanthropy(e)],
+  ];
+  for (const [kind, curse, cure] of curses) {
+    const w = hostWorld({ model: MODELS.enduring });
+    const p = w.host.current();
+    assert.ok(curse(w.e), `${kind}: the producer's curse`);
+    const out = w.host.deathOutcome();
+    assert.equal(out.kind, 'rise', `${kind}: rises`);
+    assert.equal(out.line, 'The curse in Ysolde\'s blood keeps Arkay at bay. No years are taken.', `${kind}: and says why`);
+    assert.equal(p.toll | 0, 0, `${kind}: no years taken`);
+    p.toll = 500;
+    assert.equal(w.host.deathOutcome().kind, 'rise', `${kind}: the span spent, still rises`);
+    assert.equal(p.died, null);
+    assert.ok(cure(w.e), `${kind}: cured`);
+    const last = w.host.deathOutcome();
+    assert.equal(last.kind, 'fall', `${kind}: cured, the spent die of their years`);
+    assert.equal(p.died.cause, 'years');
+  }
+  const w = hostWorld({ model: MODELS.enduring });
+  assert.match(w.host.deathOutcome().line, /^Arkay takes 11 years for the road back\./, 'no curse, the toll as ever');
 });
 
 test('LEGACY2: an elder passes the mantle - retired, saved, and the Succession asked; a young member cannot', () => {
