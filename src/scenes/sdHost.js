@@ -23,6 +23,9 @@ import { sdMapMark, sdOmenLight, sdRumor, sdMarksLine, sdHourLine, SD_HOUR_LEFT_
 
 /** A line the scan has not been able to place yet is said with the region's name after this long, never lost. */
 export const SD_LINE_WAIT_MS = 30_000;
+/** AUDIT SD III (H4): a cast-out asked is asked again when I still stand in the Hollow or its Hour this long on (ms) - the
+ *  exit is taken the frame after it is asked, so only one a death dropped is still waiting. */
+export const SD_CAST_OUT_AGAIN_MS = 2000;
 
 /** SD10 (2026-10-07, section 11's collapse): THE COLLAPSE'S READOUTS - whoever stands in the Hollow or its Hour while it
  *  collapses is told how long is left: at the fall (or the first frame they are inside during it), then as each of these
@@ -97,8 +100,11 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   /** The lines owed until the Hollow's place is known (its city's name): `{ kind, rec, at }`. */
   const owed = [];
   let foundSentAt = -Infinity, foundSentS = 0;
-  /** SD2d: the slot whose Hollow this player was cast out of - once a slot. */
-  let castOutS = 0;
+  /** SD2d: the slot whose Hollow this player was cast out of, and when - AUDIT SD III (H4): once a STAY, not once a slot.
+   *  Asked again while I still stand there SD_CAST_OUT_AGAIN_MS on (the exit asked is taken a frame later, and a death in
+   *  that frame - a lethal landing - drops it: raised where I lay, I stood in an ended Hollow no frame cast me out of),
+   *  and forgotten as I stand nowhere it could cast me out of (back in by its door while it is still listed). */
+  let castOutS = 0, castOutAt = -Infinity;
   /** SD10: the collapse's last readout said - its slot and its mark. AUDIT SD II (L6 F5): and the fade's. */
   let warned = { s: 0, at: Infinity }, fadeWarned = { s: 0, at: Infinity };
   /** SD19: the slot whose last hour has been said (once a slot). */
@@ -157,18 +163,21 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     // what stood and should not: down - unless the player stands in it (the ground is never pulled from under them), and
     // then they are cast out before its door, once (SD2d); the next frame finds them outside
     let asked = false;
+    const again = (s) => castOutS !== s || t - castOutAt >= SD_CAST_OUT_AGAIN_MS;
+    const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };
     if (stood && (!h || h.s !== stood.s)) {
       if (!inside(stood.loc)) { unstand(stood.key); stood = null; }
       // AUDIT SD II (L1 F2): latched once it ACTED - a player dead at the end and raised where they lay (a Resurrect) was
       // latched as cast out, and stood in an ended Hollow or Hour for good
-      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }
+      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }
     }
     // AUDIT SD II (L1 F3): THE END JUDGED WHERE I STAND, too - a step under the veil (into the Hour, or back into its
     // Hollow: a whole dungeon's build) could finish after the end had taken the Hollow down, and land me in a Hollow or an
     // Hour no frame would ever cast me out of. Judged once the hub has said its record (a page that has heard nothing
     // knows no end)
     const at = standing();
-    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && castOutS !== at && castOut(`slot:${at}`) !== false) castOutS = at;
+    if (at == null && !(stood && inside(stood.loc))) castOutS = 0;   // AUDIT SD III (H4): the stay over
+    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);
     if (h && !stood) { stand(h.key, h.loc); stood = { s: h.s, key: h.key, loc: h.loc }; }
     // SD10: THE COLLAPSE'S READOUTS - to whoever stands in it (the Hollow, or its Hour) while it collapses
     if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {

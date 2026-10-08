@@ -149,11 +149,11 @@ test('SD11d THE HOSTS SAY THROUGH THE VOICE, from the world host\'s own text: it
   // the voice's frame, run from its own text: in the Hour it frames; leaving lets go what waits, once
   const log = [];
   let slot = 3;
-  const frame = new Function('modes', 'sdVoice', `let _sdVoiceIn = false;\n${constOf('sdVoiceFrame')}\nreturn sdVoiceFrame;`)({ sdRealmSlot: () => slot }, { clear: () => log.push('clear'), frame: () => log.push('frame') });
+  const frame = new Function('modes', 'sdVoice', `let _sdVoiceIn = false;\n${constOf('sdVoiceFrame')}\nreturn sdVoiceFrame;`)({ sdRealmSlot: () => slot }, { leave: () => log.push('leave'), frame: () => log.push('frame') });
   frame(); frame();
   assert.deepEqual(log, ['frame', 'frame'], 'in the Hour: framed');
   slot = null; frame(); frame();
-  assert.deepEqual(log, ['frame', 'frame', 'clear', 'frame', 'frame'], 'out: let go once');
+  assert.deepEqual(log, ['frame', 'frame', 'leave', 'frame', 'frame'], 'out: let go once');   // AUDIT SD III (H5, PIN MOVED): what waits for the Hour let go - its turns still said (scenes/sdVoice.js leave)
 });
 
 // ── the bar (L6 F1, F6, F10) ───────────────────────────────────────────

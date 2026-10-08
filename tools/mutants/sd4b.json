@@ -228,8 +228,8 @@
   {
     "name": "SD4B-the-word-unasked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (word == null && w?.enter?.()) return;",
-    "new": "    if (w?.enter?.()) return;",
+    "old": "    if (word == null) {\n      const went = w?.enter?.();",
+    "new": "    if (w) {\n      const went = w?.enter?.();",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

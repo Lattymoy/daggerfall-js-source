@@ -92,7 +92,7 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   const block = W.slice(W.indexOf('  const sdSlotsKept = (key) => {'), W.indexOf('\n  };\n', W.indexOf('  const sdSlotsKept = (key) => {')) + 5);
   const store = new Map();
   const appStorage = () => ({ getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) });
-  const make = new Function('appStorage', 'SD_ENTERED_MAX', `${block}\nreturn sdSlotsKept;`)(appStorage, SD_ENTERED_MAX);
+  const make = new Function('appStorage', 'SD_ENTERED_MAX', '_accountSds', `${block}\nreturn sdSlotsKept;`)(appStorage, SD_ENTERED_MAX, { me: () => null });   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's
   const fallen = make(SD_FALLEN_KEY);
   fallen.add(7); fallen.add(7);
   assert.equal(fallen.has(7), true);

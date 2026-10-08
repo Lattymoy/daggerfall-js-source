@@ -1841,8 +1841,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function sdRiftStep() {
     const w = sdEndWord();
     const word = w ? w.word : SD_NO_RIFT;
-    if (word == null && w?.enter?.()) return;
+    if (word == null) {
+      const went = w?.enter?.();
+      if (went) return true;
+      if (went === null) return false;   // AUDIT SD III (H6): a step under way - not refused: asked again (sdEnd keeps its walk-in)
+    }
     if (!opts.sdSay?.(word ?? SD_NO_RIFT)) setMidScreenText(word ?? SD_NO_RIFT);   // AUDIT SD II (SD11d): through the Hour's voice
+    return true;
   }
   /** Into the Return: back to the way in - the start marker's landing, through the dungeon's own teleport door. */
   function sdReturnStep() {

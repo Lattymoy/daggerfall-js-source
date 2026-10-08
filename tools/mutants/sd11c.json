@@ -12,8 +12,8 @@
   {
     "name": "SD11c-L1F2-latched-on-the-refusal",
     "file": "src/scenes/sdHost.js",
-    "old": "else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }",
-    "new": "else if (castOutS !== stood.s) { asked = true; castOut(stood.key); castOutS = stood.s; }",
+    "old": "const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };",
+    "new": "const ask = (s, key) => { castOut(key); castOutS = s; castOutAt = t; };",
     "tests": [
       "test/sd11c_page.test.js",
       "test/sd2d_castout.test.js"
@@ -61,7 +61,7 @@
   {
     "name": "SD11c-L1F3-never-judged-where-I-stand",
     "file": "src/scenes/sdHost.js",
-    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && castOutS !== at && castOut(`slot:${at}`) !== false) castOutS = at;",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
     "new": "    void at;",
     "tests": [
       "test/sd11c_page.test.js"
@@ -115,7 +115,7 @@
   {
     "name": "SD11c-L6F17-never-kept",
     "file": "src/scenes/world.js",
-    "old": "try { appStorage()?.setItem?.(key, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
+    "old": "try { appStorage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
     "new": "void 0;",
     "tests": [
       "test/sd11c_page.test.js"
@@ -124,8 +124,8 @@
   {
     "name": "SD11c-L6F17-never-read",
     "file": "src/scenes/world.js",
-    "old": "JSON.parse(appStorage()?.getItem?.(key) ?? '[]')",
-    "new": "JSON.parse('[]')",
+    "old": "try { raw = appStorage()?.getItem?.(k) ?? null; } catch { raw = null; }",
+    "new": "try { raw = null; } catch { raw = null; }",
     "tests": [
       "test/sd11c_page.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "SD11c-L6F17-unbounded",
     "file": "src/scenes/world.js",
-    "old": "JSON.stringify([...kept].slice(-SD_ENTERED_MAX))",
-    "new": "JSON.stringify([...kept])",
+    "old": "JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))",
+    "new": "JSON.stringify([...now, s])",
     "tests": [
       "test/sd11c_page.test.js"
     ]

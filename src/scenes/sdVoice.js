@@ -66,8 +66,12 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds }) {
     },
     /** One frame: the next line waiting, once the one standing has stood its time. */
     frame() { pump(now()); },
-    /** Nothing more to say (the Hour left): what waits is let go; what stands, stands. */
+    /** Nothing more to say: what waits is let go; what stands, stands. */
     clear() { waiting.length = 0; },
+    /** The Hour left: what waits for it - its readouts and the floor's notes (a collapse I am out of) - is let go, and its
+     *  turns still come in their order: AUDIT SD III (H5) - the way out's own words waited behind a turn still standing
+     *  ("The way home carries you out of the Hour" behind "The way home stands open.") and were let go unread. */
+    leave() { for (let i = waiting.length - 1; i >= 0; i--) if (waiting[i].rank !== SD_VOICE_RANK.turn) waiting.splice(i, 1); },
     /** What waits, for the tests. */
     waiting: () => waiting.map((w) => w.text),
   };

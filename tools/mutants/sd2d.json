@@ -2,7 +2,7 @@
   {
     "name": "SD2D-never-cast-out",
     "file": "src/scenes/sdHost.js",
-    "old": "      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }\n",
+    "old": "      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }\n",
     "new": "",
     "tests": [
       "test/sd2d_castout.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "SD2D-cast-out-every-frame",
     "file": "src/scenes/sdHost.js",
-    "old": "      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }",
-    "new": "      else { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }",
+    "old": "      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }",
+    "new": "      else { asked = true; ask(stood.s, stood.key); }",
     "tests": [
       "test/sd2d_castout.test.js"
     ]

@@ -148,11 +148,12 @@ const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half],
 /** AUDIT SD III (A7): how often a Rift standing without its bell asks for it again (ms). */
 export const SD_BELL_ASK_MS = 1000;
 /**
- * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over.
+ * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over;
+ * `onRift()` answering false has not taken it (AUDIT SD III, H6: a step under way), and a walk-in stays armed.
  * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads. SD10: `retTitle` and `retTo` the
  * Return's (the Hour's way home says its own). AUDIT SD II (L6 F5): `riftCount()` the Rift's plaque's second row - how
  * long its Hour stands (world/sdDungeon.js sdRiftCount), or null.
- * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string, retTitle?: string, retTo?: string, riftCount?: () => (string | null) }} [deps]
+ * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => (boolean|null|void), onReturn?: () => void, riftTo?: string, retTitle?: string, retTo?: string, riftCount?: () => (string | null) }} [deps]
  */
 export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo, retTitle = SD_END_TEXT.ret, retTo = SD_END_TEXT.retTo, riftCount = () => null } = {}) {
   /** @type {{ at: number[], size: number, batch: any } | null} */
@@ -241,7 +242,9 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       const enteredRift = inRift && wasRift === false && !gap;
       const enteredRet = inRet && wasRet === false && !gap;
       wasRift = inRift; wasRet = inRet;
-      if (enteredRift) { onRift(); return 'rift'; }
+      // AUDIT SD III (H6): a host that answers false has not taken it (a step under way) - the walk-in stays armed, asked
+      // again next frame while I stand in it; it was spent, and the Rift stood dead under my feet
+      if (enteredRift) { if (onRift() === false) wasRift = false; return 'rift'; }
       if (enteredRet) { onReturn(); return 'return'; }
       return null;
     },

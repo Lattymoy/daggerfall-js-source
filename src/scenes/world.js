@@ -19943,11 +19943,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // temples, windmills and the like, same as any building door).
       onSend: (tabId, text) => {
         if (/^\/unstuck$/i.test(text.trim())) {
-          const moved = modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
-          chatLog.push(tabId, {
-            text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
-            system: true,
-          });
+          // AUDIT SD III (H10): in the Shattered Hour, the Hour's own way out - under its veil, in its words, as every other
+          // way out of it is (it left unveiled and unsaid); refused there (the dead's is the death's), nothing more said
+          const hour = modes?.sdRealmSlot?.() != null;
+          const moved = hour ? sdWayHome() : modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
+          if (moved || !hour) {
+            chatLog.push(tabId, {
+              text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
+              system: true,
+            });
+          }
           return true;
         }
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
@@ -21172,10 +21177,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     return sdBarNear(x, z);
   };
   let _sdVoiceIn = false;
-  /** One frame of the voice - and what waits let go as the Hour is left (a readout of a collapse I am out of). */
+  /** One frame of the voice - and what waits for the Hour let go as it is left (a readout of a collapse I am out of; its
+   *  turns, the way out's words among them, still said - AUDIT SD III, H5). */
   const sdVoiceFrame = () => {
     const inHour = modes?.sdRealmSlot?.() != null;
-    if (_sdVoiceIn && !inHour) sdVoice.clear();
+    if (_sdVoiceIn && !inHour) sdVoice.leave();
     _sdVoiceIn = inHour;
     sdVoice.frame();
   };
@@ -21722,7 +21728,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     cities: (r) => sdCities(_sdCityRows, r, { regionNameOf: (i) => maps.getRegionName(i) }),
     templates: () => _sdTemplateRows,
     where: (px, py) => { const regionIndex = maps.getRegionIndexAt(px, py); return { regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }; },
-    stand: (key, loc) => { _locIndexGen += 1; locationIndex.set(key, loc); _sdLate.add(key); },
+    stand: (key, loc) => { _locIndexGen += 1; locationIndex.set(key, loc); _sdLate.add(key); warmGateVeil(); },   // AUDIT SD III (H9): its Rift's veil built ahead, as a gate's is (AUDIT WB D5) - a session no gate stood in paid for its program as the first step began
     unstand: (key) => { if (locationIndex.get(key)?.superTier) { _locIndexGen += 1; locationIndex.delete(key); } _sdLate.add(key); },
     inside: (loc) => (modes?.mode ?? 'exterior') === 'dungeon' && (modes?.dungeonLocation?.sdSlot === loc?.sdSlot || modes?.dungeonLocation?.sdRealm === loc?.sdSlot),   // SD5a: or in its Hour - the end casts me out of either
     // its mouth: the dungeon entrance its pixel's blocks stood (the doors' list - kept a door generation)
@@ -21794,12 +21800,37 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
    *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
    *  Null offline - no Hollow stands there. */
-  /** A set of Hollows' slots kept on the device under `key`, its last SD_ENTERED_MAX (a store that refuses: the session's). */
+  /** A set of Hollows' slots kept on the device under `key`, its last SD_ENTERED_MAX (a store that refuses: the session's).
+   *  AUDIT SD III (H1): ONE ACCOUNT'S - under the signed-in account's own key (`<key>:<id>`; with none, the device's, as it
+   *  was), as the realm keeps its dead by the token's account (SD_NO_FALLEN): one account's death refused another on the
+   *  same device a Hollow its realm would admit. And READ AS IT IS ASKED - a second tab's write merged, never written
+   *  over: each tab wrote its own boot-time copy back over the other's. A read the store has not changed is not parsed
+   *  again. */
   const sdSlotsKept = (key) => {
-    const kept = new Set((() => { try { const v = JSON.parse(appStorage()?.getItem?.(key) ?? '[]'); return Array.isArray(v) ? v.filter(Number.isSafeInteger) : []; } catch { return []; } })());
+    const read = new Map(), own = new Map();   // per key: the store's last read ({ raw, set }), and this session's own adds
+    const keyNow = () => { const me = _accountSds.me(); return me ? `${key}:${me}` : key; };
+    const stored = (k) => {
+      let raw = null;
+      try { raw = appStorage()?.getItem?.(k) ?? null; } catch { raw = null; }
+      let r = read.get(k);
+      if (!r || r.raw !== raw) {
+        let list = [];
+        try { const v = JSON.parse(raw ?? '[]'); if (Array.isArray(v)) list = v.filter(Number.isSafeInteger); } catch { list = []; }
+        r = { raw, set: new Set(list) };
+        read.set(k, r);
+      }
+      return r.set;
+    };
     return {
-      has: (s) => kept.has(s),
-      add: (s) => { if (kept.has(s)) return; kept.add(s); try { appStorage()?.setItem?.(key, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ } },
+      has: (s) => { const k = keyNow(); return stored(k).has(s) || !!own.get(k)?.has(s); },
+      add: (s) => {
+        const k = keyNow();
+        if (!own.has(k)) own.set(k, new Set());
+        own.get(k).add(s);
+        const now = stored(k);
+        if (now.has(s)) return;
+        try { appStorage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }
+      },
     };
   };
   /** AUDIT SD: the Hollows' slots whose Hour I went through - during its collapse the Rift admits me again
@@ -21821,10 +21852,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
    *  before), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
    *  law again (SD3). The Rift's word is asked once more under the veil: the Hour can close while it does. Answers whether
-   *  the step began. */
+   *  the step began - AUDIT SD III (H6): null while another step is under way (the way back's landing, still under its
+   *  veil): not refused, not yet. The step refused it in silence, and its walk-in was spent. */
   function sdEnterRealm(s) {
     const h = sdHost?.hollow();
     if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
+    if (modes.stepping) return null;
     const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
     const site = { climateBase: h.loc.climate?.climateType ?? 2, season: INTERIOR_SEASON, climate: h.loc.climate, regionIndex: h.loc.regionIndex ?? -1, regionName: h.loc.regionName ?? '' };
     modes?.stepThroughFire(async () => {
@@ -21882,10 +21915,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
    *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
    *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
-   *  a door that would not open: outside, at its pixel. */
+   *  a door that would not open: outside, at its pixel. AUDIT SD III (H6): null while another step is under way. */
   function sdWayBack() {
     const loc = modes?.dungeonLocation;
     if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
+    if (modes.stepping) return null;
     const back = loc.sdHollow;
     modes?.stepThroughFire(async () => {
       if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0)) return false;

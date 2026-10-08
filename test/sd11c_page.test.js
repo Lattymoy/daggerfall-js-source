@@ -251,7 +251,7 @@ function enteredOf(storage) {
   assert.ok(at > 0, 'sdSlotsKept');
   const text = W.slice(at + 1, W.indexOf('\n  };\n', at) + 5);
   assert.match(W, /\n  const _sdEntered = sdSlotsKept\(SD_ENTERED_KEY\);\n/);
-  return new Function('appStorage', 'SD_ENTERED_KEY', 'SD_ENTERED_MAX', `${text}\nreturn sdSlotsKept(SD_ENTERED_KEY);`)(() => storage, SD_ENTERED_KEY, SD_ENTERED_MAX);
+  return new Function('appStorage', 'SD_ENTERED_KEY', 'SD_ENTERED_MAX', '_accountSds', `${text}\nreturn sdSlotsKept(SD_ENTERED_KEY);`)(() => storage, SD_ENTERED_KEY, SD_ENTERED_MAX, { me: () => null });   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's
 }
 const memStorage = () => { const m = new Map(); return { m, getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
 

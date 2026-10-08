@@ -600,9 +600,9 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 
 | host | what it carries |
 |---|---|
-| `scenes/world.js` | WIRED: the record, the omen and sighting, the found word, the Hollow at its pixel, the map/compass/timers, the realm's link, court, spoils, receipts, the veil, the ejections, the labels' entry line |
-| `scenes/worldModes.js` | WIRED: `enterSdRealm` / the way home, the realm's per-frame arm (lighting, fog, sky, the Orrery, the Steps, the arena), the dungeon's exit to the Hollow's door |
-| `scenes/dungeonContext.js` | WIRED: the Super difficulty, the end (`dungeonEndOf`), the Rift and the Return, the realm's bodies (the Remnant, the Echoes, the Hearts) behind the gate's three seams, the refusals |
+| `scenes/world.js` | WIRED: the record, the omen and sighting, the found word, the Hollow at its pixel, the map/compass/timers, the realm's link, court, spoils, receipts, the veil, the ejections, the labels' entry line; one life a Hollow (SD-ONELIFE); the Hour's score (SD13), its voice, air and motes (SD14), the arena read and its title card (SD15), its blows seen (SD16), the Hour-Hand's beam (SD17), the marks card, the element and the save (SD18b), the taverns' word by the Ending (SD18c), the brass air, the door's banner and card (SD19 - the fog's grade through `scenes/shared.js` `setBrass`) |
+| `scenes/worldModes.js` | WIRED: `enterSdRealm` / the way home, the realm's per-frame arm (lighting, fog, sky, the Orrery, the Steps, the arena), the dungeon's exit to the Hollow's door, the step through the fire under way (`stepping`, AUDIT SD III) |
+| `scenes/dungeonContext.js` | WIRED: the Super difficulty, the end (`dungeonEndOf`), the Rift and the Return, the realm's bodies (the Remnant, the Echoes, the Hearts) behind the gate's three seams, the refusals; the rig's body, its parts and gears (SD17), a strike's cast by its element (SD18b), the Remnant in its Ending's light (SD18c) |
 | `scenes/exterior.js` | FLAGGED: the `?exterior` bench is offline; there is no Super dungeon offline. Its plaque is the World Tooltips mod's own *To <name>* - the tiers are said online alone (section 12). |
 
 ## 16. Slices and their records
@@ -621,6 +621,10 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | SD8 | the Brass Remnant |
 | SD9 | the feat: receipts, spoils, THE BRASS OF NUMIDIUM, the claim, Hourbreaker and The Turning Hour |
 | SD10 | the collapse, the readouts, the audit |
+| SD11 | AUDIT SD II |
+| SD-ONELIFE | one life a Hollow |
+| SD13-SD19 | the detail past the gates: the score, the voice, the air and the motes, the arena read, the blows seen, the body moved, the marks, the Hollow's presence |
+| SD20 | AUDIT SD III |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -2120,6 +2124,12 @@ Pins: `test/sd12_onelife.test.js` (3 - the realm remembers a death; the Rift's w
 death's words; the device's memory is `sdSlotsKept`), `test/sd10b_audit.test.js` (the Rift's rig),
 `test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (the slot of the Hour I die in
+kept - `_sdFallen`, the death block's first statement - and the Rift asked with it, `sdRiftOf`; no Resurrect raising me
+in the Hour); `scenes/worldModes.js` FLAGGED - the death and its door are the mode machine's as in any dungeon, worded by
+the world host's respawn; `scenes/dungeonContext.js` FLAGGED - the Rift's refusal is its word off the outer host
+(`superRift`), unchanged; `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hour to die in.
+
 ### SD13 - shipped 2026-10-07 (the Score of the Hour)
 
 Mac: *"The detail needs to exceed that of the oblivion gates. These are the pinnacle of the hardest content in the
@@ -2155,6 +2165,12 @@ after.
 Pins: `test/sd13_score.test.js` (7 - the songs; the Hour's sound; the levels; where I stand; the law; the fall played
 whole; the host, from the world host's text); `tools/mutants/sd13.json` (27).
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (`hourScoreFrame` - the Hour's
+score while I stand in a Hollow or its Hour, asked before the court's, the arena's and the director's); `scenes/worldModes.js`
+FLAGGED - the music is the world host's (it reads the mode machine's place, and SD20d its `stepping`);
+`scenes/dungeonContext.js` FLAGGED - the dungeon host stands the Hollow and the Hour, never their music;
+`scenes/exterior.js` FLAGGED - the bench's music is the director's alone.
+
 ### SD14a - shipped 2026-10-07 (the Brass Remnant's voice)
 
 The Warden speaks in 48 cues; the Remnant had its blows' wind-ups and landings and its fall's thud, and nothing of its
@@ -2185,6 +2201,11 @@ releases, the shock and the sting; forgotten and the host's); `tools/mutants/sd1
 `sd11c.json` (the fight left once). PINS MOVED: `test/sd11c_page.test.js`, `test/sd8c_remnant_page.test.js`,
 `test/sd8d_remnant_blows.test.js` (the voice framed and let go beside the blows).
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (`sdRemVoice` - made beside the
+blows, framed in the fight's frame for the living, let go with the Hour); `scenes/worldModes.js` FLAGGED - nothing of the
+fight passes through it; `scenes/dungeonContext.js` FLAGGED - the Remnant's body stands there (`scenes/sdRemnant.js`),
+its voice is the world host's off the fight's link; `scenes/exterior.js` FLAGGED - no Hour.
+
 ### SD14b - shipped 2026-10-07 (the Hour's air)
 
 The Deadlands have three beds and three kinds of event; the Hour had none - its dungeon's drips and doors silenced and
@@ -2212,6 +2233,11 @@ have run, beside the Deadlands' own. With the Remnant's voice (SD14a) the arc sp
 
 Pins: `test/sd14b_air.test.js` (5 - the beds; the made sounds; the events; heard from its quarter; the world host);
 `tools/mutants/sd14b.json` (16).
+
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (`sdAirFrame` - the Hour's air
+beside the Deadlands', on the sky's own clock, stopped out of the Hour); `scenes/worldModes.js` FLAGGED - the realm's
+per-frame arm lights and fogs it, its air is the world host's; `scenes/dungeonContext.js` FLAGGED - the Hour's level
+stands there, never its air; `scenes/exterior.js` FLAGGED - no Hour.
 
 ### SD14c - shipped 2026-10-07 (the Hour's motes)
 
@@ -2241,6 +2267,11 @@ law, and the small faded; drawn, and the world host's); `tools/mutants/sd14c.jso
 `test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the Hour's world pass draws the motes beside the blows
 and the loot lines).
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (the motes - `SdMotesRenderer`,
+made the first time the Hour is drawn - in the Hour's pass, in its fog and its sky's light); `scenes/worldModes.js`
+FLAGGED - its per-frame arm hands the Hour's fog and sky, never the motes; `scenes/dungeonContext.js` FLAGGED - the
+level stands there, the motes over it are the world host's pass; `scenes/exterior.js` FLAGGED - no Hour.
+
 ### SD15 - shipped 2026-10-07 (the arena read)
 
 The gate tells a fighter "move!" when a blow is about to land on their feet (WB13a) and shows the fight's turns on a
@@ -2269,6 +2300,11 @@ Pins: `test/sd15_read.test.js` (6 - the Stomp; the Hand, the Volley and the Echo
 beats; the Hour's card and the host's; the burning brass felt); `tools/mutants/sd15.json` (21). PINS MOVED:
 `test/sd8c_remnant_page.test.js` (the fight read once; one hide), `test/sd11c_page.test.js` and `test/sd11a_scenes.test.js`
 (the arena read in the fight's rigs).
+
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (the fight's frame reads the
+arena - `sdPerilAt`, `sdGroundModel`, `createSdBeats` - and draws the gate's ground view and the Hour's own title card
+under one hide); `scenes/worldModes.js` FLAGGED - nothing of the read passes through it; `scenes/dungeonContext.js`
+FLAGGED - the arena's level is the dungeon host's, its read the world host's; `scenes/exterior.js` FLAGGED - no Hour.
 
 ### SD16 - shipped 2026-10-07 (the blows seen)
 
@@ -2306,6 +2342,12 @@ world host's); `tools/mutants/sd16.json` (28). PINS MOVED: `test/sd8c_remnant_pa
 `test/sd8d_remnant_blows.test.js`, `test/sd14a_voice.test.js`, `test/sd11c_page.test.js` (its sparks framed and left
 beside the voice), `test/sd14c_motes.test.js`, `test/sd9e_spoils.test.js` (drawn after the motes; lit after the spoils);
 records re-aimed by content: `sd11c.json` G3, `sd14a.json` never-let-go, `sd9e.json` unlit.
+
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (`sdFx` framed in the fight's
+frame, its landings' flashes in the Hour's light channel - `sdRealmLights` - and its sparks in the Hour's pass);
+`scenes/worldModes.js` FLAGGED - its per-frame arm takes the Hour's lights from the world host whole;
+`scenes/dungeonContext.js` FLAGGED - the bursts are drawn over its level by the world host's passes;
+`scenes/exterior.js` FLAGGED - no Hour.
 
 ### SD17 - shipped 2026-10-07 (the body moved)
 
@@ -2350,6 +2392,11 @@ stun's slump, the Hand's raised arm and the Volley's throw never showed - fixed 
 `test/sd16_fx.test.js`, `test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the beam after the sparks);
 `sd8c.json` SD8C-an-echo-unscaled re-aimed by content.
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/dungeonContext.js` WIRED (the Remnant it stands -
+`scenes/sdRemnant.js` - is the rig's body: its parts and its gears among the context's own draws, framed and freed with
+it); `scenes/world.js` WIRED (the Hour-Hand's beam drawn in the Hour's pass, `sdBeamDraws`); `scenes/worldModes.js`
+FLAGGED - the body is the dungeon host's, the beam the world host's; `scenes/exterior.js` FLAGGED - no Hour.
+
 ### SD18a - shipped 2026-10-07 (the Hour's marks)
 
 The gate's Warden wears one of four aspects and two of nine trials, a cycle of 144 (WB8b); every Hour was the same Hour.
@@ -2383,6 +2430,11 @@ recorded: the ring's closing check - the walk's first ring closes at every seat 
 hash). Records re-aimed by content (22): `sd15.json` (3), `sd17.json` (2), `sd6a.json` (2), `sd8a.json` (6),
 `sd8b.json`, `sd8c.json` (3), `sd8d.json` (5) - each run again, every one dead.
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): none wired - the law, the relay and the link
+(`net/sdMarks.js`, `net/sdBrain.js`, `net/sdFightLink.js`); `scenes/world.js`, `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED - each reads a Hollow's marks through the fight's link or its
+slot (SD18b, SD18c), never the law's tables.
+
 ### SD18b - shipped 2026-10-07 (the marks seen)
 
 The gate shows the Warden's marks on a card as a fighter steps in and in a row under his bar, and his aspect colours and
@@ -2414,6 +2466,12 @@ the strike; the hall); `tools/mutants/sd18b.json` (25). PINS MOVED: `test/sd11a_
 `test/sd16_fx.test.js`, `test/sd9e_spoils.test.js` (the stone's light after the landings'); records re-aimed by content:
 `sd10b.json` (3), `sd11a.json` (2), `sd15.json`, `sd8d.json` - each run again, dead.
 
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (the marks card as I step into the
+Hour, `sdMarksCardModel`; the element on the floor and under the crosshair; the save against its Ending's element; the
+Ending's stone light in the Hour's channel); `scenes/dungeonContext.js` WIRED (a strike's cast sound by its element -
+`GATE_STRIKE_CAST`, magic among them); `scenes/worldModes.js` FLAGGED - nothing of the marks passes through it;
+`scenes/exterior.js` FLAGGED - no Hour.
+
 ### SD18c - shipped 2026-10-07 (the Ending's light and word)
 
 SD18b put a Hollow's Ending on its card, its row and its floor; the colossus itself still burned the Mantella's green in
@@ -2434,6 +2492,12 @@ where none is kept), and its card on the held map says *It keeps the Ending of <
 Pins: `test/sd18c_endings.test.js` (4 - the lights; the bodies and the scene; the sparks; the word);
 `tools/mutants/sd18c.json` (13). PINS MOVED: `test/sd8c_remnant_page.test.js` (the art's records; the context's birth of
 the scene), `test/sd2c_omen.test.js` (the map card's line, the rumor by the slot's Ending).
+
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/dungeonContext.js` WIRED (the Remnant burns in its
+Hollow's Ending's light - the slot's marks, `sdMarksOf`, handed to the body it stands); `scenes/world.js` WIRED (the
+taverns' word of a Hollow by its Ending - `getNewsOrRumors` asks `sdHost.rumor` first); `scenes/worldModes.js` FLAGGED -
+nothing of the Ending passes through it; `scenes/exterior.js` FLAGGED - the bench is offline: no Hollow, no taverns'
+word of one.
 
 ### SD19 - shipped 2026-10-07 (the Hollow's presence)
 
@@ -2469,6 +2533,13 @@ and `test/sd11c_page.test.js` (the marks line after the find), `test/sd2c_omen.t
 Hollow too), `test/wbx8_gate_sky.test.js`, `test/sunbaby1_event.test.js`, `test/sunbaby2_phases.test.js` and `test/event1_live_event.test.js` (the lights under `sdBrassLight`, the haze's dread grade now `d`), `test/auditwb_world.test.js` (the banner a wish, hidden by the same three). Records
 re-aimed by content: `EVENT1-controller-fog-ungraded`, `SD18B-the-card-never-fades`, `SUNBABY1-host-light-unlifted`,
 `WB2-the-banner-follows-indoors`.
+
+THE FOUR HOSTS (AUDIT SD III, SD20f H3: this record had none): `scenes/world.js` WIRED (the brass air near a standing
+Hollow - `sdAirNow`, `sdBrassLight`, and the fog's grade through `scenes/shared.js` `setBrass`; the banner and its marks
+card at its door - `presenceFrame`, the gate's wish first; its marks and its last hour said through `sdHost`);
+`scenes/worldModes.js` FLAGGED - the presence is the street's, cleared indoors by the world host; `scenes/dungeonContext.js`
+FLAGGED - inside the Hollow nothing of it stands; `scenes/exterior.js` FLAGGED - the bench is offline: its fog's brass
+stays 0 (`setBrass` never asked).
 
 ### SD20 - AUDIT SD III (the arc audited a third time)
 
@@ -2701,3 +2772,33 @@ the veil and the card's clock from its opening); `scenes/worldModes.js` FLAGGED 
 player reads of the Hour but through the world host's and the dungeon host's words; `scenes/dungeonContext.js` FLAGGED -
 the dungeon host stands the Rift and the way home, whose plaques' words are `world/sdDungeon.js`'s and `scenes/sdEnd.js`'s;
 `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no banner, no Hour.
+
+#### SD20f - the hosts and the lifecycle
+
+| | what was wrong | now |
+|---|---|---|
+| H1 | ONE LIFE A HOLLOW WAS THE DEVICE'S. The Hollows I died in (and the ones I went through) were kept under one key for the whole device, read once at boot: one account's death refused another account on the same device a Hollow its realm would admit (the realm keeps its dead by the token's account), and a second tab wrote its boot-time copy back over the first's | kept under the signed-in account's own key (`scenes/world.js` `sdSlotsKept`, `<key>:<id>`; with no session the device's, as it was), read as it is asked - another tab's write merged, never written over - and a read the store has not changed not parsed again |
+| H2 | eight host pins red on the merge | fixed in part one (`2cd80943`) |
+| H3 | THE FOUR HOSTS RULE BROKEN FOR TWELVE RECORDS. SD-ONELIFE and SD13-SD19 wire the world host and the dungeon host and said so nowhere; section 15's table named none of their seams | each record says its four hosts; section 15's table carries their seams, and section 16's table the slices since SD10 |
+| H4 | THE CAST-OUT LATCHED ONCE A SLOT. The end casts me out and the exit is taken a frame later; a death in that frame (a lethal landing) drops it, and a party's Resurrect raised me where I lay - in an ended Hollow no frame would cast me out of, its slot latched as done | once a STAY (`scenes/sdHost.js`): asked again while I still stand there `SD_CAST_OUT_AGAIN_MS` (2 s) on, never sooner; the stay over as I stand nowhere it could cast me out of - back in by its door while it is still listed, I am cast out at once |
+| H5 | THE WAY OUT'S WORDS LET GO. The first frame outside the Hour let go of everything waiting to be said: *"The way home carries you out of the Hour..."* waits behind *"The way home stands open."*, and a press inside its second and a half lost it unread - the cast-out line too, behind any turn standing | leaving lets go of the Hour's readouts and the floor's notes alone (`scenes/sdVoice.js` `leave`); its turns, the way out's words among them, still come in their order |
+| H6 | A RIFT STEP SPENT UNDER ANOTHER'S VEIL. A step under way refuses a second (the mode machine's one at a time), and the Rift took the refusal as entered: walked into during the way back's landing (its veil still opening) its walk-in was spent, nothing said, the Rift dead under my feet | the world answers "not yet" (null) while a step is under way (`sdEnterRealm`, `sdWayBack`); the dungeon host hands it back untaken, nothing said (`sdRiftStep`); the Rift keeps its walk-in armed and asks again each frame I stand in it (`scenes/sdEnd.js`) |
+| H7, H8 | the Hour's per-frame garbage; the street's song between the Hollow's and the Hour's | SD20c (V5) and SD20d (A1) |
+| H9 | THE VEIL COLD FOR A HOLLOW. The step's veil was built ahead only when a gate stood (AUDIT WB D5): a session no gate stood in compiled it as the first Rift step began | built ahead as a Hollow stands (`warmGateVeil` in the Hollow host's `stand`) |
+| H10 | /unstuck IN THE HOUR. It left by the dungeon's door - no veil, none of the Hour's words, the one way out of the Hour that was neither | the Hour's own way out (`sdWayHome`): under its veil, in its words; refused there (the dead's is the death's), nothing more said |
+
+Pins: `test/sd20f_hosts.test.js` (5 - the kept slots by account over one store and two tabs, run from the world host's
+own text; the cast-out once a stay on the real Hollow host over the world's own doors, asked again, never sooner, and at
+once on a new stay; the Hour's voice leaving its turns; the step under another's veil - the world's two doors, the dungeon
+host's answer and the Rift's walk-in kept armed; the veil warmed, and /unstuck in the Hour run from its own text);
+`tools/mutants/sd20f.json` (16, all dead). RE-AIMED BY CONTENT, each still dead: `sd11c.json`
+(`SD11c-L1F2-latched-on-the-refusal`, `SD11c-L1F3-never-judged-where-I-stand`, `SD11c-L6F17-never-kept`,
+`SD11c-L6F17-never-read`, `SD11c-L6F17-unbounded`), `sd11d.json` (`SD11D-the-leave-never-letting-go`), `sd2d.json`
+(`SD2D-never-cast-out`, `SD2D-cast-out-every-frame`), `sd4b.json` (`SD4B-the-word-unasked`). PINS MOVED:
+`test/sd11c_page.test.js` and `test/sd12_onelife.test.js` (the kept slots' harness handed the signed-in account - none:
+the device's), `test/sd11d_words.test.js` (the voice's frame leaves, it no longer clears).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the kept slots by account; "not yet" from the Rift's two steps; the veil warmed
+as a Hollow stands; the voice's leave; /unstuck in the Hour); `scenes/dungeonContext.js` WIRED (the Rift's step handed
+back untaken while another is under way); `scenes/worldModes.js` FLAGGED - its `stepping` (SD20d) is read, its exit and
+its one-step-at-a-time unchanged; `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no Hour.
