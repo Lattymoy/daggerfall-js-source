@@ -57,10 +57,12 @@ test('SD4b the end: the marker farthest from the entrance across the floor plan 
   assert.equal(dungeonEndOf(from, []), null);
   assert.equal(dungeonEndOf(from, null), null);
   assert.equal(dungeonEndOf(from, [{ x: NaN, z: 1 }, a]), a, 'a mark without a place is none');
-  // the end's candidates: the layout's enemy markers (an Elite copy left out) and every block's start markers
-  const marks = sdEndMarks([{ x: 1, y: 0, z: 2 }, { x: 1.5, y: 0, z: 2, eliteCopy: true }, { x: NaN, y: 0, z: 0 }],
-    [{ originX: 100, originZ: 200, layout: { startMarkers: [{ x: 1, y: 3, z: 1 }] } }, { originX: 0, originZ: 0, layout: {} }]);
-  assert.deepEqual(marks, [{ x: 1, y: 0, z: 2 }, { x: 101, y: 3, z: 201 }]);
+  // the end's candidates: the layout's enemy markers (an Elite copy left out). SD-REACH (PIN MOVED, test/sd22_reach.test.js):
+  // no block's start markers beside them - those only with no enemy marker at all, placed by their block's origin
+  const ends = [{ originX: 100, originZ: 200, layout: { startMarkers: [{ x: 1, y: 3, z: 1 }] } }, { originX: 0, originZ: 0, layout: {} }];
+  const marks = sdEndMarks([{ x: 1, y: 0, z: 2 }, { x: 1.5, y: 0, z: 2, eliteCopy: true }, { x: NaN, y: 0, z: 0 }], ends);
+  assert.deepEqual(marks, [{ x: 1, y: 0, z: 2 }]);
+  assert.deepEqual(sdEndMarks([], ends), [{ x: 101, y: 3, z: 201 }]);
   const D = read('src/scenes/dungeonContext.js');
   assert.match(D, /const far = dungeonEndOf\(from, marks\);/, 'RVN7d\'s lair stand');
   assert.match(D, /const end = dungeonEndOf\(dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null, sdEndMarks\(_layoutEnemies, dungeon\.blocks\)\);/, 'a Super dungeon\'s end, from the same entrance');
