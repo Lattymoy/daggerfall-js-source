@@ -227,7 +227,7 @@ test('AUDIT PROF12 A3 law (Mac: "Potent lasts longer"): the fourteen potions who
 test('AUDIT PROF12 E3 law (Mac: "2 + Mercury -> 1"): the Transmuter\'s recipe is two of a metal and a Mercury for one of the next, and its card says so', () => {
   assert.equal(TRANSMUTE_IN, 2);
   for (const r of TRANSMUTE_RECIPES) assert.deepEqual(r.inputs.map((i) => i.n), [2, 1], r.id);
-  assert.equal(SPECIALISATIONS.alchemy[100].find((sp) => sp.id === 'transmuter')?.text, 'Two of a DFU metal and a Mercury make one of the next up.');
+  assert.equal(SPECIALISATIONS.provisioning[100].find((sp) => sp.id === 'transmuter')?.text, 'Two of a DFU metal and a Mercury make one of the next up.');   // PIN MOVED (CRAFT3): SPECIALISATIONS is keyed by track - the Transmuter's card stands under Provisioning, Alchemy's craft
 });
 
 test('AUDIT PROF-541 B1 law: a cauldron is its recipe\'s own ingredients - DFU\'s int32 hash collides (a Purification with Jade for its Diamond: 4 9 17 27 33 60 62 63; a Healing of 17 19 62 65), and a collision answers no potion; the recipe\'s own, in any order, still does', () => {

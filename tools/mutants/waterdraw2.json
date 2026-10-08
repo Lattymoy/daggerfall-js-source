@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WATERDRAW2-an-island-dropped",
+    "file": "src/world/waterCorners.js",
+    "old": "export const ISLAND_DRAWN = Object.freeze([4, 19, 29]);",
+    "new": "export const ISLAND_DRAWN = Object.freeze([4, 19]);",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-islands-undrawn",
+    "file": "src/world/waterCorners.js",
+    "old": "  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;",
+    "new": "  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0;",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-a-corner-dropped",
+    "file": "src/world/waterCorners.js",
+    "old": "export const CORNER_DRAWN = Object.freeze([37, 38, 40, 41, 43, 44]);",
+    "new": "export const CORNER_DRAWN = Object.freeze([37, 38, 40, 41, 43]);",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-corner-from-record-6",
+    "file": "src/world/waterCorners.js",
+    "old": "  const corner = SHORE_FAMILIES[0][2];",
+    "new": "  const corner = SHORE_FAMILIES[0][1];",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-corners-undrawn",
+    "file": "src/world/waterCorners.js",
+    "old": "  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = table[(corner << 2) | t];",
+    "new": "  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0;",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-saddle-left-dry",
+    "file": "src/world/waterCorners.js",
+    "old": "table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)];",
+    "new": "table[(family[3] << 2) | t] = 0;",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-saddle-turns-crossed",
+    "file": "src/world/waterCorners.js",
+    "old": "table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)];",
+    "new": "table[(family[3] << 2) | t] = table[(family[3] << 2) | (3 - t)];",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-one-family-s-saddle",
+    "file": "src/world/waterCorners.js",
+    "old": "  for (const family of SHORE_FAMILIES) for (const t of [2, 3])",
+    "new": "  for (const family of SHORE_FAMILIES.slice(0, 1)) for (const t of [2, 3])",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "WATERDRAW2-the-law-drawn",
+    "file": "src/world/waterCorners.js",
+    "old": "  if (!drawn) return table;\n",
+    "new": "  \n",
+    "tests": [
+      "test/waterdraw2.test.js",
+      "test/grasspath.test.js"
+    ]
+  }
+]

@@ -1462,6 +1462,7 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .prof-spec:disabled { cursor: default; opacity: 0.72; }
 .prof-spec.on:disabled { opacity: 1; }
 .prof-cost { font-style: normal; font-size: 11px; color: #e8b872; }
+.prof-of { font-style: normal; font-size: 11px; color: #9c8f78; }   /* CRAFT3: whose choice a merged craft's card is */
 .prof-locked { opacity: 0.55; }
 .prof-word { margin: 8px 0 0; font-size: 12px; color: #e59a8e; }
 .prof-gentle { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12px; color: #b9ab93; cursor: pointer; }

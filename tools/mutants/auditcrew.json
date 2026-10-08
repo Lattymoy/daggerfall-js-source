@@ -847,8 +847,8 @@
   {
     "name": "AUDIT-CC-F-world-helm-stands",
     "file": "src/scenes/world.js",
-    "old": " || csaRuntime?.isSailing?.()) return null;\n    const spotOf",
-    "new": ") return null;\n    const spotOf",
+    "old": " || csaRuntime?.isSailing?.()) return null;\n    if (modes?.gateArenaDay?.() != null) return null;",
+    "new": ") return null;\n    if (modes?.gateArenaDay?.() != null) return null;",
     "tests": [
       "test/auditcrew.test.js",
       "test/crewcompanions.test.js"

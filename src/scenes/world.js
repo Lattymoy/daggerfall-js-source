@@ -274,6 +274,7 @@ import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/
 import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands
 import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
+import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
@@ -324,6 +325,7 @@ import { bossPlace } from '../world/gateBoss.js';   // AUDIT WBX F3: where he fe
 import { itemIconColor32 } from '../ui/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
 import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { createGateCrowd, gateCrowdMax } from '../net/gateCrowd.js';   // GATE-CROWD: a gate's court draws the nearest of a crowd
 import { gateLandingFor, courtRing, courtArena, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -467,6 +469,11 @@ import { mintPieces, mintPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_
 import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
+import { temperItem, reforgeItem, essenceReforgeRefusal, TEMPER_MOVED_TEXT, TEMPER_LOST_TEXT, REFORGE_LOST_TEXT } from '../systems/smithItems.js';   // CRAFT4: the temper and the Reforge with Essence, on the piece
+import { temperRecipeOf, temperRefusal, pieceQuality, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: what a temper takes
+import { QUALITY_NAMES } from '../net/recipeLaw.js';   // CRAFT4: a temper's word
+import { reforgeableLines, affixLine } from '../systems/lootRarity.js';   // CRAFT4: the lines an Enchanter reforges
+import { trackOf } from '../net/professionLaw.js';   // CRAFT4: the craft a piece's temper is
 import { brewItems, brewedText, BREW_KEPT_TEXT } from '../systems/alchemyItems.js';   // PROF12: a brew's potions, DFU's own, into the pack
 import { essenceOf, piecePoints, DISENCHANTER } from '../net/alchemyLaw.js';   // PROF12: a piece's Essence, as the enchanting station shows it
 import { facetBand } from '../net/recipeLaw.js';   // PROF10: the facet's attribute band
@@ -1664,15 +1671,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // one latch holds every craft and brew (profBook.js _craftBusy), so a station's own word named another's work: the
   // book's refusal says the hands are busy (accountClient.js 'prof-busy')
   const craftStation = (profession) => (profession === 'carpentry'
-    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: 'Carpentry' }
+    ? { here: () => modes?.workbenchHere?.() ?? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT, xp: professionName('carpentry') }   // CRAFT3: each discipline's craft's track - Building's
     : profession === 'outfitting'
       ? { here: () => modes?.loomHere?.() ?? null, a: 'a loom', who: 'tailor', noun: 'loom', kept: LOOM_KEPT_TEXT, xp: 'Outfitting' }
       : profession === 'masonry'   // PROF11: the mason's bench - a General Store's or a home's
-        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: 'Masonry' }
+        ? { here: () => modes?.masonHere?.() ?? null, a: 'a mason\'s bench', who: 'mason', noun: 'mason\'s bench', kept: MASON_KEPT_TEXT, xp: professionName('masonry') }
         : profession === 'cooking'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee
-          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: 'Cooking' }
+          ? { here: () => cookFireHere(), a: 'a fire', who: 'cook', noun: 'fire', kept: COOK_KEPT_TEXT, xp: professionName('cooking') }
           : profession === 'jewelcrafting'   // PROF10: the jeweller's bench - a Pawn Shop's or a Gem Store's, or a home's
-            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: 'Jewelcrafting' }
+            ? { here: () => modes?.jewellerHere?.() ?? null, a: 'a jeweller\'s bench', who: 'jeweller', noun: 'jeweller\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName('jewelcrafting') }
             : { here: () => modes?.forgeHere?.() ?? null, a: 'an anvil', who: 'smith', noun: 'anvil', kept: CRAFT_KEPT_TEXT, xp: 'Smithing' });
   /** AUDIT 32 B3: a balance a counter's purchase answered, told to every book that shows one - the Bank's and the
    *  market's (AUDIT 30 U6's law, which the Stores page's counters never kept: the Market tab read the old one for its
@@ -9352,9 +9359,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  pool itself: the street's, a building's, a dungeon's), how a companion stands there (the player's ally, loose of
    *  every cap, out of the place's own save - the layer's catch-up comes long before the street's cull) and goes, and where behind the player a
    *  body may stand (the place's collider swept from the player's feet). None while the player is not afoot in it: a
-   *  door or a load in flight, at a helm, in the travel view, or the naval arc off. */
+   *  door or a load in flight, at a helm, in the travel view, or the naval arc off. GATE-ALONE (2026-10-07, Mac: "We need
+   *  to not allow followers inside the oblivion gates"): and none in an Oblivion Gate's court - the layer lifts every
+   *  companion as the player steps in (health and spells carried) and stands them behind the player again out of it. */
   function companionPlace({ crew = true } = {}) {   // REVENANT-COMPANION: the sworn's layer asks it without the naval arc's gate
     if ((crew && !navalOn()) || !walkMode || !playerSpawned || _loading || modes?.transitioning || travelView?.active || csaRuntime?.isSailing?.()) return null;
+    if (modes?.gateArenaDay?.() != null) return null;   // GATE-ALONE: they wait outside the gate
     const spotOf = (col) => (from, dx, dz) => { const p = [from[0], from[1], from[2]]; try { col?.move(p, dx, 0, dz, 1.8); } catch { /* the leader's own spot */ } return [p[0], p[1], p[2]]; };   // AUDIT CC-A3: the swept spot's own height (a slope's, a stair's)
     const mode = _mode();
     const standIn = (pool) => (mobile, feet, o) => pool.spawnFoe(mobile, feet, { yaw: o.yaw, gender: o.gender, allied: true, loose: true, transient: true });
@@ -9474,6 +9484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  name, role and effects, his health off his body where one stands here (else as the party carries it, a share of
    *  his whole); none with the arc off. */
   function partyCompanions() {
+    if (modes?.gateArenaDay?.() != null) return [];   // GATE-ALONE: none in a gate's court - they wait outside it
     // AUDIT WK-U5: none while I sail - the party is lifted aboard (it stood its cards over the ship's plate on a phone)
     const party = navalOn() && !csaRuntime?.isSailing?.() ? naval?.companions?.party ?? [] : [];
     const sworn = swornCards?.() ?? [];   // REVENANT-COMPANION: the sworn's cards after the crew's
@@ -9734,7 +9745,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (`player.collider`: the street's, the building's, the dungeon's), the same rule the plaque's other racers keep
    *  (pickActivatableHit's wall test). A player behind a wall is not named, lit or pressed. */
   const peerInSight = (eye, dir) => {
-    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate), SOCIAL_REACH, rayPersonDistance);   // INVIS-NET: a player concealed is not there to press - CONCEAL-MATE: unless they are in my party
+    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), SOCIAL_REACH, rayPersonDistance);   // INVIS-NET: a player concealed is not there to press - CONCEAL-MATE: unless they are in my party; GATE-CROWD: nor one a gate's crowd leaves undrawn
     if (!hit) return null;
     const col = player?.collider ?? collider;
     const wall = col?.raycast ? col.raycast(eye, dir, hit.distance) : Infinity;
@@ -10621,11 +10632,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           // step this craft (fortLaw.js hallStepsFor) - the service asks the Charter again (professions.js seatStepsFor)
           const { seat } = myHall(recipeById(recipe)?.profession);
           const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);   // PROF10: a Lapidary's cracked gem
-          if (!r?.ok) return { ok: false, text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
+          // CRAFT1 (bible/06-Systems/Professions-Arc.md 41): the chain's works the craft ran first - said, made or refused
+          // AUDIT CRAFT1 F3: a kept craft says it too; F4: and a refused one where the chain stopped
+          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');
+          if (!r?.ok) return { ok: false, text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };
           const paid = f.fee > 0 && !r.elsewhere;
           const rec = recipeById(recipe);
           const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));   // SEAT2b part two: a Ram Kit is the Stores'
-          return { ok: true, text: `${made} (+${r.data.xp} ${st.xp} XP)${paid ? `, and paid the ${st.who} ${f.fee} gold` : ''}.` };
+          return { ok: true, text: `${chain ? `${chain} ` : ''}${made} (+${r.data.xp} ${st.xp} XP)${paid ? `, and paid the ${st.who} ${f.fee} gold` : ''}.` };
         },
         stock: async (material, qty, counter = stockOf(material)?.counter) => {
           const r = await profBook.stock(material, qty);
@@ -10671,7 +10685,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const r = await profBook.brew(potion, keys, { fee: f.fee > 0 ? f.fee : 0, seat }, profMintCraft);
           if (!r?.ok) return { ok: false, text: r?.kept ? BREW_KEPT_TEXT : r?.error === 'prof-busy' ? 'Your hands are busy with another craft.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
           const paid = f.fee > 0 && !r.elsewhere;
-          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} Alchemy XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
+          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} ${professionName('alchemy')} XP)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
         },
         // PROF12: THE ENCHANTING STATION the player stands at (a Mages Guild hall, its fee a piece; a home's), the pack's crafted
         // pieces it may take (in the pack, not worn, bound or locked, no market act kept on them) and a disenchant: the piece
@@ -10737,6 +10751,51 @@ export async function bootWorld(canvas, renderer, params, status) {
           saveSoon.changed();
           const got = Number.isSafeInteger(r.data?.essence) ? `${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting XP)` : 'Arcane Essence';   // a landed realm act says no more
           return { ok: true, text: `${name} comes apart into ${got}${paid ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
+        },
+        // CRAFT4 (bible/06-Systems/Professions-Arc.md 41.7): THE TEMPER at the anvil (the smith's pieces) and the loom (the
+        // tailor's) - the pack's pieces a temper takes (Rare or below, below Superior), not worn, no market act kept on them;
+        // the step laid on the piece on the service's answer (smithItems.js temperItem), the station's fee a temper
+        temperable: (where) => (playerEntity.items ?? []).filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))
+          .map((it) => ({ it, r: temperRecipeOf(it) })).filter(({ r }) => trackOf(r.profession) === (where === 'loom' ? 'outfitting' : 'smithing'))
+          .map(({ it, r }) => ({ item: it, name: itemLongName(it), recipe: r.id, quality: pieceQuality(it), provenance: typeof it.provenance === 'string' ? it.provenance : null })),
+        temper: async (offer) => {
+          const r0 = recipeById(offer?.recipe);
+          const loom = trackOf(r0?.profession) === 'outfitting';
+          const f = (loom ? modes?.loomHere?.() : modes?.forgeHere?.()) ?? null;
+          if (!f) return { ok: false, text: loom ? 'You are not at a loom.' : 'You are not at an anvil.' };
+          const who = loom ? 'tailor' : 'smith';
+          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The ${who} asks ${f.fee} gold for a temper.` };
+          const pack = playerEntity.items, it = offer.item;
+          if (!pack?.includes(it) || isEquipped(it) || temperRefusal(it) || pieceQuality(it) !== offer.quality) return { ok: false, text: TEMPER_MOVED_TEXT };
+          const name = itemLongName(it);
+          const r = await profBook.temper(offer.recipe, offer.quality, offer.provenance);
+          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while tempering. Check its Stores when you return.' };
+          if (!r?.ok) return { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
+          // the fee for the temper this press made, on the first answer it hears - `repeat` or not (AUDIT 29 C3's law)
+          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
+          const took = pack.includes(it) && temperItem(it, r.data);
+          saveSoon.changed();
+          if (!took) return { ok: false, text: TEMPER_LOST_TEXT };
+          return { ok: true, text: `${name} is ${QUALITY_NAMES[r.data.quality]} now (+${r.data.xp} ${professionName(r0.profession)} XP)${f.fee > 0 ? `, and paid the ${who} ${f.fee} gold` : ''}.` };
+        },
+        // CRAFT4: THE REFORGE WITH ESSENCE at the enchanting station - the pack's known Magic and Rare pieces, not worn, each
+        // line the Loot arc's own Reforge may roll (once reforged, that line alone); the line rolled on the service's seed
+        reforgeable: () => (playerEntity.items ?? []).filter((it) => it && reforgeEssence(it.rarity) && !essenceReforgeRefusal(it, reforgeableLines(it)[0]))
+          .map((it) => ({ item: it, name: itemLongName(it), tier: it.rarity, lines: reforgeableLines(it).map((index) => ({ index, text: affixLine(it, index) })) })),
+        essenceReforge: async (offer, index) => {
+          const f = modes?.enchantHere?.() ?? null;
+          if (!f) return { ok: false, text: 'You are not at an enchanting station.' };
+          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The enchanter asks ${f.fee} gold to reforge a piece.` };
+          const pack = playerEntity.items, it = offer.item;
+          if (!pack?.includes(it) || essenceReforgeRefusal(it, index) || it.rarity !== offer.tier) return { ok: false, text: TEMPER_MOVED_TEXT };
+          const r = await profBook.reforge(offer.tier);
+          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while reforging. Check its Stores when you return.' };
+          if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
+          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
+          const line = pack.includes(it) && r.data?.tier === it.rarity ? reforgeItem(it, index, r.data.seed) : null;
+          saveSoon.changed();
+          if (!line) return { ok: false, text: REFORGE_LOST_TEXT };
+          return { ok: true, text: `Reforged: ${affixLine(it, index)}${f.fee > 0 ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
         },
         facetBand: () => facetBand({ willpower: liveStat(playerEntity, 'willpower'), luck: liveStat(playerEntity, 'luck') }),
         clothing: () => (playerEntity?.gender === 'female' ? 'WomensClothing' : 'MensClothing'),
@@ -10842,6 +10901,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _veils = new Map();   // INVIS-LOOK: peer id -> this frame's concealed draw (ECV1's visual), for every layer
   const _hiddenPeers = new Set();   // AUDIT (pre-merge) I-B: the peers the classic lane stands nowhere this frame - their teams with them
   const veilOf = (id) => _veils.get(id) ?? null;
+  const gateCrowd = createGateCrowd();   // GATE-CROWD: a gate's court draws the nearest of a crowd (net/gateCrowd.js) - the places held frame to frame
+  const crowdDrawnHere = (p) => gateCrowd.shows(p.id);   // GATE-CROWD: a player the court's crowd leaves undrawn is not there to press or aim a gift at
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     lairHere: () => {   // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): a deed in the open world - my map pixel, and the named dungeons in the boards' ring about it
@@ -21150,6 +21211,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
   };
+  /** GATE-ALONE (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates"): no companion stands in a
+   *  gate's court (companionPlace answers none there), and a fighter who steps in with any at their side is told so -
+   *  once each time they step in, when the step's fire has opened over the court (the veil covers the HUD); owed again
+   *  once they are out. */
+  let _courtAloneSaid = false;
+  const courtAloneFrame = () => {
+    if (modes?.gateArenaDay?.() == null) { _courtAloneSaid = false; return; }
+    if (_courtAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    _courtAloneSaid = true;
+    if (companionsWithYou() > 0) setMidScreenText(COURT_TEXT.noCompanions, courtSaySeconds(COURT_TEXT.noCompanions));
+  };
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
   const gateFrame = () => {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
@@ -21178,6 +21250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
+    courtAloneFrame();   // GATE-ALONE: my companions wait outside - said as I step in
   };
   // ═══ SERPENT1 (2026-10-04, Mac: "A new world event that requires players with a ship to meet up and take on a large
   // scale sea serpent in the ocean"; "make this something truly special"): SETHRAKUL, THE OLD COIL ════════════════════
@@ -23883,7 +23956,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  crosshair always on them), and never a CONCEALED stranger (INVIS-NET: the F key's pick does not see them - a
    *  gift named them aloud). A concealed mate is still a mate, as the party's own reads keep them (player/socialPick.js
    *  openPeers - CONCEAL-MATE's one law for every social door). */
-  const giftablePeers = (list) => openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent));
+  const giftablePeers = (list) => openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent) && crowdDrawnHere(p));
   /** ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
    *  whether it went - a refusal (the gate, the socket gone, a relay too old to route it) lets the release fall
    *  through to the ordinary arm. */
@@ -24125,7 +24198,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _peerFxHp = playerEntity?.health ?? null;
     if (!online) return;
     for (const p of online.peers.values()) {
-      if (!p?.shown || !online.visible(p)) { peerFxPlayer.forget(p?.id); continue; }
+      if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id)) { peerFxPlayer.forget(p?.id); continue; }   // GATE-CROWD: no spark nor cry from a player the court's crowd leaves undrawn
       peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0);
     }
     peerFxPlayer.frame();
@@ -24471,7 +24544,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
-    const visiblePeers = cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id));
+    const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
     peerCastVisuals(visiblePeers);   // SPELLFX1: a peer's new cast, drawn once
     _veilT += dt > 0 ? dt : 0;
     _veils.clear(); _hiddenPeers.clear();

@@ -1,10 +1,10 @@
 # The Steel Plate - the port's own steel armour set
 
-`tools/fbxStrip.mjs` + `tools/bakeSteelPlate.mjs` + `src/characters/ownArmorModels.js` (the steel plate's rows) +
-`src/formats/mwItemMap.js` (composeWornArmor) + `src/formats/mwSkinTransfer.js` (fitShift, the sided transferSkin,
-rebindSkin, bindPoseMats) + `src/formats/mwFirstPerson.js` (bindSkinnedFromBody, skeletonBindSkins) +
-`src/combat/fpArm.js` (ownBodyPaths, ownBodyPart) + `src/systems/features.js` (the Steel Helm row)
-(MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt and the bind pose, 2026-10-07; MW-STEEL3, the bind's anchor, 2026-10-07)
+`tools/fbxStrip.mjs` + `tools/bakeSteelPlate.mjs` (the bake, the bind, the rig) + `tools/skinWeights.mjs` (jointWeights) +
+`tools/nifWrite.mjs` (skinnedMeshesToNif) + `src/characters/ownArmorModels.js` (the steel plate's rows) +
+`src/formats/mwItemMap.js` (composeWornArmor) + `src/systems/features.js` (the Steel Helm row)
+(MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt, 2026-10-07; MW-STEEL4, rigged as retail's armour is, 2026-10-07 -
+it retired the runtime rig MW-STEEL1 to MW-STEEL3 built, recorded below)
 
 > "These 2 files are for the armor replacement of the morrowind steel armor with a varient to toggle the helmet type"
 
@@ -13,7 +13,11 @@ breastplate, helmet faceplate, pants and helmet.
 
 **The third of the port's own Morrowind models, and the first SET.** The Steel Brigandine
 (`04-Characters/Steel-Brigandine.md`) put one worn piece on the Morrowind body; this is a whole suit of steel plate -
-a breastplate, a pair of pauldrons, gauntlets, greaves and boots, and a helm two ways.
+a breastplate and the skirt under it, a pair of pauldrons, gauntlets, greaves and boots, and a helm two ways.
+
+**It ships skinned, as Morrowind's own armour does** (MW-STEEL4): every piece's NIF carries its weights to the Bip01
+bones and their inverse binds, made once at bake time, and the game wears it on the very path it wears a retail
+armour mesh. Nothing about the plate is solved while the game runs.
 
 ## Which items
 
@@ -35,25 +39,23 @@ the bake keeps the scene's axes (`forward: '+y', up: '+z'` - the brigandine's sc
 +X is the actor's right; the names are no help to the side - the right gauntlet is the object called
 `Imperial_Steel_Left_Gauntlet_20_Male`, standing at +X.
 
-**It stands in a T-pose - the skins' bind, not the skeleton's rest.** The body in the scene is a Breton man out of a
-"Morrowind_TPose_Models" pack, arms out level. MW-STEEL1 took Morrowind's skeleton to rest the same way (an OpenMW
-forum reading of base_anim, "t-posing in the horizontal") and solved the transfer in the skeleton file's rest; retail's
-does not rest so. Its node transforms are the idle's first frame - the arms hanging, the right leg forward - and the
-T-pose is only its skins' BIND, read off their inverse binds. In game every T-posed arm piece then found the SHOULDER
-nearest and stood out level while the arm moved: Mac's "The new steel armor T-poses ingame". MW-STEEL2, below, solves
-the plate in the bind.
+**It stands in a T-pose, and the T-pose is Morrowind's bind.** The body in the scene is a Breton man out of a
+"Morrowind_TPose_Models" pack, arms out level. Retail's skeleton does not REST so - the vendored retail hierarchy
+(`vendor/weapon-sheathing/.../xbase_anim_sh.nif`) stores the idle's first frame in its node transforms, the arms
+hanging, the right leg forward - but its skins are BOUND so: the file's own "Tri Shadow" binds all 32 Bip01 bones in
+a T-pose, the hands level with the shoulders and 46.6 out. That bind is what the plate is skinned in (below).
 
 **The skirt is the set's.** Under the breastplate the scene keeps a skirt of plates
 (`Imperial_Silver_Cuirass_67_Male.011`, painted from a "steelpelvis" texture). MW-STEEL1 stripped it - its painting had
 never come, and Mac had said "That was never apart of the set its just the breastplate and leg armor". On 2026-10-07 Mac
-sent it: "This is the missing texture for the morrowind steel armor's skirt", with the two exports again. It is baked
-now, the Steel Cuirass's second part (below).
+sent it (MW-STEEL2): "This is the missing texture for the morrowind steel armor's skirt", with the two exports again.
+It is baked, the Steel Cuirass's second part (below).
 
 **The body it was fitted on is Morrowind's own.** Beside the armour the scene keeps two objects of that Breton -
 his head (`Breton_Male.003`) and his neck (`Breton_Male.006`), wearing Morrowind's tx_b_n_breton_m_* pictures. They are
 Bethesda's meshes, the port never ships Morrowind data, and a public repository publishes every file it commits, so
-they are NOT committed: `tools/fbxStrip.mjs` takes them out at import (below). What the fit needs of them is their
-bounds - twelve numbers, kept as ownArmorModels.js `STEEL_PLATE_SCENE`.
+they are NOT committed: `tools/fbxStrip.mjs` takes them out at import (below). Their bounds - twelve numbers - are kept
+as `tools/bakeSteelPlate.mjs` SCENE_BODY, the evidence the scene's frame is read against (below).
 
 ## The strip
 
@@ -70,7 +72,7 @@ byte - pinned.
 
 `node tools/bakeSteelPlate.mjs --import=<New_Ship.fbx>,<New_Ship1.fbx>` runs it on Mac's two exports: which is which is
 read from the files (the open helm's object is in one), every shared object must bake the same from both, the reference
-body is measured and printed for `STEEL_PLATE_SCENE`, and the two committed sources are written -
+body is measured and printed for SCENE_BODY, and the two committed sources are written -
 `src/assets/mw/source/Steel_Plate.fbx` (the whole set with the open helm and the skirt, the head and the neck
 stripped) and
 `Steel_Plate_Closed_Helm.fbx` (the closed helm and its visor alone; the shared pieces are the first's).
@@ -79,20 +81,76 @@ stripped) and
 
 `node tools/bakeSteelPlate.mjs` makes twelve meshes and eight textures under `src/assets/mw/` (a Data Files tree,
 served by `systems/ownMwAssets.js` after the player's loose files and before every BSA, as the Thunderlock's and the
-brigandine's are). Each piece is read out of the scene by its own object (`PIECES`), and each object must stand where
-it was read - its scene box, to 0.02 - or the bake refuses it by name, so a re-export that renamed, moved or reshaped
-one never ships a boot as a greave (bakeGalleon's ROLES boxes, the same lesson). Every mesh keeps the scene placement
-(`placement: 'scene'`); every painting is mip-chained to an uncompressed DDS as the brigandine's is, the left and right
-of a pair sharing one. The closed helm is ONE part of TWO shapes - a shell in the helm's painting, a visor in the
-faceplate's - which `tools/nifWrite.mjs meshesToNif` writes (meshToNif is its one-shape case, and the Thunderlock and
-the brigandine re-bake to the same bytes). `test/mwsteel1.test.js` re-makes every file from the committed sources byte
-for byte and decodes each DDS back to its painting pixel for pixel.
+brigandine's are), from the two sources, the eight paintings and retail's skeleton. Each piece is read out of the scene
+by its own object (`PIECES`), and each object must stand where it was read - its scene box, to 0.02 - or the bake
+refuses it by name, so a re-export that renamed, moved or reshaped one never ships a boot as a greave (bakeGalleon's
+ROLES boxes, the same lesson). Every mesh keeps the scene placement (`placement: 'scene'`) and is skinned (the rig,
+below); every painting is mip-chained to an uncompressed DDS as the brigandine's is, the left and right of a pair
+sharing one. The closed helm is ONE part of TWO shapes - a shell in the helm's painting, a visor in the faceplate's.
+`test/mwsteel1.test.js` re-makes every file from the committed sources and the vendored skeleton byte for byte and
+decodes each DDS back to its painting pixel for pixel.
+
+## The rig: skinned at bake time, as retail's armour is
+
+Retail Morrowind ships its armour skinned: each piece's NIF carries its own weights to the Bip01 bones and its own
+inverse binds, made once by the modeller, and the engine only reads them (Morrowind-Rules.md rules 12, 19 and 20).
+The plate came as static meshes on a T-posed body, so the bake does the modeller's step.
+
+**The bind is retail's own.** `retailBind` reads the vendored skeleton's Tri Shadow - skinned over the whole Bip01
+chain with an identity skin transform on an identity shape, never drawn (rule 59) - and each bone's inverse bind,
+undone, is where that bone stood when retail's skins were bound. A skeleton whose shadow is missing, or moved, turned
+or scaled, is refused.
+
+**The scene stands on it, measured.** The Tri Shadow's frame is its own (the pelvis 22 units under its origin) and the
+scene's is Blender's (the soles on z = 0); their axes agree, both upright and facing +Y, and the scene is the bind
+moved by `SCENE_FROM_BIND` = (0, 2.5, 98.55). The T-posed Breton's own meshes are not here to read, so the number is
+read off the pieces against the bones: the forearm's bone line runs through the middle of each gauntlet's cuff (its
+cross-sections centred 2.6 to 3.0 in front of the line and 98.3 to 98.8 above it, x 34 to 46, where the cuff is a clean
+tube); the neck bone stands mid-neck in SCENE_BODY's neck (its centre 1.9 in front of the bind's); and the bind's
+pelvis stands at the idle's height (76.37, which is the 98.55), putting the ankle bone 6.6 over the scene's floor (6.8
+over the boots' lowest point) as it stands 6.8 to 7.0 over the floor in the idle. Across, nothing: the bind and the plate are both mirrored about x = 0.
+The pins hold each of those, and a unit's error either way fails them.
+
+**The weights are a rigger's** (`tools/skinWeights.mjs` jointWeights). Each piece names its own bones - a modeller's
+vertex groups, `PLATE_RIG` - each a segment in the bind from its origin to where it ends (its child's origin, or for
+a bone that ends in nothing a point in its own frame: the hand at its knuckles, a finger 2.5 past its last joint, the
+foot at its ball, the head at its crown). Each vertex goes to the segment it is nearest, and blends across a JOINT
+with the bone on the other side - a smoothstep across the joint's plane, `blend` units either side - and nowhere else,
+so the steel keeps its shape between joints and folds across a joint's width:
+
+| piece | its bones (a joint's blend, units) | shape |
+|---|---|---|
+| breastplate | the pelvis, the spine (3), spine1 (3), spine2 (3), the neck (2); the clavicles at its shoulders (2) | `Tri Chest` |
+| skirt | HANGS: the pelvis alone at the waist (z 84), the thighs' share growing to 0.7 at the hem (z 64.5), split left and right across 4 units of the middle | `Tri Groin` |
+| pauldron | the clavicle at its root, the upper arm it covers (2.5) | `Tri Right Clavicle` / `Tri Left Clavicle` |
+| gauntlet | the forearm under its cuff, the hand (1.5), and the three fingers Morrowind's hand has - the thumb and two pairs, each of two joints (1, 0.75) - so its fingers close as the hand's do | `Tri Right Hand` / `Tri Left Hand` |
+| greave | the thigh and, past the knee, the calf (3) | `Tri Right Upper Leg` / `Tri Left Upper Leg` |
+| boot | the thigh at its top (it stands over the knee), the calf (3), the foot past the ankle (2) | `Tri Right Foot` / `Tri Left Foot` |
+| helm | the head alone - rigid on the skull, as a helmet is | `Tri Hair` (the closed helm's visor `Tri Hair 1`) |
+
+Welded vertices (one position, split by a seam in the UVs or the normals) are weighted once and share the answer, so
+no seam opens under a pose. A vertex carries one bone or a joint's two (a hanging one up to three), normalised to 1.
+The law is pure arithmetic, so the bake is the same bytes on every machine.
+
+**The file is a retail piece's shape** (`tools/nifWrite.mjs` skinnedMeshesToNif). Each shape a NiSkinInstance over the
+bones it weights and a NiSkinData of their inverse binds (the bind undone, mesh space to bone space, as rule 19 reads
+it), an identity skin transform and its weights; the shape NAMED for the slot it fills, because rule 15's filter picks a
+skinned part's geometry by that name ("Tri Right Hand 0" passes for the right hand, nothing for the left; the helm
+fills the HAIR slot, whose filter is the word "hair"). The bones stand as nodes under the root at their binds, after
+every shape, so the file is its own bind pose and a tool that skins it against its own nodes draws it where Mac put it.
+
+**Worn, it is a retail part.** composeWornArmor claims each piece's slots at an armour's priority and hands the build
+its mesh alone - no `skinFrom`, no fit - and bindPartsInto binds it on the skinned branch every retail body part and
+armour piece takes: rebound onto the wearer's skeleton by its bones' NAMES (rule 12, never parented to a bone), drawn by
+skinBatch (rule 20) in whatever pose the animation gives. The third-person body, every peer's and the first person's
+gauntlets (fpWornAdds keeps the hands) are the one door; on the first-person rig the gauntlets ride its forearm, hand
+and finger bones by name, whatever that rig's rest. A bone a rig lacks is rule 40's skipped influence, said on the
+card. Women and beast races wear the plate as they wear retail's armour: it follows their bones.
 
 ## Where each piece goes
 
 ownArmorModels.js gives each piece the ARMO_PART slots a retail piece of its shape fills, so the priority law and the
-skin shadows are the ordinary path (composeWornArmor claims them at an armour's priority, as composeRefs claims a
-record's):
+skin shadows are the ordinary path:
 
 | piece | slot(s) | also hides (`hides`) |
 |---|---|---|
@@ -105,99 +163,11 @@ record's):
 
 `hides` is reserveIndividualPart's occupation - the slot claimed with no mesh, at the armour's priority - so the skin
 under a vambrace or a boot's shaft is not drawn. The law stands over the plate as over retail's: a worn clothing skirt
-reserves the groin and both upper legs at its higher priority and covers the greaves, and a robe the rest of what it
-reserves. The helm takes the HAIR slot: the hair is hidden (the helmet-hides-hair rule, AUDIT 30 F1, by the slot itself) and the head is LEFT - the
-open helm shows the face, and the closed one's eye slit looks onto it rather than through an empty helm.
-
-## The fit: kept to the scene's own body
-
-MW-BRIG3 learned that a modeller's scene is not the skeleton's rest, and fitted the brigandine by meeting its own top
-to the chest's - its scene carried no body to measure. This one does, so a piece keeps its relation to THAT body
-instead of to its own edges (a collar that rises up the neck stays risen). `fitShift` (mwSkinTransfer.js): a list of
-rules, each naming a wearer's part, for each axis a feature of that part's rest-pose bounds ('min', 'max', 'centre'),
-and the scene's bounds of the same part (or 'self', the piece's own, for a part the scene did not carry); the piece
-moves by the wearer's feature less the scene's, a pure translation measured in the rest pose before the piece is
-skinned. The rules:
-
-- **The neck** - the breastplate, the pauldrons, the gauntlets and the greaves: across and front to back by
-  its middle, up by its base. The one part of the scene's body every wearer has in the same place over the shoulders.
-- **The head** - the helm: across by its middle, front to back by the back of the skull (noses differ, skulls far
-  less), up by the crown. Heads differ by race and face; the neck would carry a helm to where the Breton's head was.
-- **The feet** - the boots: up by the sole, the boot's lowest point to the foot's; across and front to back by the
-  neck, so they stay under the greaves. Legs differ in length between the three skeletons, and a boot off the ground
-  or sunk into it is the plainest error a body can show.
-
-On a male body (base_anim.nif, the skeleton the scene's Breton stands on) the rules agree and reproduce Mac's fit
-exactly, wherever his scene stood; on another skeleton each piece follows the part it hangs on. The build's notes say
-what each piece was moved by ("fitted to the neck (xyz) - moved ..."), and with no such part the piece stays where the
-scene put it and the note says that instead. The pins stand the plate on a T-posed body laid to the scene's proportions
-and moved off them, with the neck and head built to the scene's measured bounds: every piece lands moved by exactly
-that offset.
-
-## Skinned from the body, each side its own
-
-Each piece is skinned from the body under it (`skinFrom`, MW-BRIG2's transfer): the breastplate from the chest, groin
-and upper arms; the gauntlets from the hand, wrist, forearm and upper arm; the greaves from the thighs, knees and
-groin; the pauldrons from the upper arm and chest; the helm from the head; the boots from the foot, ankle and knee.
-
-**A sided piece copies its own side** (`transferSkin`'s `side`, from the part's name). Without it the inner face of a
-right greave could copy the left thigh where the two meet - measured on the fixture, where the thighs touch at x = 0
-and a tie goes to the first source, the left - and stretch a triangle between the legs at every stride. A body vertex's
-side is its HEAVIEST bone's ("Bip01 L Thigh", "Left Upper Leg" - boneSide), never where it stands; a vertex whose
-heaviest bone is the pelvis or the spine serves both sides.
-
-## The first person: solved on the third-person skeleton
-
-The gauntlets are the one piece the first person keeps (fpWornAdds: the arm bones), and the hands are always on
-screen. The first-person rig's rest is not the bind the plate was fitted in, and its hand is a different mesh
-(`b_n_*_hands.1st`; the forearm and upper arm are the third person's - Morrowind-Rules.md, "retail gives a Nord male
-ONE first-person arm record"). So the first person's own adds are skinned from the THIRD-person body and SOLVED ON THE
-THIRD-PERSON SKELETON (`solveOn`) in its bind (MW-STEEL2), fitted by the same rules, and worn on the first-person rig
-by their bones' NAMES
-(`rebindSkin`): a transferred skin is bone-relative, in graph space, and the bones are the same bones. The pin turns
-the first person's arm away from the T-pose at rest and finds the gauntlet on its forearm exactly as on the third
-person's; solved on that rest instead, the T-posed gauntlet binds to other parts. A bone the rig lacks is a null ref,
-skipped as rule 40 skips one, and the note names it.
-
-`combat/fpArm.js` reads the body under an own model in ONE place for both rigs - `ownBodyPaths` (the skin slots and
-the fit's slots, shadowed or not) and `ownBodyPart` (their bytes, `fitTo`, `fit`, and `solveOn` when the rig differs).
-
-## MW-STEEL2: the skirt, and the pose the body was bound in
-
-Mac, 2026-10-07: "This is the missing texture for the morrowind steel armor's skirt" (a 128 x 128 painting) and "The
-new steel armor T-poses ingame", the two Blender exports attached again.
-
-**The skirt.** The exports reproduce the committed sources byte for byte (the same twelve objects, the same strip), so
-the skirt is read out of the same scene: `bakeSteelPlate.mjs` imports it now (`NOT_IN_SET` is gone; the strip takes the
-head and the neck alone), `PIECES` reads it by its object and its scene box, and the painting is the committed
-`src/assets/mw/source/Steel_Plate_Skirt.png`, mip-chained to `steel_plate_skirt.dds` beside `steel_plate_skirt.nif`. It is
-the Steel Cuirass's SECOND part (ownArmorModels.js `steel()`'s cuirass parts): Morrowind's skirt slot, which a retail
-cuirass's skirt fills, skinned from the groin and both upper legs (`STEEL_SKIRT_SKIN_FROM` - a part may name its own body,
-mwItemMap.js composeWornArmor's `p.skinFrom ?? own.skinFrom`), shadowing nothing. A worn clothing skirt takes the slot
-over it at its higher priority, as over a retail cuirass's.
-
-**The T-pose.** Retail's xbase_anim rests with the hands hanging 34 units under the shoulders (the pin reads the
-vendored hierarchy, `vendor/weapon-sheathing/.../xbase_anim_sh.nif`); the T-pose lives only in the skins' inverse binds.
-MW-STEEL1's pins stood on a rig whose rest WAS a T-pose over a rigid body, so none could tell the rest from the bind.
-`bindPoseMats` (mwSkinTransfer.js) recovers the bind: within one skin every bone's bind is fixed by any other's,
-P_c = P_b o IB_b o IB_c^-1; a group of bones the skins connect is anchored at its root-most bone - the skeleton file's
-own skin's first (MW-STEEL3, below), standing on that bone's rest ORIGIN with the bind's rotation, so the bound body
-stands on the floor the rest stands on; a group only a body part's skin reaches stands on its anchor's whole rest - and
-grows through every skin that touches it; a bone no skin binds rides its parent's bind by its own rest local. The skins
-read are the worn parts' own and the skeleton file's own "Tri Shadow" (`skeletonBindSkins` - skinned over the whole
-Bip01 chain and never drawn, rule 59), which binds the bones no part reaches; a rigid part's "inverse bind" is its
-placement, not a bind, and says nothing (`rigid`). Retail's 32 bones come out one group at the pelvis, its one skin
-agreeing with itself to under a thousandth of a unit; a body whose skins disagree past `BIND_SPREAD_NOTE` says by how
-much on the card.
-
-A piece modelled on a T-posed body says so - `solvePose: 'bind'` on every steel piece (`STEEL_SOLVE_POSE`), carried by
-composeWornArmor - and bindSkinnedFromBody fits and transfers it in the bind instead of the rest; the frame's pose is
-the animation's as before. The brigandine keeps the rest its fit was proven in, and a body with no skin to read keeps
-the rest and the card says so. The pins stand a rig whose arms hang at rest over a SKINNED body bound in the T-pose -
-retail's shape - and each fails on the MW-STEEL1 solve: the gauntlet copied the shoulder and stood out level, more than
-20 units off the arm; solved in the bind it copies the forearm and the hand, lies within 5 of them at rest, and holds
-that gap through a turn of the elbow. In first person the gauntlets are solved in the third person's bind and worn on the
-first person's rig by name, so they sit on its forearm whatever either rig's rest.
+reserves the groin and both upper legs at its higher priority and covers the greaves, and takes the skirt slot from the
+plate skirt; a robe the rest of what it reserves. The plate skirt shadows nothing (ARMO_PART's skirt row): the groin
+skin stays under it. The helm takes the HAIR slot: the hair is hidden (the helmet-hides-hair rule, AUDIT 30 F1, by the
+slot itself) and the head is LEFT - the open helm shows the face, and the closed one's eye slit looks onto it rather
+than through an empty helm.
 
 ## The Steel Helm switch
 
@@ -206,61 +176,83 @@ group Combat, the port's own): pref `mwSteelHelm`, `closed` or `open` (ownArmorM
 switch's values ARE the helm's styles). It is the VIEWER's, as the sheathing is: read where the worn set is composed
 (fpArm.js, beside Show Nudity's weld), it is how this machine draws a steel helm - the player's and every peer's - and
 it never reaches the wire. Thrown, the tile rebuilds the standing body at once (ui/enhancedMenu.js TILE_AFTER, whose
-after-step a choice's write now takes as a switch's does); a peer's body takes it at its next build.
+after-step a choice's write takes as a switch's does); a peer's body takes it at its next build.
 
 ## Not done here
 
-- **Not seen in game.** Every pin runs on a fixture body (the bind pose's premise on retail's own vendored hierarchy);
-  the fit is measured on the player's own body at bind time and the notes say what it moved and which pose it was
-  solved in, so a piece that still sits wrong says how far it went.
-- **The fixture's limbs are rigid**, so in the pins' poses a piece's triangles part where they change source (the
-  top of a greave, on the groin, against the rest of it on the thigh); a retail body is skinned with weights blended
-  across the hip, and the plate copies those blends. Whether the greaves' tops hold on a real stride is a thing to look
-  at.
-- **Women and beasts** wear the plate Mac fitted on a man: each piece follows the part it hangs on (the rules above),
-  its shape is the one it was modelled with. Beast feet are not a Breton's.
+- **Not seen in game yet** - no retail data is in the tree. Every pin stands on retail's own skeleton (the vendored
+  hierarchy, its rest and its Tri Shadow), and the plate is worn on the path retail's own armour is worn on, which the
+  game has drawn since MW-D20 (Mac's retest: "hands PERFECT"); what is the plate's own is the bind's
+  placement under it (SCENE_FROM_BIND, read to about a unit) and the weights.
+- **The weights are geometric** - a rigger's law, not an artist's painting. If a joint folds badly in play, the
+  piece's bones and blends in `PLATE_RIG` are where to look, and a re-bake is the whole fix.
+- **The first person's finger bones** are assumed on its rig, as retail's .1st hands use them; if a rig lacks one, the
+  card names it (rule 40) and those finger vertices collapse - which is exactly what the note is for.
+- **Women and beasts** wear the plate Mac fitted on a man, skinned to their own bones as retail's armour is. Beast feet
+  are not a Breton's, and the port does not keep boots off them (retail's does not apply here either).
 - **The ground and icon pictures** of the Steel pieces still resolve to retail's steel meshes (MW-ASSIGN's icon path),
   as the brigandine's do. The worn body is what this changes.
+- **The brigandine** is still rigged at runtime (MW-BRIG2/3 - skinned from the body under it, fitted to the chest); it
+  could be baked the same way.
 - **The licence.** Three objects are named for the meshes they were modelled from (`Imperial_Silver_Cuirass_67_Male`,
   `Imperial_Steel_Left_Gauntlet_20_Male`, and `Breton_Male` for the greaves and pauldrons), and the paintings came from
   folders under Mac's Downloads; whether the geometry and the paintings are his own work or carry a licence of their own
-  is **Mac's to confirm**, as the brigandine's is. The doctrine rows call them SUPPLIED and claim no more.
+  is **Mac's to confirm**, as the brigandine's is. The doctrine rows call them SUPPLIED and claim no more. The skins'
+  inverse binds are the vendored skeleton's binds, Greatness7's Weapon Sheathing skeleton (credited, free to use for
+  Morrowind projects).
 
-## MW-STEEL3: the bind's anchor stands in the skeleton's frame
+## MW-STEEL1 to MW-STEEL3: the runtime rig (RETIRED by MW-STEEL4)
 
-Mac, 2026-10-07: "Morrowind integration bugs. I am so tired of us not getting this right", over a player's screenshot
-(AverageDoggo: "OOF the arms are mega borked") - third person, a robe over the steel plate, a staff in the hanging right
-hand, and both gauntlets floating in a V over the helm.
+The plate shipped as static meshes for its first day, and each session rigged it AT RUNTIME against the player's own
+body:
 
-**The arms hung; the gauntlets did not follow them.** The robe's sleeves hang at the sides and the staff is in the right
-hand at the hip, so the bones were where the idle put them. The pieces drawn off the body were MW-STEEL2's: the plate
-solved in the bind. What placed them is `bindPoseMats`' anchor. The relation P_c = P_b o IB_b o IB_c^-1 is
-frame-free - it says where every bone stands relative to another - but the ANCHOR's axes were taken from its skin as
-though the skin's mesh were authored in the skeleton's frame. The skeleton file's own "Tri Shadow" is (its bind stands
-upright on the vendored retail file). A retail body part is not: its mesh is part-local (Morrowind-Rules.md MW-D21, "a
-torso on the ground"). And a skin may list bones it does not weight: one that lists the pelvis (or Bip01, above it)
-wins the tie at the anchor, because the body's own skins come first so a part is drawn as it was bound - and the
-whole bind turns with one part's frame. (This tree carries no retail body part to read their bone lists from; the
-fault reproduces exactly so on retail's own skeleton, below, and on nothing else this session could find.) Every gauntlet then found the clavicle nearest, copied it, and was
-drawn wherever that turned bind carried it; the breastplate's skirt stood beside the left shoulder.
+- **MW-STEEL1** (2026-10-06) fitted each piece onto the wearer by the scene's measured neck, head and feet (`fitShift`)
+  and skinned it from the body part under it, each vertex copying the nearest body vertex's skin (MW-BRIG2's transfer,
+  with a side); the first person's gauntlets were solved on the third-person skeleton and rebound by name. It solved in
+  the skeleton file's REST, taking it for a T-pose - Mac: "The new steel armor T-poses ingame".
+- **MW-STEEL2** (2026-10-07) found the rest is the idle's frame and recovered the BIND from the skins at runtime
+  (`bindPoseMats`: P_c = P_b o IB_b o IB_c^-1 through a skin, anchored at its root-most bone), and baked the skirt.
+- **MW-STEEL3** (2026-10-07; Mac: "Morrowind integration bugs. I am so tired of us not getting this right", over a
+  player's screenshot of the gauntlets floating in a V over the helm) found the anchor took a part-local body skin's
+  frame for the skeleton's, and anchored at the skeleton's own skin first.
 
-**Why every pin passed.** plateRig.mjs stands every bone unturned and authors every skin in the skeleton's own frame -
-the one condition under which the two frames coincide (MW-D20's lesson, verbatim: "every fixture's root was IDENTITY
-... the exact conditions under which three spaces coincide. Retail data holds none of them."). The premise pin read the
-Tri Shadow on retail's file and nothing else; no pin ever put a retail-shaped body on retail's skeleton.
+Every pin of the three ran on fixtures (`test/fixtures/mw/plateRig.mjs` - RETIRED with them), and each fix was a
+correction to a solve that read frames retail data does not share; the third still carried the plate on recovered
+binds the game never showed it was right about. MW-STEEL4 retired the solve whole: `fitShift`, `shiftBatch`,
+`bindPoseMats`, `rebindSkin`, `skeletonBindSkins`, the sided transfer, the plate's `fit`/`solvePose`/`skinFrom` rows and
+the first person's own-model solve are gone, and `mwSkinTransfer.js` and `bindSkinnedFromBody` are MW-BRIG3's again.
+Their pins went with them (`test/mwsteel2.test.js` and `test/mwsteel3.test.js` RETIRED, and MW-STEEL1's fit, transfer
+and first-person pins), and their mutants (`tools/mutants/mwsteel2.json` and `tools/mutants/mwsteel3.json` RETIRED, 15
+of `mwsteel1.json`'s 28 records with the code they mutated).
 
-**The fix** (`mwSkinTransfer.js` bindPoseMats, `mwFirstPerson.js` skeletonBindSkins): the skeleton file's own skins say
-so (`frame: 'skeleton'`), and they anchor FIRST - their root-most bone, the bind's rotation and the rest's origin, as
-MW-STEEL2 meant - whatever a body skin lists. A group no skeleton skin reaches is anchored at its root-most bone's
-whole REST, claiming no frame, and the relation carries it out from there. The first person's gauntlets are solved
-through the same door on the third-person skeleton, so they move with it.
+## MW-STEEL4: rigged as retail's armour is
 
-**The pins** stand on retail's own skeleton (`test/fixtures/mw/retailRig.mjs`): the vendored hierarchy with every
-bone's rest turned as retail's are, the part nodes, its own Tri Shadow verbatim, and a skinned body bound in that Tri
-Shadow's T-pose with real rotated inverse binds, authored part-local and listing the pelvis. The true bind there is
-built by hand from the Tri Shadow, not by the code under test. `test/mwsteel3.test.js`: both gauntlets copy their own
-forearm and hand and lie within 5 units of the hanging arm (MW-STEEL2's anchor: the clavicle copied, 34 units off),
-hold it through a turn of the elbow, come out the same whatever frame the body is authored in, with and without the Tri
-Shadow; the Tri Shadow's pelvis anchors though a body skin lists Bip01 above it; and the breastplate and its skirt
-stand centred on the torso, the skirt about the pelvis. `tools/mutants/mwsteel3.json` (7, all dead); two MW-STEEL2
-records re-aimed by content.
+Mac, 2026-10-07: "I think the prior session to rig the new steel set on the morrowind model really fucked it up. How
+hard is it to switch it out?" - and offered pulling the plate, parking it behind a switch, or rigging it properly, "You
+do it properly".
+
+**What changed.** The plate's twelve NIFs are skinned at bake time (the rig, above): `tools/bakeSteelPlate.mjs` reads
+the bind off the vendored skeleton (`retailBind`, `plateBind`), stands the scene on it by `SCENE_FROM_BIND`, weights each
+piece by `PLATE_RIG` through `tools/skinWeights.mjs` jointWeights and writes it with `tools/nifWrite.mjs`
+skinnedMeshesToNif (meshesToNif's own shape records, a skin after each, the bones last - so a rigid part is the bytes it
+always was; the Thunderlock and the brigandine re-bake the same). The steel rows in ownArmorModels.js are their parts
+and nothing else; composeWornArmor carries `skinFrom`/`fitTo` only for a model that has them (the brigandine), and the
+build hands the binder a plate piece's mesh alone, in both persons. The paintings, the sources, the slots, the shadows
+and the Steel Helm switch are untouched.
+
+**How it was proven.** On retail's own skeleton (`test/fixtures/mw/retailRig.mjs`: the vendored hierarchy and its Tri
+Shadow verbatim, with the part nodes base_anim carries; the bind pose built from the Tri Shadow's records by hand, not by
+the bake) through the binder the game uses. `test/mwsteel4.test.js`: the bind undoes every inverse bind and is a
+T-pose; the scene stands on it (the cuffs on the forearm line to 0.75, the neck and head bones inside the scene's neck
+and head, the ankles 6.8 over the soles); every NIF a shape per painting named for its slot (and no other), over its
+own side's bones, each inverse bind the bind undone, every vertex's weights summing to one, the skirt's hang law on
+every vertex; every piece bound as a skinned part with no note, and in the bind pose every one of 3,000-odd vertices
+Mac's scene to 0.002 under one frame; in retail's idle the gauntlets on the hanging hands (the cuff within 7 of the
+forearm, the gauntlet 25 clear of the shoulder - MW-STEEL2's fault - and of the helm - MW-STEEL3's), the helm round the
+head bone, each boot, greave, pauldron, the breastplate and the skirt on their bones, the right boot a step ahead;
+posed (an elbow, a knee, a thigh, the head, two finger joints), every vertex one bone carries moving exactly as that
+bone; in first person, on a rig whose arm rests elsewhere at other refs, each gauntlet the same in its bones' own frames;
+the rig's law case by case; the skin writer read back as the reader reads retail's, its file its own bind pose; and
+nothing left of the runtime solve. `tools/mutants/mwsteel4.json` (16, all dead). The poses were also drawn and looked
+at (the bind, the idle, a stride, the arms at work) on the same skeleton, off the tree - the pictures are not
+committed.

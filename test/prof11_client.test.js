@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY, accountRefusalText } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
-import { xpForRank, PROF_XP_MAX, MASON_FEE } from '../src/net/professionLaw.js';
+import { xpForRank, PROF_XP_MAX, MASON_FEE, trackOf } from '../src/net/professionLaw.js';
 import { recipeById, MASTERWORK, CHISEL_ACT } from '../src/net/recipeLaw.js';
 import { decorPieceOf } from '../src/net/decorLaw.js';
 import { mintPiece, mintPieces, craftedText, isCraftedFurniture, MASON_KEPT_TEXT } from '../src/systems/smithItems.js';
@@ -92,8 +92,8 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
   const ann = await s.registered('Ann');
   const give = (m, qty) => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
-  const track = (xp, spec50 = null, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'masonry', ?, ?, ?, ?)
-    ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec50 = excluded.spec50, spec100 = excluded.spec100`).run(mac.id, mac.character, xp, spec50, spec100, NOON);
+  const track = (xp, spec50 = null, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', ?, ?, ?, ?)
+    ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec50 = excluded.spec50, spec100 = excluded.spec100`).run(mac.id, mac.character, xp, spec50, spec100, NOON);   // PIN MOVED (CRAFT3): Masonry's rank and choices are the Building track's row
   give('stone:rough', 20);
   give('metal:sulphur', 1);
   give('metal:lead', 1);
@@ -122,7 +122,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
   const page = pageOf();
   try {
     assert.match(page.text(), /The Mason's Bench/);
-    assert.match(page.text(), /The mason's bench - 50 gold a cut, a mix or a carving\. Masonry 0 \(Novice\)\./);
+    assert.match(page.text(), /The mason's bench - 50 gold a cut, a mix or a carving\. Building 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says its craft's track
     // THE CUT: five cuts, the chisel struck true four times
     const cutQty = page.qty(0);
     cutQty.value = '5';
@@ -135,7 +135,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     assert.equal(book.held('stone:cut'), 5);
     assert.equal(book.held('stone:rough'), 10);
     assert.equal(book.track('masonry').xp, 5 * 20 * 1.5 + 500, 'a clean chisel half again, and the first cut\'s 500');
-    assert.deepEqual([said.at(-1), player.gold], ['+650 masonry', 950]);
+    assert.deepEqual([said.at(-1), player.gold], ['+650 building', 950]);   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE MIX: rank 10 opens it (the cut alone brought 650 of 1,000)
     assert.match(page.text(), /rank 10/, 'Mortar shut below rank 10');
     track(xpForRank(10));
@@ -145,7 +145,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     await settled();
     assert.equal(book.held('stone:mortar'), 10, 'ten at a time');
     assert.deepEqual([book.held('metal:sulphur'), book.held('metal:lead'), book.held('stone:rough')], [0, 0, 5]);
-    assert.equal(said.at(-1), `+${1 * 20 * 2 + 500} masonry`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first 500');
+    assert.equal(said.at(-1), `+${1 * 20 * 2 + 500} building`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first 500');   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE SCULPTOR'S COLUMN: a Master who chose the Sculptor, the dice steered to a Masterwork (the mark)
     track(PROF_XP_MAX, 'quarryman', 'sculptor');
     give('stone:cut', 12);
@@ -189,16 +189,16 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
 
 // ─── THE PAGE ────────────────────────────────────────────────────────
 
-/** The Stores page over a stub book - the mason's bench where `bench` says, Masonry at `rank` under `specs`. */
+/** The Stores page over a stub book - the mason's bench where `bench` says, Masonry (the Building track) at `rank` under `specs`. */
 function stubPages({ bench = { kind: 'shop', fee: 50 }, rank = 0, specs = { 50: null, 100: null }, held: heldIn = {}, purse = 1000, over = {} } = {}) {
   resetProfPages();
   setPref('gentleActs', false);
   const held = new Map(Object.entries({ 'stone:rough': 9, 'metal:sulphur': 2, 'metal:lead': 2, ...heldIn }));
-  const tracks = new Map([['masonry', { profession: 'masonry', xp: xpForRank(rank), rank, specs }], ['outfitting', { profession: 'outfitting', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);
+  const tracks = new Map([['building', { profession: 'building', xp: xpForRank(rank), rank, specs }], ['outfitting', { profession: 'outfitting', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);   // PIN MOVED (CRAFT3): Masonry's is the Building track
   const book = {
     state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: {}, hunt: { hides: 0, high: 0 } }, stale: () => false, refresh: async () => ({ ok: true }),
     held: (k) => held.get(k) ?? 0, store: (k) => ({ material: k, own: held.get(k) ?? 0, bought: 0 }),
-    track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
+    track: (p) => tracks.get(trackOf(p)) ?? { profession: trackOf(p), xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,   // PIN MOVED (CRAFT3): as the real book's - a discipline asked is its craft's track
     choose: async () => ({ ok: true }),
   };
   const calls = [];
@@ -218,7 +218,7 @@ test('PROF11 pages: the Mason\'s Bench at a General Store - the cut and the mix 
     assert.deepEqual([...PROF_STATIONS], ['forge', 'workbench', 'loom', 'mason', 'jeweller']);   // PIN MOVED (PROF10): the jeweller's bench
     assert.equal(stationColdLine('mason'), MASON_COLD_LINE);
     assert.match(MASON_COLD_LINE, /Masonry is done online, from your Stores page/);
-    assert.match(page.text(), /The mason's bench - 50 gold a cut, a mix or a carving\. Masonry 0 \(Novice\)\./);
+    assert.match(page.text(), /The mason's bench - 50 gold a cut, a mix or a carving\. Building 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says its craft's track
     assert.match(page.text(), /stone:cut2 stone:rough \(9\)/, 'the cut and its stone held');
     assert.match(page.text(), /stone:mortar x101 metal:sulphur \(2\) \+ 1 metal:lead \(2\) \+ 5 stone:rough \(9\) - rank 10/, 'ten a mix, shut below rank 10');
     assert.deepEqual([masonVerb('cut:stone'), masonVerb('mix:mortar')], ['Cut', 'Mix']);
@@ -285,7 +285,7 @@ test('PROF11 pages: the Mason\'s Bench at a General Store - the cut and the mix 
   // a home's bench: no fee
   stubPages({ bench: { kind: 'home', fee: 0 } });
   const home = pageOf();
-  try { assert.match(home.text(), /Your mason's bench\. Masonry 0/); } finally { home.done(); }
+  try { assert.match(home.text(), /Your mason's bench\. Building 0/); } finally { home.done(); }   // PIN MOVED (CRAFT3): the bench says its craft's track
   // away from a bench: the word
   stubPages({ bench: null });
   const away = pageOf();
@@ -417,7 +417,7 @@ test('PROF11 pages: the Sculptor\'s stone decor - shut to all but a Sculptor ("a
   stubPages({ rank: 50, specs: { 50: null, 100: null } });
   let root = el('div'); document.body.append(root);
   drawProfessionsPage(root, () => {}, kit);
-  [...root.querySelectorAll('button')].find((b) => b.textContent.startsWith('Masonry')).onclick();
+  [...root.querySelectorAll('button')].find((b) => b.textContent.startsWith('Building')).onclick();   // PIN MOVED (CRAFT3): Masonry is practised as the Building track's
   root.remove(); root = el('div'); document.body.append(root);
   drawProfessionsPage(root, () => {}, kit);
   const text = root.textContent;
@@ -425,11 +425,19 @@ test('PROF11 pages: the Sculptor\'s stone decor - shut to all but a Sculptor ("a
     assert.doesNotMatch(text, /not practised/);
     const cards = [...root.querySelectorAll('button')].filter((b) => b.className.includes('prof-spec'));
     const card = (name) => cards.find((b) => b.textContent.startsWith(name));
-    assert.deepEqual([card('Quarryman').disabled, card('Builder').disabled, card('Fortifier').disabled, card('Sculptor').disabled], [false, false, true, true], 'at 50: either - PIN MOVED (SEAT2b): the Builder is chosen now');
+    // PIN MOVED (CRAFT3): Building's four a rank, Carpentry's two and Masonry's, each card naming its discipline
+    assert.deepEqual(cards.map((c) => [c.querySelector('b')?.textContent, c.querySelector('.prof-of')?.textContent ?? null, c.disabled]), [
+      ['Bowyer', 'Carpentry', false], ['Joiner', 'Carpentry', false], ['Quarryman', 'Masonry', false], ['Builder', 'Masonry', false],
+      ['Siegewright', 'Carpentry', true], ['Master Joiner', 'Carpentry', true], ['Fortifier', 'Masonry', true], ['Sculptor', 'Masonry', true],
+    ], 'at 50: any of the four - PIN MOVED (SEAT2b): the Builder is chosen now');
     assert.doesNotMatch(card('Builder').textContent, /Comes with the fortifications/);
     assert.doesNotMatch(card('Fortifier').textContent, /Comes with the fortifications/);
-    assert.match(text, /Cut Stone, from Rough Stonerank 0/);
-    assert.match(text, /Mortar, from Sulphur, Lead and Rough Stonerank 10/);
+    // PIN MOVED (CRAFT3): Masonry's unlocks among Carpentry's on the Building track, each named its discipline's, by tier
+    const unlocks = [...root.querySelectorAll('.px-stat')].map((r) => r.textContent);
+    assert.deepEqual(unlocks.filter((u) => u.startsWith('Masonry: ')), ['Masonry: Cut Stone, from Rough Stonerank 0', 'Masonry: Mortar, from Sulphur, Lead and Rough Stonerank 10']);
+    assert.equal(unlocks.every((u) => /^(Carpentry|Masonry): /.test(u)), true, unlocks.join(' | '));
+    const ranks = unlocks.map((u) => Number(/rank (\d+)$/.exec(u)?.[1]));
+    assert.deepEqual(ranks, [...ranks].sort((x, y) => x - y), 'by tier');
   } finally { root.remove(); setProfessionsPages(null); }
 });
 
@@ -495,7 +503,7 @@ test('PROF11 wiring: the mason\'s bench a General Store\'s (open for trade) or a
   assert.match(m, /if \(decorOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'mason'\)\) return \{ kind: 'home', fee: 0 \};/);
   assert.match(m, /if \(hallMemberHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'mason'\)\) return \{ kind: 'home', fee: 0 \};/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /: profession === 'masonry'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.masonHere\?\.\(\) \?\? null, a: 'a mason\\'s bench', who: 'mason', noun: 'mason\\'s bench', kept: MASON_KEPT_TEXT, xp: 'Masonry' \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word
+  assert.match(w, /: profession === 'masonry'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.masonHere\?\.\(\) \?\? null, a: 'a mason\\'s bench', who: 'mason', noun: 'mason\\'s bench', kept: MASON_KEPT_TEXT, xp: professionName\('masonry'\) \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word; PIN MOVED (CRAFT3): the XP said as the track's name ("Building")
   assert.match(w, /mason: \(\) => modes\?\.masonHere\?\.\(\) \?\? null,/);
   assert.match(w, /chiselBand: \(\) => chiselBand\(\{ strength: liveStat\(playerEntity, 'strength'\), endurance: liveStat\(playerEntity, 'endurance'\) \}\),/);
   assert.match(w, /smelt: async \(recipe, count, \{ clean = false \} = \{\}\) => \{/);
@@ -513,7 +521,8 @@ test('PROF11 wiring: the mason\'s bench a General Store\'s (open for trade) or a
   assert.match(idx, /POST \/v1\/prof\/smelt \{ character, recipe, count, clean\?, rid \}/);
   assert.doesNotMatch(accountRefusalText('prof-sculptor'), /problem|could not be read/);
   const p = src('src/ui/profPages.js');
-  assert.match(p, /drawLoom\(detail, rerender, kit\);   \/\/ PROF7\n\s*drawMasonBench\(detail, rerender, kit\);   \/\/ PROF11/);
+  // PIN MOVED (CRAFT4): the loom's Temper beside it, then the bench
+  assert.match(p, /drawLoom\(detail, rerender, kit\);   \/\/ PROF7\n\s*drawTemper\(detail, rerender, kit, 'loom'\);   \/\/ CRAFT4: the tailor's\n\s*drawMasonBench\(detail, rerender, kit\);   \/\/ PROF11/);
   assert.match(src('src/ui/enhancedPlusStyle.js'), /\.prof-chisel-line\.marked \{[^}]*double/, 'the marked line a shape as well as a colour (5.1)');
   assert.match(src('src/scenes/decorTool.js'), /if \(PROF_STATIONS\.includes\(want\) && !forgeOffered\(\)\) \{ deps\.say\?\.\(stationColdLine\(want\)\); return false; \}/, 'the mason\'s bench sold where the bench works, as the forge');
 });

@@ -302,7 +302,7 @@ test('PROF6 the Work tab\'s forms: an Officer\'s guild writ - the escrow, the pa
   byClass(form(), 'work-post')[0].click();
   await ticks();
   assert.deepEqual(calls.at(-1), ['commission', { region: DF, crafter: 'Silverthorn', recipe: 'dagger:iron', quality: 2, pay: 900 }]);
-  // a kit takes no quality: none asked, none sent
+  // a kit's commission asks no least quality: none asked, none sent (CRAFT5: a kit's quality is its reach, never a commission's)
   open('Commission a piece').click();
   const fam = selects()[0];
   fam.value = 'kits'; fam.onchange();

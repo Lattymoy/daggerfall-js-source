@@ -380,16 +380,21 @@ export const REFUSALS = Object.freeze({
   'prof-hunt-high': `Your account has taken all the rare hides a day allows (${HIGH_HIDES_PER_DAY}, across your characters).`,
   'prof-foe': 'No knife takes a hide from that body.',
   'prof-dye': 'That cannot be dyed so.',
-  'prof-sculptor': 'Only a Sculptor carves stone decor - Masonry\'s choice at 100.',   // PROF11
-  'prof-lapidary': 'Only a Lapidary sets a Siege-cracked Gem as a piece\'s gem - Jewelcrafting\'s choice at 100.',   // PROF10
+  'prof-sculptor': 'Only a Sculptor carves stone decor - a Building choice at 100 (Masonry\'s).',   // PROF11; CRAFT3: the craft's
+  'prof-lapidary': 'Only a Lapidary sets a Siege-cracked Gem as a piece\'s gem - a Smithing choice at 100 (Jewelcrafting\'s).',   // PROF10; CRAFT3
   // PROF12: the alchemy station's and the enchanter's refusals
-  'prof-transmuter': 'Only a Transmuter turns one metal into the next - Alchemy\'s choice at 100.',
+  'prof-transmuter': 'Only a Transmuter turns one metal into the next - a Provisioning choice at 100 (Alchemy\'s).',   // CRAFT3
   'bad-brew': 'That cauldron makes no such potion.',
   'bad-piece': 'That is no crafted piece.',
   'prof-no-piece': 'The counting-house knows no such crafted piece - only a piece a crafter made online can be disenchanted.',
   'prof-not-yours': 'That piece is not yours to disenchant.',
   'prof-piece-busy': 'That piece is listed on the market, on its way to you, or set down in a home - it cannot be disenchanted now.',
   'prof-piece-gone': 'Your character\'s record does not hold that piece loose in the pack - it cannot be disenchanted.',   // AUDIT PROF-541 B2
+  // CRAFT4: the temper's and the Reforge with Essence's refusals
+  'prof-temper': 'No temper takes that piece - a smith tempers weapons and metal armour, a tailor leather and cloth.',
+  'prof-temper-top': 'That piece has no step left to temper - Superior is the most a temper reaches, and a Masterwork stays its maker\'s.',
+  'prof-temper-stale': 'That piece is not the quality it was - read your Stores again.',
+  'prof-reforge': 'Arcane Essence reforges a Magic or Rare piece\'s line - never a Legendary\'s, an Aetheric\'s or an artifact\'s.',
   'prof-no-essence': 'That piece carries too little enchantment to give any Arcane Essence.',
   'bad-qty': `Take 1 to ${WITHDRAW_MAX} at a time.`,
   'bad-pixels': 'That land could not be read.',
@@ -1415,6 +1420,8 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     craft: (character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false) => post('/v1/prof/craft', { character, recipe, clean, name, rid, heartwood, ...(dye == null ? {} : { dye }), ...(seat == null ? {} : { seat }), ...(cracked === true ? { cracked: true } : {}) }),   // SEAT2b part two: `seat` the held town the station stands in   // PROF3: the anvil - `clean` the act's report, `name` the maker's mark; PROF4: the workbench, `heartwood` for a plank; PROF7: the loom, a garment's `dye`; PROF10: the jeweller's bench, `cracked` a Lapidary's Siege-cracked Gem for the gem
     stock: (character, material, qty, rid) => post('/v1/prof/stock', { character, material, qty, rid }),   // PROF3: the smith's stock
     brew: (character, potion, keys, rid, seat = null) => post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) }),   // PROF12: the alchemy station's brew - `keys` the cauldron as the Stores hold it, `seat` the held town it stands in
+    temper: (character, recipe, quality, provenance, rid) => post('/v1/prof/temper', { character, recipe, quality, rid, ...(provenance ? { provenance } : {}) }),   // CRAFT4: a piece a quality step better
+    reforge: (character, tier, rid) => post('/v1/prof/reforge', { character, tier, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with
     disenchant: (character, provenance, rid, realm = null) => post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) }),   // PROF12: a crafted piece into Arcane Essence; AUDIT PROF-541 B2: a realm character's record where it stands
     writs: (character, region) => post('/v1/writs/list', { character, region }),
     deliver: (character, id, rid) => post('/v1/writs/deliver', { character, id, rid }),

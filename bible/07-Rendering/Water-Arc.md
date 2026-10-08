@@ -852,7 +852,8 @@ it is one tile, or every tile of it is shallow-water art
 its tiles takes the ground most of its eight dry neighbours stand on, the
 byte whole (its turn and flip with it), a tie to the first in the walk's
 order; a wet neighbour and a random marker are no ground; a puddle with
-no dry neighbour is left. 700 patches dried, 611 kept. Daggerfall city's
+no dry neighbour is left. 700 patches dried, 611 kept (686 and 560 since
+WATER-DRAW2, below: the islands joined their ponds). Daggerfall city's
 61 puddle tiles (records 8: 17, 9: 33, 23: 11) became 31 dirt, 11 road,
 10 grass, 6 of record 11, 2 of 47 and 1 of 10 - the terrain test's city
 histogram moved with them.
@@ -876,7 +877,8 @@ reader's own ground decode: the list; a pool in the sand is sand, the
 byte whole, a wet neighbour never taken; a patch of art and a lone tile
 of anything wet dried; a pond in its ring, a basin and art meeting a
 shore kept; once a ground, never from nothing; the one door by source;
-with ARENA2, every block served with no puddle, 700 dried, 611 kept, a
+with ARENA2, every block served with no puddle, 686 dried, 560 kept (PIN
+MOVED by WATER-DRAW2), a
 moat whole. Moved: `test/terrain.test.js`'s Daggerfall city histogram and
 `test/rr3b_worlddata.test.js`'s GetBlock pin (PIN MOVED). Mutants (12,
 12 dead): `tools/mutants/puddledry.json` - the first run's two survivors
@@ -1047,3 +1049,73 @@ above:
   FOUR HOSTS: the streaming world and the fixed town draw the enhanced water and stir its field; the interiors
   (`worldModes.js`) and the dungeons (`dungeonContext.js`) draw no enhanced water - their pools are the classic plane.
 - `WATER_OPACITY` and the sheet's `scroll` retired (m6): nothing drew them.
+
+## WATER-DRAW2 - THE DRAW'S TABLE KNOWS THE WATER ART (2026-10-07)
+
+Mac, with a phone screenshot of a winter town - a pond of WATER-NEXT's water and in it two flat blue squares, each
+round a white island: *"Is there a reason these fucking patches still remain after our most recent water changes?"*
+
+**The reason.** The squares are record 19 (water round an island of grass) and record 4 (round dirt; 29 is the stone
+one) - snow islands in winter. Neither is a marching shape nor in DFU's `OnShallowWaterTile` list, so the corner table
+(`world/waterCorners.js`) gave them no water corner - and every water law of the day asks that table. PUDDLE-DRY's
+census never counted them; WATER-NEXT's bed would not carve under them, its silt left them their painted water, its
+sheet stopped at their edges and its foam ringed them. The pond was the new water and the island tile in it DFU's
+painted tile, flat. Reproduced in the real game: Daggerfall city in winter (`tools/waterLookProbe.mjs`,
+`season=winter`, the first record-19 tile `__findTiles` names on pixel 207,213) - the square in the pond, as in the
+field.
+
+**Every gap, measured on the art.** WATER-PUDDLE's colour rule (record 0's own colours within 24, `cleanMask`'s shapes)
+read at each corner of every record at every turn, through the pass's own turn (`turnFraction`) - a corner is water
+where half its quarter-tile square is. In the four climates the rule reads cleanly (the desert, the woods and the two
+winters; the mountain's and the swamp's summer grounds sit inside the water's tolerance, as WATER-PUDDLE found) the
+method agrees with every shore entry the table already held. Where the art paints water at a corner in all four and
+the table said dry, three kinds, each laid in BLOCKS.BSA:
+
+| Kind | Records | The art's corners | In the 920 RMB blocks | In the world's 15,251 locations |
+|---|---|---|---|---|
+| water round an island | 4, 19, 29 | all four (the desert's 4: three - its sand reaches a corner) | 1,071 | 52,755 |
+| a ground of two or three kinds with water in one corner | 37, 38, 40, 41, 43, 44 | record 7's one corner, turn for turn | 76 | 5,836 |
+| a saddle laid half turned | 48, 49, 50 at turns 2 and 3 | the diagonal of turns 0 and 1 | 138 | 10,191 |
+
+The marching table writes a saddle's two diagonals at turns 0 and 1 only; a block that sets the flip bit asks for turn
+2 or 3, which nothing wrote. 10,302 of the 15,251 locations lay at least one of the three. Almost all of them sit in
+ponds: FIGHAA02's garden pond inside its paving (207 towns lay that block), the graveyards' ponds, the farms'.
+
+**The rule** (`buildWaterMaskTable(true)`): an island whole, a corner record 7's, a saddle's turns 2 and 3 its 0 and
+1. The DRAW's table alone, as WATER-DRAW1's record 9: DFU walks the player over all of them dry, so the law's table -
+the feet, the townsfolk's paths - is byte for byte what it was. Every reader of the draw follows with no law of its
+own: the bed carves under them, the silt covers them, the sheet and the foam take them in, and the grass leaves a
+corner tile as it leaves a shore tile (GRASS-WET1). The classic skin draws DFU's tile as before. THE FOUR HOSTS: the
+streaming world (`scenes/world.js`) and the fixed town (`scenes/exterior.js`, `buildWaterIndices` and its `flatGrid`
+bed) take the new entries through the table they already read; the interiors (`worldModes.js`) and the dungeons
+(`dungeonContext.js`) draw no enhanced water and stand on no RMB ground. In the Enhanced skin an island is the pond's
+water: the island DFU paints goes under the silt with the painted water. It could not stand:
+the bed is carved at the tiles' corners, so an island kept by its art would sit below the sheet in a hole the art's
+mask cut.
+
+**PUDDLE-DRY follows.** Its patches are the draw's water, so the islands joined their ponds: six lone island tiles
+dry, and twenty tiles of ponds an island had cut apart (FARMAA03's shore edges among them) are no longer dried as lone
+slivers - PUDDLE-DRY had been punching holes in those ponds. A puddle beside an island no longer takes the island's byte
+as its ground: twice a dried sliver had taken its neighbour's water art (SENT0's record 6 made a record 4, FARMAA09's
+record 32 a record 43). The census, pinned
+with ARENA2: 1,246 patches (1,311 before), 660 of one tile (674), 686 dried and 560 kept (700 and 611), 720 tiles dried
+(734), the CASTAA25 moat still 202. Daggerfall city's histogram does not move.
+
+**Seen.** The same pose before and after (renders of game data, kept outside the tree): before, the island square flat
+in the pond; after, one pond, its middle deeper now that no island bounds it.
+
+**Recorded, not fixed here.** 285 tiles of puddle art are still served, each in a patch PUDDLE-DRY keeps, and 248 of
+them meet their pond only across a dry edge - the shore tile beside them has its water on its far side - so they read
+as puddles. The blue pool at the left of the after shot is one: Daggerfall city's last record 23, beside a record-22
+corner whose water faces away. A connectivity that asks the corners on the shared edge would dry 199 record-23 tiles,
+20 of record 8, 13 of 9 and 9 of 33; measured on every block it also parts 26 blocks' largest water by a fifth or more
+(CASTAA27's moat, 168 tiles to 87) and dries 28 shore edges with them. That is a rule for Mac to choose, not one to
+ride in on this fix.
+
+**Pinned** in `test/waterdraw2.test.js` (5): the lists, and the table at every turn as literals; the law's table
+untouched; PUDDLE-DRY on the block reader's own ground (a lone island, corner and half-turned saddle dried; an island
+with its shore kept; art meeting a corner kept; a pool among islands made grass, never an island); the sheet and the
+bed over a pond of islands; and, with ARENA2, no record and turn the art paints water at a corner in every clean
+climate left dry, the corners and the saddles exactly the art's (36), and what BLOCKS.BSA lays. PIN MOVED:
+`test/grasspath.test.js`'s WATER-DRAW1 difference (SHALLOW_DRAWN and WATER-DRAW2's three, a saddle only half
+turned) and `test/puddledry.test.js`'s census. Mutants: `tools/mutants/waterdraw2.json` (9, all dead).

@@ -554,8 +554,8 @@
   {
     "name": "AUDIT2-BAG1-K5-kept-passed-to-the-craft",
     "file": "src/net/profBook.js",
-    "old": "material: ready.material, moved: ready.moved ?? 0 };\n        const w = { rid: rid(), recipe, clean: clean === true",
-    "new": "material: ready.material, moved: ready.moved ?? 0, kept: ready.kept };\n        const w = { rid: rid(), recipe, clean: clean === true",
+    "old": "material: ready.material, moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };\n        const w = { rid: rid(), recipe, clean: clean === true",
+    "new": "material: ready.material, moved: ready.moved ?? 0, kept: ready.kept, ...(refined.length ? { refined } : {}) };\n        const w = { rid: rid(), recipe, clean: clean === true",
     "tests": [
       "test/bag1_client.test.js"
     ]
