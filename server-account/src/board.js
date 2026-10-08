@@ -60,10 +60,14 @@ export function boardOpenFor(player, env) {
 /** The author's badge as the service would sign it NOW (letters.js's rule): a title worn only while held. */
 const badgeOf = (row, env, nowS) => (row ? { title: titleWorn(row, env) ?? null, glyphs: glyphsShown(row, env, nowS) } : { title: null, glyphs: [] });
 
-/** The expired rows, gone - on the board's own reads, a bounded sweep (PROF0 20: "notes deleted on expiry"). */
-async function sweep(db, nowS) {
-  await db.prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT 200)').bind(nowS).run();
-  await db.prepare('DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at <= ? LIMIT 50)').bind(nowS).run();
+/** The expired rows, gone (PROF0 20: "notes deleted on expiry") - `limit` of each table at once, answering how many went.
+ *  SCALE4b (2026-10-08): THE SERVICE'S CLOCK'S, never a read's - every board read swept first, two writes on the
+ *  busiest read the board has, and every reader racing every other to run them; server-account/src/cron.js runs it each
+ *  hour. Nothing a read answers waits on it: every read of a note or a notice asks `expires_at > now` itself. */
+export async function sweepBoard(db, nowS, limit = 200) {
+  const a = await db.prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit).run();
+  const b = await db.prepare('DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit).run();
+  return Number(a?.meta?.changes ?? 0) + Number(b?.meta?.changes ?? 0);
 }
 
 /** Whether a recruitment note still recruits: its guild stands, and the author's character is still in it at a rank
@@ -100,7 +104,6 @@ export async function readBoard({ db, nowS }, reader, env, map) {
   if (!boardOpenFor(reader, env)) return { error: 'board-closed' };
   const mapId = Number(map);
   if (!boardKeyOk(mapId)) return { error: 'bad-board' };
-  await sweep(db, nowS);
   const mod = canModerate(reader, env);
   // the author's own notes always (AUDIT 28 N2: muted or hidden, they still hold the author's places)
   const { results: notes = [] } = await db.prepare(`SELECT n.*, g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, gm.rank AS author_rank,

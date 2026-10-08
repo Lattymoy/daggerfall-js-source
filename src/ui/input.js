@@ -879,8 +879,12 @@ export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap',
  *
  * One list, because there is one keyboard, and every host that
  * registers a keydown calls this FIRST.
+ *
+ * MODE-WHEEL (AUDIT): F1 opens the browser's help and F3 its find bar - both drop the pointer lock - and the host's
+ * mode arm was what consumed them while they were DFU's mode keys. They ship unbound now (the wheel picks the
+ * mode), so they join the list: a habit's press is no lost lock.
  */
-export const BROWSER_STEALS = Object.freeze(['F5', 'F6', 'F11']);
+export const BROWSER_STEALS = Object.freeze(['F1', 'F3', 'F5', 'F6', 'F11']);
 export function swallowBrowserKey(e) {
   if (!BROWSER_STEALS.includes(e.code)) return false;
   e.preventDefault();

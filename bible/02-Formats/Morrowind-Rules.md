@@ -226,7 +226,9 @@ with it. A step change, no smoothing. It rides the same RotateController
 line as the pitch (`matrix.setTrans(matrix.getTrans() + worldOrientInverse
 * mOffset)`), and the GMST is read from the player's own .esm rather than
 hardcoded. Daggerfall's SNEAK binding is the analogue; its CROUCH is a
-collider height, not an animation state. Rule 32(b), the Lua camera
+collider height, not an animation state. (CROUCH-SNEAK, 2026-10-08,
+Port-Ledger A: a crouch IS a sneak now - `isSneaking` latches on it - so
+the stance follows the crouch key; the sink still reads `sneaking`.) Rule 32(b), the Lua camera
 offset, is not ported and is not a gap: it is settable only from Lua,
 which this port has no counterpart for.
 

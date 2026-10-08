@@ -716,8 +716,8 @@
   {
     "name": "AUDIT2-BAG1-S1-swept-at-two-days",
     "file": "server-account/src/professions.js",
-    "old": ".bind(day - CARRIED_ROW_DAYS),",
-    "new": ".bind(day - 1),",
+    "old": ".bind(day - CARRIED_ROW_DAYS, limit),",
+    "new": ".bind(day - 1, limit),",
     "tests": [
       "test/bag1_service.test.js"
     ]

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "ALIKR1-loose-ground-rule-dropped",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "    if (m.looseGround.has(a)) return { kind: 'records', pack: m.key };",
+    "new": "    if (false && m.looseGround.has(a)) return { kind: 'records', pack: m.key };",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "ALIKR1-index-loose-ground-unread",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "looseGround: new Set(index.looseGround ?? []) });",
+    "new": "looseGround: new Set() });",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "ALIKR1-owners-take-any-mod",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "(pack === null || p.key === pack) && p.names.has(k)",
+    "new": "p.names.has(k)",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "ALIKR1-layers-forget-the-pack",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "recordOwners(archive, n, src?.pack ?? null);",
+    "new": "recordOwners(archive, n);",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "ALIKR1-packs-off-by-default",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "old": "...ENVIRONMENT_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: true })),",
+    "new": "...ENVIRONMENT_PACK_MODS.map((m) => Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: false })),",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "ALIKR1-pack-served-from-the-base-root",
+    "file": "src/systems/vanillaEnhancedPack.js",
+    "old": "  const root = mod.root ?? pack.Root;",
+    "new": "  const root = pack.Root;",
+    "tests": ["test/environs_texturePacks.test.js"]
+  },
+  {
+    "name": "SNOWFALL1-not-built-on-the-base",
+    "file": "vendor/snowfall/snowfall.index.json",
+    "old": "        \"deps\": [\n          [\n            \"vanilla enhanced - base\",",
+    "new": "        \"deps\": [\n          [\n            \"vanilla enhanced - nothing\",",
+    "tests": ["test/environs_texturePacks.test.js"]
+  }
+]

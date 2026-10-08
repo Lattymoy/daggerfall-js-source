@@ -178,3 +178,11 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
   body[data-busy] .gem { animation: none; }
   .progress .track i { transition: none; }
 }
+
+/* DA12: the controller's focus (app/launcher/pad.js) - the game's own pad loop marks what it focused .pad-focus,
+   drawn as the keyboard's focus is above. */
+.feed.pad-focus { outline: 2px solid rgba(192,138,62,0.5); outline-offset: -2px; }
+.check input.pad-focus { outline: none; border-color: var(--brass); }
+.plaque.pad-focus, .link.pad-focus { outline: none; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.plaque.pad-focus { border-color: var(--brass); }
+.play:not(:disabled).pad-focus { outline: none; color: rgb(243,239,44); background: rgba(192,138,62,0.25); text-shadow: 2px 2px 0 rgb(93,77,12); }

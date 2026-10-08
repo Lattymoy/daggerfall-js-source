@@ -71,6 +71,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plusPad.js PLUS_DPAD_DEFAULTS) and the
   // two sticks' sensitivity multipliers - the Controller bindings window writes them
   plusDpad: null, plusStickLeft: 1, plusStickRight: 1,
+  // PAD-CURSOR: the controller cursor's assisted feel (systems/padCursor.js) - its curve, ramp, boost and the pull to
+  // a control; off is DFU's linear cursor, on both skins
+  padCursorAssist: true,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,

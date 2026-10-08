@@ -12,6 +12,7 @@ import { herbKey } from '../src/net/professionLaw.js';
 import { CARRIED_MAX, DEPOSIT_MAX, CARRIED_ROW_DAYS, clampCarried, carriedUsable } from '../src/net/bagLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import { utcDay } from '../src/net/marksLaw.js';
+import { runCron, CRON_HOUR } from '../server-account/src/cron.js';   // SCALE4b: the harvests' sweep is the service's clock's
 
 const DAY = 86_400;
 const WOODS = 231, ANTICLERE = 21;
@@ -284,12 +285,12 @@ test('BAG1 service (AUDIT2 S1): a carried harvest\'s row is kept thirty days, no
   const rowsOf = (carry) => Number(s.raw.prepare('SELECT COUNT(*) AS n FROM node_harvests WHERE player = ? AND carry = ?').get(mac.id, carry).n);
   try {
     Date.now = () => (NOON + 3 * DAY) * 1000;
-    await s.call('/v1/prof/state', { character: mac.character }, mac.secret);   // the state's own sweep
+    await runCron(s.env, { cron: CRON_HOUR, nowS: NOON + 3 * DAY });   // the sweep - PIN MOVED (SCALE4b): the service's clock's each hour, no longer the state's read
     assert.deepEqual([rowsOf(1), rowsOf(0)], [1, 0], 'the Stores harvest swept, the carried one kept');
     const again = await s.call('/v1/prof/harvest', body, mac.secret);
     assert.deepEqual([again.body.repeat, again.body.carry, again.body.qty], [true, true, r.body.qty], 'asked again three days on: answered, so its items are minted');
     Date.now = () => (NOON + (CARRIED_ROW_DAYS + 1) * DAY) * 1000;
-    await s.call('/v1/prof/state', { character: mac.character }, mac.secret);
+    await runCron(s.env, { cron: CRON_HOUR, nowS: NOON + (CARRIED_ROW_DAYS + 1) * DAY });
     assert.equal(rowsOf(1), 0, 'past its bound, swept');
   } finally { Date.now = () => NOON * 1000; }
   assert.equal(CARRIED_ROW_DAYS, 30);

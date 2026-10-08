@@ -155,6 +155,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'heldMap',          // MAP-TOGGLE: whether THIS player's maps are the held sheet or DFU's windows - a look, nothing the room agrees on
   'plusCursor', 'plusItemHover',   // PLUS6/7: the Plus dress's gauntlet cursor and its hover card - what THIS screen draws (OVH3's law: the skin is the player's; PLUS-ONLY retired `enhancedPlus`)
   'packPhoneDoll',    // PACK-PHONE: whether THIS phone's pack draws the body - what this screen draws
+  'padCursorAssist',  // PAD-CURSOR: how THIS player's controller cursor feels - nothing the room agrees on
   'plusToggleRun',    // PADPLUS1: whether THIS player's Run button latches - how this pad is held, nothing the room agrees on
   'proceduralSky',    // EE1's legacy key, read only by the migration
   'restWithParty',   // REST-OPT: whether I rest with my party or alone - my own say
@@ -465,6 +466,9 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'project-legacy',         // LEGACY1: my own family - its record, its births and its deaths are my characters'; the heirloom is an item in my save, and its power is folded where it is worn
   'physical-items',         // PI1: how MY loot lies - my own bodies' items stood round them (a peer's body shows none: its list is its owner's), my own shift-drops a pile as any drop is; a take off a dungeon's body is the room's word as the quick door's is (dungeonContext.js publishLoot), so what any peer reads of a container is the same switch on or off
   'come-sail-away',         // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's
+  'heat-haze',              // HAZE1: the desert's shimmer on your own screen, over a weather and an hour the room already shares
+  'windfall',               // WINDFALL1: how the trees sway, the leaves and flakes that blow and the gusts you hear - your own screen and speakers; nothing stands, rolls or is written
+  'snowfall',               // SNOWFALL1: the winter ground's paint and the snow drawn over it, on your own screen - the floor under it is the terrain's
 ];
 
 /**

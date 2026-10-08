@@ -1,0 +1,11 @@
+{
+  "ModTitle": "Heat Haze",
+  "ModVersion": "1.0.1",
+  "ModAuthor": "demifiend000",
+  "ContactInfo": "romansoldier98@gmail.com",
+  "DFUnity_Version": "1.1.1",
+  "ModDescription": "World-space heat shimmer for sunny and cloudy daytime desert exteriors, with opt-in subtropical support.",
+  "GUID": "51bf7e5b-26b1-4a2d-a88e-92aba7cec1df",
+  "Files": [],
+  "Dependencies": []
+}
