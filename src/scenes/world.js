@@ -113,6 +113,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
+import { REGULAR_HEAD_M as CARD_REGULAR_HEAD_M } from '../world/cardRegulars.js';   // CARDS4b: a seated regular's line over his head
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
 import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
@@ -288,6 +289,7 @@ import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   //
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
+import { createCardStakes } from '../net/cardStakes.js';   // CARDS6: a realm character's card stakes
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
@@ -662,7 +664,7 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
@@ -1704,6 +1706,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // PROF5 (bible/06-Systems/Professions-Arc.md 26): the market's book - the Market tab's reads through a minute's cache,
   // a piece listed, bought, cancelled back or collected KEPT before it is asked (net/marketBook.js). Its answers tell the
   // Marks book the balance. Online only.
+  /** GOLD-MARKET / CARDS6: a realm character's wallet at `region` - the purse, its letters, then that region's account
+   *  (realmGoldLaw payFromSave; court.js deductGold), as the record's gold pays and is paid. */
+  const realmWallet = realmSession ? (region) => {
+    playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+    const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
+    return {
+      gold: () => totalGoldAmount(playerEntity) + Math.max(0, account?.accountGold ?? 0),
+      // MARKET-AUDIT: and its undo - exactly what it took back where it was (court.js deductGoldUndoable); a refusal's
+      // `credit` of the whole cost turned letters and the bank's gold into purse coins
+      pay: (n) => payUndoable(playerEntity, n, account),
+      credit: (n) => addGold(playerEntity, n),
+      // collected: into that region's account, the purse where there is none (realmGoldLaw creditSave's `bank`)
+      bank: (n) => { if (account) account.accountGold = (Number.isFinite(account.accountGold) ? account.accountGold : 0) + n; else addGold(playerEntity, n); },
+    };
+  } : null;
   const marketBook = params.has('online')
     ? createMarketBook({ door: accountMarket({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
       character: () => characterIdOf(playerEntity), now: () => Date.now() + _sharedOffsetMs, marks: marksBook,
@@ -1713,19 +1730,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // checkpointed first (realmSaves.js realmGoldAct) - and the save's gold as the record's pays at the BOARD's region: the purse, its letters,
       // then that region's account (realmGoldLaw payFromSave; court.js deductGold). MARKET-ANY: a pack's piece moves it too; one this game will not hold ends the session
       realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }), abandon: (why) => realmSession.abandon(why) } : null, goods: realmSession ? { receive: (rec) => marketGoods.receive(rec) } : null,
-      wallet: realmSession ? (region) => {
-        playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
-        const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
-        return {
-          gold: () => totalGoldAmount(playerEntity) + Math.max(0, account?.accountGold ?? 0),
-          // MARKET-AUDIT: and its undo - exactly what it took back where it was (court.js deductGoldUndoable); a refusal's
-          // `credit` of the whole cost turned letters and the bank's gold into purse coins
-          pay: (n) => payUndoable(playerEntity, n, account),
-          credit: (n) => addGold(playerEntity, n),
-          // collected: into that region's account, the purse where there is none (realmGoldLaw creditSave's `bank`)
-          bank: (n) => { if (account) account.accountGold = (Number.isFinite(account.accountGold) ? account.accountGold : 0) + n; else addGold(playerEntity, n); },
-        };
-      } : null })
+      wallet: realmWallet })
+    : null;
+  // CARDS6 (bible/11-Multiplayer/Tavern-Cards.md section 23): a realm character's card stakes - the buy-in the service
+  // holds for a relay's gold table, the relay's cash-out receipts kept and claimed back into the record (net/cardStakes.js)
+  const cardStakes = params.has('online') && realmSession
+    ? createCardStakes({ door: accountCards({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
+      realm: { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) }, wallet: realmWallet,
+      character: () => characterIdOf(playerEntity), region: () => _questRegionIndex(), now: () => Date.now() + _sharedOffsetMs })
     : null;
   // PROF6 (bible/06-Systems/Professions-Arc.md 28): the writs' book - a guild writ posted, supplied, withdrawn; a
   // commission posted, filled (the piece KEPT before it is asked), cancelled, declined; the guild Stores (net/writBook.js).
@@ -3019,6 +3031,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
    *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
   let familyStreet = null, familyRoom = null;
+  /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/cardRegulars.js) - stood by the interior host each frame on layers of
+   *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
+  let cardRegularBodies = null, _cardBarks = [];
   const makeFamilyBodies = () => createFamilyBodies({
     dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
     bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
@@ -9524,16 +9539,42 @@ export async function bootWorld(canvas, renderer, params, status) {
       points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
     }
   }
+  /** CARDS4b: the card table's regulars' lines (world/cardRegulars.js regularBark) as the crew layer's points - over each
+   *  seated head, within the crew's range, in front of the eye. */
+  function cardBarkPoints(proj, view, eye, w, h, rect) {
+    const points = [];
+    for (const b of _cardBarks) {
+      const over = [b.feet[0], b.feet[1] + CARD_REGULAR_HEAD_M, b.feet[2]];
+      const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+      const at = projectToScreen(over, w, h, proj, view, rect);
+      if (d > CREW_SAY_RANGE || !at.front) continue;
+      points.push({ x: at.x, y: at.y, text: b.text, who: `card:${b.id}`, kind: 'talk', distance: d, name: firstNameOf(b.name) });
+    }
+    return points;
+  }
+  /** CARDS4b: the regulars' lines alone, the living world off (no room's talk shares the layer). AUDIT CARDS-3 B8: the
+   *  layer is told once more when the last line ends - an early return kept "Ralf: I'll see that." on the screen for
+   *  good, in every room after. */
+  let _cardBarksShown = false;
+  function cardBarkLines(proj, view, eye, dt) {
+    if (!_cardBarks.length && !_cardBarksShown) return;
+    _cardBarksShown = _cardBarks.length > 0;
+    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    drawCrewLines(covered ? [] : cardBarkPoints(proj, view, eye, w, h, worldViewportRect(w, h)), { covered, dt: gamePaused() ? 0 : dt, scale: enhancedHudScale() });
+  }
   /** LW8b (bible/06-Systems/Living-World.md "LW8b"): THE ROOM'S TALK - the lines of the residents in the building the
    *  player is in (scenes/livingIndoors.js speech: a table's circle's, a word to the player), through the interior's own
    *  matrices, on the crew's one layer by its range, sight and names. The building mode's HUD pass calls it
    *  (`host.livingSpeech`); nothing before the living world has stood a room. */
   function livingRoomLines(proj, view, eye, dt = 0) {
+    if (!livingIndoors && typeof document !== 'undefined') { cardBarkLines(proj, view, eye, dt); return; }   // CARDS4b: a card table's regulars talk with the living world off too
     if (!livingIndoors || typeof document === 'undefined') return;
     const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
     const points = [];
     if (!covered) {
       const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h);
+      points.push(...cardBarkPoints(proj, view, eye, w, h, rect));   // CARDS4b: the regulars' play over their seated heads, with the room's talk
       for (const l of livingIndoors.speech(eye)) {
         const id = l.person.living?.id;
         if (!id || !l.person.pos) continue;
@@ -14288,6 +14329,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT NAV1 (B14): nor in a boarding or on a ship of the sea's deck - the sea is never a save's, and the load set the
     // player over open water, the ship and her prize gone
     if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
+    // AUDIT CARDS-2 H1: nor with chips on a card table - the purse is short the buy-in and the chips are in no save
+    if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
@@ -16202,7 +16245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickSave: worldQuickSave,
     quickLoad: worldQuickLoad,
     relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
-    savingPrevented: () => !!naval?.saveRefused?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it
+    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
     // ONLINE-LOAD1: this host's own live-session flag (`online`,
     // not `onlineOn` - see worldQuickLoad's own header for why),
     // for the enhanced Load pane (enhancedMenu.js paneLoad) to
@@ -20178,6 +20221,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onHoldem = (f) => modes?.cardOnlineFrame?.({ ...f, at: performance.now() });   // CARDS5: the relay's card table, to the room's host - AUDIT CARDS-3 D1: on the cloth's clock (the session's own `now` is the epoch's)
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
@@ -25756,6 +25800,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
   const _peerHeights = new Map();   // AUDIT WORLD6b-ii C5: a peer's height is the peer's - the doll answers 0 while it is not standing (a slot churn, a load), and the aim point flickered with it
+  /** CARDS2b (AUDIT CARDS B3): the seated feet of the players in my room I can see, in this room's scene - the card
+   *  tables' taken seats. peersNear's own walk and gates; its row is pinned whole, so the seat reads the peers itself. */
+  const seatedPeerFeet = () => {
+    if (!online || !online.room || online.status !== 'open') return [];
+    const out = [];
+    for (const p of online.peers.values()) if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));
+    return out;
+  };
   const peersNear = ({ presenceOnly = false } = {}) => {
     if (!online || !online.room || online.status !== 'open') return null;
     const out = [];
@@ -26361,6 +26413,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
       : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
     sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1
+    // CARDS2b: seated at a card table, the pose is the SEAT's - the feet and the facing the body is drawn at (the capsule
+    // stands where it sat down from), in the room's frame like any point; `st` rides the arm below
+    const seated = modes?.seatPose?.() ?? null;
+    if (seated) { const w = sceneToOnline(seated.feet); pose.x = w[0]; pose.y = w[1]; pose.z = w[2]; pose.yaw = seated.yaw; }
     // ONLINE-MVFLICKER1 (Discord, 2026-09-18: "walking animation doesn't
     // complete, comes through only halfway"): `moved` used to be this
     // single frame's own delta, sent whichever frame the throttle below
@@ -26434,6 +26490,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       lt: torchPoseByte(playerEntity),   // PEERLIGHT1: my lit torch/lantern/candle, so it lights the others' world around me - absent while nothing burns
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
+    if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
@@ -26700,6 +26757,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
+    cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
+    cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
@@ -26749,6 +26809,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
     livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    cardRegularBillboards: () => cardRegularBodies?.batches() ?? [],   // CARDS4b: the card table's regulars, on the building's pass beside them
+    drawCardRegulars: ({ proj, view, eye }) => cardRegularBodies?.draw(canvas, { proj, view, eye }),   // CARDS4b: their bodies, after the peers'
+    cardRegulars: (list, dt, eye) => {
+      if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.destroy(); cardRegularBodies = null; } _cardBarks = []; return; }   // AUDIT CARDS-3 B10: its doll textures with it
+      cardRegularBodies ??= makeFamilyBodies();
+      cardRegularBodies.begin();
+      for (const m of list) cardRegularBodies.stand(m.res, m.feet, m.yaw, false, m.st);
+      cardRegularBodies.end(dt, eye);
+      _cardBarks = list.filter((m) => m.say).map((m) => ({ id: m.res.id, name: m.res.name, feet: m.feet, text: m.say }));
+    },
     livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),   // LW8: ...and the street's own talk ray on them
     livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),   // LW8b: ...and what they say, over their heads
     csaDrawWindWidget: () => csaDrawWindWidget(),   // CSA-E: the wind widget over a mode's HUD

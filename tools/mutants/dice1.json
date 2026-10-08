@@ -30,15 +30,15 @@
   {
     "name": "DC-rejection-dropped",
     "file": "src/net/dice.js",
-    "old": "    do { x = rand32() >>> 0; } while (x >= limit);",
-    "new": "    x = rand32() >>> 0;",
+    "old": "  do { x = rand32() >>> 0; } while (x >= limit);",
+    "new": "  x = rand32() >>> 0;",
     "tests": ["test/dice1.test.js"]
   },
   {
     "name": "DC-face-off-by-one",
     "file": "src/net/dice.js",
-    "old": "    dice.push(1 + (x % m));",
-    "new": "    dice.push(x % m);",
+    "old": "dice.push(1 + drawBelow(m, rand32));",
+    "new": "dice.push(drawBelow(m, rand32));",
     "tests": ["test/dice1.test.js"]
   },
   {
