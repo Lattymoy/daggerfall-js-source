@@ -33,8 +33,8 @@ test('the penalty comes off the purse counter and answers what it took', () => {
 test('it is taken by BOTH online respawn paths, once, and never by the offline end of run', () => {
   const world = read('src/scenes/world.js');
   const modes = read('src/scenes/worldModes.js');
-  assert.match(world, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);\s*\n\s*player\.stopAutorun\(\);[^\n]*\n\s*const goldLost = applyDeathPenalty\(playerEntity\);/,
-    'respawnOnlinePlayer, after the _respawning guard');
+  assert.match(world, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);\s*\n\s*player\.stopAutorun\(\);[^\n]*\n\s*const goldLost = wildRise \? 0 : applyDeathPenalty\(playerEntity\);/,
+    'respawnOnlinePlayer, after the _respawning guard');   // WILD GOLD: a death in the open zone pays none here - its half goes into the remains (wildDeath)
   // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
   assert.match(world, /\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)/, 'and says so on waking');
   assert.match(modes, /const goldLost = online \? applyDeathPenalty\(playerEntity\) : 0;[\s\S]*?say\(deathPenaltyText\(goldLost\)\)/, "Privateer's Hold's in-place respawn");   // PIN MOVED (AUDIT LEGACY B5): online's alone - an offline Project Legacy rise there pays none

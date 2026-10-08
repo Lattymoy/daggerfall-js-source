@@ -37,7 +37,11 @@ test('WORLD8: the wire - the hour, and what is due: a stamp an hour or more befo
 
 test('WORLD8: the dungeon by source - the stamp at the corpse door and in the record, kept from the room\'s record; the memory\'s dead-past-the-hour skipped whole and a live dead one rebuilt; respawnFoe through the one build chain with the corpse freed and the body\'s loot forgotten; the sweep once a second (the host\'s foes, everyone\'s loot); the loot stamps on the claim, the record and the apply; the pile roll one home', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /import \{ mintSharedStamp, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX(?:, FOES_FRAME_MAX)?(?:, CELL_FRAME_RECORDS_MAX)? \} from '\.\.\/net\/wire\.js';/);   // REST-SYNC: the frame's one cap, which the shared encounters ride under
+  assert.match(d, /import \{ mintSharedStamp, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX(?:, FOES_FRAME_MAX)?(?:, CELL_FRAME_RECORDS_MAX)? \} from '\.\.\/net\/wire\.js';/);   // REST-SYNC: the frame's one cap, which the shared encounters ride under
+  // DUNGEON-RESPAWN (PIN MOVED): the dungeon's respawnDue is its own pace (20 minutes, an elite's 40, the zone's and a Super
+  // dungeon's still the wire's hour - systems/dungeonRespawn.js), in the wire's place - the wire's is no longer imported
+  // (MAC-L1b: the local binding of the same name shadowed it)
+  assert.match(d, /const respawnDue = \(stamp, now\) => dungeonRespawnDue\(stamp, now, _respawnMs\);/);
   assert.match(d, /import \{ worldMinutes, skyMinutes, ownMinutes, setOwnMinutes, advanceOwnMinutes, sharedClockOn \} from '\.\.\/systems\/worldTick\.js';/);   // LIVED1: the dungeon's clock view is the character's own
   assert.match(d, /const _wallNow = \(\) => \(sharedClockOn\(\) \? wallMsForClassicMinutes\(worldMinutes\(\)\) : null\);/, 'the RELAY\'s clock (the wire\'s inverse, no offset - AUDIT WORLD7/8 B1), null offline');
   assert.match(d, /async function spawnCorpse\(f\) \{\s*\n\s*if \(f\._diedAt == null\) f\._diedAt = _wallNow\(\);/, 'the death\'s stamp at the one corpse door');
