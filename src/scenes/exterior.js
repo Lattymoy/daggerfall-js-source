@@ -268,7 +268,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
 import { activeMemberships } from '../systems/guilds.js';   // F117
-import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
+import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';   // QX1: the quest layer's reputation doors
@@ -4746,7 +4746,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (Guild.cs:170-176), so it waits on the faction file the way the
   // static-NPC door does (worldModes.js's ensureFactions arm).
   Promise.resolve(townTalk.ensureFactions?.()).then(() => {
-    revealGuildHallsOnMap(activeMemberships(playerEntity),
+    revealGuildHallsOnMap(revealingMemberships(playerEntity),   // AUDIT CHAP2 D4: either book's
       `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
       buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
         { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex), locationIndex: dfLocation.locationIndex ?? 0 }),

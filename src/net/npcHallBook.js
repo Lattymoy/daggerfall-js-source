@@ -27,12 +27,18 @@ import { guildGroupOfFaction } from '../systems/guilds.js';
 import { createGuildForGroup } from '../systems/guildVariants.js';
 import { isRollFaction, hallReportOf } from './npcChapterLaw.js';
 
-/** Where this device keeps the day it last reported each town: { [mapId]: UTC day }. */
+/** Where this device keeps the day it last reported each town: { [mapId]: UTC day } - HALL_DONE past the day for a town
+ *  the service has counted or struck, which is never reported again (an account's first answer stands for ever). */
 export const HALL_REPORTED_KEY = 'chap2.halls';
+/** AUDIT CHAP2 E9: a town done for good - counted or struck. Above every UTC day, so the newest-first keep holds them. */
+export const HALL_DONE = 1_000_000;
 /** The towns remembered - a player who wanders the Bay does not grow the key for ever. */
 export const HALL_REPORTED_MAX = 200;
-/** The answers that say the halls are not this account's to witness now - the book asks no more this page. */
+/** The answers that say the halls are not this account's to witness now - the book asks no more this page. AUDIT CHAP2
+ *  C8: an account under a week old is answered `counted: false, why: 'young'`, and asks no more this page either. */
 export const HALL_STOPS = Object.freeze(['chapters-closed', 'halls-need-account', 'no-session', 'auth']);
+/** A refusal that ends this town for good (a developer struck it). */
+const HALL_DONE_ERRORS = Object.freeze(['hall-struck']);
 
 const HIDDEN = new Set([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);
 
@@ -87,13 +93,41 @@ export function createHallBook({ door, storage = null, nowMs = () => Date.now() 
       const h = hallReportOf(report);
       if (!h || stopped) return false;
       const t = table();
-      if (t[String(h.key)] === dayNow()) return false;
+      const at = t[String(h.key)];
+      if (at === dayNow() || at >= HALL_DONE) return false;
       t[String(h.key)] = dayNow();
       write(t);
       let r = null;
       try { r = await door.witness(h); } catch { /* the next day asks again */ }
-      if (HALL_STOPS.includes(r?.error)) stopped = true;
+      if (HALL_STOPS.includes(r?.error) || (r?.ok && r.data?.why === 'young')) stopped = true;
+      // AUDIT CHAP2 E9: a town counted (the account's answer stands for ever) or struck is never asked again - a counted
+      // account re-reported every town every day, each report a rate row and the region's kept chapters thrown away
+      if ((r?.ok && r.data?.counted === true) || HALL_DONE_ERRORS.includes(r?.error)) { t[String(h.key)] = HALL_DONE + dayNow(); write(t); }
       return true;
     },
   };
+}
+
+/** AUDIT CHAP2 E1: A DEVELOPER'S CHAT WORD (the seats' `/seat strike`, townSeatBook.js parseSeatCommand): `/hall audit`
+ *  (the region the player stands in - the towns the audit names) or `/hall strike <map id>` - `{ op, key? }`, `{ error }`
+ *  in words, or null when the line is not /hall. NEVER GUARDED HERE (RED1's law): whether this player may is the
+ *  service's question (server-account/src/npcHalls.js listHalls, strikeHall). */
+export const HALL_USAGE = 'Usage: /hall audit - the towns of this region the audit names; /hall strike <map id> - a false town struck.';
+export function parseHallCommand(/** @type {unknown} */ text) {
+  const m = /^\/hall(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
+  if (!m) return null;
+  const [op, key, ...more] = (m[1] ?? '').trim().split(/\s+/).filter(Boolean);
+  const o = String(op ?? '').toLowerCase();
+  if (o === 'audit' && key == null) return { op: 'audit' };
+  const k = Number(key);
+  if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k > 0xffffffff || more.length) return { error: HALL_USAGE };
+  return { op: 'strike', key: k };
+}
+
+/** The audit list as chat lines: one a town the audit names (its map id, state, guilds and witnesses), or a line that
+ *  none is. `name(f)` a faction's name. */
+export function hallAuditLines(/** @type {any} */ data, /** @type {(f: number) => string} */ name) {
+  const towns = (data?.towns ?? []).filter((/** @type {any} */ t) => t.audit);
+  if (!towns.length) return [`No town of this region is on the halls' audit list (${data?.ignored ?? 0} accounts ignored).`];
+  return towns.map((/** @type {any} */ t) => `Town ${t.key}: ${t.state}, ${t.witnesses} witnesses - ${(t.factions ?? []).map(name).join(', ') || 'no hall'}`);
 }

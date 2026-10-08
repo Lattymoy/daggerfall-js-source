@@ -16,7 +16,7 @@
 // written over the entity's. From then on DFU's own law moves them on
 // this machine - a quest, a donation, a crime - and what moved since the
 // Roll's last word is claimed, at most once a ROLL_CLAIM_MS, and only when
-// something did. The answer is adopted the same way (rollAdopt): the
+// something did (CHAP2a: at once after a hall writ - `refresh`). The answer is adopted the same way (rollAdopt): the
 // service's number, plus whatever moved here and was not sent.
 //
 // ═══ WHAT WAS NEVER CLAIMED IS KEPT IN THE SAVE ═════════════════════
@@ -30,7 +30,7 @@
 // host's mod-save record, so it rides every checkpoint) - and the next
 // page's first read, finding the Roll still at that sequence, knows that
 // whatever the save holds past it was never claimed, and claims it. A
-// Roll that moved on since (a claim the save never saw) keeps only what
+// Roll whose claims moved on since (a claim the save never saw) keeps only what
 // moved on this page (`values0`, the standing as the page first saw it):
 // nothing is ever claimed twice.
 //
@@ -40,6 +40,12 @@
 // with nothing moved here, and the answer - the Roll's word - is adopted
 // as every answer is. Nothing is claimed twice: an empty claim moves
 // nothing, and rollAdopt keeps what moved here and was not sent.
+//
+// AUDIT CHAP2 C1: THE KEPT SEQUENCE IS THE CLAIM SEQUENCE. A hall writ's
+// credit and owed paid move the Roll on the service alone, additively; the
+// service's `seq` is its CLAIM sequence (npcRoll.js `kseq`), moved only by
+// a claim that credits a line, so neither makes the next page drop what its
+// save held unclaimed.
 //
 // A CLAIM THE NETWORK LOST IS SENT AGAIN AS IT WAS - the same id, the same
 // lines - so a claim that landed while its answer was lost is answered as
@@ -122,12 +128,17 @@ export function createRollTracker({
   let pending = null;
   /** @type {string | null} */
   let stopped = null;
-  let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity, asked = false;
+  let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity;
+  // CHAP2a: a refresh asked (askGen) and answered (doneGen) - AUDIT CHAP2 C3: a claim sent before the refresh and
+  // answered after it answers the older Roll, and leaves the refresh asked
+  let askGen = 0, doneGen = 0;
   /** @type {string | null} */
   let heldKey = null;
+  /** @type {string | null} the lease a 'lease' refusal came under (AUDIT CHAP2 C4) */
+  let stoppedLease = null;
 
-  const fail = (/** @type {string} */ error) => {
-    if (ROLL_STOPS.includes(error)) { stopped = error; onStop(error); return; }
+  const fail = (/** @type {string} */ error, /** @type {string | null} */ ls = null) => {
+    if (ROLL_STOPS.includes(error)) { stopped = error; stoppedLease = ls; onStop(error); return; }
     if (error === 'roll-unseeded') { base = null; pending = null; }   // no Roll after all: read (and seed) again
     nextAt = now() + wait;
     wait = Math.min(ROLL_RETRY_MAX_MS, wait * 2);
@@ -144,7 +155,7 @@ export function createRollTracker({
 
   async function first(/** @type {string} */ id, /** @type {string} */ ls, /** @type {Record<number, number>} */ values) {
     const r = await io.read(id, ls, { factions: values, members: members() });
-    if (!r.ok) return fail(r.error);
+    if (!r.ok) return fail(r.error, ls);
     const roll = r.data?.roll;
     if (!roll) return fail('roll-seed');   // a seed went with it, so the Roll stands - or the service took none
     // the base the answer is adopted over: the seed itself, when this read made the Roll; the kept adoption, when the Roll
@@ -160,6 +171,7 @@ export function createRollTracker({
     const deltas = rollDeltasOf(cur, /** @type {Record<number, number>} */ (base));
     const list = members();
     const key = rollMembersKey(list);
+    const asked = askGen > doneGen;
     if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey)) return null;
     if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;   // CHAP2a: a refresh is asked at once (a writ's, three a day)
     pending = { rid: rid(), deltas, members: list };
@@ -170,12 +182,17 @@ export function createRollTracker({
     const c = due(cur);
     if (!c) return;
     const from = /** @type {Record<number, number>} */ (base);
+    const g = askGen;
     lastSentAt = now();
     const r = await io.claim(id, ls, c.rid, c.deltas, c.members);
-    if (!r.ok) return fail(r.error);   // kept: sent again as it was
+    if (!r.ok) return fail(r.error, ls);   // kept: sent again as it was
     pending = null;
-    asked = false;
+    doneGen = Math.max(doneGen, g);
     adopt(from, c.deltas, r.data.roll);
+    // AUDIT CHAP2 C2 (= D1): the book as SENT is what the next claim compares with - the Roll records it by its own law
+    // (a rank above the Roll's reputation between DFU's reviews, a join under the floor), so comparing with its answer
+    // claimed again every minute for as long as the two differed
+    if (c.members) heldKey = rollMembersKey(c.members);
     const credited = r.data.credited ?? {};
     const cut = Object.keys(c.deltas).map(Number).filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);
     if (cut.length) onCeiling(cut);
@@ -184,6 +201,9 @@ export function createRollTracker({
   return {
     /** Called every frame: asks when something is due, never two at once. */
     tick() {
+      // AUDIT CHAP2 C4: a 'lease' refusal ends the asking for that lease alone - the page gives its lease up as it hides
+      // and takes a new one as it shows (scenes/world.js), and a claim caught between the two must not end the page's Roll
+      if (stopped === 'lease' && lease() && lease() !== stoppedLease) { stopped = null; nextAt = 0; }
       if (stopped || busy || now() < nextAt) return;
       const id = character(), ls = lease();
       if (!id || !ls) return;
@@ -198,7 +218,7 @@ export function createRollTracker({
     /** CHAP2a: the Roll moved on the service (a hall writ's credit) - the next tick claims, and the answer is adopted. */
     refresh() {
       if (stopped || !base) return;   // before the first read the read itself answers the Roll
-      asked = true;   // a failure's wait still holds: the claim goes when the service is asked again
+      askGen++;   // a failure's wait still holds: the claim goes when the service is asked again
     },
     get held() { return base != null; },
     get stopped() { return stopped; },

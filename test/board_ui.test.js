@@ -105,7 +105,7 @@ test('BOARD-UI the Work tab: the day\'s count stands over the cards, not under t
   await tick();
   const cork = byClass(host, 'notice-cork')[0];
   assert.equal(cork.children[0].className, 'notice-worktoday');
-  assert.equal(cork.children[0].textContent, 'Court writs today: 1 of 3');
+  assert.equal(cork.children[0].textContent, 'Writs today: 1 of 3');   // PIN MOVED (AUDIT CHAP2 C5): the Court's and the halls' one count
   assert.equal(byClass(host, 'notice-tab')[1].textContent, 'Work1', 'the writ open, never the one taken');
 });
 

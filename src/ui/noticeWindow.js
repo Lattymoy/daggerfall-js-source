@@ -16,7 +16,8 @@
 // PROF1 (2026-09-28, Mac: "Begin!"): THE WORK TAB - the region's Court writs under the Court's purple seal, each with
 // its need, its pay and Renown, its time left, what the Stores hold of it and a Take that fills it from them (PROF0 11,
 // 21, 22: a Court writ is filled whole by the first to deliver, so taking it is delivering it); under them "Court writs
-// today: 1 of 3". Shown only while the professions are this account's (`work`, the host's).
+// today: 1 of 3" (CHAP2a: and the region's chapters' hall writs under their guilds' seals; AUDIT CHAP2 C5: the line
+// "Writs today", one allowance for both). Shown only while the professions are this account's (`work`, the host's).
 //
 // GUILD1e (2026-09-30, Mac: "Finish the seats"): THE GUILDS TAB (PROF0 10.1: "Recruitment posters (each guild's heraldry
 // and a line); a guild's own notes, members only") - the town's recruitment notes hung as their guilds' posters, and
@@ -488,11 +489,14 @@ export function mountNoticeBoard(host, deps) {
     if (busy || workBusy) return;
     busy = true; render();
     const r = await work.book.deliver(w.id, work.region, { material: w.material, qty: w.qty });   // AUDIT BAG1 B9: the card's own word
+    // AUDIT CHAP2 C1: the host hears a filled writ whether or not the board still stands - its balance, its Renown and a
+    // hall writ's Roll refresh were lost with a board closed while the answer was out
+    const said = r?.ok ? work.onTaken?.(r) : null;
     if (!alive) return;
     busy = false;
     if (r?.ok) {
       writs = work.book.state && writs ? { ...writs, writs: writs.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)), today: r.data?.today ?? writs.today } : writs;
-      word = { ok: true, text: work.onTaken?.(r) || `Writ filled: ${r.data?.pay ?? w.pay} silver.` };
+      word = { ok: true, text: said || `Writ filled: ${r.data?.pay ?? w.pay} silver.` };
     } else {
       word = { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
       if (r?.error === 'writ-taken' || r?.error === 'writ-expired') loadWrits(true);
@@ -504,7 +508,8 @@ export function mountNoticeBoard(host, deps) {
     const body = el('div', 'notice-cork');
     // BOARD-UI: the day's count above the cards - under the last card it stood off the bottom of a long list
     const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
-    body.append(el('p', 'notice-worktoday', `${(writs?.writs ?? []).some((w) => w.kind === 'hall') ? 'Writs' : 'Court writs'} today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
+    // AUDIT CHAP2 C5: "Writs" - the count is every writ the account filled today, the Court's and the halls' (CALL 8)
+    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];

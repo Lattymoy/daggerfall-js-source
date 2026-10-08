@@ -86,7 +86,7 @@ and differs only where something is owed).
 
 ## Recorded
 
-- **R1 - CONFIRMED BY MAC ("Approved", 2026-10-07).** Mac's Authority call reads "online rank and reputation live on the account service". As built the
+- **R1 - CONFIRMED BY MAC ("Approved", 2026-10-07).** Mac's Authority call, "Server-owned", reads in the arc's table as online rank and reputation living on the account service (AUDIT CHAP2 R10: this quoted the table's gloss as his words). As built the
   service owns the twenty-two reputations and RECORDS the memberships and ranks (tenure by its own clock, each rank
   bounded by its reputation); the book and the rank review stay DFU's law on the client, run over the service's
   numbers. Writing the service's book over the client's would break DFU's guild objects for nothing a rival can lose.
@@ -98,7 +98,7 @@ and differs only where something is owed).
   which checks a save, closes it.
 - **S8 - a loss never claimed.** A modified client can keep a loss from the service by never claiming it; nothing on
   the service can bound what it is never told. The save keeps it, and a later page claims it unless a claim moved the
-  Roll since.
+  Roll's claim sequence since (AUDIT CHAP2 C1: a hall writ's credit or owed paid never does).
 - **S8 - `cap`.** The head's `cap` column is written and read by nothing: it is the record of the cap the seed was
   taken under, kept for a moderator.
 - **D5.** The pace falls on the twenty-two alone, so a temple's templar order (a child faction, the save's) can stand
@@ -110,6 +110,7 @@ and differs only where something is owed).
   pass the day's 15; the rest is owed now (D2) and lands the next day, well inside the 28-day review.
 - **S7 - load.** While shipped at `dev`, a non-developer's realm page costs a session's reads to be told
   `chapters-closed`, once a page (the tracker stops). Recorded, not changed: the switch needs the account to know a
-  developer.
+  developer. AUDIT CHAP2 R20: a second source since CHAP2a - the hall book, built for every online page, sends one
+  `/v1/chapters/witness` a page at the first town not yet reported, refused `chapters-closed` and stopped.
 - **The typecheck.** `npm run types` read 139 errors in this container through every audit run until the devDependencies
   CI installs (`acorn`, `rollup`, `vite`) were put in without saving; with them it reads none. None was ever this slice's.

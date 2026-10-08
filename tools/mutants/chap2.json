@@ -38,11 +38,13 @@
   {
     "name": "CHAP2-OWN-DICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return courtWrits(day, region, count, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296);",
-    "new": "return courtWrits(day, region, count, from);",
+    "old": "  return courtWrits(day, region, count + 1, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296)",
+    "new": "  return courtWrits(day, region, count + 1, from)",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-REPORT-DUP",
@@ -92,20 +94,24 @@
   {
     "name": "CHAP2-BOOK-DAY",
     "file": "src/net/npcHallBook.js",
-    "old": "      if (t[String(h.key)] === dayNow()) return false;\n",
-    "new": "",
+    "old": "      if (at === dayNow() || at >= HALL_DONE) return false;",
+    "new": "      if (at >= HALL_DONE) return false;",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-BOOK-STOP",
     "file": "src/net/npcHallBook.js",
-    "old": "      if (HALL_STOPS.includes(r?.error)) stopped = true;\n",
-    "new": "",
+    "old": "      if (HALL_STOPS.includes(r?.error) || (r?.ok && r.data?.why === 'young')) stopped = true;",
+    "new": "      if (r?.ok && r.data?.why === 'young') stopped = true;",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-GUEST",
@@ -155,20 +161,24 @@
   {
     "name": "CHAP2-CONFIRMED",
     "file": "server-account/src/npcHalls.js",
-    "old": "if (factConfirmed(f) && f.region === region)",
-    "new": "if (f.region === region)",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region)",
+    "new": "if (t.fact.region === region)",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-REGION",
     "file": "server-account/src/npcHalls.js",
-    "old": "if (factConfirmed(f) && f.region === region)",
-    "new": "if (factConfirmed(f))",
+    "old": "if (factConfirmed(t.fact) && t.fact.region === region)",
+    "new": "if (factConfirmed(t.fact))",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-POST-NO-CHAPTER",
@@ -245,29 +255,35 @@
   {
     "name": "CHAP2-JOIN",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep));",
+    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep + line.owed, f));",
     "new": "const member = ranks.has(f);",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-MEMBER-STAYS",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep));",
-    "new": "const member = ranks.has(f) && joinRecordable(line.rep);",
+    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep + line.owed, f));",
+    "new": "const member = ranks.has(f) && joinRecordable(line.rep + line.owed, f);",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-REFRESH",
     "file": "src/net/npcRollTracker.js",
-    "old": "      asked = true;   // a failure's wait",
-    "new": "      asked = false;   // a failure's wait",
+    "old": "      askGen++;   // a failure's wait",
+    "new": "      void askGen;   // a failure's wait",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-REFRESH-MINUTE",
@@ -281,11 +297,13 @@
   {
     "name": "CHAP2-REFRESH-ONCE",
     "file": "src/net/npcRollTracker.js",
-    "old": "    pending = null;\n    asked = false;\n",
-    "new": "    pending = null;\n",
+    "old": "    doneGen = Math.max(doneGen, g);\n",
+    "new": "\n",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-WIRE-ENTRY",
@@ -299,11 +317,13 @@
   {
     "name": "CHAP2-WIRE-REFRESH",
     "file": "src/scenes/world.js",
-    "old": "    if (hall) rollTracker?.refresh();\n",
+    "old": "    if (d.writ?.kind === 'hall') rollTracker?.refresh();\n",
     "new": "",
     "tests": [
-      "test/chap2_halls.test.js"
-    ]
+      "test/chap2_halls.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP2-HIDDEN-LIST",

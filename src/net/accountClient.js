@@ -608,6 +608,9 @@ export const REFUSALS = Object.freeze({
   'halls-need-account': 'Only a registered account can vouch for a town\'s guild halls.',
   'bad-hall': 'That town\'s guild halls could not be read. The game may need updating.',
   'halls-rate': 'You have vouched for enough towns this hour.',
+  // AUDIT CHAP2: the claims' hour; a town a developer struck
+  'roll-rate': 'Your standing with the guilds has been sent often this hour. It will be sent again later.',
+  'hall-struck': 'That town\'s guild halls were struck from the record.',
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw
@@ -1344,6 +1347,9 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     claim: (character, lease, rid, deltas, members) => post('/v1/chapters/claim', { character, lease, rid, deltas, members }),
     /** CHAP2a: the town this client stands in, its guild halls read off its own buildings (npcHallBook.js) */
     witness: (hall) => post('/v1/chapters/witness', { hall }),
+    /** AUDIT CHAP2 E1: a developer's - a region's towns and the audit list, and a false town struck */
+    halls: (region) => post('/v1/chapters/halls', { region }),
+    strike: (key) => post('/v1/chapters/strike', { key }),
   };
 }
 

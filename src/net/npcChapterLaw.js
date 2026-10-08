@@ -17,8 +17,10 @@
 // untouched: nothing here is read by an offline character.
 //
 // WHOSE WORD, AND WHAT BOUNDS IT. A reputation moves on the client, by
-// DFU's own law - a quest, a donation, a crime - and nothing a server saw.
-// So the client CLAIMS what moved, and the service bounds it:
+// DFU's own law - a quest, a donation, a crime - and nothing a server saw
+// (CHAP2a: but for a hall writ, whose units the Stores gave - the service
+// credits HALL_WRIT_REP itself). So the client CLAIMS what moved, and the
+// service bounds it:
 //   - A LOSS IS ALWAYS BELIEVED. A client that lies against itself is
 //     believed (section 3.3).
 //   - A GAIN IS PACED BY THE DAY: the day's NET rise of a faction is at
@@ -37,7 +39,10 @@
 //     with each faction capped at ROLL_CUSTOMS_CAP (CALL 3) - except a
 //     guild it is a member of, which keeps what its rank needs
 //     (RANK_REQ_REPUTATION; AUDIT CHAP D1: a cap that demoted the member
-//     at its next review took the rank the arc promised it keeps). Every
+//     at its next review took the rank the arc promised it keeps) and the
+//     band above it up to its next rank's line (AUDIT CHAP2 D3: seeded on
+//     the line, DFU's own 112-day drift demoted it at the review after),
+//     never past ROLL_SEAT_LINE - 1 (CALL 3: the grind buys no seat). Every
 //     other realm character - born online, or brought in before the epoch
 //     - earned its standing online, and is seeded whole (C3).
 // A seat (CHAP4) is decided by witnessed Merit (Seats-Arc law 3); what a
@@ -45,9 +50,12 @@
 // standing - each bounded here.
 //
 // The shapes and bounds BOTH ends read - the account service
-// (server-account/src/npcRoll.js), which keeps the Roll, and the client
-// (net/npcRollTracker.js), which claims and adopts. Pure: no clock, no
-// DOM, no network.
+// (server-account/src/npcRoll.js, npcHalls.js, professions.js), which
+// keeps the Roll, the halls and their writs, and the client
+// (net/npcRollTracker.js, npcHallBook.js, the board), which claims, adopts
+// and witnesses. Pure: no clock, no DOM, no network. Every balance number
+// lives here; the stores' own (CHAPTERS_KEPT_MS in npcHalls.js, the hall
+// book's key and bound in npcHallBook.js) live with them.
 // ═══════════════════════════════════════════════════════════════════
 
 import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guildFactions.js';
@@ -55,6 +63,11 @@ import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 
+/** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
+ *  order at most. */
+export const ROLL_BOOKS = 2;
+const DIVINE_SET = /** @type {Set<number>} */ (new Set(Object.values(DIVINES)));
+const ORDER_SET = /** @type {Set<number>} */ (new Set(Object.values(ORDERS)));
 /** The twenty-two guild factions the Roll keeps, by id, ascending. */
 export const ROLL_FACTIONS = Object.freeze([...Object.values(GUILD_FACTION_IDS), ...Object.values(DIVINES), ...Object.values(ORDERS)]
   .sort((a, b) => a - b));
@@ -130,13 +143,24 @@ export const rollSeedOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) => x
 /** A claim's changes: one to twenty-two lines, none 0, none past the span. */
 export const rollDeltasOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX, 1);
 
+/** THE SEAT'S LINE: the reputation rank 8 needs - CHAP4's seats begin here, and nothing the Roll takes on a client's word
+ *  alone carries a member past the line below it (CALL 3). */
+export const ROLL_SEAT_LINE = RANK_REQ_REPUTATION[8];
+/** What a member's rank keeps through the seed's cap (AUDIT CHAP D1, AUDIT CHAP2 D3): its rank's band up to the next
+ *  rank's line, so DFU's own drift does not demote it at the review after - never above the seat's line less one, and
+ *  never under its rank's own need (a rank 8 or 9 keeps its 80 or 90 - Mac's to decide, Chapters-Arc 3.6). */
+export function rollRankKeepOf(/** @type {unknown} */ rank) {
+  const r = Math.min(ROLL_RANK_MAX, Math.max(0, whole(rank)));
+  const top = r < ROLL_RANK_MAX ? RANK_REQ_REPUTATION[r + 1] - 1 : MAX_REPUTATION;
+  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));
+}
 /** THE SEED: every one of the twenty-two, as the save held it, under `cap` - and a guild the character is a member of
- *  (`ranks`, faction -> rank) never under what its rank needs. */
+ *  (`ranks`, faction -> rank) keeps what its rank keeps (rollRankKeepOf). */
 export function rollSeedOf(/** @type {Record<string, number>} */ values, cap = MAX_REPUTATION, /** @type {Map<number, number>} */ ranks = new Map()) {
   /** @type {Record<number, number>} */
   const out = {};
   for (const f of ROLL_FACTIONS) {
-    const need = ranks.has(f) ? RANK_REQ_REPUTATION[Math.min(ROLL_RANK_MAX, Math.max(0, whole(ranks.get(f))))] : MIN_REPUTATION;
+    const need = ranks.has(f) ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;
     out[f] = rollRep(values?.[f], Math.max(cap, need));
   }
   return out;
@@ -272,14 +296,19 @@ export function rollMembersOf(store) {
 export function rollMembersOk(/** @type {unknown} */ v) {
   if (!Array.isArray(v) || v.length > ROLL_FACTIONS.length) return false;
   const seen = new Set();
+  let temples = 0, orders = 0;
   for (const m of v) {
     if (!m || typeof m !== 'object' || Array.isArray(m)) return false;
     const { f, rank } = /** @type {any} */ (m);
     if (!isRollFaction(f) || seen.has(f)) return false;
     if (typeof rank !== 'number' || !Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;
+    if (DIVINE_SET.has(f)) temples++;
+    if (ORDER_SET.has(f)) orders++;
     seen.add(f);
   }
-  return true;
+  // AUDIT CHAP2 E3: DFU's book keeps ONE membership a guild group (guilds.js membershipKey) - one temple, one order - and
+  // a character holds two books (the mortal's and the vampire's, AUDIT CHAP D6): never more than two of either
+  return temples <= ROLL_BOOKS && orders <= ROLL_BOOKS;
 }
 
 /** The memberships as one comparable word - a claim is due when it changes; null (no book) is never a change. */
@@ -303,12 +332,20 @@ export const rollCeilingLine = (/** @type {unknown} */ raw) => `Your standing wi
 /** The witnessed fact's kind (world_witness.kind) - not `hall`, which `server-account/src/halls.js` keeps for the
  *  players' own guild halls (GUILD1d). */
 export const HALL_WITNESS_KIND = 'npchall';
+/** AUDIT CHAP2 E7: THE HALL LAW'S VERSION. A witness's first answer stands for ever, so a later rule (what counts as a
+ *  hall, hallFactionsOf) is a new version - its reports a new key, the old ones read by nobody - never a split with them. */
+export const HALL_REPORT_V = 1;
+/** A town's witness key at this version: `1:<mapId>`. */
+export const hallWitnessKey = (/** @type {number} */ mapId) => `${HALL_REPORT_V}:${mapId}`;
 /** A hall report an account may send in an hour (the seats' own bound, SEAT_WITNESS_REPORTS_HOUR). */
 export const HALL_WITNESS_HOUR = 24;
+/** AUDIT CHAP2 E2: the claims a character's Roll takes in an hour - the tab sends one a minute at most, and a hall writ's
+ *  refresh three a day; past it the claim is refused `roll-rate` and asked again later. */
+export const ROLL_CLAIMS_HOUR = 120;
 /** The reputation a delivered hall writ credits to its guild, on the deliverer's Roll. */
 export const HALL_WRIT_REP = 2;
 /** A chapter's writs a UTC day: two, scaled by the server's active accounts as the Court's are (CHAP2a narrowed the
- *  record's `courtWritCount` - six a chapter, five chapters a region, would post thirty a region a day). */
+ *  record's `courtWritCount`: a region can hold a dozen chapters, and six each would bury the Court's six). */
 export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
 /** A hall writ's own salt for gateHash - never the Court's (nodeLaw.js WRIT_SALT). */
 export const HALL_WRIT_SALT = 0x4a11;
@@ -339,8 +376,10 @@ const ORDER_NAMES = Object.freeze({
   Flame: 'Knights of the Flame', Horn: 'Host of the Horn', Rose: 'Knights of the Rose', Wheel: 'Knights of the Wheel',
   Scarab: 'Order of the Scarab', Hawk: 'Knights of the Hawk',
 });
-/** A CHAPTER'S NAME on its writs - the guild as DFU names its hall ("Mages Guild", "Knights of the Dragon"); a temple
- *  by its divine's whole name ("Temple of Zenithar", where DFU's caption cut it to "Zen"). Null for no guild faction. */
+/** A CHAPTER'S NAME on its writs - the guilds and orders as DFU's Talk captions their halls ("Mages Guild", "Knights of
+ *  the Dragon"); a temple is the port's own label, its divine's whole name ("Temple of Zenithar" - AUDIT CHAP2 D5: DFU's
+ *  caption cuts it to "Zen", and the town map names a temple by its templar order). Null for no guild faction. ORDER_NAMES
+ *  repeats systems/topicTree.js REGIONAL_BUILDING_NAMES' ten (that module's graph is the client's, never the service's). */
 export function hallPosterName(/** @type {number} */ faction) {
   if (faction === GUILD_FACTION_IDS.FightersGuild) return 'Fighters Guild';
   if (faction === GUILD_FACTION_IDS.MagesGuild) return 'Mages Guild';
@@ -363,7 +402,11 @@ export function hallWrits(day, region, faction, count, table) {
   const families = hallFamiliesOf(faction);
   const own = table.filter((m) => families.includes(material(m.material)?.family));
   const from = own.length ? own : table;
-  return courtWrits(day, region, count, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296);
+  // AUDIT CHAP2 E5: the Court's law gives its slot 0 the table's top tier ("one a day of tier 5-6", PROF0 11) - a
+  // chapter's two would have made every other hall writ that one, paying a quarter more than a Court writ. The day's top
+  // writ stays the Court's: a chapter's writs are the Court's law's slots after it, renumbered from 0
+  return courtWrits(day, region, count + 1, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296)
+    .slice(1).map((w, i) => ({ ...w, slot: i }));
 }
 
 /** A HALL REPORT, validated and made canonical: `{ key, region, factions }` - the location's map id (an unsigned 32-bit
@@ -390,7 +433,10 @@ export function parseHallReport(/** @type {unknown} */ text) {
   return h && hallReportText(h) === text ? h : null;
 }
 
-/** THE JOIN THE SERVICE RECORDS (AUDIT CHAP R1's line; Mac: "Approved"): a new membership only where the Roll's own
- *  reputation with the guild meets rank 0's need - DFU's join asks no less. */
-export const joinRecordable = (/** @type {unknown} */ rep) => rollRep(rep) >= RANK_REQ_REPUTATION[0];
+/** THE JOIN THE SERVICE RECORDS (AUDIT CHAP R1's line; Mac: "Approved"): a new membership only where the Roll's
+ *  standing with the guild meets DFU's join (Guild.cs IsEligibleToJoin: rank 0's need, 0) - `rep` the reputation and
+ *  what the Roll owes it (AUDIT CHAP2 S7: an initiation's own reward the day's pace cut is the Roll's already). AUDIT
+ *  CHAP2 D2: the Thieves Guild and the Dark Brotherhood join by their initiation quests at ANY standing
+ *  (GuildManager.cs:53-66, no eligibility test - ThievesGuild.cs:180-187), so their joins are recorded as DFU makes them. */
+export const joinRecordable = (/** @type {unknown} */ rep, /** @type {unknown} */ faction = null) => hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];
 

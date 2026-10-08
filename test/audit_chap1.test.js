@@ -152,7 +152,8 @@ test('AUDIT CHAP D2/D3: a reward past the day\'s pace is owed, not lost - paid a
   const c = await claimRoll(s.ctx(T0), s.player, s.body({ rid: 'worms-00001', deltas: { 21: 100 }, members: [] }));   // S0000106's +100
   assert.deepEqual([c.credited[21], c.roll.factions[21], c.roll.owed[21]], [15, 15, 85]);
   const next = await readRoll(s.ctx(T0 + DAY), s.player, s.body());
-  assert.deepEqual([next.from, next.roll.seq, next.roll.factions[21], next.roll.owed[21]], [1, 2, 30, 70], 'the next day\'s read pays 15');
+  // PIN MOVED (AUDIT CHAP2 C1): the answer's sequence is the CLAIM sequence - owed paid is the service's own credit
+  assert.deepEqual([next.from, next.roll.seq, next.roll.factions[21], next.roll.owed[21]], [1, 1, 30, 70], 'the next day\'s read pays 15');
   const later = await claimRoll(s.ctx(T0 + 2 * DAY), s.player, s.body({ rid: 'worms-00002', deltas: { 40: 1 }, members: [] }));
   assert.deepEqual([later.roll.factions[21], later.roll.owed[21]], [45, 55], 'and a claim on any line pays it too');
 });

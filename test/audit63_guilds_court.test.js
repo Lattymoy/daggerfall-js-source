@@ -217,14 +217,14 @@ test('AUDIT 63 F9: BOTH exterior hosts drive the reveal, at DFU\'s own moments',
   assert.ok(/ensureFactions\?\.\(\)/.test(body),
     'the streaming host reveals before FACTION.TXT is read - the plate saves as unknown-guild');
   const ext = read('../src/scenes/exterior.js');
-  assert.ok(/revealGuildHallsOnMap\(activeMemberships\(playerEntity\)/.test(ext),
+  assert.ok(/revealGuildHallsOnMap\(revealingMemberships\(playerEntity\)/.test(ext),   // PIN MOVED (AUDIT CHAP2 D4): either book's registration
     'the fixed-city host arms it at load - its one location becomes available exactly once');
   // the pool is the FULL building set, not the talk directory
   assert.ok(/buildingSummaries\(dfLocation\.exterior\?\.buildings/.test(ext));
   // the streaming host's pool is the FULL set too, resolved inside the
   // one reveal (the wait between the two is a microtask, not a re-read)
   assert.ok(/buildingSummaries\(dfLoc\.exterior\?\.buildings/.test(reveal.slice(0, reveal.indexOf('};'))));
-  assert.ok(/revealGuildHallsOnMap\(activeMemberships\(playerEntity\)/.test(reveal.slice(0, reveal.indexOf('};'))));
+  assert.ok(/revealGuildHallsOnMap\(revealingMemberships\(playerEntity\)/.test(reveal.slice(0, reveal.indexOf('};'))));   // PIN MOVED (AUDIT CHAP2 D4)
 });
 
 // ── F33: PlayerActivate.cs:800-841 + :1611-1673 ───────────────────

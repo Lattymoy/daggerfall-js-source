@@ -196,7 +196,7 @@ const writsToday = async (db, player, day) =>
 
 /**
  * A CHARACTER'S PROFESSIONS, as the Professions and Stores tabs and the nodes read them: every track, today's harvests
- * and the nodes taken, the Stores, today's Court writs filled, and the bounds.
+ * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), and the bounds.
  */
 export async function profState({ db, nowS }, player, env, { character } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
@@ -1293,6 +1293,10 @@ async function postWrits(db, day, region, nowS) {
   // while the region has no witnessed chapter, so a chapter confirmed later in the day posts that day
   const hallDone = !!(await db.prepare('SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first());
   if (courtDone && hallDone) return;
+  // AUDIT CHAP2 S1: the chapters (the isolate's kept answer) asked BEFORE the ground - a region with no chapter writes
+  // no hall_writ_days, and its every board read re-read the region's witnessed ground and the week's active accounts
+  const chapters = hallDone ? [] : await regionChapters(db, region, nowS * 1000);
+  if (courtDone && !chapters.length) return;
   const table = regionWritTable(region, await regionGround(db, region), daySeason(day));
   if (!table.length) return;
   const active = await activeBefore(db, day * DAY_S);
@@ -1307,7 +1311,6 @@ async function postWrits(db, day, region, nowS) {
         .bind(`c:${day}:${region}:${w.slot}`, day, region, w.slot, w.material, w.tier, w.units, w.pay, w.renown, expires)),
     );
   }
-  const chapters = hallDone ? [] : await regionChapters(db, region, nowS * 1000);
   if (chapters.length) {
     const halls = chapters.flatMap((f) => hallWrits(day, region, f, hallWritCount(active), table).map((w) => ({ ...w, faction: f })));
     stmts.push(
@@ -1328,7 +1331,8 @@ async function hiddenMemberships(db, player, character) {
   return new Set(results.map((r) => Number(r.faction_id)));
 }
 
-/** THE WORK TAB'S WRITS for a region's board: today's Court writs, each open, mine or taken, and the account's day. */
+/** THE WORK TAB'S WRITS for a region's board: today's Court writs and its chapters' hall writs (CHAP2a), each open, mine
+ *  or taken, and the account's day - the one allowance both share. */
 export async function listWrits({ db, nowS }, player, env, { character, region } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
@@ -1357,7 +1361,8 @@ function renownAnswer(character, before, after) {
 }
 
 /**
- * A COURT WRIT TAKEN (PROF0 11: filled whole, once, by the first to deliver - so taking it is delivering it):
+ * A COURT WRIT TAKEN - or a hall writ (CHAP2a; its guild +2 on the Roll, below) - (PROF0 11: filled whole, once, by the first
+ * to deliver - so taking it is delivering it):
  * `{ character, id, rid }`. Decided by the writ's one UPDATE: still open and today's, the account under its three a day,
  * the Stores holding the units, the balance with room for the pay. Then the units out (bought first), the pay struck
  * (`writ`, the second faucet - its line id the writ's own, under the service's `:`), the XP to the profession that
@@ -1387,11 +1392,13 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
   if (!w) return { error: 'no-writ' };
   // AUDIT 29 A16: a writ one filled oneself (its answer lost, the page reloaded, a new id) is answered as one's own
   if (w.filled_by === player.id) return answer(w, { repeat: true });
+  // CHAP2a: a hidden guild's writ is no writ to a character not its member on the Roll - as its listing never showed it.
+  // AUDIT CHAP2 S2: asked before the writ's day and fill, whose answers ('writ-expired', 'writ-taken') told a stranger
+  // walking the ids which regions keep the underworld's halls
+  if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };
+  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a
   if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };
   if (w.filled_by) return { error: 'writ-taken' };
-  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a
-  // CHAP2a: a hidden guild's writ is no writ to a character not its member on the Roll - as its listing never showed it
-  if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };
   if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
   const m = material(w.material);
   const prof = professionOfFamily(m?.family);
@@ -1435,7 +1442,10 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
     // head moves under this delivery's own tag (the nonce), so a claim that read the Roll before it is refused its write
     // (npcRoll.js: `roll-busy`, asked again) and never writes over the credit
     ...(w.kind === 'hall' ? [
-      db.prepare(`UPDATE npc_roll_heads SET seq = seq + 1, tag = ?3, updated_at = ?4 WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)`)
+      // AUDIT CHAP2 S5: and only while the character stands (a delivery carries no lease - the board's, not the playing
+      // tab's - so a hall writ's credit is the one Roll write a lease does not guard); the claim sequence untouched (C1)
+      db.prepare(`UPDATE npc_roll_heads SET seq = seq + 1, tag = ?3, updated_at = ?4 WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)
+        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)`)
         .bind(player.id, character, nonce, nowS, id),
       db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ?3)))
         WHERE char_id = ?2 AND player = ?1 AND faction_id = (SELECT faction FROM writs WHERE id = ?5 AND n = ?6)

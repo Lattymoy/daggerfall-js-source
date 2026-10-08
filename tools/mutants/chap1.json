@@ -116,13 +116,14 @@
   {
     "name": "CHAP1-SVC-REPEAT",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (taken) return { roll: viewOf(seq, rows), repeat: true };",
-    "new": "  if (false) return { roll: viewOf(seq, rows), repeat: true };",
+    "old": "  if (taken) return { roll: viewOf(kseq, rows), repeat: true };",
+    "new": "  if (false) return { roll: viewOf(kseq, rows), repeat: true };",
     "tests": [
       "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
     ],
-    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP1-SVC-GUARD",
@@ -181,24 +182,26 @@
   {
     "name": "CHAP1-SVC-SECOND-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (head) {\n    const seq = Number(head.seq);",
-    "new": "  if (false) {\n    const seq = Number(head.seq);",
+    "old": "  if (head) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
+    "new": "  if (false) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
     "tests": [
       "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
     ],
-    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP1-SVC-LEDGER",
     "file": "server-account/src/npcRoll.js",
-    "old": "...lines.map(([f, , asked]) => db.prepare(`INSERT INTO npc_rep_events",
-    "new": "...[].map(([f, , asked]) => db.prepare(`INSERT INTO npc_rep_events",
+    "old": "  const record = lines.length ? lines.map(([f, , asked]) => [f, asked, credited[f]]) : [[0, 0, 0]];",
+    "new": "  const record = [[0, 0, 0]];",
     "tests": [
       "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
     ],
-    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "CHAP1-SVC-SWITCH-DEV",
@@ -219,7 +222,7 @@
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"
     ],
-    "note": "CHAP2a: re-aimed by content - a refresh is asked inside the minute."
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. CHAP2a: re-aimed by content - a refresh is asked inside the minute (AUDIT CHAP2 R13: both kept)."
   },
   {
     "name": "CHAP1-TAB-RESEND",

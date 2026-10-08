@@ -338,7 +338,7 @@ test('PROF1 faces: THE WORK TAB - the region\'s Court writs under the Court\'s s
   assert.match(cards[0].textContent, /34 in your Stores/);
   assert.match(cards[1].textContent, /Filled by another/);
   assert.equal(byClass(cards[1], 'notice-take').length, 0, 'a taken writ has no Take');
-  assert.match(host.textContent, /Court writs today: 0 of 3/);
+  assert.match(host.textContent, /Writs today: 0 of 3/);   // PIN MOVED (AUDIT CHAP2 C5)
   byClass(cards[0], 'notice-take')[0].click();
   for (let i = 0; i < 3; i++) await tick();
   assert.deepEqual(delivered, ['c:1:21:0']);

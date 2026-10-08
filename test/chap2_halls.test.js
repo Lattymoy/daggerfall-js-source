@@ -17,7 +17,7 @@ import {
   parseHallReport, joinRecordable, hallPosterName, ROLL_FACTIONS,
 } from '../src/net/npcChapterLaw.js';
 import { regionWritTable, courtWrits, material } from '../src/net/nodeLaw.js';
-import { hallFactionsOf, createHallBook, HALL_REPORTED_KEY, HALL_STOPS } from '../src/net/npcHallBook.js';
+import { hallFactionsOf, createHallBook, HALL_REPORTED_KEY, HALL_STOPS, HALL_DONE } from '../src/net/npcHallBook.js';
 import { createRollTracker } from '../src/net/npcRollTracker.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../src/formats/factionFile.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
@@ -133,9 +133,10 @@ function memStorage() {
   return { m, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) };
 }
 
-test('CHAP2a the hall book: a town reported once a UTC day, kept across pages; a shut answer stops it for the page; a malformed report never sent (mutants: the day unread, the stop list ignored)', async () => {
+test('CHAP2a the hall book: a town reported once a UTC day until it is counted, then never again (PIN MOVED, AUDIT CHAP2 E9), kept across pages; a shut answer or a young account stops it for the page (C8); a malformed report never sent (mutants: the day unread, the stop list ignored)', async () => {
   let ms = 20000 * DAY * 1000 + 3_600_000;
   const door = fakeWitnessDoor();
+  door.error = 'halls-rate';   // answered, never counted: asked again the next day
   const storage = memStorage();
   const book = createHallBook({ door, storage, nowMs: () => ms });
   const town = { key: 77, region: ANTICLERE, factions: [41, 40] };
@@ -146,7 +147,11 @@ test('CHAP2a the hall book: a town reported once a UTC day, kept across pages; a
   const next = createHallBook({ door, storage, nowMs: () => ms });
   assert.equal(await next.witness(town), false, 'the next page knows');
   ms += DAY * 1000;
+  door.error = null;
   assert.equal(await next.witness(town), true, 'a new UTC day');
+  assert.deepEqual(JSON.parse(storage.getItem(HALL_REPORTED_KEY)), { 77: HALL_DONE + 20001 }, 'counted: done for good');
+  ms += DAY * 1000;
+  assert.equal(await next.witness(town), false, 'a counted town is never reported again - the account\'s answer stands');
   assert.equal(await next.witness({ key: 78, region: ANTICLERE, factions: [] }), false);
   assert.deepEqual(HALL_STOPS, ['chapters-closed', 'halls-need-account', 'no-session', 'auth']);
   door.error = 'chapters-closed';
@@ -157,6 +162,13 @@ test('CHAP2a the hall book: a town reported once a UTC day, kept across pages; a
   const quiet = createHallBook({ door: { witness: async () => ({ ok: false, error: 'halls-rate' }) }, storage: memStorage(), nowMs: () => ms });
   await quiet.witness(town);
   assert.equal(quiet.stopped, false, 'the hour\'s bound is no stop');
+  const young = createHallBook({ door: { witness: async () => ({ ok: true, data: { counted: false, why: 'young' } }) }, storage: memStorage(), nowMs: () => ms });
+  await young.witness(town);
+  assert.equal(young.stopped, true, 'an account under a week asks no more this page');
+  const struckStore = memStorage();
+  const struck = createHallBook({ door: { witness: async () => ({ ok: false, error: 'hall-struck' }) }, storage: struckStore, nowMs: () => ms });
+  await struck.witness(town);
+  assert.ok(JSON.parse(struckStore.getItem(HALL_REPORTED_KEY))[77] >= HALL_DONE, 'a struck town is never asked again');
 });
 
 // ── THE SERVICE ─────────────────────────────────────────────────────
@@ -223,7 +235,7 @@ test('CHAP2a witnessing a town: a guest 403, the Chapters shut 403, a malformed 
   assert.deepEqual((await s.call(WITNESS, { hall }, young.secret)).body, { ok: true, counted: true });
   await s.call(WITNESS, { hall: { ...hall, factions: [40] } }, young.secret);
   assert.deepEqual(s.raw.prepare("SELECT key, report, region FROM world_witness WHERE kind = 'npchall'").all().map((r) => ({ ...r })),
-    [{ key: '1234', report: '[1234,21,[40,41]]', region: ANTICLERE }], 'the first answer stands');
+    [{ key: '1:1234', report: '[1234,21,[40,41]]', region: ANTICLERE }], 'the first answer stands');   // PIN MOVED (AUDIT CHAP2 E7): keyed by the hall law's version
   const shut = await stand('off');
   const w = await shut.registered('Shut');
   shut.age(w, 8);
@@ -266,7 +278,7 @@ test('CHAP2a a region\'s chapters: the guilds its confirmed towns name - three a
   assert.deepEqual(await regionChapters(db, 17, _now * 1000), [368, 409]);
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000), [40, 41, 108], 'never here');
   // THE ISOLATE KEEPS IT A MINUTE: a row written behind the service's back is read after
-  s.raw.prepare("DELETE FROM world_witness WHERE kind = 'npchall' AND key = '2'").run();
+  s.raw.prepare("DELETE FROM world_witness WHERE kind = 'npchall' AND key = '1:2'").run();   // PIN MOVED (AUDIT CHAP2 E7)
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000 + 1000), [40, 41, 108]);
   assert.equal(CHAPTERS_KEPT_MS, 60_000);
   assert.deepEqual(await regionChapters(db, ANTICLERE, _now * 1000 + CHAPTERS_KEPT_MS), [40, 41]);
@@ -432,14 +444,17 @@ test('CHAP2a the tab\'s refresh: after a hall writ the next tick claims with not
 test('CHAP2a the wiring: the halls witnessed at the town\'s entry edge off the reveal\'s own buildings, online; the hall book built online; a hall writ refreshes the Roll; the board names its guild; the route stands; the version moved', () => {
   const world = src('src/scenes/world.js');
   assert.match(world, /revealMemberGuildHalls\(\{ witness: onlineOn \}\);/);
-  assert.match(world, /if \(witness && hallBook\) \{\n\s+const factions = hallFactionsOf\(buildings, townTalk\.factionDict \?\? null\);\n\s+if \(factions\.length\) hallBook\.witness\(\{ key: dfLoc\.mapTableData\.mapId >>> 0, region: dfLoc\.regionIndex, factions \}\);/);
-  assert.match(world, /const hallBook = params\.has\('online'\)\n\s+\? createHallBook\(\{ door: accountRoll\(/);
-  assert.match(world, /const hall = d\.writ\?\.kind === 'hall' && !d\.repeat \? hallPosterName\(d\.writ\.faction\) : null;\n\s+if \(hall\) rollTracker\?\.refresh\(\);/);
+  // PIN MOVED (AUDIT CHAP2 U1, U2, C1, C7; T: where it sits - inside the wait on the faction file)
+  const reveal = world.slice(world.indexOf('const revealMemberGuildHalls'), world.indexOf('// A2: the exterior automap'));
+  assert.match(reveal, /Promise\.resolve\(townTalk\.ensureFactions\?\.\(\)\)\.then\(\(\) => \{[\s\S]*if \(witness && hallBook && \(!homeLayoutsOnline \|\| \(_homeLayoutsApplied && !worldDataPacksMissing\(\)\.length\)\)\) \{\n\s+const factions = hallFactionsOf\(buildings, townTalk\.factionDict \?\? null\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+if \(factions\.length && Number\.isInteger\(region\)\) hallBook\.witness\(\{ key: dfLoc\.mapTableData\.mapId >>> 0, region, factions \}\);/);
+  assert.match(world, /const hallDoor = params\.has\('online'\) \? accountRoll\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\) : null;\n\s+const hallBook = hallDoor \? createHallBook\(\{ door: hallDoor, storage: appStorage\(\) \}\) : null;/);
+  assert.match(world, /if \(d\.writ\?\.kind === 'hall'\) rollTracker\?\.refresh\(\);\n\s+const hall = d\.writ\?\.kind === 'hall' && !d\.repeat && rollTracker\?\.held \? hallPosterName\(d\.writ\.faction\) : null;/);
+  assert.match(world, /\$\{hall \? ` The \$\{hall\} will remember it\.` : ''\}/);
   const board = src('src/ui/noticeWindow.js');
   assert.match(board, /const poster = w\.kind === 'hall' \? hallPosterName\(w\.faction\) \?\? 'guild' : null;/);
   assert.match(board, /`Wanted: \$\{w\.qty\} \$\{work\.countName\(w\.material, w\.qty\)\}, for the \$\{poster\} in \$\{work\.regionName\}`/);
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/witness'/);
-  assert.match(src('server-account/src/index.js'), /witnessHall\(/);
+  assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/witness' \? await witnessHall\(ctx, who\.player, env, body\)/);
   assert.match(src('server-account/src/service.js'), /ACCOUNT_VERSION = 'acct94'/);
   assert.match(src('server-account/wrangler.toml'), /CHAPTERS_OPEN = "dev"/);
   assert.match(src('server-account/migrations/0089_npc_halls.sql'), /kind IN \('pixel', 'dungeon', 'hub', 'seat', 'npchall'\)/);

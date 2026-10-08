@@ -39,7 +39,7 @@
 // call this at the two moments DFU's handlers fire - the join, and
 // each entry into a location.
 
-import { GUILDS, hasJoined } from './guilds.js';
+import { GUILDS, hasJoined, activeMemberships, membershipsFor } from './guilds.js';
 import { discoverBuilding } from './discovery.js';
 
 /** The two guilds that override Join with a reveal. Their faction ids
@@ -47,6 +47,23 @@ import { discoverBuilding } from './discovery.js';
  *  .The_Dark_Brotherhood (108) - ThievesGuild.cs:34,
  *  DarkBrotherhood.cs:34 - which the port's records already carry. */
 export const REVEALING_GUILDS = Object.freeze([GUILDS.ThievesGuild, GUILDS.DarkBrotherhood]);
+
+/**
+ * AUDIT CHAP2 D4: THE REGISTRATION IS EITHER BOOK'S. DFU restores BOTH
+ * membership books on a load (SerializablePlayer.cs:431-432), each guild's
+ * RestoreGuildData registers its events (ThievesGuild.cs:253-257,
+ * DarkBrotherhood.cs alike), and nothing unregisters them on vampirism -
+ * so the reveal (ThievesGuild.cs:227-247, no IsMember test) follows a
+ * membership kept in the inactive book too. The active book, with the
+ * two revealing guilds of the other added where it holds them.
+ */
+export function revealingMemberships(entity) {
+  const out = { ...activeMemberships(entity) };
+  for (const book of [membershipsFor(entity?.guildMemberships, false), membershipsFor(entity?.guildMemberships, true)]) {
+    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) out[g.guildGroup] = book[g.guildGroup];
+  }
+  return out;
+}
 
 /**
  * RevealGuildHallOnMap for whichever of the two the player belongs to.

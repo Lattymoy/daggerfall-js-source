@@ -155,7 +155,7 @@ test('CHAP1 the first read: no seed, no Roll; the seed taken once, capped at 40 
   const first = await call(ROLL, { character: R.id, lease: R.lease, seed }, who.secret);
   assert.equal(first.status, 200);
   assert.equal(first.body.seeded, true);
-  assert.equal(first.body.roll.factions[40], 60, 'capped at 40 - but a member keeps what its rank needs (AUDIT CHAP D1: rank 6 needs 60)');
+  assert.equal(first.body.roll.factions[40], 69, 'capped at 40 - but a member keeps its rank\'s band (AUDIT CHAP D1: rank 6 needs 60; PIN MOVED, AUDIT CHAP2 D3: up to rank 7\'s line less one, 69)');
   assert.equal(first.body.roll.factions[42], 0);
   assert.equal(first.body.roll.factions[41], -60, 'a loss is never capped');
   assert.equal(first.body.roll.factions[108], 40, 'no member: the cap');
@@ -163,7 +163,7 @@ test('CHAP1 the first read: no seed, no Roll; the seed taken once, capped at 40 
   assert.deepEqual(first.body.roll.members.map((m) => [m.f, m.rank]), [[40, 6]]);
   const again = await call(ROLL, { character: R.id, lease: R.lease, seed: { factions: { 40: 10 }, members: [] } }, who.secret);
   assert.equal(again.body.seeded, undefined);
-  assert.equal(again.body.roll.factions[40], 60, 'the Roll stands; a second seed is nothing');
+  assert.equal(again.body.roll.factions[40], 69, 'the Roll stands; a second seed is nothing');   // PIN MOVED (AUDIT CHAP2 D3)
   // a character the realm made before CHAP1 arrived keeps what it earned online whole
   raw.prepare('DELETE FROM npc_roll WHERE char_id = ?').run(R.id);
   raw.prepare('DELETE FROM npc_roll_heads WHERE char_id = ?').run(R.id);
@@ -269,24 +269,31 @@ test('CHAP1 a realm character deleted takes its Roll with it - the head, the row
 // ── THE PLAYING TAB ─────────────────────────────────────────────────
 
 /** A door that answers as the service would, keeping its own Roll - or refusing as it is told. */
+/** PIN MOVED (AUDIT CHAP2 T: the fake answered no `seq`, `from` or `seeded`, and wrote a null book over the Roll's): shaped
+ *  as the service answers - `seq` the claim sequence, moved by a claim that credits a line. */
 function fakeDoor() {
   const calls = [];
   let roll = null;
+  const view = () => ({ seq: roll.seq, factions: { ...roll.factions }, members: roll.members });
   const door = {
     calls, refuse: null, credit: (d) => d,
     async read(character, lease, seed) {
       calls.push({ kind: 'read', character, lease, seed });
       if (door.refuse) return { ok: false, error: door.refuse };
-      if (!roll) roll = { factions: rollSeedOf(seed.factions, 100), members: seed.members };
-      return { ok: true, data: { roll: { factions: { ...roll.factions }, members: roll.members } } };
+      if (!roll) {
+        roll = { seq: 0, factions: rollSeedOf(seed.factions, 100), members: seed.members ?? [] };
+        return { ok: true, data: { roll: view(), from: 0, seeded: true } };
+      }
+      return { ok: true, data: { roll: view(), from: roll.seq } };
     },
-    async claim(character, lease, rid, deltas, members, leave = false) {
-      calls.push({ kind: 'claim', rid, deltas, members, leave });
+    async claim(character, lease, rid, deltas, members) {
+      calls.push({ kind: 'claim', rid, deltas, members });
       if (door.refuse) return { ok: false, error: door.refuse };
       const credited = {};
       for (const [f, d] of Object.entries(deltas)) { credited[f] = door.credit(d); roll.factions[f] += credited[f]; }
-      roll.members = members;
-      return { ok: true, data: { roll: { factions: { ...roll.factions }, members }, credited } };
+      if (Object.keys(deltas).length) roll.seq += 1;
+      if (members) roll.members = members;
+      return { ok: true, data: { roll: view(), credited } };
     },
   };
   return door;

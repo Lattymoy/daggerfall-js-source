@@ -52,12 +52,14 @@
   {
     "name": "ACHAP-S5-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const need = ranks.has(f) ? RANK_REQ_REPUTATION[",
-    "new": "const need = false ? RANK_REQ_REPUTATION[",
+    "old": "const need = ranks.has(f) ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
+    "new": "const need = false ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
     "tests": [
       "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
-    ]
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "ACHAP-S5-RANKCAP-CLAIM",
@@ -102,12 +104,14 @@
   {
     "name": "ACHAP-S7-NOOP",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (!changed.length) return { roll: viewOf(seq, rows), credited };",
-    "new": "if (false) return { roll: viewOf(seq, rows), credited };",
+    "old": "if (!changed.length) return { roll: viewOf(kseq, rows), credited };",
+    "new": "if (false) return { roll: viewOf(kseq, rows), credited };",
     "tests": [
       "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
-    ]
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
   {
     "name": "ACHAP-S7-PRUNE",
