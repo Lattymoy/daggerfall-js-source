@@ -653,7 +653,9 @@
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",
       "test/chap2_halls.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Set.has is SameValueZero: no string id ever matches a number in the set"
   },
   {
     "name": "T-LAW-WHOLE-FINITE",
@@ -741,7 +743,7 @@
       "test/chap2_halls.test.js"
     ],
     "equivalent": true,
-    "why": "AUDIT CHAP2 E3 refuses a third temple or order, so no list of twenty-two (or more: only twenty-two distinct ids exist, and a repeat is refused) is ever a book - the length guard is the early way out"
+    "why": "AUDIT CHAP2 E3 refuses a third temple or order, and only twenty-two distinct ids exist (a repeat is refused), so no list of twenty-two or more is ever a book - the length guard is the early way out"
   },
   {
     "name": "T-LAW-MEMBERSOK-NEG",
@@ -1204,7 +1206,9 @@
       "test/chap2_halls.test.js",
       "test/prof1_service.test.js"
     ],
-    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it."
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "hall_writ_days is written only beside or after writ_days, so with both done the chapters are [] and AUDIT CHAP2 S1's guard returns before any read"
   },
   {
     "name": "T-POST-COUNT-ACTIVE",
@@ -1244,7 +1248,9 @@
       "test/chap2_halls.test.js",
       "test/prof1_service.test.js"
     ],
-    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it."
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "as above: hallDone implies courtDone, and the kept chapters answer without a read"
   },
   {
     "name": "T-LIST-FILLED-ARM",
@@ -1471,7 +1477,9 @@
       "test/chap1_roll.test.js",
       "test/chap2_halls.test.js"
     ],
-    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it."
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "redundant with the heads' primary key and the tag guard: no second seed's rows ever stand"
   },
   {
     "name": "T-HALL-FALLBACK",
@@ -1694,7 +1702,7 @@
   {
     "name": "AUDIT-CHAP2-D3-SEAT-LINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));",
+    "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
     "new": "  return Math.max(RANK_REQ_REPUTATION[r], top);",
     "tests": [
       "test/audit_chap1.test.js",
@@ -2026,6 +2034,18 @@
     "new": "CREATE TABLE IF NOT EXISTS npc_hall_strikes_x (",
     "tests": [
       "test/accountworker.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E6-HELD-AT-79",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
+    "new": "  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));",
+    "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
       "test/chap1_roll.test.js",

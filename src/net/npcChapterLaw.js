@@ -42,7 +42,8 @@
 //     at its next review took the rank the arc promised it keeps) and the
 //     band above it up to its next rank's line (AUDIT CHAP2 D3: seeded on
 //     the line, DFU's own 112-day drift demoted it at the review after),
-//     never past ROLL_SEAT_LINE - 1 (CALL 3: the grind buys no seat). Every
+//     never past ROLL_SEAT_LINE - 1 (CALL 3: the grind buys no seat - a
+//     rank 8 or 9 crossing keeps 79, E6). Every
 //     other realm character - born online, or brought in before the epoch
 //     - earned its standing online, and is seeded whole (C3).
 // A seat (CHAP4) is decided by witnessed Merit (Seats-Arc law 3); what a
@@ -147,12 +148,13 @@ export const rollDeltasOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) =>
  *  alone carries a member past the line below it (CALL 3). */
 export const ROLL_SEAT_LINE = RANK_REQ_REPUTATION[8];
 /** What a member's rank keeps through the seed's cap (AUDIT CHAP D1, AUDIT CHAP2 D3): its rank's band up to the next
- *  rank's line, so DFU's own drift does not demote it at the review after - never above the seat's line less one, and
- *  never under its rank's own need (a rank 8 or 9 keeps its 80 or 90 - Mac's to decide, Chapters-Arc 3.6). */
+ *  rank's line, so DFU's own drift does not demote it at the review after - and never past the seat's line less one
+ *  (AUDIT CHAP2 E6, Mac: "You can decide whatever is best"): a rank 8 or 9 crossing keeps 79 and is reviewed to rank 7,
+ *  as section 3.5 holds everyone at CHAP4 - an offline grind buys no seat's reputation (CALL 3). */
 export function rollRankKeepOf(/** @type {unknown} */ rank) {
   const r = Math.min(ROLL_RANK_MAX, Math.max(0, whole(rank)));
   const top = r < ROLL_RANK_MAX ? RANK_REQ_REPUTATION[r + 1] - 1 : MAX_REPUTATION;
-  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));
+  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));
 }
 /** THE SEED: every one of the twenty-two, as the save held it, under `cap` - and a guild the character is a member of
  *  (`ranks`, faction -> rank) keeps what its rank keeps (rollRankKeepOf). */

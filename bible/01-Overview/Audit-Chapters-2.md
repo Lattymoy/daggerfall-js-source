@@ -18,7 +18,10 @@ none edited the tree while any of them was reading (Home.md, DO NOT FIX WHILE TH
 Every finding was re-read here before a line moved; where lenses found one fault the IDs are joined (C2 = D1). Each fix
 carries an `AUDIT CHAP2 <ID>` comment and a pin in `test/audit_chap2.test.js` (34), and is mutated in
 `tools/mutants/audit_chap2.json` - the fixes' own mutants and the pins lens's 122, re-aimed by content where the fixes
-moved their lines: **165 records, 157 dead, 8 equivalent as recorded** (each with its reason). The arc's older lists hold
+moved their lines, and one for Mac's decision: **166 records, 157 dead, 9 equivalent as recorded** (each with its
+reason). The first run judged a few records dead that a flaky pin had failed - the audit's own end-to-end pin waited two
+turns for a real round trip, which a loaded runner does not always give - so the pin waits on what the trip moves, and
+every record judged on one failing test was run again: four the pins lens had called equivalent stand so. The arc's older lists hold
 too: `chap1.json` 25, `audit_chap1.json` 49 and `chap2.json` 39, all dead. The service stays `acct94`: none of it has
 shipped, so migration `0089` grew in place.
 
@@ -43,7 +46,7 @@ shipped, so migration `0089` grew in place.
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
 | D2 | low | "DFU's join asks no less" is false for two of the twenty-two: the Thieves Guild and the Dark Brotherhood join by their initiation quests at ANY standing (`GuildManager.cs:53-66`; `ThievesGuild.cs:180-187` has no eligibility test; L0A01L00's own path joins the Brotherhood at -95). The Roll refused to record such a member - who then never saw its own chapter's writs. | `joinRecordable(rep, faction)`: the underworld two at any standing. |
-| D3 | low | A crossing member seeded exactly ON its rank's line was demoted at the review after DFU's own 112-day drift (`PlayerEntity.cs:2235-2242`), and looped C2 meanwhile. | `rollRankKeepOf`: its rank's band up to the next line less one, never past 79 (`ROLL_SEAT_LINE` - 1) - no new seat eligibility. Ranks 8 and 9 keep 80 and 90 (E6, Mac's). |
+| D3 | low | A crossing member seeded exactly ON its rank's line was demoted at the review after DFU's own 112-day drift (`PlayerEntity.cs:2235-2242`), and looped C2 meanwhile. | `rollRankKeepOf`: its rank's band up to the next line less one, never past 79 (`ROLL_SEAT_LINE` - 1) - no new seat eligibility; a rank 8 or 9 crossing too (E6, decided). |
 | D4 | low | OFFLINE, a DFU 1:1 gap under the arc: the hidden guilds' halls were revealed for the ACTIVE book's membership alone, where DFU restores both books and registers each (`SerializablePlayer.cs:431-432`, `ThievesGuild.cs:253-257`) - a vampire's mortal Thieves Guild membership revealed nothing. | `revealingMemberships`: the active book with the two revealing guilds of the other, in both exterior hosts. |
 
 **The halls and their writs** (`server-account/src/npcHalls.js`, `server-account/src/professions.js`, `src/net/npcHallBook.js`, migration `0089`)
@@ -98,11 +101,14 @@ shipped, so migration `0089` grew in place.
 
 ## Recorded
 
-- **E6 - FOR MAC.** A rank-8 or rank-9 member crossing through customs keeps its 80 or 90 (AUDIT CHAP D1) - the
-  reputation half of CHAP4's Eligible, which CALL 3 says an offline grind cannot buy. Hold such a crossing at 79,
-  reviewed to rank 7 (as 3.5 does to everyone at CHAP4)? The record recommends yes. Built as it was until Mac answers.
-- **E4 - FOR MAC, before CHAP3.** Hall writs are first come, first served, deliverable from anywhere: once they are
-  Merit, the seats are a race at 00:00 UTC. Draw CHAP3's Merit writs per member instead? The record recommends yes.
+- **E6 - DECIDED (Mac: "You can decide whatever is best", 2026-10-08).** A rank-8 or rank-9 member crossing through
+  customs kept its 80 or 90 (AUDIT CHAP D1) - the reputation half of CHAP4's Eligible, which CALL 3 says an offline
+  grind cannot buy. Built as the record recommended: such a crossing keeps 79 (`rollRankKeepOf`), recorded at rank 7 and
+  reviewed to it, as 3.5 does to everyone at CHAP4 (pins moved in `test/audit_chap1.test.js`;
+  `AUDIT-CHAP2-E6-HELD-AT-79`).
+- **E4 - DECIDED for CHAP3 (Mac: "You can decide whatever is best").** Hall writs are first come, first served,
+  deliverable from anywhere: once they are Merit, the seats would be a race at 00:00 UTC. CHAP3's Merit writs are each
+  member's own (Chapters-Arc 5.1), its units the member's own (E13). Nothing changes before CHAP3.
 - **E10 - the numbers, for section 10.** A cheating client reaches 80/90 on a guild in about six UTC days of paced
   claims (or at once by the seed of a character born online, AUDIT CHAP S2), and CHAP4's Eligible needs fourteen days'
   tenure besides - seats stay safe while Merit is witnessed.

@@ -63,9 +63,10 @@ test('AUDIT CHAP2 E3: the Roll takes a book DFU can hold - one temple and one or
   assert.equal(L.rollMembersOk(L.ROLL_FACTIONS.map((f) => ({ f, rank: 0 }))), false, 'all twenty-two at once');
 });
 
-test('AUDIT CHAP2 D3: a crossing member keeps its rank\'s band, never the seat\'s line; ranks 8 and 9 keep their own need (Mac\'s to decide) (mutants: the band\'s top, the seat\'s line)', () => {
+test('AUDIT CHAP2 D3/E6: a crossing member keeps its rank\'s band, never the seat\'s line - a rank 8 or 9 crossing keeps 79 (Mac: "You can decide whatever is best") (mutants: the band\'s top, the seat\'s line)', () => {
   assert.equal(L.ROLL_SEAT_LINE, 80);
-  assert.deepEqual([0, 1, 4, 6, 7, 8, 9].map(L.rollRankKeepOf), [9, 19, 49, 69, 79, 80, 90]);
+  assert.deepEqual([0, 1, 4, 6, 7, 8, 9].map(L.rollRankKeepOf), [9, 19, 49, 69, 79, 79, 79]);
+  assert.equal(L.rollRankCapOf(L.rollRankKeepOf(9)), 7, 'reviewed to rank 7, as 3.5 holds everyone at CHAP4');
   const seed = L.rollSeedOf({ 40: 100, 41: 100, 42: 100 }, 40, new Map([[40, 4], [41, 7]]));
   assert.deepEqual([seed[40], seed[41], seed[42]], [49, 79, 40]);
   assert.equal(L.rollSeedOf({ 40: 45 }, 40, new Map([[40, 4]]))[40], 45, 'never above what the save held');

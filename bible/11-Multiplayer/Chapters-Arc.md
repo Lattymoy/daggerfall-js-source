@@ -7,7 +7,8 @@ audit on everything so far before we continue") read CHAP0 and CHAP1 through fiv
 (`01-Overview/Audit-Chapters.md`) - one narrowing of Mac's own Authority call, which he confirmed (R1, below: "Approved").
 CHAP2a BUILT (2026-10-07, Mac: "Do it"; the halls witnessed and their delivery writs - section 4, its record at the
 foot); AUDIT CHAP2 (2026-10-08, Mac: "Lets do a deep comprehensive audit on everything so far") read all of it through
-six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - two questions are Mac's (3.6, 5.1). CHAP2b (the
+six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its two questions decided at Mac's word
+("You can decide whatever is best": 3.6, 5.1). CHAP2b (the
 receipt writs) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
 
@@ -228,10 +229,11 @@ its standing earned online. THE SEED IS THE SAVE'S WORD (AUDIT CHAP S2): what a 
 first read is taken as a claim is, and buys what any claim buys - a personal rank, and a standing at the gate - while the
 tenure begins at the seed, so a seat is still fourteen days and witnessed Merit away. Realm phase 3 closes it.
 
-**FOR MAC (AUDIT CHAP2 E6).** Since AUDIT CHAP D1 a rank-8 or rank-9 member crossing through customs keeps its rank's
-80 or 90 - the reputation half of CHAP4's Eligible, which CALL 3 said an offline grind cannot buy (tenure and Merit stay
-out of reach). Should a crossing hold such a member at 79 instead, reviewed to rank 7 - which 3.5 does to everyone at
-CHAP4 anyway? The record's recommendation: yes, hold at 79. Until Mac answers, the 80 and 90 stand as built.
+**DECIDED (Mac: "You can decide whatever is best", 2026-10-08) - AUDIT CHAP2 E6.** Since AUDIT CHAP D1 a rank-8 or
+rank-9 member crossing through customs kept its rank's 80 or 90 - the reputation half of CHAP4's Eligible, which CALL 3
+says an offline grind cannot buy. Built: such a crossing keeps 79 (`rollRankKeepOf`, never past `ROLL_SEAT_LINE` - 1),
+its recorded rank 7, and DFU's own review takes the book to 7 - which 3.5 does to everyone at CHAP4 anyway. It is the
+one rank CHAP1's "moves no rank" gives up: a seat's rank is a seat's (3.5), never a grind's.
 
 ## 4. Hall writs - the chapter's work (CHAP2)
 
@@ -322,17 +324,21 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
 - **No spread** (AUDIT CHAP2 D6): a hall writ's +2 moves its guild alone - DFU's quest reward spreads to allies, enemies
   and down the faction tree (`PersistentFactionData.cs` ChangeReputation), which the service, holding no FACTION.TXT,
   cannot compute. Its trace is the writ's row (`filled_char`), not a line of `npc_rep_events`.
-- **FOR MAC before CHAP3 (AUDIT CHAP2 E4).** Hall writs are first come, first served: two a chapter a day, deliverable
-  from anywhere, taken at 00:00 UTC by whoever polls first. Once CHAP3 makes them Merit, the seats become that race.
-  Should CHAP3's Merit writs be drawn per member instead (each member's own daily writ for its chapter, rolled over the
-  character, inside the account's three)? The record's recommendation: yes, per member. Nothing changes before CHAP3.
+- **DECIDED for CHAP3 (Mac: "You can decide whatever is best", 2026-10-08) - AUDIT CHAP2 E4.** Hall writs are first
+  come, first served: two a chapter a day, deliverable from anywhere, taken at 00:00 UTC by whoever polls first. Once
+  Merit rides on them the seats would become that race, so CHAP3's MERIT writs are drawn PER MEMBER (5.1): each member's
+  own daily writ for its chapter, rolled over the character, inside the account's three. The shared writs stay as built
+  for their pay and standing; nothing changes before CHAP3.
 
 ## 5. Merit and Strength (CHAP3)
 
 ### 5.1 Merit
 
 DECIDED. Merit is counted per character, per chapter, per week - from **witnessed sources alone**: a hall writ
-filled for that chapter, a receipt in that chapter's region while a member. Never from a quest claim.
+filled for that chapter, a receipt in that chapter's region while a member. Never from a quest claim. DECIDED (AUDIT
+CHAP2 E4; Mac: "You can decide whatever is best"): the hall writ that earns Merit is the member's OWN - one a member a
+chapter a day, rolled over the character (the shared writs, first come first served, would make the seats a race at
+00:00 UTC) - inside the account's three a day; its units the member's own, never bought (E13: Seats-Arc 4.2's rule).
 
 - **Tenure**: a character in the guild fewer than **7 days** on the Roll earns no Merit (Seats-Arc 4.2's new member).
 - **One chapter a guild an account a week**: the first chapter of a guild an account's character earns Merit in is that
@@ -563,7 +569,7 @@ is Mac's to overrule.
 | A claim's pace | at most one a minute (`ROLL_CLAIM_MS`) - CHAP2a: at once, even with nothing moved, after a hall writ (`refresh`) - asked again after 30 seconds doubling to 15 minutes; AUDIT CHAP2 E2: the service's own bound, 120 claims a character an hour (`ROLL_CLAIMS_HOUR`, `roll-rate`) | 3.3 |
 | The memberships a claim may carry | one a guild faction, at most two temples and two orders (`ROLL_BOOKS` - the mortal's book and the vampire's, AUDIT CHAP2 E3) | 3.2 |
 | Receipt, reputation | +1 a guild | 3.3 |
-| Customs reputation cap | 40 (`ROLL_CUSTOMS_CAP`), for a customs crossing made from `ROLL_EPOCH_S` - 1,791,417,600, 2026-10-08 00:00 UTC - and never under a member's rank's band (`rollRankKeepOf`: its need up to the next rank's line less one, never past 79 - AUDIT CHAP C3, D1; AUDIT CHAP2 D3) | 3.6 |
+| Customs reputation cap | 40 (`ROLL_CUSTOMS_CAP`), for a customs crossing made from `ROLL_EPOCH_S` - 1,791,417,600, 2026-10-08 00:00 UTC - and never under a member's rank's band (`rollRankKeepOf`: its need up to the next rank's line less one, never past 79 - a rank 8 or 9 too, AUDIT CHAP2 E6 - AUDIT CHAP C3, D1; AUDIT CHAP2 D3) | 3.6 |
 | A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5) | 3.2 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
 | Receipt writ's own Marks | 0 | 4 |
@@ -696,6 +702,7 @@ liars, the audit list, a developer's strike - and a versioned key (E1, E7); the 
 standing and counts what is owed (D2, S7); a crossing member keeps its rank's band (D3); a hall writ never takes the
 Court's top slot (E5); a board read in a region with no chapter reads no ground (S1); a hidden guild's writ is the same
 `no-writ` to every stranger (S2); offline, a hidden guild's halls are revealed for a membership in either book, as DFU
-reveals them (D4). Two questions are Mac's: a rank-8 or rank-9 crossing's 80 or 90 (3.6, E6) and CHAP3's Merit writs
-(section 4, E4). `test/audit_chap2.test.js` (34) pins every fix and the pins lens's gaps; `tools/mutants/audit_chap2.json`
+reveals them (D4). Two questions were Mac's: a rank-8 or rank-9 crossing's 80 or 90 (3.6, E6) and CHAP3's Merit writs
+(section 4, E4) - DECIDED as the record recommended (Mac: "You can decide whatever is best"): a rank-8/9 crossing keeps
+79, and CHAP3's Merit writs are each member's own. `test/audit_chap2.test.js` (34) pins every fix and the pins lens's gaps; `tools/mutants/audit_chap2.json`
 mutates it.

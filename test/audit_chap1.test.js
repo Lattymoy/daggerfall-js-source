@@ -76,9 +76,9 @@ test('AUDIT CHAP S5 + D1: a customs seed keeps a member\'s rank its reputation (
   assert.deepEqual([rollRankCapOf(-5), rollRankCapOf(0), rollRankCapOf(39), rollRankCapOf(40), rollRankCapOf(95)], [0, 0, 3, 4, 9]);
   const s = await stand({ origin: 'off-audra' });
   const r = await readRoll(s.ctx(T0), s.player, s.body({ seed: { factions: { 40: 95, 41: 95, 42: 0 }, members: [{ f: 40, rank: 9 }, { f: 42, rank: 9 }] } }));
-  assert.equal(r.roll.factions[40], 90, 'a rank-9 member keeps 90: its review keeps its rank');
+  assert.equal(r.roll.factions[40], 79, 'a rank-9 member keeps 79 (PIN MOVED, AUDIT CHAP2 E6, Mac: "You can decide whatever is best": never a seat\'s 80 off an offline grind)');
   assert.equal(r.roll.factions[41], 40, 'no member: the customs cap');
-  assert.deepEqual(r.roll.members.map((m) => [m.f, m.rank]), [[40, 9], [42, 0]], 'rank 9 claimed with 0 reputation is recorded at 0');
+  assert.deepEqual(r.roll.members.map((m) => [m.f, m.rank]), [[40, 7], [42, 0]], 'rank 9 claimed with 0 reputation is recorded at 0 - and at 79, rank 7 (PIN MOVED, E6)');
   const c = await claimRoll(s.ctx(T0 + 60), s.player, s.body({ rid: 'rank-000001', deltas: {}, members: [{ f: 40, rank: 9 }, { f: 42, rank: 7 }] }));
   assert.equal(c.roll.members.find((m) => m.f === 42).rank, 0);
 });
