@@ -13,8 +13,10 @@ receipt's standing and the receipt writs - section 4, its record at the foot). C
 words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b BUILT (2026-10-08, Mac:
 "Continue"; Strength at the Turning, its band on the hall writs, the sheet - sections 5.2 and 5.3, its record at the
 foot). CHAP3c BUILT (2026-10-08, the same word; the bands on the halls' prices and shelf - section 5.2, its record at
-the foot). CHAP4 (the seats) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
-arc's migrations are `0091_npc_roll` to `0095_npc_chapters` and its service `acct95` - the records below name each
+the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the seats placed at the Turning, the book's
+rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b (the client's half) is next. Merged with main
+past the Super Dungeons arc (2026-10-08): the arc's migrations are `0091_npc_roll` to `0096_npc_seats` and its service
+`acct95` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
 "Let's audit everything we have so far before we continue") read all of it through six lenses and fixed what they found
 (`01-Overview/Audit-Chapters-3.md`); the sections below say where it narrowed them.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
@@ -223,6 +225,11 @@ DECIDED. A character whose own law would reach rank 8 or 9 holds rank 7 and is *
 back in. AUDIT CHAP R2: the service holds no skills, so CHAP4's Eligible is the half it does hold - a member whose
 reputation ON THE ROLL meets rank 8's need (80), its tenure on the Roll fourteen days - and the seat itself is Merit's. The rank-8 and rank-9 titles are the guild's own (`guilds.js`'s rank titles; `guildVariants.js`'s for the
 temples and the orders), worn only by a seat's holder.
+
+BUILT (CHAP4a, the service's half): the Roll records no rank past 7 (`ROLL_BOOK_RANK_MAX`, `rollBookRankOf` - a seed's,
+a claim's, and a claim with no book's, AUDIT CHAP2 E8's path), so a rank 8 or 9 the book reports is recorded 7, and a
+character's seats ride the Roll's answer beside its memberships (`seats: [{ f, region, seat, since }]`). The book itself
+is the client's, and CHAP4b holds it at 7 while the Roll does.
 
 ### 3.6 Customs and a new character
 
@@ -533,6 +540,33 @@ DECIDED (Mac): limited, contested seats; the shape below is the record's.
   rest of the Season.
 - **The Chronicle**: every change of seat is a history row, read by the Hall of Records as the seats' are.
 
+BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
+
+- **Placed at the Chapters' own Turning** (`server-account/src/npcChapters.js` settleChapterWeek, in its one batch after
+  the week's key): every chapter's seats placed again from the Merit of the four weeks to the week it settles
+  (`SEAT_MERIT_WEEKS`), a gate's only where its day's claims agree (AUDIT CHAP3 E1's law) - and, once the Chapters are
+  everyone's, none of a week settled while they were the developers' alone, nor the seats those weeks placed (S2's law).
+- **Eligible at the Turning** (`seatEligibleAt`, at the week's end, never at the read that settles it): a member on the
+  Roll, its reputation there at 80, `joined_at` fourteen days before the Turning, its account (`players.registered_at`)
+  seven, its character standing (a dead one sits nowhere). The reputation and the membership are the Roll's as the read
+  finds them.
+- **The order** (`chapterSeatPlan`, pure): standing in whole tenths of Merit (`seatScoreOf`), a sitting holder's x 1.2
+  (`SEAT_HOLDER_CARRY`, the seats' own `SIEGE_DEFENCE_BONUS`) for a seat at THIS chapter alone; then the longer tenure,
+  then the lower character id. Every chapter's Master's seat first, realm-wide, then its officers: so a character the
+  Master of one chapter may sit as another guild's officer, never two Masters; an account's characters hold one seat a
+  guild between them, in every region (an alt in the Master's chapter sits nowhere).
+- **The seats' table** (`npc_chapter_seats`, migration `0096_npc_seats`) is written whole again each Turning; a seat
+  keeps its `since` - the week its character first sat at the chapter without a break, through a move between Master and
+  officer. A character deleted takes its seats with it (`realm.js` deleteRealm, undoCustoms); one that dies keeps its
+  seat until the next Turning places it nowhere.
+- **The Chronicle** (`npc_chapter_history`): a row of kind `seat` for each character whose seat moved, `{ from, to }`
+  (null for none) - a week that moved no seat writes none; kept when the character is deleted. Its reader - the Hall of
+  Records - is CHAP4c's, with the titles.
+- **Hidden guilds** are placed as any chapter is; nothing of their seats is public (the sheet and the board name none).
+- **Still to build**: the client's half (CHAP4b - the book held at 7 online, a seat's rank at its chapter's halls); the
+  titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay first, Seats-Arc 7.4,
+  worded without gender); the Focus and the Chronicle's reader (CHAP4c).
+
 ## 7. Seasons - the chapter's story (CHAP6)
 
 DECIDED (Mac): seasonal events, driven by players; personal rank carries over. The events below are the record's.
@@ -632,9 +666,9 @@ DECIDED.
   character an act a guild). BUILT (CHAP3b, migration `0095_npc_chapters`): `npc_chapters` (faction, region, strength,
   week, merit, at) and `npc_chapter_weeks` (week, active, target, chapters, open, at). BUILT (AUDIT CHAP3 S3, `0092`
   grown in place): `npc_hall_regions` (region, chapters, ver, done, at) - a region's chapters computed once a change.
-  Still drawn: a chapter's event, event_state JSON, doctrine and focus (CHAP4, CHAP6); `npc_chapter_seats` (key, seat,
-  char_id, since);
-  `npc_chapter_history` (seq, key, week, kind, data JSON).
+  BUILT (CHAP4a, migration `0096_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
+  at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
+  data JSON). Still drawn: a chapter's event, event_state JSON, doctrine and focus (CHAP4c, CHAP6).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
   CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet); `standings` (a chapter's Merit), `history` still drawn; the hall writs
@@ -667,7 +701,8 @@ DECIDED.
    CHAP3a BUILT (2026-10-08): a member's own writ and the week's Merit (5.1). CHAP3b BUILT (2026-10-08): the Turning's
    Strength, the bands on the hall writs, the sheet (5.2, 5.3). CHAP3c BUILT (2026-10-08): the bands on the halls' prices
    and shelf (5.2).
-4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
+4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows. CHAP4a BUILT
+   (2026-10-08): the seats placed at the Turning, the Roll's rank stopped at 7, the Chronicle's rows (section 6).
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
@@ -1002,3 +1037,21 @@ book's key and bound).
   40 dead, 5 equivalent as recorded. Thirty older records re-aimed at the code the fixes moved, all dead - two of them
   (AUDIT CHAP2's `T-LAW-ADOPT-BASE-HAS`, CHAP3c's `CHAP3C-SHEET-BUSY`) no longer equivalent, killed by new pins. The
   pins the fixes moved say PIN MOVED.
+
+## CHAP4a - the seats placed, as built (2026-10-08, Mac: "Your decision", on "Whats next")
+
+The fourth slice's service half; sections 3.5 and 6 carry the law and what building it narrowed (BUILT, CHAP4a).
+
+- **The law.** `src/net/npcChapterLaw.js`: the seats' numbers (`CHAPTER_SEAT_KINDS`, `CHAPTER_SEATS`, `SEAT_RANK`,
+  `SEAT_TENURE_S`, `SEAT_ACCOUNT_AGE_S`, `SEAT_MERIT_WEEKS`, `SEAT_HOLDER_CARRY`), the book's cap (`ROLL_BOOK_RANK_MAX`,
+  `rollBookRankOf`), Eligible (`seatEligibleAt`), a standing (`seatScoreOf`), the placing (`chapterSeatPlan`) and what it
+  changed (`seatChangesOf`).
+- **The service.** `server-account/src/npcChapters.js`: the Turning's seats (`seatsPlaced`, in settleChapterWeek's
+  batch) and a character's (`chapterSeatsOf`, on the Roll's answer - `index.js`); `npcRoll.js`: the recorded rank
+  through `rollBookRankOf`; `realm.js`: a deleted character's seats; migration `0096_npc_seats`. Still `acct95`.
+- **Pins.** `test/chap4a_seats.test.js`, 13 tests: the law against literals (the numbers, the cap, Eligible at each
+  edge, the standing, the plan's order, vacancy, ties, carry and limits, the changes); the Turning through the real
+  migrations (who is placed and who never - under the line, a second short, an account too new, dead, gone; the window;
+  the carry against a newcomer; `since` through a move; the Chronicle; a gate's agreement; the developers' weeks;
+  Eligible at the Turning); the Roll's rank and seats through its routes; a delete through its route.
+  `tools/mutants/chap4a.json`: 44 mutants, 43 dead, 1 equivalent as recorded. ACC1b's table list moved (PIN MOVED).

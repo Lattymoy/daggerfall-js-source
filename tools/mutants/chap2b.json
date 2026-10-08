@@ -259,8 +259,8 @@
   {
     "name": "CHAP2B-DELETE",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave\n    db.prepare('DELETE FROM realm_characters",
-    "new": "    db.prepare('DELETE FROM realm_characters",
+    "old": "    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave\n    db.prepare('DELETE FROM npc_chapter_seats",
+    "new": "    db.prepare('DELETE FROM npc_chapter_seats",
     "tests": [
       "test/chap2b_receipts.test.js"
     ]

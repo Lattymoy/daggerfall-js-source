@@ -64,7 +64,7 @@ import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RAN
 import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
-import { seatWeekOf } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both)
+import { seatWeekOf, SIEGE_DEFENCE_BONUS } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4a: a holder's carry
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
@@ -649,4 +649,98 @@ export function chapterShelfQuality(/** @type {number} */ quality, /** @type {un
   const step = chapterBandOf(strength).shelf;
   if (!(quality > 0) || step === 0) return quality;
   return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));
+}
+
+// ─── CHAP4a: THE SEATS (Chapters-Arc 3.5, 6) ────────────────────────
+// Ranks 8 and 9 are seats: each chapter's one Master (rank 9) and three officers (rank 8), placed at its Turning by
+// the Merit its Eligible members earned it over the last four weeks - a sitting holder's x 1.2 (the seats' own carry,
+// townSeatLaw.js SIEGE_DEFENCE_BONUS) - ties to the longer tenure, then the lower character id. Eligible is the half of
+// the rank law the service holds (AUDIT CHAP R2): a member whose reputation on the Roll meets rank 8's need, fourteen
+// days in the guild on the Roll, on an account seven days old. A seat no Eligible member has Merit for stands vacant -
+// never filled from below. One seat an account a guild (realm-wide: an account's alts never hold two of one guild's);
+// one Master's seat a character. The book's own rank stops at 7 (ROLL_BOOK_RANK_MAX): what DFU's law would make 8 or 9
+// is Eligible, until a seat. The service places them (server-account/src/npcChapters.js).
+
+/** A chapter's seats, by kind, Master first; and the rank each gives. */
+export const CHAPTER_SEAT_KINDS = Object.freeze(['master', 'officer']);
+export const CHAPTER_SEATS = Object.freeze({ master: 1, officer: 3 });
+export const SEAT_RANK = Object.freeze({ master: 9, officer: 8 });
+/** The highest rank a membership's own book holds - 8 and 9 are the seats' (3.5). */
+export const ROLL_BOOK_RANK_MAX = 7;
+/** The rank the Roll records for a member: the book's, bounded by its own reputation (3.2), and never a seat's. */
+export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(0, Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX));
+/** Eligible's tenure on the Roll, and its account's age. */
+export const SEAT_TENURE_S = 14 * 86_400;
+export const SEAT_ACCOUNT_AGE_S = 7 * 86_400;
+/** The weeks of Merit a Turning places the seats by - the week it settles and the three before. */
+export const SEAT_MERIT_WEEKS = 4;
+/** A sitting holder's Merit, carried (Seats-Arc 5.2 step 3's 1.2). */
+export const SEAT_HOLDER_CARRY = SIEGE_DEFENCE_BONUS;
+
+/** ELIGIBLE at `atS`: a member of the guild on the Roll, its reputation there at the seat's line, its tenure fourteen days,
+ *  its account seven days old. */
+export function seatEligibleAt(/** @type {{ member?: unknown, rep?: unknown, joinedAt?: unknown, registeredAt?: unknown }} */ row, /** @type {number} */ atS) {
+  const at = (/** @type {unknown} */ v) => typeof v === 'number' && Number.isSafeInteger(v);
+  return !!row && (row.member === true || row.member === 1) && rollRep(row.rep) >= ROLL_SEAT_LINE
+    && at(row.joinedAt) && /** @type {number} */ (row.joinedAt) <= atS - SEAT_TENURE_S
+    && at(row.registeredAt) && /** @type {number} */ (row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S;
+}
+
+/** A candidate's standing for a seat, in tenths of Merit (whole, so a carried 1.2 never ties by a float's error). */
+export const seatScoreOf = (/** @type {number} */ merit, sitting = false) => Math.round(Math.max(0, whole(merit)) * 10 * (sitting ? SEAT_HOLDER_CARRY : 1));
+
+/**
+ * THE SEATS A TURNING PLACES: `candidates` `[{ faction, region, char, account, merit, joinedAt }]` - each Eligible
+ * member's four weeks' Merit at one chapter - and `sitting` the seats as they stand (`[{ faction, region, char }]`).
+ * Every chapter's Master first, realm-wide, then its officers, each in the order of standing (seatScoreOf, the sitting
+ * carried), the longer tenure, the lower character id - the chapter's own key last, so one candidate's chapters are
+ * taken in one order. A candidate with no Merit takes none; one seat an account a guild; one Master's seat a character.
+ * Answers `[{ faction, region, char, account, seat }]`, by chapter, Master first.
+ * @param {Iterable<any>} candidates @param {Iterable<any>} [sitting]
+ */
+export function chapterSeatPlan(candidates, sitting = []) {
+  const key = (/** @type {any} */ c) => `${c.faction}|${c.region}`;
+  const sat = new Set([...sitting].map((s) => `${key(s)}|${s.char}`));
+  const order = [...candidates]
+    .filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) && typeof c?.char === 'string' && typeof c?.account === 'string' && whole(c?.merit) > 0)
+    .map((c) => ({ ...c, score: seatScoreOf(c.merit, sat.has(`${key(c)}|${c.char}`)) }))
+    .sort((a, b) => b.score - a.score || whole(a.joinedAt) - whole(b.joinedAt) || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)
+      || a.faction - b.faction || a.region - b.region);
+  /** @type {Map<string, { master: any[], officer: any[] }>} */
+  const seats = new Map();
+  const held = new Set();   // account|faction - one seat an account a guild
+  const masters = new Set();   // char - one Master's seat a character
+  const place = (/** @type {any} */ c, /** @type {'master' | 'officer'} */ seat) => {
+    if (!seats.has(key(c))) seats.set(key(c), { master: [], officer: [] });
+    /** @type {any} */ (seats.get(key(c)))[seat].push({ faction: c.faction, region: c.region, char: c.char, account: c.account, seat });
+    held.add(`${c.account}|${c.faction}`);
+    if (seat === 'master') masters.add(c.char);
+  };
+  for (const seat of CHAPTER_SEAT_KINDS) {
+    for (const c of order) {
+      if ((seats.get(key(c))?.[/** @type {'master' | 'officer'} */ (seat)].length ?? 0) >= CHAPTER_SEATS[/** @type {'master' | 'officer'} */ (seat)]) continue;
+      if (held.has(`${c.account}|${c.faction}`) || (seat === 'master' && masters.has(c.char))) continue;
+      place(c, /** @type {'master' | 'officer'} */ (seat));
+    }
+  }
+  return [...seats.entries()].sort(([a], [b]) => {
+    const [fa, ra] = a.split('|').map(Number), [fb, rb] = b.split('|').map(Number);
+    return fa - fb || ra - rb;
+  }).flatMap(([, s]) => [...s.master, ...s.officer]);
+}
+
+/** WHAT A TURNING CHANGED: each character whose seat at a chapter moved - `{ faction, region, char, from, to }`, `from`
+ *  and `to` a seat or null - by chapter, then character. A seat that stands where it stood is no change. */
+export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {Iterable<any>} */ after) {
+  /** @type {Map<string, { faction: number, region: number, char: string, from: string | null, to: string | null }>} */
+  const out = new Map();
+  const at = (/** @type {any} */ s) => {
+    const k = `${s.faction}|${s.region}|${s.char}`;
+    if (!out.has(k)) out.set(k, { faction: s.faction, region: s.region, char: s.char, from: null, to: null });
+    return /** @type {any} */ (out.get(k));
+  };
+  for (const s of before) at(s).from = s.seat;
+  for (const s of after) at(s).to = s.seat;
+  return [...out.values()].filter((c) => c.from !== c.to)
+    .sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));
 }

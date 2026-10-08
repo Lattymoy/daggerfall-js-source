@@ -64,8 +64,8 @@
   {
     "name": "ACHAP-S5-RANKCAP-CLAIM",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), rollRankCapOf(line.rep)) : null,",
-    "new": "rank: member ? /** @type {number} */ (ranks.get(f)) : null,",
+    "old": "rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
+    "new": "rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), 7) : null,",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "ACHAP-S5-RANKCAP-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? Math.min(/** @type {number} */ (reported.get(f)), rollRankCapOf(values[f])) : null,",
-    "new": "rank: member ? /** @type {number} */ (reported.get(f)) : null,",
+    "old": "rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
+    "new": "rank: member ? Math.min(/** @type {number} */ (reported.get(f)), 7) : null,",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"

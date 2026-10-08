@@ -672,6 +672,7 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
     db.prepare('DELETE FROM npc_roll_heads WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM npc_rep_events WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave
+    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats (the Chronicle keeps their story)
     db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),
     endUnionsOf(db, id, nowS, 'gone'),   // LEGACY7 part three: a union ends with the character
     db.prepare('DELETE FROM realm_wed_halves WHERE char_id = ?').bind(id),
@@ -744,6 +745,7 @@ async function undoCustoms({ db, bucket }, playerId, id, originId) {
       db.prepare('DELETE FROM npc_roll_heads WHERE player = ? AND char_id = ?').bind(playerId, id),
       db.prepare('DELETE FROM npc_rep_events WHERE player = ? AND char_id = ?').bind(playerId, id),
       db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave
+      db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats
       ...customsCarry(db, playerId, id, originId),   // the carry, run back: from the realm's id to the offline one
       // the pass's census row (a pass is spent only where this account's census counted no such character), asked before
       // the pass comes back below

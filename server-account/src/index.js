@@ -183,7 +183,7 @@ import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
-import { chapterSheet } from './npcChapters.js';   // CHAP3b: the chapter sheet
+import { chapterSheet, chapterSeatsOf } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
@@ -1074,6 +1074,8 @@ const service = {
             : path === '/v1/chapters/strike' ? await strikeHall(ctx, who.player, env, body)
               : path === '/v1/chapters/roll' ? await readRoll(ctx, who.player, body) : await claimRoll(ctx, who.player, body);
         if ('error' in r) return no(r.error, /** @type {Record<string, number>} */ (ROLL_STATUS)[r.error] ?? 400, origin);
+        // CHAP4a: the Roll's answer carries the character's seats - ranks 8 and 9 are a seat's, never the book's
+        if ((path === '/v1/chapters/roll' || path === '/v1/chapters/claim') && /** @type {any} */ (r).roll) /** @type {any} */ (r).roll.seats = await chapterSeatsOf(ctx.db, body?.character);
         return json(r, 200, origin);
       }
 

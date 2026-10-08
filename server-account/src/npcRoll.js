@@ -43,7 +43,8 @@
 // whole (from what is owed first), a gain under the day's net room and
 // the rest owed (rollCredit) - and the memberships as the client holds
 // them now (null: unchanged), each rank never past what the Roll's own
-// reputation allows (rollRankCapOf). A claim whose id was taken - the
+// reputation allows, nor past 7 - CHAP4a: 8 and 9 are seats
+// (rollBookRankOf). A claim whose id was taken - the
 // head's last, or any line of the record (AUDIT CHAP S6) - is answered as
 // it stands, never credited twice; a claim that changes nothing writes
 // nothing (S7).
@@ -55,7 +56,7 @@ import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, LEASE_RE } from './realm.js';
 import {
   ROLL_FACTIONS, ROLL_EVENTS_KEEP_S, chaptersSwitchOf, rollRidOf, rollSeedOk, rollDeltasOk, rollMembersOk, rollSeedCapOf, rollSeedOf,
-  rollCredit, rollDrain, rollRankCapOf, joinRecordable, ROLL_CLAIMS_HOUR,
+  rollCredit, rollDrain, rollBookRankOf, joinRecordable, ROLL_CLAIMS_HOUR,
 } from '../../src/net/npcChapterLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { overRate } from './accounts.js';   // AUDIT CHAP2 E2: the claims' own hour
@@ -198,7 +199,7 @@ export async function readRoll({ db, nowS, rand }, player, body) {
     const member = reported.has(f);
     rows.set(f, {
       rep: values[f], gainedDay: 0, gained: 0, owed: 0, member,
-      rank: member ? Math.min(/** @type {number} */ (reported.get(f)), rollRankCapOf(values[f])) : null, joinedAt: member ? nowS : null,
+      rank: member ? rollBookRankOf(reported.get(f), values[f]) : null, joinedAt: member ? nowS : null,   // CHAP4a: never a seat's rank
     });
   }
   await db.batch([
@@ -277,15 +278,16 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
       // at any standing) - one already on the Roll stays, whatever its standing since
       const member = ranks.has(f) && (row.member || joinRecordable(line.rep + line.owed, f));
       // the tenure: kept while a member stays one, begun the first time the service sees one, ended when it leaves; the
-      // rank never past what the Roll's own reputation allows (AUDIT CHAP S5)
+      // rank never past what the Roll's own reputation allows (AUDIT CHAP S5), nor past the book's 7 (CHAP4a: 8 and 9 are
+      // seats, Chapters-Arc 3.5)
       line = {
         ...line, member,
-        rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), rollRankCapOf(line.rep)) : null,
+        rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,
         joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,
       };
-    } else if (line.member && line.rank != null && line.rank > rollRankCapOf(line.rep)) {
+    } else if (line.member && line.rank != null && line.rank > rollBookRankOf(line.rank, line.rep)) {
       // AUDIT CHAP2 E8: a claim with no book still never leaves a recorded rank past what the Roll's reputation allows
-      line = { ...line, rank: rollRankCapOf(line.rep) };
+      line = { ...line, rank: rollBookRankOf(line.rank, line.rep) };
     }
     if (!same(line, row)) changed.push([f, line, asked]);
   }

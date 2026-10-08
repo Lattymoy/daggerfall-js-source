@@ -168,8 +168,8 @@
   {
     "name": "A3-E1-AGREED",
     "file": "server-account/src/npcChapters.js",
-    "old": ".filter((r) => r.source !== 'gate' || agreed.get(/** @type {number} */ (gateDayOf(r.ref))) === Number(r.region));",
-    "new": ".filter(() => true);",
+    "old": "const merits = lines.filter((r) => r.source !== 'gate' || agreed.get(/** @type {number} */ (gateDayOf(r.ref))) === Number(r.region));",
+    "new": "const merits = lines.filter(() => true);",
     "tests": [
       "test/audit_chap3.test.js"
     ]

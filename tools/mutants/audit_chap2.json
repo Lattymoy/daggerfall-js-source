@@ -1933,7 +1933,7 @@
   {
     "name": "AUDIT-CHAP2-E8-NULL-BOOK",
     "file": "server-account/src/npcRoll.js",
-    "old": "    } else if (line.member && line.rank != null && line.rank > rollRankCapOf(line.rep)) {",
+    "old": "    } else if (line.member && line.rank != null && line.rank > rollBookRankOf(line.rank, line.rep)) {",
     "new": "    } else if (false) {",
     "tests": [
       "test/audit_chap1.test.js",
