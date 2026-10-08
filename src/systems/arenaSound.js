@@ -81,6 +81,16 @@ export function lowpass(x, rate, hz) {
   for (let i = 0; i < x.length; i++) { y += a * (x[i] - y); x[i] = y; }
   return x;
 }
+/** AUDIT SD III (A3): `lowpass` for a LOOP (in place) - the filter run on from the state the loop's end leaves, so its
+ *  start takes up where its end left off: begun from nought, a darkened loop stepped at its seam every pass (a click
+ *  at each turn of the Hour's works, its hum, the Rift's bell). */
+export function lowpassLoop(x, rate, hz) {
+  const a = 1 - Math.exp(-hz * 2 * Math.PI / rate);
+  let y = 0;
+  for (let i = 0; i < x.length; i++) y += a * (x[i] - y);
+  for (let i = 0; i < x.length; i++) { y += a * (x[i] - y); x[i] = y; }
+  return x;
+}
 /** A one-pole high-pass at `hz` (in place). */
 export function highpass(x, rate, hz) {
   const a = Math.exp(-hz * 2 * Math.PI / rate);

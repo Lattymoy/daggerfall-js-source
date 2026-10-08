@@ -163,7 +163,7 @@ void main() {
     float lit = clamp(dot(n, uLight) * 0.5 + 0.5, 0.0, 1.0);
     vec2 along = normalize(vec2(-n.z, n.x) + 1e-5);
     float u = dot(vW.xz, along) * 4.0 + h(floor(vec2(vW.y * 2.0, dot(vW.xz, along) * 4.0))) * 0.25;
-    float hatch = (1.0 - smoothstep(0.06, 0.16, abs(fract(u) - 0.5) * 2.0 - 0.78)) * smoothstep(0.55, 0.2, lit);
+    float hatch = (1.0 - smoothstep(0.06, 0.16, abs(fract(u) - 0.5) * 2.0 - 0.78)) * (1.0 - smoothstep(0.2, 0.55, lit));
     tone = 0.06 + 0.1 * (1.0 - lit) + hatch * 0.16;
   }
   // UNDER WATER (FLOOR-WATER, Mac: "adjust the water to look better"): the classic map tints everything below its

@@ -104,6 +104,10 @@ export const DOOR_VERB_FLAGS = new Set([
  *  GetComponent as `kind === 'door'` alone, which admits the special
  *  door the C# lookup can never return. */
 export const isActionDoorObject = (o) => !!o && o.kind === 'door' && !o.special;
+/** How far down a chain IsPlaying looks before it answers no (DaggerfallAction.IsPlaying's recursion, bounded here so
+ *  a looped chain cannot overflow the stack). AUDIT DELVE A4: one home - the echo's chain walk reads it
+ *  (systems/dungeonEcho.js ECHO_CHAIN_MAX). */
+export const PLAY_DEPTH_MAX = 32;
 
 // Delegated relays (P10/U6): Teleport, the text actions and
 // SetGlobalVar run through scene seams inside _runRelay. Activate
@@ -439,6 +443,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     this.onTeleportPortal = null;
     this.onLockedDoor = null;
     this.onActionSound = null;
+    this.onPlayed = null;   // ECHO1: (o, triggerType) - every Receive that passed the gate, before its Play (systems/dungeonEcho.js)
     this.onShowText = null;
     this.onShowTextInput = null;
     this.onDoorText = null;
@@ -541,6 +546,24 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  sceneMarkerMover). */
   objectAt(ns, positionKey) {
     return this._links.get(`${ns}:${positionKey}`) ?? null;
+  }
+
+  /** ECHO1: the object `o`'s chain link - `_next`, DFU's ActivateNext, for a reader that walks the chain without
+   *  playing it (systems/dungeonEcho.js chainMovers). */
+  nextOf(o) {
+    return this._next(o);
+  }
+
+  /** SENSE1 (the delve arc): every object some OTHER object's chain reaches - the keys `_next` resolves to. The look
+   *  round's secrets tier asks it which movers only a chain moves (systems/dungeonSense.js isSecretMover). A read of
+   *  the graph DFU only ever walks forward - not a DFU member. */
+  chainTargets() {
+    const out = new Set();
+    for (const o of this.objects.values()) {
+      const n = this._next(o);
+      if (n && n !== o) out.add(n.key);
+    }
+    return out;
   }
 
   /** Register an effect action (Hurt/Poison/DrainMagicka/CastSpell):
@@ -943,7 +966,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   _isPlaying(o, depth = 0) {
     const s = o.kind === 'door' ? o.moveState : o.state;
     if (s === 'forward' || s === 'reverse') return true;
-    if (depth > 32) return false;
+    if (depth > PLAY_DEPTH_MAX) return false;
     const next = this._next(o);
     return next ? this._isPlaying(next, depth + 1) : false;
   }
@@ -962,6 +985,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (!allowed || !allowed.includes(triggerType)) return;
     }
     o.activationCount = (o.activationCount ?? 0) + 1;   // verbatim: Receive increments, then Plays
+    this.onPlayed?.(o, triggerType);   // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)
     this._play(o);
   }
 

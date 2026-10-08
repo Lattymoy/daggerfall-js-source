@@ -1,0 +1,200 @@
+[
+  {
+    "name": "SD7A-a-gap-past-the-jump",
+    "file": "src/world/sdSteps.js",
+    "old": "const DRIFT_GAPS = [2.6, 2.8, 2.4, 3.0, 2.6, 3.2, 2.8, 2.6, 2.6];",
+    "new": "const DRIFT_GAPS = [2.6, 2.8, 2.4, 3.0, 2.6, 3.8, 2.8, 2.6, 2.6];",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-gap-walked",
+    "file": "src/world/sdSteps.js",
+    "old": "const CRUMBLE_GAPS = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8, 2.6];",
+    "new": "const CRUMBLE_GAPS = [2.6, 1.6, 2.8, 2.6, 2.8, 2.6, 2.8, 2.6];",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-riser-too-tall-to-run",
+    "file": "src/world/sdSteps.js",
+    "old": "export const SD_RISER_H = 2.3;",
+    "new": "export const SD_RISER_H = 2.8;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-riser-one-can-jump",
+    "file": "src/world/sdSteps.js",
+    "old": "export const SD_RISER_H = 2.3;",
+    "new": "export const SD_RISER_H = 1.2;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-swing-past-two",
+    "file": "src/world/sdSteps.js",
+    "old": "const DRIFT_AMPS = [1.2, 1.6, 1.0, 1.8, 1.4, 2.0, 1.6, 1.2];",
+    "new": "const DRIFT_AMPS = [1.2, 1.6, 1.0, 1.8, 1.4, 2.6, 1.6, 1.2];",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-step-standing-still",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (s.kind === 'drift') out[0] = s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase);",
+    "new": "  if (s.kind === 'drift') out[0] = s.x;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-all-on-one-phase",
+    "file": "src/world/sdSteps.js",
+    "old": "{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: k * 0.9 }",
+    "new": "{ amp: DRIFT_AMPS[k], period: DRIFT_PERIODS[k], phase: 0.9 }",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-beat-that-never-goes",
+    "file": "src/world/sdSteps.js",
+    "old": "export const SD_BEAT_SOLID = 2.4;",
+    "new": "export const SD_BEAT_SOLID = 3.6;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-all-on-one-beat",
+    "file": "src/world/sdSteps.js",
+    "old": "    put('beat', 1, SD_BEAT_SIZE, gap, { beat: (beat++ % 2) * SD_BEAT_HALF });",
+    "new": "    put('beat', 1, SD_BEAT_SIZE, gap, { beat: (beat++, 0) });",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-no-warning-before-the-beat",
+    "file": "src/world/sdSteps.js",
+    "old": "  return u >= SD_BEAT_SOLID - SD_BEAT_BLINK && u < SD_BEAT_SOLID;",
+    "new": "  return false;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-riser-on-the-beat",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (s.kind !== 'beat') return true;",
+    "new": "  if (s.kind !== 'beat' && s.kind !== 'riser') return true;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-no-shaking",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = true; return out; }",
+    "new": "  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = false; return out; }",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-never-back",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (since == null || since < 0 || since >= SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK) {",
+    "new": "  if (since == null || since < 0) {",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-gust-one-way",
+    "file": "src/world/sdSteps.js",
+    "old": "  out.push = u < SD_GUST_FOR ? gustSign(n) * SD_GUST_SPEED : 0;",
+    "new": "  out.push = u < SD_GUST_FOR ? SD_GUST_SPEED : 0;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-gust-unwarned",
+    "file": "src/world/sdSteps.js",
+    "old": "  out.warn = u >= SD_GUST_EVERY - SD_GUST_WARN;",
+    "new": "  out.warn = false;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-breath-over-the-Beat",
+    "file": "src/world/sdSteps.js",
+    "old": "export const inBreath = (z) => z > SD_CHECKPOINTS[2].z + SD_CHECKPOINTS[2].r && z < SD_COURSE_END;",
+    "new": "export const inBreath = (z) => z > SD_CHECKPOINTS[1].z + SD_CHECKPOINTS[1].r && z < SD_COURSE_END;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-void-higher",
+    "file": "src/world/sdSteps.js",
+    "old": "export const SD_VOID_Y = -30;",
+    "new": "export const SD_VOID_Y = -10;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-cast-back-to-A",
+    "file": "src/world/sdSteps.js",
+    "old": "const c = SD_CHECKPOINTS[Math.max(0, Math.min(SD_CHECKPOINTS.length - 1, span))];",
+    "new": "const c = SD_CHECKPOINTS[0];",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-span-read-forwards",
+    "file": "src/world/sdSteps.js",
+    "old": "  for (let k = SD_CHECKPOINTS.length - 1; k >= 0; k--) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;",
+    "new": "  for (let k = 0; k < SD_CHECKPOINTS.length; k++) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-course-short-of-the-arena",
+    "file": "src/world/sdSteps.js",
+    "old": "const CRUMBLE_TO_ARENA = 2.4;",
+    "new": "const CRUMBLE_TO_ARENA = 1.4;",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-a-step-up-in-the-Crumble",
+    "file": "src/world/sdSteps.js",
+    "old": "  for (let k = 0; k < CRUMBLE_GAPS.length; k++) { y = Math.max(0, y - drop); put(",
+    "new": "  for (let k = 0; k < CRUMBLE_GAPS.length; k++) { y = k % 2 ? y - 2 * drop : y + drop * 0.5; put(",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7A-the-arena-where-it-was",
+    "file": "src/net/sdBrain.js",
+    "old": "export const SD_ARENA = Object.freeze({ x: 0, z: 246, r: 26 });",
+    "new": "export const SD_ARENA = Object.freeze({ x: 0, z: 220, r: 26 });",
+    "tests": [
+      "test/sd7a_steps.test.js"
+    ]
+  }
+]

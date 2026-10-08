@@ -56,12 +56,13 @@ export function salvageShards(item) {
   if (t === 'legendary') return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;
   return t === 'magic' || t === 'rare' ? SALVAGE_SHARDS[t] : 0;
 }
-/** Why a piece may not be salvaged, or null: 'off', 'aetheric', 'artifact', 'quest', 'not' (nothing to salvage),
+/** Why a piece may not be salvaged, or null: 'off', 'aetheric', 'gilded', 'artifact', 'quest', 'not' (nothing to salvage),
  *  'bound', 'worn', 'locked'. */
 export function salvageRefusal(item) {
   if (!lootRarityOn()) return 'off';
   if (!item) return 'not';
   if (item.rarity === 'aetheric') return 'aetheric';
+  if (item.rarity === 'gilded') return 'gilded';   // GILDED1: a static roll is never broken down
   if (item.artifact || item.rarity === 'artifact') return 'artifact';
   if (item.questItem) return 'quest';
   if (!salvageShards(item)) return 'not';

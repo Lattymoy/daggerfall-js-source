@@ -42,6 +42,7 @@ import { groundAt } from '../world/terrainNature.js';
 import { isOutdoorWaterTile } from '../world/terrainSurface.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
 export const CAST_AHEAD_M = 3;
@@ -157,12 +158,9 @@ export function castAt({ pos, dir }) {
   return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] + rise, pos[2] + (dir[2] / l) * CAST_AHEAD_M];
 }
 
-/** A bearing's word, from the angler to a school (scene XZ: +x east, +z north). */
-export function bearingWord(dx, dz) {
-  const words = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
-  const a = (Math.atan2(dx, dz) * 180) / Math.PI;
-  return words[((Math.round(a / 45) % 8) + 8) % 8];
-}
+/** A bearing's word, from the angler to a school (scene XZ: +x east, +z north) - AUDIT DELVE C8: the scene's one
+ *  compass law (systems/compassWords.js), which the dungeon's echo reads too. */
+export const bearingWord = (dx, dz) => sceneCompassWord(dx, dz);
 
 /**
  * A PIXEL'S SCHOOLS AS THE CLIENT STANDS THEM: each of the day's two at the first of its spots on a water tile -

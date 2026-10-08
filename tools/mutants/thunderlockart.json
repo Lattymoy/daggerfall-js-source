@@ -1,0 +1,101 @@
+[
+  {
+    "name": "THUNDERLOCK-ART-the-dye-kept",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return null;\n};",
+    "new": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return dye;\n};",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-every-record-undyed",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return null;\n};",
+    "new": "  return null;\n};",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-real-archive-undyed",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (!bare?.standIn) return dye;\n",
+    "new": "  if (!bare) return dye;\n",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-doll-layer-in-a-list",
+    "file": "src/systems/thunderlock.js",
+    "old": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.icon));",
+    "new": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.doll));",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-list-door-bypassed",
+    "file": "src/systems/itemTemplates.js",
+    "old": "  { const own = ownItemImage(item); if (own) return {",
+    "new": "  { const own = ownItemImage(item); if (own && false) return {",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-doll-door-bypassed",
+    "file": "src/ui/paperDoll.js",
+    "old": "    if (own) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES",
+    "new": "    if (own && false) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-gap-left",
+    "file": "tools/gunIcons.mjs",
+    "old": "  const icon = trim(healGap(doll));",
+    "new": "  const icon = trim(doll);",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-gold-alpha",
+    "file": "tools/gunIcons.mjs",
+    "old": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2];\n    bright.push([t, i]);",
+    "new": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2]; out.data[o + 3] = 255;\n    bright.push([t, i]);",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-cap-wound-in",
+    "file": "tools/meshCap.mjs",
+    "old": "      I.push(b, a, base);",
+    "new": "      I.push(a, b, base);",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-loop-left-open",
+    "file": "tools/meshCap.mjs",
+    "old": "  for (const loop of loops) {\n    const pts",
+    "new": "  for (const loop of loops.slice(1)) {\n    const pts",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-bar-under-the-shot",
+    "file": "src/systems/quickslots.js",
+    "old": "const showsWear = (kind, item) => !isAmmunition(item) && (kind === 'weapon'",
+    "new": "const showsWear = (kind, item) => !!item && (kind === 'weapon'",
+    "tests": [
+      "test/thunderlockart.test.js"
+    ]
+  }
+]

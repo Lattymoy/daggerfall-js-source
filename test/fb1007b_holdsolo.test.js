@@ -18,6 +18,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'acorn';
 import { isStartDungeon, isStartCell, isTutorialHold, SHIPPED_START_CELL } from '../src/systems/startDungeon.js';
+import { builtDungeonSize } from '../src/world/smallerDungeons.js';
 import { mapPixelToLongitudeLatitude, MapsFile } from '../src/formats/mapsFile.js';
 import { setValue } from '../src/systems/settings.js';
 import { roomKeyFor } from '../src/net/online.js';
@@ -63,8 +64,10 @@ const props = new Map();
   if (n.type === 'Property' && n.key?.name) props.set(n.key.name, WM.slice(n.start, n.end));
   for (const v of Object.values(n)) if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v);
 })(parse(WM, { ecmaVersion: 'latest', sourceType: 'module' }));
-const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isArenaFloor', 'isStartDungeon', 'isTutorialHold',
-  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, isStartDungeon, isTutorialHold);
+// (PIN MOVED at the merge with the Super Dungeons arc: its identity reads the Shattered Hour's realm and the size the
+// dungeon was BUILT at - SD-ONLINE's `size`, 'full' for a location built whole)
+const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isArenaFloor', 'isStartDungeon', 'isTutorialHold', 'builtDungeonSize',
+  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, isStartDungeon, isTutorialHold, builtDungeonSize);
 
 // world.js's key block, executed from its source - the one the frame names its room by
 const W = read('src/scenes/world.js');
@@ -83,14 +86,14 @@ function keyIn(ident) {
 test('HOLD-SOLO: the tutorial dungeon\'s room identity says it is every character\'s own (`solo`), and the world host keys it NO room - where every other dungeon keys its shared world room by its map id', () => {
   assert.ok(KEY_FROM > 0 && KEY_TO > KEY_FROM, 'the key block');
   const hold = roomIdentityIn(locationAt(109, 158));
-  assert.deepEqual(hold, { kind: 'dungeon', mapId: HOLD_MAP_ID, regionIndex: 17, name: "Privateer's Hold", solo: true });
+  assert.deepEqual(hold, { kind: 'dungeon', mapId: HOLD_MAP_ID, regionIndex: 17, name: "Privateer's Hold", size: 'full', solo: true });
   assert.equal(keyIn(hold), null, 'no room in the Hold');
   // the room it was: everyone's
   assert.equal(roomKeyFor({ host: 'world', mode: 'dungeon', mapId: HOLD_MAP_ID }), `dungeon:m${HOLD_MAP_ID}`);
   assert.equal(isWorldRoom(`dungeon:m${HOLD_MAP_ID}`), true, 'a shared world room - its memory, foes, acts and loot');
   // every other dungeon keeps its shared room
   const other = roomIdentityIn(locationAt(120, 150, { name: 'Castle Necromoghan', mapId: 12345 }));
-  assert.deepEqual(other, { kind: 'dungeon', mapId: 12345, regionIndex: 17, name: 'Castle Necromoghan' });
+  assert.deepEqual(other, { kind: 'dungeon', mapId: 12345, regionIndex: 17, name: 'Castle Necromoghan', size: 'full' });
   assert.equal(keyIn(other), 'dungeon:m12345');
   // the null key is the host's leave: no presence, no chat's Local tab, no trade, no shared world
   assert.match(W.slice(KEY_TO), /\n {4}if \(!key\) \{ if \(online\.room\) online\.leave\(\); \}/, 'AUDIT ONLINE D4: a place keyed no room is no room');

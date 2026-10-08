@@ -71,6 +71,7 @@ uniform float uTime;    // seconds since the veil began - the whirl's own clock
 uniform float uFront;   // the fire's inner edge, screen radii
 uniform float uCover;   // how much the fire has taken - the tint on what it has not
 uniform float uHeat;    // the eye's heat
+uniform float uTheme;   // AUDIT SD II (L6 F8): 0 Dagon's fire, 1 the Shattered Hour's brass (the Mantella's green its eye)
 out vec4 o;
 float vh(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 // value noise tiled every per cells in x - round the circle, with no seam where the angle wraps
@@ -98,27 +99,29 @@ void main() {
   float tongue = pn(vec2(turn * ARMS * 4.0, lr * 7.0 - uTime * 4.5), ARMS * 4.0);
   float edge = uFront + (f1 - 0.5) * ${VEIL_RAG_BODY.toFixed(2)} + (tongue - 0.5) * ${VEIL_RAG_TONGUE.toFixed(2)};   // the front, ragged with tongues of flame
   float fire = smoothstep(edge - ${VEIL_SOFT[0].toFixed(2)}, edge + ${VEIL_SOFT[1].toFixed(2)}, r);
-  vec3 col = mix(vec3(0.04, 0.003, 0.0), vec3(0.42, 0.04, 0.006), smoothstep(0.1, 0.42, flame));   // soot to ember
-  col = mix(col, vec3(0.98, 0.3, 0.03), smoothstep(0.42, 0.74, flame));                          // to flame
-  col = mix(col, vec3(1.0, 0.72, 0.34), smoothstep(0.84, 1.0, flame));                           // to the white of it
-  col += vec3(1.0, 0.45, 0.1) * exp(-abs(r - edge - 0.05) * 16.0) * 0.9 * fire;                 // the burning front
-  col *= 1.0 - 0.5 * exp(-pow((r - 0.3) * 5.5, 2.0)) * uHeat;                                    // the throat
-  col += vec3(1.0, 0.84, 0.56) * exp(-r * 6.0) * uHeat * 1.7;                                    // the eye
+  float th = clamp(uTheme, 0.0, 1.0);
+  vec3 col = mix(mix(vec3(0.04, 0.003, 0.0), vec3(0.03, 0.022, 0.004), th), mix(vec3(0.42, 0.04, 0.006), vec3(0.34, 0.21, 0.04), th), smoothstep(0.1, 0.42, flame));   // soot to ember (to dark brass)
+  col = mix(col, mix(vec3(0.98, 0.3, 0.03), vec3(0.94, 0.7, 0.24), th), smoothstep(0.42, 0.74, flame));                          // to flame (to brass)
+  col = mix(col, mix(vec3(1.0, 0.72, 0.34), vec3(1.0, 0.94, 0.72), th), smoothstep(0.84, 1.0, flame));                           // to the white of it
+  col += mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.8, 0.38), th) * exp(-abs(r - edge - 0.05) * 16.0) * 0.9 * fire;                 // the burning front
+  col *= 1.0 - 0.5 * exp(-(r - 0.3) * (r - 0.3) * 30.25) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)
+  col += mix(vec3(1.0, 0.84, 0.56), vec3(0.5, 1.0, 0.66), th) * exp(-r * 6.0) * uHeat * 1.7;                                    // the eye (the Mantella's green)
   vec2 sc = vec2(turn * 200.0, lr * 26.0 - uTime * 22.0);
-  float spark = step(0.993, vh(floor(sc))) * smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5)) * smoothstep(0.5, 0.25, abs(fract(sc.y) - 0.5)) * smoothstep(0.05, 0.3, r);
-  col += vec3(1.0, 0.76, 0.38) * spark * fire * 2.2;                                             // embers streaking in
+  float spark = step(0.993, vh(floor(sc))) * (1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5))) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);
+  col += mix(vec3(1.0, 0.76, 0.38), vec3(1.0, 0.9, 0.58), th) * spark * fire * 2.2;                                             // embers streaking in
   col *= 1.0 - 0.35 * smoothstep(0.75, 1.05, r);                                                 // darker at the corners
   float tint = clamp(uCover, 0.0, 1.0) * 0.5;
-  o = vec4(col * fire + vec3(0.3, 0.03, 0.0) * tint * (1.0 - fire), fire + tint * (1.0 - fire));   // premultiplied
+  o = vec4(col * fire + mix(vec3(0.3, 0.03, 0.0), vec3(0.22, 0.15, 0.03), th) * tint * (1.0 - fire), fire + tint * (1.0 - fire));   // premultiplied
 }`;
 
-/** The veil's pass: one triangle over a canvas of its own. `draw(w, h, t, v)` - `v` a veilAt answer. */
+/** The veil's pass: one triangle over a canvas of its own. `draw(w, h, t, v, theme)` - `v` a veilAt answer, `theme` 0
+ *  the fire's, 1 the Hour's brass (AUDIT SD II, L6 F8). */
 export class GateVeilRenderer {
   constructor(gl) {
     this.gl = gl;
     this.prog = buildProgram(gl, GATE_VEIL_VS, GATE_VEIL_FS, 'gate veil');
     this.u = {};
-    for (const n of ['uRes', 'uTime', 'uFront', 'uCover', 'uHeat']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of ['uRes', 'uTime', 'uFront', 'uCover', 'uHeat', 'uTheme']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
@@ -128,7 +131,7 @@ export class GateVeilRenderer {
     gl.bindVertexArray(null);
   }
 
-  draw(w, h, t, v) {
+  draw(w, h, t, v, theme = 0) {
     const gl = this.gl;
     gl.viewport(0, 0, w, h);
     gl.clearColor(0, 0, 0, 0);
@@ -139,6 +142,7 @@ export class GateVeilRenderer {
     gl.uniform1f(this.u.uFront, v.front);
     gl.uniform1f(this.u.uCover, v.cover);
     gl.uniform1f(this.u.uHeat, v.heat);
+    gl.uniform1f(this.u.uTheme, theme);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);

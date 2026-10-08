@@ -172,11 +172,12 @@
   },
   {
     "name": "RVN7d-the-nearest",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "(Math.hypot(m.x - from.x, m.z - from.z) > Math.hypot(a.x - from.x, a.z - from.z) ? m : a)",
-    "new": "(Math.hypot(m.x - from.x, m.z - from.z) < Math.hypot(a.x - from.x, a.z - from.z) ? m : a)",
+    "file": "src/world/dungeonEnd.js",
+    "old": "  return list.reduce((a, m) => (d(m) > d(a) ? m : a));",
+    "new": "  return list.reduce((a, m) => (d(m) < d(a) ? m : a));",
     "tests": [
-      "test/rvn7d_stand.test.js"
+      "test/rvn7d_stand.test.js",
+      "test/sd4b_rift.test.js"
     ]
   },
   {

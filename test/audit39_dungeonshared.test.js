@@ -122,7 +122,7 @@ test('AUDIT 39 #41: worldModes hands the dungeon the LIVE eye and capsule', () =
   const WM = read('src/scenes/worldModes.js');
   const at = WM.indexOf('const ctx = await buildDungeonContext(');
   const opts = WM.slice(at, WM.indexOf('dungeonCtx = ctx;', at));
-  assert.match(opts, /motorState: \(\) => \(\{ eyeLevel: player\.eye\[1\] - player\.pos\[1\], capsule: player\.height \}\),/);
+  assert.match(opts, /motorState: \(\) => \(\{ eyeLevel: player\.eye\[1\] - player\.pos\[1\], capsule: player\.height, fallFrom: player\.falling \? player\.fallStart : null \}\),/);   // AUDIT SD III (SD20g D1, PIN MOVED): and the fall under way, for the walked trail
   // and the presenter still reads it through the one seam
   assert.match(DC, /const _ms = opts\.motorState\?\.\(\) \?\? null;/);
 });

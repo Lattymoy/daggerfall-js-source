@@ -1,0 +1,133 @@
+[
+  {
+    "name": "SD-ONLINE-the-weights-flat",
+    "file": "src/world/smallerDungeons.js",
+    "old": "Object.freeze([['small', 1], ['medium', 2], ['full', 1]]",
+    "new": "Object.freeze([['small', 1], ['medium', 1], ['full', 1]]",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "Half the Bay's dungeons are medium (Mac: medium the default online); flat weights make it a third."
+  },
+  {
+    "name": "SD-ONLINE-unsalted",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  let u = seededFirst(id ^ ONLINE_DUNGEON_SIZE_SALT) * total;",
+    "new": "  let u = seededFirst(id) * total;",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "Without its own salt a dungeon's size is any other draw the port makes on its map id."
+  },
+  {
+    "name": "SD-ONLINE-the-last-size-never-drawn",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (u < w) return size;\n    u -= w;",
+    "new": "    if (u < w) return size === 'full' ? 'medium' : size;\n    u -= w;",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "Large is one of the world's three sizes - every one of them is drawn."
+  },
+  {
+    "name": "SD-ONLINE-a-quest-stamped-online-ignored",
+    "file": "src/world/smallerDungeons.js",
+    "old": "    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation);   // SD-ONLINE: the world's, as its markers know it\n",
+    "new": "",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "A quest started online, taken offline, would build its dungeons at the settings' size, not the size its markers know."
+  },
+  {
+    "name": "SD-ONLINE-the-world-ask-ignored",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n",
+    "new": "",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "The world-dungeon-sizes row (the sync's copy of the online law) would do nothing offline."
+  },
+  {
+    "name": "SD-ONLINE-the-stamp-ignores-the-ask",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (world) return ONLINE_DUNGEONS_STATE;\n",
+    "new": "",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "A quest started offline at the world's sizes would be stamped medium (or whole) and build a layout its markers were not chosen on."
+  },
+  {
+    "name": "SD-ONLINE-adopt-blind-to-the-world",
+    "file": "src/world/smallerDungeons.js",
+    "old": "const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;",
+    "new": "const portSize = (state) => state === MEDIUM_DUNGEONS_STATE;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ],
+    "note": "E5 with the world's sizes either side: the quest must take the link's size, the one its markers were chosen on."
+  },
+  {
+    "name": "SD-ONLINE-the-build-says-whole",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (isMediumDungeon(dfLocation)) return 'medium';\n  return isSmallerDungeon(dfLocation) ? 'small' : 'full';",
+    "new": "  return isSmallerDungeon(dfLocation) ? 'small' : 'full';",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "A medium build named whole would stand in the whole dungeon's room, beside pages that lay it whole."
+  },
+  {
+    "name": "SD-ONLINE-the-small-room-shared",
+    "file": "src/net/wire.js",
+    "old": "export const DUNGEON_ROOM_TAGS = Object.freeze({ medium: '.m', small: '.s' });",
+    "new": "export const DUNGEON_ROOM_TAGS = Object.freeze({ medium: '.m', small: '' });",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "A small build would share the whole dungeon's room, its streams and its memory by index."
+  },
+  {
+    "name": "SD-ONLINE-the-small-room-refused",
+    "file": "src/net/wire.js",
+    "old": "dungeon:m[1-9]\\d{0,9}(?:\\.[ms])?|",
+    "new": "dungeon:m[1-9]\\d{0,9}(?:\\.m)?|",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "A small dungeon's room would keep no world: no host, no memory, every player stepping their own foes."
+  },
+  {
+    "name": "SD-ONLINE-the-room-blind",
+    "file": "src/net/online.js",
+    "old": "if (mode === 'dungeon') return loc ? `dungeon:${loc}${dungeonRoomTag(size)}` : null;",
+    "new": "if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "Every size of a dungeon in one room - AUDIT WORLD34 B2's two layouts trading frames by index."
+  },
+  {
+    "name": "SD-ONLINE-the-identity-blind",
+    "file": "src/scenes/worldModes.js",
+    "old": "name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), ",
+    "new": "name: dungeonLoc?.name ?? '', size: null, ",
+    "tests": [
+      "test/sdonline.test.js"
+    ],
+    "note": "The mode machine's identity must carry the built size, or the world host names every dungeon's room whole."
+  },
+  {
+    "name": "SD-ONLINE-the-world-row-left-to-the-player",
+    "file": "src/systems/features.js",
+    "old": "key: 'worldDungeonSizes', initial: false, online: true }",
+    "new": "key: 'worldDungeonSizes', initial: false, online: 'player' }",
+    "tests": [
+      "test/sdonline.test.js",
+      "test/uxb1e_onlinesync.test.js"
+    ],
+    "note": "Online the world's sizes are the room's law: forced on, the row says so and the sync copies it home."
+  }
+]

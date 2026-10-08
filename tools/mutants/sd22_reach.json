@@ -1,0 +1,119 @@
+[
+  {
+    "name": "SD22-the-start-markers-beside",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (inner.length) return inner;",
+    "new": "  if (inner.length) return [...inner, ...(blocks ?? []).flatMap((b) => (b?.layout?.startMarkers ?? []).map((m) => ({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) })))];",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-border-counted",
+    "file": "src/world/sdDungeon.js",
+    "old": "  const inner = marks.filter((m) => !SD_BORDER_BLOCK_RE.test(blockOf(m)?.name ?? ''));",
+    "new": "  const inner = marks;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-case-read",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_BORDER_BLOCK_RE = /^b/i;",
+    "new": "export const SD_BORDER_BLOCK_RE = /^B/;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-a-B-anywhere",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_BORDER_BLOCK_RE = /^b/i;",
+    "new": "export const SD_BORDER_BLOCK_RE = /b/i;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-far-edge-kept",
+    "file": "src/world/sdDungeon.js",
+    "old": "    return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;",
+    "new": "    return m.x >= ox && m.x <= ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-depth-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "    return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;",
+    "new": "    return m.x >= ox && m.x < ox + RDB_SIDE;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-origin-not-its-own",
+    "file": "src/world/sdDungeon.js",
+    "old": "    return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;",
+    "new": "    return m.x > ox && m.x < ox + RDB_SIDE && m.z > oz && m.z < oz + RDB_SIDE;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-interior-alone",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (marks.length) return marks;",
+    "new": "  if (false) return marks;",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-no-fallback",
+    "file": "src/world/sdDungeon.js",
+    "old": "      if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x + (b.originX ?? 0)",
+    "new": "      if (false) out.push({ x: m.x + (b.originX ?? 0)",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-the-copies-counted",
+    "file": "src/world/sdDungeon.js",
+    "old": "for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x)",
+    "new": "for (const e of enemies ?? []) if (e && Number.isFinite(e.x)",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-LAND-no-fallback",
+    "file": "src/scenes/worldModes.js",
+    "old": ".map((e) => e.door)) ?? dungeonReturn.from ?? null);",
+    "new": ".map((e) => e.door)));",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-LAND-none-taken",
+    "file": "src/scenes/worldModes.js",
+    "old": "        from: { pos: [player.pos[0], player.pos[1] + CAPSULE_HEIGHT / 2, player.pos[2]], normal: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)] },",
+    "new": "        from: null,",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  },
+  {
+    "name": "SD22-LAND-the-feet-not-the-middle",
+    "file": "src/scenes/worldModes.js",
+    "old": "        from: { pos: [player.pos[0], player.pos[1] + CAPSULE_HEIGHT / 2, player.pos[2]], normal: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)] },",
+    "new": "        from: { pos: [player.pos[0], player.pos[1], player.pos[2]], normal: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)] },",
+    "tests": [
+      "test/sd22_reach.test.js"
+    ]
+  }
+]

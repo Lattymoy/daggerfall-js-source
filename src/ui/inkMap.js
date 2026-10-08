@@ -41,6 +41,7 @@ import {
 import { getPixelColorIndex, FILTER_SRC } from './travelMapWindow.js';   // MAP-KEY: the classic's filter law and its four buttons, asked of - never copied
 import { GATE_RING_CSS, GATE_FILL_CSS } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, in the omen's own colours
 import { SERPENT_MAP_INK } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
+import { SD_MAP_INK } from './sdMapMark.js';   // SD2c: the Super dungeon's ring, in its omen's brass
 import { BOUNTY_RING_CSS, BOUNTY_FILL_CSS, REVENANT_RING_CSS, REVENANT_FILL_CSS } from './bountyMapMark.js';   // BOUNTY1: a held bounty's black circle; RVN7c: a revenant's lair in blood red
 import { RAID_MARK_CSS } from './eventMapMarks.js';   // EVENT-TIP: a town under attack
 import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from './questMarks.js';   // GUIDE5: where a quest points
@@ -1084,6 +1085,8 @@ export function paintInkOverlay(ctx, view, opts) {
   if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
   if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
+  // SD2c: the Super dungeon's ring once it is found, in its omen's brass
+  if (opts.sd && visible(opts.sd.cx, opts.sd.cy, opts.sd.r + 2)) paintGateRing(ctx, view, opts.sd, pulse, SD_MAP_INK);
   // BOUNTY1: each held bounty's black circle, under the party too
   for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);
   // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too
@@ -1164,9 +1167,12 @@ export function inkShip(ctx, x, y) {
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number, oy:number, scale:number}} view
  * @param {{cx:number, cy:number, r:number, label?:string}} g @param {number} [pulse] 0..1
  */
+/** AUDIT SD III (T7): the least a ring is drawn on the paper, in pixels - and so the least it answers a pointer in. */
+export const GATE_RING_MIN_PX = 10;
+
 export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {   // SERPENT1: `ink` {ring, fill} - the sea serpent's ring in its own colours
   const [x, y] = toPaper(view, g.cx, g.cy);
-  const r = Math.max(10, g.r * view.scale);
+  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);
   ctx.save();
   ctx.setLineDash([]);
   ctx.fillStyle = ink?.fill ?? GATE_FILL_CSS;
@@ -1251,17 +1257,26 @@ export function paintQuestMark(ctx, view, m) {
   ctx.strokeStyle = PEN.soft;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x, cy + r); ctx.stroke();   // the tie to the place
-  ctx.beginPath();
-  ctx.moveTo(x, cy - r); ctx.lineTo(x + r, cy); ctx.lineTo(x, cy + r); ctx.lineTo(x - r, cy); ctx.closePath();
   // AUDIT GUIDE U16: the followed quest's diamond filled with the pen's INK - gold on the paper is 2:1, the ink 8:1
-  if (m.tracked) { ctx.fillStyle = PEN.line; ctx.fill(); }
-  ctx.strokeStyle = PEN.line;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
-  ctx.strokeStyle = QUEST_MARK_CSS;
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
+  // AUDIT DELVE A4: the diamond's two strokes have one home (paintQuestDiamond, below)
+  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);
   ctx.restore();
+}
+
+/** GUIDE8 (the delve arc): the quest's diamond ALONE, centred at (x, y) with half-diagonal `k` - the dungeon strip's
+ *  mark for a floor a quest stands on (ui/inkAutomap.js paintFloorStrip), and paintQuestMark's own (AUDIT DELVE A4): the
+ *  pen's ink under the journal's gold, so the gold has one home on the sheets. `s` scales the strokes; `fill`, given,
+ *  fills it first (the followed quest's ink). */
+export function paintQuestDiamond(ctx, x, y, k, s = 1, fill = null) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - k); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k); ctx.lineTo(x - k, y); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }   // the followed quest's (paintQuestMark)
+  ctx.lineWidth = 2.4 * s;
+  ctx.strokeStyle = PEN.line;
+  ctx.stroke();
+  ctx.lineWidth = 1.4 * s;
+  ctx.strokeStyle = QUEST_MARK_CSS;
+  ctx.stroke();
 }
 
 /** The stack of party labels on ONE pixel: each member's name this

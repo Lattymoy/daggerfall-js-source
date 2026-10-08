@@ -1,0 +1,254 @@
+[
+  {
+    "name": "SD16-a-landing-seen-twice",
+    "file": "src/scenes/sdFx.js",
+    "old": "    if (k.blows.has(a.i) || t < a.at) return;",
+    "new": "    if (t < a.at) return;",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-landings-before-I-came-seen",
+    "file": "src/scenes/sdFx.js",
+    "old": "    blows: new Set(blowsOf(s).filter(([, a]) => t >= a.at).map(([, a]) => a.i)),",
+    "new": "    blows: new Set(),",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-a-landing-seen-however-late",
+    "file": "src/scenes/sdFx.js",
+    "old": "    if (t - a.at < SD_FX_LAND_LATE_MS) landed(s, b, a, t);",
+    "new": "    landed(s, b, a, t);",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-no-ring-dust",
+    "file": "src/scenes/sdFx.js",
+    "old": "      for (let i = 0; i < SD_RING_DUST.n; i++) {",
+    "new": "      for (let i = 0; i < 0; i++) {",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-ring-dust-at-the-disc",
+    "file": "src/scenes/sdFx.js",
+    "old": "      const r = stompFrontAt(a, a.at + SD_RING_DUST.after);",
+    "new": "      const r = SD_BLOWS.stomp.r;",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-shake-never-fades",
+    "file": "src/scenes/sdFx.js",
+    "old": "!(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]);",
+    "new": "w[0];",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-felt-out-of-the-Hour",
+    "file": "src/scenes/sdFx.js",
+    "old": "const felt = (kd, x, z) => { const m = mine(); if (!m) return;",
+    "new": "const felt = (kd, x, z) => { const m = mine() ?? [0, 0];",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-volley-felt-at-its-first-mark",
+    "file": "src/scenes/sdFx.js",
+    "old": "felt('volley', ...(a.tg.reduce((o, q) => (Math.hypot(q[0] - m[0], q[1] - m[1]) < Math.hypot(o[0] - m[0], o[1] - m[1]) ? q : o))));",
+    "new": "felt('volley', ...a.tg[0]);",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-hand-at-its-feet",
+    "file": "src/scenes/sdFx.js",
+    "old": "add(where(bx + Math.sin(g) * out, (b === SD_BODY.remnant ? SD_REM.h : SD_ECHO.h) * 0.55, bz + Math.cos(g) * out)",
+    "new": "add(where(bx + Math.sin(g) * out, 0.1, bz + Math.cos(g) * out)",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-a-broken-reset-seen",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (!(s.su > a.at)) { add(where(0, 3, 0)",
+    "new": "if (true) { add(where(0, 3, 0)",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-end-unshaken",
+    "file": "src/scenes/sdFx.js",
+    "old": "SD_FX_KINDS.end, SD_FX_COLOR.end); felt('end', 0, 0); }",
+    "new": "SD_FX_KINDS.end, SD_FX_COLOR.end); }",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-a-wake-seen-however-late",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (awake && !k.awake && t - s.op < SD_FX_LATE_MS)",
+    "new": "if (awake && !k.awake)",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-slip-every-frame",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (!k.slipped && s.m > 0 && s.h / s.m < SD_SLIP_FRAC) { k.slipped = true;",
+    "new": "if (s.m > 0 && s.h / s.m < SD_SLIP_FRAC) {",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-an-echo-falls-unshaken",
+    "file": "src/scenes/sdFx.js",
+    "old": "SD_FX_KINDS.echoFall, color); felt('echoFall', x, z); }",
+    "new": "SD_FX_KINDS.echoFall, color); }",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-echoes-all-gold",
+    "file": "src/scenes/sdFx.js",
+    "old": "color = i === 0 ? SD_FX_COLOR.gold : SD_FX_COLOR.silver;",
+    "new": "color = SD_FX_COLOR.gold;",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-last-heart-unseen",
+    "file": "src/scenes/sdFx.js",
+    "old": "        if (k.cx !== null) for (let j = 0; j < k.cxc.length; j++)",
+    "new": "        if (false) for (let j = 0; j < k.cxc.length; j++)",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-hearts-spent-by-the-reset-unseen",
+    "file": "src/scenes/sdFx.js",
+    "old": "        if (k.cx !== null) for (let j = 0; j < k.cxc.length; j++)",
+    "new": "        if (k.cx !== null && stun) for (let j = 0; j < k.cxc.length; j++)",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-a-heart-broken-every-frame",
+    "file": "src/scenes/sdFx.js",
+    "old": "const q = X.c[j]; if ((k.hearts[j] ?? 0) > 0 && !(q[2] > 0)) heartBurst(s, t, q, SD_FX_KINDS.heartBreak); k.hearts[j] = q[2];",
+    "new": "const q = X.c[j]; if (!(q[2] > 0)) heartBurst(s, t, q, SD_FX_KINDS.heartBreak);",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-a-fall-seen-however-late",
+    "file": "src/scenes/sdFx.js",
+    "old": "if (t - s.fell.at < SD_FX_LATE_MS) { const r = remAt(s, t, SD_REM.h * 0.5);",
+    "new": "if (true) { const r = remAt(s, t, SD_REM.h * 0.5);",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-no-flash",
+    "file": "src/scenes/sdFx.js",
+    "old": "flashAt = s.fell.at; felt('fall'",
+    "new": "felt('fall'",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-column-at-once",
+    "file": "src/scenes/sdFx.js",
+    "old": "add(where(x, 0.1, z), s.fell.at + SD_FX_COLUMN.at + k.column * SD_FX_COLUMN.step, SD_FX_KINDS.column",
+    "new": "add(where(x, 0.1, z), s.fell.at, SD_FX_KINDS.column",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-way-home-where-it-fell",
+    "file": "src/scenes/sdFx.js",
+    "old": "const [hx, hz] = clearOfPillars(x, z);",
+    "new": "const [hx, hz] = [x, z];",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-the-fight-seen-past-the-fall",
+    "file": "src/scenes/sdFx.js",
+    "old": "        return;\n      }\n      if (s.lost) return;",
+    "new": "      }\n      if (s.lost) return;",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-sparks-unbounded",
+    "file": "src/scenes/sdFx.js",
+    "old": "let b = bursts.length < FX_BURSTS_MAX ? null :",
+    "new": "let b = true ? null :",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-lights-never-fade",
+    "file": "src/scenes/sdFx.js",
+    "old": "const f = L[0] * (1 - dt / FX_LIGHT_MS);",
+    "new": "const f = L[0];",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-not-forgotten",
+    "file": "src/scenes/sdFx.js",
+    "old": "    leave() { k = null; bursts.length = 0; flashAt = -Infinity; },",
+    "new": "    leave() { k = null; },",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-never-framed",
+    "file": "src/scenes/world.js",
+    "old": "    if (inRealm) { try { sdFx?.frame(); } catch (e) { console.warn('[sd] fx', e?.message ?? e); } }   // SD16: its blows seen\n",
+    "new": "",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  },
+  {
+    "name": "SD16-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "const sparks = !!(sdFx && sdFightLink && sdFx.draw(",
+    "new": "const sparks = !!(false && sdFx.draw(",
+    "tests": [
+      "test/sd16_fx.test.js"
+    ]
+  }
+]

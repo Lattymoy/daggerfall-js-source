@@ -1,0 +1,119 @@
+[
+  {
+    "name": "SD21-the-Hour-admitted",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
+    "new": "    if (false) return null;   // SD-ALONE: nor through the Rift",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-the-slot-by-its-truth",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
+    "new": "    if (modes?.sdRealmSlot?.()) return null;   // SD-ALONE: nor through the Rift",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-every-dungeon-refused",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) return null;   // SD-ALONE: nor through the Rift",
+    "new": "    if (modes?.sdRealmSlot?.() !== undefined) return null;   // SD-ALONE: nor through the Rift",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-the-Hours-cards-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() != null) return [];   // SD-ALONE: and none in the Shattered Hour",
+    "new": "    if (false) return [];   // SD-ALONE: and none in the Shattered Hour",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-under-the-veil",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gamePaused()) return;",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-through-the-door",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "    if (_sdAloneSaid || gateVeil?.busy || gamePaused()) return;",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-under-a-window",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy) return;",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    _sdAloneSaid = true;\n",
+    "new": "    _sdAloneSaid = false;\n",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-never-owed-again",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }",
+    "new": "    if (modes?.sdRealmSlot?.() == null) { return; }",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-with-nobody",
+    "file": "src/scenes/world.js",
+    "old": "    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "new": "    if (companionsWithYou() >= 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-never-said",
+    "file": "src/scenes/world.js",
+    "old": "    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "new": "    if (companionsWithYou() > 0) void SD_REALM_TEXT.noCompanions;",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-other-words",
+    "file": "src/world/sdRealm.js",
+    "old": "  noCompanions: 'Your companions cannot follow you through the Rift.',",
+    "new": "  noCompanions: 'Your companions cannot follow you into the Deadlands.',",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-out-of-the-Hours-frame",
+    "file": "src/scenes/world.js",
+    "old": "sdRealmFrame(); sdAloneFrame(); sdFightFrame();",
+    "new": "sdRealmFrame(); sdFightFrame();",
+    "tests": [
+      "test/sd21_alone.test.js"
+    ]
+  }
+]

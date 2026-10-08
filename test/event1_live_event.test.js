@@ -292,13 +292,13 @@ test('EVENT1 grade: the GLSL twin is made from the same stops, dim and weights, 
   assert.match(DREAD_GLSL, /if \(w <= 0\.0\) return c;/, 'no event: the colour as it was');
   // the four passes
   assert.ok(COMPOSITE_FS.includes(DREAD_GLSL) && COMPOSITE_UNIFORMS.includes('uDread'));
-  assert.match(COMPOSITE_FS, /float op = 1\.0 - c\.a;[\s\S]*dreadGrade\(c\.rgb \/ op, uDread\) \* op/, 'the cloud\'s own colour is graded, its opacity put back');
+  assert.match(COMPOSITE_FS, /float op = 1\.0 - c\.a;[\s\S]*dreadGrade\(c\.rgb \/ op, uDread\), uBrass\) \* op/, 'the cloud\'s own colour is graded, its opacity put back');   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.ok(DYNAMIC_FS.includes(DREAD_GLSL) && DYNAMIC_UNIFORMS.includes('uDread'));
-  assert.match(DYNAMIC_FS, /outColor = vec4\(dreadGrade\(enc, uDread\), 1\.0\);/);
+  assert.match(DYNAMIC_FS, /outColor = vec4\(brassGrade\(dreadGrade\(enc, uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   const enhanced = rd('src/render/enhancedSky.js'), classic = rd('src/render/skyRenderer.js');
-  assert.match(enhanced, /outColor = vec4\(dreadGrade\(out3, uDread\), 1\.0\);/);
+  assert.match(enhanced, /outColor = vec4\(brassGrade\(dreadGrade\(out3, uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.match(enhanced, /gl\.uniform1f\(u\.uDread, this\.dread\);/);
-  assert.match(classic, /outColor = vec4\(dreadGrade\(mix\(color, uFogColor, uFogMix\), uDread\), 1\.0\);/);
+  assert.match(classic, /outColor = vec4\(brassGrade\(dreadGrade\(mix\(color, uFogColor, uFogMix\), uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.match(classic, /gl\.uniform1f\(this\.uDread, this\.dread\);/);
 });
 
@@ -415,7 +415,7 @@ test('EVENT1 host: the sky controller grades every pass and the fog by the one w
   assert.match(shared, /setDread\(w, glow = 0\) \{\s*dreadW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\s*\n\s*dreadGlow = [^\n]*\n\s*for \(const r of \[sky, enhancedSky, dynamicSky, clouds\]\) if \(r\) r\.dread = dreadW;/);
   assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return dreaded\(/, 'the water mirrors the dread on the dome\'s lane');
   assert.match(shared, /return dreaded\(\{ zenith: \[h\[0\] \* 0\.55/, 'and on the mod\'s');
-  assert.match(shared, /return dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');
+  assert.match(shared, /const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SD19 moved it (PIN MOVED): the brass graded over it
   assert.match(shared, /dreadGlow = dreadW > 0 \? Math\.max\(0, Math\.min\(1, Number\(glow\) \|\| 0\)\) : 0;/, 'no glow without the dread');
   assert.equal((shared.match(/\(extra\?\.flash \?\? 0\) \+ dreadGlow/g) ?? []).length, 2, 'the deck lit by the red strikes under both skies');
   assert.match(shared, /const skyWord = dreadW > 0 \? DREAD_SKY_WORD : weatherName;\s*const want = weatherRow\(skyWord\);/);
@@ -433,8 +433,8 @@ test('EVENT1 host: world.js hears the event from the HUB link alone, walks it ea
   assert.match(world, /const skyDreadW = Math\.max\(dreadW, gateSky\?\.weight \?\? 0\);/);
   assert.match(world, /sky\.setDread\(skyDreadW, dreadCloudGlow\(boltFrame\.bolts\)\);/, 'the grade and the red strikes\' glow, once the strikes are known');
   assert.ok(world.indexOf('sky.setDread(skyDreadW,') > world.indexOf('boltFrame = isEnhanced()') && world.indexOf('sky.setDread(skyDreadW,') < world.indexOf('sky.use(('), 'after the bolts, before the sky\'s frame');
-  assert.match(world, /dreadLight\(withMoonAmbient\([\s\S]*?\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\) \* \(1 - DREAD_KEY_DIM \* skyDreadW\)/);   // SUNBABY2 moved it: the sun baby's wrath reddens the light too
-  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\)\);/);   // SUNBABY2 moved it: and the key
+  assert.match(world, /dreadLight\(withMoonAmbient\([\s\S]*?\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\) \* \(1 - DREAD_KEY_DIM \* skyDreadW\)/);   // SUNBABY2 moved it: the sun baby's wrath reddens the light too; SD19 (PIN MOVED): leaning brass near a Hollow
+  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\)\);/);   // SUNBABY2 moved it: and the key
   assert.match(world, /dreadStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand, weight: dreadW \}\)/, 'on the shared clock');   // AUDIT DEEP R-11: round the traveller under the travel view
   assert.match(world, /if \(isEnhanced\(\)\) for \(const s of ds\.strikes\) struckFar\.push\(\{ \.\.\.s, flashColor: DREAD_FLASH_COLOR \}\);/);
   assert.match(world, /flash: flash - 1, pos:/, 'the host\'s flash is the storm\'s alone');

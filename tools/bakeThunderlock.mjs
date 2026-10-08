@@ -28,7 +28,8 @@ import { dirname } from 'node:path';
 import { readFbx } from './fbxRead.mjs';
 import { bakeMesh } from './fbxMesh.mjs';
 import { unwrap, unwrapQuality } from './meshUnwrap.mjs';
-import { bakeTexture, mipChain, writeDds } from './meshTexture.mjs';
+import { bakeTexture, mipChain, writeDds, GILDED_BANDS } from './meshTexture.mjs';
+import { capHoles } from './meshCap.mjs';   // THUNDERLOCK-ART: the eleven holes closed
 import { meshToNif } from './nifWrite.mjs';
 import { previewSheet, uvSheet } from './meshSheets.mjs';
 import { writePng } from './pngIO.mjs';
@@ -84,16 +85,21 @@ export const SOURCE_FBX = 'src/assets/mw/source/Pellet_Shot.fbx';
 export const OUT = Object.freeze({
   mesh: 'src/assets/mw/meshes/thunderlock.nif',
   texture: 'src/assets/mw/textures/thunderlock.dds',
+  // GILDED1: the Hourlock - the same mesh, its gold leaf (meshTexture.mjs GILDED_BANDS)
+  gildedMesh: 'src/assets/mw/meshes/thunderlock_gilded.nif',
+  gildedTexture: 'src/assets/mw/textures/thunderlock_gilded.dds',
 });
 
 const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
 
 export function bakeThunderlock(fbxBytes, { sheets = null } = {}) {
-  const raw = bakeMesh(readFbx(fbxBytes), {
+  // THUNDERLOCK-ART: CAPPED before the unwrap, so its caps take islands and occlusion of their own (tools/meshCap.mjs) -
+  // the receiver's rear, which a first-person eye looks straight at, was open, and the eye saw through the gun
+  const raw = capHoles(bakeMesh(readFbx(fbxBytes), {
     name: 'Dwarven_Thunderlock',
     forward: SETTINGS.forward, up: SETTINGS.up,
     units: SETTINGS.units, origin: SETTINGS.origin,
-  });
+  }));
   const before = unwrapQuality(raw);
   const mesh = unwrap(raw, { size: SETTINGS.atlas });
   const top = bakeTexture(mesh, { size: SETTINGS.atlas, rays: SETTINGS.rays });
@@ -103,7 +109,11 @@ export function bakeThunderlock(fbxBytes, { sheets = null } = {}) {
   // the archive keys by what the ladder lands on and not by what the
   // NIF says.
   const nif = meshToNif(mesh, { texture: 'thunderlock.dds', node: 'Thunderlock' });
-  const out = { mesh, nif, dds, before, sheets: null };
+  // GILDED1: the Hourlock's twin - one mesh, its own texture, named by its own file
+  const gold = bakeTexture(mesh, { size: SETTINGS.atlas, rays: SETTINGS.rays, bands: GILDED_BANDS });
+  const gildedDds = writeDds(mipChain({ width: gold.width, height: gold.height, data: gold.data }));
+  const gildedNif = meshToNif(mesh, { texture: 'thunderlock_gilded.dds', node: 'Hourlock' });
+  const out = { mesh, nif, dds, gildedNif, gildedDds, before, sheets: null };
   if (sheets) {
     const tex = { width: top.width, height: top.height, data: top.data };
     out.sheets = {
@@ -123,6 +133,8 @@ if (isMain(import.meta.url)) {
   const r = bakeThunderlock(readFileSync(fbx), { sheets: wantSheets });
   save(OUT.mesh, r.nif);
   save(OUT.texture, r.dds);
+  save(OUT.gildedMesh, r.gildedNif);
+  save(OUT.gildedTexture, r.gildedDds);
   const u = r.mesh.unwrap;
   const b = r.mesh.bounds;
   const size = [0, 1, 2].map((k) => +(b.max[k] - b.min[k]).toFixed(2));
@@ -132,6 +144,9 @@ if (isMain(import.meta.url)) {
   console.log(`  pivot    ${SETTINGS.origin}: muzzle at +${b.max[1].toFixed(1)}, butt at ${b.min[1].toFixed(1)}`);
   console.log(`  ${OUT.mesh}  ${r.nif.length} bytes`);
   console.log(`  ${OUT.texture}  ${r.dds.length} bytes`);
+  console.log(`  capped   ${r.mesh.bake.capped.loops} holes, ${r.mesh.bake.capped.triangles} triangles`);
+  console.log(`  ${OUT.gildedMesh}  ${r.gildedNif.length} bytes`);
+  console.log(`  ${OUT.gildedTexture}  ${r.gildedDds.length} bytes`);
   if (wantSheets) {
     for (const [k, png] of Object.entries(r.sheets)) { save(`scratch/thunderlock-${k}.png`, png); console.log(`  scratch/thunderlock-${k}.png`); }
   }

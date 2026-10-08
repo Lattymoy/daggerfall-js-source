@@ -764,7 +764,9 @@ test('AUDIT OH-F B1 the drowned dungeon\'s save: a destroyed foe stays gone (no 
   assert.match(dc, /if \(f\.abyssDestroyed\) return false;   \/\/ AUDIT OH-F B5\/C1/, 'the hour\'s respawn refuses it');
   assert.equal((loop.match(/settling\.push\(retypeFoe\(/g) ?? []).length, 2, 'both of the restore\'s rebuilds are collected');
   assert.match(dc, /return Promise\.allSettled\(settling\)\.then\(\(\) => undefined\);/);
-  assert.match(dc, /const settled = extras\.world && extras\.locationKey === _locationKey \? applyWorld\(extras\.world\) : null;/);
+  // AUDIT DELVE E2 (THE DELVE ARC): a save laid at another dungeon size than this one's leaves the room's record
+  // unapplied (foe i of one layout is not foe i of the other); OH-F B1's law - the rebuilds handed back - stands beside it
+  assert.match(dc, /const settled = extras\.world && extras\.locationKey === _locationKey && !otherLayout \? applyWorld\(extras\.world\) : null;/);
   assert.match(dc, /return settled \?\? Promise\.resolve\(\);/);
   const w = src('src/scenes/world.js');
   const restore = w.indexOf('await modes?.restoreDungeonSave?.(extras); }');

@@ -17679,7 +17679,12 @@ What the ladder says, every arm driven by a pin:
 - a pile of exactly one named by that item with its stack count; a
   corpse by who it was; a door by its lock level when locked; a static
   door by where it goes, its lock, and the closed-shop sentence from
-  its one home.
+  its one home. SENSE1 (2026-10-05, `03-World/Delve-Arc.md`): an action
+  object's two bands in the MOD'S order, the action band first (.cs:397)
+  and the door band only when it said nothing - and a special door
+  (DaggerfallActionDoorSpecial) is no DaggerfallActionDoor, so a wall a
+  lever swings is never called "Door" (`systems/worldTooltips.js`
+  actionObjectName, both hosts' one door).
 - `HideDefaultInteractTooltip` verbatim - the author's own knob, so the
   main quest's puzzles are not given away by a label on the thing you
   are meant to find for yourself.

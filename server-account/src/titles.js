@@ -54,6 +54,10 @@
 //             the account bought it (the row's `insignia`, 0036). A sale is
 //             a fact that happened, not a rule a row satisfies - and what
 //             is HELD is still read off the row at every ask, as the rest.
+//   HOURBREAKER (SD9b, 2026-10-07) - recorded the sale's way: a roll off
+//             a Brass Remnant's receipt on its kill's first write
+//             (sds.js claimSd) is a fact that happened, laid on the row
+//             (`sd_honours`, 0087) and held for good.
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -84,6 +88,7 @@
 import { TITLES, GLYPHS, AURAS, SEAT_TITLES } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
+import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -298,6 +303,9 @@ export function titlesHeld(player, env) {
   // the season's #1, so it passes to whoever takes the top and lapses by itself. A row read without them holds neither.
   if (player?.arena?.grand === true) held.push('grandchampion');
   if (player?.arena?.champion === true) held.push('arenachampion');
+  // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
+  // held for good. A guest's kill is never written, so a guest row holds none
+  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');
   return held;
 }
 
@@ -313,6 +321,9 @@ export function aurasHeld(player, env) {
   const held = [];
   for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);
   if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);
+  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js
+  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is
+  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
   return held;
 }

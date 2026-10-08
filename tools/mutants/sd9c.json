@@ -1,0 +1,182 @@
+[
+  {
+    "name": "SD9C-the-step-unheld",
+    "file": "src/render/auraRing.js",
+    "old": "  const s = Math.floor(t), e = Math.min(1, (t - s) / TURNING_STEP_S);",
+    "new": "  const s = Math.floor(t), e = 1;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-dial-forward-in-law",
+    "file": "src/render/auraRing.js",
+    "old": "export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;",
+    "new": "export const turningDialAngle = (t) => -Math.PI * 2 * TURNING_HZ.dial * t;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-strip-at-the-rim",
+    "file": "src/render/auraRing.js",
+    "old": "  turninghour: Object.freeze({ kind: 6, ringR: TURNING_R + TURNING_TOOTH_M,",
+    "new": "  turninghour: Object.freeze({ kind: 6, ringR: TURNING_R,",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-wheel-smooth",
+    "file": "src/render/auraRing.js",
+    "old": "float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return -TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }",
+    "new": "float turningWheel() { return -TAU * uTime ${hzGlsl(TURNING_HZ.wheel)}; }",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-teeth-fixed",
+    "file": "src/render/auraRing.js",
+    "old": "    float a = atan(p.y, p.x), w = a - turningWheel();",
+    "new": "    float a = atan(p.y, p.x), w = a;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-spokes-off-the-wheel",
+    "file": "src/render/auraRing.js",
+    "old": "    float across = abs(fract(w / TAU * ${TURNING_SPOKES.toFixed(1)} + 0.5) - 0.5)",
+    "new": "    float across = abs(fract(a / TAU * ${TURNING_SPOKES.toFixed(1)} + 0.5) - 0.5)",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-dial-forward",
+    "file": "src/render/auraRing.js",
+    "old": "    float d = a - uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "new": "    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-hours-own-lost",
+    "file": "src/render/auraRing.js",
+    "old": "    float markLen = ${TURNING_MARK_M.toFixed(3)} * (1.0 + first);",
+    "new": "    float markLen = ${TURNING_MARK_M.toFixed(3)};",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-no-light-at-the-feet",
+    "file": "src/render/auraRing.js",
+    "old": "  vec3 col = TH_GOLD * exp(-r * r / 0.22) * 0.3 * breath;",
+    "new": "  vec3 col = vec3(0.0);",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-never-breathing",
+    "file": "src/render/auraRing.js",
+    "old": "float turningBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(TURNING_HZ.pulse)}); }",
+    "new": "float turningBreath() { return 1.0; }",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-unkindled-lit",
+    "file": "src/render/auraRing.js",
+    "old": "  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 turningWall(",
+    "new": "  return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 turningWall(",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-edge-fixed",
+    "file": "src/render/auraRing.js",
+    "old": "  float w = u * TAU - turningWheel();",
+    "new": "  float w = u * TAU;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-no-motes",
+    "file": "src/render/auraRing.js",
+    "old": "    sparks += exp(-dot(dm, dm) / 0.0004) * (1.0 - mv) * smoothstep(0.0, 0.08, mv);",
+    "new": "    sparks += 0.0;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-the-wall-not-rising",
+    "file": "src/render/auraRing.js",
+    "old": "  return clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0) * col;",
+    "new": "  return uKindle * col;",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-never-drawn",
+    "file": "src/render/auraRing.js",
+    "old": "  if (uAura == 6) { vec3 c = uKind == 0 ? turningGround(vP) : turningWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }",
+    "new": "  if (uAura == 66) { vec3 c = uKind == 0 ? turningGround(vP) : turningWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-held-off-any-grant",
+    "file": "server-account/src/titles.js",
+    "old": "(Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');",
+    "new": "(Number(player?.sd_honours) & 3)) held.push('turninghour');",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-held-by-a-guest",
+    "file": "server-account/src/titles.js",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');",
+    "new": "  if (Number(player?.sd_honours) & SD_HONOUR_AURA) held.push('turninghour');",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-never-held",
+    "file": "server-account/src/titles.js",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n",
+    "new": "",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-another-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": ", turninghour: 'hourbreaker' });",
+    "new": ", turninghour: 'founder' });",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD9C-not-in-the-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'seraphwings', 'resonance', 'turninghour']);",
+    "new": "'seraphwings', 'resonance']);",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  }
+]

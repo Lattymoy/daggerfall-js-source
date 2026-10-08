@@ -2355,6 +2355,7 @@ telegraphs. Now:
   Deadlands."* (`world/gateArena.js COURT_TEXT.noCompanions`, the refusals' shape) - once the step's fire has opened
   (`courtAloneFrame`, in the gate's frame after the court's own): never through the door, under the fire or under a
   window, and owed again in the next court.
+- The Shattered Hour keeps the same law since SD-ALONE (`Super-Dungeons.md` section 16): no companion through its Rift.
 
 **The crowd thinned (GATE-CROWD).** A court holds as many challengers as come (`net/gateBrain.js` GATE_FIGHTERS_MAX),
 and forty round one boss were forty bodies, names, lights, spells and footsteps over his telegraphs. WB9h made the

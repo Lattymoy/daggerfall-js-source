@@ -1,0 +1,145 @@
+[
+  {
+    "name": "TIER1-a-Hollow-read-as-its-other-flags",
+    "file": "src/systems/dungeonTier.js",
+    "old": "  if (loc.superTier === true) return 'super';\n",
+    "new": "",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "A Hollow is Super whatever else it is."
+  },
+  {
+    "name": "TIER1-a-loose-elite-flag",
+    "file": "src/systems/dungeonTier.js",
+    "old": "  return loc.elite === true ? 'elite' : 'regular';",
+    "new": "  return loc.elite ? 'elite' : 'regular';",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "The flags are the booleans the builders write, nothing looser."
+  },
+  {
+    "name": "TIER1-said-offline",
+    "file": "src/systems/dungeonTier.js",
+    "old": "export const tierShown = (online) => online === true;",
+    "new": "export const tierShown = (online) => true;",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "Offline every dungeon is DFU's: the plaque stays the mod's own."
+  },
+  {
+    "name": "TIER1-the-phrase-drops-the-size",
+    "file": "src/systems/dungeonTier.js",
+    "old": "(label?.text ? `${label.text}${label.size ? `, ${label.size}` : ''}` : '')",
+    "new": "(label?.text ? label.text : '')",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "The size rides beside the tier everywhere."
+  },
+  {
+    "name": "TIER1-five-blocks-read-medium",
+    "file": "src/world/dungeonLabel.js",
+    "old": "  if (n <= SMALLER_DUNGEON_THRESHOLD) return 'small';",
+    "new": "  if (n < SMALLER_DUNGEON_THRESHOLD) return 'small';",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "DFU's small plus is five blocks: Small."
+  },
+  {
+    "name": "TIER1-the-made-places-labelled",
+    "file": "src/world/dungeonLabel.js",
+    "old": "  if (!tier || madeDungeon(loc)) return null;",
+    "new": "  if (!tier) return null;",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "The court, the arena's floor and its undercroft are no Regular Dungeon to anyone walking in."
+  },
+  {
+    "name": "TIER1-the-label-made-every-frame",
+    "file": "src/world/dungeonLabel.js",
+    "old": "  if (kept) return kept;\n",
+    "new": "",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "A plaque asks every frame it stands: the label is kept per location."
+  },
+  {
+    "name": "TIER1-the-plaque-takes-any-tier",
+    "file": "src/systems/worldTooltips.js",
+    "old": "if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {",
+    "new": "if (kind === 'dungeonEntrance' && tier) {",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "A tier is one of the three."
+  },
+  {
+    "name": "TIER1-the-plaque-loses-the-size",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    if (size) subs.push(String(size));\n",
+    "new": "",
+    "tests": [
+      "test/tier1_dungeontiers.test.js",
+      "test/elitedungeons.test.js"
+    ],
+    "note": "The size beneath the way in."
+  },
+  {
+    "name": "TIER1-the-mouth-tiered-offline",
+    "file": "src/scenes/worldModes.js",
+    "old": "const label = tierShown(host.dungeonOnline?.() ?? false) ? dungeonTierLabel(entry.dfLocation) : null;",
+    "new": "const label = dungeonTierLabel(entry.dfLocation);",
+    "tests": [
+      "test/tier1_dungeontiers.test.js",
+      "test/worldhover.test.js"
+    ],
+    "note": "Offline the mouth is the mod's own \"To <name>\"."
+  },
+  {
+    "name": "TIER1-the-held-map-label-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "+ hub + (tier ? ` (${tier})` : '')",
+    "new": "+ hub",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "The label carries the phrase online."
+  },
+  {
+    "name": "TIER1-the-held-map-box-unread",
+    "file": "src/ui/heldMap.js",
+    "old": ", ...(tier ? [tier] : [])];",
+    "new": "];",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "The I box opens with the phrase, before DFU's refusal."
+  },
+  {
+    "name": "TIER1-the-entry-line-offline",
+    "file": "src/scenes/world.js",
+    "old": "    if (!params.has('online')) return;\n    const line = tierPhrase(dungeonTierLabel(modes?.dungeonLocation ?? null));",
+    "new": "    const line = tierPhrase(dungeonTierLabel(modes?.dungeonLocation ?? null));",
+    "tests": [
+      "test/tier1_dungeontiers.test.js"
+    ],
+    "note": "The tiers are said online, where they differ."
+  },
+  {
+    "name": "TIER1-a-Super-sighted-as-a-Dungeon",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "tier === 'super' ? 'an Abyss Dungeon' : ",
+    "new": "",
+    "tests": [
+      "test/tier1_dungeontiers.test.js",
+      "test/elitedungeons.test.js"
+    ],
+    "note": "The sight line names a Super Dungeon."
+  }
+]

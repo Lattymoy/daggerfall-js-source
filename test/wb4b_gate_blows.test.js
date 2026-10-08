@@ -116,7 +116,8 @@ test('WB4b the court\'s doors: him as a body while he stands (his feet, his heig
 
 test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped body its swing, its shafts and its spells all reach - by his skin, his whole body, his own radius - and sends every number through the court\'s door; the spell engine reaches him at every site a duel opponent is reached; the dungeon arm and the world host carry the two doors (mutants: each seam removed)', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /function gateBossBody\(\) \{\n\s*const b = opts\.gateBoss\?\.\(\) \?\? null;/);
+  // PIN MOVED (SD8c): in the Shattered Hour the seam is the Brass Remnant's (scenes/sdRemnant.js), the court's elsewhere
+  assert.match(dc, /function gateBossBody\(\) \{\n\s*const b = sdRemnant \? sdRemnant\.target\(\) : opts\.gateBoss\?\.\(\) \?\? null;/);
   assert.match(dc, /const boss = gateBossBody\(\);\n\s*if \(boss\) \{ boss\._backFacing = foeDeps\.isBackFacing\(boss\.ai\.yaw, boss\.ai\.feet, playerFeet\); live\.push\(boss\); \}\n\s*const canSee = \(f\) => \{\n\s*if \(f === boss\) return bossSight\(eye, inViewFn, boss\);/, 'the swing sees him by his skin');
   assert.match(dc, /if \(foe === boss\) \{ hitEnemy = true; swingOnBoss\(boss, damage, lookDir\); continue; \}/);
   assert.match(dc, /const \{ point: p, dist \} = bossReach\(eye, boss\.ai\);/);
@@ -125,7 +126,7 @@ test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped b
   assert.match(dc, /try \{ applySpell\(harm, playerEntity\.level, boss\.entity, sinks, Math\.random, \{ entity: playerEntity \}\); \} finally \{ boss\.entity\.activeEffects = \[\]; \}/);
   assert.match(dc, /return landOnBoss\(boss, dealt, HIT_KINDS\.Spell\);/);
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp\) => spellOnBoss\(sp\) : null,/);
-  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); return false; \}\n\s*return !!opts\.onBossHit\?\.\(\{ d: damage, r \}\);/);
+  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); return false; \}\n\s*return sdRemnant \? sdRemnant\.hit\(\{ d: damage, r \}\) : !!opts\.onBossHit\?\.\(\{ d: damage, r \}\);/);   // PIN MOVED (SD8c): the Remnant's in the Hour
   const hm = read('src/scenes/hostMagic.js');
   // WBX7: the harmful families - and a Soul Trap, which met nobody before (it passed straight through him)
   assert.match(hm, /function bossMarksFor\(sp\) \{\n\s*if \(!bossMark \|\| !castAtBoss \|\| !sp \|\| !\(duelSpellOf\(sp\) \|\| \(sp\.effects \?\? \[\]\)\.some\(\(e\) => e && isSoulTrapEffect\(e\)\) \|\| spellSways\(sp\)\)\) return \[\];/, 'the harmful families, a soul trap - and WB8a: a sway, refused at him');
