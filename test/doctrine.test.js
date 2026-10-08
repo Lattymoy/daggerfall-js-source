@@ -551,6 +551,8 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
 // below.
 /** VE4: the mark a row carries when its pixels ARE a render of game data - Port-Doctrine's one exception. */
 const VE4_DERIVED = "Port-Doctrine's one exception (Mac, 2026-10-05): Daggerfall's own textures, repainted by the mod's author, carried on Mac's approval";
+/** ALIKR1 / SNOWFALL1: the second exception's mark - the desert's and the winter's ground, its own approval. */
+const ENVIRONS_DERIVED = "Port-Doctrine's second exception (Mac, 2026-10-08): Daggerfall's own desert and winter ground tiles, repainted by the packs' authors, carried on Mac's approval";
 const BUNDLE_ART = new Map([
   // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
   // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
@@ -663,6 +665,20 @@ const BUNDLE_ART = new Map([
   ['public/art/vanilla-enhanced/snowless-swamps-and-jungles/',
     { manifest: 'vendor/vanilla-enhanced/snowless-swamps-and-jungles.files.json', derived: VE4_DERIVED,
       why: "THIRD-PARTY - Vanilla Enhanced - Snowless Swamps and Jungles 3.4.7 (carademono), carried on Mac's word of the author's permission; the swamps' and jungles' ground and buildings without snow - the 160 PNGs its manifest names, byte for byte (see vendor/vanilla-enhanced/README.md)" }],
+  // ALIKR1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These
+  // should be on by default and integrate into our enhanced environments seamlessly"): THE SECOND EXCEPTION - two more
+  // packs of Daggerfall's ground repainted, each directory answering to the listing tools/environmentModsExtract.mjs
+  // writes from the archive (every file and its sha256), each row carrying the second exception's own mark.
+  ['public/art/sands-of-the-alikr/',
+    { manifest: 'vendor/sands-of-the-alikr/sands-of-the-alikr.files.json', derived: ENVIRONS_DERIVED,
+      why: "THIRD-PARTY - Sands of the Alik'r 2 (Nexus mod 1390; its archive names no author), carried on Mac's word of the author's permission; Daggerfall's desert ground under the author's sand - the pack's 47 loose TEXTURE.002 records, byte for byte (see vendor/sands-of-the-alikr/README.md for the open permission record)" }],
+  ['public/art/snowfall/',
+    { manifest: 'vendor/snowfall/snowfall.files.json', derived: ENVIRONS_DERIVED,
+      why: "THIRD-PARTY - Snowfall 1.0.5 (demifiend000), carried on Mac's word of the author's permission; the 168 winter ground records its bundle packages (TEXTURE.103, .303, .403 - Daggerfall's winter tiles under the author's snow), its snow albedo and its three surface masks, decoded losslessly from the bundle's Texture2D and TextAsset objects (see vendor/snowfall/README.md)" }],
+  // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
+  ['vendor/windfall/Textures/',
+    { manifest: 'vendor/windfall/windfall.files.json',
+      why: "THIRD-PARTY - Windfall 1.0.0 (demifiend000), carried on Mac's word of the author's permission; the mod's own leaf sheets and snowflake, RGBA32 with one mip in the bundle - each PNG is the texture exactly (see vendor/windfall/README.md)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is
@@ -733,19 +749,23 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
 const DOCTRINE = 'bible/01-Overview/Port-Doctrine.md';
 /** The directories Port-Doctrine's exception paragraph names - every backticked `public/` path on its line. */
 function exceptionDirs() {
-  const line = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').find((l) => /^\s+\*\*THE ONE EXCEPTION\b/.test(l)) ?? '';
-  return [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]);
+  // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION
+  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND) EXCEPTION\b/.test(l));
+  return lines.flatMap((line) => [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]));
 }
+/** The mark each directory's approval gave it: Vanilla Enhanced's rows the first exception's, the environment packs' the
+ *  second's - a row in one exception wearing the other's mark is a row approved by the wrong approval. */
+const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED : ENVIRONS_DERIVED);
 /** The derived rows standing outside every directory the exception names. */
 const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived && !dirs.some((d) => dir.startsWith(d))).map(([dir]) => dir);
 
 test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
   const dirs = exceptionDirs();
-  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/'], 'the doctrine names one directory');
+  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/'], 'the doctrine names three directories, under two approvals');
   assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
   for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
   // and inside it nothing passes as the port's own: every row there says what it is
-  for (const [dir, r] of BUNDLE_ART) if (dirs.some((d) => dir.startsWith(d))) assert.equal(r.derived, VE4_DERIVED, `${dir} sits in the exception and does not say so`);
+  for (const [dir, r] of BUNDLE_ART) if (dirs.some((d) => dir.startsWith(d))) assert.equal(r.derived, markFor(dir), `${dir} sits in the exception and does not say so - in its own approval's words`);
   for (const f of PUBLIC_ALLOWLIST.keys()) assert.ok(!dirs.some((d) => f.startsWith(d)), `${f}: an allow-list row inside the exception`);
 });
 
