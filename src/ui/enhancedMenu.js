@@ -207,6 +207,7 @@ import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profi
 import { saveTile, cloudStateOf, saveFromCard, newerBackup } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
+import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { profileBadge, portraitSave, liveCharacter, characterLine } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
@@ -296,6 +297,26 @@ let timersView = null;
 let timersAnchor = null;      // AUDIT TIMERS1 UI-3: the hourglass's re-placing, disconnected with the face it stands in
 let timersFocusBack = false;  // AUDIT TIMERS1 UI-5: a closed window hands the focus back to the hourglass
 const stopTimers = () => { timersView?.stop(); timersView = null; timersAnchor?.(); timersAnchor = null; };
+/** SERVER-POST: the mailbox's window over the pause face, its live view, the envelope's count kept live and its placing. */
+let postOpen = false;
+let postView = null;
+let postWatch = null;
+let postAnchor = null;
+let postFocusBack = false;   // a closed window hands the focus back to the envelope, as the hourglass's does
+const stopPost = () => { postView?.stop(); postView = null; postWatch?.(); postWatch = null; postAnchor?.(); postAnchor = null; };
+/** SERVER-POST (Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
+ *  notifications whenever players have a message"): THE ENVELOPE on the pause face - online, where the host hands its box
+ *  (hooks.post), left of the hourglass `glass` (or the profile mark); its count follows the box while the face stands
+ *  (the face draws itself only when asked). Answers the envelope, or null where there is no box. */
+function postEnvelope(home, glass) {
+  if (!hooks.post?.()) return null;
+  const envelope = postMark(document, { open: postOpen, count: hooks.post()?.waiting ?? 0, onOpen: () => { postOpen = true; render(); } });
+  home.append(envelope);
+  postAnchor = anchorPost(envelope, glass, home.querySelector?.('.px-profile'), home);
+  postWatch = watchPostMark(envelope, () => hooks.post?.() ?? null);
+  if (postFocusBack && !postOpen) { postFocusBack = false; globalThis.requestAnimationFrame?.(() => envelope.focus?.()); }
+  return envelope;
+}
 let accountOffered = false;
 // ═══ TILE2/ACC2: WHAT THE CLOUD HOLDS, ASKED ONCE PER VISIT ═══════
 //
@@ -3509,6 +3530,7 @@ function renderHome() {
       timersAnchor = anchorBeside(mark, home.querySelector?.('.px-profile'), home);   // AUDIT TIMERS1 UI-3: placed again on every resize
       if (timersFocusBack && !timersOpen) { timersFocusBack = false; globalThis.requestAnimationFrame?.(() => mark.focus?.()); }   // UI-5: back where the press was
     }
+    const envelope = postEnvelope(home, mark);   // SERVER-POST: the mailbox beside the hourglass, online - its count kept live
     if (accountOpen) {
       const acct = el('div', 'px-stage px-acctstage');
       acct.append(accountWindow());
@@ -3525,12 +3547,22 @@ function renderHome() {
       // AUDIT TIMERS1 UI-5/UI-7: the pause face under the window is out of reach - no Tab into it, no Enter on its
       // Resume, no bumper turning its tabs (plusPad's tab strips skip what is not visible to it), no profile window
       for (const n of [stage, home.querySelector?.('.px-profile'), mark]) n?.setAttribute?.('inert', '');
+      envelope?.setAttribute?.('inert', '');   // SERVER-POST: and the envelope beside it
+    }
+    else if (postOpen && hooks.post?.()) {
+      // SERVER-POST: the mailbox's window, on the hourglass's own stage (centred, its own padding - enhancedStyle.js)
+      const pstage = el('div', 'px-stage px-timersstage px-poststage');
+      postView = postWindow(document, { box: () => hooks.post?.() ?? null, onClose: () => { postOpen = false; postFocusBack = true; render(); } });
+      pstage.append(postView.root);
+      home.append(pstage);
+      closeOnOutsideTap(home, '.px-postwin', () => { postOpen = false; postFocusBack = true; render(); });
+      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope]) n?.setAttribute?.('inert', '');
     }
     // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
     // scrim - outside the window, the clock and the foot - resumes,
     // the way Escape does; the front door has no scrim and no resume.
     // PROFILE2: the mark is inside too (a press on it opens the window), and with the window open the tap is its.
-    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile, .px-timersmark', () => onAction('resume'));
+    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile, .px-timersmark, .px-postmark', () => onAction('resume'));   // SERVER-POST: the envelope inside too
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.
@@ -4651,6 +4683,7 @@ function renderInto() {
   if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   if (questTimer) { clearInterval(questTimer); questTimer = null; }
   stopTimers();   // TIMERS1: a rebuild builds the window again, with its own tick
+  stopPost();   // SERVER-POST: and the mailbox's, and the envelope's count
   app.innerHTML = '';
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
@@ -4838,6 +4871,7 @@ function onKey(e) {
   // rather than walk the screen out from under it.
   const back = accountOpen ? () => { accountOpen = false; render(); }
     : timersOpen && timersView ? () => { timersOpen = false; timersFocusBack = true; render(); }   // TIMERS1: the window first, ahead of the pause face's resume (AUDIT UI-11: a window that is drawn)
+    : postOpen && postView ? () => { postOpen = false; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
     : confirming ? () => { confirming = null; render(); }
@@ -4911,6 +4945,8 @@ export function mountEnhancedMenu(host, {
   accountOpen = false;
   timersOpen = false;   // TIMERS1: and the timers window the same
   timersFocusBack = false;
+  postOpen = false;   // SERVER-POST: and the mailbox's
+  postFocusBack = false;
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED
@@ -5022,6 +5058,7 @@ export function mountEnhancedMenu(host, {
       if (textKeyCapture) { globalThis.removeEventListener('keydown', textKeyCapture, true); textKeyCapture = null; }   // DISC28-A
       if (questTimer) { clearInterval(questTimer); questTimer = null; }
       stopTimers();   // TIMERS1
+      stopPost();   // SERVER-POST
       releaseShotsPane();   // LOAD1: the gallery's pictures and its listener
       // FIX-F: and the rebind pane's own capture listener, which is on
       // the DOCUMENT and would outlive this screen exactly as the one

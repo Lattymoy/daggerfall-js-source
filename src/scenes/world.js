@@ -733,6 +733,7 @@ import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced s
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
+import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
 import { GuildBook } from '../net/guildBook.js';   // GUILD1b: the guild the Guild tab draws
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
@@ -15993,6 +15994,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // else"): what the pause face's timers window reads (systems/eventTimers.js) - the relay's clock and what this host
   // already holds: the day's gate site and the relay's word of its kill, the seats list (the week's battles, the
   // Season's zero), the day's raids in relay ms. Null offline - every row is a shared moment of the online world.
+  /** SERVER-POST: what the pause face's mailbox reads - the box, online; null offline (no envelope), as the hourglass's.
+   *  AUDIT TIMERS1 D6's law: the pause door is armed before `online` and the box are declared, so not there yet is none. */
+  const postSource = () => { try { return online && postBox ? postBox : null; } catch { return null; } };
   let _timersSeatAsk = -Infinity;
   const timersSource = ({ ask = false } = {}) => {
     // AUDIT TIMERS1 D6: the pause door is armed before the boot's last awaits, and `online` (and the gate's two) are
@@ -16041,6 +16045,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pane's read of the same signal, not a second gate.
     loadingPrevented: () => !!online,
     timers: timersSource,   // TIMERS1: the hourglass's window (null offline - no hourglass)
+    post: postSource,   // SERVER-POST: the mailbox beside it (null offline - no mailbox)
     // SAV4: the slot window's seams - the pause SAVE/LOAD doors
     // open it with these (openClassicPauseFlow builds the doors).
     playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
@@ -19036,6 +19041,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // SOC5's key reaches it through `hudCtx.openSocial` rather than a second copy of this reference.
   let socialPanel = null;
   let mail = null;   // MAIL1: the letterbox (net/mail.js MailBox), made with the panel that draws it
+  let postBox = null;   // SERVER-POST: the server's post (net/serverPost.js PostBox), made beside the letterbox
   let guildBook = null;   // GUILD1b: the character's guild (net/guildBook.js GuildBook), made with the panel that draws it
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
   /** RAID-ROLL: the hub asked for the towns table by its operator's pinned hash - this world's, when it hashes to it
@@ -20374,6 +20380,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     // SCALE4c: its looks ride the heartbeat - while the online lane runs, as its poll there ran
     heartbeat.add('mail', whileLive(mail.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
+    // SERVER-POST (2026-10-08, Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should
+    // show notifications whenever players have a message. First use is to utilize it for players being granted items"):
+    // THE SERVER'S POST - the developers' messages, looked at on the letterbox's clock (riding the heartbeat while the
+    // online lane runs), a new one said on the world tab as a letter is; the pause face's envelope counts what waits
+    // (pauseDoorHooks `post`). An item is claimed into the realm character being played: the service writes it into the
+    // record and the pack takes it on the answer - the guild vault's take (realmGoldAct, the answer needed)
+    postBox = new PostBox({
+      ioOf: () => {
+        const st = appStorage();
+        const s = storedSession(st);
+        return s ? { fetch: (u, i) => globalThis.fetch(u, i), base: serviceBase(st), secret: s.secret, storage: st } : null;
+      },
+      onPost: (event) => { chatLog.push(tab.id, { text: postNoticeText(event), system: true }); },
+      character: () => characterIdOf(playerEntity),
+      realm: realmSession ? { act: (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }), abandon: (why) => realmSession.abandon(why) } : null,
+      pack: { add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); } },
+    });
+    heartbeat.add('post', whileLive(postBox.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
     // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
     // account minted on first use as the bank window mints it.
@@ -26243,6 +26267,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // worldModes.js's togglePause for the door itself.
     loadingPrevented: () => !!online,
     timers: timersSource,   // TIMERS1: forwarded to a building's and a dungeon's pause face
+    post: postSource,   // SERVER-POST: and the mailbox's box
     playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),
