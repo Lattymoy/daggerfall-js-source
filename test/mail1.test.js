@@ -567,5 +567,5 @@ test('MAIL1 host by source: the box is made with the panel over the ACCOUNT SERV
   assert.match(made, /ioOf: \(\) => \{\s*const st = appStorage\(\);\s*const s = storedSession\(st\);\s*return s \? \{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), base: serviceBase\(st\), secret: s\.secret, storage: st \} : null;\s*\},/);
   assert.match(made, /onLetter: \(event\) => \{ chatLog\.push\(tab\.id, \{ text: mailNoticeText\(event\), system: true \}\); \},/);
   assert.match(w, /socialPanel = createSocialPanel\(\{\s*social,\s*mail,/);
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1000}?\n\s*mail\?\.poll\(\);[^\n]*\n[\s\S]{0,2100}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');   // 1800: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox)
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1000}?\n\s*mail\?\.poll\(\);[^\n]*\n[\s\S]{0,2300}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');   // 1800: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox); PIN MOVED (2300, the merge of main past SD9b: SD2b's Hollow frame and CHAP1's Roll tick both stand between too)
 });
