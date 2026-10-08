@@ -4,6 +4,10 @@
 // clock, and the cards and chips drawn by render/cardTableDraw.js through the game's own renderer, with the table's
 // panel (ui/cardTableHud.js) over it. No game data: the felt and the floor are flat colours, the cards our own paint.
 //     cards.html?t=<seconds>&cam=seat|over&seed=<n>&patrons=<n>&nohud     (tools/cardsProbe.mjs pins them)
+// CARDS3c: `&squeeze=<0..1>` the front held card squeezed (world/cardHand.js squeezeMatrix); `&game=iliac` the cloth an
+// Iliac Hand game lays at its last turn instead (world/iliacCloth.js, render/iliacTableDraw.js); `&bench=<frames>` times
+// that many frames with the cards and without, into `__cardsBench` (tools/cardsPhoneProbe.mjs - the frame cost); `&chips=0`
+// the cards with no chips.
 import { Renderer } from '../render/renderer.js';
 import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
 import { cardTableSeats, tableFrame } from '../world/cardTables.js';
@@ -12,7 +16,12 @@ import { CardTableSession } from '../systems/cardTableSession.js';
 import { createCardTableDraw } from '../render/cardTableDraw.js';
 import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
-import { heldMatrices } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them
+import { heldMatrices, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them; CARDS3c: squeezed
+import { newGame, commit as iliacCommit, reveal as iliacReveal, iliacView, ILIAC_TURNS } from '../net/iliacHand.js';   // CARDS10: an Iliac game's cloth, for the frame's cost
+import { STARTER_DECK } from '../net/iliacCards.js';
+import { patronPlays } from '../systems/iliacPatrons.js';
+import { iliacPlaces, iliacPoses } from '../world/iliacCloth.js';
+import { createIliacTableDraw } from '../render/iliacTableDraw.js';
 
 const params = new URLSearchParams(location.search);
 const T = Number(params.get('t') ?? 14);
@@ -113,10 +122,28 @@ function frameDraw(withCards = true, asBacks = false) {
   if (camKind === 'seat') {
     const held = p.cards.filter((c) => c.seat === 0 && c.settled && Math.cos(c.roll) > 0.5).sort((a, b) => (a.id < b.id ? -1 : 1));
     const mats = heldMatrices(view, held.length, Number(params.get('peek') ?? 0));
+    if (params.has('squeeze') && mats.length > 1) mats[0] = squeezeMatrix(mats[0], Number(params.get('squeeze')));   // CARDS3c: as worldModes cardDrawGame
     p.cards = [...p.cards.filter((c) => !held.includes(c)), ...held.map((c, i) => ({ card: c.card, matrix: mats[i] }))];
   }
-  if (withCards) draw.draw(asBacks ? { ...p, cards: p.cards.map((c) => ({ ...c, card: -1 })) } : p);
+  if (params.get('chips') === '0') p.chips = [];   // CARDS3c: the plates alone (the bench's split of the cost)
+  if (withCards && iliac) iliac.draw.draw(iliac.poses);   // CARDS10: the Iliac cloth in the Hold'em one's place
+  else if (withCards) draw.draw(asBacks ? { ...p, cards: p.cards.map((c) => ({ ...c, card: -1 })) } : p);
 }
+// CARDS10: `game=iliac` - an Iliac Hand game between two tempers played to its last turn on the relay's rules, its cloth
+// laid from the player's chair (seat 0) against the one across (seat 2)
+const iliac = params.get('game') === 'iliac' ? (() => {
+  const st = newGame({ decks: [[...STARTER_DECK], [...STARTER_DECK]], rand32 });
+  let u = seed || 1;
+  const unit = () => { u = (u * 1664525 + 1013904223) >>> 0; return u / 4294967296; };
+  for (let turn = 1; turn < ILIAC_TURNS; turn++) {
+    for (const pl of [0, 1]) iliacCommit(st, pl, patronPlays(st, pl, pl ? 'loose' : 'tight', 1, unit));
+    iliacReveal(st);
+  }
+  const v = iliacView(st, 0);
+  const at = iliacPlaces(frame, seats[0].feet, seats[2].feet, 0);
+  return { draw: createIliacTableDraw(renderer), poses: iliacPoses(v, at, T, new Map()), cards: v.holdings.reduce((n, hd) => n + 1 + hd.sides[0].length + hd.sides[1].length, 0) };
+})() : null;
+
 // The table alone, its cards drawn every one as a back, then as dealt: the pixels the cards and chips change, and the
 // pixels a FACE paints (the dealt frame against the all-backs one) - a frame that culls or loses the faces has none of
 // those, and the probe fails it
@@ -130,5 +157,17 @@ const shown = readFrame();
 let cardPixels = 0, facePixels = 0;
 for (let i = 0; i < shown.length; i += 4) { if (differ(shown, bare, i)) cardPixels++; if (differ(shown, backs, i)) facePixels++; }
 const poses = scene.poses(T, session.view());
+// CARDS3c/CARDS10: THE FRAME'S COST - `bench` frames of the room with its cards and as many without, alternated three
+// times and the middle run of each kept (the pipeline drained by a one-pixel read before and after each run): what the
+// cards add to a frame, on this page's GL
+if (params.has('bench')) {
+  const n = Math.max(10, Math.min(600, Number(params.get('bench')) || 120));
+  const drain = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+  const run = (withCards) => { frameDraw(withCards); drain(); const t0 = performance.now(); for (let i = 0; i < n; i++) frameDraw(withCards); drain(); return (performance.now() - t0) / n; };
+  const bare = [], cards = [];
+  for (let r = 0; r < 3; r++) { bare.push(run(false)); cards.push(run(true)); }
+  const mid = (x) => x.slice().sort((a, b) => a - b)[1];
+  window.__cardsBench = { frames: n, width: canvas.width, height: canvas.height, game: iliac ? 'iliac' : 'holdem', plates: iliac ? iliac.cards : poses.cards.length, chips: iliac ? 0 : poses.chips.length, bareMs: mid(bare), cardsMs: mid(cards), costMs: mid(cards) - mid(bare) };
+}
 window.__cardsReady = true;
 window.__cardsState = { street: session.view().hand?.street ?? null, cards: poses.cards.length, faceUp: poses.cards.filter((c) => Math.cos(c.roll) > 0.5).length, chips: poses.chips.length, cardPixels, facePixels, log: log.slice(-4), ambient: INTERIOR_AMBIENT };

@@ -159,3 +159,54 @@ export function dragBet(legal, sliderValue, myBet = 0) {
   if (legal.call > 0) return { id: 'call', value: legal.call, amount: legal.call };
   return null;
 }
+
+// ── CARDS3c: THE SQUEEZE, A CLICK ON THE CARDS AND A PUSH ─────────────────────────────────────────────────────────
+// Section 3, DECIDED: the hand "can be peeked (lifted at the corner) or squeezed ... a click on the cards checks, a push
+// folds". A press on the held hand peeks it (CARDS3b); pulled DOWN the screen while held it SQUEEZES - the front card
+// drawn up off the other along its own length and turned, as far as the pull - and let go, the press was a CLICK (short,
+// barely moved: a check, when the law has one) or a PUSH (dragged up the screen, toward the cloth's middle across the
+// table, more up than across: a fold, on the player's turn). Anything else was a peek. The picture and the gesture
+// only: the act is the panel's own press, which the law still judges.
+
+/** MEASURE (CARDS3c): a click's most travel (a share of the view's height) and its longest press, ms; a push's least
+ *  travel up the screen; the pull down the screen that squeezes all the way. */
+export const CLICK_SLOP = 0.012;
+export const CLICK_MS = 300;
+export const PUSH_FOLD = 0.1;
+export const SQUEEZE_PULL = 0.12;
+/** MEASURE (CARDS3c): the front card's draw up off the other at a full squeeze (metres along its own length) and its
+ *  turn (degrees, about its face). */
+export const SQUEEZE_RISE = CARD_W * 0.55;
+export const SQUEEZE_TURN_DEG = 12;
+
+/**
+ * What a press on the held hand meant when it let go: `from` and `to` the cursor (CSS pixels), `ms` how long it was held,
+ * `h` the canvas's height - 'click', 'push' or null.
+ * @param {number[]|null} from @param {number[]|null} to @param {number} ms @param {number} h
+ */
+export function handGesture(from, to, ms, h) {
+  if (!from || !to || !(h > 0)) return null;
+  const dx = (to[0] - from[0]) / h, dy = (to[1] - from[1]) / h;
+  if (Math.hypot(dx, dy) <= CLICK_SLOP && ms <= CLICK_MS) return 'click';
+  if (-dy >= PUSH_FOLD && -dy > Math.abs(dx)) return 'push';
+  return null;
+}
+/**
+ * THE SQUEEZE: how far a press on the hand pulled down the screen has squeezed it, 0..1 - null until the pull passes a
+ * click's slop (a press held still is the peek alone).
+ * @param {number[]|null} from @param {number[]|null} to @param {number} h
+ */
+export function squeezeOf(from, to, h) {
+  if (!from || !to || !(h > 0)) return null;
+  const pull = (to[1] - from[1]) / h;
+  return pull > CLICK_SLOP ? Math.min(1, (pull - CLICK_SLOP) / SQUEEZE_PULL) : null;
+}
+/**
+ * A held card's matrix squeezed `s` (0..1): drawn up along its own length (its top, +Z) and turned about its face (+Y),
+ * in its own frame - the card that lies in front comes up off the one behind it.
+ * @param {ArrayLike<number>} m @param {number} s
+ */
+export function squeezeMatrix(m, s) {
+  const k = Math.max(0, Math.min(1, s));
+  return multiply(m, trs(0, 0, SQUEEZE_RISE * k, 0, SQUEEZE_TURN_DEG * k, 0));
+}

@@ -60,6 +60,7 @@ import { TRANSPORT_MODES } from '../systems/transport.js';   // RIDE-SOUND: the 
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
 import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse stands as the dungeon's own corpses stand
 import { raceGenderPain3Sound, CLASSIC_PLAYER_DEATH_SOUND } from '../systems/playerDeath.js';   // PCORPSE1: the fallen player's own cry
+import { SEAT_HIP_DROP } from '../player/seatPose.js';   // CARDS2c: a seated sprite sinks by the seat's own drop
 import { RACES } from '../systems/races.js'; import { PeerClimbSounds, peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a peer on the wall faces it, takes no stride, and is heard climbing
 
 // ── PCORPSE1: THE FALLEN ──────────────────────────────────────────
@@ -486,6 +487,17 @@ export const ridingLoopName = (id) => `peerRide:${id}`;
 /** AUDIT DISC7 B3: a mounted peer whose newest pose is older than this is standing still for the riding loop - a
  *  rider in motion sends at POSE_HZ, so a second of silence is a stall, not a gallop. */
 export const PEER_RIDE_STALE_MS = 1000;
+
+/**
+ * CARDS2c (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Lets build every inch of this"): THE SPRITE
+ * LANE SEATED. Eye Of The Beholder's walkers and the paperdoll have no sitting art, so a peer seated at a card table
+ * (the pose's `st`, CARDS2b's table top) stood at the seat. A sprite cannot bend; it SINKS - its feet lowered by the
+ * seat's own hip drop (player/seatPose.js SEAT_HIP_DROP, the Morrowind body's), so its hips stand where the seated rig's
+ * do, its head at the seated eye, and what would be its legs lies below the floor and behind the table, which hide it.
+ * The name over it comes down with it. Answers how far a pose's sprite sinks (0 standing).
+ * @param {any} shown
+ */
+export const seatedSink = (shown) => (Number.isInteger(shown?.st) && shown.st > 0 ? SEAT_HIP_DROP : 0);
 
 /** The peers of a session, as billboards and names. */
 export class RemotePlayers {
@@ -1034,12 +1046,13 @@ export class RemotePlayers {
       this._batches.set(peer.id, entry);
     }
     const f = toScene(peer.shown);
-    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
+    const sink = seatedSink(peer.shown);   // CARDS2c: seated, sunk by the seat's drop
+    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1] - sink; entry.batch.origin[2] = f[2];
     entry.batch.conceal = veil;   // INVIS-LOOK: the renderer's blended phase, or plain
     entry.peer = peer;
     const g = this._growAt(f);
     if (entry.g !== g) { entry.g = g; this._sizeBatch(entry.batch, { w: entry.doll.w * g, h: entry.doll.h * g }, g); }   // OW-PEERS
-    if (!veil) this._shown.push({ peer, height: entry.doll.h * g });
+    if (!veil) this._shown.push({ peer, height: entry.doll.h * g - sink });
   }
 
   /** The class-enemy billboard path: `bundle.mobileUnit.update` is fed simple flags off the peer's OWN synced pose
@@ -1090,9 +1103,10 @@ export class RemotePlayers {
       entry.peer = peer;
     }
     if (entry.g !== g) { entry.g = g; this._sizeBatch(entry.batch, size, g); }
-    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
+    const sink = seatedSink(shown);   // CARDS2c: seated, sunk by the seat's drop
+    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1] - sink; entry.batch.origin[2] = f[2];
     entry.batch.conceal = veil;   // INVIS-LOOK
-    if (!veil) this._shown.push({ peer, height: entry.height });
+    if (!veil) this._shown.push({ peer, height: entry.height - sink });
   }
 
   /** OW-PEERS: the Overworld's grow at a peer's feet (1 off the view). */

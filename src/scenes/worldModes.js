@@ -220,7 +220,7 @@ import { regularsToStand, regularBark, BARK_MS } from '../world/cardRegulars.js'
 import { openIliacTableGame } from './iliacTableGame.js';   // CARDS10: Iliac Hand on the seat
 import { iliacGrade } from '../systems/iliacPatrons.js';   // CARDS10: the tavern's grade - its regulars' decks and play
 import { cardPackPrice, buyCardPack } from '../systems/cardSources.js';   // CARDS9: the house sells packs at its card table
-import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged
+import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT, handGesture, squeezeOf, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged; CARDS3c: the squeeze, the click, the push
 import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';   // CARDS3b: the cursor's ray, and the hand on the screen
 import { createCardTableHud, cardHudModel, eventLine, showdownWinners, HOLDEM_REFUSALS } from '../ui/cardTableHud.js';   // CARDS4: its panel
 import { tablePlaces, CardScene } from '../world/cardScene.js';   // CARDS3: the cards on the cloth
@@ -886,6 +886,7 @@ export function createWorldModes(host) {
       if (!mine()) return;
       g.mouse = cardMouseAt(e);
       g.overPanel = onPanel(e);   // AUDIT CARDS-3 C10: the panel over the hand is the panel's - no peek through it
+      if (g.handPress) g.squeeze = squeezeOf(g.handPress.at, g.mouse, canvas.clientHeight);   // CARDS3c: pulled down, squeezed
       if (!g.drag) return;
       const q = cardTableAt(g, g.mouse);
       g.drag.off = !onTable(q, g.scene?.places.table);   // AUDIT CARDS-3 C6: off the table, the chips wait where they last were on it
@@ -902,7 +903,7 @@ export function createWorldModes(host) {
       const grabbed = !!place && onStack(p, place);
       const bet = grabbed ? dragBet(table?.legal?.(), g.hud.sliderValue?.() ?? null, myBet) : null;
       if (bet) g.drag = { bet, point: p, off: false };
-      else if (!grabbed && cardHandHovered(g)) g.peekHeld = true;
+      else if (!grabbed && cardHandHovered(g)) { g.peekHeld = true; g.handPress = { at: g.mouse.slice(), t: performance.now() }; }   // CARDS3c: and what the press means is told at its letting go
       else if (!grabbed) return;   // AUDIT CARDS-3 C2: a press on his own stack is his chips' - never the swing that stands him up, his turn or not
       g.swallowMouse = true;
       e.stopImmediatePropagation?.(); e.preventDefault?.();
@@ -913,6 +914,17 @@ export function createWorldModes(host) {
       g.swallowMouse = false;   // a browser that sent no mouse press after the taken pointerdown never eats the next one
       if (!mine()) return;
       g.peekHeld = false;
+      // CARDS3c: a press on the hand let go - a click checks (when the law has a check), a push folds (on his turn)
+      const hp = g.handPress;
+      g.handPress = null; g.squeeze = null;
+      if (hp) {
+        const kind = handGesture(hp.at, cardMouseAt(e), performance.now() - hp.t, canvas.clientHeight);
+        const legal = (g.remote ?? g.session)?.legal?.();
+        if (kind === 'click' && legal?.check) cardPress(g, 'check');
+        else if (kind === 'push' && legal) cardPress(g, 'fold');
+        e.stopImmediatePropagation?.();
+        return;
+      }
       const d = g.drag;
       if (!d) return;
       g.drag = null;
@@ -952,6 +964,7 @@ export function createWorldModes(host) {
     const lift = cardHeldLift(g, held.map((c) => mats0[slot(c)] ?? mats0[0]), proj, view);
     g.lift = (g.lift ?? lift) + (lift - (g.lift ?? lift)) * Math.min(1, dt * PEEK_RATE);   // eased - a panel that grows lifts the hand, never jumps it
     const mats = g.lift > 1e-4 ? heldMatrices(view, fan, g.peek, g.lift) : mats0;
+    if (g.squeeze > 0 && mats.length > 1) mats[0] = squeezeMatrix(mats[0], g.squeeze);   // CARDS3c: the front card squeezed up off the other
     g.hold ??= new Map();   // card id -> { k: 0..1 into the hand, m: its last held matrix }
     const step = dt / HELD_EASE_S;
     const ids = new Set(p.cards.map((c) => c.id));
