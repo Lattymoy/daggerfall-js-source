@@ -84,6 +84,7 @@ import { uiCanvas, onUiScreen, fromUiPoint } from '../ui/uiScreen.js';   // RETR
 import { dfuLookAxes } from '../ui/lookSettings.js';   // WIDGET-LOOK: the mods' Inertia reads DFU's look axes, not the camera's radians
 import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
 import { liveStat } from '../systems/statMods.js';   // WW1: the widget's speed ratio
+import { castRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate both lanes' hands cast at
 import './swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk arm
 
@@ -1366,10 +1367,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  in which case the engine resolves on the spot. */
     castSpellAnim: (rangeType, element, onRelease = null) => {
       cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0; cast.element = Number.isInteger(element) && element >= 0 && element <= 4 ? element : 4;   // MAC7 #2: the wire's cast, counted before either lane's own gate. EOTB-IL: the sprite's cast is polled off FPSSpellCasting.IsPlayingAnim (IL_3f57), not called from here
-      const armCasts = fpArm.castSpell(rangeType) && (fpArm.active() || fpArm.thirdActive());
+      // CAST-SPEED: ONE RATE FOR BOTH LANES, read once as the cast starts - the live Speed and the castSpeed loot line
+      // (systems/castSpeed.js): the classic frames step at CAST_FRAME_PERIOD over it, the arm's spellcast group plays at it
+      const rate = castRate(entity);
+      const armCasts = fpArm.castSpell(rangeType, rate) && (fpArm.active() || fpArm.thirdActive());
       // MW-CAST1: the Morrowind hands on screen cast the spell - it leaves on their "<type> release", or when they stop
       // casting without one (fpsSpellCasting's hold, and its ceiling); the classic lane's frame 5 is untouched
-      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight() } : {});
+      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : { rate });
     },
     playerWeapon,
     swing,   // MAC7 #1: { n, strike } - the count and the kind of the last strike started, for the wire

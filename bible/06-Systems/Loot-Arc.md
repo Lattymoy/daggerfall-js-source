@@ -105,6 +105,11 @@ opened (SET2), in one module (`systems/lootPowers.js`):
 | `focus` | jewellery | prefix | 2-4 | 4-7 | 7-10 | that share (%) off your spells' magicka (all you wear, at most 30%) |
 | `slayer` (undead, daedra, humanoid, animal) | weapons | suffix | 5-10 | 10-20 | 20-30 | that much more (%) weapon damage to that kind of foe - DFU's own grouping (`enemyEntityGroup`: a vampire undead, a dragonling an animal, an orc humanoid) |
 
+CAST-SPEED (2026-10-08, Mac: "have casting speed a new rarity affix") appended a sixth, after every kind before it:
+`castSpeed`, jewellery and weapons, suffix, 3-6 / 6-10 / 10-15, "+N% casting speed" - every worn line summed, the
+weapons in hand among them, at most 30%, onto the cast's rate (`systems/castSpeed.js`;
+`02-Formats/Morrowind-Rules.md` CAST-SPEED).
+
 A weapon's three are the weapon IN HAND's alone; a wearer's armour and jewellery sum, under the caps. Each answers MY
 entity alone, offline and online, and never a player (law 5). Names: `Burning Longsword of the Leech`, `Barbed
 Cuirass of the Bear`, `Adept's Ring of the Owl`, `Shortsword of the Gravewatch`.
