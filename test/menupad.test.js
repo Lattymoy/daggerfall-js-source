@@ -150,7 +150,8 @@ test('PAD-DOOR: a press that redraws the menu puts the focus back on the control
 
 test('PAD-DOOR: main.js attaches it around the front door and stops it when a game is chosen; no page, no loop', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /const \{ attachMenuPad \} = await import\('\.\/ui\/menuPad\.js'\);\s*\n\s*const detachMenuPad = attachMenuPad\(\);/);
+  // PAD-CURSOR: with the cursor's law and art handed in - the loop is a leaf the launcher serves alone (DA12)
+  assert.match(main, /const \[\{ attachMenuPad \}, \{ padDoorCursorLaw \}, \{ GAUNTLET_POINT \}\] = await Promise\.all\(\[\s*\n\s*import\('\.\/ui\/menuPad\.js'\), import\('\.\/systems\/padCursor\.js'\), import\('\.\/ui\/plusCursor\.js'\),\s*\n\s*\]\);\s*\n\s*const detachMenuPad = attachMenuPad\(\{ cursor: \{ law: padDoorCursorLaw, art: GAUNTLET_POINT \} \}\);/);
   assert.match(main, /choice = await runCinematicFrontDoor\([\s\S]{0,900}?\}\)\.finally\(detachMenuPad\);/,
     'the door\'s pad stops with the choice, before the scene\'s pad starts');
   assert.equal(typeof attachMenuPad({ doc: null }), 'function', 'without a page it answers a no-op detach');

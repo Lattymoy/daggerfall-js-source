@@ -19,6 +19,7 @@ import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   /
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS, askInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
+import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
@@ -322,8 +323,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
     return key;
   };
   const keys = new Set();
+  // MODE-WHEEL: ChangeInteractionMode, for the wheel's release and the pad's NextMode (its mode actions unbound) -
+  // the F1-F4 arm's own three lines below, under this host's overlay gate
+  const pickMode = (m) => {
+    if (ctx.uiOverlayActive) return false;
+    askInteractionMode(m);
+    if (m !== getInteractionMode()) { setInteractionMode(m); setMidScreenText(`Interaction is now in ${m} mode.`); }
+    return true;
+  };
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
+  // (MODE-WHEEL: it is the wheel's key now, and the same reason holds.)
   addEventListener('keydown', (e) => {
     // ROAD-G G3: this host already filled the ring first, which is
     // InputManager.PollInput's own order (:1795-1809) and now load-
@@ -364,14 +374,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // through. It arms a mode and fires the one-frame activate
     // (`_tapArmed`) the touch tap already uses, because the key is
     // known here and only the FRAME has the ray and the pools.
-    if (!ctx.uiOverlayActive && actionsOf(e, keys).some(quickLootArm)) { _tapArmed = 2; e.preventDefault(); return; }   // UXB1-S: every action a shared key carries
-    const im = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);
+    const acts = actionsOf(e, keys);   // MODE-WHEEL (AUDIT): read once - the three rungs below all ask it
+    if (!ctx.uiOverlayActive && acts.some(quickLootArm)) { _tapArmed = 2; e.preventDefault(); return; }   // UXB1-S: every action a shared key carries
+    // MODE-WHEEL: the held key opens the wheel, under this host's overlay gate; its release picks through the same
+    // ChangeInteractionMode as the four keys below, which asks the gate again at the release (ui/modeWheel.js)
+    if (!ctx.uiOverlayActive && acts.includes(MODE_WHEEL_ACTION)) {
+      e.preventDefault();
+      modeWheel.press(e, pickMode);
+    }
+    const im = acts.map((a) => MODE_ACTIONS[a]).find(Boolean);
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
-      // SetMidScreenText's, in EVERY host (one C# call site).
-      if (!ctx.uiOverlayActive && !e.repeat) askInteractionMode(im);   // SENSE1: asked, changed or not - the context's look round reads the count; AUDIT DELVE B6: the press, not the key's repeat
-      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); setMidScreenText(`Interaction is now in ${im} mode.`); }
+      // SetMidScreenText's, in EVERY host (one C# call site) - pickMode, the one copy here (MODE-WHEEL AUDIT).
+      // SENSE1: asked, changed or not; AUDIT DELVE B6: the press, not the key's repeat - and the same mode again is
+      // ChangeInteractionMode's no-op, so a repeat has nothing else to do
+      if (!e.repeat) pickMode(im);
     }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -516,6 +534,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(keyEdge, mc); } if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
+    padAction: (act) => (MODE_ACTIONS[act] ? pickMode(MODE_ACTIONS[act]) : false),   // MODE-WHEEL: PAD-BINDS' door for an action on no key - the four mode actions ship unbound, so the pad's NextMode lands here
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
@@ -572,6 +591,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // nothing. Same law as routeMouseDrag (scenes/shared.js, MAC-O4).
     if (document.pointerLockElement === canvas && swingHeld(e.buttons, keys) && getInt('Controls', 'WeaponSwingMode', 0, 2) === 0) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
     if (document.pointerLockElement !== canvas) return;
+    if (modeWheel.isOpen()) return;   // MODE-WHEEL: while it is open the mouse steers it (its own listener), not the view
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
     // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
     // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right

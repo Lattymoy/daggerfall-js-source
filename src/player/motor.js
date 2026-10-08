@@ -3073,7 +3073,12 @@ export class PlayerMotor {
     if (this.grounded) {
       // TR1: CanRunUnlessRiding (:137-140) - a mount does not sprint.
       this.isRunning = this._runMode && canRunUnlessRiding(this.transportMode);
-      this.isSneaking = !this.isRunning && this._sneakMode;
+      // CROUCH-SNEAK (a recorded departure, Port-Ledger A): CROUCHED IS SNEAKING. DFU keeps the two apart - a height
+      // (PlayerHeightChanger) and a slow walk (PlayerSpeedChanger's sneakingMode) - and the player asked for one key
+      // that does both, Morrowind's way. So the crouch toggle carries the sneak arm with it: the crouched-sneak speed
+      // below (the crouch base halved, less one classic unit) and with it the P13 stealth half-speed gate. The Sneak
+      // action still answers for a player who binds it (it ships unbound); running still beats both.
+      this.isSneaking = !this.isRunning && (this._sneakMode || this.crouching);
     }
     // F-C3 (self-audit 3, ApplyInputSpeedAdjustment :121-125): running
     // CLEARS sneakingMode - "switch sneaking off if was previously

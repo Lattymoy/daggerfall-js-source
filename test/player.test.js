@@ -314,7 +314,10 @@ test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', a
   approx(m.eye[1], m.pos[1] + CROUCH_EYE_HEIGHT);
   const x0 = m.pos[0];
   m.update(0.1, { forward: 1, strafe: 0, run: false, jump: false }, Math.PI / 2);
-  approx(m.pos[0] - x0, crouchSpeed(50) * 0.1, 0.02);
+  // CROUCH-SNEAK (Ledger A): crouched IS sneaking - the crouch base through the sneak arm, so a moving crouch passes
+  // the P13 half-speed gate the held Sneak key used to be needed for
+  approx(m.pos[0] - x0, sneakSpeed(crouchSpeed(50)) * 0.1, 0.02);
+  assert.ok(m.isSneaking && m.movingLessThanHalfSpeed, 'a crouched walk is a sneak');
   const x1 = m.pos[0];
   m.update(0.1, { forward: 1, strafe: 0, run: true, jump: false }, Math.PI / 2);
   approx(m.pos[0] - x1, runSpeed(50, 30, true) * 0.1, 0.03);
