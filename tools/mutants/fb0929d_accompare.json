@@ -210,8 +210,8 @@
   {
     "name": "ACCOMPARE-the-damage-set-against-itself",
     "file": "src/ui/armourCard.js",
-    "old": "after: weaponDamageRange(item) };",
-    "new": "after: weaponDamageRange(rival) };",
+    "old": "before: weaponDamageRange(rival), after: weaponDamageRange(item) };",
+    "new": "before: weaponDamageRange(rival), after: weaponDamageRange(rival) };",
     "tests": [
       "test/fb0929d_accompare.test.js"
     ]

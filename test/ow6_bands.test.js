@@ -16,6 +16,7 @@ import { CLIMATES } from '../src/formats/mapsFile.js';
 import { enemyDisplayName } from '../src/characters/enemyBasics.js';
 import { seededRng } from '../src/systems/wind.js';
 import { NATIVE_PER_M } from '../src/systems/travelDungeons.js';
+import { WILD_PACK_MULT } from '../src/scenes/exteriorFoes.js';
 
 const land = () => true;
 /** Every band a strip of cells holds over `lives` lives - a population to measure. */
@@ -106,11 +107,12 @@ const liftMake = () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   const m = /\n {2}function bandMake\(b\) \{\n[\s\S]*?\n {2}\}\n/.exec(w);
   assert.ok(m, 'bandMake lifted');
-  return (scope) => new Function('s', `const { _bandMake, maps, rollGroupComposition, seededRng, bandMakeSeed, bandLevelOf, bandSizeOf, playerEntity, online, enemyDisplayName } = s;${m[0]} return bandMake;`)(scope);
+  return (scope) => new Function('s', `const { _bandMake, maps, rollGroupComposition, seededRng, bandMakeSeed, bandLevelOf, bandSizeOf, playerEntity, online, enemyDisplayName, wildBornHere, WILD_PACK_MULT } = s;${m[0]} return bandMake;`)(scope);
 };
 const makeScope = (level, online) => ({
   _bandMake: new Map(), maps: { getClimateIndex: () => CLIMATES.Mountain }, rollGroupComposition, seededRng, bandMakeSeed, bandLevelOf, bandSizeOf,
   playerEntity: { level }, online, enemyDisplayName,
+  wildBornHere: () => false, WILD_PACK_MULT,   // PVPDUNGEONS: no band here is born in the open zone (its pack x WILD_PACK_MULT)
 });
 
 test('OW6 host run: ONLINE, ONE BAND FOR EVERY PLAYER - a level-1 and a level-18 player read the same kind and the same number over it (it was each viewer\'s own level); offline the player\'s own, as Daggerfall reads it; its number is its own (mutants: the viewer\'s level online, the size dropped)', () => {

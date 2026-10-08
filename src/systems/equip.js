@@ -282,6 +282,39 @@ export function equipItem(entity, item) {
 
 export const isEquipped = (item) => item.equipSlot != null;
 
+/** SWAP-HANDS (2026-10-08, the owner: "the game should also let you swap out left and right hand in the inventory (right
+ *  now you have to put both in the inventory again and requip it)"): the pieces in the two hands change hands - each by
+ *  the hand law the equip table itself keeps (characters/equipTable.js getItemHands): a piece held in EITHER hand may go
+ *  to the other, a shield (LeftOnly) never leaves the left, a right-only or two-handed weapon never the right. One held
+ *  piece that may change hands crosses to the empty one. Answers `{ ok: true }` or `{ ok: false, why }` - words for the
+ *  pack. One equip act (oneEquipAct), so every listener hears the table once, settled. */
+export function canSwapHands(entity) {
+  const slots = equipTableOf(entity);
+  const R = slots[EQUIP_SLOTS.RightHand], L = slots[EQUIP_SLOTS.LeftHand];
+  if (!R && !L) return { ok: false, why: 'Your hands are empty.' };
+  const may = (item, to) => {
+    const h = getItemHands(numeric(item));
+    return h === ITEM_HANDS.Either || (to === EQUIP_SLOTS.LeftHand ? h === ITEM_HANDS.LeftOnly : h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both);
+  };
+  if (R && !may(R, EQUIP_SLOTS.LeftHand)) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };
+  if (L && !may(L, EQUIP_SLOTS.RightHand)) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };
+  return { ok: true };
+}
+export function swapHands(entity) {
+  const can = canSwapHands(entity);
+  if (!can.ok) return can;
+  const slots = equipTableOf(entity);
+  const R = slots[EQUIP_SLOTS.RightHand], L = slots[EQUIP_SLOTS.LeftHand];
+  oneEquipAct(() => {
+    slots[EQUIP_SLOTS.RightHand] = L ?? null;
+    slots[EQUIP_SLOTS.LeftHand] = R ?? null;
+    if (L) L.equipSlot = EQUIP_SLOTS.RightHand;
+    if (R) R.equipSlot = EQUIP_SLOTS.LeftHand;
+    equipChanged(entity);
+  });
+  return { ok: true };
+}
+
 /** AUDIT 17e C1 - SerializablePlayer.RestoreItems verbatim
  *  (SerializablePlayer.cs:301, :355-368): after items are restored,
  *  the equip TABLE is rebuilt by re-linking each worn item into its

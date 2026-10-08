@@ -42,6 +42,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn } from './lootRarity.js';
+import { wildHere } from './wildZone.js';   // PVPDUNGEONS: no revenant is made in, nor returns to, the open zone
 import { registerPlayerBlowLanded } from './sigilSetPowers.js';
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // REVENANT-HARM: a death no blow names
 import { registerPlayerStruckListener, registerPlayerStrikeListener } from '../combat/formulas.js';   // REVENANT-HARM: a foe's blow leaves its mark (its poison's ticks come later); RVN1: my blow, in its fight's ledger
@@ -385,6 +386,7 @@ const dueFrom = (now, rolls) => now + REVENANT_RETURN_MIN_MINUTES + Math.floor(r
 export function revenantCandidate(entity, rec = null) {
   if (!entity || !revenantOn()) return false;
   if (entity.retinueOf != null) return false;   // RVN6 (Feud-Arc.md 17): a band's follower is its master's, never one itself
+  if (entity.wildFoe || entity.wildGiant) return false;   // PVPDUNGEONS (the owner: "No elite or any monster in the zone can be a revenant")
   if (entity.bout) return false;   // AUDIT ARENA-LADDER 2: a fighter on the sand is its bout's - an elite champion never flees it as a revenant, nor becomes one
   const special = !!entity.revenant || !!entity.eliteFoe || (typeof entity.champion === 'string' && !!entity.champion);
   if (!special) return false;
@@ -665,7 +667,7 @@ export const revenantRecord = (player, id) => { ensureMirror(player); return rev
 /** An open-world encounter roll's question: does a revenant come instead? The one due (its time come, none of the
  *  character's out in the world already), the highest rank first, on REVENANT_RETURN_CHANCE. Answers the record, or null. */
 export function revenantToReturn(player, { now = nowMinutes(), rolls = Math.random } = {}) {
-  if (!revenantOn()) return null;
+  if (!revenantOn() || wildHere()) return null;   // PVPDUNGEONS: none returns in the open zone
   ensureMirror(player);
   const living = livingRevenants();
   if (living.some((r) => r.out)) return null;
@@ -742,7 +744,7 @@ export function revenantHandBack(player, r, entity = null) {
  *  living, unsworn revenant whose lair it is, not out, and due or its lair known; CLAIMED as a return is (its stand
  *  crosses awaits). Decided here: a Night-stalker is at home at any hour - the dark is its own underground. */
 export function revenantForLair(player, here, { now = nowMinutes(), dueOnly = false } = {}) {   // `dueOnly`: a rest's answer - due, never merely known
-  if (!revenantOn() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;
+  if (!revenantOn() || wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone
   ensureMirror(player);
   const r = livingRevenants().filter((x) => !x.out && x.lair && x.lair.px === here.px && x.lair.py === here.py && (x.dueAt <= now || (!dueOnly && x.lairKnown)))
     .sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt)[0] ?? null;

@@ -132,8 +132,8 @@
   {
     "name": "TV7-random-make",
     "file": "src/scenes/world.js",
-    "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) }, seededRng(bandMakeSeed(b)));",
-    "new": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) }, Math.random);",
+    "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));",
+    "new": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, Math.random);",
     "tests": [
       "test/tv7_bands.test.js"
     ],

@@ -19,6 +19,9 @@
 //    it is kept - a fight won at the player's side, a day with the player, a call after its rest; a day sent away, a
 //    fall, a second sending-away in a day, one of its own kind executed in its sight. Devoted (90 and up), it strikes
 //    harder and warns of a blow from behind.
+import { wildHere } from './wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
+/** PVPDUNGEONS: how many sworn revenants may stand at the player's side in the open zone. */
+export const WILD_REVENANTS_MAX = 1;
 import { swornRevenants, revenantCompanionUpdate, revenantRecord, REVENANT_HEALTH_PER_RANK, REVENANT_DAMAGE_PER_RANK, setSwornLeftListener, revenantBetrays } from './revenant.js';
 import { registerCompanionCount, companionsWithYou, COMPANION_SLOTS } from './companionSlots.js';
 import { addItem, addGoldPieces, isGoldPieces } from './inventory.js';   // a released one's pack, handed back
@@ -94,6 +97,7 @@ export function callRefusal(r, now) {
   if (!r?.sworn) return 'It is no longer sworn to you.';
   if (stateOf(r) === 'with') return null;
   if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';
+  if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return 'Only one revenant may walk at your side in the Wrothgarian Mountains.';   // PVPDUNGEONS
   if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;
   return null;
 }
@@ -179,7 +183,7 @@ function memberOf(r) {
  */
 export function revenantParty({ onWake = null } = {}) {
   return {
-    get party() { return revenantsWithYou().filter((r) => !held(r.id)).map(memberOf); },
+    get party() { const list = revenantsWithYou().filter((r) => !held(r.id)); return (wildHere() ? list.slice(0, WILD_REVENANTS_MAX) : list).map(memberOf); },   // PVPDUNGEONS: in the zone one stands, the rest wait outside it
     wake(now) {
       for (const r of swornRevenants()) {
         if (stateOf(r) === 'resting' && now >= restUntil(r, now)) {

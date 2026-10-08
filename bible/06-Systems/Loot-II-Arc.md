@@ -200,6 +200,11 @@ bites. Known, its tier line reads "Cursed Rare" or "Cursed Legendary" and the dr
 Cure Disease priest lifts it for gold - a quarter of the piece's price, at least 300 - the drawback gone and the line
 KEPT: the find's reward, paid for. Salvage, the Reforge and the hone take a cursed piece as its tier.
 
+HEAL-CURSE (2026-10-08, the owner, in the Wrothgarian zone's merge): the same priest's next row lifts a curse of the
+BLOOD - vampirism, lycanthropy, or either not yet turned - for 12,000 gold at the temple's price
+(`src/systems/healCurse.js`, `11-Multiplayer/Wild-Zone.md` section 21); its row stands a row lower where this Lift
+Curse row stands.
+
 ## 9. LOOT17 - the hone
 
 At the Reforge, beside each line's Reforge: HONE - the line rolled again within its own band, from one above its value

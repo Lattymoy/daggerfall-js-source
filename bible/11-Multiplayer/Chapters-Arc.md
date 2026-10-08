@@ -17,7 +17,7 @@ the foot). CHAP4a BUILT (2026-10-08, Mac: "Your decision", on "Whats next"; the 
 rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2026-10-08, the same word; the book
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
 CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
-`world177` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
+`world178` first - section 6, its record at the foot); CHAP4d (the Chronicle's reader, the Focus) is next. Merged with main
 past the Super Dungeons arc and then past SCALE4 (2026-10-08): the arc's migrations are `0092_npc_roll` to
 `0097_npc_seats` and its service `acct96` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -583,7 +583,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   `chapterofficer`, `formermaster` - each with the seats' bounded claim (`ts`, [the chapter's key, the Season]; the key
   its guild faction x 100 + its region, `chapterTitleKey`), refused without it and the claim refused beside any title
   that rides alone (`titleClaimed`). The relay stamps and reads the claim as a seat title's (`net/wire.js` badged,
-  readBadge) - a relay change: `world177`, NOT YET DEPLOYED.
+  readBadge) - a relay change: `world178`, NOT YET DEPLOYED.
 - **Worded without gender** (Seats-Arc 7.4) - "Master of the Fighters Guild, Anticlere", "Officer of the Mages Guild,
   Daggerfall", "Former Master of the Knights of the Dragon, Daggerfall" (`chapterTitleText`); NARROWED from the draft's
   "Former Master of the <Region> Chapter": a region keeps a chapter of every guild with a hall there, so the guild is
@@ -593,7 +593,7 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
   Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
   Master's seat again; a token signs it, with its claim, only for a character that holds it.
-- **The order of the deploy** (the SHADOW-FANG order): the relay `world177` first, by hand - a token with a title the
+- **The order of the deploy** (the SHADOW-FANG order): the relay `world178` first, by hand - a token with a title the
   live relay does not know is refused at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`,
   shipped `"off"`; `chapterTitlesOpenFor`).
 
@@ -1130,7 +1130,7 @@ The fourth slice's client half; sections 3.5 and 6 carry the law and what buildi
 The fourth slice's titles; section 6 carries the law and what building it narrowed (BUILT, CHAP4c).
 
 - **The token and the relay.** `src/net/identityToken.js`: CHAPTER_TITLES, last in TITLES, and `titleClaimed` (a seat's
-  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world177`, its
+  and a chapter's title ride with `ts`); `src/net/wire.js` badged and readBadge carry it. RELAY_VERSION `world178` (`world177` on its branch, renumbered past main's Wrothgarian zone at the merge), its
   law recorded in `test/relayversion.test.js`; forty-one tests' version pins moved with it (PIN MOVED).
 - **The law.** `src/net/npcChapterLaw.js`: the key (`chapterTitleKey`, `chapterOfTitleKey`), the words
   (`chapterTitleText`) and the titles a character's seats give it (`chapterTitlesOf`).

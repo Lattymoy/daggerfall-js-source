@@ -143,6 +143,7 @@ export const GUARD_INDOOR_DOOR_OFFSET = CAPSULE_RADIUS + 0.1;   // 0.45
 export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
   hitEffects = null, groundStands = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool; FALL-HOLD: exteriorFoes.js's ground law - the watch has no distance cull at all
   levelBonus = null,   // SEAT1d (Seats-Arc 7.6): CURFEW - () => the levels a watchman is posted stronger (at night in a Curfew town)
+  guardScale = null,   // ZONE-WATCH: () => how many times as strong a watchman is posted (the open zone's towns: ten)
   shake = null,   // AUDIT TELL H6: the host's camera kick (its player's maxShake), for my blow that staggers a watchman
   // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
   // OUTSIDE corpse to StreamingWorld.TrackLooseObject, which stamps it
@@ -314,6 +315,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // equipment), the kit put on, the trio off this host's stream,
       // the port's roll (a guard is a class enemy - its entity level is
       // its tier).
+      // ZONE-WATCH (2026-10-08, the owner: "Guards in the cities are 10x times as strong"): the zone's watch - its health
+      // and every blow it lands (formulas.js calculateAttackDamage's damageScale) ten times
+      { const k = Number(guardScale?.() ?? 1); if (k > 1) { entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * k)); entity.health = entity.maxHealth; entity.healthMult = (entity.healthMult ?? 1) * k; entity.damageScale = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1) * k; entity.zoneWatch = true; } }
       spawnEnemyLoot(entity, GUARD_MOBILE_TYPE, basics, playerEntity, { rolls: rand });
       const archive = basics.maleTexture;
       const tex = await getTexture(archive);

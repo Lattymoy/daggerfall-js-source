@@ -57,8 +57,8 @@
   {
     "name": "MACD3-the-heal-goes-back-to-the-end-after-the-teleport-the-death-loop",
     "file": "src/scenes/world.js",
-    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();\n    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = applyDeathPenalty(playerEntity);",
-    "new": "    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = applyDeathPenalty(playerEntity);",
+    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();\n    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "new": "    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
     "tests": [
       "test/inputactions.test.js",
       "test/audit63_items_loot.test.js",

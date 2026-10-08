@@ -122,7 +122,7 @@
   {
     "name": "OW6-S-classic-ungoverned",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : foePaced(foes.cap, travelAsked);",
+    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ? Math.min(foePaced(foes.cap, travelAsked), foes.strangerRate) : foePaced(foes.cap, travelAsked));",
     "new": "      const rate = csaHoldsTimeScale() ? null : travelAsked;",
     "tests": [
       "test/ow6_slowdown.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "OW6-S-classic-over-helm",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : foePaced(foes.cap, travelAsked);",
-    "new": "      const rate = foePaced(foes.cap, travelAsked);",
+    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ?",
+    "new": "      const rate = (foes.strangerRate ?",
     "tests": [
       "test/ow6_slowdown.test.js"
     ],

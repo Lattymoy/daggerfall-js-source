@@ -1895,7 +1895,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // cart - while the press has raced all three since SURV3/EOTB-IL.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /\? \{ title: lootPileName\(droppedLoot\.contents\?\.\(key\) \?\? null\) \} : null\)/,
+    assert.match(src, /\? \{ title: (?:droppedLoot\.labelFor\?\.\(key\) \?\? )?lootPileName\(droppedLoot\.contents\?\.\(key\) \?\? null\) \} : null\)/,   // WILD1: a pile's own label first (the open zone's remains)
       `${f}: a dropped pile is named as the interior and the dungeon name one`);
     assert.match(src, /\? waterSourceHoverName\(/, `${f}: a water source has a word`);
     assert.match(src, /\(key\) => wagonHoverName\(key\),/, `${f}: and so has the cart`);
@@ -1907,9 +1907,9 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // the indoor arm the bug was measured against could be reverted to
   // `{ title: 'Loot' }` freely. All four hosts, one word.
   assert.match(read('src/scenes/worldModes.js'),
-    /if \(key\.startsWith\('droppedLoot:'\)\) return \{ title: lootPileName\(interiorDropped\.contents\?\.\(key\) \?\? null\) \};/,
+    /if \(key\.startsWith\('droppedLoot:'\)\) return \{ title: (?:interiorDropped\.labelFor\?\.\(key\) \?\? )?lootPileName\(interiorDropped\.contents\?\.\(key\) \?\? null\) \};/,
     'the interior names a pile from its contents too');
-  assert.match(read('src/scenes/dungeonContext.js'), /return \{ title: lootPileName\(api\.lootContents\(key\)\) \};/,
+  assert.match(read('src/scenes/dungeonContext.js'), /return \{ title: (?:\(key\.startsWith\('droppedLoot:'\) \? droppedLoot\.labelFor\?\.\(key\) : null\) \?\? )?lootPileName\(api\.lootContents\(key\)\) \};/,   // WILD1: a pile's own label first
     'and the dungeon, which is where the word came from');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.doesNotMatch(read(f).replace(/^\s*(?:\/\/|\*).*$/gm, ''), /title: 'Loot'/,

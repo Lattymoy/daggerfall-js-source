@@ -92,6 +92,7 @@ function build(doc, hooks) {
         <span class="travelpanel-label">Time</span>
         <span class="travelpanel-accel">1</span>
         <span class="travelpanel-ground"></span>
+        <span class="travelpanel-ground travelpanel-stranger" style="display:none;color:#ff3b2f"></span>
       </div>
       <div class="travelpanel-acts">
         <button type="button" class="travelpanel-act" data-act="map" title="${T.TipMap}">Map</button>
@@ -126,6 +127,7 @@ function build(doc, hooks) {
     name: root.querySelector('.travelpanel-name'),
     sub: root.querySelector('.travelpanel-sub'),
     accel: root.querySelector('.travelpanel-accel'),
+    stranger: root.querySelector('.travelpanel-stranger'),
     ground: root.querySelector('.travelpanel-ground'),
     msg: root.querySelector('.travelpanel-msg'),
     junction: root.querySelector('.travelpanel-junction'),
@@ -244,6 +246,13 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   const foesHold = held != null && state.heldWhy === 'foes';
   put(parts.accel, 'accel', held != null ? `×${held} / ×${accel}` : `×${accel}`);
   cls(parts.accel, 'accelClass', held != null ? 'travelpanel-accel held' : 'travelpanel-accel');
+  // PVPNEAR: the nearby stranger's timer, in this box just under the actual one
+  if (parts.stranger) {
+    // STRANGER-LINE (the owner: "Stranger nearby looks totaly missplaced"): in the time box itself, in the ground line's
+    // place and face (the held rate above it already says the pace) - red, while a stranger holds the journey
+    const sr = state.stranger ? 'stranger near' : '';
+    if (last.strangerTxt !== sr) { last.strangerTxt = sr; parts.stranger.textContent = sr; parts.stranger.style.display = sr ? '' : 'none'; if (parts.ground) parts.ground.style.display = sr ? 'none' : ''; }
+  }
   put(parts.ground, 'ground', state.onRoad ? TRAVEL_GROUND_TEXT.road : TRAVEL_GROUND_TEXT.open);
   // AUDIT DEEP X-6: and says why, under the pointer (the travel view's own words - they were written, and never shown)
   const why = held != null ? TRAVEL_HELD_TEXT(held, accel, state.heldWhy) : '';

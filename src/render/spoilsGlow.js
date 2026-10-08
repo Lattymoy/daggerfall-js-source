@@ -163,10 +163,11 @@ export class SpoilsGlowRenderer {
     for (const g of list) {
       const tier = RARITIES[g.tier] ? g.tier : 'common';
       gl.uniform3f(U.uRoot, g.root[0], g.root[1], g.root[2]);
-      gl.uniform1f(U.uHeight, lineHeight(tier));
-      gl.uniform3fv(U.uColor, tierColour(tier));
+      // WILD1: a line may wear its own colour, height and pulse (scenes/lootLines.js `mark` - my remains in the open zone)
+      gl.uniform1f(U.uHeight, Number.isFinite(g.h) ? g.h : lineHeight(tier));
+      gl.uniform3fv(U.uColor, Array.isArray(g.colour) && g.colour.length === 3 ? g.colour : tierColour(tier));
       gl.uniform1f(U.uAlpha, Math.min(1, g.alpha));
-      gl.uniform1f(U.uPulse, RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);
+      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

@@ -70,9 +70,7 @@ export const TV_STEEP_RISE = 16;
  *  every step is walked (every step there is steep - refusing them is a traveller who can never leave); every other
  *  step is the ground's: into the peaks refused, a steep rise refused. */
 export function openStepBlocked(climateAt, heightAt, ax, ay, bx, by, leaving = false) {
-  if (leaving) return false;
-  if (climateAt(bx, by) === TV_MOUNTAIN_CLIMATE) return true;
-  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;
+  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot
 }
 
 /**
@@ -103,8 +101,8 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   const isWater = (x, y) => x < 0 || y < 0 || x >= width || y >= height || heights[y * width + x] <= waterByte;
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
   // massif is left freely, as its own peaks are (AUDIT OW4 J1: `leaving`, the flood fill over peakAt)
-  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && ((rocks !== null && rocks[by * width + bx] === 1) || openStepBlocked(climateOf, heightOf, ax, ay, bx, by, leaving));
-  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE || (rocks !== null && rocks[y * width + x] === 1);
+  const openBlocked = () => false;   // MOUNTAINS WALKABLE
+  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so "the mountains cannot be crossed" never fires
   // THE PIECES: two neighbours joined where the step law (an ordinary step - no goal's exemption, no start's peaks, roads
   // and tracks included) walks from one that can be ENTERED to the other. A pixel no ordinary step enters - the sea, a
   // peak no road reaches - is only ever a route's start, so its steps out join nothing (a one-pixel ridge is left down

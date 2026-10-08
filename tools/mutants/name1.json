@@ -630,8 +630,8 @@
   {
     "name": "AUDIT-NAME1-F14-the-pass-projects-under-a-window",
     "file": "src/net/remotePlayers.js",
-    "old": "    const points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
-    "new": "    const points = this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
+    "old": "    let points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
+    "new": "    let points = this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

@@ -122,7 +122,7 @@
   {
     "name": "OW6-B-make-unsized",
     "file": "src/scenes/world.js",
-    "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) }, seededRng(bandMakeSeed(b)));",
+    "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));",
     "new": "gameMinutes: b.night ? 0 : 720 }, seededRng(bandMakeSeed(b)));",
     "tests": [
       "test/ow6_bands.test.js"
@@ -132,7 +132,7 @@
   {
     "name": "OW6-B-warband-past-the-pool",
     "file": "src/scenes/world.js",
-    "old": "  const campMembers = (types) => partyGroupMembers(types, partySize()).slice(0, MAX_ACTIVE_ENCOUNTER_FOES);",
+    "old": "  const campMembers = (types) => partyGroupMembers(types, partySize()).slice(0, encounterCap());",
     "new": "  const campMembers = (types) => partyGroupMembers(types, partySize());",
     "tests": [
       "test/auditpscale1.test.js"

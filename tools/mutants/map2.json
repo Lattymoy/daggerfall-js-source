@@ -2,7 +2,7 @@
   {
     "name": "ports-ignored-by-marks",
     "file": "src/ui/heldMap.js",
-    "old": "        isDiscovered: (s) => this._discovered(s),   // MAP2: the ports arm before DFU's own test\n",
+    "old": "        isDiscovered: (s) => (s?.wildHall ? true : this._discovered(s)),   // MAP2: the ports arm before DFU's own test\n",
     "new": "",
     "tests": [
       "test/heldmap.test.js"

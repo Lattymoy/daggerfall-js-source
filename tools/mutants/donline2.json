@@ -2,8 +2,8 @@
   {
     "name": "DONLINE2-the-tutorial-dungeon-gets-the-door-out-like-any-other",
     "file": "src/scenes/world.js",
-    "old": "      if (wasInDungeon && !isPrivateersHold) kind = 'dungeon';   // the door out: the pixel already under the player",
-    "new": "      if (wasInDungeon) kind = 'dungeon';   // the door out: the pixel already under the player",
+    "old": "      else if (wasInDungeon && !isPrivateersHold) kind = 'dungeon';   // the door out: the pixel already under the player",
+    "new": "      else if (wasInDungeon) kind = 'dungeon';   // the door out: the pixel already under the player",
     "tests": ["test/donline1_respawn.test.js"]
   },
   {

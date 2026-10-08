@@ -215,8 +215,8 @@
   {
     "name": "DEATH-PENALTY-4-the-respawn-takes-nothing",
     "file": "src/scenes/world.js",
-    "old": "    const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: once per death",
-    "new": "    const goldLost = 0;   // DEATH-PENALTY: once per death",
+    "old": "    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "new": "    const goldLost = 0;",
     "tests": [
       "test/deathpenalty.test.js",
       "test/donline1_respawn.test.js",

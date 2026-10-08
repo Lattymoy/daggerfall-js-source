@@ -43,6 +43,7 @@ import { isNight } from '../world/worldClock.js';   // SOFTCAP5: the wilds' nigh
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
 import { spawnEnemyLoot, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer, windupDoor, tellCues, takeAimedShot, aimedDirection, aimedArrowMeta, landBlowEffect } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload; TELL1: the poise door
+import { wildLootAfter } from './hostCombat.js';   // WILD1: the open zone's gold, after the chain
 import { TELL } from '../ai/tells.js';   // TELL1: the breaking blow's shove
 import { validLootList, LOOT_NEWER_TAKE_TEXT } from '../systems/loot.js';   // WORLD6b-iii(c): the pile on the wire, WORLD4's projection; AUDIT ONLINE2 F4: a grant this build cannot read
 import { foeHandoverFrames } from '../world/foeHandover.js';
@@ -60,6 +61,7 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY, playerWeaponHitEntity, playerWeaponKillReported } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { applyChampion, rollStreetChampion, championIndex, championName, properName } from '../systems/champions.js';   // LOOT7: the street's champions
+import { wildHere, wildRing, applyWildFoe, wildLootOpts, wildGiantSize, WILD_GIANT, WILD_GIANT_HEALTH_MULT, WILD_GIANT_DAMAGE_MULT } from '../systems/wildZone.js';   // WILD1: the open zone's foes
 import { lootCrown } from './lootLines.js';   // LOOT11: a body's line of light
 import { validFoeRecord, LIVING_ID_RE, REVENANT_NAME_MAX, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, FOE_SEQ_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, hitClassField, hitClassOf } from '../net/wire.js';   // STRIKE-SHARED: a strike spell rides the hit
 import { blowWire, blowWireKey, applyBlowRecord, puppetBlowTurn, puppetGapLanded, blowClassOf } from '../ai/puppetBlows.js';   // TELL8: a wind-up on the wire - the owner's word, the puppet's state, each judging its own feet, a blow's class
@@ -103,6 +105,10 @@ import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eli
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
 export const MAX_ACTIVE_ENCOUNTER_FOES = 8;
+/** PVPDUNGEONS (the owner: "4x more enemies per pack that can attack you on the world map"): in the open zone a pack is
+ *  four times as many, and the pool makes room for them. */
+export const WILD_PACK_MULT = 4;
+export const encounterCap = () => (wildHere() ? MAX_ACTIVE_ENCOUNTER_FOES * WILD_PACK_MULT : MAX_ACTIVE_ENCOUNTER_FOES);
 /** DEEP-SHARE (2026-09-26, Mac: "Yes" - one player standing the sea's creatures for everyone near): THE DEEP HAS ITS
  *  OWN ALLOWANCE. Iliac Puddle No More's foes are LOOSE stands, outside the owner's encounter cap; a reader stood at
  *  most CELL_PUPPETS_MAX (twelve) of an owner's foes, the deep's among them, and the rest of its sea was never seen.
@@ -374,14 +380,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, turned = false, band = true } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, turned = false, band = true, zoneGiant = null } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
     // WORLD6b: a puppet is not this cap's. AUDIT 68 review (R-scenes-loose-foe-squad-capped): nor is a `loose` stand -
     // CreateFoeSpawner's (a summoning punishment, RR's expulsion squad, a Rose's Daedroth) stands however many it is
     // told in one loop, and DFU caps none of them; the cap is the encounter rolls'
     const capped = !questBehaviour && !replacing && !puppet && !placed && !loose;
     // AUDIT 68 S20-encounter-cap-race: a capped spawn still crossing its awaits holds its slot - a camp's members all
     // start in one synchronous loop, and each saw the count from before any of them landed
-    if (capped && activeCount() + spawning.filter((s) => s.capped).length >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+    if (capped && activeCount() + spawning.filter((s) => s.capped).length >= encounterCap()) return null;   // PVPDUNGEONS: the zone's packs four times over
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign || transformY ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
@@ -421,13 +427,30 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       entity._feudPlace = playerInside ? 'building' : 'street';   // RVN1 (Feud-Arc.md 12): where a fight with it is fought, for its ledger
       if (!allied && !entity.eliteFoe) applyChampion(entity, champion !== undefined ? champion : revenant ? (revenant.trait ? championIndex(revenant.trait) : null) : (capped ? rollStreetChampion(pending.feet, mobileType) : null));   // LOOT7: a champion - before its loot, which reads the mark
       if (revenant && !puppet) applyRevenant(entity, revenant, { turned });   // REVENANT: its name and its rank - over its trait or its glow, before its loot; RVN11c: a betrayer's turning is no return
+      // WILD1 (systems/wildZone.js): a foe of the open zone - four times its health and its blows, over its elite's, its
+      // champion's or its revenant's (a puppet: its blows alone, its maximum is its owner's word); never an ally
+      const wild = wildHere() && !allied;
+      if (wild) applyWildFoe(entity, { own: !puppet, ring: wildRing() });   // WILD2: the ring the player stands in
+      // ZONE-GIANTS: only the zone's own eight giants (systems/wildGiants.js - `zoneGiant` their index) stand as the
+      // zone's giants; a puppet of one keeps its size. A Giant any other roll stands is a giant of the ordinary kind
+      // GREATER-GIANT: a puppet is told by its owner's record (`gg`, the stream below), never assumed: the Greater Giant's
+      // ten summoned giants are giants of the ordinary kind, and everyone must see them so
+      if (wild && mobileType === WILD_GIANT && zoneGiant != null) entity.wildGiant = true;
+      if (zoneGiant != null) entity.zoneGiant = zoneGiant;
+      if (wild && mobileType === WILD_GIANT && zoneGiant != null && !puppet) {   // PVPGIANT: ten times the health, four times the blows, over the zone's own
+        entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * WILD_GIANT_HEALTH_MULT)); entity.health = entity.maxHealth;
+        entity.healthMult = (entity.healthMult ?? 1) * WILD_GIANT_HEALTH_MULT;
+        entity.damageScale = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1) * WILD_GIANT_DAMAGE_MULT;
+      }   // WILD3: a giant of the open country stands four times its size (a dungeon's never: this is the street's pool)
       // AUDIT WORLD6b B14: a PUPPET carries no loot of this player's (its body is its owner's - WORLD6b-iii(c): taken under the owner's grant), wears no
       // kit of its own and casts nothing, so its stand rolls no table and draws nothing off the injectable roll or
       // the shared stream: what my neighbours stream must not move my own dice
       if (puppet) entity.items = [];
       else {
-        spawnEnemyLoot(entity, mobileType, basics, playerEntity, { rolls });   // RF2: SetEnemyCareer's whole loot chain, one seam - the trio and the port's roll off this pool's stream
+        spawnEnemyLoot(entity, mobileType, basics, playerEntity, wild ? wildLootOpts({ rolls }, wildRing()) : { rolls });   // RF2: SetEnemyCareer's whole loot chain, one seam - the trio and the port's roll off this pool's stream (WILD1: the zone's doubled odds)
+        if (wild) wildLootAfter(entity);   // WILD1: and its gold twice
         if (entity.eliteFoe) grantEliteLoot(entity, builtLevel);   // ELITE FOES: better loot
+        if (entity.wildGiant) { grantEliteLoot(entity, builtLevel); grantEliteLoot(entity, builtLevel); }   // PVPGIANT: twice an elite's drop
         if (entity.revenant) grantRevenantLoot(entity, builtLevel);   // REVENANT: its own drop, by its rank
       }
       // NT2 (F210): GetTextureArchive's gender arm - a DFRandom draw off
@@ -611,7 +634,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     feet: f.ai.feet,
     fallbackSize: billboardSize(f.tex, 0),
     stillDead: () => f.dead,
-    sizeScale: isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1,   // ELITE FOES: the body as large as the elite was
+    sizeScale: (isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1) * wildGiantSize(f.entity),   // ELITE FOES: the body as large as the elite was (WILD3: and a giant of the open zone its four)
   }).then((c) => {
     if (!c) return;
     if (isEliteCorpse(f.entity)) { c.elite = true; c.elitePhase = Math.random(); markEliteCorpseBatch(c.batch, c.elitePhase); }   // ELITE FOES: the blue outline stays and pulses, the embers stop
@@ -1990,7 +2013,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
       const sz0 = mobileBillboardSize(f.tex, o.record);   // AUDIT MM1: a mobile unit's record cache carries the xml scale
       const szE = eliteSize(f.entity) * lastStandSize(f.entity);   // ELITE FOES: a quarter larger (onto locals - the cache's object is shared); RVN4: phase two a tenth
-      const sz = szE === 1 ? sz0 : { w: sz0.w * szE, h: sz0.h * szE };
+      const szG = szE * wildGiantSize(f.entity);   // WILD3: a giant of the open zone, four times over
+      const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
       f.batch.record = rkey;
       f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
@@ -2344,6 +2368,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // AUDIT WORLD6b-ii B2/B3: the attacker's terms - its level and its right-hand weapon - so a puppet's blow is this foe's
       const wpn = f.entity.weapon, wd = wpn && Number.isInteger(wpn.templateIndex) ? [wpn.templateIndex, wpn.material | 0] : null;
       const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), ...(Number.isFinite(f.entity.health) ? { h: Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) } : {}), ...(Number.isFinite(f.entity.maxHealth) && f.entity.maxHealth >= 1 ? { k: Math.min(FOE_HEALTH_MAX, f.entity.maxHealth) } : {}), d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '', o: onWatch || _questLike(f) ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0), ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch && typeof f.entity?.revenant?.name === 'string' && f.entity.revenant.name ? { nm: f.entity.revenant.name.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, REVENANT_NAME_MAX) } : {}), ...(f.yielded ? { yd: 1 } : {}), ...(f.executing ? { ex: 1 } : {}), ...(f.sparing ? { sp: 1 } : {}) };   // REVENANT-FATE: kneeling, burning   // REVENANT-WIRE: its revenant's name rides to every puppet   // ELITE FOES: `z` an elite, so a puppet stands as one   // AUDIT (pre-merge) Q5: nor a quest foe's body - its take arm answers only the owner's own (A5), so a member's press asked again forever   // AUDIT WATCH1 A3: a watch body advertises NO pile - its take arm is its owner's own door (cityGuards.takeLoot), which the wire does not reach, so a peer offered the body clicked it for ever and heard nothing; WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at; WORLD6b-iii(c): o the body's pile
+      if (!onWatch && Number.isInteger(f.entity?.zoneGiant)) r.gg = f.entity.zoneGiant;   // GREATER-GIANT: which of the zone's Greater Giants it is, to every puppet
       if (!onWatch && f.entity?.champion) r.cp = championIndex(f.entity.champion);   // LOOT7: its trait rides to every puppet, which stands as the same champion
       if (onWatch && typeof f.livingFrom?.id === 'string' && LIVING_ID_RE.test(f.livingFrom.id)) r.lr = f.livingFrom.id;   // WATCH-FIX: the living world's resident he stands for - a reader takes them off its street while he stands
       if (!onWatch && f.entity?.revenant) Object.assign(r, feudWire(f.entity.revenant));   // RVN13 (bible/12-Enhanced-AI/Feud-Arc.md 25): its adaptations, its weakness, its last stand (AUDIT FEUD: an heir's too - the name's own gate)
@@ -2625,7 +2650,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (typeof r.nm === 'string' && r.nm) { const fw = `${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rb ?? 0}`; if (f._feudWire !== fw) { f._feudWire = fw; f.entity.revenant = feudFromWire(f.entity.revenant, r); puppetRevenantBlows(f.entity, r); } }
     if (r.rt !== undefined && f.puppet) { const m = _pupIndex.get(pupKey(f.puppet, r.rt)); const name = m ? puppetBandName(m.entity?.revenant?.name, m.mobileType) : null; if (name) f.entity.bandName = name; }   // RVN13: a follower named for its master's band
     if (r.k !== undefined) f.entity.maxHealth = r.k;   // AUDIT SETS M1: the owner's maximum - "under half" is its word
-    if (r.h !== undefined) { if (p.h != null && r.h < p.h) p.hurt = true; p.h = r.h; f.entity.health = r.h; }   // AUDIT WORLD6b-iii(a) B6: a drop against the last STREAMED health - a self-heal cast here made every record after it a hurt
+    if (r.h !== undefined) { if (p.h != null && r.h < p.h) p.hurt = true; p.h = r.h; f.entity.health = r.h; }
+    if (Number.isInteger(r.gg) && f.entity.zoneGiant !== r.gg) { f.entity.wildGiant = true; f.entity.zoneGiant = r.gg; }   // GREATER-GIANT: its owner's word - its size and its name, the same for everyone   // AUDIT WORLD6b-iii(a) B6: a drop against the last STREAMED health - a self-heal cast here made every record after it a hurt
     // AUDIT WORLD6b-iii(a) A3: the blow's and the cast's RECIPIENT ride with their counts (b, u); an older record without
     // them falls back on the live hunt (g), the slice's law
     if (r.a !== undefined) { if (p.a != null && r.a !== p.a) p.strike = { kind: (r.a & 1) ? 'ranged' : 'melee', at: r.b ?? r.g ?? p.target }; p.a = r.a; }
@@ -3104,7 +3130,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** OW6: an owner's camp taken over, by `owner:campId` - every member of it one camp of mine. */
   const _adoptedCamps = new Map();
   /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
-  const encounterRoom = () => MAX_ACTIVE_ENCOUNTER_FOES - activeCount() - spawning.filter((s) => s.capped).length;
+  const encounterRoom = () => encounterCap() - activeCount() - spawning.filter((s) => s.capped).length;
 
   return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(foes, 'foeCorpse', corpseLens), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js); PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
