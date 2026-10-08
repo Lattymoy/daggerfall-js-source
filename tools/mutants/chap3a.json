@@ -370,8 +370,8 @@
   {
     "name": "CHAP3A-RCPT-MERIT",
     "file": "server-account/src/npcReceipts.js",
-    "old": "...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {",
-    "new": "...credits.filter(() => false).map((c) => meritStatement(db, {",
+    "old": "...own.map((c) => meritStatement(db, {",
+    "new": "...own.filter(() => false).map((c) => meritStatement(db, {",
     "tests": [
       "test/chap3a_merit.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "CHAP3A-RCPT-WRITREF",
     "file": "server-account/src/npcReceipts.js",
-    "old": "...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {",
-    "new": "...credits.map((c) => meritStatement(db, {",
+    "old": "const own = credits.filter((c) => c.ref === receiptRef(kind, id));",
+    "new": "const own = credits;",
     "tests": [
       "test/chap3a_merit.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "CHAP3A-RCPT-TAG",
     "file": "server-account/src/npcReceipts.js",
-    "old": "AND ref = ?7 AND tag = ?12)', binds: [MERIT_RECEIPT, tag],",
-    "new": "AND ref = ?7 AND ?12 = ?12)', binds: [MERIT_RECEIPT, tag],",
+    "old": "AND ref = ?7 AND tag = ?12)', binds: [meritOfReceipt(own.length), tag],",
+    "new": "AND ref = ?7 AND ?12 = ?12)', binds: [meritOfReceipt(own.length), tag],",
     "tests": [
       "test/chap3a_merit.test.js"
     ],
@@ -419,8 +419,8 @@
   {
     "name": "CHAP3A-RCPT-AMOUNT",
     "file": "server-account/src/npcReceipts.js",
-    "old": "binds: [MERIT_RECEIPT, tag],",
-    "new": "binds: [MERIT_WRIT, tag],",
+    "old": "binds: [meritOfReceipt(own.length), tag],",
+    "new": "binds: [100, tag],",
     "tests": [
       "test/chap3a_merit.test.js"
     ]

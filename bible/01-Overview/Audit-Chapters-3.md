@@ -17,13 +17,14 @@ VERIFIER IS READING):
 - **the pins** (T): the eight test files and the eight mutation lists - flakes, weak pins, wrong equivalences, gaps.
 
 Every finding was re-read here before a line moved. Each fix carries an `AUDIT CHAP3 <ID>` comment and a pin in
-`test/audit_chap3.test.js` (17), and is mutated in `tools/mutants/audit_chap3.json`: **37 records, 32 dead, 5 equivalent
+`test/audit_chap3.test.js` (18), and is mutated in `tools/mutants/audit_chap3.json`: **45 records, 40 dead, 5 equivalent
 as recorded** (each with its reason). Thirty older records the fixes moved were re-aimed by content and run again: all
 dead - AUDIT CHAP2's `T-LAW-ADOPT-BASE-HAS` and CHAP3c's `CHAP3C-SHEET-BUSY` among them, no longer called equivalent (T6,
 T7). The service stays `acct95`: none of the arc has shipped, so migrations `0092` to `0095` grew in place.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:
-E1's gate agreement, E3's one writ a guild a day, S2's forgetting of the developers' weeks, S3's computed regions.
+E1's gate agreement, E3's one writ a guild a day, S2's forgetting of the developers' weeks, S3's computed regions. E4,
+recorded at first, was decided after (Mac: "Your decision").
 
 ## Fixed
 
@@ -44,6 +45,7 @@ E1's gate agreement, E3's one writ a guild a day, S2's forgetting of the develop
 |---|---|---|---|
 | E1 | medium | A gate's region was its client's word: one gate paid 50 Merit to every chapter of the character's guilds wherever it named (400 with eight memberships), and a week of receipts banked and claimed in one paid a week's Merit at once. | A gate of another seat week counts for no chapter (`old-week`, the seats' `creditGate`'s law); at the Turning a gate's Merit counts only where three of its day's claims agree on the region (the seats' `agreedGateRegions`). |
 | E3 | low | A member reading every region's board had one private writ a region a guild a day - the shared writs' race AUDIT CHAP2 E4 closed, opened again a region at a time (and ~500 rows a character a day). | One a member a GUILD a UTC day, the first board of the day with a chapter of its guild - asked again inside the write. |
+| E4 | low | DECIDED after the audit (Mac: "Your decision"). In a quiet realm one account at its 600 made a chapter Ascendant in about five weeks and held it with a single receipt a week (any Merit froze it); a receipt paid 50 to every chapter of the character's guilds where it stood (400 with eight). | A week short of its target moves a chapter above 50 three back toward 50, never past it (`STRENGTH_SHORT`); a receipt's 50 is shared among the chapters it reached (`meritOfReceipt`). |
 
 **The client** (`src/scenes/world.js`, `worldModes.js`, `src/net/chapterSheet.js`, `src/ui/noticeWindow.js`)
 
@@ -89,7 +91,5 @@ bound; three stale comments.
 
 - **E2**: a raid's cap is six a game day of two real hours - up to seventy-two raids a UTC day, each a witnessed act
   whose +1 stands outside the 15 a day; Merit is bounded by the 600. Recorded in 3.3, as DECIDED.
-- **E4**: in a quiet realm one account at its 600 makes a chapter Ascendant in about five weeks, and one receipt a week
-  holds it. Recorded in 5.2 with the knobs Mac may want (decay unless the target is met; one chapter a receipt).
 - **A receipt's character** is the request's word, as a hall writ's is (AUDIT CHAP2 S5): an account may name any of its
   living characters; a gate's credit goes to the character playing when its claim lands.

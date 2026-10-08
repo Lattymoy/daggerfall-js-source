@@ -23,10 +23,11 @@
 // (`kseq`) is untouched: the service's own credit, additive (AUDIT CHAP2
 // C1). Only while the character stands.
 //
-// CHAP3a: AND ITS MERIT - MERIT_RECEIPT to each chapter the receipt's own
-// line (never the receipt writ's) credited, in the same batch under the
-// same tag (npcMerit.js meritStatement asks the tenure, the week's one
-// chapter of a guild and the cap).
+// CHAP3a: AND ITS MERIT - MERIT_RECEIPT to the chapters the receipt's own
+// line (never the receipt writ's) credited - AUDIT CHAP3 E4: shared among
+// them (meritOfReceipt) - in the same batch under the same tag (npcMerit.js
+// meritStatement asks the tenure, the week's one chapter of a guild and
+// the cap).
 // ═══════════════════════════════════════════════════════════════════
 
 import { chaptersOpenFor } from './npcRoll.js';
@@ -38,7 +39,7 @@ import { utcDay } from '../../src/net/marksLaw.js';
 import { gateTimes } from '../../src/net/gateLaw.js';   // AUDIT CHAP3 E1: the week a gate rose in
 import { MAX_REPUTATION } from '../../src/systems/guildFactions.js';
 import {
-  RECEIPT_KINDS, receiptCreditsOf, receiptRef, receiptWritRef, hallReceiptKindsOf, hallHidden, MERIT_RECEIPT, meritWeekOf,
+  RECEIPT_KINDS, receiptCreditsOf, receiptRef, receiptWritRef, hallReceiptKindsOf, hallHidden, meritOfReceipt, meritWeekOf,
 } from '../../src/net/npcChapterLaw.js';
 
 /** A write's own tag: eight random bytes, hex (npcRoll.js mints its own the same way). */
@@ -85,6 +86,7 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
     const stood = new Set(had.map((/** @type {any} */ r) => `${r.faction_id}|${r.ref}`));
     if (credits.every((c) => stood.has(`${c.faction}|${c.ref}`))) return { counted: false, why: 'credited' };
     const tag = mintTag(rand);
+    const own = credits.filter((c) => c.ref === receiptRef(kind, id));
     const tagged = 'EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ?1 AND tag = ?2)';
     const sum = '(SELECT COALESCE(SUM(amount), 0) FROM npc_receipt_credits WHERE char_id = ?1 AND faction_id = ?3 AND tag = ?2)';
     await db.batch([
@@ -95,10 +97,11 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
       // never past DFU's 100, what is owed trimmed to the room left - as a hall writ's credit (professions.js deliverWrit)
       ...[...new Set(credits.map((c) => c.faction))].map((f) => db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ${sum}),
         owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ${sum}))) WHERE char_id = ?1 AND faction_id = ?3 AND ${tagged}`).bind(character, tag, f, MAX_REPUTATION)),
-      // CHAP3a: the receipt's Merit to each chapter whose receipt line this write made
-      ...credits.filter((c) => c.ref === receiptRef(kind, id)).map((c) => meritStatement(db, {
+      // CHAP3a: the receipt's Merit to each chapter whose receipt line this write made - AUDIT CHAP3 E4: its share of
+      // the one receipt (meritOfReceipt), shared among every chapter the receipt reached
+      ...own.map((c) => meritStatement(db, {
         player: player.id, character, faction: c.faction, region, source: kind, ref: c.ref, nowS, amountSql: '?11',
-        guard: 'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)', binds: [MERIT_RECEIPT, tag],
+        guard: 'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)', binds: [meritOfReceipt(own.length), tag],
       })),
     ]);
     const { results: got = [] } = await db.prepare('SELECT faction_id AS f, SUM(amount) AS amount FROM npc_receipt_credits WHERE char_id = ?1 AND tag = ?2 GROUP BY faction_id ORDER BY faction_id')

@@ -56,8 +56,8 @@
   {
     "name": "CHAP3B-AFTER-IDLE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const moved = m > 0 ?",
-    "new": "const moved = m >= 0 ?",
+    "old": "const moved = m <= 0 ? s - STRENGTH_IDLE",
+    "new": "const moved = m < 0 ? s - STRENGTH_IDLE",
     "tests": [
       "test/chap3b_strength.test.js"
     ]

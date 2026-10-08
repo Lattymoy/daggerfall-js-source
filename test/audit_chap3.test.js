@@ -16,7 +16,7 @@ import { listHalls } from '../server-account/src/npcHalls.js';
 import { creditReceipt } from '../server-account/src/npcReceipts.js';
 import { listWrits } from '../server-account/src/professions.js';
 import { readRoll } from '../server-account/src/npcRoll.js';
-import { meritWeekOf } from '../src/net/npcChapterLaw.js';
+import { meritWeekOf, strengthAfter, STRENGTH_SHORT, meritOfReceipt } from '../src/net/npcChapterLaw.js';
 import { seatWeekStartMs, seasonEndingAt } from '../src/net/townSeatLaw.js';
 import { gameDayAt } from '../src/net/gateLaw.js';
 import { herbPatches, nodeKey } from '../src/net/nodeLaw.js';
@@ -195,6 +195,35 @@ test('AUDIT CHAP3 E1: a gate of another week counts for no chapter; at the Turni
   t.merit(tweek, 41, ANTICLERE, 600, 'gate', `gate:${d}`);
   await settleChapterWeek(t.env.DB, tweek, _now);
   assert.equal(t.strength(41), 47);
+});
+
+test('AUDIT CHAP3 E4 (DECIDED): a week short of its target moves a chapter above 50 three back toward 50, never past it - one under 50 holds; a receipt\'s 50 Merit is shared among the chapters it reached (mutants: the slip, its bound, its floor, the share)', async () => {
+  assert.equal(STRENGTH_SHORT, 3);
+  assert.deepEqual([
+    strengthAfter(90, 59, 60), strengthAfter(52, 30, 60), strengthAfter(51, 1, 60), strengthAfter(50, 59, 60), strengthAfter(40, 30, 60),
+    strengthAfter(90, 60, 60), strengthAfter(90, 0, 60), strengthAfter(52, 0, 60), strengthAfter(90, 599, 600),
+  ], [87, 50, 50, 50, 40, 91, 87, 49, 87]);
+  assert.deepEqual([1, 2, 3, 8, 22, 0, NaN, '2'].map(meritOfReceipt), [50, 25, 16, 6, 2, 50, 50, 25]);
+  // the Turning: a chapter tended short of its target slips toward 50, and no further
+  const s = await stand();
+  const week = meritWeekOf(_now);
+  s.merit(week - 2, 41, ANTICLERE, 600);
+  s.merit(week - 2, 368, ANTICLERE, 120);
+  await settleChapterWeek(s.env.DB, week - 2, _now);
+  assert.deepEqual([s.strength(41), s.strength(368)], [60, 52]);
+  s.merit(week - 1, 41, ANTICLERE, 50);
+  s.merit(week - 1, 368, ANTICLERE, 50);
+  await settleChapterWeek(s.env.DB, week - 1, _now);
+  assert.deepEqual([s.strength(41), s.strength(368)], [57, 50], 'a single receipt a week holds no band above Steady');
+  s.merit(week, 368, ANTICLERE, 50);
+  await settleChapterWeek(s.env.DB, week, _now);
+  assert.deepEqual([s.strength(41), s.strength(368)], [54, 50], 'idle: three lost; short at 50: held');
+  // a receipt of a member of two guilds: 25 to each chapter; a chapter its line cannot pay keeps its share unpaid
+  const t = await stand({ members: [41, 368] });
+  const credit = (id) => creditReceipt({ db: t.env.DB, nowS: _now }, { id: t.who.id }, { CHAPTERS_OPEN: 'on' }, { character: t.R.id, kind: 'raid', id, region: ANTICLERE });
+  assert.deepEqual((await credit(`raid:${ANTICLERE}:1:${utcDay(_now)}`)).merit, [{ f: 41, amount: 25 }, { f: 368, amount: 25 }]);
+  t.raw.prepare('UPDATE npc_roll SET joined_at = ? WHERE char_id = ? AND faction_id = 368').run(_now, t.R.id);
+  assert.deepEqual((await credit(`raid:${ANTICLERE}:2:${utcDay(_now)}`)).merit, [{ f: 41, amount: 25 }], 'a new member\'s chapter earns nothing; the other its share alone');
 });
 
 test('AUDIT CHAP3 E3: a member\'s own writ is one a guild a UTC day, wherever posted - the first board of the day with a chapter of its guild (mutants: the region in the check, the check in the write)', async () => {

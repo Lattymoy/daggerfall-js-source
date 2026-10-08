@@ -341,5 +341,93 @@
     ],
     "equivalent": true,
     "why": "npc_roll's primary key (char_id, faction_id) is the index SQLite reads a character's rows by, so today they come in faction order with or without the ORDER BY; it pins that order against an index added later, which no test can stand up now."
+  },
+  {
+    "name": "A3-E4-SHORT-NUMBER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const STRENGTH_SHORT = 3;",
+    "new": "export const STRENGTH_SHORT = 2;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-NO-SLIP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "step > 0 ? s + step : s > STRENGTH_START ? Math.max(STRENGTH_START, s - STRENGTH_SHORT) : s;",
+    "new": "s + step;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-PAST-50",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(STRENGTH_START, s - STRENGTH_SHORT)",
+    "new": "s - STRENGTH_SHORT",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-UNDER-50",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "s > STRENGTH_START ? Math.max(",
+    "new": "true ? Math.max(",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SLIP-AT-STEP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "step > 0 ? s + step :",
+    "new": "step >= 0 ? s + step :",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-WHOLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.floor(MERIT_RECEIPT / Math.max(1, Math.floor(Number(n)) || 1));",
+    "new": "MERIT_RECEIPT;",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-CEIL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.floor(MERIT_RECEIPT / Math.max(1,",
+    "new": "Math.ceil(MERIT_RECEIPT / Math.max(1,",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
+  },
+  {
+    "name": "A3-E4-SHARE-UNREAD",
+    "file": "server-account/src/npcReceipts.js",
+    "old": "binds: [meritOfReceipt(own.length), tag],",
+    "new": "binds: [meritOfReceipt(1), tag],",
+    "tests": [
+      "test/audit_chap3.test.js",
+      "test/chap3b_strength.test.js",
+      "test/chap3a_merit.test.js"
+    ]
   }
 ]

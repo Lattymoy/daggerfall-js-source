@@ -397,8 +397,10 @@ BUILT (CHAP3a, 2026-10-08), and where building it asked, narrowed here:
 - **Its Merit**: `MERIT_WRIT`, 100, for its units - the share of them the member's own: the bought are spent first
   (`professions.js` spendStatements), so what they leave is the own share, rounded down; a writ filled with bought units
   alone pays and earns none (E13).
-- **A receipt's Merit**: `MERIT_RECEIPT`, 50, to each chapter whose own receipt line a gate or a raid credits (CHAP2b's
-  +1; the receipt writ's line earns none of its own) - every receipt, as its +1 is.
+- **A receipt's Merit**: `MERIT_RECEIPT`, 50, shared among the chapters whose own receipt line a gate or a raid credits
+  (CHAP2b's +1; the receipt writ's line earns none of its own) - every receipt, as its +1 is. DECIDED (AUDIT CHAP3 E4,
+  Mac: "Your decision"): one receipt is one act, its 50 shared, rounded down (`meritOfReceipt`: two guilds 25 each, eight
+  6) - never 50 a guild; a share its chapter's line cannot take (a new member's, another region's this week) is unpaid.
 - **The bounds are the line's own.** Each Merit line is one INSERT in its act's own batch
   (`server-account/src/npcMerit.js` meritStatement), so the act and its Merit stand or fall together and two of an
   account's acts cannot race past a bound: the tenure from `npc_roll.joined_at` - the service's first sight of the
@@ -425,7 +427,7 @@ BUILT (CHAP3a, 2026-10-08), and where building it asked, narrowed here:
 
 DECIDED. Each chapter has a **Strength**, 0 to 100, starting at 50. At each Turning it moves toward what its members
 did: `+ min(10, merit / target)` where `target` scales with the region's active accounts, and `- 3` for a week with no
-Merit at all. Between Seasons it moves halfway back toward 50 (as a seat's Standing does - Seats-Arc 9.1).
+Merit at all (AUDIT CHAP3 E4: and, above 50, `- 3` toward 50 for a week short of its target). Between Seasons it moves halfway back toward 50 (as a seat's Standing does - Seats-Arc 9.1).
 
 | Band | Strength | What the chapter's halls give |
 |---|---|---|
@@ -443,8 +445,9 @@ BUILT (CHAP3b, 2026-10-08), and where building it asked, narrowed here:
   an account plays in. Its active accounts are the registered ones that played in the week before its Turning or
   since (a player's last play is all it keeps). One account at its 600 moves a quiet realm's chapter the whole 10; a
   realm of a thousand needs ten.
-- **The step** is whole: `+ min(10, floor(merit / target))` - a week of some Merit under the target holds the chapter
-  where it stands; only a week of none at all is the `- 3`. A chapter starts at 50 at its first Turning (`STRENGTH_START`).
+- **The step** is whole: `+ min(10, floor(merit / target))` - a week of some Merit under the target holds a chapter at
+  or under 50 where it stands, and moves one above 50 `STRENGTH_SHORT` (3) back toward 50, never past it (DECIDED, AUDIT
+  CHAP3 E4: a band above Steady is held by meeting the target); a week of none at all is the `- 3` anywhere. A chapter starts at 50 at its first Turning (`STRENGTH_START`).
 - **The Season's end**: the Turning that ends a Season moves every chapter halfway back toward 50 after its week's own
   step (`strengthSeasonEnd`, rounded toward 50 as the seats' Standing is).
 - **The Turning is the Chapters' own** (`server-account/src/npcChapters.js` settleChapterWeek, settleChaptersDue), on the
@@ -457,10 +460,12 @@ BUILT (CHAP3b, 2026-10-08), and where building it asked, narrowed here:
   `CHAPTER_TURNING_GRACE_S` (300 seconds) after its boundary, so a credit in flight across it lands in its week first
   (S1); nothing settles, and no hall writ posts, while the Chapters are `off`, and the first week settled `on` after
   weeks at `dev` starts every chapter from 50 - the developers' trial weeks leave none Failing, nor Ascendant, the day
-  the Chapters open (S2, `npc_chapter_weeks.open`). AUDIT CHAP3 E4, what the decided numbers allow (no change): in a
-  quiet realm one account at its 600 makes a new chapter Ascendant in about five weeks, and a single receipt a week holds
-  it there (50 Merit is some Merit, so no -3); a receipt pays 50 to every chapter of the character's guilds where it
-  stood. Mac's knobs, should he want them: decay unless a week's Merit meets the target; one chapter a receipt.
+  the Chapters open (S2, `npc_chapter_weeks.open`). AUDIT CHAP3 E4, DECIDED (Mac: "Your decision",
+  2026-10-08): in a quiet realm one account at its 600 still makes a new chapter Ascendant in about five weeks - one
+  member's real work, the realm's whole - but no longer holds it with a single receipt a week: a week short of its target
+  moves a chapter above 50 three back toward 50 (`STRENGTH_SHORT`), so a band above Steady is held by the target met;
+  and a receipt's 50 Merit is shared among the chapters it reached (`meritOfReceipt` - a member of eight guilds earned
+  400 a gate, now 6 a chapter), so a gate lifts one act's worth of chapters, never every guild the character joined.
 - **The bands' writs** stand now (`hallWritCountIn`): a chapter's hall writs a day halved Failing (never none), half again
   Thriving and Ascendant. Their prices and shelf are CHAP3c's - the numbers are the law's (`CHAPTER_BANDS`) already.
 
@@ -736,10 +741,10 @@ is Mac's to overrule.
 | A region's chapters kept | 60 seconds an isolate (`CHAPTERS_KEPT_MS`, `server-account/src/npcHalls.js`) | 4 |
 | The join's floor | 0 (`RANK_REQ_REPUTATION[0]`, `joinRecordable`) | 3.4 |
 | A member's own writ, Merit | 100 for its units, its own units' share, rounded down (`MERIT_WRIT`, `meritOfWrit`); one a member a chapter a UTC day (`memberWrit`, `memberWritId`, `MEMBER_WRIT_SALT`) | 5.1 |
-| A receipt, Merit | 50 a chapter its own receipt line credits (`MERIT_RECEIPT`) | 5.1 |
+| A receipt, Merit | 50 shared among the chapters its own receipt lines credit, rounded down (`MERIT_RECEIPT`, `meritOfReceipt`; AUDIT CHAP3 E4) | 5.1 |
 | Merit tenure | 7 days on the Roll (`MERIT_TENURE_S`, from `joined_at`) | 5.1 |
 | Merit cap | 600 an account a chapter a week (`MERIT_CAP_WEEK`); one chapter of a guild an account a seat week (`meritWeekOf`) | 5.1 |
-| Strength | 0-100, start 50 (`STRENGTH_START`); `+ min(10, floor(merit / target))` (`STRENGTH_STEP_MAX`, `strengthAfter`); -3 a week with no Merit (`STRENGTH_IDLE`); halfway to 50 at a Season's end (`strengthSeasonEnd`) | 5.2 |
+| Strength | 0-100, start 50 (`STRENGTH_START`); `+ min(10, floor(merit / target))` (`STRENGTH_STEP_MAX`, `strengthAfter`); -3 a week with no Merit (`STRENGTH_IDLE`); above 50, -3 toward 50 a week short of its target (`STRENGTH_SHORT`, AUDIT CHAP3 E4); halfway to 50 at a Season's end (`strengthSeasonEnd`) | 5.2 |
 | Strength's target | 60 Merit a point for each hundred active accounts (`STRENGTH_TARGET`, `strengthTarget`) | 5.2 |
 | The Turnings a read settles | 8 at most (`CHAPTER_WEEKS_MAX`, `server-account/src/npcChapters.js`); every region's chapters kept 60 seconds an isolate (`ALL_CHAPTERS_KEPT_MS`) | 5.2 |
 | Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 (`CHAPTER_BANDS`, `chapterBandOf`) | 5.2 |
@@ -990,7 +995,10 @@ book's key and bound).
   a window's factor read once. `chapterSheet.js`: a stop forgets. `noticeWindow.js`: a refused Take reads the list again,
   a member's own writ promises Merit only where it can earn. `npcChapterLaw.js`: a receipt's Merit in its line; the
   shelf's quality untouched where the band moves nothing.
-- **Pins.** `test/audit_chap3.test.js`, 17 tests, one a finding or a group; `tools/mutants/audit_chap3.json`, 37 mutants:
-  32 dead, 5 equivalent as recorded. Thirty older records re-aimed at the code the fixes moved, all dead - two of them
+- **E4 DECIDED** (Mac: "Your decision", after the audit): `npcChapterLaw.js` `STRENGTH_SHORT` in `strengthAfter` (a
+  week short of its target, above 50, three back toward 50) and `meritOfReceipt` (a receipt's 50 shared among its
+  chapters), read by `npcReceipts.js` creditReceipt. CHAP3a's receipt pin moved (25 each, PIN MOVED).
+- **Pins.** `test/audit_chap3.test.js`, 18 tests, one a finding or a group; `tools/mutants/audit_chap3.json`, 45 mutants:
+  40 dead, 5 equivalent as recorded. Thirty older records re-aimed at the code the fixes moved, all dead - two of them
   (AUDIT CHAP2's `T-LAW-ADOPT-BASE-HAS`, CHAP3c's `CHAP3C-SHEET-BUSY`) no longer equivalent, killed by new pins. The
   pins the fixes moved say PIN MOVED.

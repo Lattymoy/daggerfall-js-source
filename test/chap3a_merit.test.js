@@ -234,22 +234,22 @@ test('CHAP3a only its owner delivers it, and Merit waits on the week in the guil
   assert.deepEqual(s.merit(), []);
 });
 
-test('CHAP3a a receipt\'s Merit: 50 to each chapter its own line credited, never for the receipt writ, every gate and raid - in the claim\'s answer (mutants: the receipt\'s Merit, the writ\'s line counted, the answer)', async () => {
+test('CHAP3a a receipt\'s Merit: its 50 shared among the chapters its own line credited (AUDIT CHAP3 E4 - PIN MOVED: 50 to each), never for the receipt writ, every gate and raid - in the claim\'s answer (mutants: the receipt\'s Merit, the writ\'s line counted, the answer)', async () => {
   const s = await stand({ members: [41, 368] });
   const day = utcDay(_now);
   const g = await s.gate();
-  assert.deepEqual(g.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }], merit: [{ f: 41, amount: 50 }, { f: 368, amount: 50 }] });
+  assert.deepEqual(g.body.chapters, { counted: true, credited: [{ f: 41, amount: 3 }, { f: 368, amount: 3 }], merit: [{ f: 41, amount: 25 }, { f: 368, amount: 25 }] });
   const a = await s.raid(7);
-  assert.deepEqual(a.body.chapters.merit, [{ f: 41, amount: 50 }, { f: 368, amount: 50 }]);
+  assert.deepEqual(a.body.chapters.merit, [{ f: 41, amount: 25 }, { f: 368, amount: 25 }]);
   const b = await s.raid(8);
-  assert.deepEqual(b.body.chapters.merit, [{ f: 41, amount: 50 }, { f: 368, amount: 50 }], 'the receipt writ filled: the receipt\'s own Merit still');
+  assert.deepEqual(b.body.chapters.merit, [{ f: 41, amount: 25 }, { f: 368, amount: 25 }], 'the receipt writ filled: the receipt\'s own Merit still');
   const week = meritWeekOf(_now);
   assert.deepEqual(s.merit().map((m) => [m.faction, m.source, m.ref, m.amount, m.week, m.region]), [
-    [41, 'gate', `gate:${gameDayAt(_now * 1000)}`, 50, week, ANTICLERE], [368, 'gate', `gate:${gameDayAt(_now * 1000)}`, 50, week, ANTICLERE],   // PIN MOVED (AUDIT CHAP3 E1)
-    [41, 'raid', `raid:${ANTICLERE}:7:${day}`, 50, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:7:${day}`, 50, week, ANTICLERE],
-    [41, 'raid', `raid:${ANTICLERE}:8:${day}`, 50, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:8:${day}`, 50, week, ANTICLERE],
+    [41, 'gate', `gate:${gameDayAt(_now * 1000)}`, 25, week, ANTICLERE], [368, 'gate', `gate:${gameDayAt(_now * 1000)}`, 25, week, ANTICLERE],   // PIN MOVED (AUDIT CHAP3 E1)
+    [41, 'raid', `raid:${ANTICLERE}:7:${day}`, 25, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:7:${day}`, 25, week, ANTICLERE],
+    [41, 'raid', `raid:${ANTICLERE}:8:${day}`, 25, week, ANTICLERE], [368, 'raid', `raid:${ANTICLERE}:8:${day}`, 25, week, ANTICLERE],
   ]);
-  assert.deepEqual((await s.list()).merit.map((m) => [m.faction, m.merit]), [[41, 150], [368, 150]]);
+  assert.deepEqual((await s.list()).merit.map((m) => [m.faction, m.merit]), [[41, 75], [368, 75]]);
 });
 
 test('CHAP3a the week\'s bounds through a receipt: the cap cut to the room an account has left, whichever of its characters earned it; one chapter of a guild an account a week - last week\'s no bar (mutants: the cap\'s key, the chapter\'s lock, the week)', async () => {

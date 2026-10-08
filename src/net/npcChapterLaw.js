@@ -513,6 +513,9 @@ export const joinRecordable = (/** @type {unknown} */ rep, /** @type {unknown} *
 export const MERIT_WRIT = 100;
 /** A receipt (a gate closed, a raided town defended) in the chapter's region, while a member. */
 export const MERIT_RECEIPT = 50;
+/** AUDIT CHAP3 E4 (DECIDED): a receipt is one act - its MERIT_RECEIPT shared among the `n` chapters it reached
+ *  (the character's guilds keeping one where it stood), rounded down, never MERIT_RECEIPT to each. */
+export const meritOfReceipt = (/** @type {unknown} */ n) => Math.floor(MERIT_RECEIPT / Math.max(1, Math.floor(Number(n)) || 1));
 /** A member earns Merit after this long in the guild on the Roll (Seats-Arc 4.2's new member). */
 export const MERIT_TENURE_S = 7 * 86_400;
 /** The Merit an account earns a chapter a week, whatever number of its characters play. */
@@ -568,7 +571,8 @@ export function meritLineOf(m, nowS) {
 // ─── CHAP3b: STRENGTH (Chapters-Arc 5.2) ────────────────────────────
 // What a chapter's members did, a week's Merit at a time: each chapter's Strength, 0 to 100 from 50, moved at the
 // Turning toward its week's Merit - up to STRENGTH_STEP_MAX for a week whose Merit meets the target ten times over, down
-// STRENGTH_IDLE for a week with none - and halfway back toward 50 at a Season's end. Its band is what the chapter's halls
+// STRENGTH_IDLE for a week with none, and above 50 STRENGTH_SHORT back toward it for a week short of its target (AUDIT
+// CHAP3 E4) - and halfway back toward 50 at a Season's end. Its band is what the chapter's halls
 // give (the prices and the shelf, CHAP3c; the writs, here). The service settles it (server-account/src/npcChapters.js).
 
 /** A chapter's Strength before its first Turning. */
@@ -580,6 +584,9 @@ export const STRENGTH_MAX = 100;
 export const STRENGTH_STEP_MAX = 10;
 /** A week with no Merit at all: this much lost. */
 export const STRENGTH_IDLE = 3;
+/** AUDIT CHAP3 E4 (DECIDED): a week whose Merit falls short of its target, for a chapter above 50 - this much back
+ *  toward 50, never past it. A band above Steady is held by meeting the target, never by a single receipt a week. */
+export const STRENGTH_SHORT = 3;
 /** The Merit a point of Strength costs, for each hundred accounts active in the week (the hall writs' own scale). */
 export const STRENGTH_TARGET = 60;
 /** A week's target: STRENGTH_TARGET for each hundred active accounts, never under one hundred's. */
@@ -587,12 +594,14 @@ export const strengthTarget = (/** @type {unknown} */ active) => STRENGTH_TARGET
 /**
  * A CHAPTER'S STRENGTH AFTER A WEEK: `prev` its Strength, `merit` the week's Merit of all its members, `target` the
  * week's (strengthTarget) - `+ min(10, floor(merit / target))`, or `- 3` for a week with no Merit at all; inside 0-100.
+ * AUDIT CHAP3 E4: a week short of its target moves a chapter above 50 `STRENGTH_SHORT` back toward 50, never past it.
  * @param {number} prev @param {number} merit @param {number} target
  */
 export function strengthAfter(prev, merit, target) {
   const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;
   const m = Number.isFinite(merit) ? Math.max(0, merit) : 0;
-  const moved = m > 0 ? s + Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target))) : s - STRENGTH_IDLE;
+  const step = Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)));
+  const moved = m <= 0 ? s - STRENGTH_IDLE : step > 0 ? s + step : s > STRENGTH_START ? Math.max(STRENGTH_START, s - STRENGTH_SHORT) : s;
   return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));
 }
 /** A Season's end (Seats-Arc 9.1's soft reset): halfway back toward 50, rounded toward 50. */
