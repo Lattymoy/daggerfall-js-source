@@ -210,15 +210,14 @@ test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuir
     assert.equal(ownMwDataPath(`../assets/mw/${path}`), path);
   }
   assert.ok(itemMapCoverage().some((c) => c.kind === 'own' && c.own === 'ownArmorModels' && c.material === 'Steel'));
-  // The build loads the body under it - shadowed or not - and hands it to the binder with the part. MW-STEEL1: through
-  // ownBodyPaths and ownBodyPart, the one reading the third person's body and the first person's gauntlets share.
+  // The build loads the body under it - shadowed or not - and hands it to the binder with the part, through
+  // ownBodyPaths and ownBodyPart (MW-STEEL4: the third person's alone - no model skinned from the body reaches the first).
   const fp = sourceText('src/combat/fpArm.js');
-  assert.match(fp, /const under = \(slots\) => \(slots \?\? \[\]\)\.flatMap\(\(slot\) => rows\n/);
-  assert.match(fp, /return \{ skinFrom: under\(add\.skinFrom\), fitFrom: under\(add\.fitFrom\) \};/);
-  assert.match(fp, /const bodyUnder = \(add\) => \{ const p = ownBodyPaths\(add, rows\); return \[\.\.\.p\.skinFrom, \.\.\.p\.fitFrom\]; \};/);
+  assert.match(fp, /  return \(add\.skinFrom \?\? \[\]\)\.flatMap\(\(slot\) => rows\n/);
+  assert.match(fp, /const bodyUnder = \(add\) => ownBodyPaths\(add, rows\);/);
   assert.match(fp, /\.\.\.worn\.adds\.flatMap\(bodyUnder\)\.map\(\(b\) => b\.path\),   \/\/ MW-BRIG2/);
   assert.match(fp, /\.\.\.ownBodyPart\(row, rows, find\) \}\);/);
-  assert.match(fp, /if \(!add\.skinFrom\) return \{\};\n  const read = \(list\) => list\.map\(\(b\) => \(\{ slot: b\.slot, bytes: find\(b\.path\)\?\.get\(b\.path\)\?\.slice\(\) \}\)\)\.filter\(\(b\) => b\.bytes\);/);
+  assert.match(fp, /if \(!add\.skinFrom\) return \{\};\n  return \{\n    skinFrom: ownBodyPaths\(add, rows\)\.map\(\(b\) => \(\{ slot: b\.slot, bytes: find\(b\.path\)\?\.get\(b\.path\)\?\.slice\(\) \}\)\)\.filter\(\(b\) => b\.bytes\),/);
 });
 
 test('MW-BRIG2: the shipped files are re-made from the committed sources, byte for byte, and read back', () => {
