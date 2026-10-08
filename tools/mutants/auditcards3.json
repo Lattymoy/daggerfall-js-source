@@ -842,8 +842,8 @@
   {
     "name": "D-host-setmode-watches-kept",
     "file": "src/scenes/worldModes.js",
-    "old": "privateVisitOwner = null; closeCardWatches(); } };",
-    "new": "privateVisitOwner = null; } };",
+    "old": "if (next !== 'interior') closeCardWatches();   /* CARDS5",
+    "new": "if (false) closeCardWatches();   /* CARDS5",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",

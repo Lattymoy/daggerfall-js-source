@@ -60,7 +60,7 @@ export function heldMatrices(view, n, peek = 0, lift = 0) {
 }
 
 /** AUDIT CARDS-3 C3: how long a card takes to come up off the cloth into the hand, or to leave it (a fold), seconds. */
-export const HOLD_S = 0.25;
+export const HELD_EASE_S = 0.25;
 
 /** A rigid matrix's rotation as a unit quaternion [x, y, z, w] (mat4.js quatToMat4's inverse). */
 function quatOf(m) {

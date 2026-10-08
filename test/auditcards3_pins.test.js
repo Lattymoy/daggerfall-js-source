@@ -166,7 +166,7 @@ test('AUDIT CARDS-3 pins, the regulars\' looks, the hand\'s grab and ground, the
 
 test('AUDIT CARDS-3 pins, the host lines no driven test reaches (mutants D-host-*, D-world-*)', () => {
   const wm = read('src/scenes/worldModes.js'), w = read('src/scenes/world.js');
-  assert.match(wm, /privateVisitOwner = null; closeCardWatches\(\); \} \};/, 'the watches go with the interior');
+  assert.match(wm, /silenceTorch\(\);[^\n]*? if \(next !== 'interior'\) closeCardWatches\(\);[^\n]*? mode = next;/, 'the watches go with the interior');
   assert.match(w, /    cardOnline: \{ ok: \(\) => !!online\?\.holdemOk, send: \(w\) => !!online\?\.sendHoldem\(w\),/, 'the host hands the modes the relay that deals');
   assert.match(wm, /return \{ \.\.\.r, say: b && now < b\.until \? b\.text : null \};/, 'a bark ends');
   assert.match(wm, /g\.drag\.off = !onTable\(q, g\.scene\?\.places\.table\);[^\n]*\n\s*if \(!g\.drag\.off\) g\.drag\.point = q;/, 'a carried bet follows the cursor on the table');

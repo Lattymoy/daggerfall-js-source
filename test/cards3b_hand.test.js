@@ -12,7 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  heldMatrices, heldLift, blendMatrix, HOLD_S, tablePoint, onStack, onTable, inBetZone, dragBet, HELD_LIFT_MAX, HELD_PANEL_GAP_PX, FACE_THE_EYE, HELD_AT, HELD_LEAN_DEG, PEEK_LEAN_DEG, HELD_GAP, PEEK_GAP, STACK_GRAB_M,
+  heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, HELD_LIFT_MAX, HELD_PANEL_GAP_PX, FACE_THE_EYE, HELD_AT, HELD_LEAN_DEG, PEEK_LEAN_DEG, HELD_GAP, PEEK_GAP, STACK_GRAB_M,
 } from '../src/world/cardHand.js';
 import { riffleAt, RIFFLE_S, RIFFLE_HALF, RIFFLE_PART, CARD_T } from '../src/world/cardMotion.js';
 import { tablePlaces, CardScene } from '../src/world/cardScene.js';
@@ -196,5 +196,5 @@ test('AUDIT CARDS-3 C3: a card picked up or let go blends - the place along the 
     assert.ok([...m].every((v, k) => Math.abs(v - last[k]) < 0.25), 'no jump between steps');
     last = m;
   }
-  assert.ok(HOLD_S > 0.1 && HOLD_S < 0.5);
+  assert.ok(HELD_EASE_S > 0.1 && HELD_EASE_S < 0.5);
 });
