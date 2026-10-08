@@ -263,6 +263,7 @@ function stands(over = {}) {
     SOLITARY_TYPES, partyExtraFoes, partySize: () => 1, effectiveLevel: (e) => e?.level ?? 1,   // SOFTCAP2: mentor mode's level, a leaf read
     getPref: () => undefined, onTheRoad: () => false, trivialOnRoad, roadCompany, wandererCount,   // WILD-ROAD: off the road - DFU's wanderer, the party's count
     _standEncounterFoe: (hit) => out.push(hit.mobileType), playerFeet: [0, 0, 0],
+    wildHere: () => false, WILD_GIANT_CHANCE: 0.15, WILD_GIANT: 16,   // WILD3: not in the open zone here
     revenantToReturn: () => null, now: 0,   // REVENANT: none due here (the tick's minute, above this slice)
     sharedClockOn: () => false, worldMinutes: () => 0,   // LIVED1: the spawn roll's sky (the world's clock online)
     spawns: true,   // AUDIT LIVED1b P1: the loop's own parameter - a solo tick asks for its wanderers
@@ -304,6 +305,7 @@ test('AUDIT PSCALE1 a camp or a pack grows by its own members, mounted - one mor
       placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [], campAnchorSpot: () => ({ x: 20, y: 0, z: 0 }),   // CAMP-FAR: main's anchor, a hundred metres out
       LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nearRoad: () => false, _overDeepWater: () => false, _inRock: () => false, CAMP_ROAD_CLEAR_M: 4,   // ROADS-CLEAR: no road here; BOUNTY-ROCK: no rock
       partyGroupMembers, partySize: () => n, MAX_ACTIVE_ENCOUNTER_FOES, ENEMY_BASICS: {},
+      encounterCap: () => MAX_ACTIVE_ENCOUNTER_FOES,   // PVPDUNGEONS: exteriorFoes.js's cap, the open zone off here (wildHere() false)
       exteriorFoes: { newCampId: () => 1, spawnFoe: (mobileType) => { stood.push(mobileType); return Promise.resolve(null); } },   // OW6: the pool's counter
     }, `return (hit, feet) => ${fn.slice(fn.indexOf('{'))};`);
     standCamp({ mobileTypes, minDistance: 14, maxDistance: 26, spacing: 3, alertRadius: 9 }, [0, 0, 0]);

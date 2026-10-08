@@ -134,6 +134,8 @@ const governorHost = (over = {}) => {
     csaBoatUnderMe: () => null, gamePaused: () => false, csaHoldsTimeScale: () => d.helm ?? false, resetTimeScale: () => { d.scale = 1; },
     // THE MERGE (NAV-H, NAV-R): the sea fight - none unless a test stands one (its hostile ships, its raiders as ships)
     naval: d.naval ?? null, navalRaidersOn: () => !!d.navalRaiders,
+    // WILD3: the open zone's strangers - none unless a test stands them
+    _wildStrangers: d.strangers ?? [], WILD_STRANGER_SLOW_M: 200,
   };
   const names = Object.keys(scope);
   const body = `
@@ -293,5 +295,6 @@ test('OW6 host wiring: the governor runs before the frame reads its scale, the p
   assert.match(W, /const foes = journey \|\| walk \? journeyThreatCap\(!!travelView\?\.active, !journey\) : null;/);
   assert.match(W, /const yaw = _travelDrive \? \(_travelDrive\.yaw \* Math\.PI\) \/ 180 : keys \? _tvWalkYaw : null;/);
   assert.match(W, /forward: 1 \}\) === 0\) \{ axes\.forward = 0; axes\.strafe = 0; \}\n\s*_tvWalkYaw = way;/, 'the keys\' way kept as they move the body');
-  assert.match(W, /return threatCap\(\{ threats: journeyThreats\(up\), heading: yaw == null \? null : \{ x: Math\.sin\(yaw\), z: Math\.cos\(yaw\) \}, speedMps: player\?\.speed \?\? 0 \}\);/);
+  // PIN MOVED (PVPNEAR/STRANGER-PACE): the cap kept, and a near stranger's own pace carried beside it
+  assert.match(W, /const r = threatCap\(\{ threats: journeyThreats\(up\), heading: yaw == null \? null : \{ x: Math\.sin\(yaw\), z: Math\.cos\(yaw\) \}, speedMps: player\?\.speed \?\? 0 \}\);\n(?:[^\n]*\n){1,14}?\s*return sr \? \{ \.\.\.r, strangerRate: sr \} : r;/);
 });

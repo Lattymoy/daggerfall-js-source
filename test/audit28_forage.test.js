@@ -144,6 +144,8 @@ test('AUDIT 28 H12: a payday notice taken down unread goes back in the queue - n
 
 test('AUDIT 28 H8: a built pixel\'s bounty boards are worked out once, not every frame', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /const boardSplitOf = \(p\) => \(p\._boardSplit \?\?= questBoardIndices\(p\.boards \?\? \[\]\)\);/);
+  // PIN MOVED (GOTHWAY-BOARDS): the split is still memoised on the pixel (`??=`), its one questBoardIndices call over the
+  // town's own boards; every board a town stands of its own (`extra` - Gothway Garden's) is a bounty board always
+  assert.match(w, /const boardSplitOf = \(p\) => \(p\._boardSplit \?\?= \(\(\) => \{\n\s*const all = p\.boards \?\? \[\];\n\s*const split = questBoardIndices\(all\.filter\(\(b\) => !b\.extra\)\);\n\s*all\.forEach\(\(b, i\) => \{ if \(b\.extra\) split\.add\(i\); \}\);\n\s*return split;\n\s*\}\)\(\)\);/);
   assert.equal((w.match(/questBoardIndices\(/g) ?? []).length, 1, 'the one call, memoised');
 });

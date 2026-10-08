@@ -569,6 +569,6 @@ test('MAIL1 host by source: the box is made with the panel over the ACCOUNT SERV
   assert.match(w, /socialPanel = createSocialPanel\(\{\s*social,\s*mail,/);
   // PIN MOVED (SCALE4c): the lane no longer looks itself - it stamps that it runs, before the dead return, and the box's
   // looks ride the tab's one heartbeat while it does (net/heartbeat.js whileLive)
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1000}?\n\s*_mailFrameAt = performance\.now\(\);[^\n]*\n[\s\S]{0,2100}?if \(townTalk\.overlay instanceof DeathScreen/, 'stamped before the dead return');   // 2100: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox)
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1200}?\n\s*_mailFrameAt = performance\.now\(\);[^\n]*\n[\s\S]{0,2100}?if \(townTalk\.overlay instanceof DeathScreen/, 'stamped before the dead return');   // 1200 (WILD1: the zone's wildFrame() line between); 2100: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox)
   assert.match(w, /heartbeat\.add\('mail', whileLive\(mail\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/);
 });

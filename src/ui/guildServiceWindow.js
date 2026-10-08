@@ -91,6 +91,11 @@ export const REFORGE_ROW_BG = Object.freeze([0.16, 0.11, 0.06, 0.92]);   // PORT
  *  temple's Cure Disease), its key L. */
 export const LIFT_ROW = 'Lift Curse';
 export const LIFT_KEY = 'KeyL';
+/** HEAL-CURSE: the temple's second row, under its Cure Disease (systems/healCurse.js) - the Reforge's shape, a row lower
+ *  when the popup carries the Reforge's row or LOOT16's Lift Curse in that place (an item's curse there, the blood's here). */
+export { HEAL_CURSE_ROW, HEAL_CURSE_KEY } from '../systems/healCurse.js';
+import { HEAL_CURSE_ROW, HEAL_CURSE_KEY } from '../systems/healCurse.js';
+const healCurseRect = (reforge) => Object.freeze([REFORGE_RECT[0], REFORGE_RECT[1] + (reforge ? REFORGE_RECT[3] + 2 : 0), REFORGE_RECT[2], REFORGE_RECT[3]]);
 
 let _art = null;
 /** BOX1: the test seam every other art-gated window carries. */
@@ -156,6 +161,12 @@ export class GuildServiceWindow {
 
   _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
 
+  /** HEAL-CURSE: the temple's Heal Curse row - its offer, or its refusal, a box on the popup. */
+  _healCurse() {
+    const r = this.hooks.healCurse?.();
+    if (isServiceBox(r)) this._push({ ...r, closesWindow: !!r.closesWindow });
+  }
+
   /** LOOT9: the Reforge's row - a dispatch closes the popup, as a service's does; a box stands on it. */
   _reforge() {
     const r = this.hooks.reforge?.();
@@ -210,9 +221,10 @@ export class GuildServiceWindow {
       ...(serviceBtn ? [serviceBtn] : []),              // Buttons.None -> no accelerator at all
       'GuildsExit',
     ];
+    const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY;   // HEAL-CURSE: the temple's second row, its key H - ahead of every other, and the one sound below (AUDIT 26 D1)
     const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;   // LOOT9: the Reforge's row, its key F - the one sound below
     const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;   // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)
-    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
+    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
     if (hit === null) return;
     // F141 on the KEYBOARD side too: Talk/Service/Exit each play
     // ButtonClick in their OnKeyboardEvent's KeyDown arm (:299, :460,
@@ -230,6 +242,7 @@ export class GuildServiceWindow {
       case 'GuildsExit': this._close(); return;
       case 'Reforge': this._reforge(); return;   // LOOT9
       case 'Lift': this._lift(); return;   // LOOT16
+      case 'HealCurse': this._healCurse(); return;   // HEAL-CURSE
       default: this._service();   // whichever of the nineteen service buttons hit
     }
   }
@@ -261,6 +274,7 @@ export class GuildServiceWindow {
     if (inRect(GUILD_RECTS.service, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._service(); return true; }
     if (inRect(GUILD_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     if (this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._reforge(); return true; }   // LOOT9
+    if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return true; }   // HEAL-CURSE
     if (!this.hooks.reforge && this.hooks.lift && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._lift(); return true; }   // LOOT16: the temple's, in its place
     return false;
   }
@@ -294,6 +308,11 @@ export class GuildServiceWindow {
       const [rx, ry, rw, rh] = REFORGE_RECT;
       drawRect(renderer, m, PANEL_X + rx, PANEL_Y + ry, rw, rh, REFORGE_ROW_BG);
       shadowText(renderer, font, LIFT_ROW, m, PANEL_X + rx, PANEL_Y + ry + 2, { align: 'center', w: rw });
+    }
+    if (this.hooks.healCurse) {   // HEAL-CURSE: the temple's second row, under Cure Disease
+      const [hx, hy, hw, hh] = healCurseRect(!!this.hooks.reforge || !!this.hooks.lift);
+      drawRect(renderer, m, PANEL_X + hx, PANEL_Y + hy, hw, hh, REFORGE_ROW_BG);
+      shadowText(renderer, font, HEAL_CURSE_ROW, m, PANEL_X + hx, PANEL_Y + hy + 2, { align: 'center', w: hw });
     }
     const top = this.top;
     if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2

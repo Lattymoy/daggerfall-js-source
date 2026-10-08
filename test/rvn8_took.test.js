@@ -226,7 +226,8 @@ test('RVN8 THE CAP AND THE SAVE: the cap never buries one holding a piece; the s
 test('RVN8 THE HOSTS: the online respawn takes it beside the death penalty and the chase\'s end, once a death (its guard), and the wake box says it (mutants: unwired; unsaid)', () => {
   const w = read('src/scenes/world.js');
   // PIN MOVED (RVN8's gate: AUDIT REP's pin holds the chase's clear right under the death's price - the theft follows it)
-  assert.match(w, /const goldLost = applyDeathPenalty\(playerEntity\);[\s\S]{0,1200}?arrestFlow\.abandon\(\);[^\n]*\n\s*const took = revenantTakes\(playerEntity, \{ online: true \}\);/);
+  // WILD GOLD: a death in the open zone pays its half into the remains instead (wildRise), the theft beside it all the same
+  assert.match(w, /const goldLost = wildRise \? 0 : applyDeathPenalty\(playerEntity\);[\s\S]{0,1200}?arrestFlow\.abandon\(\);[^\n]*\n\s*const took = revenantTakes\(playerEntity, \{ online: true \}\);/);
   assert.match(w, /new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)/);
   assert.match(read('src/systems/revenantFate.js'), /const back = revenantHandBack\(player, r, f\.entity\);/);
 });

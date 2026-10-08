@@ -1746,6 +1746,7 @@ ${badgeCss()}
 .hmresult:hover { background: #12161b; }
 .hmresult-region { color: var(--dim); font-size: 12px; }
 .hmclose { pointer-events: auto; }
+.hmfindme { pointer-events: auto; margin-right: 8px; }
 .hmcard {
   display: none; position: absolute; right: 18px; bottom: 18px;
   width: min(340px, calc(100vw - 36px)); padding: 18px 20px;
@@ -3607,6 +3608,9 @@ ${paceControlsCss('tview')}
   margin: 10px 0 0; padding: 10px 14px; background: rgba(0,0,0,0.28);
   border: 1px solid rgba(125,116,96,0.4); border-radius: 2px; flex: 0 0 auto; }
 .trade-shell .trade-detail .tile { flex: 0 0 auto; }
+.trade-shell .trade-detail { min-height: 78px; box-sizing: border-box; }   /* TRADE-STEADY: the strip's room kept, filled or not */
+.trade-shell .trade-detail-empty { justify-content: center; }
+.trade-shell .trade-detail-empty .meta { margin: 0; font-size: 12px; color: #7d745f; letter-spacing: 0.04em; }
 .trade-shell .trade-detail-info { flex: 1 1 auto; min-width: 0; }
 .trade-shell .trade-detail-info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 400;
   color: #e8e0c8; }
@@ -5322,6 +5326,45 @@ ${paceControlsCss('tview')}
 /* OW-WHO: the Players row's word - the row's first cell, so never hidden with the glyphs' words on a phone (the
    grid's rows are display: contents, and a hidden first cell would shift every row after it a column) */
 .hmkeywho { font-size: 11px; color: #c5bda2; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* WILD2: THE ZONE MAP'S LEGEND (ui/wildZoneMap.js buildZoneLegend) - the Wrothgarian Mountains' four rings, where I
+   stand and the zone's laws, in the held map's plaque language (the hover card's frame, the key's bone and brass): a
+   panel on the right of the paper, the room the zone map's view leaves it (ZONE_LEGEND_W). Each ring's swatch is its
+   fill on the sheet; the ring I stand in wears the brass edge. A solid panel, so a press on it is never a drag. */
+.hmwild { position: absolute; z-index: 2; top: 76px; right: 18px; width: min(300px, calc(100vw - 36px));
+  max-height: calc(100% - 170px); overflow: hidden; padding: 12px 14px 14px; pointer-events: auto;
+  display: flex; flex-direction: column;   /* LEGEND-FIT: the laws scroll, the foot's buttons never leave the panel */
+  background: rgba(10,12,17,0.92); border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
+  outline-offset: 3px; color: #d8cfae; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hmwild-head { border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px; margin-bottom: 8px; }
+.hmwild-kicker { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cinnabar); }
+.hmwild-title { font-size: 18px; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hmwild-where { font-size: 13px; line-height: 1.35; color: #9c937d; margin-bottom: 10px; }
+.hmwild-where.in { color: #e9e4d9; }
+.hmwild-rings { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; }
+.hmwild-ring { display: grid; grid-template-columns: 16px 1fr auto; grid-template-rows: auto auto; gap: 0 8px;
+  align-items: center; padding: 5px 8px; border: 2px solid rgba(125,116,96,0.35); background: rgba(0,0,0,0.25); }
+.hmwild-ring.mine { border-color: var(--brass); background: rgba(192,138,62,0.12); }
+.hmwild-sw { grid-row: 1 / span 2; width: 14px; height: 14px; border: 2px solid; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
+.hmwild-rname { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: #e9e4d9; }
+.hmwild-rname b { color: rgb(243,239,44); font-weight: 400; margin-right: 2px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hmwild-bonus { font-size: 14px; color: #f08a6a; font-variant-numeric: tabular-nums; }
+.hmwild-depth { grid-column: 2 / span 2; font-size: 11px; color: #9c937d; letter-spacing: 0.06em; }
+.hmwild-rules { margin: 0 0 12px; padding-left: 16px; font-size: 12px; line-height: 1.4; color: #c5bda2; }
+.hmwild-rules li { margin: 0 0 3px; }
+.hmwild-head, .hmwild-where, .hmwild-rings, .hmwild-foot { flex: none; }
+.hmwild-rules { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.hmwild-foot { display: grid; gap: 6px; padding-top: 8px; border-top: 2px solid rgba(125,116,96,0.35); }
+.hmroot .act.hmwild-go { border-color: var(--brass); color: rgb(243,239,44); }
+.hmroot .act.hmwild-back { width: 100%; min-height: 36px; }
+.hmroot .act.hmkeyzone { border-color: var(--cinnabar); color: #f3d7c9; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+@media (max-width: 860px) {
+  /* a phone keeps the paper: the legend a compact strip of the four rings under the search, the laws left to the HUD */
+  .hmwild { top: 128px; bottom: auto; right: 12px; left: 12px; width: auto; max-height: 30vh; padding: 8px 10px 10px; }
+  .hmwild-rules, .hmwild-depth { display: none; }
+  .hmwild-ring { padding: 3px 8px; }
+  .hmwild-title { font-size: 15px; }
+}
 @media (max-width: 860px) {
   .hmkey { max-width: calc(100vw - 24px); }
   .hmkeyname { display: none; }   /* a phone keeps the toggles and the glyphs; each glyph's title names it */

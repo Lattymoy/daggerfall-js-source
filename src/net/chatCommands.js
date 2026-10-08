@@ -176,7 +176,7 @@ export const HELP_LINES = Object.freeze([
   '/ready - how your party rests online (no vote: a night at a fire carries the party)',
   '/leader - travel to your party leader',
   '/travel - ready up for the leader\'s journey (the leader: call it off)',
-  '/unstuck - out through the door you came in by',
+  '/unstuck - out by the door you came in, or outdoors to the nearest town (/unstuck cancel stops a wait)',   // PVPUNSTUCK
   '/mentor - whether you are mentoring your party (automatic when they are well below your level)',
   '//text - a line that starts with a slash',
 ]);
@@ -229,7 +229,7 @@ export const emptyCommandText = (name) => `/${name} needs something to say.`;
 export const badRollText = (name) => `/${name} takes dice like 2d6+3, d20 or 100 - at most ${ROLL_DICE_MAX} dice of up to ${ROLL_SIDES_MAX} sides.`;
 /** A host command in a shape its own test refused (`/red` with nothing to say, `/unstuck now`) - refused in words
  *  too: before this slice such a line fell through to the room and was said there, slash and all. */
-export const hostMisuseText = (name) => (name === 'red' ? emptyCommandText(name) : `/${name} takes nothing after it.`);
+export const hostMisuseText = (name) => (name === 'red' ? emptyCommandText(name) : name === 'unstuck' ? '/unstuck takes nothing after it but cancel.' : `/${name} takes nothing after it.`);   // PVPUNSTUCK: /unstuck cancel
 
 /** EMOTE1: the gestures, as the lines `/emotes` shows. */
 export const EMOTE_LINES = Object.freeze(['Gestures, to those near you - add a name to make one AT someone:', Object.keys(EMOTES).map((n) => `/${n}`).join(' ')]);

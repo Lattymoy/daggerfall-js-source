@@ -678,7 +678,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /return chatSend\(tabId, cmd\.text, tabId\);/, 'a line that is no command is said on the tab it was typed on');
   const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w);
   assert.ok(onSend, 'UNSTUCK1: the host no longer carries an onSend block');
-  const cmdAt = onSend[1].indexOf("/^\\/unstuck$/i.test(text.trim())");
+  const cmdAt = onSend[1].indexOf("/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())");   // PVPUNSTUCK: the command takes an optional "cancel" now (a zone wait can be called off) - PIN MOVED
   const sendAt = onSend[1].indexOf('chatSend(');
   assert.ok(cmdAt > 0, 'UNSTUCK1: the local /unstuck command is gone from onSend');
   assert.ok(cmdAt < sendAt, 'UNSTUCK1: the local command must be tested BEFORE the relay send, or the room hears it');

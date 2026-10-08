@@ -146,6 +146,7 @@ test('GUIDE4 WHICH QUEST - the tracked quest, else the one the journal last chan
   assert.equal(t.frame(), null, 'no quest: the card says nothing');
   t.hear({ quests: [view('1', { updatedAt: 10 }), view('2', { updatedAt: 20 }), view('3', { updatedAt: 5 })], events: [] });
   assert.equal(t.tracked().id, '2', 'a baseline: the quest written last');
+  assert.equal(t.frame(), null, 'TRACK-ONLY (the owner: "When you dont track a quest it should never appear on the screen!"): followed, never shown');
   t.hear({ quests: [view('1', { updatedAt: 10 }), view('2', { updatedAt: 20 }), view('3', { updatedAt: 5 })], events: [{ type: 'urgent', id: '3' }] });
   assert.equal(t.tracked().id, '3', 'news: the quest the journal last changed, whatever it was written');
   t.hear({ quests: [view('1', { updatedAt: 30 }), view('2', { updatedAt: 20 }), view('3', { updatedAt: 5 })], events: [{ type: 'updated', id: '1' }] });
@@ -169,8 +170,9 @@ test('GUIDE4 WHICH QUEST - the tracked quest, else the one the journal last chan
   assert.deepEqual([t.views, t.follow, t.pinned], [[], null, '4'], 'a load forgets what it saw and followed, never what the player chose');
   assert.equal(t.frame(), null, '...and says nothing until the next look');
   t.hear({ quests: [view('5', { updatedAt: 60 })], events: [] });
-  assert.equal(t.tracked().id, '5', 'a tracked quest the look does not carry is shown no more (the quest it names is not in the journal)');
-  assert.equal(t.frame().pinned, false);
+  assert.equal(t.tracked().id, '5', 'a tracked quest the look does not carry is followed no more (the quest it names is not in the journal)');
+  assert.equal(t.frame(), null, 'TRACK-ONLY: and the card shows nothing - an untracked quest is on no screen');
+  assert.equal(t.shown(), null);
   const tie = new QuestTracker();
   tie.hear({ quests: [view('7', { updatedAt: 9 }), view('8', { updatedAt: 9 })], events: [] });
   assert.equal(tie.tracked().id, '7', 'a tie: the walk\'s order (the journal\'s)');
@@ -180,8 +182,10 @@ test('GUIDE4 THE WORDS - the title (a main quest marked), the newest entry\'s op
   const t = new QuestTracker();
   const long = ['Sundas the 1st of Morning Star:', ' The Fighters Guild of Daggerfall has hired me to kill a troublesome', ' werewolf, wereboar, or whatever, in its lair, Castle Llugwych.'];
   t.hear({ quests: [view('1', { title: 'The Beast', main: true, lines: long, clockSeconds: 80000, where: `Llugwych in ${REGION} province` })], events: [] });
+  assert.equal(t.frame(), null, 'TRACK-ONLY: the main quest untracked says nothing');
+  t.toggle('1');
   assert.deepEqual(t.frame(), {
-    id: '1', title: 'The Beast', main: true, pinned: false,
+    id: '1', title: 'The Beast', main: true, pinned: true,
     opening: entryOpening(long, TRACKER_OPENING_MAX),
     where: `Llugwych in ${REGION} province`,
     note: '',
@@ -193,6 +197,7 @@ test('GUIDE4 THE WORDS - the title (a main quest marked), the newest entry\'s op
   assert.equal(t.frame().time, `${TRACKER_WORDS.main} - ${TRACKER_WORDS.left(80000)}`);
   const plain = new QuestTracker();
   plain.hear({ quests: [view('2', { lines: [' Just words.'] })], events: [] });
+  plain.toggle('2');
   assert.deepEqual([plain.frame().where, plain.frame().time, plain.frame().urgent, plain.frame().main], ['', '', false, false]);
   assert.equal(plain.frame().opening, 'Just words.');
 });
@@ -236,20 +241,30 @@ test('GUIDE4 THE BRIDGE FEEDS IT - over the real bridge and machine: the tracker
     beat(b);
     assert.equal(n.looks, 1);
     assert.equal(n.wheres[0], questWhere, 'the host\'s questions, handed to the look');
+    // TRACK-ONLY (the owner: "When you dont track a quest it should never appear on the screen!"): the baseline is
+    // FOLLOWED at once (the journal opens on it), and on no screen until it is tracked
+    assert.equal(questTracker.frame(), null, 'running, untracked: on no screen');
+    assert.equal(questTracker.tracked().title, 'The First Road', 'the baseline is followed at once - the quests as they stand');
+    const a = questOf(b, '__GTRACKA');
+    questTracker.toggle(String(a.uid));
     let f = questTracker.frame();
-    assert.equal(f.title, 'The First Road', 'the baseline is on the card at once - the quests as they stand');
+    assert.equal(f.title, 'The First Road', 'tracked: on the card');
     assert.equal(f.opening, 'Find The Feather and Dog in Bigtown.');
     assert.equal(f.where, `The Feather and Dog, Bigtown in ${REGION} province (you are here)`, 'the host said where the player stands');
     assert.equal(f.time, `${remainWords(3 * 86400)} left`);
-    assert.equal(f.pinned, false);
+    assert.equal(f.pinned, true);
+    questTracker.toggle(String(a.uid));
+    assert.equal(questTracker.frame(), null, 'untracked again: gone from the screen');
 
     clock.now = 1100; start(b, '__GTRACKB', 9); beat(b);
-    assert.equal(questTracker.frame().title, 'The Second Road', 'a new quest is news: the card follows it');
-    const a = questOf(b, '__GTRACKA');
+    assert.equal(questTracker.tracked().title, 'The Second Road', 'a new quest is news: the journal follows it');
+    assert.equal(questTracker.frame(), null, '...and the screen shows nothing of it');
     clock.now = 1200; a.startTask({ name: 'next' }); beat(b);
+    assert.equal(questTracker.tracked().title, 'The First Road', 'the first quest wrote: the journal follows it back');
+    questTracker.toggle(String(a.uid));
     f = questTracker.frame();
-    assert.equal(f.title, 'The First Road', 'the first quest wrote: the card follows it back');
     assert.equal(f.opening, `Now go to Llugwych in ${REGION}.`, 'the newest entry\'s opening');
+    questTracker.toggle(String(a.uid));
     const bq = questOf(b, '__GTRACKB');
     questTracker.toggle(String(bq.uid));
     clock.now = 1300; a.startTask({ name: 'win' }); beat(b, 6);
@@ -297,6 +312,7 @@ test('GUIDE4 THE MACHINE NEVER KNOWS - a whole game ticked through the bridge (a
       beat(b);
       quiet(() => b.machine.startQuestByName('__GQUIET', 0, { rolls }));
       beat(b, 3);
+      questTracker.toggle(String(questOf(b, '__GQUIET').uid));   // TRACK-ONLY: the card shows a tracked quest alone
       const seen = questTracker.frame();
       const q = questOf(b, '__GQUIET');
       clock.now += 60; q.startTask({ name: 'next' });
@@ -353,22 +369,26 @@ test('GUIDE4 THE CARD - built once on the page, aria-hidden (the herald speaks),
     assert.equal(drawQuestTracker({ doc }), null, 'nothing to follow: nothing on the page');
     assert.equal(doc.getElementById(TRACKER_ID), null);
     questTracker.hear({ quests: [view('1', { title: 'The Beast', main: true, lines: [' Kill it.'], clockSeconds: 80000, where: 'Llugwych in Devilrock province' })], events: [] });
+    // TRACK-ONLY (the owner: "When you dont track a quest it should never appear on the screen!"): followed, never drawn
+    assert.equal(drawQuestTracker({ doc }), null, 'an untracked quest: nothing on the page');
+    assert.equal(doc.getElementById(TRACKER_ID), null);
+    questTracker.toggle('1');
     const f = drawQuestTracker({ doc });
     const card = doc.getElementById(TRACKER_ID);
-    assert.ok(card, 'built');
+    assert.ok(card, 'tracked: built');
     assert.equal(card.attrs['aria-hidden'], 'true');
     assert.equal(card.className, 'qtrack main urgent');
     const r = rowsOf(card);
     assert.deepEqual([r.mark.textContent, r.title.textContent, r.line.textContent, r.where.textContent, r.time.textContent],
-      ['◇', 'The Beast', 'Kill it.', 'Llugwych in Devilrock province', f.time], 'followed: the hollow mark');
+      ['◆', 'The Beast', 'Kill it.', 'Llugwych in Devilrock province', f.time], 'tracked: the filled mark');
     assert.equal(vars[TRACKER_HEIGHT_VAR], '0px', 'a card of no measured height publishes none');
     const w = writes.text;
     drawQuestTracker({ doc });
     assert.equal(writes.text, w, 'a still frame writes nothing');
     card.offsetHeight = 64;
-    questTracker.toggle('1');
+    questTracker.hear({ quests: [view('1', { title: 'The Beast', main: true, lines: [' Kill it, now.'], clockSeconds: 80000, where: 'Llugwych in Devilrock province' })], events: [] });
     drawQuestTracker({ doc });
-    assert.equal(r.mark.textContent, '◆', 'tracked: the filled mark');
+    assert.equal(r.line.textContent, 'Kill it, now.');
     assert.equal(vars[TRACKER_HEIGHT_VAR], `${64 + TRACKER_GAP}px`, 'what it says changed: measured and published for the party list');
     assert.equal(doc.getElementById(TRACKER_ID), card, 'the same card - updated, not rebuilt');
     questTracker.hear({ quests: [view('1', { title: 'The Beast', lines: [' Kill it.'] })], events: [] });
