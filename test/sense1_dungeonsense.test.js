@@ -325,7 +325,11 @@ test('SENSE1: the asks are counted where the press is read, changed or not', () 
   assert.match(tt, /function setMode\(m, ask = true\) \{\n    if \(ask\) askInteractionMode\(m\);[^\n]*\n    if \(m === getInteractionMode\(\)\) return;/);
   // AUDIT DELVE B6: the press, not the key's repeat (a held F3 asked thirty times a second, each a look round)
   assert.match(tt, /setMode\(m, !e\.repeat\);/);
-  assert.match(src('src/scenes/dungeon.js'), /if \(!ctx\.uiOverlayActive && !e\.repeat\) askInteractionMode\(im\);/);
+  // MODE-WHEEL AUDIT: the dungeon host's one ChangeInteractionMode (pickMode) counts under its overlay gate, before
+  // the same-mode no-op, and the key arm calls it on the press alone
+  const d = src('src/scenes/dungeon.js');
+  assert.match(d, /if \(ctx\.uiOverlayActive\) return false;\n\s*askInteractionMode\(m\);\n\s*if \(m !== getInteractionMode\(\)\)/);
+  assert.match(d, /if \(!e\.repeat\) pickMode\(im\);/);
 });
 
 test('SENSE1: the context looks round at an ask and draws after the last opaque flat; the glow ends with it', () => {

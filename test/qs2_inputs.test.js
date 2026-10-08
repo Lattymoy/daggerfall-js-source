@@ -69,7 +69,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // include a row this pin is not about.
   assert.deepEqual(ACTIONS.slice(45, 52), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
   assert.equal(ACTIONS[52], 'FreeMouse', 'and FREEMOUSE\'s appended past them');
-  assert.equal(ACTIONS.length, 87, 'LEGACY3\'s 1 (LegacyFamily, last) + CLASSIC-PAGES\'s 1 + DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay) + CSA-D\'s 2 (the helm\'s two keys) + CSA-E\'s 4 (the sails\' and the trim\'s) + CSA-G\'s 3 (the time scale\'s) + TV1\'s 1 (TravelView) + PADWALK\'s WalkMode + VIEW-TOGGLE\'s TogglePerspective + PROF1\'s 1 (ActChoice, after it) + HELM-KEYS\' 2 (more and less sail, last)');
+  assert.equal(ACTIONS.length, 88, 'MODE-WHEEL\'s 1 (ModeWheel, last) + LEGACY3\'s 1 (LegacyFamily, last) + CLASSIC-PAGES\'s 1 + DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay) + CSA-D\'s 2 (the helm\'s two keys) + CSA-E\'s 4 (the sails\' and the trim\'s) + CSA-G\'s 3 (the time scale\'s) + TV1\'s 1 (TravelView) + PADWALK\'s WalkMode + VIEW-TOGGLE\'s TogglePerspective + PROF1\'s 1 (ActChoice, after it) + HELM-KEYS\' 2 (more and less sail, last)');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -114,12 +114,13 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   // view's, whose door is the held map's.
   // HELM-KEYS: and More sail owns no key - it SHARES the up arrow (inputActions.js DEFAULT_SHARES); CLASSIC-PAGES: nor
   // the Professions key - it shares the down arrow
-  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'QuickSwap', 'DebugOverlay', 'TravelView', 'WalkMode', 'BoatSailUp', 'Professions'],
+  // MODE-WHEEL: and DFU's four mode keys and Sneak - the wheel and Crouch answer for them
+  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'TravelView', 'WalkMode', 'BoatSailUp', 'Professions'],
     'the actions without an owned key');
-  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 8);   // PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 13);   // PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share
   // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
   // them is a digit - read off the table rather than asserted about it.
-  const dfu = DEFAULT_BINDINGS.slice(0, 44).map(([c]) => c);
+  const dfu = DEFAULT_BINDINGS.slice(0, DEFAULT_BINDINGS.findIndex(([, a]) => a === 'SocialInteract')).map(([c]) => c);   // MODE-WHEEL: DFU's rows are those before SOC5's (five ship unbound now)
   for (const d of ['Digit1', 'Digit2', 'Digit3']) assert.ok(!dfu.includes(d), `SetupDefaults never spends ${d}`);
   // The port's own spending, named where it is spent, so a rename there fails
   // here (the same shape HT4's pin uses one file over).

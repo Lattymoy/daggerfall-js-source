@@ -837,6 +837,12 @@ half line), so the P13 stealth checks now apply to a MOVING player.
 Toggle-mode sneak (ToggleSneak) and autorun pend with the input-
 options arc. All four motor hosts wired (standing rule).
 
+CROUCH-SNEAK (2026-10-08, a recorded departure - Port-Ledger A, CROUCH IS
+SNEAK): the crouch now carries the sneak - `isSneaking` latches on the
+sneak mode OR a crouch, so a crouched walk is the crouched-sneak speed and
+passes the half line. Sneak's Left Alt is the mode wheel's; the Sneak
+action ships unbound.
+
 +1 trace in motorStairs.test.js (10). Suite 384/85, ARENA2 corpus
 green pre-commit.
 
