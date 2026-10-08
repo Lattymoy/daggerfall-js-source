@@ -218,6 +218,7 @@ import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
+import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
@@ -1393,6 +1394,12 @@ const service = {
         return r.error ? no(r.error, PASS_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
+      // SCALE4c: ONE HEARTBEAT - the beat, the letterbox and a town's board, whichever the body names, each part answered
+      // as its own route answers it (heartbeat.js), under the one session this request resolved
+      if (path === '/v1/heartbeat') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        return json(await heartbeat(ctx, who.player, env, body), 200, origin);
+      }
       if (path === '/v1/account/played' && request.method === 'POST') {
         // ACC4: A BEAT, AND NOTHING IN IT IS READ. Whatever the body
         // says, the credit is the gap by THIS clock (accounts.js

@@ -152,6 +152,59 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
     return e.pending;
   }
 
+  /**
+   * SCALE4c: THE BOARD OF THE TOWN STOOD IN, AS A HEARTBEAT'S PART (net/heartbeat.js) - the read the host's frame asked
+   * every second (a minute's cache, for the count that floats over the boards) carried by the tab's one heartbeat
+   * instead of its own request. `townMap()` is the town the host says the player stands in, or null. Due when that
+   * board's minute is up, as `read` asks it; riding a heartbeat that goes anyway when it would be due within `early` ms;
+   * in flight it is the town's `pending` read, so a window's own read meanwhile waits for this answer rather than asking
+   * twice; its answer taken as `read` takes its own - a refusal kept the minute too.
+   * @param {() => (number|null)} townMap
+   * @returns {import('./heartbeat.js').HeartbeatPart}
+   */
+  function heartbeatPart(townMap) {
+    /** @type {{ map: number, e: any, settle: (v: any) => void } | null} */
+    let asking = null;
+    const ready = (/** @type {number} */ t, /** @type {number} */ early) => {
+      if (asking) return false;
+      const map = townMap();
+      if (!boardKeyOk(map)) return false;
+      const e = boards.get(map);
+      return !e?.pending && (!e || t - e.at >= BOARD_CACHE_MS - early);
+    };
+    return {
+      due: (t) => ready(t, 0),
+      soon: (t, early) => ready(t, early),
+      body: () => {
+        const map = townMap();
+        if (!boardKeyOk(map)) return undefined;
+        const e = boards.get(map) ?? { board: null, at: -Infinity, error: null, pending: null };
+        boards.set(map, e);
+        /** @type {(v: any) => void} */
+        let settle = () => {};
+        e.pending = new Promise((r) => { settle = r; });
+        asking = { map, e, settle };
+        return map;
+      },
+      take: (r) => {
+        const a = asking;
+        asking = null;
+        if (!a) return;
+        const { e } = a;
+        e.pending = null;
+        if (r?.ok) {
+          open = true; e.board = r.data; e.at = nowMs(); e.error = null;
+          a.settle({ board: e.board, error: null, stale: false });
+          return;
+        }
+        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it
+        e.error = r?.error ?? 'server';
+        e.at = nowMs();
+        a.settle({ board: e.board, error: e.error, stale: !!e.board });
+      },
+    };
+  }
+
   /** What a read would show without asking: the cached board, or null. */
   const cached = (map) => boards.get(map)?.board ?? null;
   const forget = (map) => { const e = boards.get(map); if (e) e.at = -Infinity; };
@@ -240,7 +293,7 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
   const noticeDraft = { subject: '', body: '', days: 3 };
 
   return {
-    read, cached, markSeen, seenAt, unseen,
+    read, cached, markSeen, seenAt, unseen, heartbeatPart,
     /** Whether the board is open to this account, as the last read said (null before any). */
     get open() { return open; },
     /** The note being written for town `map` - the window's form writes into it. */

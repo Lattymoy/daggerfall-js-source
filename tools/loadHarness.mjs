@@ -73,7 +73,9 @@ import {
   accountTokenMinter, SESSION_KEY, SERVICE_KEY, beatPlay, register as registerCall,
   accountBoard, accountHomes, accountSeats, accountProf, accountRenown, accountDecor,
 } from '../src/net/accountClient.js';
-import { inboxCall, MAIL_POLL_MS } from '../src/net/mail.js';
+import { inboxCall, MAIL_POLL_MS, MailBox } from '../src/net/mail.js';
+import { createNoticeBook } from '../src/net/noticeBook.js';
+import { startPlayClock } from '../src/net/playClock.js';
 import { realmIo, realmCreate, createRealmSession } from '../src/systems/realmSaves.js';
 import { worldRoom, cellHaloFor, CHAT_WORLD_ROOM, chatRegionRoom, PIXEL_UNITS, POSE_TS_MOD } from '../src/net/wire.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
@@ -88,6 +90,10 @@ import { MOTHERLODE_READ_MS } from '../src/net/motherlodeBook.js';
 import { routeLabel } from '../server-account/src/metrics.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+/** SCALE4c: the tab's one heartbeat (src/net/heartbeat.js), where the tree under test has it - its bots then keep the
+ *  beat, the letterbox and the town's board as the world host keeps them (the client's own MailBox, notice book and play
+ *  clock, each a part of the bot's heartbeat); a tree before it is measured with the three clocks it had. */
+const HEARTBEAT = await import('../src/net/heartbeat.js').catch(() => null);
 const run = promisify(execFile);
 
 // ═══ THE KNOBS ═════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -364,6 +370,22 @@ async function standServices(o, state) {
   return svc;
 }
 
+/** THE SERVICE'S OWN CLOCK (SCALE4b, server-account/src/cron.js), fired as the deploy fires it: the minute's list every
+ *  minute of play and the hour's once as play begins - `wrangler dev --test-scheduled` answers /__scheduled. Its
+ *  statements ride the service's own points (`cron:<job>`), counted with the rest. The two strings are cron.js's
+ *  CRON_MINUTE and CRON_HOUR (test/scale3.test.js holds them together); a tree whose service keeps no clock (before
+ *  SCALE4b) answers the firing with nothing, so one harness measures either. */
+export const FIRE_MINUTE = '* * * * *';
+export const FIRE_HOUR = '41 * * * *';
+async function fireCron(port, cron) {
+  return new Promise((resolve) => {
+    const req = httpRequest({ host: '127.0.0.1', port, path: `/__scheduled?cron=${encodeURIComponent(cron)}`, timeout: 60_000 }, (r) => { r.resume(); r.on('end', resolve); });
+    req.on('error', () => resolve());
+    req.on('timeout', () => { req.destroy(); resolve(); });
+    req.end();
+  });
+}
+
 /** The account service's kept points and statements since the last read (tools/loadAccountEntry.mjs) - every read
  *  drains them, so each fold is of what is new. */
 async function serviceStats(port) {
@@ -469,14 +491,27 @@ function accountClocks(bot, o) {
   const io = () => ({ fetch: bot.fetch, base: LOAD_SERVICE, secret: bot.account.secret });
   const dev = { fetch: bot.fetch, storage: bot.storage };
   const board = accountBoard(dev), homes = accountHomes(dev), seats = accountSeats(dev), prof = accountProf(dev), renown = accountRenown(dev), decor = accountDecor(dev);
-  const clocks = [
-    ['play beat', PLAY_BEAT_S * 1000, () => beatPlay(io())],
-    ['mail', MAIL_POLL_MS, () => inboxCall(io())],
+  const clocks = [];
+  if (HEARTBEAT) {
+    // SCALE4c: as the world host keeps them - the play clock knocking through the heartbeat, the box and the board its parts
+    bot.heartbeat = HEARTBEAT.createHeartbeat({ fetch: bot.fetch, storage: bot.storage });
+    bot.mail = new MailBox({ ioOf: () => ({ ...io(), storage: bot.storage }) });
+    bot.notices = createNoticeBook({ door: board, storage: bot.storage });
+    bot.heartbeat.add('board', bot.notices.heartbeatPart(() => bot.mapId));
+    bot.heartbeat.add('mail', bot.mail.heartbeatPart());
+    bot.stopBeat = startPlayClock({ beat: () => bot.heartbeat.beat() });
+  } else {
+    clocks.push(
+      ['play beat', PLAY_BEAT_S * 1000, () => beatPlay(io())],
+      ['mail', MAIL_POLL_MS, () => inboxCall(io())],
+      ['board', BOARD_CACHE_MS, () => board.read(bot.mapId)],
+    );
+  }
+  clocks.push(
     ['checkpoint', ONLINE_CHECKPOINT_MS, () => bot.realm.session.idle(() => bot.realm.session.checkpoint(saveText(bot, o['save-kb'], Date.now())))],
-    ['board', BOARD_CACHE_MS, () => board.read(bot.mapId)],
     ['yards', YARD_TOWN_TTL_MS, () => decor.yards(bot.mapId)],
     ['seats', SEAT_RED_READ_MS, () => seats.list()],
-  ];
+  );
   if (bot.registered) clocks.push(['motherlodes', MOTHERLODE_READ_MS, () => prof.motherlodes(bot.realm.id)]);
   if (bot.fighter) clocks.push(['renown', RENOWN_REPORT_MS, () => renown.report(bot.realm.id, 40, bot.name, renownRid())]);
   if (bot.gatherer && bot.registered) clocks.push(['prof state', 30_000, () => prof.state(bot.realm.id)]);
@@ -545,6 +580,8 @@ async function main(o) {
     relay.inByType = {}; relay.outByType = {}; relay.poseMs = []; relay.closes = {}; relay.refusals = {};
     const playStart = Date.now();
     const playMs = o.minutes * 60_000;
+    await fireCron(svc.accountPort, FIRE_HOUR);
+    const clockTimer = setInterval(() => { fireCron(svc.accountPort, FIRE_MINUTE); }, 60_000);
     const statsSum = { byRoute: new Map(), statements: new Map() };
     const fold = (s) => {
       for (const p of s.points) {
@@ -569,8 +606,10 @@ async function main(o) {
     if (left > 0) await sleep(left);
     const playedMs = Date.now() - playStart;
     clearInterval(ticker);
+    clearInterval(clockTimer);
     fold(await serviceStats(svc.accountPort));
     for (const b of bots) for (const s of b.sessions) quietly(() => s.leave());
+    for (const b of bots) { b.heartbeat?.stop(); b.stopBeat?.(); }
     console.warn = restore.warn; console.info = restore.info;
 
     out.report = report({ bots, o, ctx, relay, statsSum, playedMs, storm });
@@ -648,7 +687,12 @@ function report({ bots, o, ctx, relay, statsSum, playedMs, storm }) {
       statementsPerRequest: svc.n ? svc.statements / svc.n : null, statementsPerBotHour: svc.statements / botHours,
     };
   }).sort((a, b) => b.statementsPerBotHour - a.statementsPerBotHour);
-  const totals = routes.reduce((a, r) => ({ requests: a.requests + r.requests, statements: a.statements + r.statementsPerBotHour * botHours }), { requests: 0, statements: 0 });
+  for (const [route, svc] of statsSum.byRoute) {
+    if (!route.startsWith('cron:')) continue;   // the service's own clock: no bot asked it, the database paid it
+    routes.push({ route, requests: svc.n, perBotHour: svc.n / botHours, statuses: {}, p50: null, p95: null, statementsPerRequest: svc.n ? svc.statements / svc.n : null, statementsPerBotHour: svc.statements / botHours });
+  }
+  routes.sort((a, b) => b.statementsPerBotHour - a.statementsPerBotHour);
+  const totals = routes.reduce((a, r) => ({ requests: a.requests + (r.route.startsWith('cron:') ? 0 : r.requests), statements: a.statements + r.statementsPerBotHour * botHours }), { requests: 0, statements: 0 });
   const statements = [...statsSum.statements].map(([sql, s]) => ({ sql, ...s, rowsReadPerBotHour: s.rowsRead / botHours }))
     .sort((a, b) => b.rowsRead - a.rowsRead);
   const rows = statements.reduce((a, s) => ({ read: a.read + s.rowsRead, written: a.written + s.rowsWritten }), { read: 0, written: 0 });

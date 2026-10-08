@@ -161,7 +161,7 @@ export class MailBox {
   /** A refusal the whole box answers to: `auth` forgets the session (accountClient's rule), a guest is a guest. True
    *  when it was one of those. */
   _boxRefusal(io, error) {
-    if (error === 'auth') { forgetSession(io.storage); this.state = 'signed-out'; this.letters = []; this.unread = 0; this.opened.clear(); this._known = null; this.error = error; this._changed(); return true; }
+    if (error === 'auth') { forgetSession(io?.storage); this.state = 'signed-out'; this.letters = []; this.unread = 0; this.opened.clear(); this._known = null; this.error = error; this._changed(); return true; }
     if (error === 'mail-needs-account') { this.state = 'guest'; this.letters = []; this.unread = 0; this.error = error; this._changed(); return true; }
     return false;
   }
@@ -183,7 +183,12 @@ export class MailBox {
     this.at = this.now();
     const io = this._io();
     if (!io) return { ok: false, error: 'signed-out' };
-    const r = await inboxCall(io);
+    return this._take(await inboxCall(io), io);
+  }
+
+  /** What a look does with the box's answer - its own call's, or (SCALE4c) a heartbeat's mail part, the same answer
+   *  under another request. */
+  _take(r, io = this.ioOf?.() ?? null) {
     this.at = this.now();
     if (!r.ok) {
       if (!this._boxRefusal(io, r.error)) { this.state = 'error'; this.error = r.error ?? 'server'; this._changed(); }
@@ -208,6 +213,27 @@ export class MailBox {
 
   /** The host's frame: a look when one is due. Never awaited by a frame - it lands on its own. */
   poll(nowMs = this.now()) { if (this.due(nowMs)) this.refresh(); }
+
+  /**
+   * SCALE4c: THE BOX AS A HEARTBEAT'S PART (net/heartbeat.js) - due when a look is (MAIL_POLL_MS since the last), riding
+   * a heartbeat that goes anyway when it would be due within `early` ms; stamped as it sets out, as a look is, so the
+   * box is never asked twice for one look; its answer taken as a look takes its own.
+   * @returns {import('./heartbeat.js').HeartbeatPart}
+   */
+  heartbeatPart() {
+    // the stamp at `body` is what keeps a look from going twice: the box is not due again for MAIL_POLL_MS (and a
+    // heartbeat's tick waits while one is out)
+    const ready = (/** @type {number} */ nowMs, /** @type {number} */ early) => !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS - early);
+    return {
+      due: (nowMs) => ready(nowMs, 0),
+      soon: (nowMs, early) => ready(nowMs, early),
+      body: () => {
+        this.at = this.now();
+        return this._io() ? true : undefined;   // signed out: the box says so, and nothing rides
+      },
+      take: (r) => { this._take(r); },
+    };
+  }
 
   /** OPEN ONE: the whole letter, from this sitting's copy or the service - which marks it read. */
   async open(id) {

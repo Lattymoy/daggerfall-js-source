@@ -567,5 +567,8 @@ test('MAIL1 host by source: the box is made with the panel over the ACCOUNT SERV
   assert.match(made, /ioOf: \(\) => \{\s*const st = appStorage\(\);\s*const s = storedSession\(st\);\s*return s \? \{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), base: serviceBase\(st\), secret: s\.secret, storage: st \} : null;\s*\},/);
   assert.match(made, /onLetter: \(event\) => \{ chatLog\.push\(tab\.id, \{ text: mailNoticeText\(event\), system: true \}\); \},/);
   assert.match(w, /socialPanel = createSocialPanel\(\{\s*social,\s*mail,/);
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1000}?\n\s*mail\?\.poll\(\);[^\n]*\n[\s\S]{0,2100}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');   // 1800: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox)
+  // PIN MOVED (SCALE4c): the lane no longer looks itself - it stamps that it runs, before the dead return, and the box's
+  // looks ride the tab's one heartbeat while it does (net/heartbeat.js whileLive)
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,1000}?\n\s*_mailFrameAt = performance\.now\(\);[^\n]*\n[\s\S]{0,2100}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');
+  assert.match(w, /heartbeat\.add\('mail', whileLive\(mail\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/);   // 1800: WB1's gateFrame and RENOWN1's tick both stand between, and ONE-SEAT's branch (a tab out of the seat keeps its letterbox)
 });
