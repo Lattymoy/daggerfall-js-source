@@ -33,8 +33,9 @@ import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
 import { isCardTableModel } from '../world/cardTables.js';   // CARDS2
 import { localAabb } from '../render/frustum.js';   // AUDIT CARDS B6: a card table's own box
+import { PLACED_CARD_TABLE_MODEL, placedTableSpot } from '../world/placedCardTable.js';   // GOTHWAY-TABLE: a card table stood where the room has none
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
-import { LADDER_MODEL_ID } from '../player/enterExit.js';
+import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // GOTHWAY-TABLE: a static door's place, for the placed table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { createBaseRoom, baseBucketOf } from './decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
 import { decorBaseModelKey, decorBaseFlatKey } from '../net/decorLaw.js';   // BASE-HIDE: the layout's names for them
@@ -236,6 +237,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const recordData = dfBlock.rmbBlock.subRecords[recordIndex];
   const ids = new Set();
   for (const obj of recordData.interior.block3dObjectRecords) ids.add(obj.modelIdNum);
+  if (opts.placeCardTable) ids.add(PLACED_CARD_TABLE_MODEL);   // GOTHWAY-TABLE: the placed table's model, climate-swapped with the room's
   await Promise.all([...ids].map(collect));
 
   const interior = layoutInterior(dfBlock, blockIndex, recordIndex, (id) => pending.get(id));
@@ -479,6 +481,41 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       continue;
     }
     dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
+  }
+
+  // GOTHWAY-TABLE (world/placedCardTable.js; the owner: "Put a table in gothway tavern"): A CARD TABLE STOOD WHERE THE
+  // HOST ASKS FOR ONE (`opts.placeCardTable` - a tavern in Gothway Garden, scenes/worldModes.js). Its floor is found from
+  // the room's FIRST enter marker - the record's, not the door walked through, so every client stands it in the same
+  // place - with the room's whole collider built (its closed doors stop the walk), keeping clear of the doors, the
+  // people, the flats and the markers. Then it is one of the room's models - drawn in the merge, collided, on the
+  // automap (its key the next placement index, past the record's own) - and one of its card tables, after the room's
+  // own (the relay keys a table by its index). A data set without the model, or a room with no such floor, stands none.
+  if (opts.placeCardTable) {
+    const id = PLACED_CARD_TABLE_MODEL;
+    const gpu = await getGpuMesh(id);
+    const cpu = cpuModels.get(id);
+    const enter = interior.markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? interior.markers.find((m) => m.type === INTERIOR_MARKER.REST);
+    const b = cpu ? localAabb(cpu.positions) : null;
+    const spot = gpu && cpu && enter ? placedTableSpot({ min: b.slice(0, 3), max: b.slice(3) }, [enter.x, enter.y, enter.z], {
+      floor: (x, y, z) => { const d = collider.raycast(parentPt(x, y, z), [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
+      open: (x, y, z, r) => !collider.sphereOverlaps(parentPt(x, y, z), r),
+    }, [
+      ...interior.doors.map((d) => [...doorWorldPosition(d), 1.5]),
+      ...interior.actionDoors.map((d) => [d.matrix[12], d.matrix[13], d.matrix[14], 1.5]),   // the hinge; the swing is within
+      ...collectInteriorPeople(recordData).map((pn) => [pn.x, pn.y, pn.z, 0.6]),
+      ...interior.flats.map((f) => [f.x, f.y, f.z, 0.5]),
+      ...interior.markers.map((m) => [m.x, m.y, m.z, 0.5]),
+    ]) : null;
+    if (spot) {
+      const matrix = parent(trs(spot.x, spot.y, spot.z, 0, 0, 0));
+      const aabb = worldAabb(cpu.positions, matrix);
+      const key = `int:${interior.placements.length}`;
+      drawList.push({ mesh: gpu, matrix, key, aabb });
+      if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
+      automapEntries.push({ key, aabb, blockIndex: 0, blockName: amapBlockName, elementIndex: 0, elementName: INTERIOR_ELEMENT_NAMES[0], modelIndex: amapModelCount[0]++, waterLevel: null, positions: cpu.positions, indices: cpu.indices, normals: cpu.normals ?? null, matrix });
+      collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
+      tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: id });
+    } else console.warn('[interior] no card table stood: ' + (!gpu || !cpu ? `model ${id} is not in this ARCH3D` : !enter ? 'the room has no enter marker' : 'no clear floor near the entrance'));
   }
 
   // People (C1): AddPeople's data layer - base positions batch through

@@ -4,7 +4,8 @@
 // table, where its seats stand, and the eye a seated player looks from. The host (scenes/worldModes.js) hands in the
 // table's own box, its matrix and its world box, and a probe of its own collider; nothing here reads a mesh or the scene.
 //
-// THE TABLES ARE DAGGERFALL'S. No placed prop and no new mesh: a card table is a table model a tavern already stands.
+// THE TABLES ARE DAGGERFALL'S. No placed prop and no new mesh: a card table is a table model a tavern already stands -
+// save one, the owner's (GOTHWAY-TABLE, world/placedCardTable.js): a tavern in Gothway Garden stands one more of it.
 // FLAGGED: CARD_TABLE_MODELS holds the one ARCH3D id this tree can name as a table - 41130, "Table" in the vendored World of Daggerfall's model list (vendor/world-of-daggerfall/Scripts/LocationHelper.cs, its {"41130", "Table"} row). The tavern blocks' other tables are unmeasured: the container carries no ARENA2, and `node tools/cardTableCensus.mjs <arena2>` lists every furniture model the tavern interiors stand, with its count and its size, for Mac's eye.
 //
 // THE SEATS stand round the table's OWN box (its model's, turned by its matrix - AUDIT CARDS B6: a table turned off the

@@ -226,6 +226,7 @@ import { createCardTableDraw, cardMatrix } from '../render/cardTableDraw.js';   
 import { residentName } from '../systems/livingWorld/census.js';   // CARDS4: the tavern's regulars, named as the living world names its people
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
+import { isGothwayGarden } from '../systems/gothwayBoards.js';   // GOTHWAY-TABLE: its taverns stand a card table
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT, buildingClosedText } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours   // WORLD-HOVER: the closed sentence, not the two tables it is built from
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
@@ -7825,6 +7826,9 @@ export function createWorldModes(host) {
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
         hit.door.matrix, {
           voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible, baseEditable,
+          // GOTHWAY-TABLE (world/placedCardTable.js; the owner: "Put a table in gothway tavern"): a tavern in Gothway Garden
+          // - the first town out of Privateer's Hold - stands a card table of its own, whatever tables its block put there
+          placeCardTable: isTavern(building?.buildingType ?? BUILDING_TYPES.None) && isGothwayGarden(hit.dfLocation?.name),
           // RR2: Roleplay & Realism's variant keepers and residents (RoleplayRealism.cs:775-932) - the decision per person, with StaticNPC's own name seed and the location's climate
           variantPerson: (pn) => rrVariantPerson(pn, {
             buildingType: building?.buildingType ?? -1, quality: building?.quality ?? 0,
