@@ -423,7 +423,7 @@ test('AUDIT NAV1 (B14) NO SAVE MID-FIGHT: a boarding under way, or the player on
   h.host.setEnabled(false);
   assert.equal(h.host.saveRefused(), false, 'no sea');
   assert.match(WORLD, /if \(naval\?\.saveRefused\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'F9 and the checkpoints');
-  assert.match(WORLD, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\),/, 'the pause window greys its Save');
+  assert.match(WORLD, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\)( \|\| [^,\n]+)?,/, 'the pause window greys its Save');   // AUDIT CARDS-2 H1: a later refusal may join it (chips on a card table)
 });
 
 test('AUDIT NAV1 (B11) BACK AT THE HELM: her fate decided, "Leave her" pressed, or her going down under the fight - over my own rail and at my wheel (Come Sail Away\'s StartSailing); the back key and the scrim only shut her window, her deck still underfoot (mutants: the wheel never taken, Leave her a plain close)', async () => {

@@ -318,8 +318,8 @@
   {
     "name": "NAVB-B14-the-pause-around-it",
     "file": "src/scenes/world.js",
-    "old": "    savingPrevented: () => !!naval?.saveRefused?.(),",
-    "new": "    savingPrevented: () => false,",
+    "old": "    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.(),",
+    "new": "    savingPrevented: () => !!modes?.cardTableLive?.(),",
     "tests": [
       "test/navaudit_boarding.test.js"
     ]

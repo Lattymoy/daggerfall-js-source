@@ -7206,7 +7206,12 @@ have casting speed a new rarity affix along with scaling with speed"*.
   plays its spellcast group from "<type> start" to "<type> stop" at it
   (`fpArm.castSpell(rangeType, rate)`). OpenMW plays that group at 1.
 - **The castSpeed loot line** (`systems/lootRarity.js`, a proc kind after
-  every kind before it, so no other piece's draw moves): "+N% casting
+  every kind before it, so the numbers' pass draws as it did - the LAST
+  pass moved all the same: a jewel's proc pool was empty before it, a
+  weapon's one narrower, so a seeded hoard holding such a piece rolls on
+  from a moved stream; CAST-SPEED-PINS re-aimed the serpent hoard pins
+  that found this, `test/serpent1_client.test.js` and
+  `test/serpentset.test.js`): "+N% casting
   speed" on jewellery and weapons, 3-6 / 6-10 / 10-15, worth 60 a point,
   suffix words *of Quickening*, *of Alacrity*, *of the Swift Hand*.
   `systems/lootPowers.js` lootCastSpeed sums every worn line, the weapons

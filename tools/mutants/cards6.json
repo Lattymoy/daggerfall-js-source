@@ -1,0 +1,651 @@
+[
+  {
+    "name": "C6-stake-fields-anywhere",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o !== 'stake' && !noStake) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-stake-unchecked",
+    "file": "src/net/identityToken.js",
+    "old": "if (c.o === 'stake' && (!stakeOrderValid(c) ||",
+    "new": "if (c.o === 'stake' && (false ||",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-stake-any-room",
+    "file": "src/net/identityToken.js",
+    "old": "|| typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr)) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-void-any-kind",
+    "file": "src/net/identityToken.js",
+    "old": "valid: (c) => orderValid(c) && c.o === 'stake' });",
+    "new": "valid: (c) => orderValid(c) });",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-broke-with-chips",
+    "file": "src/net/cardReceipt.js",
+    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-why-any",
+    "file": "src/net/cardReceipt.js",
+    "old": "  if (!CARD_RECEIPT_WHY.includes(c.w)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-receipt-forever",
+    "file": "src/net/cardReceipt.js",
+    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-gold-or-not",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none",
+    "new": "  void stake;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-stake-any-size",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
+    "new": "  void HOLDEM_STAKE_MIN_BB;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-no-cashout",
+    "file": "src/net/holdemTable.js",
+    "old": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
+    "new": "  void seat;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-cashed-twice",
+    "file": "src/net/holdemTable.js",
+    "old": "  if (!seat?.stake || seat.cashed) return;",
+    "new": "  if (!seat?.stake) return;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-cashed-rejoins",
+    "file": "src/net/holdemTable.js",
+    "old": "    if (t.seats[mine].cashed) return 'cashed out';",
+    "new": "    void 0;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-folded-paid-whole",
+    "file": "src/net/holdemTable.js",
+    "old": "r: t.hand.seats[k].stack, w: t.hand.seats[k].stack > 0",
+    "new": "r: seat.stack, w: t.hand.seats[k].stack > 0",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-spent-unchecked",
+    "file": "server/src/index.js",
+    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) return { no: 'stake spent' };",
+    "new": "    void c;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-anyones-stake",
+    "file": "server/src/index.js",
+    "old": "    if (!v.ok || v.claims.s !== a.sub) return { no: 'stake refused' };",
+    "new": "    if (!v.ok) return { no: 'stake refused' };",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-stake-anywhere",
+    "file": "server/src/index.js",
+    "old": "    if (c.ct !== m.table || c.cb !== m.bb) return { no: 'stake elsewhere', back };   // this room's own, at another table or stakes",
+    "new": "    void back;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-refused-kept",
+    "file": "server/src/index.js",
+    "old": "const no = async (why) => { if (stake) await this._holdemReceipt(",
+    "new": "const no = async (why) => { if (false) await this._holdemReceipt(",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-void-twice",
+    "file": "server/src/index.js",
+    "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) { refuse('stake spent'); return; }\n    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
+    "new": "    await this.state.storage.put(stakeKeyOf(c.cj), nowS);",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-owed-forgotten",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(key, kept.slice(-HOLDEM_OWED_MAX));",
+    "new": "    void kept;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-ack-ignored",
+    "file": "server/src/index.js",
+    "old": "    if (left.length) await this.state.storage.put(key, left); else await this.state.storage.delete(key);",
+    "new": "    void left;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-cashouts-unsigned",
+    "file": "server/src/index.js",
+    "old": "    await this._holdemCashouts(tables);   // CARDS6",
+    "new": "    void tables;   // CARDS6",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-rejoin-asked-stake",
+    "file": "server/src/index.js",
+    "old": "      if (m.stake !== undefined && !back) {",
+    "new": "      if (m.stake !== undefined) {",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-no-debit",
+    "file": "server-account/src/cards.js",
+    "old": "(save) => (payFromSave(save, amount, region) ? null : 'realm-gold')",
+    "new": "(save) => null",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-repeat-twice",
+    "file": "server-account/src/cards.js",
+    "old": "  if (prior) return prior.status === 'held'",
+    "new": "  if (false) return prior.status === 'held'",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-any-buy-in",
+    "file": "server-account/src/cards.js",
+    "old": "amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || ",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-anyones",
+    "file": "server-account/src/cards.js",
+    "old": "  if (c.s !== player.id) return { error: 'cards-not-yours' };\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-short-refund",
+    "file": "server-account/src/cards.js",
+    "old": "  if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };",
+    "new": "  void 0;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-no-cap",
+    "file": "server-account/src/cards.js",
+    "old": "  if (c.r > Number(into?.n ?? 0)) return { error: 'cards-receipt', why: 'sum' };",
+    "new": "  void 0;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js",
+      "test/auditcards5_gold.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-other-character",
+    "file": "server-account/src/cards.js",
+    "old": "  if (row.char_id !== character) return { error: 'cards-other-character' };",
+    "new": "  void 0;",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-svc-no-credit",
+    "file": "server-account/src/cards.js",
+    "old": "(save) => (creditSave(save, c.r, { bank: home }) ? null : 'bad-gold')",
+    "new": "(save) => null",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-book-no-hold",
+    "file": "src/net/cardStakes.js",
+    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply:",
+    "new": "...(first ? {} : { apply:",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-book-repeat-pays",
+    "file": "src/net/cardStakes.js",
+    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0)",
+    "new": "if (Number.isSafeInteger(g) && g > 0)",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-book-not-kept-first",
+    "file": "src/net/cardStakes.js",
+    "old": "      write(CARD_STAKES_KEY, [...read(CARD_STAKES_KEY), { rid, room, table, bb, amount, c, reg, at: now(), ...(topup ? { topup: true } : {}), ...(place ? { place: String(place).slice(0, 80) } : {}) }]);\n",
+    "new": "",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-book-any-character",
+    "file": "src/net/cardStakes.js",
+    "old": "(x.c == null || x.c === character()) && !tried.has(x.j)",
+    "new": "!tried.has(x.j)",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/auditcards4_client.test.js",
+      "test/auditcards4_pins.test.js",
+      "test/auditcards4_tidy.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/cards6b_topup.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-book-void-at-once",
+    "file": "src/net/cardStakes.js",
+    "old": "t - x.at >= CARD_VOID_AFTER_MS",
+    "new": "true",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "C6-cashout-lost-on-leaving",
+    "file": "src/net/online.js",
+    "old": "(!primary && m.cashout === undefined)",
+    "new": "!primary",
+    "tests": [
+      "test/auditcards3_pins.test.js",
+      "test/auditcards3_relay.test.js",
+      "test/cards5_client.test.js",
+      "test/cards5_relay.test.js",
+      "test/cards6_client.test.js",
+      "test/cards6_law.test.js",
+      "test/cards6_relay.test.js",
+      "test/cards6_service.test.js",
+      "test/identitytoken.test.js"
+    ]
+  }
+]

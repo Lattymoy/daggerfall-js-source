@@ -75,6 +75,7 @@ import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
 import { HIT_FRAME_MELEE, MELEE_NUM_FRAMES } from '../characters/weaponStates.js';   // MW-PACE1: where in a blow its hit lands
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+import { seatTopOf } from '../player/seatPose.js';   // CARDS2b: the table's top the pose names
 import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, peerClimbing, peerMoving, PeerClimbTrack } from './peerClimb.js';   // HT-WAIST-BACK: the pace law, lifted - the walkers' lanterns swing off it too; CLIMB5: the climb's facing and pose
 
 
@@ -241,6 +242,15 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
  * written in place each frame. WB9h: `yaw` the body's own eased yaw
  * (the pose's when none), so no copy of the pose is made a frame.
  */
+/** CARDS2b: a seated peer's seat (`{ feet, yaw, top }` - the rig's thirdSeat poses it at the body's own race) at the
+ *  feet and facing the body is drawn at - kept while none of them moves (a sitter's pose stands still), rebuilt while
+ *  the arrival eases in or the seat changes. */
+export function seatFor(b, f, yaw, st) {
+  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;
+  if (b.seatKey !== key) { b.seatKey = key; b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: seatTopOf(st) }; }
+  return b.seatSpec;
+}
+
 export function peerCamera(shown, feet, speed = 0, cam = null, yaw = peerBodyYaw(shown)) {
   const c = cam ?? { pos: [0, 0, 0], yaw: 0, pitch: 0, sneaking: false, bob: [0, 0], move: { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false } };
   const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk
@@ -543,6 +553,9 @@ export class PeerBodies {
     b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw);
     // CLIMB6: the climb the body's limbs take - the hold rebuilt from the pose, a move from its kind, lip and time
     b.cam.climb = (b.climbTrack ??= new PeerClimbTrack()).input(peer.shown, f, b.yaw, this._now(), this._collider());
+    // CARDS2b: seated at a card table - the same seated request the sitter's own body takes (player/seatPose.js), at the
+    // table's top the pose names; rebuilt only when the seat moves
+    b.cam.seat = peer.shown.st ? seatFor(b, f, b.yaw, peer.shown.st) : null;
     b.inView = !this._planesOk || this._sees(b, turnLeadMargin(Math.sqrt(b.d2), this._turn));   // WB9h: in the last pass's view, with the margin a turning eye needs - MW-CROWD: led by the turn
   }
 

@@ -108,7 +108,10 @@ opened (SET2), in one module (`systems/lootPowers.js`):
 CAST-SPEED (2026-10-08, Mac: "have casting speed a new rarity affix") appended a sixth, after every kind before it:
 `castSpeed`, jewellery and weapons, suffix, 3-6 / 6-10 / 10-15, "+N% casting speed" - every worn line summed, the
 weapons in hand among them, at most 30%, onto the cast's rate (`systems/castSpeed.js`;
-`02-Formats/Morrowind-Rules.md` CAST-SPEED).
+`02-Formats/Morrowind-Rules.md` CAST-SPEED). Appended last keeps the numbers' pass where it was; the last pass itself
+moved (CAST-SPEED-PINS, 2026-10-08): a jewel's proc pool was empty before this kind, so a jewel whose chance hit now
+draws where it drew nothing, and a weapon's pick lands in a pool one wider - a seeded hoard holding such a piece rolls
+on from a moved stream. The serpent hoard pins found it on main after the merge and were re-aimed.
 
 A weapon's three are the weapon IN HAND's alone; a wearer's armour and jewellery sum, under the caps. Each answers MY
 entity alone, offline and online, and never a player (law 5). Names: `Burning Longsword of the Leech`, `Barbed
@@ -197,7 +200,7 @@ Exalted 10 and 2,000.
 
 **The codex.** Every Legendary record - and every Aetheric piece - a character has TAKEN is in its codex, with the day
 it was first found. The first find is said and heard (the HUD's line, the level-up's fanfare): *"Wyrmbane - a
-Legendary! It joins your codex."* The Codex window lists all thirty and the Aetheric sets: a found record's name,
+Legendary! It joins your codex."* The Codex window lists every Legendary record (thirty at LOOT10; the wardrobe's six and the Thunderlock since - AUDIT CARDS-5 R1) and the Aetheric sets - and so does the Holdings rail's Collections page (`11-Multiplayer/Tavern-Cards.md` section 26), the same rows and lines: a found record's name,
 lore, lines, power and where it is found; an unfound one's place and its hint (*"Said to be carried by the
 undead"*). It rides the character's save (a mod record).
 

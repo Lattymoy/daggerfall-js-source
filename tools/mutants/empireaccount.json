@@ -273,8 +273,8 @@
   {
     "name": "EMPIRE-ACCOUNT-market-wallet-branch",
     "file": "src/scenes/world.js",
-    "old": "        const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
-    "new": "        const account = playerEntity.bankAccounts[region] ?? null;",
+    "old": "    const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;",
+    "new": "    const account = playerEntity.bankAccounts[region] ?? null;",
     "tests": [
       "test/empireaccount.test.js"
     ]

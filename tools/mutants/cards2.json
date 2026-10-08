@@ -1,0 +1,507 @@
+[
+  {
+    "name": "CS-chair-a-table",
+    "file": "src/world/cardTables.js",
+    "old": "new Set([41130])",
+    "new": "new Set([41130, 41100])",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-spacing",
+    "file": "src/world/cardTables.js",
+    "old": "export const SEAT_SPACING = 0.75;",
+    "new": "export const SEAT_SPACING = 0.7;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-side-min-off",
+    "file": "src/world/cardTables.js",
+    "old": "(len < SEAT_SIDE_MIN ? 0 :",
+    "new": "(len <= SEAT_SIDE_MIN ? 0 :",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-no-seat-min-one",
+    "file": "src/world/cardTables.js",
+    "old": "Math.max(1, Math.floor(len / SEAT_SPACING))",
+    "new": "Math.floor(len / SEAT_SPACING)",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-seat-at-edge",
+    "file": "src/world/cardTables.js",
+    "old": "at: (t) => [x1 + SEAT_OUT, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
+    "new": "at: (t) => [x1, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-normal-outward",
+    "file": "src/world/cardTables.js",
+    "old": "at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: -1 },",
+    "new": "at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: 1 },",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-seats-at-the-ends",
+    "file": "src/world/cardTables.js",
+    "old": "const [lx, lz] = s.at((k + 0.5) / s.n);",
+    "new": "const [lx, lz] = s.at(k / s.n);",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-world-box-not-own",
+    "file": "src/world/cardTables.js",
+    "old": "  const box = table.box ?? aabb;",
+    "new": "  const box = aabb;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-matrix-ignored",
+    "file": "src/world/cardTables.js",
+    "old": "  const m = table.matrix ?? IDENTITY;",
+    "new": "  const m = IDENTITY;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-floor-at-top",
+    "file": "src/world/cardTables.js",
+    "old": "  const floorY = aabb.min[1], topY = aabb.max[1];",
+    "new": "  const floorY = aabb.max[1], topY = aabb.max[1];",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-standing-eye",
+    "file": "src/world/cardTables.js",
+    "old": "const eye = [p[0], floorY + SEATED_EYE_HEIGHT, p[2]];",
+    "new": "const eye = [p[0], floorY + 1.7, p[2]];",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-probe-ignored",
+    "file": "src/world/cardTables.js",
+    "old": "    if (!clear([midW[0], eye[1], midW[2]], eye)) continue;",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-probe-from-the-floor",
+    "file": "src/world/cardTables.js",
+    "old": "if (!clear([midW[0], eye[1], midW[2]], eye)) continue;",
+    "new": "if (!clear([midW[0], floorY, midW[2]], eye)) continue;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-turned-to-the-middle",
+    "file": "src/world/cardTables.js",
+    "old": "      yaw: yawToward(p[0], p[2], q[0], q[2]),",
+    "new": "      yaw: yawToward(p[0], p[2], midW[0], midW[2]),",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-pitch-level",
+    "file": "src/world/cardTables.js",
+    "old": "      pitch: Math.atan2(topY - eye[1], Math.hypot(midW[0] - eye[0], midW[2] - eye[2])),",
+    "new": "      pitch: 0,",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-top-of-floor",
+    "file": "src/world/cardTables.js",
+    "old": "feet: [p[0], floorY, p[2]], top: topY - floorY, eye,",
+    "new": "feet: [p[0], floorY, p[2]], top: topY, eye,",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-yaw-backwards",
+    "file": "src/world/cardTables.js",
+    "old": "export const yawToward = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);",
+    "new": "export const yawToward = (x, z, tx, tz) => Math.atan2(tz - z, tx - x);",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-one-seat-a-table",
+    "file": "src/world/cardTables.js",
+    "old": "if (kept.length < HOLDEM_SEATS_MIN) return [];",
+    "new": "if (kept.length < 1) return [];",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-no-cap",
+    "file": "src/world/cardTables.js",
+    "old": "if (kept.length <= HOLDEM_SEATS_MAX) return kept;",
+    "new": "return kept;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-cap-first-six",
+    "file": "src/world/cardTables.js",
+    "old": "for (let k = 0; out.length < HOLDEM_SEATS_MAX; k++) for (const q of queues) if (q[k] && out.length < HOLDEM_SEATS_MAX) out.push(q[k]);",
+    "new": "out.push(...kept.slice(0, HOLDEM_SEATS_MAX));",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-taken-radius",
+    "file": "src/world/cardTables.js",
+    "old": "export const SEAT_TAKEN_RADIUS = 0.3;",
+    "new": "export const SEAT_TAKEN_RADIUS = 0.35;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-taken-by-height",
+    "file": "src/world/cardTables.js",
+    "old": "feet.some((f) => Math.hypot(f[0] - s.x, f[2] - s.z) <= SEAT_TAKEN_RADIUS)",
+    "new": "feet.some((f) => Math.hypot(f[0] - s.x, f[1], f[2] - s.z) <= SEAT_TAKEN_RADIUS)",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-taken-ignored",
+    "file": "src/world/cardTables.js",
+    "old": "    if (busy.has(i)) return;",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-farthest-seat",
+    "file": "src/world/cardTables.js",
+    "old": "if (d < bestD) { best = i; bestD = d; }",
+    "new": "if (!(d <= bestD) || best < 0) { best = i; bestD = d; }",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-table-top-a-floor",
+    "file": "src/world/cardTables.js",
+    "old": "down >= SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX",
+    "new": "down > SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-drop-a-floor",
+    "file": "src/world/cardTables.js",
+    "old": "&& down <= SEAT_FLOOR_PROBE;",
+    "new": "&& down < SEAT_FLOOR_PROBE;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-jump-sits",
+    "file": "src/world/cardTables.js",
+    "old": "|| mv?.right || jump",
+    "new": "|| mv?.right",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-stick-ignored",
+    "file": "src/world/cardTables.js",
+    "old": "Math.hypot(Number(mv.analog.x) || 0, Number(mv.analog.y) || 0) > SEAT_STICK_LEAVE",
+    "new": "false",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-sit-far-out",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEAT_OUT = 0.35;",
+    "new": "export const SEAT_OUT = 0.45;",
+    "tests": [
+      "test/cards2_seat.test.js",
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "CS-census-any-building",
+    "file": "tools/cardTableCensus.mjs",
+    "old": "      if (b.buildingTypes[r] !== BUILDING_TYPES.Tavern) return;",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-census-any-type",
+    "file": "tools/cardTableCensus.mjs",
+    "old": "if (o.objectType !== PROP_MODEL_TYPE || o.modelIdNum",
+    "new": "if (o.modelIdNum",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-census-blocks-counted",
+    "file": "tools/cardTableCensus.mjs",
+    "old": "row.count++; row.blocks.add(b.name);",
+    "new": "row.count++; row.blocks.add(`${b.name}:${row.count}`);",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-ctx-no-tables",
+    "file": "src/scenes/interiorContext.js",
+    "old": "tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }",
+    "new": "}",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-any-building",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!cardSeat && inTavern()) interiorCtx.tables?.forEach((t, i) => {",
+    "new": "    if (!cardSeat) interiorCtx.tables?.forEach((t, i) => {",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-target-while-seated",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!cardSeat && inTavern()) interiorCtx.tables?.forEach((t, i) => {",
+    "new": "    if (inTavern()) interiorCtx.tables?.forEach((t, i) => {",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-seatless-table",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (cardSeatsOf(i).length) targets.push({ key: `cardtable:${i}`",
+    "new": "      targets.push({ key: `cardtable:${i}`",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-press-dead",
+    "file": "src/scenes/worldModes.js",
+    "old": "        sitAtCardTable(Number(key.split(':')[1]));   // CARDS2",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-press-sits-on",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardSeat) { standFromCardTable(); return true; }   // CARDS2",
+    "new": "    // CARDS2",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-step-sits-on",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromCardTable();",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-autorun-walks-off",
+    "file": "src/scenes/worldModes.js",
+    "old": "leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)",
+    "new": "leavesSeat(mv, jumpHeld || swingKey)",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-swing-key-sits-on",
+    "file": "src/scenes/worldModes.js",
+    "old": "leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)",
+    "new": "leavesSeat(mv, jumpHeld || !!player.toggleAutorun)",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-swing-button-swings",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-eye-standing",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-third-person",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-seat-outlives-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "    standFromCardTable();   // CARDS2: and nobody stays seated in a room they left",
+    "new": "    // CARDS2: and nobody stays seated in a room they left",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-seat-outlives-forced-exit",
+    "file": "src/scenes/worldModes.js",
+    "old": "        standFromCardTable({ cashOut: !load });   // CARDS2b (AUDIT CARDS B1): the forced road out",
+    "new": "        // CARDS2b (AUDIT CARDS B1): the forced road out",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-seat-into-new-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "      standFromCardTable();   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet - CARDS4: and an old table's chips come home\n      interiorBuilding = building;",
+    "new": "      interiorBuilding = building;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-stand-keeps-seat",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!cardSeat) return;\n    cardSeat = null;\n",
+    "new": "    if (!cardSeat) return;\n",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-stand-keeps-eye",
+    "file": "src/scenes/worldModes.js",
+    "old": "    cardSeat = null;\n    cam.pos = player.eyeAt();   // EV1: back to the body's own eye",
+    "new": "    cardSeat = null;\n    // EV1: back to the body's own eye",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-taken-ignored",
+    "file": "src/scenes/worldModes.js",
+    "old": "nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));",
+    "new": "nearestFreeSeat(seats, player.pos[0], player.pos[2]);",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-world-box",
+    "file": "src/scenes/worldModes.js",
+    "old": "(t.seats ??= cardTableSeats(t, seatProbe))",
+    "new": "(t.seats ??= cardTableSeats({ aabb: t.aabb }, seatProbe))",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-walls-ignored",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!(len > 0) || c.raycast(from, [d[0] / len, d[1] / len, d[2] / len], len) < len) return false;",
+    "new": "    if (!(len > 0)) return false;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-floor-ignored",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return seatFloorOk(c.raycast(to, [0, -1, 0], SEAT_FLOOR_PROBE));",
+    "new": "    return true;",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-looks-away",
+    "file": "src/scenes/worldModes.js",
+    "old": "    cam.yaw = seats[k].yaw;\n    cam.pitch = seats[k].pitch;",
+    "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-eye-over-death",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos",
+    "new": "if (mode === 'interior' && cardSeat) cam.pos",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-pose-outdoors",
+    "file": "src/scenes/worldModes.js",
+    "old": "    seatPose: () => (mode === 'interior' && cardSeat ?",
+    "new": "    seatPose: () => (cardSeat ?",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  }
+]

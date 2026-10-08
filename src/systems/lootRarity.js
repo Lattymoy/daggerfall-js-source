@@ -556,8 +556,11 @@ export const AFFIX_KINDS = Object.freeze({
   dry:    Object.freeze({ slot: 'prefix', groups: CLOTHING_GROUPS, params: null, survival: true,
     word: (band) => DRY_PREFIX[band], label: (a) => `${a.value}% weatherproof` }),
   // CAST-SPEED (2026-10-08, Mac: "have casting speed a new rarity affix"): A LINE THAT DOES SOMETHING, after every kind
-  // before it so no other piece's draw moves - the casting hands run that much faster (systems/castSpeed.js, summed and
-  // capped by systems/lootPowers.js). Jewellery's and a weapon's, so a caster who may wear no armour still finds it.
+  // before it so the numbers' pass draws as it did - the casting hands run that much faster (systems/castSpeed.js,
+  // summed and capped by systems/lootPowers.js). Jewellery's and a weapon's, so a caster who may wear no armour still
+  // finds it. THE LAST PASS MOVED ALL THE SAME (CAST-SPEED-PINS, 2026-10-08): a jewel's proc pool was EMPTY before this
+  // kind, so a jewel whose chance hit drew nothing more and now draws the kind and its band; a weapon's pick lands in a
+  // pool one wider. A seeded hoard holding such a piece rolls on from a moved stream (the serpent hoard pins moved).
   castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
     word: (band) => CAST_SPEED_SUFFIX[band], label: (a) => `+${a.value}% casting speed` }),
 });

@@ -113,6 +113,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
+import { REGULAR_HEAD_M as CARD_REGULAR_HEAD_M } from '../world/cardRegulars.js';   // CARDS4b: a seated regular's line over his head
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
 import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
@@ -282,6 +283,8 @@ import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';
 import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
+import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay in Gothway Garden, and the flowers laid at it
+import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: its town, its spot off the town's navgrid, and the people's navgrid carved round it
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/profItems.js';   // PROF1: a Stores material as DFU's own item
@@ -290,6 +293,7 @@ import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   //
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
+import { createCardStakes } from '../net/cardStakes.js';   // CARDS6: a realm character's card stakes
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
@@ -664,7 +668,7 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
@@ -1431,6 +1435,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const locationIndex = new Map();
   let bountyFarms = null;   // BOUNTY-FARM: the farm pool, made beside the bounty pack's stander; read late (a transition, a load, the frame)
   let quays = null;   // QUAYS: the harbours' quays (scenes/quayPool.js), made beside the farms; read late (a transition, a load, the frame)
+  let lefay = null;   // LEFAY1: the monument to Julian LeFay (scenes/lefayMonumentHost.js), made beside the Sigil Broker; read late (a transition, a load, the frame)
   const _bountyFarmLocs = [];   // BOUNTY-FARM: the game's own farmsteads - the nearest lends a farm bounty its buildings
   const _bountyDungeonPixels = new Map();   // BOUNTY1: the game's own dungeons, by pixel -> name, for a board's underground hunts
   const _bountyGraveyardPixels = new Set();   // BOUNTY-GRAVEYARD: the game's own graveyards, by pixel - a board's hunt there stands outside
@@ -1718,6 +1723,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // PROF5 (bible/06-Systems/Professions-Arc.md 26): the market's book - the Market tab's reads through a minute's cache,
   // a piece listed, bought, cancelled back or collected KEPT before it is asked (net/marketBook.js). Its answers tell the
   // Marks book the balance. Online only.
+  /** GOLD-MARKET / CARDS6: a realm character's wallet at `region` - the purse, its letters, then that region's account
+   *  (realmGoldLaw payFromSave; court.js deductGold), as the record's gold pays and is paid. */
+  const realmWallet = realmSession ? (region) => {
+    playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+    const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
+    return {
+      gold: () => totalGoldAmount(playerEntity) + Math.max(0, account?.accountGold ?? 0),
+      // MARKET-AUDIT: and its undo - exactly what it took back where it was (court.js deductGoldUndoable); a refusal's
+      // `credit` of the whole cost turned letters and the bank's gold into purse coins
+      pay: (n) => payUndoable(playerEntity, n, account),
+      credit: (n) => addGold(playerEntity, n),
+      // collected: into that region's account, the purse where there is none (realmGoldLaw creditSave's `bank`)
+      bank: (n) => { if (account) account.accountGold = (Number.isFinite(account.accountGold) ? account.accountGold : 0) + n; else addGold(playerEntity, n); },
+    };
+  } : null;
   const marketBook = params.has('online')
     ? createMarketBook({ door: accountMarket({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
       character: () => characterIdOf(playerEntity), now: () => Date.now() + _sharedOffsetMs, marks: marksBook,
@@ -1727,19 +1747,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // checkpointed first (realmSaves.js realmGoldAct) - and the save's gold as the record's pays at the BOARD's region: the purse, its letters,
       // then that region's account (realmGoldLaw payFromSave; court.js deductGold). MARKET-ANY: a pack's piece moves it too; one this game will not hold ends the session
       realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }), abandon: (why) => realmSession.abandon(why) } : null, goods: realmSession ? { receive: (rec) => marketGoods.receive(rec) } : null,
-      wallet: realmSession ? (region) => {
-        playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
-        const account = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT: the Empire's account
-        return {
-          gold: () => totalGoldAmount(playerEntity) + Math.max(0, account?.accountGold ?? 0),
-          // MARKET-AUDIT: and its undo - exactly what it took back where it was (court.js deductGoldUndoable); a refusal's
-          // `credit` of the whole cost turned letters and the bank's gold into purse coins
-          pay: (n) => payUndoable(playerEntity, n, account),
-          credit: (n) => addGold(playerEntity, n),
-          // collected: into that region's account, the purse where there is none (realmGoldLaw creditSave's `bank`)
-          bank: (n) => { if (account) account.accountGold = (Number.isFinite(account.accountGold) ? account.accountGold : 0) + n; else addGold(playerEntity, n); },
-        };
-      } : null })
+      wallet: realmWallet })
+    : null;
+  // CARDS6 (bible/11-Multiplayer/Tavern-Cards.md section 23): a realm character's card stakes - the buy-in the service
+  // holds for a relay's gold table, the relay's cash-out receipts kept and claimed back into the record (net/cardStakes.js)
+  const cardStakes = params.has('online') && realmSession
+    ? createCardStakes({ door: accountCards({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
+      realm: { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) }, wallet: realmWallet,
+      character: () => characterIdOf(playerEntity), region: () => _questRegionIndex(), now: () => Date.now() + _sharedOffsetMs })
     : null;
   // PROF6 (bible/06-Systems/Professions-Arc.md 28): the writs' book - a guild writ posted, supplied, withdrawn; a
   // commission posted, filled (the piece KEPT before it is asked), cancelled, declined; the guild Stores (net/writBook.js).
@@ -3033,6 +3048,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
    *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
   let familyStreet = null, familyRoom = null;
+  /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/cardRegulars.js) - stood by the interior host each frame on layers of
+   *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
+  let cardRegularBodies = null, _cardBarks = [];
   const makeFamilyBodies = () => createFamilyBodies({
     dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
     bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
@@ -4991,6 +5009,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let arenaOrigin = null;   // ARENA2: the colosseum's block's origin (pixel-local) - the city floor's frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
+    let lefaySpot = null;    // LEFAY1: Gothway Garden's monument - its spot in the location frame (world/lefayMonument.js lefaySpot), null in any other town
     let personBatches = null;
     let locBlocks = null;    // T3d: the layout blocks for the Where-is directory
     let homeTown = 0;        // HOME-LOOK: the town's map id, and its homes as heard at the build
@@ -5009,6 +5028,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32: WorldDataVariants' last key is THIS location's before its blocks are read - DFU reads the DFLocation right before RMBLayout (MapsFile.cs:999 sets it); the boot index here read every location and left the key on the last
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
+      if (isLefayTown(dfLocation)) lefaySpot = lefaySpotOf(loc);   // LEFAY1: the open ground nearest the town's middle, off its own navgrid
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
       // T3d: EVERY location pixel keeps its origin (the population
@@ -5318,6 +5338,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
+        if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {
@@ -5798,6 +5819,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _bed: bed,   // WATER-NEXT 2: the bed, for the cap's re-index (dwWaterSurface) and its re-carve (dwRecarve)
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
+      lefay: lefaySpot,   // LEFAY1: the monument's spot, location frame (locOrigin + its x, z) - null off Gothway Garden
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
@@ -9538,16 +9560,42 @@ export async function bootWorld(canvas, renderer, params, status) {
       points.push({ x: at.x, y: at.y, text: l.text, name: livingRelations.known(id) ? firstNameOf(l.person.nameNPC) : null, who: key, kind: 'talk', distance: d });
     }
   }
+  /** CARDS4b: the card table's regulars' lines (world/cardRegulars.js regularBark) as the crew layer's points - over each
+   *  seated head, within the crew's range, in front of the eye. */
+  function cardBarkPoints(proj, view, eye, w, h, rect) {
+    const points = [];
+    for (const b of _cardBarks) {
+      const over = [b.feet[0], b.feet[1] + CARD_REGULAR_HEAD_M, b.feet[2]];
+      const d = Math.hypot(over[0] - eye[0], over[1] - eye[1], over[2] - eye[2]);
+      const at = projectToScreen(over, w, h, proj, view, rect);
+      if (d > CREW_SAY_RANGE || !at.front) continue;
+      points.push({ x: at.x, y: at.y, text: b.text, who: `card:${b.id}`, kind: 'talk', distance: d, name: firstNameOf(b.name) });
+    }
+    return points;
+  }
+  /** CARDS4b: the regulars' lines alone, the living world off (no room's talk shares the layer). AUDIT CARDS-3 B8: the
+   *  layer is told once more when the last line ends - an early return kept "Ralf: I'll see that." on the screen for
+   *  good, in every room after. */
+  let _cardBarksShown = false;
+  function cardBarkLines(proj, view, eye, dt) {
+    if (!_cardBarks.length && !_cardBarksShown) return;
+    _cardBarksShown = _cardBarks.length > 0;
+    const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    drawCrewLines(covered ? [] : cardBarkPoints(proj, view, eye, w, h, worldViewportRect(w, h)), { covered, dt: gamePaused() ? 0 : dt, scale: enhancedHudScale() });
+  }
   /** LW8b (bible/06-Systems/Living-World.md "LW8b"): THE ROOM'S TALK - the lines of the residents in the building the
    *  player is in (scenes/livingIndoors.js speech: a table's circle's, a word to the player), through the interior's own
    *  matrices, on the crew's one layer by its range, sight and names. The building mode's HUD pass calls it
    *  (`host.livingSpeech`); nothing before the living world has stood a room. */
   function livingRoomLines(proj, view, eye, dt = 0) {
+    if (!livingIndoors && typeof document !== 'undefined') { cardBarkLines(proj, view, eye, dt); return; }   // CARDS4b: a card table's regulars talk with the living world off too
     if (!livingIndoors || typeof document === 'undefined') return;
     const covered = townTalk.overlayActive || gamePaused() || !!townTalk.hudHidden || _mode() !== 'interior';
     const points = [];
     if (!covered) {
       const w = canvas.clientWidth, h = canvas.clientHeight, rect = worldViewportRect(w, h);
+      points.push(...cardBarkPoints(proj, view, eye, w, h, rect));   // CARDS4b: the regulars' play over their seated heads, with the room's talk
       for (const l of livingIndoors.speech(eye)) {
         const id = l.person.living?.id;
         if (!id || !l.person.pos) continue;
@@ -9992,6 +10040,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => wagonHoverName(key),
     (key) => hcc.hoverName(key),   // HCC: the horse by its name (HorseNameTooltipController's HorseTargetLabel), the wagon, a peer's by whose it is
     (key) => csaHoverName(key),   // CSA-D: a boat, by its hull's name
+    // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; after the Sigil Broker's and the
+    // rite's (WB12d holds those two together) and before another player's (PEER-PLAQUE1's, the array's last): its press
+    // is the street's (worldModes.tryEnter, the ladder's last family), and it answers its own key alone
+    (key) => lefay?.hoverName(key) ?? null,
     // PEER-PLAQUE1: another player, by the session's own name - the port's
     // own family (DFU has no other players), so it sits with the cart and
     // the camps ABOVE the mod's switch, as the names over heads already do.
@@ -12973,6 +13025,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
     bountyFarms?.destroyAll();   // BOUNTY-FARM: the frame moves under it - it stands again from the bounty, in the new one
     quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one
+    lefay?.destroyAll();   // LEFAY1: and the monument - stood again the next frame that finds Gothway Garden built
     riteHost?.destroyAll();   // WB12d: and the faithful's circle - its faithful went with the live pools; it stands again the next frame
     csaReanchor(state.initOffset);   // FIELD-CSA1: and every placed boat with it
     // AUDIT ENVIRONS I2: AND THE SNOW, THE WIND AND THE HAZE, by the same move. Each keeps scene places a recentre
@@ -14302,6 +14355,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT NAV1 (B14): nor in a boarding or on a ship of the sea's deck - the sea is never a save's, and the load set the
     // player over open water, the ship and her prize gone
     if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
+    // AUDIT CARDS-2 H1: nor with chips on a card table - the purse is short the buy-in and the chips are in no save
+    if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
@@ -14840,6 +14895,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         droppedTorches.restore(restandAt('position')(w.droppedTorches), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
         bountyFarms?.destroyAll();   // BOUNTY-FARM: a load - the farms stand again from the loaded bounties
         quays?.destroyAll();   // QUAYS: and the quays, off the harbours found again
+        lefay?.destroyAll();   // LEFAY1: and the monument - its collider down, stood again off the loaded world (a flower in the air lands nowhere: thrown before the restore - AUDIT LEFAY1 B1)
         camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back
         camps.restore(restandAt('pos')(w.camps), campFromNatives);   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
@@ -16216,7 +16272,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickSave: worldQuickSave,
     quickLoad: worldQuickLoad,
     relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
-    savingPrevented: () => !!naval?.saveRefused?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it
+    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
     // ONLINE-LOAD1: this host's own live-session flag (`online`,
     // not `onlineOn` - see worldQuickLoad's own header for why),
     // for the enhanced Load pane (enhancedMenu.js paneLoad) to
@@ -20192,6 +20248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onHoldem = (f) => modes?.cardOnlineFrame?.({ ...f, at: performance.now() });   // CARDS5: the relay's card table, to the room's host - AUDIT CARDS-3 D1: on the cloth's clock (the session's own `now` is the epoch's)
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
@@ -23554,6 +23611,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     open: openBroker,
     gone: () => closeBrokerDoor(),   // midnight took her from under her open window: it is shut, and she says so
   }) : null;
+  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - in the middle of Gothway Garden, where its
+  // pixel's build found open ground (`p.lefay`, the location frame), carried by the live floating-origin translation;
+  // the flowers a press throws there laid in the character's own pile (systems/save.js carries it)
+  const _lefayT = [0, 0, 0], _lefaySite = [0, 0, 0];
+  lefay = createLefayMonument({
+    renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
+    site: () => {
+      if (_mode() !== 'exterior') return null;
+      for (const p of built.values()) {
+        if (!p.lefay || !p.locOrigin) continue;
+        const t = state.pixelTranslation(p.px, p.py, _lefayT);
+        _lefaySite[0] = t[0] + p.locOrigin[0] + p.lefay.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.lefay.z;
+        _lefaySite[2] = state.compensation[1];   // AUDIT LEFAY1 C2: a vertical recentre re-reads its ground
+        return _lefaySite;
+      }
+      return null;
+    },
+    groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the Broker's cage stands on (no ground: its pixel not built)
+    eye: () => cam.pos, feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
+    sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
+    restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
+  });
   /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's
   // one memo, which the look's map question shares, so the compass (every street frame) and the held map's poll never
@@ -25770,6 +25851,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
   const _peerHeights = new Map();   // AUDIT WORLD6b-ii C5: a peer's height is the peer's - the doll answers 0 while it is not standing (a slot churn, a load), and the aim point flickered with it
+  /** CARDS2b (AUDIT CARDS B3): the seated feet of the players in my room I can see, in this room's scene - the card
+   *  tables' taken seats. peersNear's own walk and gates; its row is pinned whole, so the seat reads the peers itself. */
+  const seatedPeerFeet = () => {
+    if (!online || !online.room || online.status !== 'open') return [];
+    const out = [];
+    for (const p of online.peers.values()) if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));
+    return out;
+  };
   const peersNear = ({ presenceOnly = false } = {}) => {
     if (!online || !online.room || online.status !== 'open') return null;
     const out = [];
@@ -26375,6 +26464,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
       : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
     sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1
+    // CARDS2b: seated at a card table, the pose is the SEAT's - the feet and the facing the body is drawn at (the capsule
+    // stands where it sat down from), in the room's frame like any point; `st` rides the arm below
+    const seated = modes?.seatPose?.() ?? null;
+    if (seated) { const w = sceneToOnline(seated.feet); pose.x = w[0]; pose.y = w[1]; pose.z = w[2]; pose.yaw = seated.yaw; }
     // ONLINE-MVFLICKER1 (Discord, 2026-09-18: "walking animation doesn't
     // complete, comes through only halfway"): `moved` used to be this
     // single frame's own delta, sent whichever frame the throttle below
@@ -26448,6 +26541,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       lt: torchPoseByte(playerEntity),   // PEERLIGHT1: my lit torch/lantern/candle, so it lights the others' world around me - absent while nothing burns
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
+    if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
@@ -26714,6 +26808,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
+    cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
+    cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),
@@ -26763,6 +26860,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     csaActivationPick: (eye, dir) => csaActivationPick(eye, dir),   // CSA-D: ...and the one ray on it, in the building's or the dungeon's ladder
     csaActivate: (pick) => csaActivate(pick),
     livingBillboards: () => (livingIndoors?.batches() ?? []),   // LW8: the residents inside, on the building's own pass
+    cardRegularBillboards: () => cardRegularBodies?.batches() ?? [],   // CARDS4b: the card table's regulars, on the building's pass beside them
+    drawCardRegulars: ({ proj, view, eye }) => cardRegularBodies?.draw(canvas, { proj, view, eye }),   // CARDS4b: their bodies, after the peers'
+    cardRegulars: (list, dt, eye) => {
+      if (!list?.length) { if (cardRegularBodies) { cardRegularBodies.destroy(); cardRegularBodies = null; } _cardBarks = []; return; }   // AUDIT CARDS-3 B10: its doll textures with it
+      cardRegularBodies ??= makeFamilyBodies();
+      cardRegularBodies.begin();
+      for (const m of list) cardRegularBodies.stand(m.res, m.feet, m.yaw, false, m.st);
+      cardRegularBodies.end(dt, eye);
+      _cardBarks = list.filter((m) => m.say).map((m) => ({ id: m.res.id, name: m.res.name, feet: m.feet, text: m.say }));
+    },
     livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),   // LW8: ...and the street's own talk ray on them
     livingSpeech: ({ proj, view, eye, dt }) => livingRoomLines(proj, view, eye, dt),   // LW8b: ...and what they say, over their heads
     csaDrawWindWidget: () => csaDrawWindWidget(),   // CSA-E: the wind widget over a mode's HUD
@@ -27435,6 +27542,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       return out;
     },
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
+    monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    activateMonument: (key, mode, verb) => lefay?.activate(key, mode, verb) ?? false,   // LEFAY1: read it, or throw it a flower
     boardTargets: () => {
       const out = [];
       for (const p of built.values()) {
@@ -30021,7 +30130,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // (0x7d1), not a frame-tail chore.
     if (restoresSoFar() !== _portalRestores) { _portalRestores = restoresSoFar(); portalGates.clear(); }   // PORTAL1: A LOAD ENDS EVERY PORTAL STANDING - asked at the one door every load passes (save.js restorePlayer: the world's, a classic import, a dungeon's own), so no branch of any load keeps one (AUDIT PORTAL1 U9); the save's pack is the truth
     if (_bootLoaded) { const gift = takePortalGiftNotice(); if (gift) townTalk.say(PORTAL_TEXT.gift(gift)); }   // PORTAL-GIFT: the stones a load gave, said once the world stands - every load's (the boot's, F9's, a dungeon's own), in every mode
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ if (_torchesMode === 'exterior') { closeBrokerDoor(); sigilBroker?.destroyAll(); }   /* AUDIT SET W2: the street left (the gate's court entered under the veil's 1.2 s, an interior, a travel) - her window shut and her post down, never carried in */ portalGates.forgetSteps(); _torchesMode = _mode(); }   // HT1; PORTAL1: the step forgotten at every change of place
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ if (_torchesMode === 'exterior') { closeBrokerDoor(); sigilBroker?.destroyAll(); }   /* AUDIT SET W2: the street left (the gate's court entered under the veil's 1.2 s, an interior, a travel) - her window shut and her post down, never carried in */ if (_torchesMode === 'exterior') lefay?.destroyAll();   /* LEFAY1: the monument's collider down, never carried in */ portalGates.forgetSteps(); _torchesMode = _mode(); }   // HT1; PORTAL1: the step forgotten at every change of place
     if (modes.frame(dt, now)) {
       if (_wodInside) { _wodInside = false; _wodArrival = wodArrivalOf([]); }   // WOD6: inside - the arrival's markers meet Start on the way out, from the player
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
@@ -31414,6 +31523,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
+    try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: the monument stood where Gothway Garden is built, its flowers in flight and laid
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
@@ -31494,6 +31604,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
+    lefay?.draw(renderer);   // LEFAY1: the monument to Julian LeFay
     if (csaOn()) csa.draw(renderer);   // CSA-B: the boats - the hulls, the classic models their helpers stand, the baked sails
     // SERPENT1: the sea serpent's body with the opaque world, before the sea's top (its humps break it, the rest shows
     // dark through it); its frame made once here, its sea's marks drawn from it after the sea
@@ -31998,6 +32109,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     portalGates.tick(_mode() === 'exterior' && walkMode && playerSpawned ? player.feetAt() : null, { hold: portalHoldNow });   // PORTAL1: the portals run out, and a step in is an arrival - indoors nobody steps in
     if (_mode() === 'exterior') livePersonBatches.push(...portalGates.batches());   // PORTAL1: the vortexes on the flats' axis
     if (sigilBroker && _mode() === 'exterior') livePersonBatches.push(...sigilBroker.batches());   // SET7: the Broker on the flats' axis, as a foe stands
+    if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
     if (riteHost && _mode() === 'exterior') { riteHost.tick(dt); livePersonBatches.push(...riteHost.batches()); }   // WB12d: the braziers' flames and the faithful's fire
     // HCC: the horse billboards on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
     if (hcc.enabled && _mode() === 'exterior') livePersonBatches.push(...hcc.batches());

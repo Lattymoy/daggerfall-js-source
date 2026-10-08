@@ -99,6 +99,6 @@ test('RUN-IN-PLACE: one home - the drawn pose the play-out makes is the one ever
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;/, 'the sender\'s hold IS the watcher\'s - one literal, net/online.js (AUDIT 637 D7)');
   const climb = readFileSync(new URL('../src/net/peerClimb.js', import.meta.url), 'utf8');
-  assert.match(climb, /export const peerMoving = \(shown\) => !!shown\?\.mv && !peerClimbing\(shown\);/, 'a body strides off the drawn pose\'s mv');
+  assert.match(climb, /export const peerMoving = \(shown\) => !!shown\?\.mv && !peerClimbing\(shown\) && !shown\?\.st;/, 'a body strides off the drawn pose\'s mv');   // PIN MOVED (AUDIT CARDS C5): and never seated
   assert.ok(PEER_TIMEOUT_MS > SHOWN_MOVE_HOLD_MS * 100);
 });

@@ -182,8 +182,8 @@
   {
     "name": "CLIMB5-peer-walks-on-the-wall",
     "file": "src/net/peerClimb.js",
-    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown);",
-    "new": "export const peerMoving = (shown) => !!shown?.mv;",
+    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;",
+    "new": "export const peerMoving = (shown) => !!shown?.mv && !shown?.st;",
     "tests": [
       "test/climb5.test.js"
     ]
