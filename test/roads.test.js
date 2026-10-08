@@ -209,7 +209,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   const fs = await import('node:fs');
   const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
   assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
-  assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
+  assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads, sites, climates \}\)/, 'and hands it to the kernel on every job');   // LANDFORM4: beside the sites
   const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
   assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 6,   // LANDFORM1-3: and the three paths a promotion's grid takes here - its ghost rows are cut along the same network

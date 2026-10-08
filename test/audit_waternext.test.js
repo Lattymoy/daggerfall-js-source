@@ -100,7 +100,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel');
   assert.match(w, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');
-  assert.match(w, /roads: terrainGen\.roads\(\), bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'the restride asks the kernel');
+  assert.match(w, /roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'the restride asks the kernel');   // LANDFORM4/6: beside the landforms' sites and climates
 });
 
 test('AUDIT WATER-NEXT H1: Deep Waters\' cap carves the bed - a tile it repaints is ground and a tile it clips votes dry, the bed carved again from the grid as it stood when the cap\'s TileMap lands or lifts (mutants: no re-carve; the build\'s bytes kept; a clipped tile carved under the mod\'s floor)', () => {

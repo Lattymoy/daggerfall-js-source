@@ -35,6 +35,19 @@ one at a time. Six paid, two are recorded and left as they stand:
   position where DFU's GPS stands at the door. It waits on the reporter's save. The abandon-a-quest suggestion is not
   DFU's and was not taken.
 
+**2026-10-07 - AUDIT LANDFORMS III.** Mac: *"Audit this. Must be perfection"*, of LANDFORM4-6 - a town standing in its
+land, the rolling hills, the land each climate wears. Four independent adversarial lenses on the frozen head (the
+shaper's math and determinism, every reader and online, the tests' and the record's honesty, the real map's body and
+cost), every one on the freeware ARENA2 in scratch, and this session's own. Paid: the town pull stood walls at the beach
+round coastal towns - 85 pixels over 50 m past DFU's own step, 149 m beside Penwold - and a pull up is eased over the
+knee now (A1: 0 over 5 m); the hills stood rivers on embankments, 77 m over their banks at worst, while the moved pins
+hid it - a river cuts its valley now (C1); the mountain woods sat 13-18 m low on a stale centre - every land centred on
+its own field (A2); a client whose town pack failed stood the wild ground round 3,360 towns up to 120 m off its room's -
+the sites are MAPS.BSA's rows on every client (B1); the sea was counted twice under coastal towns and six stood under the beach line - a level is its land's (D4); the ground asked engine-approximated Math.cos and Math.exp - series
+of correctly rounded steps now (A8). Lens C's 15 surviving mutants pinned or proven equivalent; the record's stale
+sentences corrected (A3, R1-R10); a big town on a steep mountainside left for Mac (C7), and a WATER-NEXT seam named for
+its owner (B2). 35 new mutants, 34 dead and 1 recorded equivalent. Record: `Audit-Landforms.md` (AUDIT LANDFORMS III).
+
 **2026-10-07 - AUDIT LANDFORMS II.** Mac: *"Do another deep audit on this"*, of LANDFORM1-3 and its first audit (#655).
 Six lenses on the audited head - the first audit's fixes, the network's timing, main's arrivals since, the body on the
 ground, the tests' and the record's honesty (five independent adversarial reviewers on a snapshot), and this session's
