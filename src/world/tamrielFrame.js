@@ -30,11 +30,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { PIXEL_M } from '../net/gateLaw.js';   // the metres a map pixel spans (819.2: MapsFile's 32768 world units at 40 a metre) - ONE home, the gate's law declared it first
-
-/** The metres a map pixel spans - MapsFile's own 32768 world units at 40 a metre (world/streamingWorld.js
- *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS). Measured, not chosen; re-exported from its one home for the frame's readers. */
-export { PIXEL_M };
+/** The kilometres a map pixel spans - MapsFile's own 32768 world units at 40 a metre (world/streamingWorld.js
+ *  NATIVE_PIXEL; net/wire.js PIXEL_UNITS; net/gateLaw.js PIXEL_M, the metres). Measured, not chosen, and held to the
+ *  wire's units by test/tamriel.test.js. Not imported from the gate's law: the terrain worker reads this module, and its
+ *  import graph is pure by law (TAMRIEL2-WORKER: that import dragged net/wire.js and twenty modules into the worker's
+ *  bundle, and the world froze on going outside). */
 /** The authoring grid: Daggerfall's Tamriel picture, 320 x 200 (TMAP00I0.IMG, TAMRIEL2.IMG - ui/provinceMap.js). */
 export const PICTURE_W = 320;
 export const PICTURE_H = 200;
@@ -51,8 +51,7 @@ export const BAY_H = MAP_HEIGHT;
  *  (45.97, 52.0) - the west coast's notch, under northern High Rock, over Hammerfell's shoulder. The probe corrects it. */
 export const BAY_ORIGIN = Object.freeze({ x: 862, y: 975 });
 
-/** Kilometres a pixel, for anyone saying a distance. */
-export const KM_PER_PIXEL = PIXEL_M / 1000;
+export const KM_PER_PIXEL = 0.8192;
 
 /** A Bay pixel's place on the continent's grid. Fractions allowed: a point, not only a pixel. */
 export function bayToTamriel(x, y) {

@@ -23,7 +23,7 @@
 // Coordinates: x east, y south, picture units. Fractions are fine.
 // ═══════════════════════════════════════════════════════════════════
 
-import { segmentDistance } from '../net/gateStrike.js';   // a point's distance to a segment - ONE home, the gate's strike declared it first
+import { segmentDistance } from './segment.js';   // a point's distance to a segment - ONE home, a module that imports nothing (the terrain worker reads this one)
 
 /** @typedef {{ x: number, y: number }} Pt */
 
