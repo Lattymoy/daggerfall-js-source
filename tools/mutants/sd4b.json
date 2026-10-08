@@ -210,7 +210,7 @@
   {
     "name": "SD4B-the-bell-undarkened",
     "file": "src/systems/sdRiftSound.js",
-    "old": "  lowpass(out, rate, S.darkHz);\n",
+    "old": "  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole\n",
     "new": "",
     "tests": [
       "test/sd4b_rift.test.js"

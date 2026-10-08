@@ -14,7 +14,7 @@
 // where the Rift stands. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
 import { SAMPLE_RATE as SND_RATE } from '../formats/sndFile.js';
-import { addVoice, lowpass, level } from './arenaSound.js';
+import { addVoice, lowpassLoop, level } from './arenaSound.js';
 
 /** The made sound's key on the engine. */
 export const RIFT_BELL_KEY = 'sd:riftBell';
@@ -44,7 +44,7 @@ export function buildRiftBell(bell, bubbles, { srcRate = SND_RATE, rate = RIFT_B
     addVoice(out, rate, bell, srcRate, { ratio: S.ratio * 0.995, offset: 0.05 + S.echoS, gain: S.echo, wrap: true });
   }
   if (bubbles?.length) addVoice(out, rate, bubbles, srcRate, { ratio: 0.8, offset: seconds * 0.45, gain: 0.18, wrap: true });
-  lowpass(out, rate, S.darkHz);
+  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole
   // the swell: a whole number of slow waves in the loop, so its end meets its start
   const waves = Math.max(1, Math.round(S.swellHz * seconds));
   for (let i = 0; i < out.length; i++) out[i] *= 1 - S.swell * 0.5 * (1 - Math.cos((2 * Math.PI * waves * i) / out.length));
@@ -65,12 +65,20 @@ export function startRiftBell(audio, at) {
   } catch { return null; }   // a sound that cannot stand never costs the Rift
 }
 
+/** AUDIT SD III (A7): the toll's samples, built once its archive is read - the Rift asks for its bell again until one
+ *  stands, and the asking never builds it twice. */
+const _built = new WeakMap();
 /** The toll registered on the engine, once the archive is read - true once it stands. */
 function bellOn(audio) {
   if (!audio?.registerSamples || !audio?.samplesOf) return false;
-  const bell = audio.samplesOf(RIFT_BELL_RECORDS.bell);
-  if (!bell) return false;
-  return !!audio.registerSamples(RIFT_BELL_KEY, buildRiftBell(bell, audio.samplesOf(RIFT_BELL_RECORDS.bubbles)), RIFT_BELL_RATE);
+  let samples = _built.get(audio);
+  if (!samples) {
+    const bell = audio.samplesOf(RIFT_BELL_RECORDS.bell);
+    if (!bell) return false;
+    samples = buildRiftBell(bell, audio.samplesOf(RIFT_BELL_RECORDS.bubbles));
+    _built.set(audio, samples);
+  }
+  return !!audio.registerSamples(RIFT_BELL_KEY, samples, RIFT_BELL_RATE);
 }
 
 /** AUDIT SD II (L6 F16): the way home's toll - the Rift's own bell, a fourth higher (the way out, where the Rift is the

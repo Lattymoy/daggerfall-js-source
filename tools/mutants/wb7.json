@@ -128,7 +128,7 @@
   {
     "name": "WB7-the-courts-song-left-playing-outside",
     "file": "src/scenes/world.js",
-    "old": "      if (_scoreHeld) { _scoreHeld = false; music.stop(); }",
+    "old": "      if (_scoreHeld) { _scoreHeld = false; music.fadeOut(); }",
     "new": "      if (_scoreHeld) { _scoreHeld = false; }",
     "tests": ["test/wb7_boss_audio.test.js"]
   }

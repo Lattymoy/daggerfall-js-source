@@ -25,7 +25,7 @@
 
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY } from '../net/sdRemnant.js';
-import { sdBodyAt } from '../net/sdFightLink.js';
+import { sdBodyAt, sdEndAgain } from '../net/sdFightLink.js';
 import { BODY_FALL, THUNDER_ROLL, SWING_LOW, CRYSTAL_CLIPS } from '../world/gateBoss.js';
 
 /** The Iron Atronach's voice (characters/enemyBasics.js row 36: moveSound, barkSound, attackSound). */
@@ -61,6 +61,8 @@ export const SD_VOICE_CUES = Object.freeze({
     pulse: cue(THUNDER_ROLL, 0.8, 1.2, 120, 'arena'), reset: cue(CRYSTAL_CLIPS.hit, 0.42, 1.5, 120, 'arena'), end: cue(TOLL, 0.3, 2.0, 200, 'arena'),
   }),
   sting: cue(CRYSTAL_CLIPS.hit, 2.2, 1.3, 20, 'feet'),
+  // AUDIT SD III (A2): the End struck again (net/sdFightLink.js sdEndAgain) - a third of its toll, the clock's knell
+  knell: cue(TOLL, 0.3, 0.7, 200, 'arena'),
 });
 /** A stride's length, the Remnant's and an Echo's (m); a jump past this between frames is a body put somewhere, not
  *  walked. */
@@ -77,6 +79,8 @@ export const SD_HURT_GAP_MS = 1400;
 export const SD_RELEASE_MS = 350;
 /** A turn heard this late at most (ms) - a wake, a fall. */
 export const SD_TURN_LATE_MS = 1500;
+/** AUDIT SD III (A6): a page that heard nothing of its fight this long (ms) was away - what it passed is not heard. */
+export const SD_VOICE_AWAY_MS = 4000;
 /** The gears slip once, under this share of its health. */
 export const SD_SLIP_FRAC = 0.2;
 /** A Volley's mark this near my feet is aimed at me (m). */
@@ -131,6 +135,9 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       const s = link?.state?.(), t = link?.now?.();
       if (!s || !(s.fi > 0) || !Number.isFinite(t)) { k = null; return; }
       if (!k || k.fi !== s.fi) { k = seen(s, t); return; }   // a fight first seen is taken as it stands
+      // AUDIT SD III (A6): and a fight unheard SD_VOICE_AWAY_MS (a tab put away, the page asleep) - taken again as it
+      // stands, in silence: every turn it passed sounded at once on the first frame back
+      if (!(t - k.t <= SD_VOICE_AWAY_MS)) { k = seen(s, t); return; }
       const rem = (y = 3) => (s.rem ? placeOf(s.rem, t, y) : arena());
       // its end, and the fight lost
       if (s.fell && !k.fell) { k.fell = true; if (t - s.fell.at < SD_TURN_LATE_MS) play(SD_VOICE_CUES.fallCry, rem(4)); }
@@ -164,7 +171,8 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
       if (!outside) strides(k, s.rem, t, SD_STRIDE_M, SD_VOICE_CUES.step, 0.5);
       else k.at = null;
       const striking = !!s.rem?.atk && t < s.rem.atk.at + 1500;
-      if (awake && !outside && !stun && !striking && t >= k.growlAt) { play(SD_VOICE_CUES.growl, rem(4)); k.growlAt = t + SD_GROWL_MS + k.rng() * SD_GROWL_MORE_MS; }
+      // AUDIT SD III (A2): and none once the Hour has ended - it stands still under the End's knell (it growled through it)
+      if (awake && !outside && !stun && !striking && !(s.ended > 0) && t >= k.growlAt) { play(SD_VOICE_CUES.growl, rem(4)); k.growlAt = t + SD_GROWL_MS + k.rng() * SD_GROWL_MORE_MS; }
       else if (striking && k.growlAt < t + 2000) k.growlAt = t + 2000;
       // its Echoes: risen, striding, hurt, broken
       (s.ec ?? []).forEach((E, i) => {
@@ -196,7 +204,7 @@ export function createSdRemnantVoice({ audio = null, link, feet = () => null }) 
           m.stung = true;
           if (A === SD_BLOWS.volley && me && t < a.at && (a.tg ?? []).some((q) => Math.hypot(SD_ARENA.x + q[0] - me[0], SD_ARENA.z + q[1] - me[2]) <= SD_STING_M)) sound(SD_VOICE_CUES.sting);
         }
-        if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(SD_VOICE_CUES.release[A.key], where); }
+        if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where); }
         if (!m.landed && t >= a.at) {
           m.landed = true;
           if (b === SD_BODY.remnant && (A === SD_BLOWS.stomp || A === SD_BLOWS.end) && t - a.at < 400) play(SD_VOICE_CUES.quake, rem(0.5));

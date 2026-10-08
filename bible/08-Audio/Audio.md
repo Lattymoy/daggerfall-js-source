@@ -738,3 +738,20 @@ MAKES, under a string key, as `registerSound` registers a decoded WAV, so every 
 `setPitch` on `loop`'s handle (playbackRate, live, beside WX2's `setVolume`). The wind rides `loop`: one source for the
 whole blow, its gain and pitch set live. The riding loop is unchanged - its clips are made to be replayed.
 `01-Overview/Field-Bugs-2026-09-29e.md`; `test/field_wind1.test.js`.
+
+## AUDIT SD III, SD20d (2026-10-07): a named bed - a loop the engine runs
+
+The Hour's beds (`scenes/sdAir.js`) and the Deadlands' (`scenes/deadlandsAir.js`) rode the riding loop's shape
+(`setLoop`, `setLoop3d`: a non-looping source re-armed from its `ended` - DFU's `if (!isPlaying) Play()`, right for a
+hoofbeat's swap): at every pass of a bed a gap of the main thread's dispatch, the Hour's void every 5.8 s, its works
+every 2. Two doors on the engine (`systems/audio.js`): `setBed(name, clip, { volume, pitch })` and `setBed3d(name, clip,
+pos, opts)` - a NAMED bed, one buffer looping in the engine itself (`src.loop`), its volume and pitch live, moved each
+call; the same call each frame keeps the one source; it rises from nothing as it begins and fades to nothing as it is
+let go (`clip` null) or swapped for another clip, over 0.4 s (the arena's crowd bed's `BED_FADE_S` - a bed cut at its
+level pops). `loop3d`'s handle fades as `loop`'s does (`fadeStop` - the Rift's bell was cut as its dungeon went). The
+riding loop keeps its shape. A made loop is darkened as a loop (`systems/arenaSound.js` `lowpassLoop`: the one-pole run
+on from the state the loop's end leaves - begun from nought, it stepped at its seam each pass; FIELD-WIND1's wind ran its
+filters twice for the same reason). Two song writers merge a note laid where the same voice already strikes it into one
+note, its loudest and longest (`systems/sdScore.js`, `systems/gateScore.js`: thirty-three doubled note-ons in the Hour's
+nine songs, twenty-five in the Warden's war). Every score is let go by a fade (`music.fadeOut`), never a cut: the Hour's,
+the court's and the arena's. See `11-Multiplayer/Super-Dungeons.md` section 16's SD20d; `test/sd20d_audio.test.js`.

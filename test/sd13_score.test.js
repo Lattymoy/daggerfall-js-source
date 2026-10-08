@@ -186,13 +186,14 @@ function scoreHost() {
     registerSong: (name) => log.push(['reg', name]), playSong: (n) => { if (current !== n) { current = n; log.push(['play', n]); } },
     stop: () => { current = null; log.push('stop'); }, fadeOut: () => { log.push('fade'); current = null; }, get current() { return current; },
   };
-  const st = { mode: 'exterior', loc: null, slot: null, pos: [0, 0, 0], fight: null, rec: null, now: T0 };
+  const st = { mode: 'exterior', loc: null, slot: null, pos: [0, 0, 0], fight: null, rec: null, now: T0, hp: 100, stepping: false };
   const env = {
-    modes: { get mode() { return st.mode; }, get dungeonLocation() { return st.loc; }, sdRealmSlot: () => st.slot },
+    modes: { get mode() { return st.mode; }, get dungeonLocation() { return st.loc; }, sdRealmSlot: () => st.slot, get stepping() { return st.stepping; }, get transitioning() { return false; } },
     player: { get pos() { return st.pos; } }, sdDungeonToRealm: dungeonToRealm, sdScorePlace, sdScoreSongs, createHourScore, SD_SCORE_SILENCE, music,
     sdFightLink: { state: () => st.fight, now: () => st.now }, sdHost: { record: () => st.rec }, sdPhase, _sharedOffsetMs: 0,
+    playerEntity: { get health() { return st.hp; } },   // AUDIT SD III (A5, PIN MOVED): the living and the dead
   };
-  const body = `let _hourScoreHeld = false, _hourScoreMade = false;\nconst _hourScore = createHourScore();\n${constOf('sdScoreWhere')}\n${constOf('hourScoreFrame')}\nreturn hourScoreFrame;`;
+  const body = `let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;\nconst _hourScore = createHourScore();\n${constOf('sdScoreWhere')}\n${constOf('hourScoreFrame')}\nreturn hourScoreFrame;`;   // AUDIT SD III (A10, PIN MOVED): where I stood last
   return { frame: new Function(...Object.keys(env), body)(...Object.values(env)), log, st };
 }
 
@@ -227,8 +228,9 @@ test('SD13 THE HOST, from the world host\'s own text: outside, nothing held; in 
   h.frame(); assert.equal(log.at(-1), 'fade', 'the End: faded, never cut');
   // out of both: let go, once
   st.mode = 'exterior'; st.loc = null; st.slot = null;
+  const before = log.length;
   assert.equal(h.frame(), false);
-  assert.equal(log.at(-1), 'stop');
+  assert.deepEqual(log.slice(before), ['fade'], 'let go, faded - never cut');   // AUDIT SD III (A4, PIN MOVED): it was stopped
   const n = log.length;
   h.frame(); h.frame();
   assert.equal(log.length, n, 'once');

@@ -137,8 +137,8 @@
   {
     "name": "SD14a-the-growl-while-striking",
     "file": "src/scenes/sdRemnantVoice.js",
-    "old": "if (awake && !outside && !stun && !striking && t >= k.growlAt) {",
-    "new": "if (awake && !outside && !stun && t >= k.growlAt) {",
+    "old": "if (awake && !outside && !stun && !striking && !(s.ended > 0) && t >= k.growlAt) {",
+    "new": "if (awake && !outside && !stun && !(s.ended > 0) && t >= k.growlAt) {",
     "tests": [
       "test/sd14a_voice.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "SD14a-no-release",
     "file": "src/scenes/sdRemnantVoice.js",
-    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(SD_VOICE_CUES.release[A.key], where); }",
+    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where); }",
     "new": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; }",
     "tests": [
       "test/sd14a_voice.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "SD14a-never-framed",
     "file": "src/scenes/world.js",
-    "old": "    if (inRealm) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard\n",
+    "old": "    if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard; AUDIT SD III (A5): never by the dead\n",
     "new": "",
     "tests": [
       "test/sd14a_voice.test.js"

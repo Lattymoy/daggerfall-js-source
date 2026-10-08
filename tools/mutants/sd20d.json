@@ -1,0 +1,344 @@
+[
+  {
+    "name": "SD20D-A1-let-go-under-the-veil",
+    "file": "src/scenes/world.js",
+    "old": "      if (_hourScoreHeld && (modes?.stepping || modes?.transitioning)) return true;   // A1: the world moving under the veil\n",
+    "new": "",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A1-the-stepping-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "    get stepping() { return _stepping; },",
+    "new": "    get stepping() { return false; },",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A4-the-hour-cut",
+    "file": "src/scenes/world.js",
+    "old": "      if (_hourScoreHeld) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut",
+    "new": "      if (_hourScoreHeld) { _hourScoreHeld = false; music.stop(); }   // A4: an ending, not a cut",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A4-the-court-cut",
+    "file": "src/scenes/world.js",
+    "old": "      if (_scoreHeld) { _scoreHeld = false; music.fadeOut(); }",
+    "new": "      if (_scoreHeld) { _scoreHeld = false; music.stop(); }",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A4-the-arena-cut",
+    "file": "src/scenes/world.js",
+    "old": "      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.fadeOut(); }",
+    "new": "      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.stop(); }",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A5-war-over-the-dead",
+    "file": "src/scenes/world.js",
+    "old": "const want = !(playerEntity.health > 0) ? SD_SCORE_SILENCE : _hourScore.want(",
+    "new": "const want = _hourScore.want(",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A5-the-voice-to-the-dead",
+    "file": "src/scenes/world.js",
+    "old": "if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame();",
+    "new": "if (inRealm) { try { sdRemVoice?.frame();",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A10-no-hold",
+    "file": "src/systems/sdScore.js",
+    "old": "(was === 'arena' ? SD_SCORE_HOLD_M : 0)",
+    "new": "0",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A10-the-steps-unheld",
+    "file": "src/systems/sdScore.js",
+    "old": "(was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0)",
+    "new": "0",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A10-the-steps-over-the-end",
+    "file": "src/systems/sdScore.js",
+    "old": "  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;\n  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;\n",
+    "new": "  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;\n  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;\n",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A10-the-place-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "return (_hourPlace = sdScorePlace(x, z, _hourPlace)); }",
+    "new": "return (_hourPlace = sdScorePlace(x, z)); }",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A2-every-strike-whole",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where);",
+    "new": "sound(SD_VOICE_CUES.release[A.key], where);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A2-the-roll-again",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (t < atk.at && !again) {",
+    "new": "if (t < atk.at) {",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A2-the-fire-again",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "        if (!again) sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);",
+    "new": "        sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A2-the-first-a-knell",
+    "file": "src/net/sdFightLink.js",
+    "old": "s?.ended > 0 && atk.at > s.ended;",
+    "new": "s?.ended > 0 && atk.at >= s.ended;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A2-a-growl-under-the-knell",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "!striking && !(s.ended > 0) && t >= k.growlAt",
+    "new": "!striking && t >= k.growlAt",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A6-the-away-heard",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (!(t - k.t <= SD_VOICE_AWAY_MS)) { k = seen(s, t); return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A6-every-hitch-silent",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "export const SD_VOICE_AWAY_MS = 4000;",
+    "new": "export const SD_VOICE_AWAY_MS = 1000;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A12-the-taken-unheard",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "else if (taken) play(BOSS_CUES.crystalRing, heartsOf.p[k]);",
+    "new": "else if (taken) void 0;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A12-the-taken-shattered",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "else if (taken) play(BOSS_CUES.crystalRing, heartsOf.p[k]);",
+    "new": "else if (taken) play(BOSS_CUES.crystalBreak, heartsOf.p[k]);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A12-a-late-ring",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "const taken = !stunned && t - (heartsOf.called + SD_BLOWS.reset.windup) < SD_HEART_LATE_MS;",
+    "new": "const taken = !stunned;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-bed-a-one-shot",
+    "file": "src/systems/audio.js",
+    "old": "    src.loop = true;\n    src.playbackRate.value = o.pitch;",
+    "new": "    src.loop = false;\n    src.playbackRate.value = o.pitch;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-restarted-each-frame",
+    "file": "src/systems/audio.js",
+    "old": "if (was && was.clip === clip && clip != null) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-bed-cut",
+    "file": "src/systems/audio.js",
+    "old": "          fade.gain.linearRampToValueAtTime(0, now + seconds);\n          src.stop(now + seconds + 0.05);",
+    "new": "          src.stop(now);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-rise-dropped",
+    "file": "src/systems/audio.js",
+    "old": "    fade.gain.linearRampToValueAtTime(1, t + BED_FADE_S);",
+    "new": "    fade.gain.setValueAtTime(1, t);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-bed-unmoved",
+    "file": "src/systems/audio.js",
+    "old": "      move(p) { if (pan) placeAudio(pan, p); },",
+    "new": "      move() {},",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-one-moan",
+    "file": "src/scenes/sdAir.js",
+    "old": "engine.setBed(SD_AIR_VOID.loop, SD_AIR_VOID.clip,",
+    "new": "engine.setBed(SD_AIR_VOID.loop, SD_AIR_VOID.voice,",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-seam-stepped",
+    "file": "src/systems/arenaSound.js",
+    "old": "  for (let i = 0; i < x.length; i++) y += a * (x[i] - y);\n",
+    "new": "",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A3-the-deadlands-retriggered",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "engine.setBed(AIR_WIND.loop, AIR_WIND.clip,",
+    "new": "engine.setLoop?.(AIR_WIND.loop, AIR_WIND.clip,",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A11-built-every-frame",
+    "file": "src/scenes/sdAir.js",
+    "old": "      if (!built) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A9-the-beats-pitch",
+    "file": "src/scenes/sdAir.js",
+    "old": "export const SD_WORKS_TICK = Object.freeze([0.8, 0.6]);",
+    "new": "export const SD_WORKS_TICK = Object.freeze([1.6, 1.2]);",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A9-never-ducked",
+    "file": "src/scenes/sdAir.js",
+    "old": "(spanAt(ear[2] - SD_REALM_ORIGIN[2]) === 1 ? SD_AIR_WORKS.duck : 1)",
+    "new": "1",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A9-stepped",
+    "file": "src/scenes/sdAir.js",
+    "old": "* Math.min(1, dt * 3);",
+    "new": "* 1;",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A7-asked-once",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (rift && !bell && audio && t - bellAskedAt >= SD_BELL_ASK_MS) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A7-built-every-ask",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "  if (!samples) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A7-cut",
+    "file": "src/scenes/sdEnd.js",
+    "old": "try { if (bell?.fadeStop) bell.fadeStop(); else bell?.stop?.(); }",
+    "new": "try { bell?.stop?.(); }",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A8-the-hours-merge-undone",
+    "file": "src/systems/sdScore.js",
+    "old": "      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD20D-A8-the-gates-merge-undone",
+    "file": "src/systems/gateScore.js",
+    "old": "      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd20d_audio.test.js"
+    ]
+  }
+]

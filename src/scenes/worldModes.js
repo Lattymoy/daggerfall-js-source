@@ -12155,6 +12155,9 @@ export function createWorldModes(host) {
      *  (PlayerMouseLook.cs:190-198); see modalWindowUp's note above. */
     modalWindowUp,
     get transitioning() { return transitioning; },
+    /** AUDIT SD III (A1): a step through the fire under way (stepThroughFire) - the world moved under its veil, its
+     *  place changing (the Hour's score holds through it). */
+    get stepping() { return _stepping; },
     /** AUDIT 68 X3-transition-build-race: the host moved the world (a
      *  teleport, a load) - a door build still in flight frees what it
      *  made instead of publishing it. */

@@ -219,10 +219,19 @@ function makeSong(name, bpm, bars, write, level, press) {
   // a note laid past the last bar (the silver Echo's canon, two beats behind) sounds at the loop's start: the song is
   // a loop, and the canon runs on round its seam
   const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ) % length;
+  // AUDIT SD III (A8): ONE NOTE A KEY A MOMENT - a note laid where the same voice already strikes it (a theme's note on
+  // its bar's own chord tone, the kit's crash under the song's) is one note, its loudest and its longest: two note-ons
+  // as one doubled the hit, or cut the first short, thirty-three times over the nine songs
+  const struck = new Map();
   const w = {
     note(voice, bar, beat, beats, n, velocity) {
-      const note = typeof n === 'number' ? n : midiNote(n);
-      events.push({ tick: tick(bar, beat), type: 'noteOn', channel: HOUR_CHANNELS[voice], note, velocity: Math.max(1, Math.min(127, Math.round(velocity))), duration: Math.max(1, Math.round(beats * SCORE_TPQ)) });
+      const note = typeof n === 'number' ? n : midiNote(n), at = tick(bar, beat), channel = HOUR_CHANNELS[voice];
+      const v = Math.max(1, Math.min(127, Math.round(velocity))), duration = Math.max(1, Math.round(beats * SCORE_TPQ));
+      const key = (at * 16 + channel) * 128 + note, was = struck.get(key);
+      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }
+      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };
+      struck.set(key, e);
+      events.push(e);
     },
     hit(key, bar, beat, velocity) { w.note('kit', bar, beat, 0.25, KIT[key], velocity); },
   };
@@ -516,16 +525,20 @@ export function sdScoreSongs() {
   return (_songs ??= Object.freeze({ hollow: hollow(), hall: hall(), steps: steps(), war1: war1(), war2: war2(), war3: war3(), last: last(), fell: fell(), gone: gone() }));
 }
 
+/** AUDIT SD III (A10): how far past the edge it began at a place's song holds (m) - at the bar's reach a step back and
+ *  forth switched the war and the Steps' song every few strides, each switch a fade out and in. */
+export const SD_SCORE_HOLD_M = 4;
 /**
  * WHERE I STAND IN THE HOUR, by the realm's frame (net/sdBrain.js): near the arena as its bar is (ui/sdRemnantBar.js
  * SD_BAR_NEAR_M), on the Steps from the first step's near edge on, else the hall (the Threshold, the Orrery, the
- * bridge). Pure.
+ * bridge) - `was` where I stood last, held SD_SCORE_HOLD_M past the edge it began at. Pure.
+ * @param {number} x @param {number} z @param {string | null} [was]
  * @returns {'arena' | 'steps' | 'hall' | null}
  */
-export function sdScorePlace(x, z) {
+export function sdScorePlace(x, z, was = null) {
   if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
-  if (Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r + SD_BAR_NEAR_M) return 'arena';
-  return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r ? 'steps' : 'hall';
+  if (Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r + SD_BAR_NEAR_M + (was === 'arena' ? SD_SCORE_HOLD_M : 0)) return 'arena';
+  return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r - (was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0) ? 'steps' : 'hall';
 }
 
 /**
@@ -539,11 +552,15 @@ export function hourScoreFor(place, s, now, collapsing = false) {
   if (fight?.fell) return now - fight.fell.at < SD_SCORE_STING_MS ? HOUR_SONGS.fell : HOUR_SONGS.gone;
   if (collapsing) return HOUR_SONGS.gone;
   if (place === 'hollow') return HOUR_SONGS.hollow;
+  // the End and the Hour's last minute are the whole Hour's (AUDIT SD III, A10: the hall and the Steps played their own
+  // songs to the last toll)
+  const ending = !!fight && !fight.lost && (fight.ended > 0 || (Number.isFinite(fight.ends) && now >= fight.ends));
+  const lastMinute = !!fight && !fight.lost && Number.isFinite(fight.ends) && fight.ends - now <= SD_SCORE_ENDS_WARN_MS;
+  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it
+  if (lastMinute) return HOUR_SONGS.last;
   if (place === 'hall') return HOUR_SONGS.hall;
   if (place !== 'arena' || !fight) return HOUR_SONGS.steps;
   if (fight.lost) return SD_SCORE_SILENCE;
-  if (fight.ended > 0 || (Number.isFinite(fight.ends) && now >= fight.ends)) return SD_SCORE_SILENCE;   // the End: nothing over it
-  if (Number.isFinite(fight.ends) && fight.ends - now <= SD_SCORE_ENDS_WARN_MS) return HOUR_SONGS.last;
   return fight.ph >= 3 ? HOUR_SONGS.war3 : fight.ph === 2 ? HOUR_SONGS.war2 : HOUR_SONGS.war1;
 }
 

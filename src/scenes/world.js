@@ -21542,13 +21542,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  does not run then. */
   /** WB7: THE WARDEN'S SCORE (systems/gateScore.js) - while the court stands under me its music is the fight's, not the
    *  director's: the war song of his phase, his fall's fanfare, then quiet. The songs are made the first time a court
-   *  is stood in; the music is let go the frame the court is gone (the song stopped, so the director's next frame hears
-   *  it ended and plays its own). Answers whether the court holds the music this frame. */
+   *  is stood in; the music is let go the frame the court is gone (the song faded - AUDIT SD III, A4: it was cut - and
+   *  the director's next frame plays its own, as the fade ends). Answers whether the court holds the music this frame. */
   let _scoreHeld = false, _scoreMade = false;
   const _courtScore = createCourtScore();   // AUDIT WB D2: the fanfare played whole from its own start
   const gateScoreFrame = () => {
     if (modes?.gateArenaDay?.() == null) {
-      if (_scoreHeld) { _scoreHeld = false; music.stop(); }
+      if (_scoreHeld) { _scoreHeld = false; music.fadeOut(); }
       return false;
     }
     if (!_scoreMade) { _scoreMade = true; for (const song of Object.values(gateScoreSongs())) music.registerSong(song.name, song); }
@@ -21560,19 +21560,23 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD13: THE SCORE OF THE HOUR (systems/sdScore.js) - while I stand in a Hollow or its Hour the music is theirs, not
    *  the director's: the Hollow's walk; in the Hour the hall's, the Steps', the arena's war by its phase and its last
    *  minute, the fall's song, then the collapse's - which the Hollow plays too while it collapses. The songs are made
-   *  the first time either is stood in; let go (the song stopped, the director's next frame plays its own) the frame I
-   *  stand in neither. Answers whether the Hour holds the music this frame. */
-  let _hourScoreHeld = false, _hourScoreMade = false;
+   *  the first time either is stood in; let go (the song faded, the director's next frame plays its own) the frame I
+   *  stand in neither. Answers whether the Hour holds the music this frame. AUDIT SD III: held through the veil while
+   *  the world moves under it (A1 - a Rift's step played the street's song between the Hollow's and the hall's, cut
+   *  both ways); let go by a fade, never a cut (A4); silent while I lie dead in it (A5 - the war played on over the
+   *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
+  let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
   const _hourScore = createHourScore();
   const sdScoreWhere = () => {
-    if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
-    if (modes?.sdRealmSlot?.() != null) { const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return sdScorePlace(x, z); }
-    return modes?.dungeonLocation?.superTier ? 'hollow' : null;
+    if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
+    if (modes?.sdRealmSlot?.() != null) { const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return (_hourPlace = sdScorePlace(x, z, _hourPlace)); }
+    return (_hourPlace = modes?.dungeonLocation?.superTier ? 'hollow' : null);
   };
   const hourScoreFrame = () => {
     const place = sdScoreWhere();
     if (place == null) {
-      if (_hourScoreHeld) { _hourScoreHeld = false; music.stop(); }
+      if (_hourScoreHeld && (modes?.stepping || modes?.transitioning)) return true;   // A1: the world moving under the veil
+      if (_hourScoreHeld) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut
       return false;
     }
     if (!_hourScoreMade) { _hourScoreMade = true; for (const song of Object.values(sdScoreSongs())) music.registerSong(song.name, song); }
@@ -21580,18 +21584,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const slot = modes?.dungeonLocation?.sdSlot ?? modes?.sdRealmSlot?.() ?? null;
     const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.() ?? null;
     const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';
-    const want = _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);
+    const want = !(playerEntity.health > 0) ? SD_SCORE_SILENCE : _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);   // A5: no war over the dead
     if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
     return true;
   };
   /** ARENA2: THE ARENA'S MUSIC (systems/arenaScore.js) - while a bout is heard here, the march, then the fanfare, then
-   *  quiet through the healers; let go (the song stopped, the director's next frame plays its own) the frame there is
-   *  none. The songs are made the first time a bout is heard. Answers whether the arena holds the music this frame. */
+   *  quiet through the healers; let go (the song faded - AUDIT SD III, A4: it was cut - the director's next frame plays
+   *  its own) the frame there is none. The songs are made the first time a bout is heard. Answers whether the arena
+   *  holds the music this frame. */
   let _arenaScoreHeld = false, _arenaScoreMade = false;
   const arenaScoreFrame = () => {
     const want = arenaBouts.scoreWant();
     if (want == null) {
-      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.stop(); }
+      if (_arenaScoreHeld) { _arenaScoreHeld = false; music.fadeOut(); }
       return false;
     }
     if (!_arenaScoreMade) { _arenaScoreMade = true; for (const song of Object.values(arenaScoreSongs())) music.registerSong(song.name, song); }
@@ -21979,7 +21984,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // telegraph each compiled on its first use, a stall in the frame its first blow landed in
     if (inRealm && !_sdPassesWarm) { _sdPassesWarm = true; sdBeamPassOf(); sdFx?.warm?.(renderer.gl); sdBlows?.warm?.(); }
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
-    if (inRealm) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard
+    if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard; AUDIT SD III (A5): never by the dead
     if (inRealm) { try { sdFx?.frame(); } catch (e) { console.warn('[sd] fx', e?.message ?? e); } }   // SD16: its blows seen
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
     let bar = null, ground = null, card = null;

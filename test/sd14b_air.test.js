@@ -23,13 +23,14 @@ const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8
 const rms = (x) => Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
 const voice = (n, hz = 440, rate = 11025) => Float32Array.from({ length: n }, (_, i) => Math.sin((2 * Math.PI * hz * i) / rate) * Math.exp(-i / (n / 3)));
 
-/** An engine that keeps its loops and hears its one-shots. */
+/** An engine that keeps its beds and hears its one-shots. AUDIT SD III (A3, PIN MOVED): the beds are named native loops
+ *  (systems/audio.js setBed, setBed3d) - they were setLoop's re-armed one-shots. */
 function engine({ archive = true } = {}) {
   const loops = new Map(), loops3d = new Map(), shots = [], reg = [];
   return {
     loops, loops3d, shots, reg,
-    setLoop: (name, clip, o) => { if (clip == null) loops.delete(name); else loops.set(name, { clip, ...o }); },
-    setLoop3d: (name, clip, pos, o) => { if (clip == null) loops3d.delete(name); else loops3d.set(name, { clip, pos, ...o }); },
+    setBed: (name, clip, o) => { if (clip == null) loops.delete(name); else loops.set(name, { clip, ...o }); },
+    setBed3d: (name, clip, pos, o) => { if (clip == null) loops3d.delete(name); else loops3d.set(name, { clip, pos, ...o }); },
     play3d: (clip, at, volume, o) => shots.push({ clip, at, volume, ...o }),
     registerSamples: (key, s, rate) => { reg.push([key, s.length, rate]); return true; },
     samplesOf: (i) => (archive ? voice(4000, i) : null),
@@ -43,7 +44,8 @@ test('SD14b THE BEDS: the void\'s wind (the deep moan, lower) breathing on the H
   assert.equal(air.on, true);
   assert.deepEqual([...e.loops.keys()].sort(), [SD_AIR_VOID.loop, SD_AIR_WORKS.loop].sort());
   assert.deepEqual([...e.loops3d.keys()].sort(), [SD_AIR_GEARS.loop, SD_AIR_HUM.loop].sort());
-  assert.equal(e.loops.get(SD_AIR_VOID.loop).clip, SOUND.AmbientWindMoanDeep);
+  assert.equal(e.loops.get(SD_AIR_VOID.loop).clip, SD_AIR_VOID.clip, 'the void made');   // AUDIT SD III (A3, PIN MOVED): it was the one moan looped
+  assert.equal(SD_AIR_VOID.voice, SOUND.AmbientWindMoanDeep, 'of the deep moan');
   assert.ok(SD_AIR_VOID.pitch < 0.74, 'lower than the Deadlands\' own moan');
   assert.deepEqual(e.loops3d.get(SD_AIR_HUM.loop).pos, SD_AIR_HUM_AT);
   const [hx, , hz] = dungeonToRealm(...SD_AIR_HUM_AT);
@@ -51,18 +53,17 @@ test('SD14b THE BEDS: the void\'s wind (the deep moan, lower) breathing on the H
   const [gx, , gz] = dungeonToRealm(...SD_AIR_GEARS_AT);
   assert.ok(Math.hypot(gx - SD_ARENA.x, gz - SD_ARENA.z) < 0.01, 'under the arena');
   assert.ok(SD_AIR_HUM.maxDistance < SD_ARENA.z - SD_ORRERY.z, 'the hum never reaches the arena');
-  assert.deepEqual(e.reg.map((r) => r[0]).sort(), [SD_AIR_HUM.clip, SD_AIR_WORKS.clip].sort());
+  assert.deepEqual(e.reg.map((r) => r[0]).sort(), [SD_AIR_GEARS.clip, SD_AIR_HUM.clip, SD_AIR_VOID.clip, SD_AIR_WORKS.clip].sort());   // AUDIT SD III (A3, PIN MOVED): all four made
   air.frame(10.1, [0, 1, 0]); air.frame(10.2, [0, 1, 0]);
-  assert.equal(e.reg.length, 2, 'made once');
+  assert.equal(e.reg.length, 4, 'made once');
   air.stop();
   assert.equal(e.loops.size + e.loops3d.size, 0, 'nothing left looping');
   assert.equal(air.on, false);
-  // no archive yet: the wind and the gears, and the made two asked again
+  // no archive yet: nothing stands (a clip of the archive sounds nothing without it either), and the made asked again
   const n = engine({ archive: false });
   const a2 = createSdAir(n);
   a2.frame(5, [0, 0, 0]);
-  assert.deepEqual([...n.loops.keys()], [SD_AIR_VOID.loop]);
-  assert.equal(n.loops3d.has(SD_AIR_GEARS.loop), true);
+  assert.equal(n.loops.size + n.loops3d.size, 0);   // AUDIT SD III (A3, PIN MOVED): the wind and the gears stood unmade
   assert.equal(n.reg.length, 0);
   // a later engine's air silences the old one's
   const e3 = engine(), old = createSdAir(e3);

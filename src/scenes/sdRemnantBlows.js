@@ -22,7 +22,7 @@ import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_PILLAR_OVER_Y, atkWindup, blowShape, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
 import { strikeDamage, savedShare } from '../net/gateStrike.js';
-import { sdBodyAt, SD_HEARTS_KEY } from '../net/sdFightLink.js';
+import { sdBodyAt, sdEndAgain, SD_HEARTS_KEY } from '../net/sdFightLink.js';
 import { sdBlowVerdict, sdVolleyPools, sdPoolUnder } from '../net/sdStrike.js';
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_STYLE, TELEGRAPH_POOL, TELEGRAPH_FLASH_MS, TELEGRAPH_POINTS_MAX } from '../render/gateTelegraph.js';
 import { damageChartModel, drawGateDamageChart, DAMAGE_CHART_DELAY_MS, DAMAGE_CHART_MS } from '../ui/gateDamageChart.js';
@@ -238,12 +238,13 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       marks.set(atk.i, m);
       if (marks.size > 32) marks.delete(marks.keys().next().value);
     }
-    if (!m.cued) { m.cued = true; if (t < atk.at) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t); if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY); } }
+    const again = sdEndAgain(atk, s);   // AUDIT SD III (A2): the End struck again - its knell is the voice's; nothing here
+    if (!m.cued) { m.cued = true; if (t < atk.at && !again) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t); if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY); } }
     if (A === SD_BLOWS.end && endSaid !== s.fi && t < atk.at) { endSaid = s.fi; say(SD_BLOWS_TEXT.end); }
     if (!m.landed && t >= atk.at) {
       m.landed = true;
       if (t - atk.at < 400 + Math.max(blowShape(atk).active, 0)) {
-        sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);
+        if (!again) sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);
         if (A === SD_BLOWS.volley) pools.push(...sdVolleyPools(atk));
       }
     }
@@ -278,9 +279,15 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     const X = s.cx;
     if (!X || s.fell || s.lost) {
       // the LAST Heart breaks in the stun's own word: the realm fans its `cxb` and the stun together, and the stun takes
-      // the Hearts with it - the ones this screen last saw standing were broken, and are heard so (a Reset that landed
-      // stuns nothing: its Hearts go unheard, as they went unbroken)
-      if (heartsOf && !X && s.fi === heartsOf.fi && s.su > t && s.stunAt >= heartsOf.called) for (let k = 0; k < heartsOf.h.length; k++) if (heartsOf.h[k] > 0) broke(heartsOf.p[k]);
+      // the Hearts with it - the ones this screen last saw standing were broken, and are heard so (a stun over before
+      // this screen looked shatters nothing late). AUDIT SD III (A12): a Reset that LANDED breaks no Heart, and takes the
+      // ones left standing back - seen to burst in its light as they go (SD20c, V10), and heard so: the crystal's low
+      // ring alone, never its shatter, as its landing is heard live (they went in silence)
+      if (heartsOf && !X && s.fi === heartsOf.fi) {
+        const stunned = s.stunAt >= heartsOf.called, broken = stunned && s.su > t;
+        const taken = !stunned && t - (heartsOf.called + SD_BLOWS.reset.windup) < SD_HEART_LATE_MS;
+        for (let k = 0; k < heartsOf.h.length; k++) if (heartsOf.h[k] > 0) { if (broken) broke(heartsOf.p[k]); else if (taken) play(BOSS_CUES.crystalRing, heartsOf.p[k]); }
+      }
       heartsOf = null;
       return;
     }

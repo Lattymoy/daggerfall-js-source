@@ -2596,3 +2596,46 @@ and the beams into kept lists; the read's feet); `scenes/worldModes.js` FLAGGED 
 passes; `scenes/dungeonContext.js` FLAGGED - the realm's set and its draws are the world host's, the dungeon host stands
 the Hour's level alone; `scenes/exterior.js` FLAGGED - the `?exterior` bench draws the sky's passes, which take the brass
 weight the controller sets (none there: there is no Hollow offline).
+
+#### SD20d - the Hour heard
+
+| | what was wrong | now |
+|---|---|---|
+| A1 | THE STREET'S SONG IN THE RIFT. A Rift's step forces the world outside while it walks to the Hollow's pixel and builds the realm (`sdEnterRealm`, `stepThroughFire`), and the Hour let the music go there: the director's song came up between the Hollow's and the hall's, cut both ways | the Hour holds the music while a step through the fire or a door's build moves the world under its veil (`scenes/worldModes.js` `stepping`, `transitioning`); then the hall's song takes the Hollow's as one song takes another |
+| A2 | THE END SOUNDED WHOLE EVERY TWO SECONDS. After its first landing the law strikes the whole arena every `SD_END_EVERY_MS` until the fight is lost, half a minute, and each strike sounded whole - its roll, its toll and its fire: forty-five cues, the Remnant growling through them | heard whole once; each strike after it a knell - a third of its toll (`net/sdFightLink.js` `sdEndAgain`; `scenes/sdRemnantVoice.js` `knell`), no roll and no fire; no growl once the Hour has ended |
+| A3 | THE BEDS STUTTERED. The Hour's four beds rode `setLoop`'s re-armed one-shot - a gap of the main thread's dispatch at every seam - and the void was one moan looped, the same swell in the same place every 5.8 s | named beds the engine loops (`systems/audio.js` `setBed`, `setBed3d` - the Audio record); all four MADE - the void the deep moan laid over itself at a spread of low pitches round 23 s (`buildVoidWind`), the gears the grind round 13 s (`buildArenaGears`) - each darkened as a loop (`lowpassLoop`), as the works, the hum and the Rift's bell now are; the Deadlands' beds on the same doors |
+| A4 | EVERY SCORE CUT. The Hour's, the court's and the arena's scores let the music go with `music.stop()` - a song cut at its level | each fades it (`music.fadeOut`), and the director's song comes up as the fade ends |
+| A5 | THE WAR OVER THE DEAD. One life a Hollow, and as a player lay dead in its arena the war song played on and the Remnant growled, stepped and barked at the body | the score fades to nothing while I am dead; the Remnant's voice is framed for the living alone |
+| A6 | A PAGE BACK HEARD EVERYTHING AT ONCE. A tab put away while the fight turned sounded every turn it missed - the Dragon Break, the Last Moment, the stun - on its first frame back | a fight unheard `SD_VOICE_AWAY_MS` (4 s) is taken again as it stands, in silence - as a blow's landing seen late always was; a hitch shorter than that still hears its turns |
+| A7 | THE RIFT'S BELL ASKED ONCE. Asked for as the Rift stood, and a Rift stood before the archive was read or a context stood (no gesture yet) stood silent for good | asked again each `SD_BELL_ASK_MS` (1 s) while it stands without one (`scenes/sdEnd.js`), its toll built once (`systems/sdRiftSound.js`), faded as the dungeon goes |
+| A8 | TWO NOTES AS ONE. The Last Moment's and the last minute's war kit crashed on the songs' own crashes, and a theme's note fell on its bar's own chord tone - thirty-three doubled note-ons in the Hour's nine songs (twenty-five in the Warden's) | the song writers merge a note laid where the same voice strikes it into one note, its loudest and longest (`systems/sdScore.js`, `systems/gateScore.js`) |
+| A9 | A THIRD CLOCK OVER THE BEAT. The Hour's works ticked the Steps' own clunk at the Beat's own pitch (1.6), a second apart, where the Beat's half beat - the time a jump is taken by - is 1.8 s | the works' tick and tock are their own pitches (`SD_WORKS_TICK`, 0.8 and 0.6 - under the Beat's, apart from the hall's turns), and on the Beat's span the works duck to a quarter, eased in and out |
+| A10 | THE SONGS FLICKERED AT THE ARENA'S REACH, AND THE END WAS THE ARENA'S ALONE. A step back and forth at the bar's reach switched the war and the Steps' song every few strides; and the Steps and the hall played their own songs to the End's last toll | a place's song holds `SD_SCORE_HOLD_M` (4 m) past the edge it began at (`sdScorePlace`'s `was`); the Hour's last minute and its End are the whole Hour's (`hourScoreFor`) |
+| A11 | THE WORKS BUILT EVERY FRAME. With the archive read and no context to make them on, the works and the hum were built anew every frame - 2.2 ms | built once; only the registration is asked again |
+| A12 | THE HEARTS A LANDED RESET TOOK, UNHEARD. A Reset that lands breaks no Heart (SD11d), and the ones left standing went in silence while they burst in its light (SD20c, V10) | each rings low as it goes, live - the crystal's ring, never its shatter (`scenes/sdRemnantBlows.js`); a stun heard late still shatters nothing |
+
+Pins: `test/sd20d_audio.test.js` (12 - the Hour's song held through the veil, from the world host's own text; every
+score let go by a fade; no war over the dead; the place's hold and the whole Hour's End; the End whole once and its knells
+over a whole half minute; a page away hears nothing it missed; the Hearts a landed Reset takes; the named beds on a fake
+context - looped by the engine, kept, live, risen, faded, moved; the made beds, their seams and their one build; the
+works under the Beat; the Rift's bell asked until it stands; no note struck twice as one in either score);
+`tools/mutants/sd20d.json` (38, all dead). RE-AIMED BY CONTENT, each still dead: `field_wind1.json`
+(`FIELD-WIND1-engine-pitch-dead` - `loop`'s own door, by its comment), `sd11d.json` (`SD11D-the-last-unheard`,
+`SD11D-a-late-stun-shatters`), `sd13.json` (`SD13-music-over-the-end`, `SD13-no-last-minute`,
+`SD13-the-arena-by-its-rim-alone`, `SD13-the-steps-from-the-hall`, `SD13-the-score-never-let-go`,
+`SD13-the-hollow-unheard`, `SD13-the-place-askew`), `sd14a.json` (`SD14a-no-release`, `SD14a-never-framed`,
+`SD14a-the-growl-while-striking`), `sd14b.json` (`SD14b-no-tock`, `SD14b-one-left-looping`,
+`SD14b-the-gears-never-stood`, `SD14b-the-hum-bright`, `SD14b-the-old-air-left`), `sd4b.json`
+(`SD4B-the-bell-undarkened`), `sd8d.json` (`SD8D-no-landing-heard`, `SD8D-the-wind-up-unheard`), `wb6b.json`
+(`WB6b-stop-leaves-a-bed-looping`), `wb7.json` (`WB7-the-courts-song-left-playing-outside`). PINS MOVED:
+`test/sd13_score.test.js` (the host's harness - the living, the step, where I stood; let go by a fade, counted),
+`test/sd14a_voice.test.js` (the knell among the cues; the voice framed for the living; a growl's wait framed - one step
+that long is a page away), `test/sd14b_air.test.js` (the beds named native loops, all four made, nothing before the
+archive), `test/wb6b_deadlands_life.test.js` (the Deadlands' beds named native loops), `test/wb7_boss_audio.test.js` (the
+court's song let go by a fade).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the Hour's score held under the veil, faded, silent over the dead, where I stood
+remembered; the court's and the arena's faded; the voice for the living); `scenes/worldModes.js` WIRED (`stepping`, the
+step through the fire's own flag); `scenes/dungeonContext.js` FLAGGED - the Hour's sound is the world host's and its
+air's, the dungeon host stands the Hour's level; `scenes/exterior.js` FLAGGED - the `?exterior` bench has no Hour, no
+court and no arena bout, and its music is the director's alone.

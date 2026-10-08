@@ -263,8 +263,8 @@ test('WB6b the thunder: every strike the sky draws is heard once, late by its di
 test('WB6b the air\'s driver: the beds set every frame (the wind breathing on the clock, the sea\'s roar, a loop at each brazier), the events between two frames played once from their stand-ins with the ear\'s offset held (`far`), a gap past AIR_BACKLOG_S playing nothing; stop silences every loop it set and nothing when it set none; a later boot\'s air silences the old one\'s as it is made (mutants: stop leaving a bed looping; the backlog played; an event unheld; the old air outliving its host)', () => {
   const log = [];
   const engine = {
-    setLoop: (...a) => log.push(['setLoop', ...a]),
-    setLoop3d: (...a) => log.push(['setLoop3d', ...a]),
+    setBed: (...a) => log.push(['setBed', ...a]),   // AUDIT SD III (A3, PIN MOVED): the beds named native loops - they were setLoop's re-armed one-shots
+    setBed3d: (...a) => log.push(['setBed3d', ...a]),
     play3d: (...a) => log.push(['play3d', ...a]),
   };
   const air = createDeadlandsAir(engine);
@@ -275,11 +275,11 @@ test('WB6b the air\'s driver: the beds set every frame (the wind breathing on th
   const T0 = 1790000000;
   air.frame(T0, ear, beds);
   assert.ok(air.on);
-  const wind = log.find((c) => c[0] === 'setLoop' && c[1] === AIR_WIND.loop);
+  const wind = log.find((c) => c[0] === 'setBed' && c[1] === AIR_WIND.loop);
   assert.equal(wind[2], AIR_WIND.clip);
   assert.ok(Math.abs(wind[3].volume - airWindGain(T0)) < 1e-12 && wind[3].pitch === AIR_WIND.pitch);
-  assert.ok(log.some((c) => c[0] === 'setLoop' && c[1] === AIR_SEA.loop && c[2] === AIR_SEA.clip));
-  const fires = log.filter((c) => c[0] === 'setLoop3d');
+  assert.ok(log.some((c) => c[0] === 'setBed' && c[1] === AIR_SEA.loop && c[2] === AIR_SEA.clip));
+  const fires = log.filter((c) => c[0] === 'setBed3d');
   assert.equal(fires.length, beds.length, 'a fire at each brazier');
   assert.deepEqual(fires[0][3], beds[0]);
   assert.equal(fires[0][4].distanceModel, 'linear', 'a torch\'s short reach');
@@ -308,21 +308,21 @@ test('WB6b the air\'s driver: the beds set every frame (the wind breathing on th
   // fewer braziers: the missing one's loop stopped
   log.length = 0;
   air.frame(t + AIR_BACKLOG_S + 60.02, ear, beds.slice(0, 2));
-  assert.deepEqual(log.filter((c) => c[0] === 'setLoop3d' && c[2] == null).map((c) => c[1]), [2, 3, 4].map((i) => AIR_BRAZIER.loop + i));
+  assert.deepEqual(log.filter((c) => c[0] === 'setBed3d' && c[2] == null).map((c) => c[1]), [2, 3, 4].map((i) => AIR_BRAZIER.loop + i));
   // stop: every loop it set, silenced
   log.length = 0;
   air.stop();
   assert.ok(!air.on);
-  assert.deepEqual(log.filter((c) => c[0] === 'setLoop').map((c) => [c[1], c[2]]), [[AIR_WIND.loop, null], [AIR_SEA.loop, null]]);
-  assert.deepEqual(log.filter((c) => c[0] === 'setLoop3d').map((c) => [c[1], c[2]]), [[AIR_BRAZIER.loop + 0, null], [AIR_BRAZIER.loop + 1, null]]);
+  assert.deepEqual(log.filter((c) => c[0] === 'setBed').map((c) => [c[1], c[2]]), [[AIR_WIND.loop, null], [AIR_SEA.loop, null]]);
+  assert.deepEqual(log.filter((c) => c[0] === 'setBed3d').map((c) => [c[1], c[2]]), [[AIR_BRAZIER.loop + 0, null], [AIR_BRAZIER.loop + 1, null]]);
   // a later boot's air silences the old one's loops as it is made - the old host's loop died without a stop
   log.length = 0;
   air.frame(T0 + 1000, ear, beds);
   const next = createDeadlandsAir(engine);
   assert.ok(!air.on && !next.on, 'the old air silenced by the new one\'s making');
-  assert.deepEqual(log.filter((c) => c[0] === 'setLoop' && c[2] == null).map((c) => c[1]), [AIR_WIND.loop, AIR_SEA.loop]);
+  assert.deepEqual(log.filter((c) => c[0] === 'setBed' && c[2] == null).map((c) => c[1]), [AIR_WIND.loop, AIR_SEA.loop]);
   // a sound is never the fight
-  const bad = createDeadlandsAir({ setLoop() { throw new Error('no audio'); }, setLoop3d() {}, play3d() {} });
+  const bad = createDeadlandsAir({ setBed() { throw new Error('no audio'); }, setBed3d() {}, play3d() {} });
   assert.doesNotThrow(() => bad.frame(T0, ear, beds));
 });
 

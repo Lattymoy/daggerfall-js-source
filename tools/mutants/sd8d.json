@@ -146,7 +146,7 @@
   {
     "name": "SD8D-no-landing-heard",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "        sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);\n",
+    "old": "        if (!again) sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);\n",
     "new": "",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "SD8D-the-wind-up-unheard",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "    if (!m.cued) { m.cued = true; if (t < atk.at) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t);",
-    "new": "    if (!m.cued) { m.cued = true; if (t < atk.at) { void 0;",
+    "old": "    if (!m.cued) { m.cued = true; if (t < atk.at && !again) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t);",
+    "new": "    if (!m.cued) { m.cued = true; if (t < atk.at && !again) { void 0;",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]

@@ -199,9 +199,9 @@ test('WB7 his weight and his end: the ground\'s shock under a slam, a charge, a 
   assert.ok(THUD_AT_MS < FALL_MS, 'inside his fall');
 });
 
-test('WB7 the seams, by source: the world host lets the court hold the music while it stands - the songs registered the first time, the law\'s song played (the war song before the fight\'s first word), quiet stopped - and lets it go the frame the court is gone, stopped so the director\'s next frame plays its own; the director fed only when the court does not hold it, still before the modal return (mutants: the director fed over the court; the court\'s song left playing outside)', () => {
+test('WB7 the seams, by source: the world host lets the court hold the music while it stands - the songs registered the first time, the law\'s song played (the war song before the fight\'s first word), quiet stopped - and lets it go the frame the court is gone, faded so the director\'s next frame plays its own; the director fed only when the court does not hold it, still before the modal return (mutants: the director fed over the court; the court\'s song left playing outside)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /const gateScoreFrame = \(\) => \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) == null\) \{\n\s+if \(_scoreHeld\) \{ _scoreHeld = false; music\.stop\(\); \}\n\s+return false;\n\s+\}/);
+  assert.match(w, /const gateScoreFrame = \(\) => \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) == null\) \{\n\s+if \(_scoreHeld\) \{ _scoreHeld = false; music\.fadeOut\(\); \}\n\s+return false;\n\s+\}/);   // AUDIT SD III (A4, PIN MOVED): let go by a fade - it was cut
   assert.match(w, /if \(!_scoreMade\) \{ _scoreMade = true; for \(const song of Object\.values\(gateScoreSongs\(\)\)\) music\.registerSong\(song\.name, song\); \}/);
   assert.match(w, /const want = _courtScore\.want\(gateLink\?\.state\?\.\(\) \?\? null, Date\.now\(\) \+ _sharedOffsetMs\) \?\? GATE_SONGS\.war1;/);   // AUDIT WB D2: the law as this machine hears it
   assert.match(w, /if \(want === SCORE_SILENCE\) \{ if \(music\.current !== null\) music\.fadeOut\(\); \} else music\.playSong\(want\);/, 'AUDIT WB D2: the quiet after the fanfare faded in, not cut');

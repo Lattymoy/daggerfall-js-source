@@ -2,8 +2,8 @@
   {
     "name": "SD14b-the-gears-never-stood",
     "file": "src/scenes/sdAir.js",
-    "old": "        engine.setLoop3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT,",
-    "new": "        engine.setLoop3d(SD_AIR_GEARS.loop, null, SD_AIR_GEARS_AT,",
+    "old": "          engine.setBed3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT,",
+    "new": "          engine.setBed3d(SD_AIR_GEARS.loop, null, SD_AIR_GEARS_AT,",
     "tests": [
       "test/sd14b_air.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SD14b-one-left-looping",
     "file": "src/scenes/sdAir.js",
-    "old": "        engine.setLoop3d(SD_AIR_HUM.loop, null, null);\n",
+    "old": "        engine.setBed3d(SD_AIR_HUM.loop, null, null);\n",
     "new": "",
     "tests": [
       "test/sd14b_air.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SD14b-the-old-air-left",
     "file": "src/scenes/sdAir.js",
-    "old": "  _heard?.stop();\n  /** The two made sounds",
-    "new": "  /** The two made sounds",
+    "old": "  _heard?.stop();\n  /** The four made sounds",
+    "new": "  /** The four made sounds",
     "tests": [
       "test/sd14b_air.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "SD14b-no-tock",
     "file": "src/scenes/sdAir.js",
-    "old": "    addVoice(out, rate, clunk, srcRate, { ratio: 1.2, offset: seconds / 2, gain: 0.8, wrap: true });\n",
+    "old": "    addVoice(out, rate, clunk, srcRate, { ratio: SD_WORKS_TICK[1], offset: seconds / 2, gain: 0.8, wrap: true });\n",
     "new": "",
     "tests": [
       "test/sd14b_air.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "SD14b-the-hum-bright",
     "file": "src/scenes/sdAir.js",
-    "old": "  lowpass(out, rate, 700);",
-    "new": "  lowpass(out, rate, 9000);",
+    "old": "  lowpassLoop(out, rate, 700);",
+    "new": "  lowpassLoop(out, rate, 9000);",
     "tests": [
       "test/sd14b_air.test.js"
     ]

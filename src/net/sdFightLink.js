@@ -78,6 +78,11 @@ export function sdBodyAt(B, now, out = null) {   // AUDIT SD III (V5): into `out
   const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);
   return keepInArena(m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along, SD_REM.keep, o);
 }
+/** AUDIT SD III (A2): THE END STRUCK AGAIN - whether `atk` is one of the End's strikes after its first landing (the fight's
+ *  `ended`): the law strikes the whole arena every SD_END_EVERY_MS from then until the fight is lost, half a minute, and
+ *  each strike sounded whole - its roll, its toll and its fire every two seconds, forty-five cues. The page hears the End
+ *  whole once, and each strike after it as a knell. Pure. */
+export const sdEndAgain = (atk, s) => !!atk && atk.a === SD_BLOWS.end.id && s?.ended > 0 && atk.at > s.ended;
 /** Whether a blow in flight is done by `now` - landed, its span and its stillness after spent (the law sends no word for
  *  its end). Pure. */
 export function sdBlowDone(atk, now) {

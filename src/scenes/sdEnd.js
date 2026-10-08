@@ -145,6 +145,8 @@ export function ensureSdEndArt(renderer) {
 /** A portal's activation box: `half` across either way of its axis, from its foot to `height` above it. */
 const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half], max: [at[0] + half, at[1] + height, at[2] + half] });
 
+/** AUDIT SD III (A7): how often a Rift standing without its bell asks for it again (ms). */
+export const SD_BELL_ASK_MS = 1000;
 /**
  * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over.
  * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads. SD10: `retTitle` and `retTo` the
@@ -158,7 +160,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   /** @type {{ at: number[], batch: any, risesAt: number, up?: boolean, pressed: boolean } | null} AUDIT SD II (L6 F9,
    *  F16): when it began to rise, whether it has, and whether only a press takes it (the way home) */
   let ret = null;
-  let bell = null;
+  let bell = null, bellAskedAt = -Infinity;
   let wasRift = null, wasRet = null, hasLast = false;
   /** AUDIT SD II (L2 F9): where the feet were last frame, and when - one scratch each (a copy was made every frame, and a
    *  time kept loose was a new number every frame) */
@@ -201,6 +203,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };
       rebatch();
       bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);
+      bellAskedAt = now();
       return true;
     },
     /** SD10: the Return stood alone, after the stand (the Hour's way home, where the Remnant fell) - once while it stands.
@@ -222,6 +225,9 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     frame(feet) {
       const t = now();
       const age = (t - born) / 1000;
+      // AUDIT SD III (A7): the bell asked again while the Rift stands without one (no archive yet, no context before the
+      // first gesture) - it was asked once, as the Rift stood, and a Rift stood before either stood silent for good
+      if (rift && !bell && audio && t - bellAskedAt >= SD_BELL_ASK_MS) { bellAskedAt = t; bell = startRiftBell(audio, [rift.at[0], rift.at[1] + rift.size / 2, rift.at[2]]); }
       if (rift?.batch) rift.batch.record = RIFT_RECS[((Math.floor(age * RIFT_FPS) % RIFT_FRAMES) + RIFT_FRAMES) % RIFT_FRAMES];
       if (ret?.batch) ret.batch.record = RETURN_RECS[((Math.floor(age * RETURN_FPS) % RETURN_FRAMES) + RETURN_FRAMES) % RETURN_FRAMES];
       if (ret?.batch && !ret.up) rose(t);   // AUDIT SD II (L6 F16): out of the floor
@@ -262,8 +268,8 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     clear() {
       free(rift?.batch); free(ret?.batch);
       rift = null; ret = null; _batches = NONE; _targets = NONE;
-      try { bell?.stop?.(); } catch { /* stopped */ }
-      bell = null;
+      try { if (bell?.fadeStop) bell.fadeStop(); else bell?.stop?.(); } catch { /* stopped */ }   // AUDIT SD III (A7): faded, never cut
+      bell = null; bellAskedAt = -Infinity;
     },
   };
 }

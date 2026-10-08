@@ -74,8 +74,8 @@
   {
     "name": "SD13-the-arena-by-its-rim-alone",
     "file": "src/systems/sdScore.js",
-    "old": "<= SD_ARENA.r + SD_BAR_NEAR_M) return 'arena';",
-    "new": "<= SD_ARENA.r) return 'arena';",
+    "old": "<= SD_ARENA.r + SD_BAR_NEAR_M + (was === 'arena' ? SD_SCORE_HOLD_M : 0)) return 'arena';",
+    "new": "<= SD_ARENA.r + (was === 'arena' ? SD_SCORE_HOLD_M : 0)) return 'arena';",
     "tests": [
       "test/sd13_score.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD13-the-steps-from-the-hall",
     "file": "src/systems/sdScore.js",
-    "old": "return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r ? 'steps' : 'hall';",
-    "new": "return z >= SD_FIRST_STEP.z ? 'steps' : 'hall';",
+    "old": "return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r - (was",
+    "new": "return z >= SD_FIRST_STEP.z - (was",
     "tests": [
       "test/sd13_score.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "SD13-no-last-minute",
     "file": "src/systems/sdScore.js",
-    "old": "  if (Number.isFinite(fight.ends) && fight.ends - now <= SD_SCORE_ENDS_WARN_MS) return HOUR_SONGS.last;\n",
+    "old": "  if (lastMinute) return HOUR_SONGS.last;\n",
     "new": "",
     "tests": [
       "test/sd13_score.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "SD13-music-over-the-end",
     "file": "src/systems/sdScore.js",
-    "old": "  if (fight.ended > 0 || (Number.isFinite(fight.ends) && now >= fight.ends)) return SD_SCORE_SILENCE;   // the End: nothing over it\n",
+    "old": "  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it\n",
     "new": "",
     "tests": [
       "test/sd13_score.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "SD13-the-score-never-let-go",
     "file": "src/scenes/world.js",
-    "old": "      if (_hourScoreHeld) { _hourScoreHeld = false; music.stop(); }",
-    "new": "      if (false) { _hourScoreHeld = false; music.stop(); }",
+    "old": "      if (_hourScoreHeld) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut",
+    "new": "      if (false) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut",
     "tests": [
       "test/sd13_score.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD13-the-hollow-unheard",
     "file": "src/scenes/world.js",
-    "old": "    return modes?.dungeonLocation?.superTier ? 'hollow' : null;",
-    "new": "    return null;",
+    "old": "    return (_hourPlace = modes?.dungeonLocation?.superTier ? 'hollow' : null);",
+    "new": "    return (_hourPlace = null);",
     "tests": [
       "test/sd13_score.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD13-the-place-askew",
     "file": "src/scenes/world.js",
-    "old": "const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return sdScorePlace(x, z); }",
-    "new": "const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return sdScorePlace(z, x); }",
+    "old": "return (_hourPlace = sdScorePlace(x, z, _hourPlace)); }",
+    "new": "return (_hourPlace = sdScorePlace(z, x, _hourPlace)); }",
     "tests": [
       "test/sd13_score.test.js"
     ]
