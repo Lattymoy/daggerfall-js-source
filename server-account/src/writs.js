@@ -164,26 +164,39 @@ function commissionReturn(db, id, nowS) {
 
 /** THE GUILD WRITS PAST THEIR DAYS, closed, and every closed writ's escrow home - anyone's Work read runs it; at most
  *  WRIT_SETTLE_MAX a read, one batch each; a treasury the cap cannot take waits. */
-async function closeGuildWrits({ db, nowS }) {
+export async function closeGuildWrits(ctx) {
+  const { db, nowS } = ctx;
   const { results: due = [] } = await db.prepare(`SELECT id FROM guild_writs WHERE (state = 'open' AND expires_at <= ?1)
       OR (state != 'open' AND returned = 0 AND (escrow = 0 OR COALESCE((SELECT balance FROM guild_marks WHERE guild_id = guild_writs.guild_id), 0) + escrow <= ?2))
     ORDER BY expires_at LIMIT ${WRIT_SETTLE_MAX}`).bind(nowS, MARKS_MAX).all();
+  let moved = 0;
   for (const w of due) {
-    await db.batch([
+    if (ctx.budget && !ctx.budget()) break;   // AUDIT SCALE A2: the clock's firing keeps under D1's statements an invocation
+    const out = await db.batch([
       db.prepare(`UPDATE guild_writs SET state = 'expired', closed_at = ?2 WHERE id = ?1 AND state = 'open' AND expires_at <= ?2`).bind(w.id, nowS),
       ...guildWritReturn(db, w.id, nowS),
     ]);
+    if (out.some((r) => Number(r?.meta?.changes ?? 0) > 0)) moved++;
   }
+  // SCALE4b: the service's clock asks again while a full page closed. AUDIT SCALE A2: the writs MOVED - closed or
+  // returned - never the ones picked, so a page that changed nothing is not asked again
+  return moved;
 }
 /** An account's own commissions settled: those past their days closed - those it posted and (AUDIT 31 L1) those naming
  *  it, so a crafter's Yours never shows one open that cannot be filled - those whose crafter is gone declined, and the
  *  escrow of each closed one it posted (not filled) back, under the Marks cap. */
 async function settleCommissions({ db, nowS }, me) {
-  await db.batch([
-    db.prepare(`UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)
-      .bind(me, nowS),
-    db.prepare(`UPDATE commissions SET state = 'declined', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND crafter IS NULL`).bind(me, nowS),
-  ]);
+  // SCALE4b (2026-10-08): ASKED BEFORE IT IS WRITTEN - both updates went on every Work read, nearly always changing
+  // nothing; one read says whether either has a row to move, and only then do the same two go (market.js settle's law)
+  const due = await db.prepare(`SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)
+      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due`).bind(me, nowS).first();
+  if (Number(due?.due)) {
+    await db.batch([
+      db.prepare(`UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)
+        .bind(me, nowS),
+      db.prepare(`UPDATE commissions SET state = 'declined', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND crafter IS NULL`).bind(me, nowS),
+    ]);
+  }
   const { results: back = [] } = await db.prepare(`SELECT id FROM commissions WHERE poster = ?1 AND state IN ('withdrawn', 'declined', 'expired') AND returned = 0
       AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + pay <= ?2
     ORDER BY closed_at LIMIT ${WRIT_SETTLE_MAX}`).bind(me, MARKS_MAX).all();

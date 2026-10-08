@@ -1,0 +1,272 @@
+[
+  {
+    "name": "SCALE4b-board-swept-on-read",
+    "file": "server-account/src/board.js",
+    "old": "  if (!boardKeyOk(mapId)) return { error: 'bad-board' };\n  const mod = canModerate(reader, env);",
+    "new": "  if (!boardKeyOk(mapId)) return { error: 'bad-board' };\n  await sweepBoard(db, nowS);\n  const mod = canModerate(reader, env);",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the board's read sweeps first again - two writes on every look"
+  },
+  {
+    "name": "SCALE4b-guild-board-swept-on-read",
+    "file": "server-account/src/guildBoard.js",
+    "old": "  const { me } = a;\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "new": "  const { me } = a;\n  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a guild board's read sweeps first again"
+  },
+  {
+    "name": "SCALE4b-harvests-pruned-on-read",
+    "file": "server-account/src/professions.js",
+    "old": "  const day = utcDay(nowS);\n  const { results: rows = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).all();",
+    "new": "  const day = utcDay(nowS);\n  await sweepHarvests(db, nowS);\n  const { results: rows = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).all();",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the professions' state prunes on every ask again"
+  },
+  {
+    "name": "SCALE4b-history-pruned-on-read",
+    "file": "server-account/src/market.js",
+    "old": "  // history - kept 90 days (section 20); SCALE4b: pruned by the service's clock (pruneMarketHistory), never this read\n",
+    "new": "  // history - kept 90 days (section 20); SCALE4b: pruned by the service's clock (pruneMarketHistory), never this read\n  await pruneMarketHistory(db, nowS);\n",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the History view's nine deletes back on its read"
+  },
+  {
+    "name": "SCALE4b-sweep-takes-the-live",
+    "file": "server-account/src/board.js",
+    "old": "DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit)",
+    "new": "DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS + 2 * 86400, limit)",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the board's sweep takes notes still up"
+  },
+  {
+    "name": "SCALE4b-settle-unasked",
+    "file": "server-account/src/market.js",
+    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE market_listings",
+    "new": "  if (true) {\n    await db.batch([\n      db.prepare(`UPDATE market_listings",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the market's expiry written on every read again"
+  },
+  {
+    "name": "SCALE4b-settle-inverted",
+    "file": "server-account/src/market.js",
+    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE market_listings",
+    "new": "  if (!Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE market_listings",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a listing past its hours never expired"
+  },
+  {
+    "name": "SCALE4b-commissions-unasked",
+    "file": "server-account/src/writs.js",
+    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "new": "  if (true) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the Work tab's two updates on every read again"
+  },
+  {
+    "name": "SCALE4b-commissions-inverted",
+    "file": "server-account/src/writs.js",
+    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "new": "  if (!Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a commission past its days never expired"
+  },
+  {
+    "name": "SCALE4b-succession-unasked",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;\n",
+    "new": "",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the succession's update on every guild read again"
+  },
+  {
+    "name": "SCALE4b-succession-never",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;\n",
+    "new": "  if (!first || Number(first.rank) !== -1) return;\n",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a guild that lost its master never crowns another"
+  },
+  {
+    "name": "SCALE4b-auctions-off-the-clock",
+    "file": "server-account/src/cron.js",
+    "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],\n",
+    "new": "",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "an auction past its end waits for somebody's read"
+  },
+  {
+    "name": "SCALE4b-writs-off-the-clock",
+    "file": "server-account/src/cron.js",
+    "old": "  ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX, ctx.budget)],\n",
+    "new": "",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a guild writ past its time waits for somebody's read"
+  },
+  {
+    "name": "SCALE4b-contracts-off-the-clock",
+    "file": "server-account/src/cron.js",
+    "old": "  ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX, ctx.budget)],\n",
+    "new": "",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a contract past its time waits for somebody's read"
+  },
+  {
+    "name": "SCALE4b-seats-behind-dev",
+    "file": "server-account/src/cron.js",
+    "old": "(seatsSwitchOf(env?.SEATS_OPEN) === 'on' ?",
+    "new": "(seatsSwitchOf(env?.SEATS_OPEN) !== 'off' ?",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the clock settles a developer's seats"
+  },
+  {
+    "name": "SCALE4b-lodes-every-minute",
+    "file": "server-account/src/cron.js",
+    "old": "    if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;",
+    "new": "    if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on') return 0;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the day's Motherlodes asked every minute"
+  },
+  {
+    "name": "SCALE4b-champion-after-readers",
+    "file": "server-account/src/arena.js",
+    "old": "export const ARENA_CHAMPION_CLOCK_S = ARENA_CHAMPION_STORED_S - 120;",
+    "new": "export const ARENA_CHAMPION_CLOCK_S = ARENA_CHAMPION_STORED_S + 120;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the clock counts the #1 after the readers already have"
+  },
+  {
+    "name": "SCALE4b-champion-off-the-clock",
+    "file": "server-account/src/cron.js",
+    "old": "    await storeArenaChampion(ctx, season, ctx.nowS);\n    return 1;",
+    "new": "    void storeArenaChampion;\n    return 1;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a reader counts and writes the season's #1"
+  },
+  {
+    "name": "SCALE4b-minute-runs-the-hour",
+    "file": "server-account/src/cron.js",
+    "old": "  if (cron === CRON_MINUTE) return MINUTE_JOBS;",
+    "new": "  if (cron === CRON_MINUTE) return HOUR_JOBS;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the minute's firing runs the hour's sweeps"
+  },
+  {
+    "name": "SCALE4b-maintenance-ignored",
+    "file": "server-account/src/cron.js",
+    "old": "  if (!env?.DB || maintaining(env) || !Number.isSafeInteger(nowS)) return [];",
+    "new": "  if (!env?.DB || !Number.isSafeInteger(nowS)) return [];",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a service held for its rewind still writes"
+  },
+  {
+    "name": "SCALE4b-point-unwritten",
+    "file": "server-account/src/cron.js",
+    "old": "      env.METRICS?.writeDataPoint?.({ indexes: [`cron:${name}`],",
+    "new": "      void ({ indexes: [`cron:${name}`],",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a job nobody can see"
+  },
+  {
+    "name": "SCALE4b-first-failure-ends",
+    "file": "server-account/src/cron.js",
+    "old": "      ok = false;\n      console.warn(`[cron] ${name} failed`, e?.message ?? e);",
+    "new": "      ok = false;\n      throw e;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "one job's throw ends the firing"
+  },
+  {
+    "name": "SCALE4b-rate-cutoff",
+    "file": "server-account/src/cron.js",
+    "old": "export const RATE_ROW_KEEP_S = 24 * 3600;",
+    "new": "export const RATE_ROW_KEEP_S = 60;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a rate window's row taken while its window is open"
+  },
+  {
+    "name": "SCALE4b-session-cutoff",
+    "file": "server-account/src/cron.js",
+    "old": "'DELETE FROM sessions WHERE id IN (SELECT id FROM sessions WHERE last_seen < ?1 LIMIT ?2)', ctx.nowS - SESSION_IDLE_S)",
+    "new": "'DELETE FROM sessions WHERE id IN (SELECT id FROM sessions WHERE last_seen < ?1 LIMIT ?2)', ctx.nowS - SESSION_IDLE_S + 10)",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a session at the bound resolveSession admits, deleted"
+  },
+  {
+    "name": "SCALE4b-invite-cutoff",
+    "file": "server-account/src/cron.js",
+    "old": "SELECT rowid FROM guild_invites WHERE at <= ?1 LIMIT ?2",
+    "new": "SELECT rowid FROM guild_invites WHERE at < ?1 LIMIT ?2",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "an invitation a week old to the second left standing"
+  },
+  {
+    "name": "SCALE4b-rounds-unbounded",
+    "file": "server-account/src/cron.js",
+    "old": "  let n = 0;\n  for (let i = 0; i < ROUNDS_MAX; i++) {\n    const got = Number(await step()) || 0;",
+    "new": "  let n = 0;\n  for (let i = 0; i < ROUNDS_MAX * 2; i++) {\n    const got = Number(await step()) || 0;",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "a firing takes past its bound"
+  },
+  {
+    "name": "SCALE4b-unscheduled",
+    "file": "server-account/src/index.js",
+    "old": "  scheduled: (controller, env) => runCron(env, { cron: controller?.cron, nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now()) / 1000) }),\n",
+    "new": "",
+    "tests": [
+      "test/scale4b.test.js"
+    ],
+    "note": "the Worker has no clock"
+  }
+]

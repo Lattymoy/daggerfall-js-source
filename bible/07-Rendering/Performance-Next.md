@@ -236,8 +236,11 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
 16. **The foes lane** fan-bounded, and no full frame with no foes - tiering far listeners as poses are tiered changes
     what they see: a design call.
 17. **Slimmer poses** - quantised, defaults omitted, -35% bytes measured; binary later. SCALE5.
-18. **SCALE3's load harness** still does not exist; the benches this pass used (a Room over a counting fake, the client
-    session over a fake socket) are its measuring half.
+18. **SCALE3's load harness** exists now (2026-10-08, `tools/loadHarness.mjs`, `npm run load`;
+    `11-Multiplayer/Scale-Arc.md` SCALE3): both Workers in local workerd under a fleet of the client's own modules. At 100
+    bots in one cell over three threads a pose's age is p50 19 ms, p99 78 ms, with 132 frames a bot-second heard; one
+    thread is the harness's own queue. The staging pair is left; the benches this pass used (a Room over a counting
+    fake, the client session over a fake socket) stay its microscope.
 19. **`net/wire.js`'s POSE_FAR_SHARE doc** says the far interval is clamped at GAP_MAX_MS - true for an arrival
     interval, no longer for a timed one (AUDIT 637 C2). The file's bytes are the relay's version (SLAM8), so its
     correction rides the next relay deploy, with no behaviour of its own.

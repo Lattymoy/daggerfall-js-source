@@ -655,8 +655,9 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
+import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
@@ -11616,7 +11617,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
-  let _noticeReadT = 0;   // NOTICE1: the town underfoot is asked about once a second (the book's cache answers the rest)
+  /** SCALE4c: the town the street frame last found underfoot, and when (performance.now ms) - the heartbeat's board part
+   *  asks it, so the board is read exactly where and while the frame asked it before; and when the online lane last ran,
+   *  for the letterbox's part the same way. */
+  let _noticeTown = /** @type {{ mapId: number|null, at: number } | null} */ (null);
+  let _mailFrameAt = -Infinity;
+  const FRAME_LIVE_MS = 2500;
   /** BOUNTY-FARM / BOUNTY-TRAIL: how near its spot (the farmhouse, the second group's) the hunter must come before the
    *  group stands - under the camps' 200 m cull, so a group stood is never culled on the frame it stands. */
   const BOUNTY_GROUP_REACH_M = 150;
@@ -19621,10 +19627,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   // because bootWorld runs once per page. Online or not: a signed-in
   // player in a single-player world is still playing. A hidden page
   // does not knock, so a tab left in the background is not time played.
-  startPlayClock({
-    beat: accountPlayBeat({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+  // SCALE4c (Mac: "Do 1 2 and 3"): ONE HEARTBEAT FOR THE TAB'S THREE CLOCKS - the beat rides it (or goes alone when
+  // nothing will ride with it, a single-player world's case), the town's board and the letterbox join it below, each at
+  // its own pace and each answered as its own route answers (net/heartbeat.js, server-account/src/heartbeat.js). The
+  // FOUR HOSTS: this host alone keeps any of the three - exterior.js (the fixed city), worldModes.js (interiors, this
+  // host's own modes) and dungeonContext.js (the standalone dungeon) start no play clock, read no board and keep no box.
+  const heartbeat = createHeartbeat({
+    fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
+  // AUDIT SCALE B1: the hide seen at once, not at the next tick - a knock waiting as the page hides goes with it, kept
+  // alive past the page (a tab closed), where a second's tick may never come
+  globalThis.document?.addEventListener?.('visibilitychange', () => { heartbeat.tick(); });
+  startPlayClock({
+    beat: () => heartbeat.beat(),
+    visible: () => globalThis.document?.visibilityState !== 'hidden',
+  });
+  // the town's board, read where and while the street frame finds the player in a town (the frame stamps it each second)
+  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => (_noticeTown && performance.now() - _noticeTown.at < FRAME_LIVE_MS ? _noticeTown.mapId : null)));
   /** QUEST-PARTY (2026-09-26, Mac: "Party shares them"): THE PARTY'S LAW FOR A POOL'S QUEST FOES - one home for the
    *  open air's pool (onlineStart) and each building's (worldModes' interior pool, QUEST-PARTY phase 3b). A quest shared
    *  with the party streams its foes to the party, a member stands a party peer's, a peer's blow and a quest foe's hunt
@@ -20348,6 +20368,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
       onLetter: (event) => { chatLog.push(tab.id, { text: mailNoticeText(event), system: true }); },
     });
+    // SCALE4c: its looks ride the heartbeat - while the online lane runs, as its poll there ran
+    heartbeat.add('mail', whileLive(mail.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
     // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
     // account minted on first use as the bank window mints it.
@@ -25114,7 +25136,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     wedFrame();   // LEGACY7 part three: the wedding's clock, and the account's unions read again
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
-    mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
+    _mailFrameAt = performance.now();   // MAIL1: the letterbox looks while this lane runs - SCALE4c: on the heartbeat (its part, above), before the dead return as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
     sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
@@ -29888,8 +29910,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
-    _noticeReadT -= dt;
-    if (noticeBook && _noticeReadT <= 0) { _noticeReadT = 1; const town = noticeTownHere(); if (town) noticeBook.read(town.mapId); }
+    // AUDIT SCALE B7: once a second by the wall clock, not by the frame's dt - the dt is clamped at 0.1 s, so at four
+    // frames a second or fewer that "second" outran FRAME_LIVE_MS and the board's part dropped out between stamps
+    const stampAt = performance.now();
+    if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000)) { const town = noticeTownHere(); _noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }   // SCALE4c: the heartbeat's board part reads it (above)
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     pump();

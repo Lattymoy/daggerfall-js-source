@@ -59,6 +59,14 @@ const noteView = (n, me) => ({
   mine: n.author === me.player,
 });
 
+/** A guild's expired notes, gone - `limit` at once, answering how many went. SCALE4b (2026-10-08): the service's clock's
+ *  (server-account/src/cron.js, each hour), never a read's - the board's read swept first, a write on every look at a
+ *  guild's board; nothing it answers waits on it, its notes are read `expires_at > now`. */
+export async function sweepGuildNotes(db, nowS, limit = 200) {
+  const r = await db.prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit).run();
+  return Number(r?.meta?.changes ?? 0);
+}
+
 /**
  * THE GUILD'S BOARD, as this member sees it: the guild (its name, tag and heraldry), its live notes newest first - a
  * muted author's left out but for its author - and the reader's standing: may they pin, how many they have up, and
@@ -69,7 +77,6 @@ export async function readGuildBoard({ db, nowS }, player, env, { character } = 
   const a = await memberOf(db, player, env, character);
   if ('error' in a) return a;
   const { me } = a;
-  await db.prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT 200)').bind(nowS).run();
   const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();
   if (!g) return { error: 'no-guild' };
   const { results: notes = [] } = await db.prepare(`SELECT n.* FROM guild_notes n JOIN players p ON p.id = n.author
