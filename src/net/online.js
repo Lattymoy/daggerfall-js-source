@@ -2420,7 +2420,8 @@ export class OnlineSession {
       if (primary) this.castOk = relaySupportsCast(relayV);   // AUDIT ALLY-CAST B1
       if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
-      if (primary) { this.holdemOk = relaySupportsHoldem(relayV); this.iliacOk = relaySupportsIliac(relayV); this.holdemWelcomes++; }   // CARDS10: and the second game   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
+      if (primary) { this.holdemOk = relaySupportsHoldem(relayV); this.holdemWelcomes++; }   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
+      if (primary) this.iliacOk = relaySupportsIliac(relayV);   // CARDS10: and deals the second game   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
       if (primary) this.dmOk = relaySupportsDm(relayV);   // TITLE-N
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1

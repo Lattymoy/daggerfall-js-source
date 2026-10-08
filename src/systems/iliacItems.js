@@ -19,11 +19,11 @@ import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseH
 import { validBinderDeck, BINDER_DECK_NAME_MAX } from './itemFields.js';
 import { addItem } from './inventory.js';
 import { cardById, STARTER_DECK } from '../net/iliacCards.js';
-import { ILIAC_CARD_TEMPLATE as CARD_TEMPLATE_LAW, cardWorth } from '../net/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service
+import { ILIAC_CARD_TEMPLATE, cardWorth } from '../net/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service
 
 /** The card's and the binder's templates - the port's own, beside the Wallet's 580 and below the professions' 600.
  *  CARDS9: the card's number is the law's (net/cardWorthLaw.js - the account service reads it there). */
-export const ILIAC_CARD_TEMPLATE = CARD_TEMPLATE_LAW;
+export { ILIAC_CARD_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
 export const CARD_BINDER_TEMPLATE = 582;
 /** CARDS9 (section 28): the tavern's sealed pack of cards (systems/cardSources.js opens it). */
 export const CARD_PACK_TEMPLATE = 583;

@@ -52,6 +52,7 @@ import { sweepGuildNotes } from './guildBoard.js';
 import { sweepHarvests } from './professions.js';
 import { SESSION_IDLE_S } from './accounts.js';
 import { storeArenaChampion, ARENA_CHAMPION_CLOCK_S } from './arena.js';
+import { iliacChampionClock } from './iliac.js';   // CARDS10: Iliac Hand's season #1, counted the arena's way
 import { countedDb } from './metrics.js';
 import { maintaining } from './service.js';
 import { WRIT_SETTLE_MAX } from '../../src/net/writLaw.js';
@@ -132,6 +133,8 @@ export const MINUTE_JOBS = Object.freeze([
     await storeArenaChampion(ctx, season, ctx.nowS);
     return 1;
   }],
+  // CARDS10: Iliac Hand's season #1, the arena's law (iliac.js iliacChampionClock) - counted only after a rated game
+  ['iliac-champion', async (ctx) => iliacChampionClock(ctx)],
   ['motherlodes', async (ctx, env) => {
     const day = utcDay(ctx.nowS);
     if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;

@@ -122,8 +122,8 @@
   {
     "name": "C5-relay-any-room",
     "file": "server/src/index.js",
-    "old": "      if (!String(a.key ?? '').startsWith('interior:')) return;\n      if (!this._spend(ws, now, holdemGate,",
-    "new": "      if (!this._spend(ws, now, holdemGate,",
+    "old": "      if (!String(a.key ?? '').startsWith('interior:')) return;\n      if (!this._spend(ws, now, holdemGate, 'holdemBucket'",
+    "new": "      if (!this._spend(ws, now, holdemGate, 'holdemBucket'",
     "tests": [
       "test/cards5_relay.test.js",
       "test/cards5_client.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "C5-relay-to-all",
     "file": "server/src/index.js",
-    "old": "if (b.id && (to == null || b.id === to)) this._send(w, out);",
-    "new": "if (b.id) this._send(w, out);",
+    "old": "      const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });\n      for (const [w, b] of this._all()) if (b.id && (to == null || b.id === to)) this._send(w, out);",
+    "new": "      const out = JSON.stringify({ t: 'holdem', table: index, now, ...frame });\n      for (const [w, b] of this._all()) if (b.id) this._send(w, out);",
     "tests": [
       "test/cards5_relay.test.js",
       "test/cards5_client.test.js"

@@ -55,6 +55,9 @@ export const ILIAC_BOARD_TOP = 10;
  *  (the arena's: arena.js ARENA_CHAMPION_CACHE_S, ARENA_CHAMPION_STORED_S). */
 export const ILIAC_CHAMPION_CACHE_S = 60;
 export const ILIAC_CHAMPION_STORED_S = 600;
+/** The service's clock counts the season's #1 again once the kept word is this old (cron.js, the arena's clock's law:
+ *  arena.js ARENA_CHAMPION_CLOCK_S) - so a reader finds it kept, counts nothing and writes nothing. */
+export const ILIAC_CHAMPION_CLOCK_S = ILIAC_CHAMPION_STORED_S - 120;
 /** How many times a claim reads the two ratings again when a game of either landed between its read and its write. */
 export const ILIAC_RATE_TRIES = 4;
 
@@ -143,15 +146,40 @@ export async function storeIliacChampion(ctx, season, nowS) {
   _champ = { season, at: nowS, id };
   return id;
 }
-/** The season's #1 as the service last counted it - counted afresh only where it never was this season or is old. */
+/** Whether the season has a rated game - a season nobody played counts no board and writes nothing (STORM-SHED 2's
+ *  law: a token's mint, an account's read, a board's badges read the kept word, and the board is counted only when a
+ *  rated game moved it). */
+const seasonPlayed = async ({ db }, season) => !!(await db.prepare('SELECT 1 AS one FROM iliac_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season).first());
+/** The season's #1 as the service last counted it - counted afresh only where it never was this season or is old, and
+ *  only when the season has a rated game at all. */
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < ILIAC_CHAMPION_CACHE_S) return _champ.id;
   const kept = await ctx.db.prepare('SELECT player, at FROM iliac_champions WHERE season = ?1').bind(season).first();
-  const id = kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S ? kept.player ?? null : await storeIliacChampion(ctx, season, nowS);
+  const id = kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S ? kept.player ?? null : (await seasonPlayed(ctx, season)) ? await storeIliacChampion(ctx, season, nowS) : null;
   _champ = { season, at: nowS, id };
   return id;
 }
+/**
+ * THE CLOCK'S COUNT (cron.js, every minute): the season's #1 counted before a reader would count it - only once the kept
+ * word is ILIAC_CHAMPION_CLOCK_S old, and only when a rated game came since (a kept word no game is newer than is
+ * stamped again, never counted); a season nobody played writes nothing. Answers how many it counted (0 or 1).
+ * @param {{ db: any, nowS: number }} ctx
+ */
+export async function iliacChampionClock(ctx) {
+  const season = arenaSeasonOf(ctx.nowS);
+  const kept = await ctx.db.prepare('SELECT at FROM iliac_champions WHERE season = ?1').bind(season).first();
+  if (kept && ctx.nowS - Number(kept.at) < ILIAC_CHAMPION_CLOCK_S) return 0;
+  const last = await ctx.db.prepare('SELECT MAX(at) AS at FROM iliac_games WHERE season = ?1 AND rated = 1').bind(season).first();
+  if (last?.at == null) return 0;
+  if (kept && Number(last.at) < Number(kept.at)) {
+    await ctx.db.prepare('UPDATE iliac_champions SET at = ?2 WHERE season = ?1').bind(season, ctx.nowS).run();
+    return 0;
+  }
+  await storeIliacChampion(ctx, season, ctx.nowS);
+  return 1;
+}
+
 /** ILIAC HAND'S HONOURS of an account, as the token's mint reads them: `champion` - the season's #1 now. Never a guest's. */
 export async function iliacHonoursOf(ctx, player, nowS) {
   if (!player?.handle) return { champion: false };

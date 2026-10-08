@@ -382,8 +382,8 @@
   {
     "name": "D-relay-no-one-seat",
     "file": "server/src/index.js",
-    "old": "for (const [k, other] of tables) if (k !== m.table) { const up",
-    "new": "for (const [k, other] of tables) if (false) { const up",
+    "old": "for (const [k, other] of tables) if (k !== m.table) { const up = holdemStand",
+    "new": "for (const [k, other] of tables) if (false) { const up = holdemStand",
     "tests": [
       "test/auditcards2_cloth.test.js",
       "test/auditcards2_host.test.js",

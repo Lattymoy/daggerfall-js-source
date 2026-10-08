@@ -1746,7 +1746,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ranked games' signed results this device carries to it (net/iliacClaims.js), offered at once and again while kept
   const iliacDoor = accountIliac({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const iliacClaims = params.has('online')
-    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: spoilsStore(appStorage()), me: () => iliacDoor.me(), nowMs: () => Date.now() + _sharedOffsetMs,
+    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, me: () => iliacDoor.me(),   // the one store (AUDIT WB A6): its memory every reader's nowMs: () => Date.now() + _sharedOffsetMs,
       onCounted: (a) => townTalk?.say?.(a.rated ? `Iliac Hand: the game is on the season's board - your rating ${a.rating} (${a.delta >= 0 ? '+' : ''}${a.delta}).` : 'Iliac Hand: the game is kept, but not counted - you have played that opponent often enough today.'),
       onGuest: () => townTalk?.say?.('Iliac Hand: register your account to keep your ranked games on the board.') })
     : null;

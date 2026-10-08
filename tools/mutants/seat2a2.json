@@ -1,862 +1,862 @@
 [
- {
-  "name": "SEAT2a2-law-radius",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
-  "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 9, raiseS: 20, decayPerS: 1 });",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-raise",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
-  "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 15, decayPerS: 1 });",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-decay",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
-  "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 0.5 });",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-palace",
-  "file": "src/net/siegeRef.js",
-  "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
-  "new": "palace: Object.freeze({ banners: 3, holdS: 120 })",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-hold",
-  "file": "src/net/siegeRef.js",
-  "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
-  "new": "palace: Object.freeze({ banners: 2, holdS: 90 })",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-crown",
-  "file": "src/net/siegeRef.js",
-  "old": "crown: Object.freeze({ banners: 3, holdS: 180 })",
-  "new": "crown: Object.freeze({ banners: 2, holdS: 180 })",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-lengths",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "new": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 30 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-forfeit",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_FORFEIT_MS = 10 * 60_000;",
-  "new": "export const SIEGE_FORFEIT_MS = 15 * 60_000;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-spectators",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_SPECTATORS_MAX = 60;",
-  "new": "export const SIEGE_SPECTATORS_MAX = 61;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-field-count",
-  "file": "src/net/siegeRef.js",
-  "old": "  if (!Array.isArray(sf) || sf.length !== n + 3) return null;",
-  "new": "  if (!Array.isArray(sf) || sf.length < n + 3) return null;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-field-order",
-  "file": "src/net/siegeRef.js",
-  "old": "camps: { attack: [sf[n + 1][0], sf[n + 1][1]], defend: [sf[n + 2][0], sf[n + 2][1]] } };",
-  "new": "camps: { attack: [sf[n + 2][0], sf[n + 2][1]], defend: [sf[n + 1][0], sf[n + 1][1]] } };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-start-side",
-  "file": "src/net/siegeRef.js",
-  "old": "field.banners.map(() => ({ side: kind === 'tourney' ? null : 'defend', raise: 0, by: null })),",
-  "new": "field.banners.map(() => ({ side: null, raise: 0, by: null })),",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-tourney-length",
-  "file": "src/net/siegeRef.js",
-  "old": "  const length = kind === 'tourney' ? SIEGE_LENGTH_MS.tourney : kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
-  "new": "  const length = kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-present-down",
-  "file": "src/net/siegeRef.js",
-  "old": "    if (f.down || !f.pose || !f.here) continue;",
-  "new": "    if (!f.pose || !f.here) continue;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-present-here",
-  "file": "src/net/siegeRef.js",
-  "old": "    if (f.down || !f.pose || !f.here) continue;",
-  "new": "    if (f.down || !f.pose) continue;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-before-start",
-  "file": "src/net/siegeRef.js",
-  "old": "  if (b.result || nowMs < b.startMs) return [];",
-  "new": "  if (b.result) return [];",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-clamp",
-  "file": "src/net/siegeRef.js",
-  "old": "  const dt = Math.max(0, Math.min(nowMs - Math.max(b.at, b.startMs), 5 * SIEGE_TICK_MS)) / 1000;",
-  "new": "  const dt = Math.max(0, nowMs - Math.max(b.at, b.startMs)) / 1000;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-stood",
-  "file": "src/net/siegeRef.js",
-  "old": "    f.stood = (f.stood ?? 0) + dt;",
-  "new": "    f.stood = (f.stood ?? 0) + 1;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-freeze",
-  "file": "src/net/siegeRef.js",
-  "old": "    if (p.attack && p.defend) return;   // contested: frozen",
-  "new": "    if (p.attack && p.defend && false) return;   // contested: frozen",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-reset",
-  "file": "src/net/siegeRef.js",
-  "old": "      if (bn.by !== alone) { bn.by = alone; bn.raise = 0; }",
-  "new": "      if (bn.by !== alone) { bn.by = alone; }",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-raised-flag",
-  "file": "src/net/siegeRef.js",
-  "old": "        if (alone === 'attack') b.raised = true;",
-  "new": "        b.raised = true;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-banner-decay",
-  "file": "src/net/siegeRef.js",
-  "old": "    bn.raise = Math.max(0, bn.raise - SIEGE_BANNER.decayPerS * dt);",
-  "new": "    bn.raise = Math.max(0, bn.raise);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-open",
-  "file": "src/net/siegeRef.js",
-  "old": "    const open = b.banners.filter((bn) => bn.side === 'attack').length >= rule.banners && !siegeThroneBarred(b);",
-  "new": "    const open = b.banners.filter((bn) => bn.side === 'attack').length > rule.banners && !siegeThroneBarred(b);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-contest",
-  "file": "src/net/siegeRef.js",
-  "old": "    if (open && p.attack && !p.defend) b.throne += dt;",
-  "new": "    if (open && p.attack) b.throne += dt;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-decay",
-  "file": "src/net/siegeRef.js",
-  "old": "    else if (!(open && p.attack && p.defend)) b.throne = Math.max(0, b.throne - SIEGE_THRONE.decayPerS * dt);",
-  "new": "    else if (!(open && p.attack && p.defend)) b.throne = Math.max(0, b.throne);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-throne-tourney",
-  "file": "src/net/siegeRef.js",
-  "old": "  if (b.kind === 'siege') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
-  "new": "  if (b.kind !== 'nothing') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-forfeit-kind",
-  "file": "src/net/siegeRef.js",
-  "old": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
-  "new": "  if (!b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-absent",
-  "file": "src/net/siegeRef.js",
-  "old": "return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
-  "new": "return end(b, 'forfeit', out);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-time-siege",
-  "file": "src/net/siegeRef.js",
-  "old": "    if (b.kind === 'siege') return end(b, 'defend', out);",
-  "new": "    if (b.kind === 'siege') return end(b, 'tie', out);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-tie",
-  "file": "src/net/siegeRef.js",
-  "old": "    return end(b, a > d ? 'attack' : d > a ? 'defend' : 'tie', out);",
-  "new": "    return end(b, a > d ? 'attack' : 'defend', out);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-honour-felled",
-  "file": "src/net/siegeRef.js",
-  "old": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 0 ||",
-  "new": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 1 ||",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-honour-half",
-  "file": "src/net/siegeRef.js",
-  "old": "(f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
-  "new": "(f.stood ?? 0) * 1000 > (Math.max(b.at, b.startMs) - b.startMs) / 2);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-opens",
-  "file": "src/net/siegeRef.js",
-  "old": "export const SIEGE_OPENS_MS = 10 * 60_000;",
-  "new": "export const SIEGE_OPENS_MS = 15 * 60_000;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-camp-y",
-  "file": "src/net/siegeRef.js",
-  "old": "  return { x: c[0], y: Number.isFinite(was?.y) ? was.y : 0, z: c[1],",
-  "new": "  return { x: c[0], y: 0, z: c[1],",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-frame-floor",
-  "file": "src/net/siegeRef.js",
-  "old": "th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier]",
-  "new": "th: Math.min(Math.round(b.throne), (SIEGE_THRONE[b.tier]",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-frame-code",
-  "file": "src/net/siegeRef.js",
-  "old": "const sideCode = (s) => (s === 'attack' ? 1 : s === 'defend' ? 2 : 0);",
-  "new": "const sideCode = (s) => (s === 'attack' ? 1 : s === 'defend' ? 1 : 0);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-beat-forfeit",
-  "file": "src/net/siegeRef.js",
-  "old": "  if (b.kind === 'siege' && !b.attackSeen) marks.push(b.startMs + SIEGE_FORFEIT_MS);",
-  "new": "  if (b.kind === 'siege') marks.push(b.startMs + SIEGE_FORFEIT_MS);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-law-beat-marks",
-  "file": "src/net/siegeRef.js",
-  "old": "  for (const m of marks) if (m > now && m < next) next = m;",
-  "new": "  for (const m of marks) if (m > now && m < next && false) next = m;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-kind",
-  "file": "src/net/identityToken.js",
-  "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake']);",
-  "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake']);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-disjoint",
-  "file": "src/net/identityToken.js",
-  "old": "  if (c.o !== 'siege' && !noSiege) return false;",
-  "new": "  if (c.o === 'nothing' && !noSiege) return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-guild",
-  "file": "src/net/identityToken.js",
-  "old": "  if (c.o === 'siege' && (!siegePassValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild)) return false;",
-  "new": "  if (c.o === 'siege' && (!siegePassValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-sk",
-  "file": "src/net/identityToken.js",
-  "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
-  "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-sw",
-  "file": "src/net/identityToken.js",
-  "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
-  "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw)) return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-sides",
-  "file": "src/net/identityToken.js",
-  "old": "export const SIEGE_PASS_SIDES = Object.freeze(['attack', 'defend', 'watch', 'duel']);",
-  "new": "export const SIEGE_PASS_SIDES = Object.freeze(['attack', 'defend', 'watch', 'duel', 'neutral']);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-tier",
-  "file": "src/net/identityToken.js",
-  "old": "(c.st !== 'palace' && c.st !== 'crown')",
-  "new": "(c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle')",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-span",
-  "file": "src/net/identityToken.js",
-  "old": "export const SIEGE_PASS_SPAN_S = 2 * 3600;",
-  "new": "export const SIEGE_PASS_SPAN_S = 3 * 3600;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-se",
-  "file": "src/net/identityToken.js",
-  "old": "c.se <= c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
-  "new": "c.se < c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-points",
-  "file": "src/net/identityToken.js",
-  "old": "export const siegePassPoints = (tier, kind = 'siege') => (kind === 'royal' ? 1 : tier === 'crown' ? 7 : 6);",
-  "new": "export const siegePassPoints = (tier, kind = 'siege') => (kind === 'royal' ? 1 : tier === 'crown' ? 6 : 6);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-pass-coord",
-  "file": "src/net/identityToken.js",
-  "old": "const coordOk = (v) => Number.isSafeInteger(v) && Math.abs(v) <= SIEGE_PASS_COORD_MAX;",
-  "new": "const coordOk = (v) => Number.isFinite(v) && Math.abs(v) <= SIEGE_PASS_COORD_MAX;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-foreign",
-  "file": "src/net/siegeReceipt.js",
-  "old": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l'];",
-  "new": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'l'];",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-side",
-  "file": "src/net/siegeReceipt.js",
-  "old": "  if (c.sd !== 'attack' && c.sd !== 'defend') return false;",
-  "new": "  if (c.sd !== 'attack' && c.sd !== 'defend' && c.sd !== 'watch') return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-flags",
-  "file": "src/net/siegeReceipt.js",
-  "old": "  if ((c.a !== 0 && c.a !== 1) || (c.h !== 0 && c.h !== 1)) return false;",
-  "new": "  if ((c.a !== 0 && c.a !== 1)) return false;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-ttl",
-  "file": "src/net/siegeReceipt.js",
-  "old": "export const SIEGE_RECEIPT_TTL_S = 7 * 24 * 3600;",
-  "new": "export const SIEGE_RECEIPT_TTL_S = 8 * 24 * 3600;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-version",
-  "file": "src/net/siegeReceipt.js",
-  "old": "export const SIEGE_RECEIPT_V = 's1';",
-  "new": "export const SIEGE_RECEIPT_V = 'r1';",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-rc-results",
-  "file": "src/net/siegeReceipt.js",
-  "old": "export const SIEGE_RESULTS = Object.freeze(['attack', 'defend', 'tie', 'forfeit', 'absent']);",
-  "new": "export const SIEGE_RESULTS = Object.freeze(['attack', 'defend', 'tie', 'forfeit', 'absent', 'void']);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-wire-sp",
-  "file": "src/net/wire.js",
-  "old": "      if (typeof m.sp !== 'string' || !TOKEN_RE.test(m.sp)) return { error: 'bad pass' };",
-  "new": "      if (typeof m.sp !== 'string') return { error: 'bad pass' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-wire-min",
-  "file": "src/net/wire.js",
-  "old": "export const SIEGE_BATTLE_RELAY_MIN = 147;",
-  "new": "export const SIEGE_BATTLE_RELAY_MIN = 146;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-dev",
-  "file": "server/src/index.js",
-  "old": "    if (!sp) return who.subject && Array.isArray(who.glyphs) && who.glyphs.includes('dev') && !s?.battle ? { side: null } : { no: 'the siege is not open' };",
-  "new": "    if (!sp) return who.subject && Array.isArray(who.glyphs) && who.glyphs.includes('dev') ? { side: null } : { no: 'the siege is not open' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-carrier",
-  "file": "server/src/index.js",
-  "old": "    if (c.s !== who.subject || !room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
-  "new": "    if (!room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-week",
-  "file": "server/src/index.js",
-  "old": "    if (c.s !== who.subject || !room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
-  "new": "    if (c.s !== who.subject || !room || c.sk !== room.key) return { no: 'that pass is for another battle' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-door",
-  "file": "server/src/index.js",
-  "old": "    if (now < c.sb * 1000 - SIEGE_OPENS_MS) return { no: 'the siege is not open' };",
-  "new": "    if (false) return { no: 'the siege is not open' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-window",
-  "file": "server/src/index.js",
-  "old": "    if (now >= c.se * 1000) return s?.battle?.result && s.receipts?.[who.subject] && mine?.side === c.sd ? { side: c.sd } : { no: 'the siege is not open' };\n",
-  "new": "",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-agree",
-  "file": "server/src/index.js",
-  "old": "    if (s?.of && Object.keys(of).some((k) => s.of[k] !== of[k])) return { no: 'that pass is for another battle' };",
-  "new": "    if (s?.of && ['sk', 'sw', 'sb'].some((k) => s.of[k] !== of[k])) return { no: 'that pass is for another battle' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-fighter-watch",
-  "file": "server/src/index.js",
-  "old": "      if (mine?.side) return { no: 'a fighter is always a fighter' };",
-  "new": "      if (false) return { no: 'a fighter is always a fighter' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-stands",
-  "file": "server/src/index.js",
-  "old": "      if (watching >= SIEGE_SPECTATORS_MAX) return { no: 'the stands are full' };",
-  "new": "      if (watching > SIEGE_SPECTATORS_MAX) return { no: 'the stands are full' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-other-side",
-  "file": "server/src/index.js",
-  "old": "      if (mine.side !== c.sd) return { no: 'that pass is for another side' };",
-  "new": "      if (false) return { no: 'that pass is for another side' };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-arm",
-  "file": "server/src/index.js",
-  "old": "      await this._siegeArm(c.sn === 'royal' ? royalNextBeat(this._siege.battle, now) : now + SIEGE_TICK_MS);   // CROWN1 part two: a tourney with no bout on wakes at its week's end\n    }\n    return { side: c.sd };",
-  "new": "    }\n    return { side: c.sd };",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-attach",
-  "file": "server/src/index.js",
-  "old": "sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
-  "new": "sub: who.subject, mu: who.mu,",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-camp-in",
-  "file": "server/src/index.js",
-  "old": "        const pose = camp ? siegeCampPose(b, side, a.pose) : (a.pose ?? null);",
-  "new": "        const pose = a.pose ?? null;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-start",
-  "file": "server/src/index.js",
-  "old": "    if (b && (b.result || now < b.startMs)) return;   // SEAT2a: the battle is not joined yet, or over",
-  "new": "    if (b && b.result) return;   // SEAT2a: the battle is not joined yet, or over",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-over",
-  "file": "server/src/index.js",
-  "old": "    if (b && (b.result || now < b.startMs)) return;   // SEAT2a: the battle is not joined yet, or over",
-  "new": "    if (b && now < b.startMs) return;   // SEAT2a: the battle is not joined yet, or over",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-friendly",
-  "file": "server/src/index.js",
-  "old": "    if (by.side && b?.kind !== 'royal' && (heal ? to.side !== by.side : to.side === by.side)) return;   // SEAT2a: the sides are kept",
-  "new": "    if (by.side && b?.kind !== 'royal' && heal && to.side !== by.side) return;   // SEAT2a: the sides are kept",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-foe-heal",
-  "file": "server/src/index.js",
-  "old": "    if (by.side && b?.kind !== 'royal' && (heal ? to.side !== by.side : to.side === by.side)) return;   // SEAT2a: the sides are kept",
-  "new": "    if (by.side && b?.kind !== 'royal' && !heal && to.side === by.side) return;   // SEAT2a: the sides are kept",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-felled",
-  "file": "server/src/index.js",
-  "old": "      by.felled = (by.felled ?? 0) + 1;   // SEAT2a: Honours' other half (6.8)",
-  "new": "      by.felled = by.felled ?? 0;   // SEAT2a: Honours' other half (6.8)",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-wave-tier",
-  "file": "server/src/index.js",
-  "old": "      to.upAt = siegeNextWave(now, b ? siegeWaveMs(b, to.side) : SIEGE_WAVE_MS.palace);",
-  "new": "      to.upAt = siegeNextWave(now, SIEGE_WAVE_MS.palace);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-rise-camp",
-  "file": "server/src/index.js",
-  "old": "        if (b && f.side) { f.pose = siegeCampPose(b, f.side, f.pose); f.poseAt = now; }",
-  "new": "        if (b && f.side) { f.poseAt = now; }",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-here",
-  "file": "server/src/index.js",
-  "old": "      for (const [sub, f] of Object.entries(s.fighters)) if (f.side) { f.here = !!this._siegeSocketOf(sub); f.sub = sub; list.push(f);",
-  "new": "      for (const [sub, f] of Object.entries(s.fighters)) if (f.side) { f.here = true; f.sub = sub; list.push(f);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-fan",
-  "file": "server/src/index.js",
-  "old": "      this._siegeFan([...struck, siegeFieldFrame(b, this._siegeCounts(s))]);",
-  "new": "      this._siegeFan([...struck]);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-beat",
-  "file": "server/src/index.js",
-  "old": "      next = Math.min(next, siegeNextBeat(b, now));",
-  "new": "      next = Math.min(next, now + 60_000);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-counts-watch",
-  "file": "server/src/index.js",
-  "old": "      if (b.sd === 'watch') { watch++; continue; }",
-  "new": "      if (b.sd === 'watch') { continue; }",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-receipt-honour",
-  "file": "server/src/index.js",
-  "old": "r: b.result, a: b.raised ? 1 : 0, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
-  "new": "r: b.result, a: b.raised ? 1 : 0, h: 1, th: b.reached ? 1 : 0 }, key,",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-receipt-raised",
-  "file": "server/src/index.js",
-  "old": "r: b.result, a: b.raised ? 1 : 0, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
-  "new": "r: b.result, a: 1, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-receipt-own",
-  "file": "server/src/index.js",
-  "old": "      const rc = att.sub ? s.receipts[att.sub] : undefined;",
-  "new": "      const rc = Object.values(s.receipts)[0];",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-keep",
-  "file": "server/src/index.js",
-  "old": "      if (b?.result) this._send(ws, JSON.stringify({ t: 'siege', k: 'end', r: b.result, a: b.raised ? 1 : 0, ...(s.receipts?.[a.sub] ? { rc: s.receipts[a.sub] } : {}) }));",
-  "new": "      if (b?.result) this._send(ws, JSON.stringify({ t: 'siege', k: 'end', r: b.result, a: b.raised ? 1 : 0 }));",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-drop",
-  "file": "server/src/index.js",
-  "old": "      if (now >= (s.dropAt ?? 0)) { await this.state.storage.delete('siege'); this._siege = null; } else await this.state.storage.setAlarm(s.dropAt);",
-  "new": "      if (false) { await this.state.storage.delete('siege'); this._siege = null; } else await this.state.storage.setAlarm(s.dropAt);",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- },
- {
-  "name": "SEAT2a2-relay-drop-ttl",
-  "file": "server/src/index.js",
-  "old": "    s.dropAt = now + SIEGE_RECEIPT_TTL_S * 1000;",
-  "new": "    s.dropAt = now + SIEGE_RECEIPT_TTL_S * 100;",
-  "tests": [
-   "test/seat2a_battle.test.js",
-   "test/seat2a_relay.test.js"
-  ]
- }
+  {
+    "name": "SEAT2a2-law-radius",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
+    "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 9, raiseS: 20, decayPerS: 1 });",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-raise",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
+    "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 15, decayPerS: 1 });",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-decay",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 1 });",
+    "new": "export const SIEGE_BANNER = Object.freeze({ radiusM: 8, raiseS: 20, decayPerS: 0.5 });",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-palace",
+    "file": "src/net/siegeRef.js",
+    "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
+    "new": "palace: Object.freeze({ banners: 3, holdS: 120 })",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-hold",
+    "file": "src/net/siegeRef.js",
+    "old": "palace: Object.freeze({ banners: 2, holdS: 120 })",
+    "new": "palace: Object.freeze({ banners: 2, holdS: 90 })",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-crown",
+    "file": "src/net/siegeRef.js",
+    "old": "crown: Object.freeze({ banners: 3, holdS: 180 })",
+    "new": "crown: Object.freeze({ banners: 2, holdS: 180 })",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-lengths",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
+    "new": "export const SIEGE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 30 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-forfeit",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_FORFEIT_MS = 10 * 60_000;",
+    "new": "export const SIEGE_FORFEIT_MS = 15 * 60_000;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-spectators",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_SPECTATORS_MAX = 60;",
+    "new": "export const SIEGE_SPECTATORS_MAX = 61;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-field-count",
+    "file": "src/net/siegeRef.js",
+    "old": "  if (!Array.isArray(sf) || sf.length !== n + 3) return null;",
+    "new": "  if (!Array.isArray(sf) || sf.length < n + 3) return null;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-field-order",
+    "file": "src/net/siegeRef.js",
+    "old": "camps: { attack: [sf[n + 1][0], sf[n + 1][1]], defend: [sf[n + 2][0], sf[n + 2][1]] } };",
+    "new": "camps: { attack: [sf[n + 2][0], sf[n + 2][1]], defend: [sf[n + 1][0], sf[n + 1][1]] } };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-start-side",
+    "file": "src/net/siegeRef.js",
+    "old": "field.banners.map(() => ({ side: kind === 'tourney' ? null : 'defend', raise: 0, by: null })),",
+    "new": "field.banners.map(() => ({ side: null, raise: 0, by: null })),",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-tourney-length",
+    "file": "src/net/siegeRef.js",
+    "old": "  const length = kind === 'tourney' ? SIEGE_LENGTH_MS.tourney : kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
+    "new": "  const length = kind === 'revolt' ? SIEGE_LENGTH_MS.revolt : (SIEGE_LENGTH_MS[tier] ?? SIEGE_LENGTH_MS.palace);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-present-down",
+    "file": "src/net/siegeRef.js",
+    "old": "    if (f.down || !f.pose || !f.here) continue;",
+    "new": "    if (!f.pose || !f.here) continue;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-present-here",
+    "file": "src/net/siegeRef.js",
+    "old": "    if (f.down || !f.pose || !f.here) continue;",
+    "new": "    if (f.down || !f.pose) continue;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-before-start",
+    "file": "src/net/siegeRef.js",
+    "old": "  if (b.result || nowMs < b.startMs) return [];",
+    "new": "  if (b.result) return [];",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-clamp",
+    "file": "src/net/siegeRef.js",
+    "old": "  const dt = Math.max(0, Math.min(nowMs - Math.max(b.at, b.startMs), 5 * SIEGE_TICK_MS)) / 1000;",
+    "new": "  const dt = Math.max(0, nowMs - Math.max(b.at, b.startMs)) / 1000;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-stood",
+    "file": "src/net/siegeRef.js",
+    "old": "    f.stood = (f.stood ?? 0) + dt;",
+    "new": "    f.stood = (f.stood ?? 0) + 1;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-freeze",
+    "file": "src/net/siegeRef.js",
+    "old": "    if (p.attack && p.defend) return;   // contested: frozen",
+    "new": "    if (p.attack && p.defend && false) return;   // contested: frozen",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-reset",
+    "file": "src/net/siegeRef.js",
+    "old": "      if (bn.by !== alone) { bn.by = alone; bn.raise = 0; }",
+    "new": "      if (bn.by !== alone) { bn.by = alone; }",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-raised-flag",
+    "file": "src/net/siegeRef.js",
+    "old": "        if (alone === 'attack') b.raised = true;",
+    "new": "        b.raised = true;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-banner-decay",
+    "file": "src/net/siegeRef.js",
+    "old": "    bn.raise = Math.max(0, bn.raise - SIEGE_BANNER.decayPerS * dt);",
+    "new": "    bn.raise = Math.max(0, bn.raise);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-open",
+    "file": "src/net/siegeRef.js",
+    "old": "    const open = b.banners.filter((bn) => bn.side === 'attack').length >= rule.banners && !siegeThroneBarred(b);",
+    "new": "    const open = b.banners.filter((bn) => bn.side === 'attack').length > rule.banners && !siegeThroneBarred(b);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-contest",
+    "file": "src/net/siegeRef.js",
+    "old": "    if (open && p.attack && !p.defend) b.throne += dt;",
+    "new": "    if (open && p.attack) b.throne += dt;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-decay",
+    "file": "src/net/siegeRef.js",
+    "old": "    else if (!(open && p.attack && p.defend)) b.throne = Math.max(0, b.throne - SIEGE_THRONE.decayPerS * dt);",
+    "new": "    else if (!(open && p.attack && p.defend)) b.throne = Math.max(0, b.throne);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-throne-tourney",
+    "file": "src/net/siegeRef.js",
+    "old": "  if (b.kind === 'siege') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
+    "new": "  if (b.kind !== 'nothing') {\n    worksStep(b, fighters, nowMs, dt, ground, out);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-forfeit-kind",
+    "file": "src/net/siegeRef.js",
+    "old": "  if (b.kind === 'siege' && !b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
+    "new": "  if (!b.attackSeen && nowMs >= b.startMs + SIEGE_FORFEIT_MS)",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-absent",
+    "file": "src/net/siegeRef.js",
+    "old": "return end(b, b.defendSeen ? 'forfeit' : 'absent', out);",
+    "new": "return end(b, 'forfeit', out);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-time-siege",
+    "file": "src/net/siegeRef.js",
+    "old": "    if (b.kind === 'siege') return end(b, 'defend', out);",
+    "new": "    if (b.kind === 'siege') return end(b, 'tie', out);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-tie",
+    "file": "src/net/siegeRef.js",
+    "old": "    return end(b, a > d ? 'attack' : d > a ? 'defend' : 'tie', out);",
+    "new": "    return end(b, a > d ? 'attack' : 'defend', out);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-honour-felled",
+    "file": "src/net/siegeRef.js",
+    "old": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 0 ||",
+    "new": "export const honoured = (f, b) => b.kind !== 'revolt' && ((f.felled ?? 0) > 1 ||",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-honour-half",
+    "file": "src/net/siegeRef.js",
+    "old": "(f.stood ?? 0) * 1000 >= (Math.max(b.at, b.startMs) - b.startMs) / 2);",
+    "new": "(f.stood ?? 0) * 1000 > (Math.max(b.at, b.startMs) - b.startMs) / 2);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-opens",
+    "file": "src/net/siegeRef.js",
+    "old": "export const SIEGE_OPENS_MS = 10 * 60_000;",
+    "new": "export const SIEGE_OPENS_MS = 15 * 60_000;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-camp-y",
+    "file": "src/net/siegeRef.js",
+    "old": "  return { x: c[0], y: Number.isFinite(was?.y) ? was.y : 0, z: c[1],",
+    "new": "  return { x: c[0], y: 0, z: c[1],",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-frame-floor",
+    "file": "src/net/siegeRef.js",
+    "old": "th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier]",
+    "new": "th: Math.min(Math.round(b.throne), (SIEGE_THRONE[b.tier]",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-frame-code",
+    "file": "src/net/siegeRef.js",
+    "old": "const sideCode = (s) => (s === 'attack' ? 1 : s === 'defend' ? 2 : 0);",
+    "new": "const sideCode = (s) => (s === 'attack' ? 1 : s === 'defend' ? 1 : 0);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-beat-forfeit",
+    "file": "src/net/siegeRef.js",
+    "old": "  if (b.kind === 'siege' && !b.attackSeen) marks.push(b.startMs + SIEGE_FORFEIT_MS);",
+    "new": "  if (b.kind === 'siege') marks.push(b.startMs + SIEGE_FORFEIT_MS);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-law-beat-marks",
+    "file": "src/net/siegeRef.js",
+    "old": "  for (const m of marks) if (m > now && m < next) next = m;",
+    "new": "  for (const m of marks) if (m > now && m < next && false) next = m;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-kind",
+    "file": "src/net/identityToken.js",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake', 'deck']);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-disjoint",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o !== 'siege' && !noSiege) return false;",
+    "new": "  if (c.o === 'nothing' && !noSiege) return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-guild",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o === 'siege' && (!siegePassValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild)) return false;",
+    "new": "  if (c.o === 'siege' && (!siegePassValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-sk",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-sw",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw)) return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-sides",
+    "file": "src/net/identityToken.js",
+    "old": "export const SIEGE_PASS_SIDES = Object.freeze(['attack', 'defend', 'watch', 'duel']);",
+    "new": "export const SIEGE_PASS_SIDES = Object.freeze(['attack', 'defend', 'watch', 'duel', 'neutral']);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-tier",
+    "file": "src/net/identityToken.js",
+    "old": "(c.st !== 'palace' && c.st !== 'crown')",
+    "new": "(c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle')",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-span",
+    "file": "src/net/identityToken.js",
+    "old": "export const SIEGE_PASS_SPAN_S = 2 * 3600;",
+    "new": "export const SIEGE_PASS_SPAN_S = 3 * 3600;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-se",
+    "file": "src/net/identityToken.js",
+    "old": "c.se <= c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
+    "new": "c.se < c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-points",
+    "file": "src/net/identityToken.js",
+    "old": "export const siegePassPoints = (tier, kind = 'siege') => (kind === 'royal' ? 1 : tier === 'crown' ? 7 : 6);",
+    "new": "export const siegePassPoints = (tier, kind = 'siege') => (kind === 'royal' ? 1 : tier === 'crown' ? 6 : 6);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-pass-coord",
+    "file": "src/net/identityToken.js",
+    "old": "const coordOk = (v) => Number.isSafeInteger(v) && Math.abs(v) <= SIEGE_PASS_COORD_MAX;",
+    "new": "const coordOk = (v) => Number.isFinite(v) && Math.abs(v) <= SIEGE_PASS_COORD_MAX;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-foreign",
+    "file": "src/net/siegeReceipt.js",
+    "old": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l'];",
+    "new": "const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'l'];",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-side",
+    "file": "src/net/siegeReceipt.js",
+    "old": "  if (c.sd !== 'attack' && c.sd !== 'defend') return false;",
+    "new": "  if (c.sd !== 'attack' && c.sd !== 'defend' && c.sd !== 'watch') return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-flags",
+    "file": "src/net/siegeReceipt.js",
+    "old": "  if ((c.a !== 0 && c.a !== 1) || (c.h !== 0 && c.h !== 1)) return false;",
+    "new": "  if ((c.a !== 0 && c.a !== 1)) return false;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-ttl",
+    "file": "src/net/siegeReceipt.js",
+    "old": "export const SIEGE_RECEIPT_TTL_S = 7 * 24 * 3600;",
+    "new": "export const SIEGE_RECEIPT_TTL_S = 8 * 24 * 3600;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-version",
+    "file": "src/net/siegeReceipt.js",
+    "old": "export const SIEGE_RECEIPT_V = 's1';",
+    "new": "export const SIEGE_RECEIPT_V = 'r1';",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-rc-results",
+    "file": "src/net/siegeReceipt.js",
+    "old": "export const SIEGE_RESULTS = Object.freeze(['attack', 'defend', 'tie', 'forfeit', 'absent']);",
+    "new": "export const SIEGE_RESULTS = Object.freeze(['attack', 'defend', 'tie', 'forfeit', 'absent', 'void']);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-wire-sp",
+    "file": "src/net/wire.js",
+    "old": "      if (typeof m.sp !== 'string' || !TOKEN_RE.test(m.sp)) return { error: 'bad pass' };",
+    "new": "      if (typeof m.sp !== 'string') return { error: 'bad pass' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-wire-min",
+    "file": "src/net/wire.js",
+    "old": "export const SIEGE_BATTLE_RELAY_MIN = 147;",
+    "new": "export const SIEGE_BATTLE_RELAY_MIN = 146;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-dev",
+    "file": "server/src/index.js",
+    "old": "    if (!sp) return who.subject && Array.isArray(who.glyphs) && who.glyphs.includes('dev') && !s?.battle ? { side: null } : { no: 'the siege is not open' };",
+    "new": "    if (!sp) return who.subject && Array.isArray(who.glyphs) && who.glyphs.includes('dev') ? { side: null } : { no: 'the siege is not open' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-carrier",
+    "file": "server/src/index.js",
+    "old": "    if (c.s !== who.subject || !room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
+    "new": "    if (!room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-week",
+    "file": "server/src/index.js",
+    "old": "    if (c.s !== who.subject || !room || c.sk !== room.key || c.sw !== room.week) return { no: 'that pass is for another battle' };",
+    "new": "    if (c.s !== who.subject || !room || c.sk !== room.key) return { no: 'that pass is for another battle' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-door",
+    "file": "server/src/index.js",
+    "old": "    if (now < c.sb * 1000 - SIEGE_OPENS_MS) return { no: 'the siege is not open' };",
+    "new": "    if (false) return { no: 'the siege is not open' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-window",
+    "file": "server/src/index.js",
+    "old": "    if (now >= c.se * 1000) return s?.battle?.result && s.receipts?.[who.subject] && mine?.side === c.sd ? { side: c.sd } : { no: 'the siege is not open' };\n",
+    "new": "",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-agree",
+    "file": "server/src/index.js",
+    "old": "    if (s?.of && Object.keys(of).some((k) => s.of[k] !== of[k])) return { no: 'that pass is for another battle' };",
+    "new": "    if (s?.of && ['sk', 'sw', 'sb'].some((k) => s.of[k] !== of[k])) return { no: 'that pass is for another battle' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-fighter-watch",
+    "file": "server/src/index.js",
+    "old": "      if (mine?.side) return { no: 'a fighter is always a fighter' };",
+    "new": "      if (false) return { no: 'a fighter is always a fighter' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-stands",
+    "file": "server/src/index.js",
+    "old": "      if (watching >= SIEGE_SPECTATORS_MAX) return { no: 'the stands are full' };",
+    "new": "      if (watching > SIEGE_SPECTATORS_MAX) return { no: 'the stands are full' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-other-side",
+    "file": "server/src/index.js",
+    "old": "      if (mine.side !== c.sd) return { no: 'that pass is for another side' };",
+    "new": "      if (false) return { no: 'that pass is for another side' };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-arm",
+    "file": "server/src/index.js",
+    "old": "      await this._siegeArm(c.sn === 'royal' ? royalNextBeat(this._siege.battle, now) : now + SIEGE_TICK_MS);   // CROWN1 part two: a tourney with no bout on wakes at its week's end\n    }\n    return { side: c.sd };",
+    "new": "    }\n    return { side: c.sd };",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-attach",
+    "file": "server/src/index.js",
+    "old": "sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
+    "new": "sub: who.subject, mu: who.mu,",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-camp-in",
+    "file": "server/src/index.js",
+    "old": "        const pose = camp ? siegeCampPose(b, side, a.pose) : (a.pose ?? null);",
+    "new": "        const pose = a.pose ?? null;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-start",
+    "file": "server/src/index.js",
+    "old": "    if (b && (b.result || now < b.startMs)) return;   // SEAT2a: the battle is not joined yet, or over",
+    "new": "    if (b && b.result) return;   // SEAT2a: the battle is not joined yet, or over",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-over",
+    "file": "server/src/index.js",
+    "old": "    if (b && (b.result || now < b.startMs)) return;   // SEAT2a: the battle is not joined yet, or over",
+    "new": "    if (b && now < b.startMs) return;   // SEAT2a: the battle is not joined yet, or over",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-friendly",
+    "file": "server/src/index.js",
+    "old": "    if (by.side && b?.kind !== 'royal' && (heal ? to.side !== by.side : to.side === by.side)) return;   // SEAT2a: the sides are kept",
+    "new": "    if (by.side && b?.kind !== 'royal' && heal && to.side !== by.side) return;   // SEAT2a: the sides are kept",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-foe-heal",
+    "file": "server/src/index.js",
+    "old": "    if (by.side && b?.kind !== 'royal' && (heal ? to.side !== by.side : to.side === by.side)) return;   // SEAT2a: the sides are kept",
+    "new": "    if (by.side && b?.kind !== 'royal' && !heal && to.side === by.side) return;   // SEAT2a: the sides are kept",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-felled",
+    "file": "server/src/index.js",
+    "old": "      by.felled = (by.felled ?? 0) + 1;   // SEAT2a: Honours' other half (6.8)",
+    "new": "      by.felled = by.felled ?? 0;   // SEAT2a: Honours' other half (6.8)",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-wave-tier",
+    "file": "server/src/index.js",
+    "old": "      to.upAt = siegeNextWave(now, b ? siegeWaveMs(b, to.side) : SIEGE_WAVE_MS.palace);",
+    "new": "      to.upAt = siegeNextWave(now, SIEGE_WAVE_MS.palace);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-rise-camp",
+    "file": "server/src/index.js",
+    "old": "        if (b && f.side) { f.pose = siegeCampPose(b, f.side, f.pose); f.poseAt = now; }",
+    "new": "        if (b && f.side) { f.poseAt = now; }",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-here",
+    "file": "server/src/index.js",
+    "old": "      for (const [sub, f] of Object.entries(s.fighters)) if (f.side) { f.here = !!this._siegeSocketOf(sub); f.sub = sub; list.push(f);",
+    "new": "      for (const [sub, f] of Object.entries(s.fighters)) if (f.side) { f.here = true; f.sub = sub; list.push(f);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-fan",
+    "file": "server/src/index.js",
+    "old": "      this._siegeFan([...struck, siegeFieldFrame(b, this._siegeCounts(s))]);",
+    "new": "      this._siegeFan([...struck]);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-beat",
+    "file": "server/src/index.js",
+    "old": "      next = Math.min(next, siegeNextBeat(b, now));",
+    "new": "      next = Math.min(next, now + 60_000);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-counts-watch",
+    "file": "server/src/index.js",
+    "old": "      if (b.sd === 'watch') { watch++; continue; }",
+    "new": "      if (b.sd === 'watch') { continue; }",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-receipt-honour",
+    "file": "server/src/index.js",
+    "old": "r: b.result, a: b.raised ? 1 : 0, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
+    "new": "r: b.result, a: b.raised ? 1 : 0, h: 1, th: b.reached ? 1 : 0 }, key,",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-receipt-raised",
+    "file": "server/src/index.js",
+    "old": "r: b.result, a: b.raised ? 1 : 0, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
+    "new": "r: b.result, a: 1, h: honoured(f, b) ? 1 : 0, th: b.reached ? 1 : 0 }, key,",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-receipt-own",
+    "file": "server/src/index.js",
+    "old": "      const rc = att.sub ? s.receipts[att.sub] : undefined;",
+    "new": "      const rc = Object.values(s.receipts)[0];",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-keep",
+    "file": "server/src/index.js",
+    "old": "      if (b?.result) this._send(ws, JSON.stringify({ t: 'siege', k: 'end', r: b.result, a: b.raised ? 1 : 0, ...(s.receipts?.[a.sub] ? { rc: s.receipts[a.sub] } : {}) }));",
+    "new": "      if (b?.result) this._send(ws, JSON.stringify({ t: 'siege', k: 'end', r: b.result, a: b.raised ? 1 : 0 }));",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-drop",
+    "file": "server/src/index.js",
+    "old": "      if (now >= (s.dropAt ?? 0)) { await this.state.storage.delete('siege'); this._siege = null; } else await this.state.storage.setAlarm(s.dropAt);",
+    "new": "      if (false) { await this.state.storage.delete('siege'); this._siege = null; } else await this.state.storage.setAlarm(s.dropAt);",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a2-relay-drop-ttl",
+    "file": "server/src/index.js",
+    "old": "    s.dropAt = now + SIEGE_RECEIPT_TTL_S * 1000;",
+    "new": "    s.dropAt = now + SIEGE_RECEIPT_TTL_S * 100;",
+    "tests": [
+      "test/seat2a_battle.test.js",
+      "test/seat2a_relay.test.js"
+    ]
+  }
 ]

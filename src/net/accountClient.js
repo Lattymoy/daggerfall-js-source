@@ -575,6 +575,9 @@ export const REFUSALS = Object.freeze({
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
   'customs-cards': 'That character carries more cards than customs lets in. Bring it online again.',   // CARDS9: the cards' customs
+  'ranked-needs-account': 'Ranked games need a registered account.',   // CARDS10: a ranked seat's deck order (server-account/src/iliac.js)
+  'bad-deck': 'The table will not take that deck.',
+  'deck-short': 'Your realm character does not hold every card of that deck.',
   // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
   dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
   'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',
