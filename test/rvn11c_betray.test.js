@@ -134,7 +134,7 @@ test('RVN11c ITS CARD: Betrayed - "Grushnak turns on you!" (mutants: the kicker;
 
 test('RVN11c THE HOSTS: the pools stand a turned revenant (no band, no return); the world turns it before the layer\'s frame - its card, its body lifted (no portal), the hostile stood at its feet and set on me (mutants: each seam unwired; the band stood; the portal; after the frame)', () => {
   const x = read('src/scenes/exteriorFoes.js');
-  assert.match(x, /revenant = null, eliteFoe = undefined, turned = false, band = true \} = \{\}\) \{/);
+  assert.match(x, /revenant = null, eliteFoe = undefined, turned = false, band = true(?:, zoneGiant = null)? \} = \{\}\) \{/);   // ZONE-GIANTS: the open zone's giant index after it
   assert.match(x, /if \(revenant && !puppet\) applyRevenant\(entity, revenant, \{ turned \}\);/);
   assert.match(x, /if \(revenant && band && !puppet && !allied && entity\.revenant\) Promise\.resolve\(\)\.then\(\(\) => standBand\(/);
   const d = read('src/scenes/dungeonContext.js');
