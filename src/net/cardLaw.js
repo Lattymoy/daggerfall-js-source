@@ -309,6 +309,24 @@ export function act(st, seat, action) {
 }
 
 /**
+ * A seat folded OUT OF TURN - a player who stands up from the table, or whose connection leaves the room (Tavern-Cards
+ * section 5; AUDIT CARDS's note for CARDS5). The casino takes a fold at any moment: the seat's chips in the pot stay
+ * there, it can win nothing more, and the action goes on where it was (on its own turn it is the fold `act` makes).
+ * Null for a hand already over or a seat already out; the state handed in is never changed.
+ * @param {ReturnType<typeof newHand>} st
+ * @param {number} seat
+ */
+export function foldSeat(st, seat) {
+  if (!st || st.result || !st.seats[seat] || st.seats[seat].folded) return null;
+  if (st.toAct === seat) return act(st, seat, { type: 'fold' });
+  const next = structuredClone(st);
+  next.seats[seat].folded = true;
+  // The seat to act still owes what it owed; a round that waited on nobody else may now be over.
+  next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;
+  return settleIfDone(next);
+}
+
+/**
  * The seat clock's answer for a seat that did not act in time (CARDS5's): check when it can, fold when it cannot.
  * @param {ReturnType<typeof newHand>} st
  */

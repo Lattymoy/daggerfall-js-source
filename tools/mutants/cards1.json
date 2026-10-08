@@ -263,8 +263,8 @@
   {
     "name": "CD-act-mutates",
     "file": "src/net/cardLaw.js",
-    "old": "  const next = structuredClone(st);",
-    "new": "  const next = st;",
+    "old": "  if (!legal || !action) return null;\n  const next = structuredClone(st);",
+    "new": "  if (!legal || !action) return null;\n  const next = st;",
     "tests": [
       "test/cards1_cardlaw.test.js"
     ]

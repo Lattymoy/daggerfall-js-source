@@ -157,6 +157,13 @@ directory by `test/audit18_bible_docs.test.js`:
   sticky slots by position, `?shadowcache=off` the old path
   (`Enhanced-Lighting-Arc.md`, SC1, CACHE-COPY).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `cardTableDraw.js` - CARDS3 THE CARDS' BODIES (2026-10-07,
+  `11-Multiplayer/Tavern-Cards.md` section 15): one atlas (52 faces, the back,
+  the stock, five chips) painted on a canvas and uploaded once under a string
+  key; 52 face plates, a back plate and five chip drums made at the first card,
+  each drawn with its own matrix in the interior's pass after the decor, all
+  freed with the table. The plates wound counter-clockwise about their normals
+  and the faces laid unmirrored for the mirrored world - both found by eye.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
   its view-space box touches, uploaded as two integer textures (the grid's

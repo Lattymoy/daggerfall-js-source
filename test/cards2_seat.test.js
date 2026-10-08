@@ -158,13 +158,13 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   // AUDIT CARDS E1: standing up does what it says - the slot empties and the eye goes home
   has("  function standFromCardTable() {\n    if (!cardSeat) return;\n    cardSeat = null;\n    cam.pos = player.eyeAt();", 'the stand empties the seat and gives the body its eye back');
   // AUDIT CARDS B1: every road out of a building empties the seat - the mode's change (a load, a teleport, a respawn), a new room
-  has("        cardSeat = null;   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does\n        interiorCtx = null; interiorBuilding = null; interiorCabin = null;", 'the forced road out empties the seat');
-  has("      cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet\n      interiorBuilding = building;", 'a new room seats nobody');
+  has("        standFromCardTable();   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does; CARDS4: and cashes the table out\n        interiorCtx = null; interiorBuilding = null; interiorCabin = null;", 'the forced road out empties the seat');
+  has("      standFromCardTable();   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet - CARDS4: and an old table\'s chips come home\n      interiorBuilding = building;", 'a new room seats nobody');
   has("    seatPose: () => (mode === 'interior' && cardSeat ?", 'and the pose never says a seat outside a building');
   has("    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));", 'AUDIT CARDS B3: another player\'s seat is taken');
   has("    return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];", 'AUDIT CARDS B6: the whole table - its own box and its turn - to the seats');
   has("    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)\n    const view = betterAmbience.view(", 'the seat\'s own view, first person, the last word on the eye');
-  has("    cardSeat = null;   // CARDS2: and nobody stays seated in a room they left");
+  has("    standFromCardTable();   // CARDS2: and nobody stays seated in a room they left - CARDS4: the table cashed out");
   has("(key) => (typeof key === 'string' && key.startsWith('cardtable:') ? { title: 'Card table' } : null)");
   has("    return seatFloorOk(c.raycast(to, [0, -1, 0], SEAT_FLOOR_PROBE));");
   has("    if (!(len > 0) || c.raycast(from, [d[0] / len, d[1] / len, d[2] / len], len) < len) return false;");

@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth. Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -176,8 +176,8 @@ Each ships alone and is verifiable without the next.
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
 | **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
 | **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
-| **CARDS3** | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
-| **CARDS4** | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
+| **CARDS3** SHIPPED | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
+| **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables. |
 | **CARDS6** | Online stakes: buy-in and cash-out escrowed by the realm service. |
 | **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. |
@@ -331,4 +331,69 @@ sweep of every test reading a touched host; the whole record is `01-Overview/Aud
 - **Recorded, not built:** a readied spell fires on its press before the release stands you up (B5); a duel's sparring
   blows do not stand you up (B4); seated, foes and the collider stand at the capsule until the first blow (C4); a
   tall, slight race's hands stop a few centimetres short of the table (D2); CARDS5 needs a fold out of turn for a seat
-  whose player leaves (section 5).
+  whose player leaves (section 5) - built at CARDS4 (`foldSeat`, section 14).
+
+## 14. CARDS4 (2026-10-07): offline Hold'em against the tavern
+
+Mac: **"Do 3 and 4"**. The first playable game: sit at a tavern's card table, buy in, and play no-limit Hold'em against
+the house's regulars until you stand, go broke or empty the table.
+
+- **The patrons' play** (`src/systems/cardPatrons.js`, pure). Before the flop a hand is its Chen score over twenty;
+  after it, its equity - Monte Carlo over `EQUITY_SAMPLES` (200) deals of the unseen cards, a tie its share, cards known
+  dead never dealt. Each patron is one of three tempers (`PATRON_TEMPERS`: tight, loose, a bluffer), four numbers each: the
+  preflop line he plays from, the strength he raises with, how often he bets air, the edge over the pot's odds a call
+  wants. A raise is sized off the pot - a half to the whole, more the stronger - and clamped to what the law allows.
+  The bluff is the decision's FIRST draw (a constant source would spin the shuffle's rejection loop forever otherwise -
+  found by the pins' first hang). Every decision is one `legalActions` allows, swept over thousands of seeded spots.
+- **The evening** (`src/systems/cardTableSession.js`, pure). The table's clock over the cards' law: the stakes by the
+  tavern's quality (`TABLE_STAKES`: 1/2 to quality 7, 5/10 to 13, 25/50 above), the buy-in 20 to 100 big blinds and never past
+  the purse, the regulars' purses 30 to 120 big blinds; a patron acts after `THINK_MS` and a seeded spread, the next
+  hand waits `HAND_GAP_MS` after a showdown, a broke patron leaves (his chair shows empty), the evening is over
+  `broke`, `empty` or `left`. Standing mid-hand folds you OUT OF TURN - `foldSeat` in the cards' law, the primitive
+  CARDS5's leaver needs too (section 13) - your pot chips stay, the rest comes home.
+- **The panel** (`src/ui/cardTableHud.js`). The port's own panel, not a pausing window - the patrons play on - holding
+  the cursor while it stands: the seats, the cards each may see, the pot, the buttons the law allows, a raise slider,
+  the log. It swallows its own presses and keys (a slider's arrow is never a step that stands you up).
+- **The host** (`worldModes.js`, the interior only - a tavern is an interior). Sitting opens the panel; dealing in
+  takes the buy-in from the purse; the frame runs the patrons under any window; every road off the seat (the stand, a
+  hit, the door, a new room, a forced exit) goes through `standFromCardTable` and cashes the table out - the three bare
+  seat clears that would have dropped the chips are gone. The regulars are named by the living world's namer on a seed
+  of the building's key: the same faces every evening at this tavern.
+- **DECIDED: online it is a friendly game.** A patron's gold paid on the client is a faucet the realm service never
+  sees (section 5: a stake the service does not hold plays for no gold), so a realm character - or any online page -
+  plays for chips and no purse is touched. Real-gold online tables are CARDS6's escrow.
+- **Open:** the regulars are names, not the room's living residents seated at the table (needs a host seam into the
+  living world's crowd); the patrons do not talk.
+- **Pins:** `test/cards4_patrons.test.js` 4, `test/cards4_session.test.js` 5, `test/cards4_hud.test.js` 6.
+  `tools/mutants/cards4.json`: 17, all dead (three survived the first pass - a dead-card pin that compared a call
+  with itself, an evening seed in which nobody went broke, and an empty chair nobody looked at; each pinned).
+
+## 15. CARDS3 (2026-10-07): the cards on the cloth
+
+The same ask. Section 3's physics, closed-form in time so a slow or skipped frame lands on the same pose, seeded so a
+table's throws are its own.
+
+- **The motion** (`src/world/cardMotion.js`, pure). A throw from the dealer's hand (`DEAL_LIFT` over the top) on an
+  arc (`ARC_HEIGHT`) at `FLIGHT_SPEED`, never quicker than `FLIGHT_MIN_S`, spinning; a slide under the cloth's
+  `SLIDE_DECEL` that stops EXACTLY on its rest with no speed left; a flip over the long edge (`FLIP_S`) or at its middle;
+  chips stacked greedily from `CHIP_VALUES` in columns of `CHIP_STACK_MAX`, pushed over `PUSH_S`.
+- **The scene** (`src/world/cardScene.js`, pure). `tablePlaces` lays each seat's hole cards, bet and stack, the board
+  along the long side, the burn at its head, the muck and the pot either side; `CardScene` turns the session's events
+  into motions - the deal round from the dealer's left, the player's own two turned up where they lie, the board thrown
+  face down and turned over its edge, a fold to the muck, a showdown's hands turned and the pot pushed to its winner -
+  and `poses(t)` is the whole picture at any clock. A card the player may not know is a back, even told it.
+- **The draw** (`src/render/cardTableDraw.js`). One atlas (52 faces, the back, the stock, five chips) painted on a
+  canvas and uploaded once under the key `drawMesh` reads; 52 face plates, a back plate and five chip drums made at the
+  first card; each drawn with its own matrix; all freed with the table (`closeCardGame`). The host draws it in the
+  room's own pass after the decor.
+- **Seen, not assumed** (`cards.html`, `src/tools/cardsLab.js`, `tools/cardsProbe.mjs`: a felt table, a seeded evening
+  played to a clock, four cameras, Chromium screenshots). The first cut was wrong three ways the pins had not seen:
+  every face culled (the quads wound clockwise - the renderer's front is counter-clockwise about the normal), every face
+  mirrored (the world is Daggerfall's left-handed axes drawn through a mirror, so from above +X runs right), and the
+  board a card's width off its slots (an edge flip moves the card across - a dealer throws it a width short,
+  `flipShift`; a player's own cards turn at their middle). Each is now a pin and a mutant.
+- **Not yet:** the fanned hand and the peek, a drag of chips to bet (the panel's buttons do it), the shuffle's riffle;
+  the frame cost on a phone (the lab draws 60-odd meshes with no measurable cost on the probe's software GL).
+- **Not verified in a live tavern** (no ARENA2 here): the lab's table stands for the room's.
+- **Pins:** `test/cards3_motion.test.js` 8, `test/cards3_draw.test.js` 6. `tools/mutants/cards3.json`: 15, all dead
+  (two survived the first pass - a short throw's least flight and a careless `holeOf`; both pinned).

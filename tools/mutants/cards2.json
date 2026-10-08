@@ -399,8 +399,8 @@
   {
     "name": "CS-host-seat-outlives-room",
     "file": "src/scenes/worldModes.js",
-    "old": "    cardSeat = null;   // CARDS2: and nobody stays seated in a room they left",
-    "new": "",
+    "old": "    standFromCardTable();   // CARDS2: and nobody stays seated in a room they left",
+    "new": "    // CARDS2: and nobody stays seated in a room they left",
     "tests": [
       "test/cards2_seat.test.js"
     ]
@@ -408,7 +408,7 @@
   {
     "name": "CS-host-seat-outlives-forced-exit",
     "file": "src/scenes/worldModes.js",
-    "old": "        cardSeat = null;   // CARDS2b (AUDIT CARDS B1): the forced road out",
+    "old": "        standFromCardTable();   // CARDS2b (AUDIT CARDS B1): the forced road out",
     "new": "        // CARDS2b (AUDIT CARDS B1): the forced road out",
     "tests": [
       "test/cards2_seat.test.js"
@@ -417,7 +417,7 @@
   {
     "name": "CS-host-seat-into-new-room",
     "file": "src/scenes/worldModes.js",
-    "old": "      cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet\n      interiorBuilding = building;",
+    "old": "      standFromCardTable();   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet - CARDS4: and an old table's chips come home\n      interiorBuilding = building;",
     "new": "      interiorBuilding = building;",
     "tests": [
       "test/cards2_seat.test.js"

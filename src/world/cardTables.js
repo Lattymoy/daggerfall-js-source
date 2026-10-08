@@ -121,6 +121,21 @@ export function cardTableSeats(table, clear) {
 }
 
 /**
+ * CARDS3: the table's own frame - `{centre, axisYaw, halfLong, halfShort}`: the middle of its top (world), the yaw its
+ * long side runs along (the camera's yaw law), and half its length and breadth - from its own box turned by its matrix
+ * (cardTableSeats' table), so the board lies along a turned table too.
+ * @param {{aabb: {min: number[], max: number[]}, box?: {min: number[], max: number[]}, matrix?: ArrayLike<number>}} table
+ */
+export function tableFrame(table) {
+  const box = table.box ?? table.aabb, m = table.matrix ?? IDENTITY;
+  const mid = [(box.min[0] + box.max[0]) / 2, (box.min[1] + box.max[1]) / 2, (box.min[2] + box.max[2]) / 2];
+  const lx = box.max[0] - box.min[0], lz = box.max[2] - box.min[2];
+  const c = transformPoint(m, mid[0], mid[1], mid[2]);
+  const along = lx >= lz ? transformPoint(m, mid[0] + 1, mid[1], mid[2]) : transformPoint(m, mid[0], mid[1], mid[2] + 1);
+  return { centre: [c[0], table.aabb.max[1], c[2]], axisYaw: yawToward(c[0], c[2], along[0], along[2]), halfLong: Math.max(lx, lz) / 2, halfShort: Math.min(lx, lz) / 2 };
+}
+
+/**
  * The seats other players already sit in: the indices of `seats` with one of `feet` (their seated feet, in the same
  * space) within SEAT_TAKEN_RADIUS on the ground.
  * @param {{x: number, z: number}[]} seats
