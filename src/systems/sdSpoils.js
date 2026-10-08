@@ -27,6 +27,7 @@ import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
 import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
 import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from './loot.js';
+import { bossCardRoll } from './bossCards.js';   // CARDS9: the Brass Remnant's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - over half again a gate boss's. */
 export const SD_SPOILS_GOLD_PER_LEVEL = 400;
@@ -90,7 +91,10 @@ export function rollSdSpoils(seed, level) {
   // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was
   const hourlock = rollHourlock(rolls);
   if (hourlock) pieces.push({ item: hourlock, tier: hourlock.rarity });
-  return { gold, pieces };
+  // CARDS9 (Tavern-Cards section 28; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
+  // BRASS REMNANT'S OWN CARD - one draw more after the Hourlock's, LAST of all; kept beside the pieces
+  const card = bossCardRoll('abyss', rolls);
+  return { gold, pieces, card };
 }
 
 /** The spoils as the pool throws them (scenes/spoilsPool.js's pieces): each item, then the gold - the gate's own order -
@@ -101,6 +105,7 @@ export function sdSpoilsList(seed, level) {
   const s = rollSdSpoils(seed, level);
   return [
     ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),
+    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : []),   // CARDS9: the Remnant's card, after the pieces
     { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },
   ];
 }

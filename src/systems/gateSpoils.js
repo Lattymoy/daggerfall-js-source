@@ -35,6 +35,7 @@ import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
 import { rollRegalia } from './aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
 import { stacksWith, addItem } from './inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
 import { wearableItem } from './equip.js';   // RARITY-WEAR: a spoils piece is one a slot takes
+import { bossCardRoll } from './bossCards.js';   // CARDS9: the Warden's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
 export const SPOILS_GOLD_PER_LEVEL = 250;
@@ -232,7 +233,10 @@ export function rollSpoils(seed, level) {
   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in
   // ten - rolled after the Regalia, so every spoils before it is what it was for its seed
   lastPass(pieces.map((p) => p.item), rolls);
-  return { gold, pieces, sigil: sigilStone() };
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 28): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
+  // the last pass), so every spoils before it is what it was for its seed; kept beside the pieces, never among them
+  const card = bossCardRoll('gate', rolls);
+  return { gold, pieces, sigil: sigilStone(), card };
 }
 
 /** A piece laddered to its tier and known - a Legendary with no record for its kind falls to Rare (applyRarity's own

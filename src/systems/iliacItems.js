@@ -19,10 +19,14 @@ import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseH
 import { validBinderDeck, BINDER_DECK_NAME_MAX } from './itemFields.js';
 import { addItem } from './inventory.js';
 import { cardById, STARTER_DECK } from '../net/iliacCards.js';
+import { ILIAC_CARD_TEMPLATE as CARD_TEMPLATE_LAW, cardWorth } from '../net/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service
 
-/** The card's and the binder's templates - the port's own, beside the Wallet's 580 and below the professions' 600. */
-export const ILIAC_CARD_TEMPLATE = 581;
+/** The card's and the binder's templates - the port's own, beside the Wallet's 580 and below the professions' 600.
+ *  CARDS9: the card's number is the law's (net/cardWorthLaw.js - the account service reads it there). */
+export const ILIAC_CARD_TEMPLATE = CARD_TEMPLATE_LAW;
 export const CARD_BINDER_TEMPLATE = 582;
+/** CARDS9 (section 28): the tavern's sealed pack of cards (systems/cardSources.js opens it). */
+export const CARD_PACK_TEMPLATE = 583;
 const GROUP = 'UselessItems2';
 /** The rows. Rarity 20: no shelf and no loot table rolls either. The card wears DFU's Parchment picture (TEXTURE.209
  *  record 8), the binder its Spellbook's (record 4) - the item's own picture; the card's face is painted in code
@@ -40,10 +44,22 @@ export const CARD_BINDER_ROW = Object.freeze({
   playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,
   bound: true, packOnly: true,
 });
-registerCustomTemplates([ILIAC_CARD_ROW, CARD_BINDER_ROW]);
+/** CARDS9: the pack - stackable (packs are alike until opened), weightless, sold at the tavern's counter for its price
+ *  (systems/cardSources.js cardPackPrice); it wears DFU's Parchment picture as a card does, the pack's paper. */
+export const CARD_PACK_ROW = Object.freeze({
+  index: CARD_PACK_TEMPLATE, name: 'Card Pack', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 40,
+  enchantmentPoints: 0, rarity: 20, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
+  isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,
+  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,
+});
+registerCustomTemplates([ILIAC_CARD_ROW, CARD_BINDER_ROW, CARD_PACK_ROW]);
 
 /** Whether a record IS a card of the catalog (its template, its group, a card it names). */
 export const isIliacCard = (/** @type {any} */ item) => item?.templateIndex === ILIAC_CARD_TEMPLATE && item?.group === GROUP && typeof item?.card === 'string';
+/** CARDS9: whether a record is a sealed pack. */
+export const isCardPack = (/** @type {any} */ item) => item?.templateIndex === CARD_PACK_TEMPLATE && item?.group === GROUP;
+/** CARDS9: a pack's lines on its item card. */
+export const CARD_PACK_LINES = Object.freeze(['Five Iliac Hand cards, sealed - one of them rare or better.', 'Use it to open it.']);
 /** Whether a record is the binder. */
 export const isCardBinder = (/** @type {any} */ item) => item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;
 /** The pack's binder, or null. */
@@ -76,6 +92,13 @@ export function mintIliacCard(/** @type {string} */ id, count = 1) {
   const it = mintCondition(setItemFields({ group: GROUP, templateIndex: ILIAC_CARD_TEMPLATE }));
   it.card = id;
   it.stackCount = count;
+  it.value = cardWorth(id);   // CARDS9: its tier's worth (net/cardWorthLaw.js CARD_WORTH) - a coin no longer
+  return it;
+}
+/** CARDS9: a sealed pack. */
+export function mintCardPack(count = 1) {
+  const it = mintCondition(setItemFields({ group: GROUP, templateIndex: CARD_PACK_TEMPLATE }));
+  it.stackCount = Math.max(1, Math.trunc(count) || 1);
   return it;
 }
 /** A binder, holding `decks`. */
@@ -104,9 +127,11 @@ export function deckHeldRefusal(/** @type {string[]} */ cards, /** @type {any} *
 export function binderDecks(/** @type {any} */ binder) {
   return Array.isArray(binder?.decks) ? binder.decks.filter(validBinderDeck).slice(0, BINDER_DECKS_MAX) : [];
 }
-/** Every binder of a list made sound in place - its decks replaced by the ones a reader may trust (a load's, save.js). */
+/** Every binder of a list made sound in place - its decks replaced by the ones a reader may trust (a load's, save.js).
+ *  CARDS9: and every card worth its tier's worth - a card minted before CARDS9 carried a coin's. */
 export function cleanBinders(/** @type {any} */ items) {
   for (const it of Array.isArray(items) ? items : []) {
+    if (isIliacCard(it)) { const w = cardWorth(it.card); if (w > 0 && it.value !== w) it.value = w; continue; }
     if (!isCardBinder(it)) continue;
     const ok = binderDecks(it);
     if (!Array.isArray(it.decks) || ok.length !== it.decks.length) it.decks = ok;

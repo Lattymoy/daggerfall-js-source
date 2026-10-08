@@ -574,6 +574,7 @@ export const REFUSALS = Object.freeze({
   // AUDIT REALM2 S1: a first save the realm reads - a new character's, or customs' own
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
+  'customs-cards': 'That character carries more cards than customs lets in. Bring it online again.',   // CARDS9: the cards' customs
   // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
   dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
   'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',

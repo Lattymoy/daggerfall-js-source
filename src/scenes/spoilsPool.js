@@ -140,6 +140,7 @@ export function spoilsList(seed, level, claims = null) {
   const ember = { kind: 'item', item: s.sigil, tier: SIGIL_TIER, record: flat() };
   return [
     ...pieces,
+    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : []),   // CARDS9: the Warden's card, after the pieces
     ember,
     ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),
     { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },

@@ -653,6 +653,53 @@ const GLYPHS = {
     }
     part(ctx);
   },
+  // CARDS9 (section 28): the bosses' own pictures - the Gate's Warden, the Sea Serpent, the Abyss Dungeon's Remnant.
+  gate(ctx) {         // the Burning Gate: a horned arch of black iron, its gap a tongue of fire, spikes along its crown
+    ctx.moveTo(-0.42, 0.46); ctx.lineTo(-0.42, -0.06); ctx.quadraticCurveTo(-0.42, -0.42, 0, -0.44);
+    ctx.quadraticCurveTo(0.42, -0.42, 0.42, -0.06); ctx.lineTo(0.42, 0.46); ctx.lineTo(0.26, 0.46); ctx.lineTo(0.26, -0.04);
+    ctx.quadraticCurveTo(0.26, -0.28, 0, -0.29); ctx.quadraticCurveTo(-0.26, -0.28, -0.26, -0.04); ctx.lineTo(-0.26, 0.46);
+    ctx.closePath();
+    part(ctx);
+    for (const m of [1, -1]) poly(ctx, [[0.36 * m, -0.3], [0.5 * m, -0.5], [0.24 * m, -0.38]]);   // the horns
+    for (let k = -2; k <= 2; k++) poly(ctx, [[k * 0.09 - 0.035, -0.43], [k * 0.09, -0.52 + Math.abs(k) * 0.02], [k * 0.09 + 0.035, -0.43]]);
+    part(ctx);
+    // the fire in the gap: one tall tongue and two low ones
+    ctx.moveTo(-0.2, 0.46); ctx.quadraticCurveTo(-0.22, 0.2, -0.08, 0.06); ctx.quadraticCurveTo(-0.08, 0.2, 0, 0.22);
+    ctx.quadraticCurveTo(-0.04, 0.02, 0.06, -0.16); ctx.quadraticCurveTo(0.12, 0.06, 0.08, 0.2);
+    ctx.quadraticCurveTo(0.16, 0.12, 0.14, 0.04); ctx.quadraticCurveTo(0.24, 0.22, 0.2, 0.46); ctx.closePath();
+    part(ctx);
+  },
+  serpent(ctx) {      // the Old Coil: a sea serpent rising in three arches out of a swell, its finned head turned back
+    for (const [x0, x1, h] of [[-0.46, -0.18, 0.3], [-0.12, 0.14, 0.26]]) {   // two body arches, thick
+      ctx.moveTo(x0, 0.16); ctx.quadraticCurveTo((x0 + x1) / 2, 0.16 - h * 2, x1, 0.16);
+      ctx.lineTo(x1 - 0.08, 0.16); ctx.quadraticCurveTo((x0 + x1) / 2, 0.16 - h * 1.45, x0 + 0.08, 0.16); ctx.closePath();
+    }
+    part(ctx);
+    // the neck rising to the head, the head turned back over it with its jaw open
+    ctx.moveTo(0.2, 0.16); ctx.quadraticCurveTo(0.24, -0.2, 0.34, -0.34); ctx.lineTo(0.46, -0.38); ctx.lineTo(0.5, -0.3);
+    ctx.lineTo(0.4, -0.27); ctx.lineTo(0.48, -0.2); ctx.lineTo(0.38, -0.2); ctx.quadraticCurveTo(0.32, -0.04, 0.3, 0.16); ctx.closePath();
+    part(ctx);
+    for (let k = 0; k < 3; k++) poly(ctx, [[0.2 + k * 0.04, -0.06 - k * 0.1], [0.12 + k * 0.03, -0.12 - k * 0.1], [0.24 + k * 0.04, -0.12 - k * 0.1]]);   // the fin down its neck
+    part(ctx);
+    waveRow(ctx, 0.28, 0.08); waveRow(ctx, 0.44, 0.08);
+    line(ctx, 0.07);
+  },
+  gear(ctx) {         // the Brass Remnant's turning gear: a cogwheel of twelve teeth round an hourglass cut through its hub
+    const teeth = 12, r0 = 0.36, r1 = 0.48;
+    for (let k = 0; k < teeth; k++) {
+      const a0 = (k * 2 * Math.PI) / teeth, a1 = a0 + Math.PI / teeth;
+      const p = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+      const pts = [p(a0, r0), p(a0 + 0.06, r1), p(a1 - 0.06, r1), p(a1, r0)];
+      if (k === 0) ctx.moveTo(pts[0][0], pts[0][1]); else ctx.lineTo(pts[0][0], pts[0][1]);
+      for (const q of pts.slice(1)) ctx.lineTo(q[0], q[1]);
+      const n = p(a1 + Math.PI / teeth, r0); ctx.lineTo(n[0], n[1]);
+    }
+    ctx.closePath();
+    circ(ctx, 0, 0, 0.24);   // the hub's hole
+    part(ctx, 'evenodd');
+    poly(ctx, [[-0.13, -0.17], [0.13, -0.17], [0.025, 0], [0.13, 0.17], [-0.13, 0.17], [-0.025, 0]]);   // the hourglass in it
+    part(ctx);
+  },
 };
 
 /** One painter per emblem, `(ctx, cx, cy, size, ink)`: the glyph `size` across, centred on (cx, cy), in `ink`. */
@@ -684,7 +731,8 @@ export const EMBLEM_PAINTERS = Object.freeze(Object.fromEntries(Object.entries(G
 /**
  * EMBLEM_PAINTERS' keys in their order: the first set's 34 (its beetle gone - no card is an insect once the scorpion
  * has its own), then AUDIT CARDS-5's 14 (razor, staff, book, claymore, rose, daedric, scorpion, bat, boar, tree,
- * gargoyle, banish, recall, sun) - net/iliacCards.js CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
+ * gargoyle, banish, recall, sun), then CARDS9's 3 (gate, serpent, gear - the bosses' own) - net/iliacCards.js
+ * CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
  * Azura's own; 'daedric' is the sigil of a Prince who has no picture of their own.
  */
 export const EMBLEM_KEYS = Object.freeze(Object.keys(GLYPHS));

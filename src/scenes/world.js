@@ -648,6 +648,8 @@ import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, 
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
+import { guildCardRoll, guildNameOfFaction } from '../systems/cardSources.js';   // CARDS9: a guild quest's card
+import { mintIliacCard, iliacCardName } from '../systems/iliacItems.js';   // CARDS9: the card minted, and named as it is said
 import { storesIn, spendStore, mintStores } from '../systems/naval/navalStores.js';
 import { orderRows } from '../systems/naval/shipCrew.js';   // SHIP-CREW: the orders list   // SEA-REPAIR: carpenter's stores in a hold   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -18661,6 +18663,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   // RENOWN1: a quest that ENDED IN SUCCESS pays its Renown XP online - the tracker is built with the online session
   // below, so the bridge's hook reaches it through this door (null until then, and offline for good)
   let renownQuestEnded = null;
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 28; section 6.3: "A guild's quest can pay a card of that guild"):
+  // a guild quest done pays one of its guild's cards one time in three - the best its quester's rank in that guild
+  // reaches (systems/cardSources.js guildCardRoll) - once a quest, however its end is heard again. Offline and online
+  // alike: a card is an item, and the realm bounds what crosses (net/cardWorthLaw.js customs).
+  const cardQuestPaid = new Set();
+  const cardQuestEnded = (q) => {
+    if (!q?.questSuccess || !(q.factionId > 0)) return;
+    const key = String(q.uid ?? q.questName ?? '');
+    if (!key || cardQuestPaid.has(key)) return;
+    cardQuestPaid.add(key);
+    const name = guildNameOfFaction(q.factionId);
+    const rank = Object.values(activeMemberships(playerEntity)).find((m) => m?.guild === name)?.rank ?? 0;
+    const id = guildCardRoll(q.factionId, rank, Math.random);
+    const card = id ? mintIliacCard(id) : null;
+    if (!card) return;
+    addItem(playerEntity.items, card);
+    try { townTalk.say(`The guild adds a card to your reward: ${iliacCardName(card).replace(/^Card: /, '')}.`); } catch { /* no talk host yet: the card is in the pack */ }
+  };
   const _heldItemIndex = (dfItem) => {
     const items = playerEntity.items ?? [];
     const direct = items.indexOf(dfItem);
@@ -18728,6 +18748,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
       renownQuestEnded?.(q);   // RENOWN1: a quest done online pays its Renown XP
+      cardQuestEnded(q);   // CARDS9: and a guild's quest, now and then, one of its guild's cards
       naval?.raidEnded(q);   // NAV-D: a raid the sea fight started - won (its leader down) or run out - ends its boarding
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own

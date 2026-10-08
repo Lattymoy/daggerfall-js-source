@@ -29,6 +29,7 @@ import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
 import { remnantPose } from '../src/scenes/sdRemnant.js';
 import { realmColliderTris } from '../src/world/sdRealm.js';
 import { Collider } from '../src/player/collider.js';
+import { bossCardRoll } from '../src/systems/bossCards.js';   // CARDS9: the Remnant's card, the hoard's last draw
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -83,7 +84,8 @@ test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, t
     if (brass) pieces.push({ item: brass, tier: brass.rarity });
     const hour = rollHourlock(rolls);
     if (hour) pieces.push({ item: hour, tier: hour.rarity });
-    return { gold, pieces };
+    const card = bossCardRoll('abyss', rolls);   // PIN MOVED (CARDS9): the Brass Remnant's own card, one draw after the Hourlock's - last
+    return { gold, pieces, card };
   };
   for (let seed = 1; seed <= 300; seed++) {
     const k = (seed * 40503) >>> 0;
@@ -94,8 +96,10 @@ test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, t
 test('SD9e THE LIST: the pieces as the pool throws them - each item with its tier, then the gold, each dressed in the treasure flat its own look-stream chooses; every item the loot\'s validator admits off the wire (mutants: the gold first; a piece undressed)', () => {
   for (const seed of [3, 99, 123456, 0xfffffff0]) {
     const s = rollSdSpoils(seed, 12), list = sdSpoilsList(seed, 12);
-    assert.deepEqual(list.map((p) => p.kind), [...s.pieces.map(() => 'item'), 'gold']);
-    assert.deepEqual(list.slice(0, -1).map((p) => p.tier), s.pieces.map((p) => p.tier));
+    // PIN MOVED (CARDS9): the Remnant's card after the pieces, before the gold, when it drops
+    assert.deepEqual(list.map((p) => p.kind), [...s.pieces.map(() => 'item'), ...(s.card ? ['item'] : []), 'gold']);
+    assert.deepEqual(list.slice(0, -1).map((p) => p.tier), [...s.pieces.map((p) => p.tier), ...(s.card ? ['aetheric'] : [])]);
+    if (s.card) assert.equal(list.at(-2).item.card, 'brass-remnant');
     assert.deepEqual(list.at(-1), { kind: 'gold', gold: s.gold, tier: 'common', record: list.at(-1).record });
     const look = seededRng(((seed >>> 0) ^ 0x5eed) >>> 0);
     for (const p of list) assert.equal(p.record, RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)]);

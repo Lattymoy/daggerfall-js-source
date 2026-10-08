@@ -42,7 +42,7 @@ import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffe
 import { isRestItem, restItemLines } from './restItems.js'; import { isPortalStone, portalStoneLines } from './portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
 import { maskText } from '../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from './walletItem.js';   // WALLET1: the wallet's card
-import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES } from './iliacItems.js';   // CARDS8: a card's name and lines, the binder's
+import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from './iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 import { makerMark, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
@@ -728,6 +728,7 @@ export function survivalInfoTokens(item) {
   else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
+  else if (isCardPack(item)) for (const text of CARD_PACK_LINES) out.push({ text, center: true });   // CARDS9: the sealed pack
   return out;
 }
 

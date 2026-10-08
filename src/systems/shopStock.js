@@ -48,7 +48,7 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { ILIAC_CARD_TEMPLATE } from './iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
 import { OIL_TEMPLATE, addItem } from './inventory.js';   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
 import { getBool } from './settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
@@ -139,6 +139,9 @@ export const SHOP_BUYS_GROUPS = Object.freeze({
 export const shopBuysItem = (buildingType, item) => (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group)
   // AUDIT CARDS-5 C2: no shop buys a collectible card - every character is given thirty, and a shelf is no card's market
   && item.templateIndex !== ILIAC_CARD_TEMPLATE
+  // CARDS9: nor a sealed pack - the tavern sells it at its counter's price, and no shelf buys it back (a pack bought
+  // well and sold dear was the gold-for-nothing ENDLESS-STOCK shut)
+  && item.templateIndex !== CARD_PACK_TEMPLATE
   // AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one
   // (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless
   && !(isOnlinePage() && isEndlessStock(item));

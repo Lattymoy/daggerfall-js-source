@@ -44,6 +44,7 @@ import { isGoldPieces } from './inventory.js';
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
 import { REST_ITEM, restItemsOnline } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
 import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
+import { cardWorth, cardWorthOf, isCardRecord, customsCardAllowance } from '../net/cardWorthLaw.js';   // CARDS9: the cards' customs, one law with the service's first save
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
@@ -139,7 +140,37 @@ export function applyCustoms(snap) {
       }
     }
   }
-  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, restKept };
+  const cards = cardCustoms(snap);   // CARDS9: and the cards, at their worth
+  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, restKept, cardsKept: cards.kept, cardWorth: cards.worth, cardAllowance: cards.allowance };
+}
+
+/**
+ * CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 28): THE CARDS' CUSTOMS, in place (the realm's copy, as all of
+ * customs is). A character brings cards worth no more than customsCardAllowance(level) (net/cardWorthLaw.js - the
+ * starter deck's worth and a sum a level); past it the DEAREST card goes first, one card at a time off its stack, until
+ * the rest fit - a stash's before the wagon's before the pack's (customs' own order, carriedItemLists). The offline
+ * character keeps every card. Answers `{ kept, worth, allowance }`: the cards that stayed behind, the worth carried
+ * before, the allowance.
+ * @param {any} snap
+ */
+export function cardCustoms(snap) {
+  const allowance = customsCardAllowance(snap?.level);
+  const worth = cardWorthOf(snap);
+  let over = worth - allowance, kept = 0;
+  if (over <= 0) return { kept, worth, allowance };
+  const held = [];
+  for (const list of carriedItemLists(snap)) for (const rec of list) if (isCardRecord(rec) && cardWorth(rec.card) > 0) held.push({ list, rec });
+  held.sort((a, b) => cardWorth(b.rec.card) - cardWorth(a.rec.card));   // stable: the lists' own order within a worth
+  for (const { list, rec } of held) {
+    while (over > 0 && list.includes(rec)) {
+      const w = cardWorth(rec.card);
+      if ((rec.stackCount ?? 1) > 1) rec.stackCount -= 1; else list.splice(list.indexOf(rec), 1);
+      over -= w;
+      kept++;
+    }
+    if (over <= 0) break;
+  }
+  return { kept, worth, allowance };
 }
 const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
 
@@ -289,7 +320,7 @@ export const CUSTOMS_PROMISE = Object.freeze([
 /** What customs did, in the Online door's words - or, `before` it runs (FIELD 2026-09-29, Dracula/Valentin: "HOW TF WAS
  *  I SUPPOSED TO KNOW YALL WOULD FORCE THE LOANS TO BE PAID"), what it will do: the same report off a copy customs ran
  *  on, told ahead, and the door's promise under it. */
-export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], restKept = 0 }, { before = false } = {}) {
+export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], restKept = 0, cardsKept = 0, cardWorth: cardsWorth = 0, cardAllowance = 0 }, { before = false } = {}) {
   const lines = [];
   if (called > 0) {
     lines.push(before
@@ -306,6 +337,8 @@ export function customsLines({ called, owed, wealth, allowance, taken, crossed =
   const what = [crossed.includes('ship') ? 'your ship' : '', houses > 1 ? `${houses} houses` : houses ? 'your house' : ''].filter(Boolean).join(' and ');
   if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
   if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character - they are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
+  // CARDS9: the cards past the allowance, the dearest first
+  if (cardsKept > 0) lines.push(`Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`);
   if (!lines.length) lines.push(before ? 'Customs finds nothing to settle.' : 'Customs found nothing to settle.');
   return before ? [...lines, ...CUSTOMS_PROMISE] : lines;
 }
