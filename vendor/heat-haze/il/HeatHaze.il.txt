@@ -1,0 +1,1437 @@
+==== TYPE .<Module> (fields: [])
+==== TYPE HeatHazeMod.HeatHazeEligibility (fields: ['TransitionMinutes'])
+
+---- HeatHazeEligibility::MeetsRules rva=2050
+  maxstack=2 locals_sig=token(0x11000001) size=63
+  IL_025c: ldarg.1        
+  IL_025d: ldc.i4         224
+  IL_0262: beq.s          622
+  IL_0264: ldarg.1        
+  IL_0265: ldc.i4         225
+  IL_026a: ceq            
+  IL_026c: br.s           623
+  IL_026e: ldc.i4.1       
+  IL_026f: brtrue.s       642
+  IL_0271: ldarg.s        argument(0x0004)
+  IL_0273: brfalse.s      639
+  IL_0275: ldarg.1        
+  IL_0276: ldc.i4         229
+  IL_027b: ceq            
+  IL_027d: br.s           643
+  IL_027f: ldc.i4.0       
+  IL_0280: br.s           643
+  IL_0282: ldc.i4.1       
+  IL_0283: stloc.0        
+  IL_0284: ldarg.0        
+  IL_0285: ldloc.0        
+  IL_0286: and            
+  IL_0287: ldarg.2        
+  IL_0288: and            
+  IL_0289: brfalse.s      665
+  IL_028b: ldarg.3        
+  IL_028c: call           HeatHazeEligibility::GetWeatherStrength
+  IL_0291: ldc.r4         0.0
+  IL_0296: cgt            
+  IL_0298: ret            
+  IL_0299: ldc.i4.0       
+  IL_029a: ret            
+
+---- HeatHazeEligibility::GetWeatherStrength rva=209b
+  maxstack=8 locals_sig=None size=25
+  IL_029c: ldarg.0        
+  IL_029d: brtrue.s       677
+  IL_029f: ldc.r4         1.0
+  IL_02a4: ret            
+  IL_02a5: ldarg.0        
+  IL_02a6: ldc.i4.1       
+  IL_02a7: bne.un.s       687
+  IL_02a9: ldc.r4         0.5
+  IL_02ae: ret            
+  IL_02af: ldc.r4         0.0
+  IL_02b4: ret            
+
+---- HeatHazeEligibility::GetDaylightStrength rva=20b8
+  maxstack=3 locals_sig=token(0x11000002) size=87
+  IL_02c4: ldarg.0        
+  IL_02c5: conv.r4        
+  IL_02c6: ldc.r4         60.0
+  IL_02cb: mul            
+  IL_02cc: ldarg.1        
+  IL_02cd: conv.r4        
+  IL_02ce: add            
+  IL_02cf: ldarg.2        
+  IL_02d0: ldc.r4         60.0
+  IL_02d5: div            
+  IL_02d6: add            
+  IL_02d7: stloc.0        
+  IL_02d8: ldc.r4         360.0
+  IL_02dd: stloc.1        
+  IL_02de: ldc.r4         1080.0
+  IL_02e3: stloc.2        
+  IL_02e4: ldloc.0        
+  IL_02e5: ldloc.1        
+  IL_02e6: ble.s          748
+  IL_02e8: ldloc.0        
+  IL_02e9: ldloc.2        
+  IL_02ea: blt.un.s       754
+  IL_02ec: ldc.r4         0.0
+  IL_02f1: ret            
+  IL_02f2: ldloc.0        
+  IL_02f3: ldloc.1        
+  IL_02f4: sub            
+  IL_02f5: ldc.r4         30.0
+  IL_02fa: div            
+  IL_02fb: call           HeatHazeEligibility::SmoothStep
+  IL_0300: stloc.3        
+  IL_0301: ldloc.2        
+  IL_0302: ldloc.0        
+  IL_0303: sub            
+  IL_0304: ldc.r4         30.0
+  IL_0309: div            
+  IL_030a: call           HeatHazeEligibility::SmoothStep
+  IL_030f: stloc.s        local(0x0004)
+  IL_0311: ldloc.3        
+  IL_0312: ldloc.s        local(0x0004)
+  IL_0314: blt.s          793
+  IL_0316: ldloc.s        local(0x0004)
+  IL_0318: ret            
+  IL_0319: ldloc.3        
+  IL_031a: ret            
+
+---- HeatHazeEligibility::SmoothStep rva=211c
+  maxstack=4 locals_sig=token(0x11000003) size=50
+  IL_0328: ldarg.0        
+  IL_0329: ldc.r4         0.0
+  IL_032e: blt.s          834
+  IL_0330: ldarg.0        
+  IL_0331: ldc.r4         1.0
+  IL_0336: bgt.s          827
+  IL_0338: ldarg.0        
+  IL_0339: br.s           839
+  IL_033b: ldc.r4         1.0
+  IL_0340: br.s           839
+  IL_0342: ldc.r4         0.0
+  IL_0347: stloc.0        
+  IL_0348: ldloc.0        
+  IL_0349: ldloc.0        
+  IL_034a: mul            
+  IL_034b: ldc.r4         3.0
+  IL_0350: ldc.r4         2.0
+  IL_0355: ldloc.0        
+  IL_0356: mul            
+  IL_0357: sub            
+  IL_0358: mul            
+  IL_0359: ret            
+==== TYPE HeatHazeMod.HeatHazeMod (fields: ['LogPrefix', 'SettingsSection', 'ShaderAssetName', 'InitializationTimeoutSeconds', 'NoiseSize', 'NoiseLatticeSize', 'CylinderSegments', 'CylinderHalfHeight', 'LayerHeightOffset', 'FadeSeconds', 'NoiseTextureId', 'IntensityId', 'NoiseScaleId', 'AnimationSpeedId', 'instance', 'ownerMod', 'shader', 'hazeObject', 'hazeMesh', 'hazeRenderer', 'hazeMaterial', 'noiseTexture', 'initialized', 'effectEnabled', 'allowSubtropical', 'effectIntensity', 'hazeDistance', 'ringHeight', 'noiseScale', 'animationSpeed', 'currentIntensity', 'layerCenterHeight', 'layerHeightInitialized'])
+
+---- HeatHazeMod::Init rva=215c
+  maxstack=5 locals_sig=token(0x11000004) size=162
+  IL_0368: ldarg.0        
+  IL_0369: ldfld          DaggerfallWorkshop.Game.Utility.ModSupport.InitParams::Mod
+  IL_036e: stloc.0        
+  IL_036f: ldsfld         HeatHazeMod::instance
+  IL_0374: ldnull         
+  IL_0375: call           UnityEngine.Object::op_Inequality
+  IL_037a: brfalse.s      900
+  IL_037c: ldloc.0        
+  IL_037d: ldc.i4.1       
+  IL_037e: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_0383: ret            
+  IL_0384: ldloc.0        
+  IL_0385: ldstr          "HeatHaze.shader"
+  IL_038a: ldc.i4.0       
+  IL_038b: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.Mod::GetAsset
+  IL_0390: stloc.1        
+  IL_0391: ldloc.1        
+  IL_0392: ldnull         
+  IL_0393: call           UnityEngine.Object::op_Equality
+  IL_0398: brfalse.s      962
+  IL_039a: ldstr          "{0} could not load required shader asset '{1}'. The effect is disabled."
+  IL_039f: ldc.i4.2       
+  IL_03a0: newarr         typeref:System.Object
+  IL_03a5: dup            
+  IL_03a6: ldc.i4.0       
+  IL_03a7: ldstr          "[Heat Haze]"
+  IL_03ac: stelem.ref     
+  IL_03ad: dup            
+  IL_03ae: ldc.i4.1       
+  IL_03af: ldstr          "HeatHaze.shader"
+  IL_03b4: stelem.ref     
+  IL_03b5: call           UnityEngine.Debug::LogErrorFormat
+  IL_03ba: ldloc.0        
+  IL_03bb: ldc.i4.1       
+  IL_03bc: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_03c1: ret            
+  IL_03c2: ldloc.1        
+  IL_03c3: callvirt       UnityEngine.Shader::get_isSupported
+  IL_03c8: brtrue.s       1010
+  IL_03ca: ldstr          "{0} shader asset '{1}' is not supported by the active graphics API. The effect is disabled."
+  IL_03cf: ldc.i4.2       
+  IL_03d0: newarr         typeref:System.Object
+  IL_03d5: dup            
+  IL_03d6: ldc.i4.0       
+  IL_03d7: ldstr          "[Heat Haze]"
+  IL_03dc: stelem.ref     
+  IL_03dd: dup            
+  IL_03de: ldc.i4.1       
+  IL_03df: ldstr          "HeatHaze.shader"
+  IL_03e4: stelem.ref     
+  IL_03e5: call           UnityEngine.Debug::LogErrorFormat
+  IL_03ea: ldloc.0        
+  IL_03eb: ldc.i4.1       
+  IL_03ec: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_03f1: ret            
+  IL_03f2: ldloc.0        
+  IL_03f3: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Title
+  IL_03f8: newobj         UnityEngine.GameObject::.ctor
+  IL_03fd: callvirt       methodspec:UnityEngine.GameObject::AddComponent
+  IL_0402: ldloc.0        
+  IL_0403: ldloc.1        
+  IL_0404: callvirt       HeatHazeMod::Begin
+  IL_0409: ret            
+
+---- HeatHazeMod::Awake rva=220c
+  maxstack=2 locals_sig=None size=69
+  IL_0418: ldsfld         HeatHazeMod::instance
+  IL_041d: ldnull         
+  IL_041e: call           UnityEngine.Object::op_Inequality
+  IL_0423: brfalse.s      1086
+  IL_0425: ldsfld         HeatHazeMod::instance
+  IL_042a: ldarg.0        
+  IL_042b: call           UnityEngine.Object::op_Inequality
+  IL_0430: brfalse.s      1086
+  IL_0432: ldarg.0        
+  IL_0433: call           UnityEngine.Component::get_gameObject
+  IL_0438: call           UnityEngine.Object::Destroy
+  IL_043d: ret            
+  IL_043e: ldarg.0        
+  IL_043f: stsfld         HeatHazeMod::instance
+  IL_0444: ldarg.0        
+  IL_0445: call           UnityEngine.Component::get_gameObject
+  IL_044a: ldc.i4.s       52
+  IL_044c: callvirt       UnityEngine.Object::set_hideFlags
+  IL_0451: ldarg.0        
+  IL_0452: call           UnityEngine.Component::get_gameObject
+  IL_0457: call           UnityEngine.Object::DontDestroyOnLoad
+  IL_045c: ret            
+
+---- HeatHazeMod::Begin rva=2260
+  maxstack=5 locals_sig=token(0x11000005) size=100
+  IL_046c: ldarg.0        
+  IL_046d: ldarg.1        
+  IL_046e: stfld          HeatHazeMod::ownerMod
+  IL_0473: ldarg.0        
+  IL_0474: ldarg.2        
+  IL_0475: stfld          HeatHazeMod::shader
+  IL_047a: ldarg.0        
+  IL_047b: ldfld          HeatHazeMod::ownerMod
+  IL_0480: ldarg.0        
+  IL_0481: ldftn          HeatHazeMod::LoadSettings
+  IL_0487: newobj         ::.ctor
+  IL_048c: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_LoadSettingsCallback
+  IL_0491: ldarg.0        
+  IL_0492: ldfld          HeatHazeMod::ownerMod
+  IL_0497: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::LoadSettings
+  IL_049c: leave.s        1218
+  IL_049e: stloc.0        
+  IL_049f: ldstr          "{0} could not read settings; built-in defaults will be used. {1}"
+  IL_04a4: ldc.i4.2       
+  IL_04a5: newarr         typeref:System.Object
+  IL_04aa: dup            
+  IL_04ab: ldc.i4.0       
+  IL_04ac: ldstr          "[Heat Haze]"
+  IL_04b1: stelem.ref     
+  IL_04b2: dup            
+  IL_04b3: ldc.i4.1       
+  IL_04b4: ldloc.0        
+  IL_04b5: callvirt       System.Exception::get_Message
+  IL_04ba: stelem.ref     
+  IL_04bb: call           UnityEngine.Debug::LogWarningFormat
+  IL_04c0: leave.s        1218
+  IL_04c2: ldarg.0        
+  IL_04c3: ldarg.0        
+  IL_04c4: call           HeatHazeMod::InitializeWhenReady
+  IL_04c9: call           UnityEngine.MonoBehaviour::StartCoroutine
+  IL_04ce: pop            
+  IL_04cf: ret            
+
+---- HeatHazeMod::InitializeWhenReady rva=22e0
+  maxstack=8 locals_sig=None size=14
+  IL_04e1: ldc.i4.0       
+  IL_04e2: newobj         <InitializeWhenReady>d__36::.ctor
+  IL_04e7: dup            
+  IL_04e8: ldarg.0        
+  IL_04e9: stfld          <InitializeWhenReady>d__36::<>4__this
+  IL_04ee: ret            
+
+---- HeatHazeMod::TryInitialize rva=22f0
+  maxstack=4 locals_sig=token(0x11000006) size=184
+  IL_04fc: ldarg.1        
+  IL_04fd: ldnull         
+  IL_04fe: stind.ref      
+  IL_04ff: ldarg.0        
+  IL_0500: ldfld          HeatHazeMod::shader
+  IL_0505: ldnull         
+  IL_0506: call           UnityEngine.Object::op_Equality
+  IL_050b: brtrue.s       1306
+  IL_050d: ldarg.0        
+  IL_050e: ldfld          HeatHazeMod::shader
+  IL_0513: callvirt       UnityEngine.Shader::get_isSupported
+  IL_0518: brtrue.s       1315
+  IL_051a: ldarg.1        
+  IL_051b: ldstr          "a supported Heat Haze shader"
+  IL_0520: stind.ref      
+  IL_0521: ldc.i4.0       
+  IL_0522: ret            
+  IL_0523: call           DaggerfallWorkshop.Game.GameManager::get_HasInstance
+  IL_0528: brtrue.s       1331
+  IL_052a: ldarg.1        
+  IL_052b: ldstr          "GameManager"
+  IL_0530: stind.ref      
+  IL_0531: ldc.i4.0       
+  IL_0532: ret            
+  IL_0533: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0538: stloc.0        
+  IL_0539: ldloc.0        
+  IL_053a: callvirt       DaggerfallWorkshop.Game.GameManager::get_MainCamera
+  IL_053f: stloc.1        
+  IL_0540: ldloc.1        
+  IL_0541: ldnull         
+  IL_0542: call           UnityEngine.Object::op_Equality
+  IL_0547: brfalse.s      1362
+  IL_0549: ldarg.1        
+  IL_054a: ldstr          "the main player camera"
+  IL_054f: stind.ref      
+  IL_0550: ldc.i4.0       
+  IL_0551: ret            
+  IL_0552: ldloc.0        
+  IL_0553: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerController
+  IL_0558: stloc.2        
+  IL_0559: ldloc.2        
+  IL_055a: ldnull         
+  IL_055b: call           UnityEngine.Object::op_Equality
+  IL_0560: brfalse.s      1387
+  IL_0562: ldarg.1        
+  IL_0563: ldstr          "the player CharacterController"
+  IL_0568: stind.ref      
+  IL_0569: ldc.i4.0       
+  IL_056a: ret            
+  IL_056b: ldc.i4.0       
+  IL_056c: stloc.3        
+  IL_056d: ldloc.1        
+  IL_056e: callvirt       UnityEngine.Camera::get_cullingMask
+  IL_0573: ldc.i4.1       
+  IL_0574: ldloc.3        
+  IL_0575: ldc.i4.s       31
+  IL_0577: and            
+  IL_0578: shl            
+  IL_0579: and            
+  IL_057a: brtrue.s       1413
+  IL_057c: ldarg.1        
+  IL_057d: ldstr          "a main-camera-visible default layer"
+  IL_0582: stind.ref      
+  IL_0583: ldc.i4.0       
+  IL_0584: ret            
+  IL_0585: nop            
+  IL_0586: ldarg.0        
+  IL_0587: ldloc.3        
+  IL_0588: ldloc.2        
+  IL_0589: call           HeatHazeMod::CreateRuntimeResources
+  IL_058e: ldc.i4.1       
+  IL_058f: stloc.s        local(0x0004)
+  IL_0591: leave.s        1457
+  IL_0593: stloc.s        local(0x0005)
+  IL_0595: ldarg.0        
+  IL_0596: ldstr          "initialization failed: "
+  IL_059b: ldloc.s        local(0x0005)
+  IL_059d: callvirt       System.Exception::get_Message
+  IL_05a2: call           System.String::Concat
+  IL_05a7: call           HeatHazeMod::DisableSafely
+  IL_05ac: ldc.i4.0       
+  IL_05ad: stloc.s        local(0x0004)
+  IL_05af: leave.s        1457
+  IL_05b1: ldloc.s        local(0x0004)
+  IL_05b3: ret            
+
+---- HeatHazeMod::CreateRuntimeResources rva=23c4
+  maxstack=3 locals_sig=None size=285
+  IL_05d0: ldarg.0        
+  IL_05d1: call           HeatHazeMod::CreateNoiseTexture
+  IL_05d6: stfld          HeatHazeMod::noiseTexture
+  IL_05db: ldarg.0        
+  IL_05dc: call           HeatHazeMod::CreateCylinderMesh
+  IL_05e1: stfld          HeatHazeMod::hazeMesh
+  IL_05e6: ldarg.0        
+  IL_05e7: ldarg.0        
+  IL_05e8: ldfld          HeatHazeMod::shader
+  IL_05ed: newobj         UnityEngine.Material::.ctor
+  IL_05f2: stfld          HeatHazeMod::hazeMaterial
+  IL_05f7: ldarg.0        
+  IL_05f8: ldfld          HeatHazeMod::hazeMaterial
+  IL_05fd: ldstr          "Heat Haze Runtime Material"
+  IL_0602: callvirt       UnityEngine.Object::set_name
+  IL_0607: ldarg.0        
+  IL_0608: ldfld          HeatHazeMod::hazeMaterial
+  IL_060d: ldc.i4.s       52
+  IL_060f: callvirt       UnityEngine.Object::set_hideFlags
+  IL_0614: ldarg.0        
+  IL_0615: ldfld          HeatHazeMod::hazeMaterial
+  IL_061a: ldsfld         HeatHazeMod::NoiseTextureId
+  IL_061f: ldarg.0        
+  IL_0620: ldfld          HeatHazeMod::noiseTexture
+  IL_0625: callvirt       UnityEngine.Material::SetTexture
+  IL_062a: ldarg.0        
+  IL_062b: ldstr          "Heat Haze World Ring"
+  IL_0630: newobj         UnityEngine.GameObject::.ctor
+  IL_0635: stfld          HeatHazeMod::hazeObject
+  IL_063a: ldarg.0        
+  IL_063b: ldfld          HeatHazeMod::hazeObject
+  IL_0640: ldc.i4.s       52
+  IL_0642: callvirt       UnityEngine.Object::set_hideFlags
+  IL_0647: ldarg.0        
+  IL_0648: ldfld          HeatHazeMod::hazeObject
+  IL_064d: ldarg.1        
+  IL_064e: callvirt       UnityEngine.GameObject::set_layer
+  IL_0653: ldarg.0        
+  IL_0654: ldfld          HeatHazeMod::hazeObject
+  IL_0659: callvirt       UnityEngine.GameObject::get_transform
+  IL_065e: ldarg.0        
+  IL_065f: call           UnityEngine.Component::get_transform
+  IL_0664: ldc.i4.0       
+  IL_0665: callvirt       UnityEngine.Transform::SetParent
+  IL_066a: ldarg.0        
+  IL_066b: ldfld          HeatHazeMod::hazeObject
+  IL_0670: callvirt       methodspec:UnityEngine.GameObject::AddComponent
+  IL_0675: ldarg.0        
+  IL_0676: ldfld          HeatHazeMod::hazeMesh
+  IL_067b: callvirt       UnityEngine.MeshFilter::set_sharedMesh
+  IL_0680: ldarg.0        
+  IL_0681: ldarg.0        
+  IL_0682: ldfld          HeatHazeMod::hazeObject
+  IL_0687: callvirt       methodspec:UnityEngine.GameObject::AddComponent
+  IL_068c: stfld          HeatHazeMod::hazeRenderer
+  IL_0691: ldarg.0        
+  IL_0692: ldfld          HeatHazeMod::hazeRenderer
+  IL_0697: ldarg.0        
+  IL_0698: ldfld          HeatHazeMod::hazeMaterial
+  IL_069d: callvirt       UnityEngine.Renderer::set_sharedMaterial
+  IL_06a2: ldarg.0        
+  IL_06a3: ldfld          HeatHazeMod::hazeRenderer
+  IL_06a8: ldc.i4.0       
+  IL_06a9: callvirt       UnityEngine.Renderer::set_shadowCastingMode
+  IL_06ae: ldarg.0        
+  IL_06af: ldfld          HeatHazeMod::hazeRenderer
+  IL_06b4: ldc.i4.0       
+  IL_06b5: callvirt       UnityEngine.Renderer::set_receiveShadows
+  IL_06ba: ldarg.0        
+  IL_06bb: ldfld          HeatHazeMod::hazeRenderer
+  IL_06c0: ldc.i4.0       
+  IL_06c1: callvirt       UnityEngine.Renderer::set_lightProbeUsage
+  IL_06c6: ldarg.0        
+  IL_06c7: ldfld          HeatHazeMod::hazeRenderer
+  IL_06cc: ldc.i4.0       
+  IL_06cd: callvirt       UnityEngine.Renderer::set_reflectionProbeUsage
+  IL_06d2: ldarg.0        
+  IL_06d3: ldfld          HeatHazeMod::hazeRenderer
+  IL_06d8: ldc.i4.0       
+  IL_06d9: callvirt       UnityEngine.Renderer::set_enabled
+  IL_06de: ldarg.0        
+  IL_06df: ldarg.2        
+  IL_06e0: ldc.i4.1       
+  IL_06e1: call           HeatHazeMod::UpdateRingTransform
+  IL_06e6: ldarg.0        
+  IL_06e7: call           HeatHazeMod::ApplyMaterialTuning
+  IL_06ec: ret            
+
+---- HeatHazeMod::Update rva=24f0
+  maxstack=4 locals_sig=token(0x11000007) size=278
+  IL_06fc: ldarg.0        
+  IL_06fd: ldfld          HeatHazeMod::initialized
+  IL_0702: brfalse.s      1824
+  IL_0704: ldarg.0        
+  IL_0705: ldfld          HeatHazeMod::hazeRenderer
+  IL_070a: ldnull         
+  IL_070b: call           UnityEngine.Object::op_Equality
+  IL_0710: brtrue.s       1824
+  IL_0712: ldarg.0        
+  IL_0713: ldfld          HeatHazeMod::hazeMaterial
+  IL_0718: ldnull         
+  IL_0719: call           UnityEngine.Object::op_Equality
+  IL_071e: brfalse.s      1825
+  IL_0720: ret            
+  IL_0721: ldc.i4.0       
+  IL_0722: stloc.0        
+  IL_0723: ldc.r4         0.0
+  IL_0728: stloc.1        
+  IL_0729: call           DaggerfallWorkshop.Game.GameManager::get_HasInstance
+  IL_072e: brfalse.s      1883
+  IL_0730: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0735: stloc.3        
+  IL_0736: ldloc.3        
+  IL_0737: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerController
+  IL_073c: stloc.s        local(0x0004)
+  IL_073e: ldloc.s        local(0x0004)
+  IL_0740: ldnull         
+  IL_0741: call           UnityEngine.Object::op_Inequality
+  IL_0746: brfalse.s      1873
+  IL_0748: ldarg.0        
+  IL_0749: ldloc.s        local(0x0004)
+  IL_074b: ldc.i4.0       
+  IL_074c: call           HeatHazeMod::UpdateRingTransform
+  IL_0751: ldarg.0        
+  IL_0752: ldloc.3        
+  IL_0753: ldloca.s       local(0x0001)
+  IL_0755: call           HeatHazeMod::IsEnvironmentEligible
+  IL_075a: stloc.0        
+  IL_075b: ldarg.0        
+  IL_075c: ldfld          HeatHazeMod::effectEnabled
+  IL_0761: ldloc.0        
+  IL_0762: and            
+  IL_0763: brtrue.s       1900
+  IL_0765: ldc.r4         0.0
+  IL_076a: br.s           1908
+  IL_076c: ldarg.0        
+  IL_076d: ldfld          HeatHazeMod::effectIntensity
+  IL_0772: ldloc.1        
+  IL_0773: mul            
+  IL_0774: stloc.2        
+  IL_0775: ldarg.0        
+  IL_0776: ldfld          HeatHazeMod::effectEnabled
+  IL_077b: brfalse.s      1920
+  IL_077d: ldloc.0        
+  IL_077e: brtrue.s       1933
+  IL_0780: ldarg.0        
+  IL_0781: ldc.r4         0.0
+  IL_0786: stfld          HeatHazeMod::currentIntensity
+  IL_078b: br.s           2019
+  IL_078d: ldc.r4         0.0
+  IL_0792: call           UnityEngine.Time::get_unscaledDeltaTime
+  IL_0797: call           UnityEngine.Mathf::Max
+  IL_079c: stloc.s        local(0x0005)
+  IL_079e: ldc.r4         1.0
+  IL_07a3: ldloc.s        local(0x0005)
+  IL_07a5: neg            
+  IL_07a6: ldc.r4         0.800000011920929
+  IL_07ab: div            
+  IL_07ac: call           UnityEngine.Mathf::Exp
+  IL_07b1: sub            
+  IL_07b2: stloc.s        local(0x0006)
+  IL_07b4: ldarg.0        
+  IL_07b5: ldarg.0        
+  IL_07b6: ldfld          HeatHazeMod::currentIntensity
+  IL_07bb: ldloc.2        
+  IL_07bc: ldloc.s        local(0x0006)
+  IL_07be: call           UnityEngine.Mathf::Lerp
+  IL_07c3: stfld          HeatHazeMod::currentIntensity
+  IL_07c8: ldarg.0        
+  IL_07c9: ldfld          HeatHazeMod::currentIntensity
+  IL_07ce: ldloc.2        
+  IL_07cf: sub            
+  IL_07d0: call           UnityEngine.Mathf::Abs
+  IL_07d5: ldc.r4         9.999999747378752e-05
+  IL_07da: bge.un.s       2019
+  IL_07dc: ldarg.0        
+  IL_07dd: ldloc.2        
+  IL_07de: stfld          HeatHazeMod::currentIntensity
+  IL_07e3: ldarg.0        
+  IL_07e4: ldfld          HeatHazeMod::hazeMaterial
+  IL_07e9: ldsfld         HeatHazeMod::IntensityId
+  IL_07ee: ldarg.0        
+  IL_07ef: ldfld          HeatHazeMod::currentIntensity
+  IL_07f4: callvirt       UnityEngine.Material::SetFloat
+  IL_07f9: ldarg.0        
+  IL_07fa: ldfld          HeatHazeMod::hazeRenderer
+  IL_07ff: ldarg.0        
+  IL_0800: ldfld          HeatHazeMod::currentIntensity
+  IL_0805: ldc.r4         9.999999747378752e-05
+  IL_080a: cgt            
+  IL_080c: callvirt       UnityEngine.Renderer::set_enabled
+  IL_0811: ret            
+
+---- HeatHazeMod::IsEnvironmentEligible rva=2614
+  maxstack=5 locals_sig=token(0x11000008) size=217
+  IL_0820: ldarg.2        
+  IL_0821: ldc.r4         0.0
+  IL_0826: stind.r4       
+  IL_0827: ldarg.1        
+  IL_0828: ldnull         
+  IL_0829: call           UnityEngine.Object::op_Equality
+  IL_082e: brfalse.s      2098
+  IL_0830: ldc.i4.0       
+  IL_0831: ret            
+  IL_0832: ldarg.1        
+  IL_0833: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerEnterExit
+  IL_0838: stloc.0        
+  IL_0839: ldarg.1        
+  IL_083a: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerGPS
+  IL_083f: stloc.1        
+  IL_0840: ldarg.1        
+  IL_0841: callvirt       DaggerfallWorkshop.Game.GameManager::get_WeatherManager
+  IL_0846: stloc.2        
+  IL_0847: ldloc.0        
+  IL_0848: ldnull         
+  IL_0849: call           UnityEngine.Object::op_Equality
+  IL_084e: brtrue.s       2193
+  IL_0850: ldloc.0        
+  IL_0851: callvirt       DaggerfallWorkshop.Game.PlayerEnterExit::get_IsPlayerInside
+  IL_0856: brtrue.s       2193
+  IL_0858: ldloc.1        
+  IL_0859: ldnull         
+  IL_085a: call           UnityEngine.Object::op_Equality
+  IL_085f: brtrue.s       2193
+  IL_0861: ldloc.2        
+  IL_0862: ldnull         
+  IL_0863: call           UnityEngine.Object::op_Equality
+  IL_0868: brtrue.s       2193
+  IL_086a: ldloc.2        
+  IL_086b: ldfld          DaggerfallWorkshop.Game.WeatherManager::PlayerWeather
+  IL_0870: ldnull         
+  IL_0871: call           UnityEngine.Object::op_Equality
+  IL_0876: brtrue.s       2193
+  IL_0878: call           DaggerfallWorkshop.DaggerfallUnity::get_HasInstance
+  IL_087d: brfalse.s      2193
+  IL_087f: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_0884: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_WorldTime
+  IL_0889: ldnull         
+  IL_088a: call           UnityEngine.Object::op_Equality
+  IL_088f: brfalse.s      2195
+  IL_0891: ldc.i4.0       
+  IL_0892: ret            
+  IL_0893: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_0898: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_WorldTime
+  IL_089d: callvirt       DaggerfallWorkshop.WorldTime::get_Now
+  IL_08a2: stloc.3        
+  IL_08a3: ldloc.3        
+  IL_08a4: brfalse.s      2251
+  IL_08a6: ldc.i4.1       
+  IL_08a7: ldloc.1        
+  IL_08a8: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentClimateIndex
+  IL_08ad: ldloc.3        
+  IL_08ae: callvirt       DaggerfallWorkshop.Utility.DaggerfallDateTime::get_IsDay
+  IL_08b3: ldloc.2        
+  IL_08b4: ldfld          DaggerfallWorkshop.Game.WeatherManager::PlayerWeather
+  IL_08b9: ldfld          DaggerfallWorkshop.Game.PlayerWeather::WeatherType
+  IL_08be: ldarg.0        
+  IL_08bf: ldfld          HeatHazeMod::allowSubtropical
+  IL_08c4: call           HeatHazeEligibility::MeetsRules
+  IL_08c9: brtrue.s       2253
+  IL_08cb: ldc.i4.0       
+  IL_08cc: ret            
+  IL_08cd: ldarg.2        
+  IL_08ce: ldloc.3        
+  IL_08cf: ldfld          DaggerfallWorkshop.Utility.DaggerfallDateTime::Hour
+  IL_08d4: ldloc.3        
+  IL_08d5: ldfld          DaggerfallWorkshop.Utility.DaggerfallDateTime::Minute
+  IL_08da: ldloc.3        
+  IL_08db: ldfld          DaggerfallWorkshop.Utility.DaggerfallDateTime::Second
+  IL_08e0: call           HeatHazeEligibility::GetDaylightStrength
+  IL_08e5: ldloc.2        
+  IL_08e6: ldfld          DaggerfallWorkshop.Game.WeatherManager::PlayerWeather
+  IL_08eb: ldfld          DaggerfallWorkshop.Game.PlayerWeather::WeatherType
+  IL_08f0: call           HeatHazeEligibility::GetWeatherStrength
+  IL_08f5: mul            
+  IL_08f6: stind.r4       
+  IL_08f7: ldc.i4.1       
+  IL_08f8: ret            
+
+---- HeatHazeMod::UpdateRingTransform rva=26fc
+  maxstack=4 locals_sig=token(0x11000009) size=201
+  IL_0908: ldarg.1        
+  IL_0909: ldnull         
+  IL_090a: call           UnityEngine.Object::op_Equality
+  IL_090f: brtrue.s       2335
+  IL_0911: ldarg.0        
+  IL_0912: ldfld          HeatHazeMod::hazeObject
+  IL_0917: ldnull         
+  IL_0918: call           UnityEngine.Object::op_Equality
+  IL_091d: brfalse.s      2336
+  IL_091f: ret            
+  IL_0920: ldarg.2        
+  IL_0921: brtrue.s       2355
+  IL_0923: ldarg.1        
+  IL_0924: callvirt       UnityEngine.CharacterController::get_isGrounded
+  IL_0929: brtrue.s       2355
+  IL_092b: ldarg.0        
+  IL_092c: ldfld          HeatHazeMod::layerHeightInitialized
+  IL_0931: brtrue.s       2393
+  IL_0933: ldarg.0        
+  IL_0934: ldarg.1        
+  IL_0935: callvirt       UnityEngine.Collider::get_bounds
+  IL_093a: stloc.2        
+  IL_093b: ldloca.s       local(0x0002)
+  IL_093d: call           UnityEngine.Bounds::get_min
+  IL_0942: ldfld          UnityEngine.Vector3::y
+  IL_0947: ldc.r4         1.5
+  IL_094c: add            
+  IL_094d: stfld          HeatHazeMod::layerCenterHeight
+  IL_0952: ldarg.0        
+  IL_0953: ldc.i4.1       
+  IL_0954: stfld          HeatHazeMod::layerHeightInitialized
+  IL_0959: ldarg.1        
+  IL_095a: callvirt       UnityEngine.Component::get_transform
+  IL_095f: callvirt       UnityEngine.Transform::get_position
+  IL_0964: stloc.0        
+  IL_0965: ldarg.0        
+  IL_0966: ldfld          HeatHazeMod::hazeObject
+  IL_096b: callvirt       UnityEngine.GameObject::get_transform
+  IL_0970: ldloc.0        
+  IL_0971: ldfld          UnityEngine.Vector3::x
+  IL_0976: ldarg.0        
+  IL_0977: ldfld          HeatHazeMod::layerCenterHeight
+  IL_097c: ldloc.0        
+  IL_097d: ldfld          UnityEngine.Vector3::z
+  IL_0982: newobj         UnityEngine.Vector3::.ctor
+  IL_0987: callvirt       UnityEngine.Transform::set_position
+  IL_098c: ldarg.0        
+  IL_098d: ldfld          HeatHazeMod::hazeObject
+  IL_0992: callvirt       UnityEngine.GameObject::get_transform
+  IL_0997: call           UnityEngine.Quaternion::get_identity
+  IL_099c: callvirt       UnityEngine.Transform::set_rotation
+  IL_09a1: ldarg.0        
+  IL_09a2: ldfld          HeatHazeMod::ringHeight
+  IL_09a7: ldc.r4         140.0
+  IL_09ac: div            
+  IL_09ad: stloc.1        
+  IL_09ae: ldarg.0        
+  IL_09af: ldfld          HeatHazeMod::hazeObject
+  IL_09b4: callvirt       UnityEngine.GameObject::get_transform
+  IL_09b9: ldarg.0        
+  IL_09ba: ldfld          HeatHazeMod::hazeDistance
+  IL_09bf: ldloc.1        
+  IL_09c0: ldarg.0        
+  IL_09c1: ldfld          HeatHazeMod::hazeDistance
+  IL_09c6: newobj         UnityEngine.Vector3::.ctor
+  IL_09cb: callvirt       UnityEngine.Transform::set_localScale
+  IL_09d0: ret            
+
+---- HeatHazeMod::LoadSettings rva=27d4
+  maxstack=4 locals_sig=None size=240
+  IL_09e0: ldarg.1        
+  IL_09e1: brtrue.s       2532
+  IL_09e3: ret            
+  IL_09e4: ldarg.0        
+  IL_09e5: ldarg.1        
+  IL_09e6: ldstr          "Heat Haze"
+  IL_09eb: ldstr          "Enabled"
+  IL_09f0: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetBool
+  IL_09f5: stfld          HeatHazeMod::effectEnabled
+  IL_09fa: ldarg.0        
+  IL_09fb: ldarg.1        
+  IL_09fc: ldstr          "Heat Haze"
+  IL_0a01: ldstr          "AllowSubtropical"
+  IL_0a06: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetBool
+  IL_0a0b: stfld          HeatHazeMod::allowSubtropical
+  IL_0a10: ldarg.0        
+  IL_0a11: ldarg.1        
+  IL_0a12: ldstr          "Heat Haze"
+  IL_0a17: ldstr          "Intensity"
+  IL_0a1c: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetFloat
+  IL_0a21: ldc.r4         0.0
+  IL_0a26: ldc.r4         3.0
+  IL_0a2b: call           UnityEngine.Mathf::Clamp
+  IL_0a30: stfld          HeatHazeMod::effectIntensity
+  IL_0a35: ldarg.0        
+  IL_0a36: ldarg.1        
+  IL_0a37: ldstr          "Heat Haze"
+  IL_0a3c: ldstr          "FullStrengthDistance"
+  IL_0a41: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetFloat
+  IL_0a46: ldc.r4         50.0
+  IL_0a4b: ldc.r4         3000.0
+  IL_0a50: call           UnityEngine.Mathf::Clamp
+  IL_0a55: stfld          HeatHazeMod::hazeDistance
+  IL_0a5a: ldarg.0        
+  IL_0a5b: ldarg.1        
+  IL_0a5c: ldstr          "Heat Haze"
+  IL_0a61: ldstr          "RingHeight"
+  IL_0a66: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetFloat
+  IL_0a6b: ldc.r4         50.0
+  IL_0a70: ldc.r4         1500.0
+  IL_0a75: call           UnityEngine.Mathf::Clamp
+  IL_0a7a: stfld          HeatHazeMod::ringHeight
+  IL_0a7f: ldarg.0        
+  IL_0a80: ldarg.1        
+  IL_0a81: ldstr          "Heat Haze"
+  IL_0a86: ldstr          "NoiseScale"
+  IL_0a8b: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetFloat
+  IL_0a90: ldc.r4         0.25
+  IL_0a95: ldc.r4         6.0
+  IL_0a9a: call           UnityEngine.Mathf::Clamp
+  IL_0a9f: stfld          HeatHazeMod::noiseScale
+  IL_0aa4: ldarg.0        
+  IL_0aa5: ldarg.1        
+  IL_0aa6: ldstr          "Heat Haze"
+  IL_0aab: ldstr          "AnimationSpeed"
+  IL_0ab0: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetFloat
+  IL_0ab5: ldc.r4         0.0
+  IL_0aba: ldc.r4         4.0
+  IL_0abf: call           UnityEngine.Mathf::Clamp
+  IL_0ac4: stfld          HeatHazeMod::animationSpeed
+  IL_0ac9: ldarg.0        
+  IL_0aca: call           HeatHazeMod::ApplyMaterialTuning
+  IL_0acf: ret            
+
+---- HeatHazeMod::ApplyMaterialTuning rva=28d0
+  maxstack=4 locals_sig=token(0x11000003) size=164
+  IL_0adc: ldarg.0        
+  IL_0add: ldfld          HeatHazeMod::hazeMaterial
+  IL_0ae2: ldnull         
+  IL_0ae3: call           UnityEngine.Object::op_Inequality
+  IL_0ae8: brfalse.s      2882
+  IL_0aea: ldarg.0        
+  IL_0aeb: ldfld          HeatHazeMod::hazeMaterial
+  IL_0af0: ldsfld         HeatHazeMod::NoiseTextureId
+  IL_0af5: ldarg.0        
+  IL_0af6: ldfld          HeatHazeMod::noiseTexture
+  IL_0afb: callvirt       UnityEngine.Material::SetTexture
+  IL_0b00: ldarg.0        
+  IL_0b01: ldfld          HeatHazeMod::hazeMaterial
+  IL_0b06: ldsfld         HeatHazeMod::NoiseScaleId
+  IL_0b0b: ldarg.0        
+  IL_0b0c: ldfld          HeatHazeMod::noiseScale
+  IL_0b11: callvirt       UnityEngine.Material::SetFloat
+  IL_0b16: ldarg.0        
+  IL_0b17: ldfld          HeatHazeMod::hazeMaterial
+  IL_0b1c: ldsfld         HeatHazeMod::AnimationSpeedId
+  IL_0b21: ldarg.0        
+  IL_0b22: ldfld          HeatHazeMod::animationSpeed
+  IL_0b27: callvirt       UnityEngine.Material::SetFloat
+  IL_0b2c: ldarg.0        
+  IL_0b2d: ldfld          HeatHazeMod::hazeMaterial
+  IL_0b32: ldsfld         HeatHazeMod::IntensityId
+  IL_0b37: ldarg.0        
+  IL_0b38: ldfld          HeatHazeMod::currentIntensity
+  IL_0b3d: callvirt       UnityEngine.Material::SetFloat
+  IL_0b42: ldarg.0        
+  IL_0b43: ldfld          HeatHazeMod::hazeObject
+  IL_0b48: ldnull         
+  IL_0b49: call           UnityEngine.Object::op_Inequality
+  IL_0b4e: brfalse.s      2943
+  IL_0b50: ldarg.0        
+  IL_0b51: ldfld          HeatHazeMod::ringHeight
+  IL_0b56: ldc.r4         140.0
+  IL_0b5b: div            
+  IL_0b5c: stloc.0        
+  IL_0b5d: ldarg.0        
+  IL_0b5e: ldfld          HeatHazeMod::hazeObject
+  IL_0b63: callvirt       UnityEngine.GameObject::get_transform
+  IL_0b68: ldarg.0        
+  IL_0b69: ldfld          HeatHazeMod::hazeDistance
+  IL_0b6e: ldloc.0        
+  IL_0b6f: ldarg.0        
+  IL_0b70: ldfld          HeatHazeMod::hazeDistance
+  IL_0b75: newobj         UnityEngine.Vector3::.ctor
+  IL_0b7a: callvirt       UnityEngine.Transform::set_localScale
+  IL_0b7f: ret            
+
+---- HeatHazeMod::CreateCylinderMesh rva=2980
+  maxstack=5 locals_sig=token(0x1100000A) size=253
+  IL_0b8c: ldc.i4         256
+  IL_0b91: newarr         typeref:UnityEngine.Vector3
+  IL_0b96: stloc.0        
+  IL_0b97: ldc.i4         768
+  IL_0b9c: newarr         typeref:System.Int32
+  IL_0ba1: stloc.1        
+  IL_0ba2: ldc.i4.0       
+  IL_0ba3: stloc.2        
+  IL_0ba4: br             3146
+  IL_0ba9: ldloc.2        
+  IL_0baa: conv.r4        
+  IL_0bab: ldc.r4         3.1415927410125732
+  IL_0bb0: mul            
+  IL_0bb1: ldc.r4         2.0
+  IL_0bb6: mul            
+  IL_0bb7: ldc.r4         128.0
+  IL_0bbc: div            
+  IL_0bbd: dup            
+  IL_0bbe: call           UnityEngine.Mathf::Cos
+  IL_0bc3: stloc.3        
+  IL_0bc4: call           UnityEngine.Mathf::Sin
+  IL_0bc9: stloc.s        local(0x0004)
+  IL_0bcb: ldloc.0        
+  IL_0bcc: ldloc.2        
+  IL_0bcd: ldc.i4.2       
+  IL_0bce: mul            
+  IL_0bcf: ldloc.3        
+  IL_0bd0: ldc.r4         -70.0
+  IL_0bd5: ldloc.s        local(0x0004)
+  IL_0bd7: newobj         UnityEngine.Vector3::.ctor
+  IL_0bdc: stelem         typeref:UnityEngine.Vector3
+  IL_0be1: ldloc.0        
+  IL_0be2: ldloc.2        
+  IL_0be3: ldc.i4.2       
+  IL_0be4: mul            
+  IL_0be5: ldc.i4.1       
+  IL_0be6: add            
+  IL_0be7: ldloc.3        
+  IL_0be8: ldc.r4         70.0
+  IL_0bed: ldloc.s        local(0x0004)
+  IL_0bef: newobj         UnityEngine.Vector3::.ctor
+  IL_0bf4: stelem         typeref:UnityEngine.Vector3
+  IL_0bf9: ldloc.2        
+  IL_0bfa: ldc.i4.1       
+  IL_0bfb: add            
+  IL_0bfc: ldc.i4         128
+  IL_0c01: rem            
+  IL_0c02: stloc.s        local(0x0005)
+  IL_0c04: ldloc.2        
+  IL_0c05: ldc.i4.6       
+  IL_0c06: mul            
+  IL_0c07: stloc.s        local(0x0006)
+  IL_0c09: ldloc.1        
+  IL_0c0a: ldloc.s        local(0x0006)
+  IL_0c0c: ldloc.2        
+  IL_0c0d: ldc.i4.2       
+  IL_0c0e: mul            
+  IL_0c0f: stelem.i4      
+  IL_0c10: ldloc.1        
+  IL_0c11: ldloc.s        local(0x0006)
+  IL_0c13: ldc.i4.1       
+  IL_0c14: add            
+  IL_0c15: ldloc.s        local(0x0005)
+  IL_0c17: ldc.i4.2       
+  IL_0c18: mul            
+  IL_0c19: ldc.i4.1       
+  IL_0c1a: add            
+  IL_0c1b: stelem.i4      
+  IL_0c1c: ldloc.1        
+  IL_0c1d: ldloc.s        local(0x0006)
+  IL_0c1f: ldc.i4.2       
+  IL_0c20: add            
+  IL_0c21: ldloc.2        
+  IL_0c22: ldc.i4.2       
+  IL_0c23: mul            
+  IL_0c24: ldc.i4.1       
+  IL_0c25: add            
+  IL_0c26: stelem.i4      
+  IL_0c27: ldloc.1        
+  IL_0c28: ldloc.s        local(0x0006)
+  IL_0c2a: ldc.i4.3       
+  IL_0c2b: add            
+  IL_0c2c: ldloc.2        
+  IL_0c2d: ldc.i4.2       
+  IL_0c2e: mul            
+  IL_0c2f: stelem.i4      
+  IL_0c30: ldloc.1        
+  IL_0c31: ldloc.s        local(0x0006)
+  IL_0c33: ldc.i4.4       
+  IL_0c34: add            
+  IL_0c35: ldloc.s        local(0x0005)
+  IL_0c37: ldc.i4.2       
+  IL_0c38: mul            
+  IL_0c39: stelem.i4      
+  IL_0c3a: ldloc.1        
+  IL_0c3b: ldloc.s        local(0x0006)
+  IL_0c3d: ldc.i4.5       
+  IL_0c3e: add            
+  IL_0c3f: ldloc.s        local(0x0005)
+  IL_0c41: ldc.i4.2       
+  IL_0c42: mul            
+  IL_0c43: ldc.i4.1       
+  IL_0c44: add            
+  IL_0c45: stelem.i4      
+  IL_0c46: ldloc.2        
+  IL_0c47: ldc.i4.1       
+  IL_0c48: add            
+  IL_0c49: stloc.2        
+  IL_0c4a: ldloc.2        
+  IL_0c4b: ldc.i4         128
+  IL_0c50: blt            2985
+  IL_0c55: newobj         UnityEngine.Mesh::.ctor
+  IL_0c5a: dup            
+  IL_0c5b: ldstr          "Heat Haze Runtime Cylinder"
+  IL_0c60: callvirt       UnityEngine.Object::set_name
+  IL_0c65: dup            
+  IL_0c66: ldc.i4.s       52
+  IL_0c68: callvirt       UnityEngine.Object::set_hideFlags
+  IL_0c6d: dup            
+  IL_0c6e: ldloc.0        
+  IL_0c6f: callvirt       UnityEngine.Mesh::set_vertices
+  IL_0c74: dup            
+  IL_0c75: ldloc.1        
+  IL_0c76: callvirt       UnityEngine.Mesh::set_triangles
+  IL_0c7b: dup            
+  IL_0c7c: callvirt       UnityEngine.Mesh::RecalculateBounds
+  IL_0c81: dup            
+  IL_0c82: ldc.i4.1       
+  IL_0c83: callvirt       UnityEngine.Mesh::UploadMeshData
+  IL_0c88: ret            
+
+---- HeatHazeMod::CreateNoiseTexture rva=2a8c
+  maxstack=7 locals_sig=token(0x1100000B) size=371
+  IL_0c98: ldc.i4         1212701233
+  IL_0c9d: newobj         System.Random::.ctor
+  IL_0ca2: stloc.0        
+  IL_0ca3: ldc.i4.s       64
+  IL_0ca5: newarr         typeref:System.Single
+  IL_0caa: stloc.1        
+  IL_0cab: ldc.i4.s       64
+  IL_0cad: newarr         typeref:System.Single
+  IL_0cb2: stloc.2        
+  IL_0cb3: ldc.i4.0       
+  IL_0cb4: stloc.s        local(0x0004)
+  IL_0cb6: br.s           3284
+  IL_0cb8: ldloc.1        
+  IL_0cb9: ldloc.s        local(0x0004)
+  IL_0cbb: ldloc.0        
+  IL_0cbc: callvirt       System.Random::NextDouble
+  IL_0cc1: conv.r4        
+  IL_0cc2: stelem.r4      
+  IL_0cc3: ldloc.2        
+  IL_0cc4: ldloc.s        local(0x0004)
+  IL_0cc6: ldloc.0        
+  IL_0cc7: callvirt       System.Random::NextDouble
+  IL_0ccc: conv.r4        
+  IL_0ccd: stelem.r4      
+  IL_0cce: ldloc.s        local(0x0004)
+  IL_0cd0: ldc.i4.1       
+  IL_0cd1: add            
+  IL_0cd2: stloc.s        local(0x0004)
+  IL_0cd4: ldloc.s        local(0x0004)
+  IL_0cd6: ldloc.1        
+  IL_0cd7: ldlen          
+  IL_0cd8: conv.i4        
+  IL_0cd9: blt.s          3256
+  IL_0cdb: ldc.i4         4096
+  IL_0ce0: newarr         typeref:UnityEngine.Color32
+  IL_0ce5: stloc.3        
+  IL_0ce6: ldc.i4.0       
+  IL_0ce7: stloc.s        local(0x0005)
+  IL_0ce9: br             3518
+  IL_0cee: ldloc.s        local(0x0005)
+  IL_0cf0: ldc.i4.8       
+  IL_0cf1: mul            
+  IL_0cf2: conv.r4        
+  IL_0cf3: ldc.r4         64.0
+  IL_0cf8: div            
+  IL_0cf9: dup            
+  IL_0cfa: call           UnityEngine.Mathf::FloorToInt
+  IL_0cff: ldc.i4.8       
+  IL_0d00: rem            
+  IL_0d01: stloc.s        local(0x0006)
+  IL_0d03: ldloc.s        local(0x0006)
+  IL_0d05: ldc.i4.1       
+  IL_0d06: add            
+  IL_0d07: ldc.i4.8       
+  IL_0d08: rem            
+  IL_0d09: stloc.s        local(0x0007)
+  IL_0d0b: dup            
+  IL_0d0c: call           UnityEngine.Mathf::Floor
+  IL_0d11: sub            
+  IL_0d12: call           HeatHazeMod::Smooth
+  IL_0d17: stloc.s        local(0x0008)
+  IL_0d19: ldc.i4.0       
+  IL_0d1a: stloc.s        local(0x0009)
+  IL_0d1c: br             3503
+  IL_0d21: ldloc.s        local(0x0009)
+  IL_0d23: ldc.i4.8       
+  IL_0d24: mul            
+  IL_0d25: conv.r4        
+  IL_0d26: ldc.r4         64.0
+  IL_0d2b: div            
+  IL_0d2c: dup            
+  IL_0d2d: call           UnityEngine.Mathf::FloorToInt
+  IL_0d32: ldc.i4.8       
+  IL_0d33: rem            
+  IL_0d34: stloc.s        local(0x000A)
+  IL_0d36: ldloc.s        local(0x000A)
+  IL_0d38: ldc.i4.1       
+  IL_0d39: add            
+  IL_0d3a: ldc.i4.8       
+  IL_0d3b: rem            
+  IL_0d3c: stloc.s        local(0x000B)
+  IL_0d3e: dup            
+  IL_0d3f: call           UnityEngine.Mathf::Floor
+  IL_0d44: sub            
+  IL_0d45: call           HeatHazeMod::Smooth
+  IL_0d4a: stloc.s        local(0x000C)
+  IL_0d4c: ldloc.1        
+  IL_0d4d: ldloc.s        local(0x000A)
+  IL_0d4f: ldloc.s        local(0x000B)
+  IL_0d51: ldloc.s        local(0x0006)
+  IL_0d53: ldloc.s        local(0x0007)
+  IL_0d55: ldloc.s        local(0x000C)
+  IL_0d57: ldloc.s        local(0x0008)
+  IL_0d59: call           HeatHazeMod::SampleLattice
+  IL_0d5e: stloc.s        local(0x000D)
+  IL_0d60: ldloc.2        
+  IL_0d61: ldloc.s        local(0x000A)
+  IL_0d63: ldloc.s        local(0x000B)
+  IL_0d65: ldloc.s        local(0x0006)
+  IL_0d67: ldloc.s        local(0x0007)
+  IL_0d69: ldloc.s        local(0x000C)
+  IL_0d6b: ldloc.s        local(0x0008)
+  IL_0d6d: call           HeatHazeMod::SampleLattice
+  IL_0d72: stloc.s        local(0x000E)
+  IL_0d74: ldloc.3        
+  IL_0d75: ldloc.s        local(0x0005)
+  IL_0d77: ldc.i4.s       64
+  IL_0d79: mul            
+  IL_0d7a: ldloc.s        local(0x0009)
+  IL_0d7c: add            
+  IL_0d7d: ldloc.s        local(0x000D)
+  IL_0d7f: ldc.r4         255.0
+  IL_0d84: mul            
+  IL_0d85: call           UnityEngine.Mathf::RoundToInt
+  IL_0d8a: conv.u1        
+  IL_0d8b: ldloc.s        local(0x000E)
+  IL_0d8d: ldc.r4         255.0
+  IL_0d92: mul            
+  IL_0d93: call           UnityEngine.Mathf::RoundToInt
+  IL_0d98: conv.u1        
+  IL_0d99: ldc.i4.0       
+  IL_0d9a: ldc.i4         255
+  IL_0d9f: newobj         UnityEngine.Color32::.ctor
+  IL_0da4: stelem         typeref:UnityEngine.Color32
+  IL_0da9: ldloc.s        local(0x0009)
+  IL_0dab: ldc.i4.1       
+  IL_0dac: add            
+  IL_0dad: stloc.s        local(0x0009)
+  IL_0daf: ldloc.s        local(0x0009)
+  IL_0db1: ldc.i4.s       64
+  IL_0db3: blt            3361
+  IL_0db8: ldloc.s        local(0x0005)
+  IL_0dba: ldc.i4.1       
+  IL_0dbb: add            
+  IL_0dbc: stloc.s        local(0x0005)
+  IL_0dbe: ldloc.s        local(0x0005)
+  IL_0dc0: ldc.i4.s       64
+  IL_0dc2: blt            3310
+  IL_0dc7: ldc.i4.s       64
+  IL_0dc9: ldc.i4.s       64
+  IL_0dcb: ldc.i4.4       
+  IL_0dcc: ldc.i4.0       
+  IL_0dcd: ldc.i4.1       
+  IL_0dce: newobj         UnityEngine.Texture2D::.ctor
+  IL_0dd3: dup            
+  IL_0dd4: ldstr          "Heat Haze Runtime Noise"
+  IL_0dd9: callvirt       UnityEngine.Object::set_name
+  IL_0dde: dup            
+  IL_0ddf: ldc.i4.1       
+  IL_0de0: callvirt       UnityEngine.Texture::set_filterMode
+  IL_0de5: dup            
+  IL_0de6: ldc.i4.0       
+  IL_0de7: callvirt       UnityEngine.Texture::set_wrapMode
+  IL_0dec: dup            
+  IL_0ded: ldc.i4.0       
+  IL_0dee: callvirt       UnityEngine.Texture::set_anisoLevel
+  IL_0df3: dup            
+  IL_0df4: ldc.i4.s       52
+  IL_0df6: callvirt       UnityEngine.Object::set_hideFlags
+  IL_0dfb: dup            
+  IL_0dfc: ldloc.3        
+  IL_0dfd: callvirt       UnityEngine.Texture2D::SetPixels32
+  IL_0e02: dup            
+  IL_0e03: ldc.i4.0       
+  IL_0e04: ldc.i4.1       
+  IL_0e05: callvirt       UnityEngine.Texture2D::Apply
+  IL_0e0a: ret            
+
+---- HeatHazeMod::SampleLattice rva=2c0c
+  maxstack=5 locals_sig=token(0x11000003) size=54
+  IL_0e18: ldarg.0        
+  IL_0e19: ldarg.3        
+  IL_0e1a: ldc.i4.8       
+  IL_0e1b: mul            
+  IL_0e1c: ldarg.1        
+  IL_0e1d: add            
+  IL_0e1e: ldelem.r4      
+  IL_0e1f: ldarg.0        
+  IL_0e20: ldarg.3        
+  IL_0e21: ldc.i4.8       
+  IL_0e22: mul            
+  IL_0e23: ldarg.2        
+  IL_0e24: add            
+  IL_0e25: ldelem.r4      
+  IL_0e26: ldarg.s        argument(0x0005)
+  IL_0e28: call           UnityEngine.Mathf::Lerp
+  IL_0e2d: ldarg.0        
+  IL_0e2e: ldarg.s        argument(0x0004)
+  IL_0e30: ldc.i4.8       
+  IL_0e31: mul            
+  IL_0e32: ldarg.1        
+  IL_0e33: add            
+  IL_0e34: ldelem.r4      
+  IL_0e35: ldarg.0        
+  IL_0e36: ldarg.s        argument(0x0004)
+  IL_0e38: ldc.i4.8       
+  IL_0e39: mul            
+  IL_0e3a: ldarg.2        
+  IL_0e3b: add            
+  IL_0e3c: ldelem.r4      
+  IL_0e3d: ldarg.s        argument(0x0005)
+  IL_0e3f: call           UnityEngine.Mathf::Lerp
+  IL_0e44: stloc.0        
+  IL_0e45: ldloc.0        
+  IL_0e46: ldarg.s        argument(0x0006)
+  IL_0e48: call           UnityEngine.Mathf::Lerp
+  IL_0e4d: ret            
+
+---- HeatHazeMod::Smooth rva=2c4e
+  maxstack=8 locals_sig=None size=18
+  IL_0e4f: ldarg.0        
+  IL_0e50: ldarg.0        
+  IL_0e51: mul            
+  IL_0e52: ldc.r4         3.0
+  IL_0e57: ldc.r4         2.0
+  IL_0e5c: ldarg.0        
+  IL_0e5d: mul            
+  IL_0e5e: sub            
+  IL_0e5f: mul            
+  IL_0e60: ret            
+
+---- HeatHazeMod::DisableSafely rva=2c64
+  maxstack=5 locals_sig=None size=66
+  IL_0e70: ldstr          "{0} {1}. The effect is disabled and gameplay is unchanged."
+  IL_0e75: ldc.i4.2       
+  IL_0e76: newarr         typeref:System.Object
+  IL_0e7b: dup            
+  IL_0e7c: ldc.i4.0       
+  IL_0e7d: ldstr          "[Heat Haze]"
+  IL_0e82: stelem.ref     
+  IL_0e83: dup            
+  IL_0e84: ldc.i4.1       
+  IL_0e85: ldarg.1        
+  IL_0e86: stelem.ref     
+  IL_0e87: call           UnityEngine.Debug::LogErrorFormat
+  IL_0e8c: ldarg.0        
+  IL_0e8d: call           HeatHazeMod::TearDownResources
+  IL_0e92: ldarg.0        
+  IL_0e93: ldfld          HeatHazeMod::ownerMod
+  IL_0e98: brfalse.s      3750
+  IL_0e9a: ldarg.0        
+  IL_0e9b: ldfld          HeatHazeMod::ownerMod
+  IL_0ea0: ldc.i4.1       
+  IL_0ea1: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_0ea6: ldarg.0        
+  IL_0ea7: call           UnityEngine.Component::get_gameObject
+  IL_0eac: call           UnityEngine.Object::Destroy
+  IL_0eb1: ret            
+
+---- HeatHazeMod::TearDownResources rva=2cb4
+  maxstack=2 locals_sig=None size=176
+  IL_0ec0: ldarg.0        
+  IL_0ec1: ldc.i4.0       
+  IL_0ec2: stfld          HeatHazeMod::initialized
+  IL_0ec7: ldarg.0        
+  IL_0ec8: ldc.i4.0       
+  IL_0ec9: stfld          HeatHazeMod::layerHeightInitialized
+  IL_0ece: ldarg.0        
+  IL_0ecf: ldfld          HeatHazeMod::hazeRenderer
+  IL_0ed4: ldnull         
+  IL_0ed5: call           UnityEngine.Object::op_Inequality
+  IL_0eda: brfalse.s      3816
+  IL_0edc: ldarg.0        
+  IL_0edd: ldfld          HeatHazeMod::hazeRenderer
+  IL_0ee2: ldc.i4.0       
+  IL_0ee3: callvirt       UnityEngine.Renderer::set_enabled
+  IL_0ee8: ldarg.0        
+  IL_0ee9: ldfld          HeatHazeMod::hazeObject
+  IL_0eee: ldnull         
+  IL_0eef: call           UnityEngine.Object::op_Inequality
+  IL_0ef4: brfalse.s      3841
+  IL_0ef6: ldarg.0        
+  IL_0ef7: ldfld          HeatHazeMod::hazeObject
+  IL_0efc: call           UnityEngine.Object::Destroy
+  IL_0f01: ldarg.0        
+  IL_0f02: ldnull         
+  IL_0f03: stfld          HeatHazeMod::hazeObject
+  IL_0f08: ldarg.0        
+  IL_0f09: ldnull         
+  IL_0f0a: stfld          HeatHazeMod::hazeRenderer
+  IL_0f0f: ldarg.0        
+  IL_0f10: ldfld          HeatHazeMod::hazeMaterial
+  IL_0f15: ldnull         
+  IL_0f16: call           UnityEngine.Object::op_Inequality
+  IL_0f1b: brfalse.s      3880
+  IL_0f1d: ldarg.0        
+  IL_0f1e: ldfld          HeatHazeMod::hazeMaterial
+  IL_0f23: call           UnityEngine.Object::Destroy
+  IL_0f28: ldarg.0        
+  IL_0f29: ldnull         
+  IL_0f2a: stfld          HeatHazeMod::hazeMaterial
+  IL_0f2f: ldarg.0        
+  IL_0f30: ldfld          HeatHazeMod::hazeMesh
+  IL_0f35: ldnull         
+  IL_0f36: call           UnityEngine.Object::op_Inequality
+  IL_0f3b: brfalse.s      3912
+  IL_0f3d: ldarg.0        
+  IL_0f3e: ldfld          HeatHazeMod::hazeMesh
+  IL_0f43: call           UnityEngine.Object::Destroy
+  IL_0f48: ldarg.0        
+  IL_0f49: ldnull         
+  IL_0f4a: stfld          HeatHazeMod::hazeMesh
+  IL_0f4f: ldarg.0        
+  IL_0f50: ldfld          HeatHazeMod::noiseTexture
+  IL_0f55: ldnull         
+  IL_0f56: call           UnityEngine.Object::op_Inequality
+  IL_0f5b: brfalse.s      3944
+  IL_0f5d: ldarg.0        
+  IL_0f5e: ldfld          HeatHazeMod::noiseTexture
+  IL_0f63: call           UnityEngine.Object::Destroy
+  IL_0f68: ldarg.0        
+  IL_0f69: ldnull         
+  IL_0f6a: stfld          HeatHazeMod::noiseTexture
+  IL_0f6f: ret            
+
+---- HeatHazeMod::OnDestroy rva=2d70
+  maxstack=2 locals_sig=None size=66
+  IL_0f7c: ldarg.0        
+  IL_0f7d: call           UnityEngine.MonoBehaviour::StopAllCoroutines
+  IL_0f82: ldarg.0        
+  IL_0f83: call           HeatHazeMod::TearDownResources
+  IL_0f88: ldarg.0        
+  IL_0f89: ldfld          HeatHazeMod::ownerMod
+  IL_0f8e: brfalse.s      3996
+  IL_0f90: ldarg.0        
+  IL_0f91: ldfld          HeatHazeMod::ownerMod
+  IL_0f96: ldnull         
+  IL_0f97: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_LoadSettingsCallback
+  IL_0f9c: ldarg.0        
+  IL_0f9d: ldnull         
+  IL_0f9e: stfld          HeatHazeMod::ownerMod
+  IL_0fa3: ldarg.0        
+  IL_0fa4: ldnull         
+  IL_0fa5: stfld          HeatHazeMod::shader
+  IL_0faa: ldsfld         HeatHazeMod::instance
+  IL_0faf: ldarg.0        
+  IL_0fb0: call           UnityEngine.Object::op_Equality
+  IL_0fb5: brfalse.s      4029
+  IL_0fb7: ldnull         
+  IL_0fb8: stsfld         HeatHazeMod::instance
+  IL_0fbd: ret            
+
+---- HeatHazeMod::.ctor rva=2dc0
+  maxstack=2 locals_sig=None size=69
+  IL_0fcc: ldarg.0        
+  IL_0fcd: ldc.i4.1       
+  IL_0fce: stfld          HeatHazeMod::effectEnabled
+  IL_0fd3: ldarg.0        
+  IL_0fd4: ldc.r4         1.5
+  IL_0fd9: stfld          HeatHazeMod::effectIntensity
+  IL_0fde: ldarg.0        
+  IL_0fdf: ldc.r4         400.3999938964844
+  IL_0fe4: stfld          HeatHazeMod::hazeDistance
+  IL_0fe9: ldarg.0        
+  IL_0fea: ldc.r4         1006.0
+  IL_0fef: stfld          HeatHazeMod::ringHeight
+  IL_0ff4: ldarg.0        
+  IL_0ff5: ldc.r4         4.5
+  IL_0ffa: stfld          HeatHazeMod::noiseScale
+  IL_0fff: ldarg.0        
+  IL_1000: ldc.r4         4.0
+  IL_1005: stfld          HeatHazeMod::animationSpeed
+  IL_100a: ldarg.0        
+  IL_100b: call           UnityEngine.MonoBehaviour::.ctor
+  IL_1010: ret            
+
+---- HeatHazeMod::.cctor rva=2e11
+  maxstack=8 locals_sig=None size=61
+  IL_1012: ldstr          "_NoiseTex"
+  IL_1017: call           UnityEngine.Shader::PropertyToID
+  IL_101c: stsfld         HeatHazeMod::NoiseTextureId
+  IL_1021: ldstr          "_IntensityPixels"
+  IL_1026: call           UnityEngine.Shader::PropertyToID
+  IL_102b: stsfld         HeatHazeMod::IntensityId
+  IL_1030: ldstr          "_NoiseScale"
+  IL_1035: call           UnityEngine.Shader::PropertyToID
+  IL_103a: stsfld         HeatHazeMod::NoiseScaleId
+  IL_103f: ldstr          "_AnimationSpeed"
+  IL_1044: call           UnityEngine.Shader::PropertyToID
+  IL_1049: stsfld         HeatHazeMod::AnimationSpeedId
+  IL_104e: ret            
+==== TYPE .<InitializeWhenReady>d__36 (fields: ['<>1__state', '<>2__current', '<>4__this', '<missingDependency>5__2', '<deadline>5__3'])
+
+---- <InitializeWhenReady>d__36::.ctor rva=2e4f
+  maxstack=8 locals_sig=None size=14
+  IL_1050: ldarg.0        
+  IL_1051: call           System.Object::.ctor
+  IL_1056: ldarg.0        
+  IL_1057: ldarg.1        
+  IL_1058: stfld          <InitializeWhenReady>d__36::<>1__state
+  IL_105d: ret            
+
+---- <InitializeWhenReady>d__36::System.IDisposable.Dispose rva=2e5e
+  maxstack=8 locals_sig=None size=1
+  IL_105f: ret            
+
+---- <InitializeWhenReady>d__36::MoveNext rva=2e60
+  maxstack=3 locals_sig=token(0x1100000C) size=155
+  IL_106c: ldarg.0        
+  IL_106d: ldfld          <InitializeWhenReady>d__36::<>1__state
+  IL_1072: stloc.0        
+  IL_1073: ldarg.0        
+  IL_1074: ldfld          <InitializeWhenReady>d__36::<>4__this
+  IL_1079: stloc.1        
+  IL_107a: ldloc.0        
+  IL_107b: brfalse.s      4227
+  IL_107d: ldloc.0        
+  IL_107e: ldc.i4.1       
+  IL_107f: beq.s          4315
+  IL_1081: ldc.i4.0       
+  IL_1082: ret            
+  IL_1083: ldarg.0        
+  IL_1084: ldc.i4.m1      
+  IL_1085: stfld          <InitializeWhenReady>d__36::<>1__state
+  IL_108a: ldarg.0        
+  IL_108b: ldstr          "DFU runtime services"
+  IL_1090: stfld          <InitializeWhenReady>d__36::<missingDependency>5__2
+  IL_1095: ldarg.0        
+  IL_1096: call           UnityEngine.Time::get_realtimeSinceStartup
+  IL_109b: ldc.r4         5.0
+  IL_10a0: add            
+  IL_10a1: stfld          <InitializeWhenReady>d__36::<deadline>5__3
+  IL_10a6: br.s           4322
+  IL_10a8: ldloc.1        
+  IL_10a9: ldarg.0        
+  IL_10aa: ldflda         <InitializeWhenReady>d__36::<missingDependency>5__2
+  IL_10af: call           HeatHazeMod::TryInitialize
+  IL_10b4: brfalse.s      4299
+  IL_10b6: ldloc.1        
+  IL_10b7: ldc.i4.1       
+  IL_10b8: stfld          HeatHazeMod::initialized
+  IL_10bd: ldloc.1        
+  IL_10be: ldfld          HeatHazeMod::ownerMod
+  IL_10c3: ldc.i4.1       
+  IL_10c4: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_10c9: ldc.i4.0       
+  IL_10ca: ret            
+  IL_10cb: ldarg.0        
+  IL_10cc: ldnull         
+  IL_10cd: stfld          <InitializeWhenReady>d__36::<>2__current
+  IL_10d2: ldarg.0        
+  IL_10d3: ldc.i4.1       
+  IL_10d4: stfld          <InitializeWhenReady>d__36::<>1__state
+  IL_10d9: ldc.i4.1       
+  IL_10da: ret            
+  IL_10db: ldarg.0        
+  IL_10dc: ldc.i4.m1      
+  IL_10dd: stfld          <InitializeWhenReady>d__36::<>1__state
+  IL_10e2: call           UnityEngine.Time::get_realtimeSinceStartup
+  IL_10e7: ldarg.0        
+  IL_10e8: ldfld          <InitializeWhenReady>d__36::<deadline>5__3
+  IL_10ed: blt.s          4264
+  IL_10ef: ldloc.1        
+  IL_10f0: ldstr          "timed out waiting for "
+  IL_10f5: ldarg.0        
+  IL_10f6: ldfld          <InitializeWhenReady>d__36::<missingDependency>5__2
+  IL_10fb: call           System.String::Concat
+  IL_1100: call           HeatHazeMod::DisableSafely
+  IL_1105: ldc.i4.0       
+  IL_1106: ret            
+
+---- <InitializeWhenReady>d__36::System.Collections.Generic.IEnumerator<System.Object>.get_Current rva=2f07
+  maxstack=8 locals_sig=None size=7
+  IL_1108: ldarg.0        
+  IL_1109: ldfld          <InitializeWhenReady>d__36::<>2__current
+  IL_110e: ret            
+
+---- <InitializeWhenReady>d__36::System.Collections.IEnumerator.Reset rva=2f0f
+  maxstack=8 locals_sig=None size=6
+  IL_1110: newobj         System.NotSupportedException::.ctor
+  IL_1115: throw          
+
+---- <InitializeWhenReady>d__36::System.Collections.IEnumerator.get_Current rva=2f16
+  maxstack=8 locals_sig=None size=7
+  IL_1117: ldarg.0        
+  IL_1118: ldfld          <InitializeWhenReady>d__36::<>2__current
+  IL_111d: ret            

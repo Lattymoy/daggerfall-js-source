@@ -713,8 +713,8 @@
   {
     "name": "LPT1-D5-run-unswayed",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "sway: swayOf ? swayOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
-    "new": "sway: 0, subs, drawStart: 0, drawCount: 0 });",
+    "old": "sway: swayOf ? swayOf(p) : 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
+    "new": "sway: 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
     "tests": [
       "test/lpt1_lowpolytrees.test.js"
     ]

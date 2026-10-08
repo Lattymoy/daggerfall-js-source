@@ -300,11 +300,12 @@ export function createLowPolyTrees({ renderer, getTexture, seasonal = null, fetc
      * THE FRAME: the near set gathered (again only when the eye moved LPT_REGATHER_M, a set or where it stands changed, or
      * `stamp` moved - a tree felled), culled to `planes` (the view's, normalised; null - every tree), and handed to the
      * renderer, or nothing when there is none. `sets` - gatherNear's, and `skip` its; `swayOf(proto)` its share of the
-     * wind's lean (systems/windDrive.js floraSwayOf, as its flats take it).
+     * wind's lean (systems/windDrive.js floraSwayOf, as its flats take it); WINDFALL1: `windfallOf(proto)` its share
+     * under Windfall's law (systems/windfall.js windfallResponse, its far pictures' mask).
      * @param {any[]} sets @param {number} ex @param {number} ey @param {number} ez
-     * @param {{ skip?: (set:any, i:number) => boolean, swayOf?: (proto:any) => number, stamp?: number, planes?: Float32Array|null }} [opts]
+     * @param {{ skip?: (set:any, i:number) => boolean, swayOf?: (proto:any) => number, windfallOf?: (proto:any) => number, stamp?: number, planes?: Float32Array|null }} [opts]
      */
-    frame(sets, ex, ey, ez, { skip = null, swayOf = null, stamp = 0, planes = null } = {}) {
+    frame(sets, ex, ey, ez, { skip = null, swayOf = null, windfallOf = null, stamp = 0, planes = null } = {}) {
       const t = now();
       if (t - lastSweep > 1000) sweep(t);
       if (!gpu || !lpt) { renderer.setLowPolyTrees(null); return; }
@@ -334,7 +335,7 @@ export function createLowPolyTrees({ renderer, getTexture, seasonal = null, fetc
           });
           if (!ok) continue;
           out.cut.add(h);
-          out.runs.push({ run: r, scale: p.scale, size: [p.size.w, p.size.h], sway: swayOf ? swayOf(p) : 0, subs, drawStart: 0, drawCount: 0 });
+          out.runs.push({ run: r, scale: p.scale, size: [p.size.w, p.size.h], sway: swayOf ? swayOf(p) : 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });
         }
       }
       const visible = cullNear(gathered, planes, vis);

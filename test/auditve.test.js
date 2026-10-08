@@ -32,6 +32,10 @@ import { createDataPipeline } from '../src/scenes/dataPipeline.js';
 const BASE = 'dfmod/vanilla enhanced - base.dfmod';
 const MASKED = 'dfmod/vanilla enhanced - masked roads.dfmod';
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
+// ALIKR1 / SNOWFALL1 (2026-10-08): the two environment packs ship through the same door, on by default and built on the
+// Base (test/environs_texturePacks.test.js holds their own law); a pin over the whole door names them in their places
+const SANDS = 'dfmod/sands of the alikr.dfmod';
+const SNOWFALL = 'dfmod/snowfall.dfmod';
 const enc = (t) => new TextEncoder().encode(t);
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 
@@ -52,21 +56,21 @@ test('AUDIT VE D1: the shipped Base is ON by default and its add-ons OFF - no ch
   fresh();
   assert.deepEqual([...ON_BY_DEFAULT], ['base'], 'Mac: "Ensure this is on by default" - the Base; its add-ons are picked on the card');
   installVanillaEnhancedPack();
-  assert.deepEqual(states(), [[BASE, true, true], [MASKED, true, false], [SNOWLESS, true, false]]);
+  assert.deepEqual(states(), [[BASE, true, true], [SANDS, true, true], [SNOWFALL, true, true], [MASKED, true, false], [SNOWLESS, true, false]]);
   assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), {}, 'a default writes nothing');
   assert.ok(veWorn(), 'a fresh game wears it: Replace Game Artwork is on by default (DFU\'s own)');
   setDfmodEnabled([BASE, MASKED], false);
   setDfmodEnabled(SNOWLESS, true);
   assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [BASE]: false, [MASKED]: false, [SNOWLESS]: true });
   await setDfmodSources([], async () => null);   // a boot
-  assert.deepEqual(states(), [[BASE, true, false], [MASKED, true, false], [SNOWLESS, true, true]], 'the choices, through a boot');
+  assert.deepEqual(states(), [[BASE, true, false], [SANDS, true, true], [SNOWFALL, true, true], [MASKED, true, false], [SNOWLESS, true, true]], 'the choices, through a boot');
   wearVanillaEnhanced();
   assert.equal(dfmodEnabled(BASE), true);
   wearClassicTextures();
-  assert.deepEqual(states().map((s) => s[2]), [false, false, false], 'Classic switches the shipped off');
+  assert.deepEqual(states().map((s) => s[2]), [false, false, false, false, false], 'Classic switches the shipped off');
   _resetDfmodForTests();
   installVanillaEnhancedPack();
-  assert.deepEqual(states().map((s) => s[2]), [false, false, false], 'and a new page keeps Classic - the off is a choice, not the default');
+  assert.deepEqual(states().map((s) => s[2]), [false, false, false, false, false], 'and a new page keeps Classic - the off is a choice, not the default');
 });
 
 test('AUDIT VE D1: under a copy the player attaches, the choice is the key\'s - the copy wears the shipped mod\'s switch, the attach switches it on, and removed, the shipped Base keeps the switch the copy left. PIN MOVED (R3, one switch a mod - DFU\'s Mod.Enabled by Title): this read "the shipped choice waits", the copy on a switch of its own on the attached shelf, and removing it brought back a shipped switch the player had moved since', async () => {
@@ -346,7 +350,8 @@ test('AUDIT VE R9: a copy under another file name shadows the shipped mod of its
   const store = new Map();
   await setDfmodSources([K], async (k) => store.get(k) ?? (k === K ? enc('copy') : null),
     { open: async () => bundle('Vanilla Enhanced - Base', { version: '3.5.0', textures: ['302_0-0'] }), saveIndex: async (k, j) => { store.set(k, enc(j)); }, background: false });
-  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped]), [[K, false], [MASKED, true], [SNOWLESS, true]], 'the copy read, the shipped Base not (the review: both, the shipped winning every name)');
+  // ALIKR1/SNOWFALL1: the packs name the Base by its file name, which the copy is not - their dependency is dropped, as DFU drops a missing one
+  assert.deepEqual(attachedDfmods().map((m) => [m.key, m.shipped]), [[SANDS, true], [SNOWFALL, true], [K, false], [MASKED, true], [SNOWLESS, true]], 'the copy read, the shipped Base not (the review: both, the shipped winning every name)');
   assert.equal(dfmodEnabled(K), true, 'the shipped Base\'s default');
   setDfmodEnabled(K, false);
   assert.deepEqual(getPref(DFMOD_SHIPPED_PREF), { [BASE]: false }, 'the switch is the Title\'s');
@@ -407,6 +412,7 @@ test('AUDIT VE R7: a picture asked while a registration reads its indexes is ser
   fresh();
   packIo();
   installVanillaEnhancedPack();
+  setDfmodEnabled([SANDS, SNOWFALL], false);   // ALIKR1/SNOWFALL1: Snowfall carries 303 too - the Base's own record is the one asked here
   let release; const reading = new Promise((r) => { release = r; });
   const load = async (k) => {
     if (k === 'dfmod-index/vanilla enhanced - base.dfmod') { await reading; return index('Vanilla Enhanced - Base', { version: '3.5.0', textures: ['303_0-0'] }); }
@@ -426,7 +432,7 @@ test('AUDIT VE R10: with a loose texture pack attached, Classic cannot be worn b
   const panel = OVH.OVERHAUL_PANELS.find((p) => p.id === 'texture');
   const classic = panel.options.find((o) => o.id === 'classic');
   assert.match(classic.blocked?.() ?? '', /loose texture pack/i, 'the reason, on the card');
-  setDfmodEnabled(BASE, false);   // every mod off, the loose pack still drawing
+  setDfmodEnabled([BASE, SANDS, SNOWFALL], false);   // every mod off, the loose pack still drawing (ALIKR1/SNOWFALL1: the environment packs too)
   assert.equal(OVH.currentOption(panel), null);
   assert.match(typeof panel.custom === 'function' ? panel.custom() : panel.custom, /loose texture pack/i);
   TR.clearTextureReplacements();
@@ -442,7 +448,7 @@ test('AUDIT VE R11: ?nomods is the door\'s one rule - no attached mod registers 
   try {
     installVanillaEnhancedPack();
     await setDfmodSources(['dfmod/x.dfmod'], async (k) => (k === 'dfmod-index/x.dfmod' ? index('X') : null));
-    assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, MASKED, SNOWLESS], 'the shipped alone (the review: the boot skipped the pack and a menu registered the mods)');
+    assert.deepEqual(attachedDfmods().map((m) => m.key), [BASE, SANDS, SNOWFALL, MASKED, SNOWLESS], 'the shipped alone (the review: the boot skipped the pack and a menu registered the mods)');
     assert.deepEqual((DM.unregisteredDfmods?.() ?? []).map((u) => [u.key, u.state]), [['dfmod/x.dfmod', 'nomods']]);
   } finally { if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location; }
   assert.doesNotMatch(src('scenes/shared.js'), /noMods\(|nomods\\b/, 'the boot keeps no rule of its own');

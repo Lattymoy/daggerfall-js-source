@@ -1,0 +1,11 @@
+{
+  "ModTitle": "Windfall",
+  "ModVersion": "1.0.0",
+  "ModAuthor": "demifiend000",
+  "ContactInfo": "romansoldier98@gmail.com",
+  "DFUnity_Version": "1.1.1",
+  "ModDescription": "Deterministic environmental wind with vegetation sway, gusts, leaves, audio, and snow flurries.",
+  "GUID": "895b7c6a-f7f1-4d9c-bf86-afaa26200bdf",
+  "Files": [],
+  "Dependencies": []
+}

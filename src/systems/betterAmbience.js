@@ -53,7 +53,7 @@ import { heardWeather, heardRainGain } from './weatherSim.js';   // DISC9: the w
 import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js';   // DISC11: the street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
-import { stringHash } from '../formats/netRuntime.js';   // string.GetHashCode's one home
+import { stringHash, NetRandom as SystemRandom } from '../formats/netRuntime.js';   // string.GetHashCode's one home; HAZE1: and System.Random's
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
 import { setRemoveHealthListener } from '../ui/damageFlash.js';   // the SendMessage("RemoveHealth", amount) edge
 import { playerEntity } from '../characters/playerEntity.js';
@@ -427,45 +427,10 @@ export function shakeView(view, pos, rotDeg) {
 
 // --- Foggy dungeons (FoggyDungeonsMod.cs) -------------------------------------
 
-/** System.Random (the .NET reference: Knuth's subtractive generator), as the
- *  mod seeds it with the dungeon's name. NextDouble is InternalSample / Int32.MaxValue. */
-export class SystemRandom {
-  constructor(seed) {
-    const MBIG = 2147483647, MSEED = 161803398;
-    this.seedArray = new Int32Array(56);
-    const subtraction = seed === -2147483648 ? 2147483647 : Math.abs(seed | 0);
-    let mj = (MSEED - subtraction) | 0;
-    this.seedArray[55] = mj;
-    let mk = 1;
-    for (let i = 1; i < 55; i++) {
-      const ii = (21 * i) % 55;
-      this.seedArray[ii] = mk;
-      mk = (mj - mk) | 0;
-      if (mk < 0) mk = (mk + MBIG) | 0;
-      mj = this.seedArray[ii];
-    }
-    for (let k = 1; k < 5; k++) {
-      for (let i = 1; i < 56; i++) {
-        this.seedArray[i] = (this.seedArray[i] - this.seedArray[1 + (i + 30) % 55]) | 0;
-        if (this.seedArray[i] < 0) this.seedArray[i] = (this.seedArray[i] + MBIG) | 0;
-      }
-    }
-    this.inext = 0; this.inextp = 21;
-  }
-  internalSample() {
-    const MBIG = 2147483647;
-    let locINext = this.inext, locINextp = this.inextp;
-    if (++locINext >= 56) locINext = 1;
-    if (++locINextp >= 56) locINextp = 1;
-    let retVal = (this.seedArray[locINext] - this.seedArray[locINextp]) | 0;
-    if (retVal === MBIG) retVal--;
-    if (retVal < 0) retVal = (retVal + MBIG) | 0;
-    this.seedArray[locINext] = retVal;
-    this.inext = locINext; this.inextp = locINextp;
-    return retVal;
-  }
-  nextDouble() { return this.internalSample() * (1.0 / 2147483647); }
-}
+/** System.Random (the .NET reference: Knuth's subtractive generator), as the mod seeds it with the dungeon's name -
+ *  formats/netRuntime.js's one port since HAZE1, under the name this module gave it. NextDouble is InternalSample /
+ *  Int32.MaxValue. */
+export { SystemRandom };
 
 /** DaggerfallDungeon's GameObject name (GameObjectHelper.CreateDaggerfallDungeonGameObject). */
 export const dungeonGameObjectName = (regionName, name) => `DaggerfallDungeon [Region=${regionName}, Name=${name}]`;
