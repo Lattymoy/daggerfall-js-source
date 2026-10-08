@@ -93,9 +93,13 @@ test('STAFF1 switches: /god withholds every blow at the damage veto\'s door; /fl
 
 test('STAFF1 host wiring by source: asked only of staff by the service\'s own glyphs; the switches cleared with the title; the dungeon\'s levitation ORs /fly', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const staffCmd = isStaff\(staffGlyphs\(\)\) \? parseStaffCommand\(text, staffPowers\(\)\) : null;\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
-  assert.ok(w.indexOf('const staffCmd = isStaff(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
-  assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaff\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
+  // TESTBUILD (THE WROTHGARIAN ZONE): the host asks isStaffT, which is isStaff OR the test build's switch - so "only of
+  // staff" holds while the switch ships off, and that is pinned with it. PIN MOVED: isStaff -> isStaffT, and /godmode
+  // folded to /god before the parser
+  assert.match(w, /\nconst TEST_GODMODE = false;\nconst isStaffT = \(g\) => TEST_GODMODE \|\| isStaff\(g\);\n/, 'TESTBUILD: the switch ships off, so isStaffT is isStaff');
+  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? parseStaffCommand\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
+  assert.ok(w.indexOf('const staffCmd = isStaffT(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
+  assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaffT\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
   assert.match(w, /const staffGlyphs = \(\) => _staffGlyphs;/);
   assert.match(w, /if \(_teleporting \|\| worldMoveBusy\(\)\) \{ say\('You cannot teleport right now\.'\); return; \}\n\s*hudFade\.smashHUDToBlack\(\);[^\n]*\n\s*teleportTo\(pick\)\.catch\(/);
   assert.match(rd('src/scenes/dungeonContext.js'), /playerLevitating: \(\) => hasActiveEffect\(playerEntity, 'levitate'\) \|\| staffFly\(\),/);

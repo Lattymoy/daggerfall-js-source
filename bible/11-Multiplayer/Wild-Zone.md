@@ -565,7 +565,7 @@ each is a line here, findable by its tag.
   priest's second row (key H), under Cure Disease - a row lower where LOOT16's Lift Curse stands - on both skins
   (`guildServiceWindow.js:"HEAL-CURSE: the temple's second row, under its"`, enhancedPorts.js): vampirism and
   lycanthropy cured through DFU's own CureVampirism and CureLycanthropy, and either still in the blood ended with the
-  turn it counted toward (`liftCurse`, `healCurse.js:"export function liftCurse"`) - every gift and weakness with it -
+  turn it counted toward (`healCurseLift`, `healCurse.js:"export function healCurseLift"`) - every gift and weakness with it -
   for `HEAL_CURSE_BASE` (12,000, `healCurse.js:"export const HEAL_CURSE_BASE"`) through the region's price adjustment
   and the temple's quality (`healCursePrice`, `healCurse.js:"export function healCursePrice"`), a Yes/No box
   (`healCurseBox`, `worldModes.js:"function healCurseBox"`). `src/systems/healCurse.js`.
@@ -634,10 +634,28 @@ each is a line here, findable by its tag.
 - ZONE-WATCH's door reads a town's buildings too, but no player blow is struck indoors, so in practice it is the
   street's.
 
+## 23. What the suite caught (WILD-SUITE, 2026-10-08)
+
+The zone landed without a run of the suite. Four of what it caught were the source's, fixed there:
+
+- THE HALLS STAND FROM ABOVE THE FIRST BUILD (BOOT-TDZ2). The boot's first pixel build asks `spawnedDungeonAt`, and
+  in the zone that is a hall's stand - which, with its day, its picks and its templates, was declared fifteen thousand
+  lines below the build: on an online boot on a hall's pixel each read was a dead zone, the builder's `try` swallowed
+  it and no hall stood. They are declared above the builder now (world.js:"const wildHallStandOf = (mask, px, py) => {"),
+  handed the mask the builder just read; play's callers keep the session's (`wildActiveNow`, `wildHallStand`).
+- THE HALL'S GATE WAITS INSIDE THE DOOR'S (AUDIT 68 X3). The hub's word on my lock (up to four seconds) was awaited
+  before the transition gate, so a teleport, a Recall or a load inside it did not stale the door; it is asked inside
+  the gated build now, and the build re-validated after it (worldModes.js:"the world moved during the hub's word").
+- `/unstuck`'s bar stands at the HUD's z 30, not 9999 - over the asset picker (MWFIX 1); the Heal Curse hotkey plays
+  the hotkey arm's one click, not a second of its own (AUDIT 26 D1); and the temple's blood curse is `bearsCurse` /
+  `healCurseLift`, not the item curse's `isCursed` / `liftCurse` (AUDIT 24, one name one home).
+
 ## Pins
 
 `test/wild1_zone.test.js`, `test/wild1_wire.test.js`, `test/wild1_fight.test.js`, `test/wild2_rings.test.js`,
 `test/pvpdungeons_game.test.js` (the halls' placement and foes, HEAL-CURSE, REST-WARN, SWAP-HANDS, GOTHWAY-BOARDS,
 ZONE-GIANTS' walks and the hub's giants, GIANT-FIELDS, GIANT-LEASH, CROW-NEWS, DUNGEON-RESPAWN, GREATER-GIANT,
 WILD-KEEPOUT), `test/pvpdungeons_hub.test.js` (the `wdun` wire, the lock, the way back, the reset, the crows, the
-relay's hub and no friend's take).
+relay's hub and no friend's take); the host seams of section 23 in `test/bootorder.test.js`,
+`test/audit68_worldmodes.test.js`, `test/mapkeep.test.js`, `test/mwattach.test.js`, `test/audit26_uiwindows.test.js`
+and `test/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`.

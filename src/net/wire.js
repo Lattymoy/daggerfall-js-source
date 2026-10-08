@@ -1630,7 +1630,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'renown'|'guild'|'guildout'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'look'|'gate'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'ow'|'trav'|'amap'|'stp'|'serpent'|'sd', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'renown'|'guild'|'guildout'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'look'|'gate'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'ow'|'trav'|'amap'|'stp'|'serpent'|'sd'|'wild'|'wdun', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */

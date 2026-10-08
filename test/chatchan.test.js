@@ -518,7 +518,8 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   const parser = onSend.indexOf('parseChatLine(');
   assert.equal(parser, at('parseChatLine(expandShortcodes(text))'), 'the parser\'s first call is its one call, over the shortcodes\' emoji (EMOTE1)');
   assert.equal(onSend.split('parseChatLine(').length - 1, 1, 'and it is asked once');
-  assert.ok(at('/^\\/unstuck$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
+  // PVPUNSTUCK: the host's /unstuck takes an optional "cancel" (a zone wait called off) - PIN MOVED to its new test, still first
+  assert.ok(at('/^\\/unstuck(\\s+cancel)?$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
   assert.match(onSend, /if \(cmd\.kind === 'help'\) \{ for \(const line of HELP_LINES\) note\(line\); return 'read'; \}/);
   for (const k of ['unknown', 'empty', 'host']) assert.match(onSend, new RegExp(`if \\(cmd\\.kind === '${k}'\\) \\{ note\\([^)]*\\)\\); return false; \\}`), `${k}: refused in words, the line kept to be mended`);
   assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId\);/);

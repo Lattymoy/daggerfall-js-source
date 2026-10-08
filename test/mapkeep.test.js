@@ -51,7 +51,9 @@ test('MAP-KEEP / THE HOSTS: the world host\'s load enters the saved dungeon on t
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /async function startInDungeon\(\{ locationKey = null, fromLoad = false \} = \{\}\) \{/);
   assert.match(m, /return tryEnterDungeon\(hit, entries, \{ preferEnterMarker: true, fromLoad \}\);/);
-  assert.match(m, /gatedTransition\(\(live\) => dungeonTransition\(hit, entries, preferEnterMarker, live, fromLoad\)\)/);
+  // PIN MOVED (WILD-SUITE): the door build is one gated arrow now - the zone's gate asked inside it (AUDIT 68 X3), handed
+  // the load's flag too (a save's own hall is never refused at its door) - and the flag still rides to the build
+  assert.match(m, /return gatedTransition\(async \(live\) => \{[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(host\.wildDungeonGate && !\(await host\.wildDungeonGate\(hit, fromLoad\)\)\) return false;\n\s*if \(!live\(\)\) return false;[^\n]*\n\s*return dungeonTransition\(hit, entries, preferEnterMarker, live, fromLoad\);/);
   assert.match(m, /automapFromLoad: fromLoad,/);
   // AUDIT 27h M1: the court's record stands outside the store; every other dungeon enters on the arm it was handed
   assert.match(rd('src/scenes/dungeonContext.js'), /let automapRec = isGateArena\(dfLocation\)(?: \|\| isArenaFloor\(dfLocation\))?(?: \|\| _sdRealm)? \? detachedAutomapRecord\(\)[^\n]*\n\s*: enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: !!opts\.automapFromLoad \}\);/);   // SD5a (PIN MOVED): the Shattered Hour keeps no map either
