@@ -1,0 +1,101 @@
+[
+  {
+    "name": "DA12-1-the-switch-is-another-word",
+    "file": "app/lib/launcherState.cjs",
+    "old": "const PLAY_SWITCH = '--play';\n",
+    "new": "const PLAY_SWITCH = '-play';\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-2-the-first-run-skips-its-card",
+    "file": "app/lib/launcherState.cjs",
+    "old": "  if (cfg?.arena2InGame === true) return '';\n  return null;\n",
+    "new": "  return '';\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-3-any-truthy-picker-choice",
+    "file": "app/lib/launcherState.cjs",
+    "old": "  if (cfg?.arena2InGame === true) return '';\n",
+    "new": "  if (cfg?.arena2InGame) return '';\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-4-the-switch-is-ignored",
+    "file": "app/main.cjs",
+    "old": "  if (direct === null) runLauncher();\n  else runDirect(direct);\n",
+    "new": "  runLauncher();\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-5-a-broken-folder-is-served-anyway",
+    "file": "app/main.cjs",
+    "old": "      if (!r.dir) { runLauncher(); return; }\n      setArena2(r.dir);\n",
+    "new": "      setArena2(dir);\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-6-the-direct-start-never-checks",
+    "file": "app/main.cjs",
+    "old": "  if (currentUpdateTransport() === 'updater') askUpdater().catch(() => {});\n  else noticeCheck().then(tellNotice, () => {});\n  startRechecks();\n",
+    "new": "  startRechecks();\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-7-the-checks-ignore-the-gates",
+    "file": "app/main.cjs",
+    "old": "  if (!updateChecksEnabled()) return;\n  if (currentUpdateTransport() === 'updater') askUpdater()",
+    "new": "  if (currentUpdateTransport() === 'updater') askUpdater()",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-8-a-dock-click-opens-a-second-window",
+    "file": "app/main.cjs",
+    "old": "length === 0 && !directStarting) runLauncher(); });\n",
+    "new": "length === 0) runLauncher(); });\n",
+    "tests": ["test/da12_directplay.test.js", "test/da10_launcher.test.js"]
+  },
+  {
+    "name": "DA12-9-the-pad-is-never-loaded",
+    "file": "app/launcher/index.html",
+    "old": "  <script type=\"module\" src=\"pad.js\"></script>\n",
+    "new": "",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-10-the-pad-writes-a-style-the-csp-refuses",
+    "file": "app/launcher/pad.js",
+    "old": "attachMenuPad({ focusStyle: false });\n",
+    "new": "attachMenuPad();\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-11-focusStyle-is-ignored",
+    "file": "src/ui/menuPad.js",
+    "old": "  const style = focusStyle ? doc.createElement('style') : null;\n",
+    "new": "  const style = doc.createElement('style');\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-12-the-module-is-never-packed",
+    "file": "app/package.json",
+    "old": "        \"to\": \"launcher\",\n",
+    "new": "        \"to\": \"pad\",\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-13-unpacked-serves-a-file-that-is-not-there",
+    "file": "app/main.cjs",
+    "old": "const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menuPad.js');\n",
+    "new": "const MENU_PAD = path.join(LAUNCHER_DIR, 'menuPad.js');\n",
+    "tests": ["test/da12_directplay.test.js"]
+  },
+  {
+    "name": "DA12-14-the-update-check-waits-on-the-page",
+    "file": "app/main.cjs",
+    "old": "    createWindow().catch(() => {});\n  } finally { directStarting = false; }\n",
+    "new": "    await createWindow();\n  } finally { directStarting = false; }\n",
+    "tests": ["test/da12_directplay.test.js"],
+    "note": "AUDIT DA12: the check held until the page and a clear's reload had loaded - and skipped, with an unhandled rejection, when the load failed."
+  }
+]

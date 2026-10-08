@@ -377,7 +377,11 @@ test('AUDIT 58 talk: the mode keys are ACTIONS, and a window shuts them down (Pl
   assert.deepEqual({ ...MODE_ACTIONS },
     { StealMode: 'steal', GrabMode: 'grab', InfoMode: 'info', TalkMode: 'dialogue' });
   for (const m of Object.values(MODE_ACTIONS)) assert.ok(MODES.includes(m));
-  // InputManager.SetupDefaults :999-1002 - F1-F4 are the DEFAULTS
+  // InputManager.SetupDefaults :999-1002 - F1-F4 WERE the defaults; MODE-WHEEL (Ledger A) ships them unbound, and
+  // a player who wants DFU's keys binds them back - which is what this pin drives
+  assert.equal(actionOf(key('F1')), null);
+  const own = withDefaults();
+  for (const [code, a] of [['F1', 'StealMode'], ['F2', 'GrabMode'], ['F3', 'InfoMode'], ['F4', 'TalkMode']]) setBinding(own, code, a);
   assert.equal(actionOf(key('F1')), 'StealMode');
   assert.equal(actionOf(key('F4')), 'TalkMode');
 
@@ -427,11 +431,12 @@ test('AUDIT 58 talk: the dungeon host carries the same two halves', () => {
   // and it still hands the Set in.
   // UXB1-S re-aimed it once more, for the same reason: a SHARED key carries several actions, so the read is every one
   // of them (`actionsOf`) and the mode is the first that names one - still the registry, still the Set.
-  assert.match(d, /const im = actionsOf\(e(?:, keys)?\)\.map\(\(a\) => MODE_ACTIONS\[a\]\)\.find\(Boolean\);/, 'the registry, not e.code');
-  assert.ok(d.includes('actionsOf(e, keys).map((a) => MODE_ACTIONS[a])'),
-    'the mode-key read dropped the held-keys Set the combo arm needs');
-  assert.ok(d.includes('if (!ctx.uiOverlayActive && im !== getInteractionMode())'),
-    'and no mode change under an open window');
+  // MODE-WHEEL AUDIT: the registry's answer is read ONCE into `acts` (three rungs ask it), and the change itself is the
+  // host's one ChangeInteractionMode, `pickMode`, which owns the window gate - so both halves are pinned there.
+  assert.match(d, /const acts = actionsOf\(e, keys\);/, 'the registry, not e.code - and the held-keys Set the combo arm needs');
+  assert.match(d, /const im = acts\.map\(\(a\) => MODE_ACTIONS\[a\]\)\.find\(Boolean\);/);
+  assert.match(d, /const pickMode = \(m\) => \{\n\s*if \(ctx\.uiOverlayActive\) return false;/, 'and no mode change under an open window');
+  assert.match(d, /if \(!e\.repeat\) pickMode\(im\);/);
   assert.equal(/\{ F1: 'steal'/.test(d), false, 'the literal table is gone');
   // both exterior hosts hand townTalk their OTHER slot's predicate
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

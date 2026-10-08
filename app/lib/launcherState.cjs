@@ -600,8 +600,25 @@ function viewOf(s) {
   return v;
 }
 
+/** DA12 (2026-10-08, Mac: "some game managers, like PlayNite, don't reconigze the launcher as a game and also I
+ *  can't control the Launcher with a controller"): THE SWITCH PAST THE FRONT DOOR. A copy started with `--play`
+ *  goes straight into the game - for a game manager or a couch (Playnite, Steam's Big Picture), which start a
+ *  game and watch its process, and read an install-and-reopen before play as the game having quit. Updates are
+ *  the game's then, as they always were after Play: checked at launch and hourly, told on the HUD, installed at
+ *  quit or from File > Restart to Update. What the launcher must still ASK is still asked: with no game files
+ *  chosen (the first run) the launcher opens as it would, and a saved folder is judged first (null: the
+ *  launcher, whose card says what is wrong with it). Answers the folder to judge, '' for the game's own
+ *  picker (chosen once, kept), or null for the launcher. */
+const PLAY_SWITCH = '--play';
+function directPlay(argv, cfg) {
+  if (!Array.isArray(argv) || !argv.includes(PLAY_SWITCH)) return null;
+  if (typeof cfg?.arena2Path === 'string' && cfg.arena2Path) return cfg.arena2Path;
+  if (cfg?.arena2InGame === true) return '';
+  return null;
+}
+
 module.exports = {
   CHECK_TIMEOUT_MS, RECHECK_MS, NEWS_MAX, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS,
-  PICK_DEADLINE_MS, SOURCE_LABEL, installAttemptFor,
+  PICK_DEADLINE_MS, SOURCE_LABEL, PLAY_SWITCH, installAttemptFor, directPlay,
   initialState, reduce, nextStep, viewOf, canPlay, justUpdated, dateLabel, playerNotes, newsFrom, cachedNews, notArena2Detail,
 };

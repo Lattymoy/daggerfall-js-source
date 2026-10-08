@@ -315,7 +315,7 @@
   {
     "name": "BOX-auth-kept",
     "file": "src/net/mail.js",
-    "old": "    if (error === 'auth') { forgetSession(io.storage); ",
+    "old": "    if (error === 'auth') { forgetSession(io?.storage); ",
     "new": "    if (error === 'auth') { ",
     "tests": [
       "test/mail1.test.js"
@@ -495,12 +495,12 @@
   {
     "name": "HOST-never-polled",
     "file": "src/scenes/world.js",
-    "old": "    mail?.poll();   // MAIL1:",
-    "new": "    // mail?.poll();   // MAIL1:",
+    "old": "    _mailFrameAt = performance.now();   // MAIL1:",
+    "new": "    // _mailFrameAt = performance.now();   // MAIL1:",
     "tests": [
       "test/mail1.test.js"
     ],
-    "note": "Letters are found only when the tab is opened."
+    "note": "Letters are found only when the tab is opened (SCALE4c: the lane's stamp is what lets the box's part ride the heartbeat)."
   },
   {
     "name": "HOST-notice-dropped",

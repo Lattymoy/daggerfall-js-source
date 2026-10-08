@@ -506,7 +506,7 @@
   },
   {
     "name": "CHAP3B-MIG-WEEKKEY",
-    "file": "server-account/migrations/0095_npc_chapters.sql",
+    "file": "server-account/migrations/0096_npc_chapters.sql",
     "old": "  week      INTEGER PRIMARY KEY,",
     "new": "  week      INTEGER,",
     "tests": [
@@ -515,7 +515,7 @@
   },
   {
     "name": "CHAP3B-MIG-KEY",
-    "file": "server-account/migrations/0095_npc_chapters.sql",
+    "file": "server-account/migrations/0096_npc_chapters.sql",
     "old": "  PRIMARY KEY (faction, region)\n",
     "new": "  UNIQUE (faction, region, week)\n",
     "tests": [
@@ -524,7 +524,7 @@
   },
   {
     "name": "CHAP3B-MIG-CHECK",
-    "file": "server-account/migrations/0095_npc_chapters.sql",
+    "file": "server-account/migrations/0096_npc_chapters.sql",
     "old": "CHECK (strength BETWEEN 0 AND 100)",
     "new": "CHECK (strength >= 0)",
     "tests": [

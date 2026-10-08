@@ -28,7 +28,7 @@ async function stand() {
 
 test('LEGACY7 the routes: the lines, a line written, the tombstone - behind a session, and the service moved on', () => {
   for (const r of ['/v1/realm/lineages', '/v1/realm/lineage', '/v1/realm/die']) assert.ok(ROUTES.has(r), r);
-  assert.equal(ACCOUNT_VERSION, 'acct95');   // PIN MOVED: acct95, CHAP1-CHAP3a (past SD9b at the merge); acct85 at first, past SERPENT-SET's acct84; renumbered past main's YARD-SHED (acct85) and YARD-HEIGHT (acct86) at the merges; STORM-SHED moved it on (acct88), STORM-SHED 2 (acct89), TEXT-F1 (acct90), CAP-OFF (acct91), FOUNDER5 (acct92), CRAFT2-CRAFT5 (acct93), SD9b (acct94 - acct91 on its branch, renumbered past CAP-OFF, FOUNDER5 and CRAFT2-CRAFT5 at the merges)
+  assert.equal(ACCOUNT_VERSION, 'acct96');   // PIN MOVED: acct96, the Chapters (CHAP1-CHAP4b) past SCALE4's acct95 at the merge; acct85 at first, past SERPENT-SET's acct84; renumbered past main's YARD-SHED (acct85) and YARD-HEIGHT (acct86) at the merges; STORM-SHED moved it on (acct88), STORM-SHED 2 (acct89), TEXT-F1 (acct90), CAP-OFF (acct91), FOUNDER5 (acct92), CRAFT2-CRAFT5 (acct93), SD9b (acct94 - acct91 on its branch, renumbered past CAP-OFF, FOUNDER5 and CRAFT2-CRAFT5 at the merges), SCALE4a-c (acct95 - acct94 on its branch, renumbered past SD9b at the merge)
 });
 
 test('LEGACY7 a line: founded, written only past its rev - a stale write answered with the stored record to merge into - its model the founder\'s for good', async () => {

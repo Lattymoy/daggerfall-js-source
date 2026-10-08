@@ -440,7 +440,7 @@
   {
     "name": "PROF6-svc-commission-never-expired",
     "file": "server-account/src/writs.js",
-    "old": "    db.prepare(`UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)\n      .bind(me, nowS),\n",
+    "old": "      db.prepare(`UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)\n        .bind(me, nowS),\n",
     "new": "",
     "tests": [
       "test/prof6_service.test.js"

@@ -206,6 +206,23 @@ const writsToday = async (db, player, day) =>
   Number((await db.prepare('SELECT COUNT(*) AS n FROM writs WHERE filled_by = ?1 AND day = ?2').bind(player, day).first())?.n ?? 0);
 
 /**
+ * PROF0 20: a day's harvests are kept two days. AUDIT2 BAG1 S1: a CARRIED one CARRIED_ROW_DAYS: its row is the answer a
+ * kept harvest asked again is given, and only that answer mints its items - swept at two days, a harvest whose answer was
+ * lost (or heard under another character) was refused `prof-day` and its counted units never came. `limit` of each kind
+ * at once, answering how many went.
+ * SCALE4b (2026-10-08): THE SERVICE'S CLOCK'S (server-account/src/cron.js, each hour), never the state's read - which swept
+ * first on every ask: two writes on the professions' busiest read, and every reader racing every other to run them. The bounds are the read's own, so a row lives no shorter; the state reads today alone.
+ */
+export async function sweepHarvests(db, nowS, limit = 500) {
+  const day = utcDay(nowS);
+  const [a, b] = await db.batch([
+    db.prepare('DELETE FROM node_harvests WHERE rowid IN (SELECT rowid FROM node_harvests WHERE carry = 0 AND day < ? LIMIT ?)').bind(day - 1, limit),
+    db.prepare('DELETE FROM node_harvests WHERE rowid IN (SELECT rowid FROM node_harvests WHERE carry = 1 AND day < ? LIMIT ?)').bind(day - CARRIED_ROW_DAYS, limit),
+  ]);
+  return Number(a?.meta?.changes ?? 0) + Number(b?.meta?.changes ?? 0);
+}
+
+/**
  * A CHARACTER'S PROFESSIONS, as the Professions and Stores tabs and the nodes read them: every track, today's harvests
  * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), and the bounds.
  */
@@ -213,14 +230,6 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
   const day = utcDay(nowS);
-  // PROF0 20: a day's harvests are kept two days - a bounded sweep on the state's own read. AUDIT2 BAG1 S1: a CARRIED one
-  // CARRIED_ROW_DAYS: its row is the answer a kept harvest asked again is given, and only that answer mints its items - swept
-  // at two days, a harvest whose answer was lost (or heard under another character) was refused `prof-day` and its counted
-  // units never came
-  await db.batch([
-    db.prepare('DELETE FROM node_harvests WHERE rowid IN (SELECT rowid FROM node_harvests WHERE carry = 0 AND day < ? LIMIT 500)').bind(day - 1),
-    db.prepare('DELETE FROM node_harvests WHERE rowid IN (SELECT rowid FROM node_harvests WHERE carry = 1 AND day < ? LIMIT 500)').bind(day - CARRIED_ROW_DAYS),
-  ]);
   const { results: rows = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).all();
   const byProf = new Map(rows.map((r) => [r.profession, r]));
   const { results: stores = [] } = await db.prepare('SELECT material, origin, qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND qty > 0 ORDER BY material')

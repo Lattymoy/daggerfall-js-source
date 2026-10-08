@@ -249,7 +249,7 @@ test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the t
   // PlayerActivate.cs:1424 - the mode line, in BOTH hosts that own one
   // (one C# call site, so one surface everywhere).
   assert.match(src('scenes/townTalk.js'), /setMidScreenText\(`Interaction is now in \$\{m\} mode\.`\)/);
-  assert.match(src('scenes/dungeon.js'), /setMidScreenText\(`Interaction is now in \$\{im\} mode\.`\)/);
+  assert.match(src('scenes/dungeon.js'), /setMidScreenText\(`Interaction is now in \$\{m\} mode\.`\)/);   // MODE-WHEEL AUDIT: in the host's one pickMode
   // :780/:790/:834 - the youAreTooFarAway refusals.
   assert.equal((src('scenes/townTalk.js').match(/setMidScreenText\(TOO_FAR_AWAY_TEXT\)/g) ?? []).length, 3);
   assert.match(src('scenes/worldModes.js'), /setMidScreenText\(TOO_FAR_AWAY_TEXT\)/);   // :711, the bulletin board

@@ -1060,9 +1060,10 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
 }
 
 /**
- * ACC4: THE BEAT, bound to this device's stored session. The world host
- * hands this to `startPlayClock` (net/playClock.js), which calls it
- * every PLAY_BEAT_S while the page is visible.
+ * ACC4: THE BEAT, bound to this device's stored session - /v1/account/played's own door. SCALE4c: the world host knocks
+ * through the tab's heartbeat now (net/heartbeat.js, /v1/heartbeat's `beat` part, credited by the same creditPlay); this
+ * stands for the route, which stands for the doors that ask it alone (AUDIT SCALE B8: this said the world host hands it
+ * to `startPlayClock`).
  *
  * A DEVICE WITH NO SESSION DOES NOT KNOCK, and the session is read at
  * EACH beat rather than captured: a player who signs in mid-sitting

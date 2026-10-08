@@ -4,7 +4,7 @@
 // slices") — STRENGTH AND THE CHAPTER SHEET: each chapter's Strength moved
 // at the week's Turning toward its members' Merit (Chapters-Arc 5.2), and
 // every chapter's state published (5.3). The law is
-// src/net/npcChapterLaw.js; the record is migration 0095_npc_chapters.
+// src/net/npcChapterLaw.js; the record is migration 0096_npc_chapters.
 //
 // THE CHAPTERS' TURNING IS THEIR OWN, ON THE SEATS' WEEK. Section 11 drew it
 // inside the seats' settleWeek; it is built beside it instead - the same

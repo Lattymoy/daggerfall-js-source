@@ -304,7 +304,8 @@ test('TI2 pins: the prefs shelf carries the touch knobs with their shipped answe
   assert.match(menu, /import \{ isTouchDevice \} from '\.\/touch\.js';/);
   // SO1: the touch knobs are rows under CONTROLS (beside the mouse and
   // the pad), and the whole set is gated on the device the same way.
-  assert.match(menu, /function portRowsControls\(\) \{\s*\n\s*const out = \[\];\s*\n\s*if \(!isTouchDevice\(\)\) return out;/, 'the rows are gated');
+  // PAD-CURSOR: the controller's cursor-assist row stands ahead of the gate - a controller's, on every device
+  assert.match(menu, /function portRowsControls\(\) \{\s*\n\s*const out = \[\];\s*\n(?:\s*\/\/[^\n]*\n)?\s*out\.push\(prefRow\('padCursorAssist'[^;]*;\s*\n\s*if \(!isTouchDevice\(\)\) return out;/, 'the touch rows are gated');
   for (const key of ['touchLookSensitivity', 'touchAnalogStick', 'touchStickAnchor', 'touchGyroLook', 'touchGyroSensitivity', 'touchHaptics', 'touchFullscreen']) {
     assert.ok(menu.includes(`'${key}'`), `${key} has a control`);
   }

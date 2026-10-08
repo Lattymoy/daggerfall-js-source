@@ -186,7 +186,9 @@ try {
 
   console.log('== applying the real migrations to a local D1, through wrangler\'s ledger');
   const [migBin, migArgs] = cmd(['d1', 'migrations', 'apply', 'daggerfall-accounts', '--local', '--persist-to', STATE]);
-  const mig = await run(migBin, migArgs, { cwd: acct, timeout: 300_000 });
+  // SCALE3 (2026-10-08): its own buffer - wrangler reprints the summary once a migration (below), so the output grows
+  // with the square of the count, and at 89 migrations it passed execFile's 1 MiB default and the probe died here.
+  const mig = await run(migBin, migArgs, { cwd: acct, timeout: 300_000, maxBuffer: 64 * 1024 * 1024 });
   // wrangler reprints its whole summary table once per migration, so
   // the names repeat - dedupe before comparing, and compare against
   // what is actually in the directory rather than against itself.

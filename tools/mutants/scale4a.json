@@ -1,0 +1,62 @@
+[
+  {
+    "name": "SCALE4a-two-reads",
+    "file": "server-account/src/accounts.js",
+    "old": "  const player = found.id == null ? null : found;",
+    "new": "  const player = await db.prepare('SELECT * FROM players WHERE id = ?').bind(session.player_id).first();",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "the player read again after the session - the second statement every request paid"
+  },
+  {
+    "name": "SCALE4a-inner-join",
+    "file": "server-account/src/accounts.js",
+    "old": "  FROM sessions s LEFT JOIN players p ON p.id = s.player_id WHERE s.secret_hash = ?`;",
+    "new": "  FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.secret_hash = ?`;",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "an orphaned session past the idle bound never seen, so never deleted"
+  },
+  {
+    "name": "SCALE4a-orphan-admitted",
+    "file": "server-account/src/accounts.js",
+    "old": "  const player = found.id == null ? null : found;",
+    "new": "  const player = found;",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "a session whose player is gone answered with a row of NULLs"
+  },
+  {
+    "name": "SCALE4a-column-left-out",
+    "file": "server-account/src/accounts.js",
+    "old": "export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'device_label', 'created_at', 'last_seen']);",
+    "new": "export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'created_at', 'last_seen']);",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "the device's label never read with its session"
+  },
+  {
+    "name": "SCALE4a-prefix-leaks",
+    "file": "server-account/src/accounts.js",
+    "old": "    if (k.startsWith('s.')) session[k.slice(2)] = v;",
+    "new": "    if (k.startsWith('s.') && k !== 's.created_at') session[k.slice(2)] = v;",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "a session column handed to the player's row"
+  },
+  {
+    "name": "SCALE4a-idle-undeleted",
+    "file": "server-account/src/accounts.js",
+    "old": "      await db.prepare('DELETE FROM sessions WHERE id = ?').bind(session.id).run();",
+    "new": "      void 0;",
+    "tests": [
+      "test/scale4a.test.js"
+    ],
+    "note": "a session past the bound refused and left standing"
+  }
+]

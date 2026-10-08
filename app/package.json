@@ -41,6 +41,13 @@
       "preload.cjs",
       "launcherPreload.cjs",
       "launcher/**",
+      {
+        "from": "../src/ui",
+        "to": "launcher",
+        "filter": [
+          "menuPad.js"
+        ]
+      },
       "lib/**",
       {
         "from": "../dist",

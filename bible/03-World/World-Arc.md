@@ -519,7 +519,9 @@ motor hosts (the standing host rule; one shared seam module):
   is now in %s mode.", no-op on the same mode); the activation ray
   vs the person's controller cylinder (radius 0.45, height 1.8) at
   the verbatim distances (mobile NPC 6.4; pickpocket 3.2 with "You
-  are too far away" beyond); Info/Grab/Talk all talk a mobile NPC
+  are too far away" beyond) - MODE-WHEEL (2026-10-08, Port-Ledger A):
+  F1-F4 now ship unbound and a held Left Alt opens a wheel that picks
+  the mode through this same setMode (ui/modeWheel.js); Info/Grab/Talk all talk a mobile NPC
   (DFU routing); Steal pickpockets ONCE per person
   (PickpocketByPlayerAttempted). Lazily loads FACTION.TXT +
   TEXT.RSC + FONT0003 through the host's fetchBytes. The refusal is

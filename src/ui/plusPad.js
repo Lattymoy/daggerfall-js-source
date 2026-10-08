@@ -318,6 +318,22 @@ export function interactiveAt(x, y, d = doc()) {
   return n?.closest?.(INTERACTIVE) ?? null;
 }
 
+/** PAD-CURSOR: the control under a point, else one within `radius` - probed on a ring of eight points, cheap enough
+ *  for every frame (no walk of the page) - as a client-px rect { x, y, w, h }, or null. The pull's DOM targets
+ *  (systems/padCursor.js). */
+export function controlRectNear(x, y, radius, d = doc()) {
+  let n = interactiveAt(x, y, d);
+  if (!n && radius > 0) {
+    for (let i = 0; i < 8 && !n; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      n = interactiveAt(x + Math.cos(a) * radius, y + Math.sin(a) * radius, d);
+    }
+  }
+  if (!n || n.closest?.('.hud, .hb:not(.dropping)')) return null;
+  const r = n.getBoundingClientRect?.();
+  return r && r.width > 0 && r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+}
+
 /**
  * THE D-PAD IN A WINDOW: the nearest control in a direction from the cursor. Every visible, uncovered control is a
  * candidate; one behind the direction is out; the score is the distance along the direction plus twice the drift
@@ -374,9 +390,10 @@ export function domTargetAt(x, y, canvas, d = doc()) {
 }
 
 /** The pointer and mouse events a real click raises, dispatched at `el`. `phase` is 'down', 'up' or 'move'. */
-export function domPointer(el, phase, { x, y, button = 0, makeEvent }) {
+export function domPointer(el, phase, { x, y, button = 0, buttons: held, makeEvent }) {
   if (!el?.dispatchEvent) return;
-  const buttons = phase === 'up' ? 0 : button === 0 ? 1 : button === 2 ? 2 : 4;
+  // PAD-CURSOR: a move carries the caller's held mask when it hands one (a hover is no drag); else the button's own
+  const buttons = phase === 'up' ? 0 : (phase === 'move' && held != null) ? held : button === 0 ? 1 : button === 2 ? 2 : 4;
   const init = { clientX: x, clientY: y, button, buttons, pointerType: 'mouse', pointerId: 1, isPrimary: true, bubbles: true, cancelable: true, composed: true, view: globalThis.window };
   const fire = (type) => { try { el.dispatchEvent(makeEvent(type, init)); } catch { /* a harness without the ctor */ } };
   if (phase === 'move') { fire('pointermove'); fire('mousemove'); return; }
