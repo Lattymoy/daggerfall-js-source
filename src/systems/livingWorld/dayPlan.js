@@ -255,6 +255,9 @@ function nearestOf(places, list, from) {
 export const SQUARE_LIKE = 0.2;
 export const SOCIAL_NEAR = 3;
 export const EVENING_SPREAD_MIN = 75;
+/** One who drinks over this goes to the tavern of an evening (three times in four) - AUDIT LW-STIR D2: LW-STIR's DRINKER
+ *  (`stir.js`: who falls out four times as often of an evening) is this one, read, never a second literal. */
+export const TAVERN_DRINK = 0.55;
 /** LW-SPREAD: the hours a homemaker goes to the morning's market between (the first cut's one hour, 08:30-09:30, stood a
  *  hamlet's every homemaker at its one store's front at once). */
 export const MARKET_HOURS = Object.freeze([7.5, 10.5]);
@@ -444,7 +447,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   const evening = (at = h(18)) => {
     const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN);   // LW-SPREAD: out for the evening at their own minute
     if (res.social > 0.3) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), from, rollInt(rng, 30, 90));
-    if (res.drink > 0.55 && rng() < 0.75) I('tavern', fav.tavern, from + 60, rollInt(rng, 90, 180));
+    if (res.drink > TAVERN_DRINK && rng() < 0.75) I('tavern', fav.tavern, from + 60, rollInt(rng, 90, 180));
     else if (res.pious > 0.7 && rng() < 0.6) I('temple', fav.temple, from + 30, rollInt(rng, 30, 60));
     else if (res.social > 0.75 && rng() < 0.3) {
       const houses = doorKinds(places).houses.filter((s) => s !== home);

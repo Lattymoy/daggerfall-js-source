@@ -19,8 +19,12 @@ halted in a round another's word held, asked nothing (A2); a quarrel unbroken at
 keeper off their stall (A4 = B3); the day dealt from this reader's lends and household (B2); an incident's beggar and
 keeper drawn as still pictures facing nobody (B4); a halt costing a day visit its walk out (C2); a stranger asked by
 name, both of a pair calling the hour, a pair's second breaking it up, a held walker crying wares, one of an incident
-unable to greet the player the round through (A5, A6, A7, B6, B7). The record's false claims corrected; B5, B4's
-onlookers and C2's elder half recorded. 22 new mutants, all dead. Record: `Audit-LW-Stir.md`.
+unable to greet the player the round through (A5, A6, A7, B6, B7). Lens D: 93 of its 118 mutants survived every test
+that imports the living town - the small voices never heard on the street under a pin, every stated number pinned
+against itself, the hush and the turn one way, the dealer's and the voices' laws, the town's wiring, fixtures that never
+made their cases (D1-D9) - each killed now; the measured table re-run by a committed probe (D10), a reason that does not
+reproduce marked (D11), titles made true (D12), a test loop bounded (D13). The record's false claims corrected; B5, B4's
+onlookers and C2's elder half recorded. 110 new mutants, 106 dead and 4 recorded equivalent. Record: `Audit-LW-Stir.md`.
 
 **2026-10-08 - AUDIT LW-ROOMS.** Mac: *"Audit this"*, of LW-ROOMS - the whole room walked, the tables filled apart and in
 sight, a room holding what its floor does, no afternoon sat out in the tavern. Four independent adversarial lenses on the

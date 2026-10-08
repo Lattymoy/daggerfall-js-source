@@ -14,6 +14,7 @@
 // small voice from the plan entry its resident is in and the clock. Nothing is sent.
 import { lwSeed, textSeed } from './seed.js';
 import { ROUND_S, spotRound, lineMinutes } from './meetups.js';
+import { TAVERN_DRINK } from './dayPlan.js';
 import {
   GATE_SCRIPTS, CHALLENGE_SCRIPTS, QUARREL_SCRIPTS, BREAK_UP_LINES, HAGGLE_SCRIPTS, PLEA_SCRIPTS,
   WATCH_HOURS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS, fillLine, firstNameOf,
@@ -35,9 +36,9 @@ export const HAGGLE_SHARE = 0.2;
 export const PLEA_SHARE = 0.1;
 /** The gate's longest word (GATE_SCRIPTS), its lines - a stranger halted there stands for it. */
 export const GATE_LINES = Math.max(...Object.values(GATE_SCRIPTS).flat().map((x) => x.length));
-/** Who drinks, for an evening's quarrel and a song on the way home (a resident's `drink`; dayPlan.js sends one over 0.55
- *  to the tavern of an evening). */
-export const DRINKER = 0.55;
+/** Who drinks, for an evening's quarrel and a song on the way home (a resident's `drink`): dayPlan.js's own, who goes to
+ *  the tavern of an evening (AUDIT LW-STIR D2: a second literal of it, tied to nothing). */
+export const DRINKER = TAVERN_DRINK;
 export const SONG_DRINK = 0.8;
 /** A stranger's humour that day: the shares of civil, curt and hostile - a sellsword's and a sailor's rougher. */
 /** @type {Readonly<Record<'stranger'|'rough', readonly (readonly ['civil'|'curt'|'hostile', number])[]>>} */

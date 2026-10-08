@@ -59,7 +59,8 @@ function townOf(built, blocks = 45, visitors = []) {
 /** Visitors of another town in at the four gates through the day, a party of two apiece. */
 function visitorsOf(n = 16) {
   const yaws = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
-  const vis = travellerRoster({ mapId: 999, blocks: 45, region: 17, people: 3 }).slice(0, n).map((res, i) => ({ res, inT: D0 + 300 + ((i * 97) % 700), outT: H(17), yaw: yaws[i % 4] }));
+  // AUDIT LW-STIR D9: the parties at all four gates (yaws[i % 4], copied to every second, used two), as the roads mint them - their trip and their dock
+  const vis = travellerRoster({ mapId: 999, blocks: 45, region: 17, people: 3 }).slice(0, n).map((res, i) => ({ res, inT: D0 + 300 + ((i * 97) % 700), outT: H(17), yaw: yaws[(i >> 1) % 4], dock: false, trip: { from: { name: 'Wayrest' }, party: [res] } }));
   for (let i = 1; i < vis.length; i += 2) { vis[i].inT = vis[i - 1].inT; vis[i].yaw = vis[i - 1].yaw; }   // in twos, a party apiece
   for (const v of vis) v.outT = Math.max(v.outT, v.inT + 120);   // AUDIT LW-STIR C2: gone no sooner than the roads let one (trips.js: a stay of two hours at the least before noon) - those in after five left before they came
   return vis;
@@ -100,7 +101,8 @@ test('LW-STIR the gate (Mac: "a traveller being hostile with a guard"): a strang
   assert.equal(gateHalt('xn', DAY, H(9), 0), 0, 'no clock, no halt');
   // the dealer: a party of three halted together at the gate the post keeps (come in well into a round, their turn not waited)
   let inT = H(10);
-  while (!(gateHalt('xn', DAY, inT, RATE) === L && inT - spotRound('xn', inT, ROUND).start > 8)) inT += 1;
+  for (let k = 0; k < 5000 && !(gateHalt('xn', DAY, inT, RATE) === L && inT - spotRound('xn', inT, ROUND).start > 8); k++) inT += 1;   // AUDIT LW-STIR D13: bounded (a halt a hair long spun forever)
+  assert.ok(gateHalt('xn', DAY, inT, RATE) === L && inT - spotRound('xn', inT, ROUND).start > 8, 'a party come in well into a round');
   const h = gateHalt('xn', DAY, inT, RATE);
   const post = stay(who(`L${MAP}.w9`, { job: 'guard', guard: true, name: 'Hal Ward' }), 'post', H(6), H(14), { duty: true });
   const party = [0, 1, 2].map((i) => stay(who(`L999.t${i}`, { town: 999, job: i ? 'mercenary' : 'merchant', name: `${['Bram', 'Cass', 'Dun'][i]} Roe` }), 'gate', inT, inT + h));
@@ -420,10 +422,10 @@ test('LW-STIR the small voices: the night watch on duty calls the hour (WATCH_HO
   // a stall's cry by day, a beggar's call; each up VOICE_S
   const keeper = who(`L${MAP}.40`, { job: 'merchant' });
   const cries = said(keeper, { kind: 'stall' }, H(6), H(21), 0.02);
-  assert.ok(cries.length > 10 && cries.every((v) => v.t >= H(8) && v.t < H(18) && v.kind === 'shout' && STALL_CRIES.some((c) => fillLine(c, { town: 'Ripmarket' }) === v.text || c.includes('{place}'))), 'a stall cries by day');
+  assert.ok(cries.length > 10 && cries.every((v) => v.t >= H(8) && v.t < H(18) && v.kind === 'shout' && STALL_CRIES.some((c) => fillLine(c, { town: 'Ripmarket' }) === v.text)), 'a stall cries by day');
   const beggar = who(`L${MAP}.41`, { job: 'beggar' });
   const calls2 = said(beggar, { kind: 'beg' }, H(8), H(20), 0.02);
-  assert.ok(calls2.length > 10 && calls2.every((v) => v.kind === 'shout' && BEGGAR_CRIES.some((c) => fillLine(c, { town: 'Ripmarket' }) === v.text || c.includes('{place}'))), 'a beggar calls');
+  assert.ok(calls2.length > 10 && calls2.every((v) => v.kind === 'shout' && BEGGAR_CRIES.some((c) => fillLine(c, { town: 'Ripmarket' }) === v.text)), 'a beggar calls');
   for (const v of cries.slice(0, 5)) assert.ok(smallVoice(keeper, { kind: 'stall' }, v.t + up - 0.03, RATE, { town: 'Ripmarket' }) && !smallVoice(keeper, { kind: 'stall' }, v.t + up + 0.03, RATE, { town: 'Ripmarket' }), 'up VOICE_S');
   // a drinker's song on the way home from the tavern, late
   const tavern = { kind: 'door', building: 7 }, tav = (e) => e.from === tavern;
@@ -432,7 +434,7 @@ test('LW-STIR the small voices: the night watch on duty calls the hour (WATCH_HO
     const deep = who(`L${MAP}.${k}`, { drink: 0.95 });
     const sung = said(deep, { kind: 'walk', from: tavern }, H(20), H(28), 0.05, { town: 'Ripmarket' }, tav);
     songs += sung.length;
-    assert.ok(sung.every((v) => v.kind === 'sing' && DRINKING_SONGS.some((s) => fillLine(s, { town: 'Ripmarket' }) === v.text || s.includes('{')) && (((v.t % DAY_MIN) + DAY_MIN) % DAY_MIN >= 21 * 60 || ((v.t % DAY_MIN) + DAY_MIN) % DAY_MIN < 3 * 60)), 'late, a song');
+    assert.ok(sung.every((v) => v.kind === 'sing' && DRINKING_SONGS.some((s) => fillLine(s, { town: 'Ripmarket' }) === v.text) && (((v.t % DAY_MIN) + DAY_MIN) % DAY_MIN >= 21 * 60 || ((v.t % DAY_MIN) + DAY_MIN) % DAY_MIN < 3 * 60)), 'late, a song');
     assert.equal(said(who(`L${MAP}.${k}`, { drink: SONG_DRINK - 0.01 }), { kind: 'walk', from: tavern }, H(20), H(28), 0.05, {}, tav).length, 0, 'one who drinks less: none');
     assert.equal(said(deep, { kind: 'walk', from: { kind: 'door', building: 8 } }, H(20), H(28), 0.05, {}, tav).length, 0, 'not from the tavern: none');
   }
@@ -550,7 +552,7 @@ test('LW-STIR the places before (meetups.js besideStand, aloneStands `beside`): 
   assert.equal(besideStand(spot, by, () => false, street), null, 'none free: none');
 });
 
-test('LW-STIR every reader alike: two readers of a town - one stood through the morning beat by beat, one come at noon - deal the same day\'s incidents at every spot, stand the same two together at the same places, shout at the same spots and say the same words (nothing sent: the plans, the seeds and the clock) (mutants: a reader\'s own street in the deal)', () => {
+test('LW-STIR every reader alike: two readers of a town - one stood through the morning beat by beat, one come at noon - deal the same day\'s incidents at every spot, stand the same two together at the same places, shout at the same spots and say the same words (nothing sent: the plans, the seeds and the clock) (a reader\'s own living in the deal: AUDIT LW-STIR D8\'s pin)', () => {
   const built = synthTown();
   const vis = visitorsOf(12);
   const a = townOf(built, 45, vis), b = townOf(built, 45, vis);
@@ -583,7 +585,7 @@ test('LW-STIR the host: the street\'s words reach the one layer as they are said
   assert.equal(BUILDING_TYPES.Tavern, 15);
 });
 
-test('LW-STIR the game\'s own cities (ARENA2): Daggerfall, Wayrest and Ripmarket, a day of strangers in at their four gates - every arrival halted at a kept gate has its word in its round, by the post keeping it; the strangers\' humours by HUMOURS; every incident whole in its round, one at a spot a round, its two FACE_M apart in the middle of it', { skip: skipReal }, () => {
+test('LW-STIR the game\'s own cities (ARENA2): Daggerfall, Wayrest and Ripmarket, a day of strangers in at their four gates - every arrival halted at a kept gate has its word in its round, by the post keeping it; every incident whole in its round, one at a spot a round, its two FACE_M apart in the middle of it', { skip: skipReal }, () => {
   const all = cities();
   for (const name of ['Daggerfall', 'Wayrest', 'Ripmarket']) {
     const h = hostTown(/** @type {any} */ (all.find((c) => c.name === name)));

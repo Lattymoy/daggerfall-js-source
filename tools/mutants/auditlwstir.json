@@ -196,5 +196,893 @@
     "tests": [
       "test/auditlwstir.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-GATE_SHARE-0.5",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const GATE_SHARE = 0.6;",
+    "new": "export const GATE_SHARE = 0.5;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-GATE_SHARE-0.7",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const GATE_SHARE = 0.6;",
+    "new": "export const GATE_SHARE = 0.7;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CHALLENGE_SHARE-0.4",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CHALLENGE_SHARE = 0.5;",
+    "new": "export const CHALLENGE_SHARE = 0.4;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CHALLENGE_SHARE-0.6",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CHALLENGE_SHARE = 0.5;",
+    "new": "export const CHALLENGE_SHARE = 0.6;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-QUARREL_SHARE-0.04",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const QUARREL_SHARE = 0.03;",
+    "new": "export const QUARREL_SHARE = 0.04;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-QUARREL_SHARE-0.02",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const QUARREL_SHARE = 0.03;",
+    "new": "export const QUARREL_SHARE = 0.02;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-QUARREL_EVENING-3",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const QUARREL_EVENING = 4;",
+    "new": "export const QUARREL_EVENING = 3;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-QUARREL_EVENING-5",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const QUARREL_EVENING = 4;",
+    "new": "export const QUARREL_EVENING = 5;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-HAGGLE_SHARE-0.3",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const HAGGLE_SHARE = 0.2;",
+    "new": "export const HAGGLE_SHARE = 0.3;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-PLEA_SHARE-0.2",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const PLEA_SHARE = 0.1;",
+    "new": "export const PLEA_SHARE = 0.2;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-DRINKER-0.65",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const TAVERN_DRINK = 0.55;",
+    "new": "export const TAVERN_DRINK = 0.65;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-DRINKER-0.35",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const TAVERN_DRINK = 0.55;",
+    "new": "export const TAVERN_DRINK = 0.35;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-SONG_DRINK-0.9",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const SONG_DRINK = 0.8;",
+    "new": "export const SONG_DRINK = 0.9;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-SONG_DRINK-0.6",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const SONG_DRINK = 0.8;",
+    "new": "export const SONG_DRINK = 0.6;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-VOICE_S-4.4",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const VOICE_S = 3.4;",
+    "new": "export const VOICE_S = 4.4;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CALL_SHARE-0.5",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CALL_SHARE = 0.6;",
+    "new": "export const CALL_SHARE = 0.5;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CALL_SPREAD_MIN-9",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CALL_SPREAD_MIN = 6;",
+    "new": "export const CALL_SPREAD_MIN = 9;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CRY_EVERY_MIN-9",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CRY_EVERY_MIN = 6;",
+    "new": "export const CRY_EVERY_MIN = 9;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-CRY_SHARE-0.6",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const CRY_SHARE = 0.3;",
+    "new": "export const CRY_SHARE = 0.6;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-BEG_EVERY_MIN-6",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const BEG_EVERY_MIN = 8;",
+    "new": "export const BEG_EVERY_MIN = 6;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-BEG_SHARE-0.6",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const BEG_SHARE = 0.3;",
+    "new": "export const BEG_SHARE = 0.6;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-SONG_EVERY_MIN-5",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const SONG_EVERY_MIN = 3;",
+    "new": "export const SONG_EVERY_MIN = 5;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-SONG_SHARE-0.7",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const SONG_SHARE = 0.35;",
+    "new": "export const SONG_SHARE = 0.7;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-STIR_GATHER_S-5",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const STIR_GATHER_S = 4;",
+    "new": "export const STIR_GATHER_S = 5;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-STIR_AFTER_S-4",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "export const STIR_AFTER_S = 3;",
+    "new": "export const STIR_AFTER_S = 4;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-HUMOUR-rough-hostile-0.25",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "rough: Object.freeze([/** @type {const} */ (['civil', 0.3]), /** @type {const} */ (['curt', 0.35]), /** @type {const} */ (['hostile', 0.35])]),",
+    "new": "rough: Object.freeze([/** @type {const} */ (['civil', 0.3]), /** @type {const} */ (['curt', 0.45]), /** @type {const} */ (['hostile', 0.25])]),",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-first-tie-flipped",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "(y.t0 === x.t0 && byId(y, x) < 0) ? 1 : 0",
+    "new": "(y.t0 === x.t0 && byId(y, x) > 0) ? 1 : 0",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-stopped-unadded",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "    stopped.add(s.who.id);\n  }\n  // the watch stops a stranger",
+    "new": "  }\n  // the watch stops a stranger",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ],
+    "equivalent": true,
+    "why": "A stranger halted at a gate has no stay at the gate but the halt, and a patrol's challenge never reads a gate stay (`s.kind !== 'gate'`): the stopped mark after a gate's word is belt-and-braces."
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-post-unsorted",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
+    "new": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId).pop();",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-party-draw-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const s = them.map((x) => ({ x, k: lwSeed(seed, textSeed(x.who.id)) })).sort((a, b) => a.k - b.k || byId(a.x, b.x))[0].x;",
+    "new": "const s = them[0];",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-post-t0-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1)",
+    "new": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t1 >= t1)",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-post-kind-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0",
+    "new": "const post = stays.filter((g) => g.duty && g.t0 <= t0",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-challenge-watch-kind-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (!g.duty || g.kind !== 'watch' || g.pair === 1) continue;",
+    "new": "if (!g.duty || g.pair === 1) continue;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-challenge-stranger-draw-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": ".map((s) => ({ s, k: lwSeed(seed, textSeed(s.who.id), Math.round(s.t0)) })).sort((x, y) => x.k - y.k || (x.s.who.id < y.s.who.id ? -1 : 1));",
+    "new": ".map((s) => ({ s, k: 0 })).sort((x, y) => x.k - y.k || (x.s.who.id < y.s.who.id ? -1 : 1));",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-challenge-one-tried",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "      if (laid.length > n) { stopped.add(s.who.id); break; }   // one stop of a stranger a day at the spot",
+    "new": "      if (laid.length > n) { stopped.add(s.who.id); } break;   // one stop of a stranger a day at the spot",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-challenge-no-break",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "      if (laid.length > n) { stopped.add(s.who.id); break; }   // one stop of a stranger a day at the spot",
+    "new": "      if (laid.length > n) { stopped.add(s.who.id); }   // one stop of a stranger a day at the spot",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-plea-duty-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (y.duty || y.kind === 'beg' || y.who.id === x.who.id || !meets(x, y)) continue;",
+    "new": "if (y.kind === 'beg' || y.who.id === x.who.id || !meets(x, y)) continue;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-plea-met-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (met.has(pair) || draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'",
+    "new": "if (draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-haggle-met-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle'",
+    "new": "      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle'",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-haggle-falls-to-quarrel",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1);   // at the stall\n      continue;",
+    "new": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1);   // at the stall\n      ",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-haggle-stall-pick-first",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const y = stalls[lwSeed(seed, 0x61742020) % stalls.length];",
+    "new": "const y = stalls[0];",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-quarrel-evening-19",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "(((o0 % 1440) + 1440) % 1440) >= 18 * 60)",
+    "new": "(((o0 % 1440) + 1440) % 1440) >= 19 * 60)",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-quarrel-evening-17",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "(((o0 % 1440) + 1440) % 1440) >= 18 * 60)",
+    "new": "(((o0 % 1440) + 1440) % 1440) >= 17 * 60)",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-gate-first-reversed",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || p.t0 - q.t0 || p.seed - q.seed);",
+    "new": "laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || q.t0 - p.t0 || p.seed - q.seed);",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-stirLine-from-le",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (!(lineMin > 0) || t < inc.from) return null;",
+    "new": "if (!(lineMin > 0) || t <= inc.from) return null;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-call-weather-snow-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow' || ctx.weather === 'fog' ? ctx.weather : 'fair'",
+    "new": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'fog' ? ctx.weather : 'fair'",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-call-weather-thunder-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow'",
+    "new": "ctx.weather === 'rain' || ctx.weather === 'snow'",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-stall-from-9",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
+    "new": "if (e.kind === 'stall' && hour >= 9 && hour < 18) {",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-stall-to-17",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
+    "new": "if (e.kind === 'stall' && hour >= 8 && hour < 17) {",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-song-from-22",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "(hour >= 21 || hour < 3) && fromTavern(e)) {",
+    "new": "(hour >= 22 || hour < 3) && fromTavern(e)) {",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-song-to-2",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "(hour >= 21 || hour < 3) && fromTavern(e)) {",
+    "new": "(hour >= 21 || hour < 2) && fromTavern(e)) {",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-call-spread-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const at = dayHour * 60 + draw(seed, 1) * CALL_SPREAD_MIN;",
+    "new": "const at = dayHour * 60;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-voice-at-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const at = k * every + draw(seed, 1) * Math.max(0, every - up);",
+    "new": "const at = k * every;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-beg-unvoiced",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "    const seed = now(BEG_EVERY_MIN, BEG_SHARE, 0x62656720);   // 'beg '",
+    "new": "    const seed = now(CRY_EVERY_MIN, CRY_SHARE, 0x63727920);   // 'beg '",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-voice-unsaid",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const v = at ? smallVoice(row.res, at.e, this._now, rate, ctx, fromTavern) : null;",
+    "new": "const v = null;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-voice-moving",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (v && (v.kind === 'sing' || !p.moving)) out.push",
+    "new": "if (v) out.push",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-voice-sing-still",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (v && (v.kind === 'sing' || !p.moving)) out.push",
+    "new": "if (v && !p.moving) out.push",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-voice-kind-talk",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "out.push({ person: p, text: v.text, kind: v.kind });",
+    "new": "out.push({ person: p, text: v.text, kind: 'talk' });",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-fromTavern-any-door",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const fromTavern = (/** @type {any} */ e) => e.from?.kind === 'door' && this.typeOf(e.from.building) === BUILDING_TYPES.Tavern;",
+    "new": "const fromTavern = (/** @type {any} */ e) => e.from?.kind === 'door';",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-fromTavern-none",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const fromTavern = (/** @type {any} */ e) => e.from?.kind === 'door' && this.typeOf(e.from.building) === BUILDING_TYPES.Tavern;",
+    "new": "const fromTavern = (/** @type {any} */ e) => false;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-voice-greeting-first",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (g) { out.push({ person: p, text: g.text, kind: 'talk' }); continue; }",
+    "new": "      if (g) { out.push({ person: p, text: g.text, kind: 'talk' }); }",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-home-every-kind",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "inc.kind === 'gate' || inc.kind === 'challenge' ? { ...ctx, home: this._homeOf(inc.members[1]) } : ctx);",
+    "new": "inc.kind === 'gate' ? { ...ctx, home: this._homeOf(inc.members[1]) } : ctx);",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-stirOf-pair-dropped",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "list.push({ who: res, kind: e.kind, t0: e.t0, t1: e.t1, duty: !!e.duty, pair: e.pair ?? null });",
+    "new": "list.push({ who: res, kind: e.kind, t0: e.t0, t1: e.t1, duty: !!e.duty, pair: null });",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-absent-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (inc && inc.members.every((m) => !absent.has(m.id))) {",
+    "new": "if (inc) {",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-stirAt-not-loud",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (x.inc.members[0].id !== id || !stirLoud(x.inc, t)) continue;",
+    "new": "if (x.inc.members[0].id !== id) continue;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-stirAt-spot-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (a?.spot === x.spot && b?.spot === x.spot) this._stirAt.set",
+    "new": "if (a && b) this._stirAt.set",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ],
+    "equivalent": true,
+    "why": "The deal lays an incident inside its two's time together at its spot, and `_spaceAlone` reads the same day's plans at the same minute: while it is shouted both stand at its spot, so the spot test never refuses one the bare `a && b` would take."
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-post-turns-to-loud",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const yaw = other?.spot === e.at ? Math.atan2(other.x - st.x, other.z - st.z) : e.kind === 'post' && !inCircle ? e.at.yaw : loud ? Math.atan2(loud.x - st.x, loud.z - st.z) : st.yaw;",
+    "new": "const yaw = other?.spot === e.at ? Math.atan2(other.x - st.x, other.z - st.z) : loud ? Math.atan2(loud.x - st.x, loud.z - st.z) : e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-circle-turns-to-loud",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const loud = mine?.spot === e.at ? null : this._stirAt.get(e.at.key)?.mid;",
+    "new": "const loud = mine?.spot === e.at || inCircle ? null : this._stirAt.get(e.at.key)?.mid;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-spot-clear-unread",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "if (free(x, z) && street.holds(x, z) && street.clear(by.x, by.z, x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "new": "if (free(x, z) && street.holds(x, z) && street.clear(by.x, by.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-by-clear-unread",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "if (free(x, z) && street.holds(x, z) && street.clear(by.x, by.z, x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "new": "if (free(x, z) && street.holds(x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-holds-unread",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "if (free(x, z) && street.holds(x, z) && street.clear(by.x, by.z, x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "new": "if (free(x, z) && street.clear(by.x, by.z, x, z) && street.clear(spot.x, spot.z, x, z)) return { x, z, yaw: b + Math.PI };",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-half-arc",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  for (let j = 0; j <= 2 * turns; j++) {\n    const b = by.yaw +",
+    "new": "  for (let j = 0; j <= turns; j++) {\n    const b = by.yaw +",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-keeper-absent",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "if (to != null && to !== id && ids.includes(to) && !out.has(to)",
+    "new": "if (to != null && to !== id && !out.has(to)",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-MU-beside-fallback-none",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "const got = (by ? besideStand(spot, by, free, street) : null) ?? alone(id);",
+    "new": "const got = (by ? besideStand(spot, by, free, street) ?? by : null) ?? alone(id);",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-DP-halt-end-of-day",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;",
+    "new": "if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-DP-gate-past-D1",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "if (cursor < D1 && halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }",
+    "new": "if (halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-stall-cries-are-beggars",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'shout' };",
+    "new": "return seed == null ? null : { text: fill(pick(BEGGAR_CRIES, seed), seed), kind: 'shout' };",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-songs-are-cries",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "return seed == null ? null : { text: fill(pick(DRINKING_SONGS, seed), seed), kind: 'sing' };",
+    "new": "return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'sing' };",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-guard-t0-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "guards?.find((w) => w.t0 <= from && w.t1 >=",
+    "new": "guards?.find((w) => w.t1 >=",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-plea-met-unadded",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "        met.add(pair);\n        const [o0, o1] = overlap(x, y);\n        // the beggar keeps",
+    "new": "        const [o0, o1] = overlap(x, y);\n        // the beggar keeps",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-own-falls-through",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (own && this._stirring(id)) continue;   // AUDIT LW-STIR B7: after its words, their own again\n",
+    "new": "",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-greet-incident",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "this._inCircle.has(res.id) || this._stirring(res.id)) return;",
+    "new": "this._inCircle.has(res.id)) return;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-gateHalt-visitor-guard",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": ".filter((g) => g.job === 'guard' && !roads?.visitorOf?.has(g.id))",
+    "new": ".filter((g) => g.job === 'guard')",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ],
+    "equivalent": true,
+    "why": "A visitor is planned as one (`dayPlan` `visitor: true`) and holds no watch duty, so no visitor's plan has a post: the visitor test is belt-and-braces."
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-gateHalt-exit-key-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "e.kind === 'post' && e.duty && e.at?.key === exit.key));",
+    "new": "e.kind === 'post' && e.duty));",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-stirOf-kept-any",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (kept && kept.sig === sig && kept.rate === rate && kept.gen === this._planGen) return kept;",
+    "new": "if (kept) return kept;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-LT-stirOf-rate-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (kept && kept.sig === sig && kept.rate === rate && kept.gen === this._planGen) return kept;",
+    "new": "if (kept && kept.sig === sig && kept.gen === this._planGen) return kept;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ],
+    "equivalent": true,
+    "why": "A town's base rate is its mpm's (`_baseRate`: PERSON_MOVE_SPEED over `o.mpm`, fixed when it is built), so the kept deal's rate never differs from the clock's: kept as the cache's honest key."
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-reader-alive-deal",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const stirs = this._stirOf(day, everyone.concat(lent));",
+    "new": "const stirs = this._stirOf(day, alive.concat(lent));",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LWSTIR-D-lay-o1-unread",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue;",
+    "new": "if (end > r.end + slack(r.end)) continue;",
+    "tests": [
+      "test/auditlwstir.test.js",
+      "test/lwstir_street.test.js"
+    ]
   }
 ]

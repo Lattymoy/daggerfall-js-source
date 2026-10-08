@@ -493,5 +493,14 @@
     "tests": [
       "test/lwstir_street.test.js"
     ]
+  },
+  {
+    "name": "LW-STIR-line-time",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "const index = Math.floor((t - inc.from) / lineMin);",
+    "new": "const index = Math.round((t - inc.from) / lineMin);",
+    "tests": [
+      "test/lwstir_street.test.js"
+    ]
   }
 ]

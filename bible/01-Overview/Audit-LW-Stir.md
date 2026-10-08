@@ -11,7 +11,8 @@ up again on main (#699) - so the lenses were run on that merge (`a35acc7c1`, fro
 moved under a verdict - Home.md, 17l): **the dealer's math and laws** (A: `stir.js` and its words), **the street and
 every reader** (B: `livingTown.js`'s staging, the bodies, the speech, the cost), **the plans and the hosts** (C: the
 `gate` stay, every reader of a plan, the four hosts, save and load) and **the pins' and the record's honesty** (D) -
-four independent adversarial reviewers, never in the repository - and this session's own (F). **The game's own towns
+four independent adversarial reviewers, never in the repository - and this session's own (F). Lens D judged 118 mutants
+of its own on the frozen head against all 45 test files that import the living town's modules: 93 survived. **The game's own towns
 (E) were not run**: the container the audit was taken up in holds no ARENA2 and can reach none, so every number here is
 the synthetic towns' (`test/lwTown.mjs`), and the measured table's real-town rows stand unmeasured again (`Living-World.md`
 says so beneath it).
@@ -38,6 +39,21 @@ the old line put back. Each change carries an `AUDIT LW-STIR` comment.
 | B6 | Nit | A small voice was read from the plan entry at the clock: a walker held by the politeness gate owes its minutes, its plan already at the stall, and cried its wares 8.8 m short of it. | The entry where the body is (`_now` less what they owe). |
 | B7 | Nit | One of an incident was held the spot's whole round: walking on after its words, they passed the player who stopped before them unspoken (9 of 9; after the round, "Good day, stranger."). | Of the incident from their coming together to its end (`_stirring`); their own after. |
 
+### Pinned
+
+| ID | Sev | Finding | Pin |
+|---|---|---|---|
+| D1 | Major | **The small voices never reached the street under any pin.** The test called `smallVoice` with its own tavern; on the street `speech`'s voice line set to null passed all 45 files, as did a voice while walking, a song standing only, any door or none for the tavern's, and the greeting and the voice both. | A stall's keeper, the night watch and a drinker from the tavern's door heard through `speech` on the synthetic town, word for word; none walking, none from a house's door, the greeting alone. |
+| D2 | Major | **Every number the record states was pinned against itself** (a measured rate beside the imported constant, or a band): each share, VOICE_S, the beats, the gather and the after, a sellsword's humours moved 0.35/0.35 -> 0.45/0.25, all survived; DRINKER a second literal of `dayPlan.js`'s tavern evening, tied to nothing. | The literals, as `lwtalk` pins ROUND_S; DRINKER is `dayPlan.js`'s `TAVERN_DRINK`, one export. |
+| D3 | Major | **"The spot hushes and turns only while words are shouted" held one way.** With the shout's test dropped every incident, civil words and all, hushed its spot's circles and turned them for its whole length: the street test only looked after the first shout. | Before an incident's first shout no hush and its circles' faces their own; in it a circle's people turned to it and a post keeping the road (staged: no post stands by another's word on these towns); through its words its two say its lines alone and greet nobody. |
+| D4 | Minor | **Laws of the dealer no pin held**: the evening from six (17 and 19 survived), once a day for a plea and a haggle, a haggler falling out too, a beggar asking the watch, the gate's post a `post` there from the halt's start and the lower id of two, a post challenging, one stranger a stop and the next tried, the word inside the two's time together, the watch stepping in only from its first line, the round keeping the first in time, the tie to the lower id, a line from its first minute, and the draws (the party's, the stranger's, the stall's). | One assertion each, on the dealer's own output (`auditlwstir` D4, four tests). |
+| D5 | Minor | Two text assertions could not fail: an escape disjunct (`c.includes('{place}')`, `s.includes('{')`) made each `.some` true, so a stall crying a beggar's words and a drinker singing a stall's passed. | `lwstir_street`'s checks exact; each pool's own words, filled as said (PIN MOVED). |
+| D6 | Minor | The small voices' laws: snow's and thunder's calls, the hours' edges (8 and 18, 21 and 3, narrowed), the call's spread past the hour, a voice's own minute in its slot, a beggar's beat. | Each weather's own words; a cry in hours 8 and 17 and none in 7 or 18, a song in 21 and 2 and none in 20 or 3, over six of each; a call past the hour mark; the beggar's rate. |
+| D7 | Minor | F1 half pinned: the street pin skipped every word but the gate's, so a patrol's stop given the talk's town survived; and its quarrel check ran on a hand-built line no producer writes - no quarrel, haggle, plea or break-up line names a `{place}`. | A patrol's stop staged on the street names the stranger's home; the pools pinned place-less; the hand-built line gone. |
+| D8 | Minor | The town's wiring: the patrol's pair dropped from the deal (its second would challenge), the struck down left out of it (`alive` for `everyone`, which the every-reader test's title claimed and nothing killed), a halt near the day's end unweighed or a gate past it, a post at another gate keeping this one. | Days of the synthetic town where the pair decides; the struck down dealt and left out; a halt the day cannot hold begins nothing; a town of 25 blocks (one post at a time) halts only at its posted gate. |
+| D9 | Minor | Fixtures that never made the cases they named: the gate test's parties at two gates of four, never a second party in a round, a besideStand only ever on the open square, every gate posted. | The parties at the four gates as the roads mint them (`trip`, `dock`); A2's two parties a round; `besideStand` and `aloneStands` on walled and crowded streets; the 25-block town. |
+| D13 | Nit | An unbounded `while` in the gate test spun forever under a halt a hair long (mutate.mjs has no time limit). | Bounded, and asserted found. |
+
 ### The record
 
 | ID | Sev | Finding | Outcome |
@@ -46,7 +62,10 @@ the old line put back. Each change carries an `AUDIT LW-STIR` comment.
 | A | Nit | "The gate's, the day's and the minute's draw": the second's (`Math.round(inT * 60)`), in `Living-World.md` and `stir.js` alike. | FIXED. |
 | A, B | Minor | "The watch on duty standing there through it steps in", "every halt questioned", "a stall's keeper ... where they stand", "the two turned to each other", "every reader alike" - false, each by a finding above. | True now; the section says how. |
 | B5 | Nit | "Every incident's two FACE_M apart in the middle of it": on the close-built 4 x 4 town 349 of 353 - a spot of 22 or more has no place before the one who keeps their stand (`besideStand` null), and the other speaks from their own, up to 4.8 m off. Open, walled and 3 x 3 towns exact (307, 78, 210). | Said so (`Living-World.md`); recorded below. |
-| - | - | The measured table is LW-STIR's, before its audit: A6 halves a pair's calls of the hour and A2 waves a few second parties through. | Said so beneath it; the real towns' rows not measured again (no ARENA2). |
+| D10 | Minor | The measured table's synthetic row could not be re-run - no harness, no days: lens D read 6.33 quarrels, 12.67 haggles, 80.33 songs and 6.33 calls of the hour where it said 5.3, 13, 83 and 5 (quarrels 5.33-7 over six day-triples). | `tools/livingStirProbe.mjs`, the days named; the synthetic rows measured again after this audit (9 blocks and 45); the real towns' rows LW-STIR's, before it, said so (no ARENA2). |
+| D11 | Minor | "At 0.2 one more on the open town's square stood two a metre apart across a walker's lane, past LW-SPACE's measure" - the reason PLEA_SHARE is 0.1 - does not reproduce: `lwspace_street`'s own measure reads 0.338% at 0.1 and 0.2 alike, at LW-STIR's commit and at the frozen head. | Said so where it stood; the scene "recorded below" marked unstood. |
+| D12 | Minor | Titles that claimed what their bodies did not: the ARENA2 test's "the strangers' humours by HUMOURS" (no humour in it); the every-reader test's mutant "a reader's own street in the deal", recorded nowhere and surviving it; "the line's time", killed but unrecorded. | The humours struck from the title; the every-reader title names D8's pin; `lwstir.json` LW-STIR-line-time, dead. |
+| D14 | Nit | "Twelve records re-aimed" in LW-STIR's commit (eleven, as its record says); "a word lasts some 25 real seconds" (14-24, a quarrel the watch steps into 27). | The word's length corrected; the commit stands as written, its record right. |
 
 ### Recorded, not changed
 
@@ -64,6 +83,12 @@ the old line put back. Each change carries an `AUDIT LW-STIR` comment.
   its slot's edge above 0.88 minutes a second (the rates are 0.2 and 0.4); the people in town changing mid-day dealing a
   word under way again (0 of 25 when a packet made fast, 0 of 15 across 120 edges); one in incidents at two spots at once
   (0 in twenty days of the 8 x 8 town).
+- **D's equivalents.** Four of lens D's survivors are recorded equivalent, each with why (`auditlwstir.json`): the
+  gate's stopped mark (a halted stranger's only stay at the gate is the halt, which no challenge reads), the shout's spot
+  test (both its two stand at its spot while it is shouted, by the plans), the visitor test of a gate's posts (a visitor
+  holds no duty) and the kept deal's rate (a town's base rate is fixed when it is built). Eight more lens D judged
+  equivalent itself, by reading (a unit's `from`, the duty test of the gate's posts, the gate stay's `atKind`, a halt
+  home's exit, the other's spot, the exit test, the deal's prune, a keeper's own beside): left unrecorded, as judged.
 - **The cost.** A census beat 0.46 -> 0.52 ms on the 8 x 8 town (327 people), a deal 2.4 ms, its kept check 18.6 µs; one
   deal across the 04:00 turn. Keyed by the plans now (B1), a deal is made again when a plan is.
 
@@ -76,15 +101,20 @@ town); `scenes/dungeonContext.js` - no town. Lens C found each claim true; this 
 
 ### Pins and mutants
 
-`test/auditlwstir.test.js` (14): F1; A1 past 2^24 at the online rate; A2 the gate's rounds; A3 the handover; A4 the
+`test/auditlwstir.test.js` (25): F1; A1 past 2^24 at the online rate; A2 the gate's rounds; A3 the handover; A4 the
 plea at the stall; A5 no name to a stranger; A6 the pair's hour; A7 the pair's second; B1/C1 the roads' word come late;
 B2 the lent and the household; B4 the bodies drawn (real `ResidentWalker`s); B6 the held walker; B7 after the words; C2
-the walk out. PIN MOVED: `lwstir_street` (the gate test's title - a second party waved through; its visitors leave no
-sooner than the roads let one, two hours after they come in: those in after five had left before they came, and C2
-waved them through), `auditlwstir`'s F1 (the same). `tools/mutants/auditlwstir.json` (22, all dead); `lwstir.json`
-LW-STIR-gate-share, -break-up, -round, -quarrel-by-pair, -quarrel-once, -call-hours, -call-duty and -halt-post re-aimed
-by content (-halt-post survived its first re-aim - `_gateHalt` answered only for the roads' arrivals, so the pin probing
-other minutes read nothing; `_gateHalt` judges any minute again), all 55 dead. `lwtalk.json` LW-TALK-deal-from-street
-and `watchfix.json` WATCH-FIX-census-skip re-aimed (the census's skip of the lent now deals them), dead. The 1,041
-records of the 33 lists with a record on the files this audit touched (`livingTown.js`, `stir.js`) judged again on the
-fixed tree: 1,039 dead, 2 equivalent as recorded, none surviving.
+the walk out; D2 the numbers; D4 the gate's, the patrol's, the town's and the beggar's laws, the order and the edges (four
+tests); D5/D6 the small voices' laws; D9 the place before them; D1 the voices on the street; D3 the hush and the turn;
+D7 the patrol's stop on the street; D8 the town's wiring. PIN MOVED: `lwstir_street` (the gate test's title - a second
+party waved through; its visitors at the four gates as the roads mint them, leaving no sooner than two hours on - those in
+after five had left before they came, and C2 waved them through; the voices' words exact; the gate's loop bounded; the
+titles as their bodies), `auditlwstir`'s F1 (the same visitors; its hand-built quarrel line gone).
+`tools/mutants/auditlwstir.json` (110: 106 dead, 4 equivalent as recorded - lens D's 88 among them, each judged against
+`auditlwstir` and `lwstir_street`); `lwstir.json` LW-STIR-gate-share, -break-up, -round, -quarrel-by-pair,
+-quarrel-once, -call-hours, -call-duty and -halt-post re-aimed by content (-halt-post survived its first re-aim -
+`_gateHalt` answered only for the roads' arrivals, so the pin probing other minutes read nothing; `_gateHalt` judges any
+minute again) and LW-STIR-line-time added, all 56 dead. `lwtalk.json` LW-TALK-deal-from-street and `watchfix.json`
+WATCH-FIX-census-skip re-aimed (the census's skip of the lent now deals them), dead. The 1,041 records of the 33 lists
+with a record on `livingTown.js` or `stir.js` judged again on the fixed tree (before lens D's pins): 1,039 dead, 2
+equivalent as recorded, none surviving.

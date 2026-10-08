@@ -1864,8 +1864,10 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   to a spot with stalls haggles at one of them (HAGGLE_SHARE 0.2), at the stall - one who does not may still fall out
   there (the first cut's haggle sent every one at a spot with a stall past the quarrel's draw); a beggar asks one
   standing near - a stall's keeper at the stall, the beggar come to it (AUDIT LW-STIR A4), a stranger by no name (A5) -
-  (PLEA_SHARE 0.1 of each - at 0.2 one more on the open town's square stood two a metre apart across a
-  walker's lane, past LW-SPACE's measure: recorded below). One a day between the same two at a spot.
+  (PLEA_SHARE 0.1 of each; AUDIT LW-STIR D11: the first cut's reason for halving it - "at 0.2 one more on the open
+  town's square stood two a metre apart across a walker's lane, past LW-SPACE's measure" - does not reproduce:
+  `lwspace_street`'s own measure reads 0.338% at 0.1 and at 0.2 alike, and the measure that showed it is not in the
+  tree). One a day between the same two at a spot.
 - **One at a spot a round, the round's places as they were.** An incident falls whole in a round of its spot
   (`meetups.js spotRound`) - from the next round's start when the one they meet in is too short - one at a spot a round,
   the gate's first. The street takes its two out of the round's circles (their places there left empty, as the struck
@@ -1897,18 +1899,24 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
 
   | town (its people) | at the gate | a patrol's stop | quarrels | haggles | pleas | hostile of the strangers | songs | stall cries | beggar calls | the hour called |
   |---|---|---|---|---|---|---|---|---|---|---|
-  | synthetic 3 x 3 (151) | - (no post) | - | 5.3 | 13 | - | - | 83 | 283 | - | 5 |
+  | synthetic 3 x 3, 9 blocks (151) | - (no post) | - | 6.3 | 11.7 | - | - | 80 | 283 | - | 2.7 |
+  | synthetic 3 x 3, 45 blocks (185) | 2.3 | 0 | 5 | 18.3 | 5 | 0.3 of 2.3 | 119 | 448 | 138 | 25 |
   | Daggerfall (329) | 9 | 0 | 6.3 | 11 | 1 | 7 of 27 | 65 | 558 | 61 | 30 |
   | Wayrest (329) | 9 | 0.3 | 3.3 | 15 | 1 | 7 of 28 | 80 | 594 | 97 | 24 |
   | Ripmarket (317) | 6.7 | 0 | 7 | 19 | 3.3 | 4 of 20 | 105 | 739 | 149 | 23 |
 
   Every halt questioned (Daggerfall, four days of twelve: 36 halted, 36 questioned, each by the post keeping its gate);
-  every incident's two FACE_M apart in the middle of it. A word lasts some 25 real seconds. The table is LW-STIR's, before
-  its audit: the hour called counted both men of a pair (A6 halves a pair's), and a second party in a round stood its
-  halt out (A2 waves it through) - the real towns' rows are not measured again here (no ARENA2 in the audit's container).
+  every incident's two FACE_M apart in the middle of it. A word runs 14 to 24 real seconds, a quarrel the watch steps
+  into 27 (AUDIT LW-STIR D14: "some 25" was its longest). The synthetic rows are AUDIT LW-STIR's, after it, by
+  `tools/livingStirProbe.mjs` (D10: no harness or day was named - days 100-102, twelve visitors in twos at the four
+  gates, `node tools/livingStirProbe.mjs 9` and `45`); LW-STIR's own synthetic row read 5.3 quarrels, 13 haggles, 83
+  songs, 283 cries and 5 calls of the hour. The real towns' rows are LW-STIR's, before its audit - the hour called
+  counted both men of a pair (A6 halves a pair's) and a second party in a round stood its halt out (A2 waves it
+  through) - not measured again (no ARENA2 in the audit's container).
 - **Recorded, not changed.** How many strangers a town has a day is the roads' (LW3's trips) - twelve is the measure's.
   The step aside (LW-SPACE's `_dodge`) crosses its own line through one standing on it where the only side free is the
-  far one - two standing a metre apart across a walker's lane, as the plea at 0.2 stood them: LW-SPACE's to settle.
+  far one - two standing a metre apart across a walker's lane, as the plea at 0.2 stood them (a scene AUDIT LW-STIR D11
+  could not stand again): LW-SPACE's to settle.
 - **The four hosts.** LW-STIR is the living town's (`stir.js`, `lines.js`, `livingTown.js`, `meetups.js`,
   `dayPlan.js`): `scenes/world.js` - WIRED: its line layer passes each line's kind through (`livingLinePoints`: a shout
   a shout, a song a song - `ui/navalHud.js` draws each its own way; the street's lines were all talk);
@@ -1925,7 +1933,7 @@ PLEA_SCRIPTS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS).
   the small voices; on the street - out of the circles, FACE_M before, SPACE_M from the rest, said by its speaker while
   both stand, shouted, the hush, the turn, the watch's own voice, a circle's gather waiting for none of the two; the
   places before; every reader alike; the host; the game's own cities, where ARENA2_PATH names the data) and
-  `tools/mutants/lwstir.json` (55, all dead). PIN MOVED:
+  `tools/mutants/lwstir.json` (55, all dead; 56 with AUDIT LW-STIR's LW-STIR-line-time). PIN MOVED:
   `lwtalk_town` (the facing at half past six counts the two of an incident, turned to each other - an evening's quarrel
   takes its two out of their circles; the census keeps an incident's two whole, `keepUnits`) and `lwspace_street` (a
   round's places: an incident's two are the round's too).
