@@ -1,0 +1,103 @@
+[
+  {
+    "name": "HOURSFIRST-the-list-not-folded",
+    "file": "server-account/src/titles.js",
+    "old": "&& hoursFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "&& hoursFirstHandles(env).has(player.handle);",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "A handle typed in another case than the list's (a player who wrote TERRA, the list terra) would hold nothing."
+  },
+  {
+    "name": "HOURSFIRST-a-guest-by-its-name",
+    "file": "server-account/src/titles.js",
+    "old": "export const isHoursFirst = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle\n  && hoursFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "export const isHoursFirst = (player, env) => hoursFirstHandles(env).has(String(player?.handle ?? player?.guest_name ?? '').toLowerCase());",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "A guest whose generated name is a listed handle would wear Hour's First."
+  },
+  {
+    "name": "HOURSFIRST-the-aura-without-the-list",
+    "file": "server-account/src/titles.js",
+    "old": "if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
+    "new": "if (!held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "Every account would hold The First Hour."
+  },
+  {
+    "name": "HOURSFIRST-another-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "firsthour: 'hoursfirst' });",
+    "new": "firsthour: 'hourbreaker' });",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold."
+  },
+  {
+    "name": "HOURSFIRST-the-gradient-turned",
+    "file": "src/ui/playerBadge.js",
+    "old": "hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),",
+    "new": "hoursfirst: Object.freeze([HOUR_SUN, HOUR_PEARL, HOUR_DAWN]),",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "The word would read from the dawn's white into the rose gold - the light going out."
+  },
+  {
+    "name": "HOURSFIRST-the-hourbreakers-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "  hoursfirst: HOUR_DAWN,    // HOURS-FIRST",
+    "new": "  hoursfirst: HOUR_GOLD,    // HOURS-FIRST",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "Two titles of one colour - a face that draws no gradient could not tell Hour's First from Hourbreaker."
+  },
+  {
+    "name": "HOURSFIRST-the-dial-turning-back",
+    "file": "src/render/auraRing.js",
+    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE })",
+    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: false, blaze: FIRST_BLAZE })",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "The First Hour's dial would turn back as the Remnant's does - the hands never set going again."
+  },
+  {
+    "name": "HOURSFIRST-the-blaze-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE })",
+    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: 0 })",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "The Hour's own mark no brighter than the rest."
+  },
+  {
+    "name": "HOURSFIRST-the-remnants-colours",
+    "file": "src/render/auraRing.js",
+    "old": "turningLook('first', 'FH', FIRST_RGB,",
+    "new": "turningLook('first', 'FH', TURNING_RGB,",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "The First Hour would be cast in the Remnant's brass - not a different version."
+  },
+  {
+    "name": "HOURSFIRST-a-name-dropped",
+    "file": "server-account/wrangler.toml",
+    "old": ",Temegast,Terra\"",
+    "new": ",Temegast\"",
+    "tests": [
+      "test/hoursfirst.test.js",
+      "test/serverpost_send.test.js"
+    ],
+    "note": "One of the first clear left out of the title, the aura and the gun."
+  }
+]

@@ -92,8 +92,8 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker' });",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
     "tests": [
       "test/crystalfist.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour']);",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour']);",
+    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
+    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour']);",
     "tests": [
       "test/crystalfist.test.js",
       "test/relayversion.test.js"

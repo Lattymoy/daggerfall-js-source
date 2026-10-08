@@ -255,9 +255,9 @@ test('SERVER-POST the wiring: the pause face stands the envelope beside the hour
   const world = src('src/scenes/world.js');
   assert.match(world, /const postSource = \(\) => \{ try \{ return online && postBox \? postBox : null; \} catch \{ return null; \} \};/, 'online, and never a throw before the boot declared it');
   assert.equal((world.match(/post: postSource,/g) ?? []).length, 2, 'the street\'s pause bag and the modes host');
-  assert.match(src('src/scenes/worldModes.js'), /post: host\.post,/, 'a building\'s pause');
-  assert.match(src('src/scenes/worldModes.js'), /post: \(\) => host\.post\?\.\(\) \?\? null,/, 'the dungeon\'s opts');
-  assert.match(src('src/scenes/dungeonContext.js'), /post: \(\) => opts\.post\?\.\(\) \?\? null,/, 'the dungeon\'s pause');
+  assert.match(src('src/scenes/worldModes.js'), /\n {4}post: host\.post,   \/\/ SERVER-POST/, 'a building\'s pause - the live line, never a comment of it');
+  assert.match(src('src/scenes/worldModes.js'), /\n {10}post: \(\) => host\.post\?\.\(\) \?\? null,/, 'the dungeon\'s opts');
+  assert.match(src('src/scenes/dungeonContext.js'), /\n {8}post: \(\) => opts\.post\?\.\(\) \?\? null,/, 'the dungeon\'s pause');
   assert.match(world, /onPost: \(event\) => \{ chatLog\.push\(tab\.id, \{ text: postNoticeText\(event\), system: true \}\); \},/, 'its news on the world tab, a line nobody spoke');
   assert.match(world, /heartbeat\.add\('post', whileLive\(postBox\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/, 'on the letterbox\'s clock, while the lane runs');
   assert.match(world, /pack: \{ add: \(rec\) => \{ addItem\(\(playerEntity\.items \?\?= \[\]\), setItemFields\(rec\), 'back'\); \}, changed: \(\) => \{ saveSoon\.changed\(\); \} \},\n    \}\);\n    heartbeat\.add\('post'/, 'a claimed item made whole and put in the pack as the vault\'s');

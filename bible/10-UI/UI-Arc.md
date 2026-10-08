@@ -19166,3 +19166,31 @@ pressed"), `menuPadProbe.mjs` ("the door answers the pad"), `landingProbe.mjs` 5
 door census passing again, and its classic-rail check failing on main too (it predates LOAD1's Screenshots entry), as
 `enhancedTapProbe.mjs`'s intro wait does (stale, not this slice's). PIN MOVED: `landing` U63's
 colourless count; `tools/enhancedMenuProbe.mjs` reads a door's word.
+
+## SERVER-POST - THE MAILBOX BESIDE THE HOURGLASS (2026-10-08, Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause menu. It should show notifications whenever players have a message. First use is to utilize it for players being granted items.")
+
+The server's post (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` SERVER-POST) drawn on the pause face, online, as TIMERS1's
+hourglass is: `ui/enhancedPost.js`.
+
+- **The envelope** (`postMark`): a pixel envelope - brass edge, parchment, a red seal - left of the hourglass
+  (`anchorPost`: each placing stands the hourglass off the profile's measured box first and the envelope off the
+  hourglass, so a caption that changes width moves both; left of the profile where there is no hourglass). Its count
+  (`.px-postbadge`, hidden at none, "99+" past it, said in the label) is the box's `waiting` - a piece unread or a gift not
+  yet claimed, each once - kept live off the box's version on its own tick (`watchPostMark`, POST_TICK_MS), since the
+  pause face draws itself only when opened, closed or Escaped; while anything waits the envelope nudges (none under
+  `prefers-reduced-motion`).
+- **The window** (`postWindow`), on the hourglass's own stage (`.px-timersstage`, centred, its own padding): the pieces
+  newest first - a brass dot on the unread and the waiting gifts, an item named in its rarity's own colour (a rule a
+  rung, walked off `RARITIES`) with *Waiting* or *Claimed*; a piece opened, its words, its item with **Claim** (*The
+  Hourlock is in your pack.*), and **Throw away** only once nothing waits in it. The states said: looking, signed out, a
+  guest (the account's own sentence), empty, a failed look; every refusal in the account's words (REFUSALS).
+- **The face's laws, kept**: its own scrim (a tap outside closes it alone - the fifth `closeOnOutsideTap`), the envelope
+  inside the pause face's (a press opens the window, never resumes), the face under the window inert, Escape closing it
+  before the face resumes, the focus handed back to the envelope, its ticks stopped on every rebuild and unmount, and a
+  visit's window (`postOpen` reset at mount). Every host hands the world's box (`post: postSource`, the street's bag and
+  the modes host; a building's and a dungeon's forward it), null offline and never a throw before the boot declared it.
+- **The notification** beside the count: a line on the world tab when a look finds post (`postNoticeText`), the
+  letterbox's own manner.
+- Pins: `test/serverpost_client.test.js`; PIN MOVED: `test/outsideTap.test.js` (five scrims, the envelope inside the
+  pause face's).
+

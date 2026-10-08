@@ -1,0 +1,213 @@
+[
+  {
+    "name": "SERVERPOST-the-record-unwritten",
+    "file": "server-account/src/post.js",
+    "old": "(save) => { giveTradeGoods(save, [rec], 0); return null; }",
+    "new": "(save) => { return null; }",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "The piece would read claimed and the record would not hold the item - the gift gone."
+  },
+  {
+    "name": "SERVERPOST-a-waiting-gift-thrown-away",
+    "file": "server-account/src/post.js",
+    "old": " AND (item IS NULL OR claimed_at IS NOT NULL)",
+    "new": "",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "A slip of the thumb would throw away an item nobody had claimed."
+  },
+  {
+    "name": "SERVERPOST-the-record-in-the-box",
+    "file": "server-account/src/post.js",
+    "old": "  const item = postItemHead(recordOf(row));",
+    "new": "  const item = recordOf(row);",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "The box would carry every item's whole record on every look."
+  },
+  {
+    "name": "SERVERPOST-read-never-stamped",
+    "file": "server-account/src/post.js",
+    "old": "  if (row.read_at == null) await db.prepare('UPDATE server_post SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();\n",
+    "new": "",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "A piece opened would count as unread forever - the envelope's count never falling."
+  },
+  {
+    "name": "SERVERPOST-a-failed-claim-read-as-claimed",
+    "file": "server-account/src/post.js",
+    "old": "again.claimed_at != null ? 'post-claimed' : 'server'",
+    "new": "'post-claimed'",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "A batch D1 dropped would tell the player their gift was claimed when it still waits - and the client would never ask again."
+  },
+  {
+    "name": "SERVERPOST-the-wall-dropped",
+    "file": "server-account/src/index.js",
+    "old": "        if (accountKind(who.player) !== 'linked') return no('post-needs-account', 403, origin);\n",
+    "new": "",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "A guest would read and claim post."
+  },
+  {
+    "name": "SERVERPOST-a-send-twice",
+    "file": "server-account/migrations/0092_server_post.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS ux_server_post_batch",
+    "new": "CREATE INDEX IF NOT EXISTS ux_server_post_batch",
+    "tests": [
+      "test/serverpost_service.test.js",
+      "test/serverpost_send.test.js"
+    ],
+    "note": "A send run twice would send twice - two Hourlocks."
+  },
+  {
+    "name": "SERVERPOST-the-heartbeats-part-unanswered",
+    "file": "server-account/src/heartbeat.js",
+    "old": "  if (body?.post === true) await part('post',",
+    "new": "  if (body?.post === 'never') await part('post',",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "The box asked on the heartbeat would never be looked at."
+  },
+  {
+    "name": "SERVERPOST-the-first-look-said-new",
+    "file": "src/net/serverPost.js",
+    "old": "    const fresh = first ? [] : post.filter(",
+    "new": "    const fresh = post.filter(",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "Every sitting would announce old post as new."
+  },
+  {
+    "name": "SERVERPOST-a-claimed-gift-still-counted",
+    "file": "src/net/serverPost.js",
+    "old": "return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length;",
+    "new": "return this.post.filter((p) => !p.read || p.item).length;",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "The envelope would count a gift already in the pack."
+  },
+  {
+    "name": "SERVERPOST-the-pack-fed-unchecked",
+    "file": "src/net/serverPost.js",
+    "old": "          const rec = validLootItem(a?.data?.item);",
+    "new": "          const rec = a?.data?.item;",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "Whatever the answer held would go in the pack - the wire's clamp skipped."
+  },
+  {
+    "name": "SERVERPOST-throw-away-beside-a-waiting-gift",
+    "file": "src/ui/enhancedPost.js",
+    "old": "    if (!head.item || head.claimed) foot.append(button('pm-throw',",
+    "new": "    foot.append(button('pm-throw',",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "The window would offer Throw away on a gift not yet claimed."
+  },
+  {
+    "name": "SERVERPOST-the-count-never-written",
+    "file": "src/ui/enhancedPost.js",
+    "old": "  if (badge && badge.textContent !== text) badge.textContent = text;",
+    "new": "",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "The envelope would never show that anything waits - Mac's notification gone."
+  },
+  {
+    "name": "SERVERPOST-a-host-that-forgets-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "    post: host.post,   // SERVER-POST",
+    "new": "    // post: host.post,",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "Paused in a building, no mailbox."
+  },
+  {
+    "name": "SERVERPOST-a-name-unchecked",
+    "file": "tools/sendServerPost.mjs",
+    "old": "  for (const h of names) if (!HANDLE_RE.test(h)) throw new Error(`not a handle: ${JSON.stringify(h)}`);\n",
+    "new": "",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "A typo or a pasted line would reach the statement as a name."
+  },
+  {
+    "name": "SERVERPOST-the-bounds-dropped",
+    "file": "tools/sendServerPost.mjs",
+    "old": "  if (!b || b.length > POST_BODY_MAX)",
+    "new": "  if (!b)",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "A message past the box's bound would be sent, and the client's law would refuse to show it."
+  },
+  {
+    "name": "SERVERPOST-the-gun-swapped",
+    "file": "tools/sendServerPost.mjs",
+    "old": "  hourlock: () => mintHourlock(),",
+    "new": "  hourlock: () => ({ ...mintHourlock(), value: 1 }),",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "Not the Hourlock as its drop mints it - and migration 0093 no longer the tool's statement."
+  },
+  {
+    "name": "SERVERPOST-a-name-missing-from-the-first-send",
+    "file": "server-account/migrations/0093_hours_first_post.sql",
+    "old": "'temegast', 'terra');",
+    "new": "'temegast');",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "One of the thirteen would never be sent the gun."
+  },
+  {
+    "name": "SERVERPOST-an-input-spliced-into-a-run-line",
+    "file": ".github/workflows/server-post.yml",
+    "old": "--names \"$HANDLES\"",
+    "new": "--names \"${{ inputs.handles }}\"",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "Whatever is typed into the names would be a shell command on the runner that holds the Cloudflare token."
+  },
+  {
+    "name": "SERVERPOST-a-missing-name-passing",
+    "file": ".github/workflows/server-post.yml",
+    "old": "nothing was sent\"\n            exit 1",
+    "new": "nothing was sent\"",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "A send to a name that finds nobody would pass the dry run, the typo unseen."
+  },
+  {
+    "name": "SERVERPOST-the-send-on-a-dry-run",
+    "file": ".github/workflows/server-post.yml",
+    "old": "      - name: Send the post\n        if: env.APPLY == 'true'\n",
+    "new": "      - name: Send the post\n",
+    "tests": [
+      "test/serverpost_send.test.js"
+    ],
+    "note": "The dry run would send."
+  }
+]
