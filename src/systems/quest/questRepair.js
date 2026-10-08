@@ -138,29 +138,36 @@ const markerAddresses = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.d
 export function relayOnlineDungeons(machine, env = {}) {
   let relaid = 0;
   for (const quest of machine?.quests?.values?.() ?? []) {
-    if (!questRunning(quest)) continue;
-    if (quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) continue;
-    const world = quest.hooks?.world ?? null;
-    let moved = false, unread = false;
-    for (const r of quest.resources?.values?.() ?? []) {
-      const sd = r?.isPlace ? r.siteDetails : null;
-      if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
-      const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
-      const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
-      if (!location?.dungeon?.blocks) { unread = true; continue; }
-      let markers;
-      try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
-      if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
-        && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;
-      r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
-      moved = true;
-    }
-    if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
-    if (!moved) continue;
-    putBackPlacements(quest, env);
-    relaid++;
+    if (questRunning(quest) && relayQuestOnline(quest, env)) relaid++;
   }
   return relaid;
+}
+
+/** One quest's re-lay (relayOnlineDungeons, above): whether its markers moved. AUDIT SD III (D5): asked of a quest a
+ *  party member shares online too (systems/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
+ *  and its copy pointed into blocks this page's world-sized build has not; the load's pass alone re-laid it, the next
+ *  time this player loaded online. */
+export function relayQuestOnline(quest, env = {}) {
+  if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;
+  const world = quest.hooks?.world ?? null;
+  let moved = false, unread = false;
+  for (const r of quest.resources?.values?.() ?? []) {
+    const sd = r?.isPlace ? r.siteDetails : null;
+    if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
+    const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+    const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
+    if (!location?.dungeon?.blocks) { unread = true; continue; }
+    let markers;
+    try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
+    if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
+      && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;
+    r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
+    moved = true;
+  }
+  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
+  if (!moved) return false;
+  putBackPlacements(quest, env);
+  return true;
 }
 
 /**

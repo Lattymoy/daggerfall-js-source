@@ -15526,6 +15526,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the skin inside this one seam - the host says what it HAS
    *  (woods rides along for the overworld's relief) and never which
    *  map that adds up to. */
+  /** AUDIT SD III (D7): the held map's tier labels, by place (`region:index`) - a dungeon's tier and size are its own
+   *  for good, read once a page. */
+  const _tierLabels = new Map();
   function buildTravelMapWindow(extra = {}) {
     // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
     // use the map, it should transition you to first person and then
@@ -15579,7 +15582,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
       hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
       // TIER1: a dungeon's tier and size on the label and in the I box - online alone, where the tiers differ
-      tierAt: params.has('online') ? (summary) => (summary ? dungeonTierLabel(maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex)) : null) : null,
+      // AUDIT SD III (D7): kept by place - the maps hand a fresh location each ask, so the label's own memory never held
+      // one, and every pointer move over a dungeon read its record again (a large one's layout drawn again with it)
+      tierAt: params.has('online') ? (summary) => {
+        if (!summary) return null;
+        const key = `${summary.regionIndex}:${summary.locationIndex ?? summary.mapIndex}`;
+        if (!_tierLabels.has(key)) _tierLabels.set(key, dungeonTierLabel(maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex)));
+        return _tierLabels.get(key);
+      } : null,
       // SEAT1a: each seat's ring (and a crown's crown, a March's and a Free Land's second ring) - while the seats are open
       seatAt: seatBook ? (summary) => seatHere(summary?.mapID ?? summary?.mapId) : null,
       carriageAt: (summary) => carriageTown(summary?.mapID ?? summary?.mapId),   // OW-HUBS: a carriage town's wheel
@@ -20171,6 +20181,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const who = name || 'A party member';
       const result = receiveSharedQuest(questBridge?.machine, questBridge?.questLists, quest.questName, quest.data, {
         memberships: activeMemberships(playerEntity),
+        // AUDIT SD III (D5): the copy laid on this world's sizes - a quest item I carry never laid again
+        carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) => it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),
       });
       const label = quest.displayName || quest.questName;
       if (result.ok) {
@@ -21857,7 +21869,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function sdEnterRealm(s) {
     const h = sdHost?.hollow();
     if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
-    if (modes.stepping) return null;
+    if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)
     const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
     const site = { climateBase: h.loc.climate?.climateType ?? 2, season: INTERIOR_SEASON, climate: h.loc.climate, regionIndex: h.loc.regionIndex ?? -1, regionName: h.loc.regionName ?? '' };
     modes?.stepThroughFire(async () => {
@@ -21919,7 +21931,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function sdWayBack() {
     const loc = modes?.dungeonLocation;
     if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
-    if (modes.stepping) return null;
+    if (modes?.stepping) return null;
     const back = loc.sdHollow;
     modes?.stepThroughFire(async () => {
       if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0)) return false;

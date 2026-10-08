@@ -11,8 +11,8 @@
   {
     "name": "GUIDE8-the-taken-marked",
     "file": "src/systems/questGuidance.js",
-    "old": "    if (!res || !s.active || s.dead || res.isHidden === true) continue;",
-    "new": "    if (!res || s.dead || res.isHidden === true) continue;",
+    "old": "    if (!res || !s.active || s.dead || res.isHidden === true || questEnded(s.behaviour)) continue;",
+    "new": "    if (!res || s.dead || res.isHidden === true || questEnded(s.behaviour)) continue;",
     "tests": [
       "test/guide8_questguidance.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUIDE8-the-hidden-marked",
     "file": "src/systems/questGuidance.js",
-    "old": "    if (!res || !s.active || s.dead || res.isHidden === true) continue;",
-    "new": "    if (!res || !s.active || s.dead) continue;",
+    "old": "    if (!res || !s.active || s.dead || res.isHidden === true || questEnded(s.behaviour)) continue;",
+    "new": "    if (!res || !s.active || s.dead || questEnded(s.behaviour)) continue;",
     "tests": [
       "test/guide8_questguidance.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUIDE8-the-dead-foe-marked",
     "file": "src/systems/questGuidance.js",
-    "old": "    if (!b || f.dead || !feet || b.targetResource?.isHidden === true) continue;",
-    "new": "    if (!b || !feet || b.targetResource?.isHidden === true) continue;",
+    "old": "    if (!b || f.dead || !feet || b.targetResource?.isHidden === true || questEnded(b)) continue;",
+    "new": "    if (!b || !feet || b.targetResource?.isHidden === true || questEnded(b)) continue;",
     "tests": [
       "test/guide8_questguidance.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "AUDIT-DELVE-E6-the-away-marked",
     "file": "src/systems/questGuidance.js",
-    "old": "    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true) continue;",
+    "old": "    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true || questEnded(b)) continue;",
     "new": "    if (!res) continue;",
     "tests": [
       "test/guide8_questguidance.test.js"

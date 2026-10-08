@@ -167,21 +167,68 @@ export function wayPoint(cells, field, from, sees, look = WAY_LOOK_CELLS) {
   return best ?? first ?? cells.pts[from];
 }
 
+/** AUDIT SD III (D4): the most one aim spends asking `stepClear`, ms - a long trail loaded whole asked its 2,000 wall
+ *  rays in one build (31 ms on a 135k-triangle level), and the steps left were asked by building the whole field again
+ *  each second (30-40 ms, a second, for fifteen seconds). */
+export const WAY_ASK_MS = 2;
+
+/** AUDIT SD III (D4): the trail's new cells onto the field - each to a neighbour already on it, by the field's own step
+ *  (and `clear`'s word), in the order they were stood in; one with none stays off until the field is built again. The
+ *  field's arrays grow to hold them. Pure but for `field` and what `clear` reads.
+ *  @param {TrailCells} cells @param {{ next: Int32Array, jump: Uint8Array }} field @param {number} from
+ *  @param {(i: number, j: number) => boolean} [clear] */
+export function attachCells(cells, field, from, clear = undefined) {
+  const n = cells.pts.length;
+  if (field.next.length < n) {
+    const cap = Math.max(n, 2 * field.next.length);
+    const next = new Int32Array(cap).fill(-1), jump = new Uint8Array(cap);
+    next.set(field.next); jump.set(field.jump);
+    field.next = next; field.jump = jump;
+  }
+  for (let j = from; j < n; j++) {
+    const [px, py, pz] = cells.pts[j];
+    const cx = Math.floor(px / TRAIL_CELL), cz = Math.floor(pz / TRAIL_CELL);
+    let to = -1;
+    for (let dx = -1; dx <= 1 && to < 0; dx++) {
+      for (let dz = -1; dz <= 1 && to < 0; dz++) {
+        for (const i of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {
+          if (i === j || field.next[i] < 0 || Math.abs(cells.pts[i][1] - py) > WAY_STEP_DY) continue;
+          if (clear && !clear(i, j)) continue;
+          to = i;
+          break;
+        }
+      }
+    }
+    if (to >= 0) { field.next[j] = to; field.jump[j] = 0; }
+  }
+  return field;
+}
+
 /**
  * THE HOST'S READER: `aim(trail, portals, exitAt, feet, sees, nowS)` answers the compass's [x, z] for the way out, or
  * null at the way in itself. `portals` are the walked teleporters ({ entrance: { pos }, exit: { pos } }); `exitAt`
  * the way in ([x, y, z]); `feet` where the player stands. The cells are parsed once and added to as the trail grows;
  * the field is built again at once when the trail is smaller (another run's record), the way in moved or a teleporter
- * was walked; at most every WAY_FIELD_S while the player stands off it or steps are still to be asked; and every
- * WAY_REFIELD_S while the trail grows under a player on it. `stepClear(p, q)` (AUDIT DELVE C9), given, says whether a
- * step between two cells' points crosses no wall; each step is asked once (WAY_STEP_ASKS a build at most) and kept.
+ * was walked; and every WAY_REFIELD_S while the trail grows under a player on it. `stepClear(p, q)` (AUDIT DELVE C9),
+ * given, says whether a step between two cells' points crosses no wall; each step is asked once and kept.
+ * AUDIT SD III (D4): A WALK OVER NEW GROUND NEVER BUILDS IT WHOLE. The trail's new cells are attached to the field as
+ * they come (attachCells); a player still off it - a fall, a Recall, a teleporter walked from a place the trail never
+ * reached - has it built again at most every WAY_FIELD_S, then twice as long each time it leaves them off, up to
+ * WAY_REFIELD_S. And the asks are paced: at most WAY_STEP_ASKS and WAY_ASK_MS an aim (`clock`, ms); a step past them is
+ * taken as clear and asked in the aims that follow, and the field is built again (at most every WAY_FIELD_S) only if one
+ * it walks proves walled.
  */
-export function createWayOut({ fieldEvery = WAY_FIELD_S, refieldEvery = WAY_REFIELD_S, stepAsks = WAY_STEP_ASKS } = {}) {
-  let size = -1, builtAt = -Infinity, exitKey = '', portalCount = -1, unasked = false;
+export function createWayOut({ fieldEvery = WAY_FIELD_S, refieldEvery = WAY_REFIELD_S, stepAsks = WAY_STEP_ASKS, askMs = WAY_ASK_MS, clock = () => performance.now() } = {}) {
+  let size = -1, builtAt = -Infinity, exitKey = '', portalCount = -1, covered = 0, offWait = fieldEvery, walled = false, builds = 0;
   /** @type {TrailCells|null} */ let cells = null;
   /** @type {{ next: Int32Array, jump: Uint8Array }|null} */ let field = null;
   /** @type {Map<number, boolean>} */ let asked = new Map();
-  const reset = () => { size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; unasked = false; cells = null; field = null; asked = new Map(); };
+  /** the steps taken as clear unasked - pairs of cell indices, flat - and how far along them the asking is */
+  let pending = [], pendingAt = 0;
+  const reset = () => {
+    size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; covered = 0; offWait = fieldEvery; walled = false;
+    cells = null; field = null; asked = new Map(); pending = []; pendingAt = 0;
+  };
   return {
     /**
      * @param {Set<string>|null|undefined} trail @param {Iterable<any>|null|undefined} portals @param {number[]|null} exitAt
@@ -198,35 +245,59 @@ export function createWayOut({ fieldEvery = WAY_FIELD_S, refieldEvery = WAY_REFI
       // a trail only grows on one run; one SMALLER than the cells' is another run's (a new record) - read again whole
       if (!cells || n < size || ek !== exitKey) { reset(); cells = trailCells(trail); }
       else if (n !== size) trailCells(trail, cells);
-      const grown = n !== size;
-      const from = nearestCell(cells, feet);
-      const off = !field || from < 0 || from >= field.next.length || field.next[from] < 0;
-      if (!field || tps.length !== portalCount
-        || ((grown && off || unasked) && nowS - builtAt >= fieldEvery)
-        || (grown && nowS - builtAt >= refieldEvery)) {
-        const c = /** @type {TrailCells} */ (cells);
-        size = n; builtAt = nowS; exitKey = ek; portalCount = tps.length; unasked = false;
+      const c = /** @type {TrailCells} */ (cells);
+      // this aim's asks: a count and a clock (AUDIT SD III, D4)
+      let left = stepAsks;
+      const until = clock() + askMs;
+      const spend = () => left-- > 0 && clock() < until;
+      const clear = stepClear ? (/** @type {number} */ i, /** @type {number} */ j) => {
+        const k = stepKey(i, j);
+        const known = asked.get(k);
+        if (known !== undefined) return known;
+        if (!spend()) { pending.push(i, j); return true; }   // asked in the aims that follow; clear until then
+        const ok = stepClear(c.pts[i], c.pts[j]) !== false;
+        asked.set(k, ok);
+        return ok;
+      } : undefined;
+      const build = () => {
+        size = n; builtAt = nowS; exitKey = ek; portalCount = tps.length; walled = false; pending = []; pendingAt = 0; builds++;
         /** @type {[number, number][]} */ const ends = [];
         for (const t of tps) {
           const a = nearestCell(c, t?.entrance?.pos), b = nearestCell(c, t?.exit?.pos);
           if (a >= 0 && b >= 0) ends.push([a, b]);
         }
-        let budget = stepAsks;
-        const clear = stepClear ? (/** @type {number} */ i, /** @type {number} */ j) => {
+        field = wayField(c, nearestCell(c, exitAt), ends, clear);
+        covered = c.pts.length;
+      };
+      const onField = (/** @type {number} */ i) => !!field && i >= 0 && i < field.next.length && field.next[i] >= 0;
+      if (!field || tps.length !== portalCount) build();
+      else if (covered < c.pts.length) { attachCells(c, field, covered, clear); covered = c.pts.length; }
+      let from = nearestCell(c, feet);
+      const grown = n !== size;
+      if ((walled && nowS - builtAt >= fieldEvery) || (grown && nowS - builtAt >= refieldEvery) || (!onField(from) && nowS - builtAt >= offWait)) {
+        build();
+        from = nearestCell(c, feet);
+        offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2);   // still off: not again so soon
+      } else if (onField(from)) offWait = fieldEvery;
+      // the steps taken as clear, asked as the budget allows - a walled one the field walks builds it again
+      if (stepClear && field) {
+        const f = /** @type {{ next: Int32Array, jump: Uint8Array }} */ (field);
+        while (pendingAt < pending.length && spend()) {
+          const i = pending[pendingAt], j = pending[pendingAt + 1];
+          pendingAt += 2;
           const k = stepKey(i, j);
-          const known = asked.get(k);
-          if (known !== undefined) return known;
-          if (budget <= 0) { unasked = true; return true; }   // asked at a later build; clear until then
-          budget--;
+          if (asked.has(k)) continue;
           const ok = stepClear(c.pts[i], c.pts[j]) !== false;
           asked.set(k, ok);
-          return ok;
-        } : undefined;
-        field = wayField(c, nearestCell(c, exitAt), ends, clear);
+          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;
+        }
+        if (pendingAt >= pending.length) { pending = []; pendingAt = 0; }
       }
-      const p = cells && field && from >= 0 ? wayPoint(cells, field, from, sees) : null;
+      const p = field && from >= 0 ? wayPoint(c, field, from, sees) : null;
       return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]];   // no walked way: the way in, as the crow flies
     },
     reset,
+    /** How many times the whole field has been built (the tests', and a probe's). */
+    builds: () => builds,
   };
 }

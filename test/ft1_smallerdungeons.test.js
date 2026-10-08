@@ -122,7 +122,7 @@ test('FT1: the registry row - DFU Classic, over the settings key, sound', () => 
   assert.deepEqual(f.kinds, ['classic'], 'DFU\'s own feature; it wears Enhanced too the day the port builds on it');
   assert.deepEqual(f.control, { store: 'settings', key: 'Experimental/SmallerDungeons' });
   assert.equal(f.title, 'Smaller dungeons');
-  assert.match(f.note, /five blocks/); assert.match(f.note, /Main-story dungeons and dungeons a quest sends you to keep their full size/);
+  assert.match(f.note, /five blocks/); assert.match(f.note, /Main-story dungeons keep full size; a quest keeps the size it was set up at/);   // AUDIT SD III (SD20g D8, PIN MOVED): the law - a quest started with the switch on builds small after it is turned off
   assert.match(f.note, /Online every dungeon has its own size instead\./, 'SD-ONLINE (PIN MOVED): online the world\'s size for each dungeon, which is not this switch');
   assert.match(f.effect, /next dungeon you enter/);
   assert.deepEqual(checkFeature(f), []);

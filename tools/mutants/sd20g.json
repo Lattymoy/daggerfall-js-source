@@ -1,0 +1,219 @@
+[
+  {
+    "name": "SD20G-D1-the-air-stood-in",
+    "file": "src/systems/automap.js",
+    "old": "  if (Number.isFinite(fallFrom)) {\n    const was = _trailFall.get(rec);\n    _trailFall.set(rec, was == null ? fallFrom : Math.max(was, fallFrom));\n    return false;\n  }\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-every-landing-filled",
+    "file": "src/systems/automap.js",
+    "old": "  const reach = fell == null ? TRAIL_FILL_M : drop ? 0 : TRAIL_LAND_FILL_M;",
+    "new": "  const reach = fell == null ? TRAIL_FILL_M : TRAIL_LAND_FILL_M;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-the-fall-height-unread",
+    "file": "src/systems/automap.js",
+    "old": "  const drop = fell != null && fell - feet[1] > TRAIL_FALL_M;",
+    "new": "  const drop = fell != null;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-the-drop-unkept",
+    "file": "src/systems/automap.js",
+    "old": "  if (drop && last) trailDrop(rec, last, feet);\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-drops-unsaved",
+    "file": "src/systems/automap.js",
+    "old": "      ...(rec.drops?.size ? { drops: [...rec.drops.values()].map((d) => [...d]) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-drops-unread-back",
+    "file": "src/systems/automap.js",
+    "old": "      ...(Array.isArray(rec.drops) ? { drops: dropsOf(rec.drops) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-drops-kept-across-a-layout",
+    "file": "src/systems/automap.js",
+    "old": "delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone",
+    "new": "delete rec.trail; delete rec.trailAll;   // EM3-3D: the walked trail is of a layout that is gone",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-drops-uncapped",
+    "file": "src/systems/automap.js",
+    "old": "  if (rec.drops.size > TRAIL_DROPS_MAX) rec.drops.delete(rec.drops.keys().next().value);\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-the-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "capsule: player.height, fallFrom: player.falling ? player.fallStart : null }),",
+    "new": "capsule: player.height }),",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D1-the-way-steps-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "_wayAt = wayOut.aim(automapRec.trail, automapWaySteps(automapRec),",
+    "new": "_wayAt = wayOut.aim(automapRec.trail, automapRec.teleporters?.values?.() ?? null,",
+    "tests": [
+      "test/sd20g_delve.test.js",
+      "test/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D3-the-stand-of-an-ended-quest",
+    "file": "src/systems/questGuidance.js",
+    "old": "res.isHidden === true || questEnded(s.behaviour)) continue;",
+    "new": "res.isHidden === true) continue;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D3-the-foe-of-an-ended-quest",
+    "file": "src/systems/questGuidance.js",
+    "old": "b.targetResource?.isHidden === true || questEnded(b)) continue;",
+    "new": "b.targetResource?.isHidden === true) continue;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D3-the-person-of-an-ended-quest",
+    "file": "src/systems/questGuidance.js",
+    "old": "res.isDestroyed === true || questEnded(b)) continue;",
+    "new": "res.isDestroyed === true) continue;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D3-complete-unread",
+    "file": "src/systems/questGuidance.js",
+    "old": "return !!q && (q.questComplete === true || q.questTombstoned === true);",
+    "new": "return !!q && q.questTombstoned === true;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D4-no-back-off",
+    "file": "src/systems/wayOut.js",
+    "old": "offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2);",
+    "new": "offWait = fieldEvery;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D4-new-cells-unattached",
+    "file": "src/systems/wayOut.js",
+    "old": "      else if (covered < c.pts.length) { attachCells(c, field, covered, clear); covered = c.pts.length; }\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D4-asks-unpaced",
+    "file": "src/systems/wayOut.js",
+    "old": "const spend = () => left-- > 0 && clock() < until;",
+    "new": "const spend = () => left-- > 0;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D4-a-walled-step-left-walked",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D4-attach-through-the-wall",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (clear && !clear(i, j)) continue;\n          to = i;",
+    "new": "          to = i;",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D5-the-share-unlaid",
+    "file": "src/systems/questShare.js",
+    "old": "  relay(quest);\n  if (check.meta?.quest?.oneTime)",
+    "new": "  if (check.meta?.quest?.oneTime)",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D5-the-resync-unlaid",
+    "file": "src/systems/questShare.js",
+    "old": "if (quest) { relay(quest); return { ok: true, quest, resync: true }; }",
+    "new": "if (quest) { return { ok: true, quest, resync: true }; }",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D6-a-links-stamp-online",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (online) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D7-the-cache-unread",
+    "file": "src/scenes/world.js",
+    "old": "        if (!_tierLabels.has(key)) _tierLabels.set(key, dungeonTierLabel(maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex)));\n        return _tierLabels.get(key);",
+    "new": "        return dungeonTierLabel(maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex));",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  },
+  {
+    "name": "SD20G-D8-the-old-words",
+    "file": "src/systems/features.js",
+    "old": "Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '",
+    "new": "Main-story dungeons and dungeons a quest sends you to keep their full size. Online every '",
+    "tests": [
+      "test/sd20g_delve.test.js"
+    ]
+  }
+]

@@ -27,7 +27,7 @@ import { dungeonFirePlan, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fire
 import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
-import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
+import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, automapWaySteps, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 // EM3: the skin fork. The classic skin keeps DFU's 3D panel whole; the
@@ -8168,7 +8168,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!(len > 1e-3)) return true;
       return !(collider.raycast(eye, [dx / len, dy / len, dz / len], len) < len - 0.1);
     };
-    _wayAt = wayOut.aim(automapRec.trail, automapRec.teleporters?.values?.() ?? null, [sm.x, sm.y, sm.z], feet, sees, t, wayStepClear);
+    _wayAt = wayOut.aim(automapRec.trail, automapWaySteps(automapRec), [sm.x, sm.y, sm.z], feet, sees, t, wayStepClear);   // AUDIT SD III (D1): the walked teleporters and the drops taken - each a one-way step
     return _wayAt;
   }
   /** AUDIT DELVE C9: a step between two trail cells crosses no wall - a waist-high ray against the dungeon's own
@@ -8546,7 +8546,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const sm = dungeon.startMarker;
       const ms = opts.motorState?.() ?? null;
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, capsuleCentreFromEye(eye, ms?.eyeLevel, ms?.capsule), collider);
-      automapTrailTick(automapRec, eye, ms?.eyeLevel);   // EM3-3D: where the player has stood, for the held map's solid sheet
+      automapTrailTick(automapRec, eye, ms?.eyeLevel, ms?.fallFrom ?? null);   // EM3-3D: where the player has stood, for the held map's solid sheet; AUDIT SD III (D1): a fall one way
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
     /** I3: the Escape window, same one-slot idiom. GATED ON THE DOOR,

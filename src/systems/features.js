@@ -294,7 +294,7 @@ export const FEATURES = Object.freeze([
     group: 'world',
     title: 'Smaller dungeons',
     note: 'Dungeons bigger than five blocks are cut down to five: a centre block with four around it, the same '
-      + 'every visit. Main-story dungeons and dungeons a quest sends you to keep their full size. Online every '
+      + 'every visit. Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '
       + 'dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['classic']),

@@ -101,7 +101,7 @@
   {
     "name": "WAYOUT1-rebuilt-every-frame",
     "file": "src/systems/wayOut.js",
-    "old": "      if (!field || tps.length !== portalCount\n        || ((grown && off || unasked) && nowS - builtAt >= fieldEvery)\n        || (grown && nowS - builtAt >= refieldEvery)) {",
+    "old": "      if ((walled && nowS - builtAt >= fieldEvery) || (grown && nowS - builtAt >= refieldEvery) || (!onField(from) && nowS - builtAt >= offWait)) {",
     "new": "      if (true) {",
     "tests": [
       "test/wayout1_wayout.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-DELVE-B1-the-step-unfilled",
     "file": "src/systems/automap.js",
-    "old": "  if (d > TRAIL_CELL && d <= TRAIL_FILL_M) {",
+    "old": "  if (d > TRAIL_CELL && d <= reach) {",
     "new": "  if (false) {",
     "tests": [
       "test/wayout1_wayout.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-DELVE-B1-a-teleport-filled",
     "file": "src/systems/automap.js",
-    "old": "  if (d > TRAIL_CELL && d <= TRAIL_FILL_M) {",
-    "new": "  if (d > TRAIL_CELL && d <= TRAIL_FILL_M * 10) {",
+    "old": "  if (d > TRAIL_CELL && d <= reach) {",
+    "new": "  if (d > TRAIL_CELL && d <= reach * 10) {",
     "tests": [
       "test/wayout1_wayout.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-DELVE-C4-a-step-and-a-half",
     "file": "src/systems/wayOut.js",
-    "old": "> WAY_STEP_DY) continue;\n          if (clear",
-    "new": "> WAY_STEP_DY * 1.5) continue;\n          if (clear",
+    "old": "if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
+    "new": "if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY * 1.5) continue;",
     "tests": [
       "test/wayout1_wayout.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "AUDIT-DELVE-C4-reset-forgets-nothing",
     "file": "src/systems/wayOut.js",
-    "old": "  const reset = () => { size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; unasked = false; cells = null; field = null; asked = new Map(); };",
+    "old": "  const reset = () => {\n    size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; covered = 0; offWait = fieldEvery; walled = false;\n    cells = null; field = null; asked = new Map(); pending = []; pendingAt = 0;\n  };",
     "new": "  const reset = () => {};",
     "tests": [
       "test/wayout1_wayout.test.js"
@@ -245,7 +245,7 @@
   {
     "name": "AUDIT-DELVE-C9-asked-every-build",
     "file": "src/systems/wayOut.js",
-    "old": "          if (known !== undefined) return known;\n",
+    "old": "        if (known !== undefined) return known;\n",
     "new": "",
     "tests": [
       "test/wayout1_wayout.test.js"
@@ -254,7 +254,7 @@
   {
     "name": "AUDIT-DELVE-C9-no-budget",
     "file": "src/systems/wayOut.js",
-    "old": "          if (budget <= 0) { unasked = true; return true; }   // asked at a later build; clear until then\n",
+    "old": "        if (!spend()) { pending.push(i, j); return true; }   // asked in the aims that follow; clear until then\n",
     "new": "",
     "tests": [
       "test/wayout1_wayout.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-DELVE-C9-the-rest-never-asked",
     "file": "src/systems/wayOut.js",
-    "old": "|| ((grown && off || unasked) && nowS - builtAt >= fieldEvery)",
-    "new": "|| ((grown && off) && nowS - builtAt >= fieldEvery)",
+    "old": "        while (pendingAt < pending.length && spend()) {",
+    "new": "        while (false) {",
     "tests": [
       "test/wayout1_wayout.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-DELVE-B2-built-whenever-it-grows",
     "file": "src/systems/wayOut.js",
-    "old": "|| (grown && nowS - builtAt >= refieldEvery)) {",
-    "new": "|| (grown)) {",
+    "old": "|| (grown && nowS - builtAt >= refieldEvery) ||",
+    "new": "|| (grown) ||",
     "tests": [
       "test/wayout1_wayout.test.js"
     ]

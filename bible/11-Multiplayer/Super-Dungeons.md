@@ -531,8 +531,13 @@ small, medium or large, the same for every player, most of them medium. So onlin
 the room's law:
 
 - **`onlineDungeonSize`**: one draw of the port's seeded die (`systems/wind.js seededFirst`) on the dungeon's map id
-  and its own salt, weighted small 1, medium 2, large 1 (`ONLINE_DUNGEON_SIZES`) - a quarter of the Bay's dungeons
-  small, half medium, a quarter whole - the same on every client, every visit, for good.
+  and its own salt, weighted small 1, medium 2, large 1 (`ONLINE_DUNGEON_SIZES`) - a quarter of the DRAWS small, half
+  medium, a quarter whole - the same on every client, every visit, for good. What is BUILT is not that split (AUDIT SD
+  III, SD20g D2: this line said it was): a dungeon of five blocks or fewer is small whatever it draws, one of eight or
+  fewer is never more than medium, and the main story stays whole - over MAPS.BSA's own sizes the Bay's labels read
+  about two in five Small, a little under half Medium and one in seven Large (the draw itself 26/50/24 over forty sets
+  of ids). Mac's word was that the sizes mix ("World mixes sizes"), and they do; weighting the draw by a dungeon's
+  blocks, to read a quarter Large, is his call - reported, unchanged.
 - **`dungeonSizeFor`**: online answers the world's size, whatever either switch or a quest's frozen copy says (the main
   story's dungeons and the arena undercroft stay whole, as they always have); offline the settings decide, as before.
 - **The quest stamp** online is `ONLINE_DUNGEONS_STATE` (4, appended past the medium size's 3): "each dungeon at the
@@ -2791,14 +2796,57 @@ Pins: `test/sd20f_hosts.test.js` (5 - the kept slots by account over one store a
 own text; the cast-out once a stay on the real Hollow host over the world's own doors, asked again, never sooner, and at
 once on a new stay; the Hour's voice leaving its turns; the step under another's veil - the world's two doors, the dungeon
 host's answer and the Rift's walk-in kept armed; the veil warmed, and /unstuck in the Hour run from its own text);
-`tools/mutants/sd20f.json` (16, all dead). RE-AIMED BY CONTENT, each still dead: `sd11c.json`
+`tools/mutants/sd20f.json` (17, all dead). RE-AIMED BY CONTENT, each still dead: `sd11c.json`
 (`SD11c-L1F2-latched-on-the-refusal`, `SD11c-L1F3-never-judged-where-I-stand`, `SD11c-L6F17-never-kept`,
 `SD11c-L6F17-never-read`, `SD11c-L6F17-unbounded`), `sd11d.json` (`SD11D-the-leave-never-letting-go`), `sd2d.json`
 (`SD2D-never-cast-out`, `SD2D-cast-out-every-frame`), `sd4b.json` (`SD4B-the-word-unasked`). PINS MOVED:
 `test/sd11c_page.test.js` and `test/sd12_onelife.test.js` (the kept slots' harness handed the signed-in account - none:
-the device's), `test/sd11d_words.test.js` (the voice's frame leaves, it no longer clears).
+the device's), `test/sd11d_words.test.js` (the voice's frame leaves, it no longer clears), `test/tr2_riding.test.js` (CI's second shard
+found it red from SD20d on: "no true-loop source on this channel" read the whole engine, and took SD20d's named beds - a
+looped source, its pitch beside it - for the riding channel; read now on the channel's own code,
+`SD20F-the-riding-channel-looped` its mutant, dead).
 
 THE FOUR HOSTS: `scenes/world.js` WIRED (the kept slots by account; "not yet" from the Rift's two steps; the veil warmed
 as a Hollow stands; the voice's leave; /unstuck in the Hour); `scenes/dungeonContext.js` WIRED (the Rift's step handed
 back untaken while another is under way); `scenes/worldModes.js` FLAGGED - its `stepping` (SD20d) is read, its exit and
 its one-step-at-a-time unchanged; `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no Hour.
+
+#### SD20g - the delve arc and the dungeons' sizes
+
+| | what was wrong | now |
+|---|---|---|
+| D1 | A FALL WAS A STAIR. The trail's fill laid a fall as a column of cells half a metre apart, and the way out (a step either way) walked the player back up drops of two, four and six metres they could not climb - at a walk and at a run; no rule on the cells alone told a fall from a steep stair (both rules tried broke 45-degree stairs) | the motor's own fall reaches the trail (`fallFrom`, its fallStart, through each dungeon host's `motorState`): a sample taken in the air is not stood in, and a landing more than `TRAIL_FALL_M` (the way out's own step) below where its fall began is not filled (`systems/automap.js`); a stair walked on the ground, thirty to fifty-three degrees, is a way both ways. And a DROP IS A WAY DOWN: kept on the record as a one-way step (`drops`, saved with the trail, gone with it on another layout or a hidden map, `TRAIL_DROPS_MAX` at most) and handed to the way out with the walked teleporters (`automapWaySteps`) |
+| D2 | THE SPLIT SAID AS DRAWN. Section 13 said a quarter of the Bay's dungeons small, half medium, a quarter whole; what is built and labelled is about two in five Small, a little under half Medium and one in seven Large (a dungeon of five blocks or fewer is small whatever it draws, one of eight or fewer never more than medium) | the page says what is built; weighting the draw by a dungeon's blocks, to read a quarter Large, is Mac's call - reported, unchanged |
+| D3 | AN ENDED QUEST STILL MARKED. A tombstoned quest stays in the machine a game week, its stands standing and its behaviours bound to it: the Exact tier marked its item, people and foes, and the compass pointed at them | a quest complete or tombstoned marks nothing (`systems/questGuidance.js` `questEnded`) |
+| D4 | THE WAY OUT BUILT WHOLE EACH SECOND. Exploring, the player always stood on a fresh cell - off the field - and it was built whole each second (5-14 ms at 8,000 cells); a long trail loaded whole asked its 2,000 wall rays in one build (31 ms) and built again each second until every step was asked | new cells attached as they come (`attachCells`, by the field's own step and the walls' word); off the field it is built at most each `WAY_FIELD_S`, then two, four, eight seconds, up to `WAY_REFIELD_S`; an aim asks at most `WAY_ASK_MS` (2 ms) of rays - the rest taken as clear and asked in the aims that follow, the field built again only when a step it walks proves walled |
+| D5 | A SHARED QUEST UNLAID. An older page lays every dungeon whole, and a quest it shared pointed into blocks this page's world-sized build has not, until this player's next online load | each shared copy laid on this page's sizes as it arrives and as it is kept in step (`systems/questShare.js`, `relayQuestOnline`) - a quest item the player carries never laid again |
+| D6 | A LINK'S STAMP ONLINE. `adoptLinkedDungeonSize` ran online, where a quest's markers are always the world's: a link's older stamp could take the place of its own, and offline the copy built a layout its markers do not know | never online (`world/smallerDungeons.js`) |
+| D7 | THE TIER READ EACH POINTER MOVE. The maps hand a fresh location each ask, so the tier label's own memory never held one, and every pointer move over a dungeon on the held map read its record again (a large one's layout drawn again) | kept by place for the page (`scenes/world.js` `_tierLabels`) |
+| D8 | the Smaller dungeons row said a quest's dungeon keeps its full size | *"a quest keeps the size it was set up at"* - the law (a quest started with the switch on builds small after it is turned off) |
+| D9 | `systems/quest/quest.js`'s stamp comment said "online, Disabled" | the world's sizes (`ONLINE_DUNGEONS_STATE`) |
+
+Pins: `test/sd20g_delve.test.js` (7 - a fall one way at a walk and a run, two to six metres, and walked down it; a step
+down and a hop filled, its air not; stairs both ways; the hosts handing the motor's fall; the drop kept, once, capped,
+saved and loaded, gone with another layout and a hidden map; the split said as built; an ended quest's item, foe and
+person unmarked; a hundred new cells and one build, the back-off's gaps, the asks paced by the clock and a walled step
+it walked building it again; a shared copy laid, a link's stamp never taken online; the tier read once a place; the
+Smaller dungeons row); `tools/mutants/sd20g.json` (24, all dead). RE-AIMED BY CONTENT, each still dead: `dsize1.json`
+(`AUDIT-DELVE-E1-agreeing-markers-relaid`, `AUDIT-DELVE-E1-the-stamp-kept`, `AUDIT-DELVE-E1-nothing-put-back`,
+`SD-ONLINE-E1-a-world-sized-quest-relaid`, `SD-ONLINE-E1-an-unread-dungeon-restamped`), `guide8.json`
+(`GUIDE8-the-taken-marked`, `GUIDE8-the-hidden-marked`, `GUIDE8-the-dead-foe-marked`, `AUDIT-DELVE-E6-the-away-marked`),
+`wayout1.json` (`WAYOUT1-rebuilt-every-frame`, `AUDIT-DELVE-B1-the-step-unfilled`, `AUDIT-DELVE-B1-a-teleport-filled`,
+`AUDIT-DELVE-C4-a-step-and-a-half`, `AUDIT-DELVE-C4-reset-forgets-nothing`, `AUDIT-DELVE-C9-asked-every-build`,
+`AUDIT-DELVE-C9-no-budget`, `AUDIT-DELVE-C9-the-rest-never-asked`, `AUDIT-DELVE-B2-built-whenever-it-grows`),
+`sd20f.json` (`SD20F-H6-the-step-unseen`, `SD20F-H6-the-way-back-unseen` - the step's read guarded on the object, as
+audit24 wave37's law holds every read above `var modes`), `em3mapchoice.json` (`EM3-TRAIL-kept-across-a-new-layout`,
+`EM3-TRAIL-HideAll-keeps-the-trail` - the drops cleared on the same lines). PINS MOVED: `test/wayout1_wayout.test.js` (new cells attached
+at once - the way out along them within the second, the field built once; the build counted by `builds()`, the refield
+every WAY_REFIELD_S; the host hands the drops with the teleporters), `test/tier1_dungeontiers.test.js` (the tier kept by
+place), `test/playerdeath.test.js` and `test/audit39_dungeonshared.test.js` (the bench's and the world's motor state
+carry the fall), `test/ft1_smallerdungeons.test.js` (the Smaller dungeons row's law), `test/features.test.js` (the
+notes' ceiling, +1).
+
+THE FOUR HOSTS: `scenes/worldModes.js` WIRED (its `motorState` hands the fall under way); `scenes/dungeonContext.js`
+WIRED (the trail tick given the fall; the way out given the drops); `scenes/world.js` WIRED (a shared quest laid with
+the item I carry; the tier kept by place); `scenes/exterior.js` FLAGGED - the `?exterior` bench has no dungeon, no trail
+and no way out (the `?dungeon` bench, `scenes/dungeon.js`, hands its motor's fall as the world's dungeon lane does).

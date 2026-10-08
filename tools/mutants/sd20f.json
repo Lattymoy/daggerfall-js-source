@@ -83,7 +83,7 @@
   {
     "name": "SD20F-H6-the-step-unseen",
     "file": "src/scenes/world.js",
-    "old": "    if (modes.stepping) return null;\n    const hollow = {",
+    "old": "    if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)\n    const hollow = {",
     "new": "    const hollow = {",
     "tests": [
       "test/sd20f_hosts.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "SD20F-H6-the-way-back-unseen",
     "file": "src/scenes/world.js",
-    "old": "    if (modes.stepping) return null;\n    const back = loc.sdHollow;",
+    "old": "    if (modes?.stepping) return null;\n    const back = loc.sdHollow;",
     "new": "    const back = loc.sdHollow;",
     "tests": [
       "test/sd20f_hosts.test.js"
@@ -141,6 +141,15 @@
     "new": "          if (moved || hour || !hour) {",
     "tests": [
       "test/sd20f_hosts.test.js"
+    ]
+  },
+  {
+    "name": "SD20F-the-riding-channel-looped",
+    "file": "src/systems/audio.js",
+    "old": "      src.buffer = buf;\n      src.playbackRate.value = ch.rate;",
+    "new": "      src.buffer = buf;\n      src.loop = true;\n      src.playbackRate.value = ch.rate;",
+    "tests": [
+      "test/tr2_riding.test.js"
     ]
   }
 ]

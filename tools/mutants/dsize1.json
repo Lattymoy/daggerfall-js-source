@@ -188,7 +188,7 @@
   {
     "name": "AUDIT-DELVE-E1-agreeing-markers-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "      if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)\n        && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;\n",
+    "old": "    if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)\n      && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;\n",
     "new": "",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "AUDIT-DELVE-E1-the-stamp-kept",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;\n    if (!moved) continue;",
-    "new": "    if (!moved) continue;",
+    "old": "  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;\n  if (!moved) return false;",
+    "new": "  if (!moved) return false;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ],
@@ -207,8 +207,8 @@
   {
     "name": "AUDIT-DELVE-E1-nothing-put-back",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    putBackPlacements(quest, env);\n    relaid++;",
-    "new": "    relaid++;",
+    "old": "  putBackPlacements(quest, env);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "SD-ONLINE-E1-a-world-sized-quest-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) continue;",
-    "new": "    if (false) continue;",
+    "old": "  if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;",
+    "new": "  if (!quest) return false;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "SD-ONLINE-E1-an-unread-dungeon-restamped",
     "file": "src/systems/quest/questRepair.js",
-    "old": "      if (!location?.dungeon?.blocks) { unread = true; continue; }",
-    "new": "      if (!location?.dungeon?.blocks) continue;",
+    "old": "    if (!location?.dungeon?.blocks) { unread = true; continue; }",
+    "new": "    if (!location?.dungeon?.blocks) continue;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
     ],

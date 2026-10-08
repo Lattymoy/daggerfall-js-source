@@ -39,6 +39,14 @@ export const townTierOn = () => guidanceTier() !== 'journal';
 /**
  * @typedef {{ at: number[], name: string, followed: boolean }} QuestMark
  */
+/** AUDIT SD III (D3): A QUEST ENDED MARKS NOTHING - its quest complete or tombstoned (a tombstoned quest stays in the
+ *  machine a game week, its stands standing and its behaviours still bound to it): the Exact tier marked an ended
+ *  quest's item, people and foes, and the compass pointed at them. The behaviour's quest, else its resource's. */
+export const questEnded = (b) => {
+  const q = b?.targetQuest ?? b?.targetResource?.parentQuest ?? null;
+  return !!q && (q.questComplete === true || q.questTombstoned === true);
+};
+
 /**
  * THE EXACT TIER'S MARKS in a dungeon: each quest stand (`stands` - the host's dungeon list: `{ active, dead,
  * behaviour: { questUID, targetResource } }`, its place `boxOf(stand)`, activate's own box - sceneMount.js
@@ -59,7 +67,7 @@ export function dungeonQuestMarks({ stands = [], foes = [], people = [], boxOf, 
   const followed = (uid) => followedId != null && uid != null && String(uid) === String(followedId);
   for (const s of stands ?? []) {
     const res = s?.behaviour?.targetResource ?? null;
-    if (!res || !s.active || s.dead || res.isHidden === true) continue;
+    if (!res || !s.active || s.dead || res.isHidden === true || questEnded(s.behaviour)) continue;
     const box = boxOf(s);
     if (!box?.min || !box?.max) continue;
     const at = [(box.min[0] + box.max[0]) / 2, box.min[1], (box.min[2] + box.max[2]) / 2];
@@ -69,13 +77,13 @@ export function dungeonQuestMarks({ stands = [], foes = [], people = [], boxOf, 
   for (const f of foes ?? []) {
     const b = f ? behaviourOf(f) : null;
     const feet = f?.ai?.feet;
-    if (!b || f.dead || !feet || b.targetResource?.isHidden === true) continue;
+    if (!b || f.dead || !feet || b.targetResource?.isHidden === true || questEnded(b)) continue;
     out.push({ at: [feet[0], feet[1], feet[2]], name: b.targetResource?.displayName || foeName(f) || 'Quest foe', followed: followed(b.questUID) });
   }
   for (const p of people ?? []) {
     const b = p?.questBehaviour;
     const res = b?.targetResource ?? null;
-    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true) continue;
+    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true || questEnded(b)) continue;
     if (![p.x, p.y, p.z].every(Number.isFinite)) continue;
     out.push({ at: [p.x, p.y, p.z], name: res.displayName || 'Someone', followed: followed(b.questUID) });
   }

@@ -8356,7 +8356,7 @@ export function createWorldModes(host) {
           // so a crouched death sinks from the crouched eye. dungeon.js
           // has always passed this; without it the world-hosted dungeon
           // death fell to the standing defaults.
-          motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height }),
+          motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height, fallFrom: player.falling ? player.fallStart : null }),   // AUDIT SD III (D1): and the fall under way - where it began - for the walked trail
           playerSpare: () => host.arenaPlayerSpare?.() ?? null,   // ARENA2: a blow taken in my bout on the sand leaves me at 1 (the duel's spare)
           makeArenaWindow: (page) => host.makeArenaWindow?.(page) ?? null, arenaJoined: () => !!host.arenaJoined?.(),   // ARENA3: the pause window's Arena door underground (the undercroft too)
           // AUDIT 26 F222/F223/F101: the host's half of the pose -

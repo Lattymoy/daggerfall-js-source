@@ -211,7 +211,11 @@ const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_
  * link's frozen state - the quest takes the link's: the size its markers know. Called by the machine's Start
  * (machine.js startQuestImmediate), after the stamp.
  */
-export function adoptLinkedDungeonSize(quest, questMachine) {
+export function adoptLinkedDungeonSize(quest, questMachine, online = isOnlinePage()) {
+  // AUDIT SD III (D6): online every quest's markers are enumerated on the world's sizes (dungeonSizeFor answers the
+  // room's before it reads a link) and Start stamps them so - a link's older stamp (one a load's re-lay could not read)
+  // took its place, and offline the copy built a layout its markers do not know
+  if (online) return null;
   const known = [SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE, ONLINE_DUNGEONS_STATE];
   for (const r of quest?.resources?.values?.() ?? []) {
     const sd = r?.isPlace ? r.siteDetails : null;

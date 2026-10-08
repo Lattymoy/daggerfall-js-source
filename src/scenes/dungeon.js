@@ -152,7 +152,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // DC1: the death sequence starts from the LIVE eye and capsule
       // (a crouched death). Late-bound like pose - the motor is built
       // below, after this context; null falls to standing defaults.
-      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
+      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height, fallFrom: _motorRef.falling ? _motorRef.fallStart : null } : null),   // AUDIT SD III (D1): the fall under way, for the walked trail
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
       // context owns none of its own (dungeonContext.js:"(dungeon.js's tail)"), so each

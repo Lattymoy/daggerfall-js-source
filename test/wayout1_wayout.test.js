@@ -135,13 +135,14 @@ test('WAYOUT1: the host\'s reader - gone at the way in, the crow\'s line with no
   assert.deepEqual(w.aim(new Set(), null, exitAt, [20.5, 0, 0.5], ALL, 0), [0.5, 0.5], 'no trail (another run\'s record, at once): the way in, as the crow flies');
   assert.equal(w.aim(trail, null, null, [5, 0, 0], ALL, 0), null);
   assert.equal(w.aim(trail, null, exitAt, null, ALL, 0), null);
-  // the field is rebuilt when the trail grows, but not more than once a second
+  // AUDIT SD III (D4, PIN MOVED): the trail's new cells are attached to the field as they come - the way out at once,
+  // no whole field built again (it waited a second for the rebuild, and pointed the crow's line meanwhile)
   const v = createWayOut();
   const t2 = walk(run(0, 10));
   v.aim(t2, null, exitAt, [10.5, 0, 0.5], ALL, 0);
   for (const p of run(11, 30)) automapTrailTick({ trail: t2 }, [p[0], 1.6, p[2]], 1.6);
-  assert.deepEqual(v.aim(t2, null, exitAt, [30.5, 0, 0.5], ALL, 0.5), [0.5, 0.5], 'within the second: the old field, which has no cell here (the crow)');
-  assert.deepEqual(v.aim(t2, null, exitAt, [30.5, 0, 0.5], ALL, 1.2), [16.5, 0.5], 'after it: rebuilt');
+  assert.deepEqual(v.aim(t2, null, exitAt, [30.5, 0, 0.5], ALL, 0.5), [16.5, 0.5], 'within the second: attached, along the trail');
+  assert.equal(v.builds(), 1, 'and built once');
   // a walked teleporter is read off the record's own shape
   const tp = walk([...run(0, 2), ...run(50, 60)]);
   const portals = [{ entrance: { pos: [55.5, 0.5, 0.5] }, exit: { pos: [2.5, 0.5, 0.5] } }];
@@ -270,24 +271,26 @@ test('AUDIT DELVE B2: the field is built again only when the player stands off i
   const first = asks;
   assert.ok(first > 0);
   for (const p of run(21, 25)) automapTrailTick({ trail }, [p[0], 1.6, p[2]], 1.6);
-  // the player still on the old field: the trail grew, but the way it has is a way - no rebuild before WAY_REFIELD_S
+  // the player still on the old field: the trail grew, but the way it has is a way - no rebuild before WAY_REFIELD_S.
+  // AUDIT SD III (D4, PIN MOVED): the new cells attached as they come - their own steps asked, nothing built again (a
+  // player on new ground was "off" the field and had it built whole each second)
   assert.deepEqual(w.aim(trail, null, exitAt, [20.5, 0, 0.5], ALL, 2, clear), [6.5, 0.5]);
-  assert.equal(asks, first, 'on the field: not built again');
-  assert.deepEqual(w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, 2.5, clear), [11.5, 0.5], 'off it: rebuilt (a second since)');
-  assert.ok(asks > first, 'off it: built again');
-  // and every WAY_REFIELD_S while the trail grows under a player on it
+  assert.equal(asks, first + 5, 'the five new cells\' own steps asked');
+  assert.deepEqual(w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, 2.5, clear), [11.5, 0.5], 'on the new ground: on the field already');
+  assert.equal(w.builds(), 1, 'never built again for it');
+  // and every WAY_REFIELD_S while the trail grows under a player on it (a loop it closed is a shorter way)
   for (const p of run(26, 28)) automapTrailTick({ trail }, [p[0], 1.6, p[2]], 1.6);
-  const before = asks;
-  w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, 2.5 + WAY_REFIELD_S - 0.1, clear);
-  assert.equal(asks, before, 'not yet');
-  w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, 2.5 + WAY_REFIELD_S, clear);
-  assert.ok(asks > before, 'the refield');
+  w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, WAY_REFIELD_S - 0.1, clear);
+  assert.equal(w.builds(), 1, 'not yet');
+  w.aim(trail, null, exitAt, [25.5, 0, 0.5], ALL, WAY_REFIELD_S, clear);
+  assert.equal(w.builds(), 2, 'the refield');
 });
 
 test('WAYOUT1: the dungeon hands the compass its way out once the way in is found; both HUD doors carry it', () => {
   const s = src('src/scenes/dungeonContext.js');
   assert.match(s, /if \(!isEnhanced\(\) \|\| getPref\(WAY_PREF\) === false \|\| !feet \|\| !eye \|\| !sm \|\| !automapRec\?\.entranceDiscovered\) \{ _wayAt = null; return null; \}/);
-  assert.match(s, /_wayAt = wayOut\.aim\(automapRec\.trail, automapRec\.teleporters\?\.values\?\.\(\) \?\? null, \[sm\.x, sm\.y, sm\.z\], feet, sees, t, wayStepClear\);/);
+  // AUDIT SD III (D1, PIN MOVED): the walked teleporters and the drops taken, each a one-way step (automap.js automapWaySteps)
+  assert.match(s, /_wayAt = wayOut\.aim\(automapRec\.trail, automapWaySteps\(automapRec\), \[sm\.x, sm\.y, sm\.z\], feet, sees, t, wayStepClear\);/);
   // AUDIT DELVE C9: a step asked of the dungeon's own geometry alone, waist high - a door or a mover walked through is no wall
   assert.match(s, /return !stepHitCuts\(collider\.raycast\(a, \[dx \/ len, dy \/ len, dz \/ len\], len, PROF_VEIN_ONLY\), len\);/);
   assert.match(s, /const PROF_VEIN_ONLY = Object\.freeze\(\{ only: Object\.freeze\(\['dungeon'\]\) \}\);/);
