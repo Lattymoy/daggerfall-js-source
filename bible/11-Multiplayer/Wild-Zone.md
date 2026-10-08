@@ -329,7 +329,7 @@ Then "as centered as possible not on the border to the other tier... dont overri
   carries it, and the client keeps the skew), never a client's own: every player sees the same halls (`wildActiveNow`,
   `world.js:"const wildActiveNow"`). A day gone, its halls leave the index (the one I stand in stays until I leave
   it). With no hub to ask, the day falls back to this machine's clock.
-- WHAT: `wildHallStand` (`world.js:"const wildHallStand"`) stands the day's hall in the index - a clone of a template
+- WHAT: `wildHallStand` (`world.js:"const wildHallStandOf = (mask, px, py) =>"`, over the mask it is handed) stands the day's hall in the index - a clone of a template
   on the zone's own lane of map ids (`WDUN_SALT` 7, `wire.js:"export const WDUN_SALT"`; `spawnedHallMapId`), never a
   graveyard's (LocationTypes 12) nor a cemetery's dungeon type (`wildHallTemplateOk`,
   `wildDungeons.js:"export const wildHallTemplateOk"`), named "Elite <template> (x,y)", always ELITE, its tier on it
