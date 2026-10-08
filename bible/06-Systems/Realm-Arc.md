@@ -504,3 +504,28 @@ Mac, 2026-09-29, after HOUSE-LOSS: "I want people to get their stuff back" (REST
 Mac, 2026-09-30, answering AUDIT RESCUE-SAVE P1 (an edited device copy is a way into the realm): "1" - **accept it for
 now**; section 4's server-side checks close it, and the scripted checkpoint beside it. Restoring only a recent copy
 (narrows the window, never shuts it) and no copy at all (the outage's loss back) were declined.
+
+## MERC-SLOPE - the skills sell again online, under the half (2026-10-08)
+
+EvoAva: *"I leveled up 20 merc today, and i am being offered the same exact prices at the same shop, even tho i fortify
+personality to 100 + have much higher mercantile ... The ONLY difference made seems to be from the different quality
+shops"*. Nothing was miswired: MERC-RISE's half of the counter's least ask (P0.4's ceiling, the best haggler's) stood
+under nearly every seller's own Daggerfall offer, so online a sale was one figure per counter and piece. Asked whether
+to keep it, Mac: *"Whatever is most balanced."*
+
+THE HALF STAYS THE CEILING. P0.4's loop (buy, sell back) and ESSENTIALS-HALF's (an essential bought at half, sold back)
+are shut by it - a first cut that anchored the half on a typical seller and let the skilled be paid over it re-opened
+the essentials loop (`test/essentials_half.test.js` caught it) and P0.4's regional carrier, whose price index walks
+~0.5 to 1.6. UNDER IT (`systems/shopStock.js calculateTradePrice`, `ONLINE_SALE_SKILL_WEIGHT` 0.5) a seller stands where
+their own Daggerfall offer stands against the best haggler's, at half its strength: `half * (0.5 + 0.5 * offer /
+bestOffer)`. The best haggler is paid the half, as now; the weakest three quarters of it; a Mercantile 20, Personality
+50 seller about four fifths (a quality-10 counter, a 1,000-gold piece: 304 against 375); the skills are worth a third
+more from the bottom to the top, every step felt. Never over Daggerfall's own offer (its weakest seller is offered half
+what its best is, and the half is under three fifths of the best's offer at every counter). Daggerfall's whole slope
+under the half (weight 1) would have cut a typical seller's sale by two fifths, where online money is short already;
+the weight is the one dial. Offline, DFU's haggle stands. Buying is untouched.
+
+PINS MOVED: `test/fb0929d_mercantile.test.js` (the field's counter, 2187 / 2344 / 2500 / 2663 / 2718 at Mercantile 0 /
+30 / 60 / 90 / 100), `test/fb0929f_mercantile.test.js` (the law over every counter, lot and skill, and never over
+Daggerfall's own), `test/realm0.test.js` (P0.4: the best at the half, the loop's seller under it). Mutants:
+`tools/mutants/fb0929d_mercantile.json` - MERC-RISE's half re-aimed by content, four MERC-SLOPE records, all dead.

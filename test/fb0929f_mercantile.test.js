@@ -66,9 +66,13 @@ test('MERC-CAP: online the haggle reads 0..100 - a sale never falls with a skill
           assert.ok(s >= 0 && s >= last, `${at}: sells for ${s}, ${last} a step below`);
           assert.ok(a >= least, `${at}: asks ${a}, under the best haggler's ${least}`);
           assert.ok(s <= Math.floor(a * ONLINE_SALE_SHARE), `${at}: pays ${s} against an ask of ${a}`);
-          // past either end the haggle reads the end; inside the range it is Daggerfall's, under MERC-RISE's half
+          // past either end the haggle reads the end; inside the range it is Daggerfall's, under MERC-RISE's half -
+          // PIN MOVED (MERC-SLOPE, FIELD BUGS 2026-10-08): where the seller's own offer stands against the best haggler's,
+          // at half its strength, under that half and never over Daggerfall's own offer
           assert.equal(a, ask(cost, q, mm, pp, false), at);
-          assert.equal(s, Math.min(sale(cost, q, mm, pp, false), half), at);
+          const off = sale(cost, q, mm, pp, false), top = sale(cost, q, 100, 100, false);
+          assert.equal(s, top > 0 ? Math.floor(half * (0.5 + (0.5 * Math.min(off, top)) / top)) : Math.min(off, half), at);
+          assert.ok(s <= off, `${at}: never over Daggerfall's own offer (${s} against ${off})`);
           last = s;
           checked++;
         }
