@@ -4463,6 +4463,12 @@ over the shared world minute, no offset subtracted, since AUDIT
 WORLD7/8 B1; null offline, so nothing is ever due offline and a save
 keeps its dead, DFU's own).
 
+DUNGEON-RESPAWN (2026-10-08, the owner, in the Wrothgarian zone's merge):
+a dungeon's hour is its own now - a normal dungeon's twenty minutes, an
+elite one's forty, the open zone's halls and a Super dungeon keeping
+`RESPAWN_MS`; each foe and container still on its own clock
+(`src/systems/dungeonRespawn.js`, `11-Multiplayer/Wild-Zone.md` section 21).
+
 - **A foe.** The one corpse door stamps `_diedAt`; the memory's record
   carries it as `died`; a record applied keeps the ROOM's stamp, not
   this client's arrival. A memory that arrives with a foe dead past
