@@ -58,6 +58,26 @@ export function clampPace(n, onRoad = false) {
 
 let pace = null;
 let ground = false;   // the host's last word: on a road or a track
+/** WILD3 (the owner: "Youre also slower in this zone max 20x in the wilds and 40x on the roads"): THE ZONE'S CAP - while
+ *  the host says the traveller stands in the open PvP zone, the ground's top is the zone's (`WILD_PACE_CAP`). A cap,
+ *  never a write: the dials keep the player's choice and run under it, and leaving the zone gives it back at once. */
+export const WILD_PACE_CAP = Object.freeze({ road: 40, open: 20 });
+let zoneCap = null;
+/** The ground's top in force: the road's or the open's, under the zone's cap while one stands. */
+const topOn = (onRoad) => {
+  const t = onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX;
+  return zoneCap ? Math.min(t, onRoad ? zoneCap.road : zoneCap.open) : t;
+};
+/** The host's word on the zone, each frame (scenes/world.js wildFrame): `cap` the zone's tops, or null outside it. */
+export function setPaceZoneCap(cap) {
+  const next = cap ? { road: Number(cap.road) || WILD_PACE_CAP.road, open: Number(cap.open) || WILD_PACE_CAP.open } : null;
+  if ((next?.road ?? 0) === (zoneCap?.road ?? 0) && (next?.open ?? 0) === (zoneCap?.open ?? 0)) return;
+  zoneCap = next;
+  const cur = travelPace();
+  for (const fn of [...listeners]) { try { fn(cur, 'zone'); } catch { /* a listener's own fault */ } }   // a running journey asks its clock again
+}
+/** The zone's cap in force, or null. */
+export const paceZoneCap = () => zoneCap;
 const listeners = new Set();
 
 function read() {
@@ -104,10 +124,10 @@ export function setPaceGround(onRoad) {
 /** A dial's rate in force now (the stored one, under the ground's top). */
 export function paceNow(which) {
   const v = travelPace()[which] ?? TRAVEL_PACE_DEFAULT[which];
-  return ground ? v : Math.min(v, OPEN_PACE_MAX);
+  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too
 }
 /** The journey's rate on a ground (systems/timeScale.js travelRateOf asks). */
-export const paceRateOn = (onRoad) => Math.min(onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX, travelPace().speed);
+export const paceRateOn = (onRoad) => Math.min(topOn(onRoad), travelPace().speed);   // WILD3: the zone's top where it stands
 
 /** Set one dial - onto the ladder, under the ground's top (x100 refused off the road). Returns the rate set. */
 export function setTravelPace(which, n) {
@@ -129,7 +149,7 @@ export function stepTravelPace(which, dir) {
 
 /** Whether a dial can step up from where it stands, on this ground. */
 export function paceCanRise(which) {
-  return paceNow(which) < (ground ? ROAD_PACE_MAX : OPEN_PACE_MAX);
+  return paceNow(which) < topOn(ground);
 }
 
 /** Hear a change; returns the way to stop hearing it. */
@@ -139,4 +159,4 @@ export function onTravelPace(fn) {
 }
 
 /** Pins: back to the device's word. */
-export function _resetTravelPace() { pace = null; ground = false; listeners.clear(); }
+export function _resetTravelPace() { pace = null; ground = false; zoneCap = null; listeners.clear(); }

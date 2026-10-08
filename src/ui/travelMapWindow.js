@@ -104,6 +104,8 @@ import {
 import { DOT_SCALE } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
+import { WILD_REGION, WILD_RINGS, wildInside, wildRingAt, wildRingName, wildRingBonus } from '../systems/wildZone.js';   // WILD1: the open zone on the classic map too (WILD2: and its rings)
+import { RING_INK, RING_NUMERALS } from './wildZoneMap.js';   // WILD2: the rings' own tones, the zone map's
 import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, on the open province's page
 import { readBountyMarks, bountyMarksKey, bountyRingTexels, BOUNTY_DOT_RGB, REVENANT_DOT_RGB, REVENANT_LEGEND_TEXT } from './bountyMapMark.js';   // BOUNTY1: held bounties' black circles on the region page
 import { readVendorMark, vendorMarkKey, vendorRingTexels, VENDOR_DOT_RGB } from './vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's gold ring
@@ -551,6 +553,12 @@ export class TravelMapWindow {
     this._dotsBuf = new Uint32Array(REGION_W * REGION_H);
     this._outlineBuf = new Uint32Array(REGION_W * REGION_H);
     this._identifyBuf = new Uint32Array(REGION_W * REGION_H);
+    // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
+    // around it"): the open zone's own page-sized layer - a dithered fog in the zone's ash and blood, its edge in the
+    // identify's red - over the province map and over the Wrothgarian Mountains' own page (GrimoireUI dresses the art
+    // beneath; this layer is the port's, as the party's dots are). `_wildFor`: which view it was built for.
+    this._wildBuf = new Uint32Array(REGION_W * REGION_H);
+    this._wildKey = null; this._wildTex = null; this._wildDirty = false; this._wildFor = null; this._wildAny = false;
     this._dotsDirty = true;
     this._identifyDirty = true;
     // SOC6 (Mac: "Party members should be able to be seen on the world
@@ -783,12 +791,74 @@ export class TravelMapWindow {
     this._dotsDirty = true;
   }
 
+  /** WILD1: the zone layer's three texels - the fog in two tones, dithered, and the edge. */
+  static get WILD_TEXELS() {
+    return {
+      fogA: packRGBA(92, 18, 14, 120), fogB: packRGBA(46, 40, 38, 84), edge: packRGBA(206, 44, 26, 255),
+      // WILD2: each ring's tone (the zone map's, ui/wildZoneMap.js RING_INK) and the line where a deeper ring begins
+      rings: RING_INK.map((k) => packRGBA(k.fill[0], k.fill[1], k.fill[2], Math.round(110 + k.alpha * 160))),
+      ringLine: packRGBA(48, 8, 6, 230),
+    };
+  }
+  /** WILD1: THE ZONE ON A REGION PAGE - the Wrothgarian Mountains' own (a pixel of another province is that province's
+   *  page's, as the dots' law has it), each zone pixel a fog texel in a checker of its two tones and each edge pixel the
+   *  red, at the dots' own texel law. Any other page: an empty layer. */
+  _drawWildPage(originX, originY, width, height) {
+    this._wildBuf.fill(0);
+    this._wildFor = 'page';
+    this._wildAny = false;
+    this._wildDirty = true;
+    const mask = this.deps.wildMask?.() ?? null;
+    const maps = this.deps.maps;
+    if (!mask || this.selectedRegion !== WILD_REGION || !maps) return;
+    const { fogB, edge, rings, ringLine } = TravelMapWindow.WILD_TEXELS;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const px = originX + x, py = originY + y;
+        if (!wildInside(mask, px, py) || maps.getPoliticIndex(px, py) - 128 !== this.selectedRegion) continue;
+        const rim = !wildInside(mask, px - 1, py) || !wildInside(mask, px + 1, py) || !wildInside(mask, px, py - 1) || !wildInside(mask, px, py + 1);
+        const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
+        if (offset < 0 || offset >= this._wildBuf.length) continue;
+        // WILD2: its ring's tone in a checker with the ash, and a dark pixel where a deeper ring begins
+        const ring = wildRingAt(px, py, mask) || WILD_RINGS;
+        const line = wildRingAt(px - 1, py, mask) > ring || wildRingAt(px + 1, py, mask) > ring || wildRingAt(px, py - 1, mask) > ring || wildRingAt(px, py + 1, mask) > ring;
+        this._wildBuf[offset] = rim ? edge : line ? ringLine : ((x + y) & 1 ? rings[ring - 1] : fogB);
+        this._wildAny = true;
+      }
+    }
+  }
+  /** WILD1: THE ZONE ON THE PROVINCE MAP - the picker bitmap's Wrothgarian pixels (the identify's own read), fogged, its
+   *  rim red. */
+  _drawWildOverview() {
+    this._wildBuf.fill(0);
+    this._wildFor = 'overview';
+    this._wildAny = false;
+    this._wildDirty = true;
+    const bmp = _art?.pickerBitmap;
+    if (!bmp || !this.deps.wildMask?.()) return;
+    const { fogA, fogB, edge } = TravelMapWindow.WILD_TEXELS;
+    const width = bmp.width, height = bmp.height;
+    const diff = height - REGION_H - REGION_PANEL_OFFSET + 1;
+    const isZone = (x, y) => x >= 0 && y >= 0 && x < width && y < height && bmp.data[y * width + x] - 128 === WILD_REGION;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (!isZone(x, y)) continue;
+        const dstOffset = ((height - y - diff) * width) + x;
+        if (dstOffset < 0 || dstOffset >= this._wildBuf.length) continue;
+        const rim = !isZone(x - 1, y) || !isZone(x + 1, y) || !isZone(x, y - 1) || !isZone(x, y + 1);
+        this._wildBuf[dstOffset] = rim ? edge : ((x + y) & 1 ? fogA : fogB);
+        this._wildAny = true;
+      }
+    }
+  }
+
   /** SOC6's marks, extracted whole when TO1 gave this page a second
    *  walk: both the classic page and the mod's five-texel one end with
    *  the party over everything, and one copy is the port's rule. On the
    *  five-texel page a member fills the same 5x5 cell a small dot does,
    *  so the marker stays the size of the places it stands among. */
   _drawPartyMarks(originX, originY, width, height) {
+    this._drawWildPage(originX, originY, width, height);   // WILD1: the page's zone layer, built with the page
     const maps = this.deps.maps;
     const outlineOn = this.outlineEnabled;
     const outline = packRGBA(...DOT_OUTLINE_RGBA);
@@ -1918,10 +1988,10 @@ export class TravelMapWindow {
   dispose() {
     const r = this._renderer;
     if (!r) return;
-    for (const key of [this._dotsKey, this._outlineKey, this._identifyKey]) {
+    for (const key of [this._dotsKey, this._outlineKey, this._identifyKey, this._wildKey]) {   // WILD1: and the zone's layer
       if (key) r.releaseTexture('travelmap', key);
     }
-    this._dotsKey = this._outlineKey = this._identifyKey = null;
+    this._dotsKey = this._outlineKey = this._identifyKey = this._wildKey = null;
   }
 
   /** One generated buffer to a texture: DFU's bottom-up buffer
@@ -1948,6 +2018,15 @@ export class TravelMapWindow {
       if (prevDots) renderer.releaseTexture('travelmap', prevDots);
       if (prevOutline) renderer.releaseTexture('travelmap', prevOutline);
       this._dotsDirty = false;
+    }
+    // WILD1: the zone's layer - the province map's built when the province map shows (a page's rides its dots)
+    if (!this.regionSelected && this._wildFor !== 'overview') this._drawWildOverview();
+    if (this._wildDirty) {
+      const prev = this._wildKey;
+      const w = this._upload(renderer, 'wild', this._wildBuf);
+      this._wildKey = w.key; this._wildTex = w.tex;
+      if (prev) renderer.releaseTexture('travelmap', prev);
+      this._wildDirty = false;
     }
     if (this._identifyDirty) {
       const prev = this._identifyKey;
@@ -1990,9 +2069,11 @@ export class TravelMapWindow {
     if (_art) drawImg(renderer, _art.overworld, m, 0, 0);
     else drawRect(renderer, m, 0, 0, NATIVE_W, 200, [0.04, 0.03, 0.02, 0.95]);
 
+    if (!this.regionSelected && this._wildAny && this._wildTex) this._drawPage(renderer, m, this._wildTex, REGION_W, REGION_H, 0, 0, { blend: true });   // WILD1: the zone over the province map
     if (this.regionSelected) {
       const art = _art?.regionMaps?.get(this._regionMapName ?? '');
       if (art) this._drawPage(renderer, m, art.tex, art.w, art.h, 0, 0);
+      if (this._wildAny && this._wildTex) this._drawPage(renderer, m, this._wildTex, REGION_W, REGION_H, 0, 0, { blend: true });   // WILD1: the zone over its page, under the dots
       // the outline copies ride half a SCREEN pixel out (:295-311)
       if (this.outlineEnabled && this._outlineTex) {
         for (const [dx, dy] of OUTLINE_DISPLACEMENTS) {
@@ -2046,6 +2127,7 @@ export class TravelMapWindow {
     // the centred region label at y=2 (:280-282)
     const label = this.regionLabelText();
     if (label) shadowText(renderer, font, label, m, 0, 2, { align: 'center', w: NATIVE_W });
+    if (this.regionSelected && this.selectedRegion === WILD_REGION && this._wildAny && !this.popUp && !this.picker && !this.top && !this.infoBox) this._drawWildKey(renderer, m, font);   // WILD2: the rings' key on the zone's own page
 
     if (this.telePopUp) { this.telePopUp.draw(renderer, canvas, font); return; }
     if (this.popUp) {
@@ -2088,6 +2170,22 @@ export class TravelMapWindow {
       this._box = layoutMessageBox(font, this.infoBox.rows, []);
       this._drawBox(renderer, m, font);
     } else this._box = null;
+  }
+
+  /** WILD2: THE RINGS' KEY on the Wrothgarian Mountains' page - a dark plaque in the page's lower left, each ring its
+   *  swatch (its tone on the page), numeral, name and bonus, in the classic font. */
+  _drawWildKey(renderer, m, font) {
+    const x = 4, y = REGION_PANEL_OFFSET + 112, w = 118, rowH = 9;
+    drawRect(renderer, m, x, y, w, 8 + rowH * WILD_RINGS + 2, [0.04, 0.03, 0.03, 0.82]);
+    drawRect(renderer, m, x, y, w, 1, [0.72, 0.17, 0.1, 1]);
+    shadowText(renderer, font, 'OPEN PVP - LOOT BY RING', m, x + 3, y + 2, { color: [0.95, 0.42, 0.3, 1] });
+    for (let r = 1; r <= WILD_RINGS; r++) {
+      const ry = y + 2 + rowH * r;
+      const f = RING_INK[r - 1].fill;
+      drawRect(renderer, m, x + 3, ry + 1, 6, 6, [f[0] / 255, f[1] / 255, f[2] / 255, 1]);
+      shadowText(renderer, font, `${RING_NUMERALS[r - 1]} ${wildRingName(r).replace(/^The /, '')}`, m, x + 12, ry);
+      shadowText(renderer, font, wildRingBonus(r).replace(' loot', ''), m, x + w - 30, ry, { color: [0.95, 0.75, 0.4, 1] });
+    }
   }
 
   _drawBox(renderer, m, font) {

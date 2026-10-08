@@ -76,6 +76,13 @@ const GROUP_NAMES = Object.freeze({
  */
 export const FURNISHER_CHANCE = 0x32;
 
+/** RARE-REAGENTS: what every Alchemist's counter always holds - Basilisk Eye (CreatureIngredients1 51), Unicorn Horn
+ *  (CreatureIngredients3 37), Pearl (MiscellaneousIngredients2 77). */
+export const ALCHEMIST_ALWAYS = Object.freeze([
+  Object.freeze({ group: 'CreatureIngredients1', templateIndex: 51 }),
+  Object.freeze({ group: 'CreatureIngredients3', templateIndex: 37 }),
+  Object.freeze({ group: 'MiscellaneousIngredients2', templateIndex: 77 }),
+]);
 // DaggerfallLootDataTables.itemGroups* - (groupId, chance) byte pairs.
 export const SHOP_ITEM_GROUPS = Object.freeze({
   [BUILDING_TYPES.Alchemist]: [0x0E, 0x1E, 0x0F, 0x32, 0x10, 0x32, 0x11, 0x1E, 0x12, 0x14, 0x13, 0x14, 0x14, 0x3C, 0x15, 0x28, 0x16, 0x1E],
@@ -299,6 +306,11 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     // alchemists never stocked a recipe, the main legitimate way to
     // buy one.
     randomlyAddPotionRecipe(25, items, rolls);
+    // RARE-REAGENTS (2026-10-08, the owner: "please add Unicorn horn, Basilisk eye and a Pearl. I couldn't find any of
+    // those on any Alchemist shop"): the stock law's rarity gate and its roll (chance x 5 x (21 - rarity) / 100) left these
+    // three on next to no shelf in the Bay. The counter's shelf (shelfIndex 0 - each shelf model is stocked whole, so one
+    // shelf, never one a shelf) always carries one of each, minted as every row is and priced by the shop's own cost law.
+    if (shelfIndex === 0) for (const r of ALCHEMIST_ALWAYS) add({ ...r });
   }
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });

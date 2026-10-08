@@ -102,8 +102,8 @@
   {
     "name": "OW-WOD-PATH-roads-not-dropped",
     "file": "src/scenes/world.js",
-    "old": "    for (let i = 0; i < src.length; i++) if (src[i] && !((net?.roads?.[i] ?? 0) | (net?.tracks?.[i] ?? 0))) out[i] = 1;",
-    "new": "    for (let i = 0; i < src.length; i++) if (src[i]) out[i] = 1;",
+    "old": "    if (src) for (let i = 0; i < n; i++) if (src[i] && !onRoad(i)) out[i] = 1;",
+    "new": "    if (src) for (let i = 0; i < n; i++) if (src[i]) out[i] = 1;",
     "tests": [
       "test/ow_wod.test.js"
     ],

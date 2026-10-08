@@ -748,7 +748,7 @@
   {
     "name": "WORLD-HOVER-outdoors-a-dropped-pile-loses-its-word",
     "file": "src/scenes/world.js",
-    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),\n",
+    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: droppedLoot.labelFor?.(key) ?? lootPileName(droppedLoot.contents?.(key) ?? null) } : null),   // WILD1: a body's remains by its own name\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
@@ -1039,7 +1039,7 @@
   {
     "name": "AUDIT-WH2-the-interior-pile-gets-the-invented-word-back",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };",
+    "old": "      if (key.startsWith('droppedLoot:')) return { title: interiorDropped.labelFor?.(key) ?? lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548; WILD1: a body's remains by its own name",
     "new": "      if (key.startsWith('droppedLoot:')) return { title: 'Loot' };",
     "tests": [
       "test/worldhover.test.js"

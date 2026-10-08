@@ -134,6 +134,8 @@ const governorHost = (over = {}) => {
     csaBoatUnderMe: () => null, gamePaused: () => false, csaHoldsTimeScale: () => d.helm ?? false, resetTimeScale: () => { d.scale = 1; },
     // THE MERGE (NAV-H, NAV-R): the sea fight - none unless a test stands one (its hostile ships, its raiders as ships)
     naval: d.naval ?? null, navalRaidersOn: () => !!d.navalRaiders,
+    // WILD3: the open zone's strangers - none unless a test stands them
+    _wildStrangers: d.strangers ?? [], WILD_STRANGER_SLOW_M: 200,
   };
   const names = Object.keys(scope);
   const body = `

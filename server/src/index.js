@@ -268,6 +268,12 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
+// WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
+// BUNDLE - net/wildLaw.js (a place room's REMAINS: what a body in the open zone dropped, kept here so the room alone
+// decides who takes each record - it imports wire.js alone). bible/11-Multiplayer/Wild-Zone.md.
+import { newRemains, foldFall, takeFrom, remainsWords, remainsLive, remainsTtl, remainsEmpty, remainsEvict, remainsOf, wildRemainsKey, WILD_REMAINS_PREFIX } from '../../src/net/wildLaw.js';
+import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_INTERNAL_RESET, WDUN_INTERNAL_KIN, WDUN_INTERNAL_GONE, wdunRoomKey, wdunHall, WILD_REMAINS_MS as WDUN_PILE_MS } from './relay.js';
+import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants } from '../../src/net/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { sdMarksOf } from '../../src/net/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
@@ -567,6 +573,11 @@ export class Room {
     this._raidDayRolls = new Map(); // RAID-ROLL: the hub's day -> [raid identity] off the kept table - a few days at most
     this._raidTownsUp = new Map();  // RAID-ROLL: the hub's table pieces in flight, a socket's - ws -> { n, parts }
     this._raidCleans = undefined;   // RAID3: the hub's cleansed raids ([key, at, sig] - AUDIT RAID R1), read once - undefined: not read yet
+    this._wdun = null;              // PVPDUNGEONS: the hub's halls record (net/wildLaw.js wdun*) - read once a wake
+    this._wdunSavedAt = 0;          // PVPDUNGEONS: a heartbeat writes at most every WDUN_HERE_MS; a lock, a death, a reset at once
+    this._wdunRate = new WeakMap(); // PVPDUNGEONS: each socket's own bucket for wdun words
+    this._wdunKin = new Map();      // PVPDUNGEONS: a place room's answers from the hub, `taker|owner` -> { kin, at }
+    this._wildLoad = null;          // WILD1: a place room's remains (net/wildLaw.js) - read from storage once an instance life, by its prefix; storage is the truth, written at every change
     this._owLoad = null;            // OW6L: a cell's overworld ledger (net/overworldLaw.js) - the one storage read an instance life, its promise shared by every word and hello that lands while it runs; storage is the truth, written at every change
     this._roomOw = null;            // OW6L: a cell's budget for fanning its ledger's changes (OW_ROOM_HZ_MAX) - on the instance, as the chat's is
     this._herald = undefined;       // DISCORD-GATES: the hub's door to Discord ({hook, role}), read once - undefined: not read yet, null: none (no posts)
@@ -591,6 +602,9 @@ export class Room {
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
     if (path === RAID_INTERNAL_DAY) return this._raidDayInternal(request);   // RAID-ROLL: a cell asking the hub for the day's roll
+    if (path === WDUN_INTERNAL_RESET) return this._wdunResetInternal(request);   // PVPDUNGEONS: the hub wiping a hall's world room
+    if (path === WDUN_INTERNAL_KIN) return this._wdunKinInternal(request);   // PVPDUNGEONS: a place room asking the hub whether two accounts share a party
+    if (path === WDUN_INTERNAL_GONE) return this._wdunGoneInternal(request);   // PVPDUNGEONS: a place room saying a fallen's remains are gone
     if (path === RITE_INTERNAL_BROKEN) return this._riteBrokenInternal(request);   // WB12d: a circle's rite broken, said to the hub
     if (path === RITE_INTERNAL_DAY) return this._riteDayInternal(request);   // WB12d: a breach's room asking the hub for the rite's helpers
     if (path === ARENA_INTERNAL_OPEN) return this._arenaOpenInternal(request);   // ARENA4: the hall opening a matched bout's room
@@ -1690,6 +1704,9 @@ export class Room {
           for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
         } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
+      // WILD1: a place room's remains, after the welcome (a halo's hello too - a body across the seam lies there for me
+      // as well): every live one, in its chunks
+      if (streamsFoes(a.key)) { try { await this._wildHello(ws, Date.now()); } catch (e) { console.warn('[wild] hello failed', e?.message ?? e); } }
       // SD6b: the Orrery's hall as it stands - the stones, the fray, the dial and the Concord - to a soul entering the Hour,
       // after the welcome that resets its session
       if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; } catch (e) { console.warn('[sd] hall word failed', e?.message ?? e); } }
@@ -1961,6 +1978,40 @@ export class Room {
       // the funnel onto the destination, per sender - the duel's shape on slots of its own at the wedding's rate
       if (!this._senderFunnel(tws, a.id, now, 'wein', WED_HZ_MAX)) return;
       this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), ...(typeof a.ci === 'string' && a.ci ? { sc: a.ci } : {}), data: m.data }));
+      return;
+    }
+    if (m.t === 'wdun') {
+      // PVPDUNGEONS: A WORD ON THE ZONE'S HALLS, to the hub alone, from a socket whose social hello named its account (the
+      // verified player, net/social.js) - the lock, the reset and the crows are the hub's, never the client's
+      if (!isSocialRoom(a.key) || !(a.acct || a.sub)) { this._junk(ws); return; }
+      const now = Date.now();
+      const g = tokenGate(this._wdunRate.get(ws) ?? null, now, WDUN_HZ_MAX, 6);
+      this._wdunRate.set(ws, g.bucket);
+      if (!g.pass) return;
+      try { await this._wdunWord(ws, a.acct || a.sub, m, now); } catch (e) { console.warn('[wdun] word failed', e?.message ?? e); }
+      return;
+    }
+    if (m.t === 'wild') {
+      // WILD1: THE OPEN ZONE'S FRAME, from a hello'd socket in a PLACE room (a cell or a world room - a channel, the hub,
+      // an arena or a gate is nowhere a body falls), on its own bucket. DIRECTED (a blow, a fallen's gear, a pick, the
+      // gift): the duel arm's routing - to the socket `to` names in this room alone, the sender's id AND its verified
+      // account stamped on it, the rest unread (wire.js validWildData checked the shape; the DEFENDER resolves every
+      // blow, the FALLEN gives every piece). THE ROOM'S (a deposit, a take): this object keeps the remains and judges
+      // each take (net/wildLaw.js) - the first take of a record wins it.
+      const now = Date.now();
+      if (!this._spend(ws, now, wildGate, 'wildBucket', 'wildDrops', 'too many wild frames')) return;
+      if (!streamsFoes(a.key)) { this._junk(ws); return; }
+      if (wildDirected(m.data)) {
+        const to = m.data.to;
+        if (to === a.id) { this._junk(ws); return; }
+        const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
+        if (!target) return;
+        const [tws] = target;
+        if (!this._senderFunnel(tws, a.id, now, 'wiin', WILD_HZ_MAX)) return;
+        this._send(tws, JSON.stringify({ t: 'wild', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));
+        return;
+      }
+      try { await this._wildWord(ws, a, m.data, now); } catch (e) { console.warn('[wild] word failed', e?.message ?? e); }
       return;
     }
     if (m.t === 'page') {
@@ -5752,6 +5803,198 @@ export class Room {
     if (!kept.length) { await this.state.storage.delete(k); return; }
     if (!Array.isArray(v) || kept.length !== v.length) await this.state.storage.put(k, kept);
     for (const e of kept) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r: e.r }));
+  }
+
+  // ───────────────────────────── WILD1: THE ROOM'S REMAINS ─────────────────────────────
+  /** The room's remains by id (net/wildLaw.js) - read from storage ONCE an instance life (the read's promise shared, the
+   *  overworld ledger's law), the dead ones let go as they are read. */
+  _wildRemains(now) {
+    if (!this._wildLoad) {
+      this._wildLoad = (async () => {
+        const map = new Map();
+        const listed = await this.state.storage.list({ prefix: WILD_REMAINS_PREFIX });
+        const dead = [];
+        for (const [k, v] of listed) {
+          const rec = remainsOf(v);
+          if (rec && remainsLive(rec, now) && !remainsEmpty(rec)) map.set(rec.r, rec); else dead.push(k);
+        }
+        if (dead.length) await this.state.storage.delete(dead);
+        return map;
+      })();
+      this._wildLoad.catch(() => { this._wildLoad = null; });
+    }
+    return this._wildLoad;
+  }
+  /** A word to everyone hello'd in this room. */
+  _wildFan(word) {
+    const out = typeof word === 'string' ? word : JSON.stringify(word);
+    for (const [other, b] of [...this._all()]) if (b.id) this._send(other, out);
+  }
+  /** A remains gone - its key let go, the room told. */
+  async _wildDrop(map, r) {
+    this._wdunTellGone(map.get(r)?.os);   // PVPDUNGEONS: the hub's crows over the hall go with the remains
+    map.delete(r);
+    await this.state.storage.delete(wildRemainsKey(r));
+    this._wildFan({ t: 'wild', k: 'gone', r });
+  }
+  /** The live remains to a socket that just said hello. */
+  async _wildHello(ws, now) {
+    const map = await this._wildRemains(now);
+    for (const rec of [...map.values()]) {
+      if (!remainsLive(rec, now)) { await this._wildDrop(map, rec.r); continue; }
+      for (const w of remainsWords(rec, now)) if (!this._send(ws, JSON.stringify(w))) return;
+    }
+  }
+  /**
+   * A ROOM WORD ON ITS REMAINS. A `fall` makes or fills the sender's own remains (a full room lets its oldest go) and
+   * the kept records are said to the room; a `take` is judged - the record or the part of its stack goes to its taker
+   * alone (`got`), the room hears what left (`rm`), and an emptied remains goes; a take of nothing is answered `no` to
+   * its taker alone (a race lost, a remains gone).
+   */
+  async _wildWord(ws, a, d, now) {
+    const map = await this._wildRemains(now);
+    for (const rec of [...map.values()]) if (!remainsLive(rec, now)) await this._wildDrop(map, rec.r);
+    if (d.k === 'fall') {
+      let rec = map.get(d.r);
+      if (!rec) {
+        const old = remainsEvict(map);
+        if (old) await this._wildDrop(map, old);
+        rec = newRemains({ r: d.r, os: a.sub ?? null, oid: a.id, nm: a.name ?? '', p: d.p, now, gi: a.gi ?? null });   // PVPDUNGEONS: the fallen's guild, so no guildmate takes from it
+        map.set(rec.r, rec);
+      }
+      const kept = foldFall(rec, { oid: a.id, items: d.items, last: d.last });
+      if (!kept) { this._junk(ws); return; }
+      await this.state.storage.put(wildRemainsKey(rec.r), rec);
+      this._wildFan({ t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now), off: kept.off, items: kept.items, end: rec.open ? 0 : 1 });
+      return;
+    }
+    const rec = map.get(d.r);
+    // PVPDUNGEONS (the owner: "Party/guildmembers cant pick it up"): a fallen's remains are theirs and their foes', never
+    // their friends' - a guildmate is read off the sockets' own verified guilds, a party member asked of the hub
+    if (rec && rec.os && a.sub !== rec.os && ((rec.gi && a.gi && rec.gi === a.gi) || (a.sub && await this._wdunKinOf(a.sub, rec.os, now)))) {
+      this._send(ws, JSON.stringify({ t: 'wild', k: 'no', r: d.r, i: d.i }));
+      return;
+    }
+    const got = rec ? takeFrom(rec, d.i, d.n) : null;
+    if (!got) { this._send(ws, JSON.stringify({ t: 'wild', k: 'no', r: d.r, i: d.i })); return; }
+    if (remainsEmpty(rec)) { map.delete(rec.r); await this.state.storage.delete(wildRemainsKey(rec.r)); this._wdunTellGone(rec.os); }
+    else await this.state.storage.put(wildRemainsKey(rec.r), rec);
+    this._send(ws, JSON.stringify({ t: 'wild', k: 'got', r: d.r, i: d.i, it: got.it }));
+    this._wildFan({ t: 'wild', k: 'rm', r: d.r, i: d.i, n: got.n });
+    if (!map.has(d.r)) this._wildFan({ t: 'wild', k: 'gone', r: d.r });
+  }
+
+  // ───────────────────────────── PVPDUNGEONS: THE ZONE'S HALLS (the hub) ─────────────────────────────
+  /** The hub's halls record, read once a wake and pruned as it is read. */
+  async _wdunRec(now) {
+    if (!this._wdun) this._wdun = wdunOf(await this.state.storage.get(WDUN_KEY));
+    const before = JSON.stringify(this._wdun.crows), beforeG = JSON.stringify(this._wdun.giants ?? {});
+    if (wdunPrune(this._wdun, now)) {
+      await this._wdunSave(now, true);
+      if (JSON.stringify(this._wdun.crows) !== before) this._wdunFanCrows(now);
+      if (JSON.stringify(this._wdun.giants ?? {}) !== beforeG) this._wildFan({ t: 'wdun', k: 'gd', giants: wdunGiants(this._wdun, now) });   // ZONE-GIANTS: up again
+    }
+    return this._wdun;
+  }
+  async _wdunSave(now, force = false) {
+    if (!force && now - this._wdunSavedAt < WDUN_HERE_MS) return;
+    this._wdunSavedAt = now;
+    wdunBound(this._wdun);
+    await this.state.storage.put(WDUN_KEY, this._wdun);
+  }
+  _wdunFanCrows(now, who = null) { this._wildFan({ t: 'wdun', k: 'cr', crows: wdunCrows(this._wdun, now), ...(who ? { who } : {}) }); }   // CROW-NEWS: whose death
+  /** One account's word on the halls. */
+  async _wdunWord(ws, acct, m, now) {
+    const st = await this._wdunRec(now);
+    if (m.k === 'hi') { this._send(ws, JSON.stringify(wdunState(st, acct, now))); return; }
+    if (m.k === 'gk') {   // ZONE-GIANTS: a zone giant killed - down for everyone, said to everyone online
+      if (wdunGiantDie(st, m.g, now)) { await this._wdunSave(now, true); this._wildFan({ t: 'wdun', k: 'gd', giants: wdunGiants(st, now) }); }
+      return;
+    }
+    const h = wdunHall(m.h);
+    if (!h) return;
+    if (m.k === 'in') {
+      const r = wdunEnter(st, acct, h, now);
+      if (!r.ok) { this._send(ws, JSON.stringify({ t: 'wdun', k: 'no', h, left: r.left })); return; }
+      if (r.reset) await this._wdunWipe(h);   // stood empty WDUN_RESET_MS: its foes and its loot as they were never touched
+      await this._wdunSave(now, true);
+      this._send(ws, JSON.stringify({ t: 'wdun', k: 'ok', h, ep: r.ep }));
+      return;
+    }
+    if (m.k === 'here') { if (wdunHere(st, acct, h, now)) await this._wdunSave(now); return; }
+    if (m.k === 'out') {
+      const left = wdunLeave(st, acct, h, now);
+      await this._wdunSave(now, true);
+      this._send(ws, JSON.stringify({ t: 'wdun', k: 'lk', h, left }));
+      return;
+    }
+    if (m.k === 'die') {
+      wdunDie(st, acct, h, now, now + WDUN_PILE_MS);
+      await this._wdunSave(now, true);
+      this._send(ws, JSON.stringify({ t: 'wdun', k: 'lk', h, left: st.locks[acct]?.[h] ? st.locks[acct][h] - now : 0 }));
+      this._wdunFanCrows(now, acct);
+    }
+  }
+  /** A hall's world room wiped (the hub asks the room; the room refuses while anyone stands in it). */
+  async _wdunWipe(h) {
+    const key = wdunRoomKey(h), rooms = this.env?.ROOMS;
+    if (!key || !rooms?.idFromName || !rooms?.get) return false;
+    try {
+      const res = await rooms.get(rooms.idFromName(key)).fetch(new Request(`https://relay.internal${WDUN_INTERNAL_RESET}`, { method: 'POST', body: '{}', signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+      return !!res?.ok;
+    } catch (e) { console.warn('[wdun] wipe', h, e?.message ?? e); return false; }
+  }
+  /** The room's side of the wipe: its stored world forgotten, unless someone is hello'd in it. */
+  async _wdunResetInternal(_request) {
+    for (const [, b] of this._all()) if (b.id) return json({ ok: false, why: 'occupied' }, 409);
+    const m = await this.state.storage.list({ prefix: 'world:' });
+    const dead = [...m.keys()];
+    this._worldMemo = undefined;
+    for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
+    return json({ ok: true, wiped: dead.length });
+  }
+  /** The hub's answer: do accounts `a` and `b` share a party? */
+  async _wdunKinInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const a = typeof body?.a === 'string' ? body.a : null, b = typeof body?.b === 'string' ? body.b : null;
+    if (!a || !b || a.length > 128 || b.length > 128) return json({ error: 'bad kin' }, 400);
+    const [ra, rb] = [await this._acct(a), await this._acct(b)];
+    return json({ kin: !!(ra?.party && rb?.party && ra.party === rb.party) });
+  }
+  /** A place room's question to the hub, kept a minute per pair (a fat remains is many takes). */
+  async _wdunKinOf(taker, owner, now) {
+    const key = `${taker}|${owner}`, had = this._wdunKin.get(key);
+    if (had && now - had.at < 60_000) return had.kin;
+    let kin = false;
+    const rooms = this.env?.ROOMS;
+    if (rooms?.idFromName && rooms?.get) {
+      try {
+        const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${WDUN_INTERNAL_KIN}`, { method: 'POST', body: JSON.stringify({ a: taker, b: owner }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+        kin = !!(res?.ok && (await res.json())?.kin);
+      } catch (e) { console.warn('[wdun] kin', e?.message ?? e); }
+    }
+    if (this._wdunKin.size > 512) this._wdunKin.clear();
+    this._wdunKin.set(key, { kin, at: now });
+    return kin;
+  }
+  /** A remains gone in this room - the hub told, so the hall's crows go when no other body lies in it. Unawaited. */
+  _wdunTellGone(os) {
+    if (!os) return;
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return;
+    const p = rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${WDUN_INTERNAL_GONE}`, { method: 'POST', body: JSON.stringify({ os }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+    p.catch((e) => console.warn('[wdun] gone', e?.message ?? e));
+    try { this.state.waitUntil?.(p); } catch { /* not every runtime */ }
+  }
+  async _wdunGoneInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    if (typeof body?.os !== 'string' || body.os.length > 128) return json({ error: 'bad gone' }, 400);
+    const now = Date.now();
+    const st = await this._wdunRec(now);
+    if (wdunGone(st, body.os, now)) { await this._wdunSave(now, true); this._wdunFanCrows(now); }
+    return json({ ok: true });
   }
 
   // ───────────────────────────── OW6L: THE OVERWORLD'S LEDGER ─────────────────────────────

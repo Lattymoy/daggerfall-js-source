@@ -142,8 +142,8 @@
   {
     "name": "OW4-J3-ground-read-every-click",
     "file": "src/scenes/world.js",
-    "old": "const tvRouteGround = () => { (_tvRouteGround ??= routeGround(",
-    "new": "const tvRouteGround = () => { (_tvRouteGround = routeGround(",
+    "old": "    (_tvRouteGround ??= routeGround(",
+    "new": "    (_tvRouteGround = routeGround(",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],

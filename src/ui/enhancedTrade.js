@@ -37,7 +37,7 @@
 // letters when that picture is unavailable, and never blocks on it.
 
 import { BAG_WORDS } from '../net/bagLaw.js';   // BAG1
-import { itemLine, linePicture, markItemFrame, wearBar } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
+import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
 import { SLOT_BOX } from './iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from './textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -705,6 +705,7 @@ function dismissBox(yes) {
 }
 
 function close() {
+  hideItemHover();   // SHOP-HOVER: a card never outlives the row it was for
   // OnPop's ClearSelectedItems (nativeTrade.js's own `_close`): every
   // exit from this screen puts back whatever is still staged. `onExit`
   // is ui/tradeDoor.js's own teardown - the host's `hooks.onClose` is
@@ -797,6 +798,10 @@ function itemRow(item, from) {
     const when = repairWhen(item, now);
     if (when) row.append(el('span', `itemrepair${when.done ? ' done' : ''}`, when.text));
   }
+  // SHOP-HOVER: the pack's own hover card over every row of both lists - the piece's stats, its affixes, its set and
+  // what it would change against what is worn - the shelf's and my own alike (systems' one infoCard)
+  row.onmouseenter = () => { tile.removeAttribute?.('title'); showItemHover(item, { entity: deps.entity, getQuest: deps.getQuest ?? null }, row, from === 'local' ? 'local' : 'shop'); };
+  row.onmouseleave = () => hideItemHover();
   if (selected?.item === item) row.classList.add('picked');
   // A single click reads the item (the tooltip strip below the lists);
   // a double click - or the footer's primary button, reaching for
@@ -959,6 +964,7 @@ function boxScrim() {
 }
 
 function render() {
+  hideItemHover();   // SHOP-HOVER: a card never outlives the row it was for
   if (!host) return;
   // The scroll position of each list-column, captured before the
   // rebuild below throws them away - render() runs on EVERY state
@@ -985,8 +991,12 @@ function render() {
   const lists = el('div', 'packlists');
   lists.append(localCol(), remoteCol());
   body.append(lists);
-  const detail = detailStrip();
-  if (detail) body.append(detail);
+  // TRADE-STEADY (2026-10-08, the owner: "when you click on an item a bar with info appears.... its super annoying when you
+  // try to sell the buttom items cause clicking them causes the bar to appear over them"): the strip's room is ALWAYS
+  // kept under the lists - empty until a click, filled after - so a click never shrinks the lists and moves the row
+  // under the pointer away (the double click that sells it then landed on another row, or on nothing)
+  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', 'Click an item to see it and its price here - double-click to move it.')); return b; })();
+  body.append(detail);
   win.append(body);
   win.append(footer());
 
