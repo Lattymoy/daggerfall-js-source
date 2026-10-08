@@ -38,7 +38,7 @@
   {
     "name": "SD15-the-shade-ignored",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar(atk.x, atk.z, x, z);",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar(atk.x, atk.z, x, z));",
     "new": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active);",
     "tests": [
       "test/sd15_read.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "SD15-the-beams-past-read",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar",
-    "new": "handSwept(atk, x, z, atk.at, atk.at + S.active) && !behindPillar",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar",
+    "new": "handSwept(atk, x, z, atk.at, atk.at + S.active) && (over || !behindPillar",
     "tests": [
       "test/sd15_read.test.js"
     ]

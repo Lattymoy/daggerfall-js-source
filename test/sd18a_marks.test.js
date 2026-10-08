@@ -87,7 +87,7 @@ test('SD18a THE FIGHT\'S PROFILE: with no marks the table\'s own, frame for fram
   assert.deepEqual([P('wayrest').hpX, P('wayrest').endsMs], [1.25, 12 * 60_000], 'the Brazen Hide, the Short Hour');
   const Q = sdFightProfile(['sentinel', 'quickened', 'burning']);
   assert.deepEqual([Q.windX, Q.pool.ms, Q.pool.r], [0.85, 18_000, 4], 'the Quickened Gears; Sunfall and the Burning Brass together');
-  assert.deepEqual([sdFightProfile(['blades', 'hardened', 'fraying']).heartX, sdFightProfile(['blades', 'hardened', 'fraying']).fray], [1.5, 36]);
+  assert.deepEqual([sdFightProfile(['blades', 'hardened', 'fraying']).heartX, sdFightProfile(['blades', 'hardened', 'fraying']).fray], [1.25, 36]);   // PIN MOVED (AUDIT SD III F5): the Hardened Hearts a quarter again, from half again
   assert.deepEqual([sdFightProfile(['blades', 'restless', 'unending']).pulseStep, sdFightProfile(['blades', 'restless', 'unending']).resetMs, sdFightProfile(['blades', 'twin', 'short']).pairHandMs], [0.04, 40_000, 10_000]);
   assert.equal(sdFightProfile(['blades', 'twin', 'short']), sdFightProfile(['blades', 'twin', 'short']), 'kept');
   assert.ok(Object.isFrozen(Q) && Object.isFrozen(Q.pool));
@@ -149,14 +149,14 @@ test('SD18a THE LAW UNDER ITS MARKS: the Brazen Hide\'s health; the Short Hour; 
   assert.equal(E.h, 0, 'down at 9.9 s');
   stepRemnant(bl, downAt + 10_000, ringOf(bl), seeded(3));
   assert.ok(E.h > 0, 'risen again at 10 s');
-  // the Hardened Hearts: half again; the Unending Reset: forty seconds on from its return
+  // the Hardened Hearts: a quarter again (AUDIT SD III F5 - half again before it); the Unending Reset: forty seconds on from its return
   const hh = fightOf(['blades', 'hardened', 'unending']);
   hh.hp = SD_PHASE_AT[1] * hh.max - 1; hh.phase = 2;
   hh.ec = [0, 1].map((e) => ({ e, h: 0, m: 1, up: T0, downAt: T0, body: { x: 0, z: 0, yw: 0, mv: null, atk: null } }));   // both Echoes down: the Last Moment next beat
   const words = beatTo(hh, T0, hh.op + 60_000, () => ringOf(hh));
   const ph3 = words.find((x) => x.k === 'ph' && x.n === 3), cx = words.find((x) => x.k === 'cx');
   assert.ok(ph3 && cx, 'the Last Moment, the Hearts');
-  assert.equal(cx.m, Math.round(heartHpFor(Array(4).fill(30), heartCountFor(4)) * 1.5));
+  assert.equal(cx.m, Math.round(heartHpFor(Array(4).fill(30), heartCountFor(4)) * 1.25));   // PIN MOVED (AUDIT SD III F5)
   const reset = words.find((x) => x.k === 'atk' && x.a === SD_BLOWS.reset.id);
   assert.ok(reset.now >= ph3.up + 40_000 && reset.now < ph3.up + SD_RESET_EVERY_MS, `forty seconds from its return (its blow in flight let land first): ${reset.now - ph3.up}`);
   assert.equal(reset.at - reset.now, SD_BLOWS.reset.windup, 'the Reset\'s own wind-up, never quickened');

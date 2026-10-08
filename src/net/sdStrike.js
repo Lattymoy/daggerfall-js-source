@@ -9,7 +9,7 @@
 //   THE STOMP - its disc as it lands (`r` about its feet); then its ring rolling out to `r1`: a body ON THE GROUND as the
 //     front's centre crosses it is struck (a body in the air lets it pass under) - each part once a blow.
 //   THE HOUR-HAND - its beam sweeping a half-circle over its span: struck as it passes over me, within its length -
-//     unless a pillar stands between me and where it was cast from.
+//     unless a pillar stands between me and where it was cast from, and I below its top (AUDIT SD III, F8).
 //   THE GEAR VOLLEY - a disc at each mark as it lands (one strike however many meet me); the brass then burns there
 //     (`pool`), a bite each POOL_TICK_MS I stand in it, the first a tick after I stepped in (the gate's law).
 //   THE HOUR'S OWN - the Mantella Pulse (pulsePct of its count), the Reset as it lands (its Hearts left standing - a
@@ -17,7 +17,8 @@
 //
 // A landing this screen first sees later than SD_STRIKE_LATE_MS after it is not judged (a hidden tab, a stalled frame -
 // the gate's AUDIT WB B7 law): the relay never learns who was struck, and a stale verdict would be a blow nobody saw. Nor
-// a rolling part (the ring, the beam) over a span that ends SD_STRIKE_LATE_MS past it (AUDIT SD II, L4 F6).
+// a rolling part (the ring, the beam) over a span that ends SD_STRIKE_LATE_MS past it (AUDIT SD II, L4 F6). AUDIT SD III
+// (F3): save the Hour's own, which strike the whole arena - no place to misjudge, so no lateness lets one pass.
 //
 // SD18a: every number is the blow's own as its frame says it (net/sdRemnant.js blowShape - its Hollow's marks), and a
 // strike of the Remnant's or an Echo's own blow, or of the brass one leaves burning, carries its Ending's element (`el`).
@@ -34,12 +35,12 @@ const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
  * ONE BLOW JUDGED over the span `t0`..`t1` on me at (px, pz) - the strikes it lands (`hits`, each `{ part, pct, base }`
  * - a share of my own maximum health and a base, net/gateStrike.js strikeDamage), what of it has been judged (`seen`,
  * carried from the frame before), and whether it is DONE (nothing of it can strike me again). `grounded`: I stand on the
- * ground this frame.
+ * ground this frame; `over`: my feet on or over a pillar's top (net/sdRemnant.js SD_PILLAR_OVER_Y) - no pillar shades me.
  * @param {any} atk a blow as the page holds it ({a, at, x, z, yw, tg, sw?, n?}) @param {number} px @param {number} pz
- * @param {number} t0 @param {number} t1 @param {boolean} grounded @param {Record<string, boolean>} [seen]
+ * @param {number} t0 @param {number} t1 @param {boolean} grounded @param {Record<string, boolean>} [seen] @param {boolean} [over]
  * @returns {{ hits: Array<{part: string, pct: number, base: number, el?: string}>, seen: Record<string, boolean>, done: boolean }}
  */
-export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
+export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}, over = false) {
   const A = atk ? SD_BLOW_BY_ID[atk.a] : null;
   const hits = [], out = { ...seen };
   if (!A) return { hits, seen: out, done: true };
@@ -75,7 +76,7 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
       return { hits, seen: out, done: t1 > end };
     }
     case 'sweep': {
-      if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && !behindPillar(atk.x, atk.z, px, pz)) {
+      if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && (over || !behindPillar(atk.x, atk.z, px, pz))) {
         out.beam = true;
         hits.push({ part: 'beam', pct: A.pct, base: A.base, ...el });
       }
@@ -87,7 +88,14 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
     }
     case 'all': {
       const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;   // SD18a: a Restless Pulse's own step
-      if (landing('all') && inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base });   // AUDIT SD II (L4 C2): never the Steps
+      // AUDIT SD III (F3): THE WHOLE ARENA'S BLOWS ARE JUDGED HOWEVER LATE. Through the late law (above) a tab hidden
+      // across a Pulse's landing first saw it past SD_STRIKE_LATE_MS and was never struck - Ctrl+Tab and back through 70%
+      // of everyone's health, no save. A blow of the whole arena has no geometry a late frame could misjudge: a hidden page
+      // does not move, so where I stand when I first see it is where I stood when it landed - and it lands then, once.
+      if (!out.all) {
+        out.all = true;
+        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base });   // AUDIT SD II (L4 C2): never the Steps
+      }
       return { hits, seen: out, done: true };
     }
     default: return { hits, seen: out, done: true };

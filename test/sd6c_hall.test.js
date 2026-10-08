@@ -353,7 +353,7 @@ test('SD6c the hosts by source: the dungeon host stands the hall in the Hour alo
   assert.match(W, /sdHallWord: \(\) => host\.sdHallWord\?\.\(\) \?\? null,/);
   const w = read('src/scenes/world.js');
   assert.match(w, /online\.onSdHall = \(w\) => sdHallHeard\(w\);/);
-  assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);
+  assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdArenaHeld\(\) \? _realmArenaHeld : sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);   // AUDIT SD III (F2, PIN MOVED): the arena's rim first, for a fighter it holds
   assert.match(w, /const _realmArenaBridged = realmArena\(\[\.\.\.SD_REALM_FLOORS, \.\.\.SD_HALL_FLOORS, \.\.\.SD_STEPS_FLOORS\]\);/);   // SD7b (PIN MOVED): and the Steps' band and the arena
   assert.match(w, /sdTurn: \(i, a\) => !!online\?\.sendSdTurn\?\.\(i, a\),/);
   assert.match(w, /sdHallWord: \(\) => sdHallWord\(\),/);

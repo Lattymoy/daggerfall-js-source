@@ -19,7 +19,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { setBossStruck } from '../systems/sigilSetPowers.js';   // AUDIT SD: a body's blow, marked for Gearward
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, atkWindup, blowShape, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_PILLAR_OVER_Y, atkWindup, blowShape, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
 import { strikeDamage, savedShare } from '../net/gateStrike.js';
 import { sdBodyAt, SD_HEARTS_KEY } from '../net/sdFightLink.js';
@@ -195,6 +195,7 @@ export function sdBlowsInFlight(s) {
  */
 export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100 }) {
   let pass = null, passTried = false;
+  let feetOver = false;   // AUDIT SD III (F8): my feet on or over a pillar's top this frame
   /** each blow by its number: what of it has been judged, whether it is done, heard and said */
   const marks = new Map();
   let prevT = null, pools = [], inFire = false, burnAt = -Infinity, outAt = -Infinity, fireEl = null;
@@ -228,7 +229,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });
   }
   /** One blow's frame: heard at its word and its landing, the Reset and the End said, judged on my feet. */
-  function blow(s, b, atk, t, t0, at) {
+  function blow(s, b, atk, t, t0, at, over = false) {
     const A = SD_BLOW_BY_ID[atk.a];
     if (!A) return;
     let m = marks.get(atk.i);
@@ -247,7 +248,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       }
     }
     if (m.done || !at) return;
-    const v = sdBlowVerdict(atk, at[0], at[1], t0, t, grounded(), m.seen);
+    const v = sdBlowVerdict(atk, at[0], at[1], t0, t, grounded(), m.seen, over);
     m.seen = v.seen;
     m.done = v.done;
     for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);
@@ -324,10 +325,14 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
       let at = null;
-      if (alive) { const [rx, , rz] = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(rx, rz); }
+      // AUDIT SD III (F4): A BLOW STRIKES A FIGHTER - a page the realm counted in this fight. The Hour's End throws its 99%
+      // every two seconds for half a minute, and a page that walked into the arena in that tail - its `in` refused, the fight
+      // closed to it - was struck dead by a fight it could never join: with one life a Hollow, the slot gone for good. A page
+      // not counted is shown every blow and judged by none (nor by the brass); one in the fight is judged as ever.
+      if (alive && link.counted()) { const [rx, ry, rz] = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(rx, rz); feetOver = ry >= SD_PILLAR_OVER_Y; } else feetOver = false;   // AUDIT SD III (F8): on or over a pillar's top, no pillar shades me
       const out = [];
       for (const { b, atk } of sdBlowsInFlight(s)) {
-        blow(s, b, atk, t, t0, alive ? at : null);
+        blow(s, b, atk, t, t0, alive ? at : null, feetOver);
         sdTelegraphShapes(atk, b, s.ph, t, out);
       }
       burn(t, at, alive && !s.fell);
@@ -351,10 +356,12 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     /** Out of the Hour: its marks and its brass forgotten, the chart put away. */
     /** SD15: whether I stand in the burning brass this frame (the arena read's rim). */
     burning: () => inFire,
+    /** AUDIT SD III (F8): whether my feet stood on or over a pillar's top this frame - the read's shade is the verdict's. */
+    over: () => feetOver,
     /** SD18b: the element of the brass I stand in (null: plain fire, or none). */
     burningEl: () => (inFire ? fireEl : null),
     leave() {
-      marks.clear(); pools = []; inFire = false; prevT = null; shapes = [];
+      marks.clear(); pools = []; inFire = false; prevT = null; shapes = []; feetOver = false;
       marksFi = 0; fellFi = 0; endSaid = 0;   // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again
       heartsOf = null;
       if (chartAt !== null) { chartAt = null; drawGateDamageChart(null); }

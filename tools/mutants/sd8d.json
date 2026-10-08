@@ -38,7 +38,7 @@
   {
     "name": "SD8D-the-pillars-shade-forgotten",
     "file": "src/net/sdStrike.js",
-    "old": " && !behindPillar(atk.x, atk.z, px, pz)) {",
+    "old": " && (over || !behindPillar(atk.x, atk.z, px, pz))) {",
     "new": ") {",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "SD8D-the-arena-reaching-the-steps",
     "file": "src/net/sdStrike.js",
-    "old": "      if (landing('all') && inArena(px, pz, SD_ARENA_SLACK)) hits.push(",
-    "new": "      if (landing('all')) hits.push(",
+    "old": "        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push(",
+    "new": "        if (true) hits.push(",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]

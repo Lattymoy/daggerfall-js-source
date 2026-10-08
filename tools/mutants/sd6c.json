@@ -245,8 +245,8 @@
   {
     "name": "SD6C-the-lash-shielded",
     "file": "src/scenes/world.js",
-    "old": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true });",
-    "new": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg);",
+    "old": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
+    "new": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { spare: () => {} });",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD6C-the-edge-never-widened",
     "file": "src/scenes/world.js",
-    "old": "player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;",
-    "new": "player.arena = _realmArena;",
+    "old": "sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "new": "_realmArena;",
     "tests": [
       "test/sd6c_hall.test.js"
     ]

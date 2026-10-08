@@ -29,7 +29,7 @@
   {
     "name": "SD8A-the-pulse-unchanging",
     "file": "src/net/sdRemnant.js",
-    "old": "export const pulsePct = (n) => SD_PULSE_PCT + SD_PULSE_STEP * Math.max(0, Math.floor(Number(n) || 0));",
+    "old": "export const pulsePct = (n) => pulseStepPct(SD_PULSE_STEP, n);",
     "new": "export const pulsePct = (n) => SD_PULSE_PCT;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "SD8A-the-reset-never",
     "file": "src/net/sdRemnant.js",
-    "old": "    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt) {",
+    "old": "    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {",
     "new": "    if (false) {",
     "tests": [
       "test/sd8a_remnant.test.js"

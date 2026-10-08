@@ -276,8 +276,8 @@
   {
     "name": "SD11E-C2-struck-on-the-steps",
     "file": "src/net/sdStrike.js",
-    "old": "if (landing('all') && inArena(px, pz, SD_ARENA_SLACK))",
-    "new": "if (landing('all') && inArena(px, pz, 3))",
+    "old": "if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all'",
+    "new": "if (inArena(px, pz, 3)) hits.push({ part: 'all'",
     "tests": [
       "test/sd11e_laws.test.js"
     ]

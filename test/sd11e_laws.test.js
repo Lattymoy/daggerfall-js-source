@@ -321,7 +321,7 @@ test('SD11e NOBODY ON THE STEPS (L4 C2): the arena\'s own slack keeps every poin
   assert.equal(f.players.a.seenAt, T0, 'not seen from the Steps');
   const R = read('server/src/index.js');
   assert.match(R, /if \(!inArena\(at\.x, at\.z, SD_ARENA_SLACK\)\) return;\s+\/\/ from the arena alone/);
-  assert.match(read('src/net/sdStrike.js'), /if \(landing\('all'\) && inArena\(px, pz, SD_ARENA_SLACK\)\)/);
+  assert.match(read('src/net/sdStrike.js'), /if \(inArena\(px, pz, SD_ARENA_SLACK\)\) hits\.push\(\{ part: 'all', pct, base: A\.base \}\);/);   // PIN MOVED (AUDIT SD III F3): the whole arena's blow judged however late - still on the arena's own slack
 });
 
 // ── the words and the comments (L4 C4, C5, C6; the docs lens) ──────────

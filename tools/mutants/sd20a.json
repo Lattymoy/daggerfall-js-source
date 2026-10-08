@@ -1,0 +1,273 @@
+[
+  {
+    "name": "SD20A-F1-no-ceiling",
+    "file": "src/net/sdRemnant.js",
+    "old": "const pulseStepPct = (step, n) => Math.min(SD_PULSE_MAX, SD_PULSE_PCT + step * Math.max(0, Math.floor(Number(n) || 0)));",
+    "new": "const pulseStepPct = (step, n) => SD_PULSE_PCT + step * Math.max(0, Math.floor(Number(n) || 0));",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F1-the-wire-past-it",
+    "file": "src/net/sdRemnant.js",
+    "old": "(atk?.sh?.ps != null ? pulseStepPct(atk.sh.ps, atk.n) :",
+    "new": "(atk?.sh?.ps != null ? SD_PULSE_PCT + atk.sh.ps * Math.max(0, Math.floor(Number(atk.n) || 0)) :",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F1-the-ceiling-whole",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_PULSE_MAX = 0.75;",
+    "new": "export const SD_PULSE_MAX = 1;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F1-the-omens-old-words",
+    "file": "src/net/sdMarks.js",
+    "old": "text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.'",
+    "new": "text: 'Each Mantella Pulse strikes harder than the last by twice as much.'",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F2-held-whoever-stands-there",
+    "file": "src/world/sdRealm.js",
+    "old": "export const arenaHolds = (joined, x, z) => !!joined && Number.isFinite(x)",
+    "new": "export const arenaHolds = (joined, x, z) => Number.isFinite(x)",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F2-held-from-anywhere",
+    "file": "src/world/sdRealm.js",
+    "old": "Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;",
+    "new": "Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= Infinity;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F2-the-band-held-too",
+    "file": "src/world/sdRealm.js",
+    "old": "export const SD_ARENA_FLOORS = Object.freeze([Object.freeze({ kind: 'disc', ...SD_ARENA })]);",
+    "new": "export const SD_ARENA_FLOORS = Object.freeze([Object.freeze({ kind: 'disc', ...SD_ARENA }), Object.freeze({ kind: 'band', x: 0, z0: 0, z1: SD_ARENA.z, halfW: 40 })]);",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F2-never-held",
+    "file": "src/scenes/world.js",
+    "old": "    return arenaHolds(true, x, z);",
+    "new": "    return false;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F2-the-hosts-choice-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere()",
+    "new": "player.arena = sdConcordHere()",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-the-late-law-over-the-hours-own",
+    "file": "src/net/sdStrike.js",
+    "old": "      if (!out.all) {\n        out.all = true;\n",
+    "new": "      if (landing('all')) {\n",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-struck-twice",
+    "file": "src/net/sdStrike.js",
+    "old": "      if (!out.all) {\n        out.all = true;\n",
+    "new": "      {\n        out.all = true;\n",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-never-stale",
+    "file": "server/src/index.js",
+    "old": "      if (now - (b.pAt ?? b.since ?? 0) > SD_POSE_FRESH_MS) continue;\n",
+    "new": "",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-never-stamped",
+    "file": "server/src/index.js",
+    "old": ", ...(isSdRoom(a.key) ? { pAt: now } : {}) }",
+    "new": ", }",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-stamped-everywhere",
+    "file": "server/src/index.js",
+    "old": ", ...(isSdRoom(a.key) ? { pAt: now } : {}) }",
+    "new": ", pAt: now }",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-the-window-a-minute",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_POSE_FRESH_MS = 25_000;",
+    "new": "export const SD_POSE_FRESH_MS = 60_000;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F3-the-census-at-another-instant",
+    "file": "server/src/index.js",
+    "old": "stepRemnant(f, now, this._sdFightBodies(f, now), rand01)",
+    "new": "stepRemnant(f, now, this._sdFightBodies(f), rand01)",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F4-every-page-judged",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (alive && link.counted()) {",
+    "new": "if (alive) {",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F5-hardened-half-again",
+    "file": "src/net/sdMarks.js",
+    "old": "law: Object.freeze({ heartX: 1.25 })",
+    "new": "law: Object.freeze({ heartX: 1.5 })",
+    "tests": [
+      "test/sd20a_fight.test.js",
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F6-the-pulse-through-the-reset",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (R && f.pulseAt < R.at + SD_PULSE_CLEAR_MS) f.pulseAt = R.at + SD_PULSE_CLEAR_MS;\n    else {",
+    "new": "    {",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F6-the-reset-inside-the-pulse",
+    "file": "src/net/sdRemnant.js",
+    "old": " && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {",
+    "new": ") {",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F6-no-clearance",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_PULSE_CLEAR_MS = 4000;",
+    "new": "export const SD_PULSE_CLEAR_MS = 0;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F7-the-old-keep",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_REM = Object.freeze({ r: 2.2, h: 7.2, speed: 2.6, keep: 19 });",
+    "new": "export const SD_REM = Object.freeze({ r: 2.2, h: 7.2, speed: 2.6, keep: 18 });",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F10-the-void-kills",
+    "file": "src/scenes/world.js",
+    "old": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
+    "new": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true });",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F10-the-lash-kills",
+    "file": "src/scenes/world.js",
+    "old": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
+    "new": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true });",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F8-the-top-shaded",
+    "file": "src/net/sdStrike.js",
+    "old": "(over || !behindPillar(atk.x, atk.z, px, pz))",
+    "new": "!behindPillar(atk.x, atk.z, px, pz)",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F8-the-rig-never-over",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "feetOver = ry >= SD_PILLAR_OVER_Y;",
+    "new": "feetOver = false;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F8-the-read-shaded",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "(over || !behindPillar(atk.x, atk.z, x, z))",
+    "new": "!behindPillar(atk.x, atk.z, x, z)",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F8-the-host-never-tells-it",
+    "file": "src/scenes/world.js",
+    "old": "cam.yaw, !!sdBlows?.over?.()) : null;",
+    "new": "cam.yaw, false) : null;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F8-over-from-the-floor",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_PILLAR_OVER_Y = SD_PILLAR_H - 0.5;",
+    "new": "export const SD_PILLAR_OVER_Y = 0;",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  },
+  {
+    "name": "SD20A-F9-the-old-floor",
+    "file": "src/net/sdRemnant.js",
+    "old": "return Math.max(Math.min(SD_HEART.min, Math.round(team)), ",
+    "new": "return Math.max(SD_HEART.min, ",
+    "tests": [
+      "test/sd20a_fight.test.js"
+    ]
+  }
+]

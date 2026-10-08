@@ -272,7 +272,7 @@ import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERN
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { sdMarksOf } from '../../src/net/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
 import { orreryOf, orreryStep, orreryLit, orreryFresh, orreryTurn, orreryShortest, orreryRightsFresh, orreryTurnerOf, orreryMayTurn, orreryTurned, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
-import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
+import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS, SD_POSE_FRESH_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
 import { mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S } from '../../src/net/sdReceipt.js';   // SD9a: the Hour's receipt - minted at the Remnant's fall, kept by the hub
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
@@ -2411,7 +2411,7 @@ export class Room {
       if (battle && !this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses')) return;
       const step = battle ? await this._siegeStep(ws, a, m.p, now) : null;
       if (battle && !step) return;
-      const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {};
+      const turned = posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}), ...(isSdRoom(a.key) ? { pAt: now } : {}) } : {};   // AUDIT SD III (F3): an Hour's pose, stamped - the fight's census reads its age
       const met = battle ? this._metered(ws, a, true, { pose: m.p }, turned) : this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, turned, posed && !stopped);   // SCALE2b: a pose's write is lazy - a stop's is not, it is where the player stands
       if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
@@ -5010,11 +5010,13 @@ export class Room {
   /** A pose of the dungeon's frame in the arena's (net/sdBrain.js dungeonToRealm, net/sdRemnant.js arenaOf). */
   _arenaPoseOf(p) { const [x, , z] = dungeonToRealm(p.x, p.y ?? 0, p.z); const [ax, az] = arenaOf(x, z); return { x: ax, z: az }; }
   /** The fight's bodies in the realm now - one a fighter, its NEWEST socket speaking for it (the gate's law): where its
-   *  last pose stands in the arena's frame, and whether that pose says it died. */
-  _sdFightBodies(f) {
+   *  last pose stands in the arena's frame, and whether that pose says it died. AUDIT SD III (F3): a pose older than
+   *  SD_POSE_FRESH_MS (its hello's time until it has posed) speaks for no body - a frozen page is absent, not standing. */
+  _sdFightBodies(f, now = Date.now()) {
     const newest = new Map();
     for (const [, b] of this._all()) {
       if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
+      if (now - (b.pAt ?? b.since ?? 0) > SD_POSE_FRESH_MS) continue;
       const had = newest.get(b.sub);
       if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
     }
@@ -5118,7 +5120,7 @@ export class Room {
     if (!f || f.lost || (f.said && f.told)) return false;
     const now = Date.now();
     try {
-      this._sdFightFan(stepRemnant(f, now, this._sdFightBodies(f), rand01));
+      this._sdFightFan(stepRemnant(f, now, this._sdFightBodies(f, now), rand01));
       if (f.fell && !f.said) await this._sdFightFall(f, now);
       else if (f.said && !f.told) await this._sdTellFellOnce(f, now);
       await this._sdFightSave(f, now, !!f.lost);

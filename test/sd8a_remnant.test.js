@@ -53,7 +53,8 @@ test('SD8a THE NUMBERS: a share of 420 s of reference damage x 1.25; the phases 
   assert.deepEqual([0, 1, 2, 3, 4, 5, 9, 10, 11, 40].map(heartCountFor), [3, 3, 4, 4, 5, 5, 7, 8, 8, 8]);
   assert.deepEqual(SD_HEARTS, [3, 8]);
   assert.equal(heartHpFor([30, 30, 30, 30], 5), Math.round((3 * 4 * dpsRef(30)) / 5));
-  assert.equal(heartHpFor([1], 8), SD_HEART.min, 'never less than its floor');
+  assert.equal(heartHpFor([30], 8), SD_HEART.min, 'never less than its floor');
+  assert.equal(heartHpFor([1], 8), dpsRef(1), 'its floor never more than one second of the living\'s damage');   // AUDIT SD III (F9, PIN MOVED): it was SD_HEART.min for anyone
   assert.equal(pulsePct(0), 0.12); assert.ok(near(pulsePct(1), 0.14)); assert.ok(near(pulsePct(29), 0.7));
   assert.equal(SD_PULSE_PCT, 0.12); assert.equal(SD_PULSE_STEP, 0.02); assert.equal(SD_PULSE_EVERY_MS, 30_000);
   assert.equal(SD_ENDS_MS, 900_000); assert.equal(SD_END_EVERY_MS, 2000); assert.equal(SD_END_PCT, 0.99);

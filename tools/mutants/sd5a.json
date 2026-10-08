@@ -182,8 +182,8 @@
   {
     "name": "SD5A-the-edge-lost",
     "file": "src/scenes/world.js",
-    "old": "    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;",
-    "new": "    if (false) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "old": "    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "new": "    if (false) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;",
     "tests": [
       "test/sd5a_realm.test.js"
     ]

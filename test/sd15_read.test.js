@@ -142,7 +142,7 @@ test('SD15 THE HOUR\'S CARD - in brass, never Dagon\'s red: one node made on the
   drawSdTitleCard(titleCardModel(beat, 1500), { doc, hidden: true });
   assert.equal(root.style.display, 'none', 'hidden with the HUD');
   destroySdTitleCard();
-  assert.match(W, /const peril = playerEntity\.health > 0 \? sdPerilAt\(s, now, x - SD_ARENA\.x, z - SD_ARENA\.z, cam\.yaw\) : null;/);
+  assert.match(W, /const peril = playerEntity\.health > 0 \? sdPerilAt\(s, now, x - SD_ARENA\.x, z - SD_ARENA\.z, cam\.yaw, !!sdBlows\?\.over\?\.\(\)\) : null;/);   // AUDIT SD III (F8, PIN MOVED): the read told whether I stand over a pillar's top
   assert.match(W, /ground = sdGroundModel\(\{ burning: !!sdBlows\?\.burning\?\.\(\), el: sdBlows\?\.burningEl\?\.\(\) \?\? null, now, peril \}\);/);   // SD18b (PIN MOVED): in its element
   assert.match(W, /const beat = sdBeats\.frame\(s, now\);\n\s*card = beat \? titleCardModel\(beat, now\) : null;\n\s*\} else sdBeats\.leave\(\);/);
   assert.match(W, /if \(ground \|\| _sdGroundUp\) \{ drawGateGround\(ground, \{ hidden \}\); _sdGroundUp = !!ground; \}/);
@@ -155,7 +155,7 @@ test('SD15 THE BURNING BRASS FELT: the blows say whether my feet stand in a Voll
   const V = SD_BLOWS.volley;
   const s = fight({ rem: { x: 0, z: 0, yw: 0, atk: atk(V, T + 100, { tg: [[3, 4]] }) } });
   let feet = realmToDungeon(SD_ARENA.x + 3, 0, SD_ARENA.z + 4);
-  const blows = createSdRemnantBlows({ link: { state: () => s, now: () => t }, feet: () => feet, player: () => ({ health: 100, maxHealth: 100 }), strike: () => {} });
+  const blows = createSdRemnantBlows({ link: { state: () => s, now: () => t, counted: () => true }, feet: () => feet, player: () => ({ health: 100, maxHealth: 100 }), strike: () => {} });   // AUDIT SD III (F4): a page the realm counted - a fighter
   blows.frame(); t += 150; blows.frame(); t += 50; blows.frame();
   assert.equal(blows.burning(), true, 'in it');
   feet = realmToDungeon(SD_ARENA.x - 9, 0, SD_ARENA.z - 9); t += 50; blows.frame();

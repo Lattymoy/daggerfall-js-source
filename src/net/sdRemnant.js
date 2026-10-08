@@ -42,7 +42,7 @@
 // The fight's frame is the ARENA's: its centre the origin, the realm's axes (net/sdBrain.js SD_ARENA; arenaOf).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_FRAY_MAX } from './sdBrain.js';
+import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_PILLAR_H, SD_FRAY_MAX } from './sdBrain.js';
 import { sdMarksLaw, sdEndingOf, validSdMarks } from './sdMarks.js';
 import { SD_FIGHTERS_MAX } from './sdLaw.js';
 import {
@@ -70,7 +70,11 @@ export const SD_BREAK_MS = 2500;
 export const SD_BODY = Object.freeze({ remnant: 0, gold: 1, silver: 2, hour: 3 });
 /** The Remnant's body (its radius - a blow's reach is measured to it - its height, its walk) and how far from the arena's
  *  centre it keeps; an Echo's; and where the Echoes stand up. */
-export const SD_REM = Object.freeze({ r: 2.2, h: 7.2, speed: 2.6, keep: 18 });
+/** AUDIT SD III (F7): `keep` 19, from 18 - how far from the arena's centre a body walks. A fighter hugging the rim stands
+ *  at most 25.65 m out (the arena's 26 less the body's 0.35, player/motor.js CAPSULE_RADIUS), and from a body kept at 18 m
+ *  that is 5.45 m of gap to the Remnant and 5.95 to an Echo - past the Stomp's 5 (SD_BLOWS.stomp.range), so neither ever
+ *  chose it: the rim was Stomp-proof, the one place melee's punisher could not reach. At 19 the gaps are 4.45 and 4.95. */
+export const SD_REM = Object.freeze({ r: 2.2, h: 7.2, speed: 2.6, keep: 19 });
 export const SD_ECHO = Object.freeze({ r: 1.7, h: 5.6, speed: 3.0 });
 export const SD_ECHO_SPOTS = Object.freeze([Object.freeze([-9, 2]), Object.freeze([9, 2])]);
 /** Where it stands at the fight's birth (facing the way in, -z) and where it returns to for the Last Moment. */
@@ -103,15 +107,31 @@ export const SD_HEART = Object.freeze({ r: 0.9, h: 2.4, ring: Object.freeze([6, 
  *  could not reach and break its three in the 7.5 s they stand in 72% of Resets at the default build (82% at a modest
  *  one), two their four in 27% (41%) - none now (0.7% at a modest one). */
 export const heartRingFor = (n) => [SD_HEART.ring[0], Math.min(SD_HEART.ring[1], SD_HEART.ring[0] + SD_HEART.per * Math.max(0, n - 1))];
-export const heartHpFor = (lvs, n) => Math.max(SD_HEART.min, Math.round((SD_HEART.teamS * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / Math.max(1, n)));
+/** AUDIT SD III (F9): the floor (SD_HEART.min) never more than one second of the living's damage. A lone fighter at
+ *  level one or two (6-7 a second) met three Hearts of 20 - ten seconds of its damage in the 7.5 they stand - and every
+ *  Reset landed and healed: the Last Moment could not be won. A lone fighter's three are three seconds now. */
+export const heartHpFor = (lvs, n) => { const team = lvs.reduce((s, lv) => s + dpsRef(lv), 0); return Math.max(Math.min(SD_HEART.min, Math.round(team)), Math.round((SD_HEART.teamS * team) / Math.max(1, n))); };
 export const SD_HEARTS_CLOSE_MS = 500;
 export const SD_STUN_MS = 8000;
 export const SD_STUN_HIT_X = 1.5;
-/** THE MANTELLA PULSE: every this long from the wake; the first's share, and how much more each after. */
+/** THE MANTELLA PULSE: every this long from the wake; the first's share, and how much more each after - to SD_PULSE_MAX.
+ *  AUDIT SD III (F1): it had no ceiling. The table's own climb stays under one (its thirtieth Pulse, at the Hour's End,
+ *  takes 70%), but a Hollow's marks quicken and steepen it - the Underking's 22 s clock under the Restless Pulse's 0.04
+ *  a step passed 100% in eight minutes, a wall eight Hollows of every 216 put before a group at reference damage that
+ *  needed nine. Three quarters of everyone's health, no save, is the most a Pulse takes: the marks still make it the
+ *  fight's clock, and a healer still answers it. */
 export const SD_PULSE_EVERY_MS = 30_000;
 export const SD_PULSE_PCT = 0.12;
 export const SD_PULSE_STEP = 0.02;
-export const pulsePct = (n) => SD_PULSE_PCT + SD_PULSE_STEP * Math.max(0, Math.floor(Number(n) || 0));
+export const SD_PULSE_MAX = 0.75;
+/** AUDIT SD III (F6): the Mantella keeps its peace this long past a Reset's landing - two of the fight's no-save blows
+ *  never one atop the other. Its clock ran through the Reset: a Pulse wound up inside the Hearts' eight-second race (a
+ *  party running from Heart to Heart at 70% of its health) or landed on the heels of the Reset's own, and a Reset
+ *  called inside a Pulse's wind-up lost its first seconds to it. Now a Pulse due inside a Reset waits until this long
+ *  past its landing, and a Reset due inside a Pulse waits for it to land. */
+export const SD_PULSE_CLEAR_MS = 4000;
+const pulseStepPct = (step, n) => Math.min(SD_PULSE_MAX, SD_PULSE_PCT + step * Math.max(0, Math.floor(Number(n) || 0)));
+export const pulsePct = (n) => pulseStepPct(SD_PULSE_STEP, n);
 /** THE HOUR ENDS: this long after the wake; then every SD_END_EVERY_MS, SD_END_PCT of everyone's health. */
 export const SD_ENDS_MS = 15 * 60_000;
 export const SD_END_EVERY_MS = 2000;
@@ -171,7 +191,7 @@ const sized = (atk, A) => (atk && atk.sh ? blowShape(atk) ?? A : A);
 /** SD18a: a blow's wind-up as its frame says it (`sh.w`), else the law's (windupFor). */
 export const atkWindup = (atk, A, phase, body) => (atk?.sh?.w != null ? atk.sh.w : windupFor(A, phase, body));
 /** SD18a: a Pulse's share as its frame says it (`sh.ps` its step), else pulsePct's. */
-export const pulsePctOf = (atk) => (atk?.sh?.ps != null ? SD_PULSE_PCT + atk.sh.ps * Math.max(0, Math.floor(Number(atk.n) || 0)) : pulsePct(atk?.n ?? 0));
+export const pulsePctOf = (atk) => (atk?.sh?.ps != null ? pulseStepPct(atk.sh.ps, atk.n) : pulsePct(atk?.n ?? 0));   // AUDIT SD III (F1): to the same ceiling
 
 /** SD18a: THE FIGHT'S PROFILE - the numbers the relay runs it by as its marks (net/sdMarks.js) set them; with none, the
  *  table's own. Pure, frozen and kept by its marks. */
@@ -236,6 +256,12 @@ export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(
  *  centre, and the Pulse, the Reset and the End struck there, the realm counted the body present and took its `in` -
  *  where SD8d says "nobody on the Steps". The arena's edge is the motor's clamp, so no body on it stands past its rim. */
 export const SD_ARENA_SLACK = 1.5;
+/** AUDIT SD III (F3): how long a fighter's last pose speaks for its body in the fight - the pose heartbeat's 20 s (a
+ *  standing player sends one no oftener: net/wire.js HEARTBEAT_MS, the relay's sleep) and five of grace. A page that
+ *  froze in the arena (a hidden tab draws no frames and sends no poses) stood there in the relay's census for good -
+ *  its share counted standing, and half a fight of it earned the receipt by `stood`. Past this it is not among the
+ *  fight's bodies: absent, as a closed socket is (net/gateBrain.js ABSENT_RETIRE_MS takes its share out). */
+export const SD_POSE_FRESH_MS = 25_000;
 /** A point kept within `r` of the arena's centre. */
 export function keepInArena(x, z, r) {
   const d = Math.hypot(x, z);
@@ -279,6 +305,10 @@ export function handSwept(atk, x, z, t0, t1) {
   const u = (atk.sw ?? 1) * wrapYaw(Math.atan2(x - atk.x, z - atk.z) - atk.yw) + A.arc / 2;   // its place along the sweep, 0 to arc
   return u + half >= A.arc * k0 && u - half <= A.arc * k1;
 }
+/** AUDIT SD III (F8): how high feet stand (the realm's frame, its floor 0) to be on or over a pillar's top - no pillar
+ *  shades a body there (net/sdStrike.js sdBlowVerdict `over`). Fourteen metres up, a Levitate's reach, the top was the
+ *  one place the Hour-Hand never struck: a body on it stood inside the square that shades. */
+export const SD_PILLAR_OVER_Y = SD_PILLAR_H - 0.5;
 /** Whether a pillar stands between (ox, oz) and (x, z) - the segment meets one's square, short of the far end. */
 export function behindPillar(ox, oz, x, z) {
   const w = SD_PILLAR_W / 2;
@@ -689,7 +719,11 @@ export function stepRemnant(f, now, bodies, rng) {
   // THE MANTELLA PULSE - the clock's, every SD_PULSE_EVERY_MS from the wake, whatever the phase
   const P = SD_BLOWS.pulse;
   if (f.clock && now >= f.clock.until) f.clock = null;
-  if (!f.clock && now >= f.pulseAt - P.windup) { clockBlow(f, P, f.pulseAt, out, f.pulses); f.pulses++; f.pulseAt += sdProfileOf(f).pulseMs; }   // SD18a: the Hungering Heart's
+  if (!f.clock && now >= f.pulseAt - P.windup) {
+    const R = f.rem.atk && f.rem.atk.a === SD_BLOWS.reset.id ? f.rem.atk : null;   // AUDIT SD III (F6): a Reset in flight
+    if (R && f.pulseAt < R.at + SD_PULSE_CLEAR_MS) f.pulseAt = R.at + SD_PULSE_CLEAR_MS;
+    else { clockBlow(f, P, f.pulseAt, out, f.pulses); f.pulses++; f.pulseAt += sdProfileOf(f).pulseMs; }   // SD18a: the Hungering Heart's
+  }
   // THE DRAGON BREAK: it steps outside time, and the Echoes rise with half of what is left to the break's end each
   if (f.phase === 1 && f.max > 0 && f.hp <= SD_PHASE_AT[0] * f.max) {
     f.phase = 2;
@@ -740,7 +774,7 @@ export function stepRemnant(f, now, bodies, rng) {
       f.hp = Math.min(f.max, f.hp + SD_RESET_HEAL * f.max);
     }
     if (B.atk && B.atk.a === SD_BLOWS.reset.id && now >= B.atk.until) { f.resetAt = now + sdProfileOf(f).resetMs; }
-    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt) {
+    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {   // AUDIT SD III (F6): not inside a Pulse's wind-up
       stepWalk(B, now);
       if (B.mv) { B.mv = null; out.push(mvFrame(SD_BODY.remnant, B, now)); }
       f.resetAt = 0;

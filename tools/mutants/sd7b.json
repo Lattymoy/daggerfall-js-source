@@ -281,8 +281,8 @@
   {
     "name": "SD7B-world-the-shield-takes-it",
     "file": "src/scenes/world.js",
-    "old": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true });",
-    "new": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, {});",
+    "old": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
+    "new": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { spare: () => {} });",
     "tests": [
       "test/sd7b_steps.test.js"
     ]

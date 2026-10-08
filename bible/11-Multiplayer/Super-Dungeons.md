@@ -337,8 +337,10 @@ it runs the Warden.
 Warden's share (525 s of reference damage against his 240; 1.75x a Colossal Warden's) - added at its current fraction
 (the gate's `joinFight` law), at the level its token signs (`cl`, its character's own - AUDIT SD II, L7 M2: the page's
 claim stands only from a service that signs none). A fighter is in the fight while its pose stands in the arena
-(`SD_ARENA_SLACK`, 1.5 m past its rim - never the Steps: SD11e); one away from it 30 s takes its share out, and brings
-it back as it returns. The same caps on how much a blow is believed (the gate's buckets), one seat per account, 256
+(`SD_ARENA_SLACK`, 1.5 m past its rim - never the Steps: SD11e) and is fresh - a pose older than `SD_POSE_FRESH_MS`
+(25 s: the heartbeat's 20 and five of grace) stands nowhere (SD20a: a frozen page stood there earning); one away from it
+30 s takes its share out, and brings it back as it returns. Joined to a living fight and standing in the arena, a
+fighter is held on its floor: the near edge, where the Steps' band lets go over the void, is a rim to it (SD20a). The same caps on how much a blow is believed (the gate's buckets), one seat per account, 256
 fighters at most - and the realm's door admits 256 accounts, a full one freeing the seat of one with no socket in it
 and no seat in its LIVING fight (the gate's AUDIT WB A1 law; AUDIT SD II, L3 F3: a lost or stale fight seats nobody),
 guests 64 of them at most (L7 M3).
@@ -346,17 +348,20 @@ guests 64 of them at most (L7 M3).
 **Phase one - The Walking Hour (100% to 70%).**
 - *Brass Stomp* - a 7 m circle, then a shock ring rolling out to 22 m that must be JUMPED (from the circle's rim - what
   the circle strikes the ring does not; it strikes where its front's centre crosses a body on the ground: SD11e).
-- *The Hour-Hand* - a beam from its chest sweeping 180 degrees over 4 s; stay ahead of the hand or behind a pillar. As it
+- *The Hour-Hand* - a beam from its chest sweeping 180 degrees over 4 s; stay ahead of the hand or behind a pillar (below
+  its top - a pillar shades nothing standing on it: SD20a). As it
   gathers, the beam stands at the edge it will sweep from (SD11e).
 - *Gear Volley* - five spinning gears thrown at five fighters, 3 m circles where they land, burning brass for 6 s.
-- *Mantella Pulse* - every 30 s, the whole arena: 12% of health, +2% each pulse, no save.
+- *Mantella Pulse* - every 30 s, the whole arena: 12% of health, +2% each pulse to three quarters at most, no save
+  (SD20a: under a Hollow's marks it passed the whole).
 
 **Phase two - The Dragon Break (70% to 35%).** The Remnant steps outside time (it cannot be struck) and two Echoes of it
 stand in the arena, the GOLD and the SILVER, each with half of what is left. They must die within 15 s of each other:
 an Echo left alone for 15 s rises again with half its health. While both stand, each Echo's blows are its own phase-one
 blows, faster (80% wind-ups); the Hour-Hand sweeps from both.
 
-**Phase three - The Last Moment (35% to 0).** The Remnant returns, faster. Every 50 s it winds up THE RESET (8 s): Heart
+**Phase three - The Last Moment (35% to 0).** The Remnant returns, faster. Every 50 s it winds up THE RESET (8 s - never
+inside a Pulse's wind-up, and a Pulse due inside it waits until 4 s past its landing: SD20a): Heart
 crystals rise around the arena (3, plus one per two living fighters, at most 8). Break them all before it lands and it
 is stunned for 8 s and takes 1.5x; leave one and the Reset lands - 70% of everyone's health, no save - and it heals 8%.
 The Hearts rise as near as their count needs: 6 m from the centre out to 2 m more for each past the first (6-10 m for
@@ -375,7 +380,9 @@ fighter standing beyond the two, silver turns gold's way, so the two beams cross
 they closed on it, and from the arena's south end no run escaped them); one left alone fights with all three. The Mantella Pulse is the Hour's own clock, not the Walking Hour's alone: every 30 s from the wake through
 every phase, the heart beating whether it is struck or not. "The first blow" is the Remnant's own, at the opening's end
 (8 s after the first fighter's `in`): a fight nobody strikes still ends. A blow cannot take it past the phase it is in
-before the turn. The Hearts hold three seconds of the living's reference damage between them. And a fight no living
+before the turn. The Hearts hold three seconds of the living's reference damage between them, each at least 20 - or one
+second of the living's damage, where that is less (SD20a: a lone fighter at level one met ten seconds of its damage in
+the 7.5 they stand). And a fight no living
 fighter has stood in for 30 s is LOST - the next is fresh: it is meant to be lost, many times; so is one whose Hour has
 Ended, 30 s after its End, whoever's last pose still stands in it. The fight's door asks the realm's Concord (no `in`
 before the Orrery is set), and no blow lands once the hub's record no longer holds the slot.
@@ -395,9 +402,9 @@ the Turning Tide (frost - the Hour-Hand sweeps three quarters of the arena over 
 (poison - it walks 40% faster, its Stomp 8.5 m); **the Underking**, the Hungering Heart (magic - the Mantella pulses
 every 22 s); **the Blades**, the Dragon's Break (fire - its Echoes walk a fifth faster and must fall within ten
 seconds). The omens: *the Brazen Hide* (a quarter more health), *the Quickened Gears* (its own blows wind up in 85% of
-the time), *the Short Hour* (it Ends at twelve minutes), *the Hardened Hearts* (half again as much), *the Burning Brass*
-(twice as long, a third wider), *the Fraying* (the Orrery snaps at 36 turns), *the Restless Pulse* (each four points
-harder than the last), *the Unending Reset* (every 40 s) and *the Twin Hands* (the pair's Hand every 10 s). The relay
+the time), *the Short Hour* (it Ends at twelve minutes), *the Hardened Hearts* (a quarter again as much - half again
+until SD20a, a race no party ran), *the Burning Brass* (twice as long, a third wider), *the Fraying* (the Orrery snaps at
+36 turns), *the Restless Pulse* (each four points harder than the last, to the same three quarters), *the Unending Reset* (every 40 s) and *the Twin Hands* (the pair's Hand every 10 s). The relay
 runs the fight by its profile (`net/sdRemnant.js` `sdFightProfile`) and stamps each blow whose shape they change with
 the change (`sh` - its radius, ring, sweep, pool, wind-up, Pulse step and element), so every screen judges, draws and
 reads the blow the relay threw; the state carries the marks (`mk`) for the rest. They are seen (SD18b,
@@ -2454,3 +2461,49 @@ and `test/sd11c_page.test.js` (the marks line after the find), `test/sd2c_omen.t
 Hollow too), `test/wbx8_gate_sky.test.js`, `test/sunbaby1_event.test.js`, `test/sunbaby2_phases.test.js` and `test/event1_live_event.test.js` (the lights under `sdBrassLight`, the haze's dread grade now `d`), `test/auditwb_world.test.js` (the banner a wish, hidden by the same three). Records
 re-aimed by content: `EVENT1-controller-fog-ungraded`, `SD18B-the-card-never-fades`, `SUNBABY1-host-light-unlifted`,
 `WB2-the-banner-follows-indoors`.
+
+### SD20 - AUDIT SD III (the arc audited a third time)
+
+Mac, 2026-10-07: *"So I want to do a deep comprehensive audit over everything, ensuring absolute polish and perfection.
+This has to be the most beautiful, hardest and polished content to date."* Seven lenses over the arc as SD19 left it
+(`dc0eb1bf`): the realm's scenes and how they render; its sound; the fight and its balance; the hosts' lifecycle; what
+the player reads; the relay and the account; and the Delve arc's dungeons beside it. Each finding was reproduced by the
+lens's own script on the arc's own code before it was fixed. Part one (`2cd80943`) was the merge's: the ten reds the
+first full run of the suite on main's merge found - the detail arc (SD13-SD19) had never run in CI, the branch having
+conflicted with main since SD13. The relay stays `world176`, re-hashed in place (undeployed).
+
+#### SD20a - the fight
+
+| | what was wrong | now |
+|---|---|---|
+| F1 | THE PULSE HAD NO CEILING. The table's own climb stays under the whole (its thirtieth Pulse 70%), but a Hollow's marks quicken and steepen it: the Underking's 22 s clock under the Restless Pulse's four points a step passed 100% of everyone's health eight minutes in - eight Hollows of every 216 (slots 2, 20, 43, 90, 96, 148, 160, 166) a wall a group at reference damage, needing nine minutes, could not pass | three quarters at most (`net/sdRemnant.js` `SD_PULSE_MAX`), the table's step and a Restless one on the wire (`pulsePctOf`) alike; the omen says so - *"Each Mantella Pulse climbs twice as steeply - to three quarters of your health."* |
+| F2 | A STEP OFF THE ARENA DODGED THE HOUR. The Concord's band lets go of the arena's near edge as of the Steps' far one, and a step back over it was a fall the Steps cast back to the Crumble's checkpoint - out of the arena, and so out of every blow of the whole arena, for the void's 15%: a 70% Mantella Pulse, the Reset or the End walked off a moment before it landed | THE ARENA HOLDS WHAT IT HAS TAKEN (`world/sdRealm.js` `arenaHolds`, `SD_ARENA_FLOORS`): joined to a living fight (`net/sdFightLink.js` `joined`) and standing inside the rim, the motor's edge is the disc alone - the near edge a rim. A fighter leaves the fight by its end, by death or by the way home (the unstuck word, SD10's `sdWayHome`) - never by the rim; anyone else walks the Concord's floors as before |
+| F3 | A HIDDEN TAB, A FROZEN PAGE. A landing first seen late is not judged (the gate's law) - so a tab hidden across a Pulse's landing and shown again was never struck: Ctrl+Tab and back through 70% of everyone's health. And the relay's census read a fighter's LAST pose however old: a page frozen in the arena (a hidden tab draws and poses nothing) stood there for good - its share counted standing, and half a fight of it earned the receipt by `stood` | the whole arena's blows judged however late (`net/sdStrike.js`: a blow of the whole arena has no place a late frame could misjudge - a hidden page does not move - so where I stand when I first see it is where I stood when it landed, and it lands then, once; never on the Steps); the realm stamps an Hour's pose as it takes it (`pAt`), and the fight's census counts a body only while its pose is fresh (`SD_POSE_FRESH_MS`, 25 s - the pose heartbeat's 20 and five of grace; a closed socket's law past it: absent, its share out at `ABSENT_RETIRE_MS`) |
+| F4 | THE END KILLED THE REFUSED. The Hour's End throws 99% every two seconds for half a minute, and a page that walked into the arena in that tail - its `in` refused, the fight closed to it - was struck dead by a fight it could never join: with one life a Hollow, its slot gone for good | a blow strikes a FIGHTER (`scenes/sdRemnantBlows.js`): a page the realm has not counted in its fight (`link.counted()`) is shown every blow and judged by none, nor by the brass |
+| F5 | THE HARDENED HEARTS WERE A RACE NO PARTY RAN. Half again as much made the Hearts four and a half seconds of a party's reference damage of the seven and a half they stand - the run between them in the three left lost at every build the lens tried | a quarter again (`net/sdMarks.js` the Hardened Hearts, `heartX` 1.25): the Hearts at most half the time they stand open, the other half the run between them |
+| F6 | A PULSE IN THE RESET'S RACE. The Pulse's clock ran through the Reset: one wound up inside the Hearts' eight-second race (a party running from Heart to Heart at 70% of its health) or landed on the heels of the Reset's own, and a Reset called inside a Pulse's wind-up lost its first seconds to it | two of the fight's no-save blows never one atop the other: a Pulse due inside a Reset waits until `SD_PULSE_CLEAR_MS` (4 s) past its landing, and its clock counts on from there; a Reset due inside a Pulse's wind-up waits for it to land |
+| F7 | THE RIM WAS STOMP-PROOF. A body kept 18 m from the arena's centre, and a fighter hugging the rim (the arena's 26 m less its body's 0.35) stood 5.45 m past the Remnant's body and 5.95 past an Echo's - beyond the Stomp's 5: melee's punisher never chose the one place it could not reach | `SD_REM.keep` 19: the gaps are 4.45 and 4.95 - a lone fighter at the rim is stomped |
+| F8 | A PILLAR'S TOP, HAND-PROOF. Fourteen metres up, a Levitate's reach, the top of a pillar was the one place the Hour-Hand never struck: the beam's shade is the pillar's square, and a body on its top stood inside it | a pillar shades only what stands below its top (`SD_PILLAR_OVER_Y`, half a metre under it): the verdict's `over` (`net/sdStrike.js`), the rig's feet (`scenes/sdRemnantBlows.js` `over()`) and the read's (`scenes/sdArenaRead.js` `sdPerilAt`, the world host passing the rig's) |
+| F9 | THE HEARTS' FLOOR WALLED THE WEAKEST. Each Heart held at least 20: a lone fighter at level one or two (6-7 a second at reference) met three Hearts of 20 - ten seconds of its damage in the 7.5 they stand - and every Reset landed and healed: the Last Moment could not be won | the floor never more than one second of the living's damage (`heartHpFor`): a lone fighter's three are three seconds; a strong fighter's floor is 20 as ever |
+| F10 | THE HOUR'S COSTS KILLED. The void's cast-back (15%) and the Orrery's lash took their share through `bypassShield` alone - the SetHealth(0) door, which no death save answers: with one life a Hollow, a setback was the end of it | both leave a body at one (`characters/playerEntity.js` `hurtPlayer`'s `spare`, the duel's floor): a setback, never the death that ends a Hollow |
+
+Pins: `test/sd20a_fight.test.js` (10 - the Pulse's ceiling over a whole Restless Hour under the Underking; the arena
+holding, its floors and the host's choice by its own text; the whole arena's blows judged however late; a frozen page
+absent from the relay's census and back at its next pose; a blow strikes a fighter; the Reset's race - the Hardened
+Hearts' share of their window, a Pulse deferred, a Reset waiting, eight minutes of a Last Moment with neither atop the
+other; the rim stomped; a pillar's top in the verdict, the rig and the read; the Hearts' floor; the void and the lash at
+one, through the real `hurtPlayer`); `tools/mutants/sd20a.json` (30, all dead). RE-AIMED BY CONTENT, each still dead:
+`sd5a.json` (`SD5A-the-edge-lost`), `sd6c.json` (`SD6C-the-lash-shielded`, `SD6C-the-edge-never-widened`), `sd7b.json`
+(`SD7B-world-the-shield-takes-it`), `sd8a.json` (`SD8A-the-pulse-unchanging`, `SD8A-the-reset-never`), `sd8d.json`
+(`SD8D-the-pillars-shade-forgotten`, `SD8D-the-arena-reaching-the-steps`), `sd11e.json` (`SD11E-C2-struck-on-the-steps`),
+`sd15.json` (`SD15-the-shade-ignored`, `SD15-the-beams-past-read`). PINS MOVED: `test/sd5a_realm.test.js` and
+`test/sd6c_hall.test.js` (the arena's edge, the held rim first), `test/sd8a_remnant.test.js` (the Hearts' floor),
+`test/sd8b_fight.test.js` (the relay's import), `test/sd11e_laws.test.js` (the whole arena's blow, judged however late),
+`test/sd15_read.test.js` (the read told `over`; its stub link a fighter's), `test/sd18a_marks.test.js` (the Hardened
+Hearts a quarter again), `test/relayversion.test.js` (`world176` re-hashed in place).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the held arena, `sdArenaHeld` and `_realmArenaHeld`; the cast-back and the lash
+at one; the read's `over`); `scenes/worldModes.js` FLAGGED - the mode machine casts back and rides the Steps as before
+(SD7b), and the arena's edge is the world host's motor arena; `scenes/dungeonContext.js` FLAGGED - the realm's floors and
+the blows' rig are the world host's, the dungeon host stands the Hour's level alone; `scenes/exterior.js` FLAGGED - the
+`?exterior` bench is offline, and there is no Hour offline.

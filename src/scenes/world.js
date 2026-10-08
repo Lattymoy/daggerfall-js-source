@@ -296,7 +296,7 @@ import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world -
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
-import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
+import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
 import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
@@ -21283,6 +21283,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
   const _realmArena = realmArena();   // SD5a: the Shattered Hour's floors, as far as they are laid
+  const _realmArenaHeld = realmArena(SD_ARENA_FLOORS);   // AUDIT SD III (F2): the arena's rim alone - a fighter held in while its fight lives
   const _realmArenaBridged = realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS, ...SD_STEPS_FLOORS]);   // SD6c: and with the Concord, the bridge and the first step; SD7b: and past it the Steps' band - the void's to take, the cast-back its edge - and the arena
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
@@ -21819,6 +21820,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = sdFightLink?.state();
     return s?.fell ? sdFightLink.now() - (s.fell.at + SD_REM_SINK_MS) : null;
   };
+  /** AUDIT SD III (F2): whether the arena holds me now - joined to its living fight and standing inside its rim. */
+  const sdArenaHeld = () => {
+    if (!sdFightLink?.joined?.()) return false;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    return arenaHolds(true, x, z);
+  };
   /** SD10: THE WAY HOME, walked into or pressed - out of the Hour under the veil, before the Hollow's door outside (the
    *  mode machine's own exit: the realm's way out lands there, as its end casts a player out), the floor's spoils
    *  gathered as the Hour is left. Answers whether it carried me. */
@@ -21865,7 +21872,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
     if (playerEntity.health > 0 && inOrreryHall(x, z) && !!online?.id && (w.ls ?? []).includes(online.id)) {
       const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_FRAY_LASH));
-      hurtPlayer(playerEntity, dmg, { bypassShield: true });
+      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });   // AUDIT SD III (F10): it leaves me at one, never dead - one life a Hollow
       flashPlayerDamage(dmg);
     }
     sdSay(SD_HALL_TEXT.snap);
@@ -21875,7 +21882,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function sdCastBack() {
     if (playerEntity.health > 0) {
       const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_CAST_BACK_LOSS));
-      hurtPlayer(playerEntity, dmg, { bypassShield: true });
+      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });   // AUDIT SD III (F10): a setback, never a death - one life a Hollow
       flashPlayerDamage(dmg);
     }
     sdSay(SD_STEPS_TEXT.cast);
@@ -21955,7 +21962,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (sdBarNear(x, z)) bar = remnantBarModel(s, now);
       // SD15: THE ARENA READ (scenes/sdArenaRead.js) - a blow still to land on my feet, and the burning brass under them,
       // on the gate's own rim and warning; the fight's turns on the Hour's own card
-      const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw) : null;
+      const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw, !!sdBlows?.over?.()) : null;   // AUDIT SD III (F8): over a pillar's top, the Hand's shade gone
       ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), el: sdBlows?.burningEl?.() ?? null, now, peril });   // SD18b: in its element
       const beat = sdBeats.frame(s, now);
       card = beat ? titleCardModel(beat, now) : null;
@@ -22252,7 +22259,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
     if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
-    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them; SD6c: with the Concord, the bridge and the first step among them
+    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;   // AUDIT SD III (F2): standing in it, joined to its living fight, the arena's rim holds me   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them; SD6c: with the Concord, the bridge and the first step among them
     if (!player.arena) player.arena = arenaBouts.ring(); if (!player.arena) { const s = arenaOnline?.session?.(); player.arena = standsRail(modes?.arenaFloorStage?.()?.centre?.() ?? null, player.feetAt()[1], !!s && (s.state ? s.state.h === 1 : !!s.host)); }   // ARENA2: my bout's ring on the arena's sand (the duel's clamp); HOTFIX 1003i: else the stands' rail - no watcher jumps down onto the sand (the session's host may)
     duelPrompt?.render();
   };

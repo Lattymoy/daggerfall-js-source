@@ -73,10 +73,10 @@ export const SD_OMENS = Object.freeze([
   Object.freeze({ id: 'brazen', name: 'The Brazen Hide', text: 'It stands with a quarter more health.', law: Object.freeze({ hpX: 1.25 }) }),
   Object.freeze({ id: 'quickened', name: 'The Quickened Gears', text: 'Its blows wind up faster.', law: Object.freeze({ windX: 0.85 }) }),
   Object.freeze({ id: 'short', name: 'The Short Hour', text: 'The Hour ends at twelve minutes.', law: Object.freeze({ endsMs: 12 * 60_000 }) }),
-  Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts hold half again as much.', law: Object.freeze({ heartX: 1.5 }) }),
+  Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts hold a quarter again as much.', law: Object.freeze({ heartX: 1.25 }) }),   // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
   Object.freeze({ id: 'burning', name: 'The Burning Brass', text: 'Its brass burns twice as long, and wider.', law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }) }),
   Object.freeze({ id: 'fraying', name: 'The Fraying', text: 'The Orrery snaps back at thirty-six turns.', law: Object.freeze({ fray: 36 }) }),
-  Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse strikes harder than the last by twice as much.', law: Object.freeze({ pulseStep: 0.04 }) }),
+  Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.', law: Object.freeze({ pulseStep: 0.04 }) }),
   Object.freeze({ id: 'unending', name: 'The Unending Reset', text: 'The Reset comes every forty seconds.', law: Object.freeze({ resetMs: 40_000 }) }),
   Object.freeze({ id: 'twin', name: 'The Twin Hands', text: 'The Echoes\' paired Hour-Hand comes every ten seconds.', law: Object.freeze({ pairHandMs: 10_000 }) }),
 ]);

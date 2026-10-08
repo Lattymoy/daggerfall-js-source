@@ -459,3 +459,11 @@ export function realmLightsWith(lit, extra, eye) {
 /** THE MOTOR'S ARENA in the Hour (player/motor.js `arena`): its clamp the realm's edge over `floors` - one object, kept by
  *  the host and handed every frame the player stands in the realm. */
 export const realmArena = (floors = SD_REALM_FLOORS) => ({ centre: [...SD_REALM_ORIGIN], radius: SD_ARENA.z + SD_ARENA.r, clamp: (pos, inset = 0) => realmClamp(pos, inset, floors) });
+/** AUDIT SD III (F2): THE ARENA HOLDS WHAT IT HAS TAKEN. Its own floor alone - the disc, no Steps' band - and whether it
+ *  holds a body: joined to a fight that lives (net/sdFightLink.js joined) and standing inside the rim, the realm's frame.
+ *  The band let go of the arena's near edge as of the Steps' far one, and a step off it over the void was a fall cast
+ *  back to the Crumble's checkpoint - out of the arena, out of every blow of the whole arena, for the void's 15%: a
+ *  Mantella Pulse of 70% dodged by walking off the edge before it landed. Held, a fighter leaves the fight by its end,
+ *  by death, or by the way home - never by the rim. */
+export const SD_ARENA_FLOORS = Object.freeze([Object.freeze({ kind: 'disc', ...SD_ARENA })]);
+export const arenaHolds = (joined, x, z) => !!joined && Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;

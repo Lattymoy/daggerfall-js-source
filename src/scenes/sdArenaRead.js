@@ -70,11 +70,11 @@ export function sdWayOut(inside, fx, fz) {
 }
 
 /** Whether (x, z) is in blow `atk`'s ground still to strike at `t` - the Stomp's disc, the Hand's sweep from `t` on
- *  (shade a pillar's), a Volley's mark; null for a shape that is not a place. */
-function insideOf(A, atk, t) {
+ *  (shade a pillar's - none `over` a pillar's top, AUDIT SD III F8), a Volley's mark; null for a shape that is not a place. */
+function insideOf(A, atk, t, over = false) {
   const S = blowShape(atk) ?? A;   // SD18a: the blow its frame says
   if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= S.r;
-  if (A === SD_BLOWS.hand) return (x, z) => handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar(atk.x, atk.z, x, z);
+  if (A === SD_BLOWS.hand) return (x, z) => handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar(atk.x, atk.z, x, z));
   if (A === SD_BLOWS.volley) return (x, z) => (atk.tg ?? []).some((q) => Math.hypot(x - q[0], z - q[1]) <= S.r);
   return null;
 }
@@ -82,9 +82,10 @@ function insideOf(A, atk, t) {
 /**
  * A BLOW STILL TO COME ON MY FEET, or null (fx, fz my feet in the arena's frame; `yaw` the camera's, for the arrow): the
  * soonest of the Remnant's and its Echoes' blows whose ground I stand in - `{ name, t, now, color, arrow, way }` - or,
- * none of those, the Stomp's ring rolling out toward me within SD_JUMP_CALL_M (`jump`). Pure.
+ * none of those, the Stomp's ring rolling out toward me within SD_JUMP_CALL_M (`jump`). `over`: my feet on or over a
+ * pillar's top (AUDIT SD III F8 - the verdict's own shade). Pure.
  */
-export function sdPerilAt(s, t, fx, fz, yaw = null) {
+export function sdPerilAt(s, t, fx, fz, yaw = null, over = false) {
   if (!s || !(s.fi > 0) || s.fell || s.lost || s.ended > 0 || !Number.isFinite(fx) || !Number.isFinite(fz)) return null;
   const blows = [];
   if (s.rem?.atk) blows.push([SD_BODY.remnant, s.rem.atk]);
@@ -101,7 +102,7 @@ export function sdPerilAt(s, t, fx, fz, yaw = null) {
     }
     const live = A === SD_BLOWS.hand ? t < end : t < atk.at;
     if (!live || t < atk.at - w || (best && best.at <= atk.at)) continue;
-    const inside = insideOf(A, atk, t);
+    const inside = insideOf(A, atk, t, over);
     if (!inside || !inside(fx, fz)) continue;
     best = { at: atk.at, name: A.name, t: w > 0 ? Math.max(0, Math.min(1, (t - (atk.at - w)) / w)) : 1, color: sdTint(A.key, blowShape(atk)?.el), inside };   // SD18b: in its floor's colour
   }
