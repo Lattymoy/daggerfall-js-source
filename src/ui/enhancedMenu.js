@@ -153,7 +153,7 @@ import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPag
 import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
 import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
-import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage } from './collectionsPage.js';   // COLLECTIONS: the codex and the cards
+import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage, disarmCollectionsPage, setCollectionsPart } from './collectionsPage.js';   // COLLECTIONS: the codex and the cards
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
 import { affiliations } from '../systems/affiliations.js';
@@ -3642,7 +3642,7 @@ function pauseWindow() {
   for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); pauseTab = id; render(); };
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); disarmCollectionsPage(); pauseTab = id; render(); };   // AUDIT CARDS-5 D5: and the Collections page's
     tabs.append(b);
   }
   win.append(tabs);
@@ -3668,7 +3668,7 @@ function pauseHoldings(body) {
   for (const [id, label] of secs) {
     const b = el('button', `px-qrow${id === holdSec ? ' on' : ''}`);
     b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
-    b.onclick = () => { holdSec = id; render(); };
+    b.onclick = () => { holdSec = id; disarmCollectionsPage(); render(); };   // AUDIT CARDS-5 D5: an armed act never waits for the way back
     rail.append(b);
   }
   wrap.append(rail);
@@ -4977,6 +4977,7 @@ export function mountEnhancedMenu(host, {
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
+  else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
   _eff = null;
   render();
   keyHandler = onKey;

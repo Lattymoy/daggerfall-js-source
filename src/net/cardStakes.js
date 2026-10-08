@@ -31,9 +31,12 @@ export const CARD_VOID_AFTER_MS = (ORDER_TTL_S + 10) * 1000;
 export const CARD_CLAIM_DONE = Object.freeze(['cards-not-yours', 'cards-no-stake']);
 /** AUDIT CARDS-4 A4/A5: a receipt the service refused for what it IS (its shape, its sum, no signature) - never payable;
  *  one refused on its signature, its clock or the service's own trouble is kept (a key rotating, a clock behind). */
-export const CARD_RECEIPT_DEAD = Object.freeze(['shape', 'version', 'unsigned', 'sig-shape', 'body-shape', 'json', 'claims', 'sum']);
+export const CARD_RECEIPT_DEAD = Object.freeze(['shape', 'version', 'unsigned', 'sig-shape', 'body-shape', 'json', 'claims']);   // AUDIT CARDS-5 E1: never 'sum' - a sum the service would not pay today is still the relay's word, kept
 /** AUDIT CARDS-4 C2: the service's own refusals of a stake - asked, and refused: nothing held. Every other word (the
  *  session's own `offline`, `busy`, `held`, a lost answer, the session gone) may never have reached it - kept. */
+/** AUDIT CARDS-5 E3: the session's words for an act it never asked - another holding the session, a checkpoint ahead of
+ *  the act that did not land (realmSaves.js transact). */
+export const stakeNeverAsked = (r) => !r?.unknown && (r?.error === 'busy' || (r?.error === 'offline' && r?.why === 'offline'));
 export const cardStakeRefused = (e) => typeof e === 'string' && (e.startsWith('cards-') || e.startsWith('bad-') || e === 'realm-gold');
 
 /** A stake request's id - the service's CARDS_RID_RE: one asked twice is one stake. */
@@ -84,7 +87,9 @@ export function createCardStakes({ door, realm, wallet, character, region, stora
       if (!read(CARD_STAKES_KEY).some((x) => x.rid === rid)) return { ok: false, error: 'cards-kept-full' };
       const r = await ask({ rid, room, table, bb, amount, c, reg, topup }, true);
       if (r?.ok) return { ok: true, stake: r.data.stake, id: r.data.id };
-      if (!r?.unknown) write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).filter((x) => x.rid !== rid));   // refused, or never asked: nothing held
+      // refused, or never asked (the session's own 'busy', a checkpoint not landed): nothing held. Every other word - a
+      // lost answer, a lease taken by another tab mid-retry - may follow a landed ask: kept (AUDIT CARDS-5 E3)
+      if (cardStakeRefused(r?.error) || stakeNeverAsked(r)) write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).filter((x) => x.rid !== rid));
       return { ok: false, error: r?.error ?? 'offline', unknown: !!r?.unknown };   // AUDIT CARDS-4 C7: a lost answer said as one
     },
     /** The relay sat this stake: never voided now, but KEPT (AUDIT CARDS-4 C4) - whose it is and where it was staked
@@ -175,7 +180,11 @@ export function createCardStakes({ door, realm, wallet, character, region, stora
       ...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); } }),
       call: (/** @type {any} */ at) => door.stake({ character: x.c, realm: at, region: x.reg, room: x.room, table: x.table, bb: x.bb, amount: x.amount, rid: x.rid, ...(x.topup ? { topup: true } : {}) }),
     });
-    if (r?.ok && r.data?.stake) write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).map((y) => (y.rid === x.rid ? { ...y, order: r.data.stake, id: r.data.id, at: now() } : y)));
+    if (r?.ok && r.data?.stake) {
+      const kept = read(CARD_STAKES_KEY), got = { order: r.data.stake, id: r.data.id, at: now() };
+      // AUDIT CARDS-5 E3: an answer for a request another tab let go is kept again - the stake is held, so its order is
+      write(CARD_STAKES_KEY, kept.some((y) => y.rid === x.rid) ? kept.map((y) => (y.rid === x.rid ? { ...y, ...got } : y)) : [...kept, { ...x, ...got }]);
+    }
     return r;
   }
   return book;

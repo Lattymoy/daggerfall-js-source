@@ -2737,7 +2737,7 @@ export class Room {
       // whole stake back in a receipt ('refused'), so no gold the service holds is ever stranded by a chair
       let stake = null;
       await this._holdemOwed(ws, a, m.table);   // a returning player hears what he is owed first
-      const back = !!t?.seats.some((x) => x?.id === a.id && x.leaving);   // his own chair, mid-hand: the stake it holds is his
+      const back = !!t?.seats.some((x) => x?.id === a.id && x.leaving && !x.cashed);   // his own chair, mid-hand: the stake it holds is his - AUDIT CARDS-5 E2: never a chair already cashed out (a new stake there was seated by no one and spent by no one)
       if (m.stake !== undefined && !back) {
         const v = await this._holdemStake(a, m, now);
         if (v.no) { if (v.back) await this._holdemReceipt(m.table, a.id, { ...v.back, w: 'refused' }); refuse(v.no); return; }

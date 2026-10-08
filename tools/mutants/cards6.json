@@ -481,7 +481,7 @@
   {
     "name": "C6-svc-no-cap",
     "file": "server-account/src/cards.js",
-    "old": "  if (c.r > HOLDEM_STAKE_MAX_BB * Number(row.bb) * HOLDEM_SEATS_MAX) return { error: 'cards-receipt', why: 'sum' };",
+    "old": "  if (c.r > Number(into?.n ?? 0)) return { error: 'cards-receipt', why: 'sum' };",
     "new": "  void 0;",
     "tests": [
       "test/auditcards3_pins.test.js",
@@ -492,7 +492,8 @@
       "test/cards6_law.test.js",
       "test/cards6_relay.test.js",
       "test/cards6_service.test.js",
-      "test/identitytoken.test.js"
+      "test/identitytoken.test.js",
+      "test/auditcards5_gold.test.js"
     ]
   },
   {

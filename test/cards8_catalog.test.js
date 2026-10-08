@@ -126,14 +126,14 @@ test('CARDS8 power and cost follow what the thing is in the game', () => {
   assert.equal(c('rat'), 1);
   assert.ok(p('lich') > p('orc') && c('lich') > c('orc'), 'a Lich outranks an Orc');
   assert.ok(p('ancient-lich') > p('lich'));
-  assert.ok(p('vampire-ancient') > p('vampire'));
+  assert.ok(p('ancient-vampire') > p('vampire'));
   assert.ok(p('orc-warlord') > p('orc-sergeant') && p('orc-sergeant') > p('orc'));
   assert.ok(p('iron-atronach') > p('flesh-atronach'));
   assert.ok(p('giant') === Math.max(...ILIAC_CARDS.map((x) => x.power)), 'nothing stands taller than a giant');
   assert.deepEqual(ILIAC_CARDS.filter((x) => x.cost === 1 && x.kind !== 'spell').map((x) => x.id).sort(),
-    ['giant-bat', 'imp', 'mages-guild-apprentice', 'rat', 'thieves-guild-cutpurse']);
+    ['giant-bat', 'imp', 'mages-guild-apprentice', 'rat', 'thieves-guild-filcher']);
   // The legendary-or-higher cards: the Princes, the artifacts, and the Bay's few legends.
-  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['vampire-ancient', 'ancient-lich', 'king-gothryd']);
+  assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd']);
 });
 
 test('CARDS8 the starter deck: thirty, clean by the deck\'s law, common and magic alone', () => {

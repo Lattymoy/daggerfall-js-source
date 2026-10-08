@@ -1244,8 +1244,8 @@
   {
     "name": "AC4-C-void-timer-from-request",
     "file": "src/net/cardStakes.js",
-    "old": "{ ...y, order: r.data.stake, id: r.data.id, at: now() }",
-    "new": "{ ...y, order: r.data.stake, id: r.data.id }",
+    "old": "got = { order: r.data.stake, id: r.data.id, at: now() }",
+    "new": "got = { order: r.data.stake, id: r.data.id }",
     "tests": [
       "test/auditcards4_client.test.js",
       "test/auditcards4_pins.test.js",

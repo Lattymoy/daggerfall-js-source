@@ -42,7 +42,10 @@
 //
 // A FACE-DOWN CARD (played to a veiled holding) has no text until the game ends: it reveals nothing, it is never a
 // target, nothing ongoing touches it, and the other player is told only that a card lies there. It counts its own
-// power at the end, when every face-down card is unveiled and the board is tallied whole.
+// power at the end, when every face-down card is unveiled and the board is tallied whole - its POWER alone: its own
+// text never runs, its ongoing text included (AUDIT CARDS-5 A2: a face-down Prince ruled the final count it never ruled
+// in play), while the board's ongoing rules reach it as any card standing there. A card MOVED to a veiled holding came
+// face up and stays so (the veil hides what is played there).
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { shuffleDeck } from './cardLaw.js';
@@ -53,7 +56,8 @@ import { cardById, ILIAC_CARDS, ILIAC_LOCATIONS, ILIAC_TAGS, ILIAC_TIERS } from 
 export const ILIAC_DECK_SIZE = 30;
 export const ILIAC_COPIES_MAX = 2;
 export const ILIAC_LEGENDARY_COPIES_MAX = 1;
-/** MEASURE (section 6.1): the turns a game lasts, and the magicka's ceiling (six turns reach six; a card's gift may pass it). */
+/** MEASURE (section 6.1): the turns a game lasts, and the magicka's ceiling (six turns reach six; with a card's gift a turn
+ *  reaches ten at most - AUDIT CARDS-5 A4). */
 export const ILIAC_TURNS = 6;
 export const ILIAC_MAGICKA_MAX = 10;
 /** MEASURE (CARDS7): the opening hand and the most a hand holds. */
@@ -83,6 +87,9 @@ const LEGENDARY_RANK = ILIAC_TIERS.indexOf('legendary');
 
 const NUMBER_WORDS = Object.freeze(['no', 'a', 'two', 'three', 'four']);
 const an = (name) => (/^[AEIOU]/.test(name) ? `an ${name}` : `a ${name}`);
+/** AUDIT CARDS-5 A5: a card's name made plural - its head noun ("Priests of Arkay", "Rats", "Harpies"). */
+const pluralWord = (w) => (/(s|x|ch|sh)$/.test(w) ? `${w}es` : /[^aeiou]y$/.test(w) ? `${w.slice(0, -1)}ies` : `${w}s`);
+const plural = (name) => { const ws = name.split(' '); const k = ws.indexOf('of') > 0 ? ws.indexOf('of') - 1 : ws.length - 1; ws[k] = pluralWord(ws[k]); return ws.join(' '); };
 
 /** "that cost 1 or 2", "that costs 4 or more" - a `cost` [lo, hi] filter said (hi at the magicka's ceiling is open). */
 function costWords([lo, hi], one) {
@@ -120,18 +127,19 @@ function clause(fx, kind) {
     case 'buff': return fx.on === 'ongoing' ? `${t.words} ${t.one ? 'has' : 'have'} +${n} power` : `${t.words} ${t.one ? 'gains' : 'gain'} +${n} power`;
     case 'weaken': return fx.on === 'ongoing' ? `${t.words} ${t.one ? 'has' : 'have'} -${n} power` : `${t.words} ${t.one ? 'loses' : 'lose'} ${n} power`;
     case 'destroy': return `destroy ${t.words}`;
-    case 'move': return `move ${t.words} to the next holding with room`;
+    case 'move': return `move ${t.words} to the next holding round the table with room`;   // AUDIT CARDS-5 A7: it wraps from the last to the first
     case 'transform': return `turn ${t.words} into ${an(cardById(fx.card)?.name ?? '?')}`;
     case 'summon': {
       const name = cardById(fx.card)?.name ?? '?';
-      return `summon ${n === 1 ? an(name) : `${NUMBER_WORDS[n] ?? n} ${name}s`} here`;
+      const many = n === 1 ? an(name) : `${NUMBER_WORDS[n] ?? n} ${plural(name)}`;
+      return loc ? `its owner summons ${many} here` : `summon ${many} here`;   // AUDIT CARDS-5 A5: a location's summon is its owner's
     }
     case 'draw': {
       const cards = n === 1 ? 'a card' : `${n} cards`;
       return loc ? `its owner draws ${cards}` : `draw ${cards}`;
     }
     case 'magicka': return loc ? `its owner gains +${n} magicka next turn` : `gain +${n} magicka next turn`;
-    case 'room': return `each side holds only ${n} cards here`;
+    case 'room': return `each side holds only ${n === 1 ? 'one card' : `${n} cards`} here`;   // AUDIT CARDS-5 A5
     case 'veil': return 'cards here are played face down and unveiled when the game ends';
     case 'nospell': return 'spells cannot be played here';
     case 'discount': return loc ? `${fx.kind}s played here cost ${n} less` : `your ${fx.kind}s cost ${n} less`;
@@ -299,7 +307,7 @@ export function powers(state) {
     if (fx.on !== 'ongoing' || (fx.do !== 'buff' && fx.do !== 'weaken')) return;
     for (const r of select(state, ctx, fx, null)) pw[r.inst.uid] += fx.do === 'buff' ? fx.n : -fx.n;
   };
-  each((inst, h, p) => { if (!inst.down) for (const fx of cardOf(inst).fx) apply({ p, h, uid: inst.uid }, fx); });
+  each((inst, h, p) => { if (!inst.down && !inst.unveiled) for (const fx of cardOf(inst).fx) apply({ p, h, uid: inst.uid }, fx); });   // AUDIT CARDS-5 A2: nor one unveiled at the end
   for (let h = 0; h < ILIAC_HOLDINGS; h++) for (const fx of holdingCard(state, h).fx) apply({ p: null, h, uid: null }, fx);
   for (const k of Object.keys(pw)) pw[k] = Math.max(0, pw[k]);
   return pw;
@@ -337,7 +345,11 @@ function sidePower(state, pw, h, p, seen = () => true) {
 export function revealOrder(state) {
   const pw = powers(state);
   const total = [0, 1].map((p) => [0, 1, 2].reduce((s, h) => s + sidePower(state, pw, h, p, (inst) => !inst.down), 0));
-  return total[1] > total[0] ? [1, 0] : [0, 1];
+  if (total[0] !== total[1]) return total[1] > total[0] ? [1, 0] : [0, 1];
+  // AUDIT CARDS-5 A3: a tie (every first turn) by the deal's coin, then turn about - player 0 revealing first in every
+  // tie was the second player's reply every opening (47.6 to 50.8 in greedy play)
+  const first = ((state.coin ?? 0) + state.turn - 1) % 2;
+  return [first, 1 - first];
 }
 
 // ── THE GAME ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -357,8 +369,20 @@ function drawCards(state, p, n) {
  * seat times ILIAC_DECK_SIZE plus its place in his SHUFFLED deck, so a uid tells nothing of what the card is.
  * @param {{decks: string[][], rand32: () => number, locations?: string[]}} p
  */
-export function newGame({ decks, rand32, locations }) {
-  if (!Array.isArray(decks) || decks.length !== 2 || typeof rand32 !== 'function') return null;
+export function newGame({ decks, rand32: source, locations }) {
+  if (!Array.isArray(decks) || decks.length !== 2 || typeof source !== 'function') return null;
+  // AUDIT CARDS-5 A6: the source checked - a uint32, and a bounded count of draws (one stuck at the top rejected for ever)
+  let draws = 0;
+  const rand32 = () => {
+    const v = source();
+    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws > ILIAC_RAND_DRAWS_MAX) throw new Error('rand32');
+    return v;
+  };
+  try { return deal(decks, rand32, locations); } catch { return null; }
+}
+/** AUDIT CARDS-5 A6: the most draws a deal may take - its own need is a few hundred; past this the source is broken. */
+export const ILIAC_RAND_DRAWS_MAX = 100_000;
+function deal(decks, rand32, locations) {
   if (decks.some((d) => deckValid(d) !== null)) return null;
   let held;
   if (locations !== undefined) {
@@ -379,6 +403,7 @@ export function newGame({ decks, rand32, locations }) {
       hand: [], discard: [], magicka: 1, bonus: 0, plays: null,
     })),
   };
+  state.coin = drawBelow(2, rand32);   // AUDIT CARDS-5 A3: who reveals first in a tie - drawn after the shuffles, so no deal moves
   for (let p = 0; p < 2; p++) drawCards(state, p, ILIAC_HAND_START);
   return state;
 }
@@ -450,11 +475,15 @@ function act(state, T, ctx, fx, src) {
   const n = fx.n ?? 1;
   switch (fx.do) {
     case 'buff': case 'weaken': {
-      const pw = fx.pick ? powers(state) : null;
-      for (const r of select(state, ctx, fx, pw)) {
+      const pw = powers(state);
+      for (const r of select(state, ctx, fx, fx.pick ? pw : null)) {
         const before = r.inst.mod ?? 0;
-        r.inst.mod = fx.do === 'buff' ? before + n : Math.max(before - n, -cardOf(r.inst).power);   // a weaken stops at 0
-        ev.push({ t: fx.do, uid: r.inst.uid, n: Math.abs(r.inst.mod - before), src });
+        // a weaken takes from the power the card SHOWS, and stops at 0 (AUDIT CARDS-5 A1: it stopped at the card's own
+        // power, so a buffed card lost less than its text said)
+        const take = fx.do === 'weaken' ? Math.min(n, Math.max(0, pw[r.inst.uid] ?? 0)) : n;
+        if (!take) continue;   // AUDIT CARDS-5 A9: a card at 0 loses nothing, and nothing is said
+        r.inst.mod = fx.do === 'buff' ? before + n : before - take;
+        ev.push({ t: fx.do, uid: r.inst.uid, n: take, src });
       }
       return;
     }
@@ -525,7 +554,7 @@ function resolvePlay(state, T, p, inst, h) {
     // his own summons and moves leave room for his plays still landing. Kept so a broken promise costs a card's
     // play, never a card: it goes home to the hand. The random games pin that it never fires.
     state.players[p].hand.push(inst);
-    ev.push({ t: 'fizzle', p, uid: inst.uid, id: inst.id, holding: h });
+    ev.push({ t: 'fizzle', p, uid: inst.uid, holding: h });   // AUDIT CARDS-5 A9: never the card's id - it goes back to a hidden hand
     return;
   }
   const down = veiled(state, h);
@@ -575,7 +604,7 @@ export function reveal(state) {
   if (state.turn >= ILIAC_TURNS) {
     const cards = [];
     state.holdings.forEach((hd, h) => hd.sides.forEach((side, p) => side.forEach((inst) => {
-      if (inst.down) { delete inst.down; cards.push({ uid: inst.uid, id: inst.id, p, holding: h }); }
+      if (inst.down) { delete inst.down; inst.unveiled = true; cards.push({ uid: inst.uid, id: inst.id, p, holding: h }); }
     })));
     if (cards.length) T.events.push({ t: 'unveil', cards });
     state.over = true;

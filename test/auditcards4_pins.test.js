@@ -185,6 +185,9 @@ test('AUDIT CARDS-4 M device: the void timer runs from the order, said again aft
   assert.equal(store.get(CARD_RECEIPTS_KEY).length, 1, 'refused on its clock: kept');
   why = 'sum';
   await book.claim();
+  assert.equal(store.get(CARD_RECEIPTS_KEY).length, 1, 'AUDIT CARDS-5 E1 (PIN MOVED): refused on its sum - kept, the relay\'s word stands');
+  why = 'claims';
+  await book.claim();
   assert.deepEqual(store.get(CARD_RECEIPTS_KEY), [], 'refused for what it is: let go');
   book.receive(await mintCardReceipt({ s: 'acct-me', j: (await book.stake({ room: 'interior:a', table: 0, bb: 10, amount: 200 })).id, r: 9, w: 'stood' }, null, { subtle, nowS: 1000 }));
   reg = 3;

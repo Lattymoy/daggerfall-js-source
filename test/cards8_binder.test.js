@@ -79,8 +79,8 @@ test('CARDS8 the binder: the Wallet\'s shape - bound, pack-only, refused by the 
   const save = read('src/systems/save.js'), chargen = read('src/systems/chargenSession.js');
   assert.match(save, /snap\.binderGift = Number\.isSafeInteger\(entity\.binderGift\) \? entity\.binderGift : BINDER_GIFT;/);
   assert.match(save, /entity\.binderGift = Number\.isSafeInteger\(snap\.binderGift\) \? snap\.binderGift : 0;/);
-  assert.match(save, /giveWalletGift\(entity\);[^\n]*\n  giveBinderGift\(entity\);/);
-  assert.equal((chargen.match(/giveBinderGift\(playerEntity\);/g) ?? []).length, 2, 'both chargen roads');
+  assert.match(save, /giveWalletGift\(entity\);[^\n]*\n  cleanBinders\(entity\.items\);[^\n]*\n  giveBinderGift\(entity\);/);   // AUDIT CARDS-5 C1 (PIN MOVED): the decks made sound first
+  assert.equal((chargen.match(/giveBinderAtChargen\(playerEntity\);/g) ?? []).length, 2, 'both chargen roads');   // AUDIT CARDS-5 C4 (PIN MOVED): ungated
 });
 
 test('CARDS8 the decks: replaced whole when they change (the save\'s snapshot is shallow), at most BINDER_DECKS_MAX, taken apart by index', () => {

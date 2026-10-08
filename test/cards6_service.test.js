@@ -108,6 +108,7 @@ test('CARDS6 the cash-out refuses: another\'s receipt, another character, a stak
   const t = await stand();
   const ann = await t.seated('ann'), bob = await t.seated('bob');
   const a = (await t.stake(ann)).body;
+  await t.stake(bob);   // AUDIT CARDS-5 E1 (PIN MOVED): Bob's stake at the table too - Ann leaves with some of it
   const r = await t.receipt({ s: ann.id, j: a.id, r: 600, w: 'stood' });
   assert.equal((await t.cashout(bob, r)).body.error, 'cards-not-yours');
   assert.equal((await t.cashout(ann, await t.receipt({ s: ann.id, j: 'ffffffffffffffffffff', r: 5, w: 'stood' }))).body.error, 'cards-no-stake');
@@ -163,8 +164,9 @@ test('AUDIT CARDS-4 A1, A3, A4, A6, A7: a repeat is the same order; a receipt pa
 
 test('AUDIT CARDS-4 E6: a claim that landed, asked again at the sequence it was asked at - answered where the record stands (seq), never a quiet repeat', async () => {
   const t = await stand();
-  const ann = await t.seated('ann');
+  const ann = await t.seated('ann'), bob = await t.seated('bob');
   const a = (await t.stake(ann)).body;
+  await t.stake(bob);   // AUDIT CARDS-5 E1 (PIN MOVED): the table's other stake, which the 700 came from
   const rec = await t.receipt({ s: ann.id, j: a.id, r: 700, w: 'stood' });
   const where = ann.at();
   const paid = await t.s.call('/v1/cards/cashout', { character: ann.character, realm: where, receipt: rec }, ann.secret);

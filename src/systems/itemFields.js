@@ -57,8 +57,9 @@ export const validRepairData = (r) => !!r && typeof r === 'object' && !Array.isA
   && typeof r.buildingKey === 'string' && Number.isInteger(r.timeStarted) && Number.isInteger(r.repairTime);
 
 /** CARDS8: a Card Binder's deck (systems/iliacItems.js) - a name and the catalog ids of its cards, a deck's worth. */
+export const BINDER_DECK_NAME_MAX = 40;
 export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isArray(d)
-  && typeof d.name === 'string' && d.name.length <= 40 && Array.isArray(d.cards) && d.cards.length <= 40
+  && typeof d.name === 'string' && d.name.length <= BINDER_DECK_NAME_MAX && Array.isArray(d.cards) && d.cards.length <= 40
   && d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);
 
 /** The declared fields, by name. Frozen: a new field is a new line here, not a reader's private knowledge. */

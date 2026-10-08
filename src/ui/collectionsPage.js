@@ -5,8 +5,10 @@
 //
 //   THE CODEX (LOOT10, systems/lootCodex.js; bible/06-Systems/Loot-Arc.md section 12): every Legendary record and every
 //     Aetheric set, found and not - a found one's name, its group, the day it was first found and what it is; an unfound
-//     one's group and where it is said to be. The same rows the Reforge's Codex page draws (ui/reforgeWindow.js
-//     renderCodex), read from the same codex, so the two never disagree. The pack's Codex button still opens that window.
+//     one's group and where it is said to be. The rows, the lines a row opened shows and the sets' counts are the
+//     Reforge's Codex page's (ui/reforgeWindow.js renderCodex - AUDIT CARDS-5 D12 made the lines the same), read from the
+//     same codex, so the two never disagree; the Scry door is the guilds' window's alone. The pack's Codex button still
+//     opens that window.
 //   THE CARDS (CARDS8, bible/11-Multiplayer/Tavern-Cards.md section 26): the Card Binder's collection and its decks - the
 //     binder's own page (ui/cardBinderPage.js), drawn here.
 //
@@ -16,7 +18,7 @@
 import { codexRows, codexSets, codexCount } from '../systems/lootCodex.js';
 import { lootRarityOn, powerLine, legendaryById, affixLine } from '../systems/lootRarity.js';
 import { setById } from '../systems/sigilSets.js';
-import { cardsPartShown, drawCardsPart, resetCardsPart } from './cardBinderPage.js';
+import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart } from './cardBinderPage.js';
 
 export const COLLECTION_PAGE_SECTIONS = Object.freeze([Object.freeze(['collections', 'Collections'])]);
 export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
@@ -33,6 +35,10 @@ let _part = 'codex';
 let _picked = null;   // the codex row opened whole
 /** The page forgotten (a load, a new character): back to its first part. */
 export function resetCollectionsPage() { _part = 'codex'; _picked = null; resetCardsPart(); }
+/** AUDIT CARDS-5 D5: leaving the page (another rail page, another tab) disarms what was armed on it. */
+export function disarmCollectionsPage() { disarmCardsPart(); }
+/** AUDIT CARDS-5 D14: a landing names the part to open on ('codex' | 'cards'). */
+export function setCollectionsPart(/** @type {string} */ part) { if (COLLECTION_PARTS.some(([id]) => id === part)) _part = part; }
 
 export const COLLECTION_PAGE_CSS = `
 .px-sys .coll-parts { display: flex; gap: 6px; margin: 2px 0 10px; }
@@ -73,7 +79,8 @@ export function drawCollectionsPage(detail, rerender, kit) {
     for (const [id, label] of parts) {
       const b = el('button', `coll-part${id === _part ? ' on' : ''}`, label);
       b.type = 'button';
-      b.onclick = () => { _part = id; rerender(); };
+      b.setAttribute('data-focus', `coll-part-${id}`);
+      b.onclick = () => { _part = id; disarmCardsPart(); rerender(); };
       sw.append(b);
     }
     detail.append(sw);
@@ -93,6 +100,7 @@ function drawCodexPart(detail, rerender, { el, divider }) {
     line.type = 'button';
     line.dataset.record = r.id;
     line.append(el('span', 'nm', r.found ? r.name : 'Unfound'), el('span', 'sub', r.found ? `${r.group} · found on day ${r.day}` : `${r.group} · ${r.hint}`));
+    line.setAttribute('data-focus', `codex-row-${r.id}`);
     line.onclick = () => { _picked = _picked === r.id ? null : r.id; rerender(); };
     list.append(line);
     if (_picked === r.id) list.append(codexWhole(el, r));
@@ -101,7 +109,7 @@ function drawCodexPart(detail, rerender, { el, divider }) {
   detail.append(divider(`Aetheric - ${n.aetheric} of ${n.aetherics} found`));
   for (const s of codexSets()) {
     const p = el('p', 'codex-set');
-    p.append(el('span', null, `${setById(s.set)?.name ?? s.set}: `));
+    p.append(el('span', null, `${setById(s.set)?.name ?? s.set} - ${s.pieces.filter((x) => x.found).length} of ${s.pieces.length}: `));   // AUDIT CARDS-5 D12: each set's count, as the Reforge's
     s.pieces.forEach((x, i) => { if (i) p.append(el('span', null, ' · ')); p.append(el('span', x.found ? null : 'unfound', x.found ? x.name : '?')); });
     detail.append(p);
   }
@@ -109,11 +117,13 @@ function drawCodexPart(detail, rerender, { el, divider }) {
 /** A codex row opened whole: what the record is (found), or where it is said to be. */
 function codexWhole(el, r) {
   const ul = el('ul', 'codex-whole');
+  ul.append(el('li', null, `Legendary · ${r.group}`));   // AUDIT CARDS-5 D12: the Reforge's own lines, in its order
   if (r.found) {
     for (const a of legendaryById(r.id)?.affixes ?? []) { const line = affixLine({ rarity: 'legendary', affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
     if (r.power) ul.append(el('li', null, powerLine(r.power)));
     if (r.lore) ul.append(el('li', null, r.lore));
     ul.append(el('li', null, `First found on day ${r.day}`));
-  } else ul.append(el('li', null, r.hint || 'Not yet found'));
+  } else ul.append(el('li', null, 'Not yet found'));
+  if (r.hint) ul.append(el('li', 'codex-hint', r.hint));
   return ul;
 }

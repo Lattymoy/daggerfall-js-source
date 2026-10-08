@@ -26,8 +26,8 @@ import { applyCharacter, createCharacter, assignStartingSpells, CLASS_CAREERS } 
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
-import { assignStartingEquipment } from './startingGear.js';
-import { giveBinderGift } from './iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail   // S3d; RRI2: AssignStartingEquipment, the delegate
+import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
+import { giveBinderAtChargen } from './iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
@@ -144,7 +144,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // Enemies essentially could not hit a new character.
   playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
   assignStartingEquipment(playerEntity, { classIndex });
-  giveBinderGift(playerEntity);   // CARDS8
+  giveBinderAtChargen(playerEntity);   // CARDS8 (AUDIT CARDS-5 C4: ungated, as the wallet's - a stale mark never takes a new character's)
   // AUDIT 20 / THE ONE CONSTRUCTION SEAM, again. This path is a SECOND
   // copy of the construction - it hand-rolls the kit rather than going
   // through applyCreationExtras - and so it silently missed the faction
@@ -238,7 +238,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // records out of the dictionary.
   if (result.factionDict) attachFactionRep(playerEntity, result.factionDict);
   assignStartingEquipment(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
-  giveBinderGift(playerEntity);   // CARDS8
+  giveBinderAtChargen(playerEntity);   // CARDS8 (AUDIT CARDS-5 C4: ungated, as the wallet's - a stale mark never takes a new character's)
   // StartGameBehaviour.cs:432-433 "Initialize region data" ->
   // PlayerEntity.InitializeRegionData (:2189-2218): every new character
   // is born with the 62-region condition store, so the writers that

@@ -1598,7 +1598,7 @@
   {
     "name": "B2-chair-not-by-id",
     "file": "src/systems/cardRemoteTable.js",
-    "old": "    const mine = this.myId ? st.seats.findIndex((s) => s?.id === this.myId) : -1;",
+    "old": "    const mine = this.myId ? st.seats.findIndex((s) => s?.id === this.myId && !s.leaving) : -1;",
     "new": "    const mine = -1;",
     "tests": [
       "test/auditcards2_cloth.test.js",

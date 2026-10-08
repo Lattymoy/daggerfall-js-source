@@ -10,12 +10,13 @@
 //   THE BINDER (template 582): the Wallet's shape (systems/walletItem.js, bible/06-Systems/Wallet.md) - one a character,
 //     bound, pack-only. It ORGANIZES: the cards stay in the pack's own `items` (never a second list), and the binder
 //     holds the DECKS (`decks: [{ name, cards: [ids] }]`), each replaced whole when it changes (the save's snapshot is a
-//     shallow copy). Its Use opens the Collections page's Cards (ui/cardBinderPage.js).
+//     shallow copy). Its Use opens its sheet in the pack, as the Wallet's does (the Collections page builds the decks).
 //   THE GIFT: every character is given a binder and the starter deck's thirty cards once (`binderGift`, as the Wallet's
 //     gift), the starter deck laid in the binder as its first deck - "a starter deck comes with the first binder".
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { registerCustomTemplates, setItemFields, mintCondition } from './itemTemplates.js';
+import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from './itemTemplates.js';
+import { validBinderDeck, BINDER_DECK_NAME_MAX } from './itemFields.js';
 import { addItem } from './inventory.js';
 import { cardById, STARTER_DECK } from '../net/iliacCards.js';
 
@@ -67,7 +68,7 @@ export const BINDER_CARD_LINES = Object.freeze([
 
 /** The most decks a binder keeps, and the longest name one may have (the loot clamp's string bound, itemFields.js). */
 export const BINDER_DECKS_MAX = 12;
-export const DECK_NAME_MAX = 40;
+export const DECK_NAME_MAX = BINDER_DECK_NAME_MAX;   // AUDIT CARDS-5 C1: the item fields' own bound (itemFields.js validBinderDeck), one number
 
 /** `count` cards of catalog id `id`, one stack - or null for an id the catalog does not know. */
 export function mintIliacCard(/** @type {string} */ id, count = 1) {
@@ -98,10 +99,23 @@ export function deckHeldRefusal(/** @type {string[]} */ cards, /** @type {any} *
   for (const [id, n] of need) if ((have.get(id) ?? 0) < n) return 'not held';
   return null;
 }
+/** A binder's decks a reader may trust: each a sound deck (itemFields.js validBinderDeck), no more than BINDER_DECKS_MAX
+ *  (AUDIT CARDS-5 C1: a save's record is copied whole, and a malformed deck threw in the pack's sheet and the page). */
+export function binderDecks(/** @type {any} */ binder) {
+  return Array.isArray(binder?.decks) ? binder.decks.filter(validBinderDeck).slice(0, BINDER_DECKS_MAX) : [];
+}
+/** Every binder of a list made sound in place - its decks replaced by the ones a reader may trust (a load's, save.js). */
+export function cleanBinders(/** @type {any} */ items) {
+  for (const it of Array.isArray(items) ? items : []) {
+    if (!isCardBinder(it)) continue;
+    const ok = binderDecks(it);
+    if (!Array.isArray(it.decks) || ok.length !== it.decks.length) it.decks = ok;
+  }
+}
 /** The binder's deck `i` replaced (or added at the end, `i` past them), the list replaced whole. False when it cannot. */
 export function setBinderDeck(/** @type {any} */ binder, /** @type {number} */ i, /** @type {{name: string, cards: string[]}} */ deck) {
   if (!isCardBinder(binder)) return false;
-  const decks = Array.isArray(binder.decks) ? binder.decks.slice() : [];
+  const decks = binderDecks(binder);
   if (!(Number.isInteger(i) && i >= 0 && i <= decks.length) || (i === decks.length && decks.length >= BINDER_DECKS_MAX)) return false;
   decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };
   binder.decks = decks;
@@ -109,8 +123,9 @@ export function setBinderDeck(/** @type {any} */ binder, /** @type {number} */ i
 }
 /** The binder's deck `i` taken out, the list replaced whole. */
 export function dropBinderDeck(/** @type {any} */ binder, /** @type {number} */ i) {
-  if (!isCardBinder(binder) || !Array.isArray(binder.decks) || !binder.decks[i]) return false;
-  binder.decks = binder.decks.filter((_, k) => k !== i);
+  const decks = binderDecks(binder);
+  if (!isCardBinder(binder) || !decks[i]) return false;
+  binder.decks = decks.filter((_, k) => k !== i);
   return true;
 }
 
@@ -130,7 +145,20 @@ export const BINDER_GIFT = 1;
 /** The gift, once: a binder given unless the character has had it. Answers 1 for a binder given now. */
 export function giveBinderGift(/** @type {any} */ entity) {
   if (!entity || typeof entity !== 'object') return 0;
+  // AUDIT CARDS-5 C8, RECORDED: the Wallet's law - once given, never again (no door loses a bound, pack-only binder)
   if ((Number.isSafeInteger(entity.binderGift) ? entity.binderGift : 0) >= BINDER_GIFT) return 0;
   entity.binderGift = BINDER_GIFT;
   return giveBinder(entity);
 }
+/** CARDS8 at chargen: the binder and the starter deck given, the mark set - ungated, as the wallet's kit is (AUDIT
+ *  CARDS-5 C4: an entity still carrying another character's mark took no binder). Answers giveBinder's count. */
+export function giveBinderAtChargen(/** @type {any} */ entity) {
+  if (!entity || typeof entity !== 'object') return 0;
+  const n = giveBinder(entity);
+  entity.binderGift = BINDER_GIFT;
+  return n;
+}
+
+/** The pack's Use: the binder picked - its sheet in the pack's detail column (the Wallet's 'pickWallet' road), its lines
+ *  in the classic window's box (AUDIT CARDS-5 C5: it had no Use, and the pad's quick act opened nothing). */
+registerItemUseHandler(CARD_BINDER_TEMPLATE, (item) => ({ kind: 'binder', item }));

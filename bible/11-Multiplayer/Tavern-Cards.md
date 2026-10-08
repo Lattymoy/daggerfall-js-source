@@ -138,7 +138,7 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
 
 ### 6.2 The cards
 
-- Drawn from Daggerfall itself: the creatures (a rat, a skeletal warrior, a vampire ancient), the guilds and the
+- Drawn from Daggerfall itself: the creatures (a rat, a skeletal warrior, an ancient vampire), the guilds and the
   temples, the knightly orders, the provinces, the Daedric Princes, the artifacts. Every card names the thing it
   pictures, and its power and text follow from what that thing is in the game (a Lich outranks an Orc).
 - **DECIDED: rarity is the loot's.** A card carries a tier of `RARITY_ORDER` (`src/systems/lootRarity.js`: common,

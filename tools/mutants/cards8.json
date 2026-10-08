@@ -156,15 +156,16 @@
   {
     "name": "C8-decks-mutated",
     "file": "src/systems/iliacItems.js",
-    "old": "  const decks = Array.isArray(binder.decks) ? binder.decks.slice() : [];",
-    "new": "  const decks = Array.isArray(binder.decks) ? binder.decks : [];",
+    "old": "  decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };\n  binder.decks = decks;",
+    "new": "  decks[i] = { name: String(deck.name || 'Deck').slice(0, DECK_NAME_MAX), cards: deck.cards.slice() };\n  if (Array.isArray(binder.decks)) binder.decks.splice(0, binder.decks.length, ...decks); else binder.decks = decks;",
     "tests": [
       "test/auditrealm.test.js",
       "test/cards7_rules.test.js",
       "test/cards8_binder.test.js",
       "test/cards8_catalog.test.js",
       "test/cards8_faces.test.js",
-      "test/holdings.test.js"
+      "test/holdings.test.js",
+      "test/auditcards5_items.test.js"
     ]
   },
   {
@@ -254,15 +255,16 @@
   {
     "name": "C8-chargen-no-binder",
     "file": "src/systems/chargenSession.js",
-    "old": "  assignStartingEquipment(playerEntity, { classIndex });\n  giveBinderGift(playerEntity);   // CARDS8",
-    "new": "  assignStartingEquipment(playerEntity, { classIndex });",
+    "old": "  assignStartingEquipment(playerEntity, { classIndex });\n  giveBinderAtChargen(playerEntity);",
+    "new": "  assignStartingEquipment(playerEntity, { classIndex });\n  void giveBinderAtChargen;",
     "tests": [
       "test/auditrealm.test.js",
       "test/cards7_rules.test.js",
       "test/cards8_binder.test.js",
       "test/cards8_catalog.test.js",
       "test/cards8_faces.test.js",
-      "test/holdings.test.js"
+      "test/holdings.test.js",
+      "test/auditcards5_items.test.js"
     ]
   },
   {

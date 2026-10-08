@@ -64,7 +64,7 @@ import { magicPowersLines } from '../systems/itemPowers.js';   // PLUS10: %mpw
 import { CHAT_MAX } from '../net/wire.js';   // CHAT-POST: a posted item is one chat line
 import { itemIsIdentified } from '../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { isCardBinder, isIliacCard } from '../systems/iliacItems.js';   // CARDS8: the binder holds the cards
+import { isCardBinder, isIliacCard, binderDecks } from '../systems/iliacItems.js';   // CARDS8: the binder holds the cards
 import { isWalletItem, walletContents, walletLedger, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's sheet; WALLET-UI: its ledger
 import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TEXT, nextDrape, drapeCount, DRAPE_TEXT } from '../systems/useItem.js';   // PLUS10: isPotionRecipe, a recipe's second Info box   // HT2: the light source's own act; Mac: Use only where the law has an arm   // HOOD-SAID: the hood's button and its lines   // CLOAK-DRAPE: the drape's
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
@@ -596,7 +596,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
       : { kind: 'message', text: USE_PENDING.openPortal };
   }
   // WALLET1: the wallet - its sheet, in the detail column; nothing closes
-  if (r.kind === 'wallet') return { kind: 'pickWallet', item: r.item };
+  if (r.kind === 'wallet' || r.kind === 'binder') return { kind: 'pickWallet', item: r.item };   // CARDS8 (AUDIT CARDS-5 C5): the binder's sheet the same way
   // MEND-AIM: a use that asks WHICH (a repair kit, more than one piece to mend) - the pack asks, and uses it again aimed
   if (r.kind === 'chooseTarget') return { kind: 'chooseTarget', item: r.item, targets: r.targets, labels: r.labels, title: r.title };
   // The classic window's own ladder, in its own order: an explicit
@@ -3393,7 +3393,7 @@ function binderSheet(b) {
   const box = el('div', 'walletsheet bindersheet');
   const n = b.held.reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0);
   box.append(el('h4', 'wallet-head', `${n} card${n === 1 ? '' : 's'} of ${b.held.length} kind${b.held.length === 1 ? '' : 's'}`));
-  for (const d of Array.isArray(b.item.decks) ? b.item.decks : []) {
+  for (const d of binderDecks(b.item)) {   // AUDIT CARDS-5 C1: the decks a reader may trust
     const row = el('div', 'wallet-row');
     row.append(el('span', 'wallet-k', d.name), el('span', 'wallet-v', `${d.cards.length} cards`));
     box.append(row);

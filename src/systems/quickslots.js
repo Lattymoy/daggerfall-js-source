@@ -145,7 +145,8 @@ function computeKey(item) {
   const affixes = Array.isArray(item.affixes) && item.affixes.length ? JSON.stringify(item.affixes) : '';
   return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', item.potionRecipeKey ?? '',
     item.legendary ?? '', ench, custom, affixes, item.aetheric ?? ''].join('|')   // SET6: an Aetheric piece's record, as a Legendary's
-    + (item.potent ? `|p${item.potent}` : '');   // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve
+    + (item.potent ? `|p${item.potent}` : '')   // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve
+    + (typeof item.card === 'string' ? `|c${item.card}` : '');   // AUDIT CARDS-5 C3: a card's own card - a Rat and a Lamia are two kinds (only when set, so every other key stands)
 }
 
 /** What a consumable slot takes: a potion or a drug - the two arms of

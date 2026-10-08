@@ -110,7 +110,9 @@ export class RemoteCardTable {
     if (st.handNo !== this.state?.handNo) this.turn = null;
     this.state = st;
     if (events.length) this.error = null;   // AUDIT CARDS-3 B3/D8: the table moved on - an old refusal is not the news
-    const mine = this.myId ? st.seats.findIndex((s) => s?.id === this.myId) : -1;
+    // AUDIT CARDS-5 E2: my chair is one the relay holds for me - never one I am leaving (cashed out mid-hand, it stands under
+    // my id till the hand ends: a new sit's refusal raced by its frame confirmed me there, and my new stake 'sat')
+    const mine = this.myId ? st.seats.findIndex((s) => s?.id === this.myId && !s.leaving) : -1;
     if (mine >= 0) { this.chair = mine; this.confirmed = true; this.lost = null; }
     else if (this.chair >= 0 && (this.confirmed || st.seats[this.chair])) {
       const broke = events.some((e) => e.t === 'leave' && e.seat === this.chair && e.broke);

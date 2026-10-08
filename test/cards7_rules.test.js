@@ -37,6 +37,7 @@ const LOCS = ['orsinium', 'daggerfall', 'vampire-crypt'];
 function game(p0 = [], p1 = [], locations = LOCS) {
   const st = newGame({ decks: [deckOf(p0), deckOf(p1)], rand32: ident(), locations });
   for (const pl of st.players) { pl.deck.unshift(...pl.hand); pl.hand = []; }
+  st.coin = 0;   // AUDIT CARDS-5 A3: a tie's first revealer named, so a staged turn's order is the test's own
   return st;
 }
 
@@ -121,7 +122,7 @@ test('CARDS7 a new game: the holdings drawn, then deck 0 shuffled, then deck 1, 
   const src = (() => { const head = script([3, 0, 8]); return () => (++calls <= 3 ? head() : ident0()); })();
   const st = newGame({ decks: [deckOf(['rat']), deckOf(['lich'])], rand32: src });
   assert.deepEqual(st.holdings.map((h) => h.id), ['shornhelm', 'daggerfall', 'vampire-crypt']);
-  assert.equal(calls, 3 + 29 + 29);
+  assert.equal(calls, 3 + 29 + 29 + 1);   // AUDIT CARDS-5 A3 (PIN MOVED): and the tie's coin, drawn last
   assert.deepEqual(st.holdings.map((h) => h.sides), [[[], []], [[], []], [[], []]]);
   assert.equal(st.turn, 1);
   assert.equal(st.over, false);
@@ -139,7 +140,7 @@ test('CARDS7 a new game: the holdings drawn, then deck 0 shuffled, then deck 1, 
   let n = 0;
   const named = newGame({ decks: [STARTER_DECK, STARTER_DECK], rand32: () => { n++; return 0; }, locations: ['wayrest', 'betony', 'sentinel'] });
   assert.deepEqual(named.holdings.map((h) => h.id), ['wayrest', 'betony', 'sentinel']);
-  assert.equal(n, 58);
+  assert.equal(n, 58 + 1);   // AUDIT CARDS-5 A3 (PIN MOVED): and the tie's coin
   assert.deepEqual(structuredClone(named), JSON.parse(JSON.stringify(named)));
   // Refusals.
   assert.equal(newGame({ decks: [STARTER_DECK, STARTER_DECK.slice(1)], rand32: ident() }), null);
@@ -151,14 +152,14 @@ test('CARDS7 a new game: the holdings drawn, then deck 0 shuffled, then deck 1, 
 });
 
 test('CARDS7 magicka: one on the first turn, one more each turn, a gift for the next turn, never past ten', () => {
-  const st = game(['thieves-guild-fence']);
+  const st = game(['thieves-guild-crook']);
   const seen = [st.players.map((pl) => pl.magicka)];
   for (let t = 1; t < ILIAC_TURNS; t++) { turn(st); seen.push(st.players.map((pl) => pl.magicka)); }
   assert.deepEqual(seen, [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
   // The fence on turn 2 gives +2 on turn 3 (and only turn 3).
-  const g = game(['thieves-guild-fence']);
+  const g = game(['thieves-guild-crook']);
   turn(g);
-  handOf(g, 0, ['thieves-guild-fence']);
+  handOf(g, 0, ['thieves-guild-crook']);
   const ev = turn(g, [[0, 0]]);
   assert.deepEqual(ev.find((e) => e.t === 'magicka'), { t: 'magicka', p: 0, n: 2, src: { uid: 0 } });
   assert.deepEqual(g.players.map((pl) => pl.magicka), [5, 3]);
@@ -253,7 +254,7 @@ test('CARDS7 the public view: your own hand and plays, the other\'s counts alone
   assert.deepEqual(iliacView(st, 0).holdings.map((h) => [h.id, h.room]), [['orsinium', 4], ['daggerfall', 4], ['vampire-crypt', 4]]);
 });
 
-test('CARDS7 the simultaneous turn: nothing until both commit, then more power reveals first (a tie, player 0)', () => {
+test('CARDS7 the simultaneous turn: nothing until both commit, then more power reveals first (a tie, the deal\'s coin)', () => {
   // Player 1 stands more power, so his assassin lands first - and finds no enemy yet: player 0's rat lands after it.
   const a = game(['rat'], ['dark-brotherhood-assassin', 'dreugh']);
   place(a, 1, 1, 'dreugh');
@@ -291,7 +292,7 @@ test('CARDS7 the simultaneous turn: nothing until both commit, then more power r
 });
 
 test('CARDS7 buff: a reveal for good, an ongoing while its source stands, an end each turn, a pick\'s tie to the first met', () => {
-  const st = game(['rat', 'spriggan', 'priest-of-mara', 'knight-of-the-hour', 'gargoyle', 'rat'], ['mehrunes-razor']);
+  const st = game(['rat', 'spriggan', 'priest-of-mara', 'knight-of-the-wheel', 'gargoyle', 'rat'], ['mehrunes-razor']);
   const rat = place(st, 0, 0, 'rat');
   handOf(st, 0, ['spriggan']);
   st.players[0].magicka = 2;
@@ -310,8 +311,8 @@ test('CARDS7 buff: a reveal for good, an ongoing while its source stands, an end
   assert.deepEqual(st.players[0].discard.map((c) => c.id), ['priest-of-mara']);
   assert.equal(pw(st, harpy), 1);
   // The Knight of the Hour grows at every turn's end (at the crypt, where nothing else touches him).
-  const k = game(['knight-of-the-hour']);
-  handOf(k, 0, ['knight-of-the-hour']);
+  const k = game(['knight-of-the-wheel']);
+  handOf(k, 0, ['knight-of-the-wheel']);
   k.players[0].magicka = 2;
   turn(k, [[0, 2]]);
   const knight = k.holdings[2].sides[0][0].uid;
@@ -515,8 +516,8 @@ test('CARDS7 transform: the target becomes the card (its power, its text), and i
 });
 
 test('CARDS7 the holdings\' tag and cost rules: Daggerfall\'s knights, Orsinium\'s orcs, the crypt\'s dead, Sentinel\'s sun - both sides', () => {
-  const st = game(['knight-of-the-hour', 'orc', 'skeletal-warrior'], ['knight-of-the-hour', 'orc', 'giant-bat']);
-  const k0 = place(st, 0, 1, 'knight-of-the-hour'), k1 = place(st, 1, 1, 'knight-of-the-hour');
+  const st = game(['knight-of-the-wheel', 'orc', 'skeletal-warrior'], ['knight-of-the-wheel', 'orc', 'giant-bat']);
+  const k0 = place(st, 0, 1, 'knight-of-the-wheel'), k1 = place(st, 1, 1, 'knight-of-the-wheel');
   const o0 = place(st, 0, 0, 'orc'), o1 = place(st, 1, 0, 'orc');
   const s0 = place(st, 0, 2, 'skeletal-warrior');
   const b1 = place(st, 1, 2, 'giant-bat');
@@ -756,7 +757,7 @@ test('CARDS7 the language said: every verb\'s sentence, the triggers\' lead-ins,
   assert.equal(t([{ on: 'reveal', do: 'buff', to: 'all.mine', cost: [1, 3], pick: 'weakest', n: 1 }]), 'Reveal: your weakest unit that costs 1 to 3 gains +1 power.');
   assert.equal(t([{ on: 'reveal', do: 'destroy', to: 'all.theirs', pick: 'strongest' }]), 'Reveal: destroy the strongest enemy unit.');
   assert.equal(t([{ on: 'reveal', do: 'destroy', to: 'here.theirs', tag: 'undead', pick: 'weakest' }]), 'Reveal: destroy the weakest enemy undead unit here.');
-  assert.equal(t([{ on: 'end', do: 'move', to: 'self' }]), 'End of turn: move this to the next holding with room.');
+  assert.equal(t([{ on: 'end', do: 'move', to: 'self' }]), 'End of turn: move this to the next holding round the table with room.');
   assert.equal(t([{ on: 'reveal', do: 'draw', n: 1 }, { on: 'reveal', do: 'magicka', n: 2 }]), 'Reveal: draw a card and gain +2 magicka next turn.');
   assert.equal(t([{ on: 'reveal', do: 'draw', n: 3 }], 'spell'), 'Draw 3 cards.');
   assert.equal(t([{ on: 'reveal', do: 'summon', card: 'imp', n: 2 }]), 'Reveal: summon two Imps here.');
@@ -769,4 +770,101 @@ test('CARDS7 the language said: every verb\'s sentence, the triggers\' lead-ins,
   assert.equal(t([{ on: 'ongoing', do: 'discount', kind: 'spell', n: 2 }], 'prince'), 'Ongoing: your spells cost 2 less.');
   // Every location of the catalog is one the engine can stand, and every card one it can play.
   assert.equal(ILIAC_LOCATIONS.length >= 8, true);
+});
+
+test('AUDIT CARDS-5 A1-A7: a weaken takes from the power shown; an unveiled card counts its power alone; a tie by the deal\'s coin, then turn about; the source checked; the words', () => {
+  // A1: a buffed card loses what its text says
+  const a = game(['fireball'], ['harpy'], ['vampire-crypt', 'daggerfall', 'sentinel']);
+  place(a, 1, 0, 'harpy');
+  a.holdings[0].sides[1][0].mod = 2;   // showing 3
+  handOf(a, 0, ['fireball']);
+  a.players[0].magicka = 6;
+  const ev = turn(a, [[0, 0]], []);
+  const w = ev.find((e) => e.t === 'weaken');
+  assert.equal(w.n, Math.min(3, 3), 'the whole of it, from the power shown');
+  assert.equal(powers(a)[a.holdings[0].sides[1][0].uid], 0);
+  // A9: a card at 0 loses nothing and nothing is said
+  const b = game(['fireball'], ['harpy']);
+  place(b, 1, 0, 'harpy');
+  b.holdings[0].sides[1][0].mod = -1;
+  handOf(b, 0, ['fireball']);
+  b.players[0].magicka = 6;
+  assert.equal(turn(b, [[0, 0]], []).filter((e) => e.t === 'weaken').length, 0);
+  // A3: a tie by the coin, then turn about
+  const c = game(['rat'], ['rat']);
+  for (const [coin, t, first] of [[0, 1, 0], [0, 2, 1], [1, 1, 1], [1, 2, 0]]) { c.coin = coin; c.turn = t; assert.equal(revealOrder(c)[0], first, `coin ${coin} turn ${t}`); }
+  const coins = new Set();
+  for (let seed = 1; seed < 40 && coins.size < 2; seed++) coins.add(newGame({ decks: [deckOf(['rat']), deckOf(['rat'])], rand32: ((x) => () => (x = (x * 1664525 + 1013904223) >>> 0))(seed) }).coin);
+  assert.equal(coins.size, 2, 'the deal\'s coin falls both ways');
+  // A6: a broken source is no game
+  assert.equal(newGame({ decks: [deckOf(['rat']), deckOf(['rat'])], rand32: () => 0xFFFFFFFF }), null, 'stuck at the top: refused, never a hang');
+  assert.equal(newGame({ decks: [deckOf(['rat']), deckOf(['rat'])], rand32: () => 0.5 }), null, 'not a uint32: refused');
+  // A2: an unveiled card's own ongoing text never rules the final count
+  const d = game(['mehrunes-dagon'], ['harpy'], ['privateers-hold', 'daggerfall', 'sentinel']);
+  place(d, 1, 1, 'harpy');
+  d.holdings[1].sides[1][0].mod = 4;
+  place(d, 0, 0, 'mehrunes-dagon');
+  d.holdings[0].sides[0][0].down = true;
+  d.turn = ILIAC_TURNS;
+  turn(d, [], []);
+  assert.equal(d.over, true);
+  assert.equal(powers(d)[d.holdings[1].sides[1][0].uid], 5, 'the unveiled Prince\'s rule reached no one');
+  // A5, A7: the words
+  assert.equal(fxText([{ on: 'ongoing', do: 'room', n: 1 }], 'location'), 'Each side holds only one card here.');
+  assert.match(fxText([{ on: 'reveal', do: 'summon', to: 'self', card: 'priest-of-arkay', n: 2 }], 'unit'), /two Priests of Arkay/);
+  assert.match(fxText([{ on: 'reveal', do: 'summon', to: 'here', card: 'rat', n: 1 }], 'location'), /its owner summons a Rat/);
+  assert.match(fxText([{ on: 'end', do: 'move', to: 'self' }], 'unit'), /round the table/);
+});
+
+test('AUDIT CARDS-5 lane A\'s survivors: a uid a place in the shuffled deck; the strongest\'s tie to the first met; a face-down card discounts nothing, moves nothing, and is not counted in the order; a cost never below 0; five plays a lawful commit; a commit copied; two gifts add up; the events\' order', () => {
+  const xs = ((x) => () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; return x >>>= 0; })(12345);
+  const dealt = newGame({ decks: [STARTER_DECK.slice(), STARTER_DECK.slice()], rand32: xs });
+  assert.ok([...dealt.players[0].hand, ...dealt.players[0].deck].filter((c) => STARTER_DECK[c.uid] === c.id).length < 30, 'a uid is no list index');
+  // the strongest's tie: the first met
+  const s = game(['fireball'], ['dreugh', 'ice-atronach'], ['mages-guild-hall', 'evermor', 'wayrest']);
+  const a = place(s, 1, 0, 'dreugh'), b = place(s, 1, 0, 'ice-atronach');
+  handOf(s, 0, ['fireball']); s.players[0].magicka = 9;
+  const before = [pw(s, a), pw(s, b)];
+  turn(s, [[0, 0]]);
+  assert.deepEqual([pw(s, a), pw(s, b)], [Math.max(0, before[0] - 3), before[1]], 'the first of the strongest takes it');
+  // a face-down Clavicus at the Hold discounts nothing, and its power is not counted in the order
+  const d = game(['clavicus-vile', 'fireball'], [], ['privateers-hold', 'evermor', 'wayrest']);
+  handOf(d, 0, ['clavicus-vile']); d.players[0].magicka = 9;
+  turn(d, [[0, 0]]);
+  assert.equal(costOf(d, 0, cardById('fireball'), 1), cardById('fireball').cost);
+  d.coin = 1; d.turn = 1;
+  assert.deepEqual(revealOrder(d), [1, 0], 'a face-down card counts for nothing in the order (a tie, the coin\'s)');
+  // a cost never below 0: Clavicus face up and the Mages Guild Hall on a one-cost spell
+  const f = game(['clavicus-vile', 'frostbite'], [], ['mages-guild-hall', 'evermor', 'wayrest']);
+  place(f, 0, 1, 'clavicus-vile');
+  assert.equal(costOf(f, 0, cardById('frostbite'), 0), 0);
+  // five plays in one commit are lawful; a commit is the plays as they were
+  const g = game(['rat', 'imp', 'mages-guild-apprentice', 'thieves-guild-filcher', 'giant-bat'], [], ['mages-guild-hall', 'evermor', 'betony']);
+  handOf(g, 0, ['rat', 'imp', 'mages-guild-apprentice', 'thieves-guild-filcher', 'giant-bat']); g.players[0].magicka = 9;
+  assert.equal(playsRefusal(g, 0, [0, 1, 2, 3, 4].map((card) => ({ card, holding: card % 3 }))), null);
+  const h = game(['rat', 'imp'], [], ['mages-guild-hall', 'evermor', 'betony']);
+  handOf(h, 0, ['rat', 'imp']); h.players[0].magicka = 9;
+  const plays = [{ card: 0, holding: 0 }];
+  commit(h, 0, plays); plays.push({ card: 1, holding: 1 }); plays[0].holding = 2;
+  assert.deepEqual(h.players[0].plays, [{ card: 0, holding: 0 }]);
+  // the draws in the reveal's order
+  const k = game([], ['lamia'], ['mages-guild-hall', 'evermor', 'betony']);
+  place(k, 1, 0, 'lamia');
+  assert.deepEqual(turn(k).filter((e) => e.t === 'drew').map((e) => e.p), [1, 0]);
+});
+
+test('AUDIT CARDS-5 lane A\'s last survivors: a both-sides weaken takes its owner\'s side first; two gifts of magicka in one turn add up; a face-down card\'s end-of-turn text never runs', () => {
+  const s = game(['giant'], ['harpy'], ['mages-guild-hall', 'evermor', 'wayrest']);
+  place(s, 1, 0, 'harpy');
+  const mine = place(s, 0, 0, 'harpy');
+  handOf(s, 0, ['giant']); s.players[0].magicka = 9;
+  assert.equal(turn(s, [[0, 0]]).filter((e) => e.t === 'weaken')[0].uid, mine, 'its owner\'s side first');
+  const g = game(['imp', 'imp'], [], ['evermor', 'mages-guild-hall', 'wayrest']);
+  handOf(g, 0, ['imp', 'imp']); g.players[0].magicka = 9;
+  turn(g, [[0, 0], [1, 0]]);
+  assert.equal(g.players[0].magicka, Math.min(ILIAC_MAGICKA_MAX, 2 + 4), 'two imps and two of Evermor\'s gifts: four more');
+  const d = game(['giant-bat'], [], ['privateers-hold', 'evermor', 'wayrest']);
+  handOf(d, 0, ['giant-bat']); d.players[0].magicka = 9;
+  turn(d, [[0, 0]]);
+  assert.equal(d.holdings[0].sides[0].length, 1, 'the face-down bat stayed where it was played');
 });

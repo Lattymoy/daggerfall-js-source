@@ -23,9 +23,8 @@ import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMov
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';
 import { regionOk } from '../../src/net/nodeLaw.js';
 import { mintStakeOrder, STAKE_ROOM_RE } from '../../src/net/identityToken.js';
-import { verifyCardReceipt } from '../../src/net/cardReceipt.js';
+import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/cardReceipt.js';
 import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB } from '../../src/net/holdemTable.js';
-import { HOLDEM_SEATS_MAX } from '../../src/net/cardLaw.js';
 
 /** A stake request's id - one asked twice is one stake. */
 export const CARDS_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
@@ -106,7 +105,11 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
   if (row.status === 'paid') return { ok: true, repeat: true, gold: Number(row.paid ?? 0) };
   // a stake handed back whole is the stake; a seat leaves with no more than every seat's deepest stake at its table
   if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };
-  if (c.r > HOLDEM_STAKE_MAX_BB * Number(row.bb) * HOLDEM_SEATS_MAX) return { error: 'cards-receipt', why: 'sum' };
+  // AUDIT CARDS-5 E1: and a seat leaves with no more than every stake that came to its table - the seats' buy-ins, their
+  // re-buys and top-ups, over the receipt's life (six deep stakes was no bound: a loser's re-buy is a winner's chips)
+  const into = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM card_stakes WHERE room = ?1 AND tbl = ?2 AND bb = ?3 AND at <= ?4 AND at >= ?5`)
+    .bind(row.room, row.tbl, row.bb, c.i, c.i - CARD_RECEIPT_TTL_S).first();
+  if (c.r > Number(into?.n ?? 0)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT CARDS-4 A7: home to the region it was staked from - never the one the client names
   const home = Number(row.region);
   if (!regionOk(home)) return { error: 'bad-region' };
