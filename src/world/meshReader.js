@@ -35,6 +35,37 @@ const SCOURG_EXTERIOR = 156;
 const DUNGEON_EXIT_DOORS = 95;
 
 /**
+ * LoadVertices' door law for one submesh, alone (OW-DUNGEONS, 2026-10-08): the door type its texture archive - and for
+ * the ruins' archive its record - makes it, NONE where it is no door. dfMeshToModel reads every door through it, and
+ * the Overworld's dungeon models (systems/travelDungeonModels.js) ask it of a mesh's submeshes without building it.
+ * @param {number} textureArchive @param {number} textureRecord @returns {number} a DOOR_TYPE
+ */
+export function subMeshDoorType(textureArchive, textureRecord) {
+  // Base climate archive for the door check. All base door textures are
+  // > 100 with some exceptions (verbatim DFU).
+  let doorArchive = textureArchive;
+  if (
+    doorArchive > 100 &&
+    doorArchive !== DUNGEON_RUIN_ENTER_DOORS &&
+    doorArchive !== SCOURG_EXTERIOR
+  ) {
+    doorArchive = textureArchive - Math.trunc(textureArchive / 100) * 100;
+  }
+  switch (doorArchive) {
+    case BUILDING_DOORS:
+      return DOOR_TYPE.BUILDING;
+    case DUNGEON_ENTER_DOORS:
+      return DOOR_TYPE.DUNGEON_ENTRANCE;
+    case DUNGEON_RUIN_ENTER_DOORS:
+      return textureRecord > 0 ? DOOR_TYPE.DUNGEON_ENTRANCE : DOOR_TYPE.NONE;   // Dungeon ruins index 0 is just a stone texture
+    case DUNGEON_EXIT_DOORS:
+      return DOOR_TYPE.DUNGEON_EXIT;
+    default:
+      return DOOR_TYPE.NONE;
+  }
+}
+
+/**
  * Convert a decomposed DFMesh into flat GPU-ready buffers.
  * @param {object} dfMesh - output of Arch3dFile.getMesh().
  * @param {(archive:number, record:number) => {width:number,height:number}} getTextureSize
@@ -60,42 +91,10 @@ export function dfMeshToModel(dfMesh, getTextureSize) {
   for (const sm of dfMesh.subMeshes) {
     const sz = getTextureSize(sm.textureArchive, sm.textureRecord);
 
-    // Base climate archive for the door check. All base door textures are
-    // > 100 with some exceptions (verbatim DFU).
-    const submeshTextureArchive = sm.textureArchive;
-    const baseTextureArchive =
-      submeshTextureArchive - Math.trunc(submeshTextureArchive / 100) * 100;
-    let doorArchive = submeshTextureArchive;
-    if (
-      doorArchive > 100 &&
-      doorArchive !== DUNGEON_RUIN_ENTER_DOORS &&
-      doorArchive !== SCOURG_EXTERIOR
-    ) {
-      doorArchive = baseTextureArchive;
-    }
-
-    let doorFound = false;
-    let doorType = DOOR_TYPE.NONE;
-    switch (doorArchive) {
-      case BUILDING_DOORS:
-        doorFound = true;
-        doorType = DOOR_TYPE.BUILDING;
-        break;
-      case DUNGEON_ENTER_DOORS:
-        doorFound = true;
-        doorType = DOOR_TYPE.DUNGEON_ENTRANCE;
-        break;
-      case DUNGEON_RUIN_ENTER_DOORS:
-        if (sm.textureRecord > 0) { // Dungeon ruins index 0 is just a stone texture
-          doorFound = true;
-          doorType = DOOR_TYPE.DUNGEON_ENTRANCE;
-        }
-        break;
-      case DUNGEON_EXIT_DOORS:
-        doorFound = true;
-        doorType = DOOR_TYPE.DUNGEON_EXIT;
-        break;
-    }
+    // OW-DUNGEONS: the door law is subMeshDoorType's, below - one home for it (the Overworld's dungeon models ask it of a
+    // mesh they never build)
+    const doorType = subMeshDoorType(sm.textureArchive, sm.textureRecord);
+    const doorFound = doorType !== DOOR_TYPE.NONE;
 
     let doorCount = 0; // Resets per submesh, verbatim DFU scope.
     for (const plane of sm.planes) {
