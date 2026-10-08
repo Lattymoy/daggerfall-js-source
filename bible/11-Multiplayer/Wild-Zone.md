@@ -174,6 +174,25 @@ the road and x40 on it. A cap, never a write - the player's choice comes back th
 - The maps' hiding is the receiving client's; a guildless player's own mark is never sent in the zone.
 - No player fighting inside the zone's buildings and dungeons.
 
+## 13. What the suite caught (WILD-SUITE, 2026-10-08)
+
+The zone landed without a run of the suite. Four of what it caught were the source's, fixed there:
+
+- THE HALLS STAND FROM ABOVE THE FIRST BUILD (BOOT-TDZ2). The boot's first pixel build asks `spawnedDungeonAt`, and
+  in the zone that is a hall's stand - which, with its day, its picks and its templates, was declared fifteen thousand
+  lines below the build: on an online boot on a hall's pixel each read was a dead zone, the builder's `try` swallowed
+  it and no hall stood. They are declared above the builder now (world.js:"const wildHallStandOf = (mask, px, py) => {"),
+  handed the mask the builder just read; play's callers keep the session's (`wildActiveNow`, `wildHallStand`).
+- THE HALL'S GATE WAITS INSIDE THE DOOR'S (AUDIT 68 X3). The hub's word on my lock (up to four seconds) was awaited
+  before the transition gate, so a teleport, a Recall or a load inside it did not stale the door; it is asked inside
+  the gated build now, and the build re-validated after it (worldModes.js:"the world moved during the hub's word").
+- `/unstuck`'s bar stands at the HUD's z 30, not 9999 - over the asset picker (MWFIX 1); the Heal Curse hotkey plays
+  the hotkey arm's one click, not a second of its own (AUDIT 26 D1); and the temple's blood curse is `bearsCurse` /
+  `healCurseLift`, not the item curse's `isCursed` / `liftCurse` (AUDIT 24, one name one home).
+
 ## Pins
 
-`test/wild1_zone.test.js`, `test/wild1_wire.test.js`, `test/wild1_fight.test.js`, `test/wild2_rings.test.js`.
+`test/wild1_zone.test.js`, `test/wild1_wire.test.js`, `test/wild1_fight.test.js`, `test/wild2_rings.test.js`; the host
+seams above in `test/bootorder.test.js`, `test/audit68_worldmodes.test.js`, `test/mapkeep.test.js`,
+`test/mwattach.test.js`, `test/audit26_uiwindows.test.js` and `test/audit24_onehome.test.js`;
+`tools/mutants/wildsuite.json`.
