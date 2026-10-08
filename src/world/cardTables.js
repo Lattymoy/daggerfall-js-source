@@ -53,7 +53,7 @@ export const yawToward = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
  * The seats a table's OWN box could hold, before the probe: `{lx, lz, nx, nz, side}` in the box's space - the seat's
  * point SEAT_OUT out from its side, and the side's inward normal - in a fixed order (the +x side, the -x side, the +z
  * side, the -z side, each from its low end), so the same table always numbers its seats the same.
- * @param {{min: number[], max: number[]}} box
+ * @param {{min: readonly number[], max: readonly number[]}} box
  */
 export function seatSpots(box) {
   const [x0, , z0] = box.min;

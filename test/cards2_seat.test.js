@@ -115,7 +115,7 @@ test('CARDS2 the nearest free seat; something to sit over; what stands you up; t
 test('CARDS2 the interior context lists its card tables - TAVERN-TABLE: the prop alone, no model of the room\'s', () => {
   const src = read('src/scenes/interiorContext.js');
   assert.equal(src.split('tables.push(').length - 1, 1, 'one push');
-  assert.ok(src.includes('      tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix });'), 'the prop\'s: its own box and its matrix');
+  assert.ok(src.includes('      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix });'), 'the prop\'s: the table\'s own box and its matrix');
   assert.match(src, /^ {4}tables, {4}\/\/ CARDS2: the card tables$/m);
 });
 
