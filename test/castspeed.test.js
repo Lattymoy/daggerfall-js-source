@@ -177,7 +177,7 @@ test('CAST-SPEED: the Morrowind arm plays its spellcast group at the cast\'s rat
 test('CAST-SPEED: the loot line - casting speed, a line that does something on jewellery and weapons; what I wear, summed under its cap, mine alone', () => {
   on();
   const k = LR.AFFIX_KINDS.castSpeed;
-  assert.equal(LR.AFFIX_IDS.at(-1), 'castSpeed', 'after every kind before it, so no other piece\'s draw moves');
+  assert.equal(LR.AFFIX_IDS.at(-1), 'castSpeed', 'after every kind before it, so the numbers\' pass draws as it did (the last pass moved - CAST-SPEED-PINS)');
   assert.deepEqual(k.groups, ['Jewellery', 'Weapons']);
   assert.equal(k.proc, true);
   assert.equal(k.params, null);
