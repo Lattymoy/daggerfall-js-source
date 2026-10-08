@@ -259,7 +259,9 @@ test('ACC4: the beat sends the session as a Bearer and NO NUMBER, and a device w
 
 test('ACC4: the world host starts the clock, on the stored session, gated on visibility', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /startPlayClock\(\{\s*beat: accountPlayBeat\(\{[^}]*storage: appStorage\(\)/,
+  // PIN MOVED (SCALE4c): the knock rides the tab's one heartbeat (net/heartbeat.js), made on the device's own session
+  assert.match(w, /startPlayClock\(\{\s*beat: \(\) => heartbeat\.beat\(\)/, 'the world no longer knocks through its heartbeat');
+  assert.match(w, /const heartbeat = createHeartbeat\(\{\s*fetch: [^\n]*, storage: appStorage\(\),/,
     'the world no longer knocks with the device\'s own session');
   assert.match(w, /visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden'/);
   assert.equal((w.match(/startPlayClock\(/g) ?? []).length, 1, 'one clock per page - two would knock twice (harmless to the total, a wasted D1 write each beat)');

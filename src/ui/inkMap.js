@@ -41,6 +41,7 @@ import {
 import { getPixelColorIndex, FILTER_SRC } from './travelMapWindow.js';   // MAP-KEY: the classic's filter law and its four buttons, asked of - never copied
 import { GATE_RING_CSS, GATE_FILL_CSS } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, in the omen's own colours
 import { SERPENT_MAP_INK } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
+import { SD_MAP_INK } from './sdMapMark.js';   // SD2c: the Super dungeon's ring, in its omen's brass
 import { BOUNTY_RING_CSS, BOUNTY_FILL_CSS, REVENANT_RING_CSS, REVENANT_FILL_CSS } from './bountyMapMark.js';   // BOUNTY1: a held bounty's black circle; RVN7c: a revenant's lair in blood red
 import { RAID_MARK_CSS } from './eventMapMarks.js';   // EVENT-TIP: a town under attack
 import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from './questMarks.js';   // GUIDE5: where a quest points
@@ -224,7 +225,10 @@ export const HALO_PEN = 1.6;
 export const GLYPH_R = Object.freeze({
   city: 6.5, hamlet: 3.5, village: 2.8, temple: 5, cult: 4.5,
   dungeon: 5, graveyard: 3.8, coven: 5, tavern: 3.2, home: 3.2,
+  hall: 5,   // PVPDUNGEONS: a zone hall's arched door, the dungeon's own room
 });
+/** PVPDUNGEONS: a zone hall's ink - an elite hall's deep oxblood, apart from every classic dot's hue. */
+export const HALL_INK = '#7a1f14';
 /** The hand-lettered face the names are inked in. The enhanced skin's
  *  display face (ui/enhancedStyle.js --display), so the map and the
  *  card beside it agree. */
@@ -988,6 +992,9 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the roads and the tracks
   if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
   if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
+  // laid over the mountains and the roads and under every place, so a town in the fog still reads
+  if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
 
   // the marks - and MAP2's harbour glyph beside a port's, while the mod
   // restricts ship travel to ports (the classic page's ports button
@@ -1013,7 +1020,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]);   // MAP-KEY: in its classic dot's hue, where there is a palette
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
   }
   // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
   // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
@@ -1084,6 +1091,8 @@ export function paintInkOverlay(ctx, view, opts) {
   if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
   if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
+  // SD2c: the Super dungeon's ring once it is found, in its omen's brass
+  if (opts.sd && visible(opts.sd.cx, opts.sd.cy, opts.sd.r + 2)) paintGateRing(ctx, view, opts.sd, pulse, SD_MAP_INK);
   // BOUNTY1: each held bounty's black circle, under the party too
   for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);
   // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too
@@ -1164,9 +1173,12 @@ export function inkShip(ctx, x, y) {
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number, oy:number, scale:number}} view
  * @param {{cx:number, cy:number, r:number, label?:string}} g @param {number} [pulse] 0..1
  */
+/** AUDIT SD III (T7): the least a ring is drawn on the paper, in pixels - and so the least it answers a pointer in. */
+export const GATE_RING_MIN_PX = 10;
+
 export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {   // SERPENT1: `ink` {ring, fill} - the sea serpent's ring in its own colours
   const [x, y] = toPaper(view, g.cx, g.cy);
-  const r = Math.max(10, g.r * view.scale);
+  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);
   ctx.save();
   ctx.setLineDash([]);
   ctx.fillStyle = ink?.fill ?? GATE_FILL_CSS;
@@ -1251,17 +1263,26 @@ export function paintQuestMark(ctx, view, m) {
   ctx.strokeStyle = PEN.soft;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x, cy + r); ctx.stroke();   // the tie to the place
-  ctx.beginPath();
-  ctx.moveTo(x, cy - r); ctx.lineTo(x + r, cy); ctx.lineTo(x, cy + r); ctx.lineTo(x - r, cy); ctx.closePath();
   // AUDIT GUIDE U16: the followed quest's diamond filled with the pen's INK - gold on the paper is 2:1, the ink 8:1
-  if (m.tracked) { ctx.fillStyle = PEN.line; ctx.fill(); }
-  ctx.strokeStyle = PEN.line;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
-  ctx.strokeStyle = QUEST_MARK_CSS;
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
+  // AUDIT DELVE A4: the diamond's two strokes have one home (paintQuestDiamond, below)
+  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);
   ctx.restore();
+}
+
+/** GUIDE8 (the delve arc): the quest's diamond ALONE, centred at (x, y) with half-diagonal `k` - the dungeon strip's
+ *  mark for a floor a quest stands on (ui/inkAutomap.js paintFloorStrip), and paintQuestMark's own (AUDIT DELVE A4): the
+ *  pen's ink under the journal's gold, so the gold has one home on the sheets. `s` scales the strokes; `fill`, given,
+ *  fills it first (the followed quest's ink). */
+export function paintQuestDiamond(ctx, x, y, k, s = 1, fill = null) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - k); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k); ctx.lineTo(x - k, y); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }   // the followed quest's (paintQuestMark)
+  ctx.lineWidth = 2.4 * s;
+  ctx.strokeStyle = PEN.line;
+  ctx.stroke();
+  ctx.lineWidth = 1.4 * s;
+  ctx.strokeStyle = QUEST_MARK_CSS;
+  ctx.stroke();
 }
 
 /** The stack of party labels on ONE pixel: each member's name this
@@ -1418,6 +1439,21 @@ export function paintGlyph(ctx, kind, x, y, halo = false, ink = PEN.line) {
       ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 4); ctx.lineTo(x - 4, y); ctx.closePath(); ctx.stroke(); return;
     case 'dungeon':
       ctx.moveTo(x, y - 4.5); ctx.lineTo(x + 4, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.stroke(); return;
+    case 'hall': {
+      // PVPDUNGEONS: an arched door in its frame - the dungeon's own footprint (GLYPH_R 5), stroked in the sheet's pen, its
+      // leaf filled light so it reads as a door and not a hole, two planks and a ring
+      const w = 3.4, top = y - 1.2, base = y + 4.2;
+      const arch = () => { ctx.beginPath(); ctx.moveTo(x - w, base); ctx.lineTo(x - w, top); ctx.arc(x, top, w, Math.PI, 0); ctx.lineTo(x + w, base); ctx.closePath(); };
+      arch();
+      if (halo) { ctx.fill(); ctx.stroke(); return; }
+      ctx.save(); ctx.globalAlpha = 0.28; ctx.fill(); ctx.restore();
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - w * 0.36, top - w * 0.55); ctx.lineTo(x - w * 0.36, base); ctx.moveTo(x + w * 0.36, top - w * 0.55); ctx.lineTo(x + w * 0.36, base);
+      ctx.save(); ctx.lineWidth = Math.max(0.8, GLYPH_PEN * 0.6); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(x + w * 0.62, y + 1.6, 0.75, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - w - 1.1, base + 0.2); ctx.lineTo(x + w + 1.1, base + 0.2); ctx.stroke();   // the sill
+      return;
+    }
     case 'graveyard':
       ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3); ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3); ctx.stroke(); return;
     case 'coven':

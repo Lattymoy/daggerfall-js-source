@@ -85,6 +85,7 @@ export const TIER_FRAMES = Object.freeze({
   legendary: Object.freeze({ band: 2.6, studs: 8, double: true, glow: false }),
   aetheric: Object.freeze({ band: 2.8, studs: 8, double: true, glow: true }),
   artifact: Object.freeze({ band: 3.0, studs: 8, double: true, glow: true }),
+  gilded: Object.freeze({ band: 3.2, studs: 8, double: true, glow: true }),   // GILDED1's rung (merged under the arc): the widest band, every stud, gold leaf over everything
 });
 
 // ---- the emblems -------------------------------------------------------------------------------------------------

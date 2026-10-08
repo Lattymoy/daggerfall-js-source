@@ -38,7 +38,9 @@ import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
 import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
-import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageParam } from '../systems/pageQuery.js';
+import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/waterRipples.js';
+import { NO_BED_DEPTH } from '../world/waterCorners.js';   // AUDIT WATER-NEXT H2: its one home, the water's leaf (the kernel's worker writes it)   // WATER-NEXT 4: the ripple field the shader reads   // PERF-URL: the page's query, parsed once a search
 
 /** FT6 (2026-09-14, the Features arc): THE SWITCH, ONE HOME. Both
  *  exterior hosts composed "the enhanced skin, the pref, the kill door"
@@ -89,11 +91,6 @@ export const WATER_LAYER_UNITS = Object.freeze({
  *  tile is 6.4). Enough to clear the depth test on a slope, too little
  *  to read as a step at the shore. */
 export const WATER_LIFT = 0.08;
-/** The surface's base opacity; Fresnel raises it toward grazing. MAC2
- *  (2026-09-11, Mac: "I wish the water was darker and not as see
- *  through"): 0.82 -> 0.94, so the terrain pass's flat tile beneath
- *  barely shows. */
-export const WATER_OPACITY = 0.94;
 /** The classic water texel's tint under the surface - a deep blue-green
  *  multiplier, so the tile's own palette colour reads as the body of the
  *  water and not as a floor seen through it. MAC2: darkened from
@@ -138,12 +135,12 @@ export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_DRA
  * tiles at (x * stride.., z * stride..) - the grid's cell IS the tile at
  * stride 1 (6.4 units), which is the frame the shader samples in.
  */
-export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128) {
-  const g = tileDim / stride + 1;
-  const q = g - 1;
+export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128, width = tileDim, height = tileDim) {
+  const g = width / stride + 1;   // WATER-NEXT 2: a grid `width` x `height` tiles (the fixed town's), `tileDim` a row
+  const qx = g - 1, qz = height / stride;
   const out = [];
-  for (let z = 0; z < q; z++) {
-    for (let x = 0; x < q; x++) {
+  for (let z = 0; z < qz; z++) {
+    for (let x = 0; x < qx; x++) {
       let wet = false;
       for (let tz = z * stride; tz < (z + 1) * stride && !wet; tz++) {
         const row = tz * tileDim;
@@ -188,66 +185,190 @@ export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, 
     rain: Math.min(1, Math.max(0, rain || 0)),
     zenith: sky?.zenith ?? DEFAULT_SKY_ZENITH,
     horizon: sky?.horizon ?? DEFAULT_SKY_HORIZON,
-    scroll: (t * WATER_SCROLL_TILES_PER_SEC) % 1,
+    // AUDIT WATER-NEXT m6: no `scroll` and no `opacity` - WATER-NEXT 2's sheet scrolls no texel and has no one opacity
+    // (the body swallows light by its depth; MAC2's "darker and not as see through" is the deep water's now), and
+    // WATER_OPACITY, forwarded here and pinned as the surface's floor, was a law nothing drew
     lift: WATER_LIFT,
-    opacity: WATER_OPACITY,
     tint: WATER_TINT,
     f0: WATER_F0,
     shoreSoft: SHORE_SOFTNESS,
+    swell: swellAmplitude(s),   // WATER-NEXT 2: the sheet's swell, the wind's
+    absorb: WATER_ABSORB,
   };
 }
 
-/** The terrain grid, lifted. Same attributes as TERRAIN_VS so the pass
- *  draws the pixel's own surface. */
+// ═══════════════════════════════════════════════════════════════════
+// WATER-NEXT 2 - THE SWELL (2026-10-07, Mac: "real translucent water with proper waves"; asked, the waves "modest,
+// weather-driven"): THE SHEET MOVES. WATER1's waves were a normal map on a still sheet; the sheet now rides three
+// long trains - one down the wind, two crossing it - whose height the vertex shader lifts the sheet by and whose slope
+// the fragment shader lights, ONE field (SWELL_GLSL, written from SWELL_TRAINS, and swellAt below, the same sum for the
+// CPU - AUDIT WATER-NEXT m10: its pins read it; no hull bobs on it yet, so a still boat's waterline rides the swell's
+// height up and down its side, as a wave runs along a moored hull). The trains run at deep water's own speed (omega = sqrt(g k), a unit a metre) and
+// none is shorter than four of the sheet's 6.4-unit cells, so the grid carries it without facets. Over the bank the
+// swell dies (the bed's depth fades it - water never lifts off its shore), and its height is the WIND's: a calm pond
+// barely breathes, a gale heaves. The fine ripples and the rain stay WATER1's normal map (waveGradient).
+// ═══════════════════════════════════════════════════════════════════
+
+/** The swell's trains: [angle off the wind (radians), wavelength (units), share of the amplitude]. */
+export const SWELL_TRAINS = Object.freeze([
+  Object.freeze([0.0, 48.0, 0.55]),
+  Object.freeze([0.54, 31.0, 0.28]),
+  Object.freeze([-0.75, 25.6, 0.17]),
+]);
+/** g for the trains' speed, in units a second squared (a unit is a metre). */
+export const SWELL_G = 9.8;
+/** The swell's height (the sum of the trains' amplitudes, units) at a calm and at a gale, between them the wind's. */
+export const SWELL_CALM = 0.05;
+export const SWELL_GALE = 0.34;
+/** The bed depth (units) over which the swell grows from nothing at the bank to its whole height. */
+export const SWELL_DEPTH = 2.5;
+/** AUDIT WATER-NEXT G8: the distance (units) over which the sheet's heave fades out - inside a near pixel's reach of the
+ *  eye (a pixel is 819.2 across), before a strided ring's cells grow as long as the shortest train. */
+export const SWELL_REACH = Object.freeze([300, 600]);
+/** The swell's height for a wind strength 0..1. */
+export const swellAmplitude = (windStrength01) => SWELL_CALM + (SWELL_GALE - SWELL_CALM) * Math.min(1, Math.max(0, windStrength01));
+
+/** The swell at a world point, the shader's own sum: [height, d/dx, d/dz]. `windDir` a unit [x, z]. */
+export function swellAt(x, z, t, windDir, amplitude) {
+  let h = 0, gx = 0, gz = 0;
+  for (const [ang, len, share] of SWELL_TRAINS) {
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const dx = c * windDir[0] - s * windDir[1], dz = s * windDir[0] + c * windDir[1];
+    const k = (2 * Math.PI) / len, w = Math.sqrt(SWELL_G * k), a = amplitude * share;
+    const ph = k * (dx * x + dz * z) - w * t;
+    h += a * Math.sin(ph);
+    gx += a * k * Math.cos(ph) * dx;
+    gz += a * k * Math.cos(ph) * dz;
+  }
+  return [h, gx, gz];
+}
+
+/** The same sum in GLSL - the vertex shader's lift and the fragment shader's slope, one text. */
+export const SWELL_GLSL = `
+vec3 swellAt(vec2 p, float t, vec2 wind, float amp) {
+  vec3 r = vec3(0.0);
+${SWELL_TRAINS.map(([ang, len, share]) => {
+    const k = (2 * Math.PI) / len, w = Math.sqrt(SWELL_G * k), f = (v) => `(${v.toFixed(6)})`;
+    return `  { vec2 d = vec2(${f(Math.cos(ang))} * wind.x - ${f(Math.sin(ang))} * wind.y, ${f(Math.sin(ang))} * wind.x + ${f(Math.cos(ang))} * wind.y);
+    float ph = ${k.toFixed(6)} * dot(d, p) - ${w.toFixed(6)} * t; float a = amp * ${share.toFixed(4)};
+    r += vec3(a * sin(ph), (a * ${k.toFixed(6)} * cos(ph)) * d); }`;
+  }).join('\n')}
+  return r;
+}`;
+
+// ═══════════════════════════════════════════════════════════════════
+// WATER-NEXT 2 - THE BODY: water is a depth of something that swallows light, red first. What lies under it is seen
+// through it by Beer-Lambert - exp(-WATER_ABSORB * path), the path the eye's through the water - and where the light is
+// swallowed the water's own colour stands (the climate's water texel, averaged, tinted - a swamp's water is a swamp's).
+// A hand's depth is clear, a man's depth green-blue, a lake's heart and the sea dark: Mac's MAC2 water, "darker and
+// not as see through", is the deep water's, and the shallows are glass.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Beer-Lambert's absorption, per unit of path, red, green, blue. */
+export const WATER_ABSORB = Object.freeze([0.55, 0.30, 0.22]);
+/** How far the refracted look is pushed by the waves' slope, in screen fractions at a unit of depth. */
+export const REFRACT_STRENGTH = 0.035;
+/** The depth a sheet without a bed stands for - world/waterCorners.js NO_BED_DEPTH, its one home, re-exported for the renderer. */
+export { NO_BED_DEPTH };
+/** The path, in units, past which the water is taken as deep everywhere it cannot measure itself (the open sea
+ *  without a depth copy). */
+export const OPEN_PATH = 60.0;
+// ═══════════════════════════════════════════════════════════════════
+// WATER-NEXT 3 - THE SHORE (Mac: "shoreline interactivity"): WHERE THE WATER RUNS OUT, IT BREAKS. A band of foam where
+// the water is shallow - FOAM_DEPTH of it, wider in a wind - pushed up the bank by the swell's crest and drawn back by
+// its trough (the run-up: the band's edge rides the swell's own height), cut into lace by a noise that drifts down the
+// wind; and on open water in a strong wind, where the swell is steep, its crests whiten. Lit by the light the water
+// is, never glowing. One field with the waves: no sprite, no second sheet.
+// ═══════════════════════════════════════════════════════════════════
+
+/** The water depth (units, vertical) over which the shore's foam fades out, at a calm; a gale doubles it. */
+export const FOAM_DEPTH = 0.22;
+/** How far the swell's height pushes the foam's edge up and down the bank, in multiples of that height. */
+export const FOAM_RUNUP = 2.2;
+/** The swell's slope past which a crest whitens, at a gale (never below a strong wind). */
+export const CREST_SLOPE = 0.075;
+
+/** The texture units the scene's copy rides (bound before every water draw, never trusted to persist - inside
+ *  Dynamic Skies' nine and under the lane's own, as BB_SURFACE_UNIT). */
+export const WATER_SCENE_UNIT = 7;
+/** WATER-NEXT 4: the ripple field's unit - 1, the billboards' emission unit, its shadow forgotten after the bind. */
+export const WATER_RIPPLE_UNIT = 1;
+export const WATER_SCENE_DEPTH_UNIT = 6;
+
+/** WATER-NEXT 2: the sheet - the grid AS IT STOOD before the bed was carved under it (world/waterBed.js), its bed's
+ *  depth on attribute 1, lifted WATER_LIFT and heaved by the swell. The open sea's sheet (Deep Waters' top, `uOpen`)
+ *  has no bed attribute - a constant - and swells everywhere. */
 export const WATER_SURFACE_VS = `#version 300 es
 layout(location=0) in vec3 aPos;
-layout(location=1) in vec3 aNormal;
+layout(location=1) in float aDepth;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
 uniform float uLift;
+uniform float uTime;
+uniform vec2 uWindDir;
+uniform float uSwell;
+uniform int uOpen;
+uniform vec3 uCamPos;          // AUDIT WATER-NEXT G8: the eye, for the swell's reach
 out vec3 vWorldPos;
 out vec2 vLocalXZ;
+out float vDepth;
+out float vGrow;
+${SWELL_GLSL}
 void main() {
   vec4 world = uModel * vec4(aPos.x, aPos.y + uLift, aPos.z, 1.0);
+  // AUDIT WATER-NEXT H2: a negative depth is water on ground never carved (world/waterCorners.js SHEET_NO_BED) - its
+  // magnitude the tint's depth, and no swell: lifted only uLift over its ground, a heave of a fifth of a unit took its
+  // troughs under the ground in any fair wind
+  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));
+  vec3 sw = swellAt(world.xz, uTime, uWindDir, uSwell * grow);
+  // AUDIT WATER-NEXT G8: the heave fades out before the far rings' strided grids, whose cells are as long as the
+  // shortest train (a vertex a wave: the distant sheet heaved in an aliased lattice); the slope stays the fragment's
+  float lift = sw.x * (1.0 - smoothstep(${SWELL_REACH[0].toFixed(1)}, ${SWELL_REACH[1].toFixed(1)}, length(world.xz - uCamPos.xz)));
+  world.y += lift;
   vWorldPos = world.xyz;
   vLocalXZ = aPos.xz;
+  vDepth = max(abs(aDepth) + lift, 0.0);
+  vGrow = grow;
   gl_Position = uProj * uView * world;
 }`;
 
 /**
- * The surface's fragment shader, with the renderer's cloud-shadow block
- * interpolated (a GLSL declaration is visible only to the compilation
- * unit that carries it - the EE5 lesson in renderer.js).
+ * WATER-NEXT 2: the water's fragment shader, with the renderer's cloud-shadow block interpolated (a GLSL declaration
+ * is visible only to the compilation unit that carries it - the EE5 lesson in renderer.js).
  *
- * The normal is the gradient of three wave trains (one down the wind,
- * two crossing it) and, under rain, two fine trains that pock the
- * surface; the amplitudes ride the wind's strength off a calm floor.
- * The colour is the classic water texel (layer 0, slowly scrolled,
- * tinted, lit by the SAME ambient / sun / moon / cloud-shadow law the
- * ground beside it is lit by, in the same palette space - no sRGB
- * anywhere in this engine) mixed toward the reflected sky by Schlick's
- * Fresnel, plus the sun's and the moon's Blinn-Phong glints. The alpha
- * is the opacity raised toward grazing by the same Fresnel, feathered
- * to nothing along the shore's diagonal; a texel outside any water is
- * discarded before it costs a blend.
+ * WHERE: the terrain's water, a texel at a time - WATER1's corner table, its shore feather and WATER-PUDDLE's art
+ * mask, unchanged - or, under `uOpen`, the whole sheet (Deep Waters' sea).
+ * THE SLOPE: the swell's (the vertex shader's own field, per pixel) and WATER1's fine trains and rain.
+ * THE PATH through the water: the scene's depth copy where the frame has one (the bed's own distance behind the
+ * surface, so a boat's hull or a rock in a pond is where it is), else the bed's depth over the view's slant.
+ * THE LOOK: what lies under the surface - the scene's colour copy, pushed by the waves' slope (never by a thing in
+ * front of the water: a pushed look that lands on something nearer than the surface takes the straight look) - through
+ * Beer-Lambert, the water's own lit colour where the light is swallowed, the sky reflected by Fresnel, the sun's, the
+ * moon's and the lamps' glints, the fog. Without a copy (the classic lane's frame), the blend does the same sum: the
+ * ground under the sheet is drawn, and the sheet's alpha is how much of it the water hides.
  */
 export const waterSurfaceFs = (cloudShadowGlsl, shadowGlsl = '') => `#version 300 es   // EL7: with SHADOW_GLSL the water receives the lane's sun shadow
 precision highp float;
+precision highp int;   // WATER-NEXT 2: uOpen is the vertex stage's too - an int's precision must agree across the two
 precision highp usampler2D;
 precision highp sampler2DArray;
 in vec3 vWorldPos;
 in vec2 vLocalXZ;
+in float vDepth;
+in float vGrow;
 uniform sampler2DArray uTileArr;
 uniform usampler2D uTilemap;
 uniform float uTileSize;
 uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform uvec4 uWaterMask[8];   // WATER1: 256 nibbles - converted tile byte -> water corners
+uniform int uOpen;             // WATER-NEXT 2: the open sea's sheet - no tilemap, all water
+uniform vec3 uOpenColor;       // and the mod's tint over its water's colour
 uniform float uTime;
 uniform vec2 uWindDir;
 uniform float uWindStrength;   // 0..1 on the sky's row scale
+uniform float uSwell;
 uniform float uRain;           // 0..1, the front's intensity
-uniform float uScroll;         // the classic texel's flow, in tiles
 uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
@@ -263,9 +384,17 @@ uniform vec3 uIndirectColor;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 uniform vec3 uTint;
-uniform float uOpacity;
 uniform float uF0;
 uniform float uShoreSoft;
+uniform vec3 uAbsorb;
+uniform int uSceneOn;          // WATER-NEXT 2: the frame's colour and depth, copied before the water (Renderer.captureUnderWater)
+uniform sampler2D uScene;
+uniform sampler2D uSceneDepth;
+uniform vec2 uSceneSize;
+uniform mat4 uProj;
+uniform int uRippleOn;         // WATER-NEXT 4: the ripple field round the camera (world/waterRipples.js)
+uniform sampler2D uRipple;
+uniform vec3 uRippleRect;      // its corner's world x, z and its side
 ${cloudShadowGlsl}
 uniform vec3 uFogColor;
 uniform int uFogMode;
@@ -275,6 +404,7 @@ uniform vec3 uCamPos;
 ${shadowGlsl}
 out vec4 outColor;
 ${FOG_GLSL}
+${SWELL_GLSL}
 uint waterCorners(uint data) {
   // the component by comparison, not by a dynamic index: a dynamic
   // component index on a uvec4 answered zero on ANGLE/SwiftShader (the
@@ -294,11 +424,8 @@ float coverage(uint m, vec2 f) {
   float c01 = float((m >> 2u) & 1u), c11 = float((m >> 3u) & 1u);
   return mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
 }
-// the gradient of the wave field at p: three trains on the wind, two
-// fine rain trains; returns d(height)/d(xz). Each train fades with the
-// distance from the eye on its own wavelength's scale, so a train a few
-// units long is gone before it is a texel wide and aliases - the far
-// sea keeps the long swell only.
+// WATER1's fine trains: the gradient of three short trains on the wind and two rain trains, each fading with the
+// distance on its own wavelength's scale, so a train a few units long is gone before it is a texel wide and aliases
 vec2 waveGradient(vec2 p, float t, float dist) {
   float s = 0.35 + 0.65 * uWindStrength;
   vec2 d0 = uWindDir;
@@ -308,9 +435,9 @@ vec2 waveGradient(vec2 p, float t, float dist) {
   vec2 d1 = vec2(0.809 * d0.x - 0.588 * d0.y, 0.588 * d0.x + 0.809 * d0.y);   // +36 degrees
   vec2 d2 = vec2(0.766 * d0.x + 0.643 * d0.y, -0.643 * d0.x + 0.766 * d0.y);  // -40 degrees
   vec2 g = vec2(0.0);
-  g += (0.11 * s * exp(-dist * 0.0015)) * cos(dot(p, d0) * 0.55 + t * 1.3) * d0;
-  g += (0.08 * s * exp(-dist * 0.006)) * cos(dot(p, d1) * 1.10 + t * 2.1) * d1;
-  g += (0.06 * s * exp(-dist * 0.015)) * cos(dot(p, d2) * 2.30 + t * 3.4) * d2;
+  g += (0.07 * s * exp(-dist * 0.004)) * cos(dot(p, d0) * 1.10 + t * 2.1) * d0;
+  g += (0.06 * s * exp(-dist * 0.010)) * cos(dot(p, d1) * 2.30 + t * 3.4) * d1;
+  g += (0.05 * s * exp(-dist * 0.020)) * cos(dot(p, d2) * 4.10 + t * 4.6) * d2;
   if (uRain > 0.0) {
     float near = exp(-dist * 0.012);
     vec2 r0 = vec2(0.96, 0.28), r1 = vec2(-0.28, 0.96);
@@ -319,92 +446,151 @@ vec2 waveGradient(vec2 p, float t, float dist) {
   }
   return g;
 }
+// WATER-NEXT 3: the foam's lace - a value noise, two octaves
+float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float lace(vec2 p, float t) {
+  vec2 drift = uWindDir * t * 0.35;
+  return 0.65 * vnoise(p * 0.9 - drift) + 0.35 * vnoise(p * 2.7 + drift.yx);
+}
+// the eye's distance to a window depth, off the frame's own projection (a GL perspective: z_ndc = 2d - 1)
+float eyeDepth(float d) { return uProj[3][2] / ((d * 2.0 - 1.0) + uProj[2][2]); }
 void main() {
-  vec2 unwrapped = vLocalXZ / uTileSize;
-  // GRAIN1: the same wrap, the same cure - the scrolled coordinate before
-  // the fract is what the footprint is measured from, or the water tile
-  // draws a blurred line wherever the scroll rolls over. GRAIN AUDIT 1:
-  // taken HERE, above the two discards - a derivative inside non-uniform
-  // control flow is undefined in GLSL ES 3.00, and a driver that ends a
-  // discarded lane hands the shoreline quad a garbage footprint.
-  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
-  ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));
-  uint data = texelFetch(uTilemap, cell, 0).r;
-  uint corners = waterCorners(data);
-  if (corners == 0u) discard;
-  vec2 f = fract(unwrapped);
-  float edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
-  // WATER-PUDDLE: a puddle record (a dock, a moat, a puddle - drawn whole by its corners) keeps only the texels its own
-  // art paints water (world/puddleMask.js wrote them into its layer's alpha), read through the tile's turn at the
-  // record's own texel - the art's outline up close, its mip in the distance, never a square
-  uint rec = data >> 2u;
-  if (isPuddleRecord(rec)) {
-    int turn = int(data & 3u);
-    vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];
-    edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);
+  float edge = 1.0;
+  vec3 body;
+  if (uOpen == 1) {
+    // the sea's own colour: the climate's water texel, averaged, under the mod's own tint (its Top Color setting)
+    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint * uOpenColor;
+  } else {
+    vec2 unwrapped = vLocalXZ / uTileSize;
+    // GRAIN1 / GRAIN AUDIT 1: the footprint taken above the discards - a derivative inside non-uniform control flow is
+    // undefined in GLSL ES 3.00
+    vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
+    ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));
+    uint data = texelFetch(uTilemap, cell, 0).r;
+    uint corners = waterCorners(data);
+    if (corners == 0u) discard;
+    vec2 f = fract(unwrapped);
+    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
+    // WATER-PUDDLE: a puddle record keeps only the texels its own art paints water (world/puddleMask.js)
+    uint rec = data >> 2u;
+    if (isPuddleRecord(rec)) {
+      int turn = int(data & 3u);
+      vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];
+      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);
+    }
+    if (edge <= 0.002) discard;
+    // the water's own colour: the climate's water texel (record 0), averaged to one colour by its mip chain
+    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint;
   }
-  if (edge <= 0.002) discard;
+  // AUDIT WATER-NEXT G7: the open sea from under its own crest is not drawn - the mod's top discards the same
+  // (uCamPos.y - vWorldPos.y + 0.02 < 0): a swimmer at the surface under a heaving sheet saw the wave's underside
+  if (uOpen == 1 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;
   vec3 toEye = uCamPos - vWorldPos;
   float dist = length(toEye);
-  vec2 g = waveGradient(vWorldPos.xz, uTime, dist);
-  vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
   vec3 V = toEye / max(dist, 1e-4);
+  vec3 sw = swellAt(vWorldPos.xz, uTime, uWindDir, uSwell * vGrow);
+  vec2 g = sw.yz + waveGradient(vWorldPos.xz, uTime, dist);
+  // WATER-NEXT 4: the bodies' rings and wakes - the ripple field's slope, faded at its edge
+  if (uRippleOn == 1) {
+    vec2 ruv = (vWorldPos.xz - uRippleRect.xy) / uRippleRect.z;
+    vec2 inside = smoothstep(vec2(0.0), vec2(0.08), ruv) * smoothstep(vec2(0.0), vec2(0.08), vec2(1.0) - ruv);
+    if (inside.x * inside.y > 0.0) {
+      float tx = ${(1 / RIPPLE_CELLS).toFixed(6)};
+      // AUDIT WATER-NEXT G10: an explicit level - an implicit one is undefined in non-uniform flow (the field has one)
+      vec2 rg = vec2(textureLod(uRipple, ruv + vec2(tx, 0.0), 0.0).r - textureLod(uRipple, ruv - vec2(tx, 0.0), 0.0).r,
+                     textureLod(uRipple, ruv + vec2(0.0, tx), 0.0).r - textureLod(uRipple, ruv - vec2(0.0, tx), 0.0).r);
+      g += rg * (255.0 * ${RIPPLE_SCALE.toFixed(4)} / (2.0 * tx * uRippleRect.z)) * (inside.x * inside.y);
+    }
+  }
+  vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
   float NdV = clamp(dot(n, V), 0.0, 1.0);   // WATER-AUDIT (M1): two near-unit vectors can dot past one; pow of a negative is NaN
-  // Schlick, capped: a sea is never the mirror a flat plane is - the
-  // slopes the trains do not carry still scatter the grazing view - so
-  // the reflection tops out short of one, and what it reflects leans a
-  // little toward the zenith for the same reason
-  float F = uF0 + (0.72 - uF0) * pow(1.0 - NdV, 5.0);
+  float F = uF0 + (0.85 - uF0) * pow(1.0 - NdV, 5.0);
   vec3 R = reflect(-V, n);
   vec3 skyRefl = mix(uSkyHorizon, uSkyZenith, clamp(0.2 + R.y * 1.4, 0.0, 1.0));
-  // PERF-SUN2: the water reads its shadow only while the sun is up. A
-  // UNIFORM branch, and shadow reaches the light exactly once through
-  // uSunColor * (uSunScale * diff), so this is output-identical.
+  // PERF-SUN2: the shadow read only while the sun is up - a uniform branch
   float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane
-  // the classic texel, the body of the water, lit as the ground is lit
-  vec2 uv = fract(f + vec2(uScroll));
-  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;
+  // the body lit as water is lit: the sky's light into it, the sun's and the moon's through it, softly
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
-  // WATER-AUDIT (M2): the ground's other two terms - the sixteen point
-  // lights and the player-following indirect light - so a torch by a
-  // pond lights the water it lights the bank by, with no seam at the shore
-  vec3 pointAcc = vec3(0.0);
+  vec3 lit = body * (uAmbient + uSunColor * ((uSunScale * diff) * 0.6) + uMoonColor * (uMoonScale * mdiff));
+  vec3 pointAcc = vec3(0.0), pointSpec = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - vWorldPos;
     float d = length(L);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
+    vec3 Ld = L / max(d, 1e-4);
+    pointAcc += att * att * max(dot(n, Ld), 0.0) * uPointColors[i];
+    // WATER-LIT1: water sends back little light diffusely and a lot as a glint - a lamp is a highlight on the waves
+    pointSpec += att * pow(max(dot(n, normalize(Ld + V)), 0.0), 90.0) * uPointColors[i];
   }
-  // WATER-LIT1 (Mac, 2026-09-27, Gothway Garden at night with a torch: "the water tiles are buggy ... there for a long
-  // while"): WATER IS NOT LIT LIKE MUD. A lamp or the torch lit the water's own texel as if it were ground - the blue
-  // ripples times a warm flame is a brown field with the water's pattern in it, and inside the light's reach that is
-  // what the pool read as. Water sends back little light diffusely and a lot as a glint: the flame's share of the
-  // texel is cut to a quarter, and each light shows as a moving highlight on the waves (the sun's and moon's law).
-  vec3 pointSpec = vec3(0.0);
-  for (int i = 0; i < 16; i++) {
-    if (i >= uPointCount) break;
-    vec3 Lp = uPointLights[i].xyz - vWorldPos;
-    float dp = length(Lp);
-    float ap = clamp(1.0 - dp / uPointLights[i].w, 0.0, 1.0);
-    vec3 Hp = normalize(Lp / max(dp, 1e-4) + V);
-    pointSpec += ap * pow(max(dot(n, Hp), 0.0), 90.0) * uPointColors[i];
-  }
-  pointAcc *= 0.25;
-  lit += tex * pointAcc;
+  lit += body * pointAcc * 0.25;
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  lit += tex * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  vec3 col = mix(lit, skyRefl, F);
+  lit += body * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor * 0.25;
+  // THE PATH through the water
+  float slant = max(V.y, 0.12);
+  float bedPath = uOpen == 1 ? 0.0 : (vDepth + 0.02) / slant;   // what the bed under the sheet says
+  float path = uOpen == 1 ? ${OPEN_PATH.toFixed(1)} : bedPath;
+  vec2 uv0 = gl_FragCoord.xy / uSceneSize;
+  // AUDIT WATER-NEXT G1/G3: THE COMPOSITION, PREMULTIPLIED. own is the water's own light at its share of the pixel;
+  // with the scene's copy, under is the copy's colour at trans (its share: a finished, fogged image - fogged again
+  // with the rest, every pond read paler and foggier than its bank); without one, cover is how much of the frame the
+  // blend leaves under the sheet that the water hides. The foam and the glints are added to own at their full
+  // strength - divided out of the blend after edge *= a, a glint over shallow water was a twentieth of Full's.
+  vec3 own, under = vec3(0.0), trans = vec3(0.0);
+  float cover = 1.0;
+  if (uSceneOn == 1) {
+    float here = eyeDepth(gl_FragCoord.z);
+    float bedD = eyeDepth(textureLod(uSceneDepth, uv0, 0.0).r);   // AUDIT WATER-NEXT G10: after the discards, an explicit level
+    path = max(bedD - here, bedPath);   // the scene's measure, never less than the bed's (a sheet with no bed stands for one)
+    // the look pushed by the slope, by more the deeper the water under it, less the farther off
+    vec2 push = n.xz * (${REFRACT_STRENGTH.toFixed(4)} * clamp(path, 0.0, 4.0)) / (1.0 + dist * 0.02);
+    vec2 uv = clamp(uv0 + push, vec2(0.001), vec2(0.999));
+    float pushedD = eyeDepth(textureLod(uSceneDepth, uv, 0.0).r);
+    if (pushedD < here) uv = uv0; else path = max(pushedD - here, bedPath);   // never what stands in front of the water
+    vec3 T = exp(-uAbsorb * path);
+    under = textureLod(uScene, uv, 0.0).rgb;   // AUDIT WATER-NEXT G10: an explicit level
+    trans = T * (1.0 - F);
+    own = lit * (vec3(1.0) - T) * (1.0 - F) + skyRefl * F;
+  } else {
+    // the blend draws the ground under the sheet; cover is the share the water hides
+    float t = dot(exp(-uAbsorb * path), vec3(0.3333));
+    cover = 1.0 - t * (1.0 - F);
+    own = lit * (1.0 - t) * (1.0 - F) + skyRefl * F;
+  }
+  // WATER-NEXT 3: THE FOAM - the shore's band (the water's vertical depth here, the swell's crest pushing it up the
+  // bank) and, on open water in a strong wind, the steep crests
+  float vdepth = uSceneOn == 1 ? path * slant : (uOpen == 1 ? ${OPEN_PATH.toFixed(1)} : vDepth);
+  // the open sea's sheets are 6.4-unit cells, their edge a staircase over the beach: where a sheet covers no water
+  // (the scene's ground at or above it) it is gone, so the shore is where the sea's plane meets the sand
+  if (uOpen == 1 && uSceneOn == 1) edge *= smoothstep(0.0, 0.12, vdepth);
+  float band = ${FOAM_DEPTH.toFixed(3)} * (1.0 + uWindStrength);
+  float shore = 1.0 - smoothstep(0.0, band, vdepth - sw.x * ${FOAM_RUNUP.toFixed(2)});
+  float crest = smoothstep(${CREST_SLOPE.toFixed(4)}, ${(CREST_SLOPE * 1.6).toFixed(4)}, length(sw.yz)) * smoothstep(0.55, 0.9, uWindStrength);
+  // a lace, never a rim: the noise cuts the band into threads, thicker the shallower the water and the harder the wind
+  float l = lace(vWorldPos.xz, uTime);
+  float foam = max(shore * shore * smoothstep(0.62 - 0.25 * shore * uWindStrength, 0.82, l), crest * smoothstep(0.6, 0.85, l)) * 0.75 * exp(-dist * 0.004);
+  vec3 foamLit = vec3(0.92, 0.95, 0.96) * (uAmbient + uSunColor * (uSunScale * shadow * max(n.y, 0.0)) + uMoonColor * (uMoonScale * 0.5));
+  float k = foam * 0.9;   // foam is not glass: where it lies it hides what is under it
+  own = mix(own, foamLit, k); trans *= 1.0 - k; cover = mix(cover, 1.0, k);
+  edge = max(edge, foam * smoothstep(0.0, 0.2, edge));
   vec3 H = normalize(uLightDir + V);
-  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;
+  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow * (1.0 - foam);
   vec3 Hm = normalize(uMoonDir + V);
   float mspec = pow(max(dot(n, Hm), 0.0), 220.0) * uMoonScale;
-  col += uSunColor * (1.6 * spec) + uMoonColor * (0.7 * mspec);
-  col += pointSpec * 1.2;   // WATER-LIT1: the lamps' and the torch's glints
-  float alpha = (uOpacity + (1.0 - uOpacity) * F) * edge;
-  outColor = vec4(dwWaterFog(mix(uFogColor, col, fogFactorAt(vWorldPos)), vWorldPos), alpha);   // DW-C: the sea's distance fog
+  own += uSunColor * (1.6 * spec) + uMoonColor * (0.7 * mspec) + pointSpec * 1.2;   // WATER-LIT1: the lamps' and the torch's glints
+  // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes
+  // them (an affine fog of x is x * m + c; at a share s, x * m + c * s): the copy's share is left as it was drawn
+  vec3 ownShare = uSceneOn == 1 ? vec3(1.0) - trans : vec3(cover);
+  float fw = fogFactorAt(vWorldPos);
+  vec3 fogged = own * fw + uFogColor * (1.0 - fw) * ownShare;
+  fogged = dwWaterFogAdd(fogged, vWorldPos) + dwWaterFog(vec3(0.0), vWorldPos) * ownShare;
+  outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged / max(cover, 1e-3), edge * cover);
 }`;

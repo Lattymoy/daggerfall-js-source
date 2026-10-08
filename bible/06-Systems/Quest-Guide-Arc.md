@@ -456,7 +456,12 @@ no card.
 
 **WHICH QUEST** (DECISIONS 2: on by default, but quiet). The one the
 player TRACKS; else the one the journal last changed (the lens's news:
-started, updated, urgent); else the one written last. An ending lets go
+started, updated, urgent); else the one written last. (TRACK-ONLY,
+2026-10-08, the owner, in the Wrothgarian zone's merge: "When you dont
+track a quest it should never appear on the screen!" - the card, the
+compass's mark and the map's filled diamond are the TRACKED quest's
+alone, `questTracker.shown`; the journal still opens on this one -
+`11-Multiplayer/Wild-Zone.md` section 21.) An ending lets go
 of both, and so does a tracked quest that is gone - checked every tick,
 faces on or off, so no save carries a uid a later quest could be minted
 under (AUDIT GUIDE T3). The choice is the journal's: one **Track** toggle
@@ -691,7 +696,7 @@ In order. Every one reads the lens and nothing else. SHIPPED: GUIDE2 to GUIDE5 (
 | **GUIDE5 THE MARKS** (SHIPPED) | Every active quest's place on the held map (the followed one filled) and the tracker's quest's place on the enhanced compass - only a target with `find` (DFU's own discovered gate). A place off the map gets the talk arc's hint on the card instead: ask about it, which is what Daggerfall's directions are for (`06-Systems/Talk-Arc.md`, THE COMPASS MARK). The classic travel map stays DFU's. | Departure | `quest-marks` |
 | **GUIDE6 THE ACCESSIBLE JOURNAL** | The pause tab: filter by kind (Main, Guild - the quest list's own group, `findQuestMeta` - Other), sort by updated or deadline, search, each entry's date, the deadline as words AND a date, keyboard and pad navigation with visible focus, a text size that works, and an entry read aloud (speechSynthesis). | Enhanced face | per choice |
 | **GUIDE7 THE ACCESSIBILITY SHELF** | Port rows in the Accessibility category: quest text size, high-contrast panels, reduce motion (the OS's, overridable), quest popups read aloud, notices held until dismissed - and the contrast and screen-reader audit Audit-UI named and nobody ran. | Port's own | per row |
-| **GUIDE8 GUIDANCE TIERS** | Off by default: *Journal* (GUIDE5's law) / *Town* (the building the entry names, marked when the player is in its town) / *Exact* (the marker a quest resource stands on, DFU's quest-debugger knowledge, on the dungeon map). The one tier that can spoil; its own row. | Departure | `quest-guidance` |
+| **GUIDE8 GUIDANCE TIERS** (SHIPPED 2026-10-05 - `03-World/Delve-Arc.md` GUIDE8; the *Town* tier and *Exact* indoors at AUDIT DELVE, `01-Overview/Audit-Delve.md`) | Journal by default: *Journal* (GUIDE5's law) / *Town* (the building the entry names, ringed on the town map and on the compass while the player is in its town) / *Exact* (the Town tier, and the marker a quest resource stands on, DFU's quest-debugger knowledge, on the dungeon's and the building's map and the compass). Exact is the one tier that can spoil; its own row. | Departure | `quest-guidance` |
 | **GUIDE9 DFU'S QUEST DEBUGGER** | HUDQuestDebugger behind the inert `GUI/EnableQuestDebugger`: tasks, timers and globals per quest - for quest authors and bug reports. | 1:1 - DFU's | DFU's own key |
 
 ## DECISIONS (2026-09-29, Mac: "This is your baby. Take your time")

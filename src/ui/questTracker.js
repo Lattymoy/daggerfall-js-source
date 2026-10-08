@@ -42,6 +42,7 @@ import { isTouchDevice } from './touchDevice.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { entryOpening, timeLeftWords } from './questRail.js';
 import { marksOn } from './questMarks.js';   // AUDIT GUIDE T2: the marks follow this model too (pure: the HUD stays light)
+import { guidanceTier } from '../systems/questGuidance.js';   // AUDIT DELVE E7: the Exact tier follows it too
 
 /** The switch's prefs key (systems/features.js row `quest-tracker`). */
 export const TRACKER_PREF = 'questTracker';
@@ -76,8 +77,10 @@ export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF) && typeof
 
 /** AUDIT GUIDE T2: does any face follow this model? The card, or the marks (the held map's filled diamond and the
  *  compass's one mark read `tracked()` too) - the bridge feeds it while either is on, and while either is, the choice
- *  steers something, so the journal keeps the Track toggle and opens on the followed quest. */
-export const followOn = () => trackerOn() || marksOn();
+ *  steers something, so the journal keeps the Track toggle and opens on the followed quest. AUDIT DELVE E7: and the
+ *  Exact tier (systems/questGuidance.js), whose compass takes the followed quest's mark first - with the card and the
+ *  marks both off, nothing fed the tracker and the journal hid Track, so its compass only ever took the nearest. */
+export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';   // ...and the Town tier's compass
 
 /** The active quest written last - the walk's order breaks a tie. */
 function latestOf(views) {
@@ -115,10 +118,16 @@ export class QuestTracker {
   /** A load or a switch turned off: forget what was seen and followed; the player's choice stays. */
   forget() { this.views = []; this.follow = null; }
 
-  /** The quest the card shows: the tracked one, else the followed one, else the one written last. */
+  /** The quest the journal follows: the tracked one, else the followed one, else the one written last. */
   tracked() {
     const byId = (id) => (id == null ? null : this.views.find((v) => v.id === id) ?? null);
     return byId(this.pinned) ?? byId(this.follow) ?? latestOf(this.views);
+  }
+  /** TRACK-ONLY (2026-10-08, the owner: "When you dont track a quest it should never appear on the screen! right now when
+   *  i dont track the main quest it still is shown tracked."): the quest ON SCREEN - the card, the compass's mark, the
+   *  map's filled diamond - is the TRACKED one and nothing else. The journal still opens on `tracked()`'s quest. */
+  shown() {
+    return this.pinned == null ? null : (this.views.find((v) => v.id === this.pinned) ?? null);
   }
 
   isPinned(id) { return id != null && this.pinned === String(id); }
@@ -131,7 +140,7 @@ export class QuestTracker {
 
   /** The card's words, or null when there is no quest to follow. */
   frame() {
-    const v = this.tracked();
+    const v = this.shown();   // TRACK-ONLY: nothing on the card that is not tracked
     if (!v) return null;
     return {
       id: v.id,

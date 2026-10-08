@@ -72,6 +72,7 @@ test('LOOT9: salvage - Magic 1, Rare 3, Legendary 8, Exalted 15; only a graded p
   assert.equal(RF.salvageShards({ ...createWeapon(113, 1), magic: true, enchantments: [{ type: 1, param: 2 }] }), 0, 'DFU\'s own magic - never graded');
   assert.equal(RF.salvageRefusal(createWeapon(113, 1)), 'not');
   assert.equal(RF.salvageRefusal({ ...graded('rare'), rarity: 'aetheric' }), 'aetheric');
+  assert.equal(RF.salvageRefusal({ ...graded('rare'), rarity: 'gilded' }), 'gilded', 'GILDED1: a static roll never breaks');
   assert.equal(RF.salvageRefusal({ ...graded('rare'), artifact: true }), 'artifact');
   assert.equal(RF.salvageRefusal({ ...graded('rare'), questItem: true }), 'quest');
   assert.equal(RF.salvageRefusal({ ...graded('rare'), bound: true }), 'bound');
@@ -333,5 +334,5 @@ test('LOOT9: the pack card offers Salvage for a graded piece - asked first, Keep
       assert.equal(RF.shardsHeld(e.items), 3, 'into its shards');
     } finally { view.unmount(); }
   });
-  assert.match(read('src/ui/enhancedInventory.js'), /if \(side === 'local' && !line\.equipped && salvageShards\(picked\) > 0 && !\['off', 'aetheric', 'artifact', 'quest', 'bound'\]\.includes\(salvageRefusal\(picked\) \?\? ''\)\) \{/, 'never a worn piece, never one that will not break');
+  assert.match(read('src/ui/enhancedInventory.js'), /if \(side === 'local' && !line\.equipped && salvageShards\(picked\) > 0 && !\['off', 'aetheric', 'gilded', 'artifact', 'quest', 'bound'\]\.includes\(salvageRefusal\(picked\) \?\? ''\)\) \{/, 'never a worn piece, never one that will not break');
 });

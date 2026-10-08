@@ -101,8 +101,8 @@
   {
     "name": "FIELD-WIND1-engine-pitch-dead",
     "file": "src/systems/audio.js",
-    "old": "setPitch(p) { src.playbackRate.value = p; },",
-    "new": "setPitch(p) { void p; },",
+    "old": "brightens as the wind gets up. */\n      setPitch(p) { src.playbackRate.value = p; },",
+    "new": "brightens as the wind gets up. */\n      setPitch(p) { void p; },",
     "tests": [
       "test/field_wind1.test.js"
     ]

@@ -14,6 +14,7 @@ import { MARKS_MAX } from '../src/net/marksLaw.js';
 import { xpForRank } from '../src/net/professionLaw.js';
 import { readProductRecord } from '../src/net/productRecord.js';
 import { readFileSync } from 'node:fs';
+import { runCron, CRON_HOUR } from '../server-account/src/cron.js';   // SCALE4b: the History's prune is the service's clock's
 
 const DAY = 86_400;
 let _now = T0;
@@ -90,7 +91,7 @@ test('AUDIT 30 S2: a fill and a buy under one id each keep their tax - the fill\
   assert.equal(s.escrowRows(), s.escrowLedger(), 'the escrow the rows hold is the ledger\'s');
 });
 
-test('AUDIT 30 S3: an id whose row the History pruned is spent - an order, a buy, a listing asked under it again are refused, never an escrow held unpaid or goods moved unpaid', async () => {
+test('AUDIT 30 S3: an id whose row the market\'s prune took (SCALE4b: the hour\'s, pruneMarketHistory) is spent - an order, a buy, a listing asked under it again are refused, never an escrow held unpaid or goods moved unpaid', async () => {
   const s = await stand();
   const mac = await s.registered('Mac'), ann = await s.registered('Ann');
   s.fund(mac, 10_000); s.fund(ann, 100_000);
@@ -102,7 +103,7 @@ test('AUDIT 30 S3: an id whose row the History pruned is spent - an order, a buy
   const l = await s.call('/v1/market/list', list(mac, { units: 100, price: 50, rid: RL }), mac.secret);
   assert.equal((await s.call('/v1/market/buy', { character: ann.character, region: DF, listing: l.body.listing.id, units: 100, max: 5000, hubs: HUBS, rid: RB }, ann.secret)).status, 200);
   clock(_now + (MARKET_KEEP_DAYS + 1) * DAY);
-  await s.read(ann, 'history');   // the prune
+  await runCron(s.env, { cron: CRON_HOUR, nowS: _now });   // the prune - PIN MOVED (SCALE4b): the service's clock's each hour, no longer the History view's read
   assert.equal(Number(s.raw.prepare('SELECT COUNT(*) AS n FROM market_orders').get().n), 0, 'the rows are gone, the ledger\'s lines are not');
   s.fund(mac, 1_000_000);
   const o2 = await s.call('/v1/market/order', { character: mac.character, region: DF, material: 'ore:mithril', units: 1000, price: 1000, hubs: HUBS, rid: RO }, mac.secret);
@@ -167,8 +168,8 @@ test('AUDIT 30 S6 + S8/L2: a piece standing in a home is not listed, and stands 
   const HOME = { mapId: 1291010263, buildingKey: 0x10203 };
   const house = await s.seatHome(mac, { ...HOME, region: DF, price: 42000 });   // MERGE 2: a house is a realm character's (AUDIT REALM2 S2)
   assert.equal(house.status, 200);
-  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, NULL, 'master-joiner', 1)`)
-    .run(mac.id, mac.character, xpForRank(100));
+  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', ?, NULL, 'master-joiner', 1)`)
+    .run(mac.id, mac.character, xpForRank(100));   // PIN MOVED (CRAFT3): a table is Carpentry's, read from the Building track (a 'carpentry' row is read by nothing)
   s.give(mac, 'plank:oak', 'own', 3);
   const made = await s.call('/v1/prof/craft', { character: mac.character, recipe: 'table-small:oak', clean: false, name: 'Silverthorn', rid: rid() }, mac.secret);
   assert.equal(made.status, 200, JSON.stringify(made.body));
@@ -270,8 +271,8 @@ test('AUDIT 30 L4: a marked piece\'s record signs its mark (`a`), an unmarked on
   // a Master Joiner's table bears the mark at any quality; a crafter at the table's own rank (margin 0) never rolls a
   // Masterwork (qualityOdds(0)), whose mark is its own - so hers bears none
   for (const [w, rank, spec] of [[mac, 100, 'master-joiner'], [ann, 10, null]]) {
-    s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, NULL, ?, 1)`)
-      .run(w.id, w.character, xpForRank(rank), spec);
+    s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', ?, NULL, ?, 1)`)
+      .run(w.id, w.character, xpForRank(rank), spec);   // PIN MOVED (CRAFT3): a table is Carpentry's, read from the Building track (a 'carpentry' row is read by nothing)
     s.give(w, 'plank:oak', 'own', 3);
   }
   const claims = async (w) => {

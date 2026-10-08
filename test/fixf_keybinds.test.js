@@ -92,7 +92,7 @@ test('FIX-F: RecastSpell and AbortSpell reach the cast engine in all four hosts,
   assert.match(read('src/scenes/dungeonContext.js'), /recastSpell\(\) \{ magic\.recastSpell\(\); \},\s*\n\s*abortSpell\(\) \{ magic\.abortReadySpell\(\); \},/, 'the dungeon ctx');
   const hm = read('src/scenes/hostMagic.js');
   assert.match(hm, /lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null;/, 'lastSpell is set where CastReadySpell sets it (:2136), before the raise and the clear');
-  assert.match(hm, /if \(!lastSpell \|\| castInProgress\) return false;\s*\n\s*if \(!hasSpellbook\(playerEntity\)\) \{ say\(NO_SPELLBOOK_TEXT\); return false; \}\s*\n\s*readySpell\(lastSpell\);/, 'RecastSpell: the last spell, no animation playing, the book in the pack (:257-266)');
+  assert.match(hm, /if \(!lastSpell \|\| castInProgress \|\| castBusy\(\)\) return false;\s*\n\s*if \(!hasSpellbook\(playerEntity\)\) \{ say\(NO_SPELLBOOK_TEXT\); return false; \}\s*\n\s*readySpell\(lastSpell\);/, 'RecastSpell: the last spell, no animation playing, the book in the pack (:257-266)');
   assert.match(hm, /abortReadySpell\(\) \{\s*\n\s*if \(!readiedSpell\) return false;\s*\n\s*readiedSpell = null; readiedFree = false; readiedCost = 0;/, 'AbortReadySpell (:361-365) only with a spell readied (:268)');
   assert.match(read('src/scenes/interior.js'), /if \(actionsOf\(e, keys\)\.includes\('AutoMap'\)\) \{ toggleAutomap\(\); e\.preventDefault\(\); return; \}/);   // UXB1-S: its key, shared or not
   assert.doesNotMatch(read('src/scenes/interior.js'), /e\.code === 'KeyM'/);

@@ -73,10 +73,21 @@ dataset = "daggerfall_accounts"
 [placement]
 mode = "smart"
 
+# SCALE4b (2026-10-08): THE SERVICE'S OWN CLOCK (src/cron.js). Every
+# minute the settlements a read should not wait on (the auctions, the
+# guilds' writs and contracts, the seats' Turning, the day's
+# Motherlodes); each hour the sweeps no read runs any more and the
+# retention the tables never had. The two strings are src/cron.js's
+# CRON_MINUTE and CRON_HOUR - test/scale4b.test.js holds them together,
+# because a schedule this file names and the module does not runs
+# nothing. `wrangler deploy` publishes them with the Worker.
+[triggers]
+crons = ["* * * * *", "41 * * * *"]
+
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct92"
+ACCOUNT_VERSION = "acct96"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair

@@ -94,11 +94,13 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
+import { armKickMatrix } from './gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
 import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
 import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
+import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast is handed, made safe
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -1669,29 +1671,22 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   return { mwType, parts, weaponInfo, arrowInfo, notes };
 }
 
-/** MW-BRIG2 / MW-STEEL1: THE BODY FILES A WORN MODEL OF THE PORT'S OWN TAKES TO THE BINDER - the player's own
- *  third-person skin parts (`rows`, playerBodyRows) for the slots it is skinned from (`skinFrom`) and the slots its
- *  fit measures (`fitFrom`), SHADOWED OR NOT (the cuirass hides the very chest it copies; hidden is not drawn, and
- *  the skin is still the body's). One reading for both rigs - the third person's body and the first person's
- *  gauntlets - so neither can grow a slot the other forgets. */
+/** MW-BRIG2: THE BODY FILES A WORN MODEL SKINNED FROM THE BODY TAKES TO THE BINDER - the player's own third-person
+ *  skin parts (`rows`, playerBodyRows) for the slots it is skinned from (`skinFrom`), SHADOWED OR NOT (the cuirass
+ *  hides the very chest it copies; hidden is not drawn, and the skin is still the body's). Nothing for a retail add,
+ *  nor for a model the port ships skinned (the steel plate, MW-STEEL4). */
 export function ownBodyPaths(add, rows) {
-  const under = (slots) => (slots ?? []).flatMap((slot) => rows
+  return (add.skinFrom ?? []).flatMap((slot) => rows
     .filter((r) => r.record && r.slot === slot).map((r) => ({ slot, path: `meshes/${r.record.model}` })));
-  return { skinFrom: under(add.skinFrom), fitFrom: under(add.fitFrom) };
 }
 
-/** ...and what the binder takes beside the add's own mesh: those bodies' bytes out of the loaded archives, the part it
- *  is fitted onto (MW-BRIG3 `fitTo`), its fit (MW-STEEL1 `fit`), and the skeleton it is solved on when that is not the
- *  rig it is worn on (`solveOn`, bytes). Nothing at all for a retail add. */
-export function ownBodyPart(add, rows, find, solveOn = null) {
+/** ...and what the binder takes beside the add's own mesh: those bodies' bytes out of the loaded archives, and the part
+ *  it is fitted onto (MW-BRIG3 `fitTo`). Nothing at all for an add that is not skinned from the body. */
+export function ownBodyPart(add, rows, find) {
   if (!add.skinFrom) return {};
-  const read = (list) => list.map((b) => ({ slot: b.slot, bytes: find(b.path)?.get(b.path)?.slice() })).filter((b) => b.bytes);
-  const p = ownBodyPaths(add, rows);
   return {
-    skinFrom: read(p.skinFrom), fitTo: add.fitTo ?? null,
-    ...(add.fit ? { fit: add.fit, fitFrom: read(p.fitFrom) } : {}),
-    ...(add.solvePose ? { solvePose: add.solvePose } : {}),   // MW-STEEL2: the pose it is solved in - the body's bind, for the plate
-    ...(solveOn ? { solveOn } : {}),
+    skinFrom: ownBodyPaths(add, rows).map((b) => ({ slot: b.slot, bytes: find(b.path)?.get(b.path)?.slice() })).filter((b) => b.bytes),
+    fitTo: add.fitTo ?? null,
   };
 }
 
@@ -1749,8 +1744,7 @@ async function buildTpBody({
     // meshes resolveWeaponParts reads further down.
     // MW-BRIG2: the body a worn model is skinned from - the player's own skin parts for the slots it names, SHADOWED
     // OR NOT (the cuirass hides the very chest it copies; hidden is not drawn, and the skin is still the body's).
-    // MW-STEEL1: and the parts its fit measures (ownBodyPaths).
-    const bodyUnder = (add) => { const p = ownBodyPaths(add, rows); return [...p.skinFrom, ...p.fitFrom]; };
+    const bodyUnder = (add) => ownBodyPaths(add, rows);
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
       ...worn.adds.flatMap(bodyUnder).map((b) => b.path),   // MW-BRIG2
@@ -1766,7 +1760,7 @@ async function buildTpBody({
       // partName rides along: a worn add's slot is a label carrying its
       // record id, and the binder's part rules key on the part itself.
       partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice(),
-        ...ownBodyPart(row, rows, find) });   // MW-BRIG2: the body under it; MW-BRIG3: the part it is fitted onto; MW-STEEL1: its fit
+        ...ownBodyPart(row, rows, find) });   // MW-BRIG2: the body under it; MW-BRIG3: the part it is fitted onto
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: werewolf ? 'no werewolf body mesh resolved - its robe, head and hair are Bloodmoon\'s' : `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -2182,15 +2176,9 @@ export async function buildFpArm({
     // WEREWOLF1: THE ROBE IN FIRST PERSON, by addPartGroup's own ladder - a part's ".1st" record, else the plain one
     // for a hand, wrist, forearm or upper arm, else the slot reserved with nothing in it (mwItemMap
     // firstPersonPartGroup). A human's worn adds keep the arm-bone filter (fpWornAdds).
+    // MW-STEEL4: the steel gauntlets ship skinned to the arm's own bones, as a retail gauntlet does, so the first
+    // person binds them by those bones' names like any other add - nothing of the third person is read for them.
     const fpAdds = werewolf ? firstPersonPartGroup(robe, parts, female).adds : fpWornAdds(worn.adds);
-    // MW-STEEL1: A WORN MODEL OF THE PORT'S OWN IN FIRST PERSON (the steel gauntlets) is skinned from the THIRD-person
-    // body and solved on the third-person skeleton - in its skins' bind, the T-pose Mac's scene stands in (MW-STEEL2:
-    // not the skeleton file's rest, which hangs the arms), measured by the same fit - and worn on this rig by its
-    // bones' names (mwFirstPerson.js bindSkinnedFromBody `solveOn`). The first person's own
-    // rest is not that pose, and its hand is a different mesh; the bones are the same bones.
-    const ownFp = fpAdds.filter((a) => a.skinFrom);
-    const tpRows = ownFp.length ? playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch }) : [];
-    const tpSkeletonFile = ownFp.length ? correctActorModelPath(tpSkeletonPath({ female, beast, werewolf }), (p) => archives.some((a) => a.has(p))) : null;
     // MW-LOAD: ONE ROUND OF RANGED READS, concurrent, for every
     // synchronous read in the rest of this build - the first-person
     // skin parts (the fpRows loop), the worn adds the fp camera keeps
@@ -2201,8 +2189,6 @@ export async function buildFpArm({
     await loadFromArchives(archives, [
       ...fpRows.map((w) => w.path),
       ...fpAdds.map((add) => `meshes/${add.model}`),
-      ...ownFp.flatMap((add) => { const p = ownBodyPaths(add, tpRows); return [...p.skinFrom, ...p.fitFrom].map((b) => b.path); }),   // MW-STEEL1
-      ...(tpSkeletonFile ? [tpSkeletonFile] : []),   // MW-STEEL1: the skeleton they are solved on
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
       ...sourcePaths,
@@ -2216,13 +2202,11 @@ export async function buildFpArm({
     // sleeves, the shield - fpWornAdds' filter - never a helmet in
     // your face.
     missing.push(...worn.notes);
-    const tpSkeletonBytes = tpSkeletonFile ? find(tpSkeletonFile)?.get(tpSkeletonFile)?.slice() ?? null : null;   // MW-STEEL1
     for (const add of fpAdds) {
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice(),
-        ...ownBodyPart(add, tpRows, find, tpSkeletonBytes) });   // MW-STEEL1: an own model, its third-person body and skeleton
+      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice() });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
@@ -2857,6 +2841,7 @@ export function createFpArm() {
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
+  let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -2903,6 +2888,9 @@ export function createFpArm() {
   let climbHands = false;
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gunFeel.js armGunPose), set by
+   *  the rig (weaponRig.js thunderlockFeel) - or null. */
+  let gunFeel = null;
   let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
   let drawnArm = null, drawnMats = null;   // SHADOW-CLOAK (AUDIT): the arm and the pose drawThird last drew - a host that poses again before the auras (the dungeon) never hands a cape the next frame's
   /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
@@ -4742,8 +4730,11 @@ export function createFpArm() {
      *  SELF, ByTouch is TOUCH, SingleTargetAtRange and AreaAtRange are
      *  TARGET. Lands back in the stance through the upper-body machine.
      *  Never a gate: a missing clip is a note on the card and the spell
-     *  still flies. */
-    castSpell(rangeType = 2) {
+     *  still flies.
+     *
+     *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
+     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
+    castSpell(rangeType = 2, rate = 1) {
       // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
       // stance the next frame's readySpell(false) tore down again
       if (!built || !built.ok || built.werewolf) return false;
@@ -4767,6 +4758,7 @@ export function createFpArm() {
       const type = spellAttackType(rangeType);
       attackType = type;
       castReleased = false;   // MW-CAST1: this cast's own release, not a stale one
+      castRate = validCastRate(rate);
       unreadyAfterCast = false;
       attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
@@ -4877,7 +4869,9 @@ export function createFpArm() {
         // blow's own clock advanced beside it (blowPace). The record's pace is the fallback, unchanged.
         const paced = attacking && blowPlan;
         if (paced) blowPlan.clock += dt;
-        advanceClip(actionState, (actionSource || rig()).keys, dt * (paced ? blowPlan.rate : weapSpeed), onActionKey);
+        // CAST-SPEED: a cast plays at its own rate, where OpenMW plays the spellcast group at 1
+        const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
         stepUpper();
       }
       // MW-D39: jump refreshes BEFORE movement, the reference's own
@@ -5123,7 +5117,13 @@ export function createFpArm() {
       // ("the weapon ignores the look") are now taken literally.
       const pitch = followCam ? 0 : (cam.pitch || 0);
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
-      const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+      const lens = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+      // MW-GUN-FEEL (combat/gunFeel.js): THE GUN'S RECOIL AND ITS RELOAD, over the WHOLE viewmodel in the eye's own axes -
+      // turned about the shoulder, moved back and down - laid in front of the lens, so the arms and the gun move as one
+      // and nothing else in the pass does. Not through the neck (poseAssembly's neckPitch/neckOffset): glued arms take
+      // no look there by IG4's construction, and a kick is not a look. The frame record below carries it, so the muzzle
+      // (weaponMuzzle) and a held sheet's corners stand where the eye sees them.
+      const view = gunFeel ? multiply(armKickMatrix(gunFeel, MW_UNITS_PER_METER), lens, new Float32Array(16)) : lens;
 
       // MW-D23: NO MIRROR. THIS PASS IS ALREADY CHIRALITY-TRUE, and the
       // mirror MW-D9 borrowed from the world pass is what put Mac's
@@ -5235,6 +5235,10 @@ export function createFpArm() {
     followCamera: () => followCam,
     /** WW1: the rig sets the weapon widget's transform over the composite (null: the fullscreen overlay). */
     setScreenTransform(fn) { screenTransform = typeof fn === 'function' ? fn : null; },
+    /** MW-GUN-FEEL: the gun's kick and reload for the next first-person draw (combat/gunFeel.js armGunPose) - a pose
+     *  that moves nothing is none. */
+    setGunFeel(pose) { gunFeel = pose && (pose.pitch || pose.back || pose.down) ? { pitch: +pose.pitch || 0, back: +pose.back || 0, down: +pose.down || 0 } : null; },
+    gunFeel: () => gunFeel,
     screenTransform: () => screenTransform,
     setFollowCamera(v) {
       followCam = !!v;

@@ -101,8 +101,8 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
 });
 
 test('LR1: one ladder - a rolled tier is the item\'s own, an enchanted item derives Magic, an artifact is the ceiling', () => {
-  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'], 'SET6: the Aetheric rung under the Artifact');
-  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded'], 'SET6: the Aetheric rung under the Artifact; GILDED1: the Gilded over it');
+  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4, 5, 6]);
   assert.equal(LR.rarityOf({ ...sword(), rarity: 'aetheric' }), 'aetheric', 'SET6: an Aetheric piece wears its own field, as a Legendary does');
   const untouched = sword();
   assert.deepEqual(LR.applyRarity(untouched, 'aetheric', () => 0), sword(), 'SET6: nothing ROLLS the Aetheric - the ladder\'s roll leaves the piece as it was');
@@ -166,7 +166,7 @@ test('LR2: the affix kinds - six, each banded per tier, each with a word for the
   // LOOT4 (bible/06-Systems/Loot-Arc.md section 6): the six numbers LR1 shipped, and five that DO something after them
   // LOOT14 (bible/06-Systems/Loot-II-Arc.md section 6): and the wardrobe's own three, after every kind before them
   assert.deepEqual(LR.AFFIX_IDS.filter((id) => !LR.AFFIX_KINDS[id].proc), ['damage', 'armor', 'weight', 'stat', 'resist', 'skill', 'standing', 'warmth', 'dry']);
-  assert.deepEqual(LR.AFFIX_IDS.filter((id) => LR.AFFIX_KINDS[id].proc), ['elemental', 'leech', 'thorns', 'focus', 'slayer']);
+  assert.deepEqual(LR.AFFIX_IDS.filter((id) => LR.AFFIX_KINDS[id].proc), ['elemental', 'leech', 'thorns', 'focus', 'slayer', 'castSpeed']);   // CAST-SPEED: after every kind before it
   for (const id of LR.AFFIX_IDS) {
     const k = LR.AFFIX_KINDS[id];
     assert.ok(['prefix', 'suffix'].includes(k.slot));
@@ -402,8 +402,8 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
-  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');
-  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, \{ rolls \}\)/, 'the exterior foes, off the same stream');
+  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
+  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, (?:wild \? wildLootOpts\(\{ rolls \}, wildRing\(\)\) : )?\{ rolls \}\)/, 'the exterior foes, off the same stream (WILD1: the open zone\'s ring multiplies its odds)');
   assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
   // PIN MOVED (RENOWN-LOOT): a plain foe's ladder read at the roller's Renown (foeLootCap.js plainFoeRarityWeights - LOOT-EASE's own at four quarters)
   assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\), qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');
@@ -507,7 +507,8 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   assert.equal(LR.lootRarityOn(), true, 'the door turns the ladder on');
   // LR6: the ladder, plus the unidentified pair - one Rare and one
   // Legendary left on the floor's own reading.
-  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2 + AETHERIC_RECORDS.length + 1 + 4 + LR.WARDROBE_LEGENDARIES.length + 2 + 2 + 2);   // LOOT2: and one Exalted; LOOT14/LOOT15: the wardrobe's two bases at two tiers and its six; LOOT16: a cursed Rare and a cursed Legendary; LOOT20: a socketed Rare and a Ruby; LOOT21: the two Ayleid stones
+  assert.equal(added.length, 20 + LR.LEGENDARIES.length + 2 + AETHERIC_RECORDS.length + 1 + 4 + LR.WARDROBE_LEGENDARIES.length + 2 + 2 + 2 + 2);   // LOOT2: and one Exalted; LOOT14/LOOT15: the wardrobe's two bases at two tiers and its six; LOOT16: a cursed Rare and a cursed Legendary; LOOT20: a socketed Rare and a Ruby; LOOT21: the two Ayleid stones; GILDED1: the Hourlock and its shot
+  assert.deepEqual(added.filter((i) => i.rarity === 'gilded').map((i) => i.gilded), ['the-hourlock'], 'GILDED1: the top rung\'s one record, whole');
   assert.deepEqual(added.filter((i) => i.rarity === 'aetheric').map((i) => i.aetheric), AETHERIC_RECORDS.map((r) => r.id), 'SET6: the nine Regalia pieces, once each; RAID4b: then the raids\' twenty-seven');
   assert.equal(added.filter((i) => i.rarity === 'magic').length, 12);   // LOOT14: and the wardrobe's two
   assert.equal(added.filter((i) => i.rarity === 'rare').length, 15);   // LOOT16: and the cursed one; LOOT20: and the socketed one

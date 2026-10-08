@@ -241,7 +241,8 @@ test('AC-COMPARE the pack draws it: each part\'s number on the panel for its slo
       const card = host.querySelector('.packtip');
       assert.ok(card, 'the card is up');
       assert.deepEqual(read(card.querySelector('.cmp')), [`Replaces ${itemLongName(k.kite)}, ${itemLongName(k.sword)}`,
-        ['Damage', '2 - 16 → 4 - 20', '+2 up', '+4 up'], ['Overall', '6.0 → 4.5', '-1.5 down'],
+        // HANDS-COMPARE: a weapon against each hand - the sword in the right, the shield in the left
+        ['vs Right hand', '2 - 16 → 4 - 20', '+2 up', '+4 up'], ['vs Left hand', `${itemLongName(k.kite)} → 4 - 20`], ['Overall', '6.0 → 4.5', '-1.5 down'],
         ['Left arm', '3 → 0', '-3 down'], ['Hands', '3 → 0', '-3 down'], ['Legs', '10 → 7', '-3 down']]);
       // a worn piece's card has none
       const head = host.querySelectorAll('.wornrow').find((n) => txt(n.querySelector('.wornslot')) === 'Head');

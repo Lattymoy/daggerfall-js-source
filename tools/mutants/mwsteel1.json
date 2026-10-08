@@ -2,8 +2,8 @@
   {
     "name": "MWSTEEL1-silver-wears-the-plate",
     "file": "src/characters/ownArmorModels.js",
-    "old": "  id, name, templateIndex, material: ARMOR_MATERIAL.Steel,\n",
-    "new": "  id, name, templateIndex, material: ARMOR_MATERIAL.Silver,\n",
+    "old": "  id, name, templateIndex, material: ARMOR_MATERIAL.Steel, parts: Object.freeze(parts),\n",
+    "new": "  id, name, templateIndex, material: ARMOR_MATERIAL.Silver, parts: Object.freeze(parts),\n",
     "tests": [
       "test/mwsteel1.test.js"
     ]
@@ -13,33 +13,6 @@
     "file": "src/characters/ownArmorModels.js",
     "old": "export const STEEL_HELM_STYLES = Object.freeze(['closed', 'open']);",
     "new": "export const STEEL_HELM_STYLES = Object.freeze(['open', 'closed']);",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-helm-by-the-nose",
-    "file": "src/characters/ownArmorModels.js",
-    "old": "const AT_HEAD = Object.freeze({ to: 'head', x: 'centre', y: 'min', z: 'max', scene: STEEL_PLATE_SCENE.head });",
-    "new": "const AT_HEAD = Object.freeze({ to: 'head', x: 'centre', y: 'max', z: 'max', scene: STEEL_PLATE_SCENE.head });",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-boots-by-the-neck",
-    "file": "src/characters/ownArmorModels.js",
-    "old": "const BOOT_FIT = Object.freeze([Object.freeze({ ...AT_NECK, z: null }), ON_FEET]);",
-    "new": "const BOOT_FIT = Object.freeze([AT_NECK]);",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-feet-by-the-top",
-    "file": "src/characters/ownArmorModels.js",
-    "old": "const ON_FEET = Object.freeze({ to: 'foot', z: 'min', scene: 'self' });",
-    "new": "const ON_FEET = Object.freeze({ to: 'foot', z: 'max', scene: 'self' });",
     "tests": [
       "test/mwsteel1.test.js"
     ]
@@ -63,15 +36,6 @@
     ]
   },
   {
-    "name": "MWSTEEL1-scene-neck-misread",
-    "file": "src/characters/ownArmorModels.js",
-    "old": "neck: Object.freeze({ min: Object.freeze([-3.895279, -4.097911, 109.962381])",
-    "new": "neck: Object.freeze({ min: Object.freeze([-3.895279, -4.097911, 109.862381])",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
     "name": "MWSTEEL1-hides-dropped",
     "file": "src/formats/mwItemMap.js",
     "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);\n",
@@ -90,109 +54,10 @@
     ]
   },
   {
-    "name": "MWSTEEL1-fit-not-carried",
-    "file": "src/formats/mwItemMap.js",
-    "old": "          ...(own.fit ? { fit: own.fit, fitFrom: own.fitFrom } : {}),   // MW-STEEL1: kept to the body its scene carries",
-    "new": "          ...{},   // MW-STEEL1: kept to the body its scene carries",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
     "name": "MWSTEEL1-census-retail-for-steel",
     "file": "src/formats/mwItemMap.js",
     "old": "      if (own) { out.push({ kind: 'own', item: aName, material: mName, via: 'armor', own: 'ownArmorModels', index: tmpl, model: ownModelsOf(own).join(' + ') }); continue; }\n",
     "new": "",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-shift-backwards",
-    "file": "src/formats/mwSkinTransfer.js",
-    "old": "      shift[k] = feature(wearer, k) - feature(scene, k);",
-    "new": "      shift[k] = feature(scene, k) - feature(wearer, k);",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-first-rule-wins",
-    "file": "src/formats/mwSkinTransfer.js",
-    "old": "      const feature = FEATURE[rule[ax]];\n      if (!feature) return;",
-    "new": "      const feature = FEATURE[rule[ax]];\n      if (!feature || axes.length > 99 || by.some((b) => b.axes.includes(ax))) return;",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-side-unchecked",
-    "file": "src/formats/mwSkinTransfer.js",
-    "old": "  const sideOk = other ? (s, j) => src[s].side[j] !== other : null;",
-    "new": "  const sideOk = null;",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-side-by-l-misses",
-    "file": "src/formats/mwSkinTransfer.js",
-    "old": "  if (/ left | l /.test(n)) return 'left';",
-    "new": "  if (/ left /.test(n)) return 'left';",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-rebind-skipped",
-    "file": "src/formats/mwFirstPerson.js",
-    "old": "      if (skeleton !== assembly.skeleton) {",
-    "new": "      if (skeleton === assembly.skeleton) {",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-shift-not-applied",
-    "file": "src/formats/mwFirstPerson.js",
-    "old": "      worn = worn.map((g) => shiftBatch(g, fit.shift));\n",
-    "new": "",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-unsided-transfer",
-    "file": "src/formats/mwFirstPerson.js",
-    "old": "    for (const solved of transferSkin(g, sources, ctx, { side: sideOfPart(part.partName) })) {",
-    "new": "    for (const solved of transferSkin(g, sources, ctx)) {",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-fit-bodies-unbound",
-    "file": "src/formats/mwFirstPerson.js",
-    "old": "    for (const b of [...bodies, ...bindBodies(part.fitFrom, 'fit')]) {",
-    "new": "    for (const b of [...bodies]) {",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-fp-solved-on-its-own-rest",
-    "file": "src/combat/fpArm.js",
-    "old": "        ...ownBodyPart(add, tpRows, find, tpSkeletonBytes) });",
-    "new": "        ...ownBodyPart(add, tpRows, find) });",
-    "tests": [
-      "test/mwsteel1.test.js"
-    ]
-  },
-  {
-    "name": "MWSTEEL1-fit-from-unread",
-    "file": "src/combat/fpArm.js",
-    "old": "    ...(add.fit ? { fit: add.fit, fitFrom: read(p.fitFrom) } : {}),",
-    "new": "    ...(add.fit ? { fit: add.fit, fitFrom: [] } : {}),",
     "tests": [
       "test/mwsteel1.test.js"
     ]

@@ -344,8 +344,8 @@
   {
     "name": "EVENT1-composite-premultiplied",
     "file": "src/render/volumetricClouds.js",
-    "old": "dreadGrade(c.rgb / op, uDread) * op",
-    "new": "dreadGrade(c.rgb, uDread)",
+    "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op",
+    "new": "brassGrade(dreadGrade(c.rgb, uDread), uBrass)",
     "tests": [
       "test/event1_live_event.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EVENT1-controller-fog-ungraded",
     "file": "src/scenes/shared.js",
-    "old": "return dreadW > 0 ? dreadGrade(c, dreadW) : c;",
-    "new": "return c;",
+    "old": "const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;",
+    "new": "const d = c;",
     "tests": [
       "test/event1_live_event.test.js"
     ]

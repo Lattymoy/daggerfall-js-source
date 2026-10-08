@@ -110,8 +110,10 @@ import { tickHudLayout } from './hudLayout.js';   // HUD-MOVE: the movable piece
 import { mountHotbarDock, drawEnhancedHotbar, detachHotbarDock, hotbarMode } from './enhancedHotbar.js';   // HB1: the hotbar, the diamond's alternative (one or the other)
 import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
 import { QUEST_MARK_CSS } from './questMarks.js'; import { nodeMarkCss } from './nodeMarks.js';   // GUIDE5: the tracker's quest on the compass, in the marks' one gold; NODE-MARKS: a profession's nodes in its own colour
+import { WAY_MARK_CSS, WAY_BODY_CSS } from '../systems/wayOut.js';   // WAYOUT1: the way out's mark
 import { BOAT_GLYPH_URL } from './boatMarks.js';   // BOAT-MARK: my boats on the strip, a sail over a hull
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
+import { SD_RING_MAP_CSS } from './sdMapMark.js';   // SD2c: the Super dungeon on the strip, in its ring's brass
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -286,6 +288,26 @@ function drawSerpentMark(sp, playerXZ, heading01) {
   if (node.style.left !== l) node.style.left = l;
 }
 
+// SD2c: THE SUPER DUNGEON'S MARK - a found Hollow's door, a round mark in its ring's brass (ui/sdMapMark.js) - a place, not
+// the gate's or the serpent's diamond - while the player stands within SD_COMPASS_M of it outside (scenes/world.js
+// sdCompassMark); the gate's bearing law, hidden never removed.
+const sdMarkCss = () => 'position:absolute;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;border-radius:50%;box-sizing:border-box;'
+  + `border:2px solid ${SD_RING_MAP_CSS};background:rgba(10,12,17,0.65);box-shadow:0 0 6px 2px rgba(232,178,74,0.7);pointer-events:none`;
+function drawSdMark(sd, playerXZ, heading01) {
+  if (!parts.sdMark) {
+    const node = el('i', 'hud-sd');
+    node.style.cssText = sdMarkCss();
+    parts.compass.append(node);
+    parts.sdMark = node;
+  }
+  const node = parts.sdMark;
+  if (!sd || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(sd, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
 // GUIDE5: THE QUEST'S MARK - the place the tracker's quest points, one diamond in the journal's gold (ui/questMarks.js
 // QUEST_MARK_CSS), HOLLOW and edged dark so it never reads as the gate's burning one, riding the same bearing law
 // (compassMarkerLerp, clamp and all): a place behind the player stands at the strip's end on the side to turn toward.
@@ -305,6 +327,31 @@ function drawQuestMark(quest, playerXZ, heading01) {
   if (!quest || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
   if (node.style.display === 'none') node.style.display = '';
   const at = Math.min(1, Math.max(0, compassMarkerLerp(quest, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// WAYOUT1 (the delve arc): THE WAY OUT - underground, an arrow pointing up and out in the parchment's light, where the
+// walked trail leads back to the way in (systems/wayOut.js: the farthest cell the eye can see along it), on the same
+// bearing law, clamp and all. The dungeon hands it (scenes/dungeonContext.js wayOutMark); hidden, never removed.
+// AUDIT DELVE D9: ITS OWN BAND, UNDER THE STRIP - pointing up into it - so it never covers the quest's diamond (the same
+// law, the same clamp: both behind the player stood at one end, the arrow on top) nor sits among the letters; and a dark
+// body rimmed in the parchment's light (WAY_BODY_CSS under WAY_MARK_CSS), which reads on the dark of a dungeon and on
+// the pale of the letters alike (the pale arrow alone was 1.26:1 against them).
+const wayOutMarkCss = () => 'position:absolute;top:100%;width:0;height:0;margin:3px 0 0 -6px;'
+  + `border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${WAY_BODY_CSS};`
+  + `filter:drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 0.8px ${WAY_MARK_CSS}) drop-shadow(0 0 1.5px rgba(0,0,0,0.9));pointer-events:none`;
+function drawWayOutMark(way, playerXZ, heading01) {
+  if (!parts.wayOutMark) {
+    const node = el('i', 'hud-wayout');
+    node.style.cssText = wayOutMarkCss();
+    parts.compass.append(node);
+    parts.wayOutMark = node;
+  }
+  const node = parts.wayOutMark;
+  if (!way || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(way, playerXZ, heading01)));
   const l = `${(at * 100).toFixed(1)}%`;
   if (node.style.left !== l) node.style.left = l;
 }
@@ -828,7 +875,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, questMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum,
     breath, breathFill, grip, gripFill, readied, reticle, cross, centreWord, cornerWord,
@@ -973,7 +1020,9 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
   drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1
   drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
+  drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
   drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5
+  drawWayOutMark(opts.wayOut ?? null, opts.playerXZ ?? null, heading01);   // WAYOUT1
   drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY
   drawShipMarks(opts.ships ?? null, opts.playerXZ ?? null, heading01);   // AUDIT NAV1: the sea's ships
   drawBoatMarks(opts.boats ?? null, opts.playerXZ ?? null, heading01);   // BOAT-MARK: my boats
@@ -1201,6 +1250,8 @@ function drawStatus(vitals, opts) {
   const needs = survivalOn() ? survivalHudChips(vitals, Math.floor(ownMinutes()), { vampire: !!liveVampirism(vitals), endurance: liveStat(vitals, 'endurance') }) : [];   // AUDIT SURV C: the vampire's strip, the page's drunk bands
   const rested = sharedClockOn() ? { minutes: nightRealMinutesLeft(vitals, ownMinutes()) } : null;   // REST1: the night interval, online
   const all = statusTiles({ spells, powers, afflictions: afflictionRows(vitals), needs, rested });
+  const zone = zoneTile();
+  if (zone) all.unshift(...statusTiles({ zone }));   // WILD1: the open zone's tile, first
   // a new window size or HUD scale is a new band at once (AUDIT UI C: a rotation left the old band for half a second)
   const vp = `${globalThis.innerWidth}x${globalThis.innerHeight}x${last.scale ?? 1}`;
   if (last.statVp !== vp) { last.statVp = vp; last.statTick = -1; }
@@ -1488,6 +1539,10 @@ function drawSpellChip(view, tag) {
  *  surface importing them closed a cycle. `fn(entity) -> [{ key, set, name, text, state }]`. */
 let _setChips = null;
 export function setHudSetChips(fn) { _setChips = typeof fn === 'function' ? fn : null; }
+/** WILD1: the host's word on the open zone - `{ name }` while the player stands in it, else null (systems/wildZone.js). */
+let _zone = null;
+export function setHudZone(fn) { _zone = typeof fn === 'function' ? fn : null; }
+const zoneTile = () => { try { return _zone?.() ?? null; } catch { return null; } };
 const setPowerChips = (vitals) => { try { return _setChips?.(vitals) ?? []; } catch { return []; } };
 
 function quickCell(part, slot, s) {

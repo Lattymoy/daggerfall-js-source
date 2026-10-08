@@ -606,9 +606,8 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
       for (const p of ownArmorParts(own, { helmStyle })) {   // MW-STEEL1: the style the Steel Helm switch asks for
         const at = ARMO_PART.findIndex((r) => r.name === p.part);
         const row = ARMO_PART[at];
-        claim(at, prio, { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece, skinFrom: p.skinFrom ?? own.skinFrom, fitTo: own.fitTo ?? null,   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides; MW-STEEL2: a part may name its own body (the plate skirt's groin and thighs)
-          ...(own.fit ? { fit: own.fit, fitFrom: own.fitFrom } : {}),   // MW-STEEL1: kept to the body its scene carries
-          ...(own.solvePose ? { solvePose: own.solvePose } : {}) });   // MW-STEEL2: solved in the pose the body was bound in
+        claim(at, prio, { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece,
+          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) });   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides. MW-STEEL4: a model shipped skinned (the steel plate) carries neither - its mesh is bound as a retail part's is
         // MW-STEEL1: what the part covers beyond its own slot is OCCUPIED with no mesh (reserveIndividualPart), so its
         // skin is not drawn under the plate - at the armour's priority, the law's own gate
         for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);

@@ -107,8 +107,12 @@ on:
       - "src/characters/nameGen.json"
       - "src/characters/dyes.js"
       - "src/net/alchemyLaw.js"
+      - "src/net/temperLaw.js"
       - "src/systems/potionRecipes.js"
       - "src/characters/itemTemplates.json"
+      - "src/net/sdReceipt.js"
+      - "src/net/sdMarks.js"
+      - "src/systems/wind.js"
       - ".github/workflows/account-deploy.yml"
   workflow_dispatch:
 

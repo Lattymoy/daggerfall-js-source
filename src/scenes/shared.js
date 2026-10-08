@@ -7,6 +7,7 @@
 
 import { stepAsideLoading, syncLoading } from '../ui/loadingScreen.js';   // LOAD1: a full-screen film's hold takes the loading screen aside; a claimed loop lets its hold go
 import { DFPalette } from '../formats/dfPalette.js';
+import { NetRandom } from '../formats/netRuntime.js';   // HAZE1: System.Random's one port (the stars' generator)
 import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
@@ -19,6 +20,7 @@ import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, m
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
+import { sdBrassGrade } from '../systems/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -266,6 +268,7 @@ export function createSkyController(gl, params) {
   // door back to the mod's raw ceil, bug for bug.
   if (dynamicSky) dynamicSky.bandDither = params.get('bands') !== 'raw';
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
+  let brassW = 0;   // SD19: the brass air's weight this frame (setBrass) - 0 is none, and nothing below changes
   let dreadW = 0;   // EVENT1: the live event's weight this frame (setDread) - 0 is no event, and nothing below changes
   let dreadGlow = 0;   // EVENT1: and the red strikes' glow in the cloud deck this frame (the composite's flash, beside the storm's)
   // SUNBABY1: the sun baby's weight this frame (setSunbaby) - 0 is no event, and nothing below changes - and its pass,
@@ -282,7 +285,9 @@ export function createSkyController(gl, params) {
   };
   /** EVENT1: a reflected sky ({zenith, horizon}) under the dread - the water mirrors the sky it is under, on either lane;
    *  SUNBABY1: and under the sun baby, its flower sky's blue. */
-  const dreaded = (ws) => sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil);   // SUNBABY2: the wrath's sky
+  /** AUDIT SD III (V8): and the water's sky brass as the sky over it is. */
+  const brassed = (ws) => (brassW > 0 ? { ...ws, zenith: sdBrassGrade(ws.zenith, brassW), horizon: sdBrassGrade(ws.horizon, brassW) } : ws);
+  const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -392,7 +397,8 @@ export function createSkyController(gl, params) {
     fogColorFor(fogNow) {
       const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
       const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;   // SUNBABY1: the land's haze is the flower sky's horizon (SUNBABY2: the wrath's, burning)
-      return dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      return brassW > 0 ? sdBrassGrade(d, brassW) : d;   // SD19: and brass near a standing Hollow
     },
     /** EVENT1: the live event's weight this frame, 0..1 (world/dreadSky.js createDread) - every pass that draws the sky
      *  grades its colour by it, the fog above takes the same grade, and while it is above 0 the sky wears the storm
@@ -402,6 +408,13 @@ export function createSkyController(gl, params) {
       dreadW = Math.max(0, Math.min(1, Number(w) || 0));
       dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
+    },
+    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/sdOmen.js sdAirWeight) - the fog and
+     *  the water's sky lean to it, and (AUDIT SD III, V8) every pass that draws the sky grades by it as the haze is graded:
+     *  the fogged land met the sky a step apart at the skyline. 0 is exactly the sky there was. */
+    setBrass(w) {
+      brassW = Math.max(0, Math.min(1, Number(w) || 0));
+      for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.brass = brassW;
     },
     /** SUNBABY1: the sun baby's weight this frame, 0..1 (world/sunbabySky.js createSunbaby) - its flower sky is drawn over
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
@@ -1014,11 +1027,21 @@ export const containerNearbyRecord = (c) => lootNearbyRecord({
  *  Treasure is actually cast. Each host now names its own kinds and
  *  this walk does the rest, which is the only shape in which "every
  *  active loot container" can be one sentence again. */
-export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {}) => [
+export const nearbyLootRecords = ({ piles = [], containers = [], foes = [], searched = [] } = {}) => [
   ...piles.map(lootNearbyRecord),
   ...containers.map(containerNearbyRecord),
   ...corpseNearbyRecords(foes),
+  ...searched.map(searchedNearbyRecord),
 ];
+
+/** DETECT-FINDS (the delve arc): A SEARCHED OBJECT'S FIND is a loot container too - SEARCH1's coffins, shelves, chests
+ *  and crates (systems/searchables.js) hold the room's rolled find in `items` until it is taken, the port's own
+ *  DaggerfallLoot - so the one loot walk carries it, at its box's middle. Unsearched, it holds nothing yet (the find is
+ *  rolled at the search) and GetLootFlags gives it no Treasure bit, exactly as an empty corpse. */
+export const searchedNearbyRecord = (sb) => lootNearbyRecord({
+  pos: sb?.aabb ? [(sb.aabb.min[0] + sb.aabb.max[0]) / 2, (sb.aabb.min[1] + sb.aabb.max[1]) / 2, (sb.aabb.min[2] + sb.aabb.max[2]) / 2] : null,
+  items: sb?.items ?? [],
+});
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed.
@@ -1167,65 +1190,9 @@ export const populatesWanderingNpcs = (locationType) => POPULATED_LOCATION_TYPES
 
 // --- The night-sky star pass (DaggerfallSky.cs:565-600) --------------
 
-// .NET System.Random, the seeded Knuth subtractive generator, ported
-// byte-exact. DaggerfallSky holds `new System.Random(0)` (:74) and the
-// star placement is a pure function of that sequence, so substituting
-// a different generator paints different stars - this is a DATA law,
-// not an engine detail, and the Ledger's engine-PRNG row (which covers
-// UnityEngine.Random) does not cover it.
-const MBIG = 2147483647;   // int.MaxValue
-const MSEED = 161803398;
-
-export class NetRandom {
-  constructor(seed = 0) {
-    this._seedArray = new Int32Array(56);
-    const subtraction = seed === -2147483648 ? MBIG : Math.abs(seed);
-    let mj = MSEED - subtraction;
-    this._seedArray[55] = mj;
-    let mk = 1;
-    for (let i = 1; i < 55; i++) {
-      const ii = (21 * i) % 55;
-      this._seedArray[ii] = mk;
-      mk = mj - mk;
-      if (mk < 0) mk += MBIG;
-      mj = this._seedArray[ii];
-    }
-    for (let k = 1; k < 5; k++) {
-      for (let i = 1; i < 56; i++) {
-        this._seedArray[i] -= this._seedArray[1 + ((i + 30) % 55)];
-        if (this._seedArray[i] < 0) this._seedArray[i] += MBIG;
-      }
-    }
-    this._inext = 0;
-    this._inextp = 21;
-  }
-
-  /** Random.InternalSample */
-  _internalSample() {
-    let locINext = this._inext;
-    let locINextp = this._inextp;
-    if (++locINext >= 56) locINext = 1;
-    if (++locINextp >= 56) locINextp = 1;
-    let retVal = this._seedArray[locINext] - this._seedArray[locINextp];
-    if (retVal === MBIG) retVal--;
-    if (retVal < 0) retVal += MBIG;
-    this._seedArray[locINext] = retVal;
-    this._inext = locINext;
-    this._inextp = locINextp;
-    return retVal;
-  }
-
-  /** Random.Sample / Random.NextDouble */
-  nextDouble() {
-    return this._internalSample() * (1.0 / MBIG);
-  }
-
-  /** Random.Next(minValue, maxValue), small-range arm. */
-  next(minValue, maxValue) {
-    const range = maxValue - minValue;
-    return Math.trunc(this.nextDouble() * range) + minValue;
-  }
-}
+// .NET System.Random (DaggerfallSky holds `new System.Random(0)`, :74 - the star placement is a pure function of
+// that sequence): formats/netRuntime.js's one port since HAZE1, re-exported under the name this host gave it.
+export { NetRandom };
 
 /** DaggerfallSky.cs:78-79 */
 export const STAR_CHANCE = 0.004;

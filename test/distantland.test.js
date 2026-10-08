@@ -244,7 +244,7 @@ test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buff
   // ghost-row law lives there, and since PERF-EXT26 the RESTRIDE reads
   // it too (terrainGen.js restrideGrid) - on the terrain worker when one
   // is up, on this thread when not.
-  assert.ok(world.includes('restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads() })'), 'the restride reads the neighbor pixels (LANDFORM1-3: shaped as the build shaped them)');
+  assert.ok(world.includes('restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })'), 'the restride reads the neighbor pixels (LANDFORM1-3: shaped as the build shaped them; LANDFORM4/6: the same sites and climates)');   // PIN MOVED (AUDIT WATER-NEXT P1): and carves the bed with the grid
   assert.ok(readFileSync('src/world/terrainGen.js', 'utf8').includes('ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf)'),
     'the kernel reads them for every build');
   // the renderer keeps one shared buffer PER index set, not one total

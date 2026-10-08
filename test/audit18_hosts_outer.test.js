@@ -25,6 +25,7 @@ import {
   applyFallLanding, NetRandom, applyNightStars, STAR_CHANCE, STAR_COLOR_INDICES,
   outdoorFogColor, RAINY_FOG_DENSITY, skyFrameForWeatherTime,
 } from '../src/scenes/shared.js';
+import { GROUND_RECORD_LIMIT } from '../src/world/terrainTiles.js';   // AUDIT WATER-NEXT m8
 import { KEEP } from '../src/scenes/dataSource.js';
 import { PlayerMotor, walkSpeed, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../src/player/motor.js';
 import { SKILLS } from '../src/systems/skills.js';
@@ -536,7 +537,7 @@ test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }
   const shared = src('src/scenes/shared.js');
-  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*const own = dynamic\?\.fogColor \?\? outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);\s*\n\s*const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*return dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/,   // SUNBABY1 (PIN MOVED): the sun baby's haze between the law and the dread's grade; SUNBABY2 (PIN MOVED): its wrath's weight with it
+  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*const own = dynamic\?\.fogColor \?\? outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);\s*\n\s*const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;[^\n]*\n\s*return brassW > 0 \? sdBrassGrade\(d, brassW\) : d;/,   // SUNBABY1 (PIN MOVED): the sun baby's haze between the law and the dread's grade; SUNBABY2 (PIN MOVED): its wrath's weight with it; SD19 (PIN MOVED at AUDIT SD III): the brass near a standing Hollow last, over the dread's grade
     'the controller answers SetSkyFogColor over the sky it holds, or the mod\u2019s own colour');
 });
 
@@ -595,9 +596,11 @@ test('audit18 hosts: a random ground marker resets to RECORD 8, not to BYTE 8', 
   assert.equal(convertTilemap(new Uint8Array([2]))[0], 8, 'byte 2 decodes to grass record 8');
   assert.equal(convertTilemap(new Uint8Array([8]))[0], 32, 'byte 8 decodes to record 32 - a different texture');
   const s = src('src/scenes/exterior.js');
-  assert.match(s, /tile\.textureRecord >= 56\s*\n\s*\? 2\b/,
+  // PIN MOVED (AUDIT WATER-NEXT m8): the 56 is world/terrainTiles.js GROUND_RECORD_LIMIT's, its one home
+  assert.match(s, /tile\.textureRecord >= GROUND_RECORD_LIMIT[^\n]*\n\s*\? 2\b/,
     'the exterior host writes the raw record 8 into pre-conversion tilemap space');
-  assert.doesNotMatch(s, /tile\.textureRecord >= 56\s*\n\s*\? 8\b/);
+  assert.doesNotMatch(s, /tile\.textureRecord >= GROUND_RECORD_LIMIT[^\n]*\n\s*\? 8\b/);
+  assert.equal(GROUND_RECORD_LIMIT, 56, 'MeshReader.cs:487: the tileset\'s 56 records');
 });
 
 // ---------------------------------------------------------------------

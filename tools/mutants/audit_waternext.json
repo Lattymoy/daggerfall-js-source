@@ -1,0 +1,282 @@
+[
+  {
+    "name": "AUDIT-WATER-NEXT-P1-host-carves-again",
+    "file": "src/scenes/world.js",
+    "old": "      bed: waterOn,   // AUDIT WATER-NEXT P1",
+    "new": "      bed: false,   // AUDIT WATER-NEXT P1",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P1-votes-reordered",
+    "file": "src/world/waterBed.js",
+    "old": "      if (south && west && !(table[bytes[rowS + cx - 1]] & 8)) continue;",
+    "new": "      if (south && west && !(table[bytes[rowS + cx - 1]] & 4)) continue;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P1-chamfer-diagonal",
+    "file": "src/world/waterBed.js",
+    "old": "        if (x < gx - 1 && d[i - gx + 1] + 4 < v) v = d[i - gx + 1] + 4;",
+    "new": "        if (x < gx - 1 && d[i - gx + 1] + 3 < v) v = d[i - gx + 1] + 3;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P1-worker-copies-the-bed",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "    if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));",
+    "new": "",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P1-kernel-no-bed",
+    "file": "src/world/terrainGen.js",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: null });",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H1-no-recarve",
+    "file": "src/scenes/world.js",
+    "old": "    dwRecarve(entry);   // AUDIT WATER-NEXT H1",
+    "new": "    // dwRecarve(entry);   // AUDIT WATER-NEXT H1",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H1-the-builds-bytes",
+    "file": "src/scenes/world.js",
+    "old": "  function bedBytesOf(p) { return p._dwBytes ?? p.tilemapBytes; }",
+    "new": "  function bedBytesOf(p) { return p.tilemapBytes; }",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H1-recarve-from-the-carved-ground",
+    "file": "src/scenes/world.js",
+    "old": "    const grid = { positions: p._bed.sheet, normals: p._bed.normals };",
+    "new": "    const grid = { positions: p.terrain.positions, normals: p._bed.normals };",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F2-no-halo",
+    "file": "src/world/terrainGen.js",
+    "old": "  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py) : null;",
+    "new": "  const halo = null;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F2-neighbours-jitter-by-this-index",
+    "file": "src/world/waterBed.js",
+    "old": "x - dx * side, z + dz * side, px + dx, py + dz);",
+    "new": "x, z, px + dx, py + dz);",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F2-north-for-south",
+    "file": "src/world/waterBed.js",
+    "old": "    const dz = tz < 0 ? 1 : tz >= side ? -1 : 0;",
+    "new": "    const dz = tz < 0 ? -1 : tz >= side ? 1 : 0;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F2-edge-scan-stops-mid-row",
+    "file": "src/world/waterBed.js",
+    "old": "      if (!band && x === reach) x = side - reach;   // the row's middle is no edge's",
+    "new": "      if (!band && x === reach) break;   // the row's middle is no edge's",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H2-stream-the-carves-zero",
+    "file": "src/world/waterBed.js",
+    "old": "      out[i] = bank ? 0 : SHEET_NO_BED;",
+    "new": "      out[i] = 0;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground",
+    "file": "src/render/waterSurface.js",
+    "old": "(aDepth < 0.0 ? 0.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
+    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, abs(aDepth)));",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-H2-no-bed-constant-positive",
+    "file": "src/render/renderer.js",
+    "old": "    gl.vertexAttrib1f(1, -NO_BED_DEPTH);",
+    "new": "    gl.vertexAttrib1f(1, NO_BED_DEPTH);",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G1-the-copy-fogged-again",
+    "file": "src/render/waterSurface.js",
+    "old": "vec4(under * trans + fogged, edge)",
+    "new": "vec4(mix(uFogColor, under * trans + fogged, fw), edge)",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G3-the-blend-arm-not-divided",
+    "file": "src/render/waterSurface.js",
+    "old": "vec4(fogged / max(cover, 1e-3), edge * cover)",
+    "new": "vec4(fogged, edge * cover)",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G3-foam-hides-nothing",
+    "file": "src/render/waterSurface.js",
+    "old": "  own = mix(own, foamLit, k); trans *= 1.0 - k; cover = mix(cover, 1.0, k);",
+    "new": "  own = mix(own, foamLit, k); trans *= 1.0 - k;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G1-the-air-fog-on-the-whole",
+    "file": "src/render/waterSurface.js",
+    "old": "  vec3 fogged = own * fw + uFogColor * (1.0 - fw) * ownShare;",
+    "new": "  vec3 fogged = own * fw + uFogColor * (1.0 - fw);",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G2-the-seas-stale-copy",
+    "file": "src/render/renderer.js",
+    "old": "    // stood in front of - a wading foe's legs, a corpse in the shallows - and they came and went with a pond in view\n    this._underWater = undefined;",
+    "new": "    // stood in front of - a wading foe's legs, a corpse in the shallows - and they came and went with a pond in view",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G11-the-shadow-kept",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._underWater) this._forgetUnitShadows();   // AUDIT WATER-NEXT G11",
+    "new": "",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G11-the-ao-copy-shadow-kept",
+    "file": "src/render/renderer.js",
+    "old": "    this._forgetUnitShadows();   // AUDIT WATER-NEXT G11: the copy's first frame bound its texture on the active unit",
+    "new": "",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G12-the-field-carried-over",
+    "file": "src/render/renderer.js",
+    "old": "    this._ripples = null;   // AUDIT WATER-NEXT G12",
+    "new": "    // AUDIT WATER-NEXT G12 (mutant)",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G14-the-copy-past-the-resolve",
+    "file": "src/render/renderer.js",
+    "old": "    this._underWater = undefined;   // AUDIT WATER-NEXT G14",
+    "new": "    // AUDIT WATER-NEXT G14 (mutant)",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-M1-the-slide-onto-the-edge",
+    "file": "src/world/waterRipples.js",
+    "old": "    for (let z = 1; z < cells - 1; z++) {\n      const sz = z + dz;",
+    "new": "    for (let z = 0; z < cells; z++) {\n      const sz = z + dz;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G13-the-field-not-the-bytes",
+    "file": "src/render/renderer.js",
+    "old": "gl.uniform3f(L.rippleRect, r.packed[0], r.packed[1], this._rippleSpan);",
+    "new": "gl.uniform3f(L.rippleRect, r.origin[0], r.origin[1], this._rippleSpan);",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G13-packed-never-moves",
+    "file": "src/world/waterRipples.js",
+    "old": "      packed[0] = origin[0]; packed[1] = origin[1];",
+    "new": "",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P2-asleep-slide",
+    "file": "src/world/waterRipples.js",
+    "old": "    if (!live) return true;",
+    "new": "    if (false) return true;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P3-a-moored-hull-stirs",
+    "file": "src/world/waterRipples.js",
+    "old": "      if (emit && speed >= minSpeed) field.disturb(",
+    "new": "      if (emit) field.disturb(",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P3-world-hull-unhindered",
+    "file": "src/scenes/world.js",
+    "old": "ripples.stir(boat, g.position, true, nowMs, BOAT_STIR, BOAT_WAKE_SPEED);",
+    "new": "ripples.stir(boat, g.position, true, nowMs, BOAT_STIR, 0);",
+    "tests": ["test/waterripples.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-P3-wake-speed",
+    "file": "src/world/waterRipples.js",
+    "old": "export const BOAT_WAKE_SPEED = 0.25;",
+    "new": "export const BOAT_WAKE_SPEED = 0.5;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-m12-the-town-without-a-field",
+    "file": "src/scenes/exterior.js",
+    "old": "  const townRipples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;",
+    "new": "  const townRipples = null;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F4-the-swimmer-a-wader",
+    "file": "src/scenes/world.js",
+    "old": "ripples.stir(player, player.pos, !!(player.isPlayerSwimming || player.swimming), nowMs);",
+    "new": "ripples.stir(player, player.pos, !!player.swimming, nowMs);",
+    "tests": ["test/waterripples.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G7-the-underside-drawn",
+    "file": "src/render/waterSurface.js",
+    "old": "  if (uOpen == 1 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
+    "new": "  if (uOpen == 2 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-G8-the-far-lattice",
+    "file": "src/render/waterSurface.js",
+    "old": "export const SWELL_REACH = Object.freeze([300, 600]);",
+    "new": "export const SWELL_REACH = Object.freeze([300, 900]);",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-m8-the-tie-to-the-last",
+    "file": "src/world/puddleDry.js",
+    "old": "for (const [bits, n] of count) if (n > most)",
+    "new": "for (const [bits, n] of count) if (n >= most)",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-m6-a-dead-opacity-back",
+    "file": "src/render/waterSurface.js",
+    "old": "    lift: WATER_LIFT,\n    tint: WATER_TINT,",
+    "new": "    lift: WATER_LIFT,\n    opacity: 0.94,\n    tint: WATER_TINT,",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-m7-damping",
+    "file": "src/world/waterRipples.js",
+    "old": "export const RIPPLE_DAMPING = 0.975;",
+    "new": "export const RIPPLE_DAMPING = 0.985;",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-m7-swell-angle",
+    "file": "src/render/waterSurface.js",
+    "old": "  Object.freeze([0.54, 31.0, 0.28]),",
+    "new": "  Object.freeze([0.64, 31.0, 0.28]),",
+    "tests": ["test/audit_waternext.test.js"]
+  },
+  {
+    "name": "AUDIT-WATER-NEXT-F2-march-tile-ring",
+    "file": "src/world/terrainTiles.js",
+    "old": "  const ring = (b0 + b1 + b2 + b3) >> 2;",
+    "new": "  const ring = (b0 + b1 + b2 + b3) >> 3;",
+    "tests": ["test/audit_waternext.test.js"]
+  }
+]

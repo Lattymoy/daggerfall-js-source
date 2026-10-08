@@ -38,7 +38,10 @@ test('GRAIN1: every tile-array sample takes its footprint from the UNWRAPPED coo
   // the water pass samples the same array, with the same wrap
   const fs = waterSurfaceFs('');
   assert.match(fs, /vec2 wgx = dFdx\(unwrapped\), wgy = dFdy\(unwrapped\);/, 'the water pass measures from the unwrapped coordinate too');
-  assert.match(fs, /textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)/, 'and hands it over');
+  // PIN MOVED (WATER-NEXT 2): the scrolled classic texel is gone - the water's body is the texel's mip-chain average
+  // (an explicit LOD: no footprint at all), and the one footprinted read left is the puddle art's
+  assert.match(fs, /textureGrad\(uTileArr, vec3\(puv, float\(rec\)\), PUDDLE_ROT\[turn\] \* wgx, PUDDLE_ROT\[turn\] \* wgy\)/, 'and hands it over');
+  assert.doesNotMatch(fs, /texture\(uTileArr,/, 'no implicit-derivative read of the array');
   assert.doesNotMatch(fs, /texture\(uTileArr, vec3\(uv, 0\.0\)\)/, 'no implicit sample survives there either');
 });
 

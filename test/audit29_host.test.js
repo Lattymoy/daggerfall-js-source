@@ -292,7 +292,7 @@ test('AUDIT 29: the hosts by source - the seams the audit moved', () => {
   assert.match(src('src/scenes/herbHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);
   assert.match(src('src/scenes/mineHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);
   // C1: the host's sight, handed in
-  assert.match(w, /clear: \(from, to, underground\) => \{/);
+  assert.match(w, /clear: \(from, to, underground, interior = false\) => \{/);   // PIN MOVED (INDOOR-SKIN): and a building's walls
   // B3 + B4: the fee on the first answer; the kept withdrawals settled on every good read and on the Stores page
   assert.match(w, /if \(f\.fee > 0\) \{ deductGold\(playerEntity, f\.fee\); saveSoon\.changed\(\); \}/);   // PROF-SAVE: and the save soon
   assert.doesNotMatch(w, /!r\.data\?\.repeat\) \{? ?deductGold/);

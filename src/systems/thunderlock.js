@@ -30,7 +30,7 @@
 // registerCustomTemplates takes them and the frozen DFU table stays
 // what it is. Nothing here writes to itemTemplates.json.
 
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition } from './itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition, registerOwnItemImage } from './itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
 import { registerUniqueFind, registerLegendary, FOE_FAMILIES } from './lootRarity.js';
 import { SKILLS } from './skills.js';
@@ -217,10 +217,29 @@ export function spendPellet(items) {
  */
 export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 93 });
 
+/**
+ * THUNDERLOCK-ART (2026-10-07, Mac: "The thunderlock/ammo also doesnt recieve proper artwork in slots like the hotbar or
+ * inventory"): THE GUN'S PICTURES, BY JOB. Record 0 is the doll layer - the fist's gap cut out of its grip, which is
+ * right on the doll and wrong in a list, where it read as a gun with a hole in it. Record 1 is the WHOLE gun, the gap
+ * healed by tools/gunIcons.mjs from the doll layer's own pixels, and every list asks it (registerOwnItemImage, below).
+ * A Gilded piece (systems/gilded.js, the Hourlock) wears the same two in gold leaf: 2 on the doll, 3 in a list. The
+ * pellet keeps its one picture, Mac's 12px ball (FIELD-GUN18's size) - its slots drew initials for the dye's reason
+ * (textureReplacement.js standInDye), never the picture's.
+ */
+export const ART_RECORDS = Object.freeze({ doll: 0, icon: 1, gildedDoll: 2, gildedIcon: 3 });
 export const ICON_FILES = Object.freeze([
-  { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },
+  { archive: ART.weaponArchive, record: ART_RECORDS.doll, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },
+  { archive: ART.weaponArchive, record: ART_RECORDS.icon, frame: 0, file: 'gun-icon.png' },
+  { archive: ART.weaponArchive, record: ART_RECORDS.gildedDoll, frame: 0, file: 'gun-paperdoll-gilded.png', offset: PAPERDOLL_OFFSET },
+  { archive: ART.weaponArchive, record: ART_RECORDS.gildedIcon, frame: 0, file: 'gun-icon-gilded.png' },
   { archive: ART.ammoArchive, record: 0, frame: 0, file: 'gun-ammo.png' },
 ]);
+/** Which of them an item wears, for a job: the doll layer on the doll, the whole gun in a list - gold for a Gilded
+ *  piece ('gilded' is lootRarity.js's tier id; systems/gilded.js imports this file, so this one names it). */
+export const thunderlockImageRecord = (item, forPaperDoll) => (item?.rarity === 'gilded'
+  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.gildedIcon)
+  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.icon));
+registerOwnItemImage(THUNDERLOCK_TEMPLATE, (item, { forPaperDoll = false } = {}) => ({ archive: ART.weaponArchive, record: thunderlockImageRecord(item, forPaperDoll) }));
 
 /** AUDIT-THUNDERLOCK F7: the SITE root, not the document's - the
  *  game's document is `/play/index.html` and these live at

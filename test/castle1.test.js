@@ -126,8 +126,9 @@ test('CASTLE1: with no key, or a key nobody carries, the player\'s own pixel\'s 
   assert.equal(dungeonStartDoorFor([], SITE, 'dungeon:1291010263'), SITE);
 });
 
-test('CASTLE1: a pixel with no dungeon of its own keeps the old fallback - the first door there is, or nothing', () => {
-  assert.equal(dungeonStartDoorFor([NEIGHBOUR, KEEP], null, null).i, 2);
+test('CASTLE1: a pixel with no dungeon of its own enters nothing - never a neighbour\'s door (AUDIT SD II, PIN MOVED: it kept the old fallback, the first door there was, and a Mark in a Super dungeon gone since entered the nearest dungeon)', () => {
+  assert.equal(dungeonStartDoorFor([NEIGHBOUR, KEEP], null, null), null);
+  assert.equal(dungeonStartDoorFor([NEIGHBOUR, KEEP], null, 'dungeon:4040'), null, 'a save of a dungeon gone: nothing');
   assert.equal(dungeonStartDoorFor([], null, null), null);
   assert.equal(dungeonStartDoorFor(null, null, 'dungeon:1'), null);
 });

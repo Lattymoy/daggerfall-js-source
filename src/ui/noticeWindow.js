@@ -8,7 +8,8 @@
 //   1. the town's rumour, pinned first - DFU's own sign, its rows as the rumour mill composed them (systems/
 //      bulletinBoard.js, ROAD A9), under the town seal;
 //   2. in a town with a bounty board, the line that sends the reader to it (BOUNTY1's hunts are the other boards');
-//   3. the server's word under the red seal - today's Oblivion Gate while it stands, and the developers' notices;
+//   3. the server's word under the red seal - today's Oblivion Gate while it stands, a found Super dungeon while it
+//      stands (SD2c), and the developers' notices;
 //   4. the players' notes, newest first - a guild's recruitment under its own seal.
 // A note's one button answers its author through a door that already stands (net/boardLaw.js NOTE_BUTTONS); the host
 // decides which (`answer`).
@@ -115,14 +116,15 @@ export const BOARD_WORDS = Object.freeze({
 /**
  * The cards of a board, in the order they hang (the header's four arms, above). Pure over what the window is handed.
  * @param {{ town:{name:string}, rumour?:string[], bountyLine?:boolean, gate?:({subject:string, body:string}|null),
- *   board?:any, seenAt?:number|null }} o
+ *   sd?:({subject:string, body:string}|null), board?:any, seenAt?:number|null }} o
  */
-export function noticeCards({ town, rumour = [], bountyLine = false, gate = null, board = null, seenAt = null }) {
+export function noticeCards({ town, rumour = [], bountyLine = false, gate = null, sd = null, board = null, seenAt = null }) {
   const cards = [];
   const lines = (rumour ?? []).map((l) => String(l ?? '').trim()).filter(Boolean);
   if (lines.length) cards.push({ key: 'rumour', seal: 'town', subject: `News of ${town.name || 'the town'}`, body: lines.join('\n') });
   if (bountyLine) cards.push({ key: 'bounty', seal: 'bounty', subject: 'Bounties', body: BOUNTY_BOARD_LINE });
   if (gate) cards.push({ key: 'gate', seal: 'server', subject: gate.subject, body: gate.body });
+  if (sd) cards.push({ key: 'sd', seal: 'server', subject: sd.subject, body: sd.body });   // SD2c: a found Super dungeon, the server's word as the gate is
   for (const n of board?.notices ?? []) {
     cards.push({ key: `notice:${n.id}`, seal: 'server', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, notice: n, isNew: noteIsNew(n, seenAt) });
   }
@@ -151,6 +153,7 @@ function injectSkin(doc = document) {
  * @param {{
  *   town: { name: string, mapId: number },
  *   rumour?: string[], bountyLine?: boolean, gate?: () => ({subject:string, body:string}|null),
+ *   sd?: () => ({subject:string, body:string}|null),
  *   book: any,
  *   answer?: (note: any) => ({ ok: boolean, text?: string } | void),
  *   character?: () => (string|null),
@@ -551,7 +554,7 @@ export function mountNoticeBoard(host, deps) {
   /** THE NOTICES TAB (BOARD-UI): the town's and the server's word ("News"), then the players' notes under their count. */
   function boardBody() {
     const body = el('div', 'notice-cork');
-    const cards = noticeCards({ town: deps.town, rumour: deps.rumour, bountyLine: deps.bountyLine, gate: deps.gate?.() ?? null, board, seenAt: seenAtOpen });
+    const cards = noticeCards({ town: deps.town, rumour: deps.rumour, bountyLine: deps.bountyLine, gate: deps.gate?.() ?? null, sd: deps.sd?.() ?? null, board, seenAt: seenAtOpen });   // SD2c: a found Super dungeon's card among the news, as the gate's
     const news = cards.filter((c) => !c.note), notes = cards.filter((c) => c.note);
     if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));
     body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));
@@ -791,8 +794,21 @@ export function mountNoticeBoard(host, deps) {
     try { n.focus?.({ preventScroll: true }); } catch { n.focus?.(); }
     if (k.at && k.at[0] != null) { try { n.setSelectionRange(k.at[0], k.at[1]); } catch { /* none to set */ } }
   }
+  /** CRASH-BLUR (from play, 2026-10-07: "NotFoundError: Failed to execute 'replaceChildren' ... Perhaps it was moved in a
+   *  'blur' event handler"): a paint asked for WHILE one paints is coalesced, never run inside it. Emptying the window
+   *  takes a focused list out of the document, the browser blurs it as it goes, and the Market's answer held for that
+   *  list (marketTab.js's redraw) repaints on that blur - a second replaceChildren inside the first emptied the window
+   *  under it, and the first threw on the node already gone. The inner ask is kept and drawn once the outer is done. */
+  let painting = false, paintAgain = false;
   function render() {
     if (!alive) return;
+    if (painting) { paintAgain = true; return; }
+    painting = true;
+    try {
+      do { paintAgain = false; paint(); } while (paintAgain && alive);
+    } finally { painting = false; }
+  }
+  function paint() {
     const kept = keptOf();
     win.replaceChildren();
     win.append(...header());

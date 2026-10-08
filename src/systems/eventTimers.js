@@ -16,6 +16,7 @@ import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINU
 import { wallMsForClassicMinutes } from '../net/wire.js';
 import { seatWeekOf, seatWeekStartMs, seatPhaseOf, SEAT_RECKONING_MS, seasonOf, seatSeasonName, battleLengthMs, SIGN_CLOSES_MS, guildWords } from '../net/townSeatLaw.js';
 import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpentLaw.js';   // SERPENT-TIMERS: the sea serpent's day
+import { sdPhase, SD_COLLAPSE_MS } from '../net/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news
 
 const DAY_MS = 86_400_000;
 
@@ -28,6 +29,7 @@ const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
  * @param {{ now: number,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
+ *           sd?: { rec: any, name?: string|null, place?: string|null } | null,
  *           seatsOpen?: boolean, seats?: Array<any> | null, zero?: number | null, region?: string | null,
  *           raids?: Array<{ name: string, region?: string, type?: string, startMs: number, endMs: number, done?: boolean }> | null }} src
  */
@@ -68,6 +70,19 @@ export function eventTimerRows(src) {
     const nextDay = s.day + SERPENT_EVERY_DAYS;
     coming(`serpent:${nextDay}`, 'serpent', 'Next sea serpent rises', serpentTimes(nextDay).riseAt);
   }
+
+  // ── THE SUPER DUNGEON (net/sdLaw.js: the hub's one record) ── SD2c (bible/11-Multiplayer/Super-Dungeons.md section
+  // 4): a row once it is FOUND - news, by the finder's word - and none before (a Hollow that has only risen is a find:
+  // its omen in the sky and a word in its city's taverns, never a countdown that says one stands); its fading unbeaten
+  // while it stands, its collapse after the kill. Where it stands is the host's (`place`, its city), and its name.
+  const sdRec = src?.sd?.rec ?? null;
+  const sdNow = sdPhase(sdRec, now);
+  const sdName = src?.sd?.name || 'The Abyss Dungeon';
+  const sdWhere = src?.sd?.place ? `Near ${src.sd.place}` : null;
+  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found - it fades unbroken when this runs out');
+  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken - it folds in on itself when this runs out');
+  // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
+  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this - somewhere in the Bay, its omen burning brass over it');
 
   // ── THE TOWN RAIDS (the mod's day: each town's raid a two-hour classic window) ──
   // AUDIT TIMERS1 D3: the day rolls about twenty-two across the Iliac Bay - the window held them all, twenty-seven rows.

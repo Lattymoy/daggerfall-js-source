@@ -71,6 +71,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plusPad.js PLUS_DPAD_DEFAULTS) and the
   // two sticks' sensitivity multipliers - the Controller bindings window writes them
   plusDpad: null, plusStickLeft: 1, plusStickRight: 1,
+  // PAD-CURSOR: the controller cursor's assisted feel (systems/padCursor.js) - its curve, ramp, boost and the pull to
+  // a control; off is DFU's linear cursor, on both skins
+  padCursorAssist: true,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,
@@ -125,6 +128,12 @@ export const PREF_DEFAULTS = Object.freeze({
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players an
+  // Oblivion Gate's court draws at once - the nearest, the party always (net/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,
+  // the default - Mac: "The default other setting should be everyone"). Its GATE_CROWD_DEFAULT, pinned equal by
+  // test/gatecrowd.test.js and not imported: the shelf is on the boot path, and the import made net/gateCrowd.js the
+  // entry's 69th file, past BOOT2's ceiling (test/boot2.test.js)
+  gateCrowd: 0,
   nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
   distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is

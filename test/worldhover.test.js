@@ -672,8 +672,10 @@ test('WORLD-HOVER: the dungeon\'s target list has ONE builder, and the hover rea
   // CROWN-HALL (PIN MOVED): and a SIXTH, a crown's throne room's board and chest (`crown:` - empty off a held crown's castle)
   // ARENA5 (PIN MOVED): and a SEVENTH, the Hall of Champions' plaques in the arena's undercroft (`plaque:` - empty off the
   // undercroft, and until its wall has stood), registered beside their namer (test/arena5_plaques.test.js)
-  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 7,
-    'the exit doors, the quest stands, the Records shelves, the throne room\'s pieces, the Hall\'s plaques and the static NPCs - six, named - and the court\'s spoils');
+  // SD9e (PIN MOVED): and an EIGHTH, the Brass Remnant's spoils on the arena's floor, registered where the Hour is stood
+  // (standSdRealm) - the court's own family, answered by the same host hooks for the floor the player stands on
+  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 8,
+    'the exit doors, the quest stands, the Records shelves, the throne room\'s pieces, the Hall\'s plaques and the static NPCs - six, named - and the court\'s spoils, and the Hour\'s');
   assert.match(wm, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/,
     'the spoils stood with their words');
   assert.doesNotMatch(read('src/scenes/dungeon.js'), /addActivationTargets/,
@@ -895,7 +897,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 3,
     'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
   assert.match(wm, /staticDoorName\('buildingExit', \{ locationName: currentLocationName\(\) \}\)/, 'the building exit, from inside');
-  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\)/, 'the dungeon entrance, from outside');
+  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), tier: label\?\.tier \?\? null, size: label\?\.size \?\? null \}\)/, 'the dungeon entrance, from outside (PIN MOVED, TIER1: with its tier and size online)');
   assert.match(wm, /locationName: currentLocationName\(\),\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
@@ -1299,8 +1301,12 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // quick loot declines on a tab, which is a request for that window.
   // PIN MOVED (AUDIT 625 D6): and the door answers whether it opened - the quick take's `true`, the window's own (a
   // refused pack is null) - which the corpse door rolls a body's silver on
-  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const bodyPool = \(k\) => \(k\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards\);\n(?:\s*\/\/[^\n]*\n)*\s*const openBodyLoot = \(lootKey, pileKeys = null\) => \{\n\s*bodyPool\(lootKey\)\?\.takeLoot\(lootKey, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\?\.pileBody\(k\) \?\? null, open: openBodyLoot \}\);\n\s*const w = interiorInventory\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*mountInterior\(w\);\n\s*return !!w;[^\n]*\n\s*\}\);\n\s*\};\n\s*openBodyLoot\(key\);\n\s*return true;\n\s*\}/,
+  // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the door is the host's own function now, `openInteriorBodyLoot` -
+  // one door for this ladder's press and the outer host's (a skinnable body's Search), where it was the ladder's closure
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*openInteriorBodyLoot\(key\);\n\s*return true;\n\s*\}/,
     'the press arm the bodies never had');
+  assert.match(wm, /function openInteriorBodyLoot\(lootKey, pileKeys = null\) \{\n\s*const bodyPool = \(k\) => \(k\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards\);\n\s*bodyPool\(lootKey\)\?\.takeLoot\(lootKey, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\?\.pileBody\(k\) \?\? null, open: openInteriorBodyLoot \}\);\n\s*const w = interiorInventory\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*mountInterior\(w\);\n\s*return !!w;[^\n]*\n\s*\}\);\n\s*\}/,
+    'its door: the pool\'s own takeLoot, the quick take, the pile\'s tabs back through it, whether it opened');
 
   // ...and it sits INSIDE the reach refusal, like every other family in
   // this ladder: the pick reaches as far as the whole ray, so a body
@@ -1889,7 +1895,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // cart - while the press has raced all three since SURV3/EOTB-IL.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /\? \{ title: lootPileName\(droppedLoot\.contents\?\.\(key\) \?\? null\) \} : null\)/,
+    assert.match(src, /\? \{ title: (?:droppedLoot\.labelFor\?\.\(key\) \?\? )?lootPileName\(droppedLoot\.contents\?\.\(key\) \?\? null\) \} : null\)/,   // WILD1: a pile's own label first (the open zone's remains)
       `${f}: a dropped pile is named as the interior and the dungeon name one`);
     assert.match(src, /\? waterSourceHoverName\(/, `${f}: a water source has a word`);
     assert.match(src, /\(key\) => wagonHoverName\(key\),/, `${f}: and so has the cart`);
@@ -1901,9 +1907,9 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // the indoor arm the bug was measured against could be reverted to
   // `{ title: 'Loot' }` freely. All four hosts, one word.
   assert.match(read('src/scenes/worldModes.js'),
-    /if \(key\.startsWith\('droppedLoot:'\)\) return \{ title: lootPileName\(interiorDropped\.contents\?\.\(key\) \?\? null\) \};/,
+    /if \(key\.startsWith\('droppedLoot:'\)\) return \{ title: (?:interiorDropped\.labelFor\?\.\(key\) \?\? )?lootPileName\(interiorDropped\.contents\?\.\(key\) \?\? null\) \};/,
     'the interior names a pile from its contents too');
-  assert.match(read('src/scenes/dungeonContext.js'), /return \{ title: lootPileName\(api\.lootContents\(key\)\) \};/,
+  assert.match(read('src/scenes/dungeonContext.js'), /return \{ title: (?:\(key\.startsWith\('droppedLoot:'\) \? droppedLoot\.labelFor\?\.\(key\) : null\) \?\? )?lootPileName\(api\.lootContents\(key\)\) \};/,   // WILD1: a pile's own label first
     'and the dungeon, which is where the word came from');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.doesNotMatch(read(f).replace(/^\s*(?:\/\/|\*).*$/gm, ''), /title: 'Loot'/,
@@ -1918,7 +1924,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // so `staticDoorName('dungeonEntrance')` was written, pinned, and had
   // no caller in the tree: "To Privateer's Hold" never drew once.
   assert.match(read('src/scenes/worldModes.js'),
-    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\);/);
+    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const label = tierShown\(host\.dungeonOnline\?\.\(\) \?\? false\) \? dungeonTierLabel\(entry\.dfLocation\) : null;\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), tier: label\?\.tier \?\? null, size: label\?\.size \?\? null \}\);/);   // PIN MOVED (TIER1): the tier and size, online
 
   // AUDIT-WH2 L5-F13/F14: ...AND THE PREDICATE BEHIND `inTown`, which
   // nothing drove. `staticDoorName('dungeonExit', ...)` is exercised with

@@ -9,6 +9,8 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { MARKS_MAX } from '../src/net/marksLaw.js';
+import { runCron, CRON_MINUTE } from '../server-account/src/cron.js';
+import { SETTLE_MAX } from '../server-account/src/market.js';
 import {
   AUCTION_S, AUCTION_ADD_S, MARKET_LISTINGS_MAX, listingFee, saleTax, courierFee, courierSeconds, roadPixels, auctionNext,
 } from '../src/net/marketLaw.js';
@@ -215,6 +217,46 @@ test('PROF5b service: an auction with no bid closes unsold and its piece comes b
   assert.deepEqual(back, [['returned', P(10)], ['returned', P(12)]]);
   assert.deepEqual(mine.body.auctions.filter((x) => x.id === unsold.id).map((x) => x.state), ['unsold']);
   assert.equal(s.escrowHeld(), s.escrowLedger());
+});
+
+// AUDIT SCALE (its mutation run over market.js: PROF5b-svc-listed-auctioned survived on the audited head). The clock
+// closes an unbid auction while its seller is away (SCALE4b), and the piece stays on that sale - `listed` - until a read
+// of the seller's brings it back, SETTLE_MAX a read. An open listing and an open auction each have a guard of their own
+// in the post's decision; a piece still owed back has `listed = 0` alone, and the one pin of it posted a listed piece.
+// Without it the piece went up again while its return was owed - sold, and back to its seller as well: two of it.
+test('PROF5b service: a piece whose auction closed unsold is on that sale until it is back - with more returns owed than a read makes (SETTLE_MAX), the one still owed is refused another auction (`market-listed`) and no second auction stands; once back, it is a delivery to collect (AUDIT SCALE; mutant: the decision\'s `listed = 0` dropped)', async () => {
+  clock(T0);
+  const s = await stand();
+  const mac = await s.registered('Mac');
+  s.fund(mac, 100_000);
+  const pv = (i) => P(0x300 + i);
+  for (let i = 0; i < SETTLE_MAX; i++) {
+    s.piece(mac, pv(i));
+    assert.equal((await s.post(mac, pv(i), 100)).status, 200);
+  }
+  // the last an hour after the rest, so the clock closes it after them
+  const last = pv(SETTLE_MAX);
+  clock(T0 + 3600);
+  s.piece(mac, last);
+  assert.equal((await s.post(mac, last, 100)).status, 200);
+  // nobody bids; the clock closes every one while Mac is away, the last a minute past its own end
+  for (let k = 1; k <= 10; k++) await runCron(s.env, { cron: CRON_MINUTE, nowS: T0 + AUCTION_S + 60 * k });
+  await runCron(s.env, { cron: CRON_MINUTE, nowS: T0 + 3600 + AUCTION_S + 60 });
+  const owed = () => s.raw.prepare("SELECT provenance FROM market_auctions WHERE seller = ? AND state = 'unsold' AND returned = 0 ORDER BY provenance").all(mac.id).map((r) => r.provenance);
+  assert.equal(owed().length, SETTLE_MAX + 1, 'all closed unsold, none back yet');
+  assert.ok(s.raw.prepare("SELECT MAX(closed_at) AS m FROM market_auctions WHERE provenance != ?").get(last).m
+    < s.raw.prepare('SELECT closed_at FROM market_auctions WHERE provenance = ?').get(last).closed_at, 'the last closed last');
+  // Mac posts the last again: the post's own settle brings back the twenty closed first, and the last is still owed
+  clock(T0 + 3600 + AUCTION_S + 120);
+  assert.equal((await s.post(mac, last, 100)).body.error, 'market-listed', 'still on the sale that closed');
+  assert.deepEqual(owed(), [last]);
+  assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM market_auctions WHERE provenance = ? AND state = 'open'").get(last).n, 0, 'no second auction of it');
+  assert.equal(s.owner(last).listed, 1);
+  // Mac's next read brings it back: a delivery to collect, refused an auction as one
+  await s.read(mac, 'mine');
+  assert.deepEqual(owed(), []);
+  assert.equal(s.owner(last).listed, 0);
+  assert.equal((await s.post(mac, last, 100)).body.error, 'market-uncollected');
 });
 
 // ─── THE LEDGER'S LINES, THE REPEATS, THE CAP ────────────────────────

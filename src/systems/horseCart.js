@@ -1040,18 +1040,35 @@ export function createHorseCartRuntime(deps) {
   }
 
   // ── fast travel and Travel Options [IL_9d68-IL_9f33, IL_7ff8, IL_90c4-IL_926a]
-  function handlePreFastTravel() {
+  // WILD1 (bible/11-Multiplayer/Wild-Zone.md - the owner: "when the players respawns in a town near the zone the cart
+  // comes with him"): `force` - a rise out of the open zone. The team comes whatever Follow Fast Travel says, and a team
+  // left waiting (the wagon deployed with its horse hitched, or the horse loose) is called to follow first, so it rides
+  // the same relocation a following team does (tryCompleteFastTravelHorseRelocation: behind the player, on the ground).
+  // DEPARTURE: the mod has no such journey.
+  function callTeamToFollow() {
+    if (wagonState.Mode === WAGON_MODE.Deployed && wagonState.HorseMode === HORSE_MODE.HitchedToWagon) wagonState.Mode = WAGON_MODE.FollowingPlayer;
+    else if (wagonState.HorseMode === HORSE_MODE.LooseStationary) wagonState.HorseMode = HORSE_MODE.FollowingPlayer;
+    else return;
+    wagonState.Version = WAGON_SAVE_VERSION;
+    clearInteriorAccess(); destroyAllStationaryPresentations(); changed();
+  }
+  /** The next journey's pair (pre, post) is a forced one - the host's respawn arms it, the post spends it. */
+  let forceNextJourney = false;
+  function forceNextFastTravel() { forceNextJourney = true; }
+  function handlePreFastTravel({ force = forceNextJourney } = {}) {
     if (!physicalPersistenceEnabled) { fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false; return; }
+    if (force) callTeamToFollow();
     if (!horseTravelsWithFastTravel(wagonState.Mode, wagonState.HorseMode, true)) return;
-    if (!followingTransportFastTravels) { convertFollowingTransportToWaitAtDeparture(); return; }
+    if (!followingTransportFastTravels && !force) { convertFollowingTransportToWaitAtDeparture(); return; }
     const isTeam = isTeamFollowing();
     if (ready()) { cacheFollowingHorseWorldPose(); if (isTeam) cacheFollowingWagonWorldPose(); }
     fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = false; horseFollower.resetTransient(); destroyStationaryHorsePresentation();
     if (isTeam) clearMovingPresentation();
   }
-  function handlePostFastTravel() {
+  function handlePostFastTravel({ force = forceNextJourney } = {}) {
+    forceNextJourney = false;
     if (!physicalPersistenceEnabled) { fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false; return; }
-    if (!horseTravelsWithFastTravel(wagonState.Mode, wagonState.HorseMode, followingTransportFastTravels)) { fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false; return; }
+    if (!horseTravelsWithFastTravel(wagonState.Mode, wagonState.HorseMode, followingTransportFastTravels || force)) { fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false; return; }
     fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;
   }
   function convertFollowingTransportToWaitAtDeparture() {
@@ -1320,7 +1337,7 @@ export function createHorseCartRuntime(deps) {
     lateUpdate, rebase, regroundStanding, handleSettingsChanged,
     handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
-    handlePreFastTravel, handlePostFastTravel,
+    handlePreFastTravel, handlePostFastTravel, forceNextFastTravel,
     canUseTransport, tryUseTransport, canMountHorseFromTransportWindow, canUseCartFromTransportWindow,
     handleHorseTransportButton: () => { tryUseTransport(TRANSPORT.Horse); }, handleCartTransportButton: () => { tryUseTransport(TRANSPORT.Cart); },
     handleQuickMountOrDismount, handleSummonTransport,

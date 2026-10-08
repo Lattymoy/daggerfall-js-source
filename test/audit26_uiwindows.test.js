@@ -114,9 +114,11 @@ test('F141/F145: the guild and tavern buttons all click; F146: the teleport Yes/
   const guild = src('ui/guildServiceWindow.js');
   // four handlers, four sounds (Join :501, Talk :293, Service :457, Exit :477) - PIN MOVED (LOOT9): and the Mages Guild's
   // Reforge row, the port's own fifth (drawn under DFU's panel), which clicks as its four do - PIN MOVED (LOOT16): and the
-  // temple's Lift Curse row in the same place, the sixth, which clicks so too
+  // temple's Lift Curse row in the same place, the sixth, which clicks so too - PIN MOVED (HEAL-CURSE): and the temple's
+  // Heal Curse row under its Cure Disease (a row lower than the Reforge's or the Lift's when either stands), the seventh
   const guildClick = guild.slice(guild.indexOf('click(vx, vy)'));
-  assert.equal((guildClick.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 6);
+  assert.equal((guildClick.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 7);
+  assert.match(guildClick, /if \(this\.hooks\.healCurse && inRect\(healCurseRect\(!!this\.hooks\.reforge \|\| !!this\.hooks\.lift\), vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._healCurse\(\); return true; \}/);
   assert.match(guildClick, /if \(!this\.hooks\.reforge && this\.hooks\.lift && inRect\(REFORGE_RECT, vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._lift\(\); return true; \}/);
   assert.match(guildClick, /if \(this\.hooks\.reforge && inRect\(REFORGE_RECT, vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._reforge\(\); return true; \}/);
 

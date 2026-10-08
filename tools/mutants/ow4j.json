@@ -1,15 +1,5 @@
 [
   {
-    "name": "OW4-J1-every-peak-left-freely",
-    "file": "src/systems/travelRoute.js",
-    "old": "  if (leaving) return false;\n",
-    "new": "  if (leaving || climateAt(ax, ay) === TV_MOUNTAIN_CLIMATE) return false;\n",
-    "tests": [
-      "test/tv2_click_to_move.test.js"
-    ],
-    "note": "OW3 J5's law back: every step out of ANY Mountain pixel is free - a route that entered a range by a road walks on across it peak to peak and down its edge past the steep law (Mac's lag and fall)."
-  },
-  {
     "name": "OW4-J1-no-start-range",
     "file": "src/systems/travelRoute.js",
     "old": "  const mine = openBlocked && peakAt && peakAt(from.x, from.y) ? new Uint8Array(cells) : null;",
@@ -40,14 +30,28 @@
     "note": "A start among the peaks frees every step of the route: a road out of the traveller's range into another one is followed by a walk across that one too."
   },
   {
-    "name": "OW4-J1-ground-no-peaks",
+    "name": "MOUNTAINS-WALKABLE-ground-names-peaks",
     "file": "src/systems/travelRoute.js",
-    "old": "    peakAt: peak,",
-    "new": "    peakAt: () => false,",
+    "old": "  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
+    "new": "  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE;",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/tv2_click_to_move.test.js",
+      "test/tv6_dungeons.test.js",
+      "test/fb0929d_toroads.test.js"
     ],
-    "note": "The host's ground never names a peak: the start's own range is never filled, and a traveller standing among the peaks is held there."
+    "note": "MOUNTAINS WALKABLE undone in the host's ground: a Mountain pixel is a peak again - a spot there refused (\"The mountains cannot be crossed on foot.\"). Re-aimed from OW4-J1-ground-no-peaks, which the merge made equivalent (no pixel is a peak)."
+  },
+  {
+    "name": "MOUNTAINS-WALKABLE-ground-refuses",
+    "file": "src/systems/travelRoute.js",
+    "old": "  const openBlocked = () => false;   // MOUNTAINS WALKABLE",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE;",
+    "tests": [
+      "test/tv2_click_to_move.test.js",
+      "test/tv6_dungeons.test.js",
+      "test/fb0929d_toroads.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE undone in the host's ground: an open step into the Mountain climate is refused again - the route goes round the range, a spot in it has no way."
   },
   {
     "name": "OW4-J2-route-not-held",
@@ -142,8 +146,8 @@
   {
     "name": "OW4-J3-ground-read-every-click",
     "file": "src/scenes/world.js",
-    "old": "const tvRouteGround = () => { (_tvRouteGround ??= routeGround(",
-    "new": "const tvRouteGround = () => { (_tvRouteGround = routeGround(",
+    "old": "    (_tvRouteGround ??= routeGround(",
+    "new": "    (_tvRouteGround = routeGround(",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],

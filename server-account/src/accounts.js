@@ -168,6 +168,18 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
   return { sessionId, secret };
 }
 
+/** SCALE4a (2026-10-08, Mac: "Do 1 2 and 3" - the session and its player were two reads in a row, 4.86 and 4.73 million
+ *  of the database's 17.4 million the day before YARD-SHED): THE SESSION'S COLUMNS, named, each read under a `s.` prefix
+ *  no column of `players` can carry, so one row holds both without a name in common (`id`, `created_at`, `last_seen`).
+ *  The table's own six (0001_accounts.sql; no migration has altered it) - test/scale4a.test.js holds this list to the
+ *  migrations' table, so a column added there is a pin that fails until it is named here. */
+export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'device_label', 'created_at', 'last_seen']);
+/** SCALE4a: the session by its hash and its player beside it, in ONE statement. LEFT, so a session whose player is gone
+ *  still comes back (its player's columns NULL) and meets the same exits it met as two reads: the idle one is deleted
+ *  first, the orphan refused. */
+const WHO_SQL = `SELECT ${SESSION_COLUMNS.map((c) => `s.${c} AS "s.${c}"`).join(', ')}, p.*
+  FROM sessions s LEFT JOIN players p ON p.id = s.player_id WHERE s.secret_hash = ?`;
+
 /**
  * WHO IS THIS? Resolved by the secret alone, in ONE indexed lookup -
  * the caller has not proved a player id yet, so it cannot be part of
@@ -176,13 +188,23 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
  * Answers the player row plus the session, or null. Never throws on a
  * bad secret, because a bad secret is the ordinary case.
  *
+ * SCALE4a: the lookup is one STATEMENT now, the player read with it
+ * (WHO_SQL) - the same two rows `SELECT * FROM sessions` and `SELECT *
+ * FROM players` answered, from one consistent read.
+ *
  * @returns {Promise<{player: any, session: any}|null>}
  */
 export async function resolveSession({ db, subtle, nowS }, secret) {
   if (typeof secret !== 'string' || secret.length < 16 || secret.length > 128) return null;
   const hash = await hashSecret(secret, { subtle });
-  const session = await db.prepare('SELECT * FROM sessions WHERE secret_hash = ?').bind(hash).first();
-  if (!session) return null;
+  const row = await db.prepare(WHO_SQL).bind(hash).first();
+  if (!row) return null;
+  /** @type {any} */ const session = {};
+  /** @type {any} */ const found = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (k.startsWith('s.')) session[k.slice(2)] = v;
+    else found[k] = v;
+  }
 
   // ═══ AUDIT-ACC F9: AN IDLE SESSION IS DEAD, AND IT IS DELETED ════
   //
@@ -206,7 +228,9 @@ export async function resolveSession({ db, subtle, nowS }, secret) {
     return null;
   }
 
-  const player = await db.prepare('SELECT * FROM players WHERE id = ?').bind(session.player_id).first();
+  // SCALE4a: the player came with the session (WHO_SQL's LEFT JOIN) -
+  // its `id` NULL when no row of `players` stood behind it.
+  const player = found.id == null ? null : found;
   // A session whose player is gone is not a session. It cannot happen
   // through the cascade, and it is checked because "cannot happen" is
   // how a null reaches a caller that reads `.handle` off it.

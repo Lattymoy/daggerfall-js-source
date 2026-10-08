@@ -75,6 +75,11 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
+  // THUNDERLOCK-ART + GILDED1 (2026-10-07): the gun's list picture and the Hourlock's gold pair, each DERIVED from the
+  // doll layer above by tools/gunIcons.mjs (test/thunderlockart.test.js re-runs it and holds them pixel for pixel)
+  ['public/art/gun-icon.png', "OURS - gun-paperdoll.png (Mac's own art) with the fist's gap healed from its own pixels and trimmed, by tools/gunIcons.mjs; no ARENA2 pixel in it"],
+  ['public/art/gun-icon-gilded.png', 'OURS - gun-icon.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s list picture); no ARENA2 pixel in it'],
+  ['public/art/gun-paperdoll-gilded.png', 'OURS - gun-paperdoll.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s doll layer); no ARENA2 pixel in it'],
   ['public/sfx/SOURCES.md', 'documentation - where every sound in this folder came from, with its license'],
   ['public/sfx/spell-heal.wav', "IMPACTFX HEAL-FILE: the owner's chosen heal sound (02_Heal_02.wav, 2026-10-05), softened; 22050Hz 16-bit mono - SOURCE/LICENSE TO BE CONFIRMED in public/sfx/SOURCES.md"],
   ['public/sfx/fire-shotgun.wav', 'CC0 (Freesound 473846, LilMati), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
@@ -403,6 +408,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Pellet_Shot.fbx', "OURS - Mac's own Blender export of the Dwarven Thunderlock, committed so the two files below are a DERIVATION the gate can re-run rather than a blob"],
   ['src/assets/mw/meshes/thunderlock.nif', "OURS - Mac's own Dwarven Thunderlock model, baked to a Morrowind NIF by tools/nifWrite.mjs; a Bethesda format, no Bethesda data"],
   ['src/assets/mw/textures/thunderlock.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs (position, normal and cast occlusion); no image input, no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/meshes/thunderlock_gilded.nif', "OURS - the same baked mesh as thunderlock.nif (GILDED1, the Hourlock's twin), naming its own texture, by tools/bakeThunderlock.mjs; a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/thunderlock_gilded.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs on its gold-leaf bands (GILDED_BANDS); no image input, no ARENA2 or Morrowind pixel in it'],
   // MW-BRIG1 (2026-09-29): the Steel Brigandine, the port's own worn
   // model, supplied by Mac for the Morrowind body. Unlike the
   // Thunderlock it carries a PAINTED texture (the FBX names it
@@ -418,13 +425,15 @@ const PUBLIC_ALLOWLIST = new Map([
   // exports of one scene (New_Ship.fbx, the open helm; New_Ship1.fbx, the closed). His scene also carried the body it
   // was fitted on - Morrowind's own Breton head and neck, out of a "Morrowind_TPose_Models" pack - and those are
   // Bethesda's meshes, so they are NOT committed: tools/fbxStrip.mjs took them out, every other record byte for byte,
-  // and only their bounds are kept (characters/ownArmorModels.js STEEL_PLATE_SCENE). MW-STEEL2 (2026-10-07): the plate
+  // and only their bounds are kept (tools/bakeSteelPlate.mjs SCENE_BODY). MW-STEEL2 (2026-10-07): the plate
   // skirt under the breastplate, stripped with them while its painting was missing, is kept since Mac sent the picture
   // ("This is the missing texture for the morrowind steel armor's skirt"), and baked like the rest. The armour itself is Mac's export
   // as given; three of its objects are named for the meshes they were modelled from (Imperial_Silver_Cuirass_67_Male,
   // Imperial_Steel_Left_Gauntlet_20_Male, Breton_Male), so whether the geometry and the paintings are his own work or
   // carry a licence of their own is Mac's to confirm (bible/04-Characters/Steel-Plate.md). tools/bakeSteelPlate.mjs
-  // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes.
+  // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes. MW-STEEL4
+  // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones, its inverse binds the bind of the vendored
+  // retail skeleton (vendor/weapon-sheathing, Greatness7's, credited) - numbers of a skeleton, no Bethesda geometry.
   ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on stripped out by tools/fbxStrip.mjs (the plate skirt kept since MW-STEEL2); committed so the files below are a DERIVATION the gate can re-run"],
   ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
@@ -435,8 +444,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Steel_Plate_Helm.png', "SUPPLIED - the helm's painting as Mac sent it (his helmet texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Visor.png', "SUPPLIED - the closed helm's visor and plume, painted as Mac sent it (his helmetface texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Skirt.png', "SUPPLIED - the plate skirt's painting as Mac sent it (the steelpelvis texture, 2026-10-07 - MW-STEEL2), committed as its DDS's source"],
-  ['src/assets/mw/meshes/steel_plate_cuirass.nif', 'SUPPLIED - the steel plate\'s breastplate, baked to a Morrowind NIF by tools/bakeSteelPlate.mjs (skinned from the body at bind time); a Bethesda format - the geometry Mac\'s export as given'],
-  ['src/assets/mw/meshes/steel_plate_skirt.nif', 'SUPPLIED - the steel plate\'s skirt of plates under the breastplate, baked by tools/bakeSteelPlate.mjs (MW-STEEL2; skinned from the body at bind time); a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_cuirass.nif', 'SUPPLIED - the steel plate\'s breastplate, baked to a Morrowind NIF by tools/bakeSteelPlate.mjs (skinned at the bake in retail\'s bind - MW-STEEL4); a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_skirt.nif', 'SUPPLIED - the steel plate\'s skirt of plates under the breastplate, baked by tools/bakeSteelPlate.mjs (MW-STEEL2; skinned at the bake in retail\'s bind - MW-STEEL4); a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_pauldron_right.nif', 'SUPPLIED - the steel plate\'s right pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_pauldron_left.nif', 'SUPPLIED - the steel plate\'s left pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_gauntlet_right.nif', 'SUPPLIED - the steel plate\'s right gauntlet, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
@@ -549,6 +558,8 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
 // below.
 /** VE4: the mark a row carries when its pixels ARE a render of game data - Port-Doctrine's one exception. */
 const VE4_DERIVED = "Port-Doctrine's one exception (Mac, 2026-10-05): Daggerfall's own textures, repainted by the mod's author, carried on Mac's approval";
+/** ALIKR1 / SNOWFALL1: the second exception's mark - the desert's and the winter's ground, its own approval. */
+const ENVIRONS_DERIVED = "Port-Doctrine's second exception (Mac, 2026-10-08): Daggerfall's own desert and winter ground tiles, repainted by the packs' authors, carried on Mac's approval";
 const BUNDLE_ART = new Map([
   // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
   // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
@@ -661,6 +672,20 @@ const BUNDLE_ART = new Map([
   ['public/art/vanilla-enhanced/snowless-swamps-and-jungles/',
     { manifest: 'vendor/vanilla-enhanced/snowless-swamps-and-jungles.files.json', derived: VE4_DERIVED,
       why: "THIRD-PARTY - Vanilla Enhanced - Snowless Swamps and Jungles 3.4.7 (carademono), carried on Mac's word of the author's permission; the swamps' and jungles' ground and buildings without snow - the 160 PNGs its manifest names, byte for byte (see vendor/vanilla-enhanced/README.md)" }],
+  // ALIKR1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These
+  // should be on by default and integrate into our enhanced environments seamlessly"): THE SECOND EXCEPTION - two more
+  // packs of Daggerfall's ground repainted, each directory answering to the listing tools/environmentModsExtract.mjs
+  // writes from the archive (every file and its sha256), each row carrying the second exception's own mark.
+  ['public/art/sands-of-the-alikr/',
+    { manifest: 'vendor/sands-of-the-alikr/sands-of-the-alikr.files.json', derived: ENVIRONS_DERIVED,
+      why: "THIRD-PARTY - Sands of the Alik'r 2 (Nexus mod 1390; its archive names no author), carried on Mac's word of the author's permission; Daggerfall's desert ground under the author's sand - the pack's 47 loose TEXTURE.002 records, byte for byte (see vendor/sands-of-the-alikr/README.md for the open permission record)" }],
+  ['public/art/snowfall/',
+    { manifest: 'vendor/snowfall/snowfall.files.json', derived: ENVIRONS_DERIVED,
+      why: "THIRD-PARTY - Snowfall 1.0.5 (demifiend000), carried on Mac's word of the author's permission; the 168 winter ground records its bundle packages (TEXTURE.103, .303, .403 - Daggerfall's winter tiles under the author's snow), its snow albedo and its three surface masks, decoded losslessly from the bundle's Texture2D and TextAsset objects (see vendor/snowfall/README.md)" }],
+  // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
+  ['vendor/windfall/Textures/',
+    { manifest: 'vendor/windfall/windfall.files.json',
+      why: "THIRD-PARTY - Windfall 1.0.0 (demifiend000), carried on Mac's word of the author's permission; the mod's own leaf sheets and snowflake, RGBA32 with one mip in the bundle - each PNG is the texture exactly (see vendor/windfall/README.md)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is
@@ -731,19 +756,23 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
 const DOCTRINE = 'bible/01-Overview/Port-Doctrine.md';
 /** The directories Port-Doctrine's exception paragraph names - every backticked `public/` path on its line. */
 function exceptionDirs() {
-  const line = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').find((l) => /^\s+\*\*THE ONE EXCEPTION\b/.test(l)) ?? '';
-  return [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]);
+  // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION
+  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND) EXCEPTION\b/.test(l));
+  return lines.flatMap((line) => [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]));
 }
+/** The mark each directory's approval gave it: Vanilla Enhanced's rows the first exception's, the environment packs' the
+ *  second's - a row in one exception wearing the other's mark is a row approved by the wrong approval. */
+const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED : ENVIRONS_DERIVED);
 /** The derived rows standing outside every directory the exception names. */
 const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived && !dirs.some((d) => dir.startsWith(d))).map(([dir]) => dir);
 
 test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
   const dirs = exceptionDirs();
-  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/'], 'the doctrine names one directory');
+  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/'], 'the doctrine names three directories, under two approvals');
   assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
   for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
   // and inside it nothing passes as the port's own: every row there says what it is
-  for (const [dir, r] of BUNDLE_ART) if (dirs.some((d) => dir.startsWith(d))) assert.equal(r.derived, VE4_DERIVED, `${dir} sits in the exception and does not say so`);
+  for (const [dir, r] of BUNDLE_ART) if (dirs.some((d) => dir.startsWith(d))) assert.equal(r.derived, markFor(dir), `${dir} sits in the exception and does not say so - in its own approval's words`);
   for (const f of PUBLIC_ALLOWLIST.keys()) assert.ok(!dirs.some((d) => f.startsWith(d)), `${f}: an allow-list row inside the exception`);
 });
 

@@ -62,6 +62,10 @@ export const PANNING_MODEL = 'HRTF';
 let _oneShotObserver = null;
 export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'function' ? fn : null; }
 
+/** AUDIT SD III (A3): how long a named bed (AudioEngine.setBed) takes to rise as it begins and to fade as it is let go
+ *  (s) - the arena's crowd bed's (systems/arenaSound.js BED_FADE_S). */
+const BED_FADE_S = 0.4;
+
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -543,6 +547,54 @@ export class AudioEngine {
     return ch;
   }
 
+  /**
+   * WINDFALL1: A PLAIN UNITY AudioSource, KEPT - a 2D source a mod holds for the session (Windfall's
+   * WindEnvironmentEffects.CreateAudioSource: spatialBlend 0, no loop) and plays one-shots on. What a fire-and-forget
+   * playOneShot cannot give is the source's own state: `volume` is LIVE (Unity scales every one-shot still playing on
+   * the source by it - the mod fades a passage out indoors by lowering it), `pitch` likewise, `isPlaying` holds while
+   * any shot it started runs, and `stop()` ends them all. One gain node on the bus (SoundVolume is the bus's, as
+   * everywhere), made on the first shot a running context can play; a shot that cannot start (no context yet, no such
+   * clip) leaves the source idle, as a null clip does. `volume` clamps to 0..1 as Unity's does.
+   */
+  source() {
+    const engine = this;
+    let gain = null, vol = 1, rate = 1;
+    const live = new Set();
+    const node = () => {
+      if (!engine._ready()) return null;
+      if (!gain || gain.context !== engine.ctx) { gain = engine.ctx.createGain(); gain.connect(engine._out()); }
+      gain.gain.value = vol;
+      return gain;
+    };
+    return {
+      get volume() { return vol; },
+      set volume(v) { vol = Math.max(0, Math.min(1, Number(v) || 0)); if (gain) gain.gain.value = vol; },
+      get pitch() { return rate; },
+      set pitch(p) { rate = Number(p) || 1; for (const s of live) s.playbackRate.value = rate; },
+      get isPlaying() { return live.size > 0; },
+      /** PlayOneShot(clip): answers the clip's duration at this pitch, or undefined when nothing started. */
+      playOneShot(key) {
+        const g = node();
+        const buf = g ? engine._buffer(key) : null;
+        if (!buf) return undefined;
+        const s = engine.ctx.createBufferSource();
+        s.buffer = buf;
+        s.playbackRate.value = rate;
+        s.connect(g);
+        s.onended = () => { live.delete(s); try { s.disconnect(); } catch { /* gone */ } };
+        s.start();
+        live.add(s);
+        return buf.duration / rate;
+      },
+      stop() {
+        for (const s of live) { try { s.stop(); } catch { /* already stopped */ } try { s.disconnect(); } catch { /* gone */ } }
+        live.clear();
+      },
+      /** EVERY ALLOCATION HAS AN OWNER: the shots and the gain node, for the owner's teardown. */
+      dispose() { this.stop(); if (gain) { try { gain.disconnect(); } catch { /* gone */ } gain = null; } },
+    };
+  }
+
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
    *  AudioSource. The default profile is the DaggerfallAudioSource
    *  shape (min 1 / max 500, logarithmic - WebAudio 'inverse' is the
@@ -621,6 +673,21 @@ export class AudioEngine {
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();
+      },
+      /** AUDIT SD III (A7): an ending, not a cut - `loop`'s (HOTFIX 1003): the gain to nothing over `seconds`, then the
+       *  source stopped. The Rift's bell was cut at its level as its dungeon was left. */
+      fadeStop(seconds = BED_FADE_S) {
+        try {
+          const t = src.context.currentTime;
+          gain.gain.cancelScheduledValues(t);
+          gain.gain.setValueAtTime(gain.gain.value, t);
+          gain.gain.linearRampToValueAtTime(0, t + seconds);
+          src.stop(t + seconds + 0.05);
+          src.onended = () => { try { src.disconnect(); } catch { /* gone */ } };
+        } catch {
+          try { src.stop(); } catch { /* already stopped */ }
+          try { src.disconnect(); } catch { /* gone */ }
+        }
       },
     };
   }
@@ -703,6 +770,63 @@ export class AudioEngine {
 
   /** AUDIT DISC7 B6: move a named positional loop, if one stands (the floating origin's recentre). */
   moveLoop3d(name, pos) { this._loops3d?.get(name)?.move?.(pos); }
+
+  /**
+   * AUDIT SD III (A3): A NAMED BED - a sound under a place that never stops between its passes: one buffer looping in
+   * the engine itself (`src.loop`), its volume and pitch live, where setLoop's channel re-arms a one-shot as each pass
+   * ends (DFU's riding clop - right for a hoofbeat's swap, and at every pass of a bed a gap of the main thread's
+   * dispatch: the Hour's void stuttered every 5.8 s, its works every 2). It rises from nothing as it begins and fades
+   * to nothing as it is let go (`clip` null) or swapped for another clip, over BED_FADE_S - a bed cut at its level
+   * pops. The same call each frame keeps it; `setBed3d` stands one at `pos` (moved each call).
+   */
+  setBed(name, clip, { volume = 1, pitch = 1 } = {}) { return this._bed(this._beds ??= new Map(), name, clip, null, { volume, pitch }); }
+  setBed3d(name, clip, pos, { volume = 1, pitch = 1, refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
+    return this._bed(this._beds3d ??= new Map(), name, clip, pos, { volume, pitch, refDistance, maxDistance, distanceModel });
+  }
+  _bed(beds, name, clip, pos, o) {
+    const was = beds.get(name);
+    if (was && was.clip === clip && clip != null) { was.setVolume(o.volume); was.setPitch(o.pitch); if (pos) was.move(pos); return was; }
+    if (was) { beds.delete(name); was.fadeStop(); }
+    if (clip == null || !this._ready()) return null;
+    const buf = this._buffer(clip);
+    if (!buf) return null;
+    const ctx = this.ctx, src = ctx.createBufferSource(), gain = ctx.createGain(), fade = ctx.createGain();
+    src.buffer = buf;
+    src.loop = true;
+    src.playbackRate.value = o.pitch;
+    gain.gain.value = Math.max(0, o.volume);
+    const t = ctx.currentTime;
+    fade.gain.setValueAtTime(0, t);
+    fade.gain.linearRampToValueAtTime(1, t + BED_FADE_S);
+    const pan = pos ? this._panner(pos, o) : null;
+    src.connect(gain).connect(fade);
+    if (pan) fade.connect(pan).connect(this._out()); else fade.connect(this._out());
+    src.start();
+    let gone = false;
+    const bed = {
+      clip,
+      setVolume(v) { gain.gain.value = Math.max(0, v); },
+      setPitch(p) { src.playbackRate.value = p; },
+      move(p) { if (pan) placeAudio(pan, p); },
+      fadeStop(seconds = BED_FADE_S) {
+        if (gone) return;
+        gone = true;
+        try {
+          const now = ctx.currentTime;
+          fade.gain.cancelScheduledValues(now);
+          fade.gain.setValueAtTime(fade.gain.value, now);
+          fade.gain.linearRampToValueAtTime(0, now + seconds);
+          src.stop(now + seconds + 0.05);
+          src.onended = () => { try { src.disconnect(); fade.disconnect(); pan?.disconnect(); } catch { /* gone */ } };
+        } catch {
+          try { src.stop(); } catch { /* already stopped */ }
+          try { src.disconnect(); fade.disconnect(); pan?.disconnect(); } catch { /* gone */ }
+        }
+      },
+    };
+    beds.set(name, bed);
+    return bed;
+  }
 }
 
 export const audio = new AudioEngine();

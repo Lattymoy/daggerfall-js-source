@@ -152,9 +152,9 @@ test('SCALE2b caches: a Bounded map lets its OLDEST go past the bound and never 
 test('SCALE2b deadlines: every call from one room to another carries one - the park registry and its drop, an arena post, a gate\'s kill, a raid\'s cleanse and its day (mutant: a call without its signal)', () => {
   const index = src('server/src/index.js');
   const calls = [...index.matchAll(/\.fetch\(new Request\(`https:\/\/relay\.internal[^\n]*/g)].map((m) => m[0]);
-  assert.equal(calls.length, 9, 'the nine calls between rooms (SERPENT1\'s tell of a sea serpent\'s kill to the hub joined them at its merge - PIN MOVED)');
+  assert.equal(calls.length, 16, 'the sixteen calls between rooms (SERPENT1\'s tell of a sea serpent\'s kill to the hub joined them at its merge - PIN MOVED; SD3\'s three after it - the Worker\'s and a realm\'s ask of the hub\'s record, the census of the region channels and a cell\'s tell of a find - PIN MOVED; SD8b\'s realm\'s tell of the Brass Remnant\'s fall - PIN MOVED; WILD1\'s three - the hub\'s wipe of a wild hall\'s room, a place room\'s ask of the hub whether two accounts share a party, and its tell of a remains gone - PIN MOVED)');
   for (const c of calls) assert.match(c, /signal: AbortSignal\.timeout\(/, `a deadline on ${c.slice(0, 80)}`);
-  assert.equal(calls.filter((c) => c.includes('AbortSignal.timeout(ROOM_CALL_MS)')).length, 7, 'seven on ROOM_CALL_MS (the rite\'s two had their own) - PIN MOVED with the serpent\'s');
+  assert.equal(calls.filter((c) => c.includes('AbortSignal.timeout(ROOM_CALL_MS)')).length, 12, 'twelve on ROOM_CALL_MS (the rite\'s two had their own, and SD3\'s tell of a find its own retry, as the rite\'s - and SD8b\'s tell of the Remnant\'s fall the same retry) - PIN MOVED with the serpent\'s, and with SD3\'s ask and census, and with WILD1\'s WDUN_INTERNAL_RESET, _KIN and _GONE, all three on ROOM_CALL_MS');
   assert.ok(ROOM_CALL_MS >= 1000 && ROOM_CALL_MS <= 10000);
 });
 

@@ -84,7 +84,8 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // currentMode is GLOBAL - the dungeon door ladder reads it too);
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
-import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, askInteractionMode } from '../player/interactionMode.js';
+import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
@@ -137,7 +138,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -374,7 +375,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return t?.length ? t : fallback;
   };
 
-  function setMode(m) {
+  function setMode(m, ask = true) {
+    if (ask) askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count); AUDIT DELVE B6: a held key's repeats are no asks
     if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
     setInteractionMode(m);
     // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
@@ -475,10 +477,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // player who moves StealMode off F1 moves the key, and an F1 they
     // have re-pointed at Inventory falls through this ladder to the
     // host's own `actionOf` and opens the pack.
+    // MODE-WHEEL: the held key opens the wheel and its release picks through pickMode - the same two gates as the
+    // four mode keys below, asked again AT THE RELEASE (AUDIT: a window raised while the key was held must not see the
+    // mode flip under it), and not before the host's world keys are live (KEY-BOOT: no wheel over the loading screen).
+    // NOT consumed: the key still joins the host's held ring below this rung (G3), so a key the player shares with
+    // another action still does that one too (KB1 law 3) (ui/modeWheel.js)
+    if (keysLive?.() !== false && actionsOf(e, keys).includes(MODE_WHEEL_ACTION)) { e.preventDefault(); modeWheel.press(e, pickMode); }
     const m = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);   // UXB1-S: the mode a shared key carries, whichever of its actions it is
     if (m) {
       e.preventDefault();
-      setMode(m);
+      setMode(m, !e.repeat);   // AUDIT DELVE B6: DFU's ActionStarted is the press, not the key's repeat
       return true;
     }
     return false;
@@ -684,6 +692,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if ((overlay && talkPaused()) || otherOverlayActive?.()) return getInteractionMode();
     setMode(nextInteractionMode(getInteractionMode()));
     return getInteractionMode();
+  }
+
+  /** MODE-WHEEL: one mode, chosen - the wheel's release, and the pad's NextMode and its mode choices once the four
+   *  mode actions ship unbound (the hosts' padAction door). Under nextMode's two gates, and the host's KEY-BOOT
+   *  `keysLive` where it hands one; answers whether it was heard. */
+  function pickMode(m) {
+    if ((overlay && talkPaused()) || otherOverlayActive?.() || keysLive?.() === false) return false;
+    setMode(m);
+    return true;
   }
 
   /** The activation ray (the host's E/use edge). persons = [{ person, pos }] world feet of LIVE townsfolk. Returns true
@@ -1385,7 +1402,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     priority: 0,
   });
   return {
-    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
+    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, pickMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

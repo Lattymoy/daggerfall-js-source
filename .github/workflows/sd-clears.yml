@@ -1,0 +1,105 @@
+name: Abyss Dungeon clears
+
+# SD-CLEARS (2026-10-08, Mac: "The first group clear of the new abyss dungeon is done. Can you pull up all of their
+# names?") - WHO BROKE AN ABYSS DUNGEON, READ BY THE OPERATOR. The hub's record keeps only the top fighter's name and a
+# count; the names are the account service's `sd_kills` rows (tools/sdClears.mjs says why). Run it by hand from the
+# Actions tab: the run's summary lists every Abyss Dungeon broken, then the names of the one asked for - leave the slot
+# empty for the first ever broken. It READS ONLY: nothing is written.
+
+on:
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "The Abyss Dungeon's slot (1, 2, 3 ...). Leave it empty for the first ever broken."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+# Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+      # The input reaches the scripts as ENVIRONMENT, never pasted into them: an input spliced into a `run:` line is a
+      # shell command anybody who can start the run can type (account-recovery.yml's law).
+      SLOT: ${{ inputs.slot }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # The tool checks the slot - the statements are the tested ones (test/sdclears.test.js), not ones written again here.
+      - name: Write the statements
+        run: |
+          set -euo pipefail
+          node tools/sdClears.mjs --list > "$RUNNER_TEMP/list.sql"
+          node tools/sdClears.mjs --names "$SLOT" > "$RUNNER_TEMP/names.sql"
+
+      # The deploy's own resolution (account-deploy.yml), read-only: this job never creates a database.
+      - name: Resolve the database id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          id=$($WRANGLER d1 list --json | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::there is no database named $DB_NAME"
+            exit 1
+          fi
+          echo "::add-mask::$id"
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || { echo "::error::$toml no longer carries the sentinel"; exit 1; }
+          sed -i "s|\"$sentinel\"|\"$id\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+
+      - name: Read the clears
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          out=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$(cat "$RUNNER_TEMP/list.sql")")
+          rows=$(echo "$out" | jq -c '[.[] | (.results // [])[]]')
+          if [ "$(echo "$rows" | jq -r 'length')" = "0" ]; then
+            echo "::error::no Abyss Dungeon has been broken yet - no claim names one"
+            exit 1
+          fi
+          echo "$rows" | jq -r '"**Abyss Dungeons broken**", "", "| slot | accounts | first claimed (UTC) |", "|---:|---:|---|",
+            (.[] | "| \(.slot) | \(.fighters) | \(.first_at | todate) |"), ""' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Read the names
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          out=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$(cat "$RUNNER_TEMP/names.sql")")
+          rows=$(echo "$out" | jq -c '[.[] | (.results // [])[]]')
+          if [ "$(echo "$rows" | jq -r 'length')" = "0" ]; then
+            echo "::error::no claim names slot ${SLOT} - it has not been broken, or nobody has claimed it yet"
+            exit 1
+          fi
+          echo "$rows" | jq -r '"**Slot \(.[0].slot): \(length) accounts**", "",
+            "| name | earned | level | Hourbreaker | The Turning Hour | claimed (UTC) |", "|---|---|---:|---|---|---|",
+            (.[] | "| \(.name) | \(.earned) | \(.lv) | \(if .title == 1 then "yes" else "" end) | \(if .aura == 1 then "yes" else "" end) | \(.at | todate) |"),
+            "", "A guest who has not registered, or an account that is gone, is not listed."' | tee -a "$GITHUB_STEP_SUMMARY"

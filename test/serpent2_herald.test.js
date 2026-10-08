@@ -15,7 +15,7 @@ import {
 import { foldGateSite, HERALD_RETRY_MS, HERALD_FELL_KEEP_MS, GATE_SITE_SKEW_MS } from '../src/net/gateHerald.js';
 import { serpentTimes, serpentAt, serpentPhase, SERPENT_DIVE_MS, SERPENT_EVERY_DAYS, SERPENT_SURFACE_MS } from '../src/net/serpentLaw.js';
 import {
-  validSerpentIn, parseClient, relaySupportsSerpentSite, SERPENT_SITE_RELAY_MIN, SERPENT_KINDS, SERPENT_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, POSE_BOUND, ACCOUNT_SWEEP_MS,
+  validSerpentIn, parseClient, relaySupportsSerpentSite, SERPENT_SITE_RELAY_MIN, SERPENT_KINDS, SERPENT_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, POSE_BOUND, ACCOUNT_SWEEP_MS, SD_KEY,
 } from '../src/net/wire.js';
 import { createSerpentOmen } from '../src/systems/serpentOmen.js';
 import { eventTimerRows } from '../src/systems/eventTimers.js';
@@ -125,7 +125,7 @@ test('SERPENT2 wire: the `site` word - its day, its native point to the whole un
     { sx: POSE_BOUND + 1 }, { sz: -POSE_BOUND - 1 }, { sx: 1.5 }, { sz: '1' }, { d: -1 }, { d: '611' }, { d: 1.5 }]) assert.equal(validSerpentIn({ ...ok, ...bad }), null, JSON.stringify(bad));
   assert.deepEqual(parseClient(JSON.stringify({ t: 'serpent', ...ok, extra: 1 }), { hasHello: true }), { t: 'serpent', ...ok });
   assert.equal(SERPENT_SITE_RELAY_MIN, 166);
-  assert.equal(RELAY_VERSION, 'world176');   // SHADOW-CLOAK moved it on after (world167, the cloak's word - PIN MOVED), SERAPH-WINGS after that (world168, the wings word - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED), FEUD after that (world170, the foe record's wind-ups and a revenant's fields - PIN MOVED); CRYSTAL-FIST after it (world171, the Crystal Fist's words - world170 on its branch, renumbered past FEUD's at the merge - PIN MOVED); WATCH-FIX after it (world172, the watch record names its resident - PIN MOVED); SERPENT3 after that (world173, the sea serpent brain - world171 on its branch, renumbered past CRYSTAL-FIST's and WATCH-FIX's at the merges - PIN MOVED); LEGACY7 after that (world174, the house on the token and the row - world172 on its branch, renumbered past WATCH-FIX's and SERPENT3's at the merge - PIN MOVED); TEXT-F1 after that (world175, the words a player types starred - PIN MOVED); the site's floor stays world166
+  assert.equal(RELAY_VERSION, 'world178');   // SHADOW-CLOAK moved it on after (world167, the cloak's word - PIN MOVED), SERAPH-WINGS after that (world168, the wings word - PIN MOVED), AUDIT ARENA-LADDER after that (world169, the arena ladder audit - PIN MOVED), FEUD after that (world170, the foe record's wind-ups and a revenant's fields - PIN MOVED); CRYSTAL-FIST after it (world171, the Crystal Fist's words - world170 on its branch, renumbered past FEUD's at the merge - PIN MOVED); WATCH-FIX after it (world172, the watch record names its resident - PIN MOVED); SERPENT3 after that (world173, the sea serpent brain - world171 on its branch, renumbered past CRYSTAL-FIST's and WATCH-FIX's at the merges - PIN MOVED); LEGACY7 after that (world174, the house on the token and the row - world172 on its branch, renumbered past WATCH-FIX's and SERPENT3's at the merge - PIN MOVED); TEXT-F1 after that (world175, the words a player types starred - PIN MOVED; SUPER-DUNGEONS after that (world176, a re-laid dungeon's room of its own - world171 on its branch, renumbered past CRYSTAL-FIST's at one merge and past WATCH-FIX's, SERPENT3's and LEGACY7's at the next - PIN MOVED); the site's floor stays world166
   assert.ok(relaySupportsSerpentSite('world166') && relaySupportsSerpentSite(RELAY_VERSION) && !relaySupportsSerpentSite('world165') && !relaySupportsSerpentSite(null), 'never said to a relay that would close the socket on it');
 });
 
@@ -140,6 +140,10 @@ async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD
   r.room._heraldBeat = async () => {}; r.room._heraldNextAt = () => null;
   const realNow = Date.now, realFetch = globalThis.fetch;
   let clock = start;
+  // SD3: the Super dungeon's director beats on the hub's one alarm too (server/src/index.js _sdBeat) - its record seeded
+  // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
+  // sd3_relay.test.js's)
+  r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }) };
   Date.now = () => clock;
@@ -381,7 +385,7 @@ test('SERPENT2 timers: the serpent\'s row through its day - its rising counted d
   // its kind in the window: after the gate's, in its waters' own colour, named in the button
   assert.deepEqual(TIMER_KINDS.slice(0, 2), ['gate', 'serpent']);
   assert.ok(ENHANCED_CSS.includes(`.px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; }`));
-  assert.match(rd('src/ui/enhancedTimers.js'), /'Timers: gates, the sea serpent, raids, battles and resets'/);
+  assert.match(rd('src/ui/enhancedTimers.js'), /'Timers: gates, the sea serpent, the Abyss Dungeon, raids, battles and resets'/);   // PIN MOVED (SD2c): the Super dungeon's row beside the serpent's; ABYSS-NAME: named the player's way
   const w = rd('src/scenes/world.js');
   assert.match(w, /serpent: \{ place: serpentOmen\?\.current\?\.\(\)\?\.site\?\.near \?\? null, fellAt: \(day\) => \{ const site = serpentOmen\?\.current\?\.\(\)\?\.site; return site && site\.day === day \? serpentLink\?\.fellAt\?\.\(day, site\) \?\? null : null; \} \},/, 'the host hands the omen\'s port and its own site\'s kill');
 });

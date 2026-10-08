@@ -9586,6 +9586,25 @@ false; the pick closes first and uses second. The use is the port's one
 seam, `systems/useItem.js` - the inventory's own path, both arms - owned
 by the world host and lent to worldModes and on to the dungeon ctx.
 
+**UMI-NAMES (2026-10-07, the field: "Use Magic Item Menu is crowded").**
+The list read "Kit of Venom Spitting" and row after row of "Glass
+Bottle", and the player could not tell they were potions. Refresh
+(:50-57) lists each item's `LongName` - ItemHelper.ResolveItemLongName -
+and the factory's default `nameOf` listed the raw `name` field instead,
+the same miss MAC-D found in the quest machine: a potion showed its
+template's "Glass Bottle" (setItemFields' name; createPotion's own mint
+carries none, so a blank row) and a MAGIC.DEF item its unfilled
+`%it of ...`. `createUseMagicItemWindow` now names a row with
+`itemInfo.js:"export function itemLongName(item, opts) {"` - "Potion of
+Healing" by its recipe (the %po arm, Potent included), "Mark of
+Lightning" with %it filled once identified and the bare "Mark" before.
+The crowding was the names, not the rows: DFU lists one row per ITEM
+and folds nothing, and identical potions are already one row because
+`addItem` stacks them (ItemCollection.AddItem / FindExistingStack's
+recipe term). Pinned in `test/ui1_usemagicitem.test.js` off the real
+producers (createPotion, mintHealingPotion, brewItems,
+createRegularMagicItem).
+
 ### UI2 CLOSED: the merchant service popup
 
 The port SKIPPED this one rather than deferring it: `staticNpcRoute`
@@ -17660,7 +17679,12 @@ What the ladder says, every arm driven by a pin:
 - a pile of exactly one named by that item with its stack count; a
   corpse by who it was; a door by its lock level when locked; a static
   door by where it goes, its lock, and the closed-shop sentence from
-  its one home.
+  its one home. SENSE1 (2026-10-05, `03-World/Delve-Arc.md`): an action
+  object's two bands in the MOD'S order, the action band first (.cs:397)
+  and the door band only when it said nothing - and a special door
+  (DaggerfallActionDoorSpecial) is no DaggerfallActionDoor, so a wall a
+  lever swings is never called "Door" (`systems/worldTooltips.js`
+  actionObjectName, both hosts' one door).
 - `HideDefaultInteractTooltip` verbatim - the author's own knob, so the
   main quest's puzzles are not given away by a label on the thing you
   are meant to find for yourself.

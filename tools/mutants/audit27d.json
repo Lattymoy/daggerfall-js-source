@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-B1-duel-opponent-giftable",
     "file": "src/scenes/world.js",
-    "old": "openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent));",
-    "new": "openPeers(list, isPartyMate);",
+    "old": "openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent) && crowdDrawnHere(p));",
+    "new": "openPeers(list, isPartyMate).filter((p) => crowdDrawnHere(p));",
     "tests": [
       "test/audit27d.test.js"
     ]

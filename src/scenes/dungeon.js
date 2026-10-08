@@ -18,7 +18,8 @@ import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { INTERIOR_CLEAR } from '../render/renderer.js';
-import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
+import { getInteractionMode, setInteractionMode, MODE_ACTIONS, askInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
+import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
@@ -66,6 +67,7 @@ import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, p
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
+import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: and the PrintScreen key's, the same way
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -151,7 +153,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // DC1: the death sequence starts from the LIVE eye and capsule
       // (a crouched death). Late-bound like pose - the motor is built
       // below, after this context; null falls to standing defaults.
-      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
+      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height, fallFrom: _motorRef.falling ? _motorRef.fallStart : null } : null),   // AUDIT SD III (D1): the fall under way, for the walked trail
       placePlayer: placeLoadedPlayer,   // DIAL-LOAD: the host's load law, for every load the context runs - not routeKey's alone
       // MAC1 J: this host's canvas, for the pause door's relock. The
       // context owns none of its own (dungeonContext.js:"(dungeon.js's tail)"), so each
@@ -321,8 +323,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
     return key;
   };
   const keys = new Set();
+  // MODE-WHEEL: ChangeInteractionMode, for the wheel's release and the pad's NextMode (its mode actions unbound) -
+  // the F1-F4 arm's own three lines below, under this host's overlay gate
+  const pickMode = (m) => {
+    if (ctx.uiOverlayActive) return false;
+    askInteractionMode(m);
+    if (m !== getInteractionMode()) { setInteractionMode(m); setMidScreenText(`Interaction is now in ${m} mode.`); }
+    return true;
+  };
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
+  // (MODE-WHEEL: it is the wheel's key now, and the same reason holds.)
   addEventListener('keydown', (e) => {
     // ROAD-G G3: this host already filled the ring first, which is
     // InputManager.PollInput's own order (:1795-1809) and now load-
@@ -363,13 +374,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // through. It arms a mode and fires the one-frame activate
     // (`_tapArmed`) the touch tap already uses, because the key is
     // known here and only the FRAME has the ray and the pools.
-    if (!ctx.uiOverlayActive && actionsOf(e, keys).some(quickLootArm)) { _tapArmed = 2; e.preventDefault(); return; }   // UXB1-S: every action a shared key carries
-    const im = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);
+    const acts = actionsOf(e, keys);   // MODE-WHEEL (AUDIT): read once - the three rungs below all ask it
+    if (!ctx.uiOverlayActive && acts.some(quickLootArm)) { _tapArmed = 2; e.preventDefault(); return; }   // UXB1-S: every action a shared key carries
+    // MODE-WHEEL: the held key opens the wheel, under this host's overlay gate; its release picks through the same
+    // ChangeInteractionMode as the four keys below, which asks the gate again at the release (ui/modeWheel.js)
+    if (!ctx.uiOverlayActive && acts.includes(MODE_WHEEL_ACTION)) {
+      e.preventDefault();
+      modeWheel.press(e, pickMode);
+    }
+    const im = acts.map((a) => MODE_ACTIONS[a]).find(Boolean);
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
-      // SetMidScreenText's, in EVERY host (one C# call site).
-      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); setMidScreenText(`Interaction is now in ${im} mode.`); }
+      // SetMidScreenText's, in EVERY host (one C# call site) - pickMode, the one copy here (MODE-WHEEL AUDIT).
+      // SENSE1: asked, changed or not; AUDIT DELVE B6: the press, not the key's repeat - and the same mode again is
+      // ChangeInteractionMode's no-op, so a repeat has nothing else to do
+      if (!e.repeat) pickMode(im);
     }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -514,6 +534,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(keyEdge, mc); } if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
+    padAction: (act) => (MODE_ACTIONS[act] ? pickMode(MODE_ACTIONS[act]) : false),   // MODE-WHEEL: PAD-BINDS' door for an action on no key - the four mode actions ship unbound, so the pad's NextMode lands here
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
@@ -570,6 +591,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // nothing. Same law as routeMouseDrag (scenes/shared.js, MAC-O4).
     if (document.pointerLockElement === canvas && swingHeld(e.buttons, keys) && getInt('Controls', 'WeaponSwingMode', 0, 2) === 0) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
     if (document.pointerLockElement !== canvas) return;
+    if (modeWheel.isOpen()) return;   // MODE-WHEEL: while it is open the mouse steers it (its own listener), not the view
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
     // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
     // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
@@ -1150,6 +1172,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (shotMode) window.__frame = frames;
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
+      deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
@@ -1175,6 +1198,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // draw (preserveDrawingBuffer false - the buffer is only this
     // task's to read).
     capturePendingScreenshot(canvas);
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
     frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }

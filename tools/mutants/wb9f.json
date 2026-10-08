@@ -201,11 +201,12 @@
   {
     "name": "WB9f-the-host-takes-nothing",
     "file": "src/scenes/world.js",
-    "old": "    takeSpoil: (key) => !!spoilsPool?.pick(key),",
+    "old": "    takeSpoil: (key) => !!floorPool()?.pick(key),",
     "new": "    takeSpoil: () => false,",
     "tests": [
       "test/wb9f_gate_spoils.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the floor of the place I stand in - re-aimed by content."
   },
   {
     "name": "WB9f-spoils-never-itemise",

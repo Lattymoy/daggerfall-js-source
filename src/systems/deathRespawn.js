@@ -25,6 +25,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../f
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
 import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js';   // DISC28-E: the dead live no minutes
+import { SD_REALM_TEXT } from '../world/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -47,7 +48,7 @@ const SAFE_KINDS = Object.freeze([
  * - vanishingly rare, but not a throw; the caller falls back to
  * whatever it already had (see respawnOnlinePlayer's own fallback).
  */
-export function nearestSafeLocation(mapTable, mapPixelXY) {
+export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {   // WILD1: `accept(hit)` - a hit the caller turns down is no answer (the open zone's rise: a town outside the mountains)
   let best = null;
   let bestDist = Infinity;
   for (let i = 0; i < (mapTable?.length ?? 0); i++) {
@@ -58,7 +59,10 @@ export function nearestSafeLocation(mapTable, mapPixelXY) {
     const px = longitudeLatitudeToMapPixel(e.longitude, e.latitude);
     const dx = px.x - mapPixelXY.x, dz = px.y - mapPixelXY.y;
     const d2 = dx * dx + dz * dz;
-    if (d2 < bestDist) { bestDist = d2; best = { kind: found.kind, locationIndex: i, mapPixel: px }; }
+    if (d2 >= bestDist) continue;
+    const hit = { kind: found.kind, locationIndex: i, mapPixel: px };
+    if (accept && !accept(hit)) continue;
+    bestDist = d2; best = hit;
   }
   return best;
 }
@@ -72,12 +76,12 @@ export function nearestSafeLocation(mapTable, mapPixelXY) {
  * resident at a time and the one resident before put back - world/roadsProducer.js settlementsOf's sweep. Returns
  * nearestSafeLocation's shape, or null when no region carries one (no map at all).
  */
-export function nearestSafeLocationAnywhere(maps, mapPixelXY) {
+export function nearestSafeLocationAnywhere(maps, mapPixelXY, accept = null) {   // WILD1: `accept`, nearestSafeLocation's own
   const before = maps?._lastRegion ?? -1;
   let best = null;
   let bestDist = Infinity;
   for (let r = 0; r < (maps?.regionCount ?? 0); r++) {
-    const hit = nearestSafeLocation(maps.getRegion(r)?.mapTable ?? [], mapPixelXY);
+    const hit = nearestSafeLocation(maps.getRegion(r)?.mapTable ?? [], mapPixelXY, accept);
     if (!hit) continue;
     const dx = hit.mapPixel.x - mapPixelXY.x, dz = hit.mapPixel.y - mapPixelXY.y;
     const d2 = dx * dx + dz * dz;
@@ -104,6 +108,9 @@ const FLAVOR = Object.freeze({
     'You wake in the open air, the dungeon door standing behind you and no memory of the walk out.',
     'Something dragged you out before the dark could keep you. You come to just outside the entrance.',
   ],
+  // AUDIT SD II (L6 F4): a death in the Shattered Hour is the Hour's own - its words, as the gate's court casts out in
+  // its own ("You are cast out of the Burning Court.")
+  hour: [SD_REALM_TEXT.died],
 });
 
 /** One flavor line for the kind that took the player back - `roll`

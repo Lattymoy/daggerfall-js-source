@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import {
   SOCIAL_ROOM, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX,
   SOCIAL_ROOM_HZ_MAX, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, PARTY_IN_HZ_MAX, PARTY_HZ_MAX, PARTY_MAX, INBOUND_FRAME_MAX, WORLD_FRAME_MAX, ROSTER_MAX, MAX_FRAME_BYTES,
-  PARTY_LOC_MAX, NAME_MAX, RELAY_VERSION, validPartyPose, validSocialAct, validSocialFrame, PARTY_FX_MAX, PARTY_FX_NAME_MAX,
+  PARTY_LOC_MAX, NAME_MAX, RELAY_VERSION, validPartyPose, validSocialAct, validSocialFrame, PARTY_FX_MAX, PARTY_FX_NAME_MAX, SD_KEY,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { SocialState, PARTY_GREEN_CSS, FRIEND_CSS } from '../src/net/social.js';
@@ -28,6 +28,10 @@ const quiet = (fn) => { const info = console.info, warn = console.warn; console.
 async function withHub(fn, key = SOCIAL_ROOM) {
   const r = fakeRoom(key);
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
+  // SD3: the Super dungeon's director beats on the hub's one alarm too (server/src/index.js _sdBeat) - its record seeded
+  // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
+  // sd3_relay.test.js's)
+  if (key === SOCIAL_ROOM) r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
   const tick = (ms = 600) => { clock += ms; };
   const act = (ws, o) => r.raw(ws, JSON.stringify({ t: 'social', ...o }));
   const pose = (ws, p = P) => r.raw(ws, JSON.stringify({ t: 'party', p }));

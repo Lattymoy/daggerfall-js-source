@@ -136,8 +136,9 @@ test('RF5: a declared field\'s shape is closed on the wire - the wrong kind refu
   assert.ok(ok({ enchantments: [{ type: 3, param: -1 }] }));
   assert.equal(ok({ affixes: [{ id: 'armor', param: 1e9 }] }), null, 'LR4: a forged affix');
   assert.equal(ok({ rarity: 'epic' }), null, 'a rarity off the ladder');
-  for (const r of RARITY_ORDER.filter((x) => x !== 'aetheric')) assert.ok(ok({ rarity: r }));
+  for (const r of RARITY_ORDER.filter((x) => x !== 'aetheric' && x !== 'gilded')) assert.ok(ok({ rarity: r }));
   assert.equal(ok({ rarity: 'aetheric' }), null, 'AUDIT SET D6: the Aetheric tier is its record\'s, never a bare word (auditset_c.test.js walks the Regalia through)');
+  assert.equal(ok({ rarity: 'gilded' }), null, 'GILDED1: nor the Gilded - its record\'s, minted whole (gilded1_gilded.test.js walks the Hourlock through)');
   assert.equal(ok({ equipSlot: ITEM_EQUIP_SLOTS }), null, 'a slot past the table');
   assert.equal(ok({ equipSlot: -1 }), null);
   assert.ok(ok({ equipSlot: ITEM_EQUIP_SLOTS - 1 }));

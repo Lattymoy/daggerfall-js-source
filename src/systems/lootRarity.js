@@ -21,7 +21,13 @@
 //   aetheric   - SET6 (Sigil Sets): the rung under Artifact, never
 //                rolled - a boss's own set (systems/aetheric.js), and
 //                the Sigil Broker's
-//   artifact   - DFU's artifacts, untouched, the top of the ladder
+//   artifact   - DFU's artifacts, untouched
+//   gilded     - GILDED1 (2026-10-07, Mac: "a new rarity above
+//                atheric ... the most rare and gilded item in the
+//                entire game"): the top of the ladder, over the
+//                artifacts, never rolled - one fixed record, the
+//                Hourlock, the Brass Remnant's rarest spoil
+//                (systems/gilded.js)
 //
 // REPLACE, DON'T LAYER. With the switch on there is ONE ladder: every
 // enchanted item is at least Magic (rarityOf derives it), every rolled
@@ -88,7 +94,7 @@ export const LOOT_RARITY_KEY = 'lootRarity';
 export const lootRarityOn = () => !!getPref(LOOT_RARITY_KEY);
 
 // ── the tiers ───────────────────────────────────────────────────────
-export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact']);
+export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded']);
 /** Label, the skin colour (the enhanced sheet's rules read the id; the
  *  native scroller tints the cell with `tint`), and the rank. SET6: the
  *  Aetheric rung (the aether's pale blue-white) under the Artifact. */
@@ -99,6 +105,7 @@ export const RARITIES = Object.freeze({
   legendary: Object.freeze({ rank: 3, label: 'Legendary', colour: '#e07a2e', tint: Object.freeze([0.85, 0.42, 0.10, 0.50]) }),
   aetheric:  Object.freeze({ rank: 4, label: 'Aetheric',  colour: '#bfe8ff', tint: Object.freeze([0.62, 0.86, 1.00, 0.55]) }),
   artifact:  Object.freeze({ rank: 5, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
+  gilded:    Object.freeze({ rank: 6, label: 'Gilded',    colour: '#ffcf4d', tint: Object.freeze([1.00, 0.80, 0.26, 0.60]) }),   // GILDED1: gold leaf, over everything
 });
 export { ROLLED_TIERS };   // RARE-BREAK1: its one home is the leaf (rarityTier.js), so a formula can ask it without the ladder
 
@@ -453,6 +460,8 @@ export const AFFIX_RANGES = Object.freeze({
   standing:  Object.freeze({ magic: [2, 3], rare: [3, 5], legendary: [5, 8] }),     // standing with one social group
   warmth:    Object.freeze({ magic: [2, 4], rare: [4, 7], legendary: [7, 10] }),    // degrees of clothing warmth
   dry:       Object.freeze({ magic: [10, 20], rare: [20, 35], legendary: [35, 50] }), // % less of the weather's soaking
+  // CAST-SPEED: the casting hands' own
+  castSpeed: Object.freeze({ magic: [3, 6], rare: [6, 10], legendary: [10, 15] }),  // % faster a cast's hands (systems/castSpeed.js)
 });
 /** How many affixes a tier rolls: [min, max]. A Legendary's are its record's. */
 export const AFFIX_COUNTS = Object.freeze({ magic: [1, 2], rare: [3, 4] });
@@ -501,6 +510,7 @@ const STANDING_SUFFIX = Object.freeze({
 });
 const WARMTH_PREFIX = Object.freeze(['Lined', 'Quilted', 'Fur-lined']);
 const DRY_PREFIX = Object.freeze(['Waxed', 'Oiled', 'Stormproof']);
+const CAST_SPEED_SUFFIX = Object.freeze(['of Quickening', 'of Alacrity', 'of the Swift Hand']);   // CAST-SPEED
 const DAMAGE_PREFIX = Object.freeze(["Soldier's", "Warrior's", "Slayer's"]);
 const ARMOR_PREFIX = Object.freeze(["Sentinel's", "Guardian's", "Bulwark"]);
 const WEIGHT_PREFIX = Object.freeze(["Porter's", "Mule's", "Giant's"]);
@@ -545,13 +555,19 @@ export const AFFIX_KINDS = Object.freeze({
     word: (band) => WARMTH_PREFIX[band], label: (a) => `+${a.value} warmth` }),
   dry:    Object.freeze({ slot: 'prefix', groups: CLOTHING_GROUPS, params: null, survival: true,
     word: (band) => DRY_PREFIX[band], label: (a) => `${a.value}% weatherproof` }),
+  // CAST-SPEED (2026-10-08, Mac: "have casting speed a new rarity affix"): A LINE THAT DOES SOMETHING, after every kind
+  // before it so no other piece's draw moves - the casting hands run that much faster (systems/castSpeed.js, summed and
+  // capped by systems/lootPowers.js). Jewellery's and a weapon's, so a caster who may wear no armour still finds it.
+  castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons']), params: null, proc: true,
+    word: (band) => CAST_SPEED_SUFFIX[band], label: (a) => `+${a.value}% casting speed` }),
 });
 export const AFFIX_IDS = Object.freeze(Object.keys(AFFIX_KINDS));
 
 /** Gold per point of each affix, for the item's value. */
 export const AFFIX_WORTH = Object.freeze({ damage: 40, armor: 60, weight: 15, stat: 90, resist: 20, skill: 25,
   elemental: 50, leech: 80, thorns: 40, focus: 60, slayer: 25,   // LOOT4
-  standing: 60, warmth: 30, dry: 8 });   // LOOT14
+  standing: 60, warmth: 30, dry: 8,   // LOOT14
+  castSpeed: 60 });   // CAST-SPEED: focus's own worth, its fellow at the cast
 /** LOOT14: A GARMENT'S LINES ARE WORTH HALF - its slots carry no fight, and it weighs a quarter of a kilo to two and a
  *  half: at a weapon's price a Rare pair of Tights was the best gold a kilo in the game, against the Economy Arc's own
  *  pressure home (capacity). Its Rare enchantment is worth GARMENT_RARE_ENCHANT_WORTH where a weapon's is 600. */
@@ -1011,7 +1027,11 @@ export const LEGENDARY_POWERS = Object.freeze({
     brief: '15% to absorb a spell', text: 'A Destruction spell that strikes you is absorbed 15 times in a hundred, as Spell Absorption is' }),
 });
 /** A record's power: the port's table's, else a mod's record's own `power`, else null. */
-export const powerOf = (id) => (typeof id === 'string' ? (LEGENDARY_POWERS[id] ?? legendaryById(id)?.power ?? null) : null);
+/** GILDED1: a Gilded record's power and lore, as the ladder reads them (systems/gilded.js registers its records - it
+ *  imports this file, so this one cannot import it). */
+let _gilded = null;
+export function registerGildedRecords(api) { _gilded = api && typeof api.powerOf === 'function' && typeof api.loreOf === 'function' ? api : null; }
+export const powerOf = (id) => (typeof id === 'string' ? (LEGENDARY_POWERS[id] ?? legendaryById(id)?.power ?? _gilded?.powerOf(id) ?? null) : null);
 /** The power's line on a card and a tooltip: its name and its brief. */
 export const powerLine = (p) => (p?.name && p?.brief ? `${p.name}: ${p.brief}${p.survival && !survivalOn() ? SURVIVAL_OFF_NOTE : ''}` : '');   // LOOT15: a survival power says its reader is off
 /** LOOT10 (bible/06-Systems/Loot-Arc.md section 12): A RARE'S IMPRINT - the power of a Legendary of its own group,
@@ -1860,11 +1880,11 @@ export function rarityLines(item, { sigil = true, set = true, lore = true } = {}
     }
   }
   { const s = socketLine(item); if (s) out.push(s); }   // LOOT20: an empty socket says so; a set gem's line said itself above
-  { const p = item.legendary ? powerOf(item.legendary) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief
+  { const p = item.legendary ? powerOf(item.legendary) : item.gilded ? powerOf(item.gilded) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief - GILDED1: a Gilded record's too
   { const im = imprintLine(item); if (im) out.push(im); }   // LOOT10: a Rare's imprinted power
   if (sigil) out.push(...setSigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown (AUDIT SET U11: a set piece's, asleep in a duel)
   if (set) out.push(...setLines(item));   // SET5: its set - what is worn of it, and its three tiers (a card that draws the set's block asks without)
-  const words = !lore ? null : item.legendary ? legendaryById(item.legendary)?.lore : item.aetheric ? (_aethericLore?.(item) ?? null) : null;   // SET6: an Aetheric piece's own; CARD-FIT: the card's list asks without (the Info box says it)
+  const words = !lore ? null : item.legendary ? legendaryById(item.legendary)?.lore : item.aetheric ? (_aethericLore?.(item) ?? null) : item.gilded ? (_gilded?.loreOf(item) ?? null) : null;   // GILDED1: and a Gilded record's   // SET6: an Aetheric piece's own; CARD-FIT: the card's list asks without (the Info box says it)
   if (words) out.push(words);
   return out;
 }

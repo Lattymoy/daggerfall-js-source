@@ -48,6 +48,7 @@
 
 import { drawSpellIcon, spellIconsLoaded } from './spellIcons.js';
 import { statusGlyphColor32 } from './hudStatus.js';   // TELL9: the bleed's own icon, the enhanced widget's glyph
+import { wildHere, WILD_TEXT } from '../systems/wildZone.js';   // WILD1: the open zone's own icon
 import { uiCanvas, toUiPoint } from './uiScreen.js';   // RETRO-UI: the HUD's own space under the pillarbox
 import { liveBundles, canEndBundle } from '../systems/mysticism.js';   // BUFF-END: and which the player may end
 import { getString } from '../systems/settings.js';
@@ -156,8 +157,16 @@ export function activeSpellIcons(entity) {
   // index the atlas's first as an iconless bundle's (what a reader of DFU's shape finds)
   const bleed = entity?.bleed;
   if (bleed && bleed.left > 0) other.push({ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding', poolIndex: poolIndex++, expiring: bleed.left < 2, isItem: false, bundleId: null, endable: false });
+  // WILD1 (systems/wildZone.js): the open zone, on the classic row as on the enhanced widget - its own glyph, first of
+  // the warnings, while the player stands in it
+  if (entity === _zoneEntity && wildHere()) other.unshift({ iconIndex: BLEED_ICON, glyph: WILD_GLYPH, displayName: WILD_TEXT.chip, poolIndex: poolIndex++, expiring: false, isItem: false, bundleId: null, endable: false });
   return { self, other };
 }
+/** WILD1: the zone's glyph (ui/hudStatus.js STATUS_GLYPHS), and the one entity it is shown for - the player's (the
+ *  world host says which; a foe's row never wears it). */
+export const WILD_GLYPH = 'wild';
+let _zoneEntity = null;
+export function setZoneEntity(entity) { _zoneEntity = entity ?? null; }
 /** TELL6e: the bleed's index - the atlas's first, as an iconless bundle's. */
 export const BLEED_ICON = 0;
 /** TELL9: the bleed's own icon - its glyph on the kit's grid (ui/hudStatus.js STATUS_GLYPHS). */

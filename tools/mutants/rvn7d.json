@@ -2,8 +2,8 @@
   {
     "name": "RVN7d-home-switch",
     "file": "src/systems/revenant.js",
-    "old": "  if (!revenantOn() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
-    "new": "  if (!here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
+    "old": "  if (!revenantOn() || wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
+    "new": "  if (wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
     "tests": [
       "test/rvn7d_stand.test.js"
     ]
@@ -172,11 +172,12 @@
   },
   {
     "name": "RVN7d-the-nearest",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "(Math.hypot(m.x - from.x, m.z - from.z) > Math.hypot(a.x - from.x, a.z - from.z) ? m : a)",
-    "new": "(Math.hypot(m.x - from.x, m.z - from.z) < Math.hypot(a.x - from.x, a.z - from.z) ? m : a)",
+    "file": "src/world/dungeonEnd.js",
+    "old": "  return list.reduce((a, m) => (d(m) > d(a) ? m : a));",
+    "new": "  return list.reduce((a, m) => (d(m) < d(a) ? m : a));",
     "tests": [
-      "test/rvn7d_stand.test.js"
+      "test/rvn7d_stand.test.js",
+      "test/sd4b_rift.test.js"
     ]
   },
   {

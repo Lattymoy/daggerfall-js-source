@@ -278,7 +278,7 @@ test('EL3: the renderer\'s wiring - the air rides the lane and the door, the com
   assert.match(r, /const want = this\._airWanted && !!this\._lane\?\.air && !!this\._shadows;/);
   assert.equal((r.match(/this\._compositeAir\(\);   \/\/ EL3/g) || []).length, 2, 'drawScreenQuad and drawScreenQuadRun');
   assert.match(r, /this\._uploadAdapt\(this\._el\[key\]\.ao\);   \/\/ EL6/); assert.ok(!/_air\.upload\(/.test(r) && !/_uploadNoAo/.test(r), 'EL6: the world pass uploads no AO');
-  assert.match(r, /this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp\);/);
+  assert.match(r, /this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp, this\._windfall\);/);   // PIN MOVED (WINDFALL1): and Windfall's law, as the flats were drawn with it
   const sp = read('src/render/shadowPass.js');
   assert.match(sp, /r\.right\.set\(camRight\); r\.up\.set\(camUp\);/);
   assert.ok(!/this\.discard\(\);\n  \}\n\n  \/\*\* One map's worth/.test(sp), 'the shadow pass no longer drops the records itself - the renderer does, after the air');

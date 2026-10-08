@@ -380,7 +380,7 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   // the world host by source: the heartbeat (A9), the death branch (C8), the full kick (C7), the targets (B8), the Wabbajack (B9), the pane (C9)
   const h = rd('src/scenes/world.js');
   assert.match(h, /else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\);/, 'A9');
-  assert.match(h, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); _foesRoom = null; \}/, 'C8 (QUEST-PARTY phase 3b: a building\'s puppets too)');
+  assert.match(h, /if \(online\.room(?: && !_wildGhost)?\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); _foesRoom = null; \}/, 'C8 (QUEST-PARTY phase 3b: a building\'s puppets too) - WILD1: never the open zone\'s ghost, whose cell is kept while its body lies');
   assert.match(h, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; _ownFullAt = -Infinity; if \(!seam\) \{ exteriorFoes\.clearPuppets\(\); modes\?\.clearOwnPuppets\?\.\(\); \} \}/, 'C7 (WORLD6b-iii(b): a cell crossing keeps them - the seam is no room change to the puppets; QUEST-PARTY phase 3b: a building\'s go with the room)');
   assert.match(h, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C3: the prune reads the clock');
   // WATCH-PROTECTS: PIN MOVED - the street's people beside them (the living world's quarry), the puppet still nobody's

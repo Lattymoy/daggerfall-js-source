@@ -1,0 +1,551 @@
+[
+  {
+    "name": "WINDFALL1-xorshift-dropped",
+    "file": "src/systems/windfall.js",
+    "old": "    h = (h ^ (h >>> 13)) >>> 0;\n",
+    "new": "",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-hashunit-over-2-32",
+    "file": "src/systems/windfall.js",
+    "old": "export const hashUnit = (value) => f32(value & 0x7fffffff) / 2147483648;",
+    "new": "export const hashUnit = (value) => f32(value & 0x7fffffff) / 4294967296;",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-windstorm-9-percent",
+    "file": "src/systems/windfall.js",
+    "old": "const WINDSTORM_CHANCE = f32(0.08);",
+    "new": "const WINDSTORM_CHANCE = f32(0.09);",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-windy-window-from-60",
+    "file": "src/systems/windfall.js",
+    "old": "const lo = source === NATURAL.windstorm ? 60 : 180,",
+    "new": "const lo = source === NATURAL.windstorm ? 60 : 60,",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-cooldown-day-two-none",
+    "file": "src/systems/windfall.js",
+    "old": "    case 2: return 0.5;",
+    "new": "    case 2: return 0;",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-weights-byte-moved",
+    "file": "src/systems/windfall.js",
+    "old": "  [0, 166, 89, 255, 0, 89, 89, 89, 89, 166,",
+    "new": "  [0, 166, 89, 255, 255, 89, 89, 89, 89, 166,",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-season-table-ignored",
+    "file": "src/systems/windfall.js",
+    "old": "  const table = m && Number(m[2]) === archive ? SIB_WEIGHTS[SIB_ATLAS[`${archive}${m[1]}`]] : null;",
+    "new": "  const table = null;",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-ease-2-a-second",
+    "file": "src/systems/windfall.js",
+    "old": "current = lerpProfile(current, target, f32(1 - f32(Math.exp(f32(-dt * 3)))));",
+    "new": "current = lerpProfile(current, target, f32(1 - f32(Math.exp(f32(-dt * 2)))));",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-rain-1-2",
+    "file": "src/systems/windfall.js",
+    "old": "const RAIN_STRENGTH = f32(1.15), SNOW_STRENGTH = f32(1.1);",
+    "new": "const RAIN_STRENGTH = f32(1.2), SNOW_STRENGTH = f32(1.1);",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-gust-hold-to-half",
+    "file": "src/systems/windfall.js",
+    "old": "!(t < f32(0.45))",
+    "new": "!(t < f32(0.5))",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-pair-chance-quarter",
+    "file": "src/systems/windfall.js",
+    "old": "randomRange(0, 1) < f32(0.15)",
+    "new": "randomRange(0, 1) < f32(0.25)",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-storm-initial-delay-3",
+    "file": "src/systems/windfall.js",
+    "old": "const initialEventDelay = () => (presentation === PRESENTATION.storm ? 2 :",
+    "new": "const initialEventDelay = () => (presentation === PRESENTATION.storm ? 3 :",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-indoor-gust-eases-at-1",
+    "file": "src/systems/windfall.js",
+    "old": "gust = moveTowards(gust, 0, f32(rawDt * 0.5));",
+    "new": "gust = moveTowards(gust, 0, f32(rawDt * 1));",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-context-cell-16",
+    "file": "src/systems/windfall.js",
+    "old": "floorDivide(px.x, 8), floorDivide(px.y, 8)",
+    "new": "floorDivide(px.x, 16), floorDivide(px.y, 8)",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-percentage-unscaled",
+    "file": "src/systems/windfall.js",
+    "old": "const percentage = (read, k) => clampF(f32(readF(read, k) * ONE_PERCENT), 0, 2);",
+    "new": "const percentage = (read, k) => clampF(readF(read, k), 0, 2);",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-windy-from-normal-section",
+    "file": "src/systems/windfall.js",
+    "old": "windy: profileOf(read, 'Windy Day')",
+    "new": "windy: profileOf(read, 'Normal')",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-heading-ignored",
+    "file": "src/systems/windfall.js",
+    "old": "      if (h && (h[0] !== 0 || h[1] !== 0)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-wander-twice",
+    "file": "src/systems/windfall.js",
+    "old": "const turn = (direction - baseDirection) * (Math.PI / 180)",
+    "new": "const turn = 2 * (direction - baseDirection) * (Math.PI / 180)",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-sandstorm-sunny",
+    "file": "src/systems/windfall.js",
+    "old": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder });",
+    "new": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.sunny });",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-indoor-strength-kept",
+    "file": "src/systems/windfall.js",
+    "old": "on: true, outside, strength: outside ? baseline : 0,",
+    "new": "on: true, outside, strength: baseline,",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-snow-takes-rain-multiplier",
+    "file": "src/systems/windfall.js",
+    "old": "target.strength = f32(target.strength * SNOW_STRENGTH);",
+    "new": "target.strength = f32(target.strength * RAIN_STRENGTH);",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-save-context-check-dropped",
+    "file": "src/systems/windfall.js",
+    "old": "\n        && Number.isInteger(d.lastNaturalWindContextKey) && !(d.lastNaturalWindAbsoluteDay >= 0 && d.lastNaturalWindContextKey === INT_MIN);",
+    "new": "\n        && Number.isInteger(d.lastNaturalWindContextKey);",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-save-version-unchecked",
+    "file": "src/systems/windfall.js",
+    "old": "const ok = d && d.version === 1 && Number.isInteger",
+    "new": "const ok = d && Number.isInteger",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-storm-mode-windy",
+    "file": "src/systems/windfall.js",
+    "old": "debugMode === DEBUG_MODE.storm ? PRESENTATION.storm : PRESENTATION.normal;",
+    "new": "debugMode === DEBUG_MODE.storm ? PRESENTATION.windy : PRESENTATION.normal;",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-test-mode-under-weather",
+    "file": "src/systems/windfall.js",
+    "old": "    if (debugMode !== DEBUG_MODE.auto) return debugMode === DEBUG_MODE.windy",
+    "new": "    if (debugMode !== DEBUG_MODE.auto && weather !== WEATHER.thunder) return debugMode === DEBUG_MODE.windy",
+    "tests": [
+      "test/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-storm-gust-at-windy-level",
+    "file": "src/systems/windfallEffects.js",
+    "old": "lerp(0.18, storm ? 0.44 : 0.4, clamp01(peak))",
+    "new": "lerp(0.18, 0.4, clamp01(peak))",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-normal-day-gust-clip",
+    "file": "src/systems/windfallEffects.js",
+    "old": "      if (!windyDay && !storm) { playAmbientWind(0.14, 0); return; }\n",
+    "new": "",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-passage-gap-dropped",
+    "file": "src/systems/windfallEffects.js",
+    "old": "nextAmbientTime = presentationTime + pool[i].length / s.pitch + Math.max(0, gap);",
+    "new": "nextAmbientTime = presentationTime + pool[i].length / s.pitch;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-repeat-allowed",
+    "file": "src/systems/windfallEffects.js",
+    "old": "const nextNonRepeating = (count, previous) => { const n = rangeInt(0, count - 1); return n < previous ? n : n + 1; };",
+    "new": "const nextNonRepeating = (count) => rangeInt(0, count);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-ruffle-onset-every-frame",
+    "file": "src/systems/windfallEffects.js",
+    "old": "    if (gusting && !wasGusting) { playRuffle(density, true, gust);",
+    "new": "    if (gusting) { playRuffle(density, true, gust);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-winter-set-ruffles",
+    "file": "src/systems/windfallEffects.js",
+    "old": "const ruffleOn = cfg.audioEnabled && f.weather !== WEATHER_SNOW && !winterSet && canopy > 0",
+    "new": "const ruffleOn = cfg.audioEnabled && f.weather !== WEATHER_SNOW && canopy > 0",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-ruffle-canopy-unscaled",
+    "file": "src/systems/windfallEffects.js",
+    "old": "s.volume = cfg.audioVolume * cfg.ruffleVolume * level * clamp01(density);",
+    "new": "s.volume = cfg.audioVolume * cfg.ruffleVolume * level;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-fade-half-a-second",
+    "file": "src/systems/windfallEffects.js",
+    "old": "s.volume = moveTowards(s.volume, 0, Math.max(0, dt) * 0.8);",
+    "new": "s.volume = moveTowards(s.volume, 0, Math.max(0, dt) * 0.5);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-stop-at-nothing-dropped",
+    "file": "src/systems/windfallEffects.js",
+    "old": "    if (s.volume <= 0 && s.isPlaying) s.stop();\n",
+    "new": "",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-clear-every-frame",
+    "file": "src/systems/windfallEffects.js",
+    "old": "const c = clear && !suppressed;",
+    "new": "const c = clear;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-leaves-downwind",
+    "file": "src/systems/windfallEffects.js",
+    "old": "flowTo(flows.leaves, p[0] - wx * 13, p[1] + 7, p[2] - wz * 13,",
+    "new": "flowTo(flows.leaves, p[0] + wx * 13, p[1] + 7, p[2] + wz * 13,",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-storm-leaves-32",
+    "file": "src/systems/windfallEffects.js",
+    "old": "(f.storm ? 48 : 32)",
+    "new": "(f.storm ? 32 : 32)",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-snow-out-of-winter",
+    "file": "src/systems/windfallEffects.js",
+    "old": "const snowOn = cfg.snowFlurriesEnabled && f.season === SEASON_WINTER && winterSet && canopy > 0;",
+    "new": "const snowOn = cfg.snowFlurriesEnabled && winterSet && canopy > 0;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-sheet-not-cleared",
+    "file": "src/systems/windfallEffects.js",
+    "old": "if (sheet !== leafSeason) { leafSeason = sheet; flows.leaves.clear = true; flows.ambientLeaves.clear = true; }",
+    "new": "if (sheet !== leafSeason) { leafSeason = sheet; }",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-source-volume-fixed-at-shot",
+    "file": "src/systems/audio.js",
+    "old": "set volume(v) { vol = Math.max(0, Math.min(1, Number(v) || 0)); if (gain) gain.gain.value = vol; },",
+    "new": "set volume(v) { vol = Math.max(0, Math.min(1, Number(v) || 0)); },",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-source-never-playing",
+    "file": "src/systems/audio.js",
+    "old": "      get isPlaying() { return live.size > 0; },",
+    "new": "      get isPlaying() { return false; },",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-particle-cap-dropped",
+    "file": "src/render/windfallParticles.js",
+    "old": "    if (this.count >= this.shape.maxParticles) return;\n",
+    "new": "",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-box-twice-as-wide",
+    "file": "src/render/windfallParticles.js",
+    "old": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;",
+    "new": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X * 2;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-velocity-not-integrated",
+    "file": "src/render/windfallParticles.js",
+    "old": "this.pos[w * 3] = x + (vx + nx * ns) * dt;",
+    "new": "this.pos[w * 3] = x + nx * ns * dt;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-particle-clear-ignored",
+    "file": "src/render/windfallParticles.js",
+    "old": "if (flow.clear) { this.clear(); flow.clear = false; }",
+    "new": "if (flow.clear) { flow.clear = false; }",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-shiver-unsaturated",
+    "file": "src/render/windfallSway.js",
+    "old": "  out[1] = wf.profile.shiverAmplitude * sat * cap;",
+    "new": "  out[1] = wf.profile.shiverAmplitude * cap;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-share-wind3s-under-law",
+    "file": "src/render/windfallSway.js",
+    "old": "export const swayShare = (b, lawOn) => (lawOn ? b.windfall : b.sway) || 0;",
+    "new": "export const swayShare = (b, lawOn) => b.sway || 0;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-lateral-085-lost",
+    "file": "src/render/windfallSway.js",
+    "old": "right * (dot(d, right) * 0.85)",
+    "new": "right * (dot(d, right) * 0.0)",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-spread-04",
+    "file": "src/render/windfallSway.js",
+    "old": "(shiv * 0.400000036 + 0.8)",
+    "new": "(shiv * 0.8 + 0.8)",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-cell-6m",
+    "file": "src/render/windfallSway.js",
+    "old": "mod(floor(w * 0.0833333358), 4096.0) * 12.0",
+    "new": "mod(floor(w * 0.166666672), 8192.0) * 6.0",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-anchor-ignored",
+    "file": "src/render/windfallSway.js",
+    "old": "  vec2 w = root + uWindfallAxis.zw;",
+    "new": "  vec2 w = root;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-both-laws-at-once",
+    "file": "src/render/renderer.js",
+    "old": "  } else if (uSway > 0.0) {\n    vec2 wv = uFlatWind.xy;",
+    "new": "  }\n  if (uSway > 0.0) {\n    vec2 wv = uFlatWind.xy;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-bottom-corners-move",
+    "file": "src/render/renderer.js",
+    "old": "* (uSway * uSize.y * fs * (aCorner.y + 0.5));",
+    "new": "* (uSway * uSize.y * fs);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-mask-ignored",
+    "file": "src/render/renderer.js",
+    "old": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y",
+    "new": "    world += windfallLean((aCenter + uOrigin).xz, right) * (1.0 * uSize.y",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-tree-lean-squared",
+    "file": "src/render/renderer.js",
+    "old": "* (uSway * uSize.y * aScale * clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0));",
+    "new": "* (uSway * uSize.y * aScale * pow(clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0), 2.0));",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-exterior-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);",
+    "new": "floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null, null);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-law-without-switch",
+    "file": "src/scenes/world.js",
+    "old": "floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);",
+    "new": "floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, windfallLaw);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-shadow-share-wind3s",
+    "file": "src/render/shadowPass.js",
+    "old": "          const sw = swayShare(b, law);",
+    "new": "          const sw = b.sway || 0;",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-runtime-lane-ignored",
+    "file": "src/scenes/windfallHost.js",
+    "old": "      if (!enhanced || broken) return null;\n      try { return tick(f); }",
+    "new": "      if (broken) return null;\n      try { return tick(f); }",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-runtime-indoor-law",
+    "file": "src/scenes/windfallHost.js",
+    "old": "    return f.outside ? windfallUniforms(wf, anchor, law) : null;",
+    "new": "    return windfallUniforms(wf, anchor, law);",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "WINDFALL1-runtime-gate-dropped",
+    "file": "src/scenes/windfallHost.js",
+    "old": "  gateConsoleCommand(WINDFALL_COMMAND.name, () => enhanced && windfallOn());\n",
+    "new": "",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  }
+]

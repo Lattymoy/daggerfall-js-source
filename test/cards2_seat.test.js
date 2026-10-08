@@ -146,7 +146,7 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   has("      if (cardSeatsOf(i).length) targets.push({ key: `cardtable:${i}`, aabb: t.aabb, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });", 'a table that seats two');
   has("        sitAtCardTable(Number(key.split(':')[1]));   // CARDS2");
   has("    if (cardSeat) { standFromCardTable(); return true; }", 'the press stands you up first');
-  has('  function tryExit({ pressCast = false } = {}) {\n    if (cardSeat) { standFromCardTable(); return true; }', 'first in the press, before the ray');
+  has('  function tryExit({ pressCast = false, interact = false, actClick = false } = {}) {\n    if (cardSeat) { standFromCardTable(); return true; }', 'first in the press, before the ray');   // PIN MOVED (the merge of main: CROUCH-SNEAK + MODE-WHEEL gave the press its interact and actClick arms)
   const leave = src.indexOf('    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromCardTable();');
   assert.ok(leave > 0 && leave < src.indexOf('      player.update(dt, paralyzed ? {'), 'whatever would move the body - or swing from it - stands it up first');
   const swing = src.indexOf("    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }");

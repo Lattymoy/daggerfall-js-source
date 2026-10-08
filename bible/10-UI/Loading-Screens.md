@@ -119,3 +119,51 @@ dead for the tab, unread imports silent, the higher HUD over the screen; and the
 
 Pinned in `test/load1_loading.test.js` (18 tests); every law's mutant is in `tools/mutants/load1.json` - 53, all dead
 (`node tools/mutate.mjs tools/mutants/load1.json`).
+
+## SHOT1 (2026-10-07): the black shots
+
+A player's gallery: `Wayrest · 7 Oct 2026` and a Daggerfall shot kept FULLY BLACK, both in towns, while a battle
+at Dak'fron with a crowd of actors came out whole.
+
+**The cause.** The renderer's WebGL context does not preserve its drawing buffer, so the canvas can be read only
+in the task that drew it. Once the compositor has the frame, the buffer reads back as cleared black. KB1 took the
+read on a `requestAnimationFrame` callback of its own. It assumed that callback would run after the host's
+callback in the same browser frame, so the read would land on the frame just drawn. The host broke that
+assumption two ways:
+
+- **The held frame.** Under a Frame Rate Cap, FPS-CAP1's `frameCapSkip` holds a frame back: it re-arms the host's
+  callback and draws nothing. A light scene on a fast screen runs past the cap, so the cap holds every other
+  browser frame (a town on a 120 Hz screen under a 60 cap), and the shot's callback could land on one of those, where the
+  buffer is the cleared black. A heavy scene, like the battle, runs under the cap, so no frame is held and the
+  read always followed a draw. That is why the battle's shot came out and the towns' did not.
+- **A press from inside the frame.** The pad's tick (`gamepad?.tick(dt)`, `ui/gamepadInput.js`) runs inside the
+  host's callback and sends its buttons as synthetic keydowns there. So the shot's callback was queued BEFORE the
+  host's own re-arm at its foot, and the next frame ran it first, ahead of the draw.
+
+**The fix: the shot rides the host's frame foot, as the save's shot always did (SS1, `capturePendingScreenshot`).**
+`takeScreenshot` no longer reads the canvas itself. It queues the read (`oweToFrameFoot`), and each host's drawn
+foot pays what it owes (`deliverOwedShots`). The foot is the line after `renderer.resolveFrame()`, beside SS1's
+save shot where the foot has one, while the buffer is still the frame just drawn. A held frame (the cap, a film's
+hold) reaches no foot, so the shot waits for the next frame that draws. Two presses before one foot are two
+shots of that frame (ASYNC NEVER DROPS). The queue is emptied before the reads run, so a shot asked for during a
+delivery belongs to the next frame (THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD). A read that throws is that
+shot's alone. No all-black filter: the cause is fixed, and a dark scene is a real picture.
+
+THE FOUR HOSTS:
+
+- `scenes/world.js`: **WIRED** at both feet, the exterior foot and the modal foot that ends an interior's or a
+  dungeon's frame.
+- `scenes/exterior.js`: **WIRED** at both feet.
+- `scenes/worldModes.js`: **WIRED THROUGH ITS HOST**. Its interior and dungeon key ladders are `routeKey`'s, but
+  its frames draw inside world.js's, and world.js's modal foot pays.
+- `scenes/dungeonContext.js`: **WIRED THROUGH ITS HOSTS**. It draws inside world.js's modal foot or the
+  `?dungeon` host's (`scenes/dungeon.js`, wired at both its feet, the overlay foot included).
+- `scenes/interior.js` (the `?interior` dev host) routes no PrintScreen of its own. Its one foot pays anyway, so
+  every drawn foot in the tree keeps the same law.
+
+Pinned in `test/shot1_frame_foot.test.js` (3 tests). The model is a canvas whose buffer holds the frame only
+between a draw and its present, driven by a host frame that the cap can hold or that a pad's press can come from
+inside. The source sweep checks that every `renderer.resolveFrame();` in the hosts is followed by the delivery,
+with only notes and SS1's save shot between; that the cap's held line never pays; that `ui/screenshot.js` takes
+no frame callback of its own; and that neither modal host has a foot of its own. The mutants are in
+`tools/mutants/shot1.json`: 12, all dead.

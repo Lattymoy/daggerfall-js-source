@@ -209,8 +209,8 @@
   {
     "name": "OWS3-hud-raider-name-bone",
     "file": "src/ui/travelViewHud.js",
-    "old": ": look === 'raider' ? C.raider : C.bone;   // OWS3",
-    "new": ": C.bone;   // OWS3",
+    "old": ": look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OWS3",
+    "new": ": look === 'stranger' ? C.stranger : C.bone;   // OWS3",
     "tests": [
       "test/ows3_raiders.test.js"
     ]

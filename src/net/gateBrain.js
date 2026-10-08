@@ -1414,8 +1414,8 @@ function stepHost(f, now, here, rng, out, P) {
 /** WB11b: a blow's hand - the blow rate's token spent (one hand for a blow on him, on a crystal and on his host), false
  *  past GATE_HIT_HZ_MAX a second. AUDIT WB11 W3: ONCE A BLOW - a frame under the sequence `seq` (the wire's `q`) of the blow just charged,
  *  within BLOW_GROUP_MS, on a body `who` it has not met, rides on it (BLOW_BODIES_MAX bodies at most); every other frame
- *  is charged, and opens a blow of its own. */
-function spendBlow(p, now, seq = null, who = '') {
+ *  is charged, and opens a blow of its own. SD8a: exported - the Brass Remnant's fight (net/sdRemnant.js) spends the same hand. */
+export function spendBlow(p, now, seq = null, who = '') {
   if (seq != null && p.bq === seq && now - (p.bqAt ?? -Infinity) <= BLOW_GROUP_MS && Array.isArray(p.bqWho) && p.bqWho.length < BLOW_BODIES_MAX && !p.bqWho.includes(who)) {
     p.bqWho.push(who);
     return true;
@@ -1428,8 +1428,8 @@ function spendBlow(p, now, seq = null, who = '') {
   return true;
 }
 /** WB11b: a blow's purse - `d` capped a blow (HIT_CAP_X), by the bucket and by what is `left` of the body it meets; the
- *  clipping counted, what lands dealt. Answers what landed. */
-function spendPurse(p, d, left, now) {
+ *  clipping counted, what lands dealt. Answers what landed. SD8a: exported - and the same purse. */
+export function spendPurse(p, d, left, now) {
   const ref = dpsRef(p.lv);
   p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);
   p.bucketAt = now;

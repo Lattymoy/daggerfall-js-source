@@ -91,14 +91,50 @@ export const SHALLOW_WHOLE = Object.freeze([8, 23, 33, 34, 35, 36]);
 export const SHALLOW_DRAWN = Object.freeze([9]);
 
 /**
+ * WATER-DRAW2 (2026-10-07, Mac with a winter town's screenshot - a pond
+ * of WATER-NEXT's water and in it two flat blue squares round white
+ * islands: "Is there a reason these fucking patches still remain after
+ * our most recent water changes?"): THE TABLE NEVER KNEW THREE KINDS OF
+ * WATER ART, AND EVERY WATER LAW SINCE ASKS IT.
+ *
+ * The squares are records 4 and 19 - water round an island of dirt and
+ * of grass (29 is the stone one; in winter all three islands are snow).
+ * They are neither marching shapes nor in DFU's motor list, so this
+ * table gave them no corner, and PUDDLE-DRY's census, WATER-NEXT's bed,
+ * its silt and its sheet all ask it: the new water stopped at their
+ * edges and the old painted water showed through. Measured on the art
+ * (the colour rule's mask, read at each corner through the pass's own
+ * turn - the method agrees with every shore entry the table already
+ * holds), the same gap holds for two more kinds, and BLOCKS.BSA lays
+ * them all - 1,071 islands, 76 corners and 138 saddles, almost every
+ * one of them in a pond:
+ *
+ *   - ISLAND_DRAWN: water round an island, whole - under the new water
+ *     the tile is the pond's, silt under it, and the island DFU paints
+ *     goes with the painted water (the classic skin draws both, as DFU);
+ *   - CORNER_DRAWN: a ground of two or three kinds with water in one
+ *     corner - record 7's corner, turn for turn;
+ *   - a SADDLE (each shore family's fourth record) laid half turned: the
+ *     marching table writes the two diagonals at turns 0 and 1 only, and a
+ *     block that sets the flip bit (turn 2 or 3) got nothing - a diagonal
+ *     turned half round is itself, so turns 2 and 3 take 0's and 1's.
+ *
+ * The DRAW's alone, as SHALLOW_DRAWN is: DFU walks the player over all
+ * of them dry, and the law's table stays its own.
+ */
+export const ISLAND_DRAWN = Object.freeze([4, 19, 29]);
+export const CORNER_DRAWN = Object.freeze([37, 38, 40, 41, 43, 44]);
+
+/**
  * The 256-entry water-corner table, indexed by the CONVERTED tile byte
  * (record << 2 | transform). Bits: 1 = corner (0,0), 2 = (1,0),
  * 4 = (0,1), 8 = (1,1), in the tilemap's frame (x along the tile row,
  * y along the column - AssignTilesJob's b0..b3).
  *
  * WATER-DRAW1: `drawn` adds the records that READ as water without
- * being water to DFU's motor - see SHALLOW_DRAWN. The default is false,
- * so the law's table is what this function has always built.
+ * being water to DFU's motor - see SHALLOW_DRAWN and WATER-DRAW2's three
+ * above. The default is false, so the law's table is what this function
+ * has always built.
  */
 export function buildWaterMaskTable(drawn = false) {
   const table = new Uint8Array(256);
@@ -114,7 +150,12 @@ export function buildWaterMaskTable(drawn = false) {
     for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
   }
   for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // MAC2: the docks, moats and puddles, whole
-  if (drawn) for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW1: and what the EYE calls water
+  if (!drawn) return table;
+  for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW1: and what the EYE calls water
+  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW2: the water round an island
+  const corner = SHORE_FAMILIES[0][2];   // record 7: one corner of water
+  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = table[(corner << 2) | t];   // WATER-DRAW2: a corner of water
+  for (const family of SHORE_FAMILIES) for (const t of [2, 3]) table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)];   // WATER-DRAW2: a saddle half turned
   return table;
 }
 
@@ -122,8 +163,17 @@ export function buildWaterMaskTable(drawn = false) {
  *  navigation refuses. DFU's answers, verbatim. */
 export const WATER_MASK_TABLE = buildWaterMaskTable();
 /** WATER-DRAW1: the enhanced PASS's table - what reads as water to the
- *  eye. The law's, plus SHALLOW_DRAWN. */
+ *  eye. The law's, plus SHALLOW_DRAWN and WATER-DRAW2's. */
 export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
+
+/** The depth a water sheet without a bed stands for (a one-tile stream, the water on ground never carved - world/waterBed.js):
+ *  shallow, tinted, and never a shore. AUDIT WATER-NEXT H2: its one home is this leaf - the kernel's worker writes it into a
+ *  sheet's depths and the renderer sets it as a constant, and the leaf is on both their roads already (a home in
+ *  world/waterBed.js put one more file on the page's boot, test/boot2.test.js). */
+export const NO_BED_DEPTH = 1.2;
+/** AUDIT WATER-NEXT H2: a sheet vertex over ground that was never carved carries this - NO_BED_DEPTH, negated: the water
+ *  shader reads its magnitude as the depth (the tint) and its sign as "no bed under it", which takes no swell. */
+export const SHEET_NO_BED = -NO_BED_DEPTH;
 
 /** The table packed eight nibbles to a uint, as the shader's
  *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */

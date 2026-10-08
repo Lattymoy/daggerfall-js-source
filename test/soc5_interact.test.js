@@ -58,10 +58,10 @@ test('SOC5: the port\'s own action - appended past DFU\'s forty-four, parseable,
   assert.equal(DEFAULT_BINDINGS.filter(([, a]) => a === 'SocialInteract').length, 1);
   // appended past DFU's table, like the action itself (QS2 appended three more behind it). KB1 took DFU's
   // ToggleConsole and Slide rows OUT of that table (Ledger A: they ship unbound, their keys freed), so the index
-  // moved from 44 to 42; what holds is that every row before it is one of DFU's own.
+  // moved from 44 to 42 (and MODE-WHEEL's five to 37); what holds is that every row before it is one of DFU's own.
   const at = DEFAULT_BINDINGS.findIndex(([, a]) => a === 'SocialInteract');
   assert.ok(DEFAULT_BINDINGS.slice(0, at).every(([, a]) => ACTIONS.indexOf(a) < 44), 'only DFU\'s rows stand before it');
-  assert.equal(at, 42);
+  assert.equal(at, 37);   // MODE-WHEEL: and F1-F4 and Sneak's Alt came out of it too (Ledger A) - 42 less five
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(codes.filter((c) => c === 'KeyF').length, 1, 'KeyF was free in SetupDefaults and is spent exactly once');
   // a live store built from the defaults answers F with the action, and the action with F
@@ -393,7 +393,7 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   // the ray is the ACTIVATION ray's own reading, and the cylinder is the port's one test
   assert.match(w, /const fwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the same forward the activation site composes');
   // AUDIT DISC7 A6: through `peerInSight` - the same one law and cylinder, and a wall in front of the player blocks it
-  assert.match(w, /const peerInSight = \(eye, dir\) => \{\s*\n\s*const hit = pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'one law, one cylinder');
+  assert.match(w, /const peerInSight = \(eye, dir\) => \{\s*\n\s*const hit = pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'one law, one cylinder');
   assert.match(w, /const hit = peerInSight\(cam\.pos, socialFwd\(\)\);/, 'the host\'s own camera');   // AUDIT DROPS E3: the forward is a named function now, shared with the plaque's modal pick
   assert.match(w, /const socialFwd = \(\) => \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the ray read as the activation site reads it');
   assert.equal((w.match(/rayPersonDistance\(/g) ?? []).length, 1, 'the host still calls the cylinder in exactly one place - the other site hands it to raceActivation as a list');

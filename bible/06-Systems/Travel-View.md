@@ -1021,6 +1021,9 @@ redrawn); `tools/mutants/tv3.json` and `tv5.json` (the OVERWORLD-NAMES records).
   it was laid (over the passes); the step out of the start and onto the goal are never refused. A spot journey is now
   routed too (to the spot's pixel round the peaks, then to the spot), and a spot among the peaks is refused ("The
   mountains cannot be crossed on foot.").
+  RETIRED 2026-10-08 by the owner, in the Wrothgarian zone's merge (MOUNTAINS WALKABLE): `openStepBlocked` refuses
+  no step and the ground calls no pixel a peak - the mountains are walked on foot everywhere
+  (`11-Multiplayer/Wild-Zone.md` section 19).
 
 **Proof.** `test/tv2_click_to_move.test.js` (three more), `tools/mutants/ow2.json` (18 records, all dead).
 
@@ -1759,6 +1762,8 @@ the rock scaled by a million 83 km under it (`03-World/World-Of-Daggerfall.md`, 
   peaks: an open step into one is refused, the start's own is walked out of, a spot inside one is refused as among the
   peaks. The rock fields are not massifs (their pieces within ~350 m; a tenth of the map) - the traveller's steering
   rounds them. A massif's rocks reach past its pixel; the pixel is what the planner refuses, the steering the rest.
+  RETIRED with OW-MOUNTAINS 2026-10-08 (MOUNTAINS WALKABLE): the host still hands `setRocks` its table, and the
+  planner no longer reads it (`11-Multiplayer/Wild-Zone.md` section 19).
 - **OW-TOWN-RING, the road round the town (3).** Basic Roads' bytes meet at the hub of a location's pixel - Daggerfall
   (207,213) and Wayrest (859,244) are N|SE|W - while the painter stops the arms at the town and paves its border ring.
   The route's legs were aimed at pixel middles, so a route through a town pixel aimed a leg at the town's heart.
@@ -1770,7 +1775,8 @@ the rock scaled by a million 83 km under it (`03-World/World-Of-Daggerfall.md`, 
   (`setLocationTiles`, from the location's blocks when the pixel is not built yet). A resume in the town's pixel skips
   no ring point, and no ring point is taken for a road join.
 
-**Left as it is, recorded.** The planner still prices no climb on open ground: its terrain law is OW-MOUNTAINS' - the
+**Left as it is, recorded.** (Since 2026-10-08 the planner has no terrain law at all - MOUNTAINS WALKABLE, above.)
+The planner still prices no climb on open ground: its terrain law is OW-MOUNTAINS' - the
 Mountain climate and a steep step (TV_STEEP_RISE 16) between two pixels' small-heightmap bytes. MountainWoods (230),
 a rise under 16 a pixel however long, and the large heightmap's relief inside a pixel pass it. The heightmaps are the
 player's own (WOODS.WLD); none is in this workspace, so no threshold was tuned blind. A journey that starts inside a
@@ -1948,3 +1954,58 @@ wall indoors climbed); a hold a load carried is no body on foot until the step t
 
 - **Pinned**: `test/fb1007b_climbtravel.test.js` (7); `tools/mutants/fb1007b.json` (its CLIMB / ENHANCED / HOST / KEYS
   records and the audit's C records).
+
+## OW-DUNGEONS - each dungeon's own model, enlarged (2026-10-08, Mac)
+
+Mac: *"Also with dungeons on the overworld it doesnt show a dungeon model."* Asked where: *"Overworld view"*; which:
+*"Check it all"*; and, shown that past the streamed grid only TV6's plate or "?" stands (no geometry is there, a town's
+neither) and that inside it a dungeon's real entrance - one small ruin, crypt or tower block most often - is a few
+pixels from the eye 450 m up, his look: *"Its own model, enlarged"* (Mount & Blade's map icons) over one icon model for
+all or the real scale alone.
+
+**What the player sees.** Under the view, the dungeons about the traveller each stand as their own entrance model,
+where the real one stands, grown so it reads from the eye - a little over half again the traveller's own icon (OW-BIG):
+about 40 m tall at the view's 450 m, some 75 px at 1080p, at every zoom. The map's own dungeons (TV6's
+TV_DUNGEON_TYPES), the spawned dungeons online the Overworld knows of (AUDIT OW3 D1's law: said, or filed), and a
+standing Abyss Dungeon (known from its rise - its column of light stands from then). The plates and "?" are TV6's as
+they were. Down in play nothing changes: the world's own entrance is the model.
+
+**The law** (`systems/travelDungeonModels.js`, pure):
+- *The set* (`dungeonModelSet`): TV6's own law (`travelDungeons.js nearDungeons`, uncapped) with nothing left to TV2's
+  grid - a found dungeon in the grid is a speck from the eye too - the nearest TV_DUNGEON_MODELS_MAX (12), ties by key.
+- *The model* (`dungeonEntranceModel`): of the location's laid blocks (`world/locationLayout.js layoutLocation`, the
+  pixel build's own), the first placed model whose ARCH3D mesh carries DFU's dungeon-entrance door
+  (`meshHasDungeonEntrance` - LoadVertices' door law, now in one home, `world/meshReader.js subMeshDoorType`, which
+  dfMeshToModel reads its doors through: archive 56, or 331 past its stone record); with none, the exterior's largest by
+  its triangles. Its matrix is the build's own: the location's tile origin, the block's origin, the model's own matrix,
+  the location's level at 0. An enhanced-only model stands on the enhanced skin alone, as in the build.
+- *The grow* (`owDungeonGrow`): TV_DUNGEON_ICON_K (0.09) of the eye's distance tall, over the model's own height above
+  its level; never smaller than itself, never past OW-BIG's twelve (TV_DUNGEON_GROW_MAX = TV_OWN_GROW_MAX). Smooth, not
+  OW-BIG's whole steps: a mesh drawn by a matrix makes no batch again.
+- *The matrix* (`grownModelMatrix`): grown about its foot - the middle of its plan on its level - which stands on the
+  scene point given, so its base stays where the real one's is and the real one stands inside it.
+- *Over a built pixel* (`owDungeonDrawn`): only once grown past TV_DUNGEON_GROWN_MIN (1.05) - at its own size it is the
+  world's own drawn twice, fighting for the same surfaces as the view rises or falls; past the grid always.
+
+**The host** (`scenes/world.js`): `tvDungeonModelList` (read again when TV6's is: the pixel, the finds, the index's
+churn, a spawn in the set gone); `tvDungeonModelLoad` (the blocks laid as the build lays them, the model held by its own
+place - PLACE-LRU kind `owdungeon`, twelve kept warm - and dressed in its location's climate and the season as its pixel
+would be, a climate-free model in its own pictures - the bounty farm's way; one that left the set while it loaded is
+never made ready, nor dressed once gone); `drawTvDungeonModels` (the set kept in step, each drawn grown with the eye's
+distance about its foot - over a built pixel on the real model's own level, past the grid on the far ring's ground,
+`tvGroundAt`, asked again only as the ground moves, as TV3's `tvSceneKept` asks - casting no giant's shadow,
+WAGON-HITCH B2's law), from the exterior frame beside the grown wagon, under the view alone. Its matrix is written in
+place (`grownModelMatrix`'s `out`), so a frame's draw makes no garbage. A load forgets them, releasing every hold.
+
+**The four hosts.** `scenes/world.js` WIRED (the one host with the view). `scenes/exterior.js` NOT WIRED on purpose
+(TV1's rule: no streaming grid under a camera 450 m up). `scenes/worldModes.js` and `scenes/dungeonContext.js` have no
+sky - a door closes the view before either draws a frame.
+
+**Not measured on real ARENA2 data** (none in this container): the models' look in each climate and the grow's feel
+are the law's; Mac's eye is the check. Each model is one draw (a texture's run each); twelve at most.
+
+**Proof.** `test/owdungeons.test.js` (9 - the door law and the reader's doors through it; a mesh's way in against the
+reader's own doors; the model's pick and place; the grow; the matrix and the drawn rule; the set; the host's list, load
+and draw run over stubs); `tools/mutants/owdungeons.json` (45, all dead). RE-AIMED BY CONTENT, each still dead: `ow3d.json`
+(`OW3D3-spawns-snapshotted`) and `ow4d.json` (`OW4D4-filed-dropped`) - TV6's spawns line has a twin in the models' list,
+so each names TV6's own by the `isFound, spawns:` beside it.

@@ -42,8 +42,9 @@ async function stand(extra = {}) {
     for (const { key, n } of recipeById(recipe).inputs) raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).run(who.id, who.character, key, origin, n * times);
   };
-  const xpOf = (who) => Number(raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(who.id, who.character, 'jewelcrafting')?.xp ?? 0);
-  const setXp = (who, xp, { spec50 = null, spec100 = null } = {}) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'jewelcrafting', ?, ?, ?, ?)
+  // PIN MOVED (CRAFT3): a jewel raises and reads the Smithing track - the row read and seeded is 'smithing'
+  const xpOf = (who) => Number(raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(who.id, who.character, 'smithing')?.xp ?? 0);
+  const setXp = (who, xp, { spec50 = null, spec100 = null } = {}) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'smithing', ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec50 = excluded.spec50, spec100 = excluded.spec100`)
     .run(who.id, who.character, xp, spec50, spec100, _now);
   const cut = (who, recipe, extra2 = {}) => s.call('/v1/prof/craft', { character: who.character, recipe, clean: false, name: 'Silverthorn', rid: rid(), ...extra2 }, who.secret);
@@ -63,7 +64,7 @@ test('PROF10 service: a Silver Ruby Ring at the jeweller\'s bench - its Silver a
   const r = await steered(0x80, () => s.call('/v1/prof/craft', ask, mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.recipe, r.body.quality, r.body.count, r.body.maker, r.body.marked, r.body.first, r.body.xp, r.body.hand], ['ring:silver:ruby', 1, 1, 'Silverthorn', false, true, 20 + FIRST_CRAFT_XP, null], 'margin 0 at the middle: Standard');
-  assert.deepEqual([r.body.track.profession, r.body.track.xp], ['jewelcrafting', 520]);
+  assert.deepEqual([r.body.track.profession, r.body.track.xp], ['smithing', 520]);   // PIN MOVED (CRAFT3): the Ring credits the Smithing track
   const p = r.body.pieces[0];
   const v = await verifyProductRecord(p.record, s.identityPublic, { subtle: globalThis.crypto.subtle });
   assert.deepEqual([v.ok, v.claims?.r, v.claims?.q, v.claims?.m, v.claims?.f], [true, 'ring:silver:ruby', 1, 'Silverthorn', undefined], 'signed; no hand');
@@ -79,7 +80,7 @@ test('PROF10 service: a Silver Ruby Ring at the jeweller\'s bench - its Silver a
   assert.deepEqual((await s.cut(mac, 'ring:silver:ruby')).body, { error: 'stores-short' });
   assert.deepEqual((await s.cut(mac, 'ring:silver:emerald')).body, { error: 'stores-short' }, 'every gem its own');
   assert.equal(s.xpOf(mac), 540);
-  assert.match(ACCOUNT_VERSION, /^acct92$/   /* PIN MOVED (PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82, CRYSTAL-FIST's acct83, SERPENT-SET and SILVER-FINDS' acct84, YARD-SHED's acct85, YARD-HEIGHT's acct86, LEGACY7's acct87, STORM-SHED's acct88, STORM-SHED 2's acct89, TEXT-F1's acct90, CAP-OFF's acct91, FOUNDER5's acct92): the live version */);
+  assert.match(ACCOUNT_VERSION, /^acct96$/   /* PIN MOVED (TAVERN CARDS' acct96, PROF12, AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82, CRYSTAL-FIST's acct83, SERPENT-SET and SILVER-FINDS' acct84, YARD-SHED's acct85, YARD-HEIGHT's acct86, LEGACY7's acct87, STORM-SHED's acct88, STORM-SHED 2's acct89, TEXT-F1's acct90, CAP-OFF's acct91, FOUNDER5's acct92, CRAFT2-CRAFT5's acct93, SD9b's acct94 - acct91 on its branch, renumbered past CAP-OFF, FOUNDER5 and CRAFT2-CRAFT5 at the merges; SCALE4a-c's acct95 - acct94 on its branch, renumbered past SD9b at the merge): the live version */);
 });
 
 test('AUDIT PROF-541 J7 service: the first time\'s 500 once a piece and base - a Silver Ruby Ring\'s, then a Silver Emerald Ring and a plain Silver Ring none; a Silver Mark and a Gold Ruby Ring each their own', async () => {

@@ -77,7 +77,7 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(w, /import \{ glyphMarks \} from '\.\.\/ui\/playerBadge\.js';/, 'the badge\'s plain-text marks, for a text plaque');
   assert.match(w, /const _hoverPeerPick = \(eye, dir\) => peerRayPick\(peerInSight\(eye, dir\), SOCIAL_REACH\);/,
     'SOC5\'s one pick (through peerInSight: AUDIT DISC7 A6, a wall blocks it), the same reach, dressed for the race');
-  assert.match(w, /const hit = pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/,
+  assert.match(w, /const hit = pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/,
     'SOC5\'s one pick, the same reach and the same cylinder, dressed for the race');
   assert.match(w, /person: _hoverPersonPick\(cam\.pos, _hd\),\s*\n\s*peer: _hoverPeerPick\(cam\.pos, _hd\),/, 'raced beside the townsperson in the street\'s pick');
   const namers = w.slice(w.indexOf('const _hoverNamers = ['), w.indexOf('const _hoverModNamers = ['));

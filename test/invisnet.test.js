@@ -70,6 +70,7 @@ test('INVIS-NET end to end: my invisibility leaves my session the moment it land
     const r = fakeRoom(ROOM);
     const relayMine = r.connect(), relayTheirs = r.connect();
     await r.hello(relayMine, 'ghost-0001', at); await r.hello(relayTheirs, 'seer-0001', at);
+    for (const f of relayMine.sent) mine.receive(f);   // SD-HELLO (PIN MOVED): my own welcome, off the real Room - a socket says nothing past its hello until it lands
     let heard = 0;
     const hear = () => { for (; heard < relayTheirs.sent.length; heard++) theirs.receive(relayTheirs.sent[heard]); };
     const relayLast = async () => {
@@ -133,7 +134,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   const arm = w.slice(w.indexOf('    const arm = {\n      mv,'), w.indexOf('};   // the wire\'s move bit'));
   assert.match(arm, /\n\s*cv: concealBits\(playerEntity\) \|\| undefined,/, 'the arm spread into every pose');
   // Boat map markers cache the adjusted poses before the existing concealment and render ordering.
-  assert.match(w, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(online\.drawable\(\), [^\n]*\) : online\.drawable\(\);[^\n]*\n\s*_peerMapPoses\.clear\(\);\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n\s*const visiblePeers = cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\);\n\s*peerCastVisuals\(visiblePeers\);[^\n]*\n(?:[^\n]*\n){0,5}?\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{\n\s*const look = peerDraw\(d\.shown\?\.cv \| 0, veilOn, _veilT, d\.id\);\n\s*if \(look\.kind === 'hidden'\) \{ _hiddenPeers\.add\(d\.id\); continue; \}/, 'the cast off every peer, the draw off the seen - a concealed peer hidden where the look says so (the classic lane)');
+  assert.match(w, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(online\.drawable\(\), [^\n]*\) : online\.drawable\(\);[^\n]*\n\s*_peerMapPoses\.clear\(\);\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n\s*const visiblePeers = gateCrowd\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), \{ on: modes\?\.gateArenaDay\?\.\(\) != null, [^\n]*\}\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);[^\n]*\n(?:[^\n]*\n){0,5}?\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{\n\s*const look = peerDraw\(d\.shown\?\.cv \| 0, veilOn, _veilT, d\.id\);\n\s*if \(look\.kind === 'hidden'\) \{ _hiddenPeers\.add\(d\.id\); continue; \}/, 'the cast off every peer, the draw off the seen - a concealed peer hidden where the look says so (the classic lane)');   // PIN MOVED (GATE-CROWD): the drawn list is cut to a court's crowd first (test/gatecrowd.test.js)
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene,/);
   assert.match(w, /const afoot = seen\.filter\(/);
   assert.match(w, /peerWalkers\.sync\(seen, onlineToScene,/);
@@ -144,7 +145,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   assert.match(w, /seen\.push\(d\);\n\s*\}\n\s*peerCandlesFrame\(seen, dt\);/, 'the candles off the seen');
   assert.doesNotMatch(w, /peerCandlesFrame\(drawable/, 'never off the whole list');
   assert.match(w, /out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\), cv: p\.shown\?\.cv \| 0 \}\);/, 'the peers the foes read carry it');
-  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer (CONCEAL-MATE: a stranger - a mate stays open)');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer (CONCEAL-MATE: a stranger - a mate stays open)');
 });
 
 // ---- AUDIT (the pre-merge audit, 2026-09-27, Mac: "Audit before we merge"): what else named or showed a concealed player.
@@ -207,7 +208,7 @@ test('CONCEAL-MATE executed: openPeers keeps every open player and a concealed p
 test('CONCEAL-MATE by source: every social door reads ONE law (openPeers over the host\'s party test) - the F key and its plaque, the Nearby list, a page\'s readers and a gift - and the party test is the session\'s own', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /function isPartyMate\(id\) \{ return !!social\?\.party && social\.isPartyPeer\(id\); \}/, 'a mate is a member of my party, and nobody without one');
-  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
   assert.match(w, /localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\)/, 'the Nearby list');
   assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(/, 'a page\'s readers');
   assert.match(w, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(/, 'a gift');

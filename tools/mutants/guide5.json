@@ -146,8 +146,8 @@
   {
     "name": "GUIDE5-every-diamond-filled",
     "file": "src/ui/inkMap.js",
-    "old": "  if (m.tracked) { ctx.fillStyle = PEN.line; ctx.fill(); }",
-    "new": "  { ctx.fillStyle = PEN.line; ctx.fill(); }",
+    "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
+    "new": "paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
     "tests": [
       "test/guide5_marks.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "GUIDE5-map-marks-off-the-switch",
     "file": "src/scenes/world.js",
-    "old": "      quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel) : []),",
-    "new": "      quests: () => questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel),",
+    "old": "      quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel) : []),",
+    "new": "      quests: () => questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel),",
     "tests": [
       "test/guide5_marks.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "GUIDE5-compass-indoors",
     "file": "src/scenes/world.js",
-    "old": "    if (!marksOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const find = questTracker.tracked()?.target?.find;",
-    "new": "    if (!marksOn()) return null;\n    const find = questTracker.tracked()?.target?.find;",
+    "old": "    if (!marksOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const find = questTracker.shown()?.target?.find;",
+    "new": "    if (!marksOn()) return null;\n    const find = questTracker.shown()?.target?.find;",
     "tests": [
       "test/guide5_marks.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "GUIDE5-compass-call-dropped",
     "file": "src/scenes/world.js",
-    "old": "          quest: vendorCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set\n",
+    "old": "          quest: vendorCompassMark() ?? townQuestCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set; GUIDE8: the Town tier's building, in its town\n",
     "new": "",
     "tests": [
       "test/guide5_marks.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "GUIDE5-marks-not-a-face",
     "file": "src/ui/questTracker.js",
-    "old": "export const followOn = () => trackerOn() || marksOn();",
-    "new": "export const followOn = () => trackerOn();",
+    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
+    "new": "export const followOn = () => trackerOn() || guidanceTier() !== 'journal';",
     "tests": [
       "test/guide5_marks.test.js"
     ]

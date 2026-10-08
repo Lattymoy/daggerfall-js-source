@@ -57,6 +57,7 @@
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
 // WB5b, the gates closed. The caller is the account the receipt names:
 //   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order, marks? }   (SERPENT1: a sea serpent's receipt; SERPENT-SET: `marks` its silver where it recorded)
+//   POST /v1/sd/claim    { receipt } -> { recorded, slot?, title?, aura?, broken }   (SD9b: a Brass Remnant's receipt - an Hour broken; Hourbreaker and The Turning Hour rolled on its first write)
 //   POST /v1/gate/claim  { receipt, region?, character? } -> { recorded, stones, closed, seat? }   (WB12d: the row's embers, AUDIT WB12d A4; SEAT1b: `seat` the kill's influence)
 // MARKS1, Marks - an account's alone, behind MARKS_OPEN (marks.js); `rid` the act's own id:
 //   POST /v1/marks/balance {}                               -> { balance, today, bank }
@@ -86,6 +87,8 @@
 //   POST /v1/prof/brew { character, potion, keys, seat?, rid } -> { ok, potion, keys, count, potent, unbruised, steps, xp, first, track, stores } | { repeat, ... }   (PROF12: Alchemy's brewing act - DFU's own recipe law on the Stores' cauldron; Potent rolled, the Apothecary's steps)
 //   POST /v1/prof/disenchant { character, provenance, rid, realm? } -> { ok, provenance, recipe, points, essence, origin, xp, track, store, realm? } | { repeat, ... } | { error: 'prof-no-piece', why? }   (PROF12: a crafted piece into Arcane Essence, gone; AUDIT PROF-541 B2: a realm character's out of its record - `realm` where it stands, `realm.seq` the record's new sequence, `why: 'disenchanted'` a piece this account's disenchant took)
 //   POST /v1/prof/stock { character, material, qty, rid }             -> { ok, ... } | { repeat, ... }   (PROF3 the smith's stock; PROF4 the furnisher's; PROF5 the Weavers')
+//   POST /v1/prof/temper { character, recipe, quality, provenance?, rid } -> { ok, recipe, quality, provenance, record?, xp, track, stores } | { repeat, ... }   (CRAFT4: a piece a quality step better, up to Superior)
+//   POST /v1/prof/reforge { character, tier, rid }                     -> { ok, tier, essence, seed, track, store } | { repeat, ... }   (CRAFT4: an Enchanter's Reforge for Arcane Essence)
 //   POST /v1/stores/withdraw { character, material, qty, rid }         -> { ok, material, qty, store } | { repeat, ... }
 //        BAG1: { carry: true, held, seen? } counts the units as carried -> { ..., carry, carried }
 //   POST /v1/stores/deposit { character, material, qty, held, order, rid, seen? } -> { ok, material, qty, own, bought, gold, store, carried } | { repeat, ... }   (BAG1: `order` 'all' or 'spend'; a deposit made is answered as made, for good - prof_deposits)
@@ -171,6 +174,7 @@ import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
+import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
 import { roomsOf, offerRoom, withdrawRoom, rentRoom, collectRent } from './rent.js';   // HOME-RENT: a home's rooms, rented
 import {
@@ -199,8 +203,8 @@ const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? 
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
-import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
-import { brewAtStation, disenchantPiece } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
+import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
+import { brewAtStation, disenchantPiece, reforgeWithEssence } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
 import {
   writBoard, postGuildWrit, supplyGuildWrit, withdrawGuildWrit, setWritBudget, postCommission, fulfilCommission, cancelCommission, declineCommission,
   guildStores, depositGuildStores, withdrawGuildStores,
@@ -216,6 +220,8 @@ import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
+import { runCron } from './cron.js';   // SCALE4b: the service's own clock
+import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
@@ -825,7 +831,7 @@ const service = {
           // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row) - RENOWN-CHAR: a
           // list of the characters' tracks again (RENOWN-ACCOUNT sent the account's one, `{ xp, level }`)
           // MARKS1: and the Marks balance, where Marks are this account's (null where not - a guest, the switch)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
           wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player) },   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
           devices: await devicesOf(ctx, who.player.id),
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
@@ -861,7 +867,7 @@ const service = {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain
+        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken
       }
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {
@@ -941,6 +947,16 @@ const service = {
         const answer = { ...r };
         delete answer.day; delete answer.struck;   // the service's own: the kill's day and whether the batch struck
         return json({ ...answer, order: signed, ...(r.recorded ? { marks: await serpentStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : {}) }, 200, origin);
+      }
+
+      if (path === '/v1/sd/claim' && request.method === 'POST') {
+        // SD9b: A BRASS REMNANT'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES. The relay signed it at the fall
+        // (src/net/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
+        // signature, the account, one row a (slot, account), and on that first write the Hour's grants off its seed. A
+        // refusal says its rung, as the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend.
+        const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
@@ -1268,6 +1284,8 @@ const service = {
           '/v1/prof/brew': () => brewAtStation(ctx, who.player, env, body),   // PROF12: the alchemy station's brew
           '/v1/prof/disenchant': () => disenchantPiece({ ...ctx, bucket: env.SAVES }, who.player, env, body),   // PROF12: an enchanting station's disenchant; AUDIT PROF-541 B2: a realm character's record, in R2
           '/v1/prof/stock': () => buyStock(ctx, who.player, env, body),   // PROF3: the smith's stock; PROF4: the furnisher's
+          '/v1/prof/temper': () => temperPiece(ctx, who.player, env, body),   // CRAFT4: a piece a quality step better
+          '/v1/prof/reforge': () => reforgeWithEssence(ctx, who.player, env, body),   // CRAFT4: a line rolled again for Arcane Essence
           '/v1/stores/withdraw': () => withdrawStores(ctx, who.player, env, body),
           '/v1/stores/deposit': () => depositStores(ctx, who.player, env, body),   // BAG1: what is carried, into the Stores
           // PROF6: the Court's writs, and beside them this board's guild writs and commissions (writs.js writBoard)
@@ -1408,6 +1426,12 @@ const service = {
         return r.error ? no(r.error, PASS_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
+      // SCALE4c: ONE HEARTBEAT - the beat, the letterbox and a town's board, whichever the body names, each part answered
+      // as its own route answers it (heartbeat.js), under the one session this request resolved
+      if (path === '/v1/heartbeat') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        return json(await heartbeat(ctx, who.player, env, body), 200, origin);
+      }
       if (path === '/v1/account/played' && request.method === 'POST') {
         // ACC4: A BEAT, AND NOTHING IN IT IS READ. Whatever the body
         // says, the credit is the gap by THIS clock (accounts.js
@@ -1657,4 +1681,7 @@ const service = {
 
 export default {
   fetch: (request, env) => measured(request, env, service.fetch),
+  // SCALE4b: THE SERVICE'S OWN CLOCK - wrangler.toml's [triggers] crons, each firing its list (cron.js), the sweeps no
+  // read runs any more and the settlements every read now nearly always finds done
+  scheduled: (controller, env) => runCron(env, { cron: controller?.cron, nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now()) / 1000) }),
 };

@@ -57,8 +57,8 @@
   {
     "name": "LANDFORM-profile-no-large-map",
     "file": "src/world/landforms.js",
-    "old": "const macro = low + noise(lx, ly) * NOISE_MAP_SCALE;",
-    "new": "const macro = low + noise(lx, ly);",
+    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
+    "new": "const macro = Math.min(Math.max(low + noise(lx, ly), SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/landform.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "LANDFORM-profile-unlifted",
     "file": "src/world/landforms.js",
-    "old": "MAX_TERRAIN_HEIGHT) + (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));",
-    "new": "MAX_TERRAIN_HEIGHT);",
+    "old": "landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around)",
+    "new": "landAt(sox + lx, soy + ly, macro, macro, low, 0, around)",
     "tests": [
       "test/landform.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "LANDFORM-arm-past-its-end-still-grades",
     "file": "src/world/landforms.js",
-    "old": "const w = (((1 - d / reach) ** 2) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
-    "new": "const w = (((1 - d / reach) ** 2) / (q * q));",
+    "old": "const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "const w = ((r * r) / (q * q));",
     "tests": [
       "test/landform.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "LANDFORM-build-ghost-rows-raw",
     "file": "src/world/terrainGen.js",
-    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms });",
-    "new": "const grid = restrideGrid({ woods, px, py, stride, samples });",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null });",
     "tests": [
       "test/landform.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "LANDFORM-job-uncut",
     "file": "src/world/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads }) : null;\n  // AUDIT LANDFORMS D3",
-    "new": "  const landforms = landform ? createLandforms({ woods }) : null;\n  // AUDIT LANDFORMS D3",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
+    "new": "  const landforms = landform ? createLandforms({ woods, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
     "tests": [
       "test/landform.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "LANDFORM-worker-grid-no-network",
     "file": "src/world/terrainGenWorker.js",
-    "old": "const { positions, normals } = restrideGrid({ ...m, woods, roads });",
-    "new": "const { positions, normals } = restrideGrid({ ...m, woods });",
+    "old": "const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
+    "new": "const { positions, normals, bed } = restrideGrid({ ...m, woods, sites, climates });",
     "tests": [
       "test/landform.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "LANDFORM-ceiling-road-graded-to-the-raw-macro",
     "file": "src/world/landforms.js",
-    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) +",
-    "new": "prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION) +",
+    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
+    "new": "const macro = Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION);",
     "tests": [
       "test/landform.test.js"
     ]

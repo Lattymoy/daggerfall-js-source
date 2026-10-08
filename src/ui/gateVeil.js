@@ -36,6 +36,16 @@ export const VEIL_CUES = Object.freeze({
   close: Object.freeze([Object.freeze({ id: FIRE_CAST_ID, volume: 1.1, pitch: 0.5 }), Object.freeze({ clip: SOUND.AmbientWindMoanDeep, volume: 0.9, pitch: 0.55 })]),
   open: Object.freeze([Object.freeze({ clip: 350, volume: 0.8, pitch: 0.72 }), Object.freeze({ clip: SOUND.Burning, volume: 0.7, pitch: 0.45 })]),
 });
+/** AUDIT SD II (L6 F8): THE SHATTERED HOUR'S VEIL - every step into and out of the Hour was Dagon's fire and its roar
+ *  (Mac, of the Hour: "not oblivion, something different"): the same whirl in brass, the Mantella's green its eye
+ *  (render/gateVeil.js `uTheme`); as it closes, the Orrery's toll (the ship's bell, low) over the Warp's deep wind; as it
+ *  opens, a gear's clunk and the Concord's chime (scenes/sdHall.js SD_HALL_SOUNDS). The fire's stays the default. */
+export const VEIL_THEMES = Object.freeze({ fire: 0, brass: 1 });
+export const VEIL_BRASS_CUES = Object.freeze({
+  close: Object.freeze([Object.freeze({ clip: 107, volume: 1.0, pitch: 0.5 }), Object.freeze({ clip: SOUND.AmbientWindMoanDeep, volume: 0.9, pitch: 0.45 })]),
+  open: Object.freeze([Object.freeze({ clip: 433, volume: 1.0, pitch: 0.55 }), Object.freeze({ clip: 364, volume: 0.6, pitch: 0.7 })]),
+});
+const themeOf = (name) => VEIL_THEMES[name] ?? VEIL_THEMES.fire;
 
 /**
  * The veil. `doc` the page (a canvas is made in it once), `raf` the frame clock, `now` milliseconds, `engine` the
@@ -45,12 +55,13 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
   let canvas = null, pass = null, broken = false;
   let veilGl = null, unseat = null;   // GL-LEAK: the context, and its seat for the page's going
   let phase = 'idle', at = 0, began = 0, from = VEIL_FRONT_IN, wait = 0, ticking = false;
+  /** @type {number} */ let theme = VEIL_THEMES.fire;   // AUDIT SD II (L6 F8): the step's own - set as it closes or flashes
   /** AUDIT WB D5: the frames the host has said it drew, and whether it says them at all; the count at the reveal */
   let drawnN = 0, hostCounts = false, drawnAt = 0;
   let waiters = [];
   const settle = (ok) => { const w = waiters; waiters = []; for (const f of w) f(ok); };
   const cue = (name) => {
-    for (const c of VEIL_CUES[name]) {
+    for (const c of (theme === VEIL_THEMES.brass ? VEIL_BRASS_CUES : VEIL_CUES)[name]) {
       try { const index = c.id != null ? engine.soundIndexForId(c.id) : c.clip; if (index >= 0) engine.playOneShot(index, c.volume, c.pitch); } catch { /* a sound is never the step */ }
     }
   };
@@ -83,7 +94,7 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
     const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_SCALE)), h = Math.max(1, Math.round((win.innerHeight || 720) * dpr * VEIL_SCALE));
     if (canvas.width !== w) canvas.width = w;
     if (canvas.height !== h) canvas.height = h;
-    try { pass.draw(w, h, (t - began) / 1000, current(t)); } catch { /* a veil is never the step */ }
+    try { pass.draw(w, h, (t - began) / 1000, current(t), theme); } catch { /* a veil is never the step */ }
   }
   function kick() { if (!ticking) { ticking = true; raf(tick); } }
   function open(t, front) { phase = 'opening'; at = t; from = front; wait = 0; cue('open'); }
@@ -108,10 +119,11 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
     get phase() { return phase; },
     get busy() { return phase !== 'idle'; },
     /** Close the fire over the screen: true once it has (at once, if it already stands shut), false where no veil can
-     *  be made or it was opened before it shut. */
-    cover() {
+     *  be made or it was opened before it shut. AUDIT SD II (L6 F8): `look` the veil's theme ('fire', 'brass'). */
+    cover(look = 'fire') {
       if (!build()) return Promise.resolve(false);
       const t = now();
+      if (phase === 'idle') theme = themeOf(look);
       if (phase === 'shut') { wait = 0; return Promise.resolve(true); }
       if (phase === 'idle' || phase === 'opening') {
         // from where it stands: the closing's own clock set back to the moment its front was here
@@ -130,10 +142,11 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
       if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }
       else if (phase === 'closing') { open(t, current(t).front); settle(false); kick(); }
     },
-    /** The fire at once, then open - a place taken by force. */
-    flash() {
+    /** The fire at once, then open - a place taken by force. AUDIT SD II (L6 F8): `look` its theme. */
+    flash(look = 'fire') {
       if (!build()) return;
       const t = now();
+      theme = themeOf(look);
       if (phase === 'idle') show(t);
       phase = 'shut'; at = t; wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN;
       settle(true);

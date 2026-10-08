@@ -218,6 +218,15 @@ export const MOD_CURATED = Object.freeze({
   'immersive-travel': Object.freeze([
     'General.DisableNormalTravel', 'General.DailyCarriageFee', 'General.RegionLockedCarriages', 'ShipTravel.DisableShipTravelOutsideDocks',
   ]),
+  // HAZE1: how strong the shimmer is, and whether the subtropics shimmer too.
+  'heat-haze': Object.freeze(['Heat Haze.Intensity', 'Heat Haze.AllowSubtropical']),
+  // WINDFALL1: what a player reaches for first - the sound and how loud, the leaves and the snow off the boughs, and how
+  // often the wind gets up. The profiles, the frequencies by season, region and weather stay in the mod's own pane.
+  windfall: Object.freeze(['Presentation.AudioEnabled', 'Presentation.AudioVolume', 'Presentation.LeavesEnabled', 'Presentation.SnowFlurriesEnabled', 'General.OverallWindyPeriodFrequency', 'General.GustFrequency']),
+  // SNOWFALL1: how deep the snow lies in the wild and in towns, whether the townsfolk and the foes leave tracks, whether
+  // it reaches the distance, and how fast a track fills back. The mesh, the masks, the feathers and the roads' dials stay
+  // in the mod's own pane.
+  snowfall: Object.freeze(['Snowpack.WildernessMaximumDepth', 'Snowpack.SettlementMaximumDepth', 'NPC Tracks.Enabled', 'Distance Prototype.Enabled', 'Refill.PassiveRefillHours']),
   // PI1: the four a player reaches for first - whether a body's gear lands round it, how hard it is thrown out, and the
   // two sizes most read (a weapon's and an armour piece's). The categories and the per-piece sizes stay in the mod's pane.
   'physical-items': Object.freeze(['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']),
@@ -294,11 +303,45 @@ export const FEATURES = Object.freeze([
     group: 'world',
     title: 'Smaller dungeons',
     note: 'Dungeons bigger than five blocks are cut down to five: a centre block with four around it, the same '
-      + 'every visit. Main-story dungeons and dungeons a quest sends you to keep their full size, and online '
-      + 'every dungeon is full size.',
+      + 'every visit. Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '
+      + 'dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
+  }),
+  // DSIZE1 (2026-10-05, the delve arc): MEDIUM DUNGEONS - the size tier the smaller-dungeons row's note left open
+  // (Features-Arc.md: "a size tier ... would earn the Enhanced label"): over eight blocks, two interior blocks side by
+  // side closed by six (AUDIT DELVE: the first cut's thirteen-block cross is struck), by GenerateSmallerDungeon's own
+  // law (world/smallerDungeons.js generateMediumDungeon). Its own row because the row above is DFU's switch, kept whole;
+  // that switch wins when both are on. Off by default; online every dungeon has the world's own size (the row below),
+  // so the lane forces it off there.
+  Object.freeze({
+    id: 'medium-dungeons',
+    group: 'world',
+    title: 'Medium dungeons',
+    note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. If Smaller '
+      + 'dungeons is on too, it wins. Main-story dungeons keep full size; a quest keeps the size it was set up at (an '
+      + 'older save\u2019s may not). Online every dungeon has its own size instead.',
+    effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF
+  }),
+  // SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
+  // second thought. Large, medium and small should all play into account online" - "World mixes sizes"): THE WORLD'S
+  // DUNGEON SIZES. Online every dungeon is built at the size one seeded draw on its map id gives it - small, medium or
+  // large, half of them medium, the same for every player (world/smallerDungeons.js onlineDungeonSize) - which is the
+  // room's law there, so the lane forces this row ON online and the sync copies it home: offline it asks for the same
+  // sizes. Below DFU's switch (Smaller wins when both are on), above the medium one.
+  Object.freeze({
+    id: 'world-dungeon-sizes',
+    group: 'world',
+    title: 'Dungeon sizes as online',
+    note: 'Every dungeon takes the size it has online - small, medium or large, half of them medium - the same every '
+      + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '
+      + 'was set up at. Online it is always on.',
+    effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes
   }),
   // FT2 (2026-09-14): LAND VIEW DISTANCE - the first CONDENSED row. Two
   // controls for one radius: the pref (LV1, the enhanced lane's 1..6)
@@ -401,11 +444,24 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-water',
     group: 'sight',
     title: 'Enhanced water',
-    note: 'Seas, rivers and ponds look like water: waves that grow with the wind, reflections of the sky and '
-      + 'moon, rain on the surface and a soft shoreline. Off brings back Daggerfall’s flat water.',
+    note: 'Seas, rivers and ponds you can see into: waves that grow with the wind, foam where they meet the shore, '
+      + 'ripples where things move, the sky and the moon on the surface. Off brings back Daggerfall’s flat water.',   // WATER-NEXT: what the water is now
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
+  }),
+  // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
+  // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
+  // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.
+  Object.freeze({
+    id: 'water-quality',
+    group: 'sight',
+    title: 'Water quality',
+    note: 'How much the enhanced water draws. Full looks through the water to what lies under it and ripples where '
+      + 'things move in it; Simple is lighter on your machine.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'waterQuality', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['simple', 'Simple']]) }),   // WATER-NEXT: render/renderer.js waterSimple
   }),
   // EL1 (2026-09-17, the Enhanced Lighting arc, tier one): the renderer's
   // lit world on a linear pipeline - render/enhancedLighting.js carries
@@ -827,6 +883,9 @@ export const FEATURES = Object.freeze([
   }),
   modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'sight'),   // FT18: was world
   modFeature('low-poly-trees', 'Takes effect when the world next loads.', 'sight'),   // LPT1: read once, as the world loads
+  modFeature('heat-haze', 'Takes effect at once.', 'sight'),   // HAZE1: the exterior hosts read its switch every frame (the enhanced outdoors')
+  modFeature('windfall', 'Takes effect at once.', 'sight'),   // WINDFALL1: the same - and every flora batch carries its mask from its build, so the law turns on and off with it
+  modFeature('snowfall', 'Takes effect at once.', 'sight'),   // SNOWFALL1: the same - its switch read every frame; off hides the snow, and the snowpack keeps its clock
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
   // TO1 (2026-09-17): TRAVEL OPTIONS - `world`, because what it changes
   // is how you cross it. The effect line is the SWITCH's (FT9: when each
@@ -1162,6 +1221,64 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/questMarks.js MARKS_PREF
+  }),
+  // GUIDE8 (2026-10-05, the delve arc - Quest-Guide-Arc.md DECISIONS 3, "a player who cannot read a dungeon should be
+  // able to ask for it"): THE GUIDANCE TIERS. Journal is GUIDE5's law; Exact is the quest debugger's knowledge - every
+  // quest resource in a dungeon on its map (its floor on the strip) and the followed one on the compass
+  // (systems/questGuidance.js, read by scenes/worldModes.js for scenes/dungeonContext.js), and AUDIT DELVE inside
+  // buildings too; Town between them - the building an entry names, ringed on the town map and on the compass while the
+  // player is in its town (scenes/world.js). Exact is the one tier that can spoil: off by default, its own row.
+  Object.freeze({
+    id: 'quest-guidance',
+    group: 'interface',
+    title: 'Quest guidance',
+    note: 'Journal marks only places your map already holds. Town rings the building your journal names on the Enhanced '
+      + 'town map and your compass. Exact also marks a quest\u2019s item, person or foe in dungeons and buildings - it '
+      + 'can spoil a search.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS
+  }),
+  // SENSE1 (2026-10-05, the delve arc - bible/03-World/Delve-Arc.md): THE LOOK ROUND. Asking for Info mode underground
+  // lights what is near, in sight, and named by the plaque (systems/dungeonSense.js, read by scenes/dungeonContext.js
+  // at the ask). On by default: it lights nothing a press or the plaque would not reach. The secrets tier lights what
+  // nothing else names - a wall only a lever moves - so it is the player's own ask.
+  Object.freeze({
+    id: 'dungeon-sense',
+    group: 'interface',
+    title: 'Look around',
+    note: 'In a dungeon, selecting Info mode makes the levers, doors and containers near you and in sight glow for '
+      + 'a few seconds. With secrets, walls that only a lever moves glow too.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'on', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeonSense.js SENSE_PREF
+  }),
+  // ECHO1 (2026-10-05, the delve arc): THE CHAIN'S ECHO - a press that moves something out of sight says which way, marks
+  // it on the dungeon map and lights it when it is reached; and in Info mode a lever's plaque says which way its work
+  // lies (systems/dungeonEcho.js, read by scenes/dungeonContext.js). On by default: it says only what the press itself
+  // set going - the sound a room away the classic game never gives a direction to.
+  Object.freeze({
+    id: 'dungeon-echoes',
+    group: 'interface',
+    title: 'Lever echoes',
+    note: 'When a lever or a plate moves something out of sight, a line says which way, the Enhanced map marks it, and '
+      + 'it glows when you reach it. In Info mode, a lever\u2019s World Tooltips label says which way it works.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonEchoes', initial: true, online: 'player' }),   // systems/dungeonEcho.js ECHO_PREF
+  }),
+  // WAYOUT1 (2026-10-05, the delve arc): THE WAY OUT ON THE COMPASS - the walked trail walked back to the way in, once
+  // the way in has been found (systems/wayOut.js, read by scenes/dungeonContext.js). On by default: it points only
+  // along where the player has already stood, toward the door they came in by - the held map's own beacon, said on the
+  // compass.
+  Object.freeze({
+    id: 'dungeon-way-out',
+    group: 'interface',
+    title: 'Way out',
+    note: 'In a dungeon, an arrow on the compass leads back along the way you walked to the way in.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonWayOut', initial: true, online: 'player' }),   // systems/wayOut.js WAY_PREF
   }),
   // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
   // an original addition, not a DFU classic feature - the classic game

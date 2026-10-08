@@ -97,6 +97,7 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   boards?: () => Array<{feet: number[], label?: string}>,
  *   homes?: () => Array<{buildingKey: number, own?: boolean, label: string}>,
  *   homesVersion?: () => number,
+ *   questBuildings?: () => Array<{buildingKey: number, followed?: boolean}>,
  *   title?: string,
  * }} deps
  */
@@ -233,9 +234,12 @@ export function createTownSheet(deps = {}) {
    *  pixels - the ring is the thing a player is actually hunting for. */
   function questMarks() {
     const found = discoveredBy();
+    // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names in this town, ringed found or not - the
+    // host hands them only while the tier is on (systems/questGuidance.js townQuestBuildings)
+    const named = new Set((deps.questBuildings?.() ?? []).map((q) => q?.buildingKey).filter((k) => k > 0));
     const out = [];
     for (const b of deps.buildings?.() ?? []) {
-      if (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey)) continue;   // RES-RING
+      if (!named.has(b?.buildingKey) && (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey))) continue;   // RES-RING
       const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
       out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are
     }

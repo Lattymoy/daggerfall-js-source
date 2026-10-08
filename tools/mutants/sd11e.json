@@ -1,0 +1,340 @@
+[
+  {
+    "name": "SD11E-F2-silver-always-the-other-way",
+    "file": "src/net/sdRemnant.js",
+    "old": "const way = one ? pairWay(standing[0].body, standing[1].body, aims[0]) : -1;",
+    "new": "const way = -1;",
+    "tests": [
+      "test/sd11e_laws.test.js",
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F2-always-golds-way",
+    "file": "src/net/sdRemnant.js",
+    "old": "return (T.x - G.x) * (T.x - S.x) + (T.z - G.z) * (T.z - S.z) > 0 ? 1 : -1;",
+    "new": "return 1;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F2-one-fighter-or-not",
+    "file": "src/net/sdRemnant.js",
+    "old": "const one = aims.length === 2 && !!aims[0] && aims[0].sub === aims[1]?.sub;",
+    "new": "const one = aims.length === 2 && !!aims[0];",
+    "tests": [
+      "test/sd11e_laws.test.js",
+      "test/sd8a_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-the-word-refuses-blows",
+    "file": "src/net/sdRemnant.js",
+    "old": "const over = (f, now) => !!(f.fell || f.lost || now >= f.endsAt);",
+    "new": "const over = (f, now) => !!(f.fell || f.lost || f.ended || now >= f.endsAt);",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-a-newcomer-in-the-wind-up",
+    "file": "src/net/sdRemnant.js",
+    "old": "const closed = (f, now) => over(f, now) || !!f.ended;",
+    "new": "const closed = (f, now) => over(f, now);",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-the-page-out-from-the-word",
+    "file": "src/net/sdFightLink.js",
+    "old": "!state.lost && !state.fell && !sdHourOver(state, now()),",
+    "new": "!state.lost && !state.fell && !state.ended,",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-the-page-closed-from-the-word",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "return live(s) && !s.fell && !sdHourOver(s, now) && now >= s.op",
+    "new": "return live(s) && !s.fell && !s.ended && now >= s.op",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-no-body-from-the-word",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "if (!L?.joined() || s.fell || sdHourOver(s, t) || s.ph === 2) return null;",
+    "new": "if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F3-the-bar-ended-at-the-word",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended",
+    "new": "wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F4-the-end-by-its-word-alone",
+    "file": "src/net/sdRemnant.js",
+    "old": "const over = (f, now) => !!(f.fell || f.lost || now >= f.endsAt);",
+    "new": "const over = (f, now) => !!(f.fell || f.lost || (f.ended && now >= f.endsAt));",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F4-the-remnant-by-the-word",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op",
+    "new": "export const remnantOpen = (f, now) => !(f.fell || f.lost || f.ended) && now >= f.op",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F4-an-echo-by-the-word",
+    "file": "src/net/sdRemnant.js",
+    "old": "if (!p || over(f, now) || !E ||",
+    "new": "if (!p || f.fell || f.lost || f.ended || !E ||",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F4-a-heart-by-the-word",
+    "file": "src/net/sdRemnant.js",
+    "old": "if (!p || over(f, now) || !q ||",
+    "new": "if (!p || f.fell || f.lost || f.ended || !q ||",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F5-the-band-inside-the-disc",
+    "file": "src/net/sdStrike.js",
+    "old": "const was = out.ro ?? d > stompFrontAt(atk, t0);",
+    "new": "const was = out.ro ?? d > stompFrontAt(atk, t0) - A.width / 2;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F5-the-law-band-inside-the-disc",
+    "file": "src/net/sdRemnant.js",
+    "old": "export function ringPassed(atk, d, t0, t1, was = d > stompFrontAt(atk, t0)) {",
+    "new": "export function ringPassed(atk, d, t0, t1, was = d > stompFrontAt(atk, t0) - SD_BLOWS.stomp.width / 2) {",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F7-the-band-judged-whole",
+    "file": "src/net/sdStrike.js",
+    "old": "        if (ringPassed(atk, d, t0, t1, was)) {",
+    "new": "        if (grounded && d >= stompFrontAt(atk, t0) - A.width / 2 && d <= stompFrontAt(atk, t1) + A.width / 2) {",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F7-the-frame-before-forgotten",
+    "file": "src/net/sdStrike.js",
+    "old": "const was = out.ro ?? d > stompFrontAt(atk, t0);",
+    "new": "const was = d > stompFrontAt(atk, t0);",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F6-never-stale",
+    "file": "src/net/sdStrike.js",
+    "old": "const stale = t1 > end + SD_STRIKE_LATE_MS;",
+    "new": "const stale = false;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F6-the-ring-over-any-span",
+    "file": "src/net/sdStrike.js",
+    "old": "if (!out.ring && !stale && t0 <= end) {",
+    "new": "if (!out.ring && t0 <= end) {",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F6-the-beam-over-any-span",
+    "file": "src/net/sdStrike.js",
+    "old": "if (!out.beam && !stale && t0 <= end && handSwept(",
+    "new": "if (!out.beam && t0 <= end && handSwept(",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F8-the-remnant-not-minded",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (dist(B.x, B.z, x, z) < clear) continue;   // AUDIT SD II (L4 F8): a Heart rose inside its body in 4% of Resets\n",
+    "new": "",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F8-the-crowded-ring-where-it-was",
+    "file": "src/net/sdRemnant.js",
+    "old": "const a = a0 + (k / n) * Math.PI * 2; spots.push([r2(Math.sin(a) * rm), r2(Math.cos(a) * rm)]);",
+    "new": "const a = (k / n) * Math.PI * 2 + Math.PI / 8; spots.push([r2(Math.sin(a) * 12), r2(Math.cos(a) * 12)]);",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F9-the-whole-ring-for-any-count",
+    "file": "src/net/sdRemnant.js",
+    "old": "const [r0, r1] = heartRingFor(n), B = f.rem",
+    "new": "const [r0, r1] = SD_HEART.ring, B = f.rem",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F9-the-ring-as-it-was",
+    "file": "src/net/sdRemnant.js",
+    "old": "ring: Object.freeze([6, 20]), per: 2,",
+    "new": "ring: Object.freeze([8, 22]), per: 2,",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F9-no-ring-by-count",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const heartRingFor = (n) => [SD_HEART.ring[0], Math.min(SD_HEART.ring[1], SD_HEART.ring[0] + SD_HEART.per * Math.max(0, n - 1))];",
+    "new": "export const heartRingFor = () => [...SD_HEART.ring];",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F10-no-beam-as-it-gathers",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "        out.push(shapeOf(TELEGRAPH_KIND.lane, { ...common, origin, end: [atk.x + Math.sin(a0) * A.len, atk.z + Math.cos(a0) * A.len], halfW: A.width / 2 }));\n",
+    "new": "",
+    "tests": [
+      "test/sd11e_laws.test.js",
+      "test/sd8d_remnant_blows.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-F10-the-beam-at-its-far-edge",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "const a0 = handAngleAt(atk, atk.at);",
+    "new": "const a0 = handAngleAt(atk, atk.at + A.active);",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C1-the-range-40",
+    "file": "src/net/sdRemnant.js",
+    "old": "aim: 'target', range: SD_HAND_LEN - SD_REM.r, w: 2 }),",
+    "new": "aim: 'target', range: 40, w: 2 }),",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C2-the-gates-slack",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const SD_ARENA_SLACK = 1.5;",
+    "new": "export const SD_ARENA_SLACK = POSE_SLACK;",
+    "tests": [
+      "test/sd11e_laws.test.js",
+      "test/sd8d_remnant_blows.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C2-seen-on-the-steps",
+    "file": "src/net/sdRemnant.js",
+    "old": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now;",
+    "new": "if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C2-struck-on-the-steps",
+    "file": "src/net/sdStrike.js",
+    "old": "if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all'",
+    "new": "if (inArena(px, pz, 3)) hits.push({ part: 'all'",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C2-the-relays-in-from-the-steps",
+    "file": "server/src/index.js",
+    "old": "if (!inArena(at.x, at.z, SD_ARENA_SLACK)) return;",
+    "new": "if (!inArena(at.x, at.z, 3)) return;",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C4-the-salts-comment-as-it-was",
+    "file": "src/systems/sdSite.js",
+    "old": "a slot's own until the 2047th Hollow after it",
+    "new": "a slot's own until the 2048th Hollow after it",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C5-the-riddle-read-two-ways",
+    "file": "src/net/sdBrain.js",
+    "old": "return `${sdCap(A)} stands as far before twelve as ${B} stands past it.`;",
+    "new": "return `Read ${A} from twelve backwards and you read ${B}.`;",
+    "tests": [
+      "test/sd11e_laws.test.js",
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-C6-a-name-a-pattern",
+    "file": "src/net/sdLaw.js",
+    "old": "name.replace('{city}', () => city)",
+    "new": "name.replace('{city}', city)",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-docs-sdfell-n-earned",
+    "file": "src/net/sdLaw.js",
+    "old": "how many fought it (`n` - every seat its fight took",
+    "new": "how many earned it (`n` - every seat its fight took",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  },
+  {
+    "name": "SD11E-docs-the-largest-cities",
+    "file": "src/systems/sdSite.js",
+    "old": "the Bay's first\n//      SD_GREAT_CITIES cities by that same claim (one named for its region, then the most blocks, then the most\n//      buildings), and the slot's roll picks one.",
+    "new": "the Bay's SD_GREAT_CITIES\n//      largest cities, and the slot's roll picks one.",
+    "tests": [
+      "test/sd11e_laws.test.js"
+    ]
+  }
+]

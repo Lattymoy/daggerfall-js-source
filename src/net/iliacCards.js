@@ -25,7 +25,7 @@
 
 /** The tiers, lowest first - the loot's (`systems/lootRarity.js` RARITY_ORDER, equal by pin: that module reads the
  *  player's prefs, and the relay's bundle carries neither). */
-export const ILIAC_TIERS = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact']);
+export const ILIAC_TIERS = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded']);   // the loot's ladder whole (lootRarity.js RARITY_ORDER) - GILDED1's rung joined at the merge of main; no card of the first set wears it
 
 /** The words a card's tags are drawn from - what an effect's `tag` filter can name. */
 export const ILIAC_TAGS = Object.freeze([

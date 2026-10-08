@@ -82,6 +82,103 @@ export function shimmer(rgba) {
   return rgba;
 }
 
+/**
+ * GILDED1 (2026-10-07): THE HOURLOCK IN THE HAND - the same frames in gold leaf, the hand that holds them left as it
+ * is. A whole-sprite recolour (the enchanted shimmer's way) would gild the glove too, and a gold-plated fist is not a
+ * gilded gun. The glove's browns lean PINK and the brass's YELLOW - no hue threshold parts them (measured on the idle
+ * frame: the glove's hues 18-35 degrees, the gun's 30-38), but their chromaticity does, read over a neighbourhood: each
+ * pixel's yellow lean `(g - b) - 0.9 (r - g)` of its share, box-blurred (GILD.blur, twice) and weighed by what is drawn,
+ * is under GILD.metalAt over the glove and over it across the brass. What reads as glove AND touches the frame's
+ * foot in its left part (where the fist enters the picture) is the hand; a dark crevice of the gun that reads glove-ish
+ * is left out, because it touches nothing. The hand is found ONCE on the idle frame and spared in every frame - the
+ * sheet's cells share one box (the union crop), so the fist stands in the same pixels throughout - and only the gun's
+ * own silhouette (the idle frame's drawn pixels) is gilded: the flash and the smoke stay the flash and the smoke.
+ */
+export const GILD = Object.freeze({ blur: 10, passes: 2, metalAt: 0.030, metalSoft: 0.016, footShare: 0.45 });
+/** GOLD LEAF, darkest to brightest - the Gilded rung's ramp (tools/gunIcons.mjs carries the list pictures' own). */
+export const GILD_RAMP = Object.freeze([[52, 30, 4], [110, 72, 10], [172, 122, 24], [226, 176, 46], [252, 214, 90], [255, 240, 160], [255, 255, 236]]);
+const goldAt = (t, out) => {
+  const u = Math.max(0, Math.min(1, t)) * (GILD_RAMP.length - 1);
+  const i = Math.min(GILD_RAMP.length - 2, Math.floor(u)), f = u - i;
+  for (let k = 0; k < 3; k++) out[k] = GILD_RAMP[i][k] * (1 - f) + GILD_RAMP[i + 1][k] * f;
+  return out;
+};
+/** A box blur of `v` (w x h) by `rad`, in place of nothing - a fresh array, rows then columns, edges clamped by count. */
+function boxBlur(v, w, h, rad) {
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    let acc = 0;
+    const row = y * w;
+    for (let x = -rad; x < w; x++) {
+      if (x + rad < w) acc += v[row + x + rad];
+      if (x - rad - 1 >= 0) acc -= v[row + x - rad - 1];
+      if (x >= 0) tmp[row + x] = acc;
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let y = -rad; y < h; y++) {
+      if (y + rad < h) acc += tmp[(y + rad) * w + x];
+      if (y - rad - 1 >= 0) acc -= tmp[(y - rad - 1) * w + x];
+      if (y >= 0) out[y * w + x] = acc;
+    }
+  }
+  return out;
+}
+/** THE HAND, on one frame: a mask (1 = the glove) of the pixels that read glove over their neighbourhood and are joined
+ *  to the frame's foot in its left GILD.footShare. Pure. */
+export function handMask({ width: w, height: h, data }) {
+  let lean = new Float32Array(w * h), drawn = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const o = i * 4;
+    if (data[o + 3] < 100) continue;
+    const sum = data[o] + data[o + 1] + data[o + 2] + 1e-6;
+    const r = data[o] / sum, g = data[o + 1] / sum, b = data[o + 2] / sum;
+    lean[i] = (g - b) - 0.9 * (r - g);
+    drawn[i] = 1;
+  }
+  for (let p = 0; p < GILD.passes; p++) { lean = boxBlur(lean, w, h, GILD.blur); drawn = boxBlur(drawn, w, h, GILD.blur); }
+  const glove = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) if (data[i * 4 + 3] > 0 && drawn[i] > 0 && lean[i] / drawn[i] < GILD.metalAt) glove[i] = 1;
+  // what of it touches the foot on the left - the fist's way into the picture
+  const mask = new Uint8Array(w * h);
+  const stack = [];
+  const footRight = Math.floor(w * GILD.footShare);
+  for (let x = 0; x < footRight; x++) { const i = (h - 1) * w + x; if (glove[i]) { mask[i] = 1; stack.push(i); } }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i / w) | 0;
+    if (x > 0 && glove[i - 1] && !mask[i - 1]) { mask[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && glove[i + 1] && !mask[i + 1]) { mask[i + 1] = 1; stack.push(i + 1); }
+    if (y > 0 && glove[i - w] && !mask[i - w]) { mask[i - w] = 1; stack.push(i - w); }
+    if (y < h - 1 && glove[i + w] && !mask[i + w]) { mask[i + w] = 1; stack.push(i + w); }
+  }
+  return mask;
+}
+/** GILD one frame IN PLACE: every pixel `keep` names (the gun's own) pulled toward the gold ramp by its lightness, the
+ *  bright parts pulled hardest; alpha is never written. Answers the frame. */
+export function gildFrame(rgba, keep) {
+  const d = rgba.data, c = [0, 0, 0];
+  for (let i = 0, n = rgba.width * rgba.height; i < n; i++) {
+    const o = i * 4;
+    if (!keep[i] || d[o + 3] === 0) continue;
+    const lum = (d[o] * 0.299 + d[o + 1] * 0.587 + d[o + 2] * 0.114) / 255;
+    const k = 0.55 + 0.45 * lum;
+    goldAt(0.02 + 1.08 * lum ** 0.9, c);
+    d[o] = d[o] * (1 - k) + c[0] * k;
+    d[o + 1] = d[o + 1] * (1 - k) + c[1] * k;
+    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;
+  }
+  return rgba;
+}
+/** The pixels a gilded sheet gilds: the idle frame's drawn ones, its hand taken out. */
+export function gildKeep(idle) {
+  const hand = handMask(idle);
+  const keep = new Uint8Array(idle.width * idle.height);
+  for (let i = 0; i < keep.length; i++) keep[i] = idle.data[i * 4 + 3] > 0 && !hand[i] ? 1 : 0;
+  return keep;
+}
+
 /** One cell of the sheet, decoded and keyed, as RGBA + its content box. */
 function bakeCell(sheet, i) {
   const r = cellRect(i, sheet.width, sheet.height);
@@ -127,7 +224,7 @@ export const NATIVE_WIDTH = GUN_FEEL.widthPct * 320;
  * the sheet is fetched from the build beside the page.
  * @returns the same shape loadFpsWeaponArt answers, or null.
  */
-export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, decode = decodePng, magic = false } = {}) {
+export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, decode = decodePng, magic = false, gilded = false } = {}) {
   const bytes = fetchSheet
     ? await fetchSheet(SHEET_FILE)
     : await (async () => {
@@ -177,9 +274,12 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   // GL handles.
   const cropped = baked.map((b) => crop(b.img, union));
   const muzzle = muzzlePoint(cropped[0], cropped[1]);
+  // GILDED1: the Hourlock's gold, on the gun's own pixels - found once, on the idle frame (gildKeep, above)
+  const keep = gilded ? gildKeep(cropped[0]) : null;
+  const look = gilded ? ':gilded' : magic ? ':magic' : '';
   const frames = cropped.map((rgba, i) =>
-    renderer.uploadTexture('img', `thunderlock${magic ? ':magic' : ''}:${i}`,
-      toScreenOrder(magic ? shimmer(rgba) : rgba)));
+    renderer.uploadTexture('img', `thunderlock${look}:${i}`,
+      toScreenOrder(gilded ? gildFrame(rgba, keep) : magic ? shimmer(rgba) : rgba)));
 
   return {
     weaponType: type,

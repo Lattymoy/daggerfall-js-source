@@ -1,0 +1,344 @@
+[
+  {
+    "name": "SD17-the-joint-drifts",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "out[12] = px - (R[0] * px + R[3] * py); out[13] = py - (R[1] * px + R[4] * py); out[14] = -(R[2] * px + R[5] * py); out[15] = 1;",
+    "new": "out[12] = 0; out[13] = 0; out[14] = 0; out[15] = 1;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-head-off-the-torso",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "ANG[0] = T[NOD]; ANG[2] = 0; joint(_j, 3); mul4(_j, _torso, _j); mul4(out[3], base, _j);",
+    "new": "ANG[0] = T[NOD]; ANG[2] = 0; joint(_j, 3); mul4(out[3], base, _j);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-arms-off-the-torso",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "ANG[0] = -A[0][0]; ANG[1] = A[0][1]; joint(_j, 4); mul4(_j, _torso, _j); mul4(out[4], base, _j);",
+    "new": "ANG[0] = -A[0][0]; ANG[1] = A[0][1]; joint(_j, 4); mul4(out[4], base, _j);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-limbs-swing-back",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "ANG[0] = -L[0]; ANG[1] = 0; ANG[2] = 0; joint(_j, 0);",
+    "new": "ANG[0] = L[0]; ANG[1] = 0; ANG[2] = 0; joint(_j, 0);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-right-arm-rolls-inward",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "ANG[0] = -A[0][0]; ANG[1] = A[0][1];",
+    "new": "ANG[0] = -A[0][0]; ANG[1] = -A[0][1];",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-no-bob",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "joint(_torso, 2); _torso[13] += T[BOB];",
+    "new": "joint(_torso, 2);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-walk-out-of-step",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "c = Math.cos((Math.PI * along) / stride)",
+    "new": "c = Math.sin((Math.PI * along) / stride)",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-walk-never-eased",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const amp = Math.min(1, along, len - along),",
+    "new": "const amp = 1,",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-an-echo-at-the-remnant's-stride",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "walking(out, Bd.mv, t, echo ? SD_ECHO_STRIDE_M : SD_STRIDE_M);",
+    "new": "walking(out, Bd.mv, t, SD_STRIDE_M);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-slipping-always",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "if (!echo && s.m > 0 && s.h / s.m < SD_SLIP_FRAC) slipping(out, t, s.fi);",
+    "new": "if (!echo) slipping(out, t, s.fi);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-stun-unslumped",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "T[LEAN] += 0.45 * k + 0.03 * k * Math.sin(t / 380); T[NOD] += 0.5 * k;",
+    "new": "T[LEAN] += 0.03 * k * Math.sin(t / 380);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-never-woken",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "if (!echo && t < s.op + SD_WAKE_MS) return waking(out, t, s.op);",
+    "new": "",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-stomp-leg-never-raised",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "out.legs[0] = 0.95 * lift;",
+    "new": "out.legs[0] = 0;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-stomp-never-slammed",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": ": fall(t, a.at - SD_RELEASE_MS, a.at);",
+    "new": ": 1;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-hand-unturned",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "else if (t < end) { out.state = 'handSweep'; T[TWIST] += sw * (A.arc * ((t - a.at) / A.active) - A.arc / 2); }",
+    "new": "else if (t < end) { out.state = 'handSweep'; }",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-hand-turned-one-way",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const T = out.trunk, sw = a.sw ?? 1,",
+    "new": "const T = out.trunk, sw = 1,",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-arm-never-raised",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "out.arms[0][0] = (Math.PI / 2) * arm; out.arms[0][1] = 0;",
+    "new": "out.arms[0][1] = 0;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-volley-never-gathered",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "if (t < go) { const k = rise(t, t0, go); out.state = 'volleyGather'; both(out, -0.7 * k, 0.3 * k);",
+    "new": "if (t < go) { const k = rise(t, t0, go); out.state = 'volleyGather'; both(out, 0, 0.3 * k);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-reset-unraised",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "out.arms[0][0] += 2.6 * k + shake; out.arms[1][0] += 2.6 * k - shake;",
+    "new": "out.arms[0][0] += shake; out.arms[1][0] += -shake;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-reset-trembles-evenly",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "shake = rise(t, t0, a.at) * 0.05 * Math.sin(t / 37);",
+    "new": "shake = 0.05 * Math.sin(t / 37);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-an-echo-winds-up-slow",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const w = atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w",
+    "new": "const w = atkWindup(a, A, s.ph, SD_BODY.remnant), t0 = a.at - w",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-falling-ease-dead-before",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const fall = (t, a, b) => 1 - rise(t, a, b);",
+    "new": "const fall = (t, a, b) => (t < a ? 0 : 1 - rise(t, a, b));",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-gears-not-from-the-hands",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const fx = (r[0] + l[0]) / 2, fy = (r[1] + l[1]) / 2, fz = (r[2] + l[2]) / 2, k = (t - go) / fl, tg = a.tg;",
+    "new": "const fx = 0, fy = 4, fz = 0, k = (t - go) / fl, tg = a.tg;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-gears-flat",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "g.y = fy + (0.4 - fy) * k + SD_GEAR_ARC_M * 4 * k * (1 - k);",
+    "new": "g.y = fy + (0.4 - fy) * k;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-a-broken-echo-throws",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "if (!a || a.a !== SD_BLOWS.volley.id || (who >= 0 && !(Bd.h > 0))) continue;",
+    "new": "if (!a || a.a !== SD_BLOWS.volley.id) continue;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-beam-through-pillars",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const reach = beamReach(a.x, a.z, bearing, A.len), sx = Math.sin(bearing), cz = Math.cos(bearing);",
+    "new": "const reach = A.len, sx = Math.sin(bearing), cz = Math.cos(bearing);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-beam-on-the-facing",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const k = (t - a.at) / S.active, bearing = a.yw + (a.sw ?? 1) * (S.arc * k - S.arc / 2);",
+    "new": "const k = (t - a.at) / S.active, bearing = a.yw;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-beam-never-fades",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "d.w = g.w; d.alpha = Math.max(0, alpha);",
+    "new": "d.w = g.w; d.alpha = 1;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-parts-never-turned",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    rigMatrices(body.object.matrix, remnantRig(s, who, t, _rig), _parts);\n",
+    "new": "    for (const m of _parts) m.set(body.object.matrix);\n",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-parts-shown-hidden",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    if (!body || body.hidden) { for (const d of list) hide(d); return; }\n",
+    "new": "    if (!body) { for (const d of list) hide(d); return; }\n",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-gears-never-flown",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;",
+    "new": "      const gears = NONE;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-a-landed-gear-left",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "        if (!q) { hide(d); continue; }",
+    "new": "        if (!q) continue;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-meshes-leaked",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      for (const m of meshes) drop(m);\n",
+    "new": "",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-pelvis-in-the-torso",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "  box(into('pelvis'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);",
+    "new": "  box(into('torso'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-legs-swapped",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "for (const s of [-1, 1]) box(into(s > 0 ? 'legR' : 'legL')",
+    "new": "for (const s of [-1, 1]) box(into(s > 0 ? 'legL' : 'legR')",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-gear-one-sided",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "const both = (a, b, c, d) => { f.quad(rec, a, b, c, d, [0, 0], [1, 0], [1, 1], [0, 1]); f.quad(rec, d, c, b, a, [0, 1], [1, 1], [1, 0], [0, 0]); };",
+    "new": "const both = (a, b, c, d) => { f.quad(rec, a, b, c, d, [0, 0], [1, 0], [1, 1], [0, 1]); };",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-beam-writes-depth",
+    "file": "src/render/sdBeam.js",
+    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
+    "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  },
+  {
+    "name": "SD17-the-beam-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "const beam = beams.length > 0 && !!sdBeamPassOf()?.draw(beams, proj, view, eye, t, fog);",
+    "new": "const beam = false;",
+    "tests": [
+      "test/sd17_body.test.js"
+    ]
+  }
+]

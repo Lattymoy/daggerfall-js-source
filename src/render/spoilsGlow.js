@@ -28,8 +28,8 @@ import { RARITIES } from '../systems/lootRarity.js';
  *  room for more). */
 export const SPOILS_GLOW_MAX = 8;
 /** WBX3: how tall the line stands out of the sprite, by tier (metres), and how wide it is. SET6: the Aetheric's between
- *  the Legendary's and the Artifact's, as its rung is. */
-export const SPOILS_LINE_H = Object.freeze({ common: 0.7, magic: 1.0, rare: 1.4, legendary: 1.9, aetheric: 2.1, artifact: 2.3 });
+ *  the Legendary's and the Artifact's, as its rung is; GILDED1: the Gilded's the tallest, at the line's own cap. */
+export const SPOILS_LINE_H = Object.freeze({ common: 0.7, magic: 1.0, rare: 1.4, legendary: 1.9, aetheric: 2.1, artifact: 2.3, gilded: 2.5 });
 export const SPOILS_LINE_W = 0.07;
 /** The narrowest the line may stand on the screen, as an angle of the eye's view (radians): about two pixels of a
  *  1080-line screen at the port's field of view - a piece across the court keeps a line the eye can find. */
@@ -163,10 +163,11 @@ export class SpoilsGlowRenderer {
     for (const g of list) {
       const tier = RARITIES[g.tier] ? g.tier : 'common';
       gl.uniform3f(U.uRoot, g.root[0], g.root[1], g.root[2]);
-      gl.uniform1f(U.uHeight, lineHeight(tier));
-      gl.uniform3fv(U.uColor, tierColour(tier));
+      // WILD1: a line may wear its own colour, height and pulse (scenes/lootLines.js `mark` - my remains in the open zone)
+      gl.uniform1f(U.uHeight, Number.isFinite(g.h) ? g.h : lineHeight(tier));
+      gl.uniform3fv(U.uColor, Array.isArray(g.colour) && g.colour.length === 3 ? g.colour : tierColour(tier));
       gl.uniform1f(U.uAlpha, Math.min(1, g.alpha));
-      gl.uniform1f(U.uPulse, RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);
+      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

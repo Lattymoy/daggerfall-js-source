@@ -269,11 +269,16 @@ test('LOOT-STACK the classic window: the body\'s picture turns the pile - LEFT t
 // ─── THE HOSTS, AND THE KEY THAT IS GONE ───────────────────────────────────────────────────────────────────────────
 
 test('LOOT-STACK the hosts by source: all four corpse doors hand the window the pile - the pool\'s own takeLoot still first (its refusals, the arrows, a puppet\'s ask), quick loot on a PRESS only, a tab back through the same door with the pile in hand; a pile may mix the two pools, so each key answers to its own (mutants: quick loot taking on a tab; the pile dropped from a host; one pool asked for both)', () => {
-  const door = /const openBodyLoot = \(lootKey, pileKeys = null\) => \{\n\s*bodyPool\(lootKey\)\??\.takeLoot\(lootKey, [^\n]*\n(?:[^\n]*\n)?\s*if \(!pileKeys && quickLootTake\(lootKey, loot, [^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\??\.pileBody\(k\)(?: \?\? null)?, open: openBodyLoot \}\);\n/;
+  // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the building's door is its host's own function, `openInteriorBodyLoot` -
+  // the ladder's press and a skinnable body's Search through one door - its pool picked inside it
+  const doorOf = (name, head) => new RegExp(String.raw`${head}\n\s*bodyPool\(lootKey\)\??\.takeLoot\(lootKey, [^\n]*\n(?:[^\n]*\n)?\s*if \(!pileKeys && quickLootTake\(lootKey, loot, [^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\??\.pileBody\(k\)(?: \?\? null)?, open: ${name} \}\);\n`);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const s = rd(f);
+    const name = f === 'src/scenes/worldModes.js' ? 'openInteriorBodyLoot' : 'openBodyLoot';
+    const door = name === 'openBodyLoot' ? doorOf(name, String.raw`const openBodyLoot = \(lootKey, pileKeys = null\) => \{`)
+      : doorOf(name, String.raw`function openInteriorBodyLoot\(lootKey, pileKeys = null\) \{\n\s*const bodyPool = [^\n]*`);
     assert.match(s, door, `${f}: the door`);
-    assert.match(s, /openBodyLoot\((?:lootKey|key)\);/, `${f}: the press goes through it`);
+    assert.match(s, new RegExp(String.raw`${name}\((?:lootKey|key)\);`), `${f}: the press goes through it`);
     assert.match(s, /\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}/, `${f}: the window is handed the pile`);
     assert.match(s, /const bodyPool = \((?:k|lootKey)\) => \((?:k|lootKey)\.startsWith\('foeCorpse:'\) \? (?:exteriorFoes|interiorFoes) : (?:cityGuards|interiorGuards)\);/, `${f}: each key to its own pool`);
   }

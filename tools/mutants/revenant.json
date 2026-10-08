@@ -398,8 +398,8 @@
   {
     "name": "ELITE-FLOOR-the-per-client-level-asked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite, checkLevel: false })",
-    "new": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite })",
+    "old": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite, superDungeon: !!e.superTier, checkLevel: false })",
+    "new": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite, superDungeon: !!e.superTier })",
     "tests": [
       "test/elitefloor_foetitle.test.js",
       "test/revenant_card.test.js"

@@ -139,6 +139,6 @@ test('RVN7b THE PICK AND THE WEAKNESS: of several in reach, the roll\'s; one in 
 
 test('RVN7b THE WORLD HOST: its talk asks the revenants first, at my map pixel and region, then the mill (mutants: unwired; the mill first)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /getNewsOrRumors: \(session\) => revenantRumor\(rumorHere\(\), session\) \?\? rumorMill\.getNewsOrRumors\(session\),/);
+  assert.match(w, /getNewsOrRumors: \(session\) => sdHost\?\.rumor\(rumorHere\(\), session\) \?\? revenantRumor\(rumorHere\(\), session\) \?\? rumorMill\.getNewsOrRumors\(session\),/);   // PIN MOVED (SD2c): a Super dungeon by this city has the taverns' word first - the revenants' still before the mill
   assert.match(w, /function rumorHere\(\) \{ const p = playerTravelPixel\(\); return \{ px: p\.x, py: p\.y, region: _questRegionIndex\(\) \}; \}/);
 });

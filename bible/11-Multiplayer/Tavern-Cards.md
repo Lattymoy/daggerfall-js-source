@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -142,7 +142,7 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
   temples, the knightly orders, the provinces, the Daedric Princes, the artifacts. Every card names the thing it
   pictures, and its power and text follow from what that thing is in the game (a Lich outranks an Orc).
 - **DECIDED: rarity is the loot's.** A card carries a tier of `RARITY_ORDER` (`src/systems/lootRarity.js`: common,
-  magic, rare, legendary, aetheric, artifact) and draws with that tier's treatment, the way an item does.
+  magic, rare, legendary, aetheric, artifact - and GILDED1's gilded, joined at the merge of main, which no card of the first set wears) and draws with that tier's treatment, the way an item does.
 - **DECIDED: the art is ours.** A card's picture can never be an ARENA2 sprite or a render of one (Port-Doctrine, "A
   RENDER OF GAME DATA IS GAME DATA"). ANSWERED (section 9 Q5): painted in code (section 26).
 
@@ -184,7 +184,7 @@ Each ships alone and is verifiable without the next.
 |---|---|
 | **CARDS1** SHIPPED | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
-| **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
+| **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world178), a hit and Escape standing you up. |
 | **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
 | **CARDS3** SHIPPED | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15); CARDS3b the held hand, the peek, the chips dragged, the riffle (section 19). OPEN: the squeeze, the frame cost measured on a phone. |
 | **CARDS-BAY** SHIPPED | The house deck of the Iliac Bay: the four crowns as the suits, their royals as the courts, their seals as the aces, the Bay's medallion on the back - painted in code, ours (section 21). |
@@ -224,7 +224,7 @@ or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
   still die (31 of 31). `net/dice.js` is relay law, so its bytes moved the relay's hash. **AUDIT CARDS C1 corrected
   this record:** CARDS1 re-hashed `world175` in place calling it undeployed - it was LIVE (the relay's `/health`
   answered world175; relay-deploy.yml deploys every push to main that moves RELAY_VERSION), so its row was restored
-  byte for byte and the lift rides world176, CARDS2b's version.
+  byte for byte and the lift rides world178, CARDS2b's version.
 - **The hand's rank** (`rankFive`, `bestHand`, `compareHands`): nine categories, each with its tie-break ranks, the
   wheel topped by its five, no straight round the corner, the best five of seven by trying all twenty-one.
 - **The pots** (`sidePots`): a layer per level some seat put in, contested by the seats still in that reached it; a
@@ -311,7 +311,7 @@ Mac: **"Continue"**.
   sends a sit or a stand at once; `lerpPose` carries it whole; `peerBodies` hands the peer's rig the same request at
   its drawn feet and facing (`seatFor`, rebuilt only while the arrival eases in) and does not walk it into the chair;
   `fpArm`'s `thirdClimb` answers the seat (`thirdSeat`) whenever no climb holds the body - a sitter never climbs.
-- **Relay world176** (NOT YET DEPLOYED): `validPose` relays `st`. An older relay strips it, and the others see the
+- **Relay world178** (NOT YET DEPLOYED): `validPose` relays `st`. An older relay strips it, and the others see the
   sitter standing at the seat. The bump was the sed over the 37 test files with `relayversion.test.js` excluded, and
   the law's row appended. The first bump REPLACED `RELAY_VERSION`'s comment - which is the relay's whole version
   chain, 148 KB of it - with CARDS2b's own sentence; HT-WAIST-NET's pin caught it, the chain was restored with
@@ -328,7 +328,7 @@ Mac: **"Continue"**.
 Mac: **"Lets do a comprehensive audit on everything developed so far"**. Five lanes over a frozen snapshot, and the
 sweep of every test reading a touched host; the whole record is `01-Overview/Audit-Cards.md`. What it changed, here:
 
-- **The relay record (C1, C2).** `world175` was live; its row is main's again, and world176 carries CARDS1's dice lift
+- **The relay record (C1, C2).** `world175` was live; its row is main's again, and world178 carries CARDS1's dice lift
   beside the seat. The version chains in 37 test files were rebuilt from main: appended, never renamed.
 - **The view (S1).** The seat's view is first person - section 2's fixed seat view - and this host draws no seated body
   of its own; the others see it through `st`.
@@ -453,7 +453,7 @@ Mac: **"Do 3 4 and 5"**. Section 5 built for the friendly table: players in one 
 holds every card.
 
 - **The relay's table** (`src/net/holdemTable.js`, pure and plain data - one home for the relay and its pins; with
-  `net/cardLaw.js` it joins the relay's bundle, `world176`, undeployed, re-hashed in place). A building's room keeps its
+  `net/cardLaw.js` it joins the relay's bundle, `world178`, undeployed, re-hashed in place). A building's room keeps its
   card tables by the table's index; A TABLE'S SEATS ARE ITS CHAIRS (the chair the client took - every client computes the
   same chairs from the same room, so every eye maps the cloth alike). The relay shuffles from its own CSPRNG
   (`shuffleDeck` over the dice's unbiased draw) and keeps the deck in the table, which no frame carries; each seat is
@@ -531,7 +531,7 @@ Mac: **"I wanna do a deep comprehensive of everything"**. Five lanes over a froz
 CARDS3b (`01-Overview/Audit-Cards-3.md`): 4 HIGH, about 20 MED and a tail of LOW, every one reproduced and fixed or
 recorded. What changed in the record:
 
-- **The relay** (`world176`, undeployed, re-hashed in place): a refused sit moves nothing elsewhere; ONE SEAT AN
+- **The relay** (`world178`, undeployed, re-hashed in place): a refused sit moves nothing elsewhere; ONE SEAT AN
   ACCOUNT in a room ('account seated'); a seat whose player has no socket in the room is stood up on the alarm and by an
   empty room's sweep (no ghost deals for ever, nobody takes a ghost's cards by its id), the alarm given back to the
   room's forgetting with the last table; the room's sits on one gate ('busy'); a table open at other chairs or stakes
@@ -589,7 +589,7 @@ Mac: **"#2 and cleanup"** - AUDIT CARDS-3's recorded-not-built, done beside CARD
   on their way from the hand before simply join it), and only then does he riffle; between the riffle and the hand's
   end the squared deck lies there (`DECK_PLATES` for a whole deck), thinning card by card as it is dealt. The session's
   first thought waits the gathering out too.
-- **A room frame names only what changed** (`net/holdemTable.js` `stateDelta`, `STATE_KEYS`; relay `world176`,
+- **A room frame names only what changed** (`net/holdemTable.js` `stateDelta`, `STATE_KEYS`; relay `world178`,
   undeployed, re-hashed in place): the relay keeps, per wake, the last state it told the room of each table and sends
   the changed fields alone (`delta`); a wake, a table's first frame and a look say it whole. The client lays a delta
   over the table it knows (`validHoldemOut` checks both the delta's fields and the merge); with none under it, or a
@@ -606,12 +606,12 @@ Mac: **"#2"**. Section 5, DECIDED: "online stakes are escrowed there. Sitting do
 to the table; standing up moves the stack back." FACT: the relay has no door to the service - the gold goes round by the
 player, the service's word one way and the relay's the other, each signed:
 
-- **THE STAKE** (`server-account/src/cards.js` `stakeCards`, `/v1/cards/stake`; migration 0088 `card_stakes`): a realm
+- **THE STAKE** (`server-account/src/cards.js` `stakeCards`, `/v1/cards/stake`; migration 0092 `card_stakes`): a realm
   character's buy-in (`HOLDEM_STAKE_MIN_BB`..`HOLDEM_STAKE_MAX_BB` big blinds, the tavern's own buy-in by pin) leaves its
   record (`payFromSave`) and is held as a row, in one batch; the answer is the service's ORDER on it
   (`net/identityToken.js` `mintStakeOrder`, kind `stake`: the account, the stake's id, the room, the table, the sum, the
   stakes - a minute's life). A request asked twice is one stake (`rid`).
-- **THE SEAT** (relay `world176`, undeployed, re-hashed in place): a sit carrying a stake order is checked with the key
+- **THE SEAT** (relay `world178`, undeployed, re-hashed in place): a sit carrying a stake order is checked with the key
   the room already holds (the kind, the account, this room and table and stakes) and its stake SPENT before anything
   else - one stake, one seat, ever. The first sitter's stake makes the table a GOLD TABLE (`publicView.gold`); every seat
   at it is staked, and a friendly table seats no stake ('gold table', 'friendly table'). A seat sits with its stake's

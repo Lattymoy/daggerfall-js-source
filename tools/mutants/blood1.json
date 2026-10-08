@@ -245,8 +245,8 @@
   {
     "name": "BLOOD1a-the-marks-draw-OVER-the-billboards",
     "file": "src/scenes/world.js",
-    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);",
-    "new": "    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);\n    bloodMarks.draw(camRight, UP_Y);",
+    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on\n    renderer.drawBillboards(allBatches, camRight, bbUp);",
+    "new": "    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on\n    renderer.drawBillboards(allBatches, camRight, bbUp);\n    bloodMarks.draw(camRight, UP_Y);",
     "tests": [
       "test/blood1_decals.test.js"
     ],
@@ -1367,8 +1367,8 @@
   {
     "name": "AUDIT3-the-spray-passes-through-walls",
     "file": "src/combat/bloodMarks.js",
-    "old": "        if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {\n          const wx",
-    "new": "        if (false) {\n          const wx",
+    "old": "        if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {\n          if (onMover(col, wall)) continue;",
+    "new": "        if (false) {\n          if (onMover(col, wall)) continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -2662,8 +2662,8 @@
   {
     "name": "AUDIT5-a-step-above-the-feet-is-a-floor",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (h.dist < DRIP_FROM - STEP_ABOVE) return null;\n    const foot",
-    "new": "    const foot",
+    "old": "    if (h.dist < DRIP_FROM - STEP_ABOVE) return null;\n    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface",
+    "new": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface",
     "tests": [
       "test/blood1_decals.test.js"
     ]

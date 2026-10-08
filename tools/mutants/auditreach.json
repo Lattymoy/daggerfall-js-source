@@ -58,8 +58,8 @@
   {
     "name": "records-left-behind-at-the-crossing",
     "file": "src/render/shadowPass.js",
-    "old": "    for (let i = 0; i < this.count; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) continue;\n      r.matrix[12] += offset[0]; r.matrix[13] += offset[1]; r.matrix[14] += offset[2];",
-    "new": "    for (let i = 0; i < 0; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) continue;\n      r.matrix[12] += offset[0]; r.matrix[13] += offset[1]; r.matrix[14] += offset[2];",
+    "old": "    for (let i = 0; i < this.count; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) {   // its batches' origins are the host's, moved;",
+    "new": "    for (let i = 0; i < 0; i++) {\n      const r = this.records[i];\n      if (r.kind === REC_BB) {   // its batches' origins are the host's, moved;",
     "tests": [
       "test/audit_reach.test.js"
     ]

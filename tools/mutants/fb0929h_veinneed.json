@@ -82,24 +82,24 @@
   {
     "name": "VEIN-NEED-dungeon-foot-silent",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }",
-    "new": "    if (key === null) { return false; }",
+    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
+    "new": "    if (key === null) { return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "tests": ["test/fb0929h_veinneed.test.js"],
     "note": "The report's dungeon: nothing under the ray, and the vein never asked."
   },
   {
     "name": "VEIN-NEED-dungeon-foot-on-a-click",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }",
-    "new": "    if (key === null) { host.profNeed?.(); return false; }",
+    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
+    "new": "    if (key === null) { host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "tests": ["test/fb0929h_veinneed.test.js"],
     "note": "A click, or a touch spell's release, hands back a press no node was asked."
   },
   {
     "name": "VEIN-NEED-dungeon-foot-answers-taken",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }",
-    "new": "    if (key === null) { if (interact && !pressCast) return host.profNeed?.(); return false; }",
+    "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
+    "new": "    if (key === null) { if (interact && !pressCast) return host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "tests": ["test/fb0929h_veinneed.test.js"],
     "note": "The ladder answers that its press was taken when only the node spoke."
   },

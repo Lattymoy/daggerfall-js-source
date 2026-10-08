@@ -1,0 +1,245 @@
+[
+  {
+    "name": "SD14a-a-borrowed-voice",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "export const SD_IRON = Object.freeze({ move: 222, bark: 223, attack: 224 });",
+    "new": "export const SD_IRON = Object.freeze({ move: 207, bark: 208, attack: 209 });",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-echoes-at-the-remnants-pitch",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "echoStep: Object.freeze([cue(SD_IRON.move, 0.8, 0.7, 30), cue(SD_IRON.move, 0.95, 0.7, 30)]),",
+    "new": "echoStep: Object.freeze([cue(SD_IRON.move, 0.5, 0.7, 30), cue(SD_IRON.move, 0.5, 0.7, 30)]),",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-late-join-sounding",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (!k || k.fi !== s.fi) { k = seen(s, t); return; }",
+    "new": "if (!k || k.fi !== s.fi) { k = { ...seen(s, t), ph: 1, awake: false, stun: false }; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-wake-heard-late",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (awake && !k.awake && t - s.op < SD_TURN_LATE_MS) {",
+    "new": "if (awake && !k.awake) {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-no-turn",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "        if (s.ph === 2) play(SD_VOICE_CUES.outside, rem(4));\n",
+    "new": "        if (s.ph === 2) void 0;\n",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-no-stun",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (stun && !k.stun) { play(SD_VOICE_CUES.stunned, rem(4)); play(SD_VOICE_CUES.stunRing, rem(3)); }",
+    "new": "if (stun && !k.stun) { void 0; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-fall-heard-late",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (s.fell && !k.fell) { k.fell = true; if (t - s.fell.at < SD_TURN_LATE_MS) play(",
+    "new": "if (s.fell && !k.fell) { k.fell = true; if (true) play(",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-sounds-after-the-end",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (s.fell || s.lost) { k.t = t; return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-grunt-each-blow",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) {",
+    "new": "if (k.hurtHp - hp > 0) {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-never-a-grunt",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "{ play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }",
+    "new": "{ k.hurtAt = t; k.hurtHp = hp; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-heal-unread",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (hp > k.hurtHp) k.hurtHp = hp;   // a share joined: the count from where it stands\n",
+    "new": "",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-slip-every-frame",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (hp < SD_SLIP_FRAC && !k.slipped) {",
+    "new": "if (hp < SD_SLIP_FRAC) {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-step-every-frame",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "else { m.walked += d; if (m.walked >= stride) {",
+    "new": "else { m.walked += d; if (d > 0) {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-body-put-somewhere-walked",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (d > JUMP_M) m.walked = 0;\n      else {",
+    "new": "      {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-steps-outside-time",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (!outside) strides(k, s.rem, t, SD_STRIDE_M, SD_VOICE_CUES.step, 0.5);",
+    "new": "      if (true) strides(k, s.rem, t, SD_STRIDE_M, SD_VOICE_CUES.step, 0.5);",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-growl-while-striking",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (awake && !outside && !stun && !striking && !(s.ended > 0) && t >= k.growlAt) {",
+    "new": "if (awake && !outside && !stun && !(s.ended > 0) && t >= k.growlAt) {",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-growl-every-frame",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "k.growlAt = t + SD_GROWL_MS + k.rng() * SD_GROWL_MORE_MS; }",
+    "new": "k.growlAt = t; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-echoes-silent",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (up && !m.up) { play(SD_VOICE_CUES.echoRise[i] ?? SD_VOICE_CUES.echoRise[0], at(2)); m.hp = frac(E.h, E.m); }",
+    "new": "if (up && !m.up) { m.hp = frac(E.h, E.m); }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-both-echoes-gold",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "else if (!up && m.up) play(SD_VOICE_CUES.echoFall[i] ?? SD_VOICE_CUES.echoFall[0], at(2));",
+    "new": "else if (!up && m.up) play(SD_VOICE_CUES.echoFall[0], at(2));",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-no-release",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where); }",
+    "new": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-release-every-frame",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true;",
+    "new": "if (t >= a.at - SD_RELEASE_MS) { m.released = true;",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-a-late-blow-released",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "          m = { released: t >= a.at - SD_RELEASE_MS, landed: t >= a.at, stung: false };",
+    "new": "          m = { released: false, landed: t >= a.at, stung: false };",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-no-quake",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "if (b === SD_BODY.remnant && (A === SD_BLOWS.stomp || A === SD_BLOWS.end) && t - a.at < 400) play(SD_VOICE_CUES.quake, rem(0.5));",
+    "new": "void 0;",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-the-sting-for-every-volley",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "(a.tg ?? []).some((q) => Math.hypot(SD_ARENA.x + q[0] - me[0], SD_ARENA.z + q[1] - me[2]) <= SD_STING_M)",
+    "new": "(a.tg ?? []).length > 0",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-never-framed",
+    "file": "src/scenes/world.js",
+    "old": "    if (inRealm && playerEntity.health > 0) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard; AUDIT SD III (A5): never by the dead\n",
+    "new": "",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-never-let-go",
+    "file": "src/scenes/world.js",
+    "old": "sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
+    "new": "sdBlows?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  },
+  {
+    "name": "SD14a-leave-remembering",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "    leave() { k = null; },",
+    "new": "    leave() {},",
+    "tests": [
+      "test/sd14a_voice.test.js"
+    ]
+  }
+]

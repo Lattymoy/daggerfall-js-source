@@ -7,8 +7,8 @@
 //
 // TWO MODES, ONE SWITCH on the Overworld's bar:
 //  - ROADS (the default, the view as it shipped): a town is reached by the roads, a spot by the way the roads help.
-//  - FREE: every journey goes across country - never onto a road it does not need - still round the mountains (the
-//    peaks' law is the land's, not the road's). A journey with no free way falls back to the roads, and says so.
+//  - FREE: every journey goes across country - never onto a road it does not need (MOUNTAINS WALKABLE, the owner, the
+//    Wrothgarian zone's merge: over the mountains too). A journey with no free way falls back to the roads, and says so.
 //
 // AND THE SNAP. A click near a town's walls was a click ON the town (TV_PLACE_GROW) - right from afar, where a town is
 // a few pixels from 450 m up, and wrong beside it, where every click round its walls walked the traveller in through
@@ -29,7 +29,7 @@ export const TRAVEL_PATH_TEXT = Object.freeze({
   free: 'Free',
   label: 'Path',
   tipRoads: 'Prefer roads - towns are reached by the roads. Shift-click to walk to an exact spot.',
-  tipFree: 'Free walk - straight across country, round the mountains. Clicks near a town go to the exact spot.',
+  tipFree: 'Free walk - straight across country. Clicks near a town go to the exact spot.',   // MOUNTAINS WALKABLE: no longer round them
   fellBack: 'There is no free way there - taking the roads.',
 });
 

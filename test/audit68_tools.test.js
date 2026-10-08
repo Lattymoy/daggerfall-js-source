@@ -130,8 +130,9 @@ test('AUDIT 68 X5-mutate-interrupt-loses-source: a .mutbak left by an interrupte
 });
 
 test('AUDIT 68 X5-mutate-interrupt-loses-source: a SIGTERM while the tests run puts the source back and stops', async (t) => {
-  const slow = "import { test } from 'node:test';\nimport { writeFileSync } from 'node:fs';\n"
-    + "test('slow', async () => { writeFileSync(new URL('./started', import.meta.url), ''); await new Promise((r) => setTimeout(r, 4000)); });\n";
+  // PIN MOVED (AUDIT SCALE M1): the runner first runs every test unmutated, so the marker is the mutant's run alone
+  const slow = "import { test } from 'node:test';\nimport { writeFileSync, readFileSync } from 'node:fs';\n"
+    + "test('slow', async () => { if (readFileSync(new URL('./target.js', import.meta.url), 'utf8').includes('= 2;')) writeFileSync(new URL('./started', import.meta.url), ''); await new Promise((r) => setTimeout(r, 4000)); });\n";
   const d = mutantBed(t, { 'slow.test.js': slow }, [{ name: 'm', file: 'target.js', old: '= 1;', new: '= 2;', tests: ['slow.test.js'] }]);
   const child = spawn(process.execPath, [join(ROOT, 'tools/mutate.mjs'), 'list.json'], { cwd: d, stdio: 'ignore', env: ENV });
   const exited = new Promise((res) => child.on('exit', (code, signal) => res({ code, signal })));

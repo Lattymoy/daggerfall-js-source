@@ -62,7 +62,7 @@ at 40k samples); the Chen table matches the published values; the session conser
 left no panel, no style, no draw, no cursor hold; no HTML injection (textContent throughout). Lane C: no NaN at any
 clock; determinism; poses() about 3 us a frame; hole cards upright to their owner on all four sides; the matrices and
 the atlas orientation right. Lane D: every first-audit fix HOLDS (C1, C2, S1, B1-B6, D1-D6, C3-C5, E1-E10); world175's
-row byte-identical to main's; world176 does not collide (main is still at world175).
+row byte-identical to main's; world178 does not collide (main is still at world175).
 
 ## Recorded, not built
 

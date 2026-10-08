@@ -729,11 +729,12 @@
   {
     "name": "WORLD-HOVER-the-dungeon-entrance-arm-loses-its-caller-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName(), elite: !!entry.dfLocation?.elite });   // ELITE: 'Elite Dungeon' over its mouth\n      }\n",
+    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        // ELITE: 'Elite Dungeon' over its mouth; TIER1: online every mouth says its tier and the size the room builds it\n        // at (systems/dungeonTier.js), offline the mod's own \"To <name>\"\n        const label = tierShown(host.dungeonOnline?.() ?? false) ? dungeonTierLabel(entry.dfLocation) : null;\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName(), tier: label?.tier ?? null, size: label?.size ?? null });\n      }\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
-    ]
+    ],
+    "note": "TIER1 (re-aimed by content): the arm names the tier and the size online now."
   },
   {
     "name": "WORLD-HOVER-the-itemised-default-comes-back",
@@ -747,7 +748,7 @@
   {
     "name": "WORLD-HOVER-outdoors-a-dropped-pile-loses-its-word",
     "file": "src/scenes/world.js",
-    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),\n",
+    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: droppedLoot.labelFor?.(key) ?? lootPileName(droppedLoot.contents?.(key) ?? null) } : null),   // WILD1: a body's remains by its own name\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
@@ -1038,7 +1039,7 @@
   {
     "name": "AUDIT-WH2-the-interior-pile-gets-the-invented-word-back",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };",
+    "old": "      if (key.startsWith('droppedLoot:')) return { title: interiorDropped.labelFor?.(key) ?? lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548; WILD1: a body's remains by its own name",
     "new": "      if (key.startsWith('droppedLoot:')) return { title: 'Loot' };",
     "tests": [
       "test/worldhover.test.js"

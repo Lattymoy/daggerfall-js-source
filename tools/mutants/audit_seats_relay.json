@@ -617,7 +617,7 @@
  {
   "name": "AUDIT-SEATS-R3-gate-before-the-token",
   "file": "server/src/index.js",
-  "old": "      if (!battle && !floor) {\n        // the room's hello gate (A6)",
+  "old": "      if (!battle && !floor && !realmRoom) {\n        // the room's hello gate (A6)",
   "new": "      if (true) {\n        // the room's hello gate (A6)",
   "tests": [
    "test/audit_seats_relay.test.js",

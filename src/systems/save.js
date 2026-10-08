@@ -1196,9 +1196,9 @@ export function clampMarkersAheadOf(entity, own) {
  *  save was for a different dungeon. The saved dungeon's own door
  *  first (by `dungeon:<locationId>`), then a door on the player's own
  *  pixel (the `site`'s group, DFU's GetLocation), then the doorless
- *  site itself, and only for a pixel with no dungeon at all the first
- *  door there is (a site with no dungeon of its own is the fallback the
- *  respawn keeps). Null when there is nothing to enter.
+ *  site itself (AUDIT SD II: never a neighbour's door - a pixel with
+ *  no dungeon of its own enters nothing). Null when there is nothing
+ *  to enter.
  *  @param {Array<{door:{doorType:number}, group?:string, dfLocation?:any}>} doors  the DUNGEON_ENTRANCE doors alone
  *  @param {{group?:string}|null} site  host.dungeonStartSite()'s answer
  *  @param {string|null} locationKey  the save's `dungeon:<id>` */
@@ -1208,7 +1208,11 @@ export function dungeonStartDoorFor(doors, site, locationKey = null) {
   const own = id != null ? list.find((e) => String(e?.dfLocation?.dungeon?.recordElement?.header?.locationId ?? '') === id) : null;
   if (own) return own;
   const here = site?.group != null ? list.find((e) => e?.group === site.group) : null;
-  return here ?? site ?? list[0] ?? null;
+  // AUDIT SD II (L1 F8): and NEVER a neighbour's - a pixel with no dungeon of its own enters nothing (DFU's
+  // StartDungeonInterior builds the player's own location or fails, and every caller has its "all else fails" arm). The
+  // first door in the stream was kept here for such a pixel, and a Mark or a save inside a Super dungeon that had gone
+  // since (the Hollow taken down, its pixel bare) entered whatever dungeon stood nearest, at the Hollow's own position
+  return here ?? site ?? null;
 }
 
 /** MAC6 #1: the dungeon a save was taken in, found by its id across

@@ -79,4 +79,4 @@ E-N4); 24,000 online hands with 0 failures; the economy within noise (exploit -3
 - A frame repeats the whole public table; a delta would shrink it (lane E, bandwidth).
 - THE MERGE (lane E): main is 54 commits on; five files conflict, all by both sides adding: `worldModes.js` at
   `tryExit` (take main's signature, the seat's line FIRST), `Testing.md`, `Active-Arcs.md`, `Port-Ledger.md`,
-  `Online-Arc.md`. main is still at world175: world176 does not collide.
+  `Online-Arc.md`. main is still at world175: world178 does not collide.

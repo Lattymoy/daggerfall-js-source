@@ -572,8 +572,8 @@
   {
     "name": "PROF7-rugs-two-wool",
     "file": "src/net/recipeLaw.js",
-    "old": "tier: WOOL.tier, inputs: [[WOOL.key, 3]] })",
-    "new": "tier: WOOL.tier, inputs: [[WOOL.key, 2]] })",
+    "old": "tier: WOOL.tier, inputs: [[WOOL.key, 3]], madeOf: 'Wool' })",
+    "new": "tier: WOOL.tier, inputs: [[WOOL.key, 2]], madeOf: 'Wool' })",
     "tests": [
       "test/prof7_law.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "PROF7-net-one-linen",
     "file": "src/net/recipeLaw.js",
-    "old": "tier: LINEN.tier, inputs: [[LINEN.key, 2]] })",
-    "new": "tier: LINEN.tier, inputs: [[LINEN.key, 1]] })",
+    "old": "tier: LINEN.tier, inputs: [[LINEN.key, 2]], madeOf: 'Linen' })",
+    "new": "tier: LINEN.tier, inputs: [[LINEN.key, 1]], madeOf: 'Linen' })",
     "tests": [
       "test/prof7_law.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "PROF7-harpy-four",
     "file": "src/net/recipeLaw.js",
-    "old": "['ingot:iron', 1], ['hide:harpy', 1]] }),",
-    "new": "['ingot:iron', 1], ['hide:harpy', 4]] }),",
+    "old": "['ingot:iron', 1], ['hide:harpy', 1]], pattern: 'Arrows', madeOf: 'Harpy Feathers' }),",
+    "new": "['ingot:iron', 1], ['hide:harpy', 4]], pattern: 'Arrows', madeOf: 'Harpy Feathers' }),",
     "tests": [
       "test/prof7_law.test.js"
     ]
@@ -1010,12 +1010,12 @@
   {
     "name": "PROF7-pages-hunting-unpractised",
     "file": "src/ui/profPages.js",
-    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
-    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'fishing', 'logging', 'smithing', 'outfitting', 'carpentry', 'masonry', 'cooking', 'jewelcrafting', 'alchemy', 'enchanting']);",
+    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
     "tests": [
       "test/prof7_client.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content."
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF7-pages-smithing-unlocks-swallowed",
@@ -1107,8 +1107,8 @@
   {
     "name": "PROF7-world-dungeon-bodies-street",
     "file": "src/scenes/world.js",
-    "old": "? bodiesOf(modes?.dungeonCtx?.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f),",
-    "new": "? bodiesOf(exteriorFoes.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f),",
+    "old": "{ street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);",
+    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: modes?.interiorFoes }, bodyStamps);",
     "tests": [
       "test/prof7_client.test.js"
     ]
