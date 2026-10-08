@@ -13,6 +13,11 @@
 //   THE FLOOR LIGHT - a flat disc a hair over the floor about its foot, added on: its edge the hall's own (eight radii
 //     from the stand's rays, so it stops at the walls), twelve hour ticks and six cracks seeping from the crater, the
 //     gear's 36 teeth turning across it as spokes (a gobo, never a shadow), pulsed outward on each toll.
+//   THE WAY BACK'S WINDOW (the Rift seen from the Hour's side, `window.hollow`) - the Hollow you came from: a dark hall of
+//     coursed Daggerfall stone behind the ring, in true parallax (an INTERIOR MAPPING - the eye's ray met with the planes
+//     of a room 6 m deep and 6 m wide that is not there), lit only from the front in the Rift's gold, cold and small, a
+//     faint silver glow on its right wall where the Return stands. The stone is the code's own (the Hollow's textures
+//     may be gone after the step) and is never a live view of the real hall.
 //   THE RETURN'S WINDOW - its lancet opening, looking home: the Bay's sky at the hour of the world (day, dusk, night - the
 //     game's clock, never the Hour's), slow pixel clouds, at night the stars and Masser and Secunda, and along its sill
 //     the city the Hollow rose by, right way up, a few windows warm. It goes out by clouding over from the top.
@@ -28,6 +33,9 @@ import { SD_SKY_FETCH_GLSL, SD_SKYLINE_GLSL, sdSkyClock } from './sdSky.js';
 export const SD_WINDOW_CELLS = 128;
 export const SD_FLOOR_CELL_M = 0.08;
 export const SD_WINDOW_FAN = 48;
+/** The way back's room behind its ring (m): its depth, its half-width, its ceiling over the floor; a stone texel and
+ *  the courses (texels a course, texels a block). */
+export const SD_HOLLOW_ROOM = Object.freeze({ deep: 9, half: 2.6, ceil: 3.8, texel: 0.0625, course: 8, block: 16 });
 /** The window's magnification about the ring's heart, and its sky's gain over the Hour's own (a portal glows). */
 export const SD_WINDOW_ZOOM = 2.6;
 export const SD_WINDOW_GAIN = 1.5;
@@ -99,6 +107,88 @@ void main() {
   col = mix(col, LIP, step(0.955, r));
   col += GOLD * 0.35 * (1.0 - smoothstep(0.0, 0.32, r));   // the core
   col = mix(col, EMBER * (0.4 + 0.5 * dnoise(g * 6.0 + uTime)), uEmber * 0.85);
+  col *= uLight;
+  col = mix(uFogColor, col, fogFactorAt(vWorld));
+  o = vec4(sdPixel(col, cell, uSteps), 1.0);
+}`;
+
+/** The way back's window: the Hollow's hall behind the ring, interior-mapped. */
+export const SD_HOLLOW_FS = HEAD + `in vec2 vDisc;
+in vec3 vWorld;
+uniform mat4 uModel;
+uniform mat3 uToLocal;
+uniform vec2 uSize;
+uniform vec3 uEye;
+uniform float uFloor;    // the floor under the ring's heart, in the ring's frame (m, below it)
+uniform float uLight;
+uniform float uTime;
+uniform float uSteps;
+${FOG_UNIFORMS}out vec4 o;
+${DEAD_NOISE_GLSL}${BAYER_GLSL}${SD_PIXEL_GLSL}${FOG_FACTOR_GLSL}
+const vec3 GOLD = vec3(1.0, 0.78, 0.4);
+const vec3 LIP = vec3(1.0, 0.92, 0.62);
+const vec3 MOON = vec3(0.85, 0.9, 1.0);
+// the classic dungeon's brown stone, three tones and its mortar
+const vec3 STONE0 = vec3(0.32, 0.25, 0.18), STONE1 = vec3(0.4, 0.31, 0.22), STONE2 = vec3(0.26, 0.2, 0.15), MORTAR = vec3(0.12, 0.09, 0.07);
+// a face of coursed stone at (u, v) metres: courses SD_HOLLOW_ROOM.course texels high, blocks .block long, every other
+// course half a block over, a 1-texel joint; three tones by hash, a little grain
+vec3 stone(vec2 uv, float seed) {
+  vec2 tx = floor(uv / ${SD_HOLLOW_ROOM.texel.toFixed(4)});
+  float row = floor(tx.y / ${SD_HOLLOW_ROOM.course.toFixed(1)});
+  float col = floor((tx.x + mod(row, 2.0) * ${(SD_HOLLOW_ROOM.block / 2).toFixed(1)}) / ${SD_HOLLOW_ROOM.block.toFixed(1)});
+  float jx = mod(tx.x + mod(row, 2.0) * ${(SD_HOLLOW_ROOM.block / 2).toFixed(1)}, ${SD_HOLLOW_ROOM.block.toFixed(1)}), jy = mod(tx.y, ${SD_HOLLOW_ROOM.course.toFixed(1)});
+  if (jx < 1.0 || jy < 1.0) return MORTAR;
+  float h = dhash(vec2(col, row) + seed);
+  vec3 c = h < 0.33 ? STONE0 : h < 0.66 ? STONE1 : STONE2;
+  if (jy > ${(SD_HOLLOW_ROOM.course - 1.5).toFixed(1)}) c *= 1.18;   // each block's top edge catches the light
+  return c * (0.88 + 0.24 * dhash(tx * 0.37 + seed));
+}
+// the eye's ray into the room behind the ring (+z, away from the eye), and where it meets the room: its colour there
+vec3 hollowAt(vec2 g) {
+  vec3 o3 = vec3(g * uSize, 0.0);
+  vec3 e = uToLocal * (uEye - (uModel * vec4(0.0, 0.0, 0.0, 1.0)).xyz);
+  vec3 wp = (uModel * vec4(g * uSize, 0.0, 1.0)).xyz;
+  vec3 d = uToLocal * normalize(wp - uEye);
+  if (e.z > 0.0) { d.z = -d.z; d.x = -d.x; }   // the room is always behind the ring as the eye stands (its right the eye's right)
+  d.z = max(d.z, 0.05);
+  float W = ${SD_HOLLOW_ROOM.half.toFixed(2)}, D = ${SD_HOLLOW_ROOM.deep.toFixed(2)}, F = -uFloor, C = -uFloor + ${SD_HOLLOW_ROOM.ceil.toFixed(2)};
+  float tx = ((d.x > 0.0 ? W : -W) - o3.x) / (abs(d.x) < 1e-4 ? 1e-4 : d.x);
+  float ty = ((d.y > 0.0 ? C : F) - o3.y) / (abs(d.y) < 1e-4 ? 1e-4 : d.y);
+  float tz = (D - o3.z) / d.z;
+  float t = min(tx, min(ty, tz));
+  vec3 h = o3 + d * t;
+  vec3 c;
+  float face;   // the face's light from the front: walls and the floor lit, the ceiling least
+  if (t == tz) {
+    c = stone(vec2(h.x + 7.0, h.y - F), 1.0); face = 1.0;
+    // a doorway in the far wall, round-headed, black beyond: the hall goes on
+    vec2 dq = vec2(h.x, h.y - F);
+    if (abs(dq.x) < 0.8 && (dq.y < 2.0 || length(vec2(dq.x, dq.y - 2.0)) < 0.8)) c = vec3(0.015, 0.012, 0.01);
+    else if (abs(dq.x) < 0.95 && (dq.y < 2.0 || length(vec2(dq.x, dq.y - 2.0)) < 0.95)) c *= 1.35;   // its dressed jambs
+  }
+  else if (t == tx) { c = stone(vec2(h.z, h.y - F), d.x > 0.0 ? 2.0 : 3.0); face = 0.8; }
+  else if (d.y < 0.0) { c = stone(vec2(h.x * 0.5 + 9.0, h.z * 2.0), 4.0) * 0.9; face = 0.9; }
+  else { c = stone(vec2(h.x, h.z), 5.0) * 0.6; face = 0.4; }
+  // lit only from the front, in the Rift's gold, falling off into the dark; the Return's silver on the right wall
+  float fall = 1.0 / (1.0 + h.z * h.z * 0.06);
+  vec3 lit = c * GOLD * (0.3 + 1.5 * fall * face);
+  if (t == tx && d.x > 0.0) {
+    vec2 q = vec2((h.z - 4.5) / 1.3, (h.y - F - 1.6) / 1.6);
+    lit += c * MOON * 1.1 * (1.0 - smoothstep(0.0, 1.0, length(q)));
+  }
+  return lit;
+}
+void main() {
+  vec2 cell = floor((vDisc * 0.5 + 0.5) * ${SD_WINDOW_CELLS.toFixed(1)});
+  vec2 g = (cell + 0.5) / ${SD_WINDOW_CELLS.toFixed(1)} * 2.0 - 1.0;
+  float r = length(g);
+  if (r > 1.0) discard;
+  vec3 col = hollowAt(g);
+  // the ring's own gold at its rim, the white-gold lip, as the Rift's
+  float ang = atan(g.x, g.y), lr = log(max(r, 1e-3));
+  float fil = step(0.7, dnoise(vec2(ang * 3.0 - lr * 4.0 - uTime * 0.35, lr * 7.0 + uTime * 0.9))) * smoothstep(0.7, 0.98, r);
+  col = mix(col, GOLD * 0.8, fil * 0.7);
+  col = mix(col, LIP, step(0.955, r));
   col *= uLight;
   col = mix(uFogColor, col, fogFactorAt(vWorld));
   o = vec4(sdPixel(col, cell, uSteps), 1.0);
@@ -238,6 +328,7 @@ export class SdRiftRenderer {
     this.win = mk(SD_WINDOW_VS, SD_WINDOW_FS, 'sd rift window', ['uView', 'uProj', 'uModel', 'uSize', 'uToLocal', 'uEye', 'uLight', 'uEmber', 'uRipple', 'uSteps', 'uSkyMap', 'uTime', 'uGain', 'uClock', ...FOGS]);
     this.floor = mk(SD_FLOOR_VS, SD_FLOOR_FS, 'sd rift floor', ['uView', 'uProj', 'uModel', 'uReach', 'uRadii', 'uCrater', 'uGear', 'uPulse', 'uColor', 'uSteps', ...FOGS]);
     this.bay = mk(SD_WINDOW_VS, SD_BAY_FS, 'sd return window', ['uView', 'uProj', 'uModel', 'uSize', 'uHour', 'uClouds', 'uFade', 'uSteps', ...FOGS]);
+    this.hollow = mk(SD_WINDOW_VS, SD_HOLLOW_FS, 'sd way back window', ['uView', 'uProj', 'uModel', 'uSize', 'uToLocal', 'uEye', 'uFloor', 'uLight', 'uTime', 'uSteps', ...FOGS]);
     const vao = (data) => {
       const v = gl.createVertexArray();
       gl.bindVertexArray(v);
@@ -267,14 +358,29 @@ export class SdRiftRenderer {
   }
   /**
    * Draw what `look` asks: `{ window?: { model, toLocal, radius, eye, light, ember, ripple, sky: { map, seconds, gain,
-   * clock } }, floor?: { model, reach, radii, crater, gear, pulse, color }, bay?: { model, key, outline, half, hour,
+   * clock }, hollow?: { floor } }, floor?: { model, reach, radii, crater, gear, pulse, color }, bay?: { model, key, outline, half, hour,
    * clouds, fade } }` - each in the frame's fog, at the pixel law's `steps`. Answers whether anything drew.
    */
   draw(proj, view, look, fog = null, steps = 10) {
     const gl = this.gl;
     let n = 0;
     gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    if (look.window?.sky?.map) {
+    if (look.window?.hollow) {
+      // the way back's window: the Hollow's hall behind the ring
+      const w = look.window, P = this.hollow, U = P.u;
+      gl.disable(gl.BLEND);
+      gl.useProgram(P.prog);
+      this._common(U, proj, view, w.model, fog);
+      this._size[0] = this._size[1] = w.radius;
+      gl.uniform2fv(U.uSize, this._size);
+      gl.uniformMatrix3fv(U.uToLocal, false, w.toLocal);
+      gl.uniform3fv(U.uEye, w.eye);
+      gl.uniform1f(U.uFloor, w.hollow.floor); gl.uniform1f(U.uLight, w.light ?? 1);
+      gl.uniform1f(U.uTime, sdSkyClock(w.sky?.seconds ?? 0)); gl.uniform1f(U.uSteps, steps);
+      gl.bindVertexArray(this.disc.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, this.disc.count);
+      n++;
+    } else if (look.window?.sky?.map) {
       const w = look.window, P = this.win, U = P.u;
       gl.disable(gl.BLEND);
       gl.useProgram(P.prog);

@@ -16,7 +16,7 @@ const want = process.argv.slice(2).filter((a) => VIEWS.includes(a));
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 
-const server = await createServer({ server: { port: 5241, strictPort: true }, logLevel: 'error' });
+const server = await createServer({ server: { port: 5241, strictPort: true, watch: { ignored: ['**/.claude/**'] } }, logLevel: 'error' });   // a still probe: never the agents' worktrees
 await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: Number(process.env.ABYSS_W ?? 960), height: Number(process.env.ABYSS_H ?? 540) } });

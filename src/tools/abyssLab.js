@@ -11,6 +11,7 @@
 //   ?t=<seconds>     the Hour's anchored clock, pinned          ?still   the clock stopped
 //   ?lane=off        the classic set (no enhanced lighting)      ?nopanel the panel hidden (probes)
 //   ?x=&y=&z=&yaw=&pitch=   an exact eye (the dungeon's frame, metres; degrees)
+//   ?rx=&ry=&rz=     an exact eye in the realm's frame
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
@@ -31,6 +32,7 @@ import { createSdHall } from '../scenes/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
 import { createSdEnd } from '../scenes/sdEnd.js';
+import { riftCentreY } from '../world/sdRiftModel.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
 import { SdRiftRenderer } from '../render/sdRiftPass.js';
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
@@ -81,6 +83,7 @@ function setView(name) {
 }
 setView(viewSel.value);
 if (params.has('x')) cam.pos = [Number(params.get('x')), Number(params.get('y') ?? 1.7), Number(params.get('z') ?? 0)];
+if (params.has('rx')) cam.pos = realmToDungeon(Number(params.get('rx')), Number(params.get('ry') ?? 1.7), Number(params.get('rz') ?? 0));   // the realm's frame
 if (params.has('yaw')) cam.yaw = Number(params.get('yaw')) * Math.PI / 180;
 if (params.has('pitch')) cam.pitch = Number(params.get('pitch')) * Math.PI / 180;
 viewSel.addEventListener('change', () => setView(viewSel.value));
@@ -106,6 +109,7 @@ const steps = createSdSteps({ renderer });
 steps.stand({ dynamicDraws, collider: null });
 const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(LAB_SLOT)[0] });
 remnant.stand({ dynamicDraws });
+const WAY_BACK_HOLLOW = { floor: riftCentreY(SD_WAY_BACK_SIZE) };
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock });
 wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws });
 const sky = new SdSkyRenderer(gl);
@@ -289,6 +293,7 @@ function frame(now) {
     sky.paint(clock, courtFogNow(), skyLook(lane), renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]);
     if (sky.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), labClock())) renderer.markForeignPass();
     const look = wayBack.look(cam.pos, { map: sky.map.texture, seconds: clock, gain: skyGain(renderer._fogColor, SD_REALM_FOG.color), clock: labClock() });
+    if (look?.window && !params.has('nohollow')) look.window.hollow = WAY_BACK_HOLLOW;   // SD-LOOK S6: the Hollow behind it (until sdEnd says so itself)
     if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
     if (halo.draw(proj, view, wayBack.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
     if (motes.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();
