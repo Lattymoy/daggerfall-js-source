@@ -92,8 +92,8 @@
   {
     "name": "SD9E-the-list-gold-first",
     "file": "src/systems/sdSpoils.js",
-    "old": "    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n",
-    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n",
+    "old": "    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : []),   // CARDS9: the Remnant's card, after the pieces\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),\n    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : []),   // CARDS9: the Remnant's card, after the pieces\n",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

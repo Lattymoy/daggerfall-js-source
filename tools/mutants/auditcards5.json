@@ -961,8 +961,8 @@
   {
     "name": "AC5-C-M9",
     "file": "src/systems/iliacItems.js",
-    "old": "isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,",
-    "new": "isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: false,",
+    "old": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: true,\n});\nexport const CARD_BINDER_ROW",
+    "new": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: true, hasNoEncumbrance: false,\n});\nexport const CARD_BINDER_ROW",
     "tests": [
       "test/auditcards5_items.test.js",
       "test/cards8_binder.test.js",

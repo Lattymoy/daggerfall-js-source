@@ -19,9 +19,11 @@
 // and never slip.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { ILIAC_CARDS, cardById, ILIAC_TIERS } from '../net/iliacCards.js';
+import { ILIAC_CARDS, cardById, ILIAC_TIERS, STARTER_DECK } from '../net/iliacCards.js';
 import { ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX, ILIAC_TURNS, ILIAC_HOLDINGS, deckValid, commit, reveal, iliacView, legalPlays, playsRefusal } from '../net/iliacHand.js';
 import { TEMPER_NAMES } from './cardPatrons.js';
+import { BOSS_CARD_IDS } from './bossCards.js';   // CARDS9: a boss's own card is found, never dealt
+const BOSS_IDS = new Set(BOSS_CARD_IDS);
 
 /** The tavern's grade by its building's quality (1..20): the Hold'em stakes' own bands (cardTableSession.js
  *  TABLE_STAKES - to 7, to 13, above). 0 a village's, 1 a town's, 2 a city's. */
@@ -34,8 +36,8 @@ export function iliacGrade(quality) {
 /** MEASURE (CARDS10): the tiers a grade's decks are drawn from, and how many of each above magic a deck may carry. */
 export const GRADE_TIERS = Object.freeze([
   Object.freeze({ common: 30, magic: 30 }),
-  Object.freeze({ common: 30, magic: 30, rare: 6 }),
-  Object.freeze({ common: 30, magic: 30, rare: 8, legendary: 2, aetheric: 1 }),
+  Object.freeze({ common: 30, magic: 30, rare: 3 }),
+  Object.freeze({ common: 30, magic: 30, rare: 4, legendary: 2, aetheric: 1 }),
 ]);
 /** MEASURE (CARDS10): how often a regular takes a good play instead of his best, by grade. */
 export const GRADE_SLIP = Object.freeze([0.25, 0.1, 0]);
@@ -63,40 +65,73 @@ export function seededUnit(seed) {
   };
 }
 
+/** MEASURE (CARDS10): how many of the starter deck's thirty a regular trades for a card of his kind, by grade - flavour,
+ *  not strength. CARDS10's sims found the curve is the game (in six turns of one to six magicka a deck of cheap cards
+ *  beat any deck of dear ones, the starter deck among them) and a card is strong only in a deck that suits it: so a
+ *  regular's deck is the starter deck's curve, card for card at the same cost, his kind's traded in. */
+export const GRADE_SWAPS = Object.freeze([6, 3, 2]);
+/** MEASURE (CARDS10): each temper's upgrades - his kind's cards that each won over the starter deck's own in the sims
+ *  (eighty games each, both seats: Azura 48-28, Mehrunes Dagon 46-33, Daedroth 49-31, the Orc Shaman 46-31, the
+ *  Werewolf 45-33, the Daedra Seducer 43-33, the Knight of the Flame 42-35, the Wraith 42-37, King Gothryd 41-36, the
+ *  Dragonling 41-34, Hircine 40-37) - his Prince first. A town's regular carries the first two that are not Princes; a
+ *  city's, his Prince and all of them. */
+export const TEMPER_UPGRADES = Object.freeze({
+  tight: Object.freeze(['azura', 'knight-of-the-flame', 'king-gothryd']),
+  loose: Object.freeze(['hircine', 'werewolf', 'orc-shaman', 'dragonling']),
+  bluffer: Object.freeze(['mehrunes-dagon', 'daedroth', 'daedra-seducer', 'wraith']),
+});
+
 /**
- * A REGULAR'S DECK: thirty ids the rules take (deckValid), drawn from the first set for his temper and the tavern's
- * grade - his kind's cards first (by weight, a card his tags name four times as likely), his spells, then any card of
- * the grade's tiers to fill; never more of a tier above magic than the grade allows, never an artifact (those are the
- * Princes' gifts, found, not dealt). The same seed, temper and grade build the same deck.
+ * A REGULAR'S DECK: thirty ids the rules take (deckValid) - the starter deck, his grade's upgrades (TEMPER_UPGRADES: a
+ * town's two, a city's Prince and all) each in place of the starter's card of its cost (a Prince for a four), then
+ * GRADE_SWAPS of the rest traded for a card of his kind at the same cost (his kind six times as likely, his spells three
+ * for a spell); never more of a tier above magic than the grade allows, never an artifact (the Princes' gifts are found,
+ * not dealt) or a boss's own. The same seed, temper and grade build the same deck.
  * @param {number} seed @param {string} temper @param {number} grade
  * @returns {string[]}
  */
 export function patronDeck(seed, temper, grade) {
-  const T = ILIAC_TEMPERS[temper] ?? ILIAC_TEMPERS.tight;
-  const caps = GRADE_TIERS[Math.max(0, Math.min(2, grade | 0))];
+  const g = Math.max(0, Math.min(2, grade | 0));
+  const tp = ILIAC_TEMPERS[temper] ? temper : 'tight';
+  const T = ILIAC_TEMPERS[tp];
+  const caps = GRADE_TIERS[g];
   const u = seededUnit(seed);
-  const left = { ...caps };
+  const deck = [...STARTER_DECK];
+  const fixed = new Set();
   const count = new Map();
-  const out = [];
+  const tiers = {};
+  const tally = (id, d) => { count.set(id, (count.get(id) ?? 0) + d); const t = cardById(id).tier; tiers[t] = (tiers[t] ?? 0) + d; };
+  for (const id of deck) tally(id, 1);
   const room = (c) => {
     const most = ILIAC_TIERS.indexOf(c.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
-    return (left[c.tier] ?? 0) > 0 && (count.get(c.id) ?? 0) < most;
+    return (count.get(c.id) ?? 0) < most && (tiers[c.tier] ?? 0) < (caps[c.tier] ?? 0);
   };
-  const take = (c) => { out.push(c.id); count.set(c.id, (count.get(c.id) ?? 0) + 1); left[c.tier]--; };
-  const pool = ILIAC_CARDS.filter((c) => c.kind !== 'location' && c.tier !== 'artifact' && caps[c.tier] !== undefined);
-  const weight = (c) => (c.kind === 'spell' ? (T.spells.includes(c.id) ? 3 : 0.3) : c.tags.some((t) => T.tags.includes(t)) ? 4 : 1);
-  // his kind first: two-thirds of the deck drawn by weight, the rest by the grade's whole pool
-  for (let guard = 0; out.length < ILIAC_DECK_SIZE && guard < 4000; guard++) {
-    const open = pool.filter(room);
-    if (!open.length) break;
-    const kinded = out.length < 20;
-    const w = open.map((c) => (kinded ? weight(c) : 1));
+  const swap = (at, id) => { tally(deck[at], -1); tally(id, 1); deck[at] = id; fixed.add(at); };
+  const ups = TEMPER_UPGRADES[tp].filter((id) => (g === 2 ? true : g === 1 ? cardById(id).kind !== 'prince' : false));
+  for (const id of g === 1 ? ups.slice(0, 2) : ups) {
+    const c = cardById(id);
+    if (!c || !room(c)) continue;
+    // its own cost's place, else the dearest below it (the starter deck stops at four; a Prince always takes a four's)
+    const want = c.kind === 'prince' ? 4 : c.cost;
+    let at = -1;
+    for (let cost = want; cost >= 1 && at < 0; cost--) at = deck.findIndex((x, i) => !fixed.has(i) && cardById(x).cost === cost && cardById(x).kind !== 'spell');
+    if (at >= 0) swap(at, id);
+  }
+  const pool = ILIAC_CARDS.filter((c) => c.kind === 'unit' || c.kind === 'spell').filter((c) => c.tier !== 'artifact' && caps[c.tier] !== undefined && !BOSS_IDS.has(c.id));
+  const weight = (c) => (c.kind === 'spell' ? (T.spells.includes(c.id) ? 3 : 0.3) : c.tags.some((t) => T.tags.includes(t)) ? 6 : 1);
+  const order = deck.map((_, i) => i).filter((i) => !fixed.has(i));
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(u() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  for (const at of order.slice(0, GRADE_SWAPS[g])) {
+    const was = cardById(deck[at]);
+    const open = pool.filter((c) => c.cost === was.cost && c.id !== was.id && room(c) && (c.kind === 'spell') === (was.kind === 'spell'));
+    if (!open.length) continue;
+    const w = open.map(weight);
     let r = u() * w.reduce((a, b) => a + b, 0);
     let k = 0;
     while (k < open.length - 1 && r >= w[k]) { r -= w[k]; k++; }
-    take(open[k]);
+    swap(at, open[k].id);
   }
-  return out.sort();
+  return deck.sort();
 }
 
 /**

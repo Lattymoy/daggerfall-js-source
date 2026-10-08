@@ -217,6 +217,9 @@ import { CardTableSession, stakesFor, buyInRange, seatPatrons, regularsFor, regu
 import { RemoteCardTable } from '../systems/cardRemoteTable.js';   // CARDS5: the relay's table as this client sees it
 import { HOLDEM_STAKE_MAX_BB, HOLDEM_TOPUP_MIN_BB } from '../net/holdemTable.js';   // CARDS6 follow-up: a gold seat's top-up
 import { regularsToStand, regularBark, BARK_MS } from '../world/cardRegulars.js';   // CARDS4b: the regulars in their chairs
+import { openIliacTableGame } from './iliacTableGame.js';   // CARDS10: Iliac Hand on the seat
+import { iliacGrade } from '../systems/iliacPatrons.js';   // CARDS10: the tavern's grade - its regulars' decks and play
+import { cardPackPrice, buyCardPack } from '../systems/cardSources.js';   // CARDS9: the house sells packs at its card table
 import { heldMatrices, heldLift, blendMatrix, HELD_EASE_S, tablePoint, onStack, onTable, inBetZone, dragBet, PEEK_RATE, DRAG_LIFT } from '../world/cardHand.js';   // CARDS3b: the hand held, the chips dragged
 import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';   // CARDS3b: the cursor's ray, and the hand on the screen
 import { createCardTableHud, cardHudModel, eventLine, showdownWinners, HOLDEM_REFUSALS } from '../ui/cardTableHud.js';   // CARDS4: its panel
@@ -527,6 +530,7 @@ export function createWorldModes(host) {
     cardSeat = null;
     cam.pos = player.eyeAt();   // EV1: back to the body's own eye
     closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out
+    closeIliacGame({ concede: cashOut });   // CARDS10: and concedes an Iliac game under way (a load's road: the game the load threw away)
   }
   // CARDS4 (bible/11-Multiplayer/Tavern-Cards.md section 14; Mac: "Hold'em first", "Real gold", "Yes, patrons play"):
   // THE TABLE'S EVENING ON THE SEAT. Sitting down opens the table's panel (ui/cardTableHud.js - the port's own, not a
@@ -537,6 +541,45 @@ export function createWorldModes(host) {
   // sees (Tavern-Cards section 5: a table the service does not keep plays for no gold), so a realm character - or any
   // online page - plays for chips, and no purse is touched.
   let cardGame = null;   // { hud, releaseCursor, stakes, friendly, buyIn, names, session, log, phase, why, scene, draw } while the panel stands
+  // CARDS10 (bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND ON THE SEAT - its own slot beside the Hold'em
+  // game's (one or the other stands: each opens by closing the other), the game's half in scenes/iliacTableGame.js
+  let iliacGame = null;
+  /** CARDS9: a pack's price at this house's card table - its quality, the player's haggle (the counter's own law). */
+  const cardHaggle = () => ({ mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality') });   // the tavern window's own skills hook
+  const cardPackHere = () => cardPackPrice(interiorBuilding?.quality ?? 10, cardHaggle());
+  const buyCardPackHere = () => buyCardPack(playerEntity, { quality: interiorBuilding?.quality ?? 10, skills: cardHaggle() });
+  /** CARDS10: the Iliac game closes (a game under way conceded) - the slot emptied first (THE SLOT IS EMPTIED BEFORE THE
+   *  OCCUPANT IS TOLD). */
+  function closeIliacGame({ concede = true } = {}) {
+    const ig = iliacGame;
+    if (!ig) return;
+    iliacGame = null;
+    ig.close({ concede });
+  }
+  /** CARDS10: Iliac Hand opens on the seat - the Hold'em panel gone, a regular for every free chair. */
+  function openIliacGame() {
+    if (!cardSeat) return;
+    if (cardGame) closeCardGame();
+    closeIliacGame();
+    const t = interiorCtx?.tables?.[cardSeat.table];
+    if (!t) return;
+    const seats = cardSeatsOf(cardSeat.table);
+    const free = cardSeat.free ?? [];
+    const names = tavernRegulars(Math.max(1, Math.min(5, free.length)));
+    const seeds = regularSeeds(names.length);
+    const quality = interiorBuilding?.quality ?? 10;
+    const regs = new Map(seeds.map((r, i) => [names[i], r]));
+    iliacGame = openIliacTableGame({
+      renderer, entity: playerEntity, say, holdCursor, relock: () => host.relock?.(), rand32: cardRand32, now: () => performance.now(),
+      day: cardDay(), key: cardTableKey(), grade: iliacGrade(quality), friendly: !!host.realmAct || isOnlinePage(),
+      regulars: free.map((chair, i) => (names[i] ? { name: names[i], seed: seeds[i].seed, chair } : null)).filter(Boolean),
+      frame: tableFrame(t), mySeatFeet: seats[cardSeat.seat].feet, chairFeet: (k) => seats[k]?.feet ?? seats[cardSeat.seat].feet,
+      packPrice: cardPackHere, buyPack: buyCardPackHere,
+      onHoldem: () => { closeIliacGame(); if (cardSeat) openCardGame((cardSeat.free?.length ?? 0) + 1); },
+      onStand: () => standFromCardTable(),
+    });
+    iliacGame.regulars = regs;   // CARDS4b's look for the regular in his chair (cardRegularsNow)
+  }
   const cardRand32 = () => globalThis.crypto.getRandomValues(new Uint32Array(1))[0];   // the table's own source - DFU's one stream is never stirred
   /** CARDS4: the tavern's regulars - the same names every evening at this building (the living world's own namer, on a
    *  seed of the town and the building's key: AUDIT CARDS-2 L9, a building key is its block's, alike in every town), as
@@ -663,12 +706,14 @@ export function createWorldModes(host) {
     g.paintedAt = performance.now();
     g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
       online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length && !g.goldOnline } : null,
-      gold: !!g.goldOnline, staking: !!g.staking, topUp: cardTopUpAmount(g) }));   // CARDS6; section 24: the top-up
+      gold: !!g.goldOnline, staking: !!g.staking, topUp: cardTopUpAmount(g), iliac: true, packPrice: cardPackHere() }));   // CARDS6; section 24: the top-up; CARDS9/10: a pack, and the other game
   }
   function cardPress(game, id, value) {
     if (game !== cardGame) return;   // a press from a panel already gone
     const now = performance.now();
     if (id === 'stand') { standFromCardTable(); return; }
+    if (id === 'iliac') { openIliacGame(); return; }   // CARDS10: the other game at this table
+    if (id === 'pack') { const r = buyCardPackHere(); say(r.ok ? `You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.` : `A pack costs ${r.price} gold - your purse is short.`); paintCardGame(); return; }   // CARDS9: the house's packs
     if (game.remote) {
       // CARDS5: the relay's table - an action is a word to it, and the relay answers with the table; alone, the regulars
       if (id === 'regulars') {
@@ -779,6 +824,12 @@ export function createWorldModes(host) {
   }
   /** CARDS4b: the regulars at this table to stand this frame - none at a relay's table or a game not dealt. */
   function cardRegularsNow(now) {
+    const ig = iliacGame?.g;
+    if (ig?.session && cardSeat) {   // CARDS10: Iliac Hand's regular sits in the chair he plays from
+      const seats = cardSeatsOf(cardSeat.table);
+      const chair = Number(String(ig.session.seats[1].id).split(':')[1]);
+      return regularsToStand({ session: ig.session, seats, seatOf: [cardSeat.seat, chair], regulars: iliacGame.regulars ?? new Map(), key: cardTableKey() });
+    }
     const g = cardGame;
     if (!g?.session || g.remote || !cardSeat) return [];
     const seats = cardSeatsOf(cardSeat.table);
@@ -9595,6 +9646,7 @@ export function createWorldModes(host) {
     seatHallsFrame(performance.now());   // AUDIT SEATS-2 C1: the seat halls, known late
     decorTool.frame({ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' });   // DECOR1d: the button, the panel's scan, the free camera
     if (mode === 'interior') cardGameFrame(performance.now());   // CARDS4: the card table's patrons think and deal on, under any window
+    if (mode === 'interior') iliacGame?.frame(performance.now());   // CARDS10: and the Iliac regular thinks and the turn turns over
     host.cardRegulars?.(mode === 'interior' ? cardRegularsNow(performance.now()) : [], dt, cam.pos);   // CARDS4b: the regulars in their chairs, drawn as peers are (world.js) - none outside a building
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
@@ -10276,6 +10328,7 @@ export function createWorldModes(host) {
     interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room
     decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung
     if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);   // CARDS3: the cards and chips on the cloth - CARDS3b: the player's own two held before the eye
+    iliacGame?.draw(performance.now());   // CARDS10: an Iliac game's cards on the cloth
     for (const w of cardWatches.values()) if (w.remote.state) w.draw.draw(w.scene.poses(performance.now() / 1000, w.remote.view()));   // CARDS5: and the tables this player watches
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
@@ -12769,6 +12822,7 @@ export function createWorldModes(host) {
     /** AUDIT DROPS E2: the surface underfoot in this mode, as PEER-FS1's kind - what the pose says peers hear. */
     get footstepKind() { return _modeFootstepKind; },
     cardTableLive: () => !!cardGame?.session && !cardGame.friendly,   // AUDIT CARDS-2 H1: chips on the table - the save refuses (world.js worldQuickSave); AUDIT CARDS-3 E-N5: a friendly game's chips are no gold
+    iliacStaked: () => !!iliacGame?.staked?.(),   // CARDS10: a game of Iliac Hand for keeps under way - a card in play the save would not know (world.js worldQuickSave)
     cardOnlineFrame,   // CARDS5: the relay's card table's frames (world.js online.onHoldem)
     /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
      *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */
