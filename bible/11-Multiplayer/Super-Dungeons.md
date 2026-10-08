@@ -609,6 +609,10 @@ it is good and to an earner's seat at the fall; `spent {s}` in, to the hub alone
 bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receipt] each) and who stood in the realm
 (`here`).
 
+SD-HELLO: a page says nothing into `sd:<s>` but its hello (and the runtime's own ping) until the realm welcomes the
+socket. The realm's hello asks the hub (`/internal/sd/live`) before it names the socket, and a Durable Object takes the
+socket's next frame while that fetch is out: a pose read then is a pose before hello, refused for good.
+
 ## 15. The four hosts
 
 | host | what it carries |
@@ -641,6 +645,7 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | SD-ALONE | no companion through the Rift |
 | SD-REACH, SD-LAND | the Rift where a walk reaches; never out in the Hour's sky |
 | SD-SKY | the way out of the Hour, and the find's door, in the street's own frame |
+| SD-HELLO | a socket says nothing past its hello until the realm welcomes it (the page's half) |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -2941,10 +2946,7 @@ Hollow stood, so SD-LAND's empty landing could not be it: the door was FOUND, in
 | K2 | THE FIND'S DOOR IN THE PIXEL'S FRAME. The sdHost's `door` seam measured the feet (the scene's) against the door read raw - right only on the pixel the player stands in, whose translation is the vertical shift alone; a Hollow's door on the pixel beside it stood a pixel's width off, and no find was said from beside it | the same `shiftedDoor` (its cache keyed on the door generation, which every origin move bumps) |
 
 Not changed, and why:
-- WHAT SENT THEM OUT. Every way out of a standing Hollow's Hour is one of the realm's own - its room refusing the hello
-  for good (`online.terminal`, the relay's *"The Hour has closed."*, *"The Hour is full."*, *"The Hour will not take you
-  back."*), the way home, `/unstuck` - and each now lands before the door with its words. The screenshots carry no
-  word, so which one these two players met is not read off them; a report that names the line said is the next step.
+- WHAT SENT THEM OUT was the realm room's hello, refused under the page's own first pose - SD-HELLO, below.
 - TWO PLAYERS, TWO RIFTS (ValenValarys: *"player cant see what I see"*, the other player standing in the ring) were two
   builds: a tab kept open from before SD-REACH stands the Rift in its old pocket. The end reads the layout alone. The
   species stood at its markers differ by client (the level's band, Varied Dungeon Monsters), but the water-species veto
@@ -2963,3 +2965,43 @@ THE FOUR HOSTS: `scenes/world.js` WIRED (both of the Hollow's door seams through
 `scenes/worldModes.js` FLAGGED - `returnLanding` asks the world host's doors as before, now the street's;
 `scenes/dungeonContext.js` FLAGGED - the end and the Rift unchanged (the layout's markers, every client's);
 `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hollow, no Hour.
+
+### SD-HELLO - shipped 2026-10-08 (the page's half: a socket says nothing past its hello until the realm welcomes it)
+
+What threw the Discord's players out of the Hour (SD-SKY's pictures: *"portal keep teleporting me out of dungeon"*, on
+every try) - found by a model of the relay's own objects, each line of it read again in the tree:
+
+1. The page's socket opens; it says its hello and counts itself open (`net/online.js` `_bind`, `status` 'open'), so the
+   very next frame's pose goes down it (`sendPose` asked only that).
+2. The realm's hello asks the hub for its record before it names the socket (`server/src/index.js` `_sdAdmit` ->
+   `_sdLiveOf` -> `sdLiveAsk`, a fetch to the hub's object; the socket's id is attached only at the hello's end).
+3. A Durable Object takes the socket's next frame while a fetch is out (its input gate closes for storage alone). The
+   pose, read then, found no id on its socket: *pose before hello* (`net/wire.js` `parseClient`), refused with
+   `CLOSE_POLICY` - a terminal close.
+4. The page, terminal in the Hour, was cast out (`scenes/world.js` `sdRealmFrame`) with *"The way to the Shattered Hour
+   is lost."* - before SD-SKY, into the sky.
+
+The realm keeps the hub's answer 10 s (`SD_LIVE_FRESH_MS`), so a step taken minutes after the last asked again and lost
+again - every try - while a player stepping in within 10 s of another got in. The court never raced: its admission reads
+storage alone (`_gateAdmit`). And a fighter whose socket blinked in the arena said its `in` and its blows the same way
+(`sdOk` is the last welcome's, never reset).
+
+| | what was wrong | now |
+|---|---|---|
+| H1 | A FRAME AHEAD OF ITS WELCOME. A socket said whatever came next the moment it had said its hello | `net/online.js` keeps the sockets their room has welcomed (`_welcomed`, a WeakSet - the mark travels with the socket through a halo's promotion and AURA-LIVE's replacement): `_send` holds every frame but the hello and the runtime's ping until it, and so do the pose's halo copies, the last pose, a cell's foes, the Orrery's turns and the fight's words |
+
+Not changed: THE RELAY'S HALF. A tab kept open from before this build still races (the build's own notice asks it to
+reload). The relay could take a frame that comes during a hello as after it (each socket's frames in their order), or
+keep the hub's ask off the hello's path - a relay change, which moves `RELAY_VERSION`, and its deploy drops every
+connected player once: Mac's call, open.
+
+Pins: the five that sent ahead of a welcome now deliver one and say what waits - `test/online.test.js` (ONLINE1: a pose
+before the welcome held), `test/chat1.test.js` (CHAT1: a line before it held), `test/relayh1.test.js`,
+`test/htwaistnet_peers.test.js` and `test/invisnet.test.js` (the real Room's own welcome handed to the sender);
+`tools/mutants/sd24_hello.json` (3 - the gate gone, the hello held by it, the welcome marking nothing - all dead).
+Unpinned beside them: the gate at the pose's halo copies, the last pose, a cell's foes and the realm's own words, the same
+law at each. RE-AIMED BY CONTENT: `tools/mutants/sd6b.json`'s `SD6B-a-turn-from-a-cell` (the Orrery's turn guard grew the
+welcome; still dead).
+
+THE FOUR HOSTS: none touched - the session is the hosts' one (`net/online.js`); `scenes/world.js`'s `sdRealmFrame` casts
+out on a terminal close as before, and no longer meets one of its own page's making.

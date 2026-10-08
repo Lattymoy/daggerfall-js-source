@@ -1,0 +1,33 @@
+[
+  {
+    "name": "SD24-the-send-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (o?.t !== 'hello' && o?.t !== 'ping' && !this._welcomed.has(this._ws)) return false;   // SD-HELLO\n",
+    "new": "",
+    "tests": [
+      "test/online.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "SD24-the-hello-held",
+    "file": "src/net/online.js",
+    "old": "    if (o?.t !== 'hello' && o?.t !== 'ping' && !this._welcomed.has(this._ws)) return false;   // SD-HELLO\n",
+    "new": "    if (o?.t !== 'ping' && !this._welcomed.has(this._ws)) return false;   // SD-HELLO\n",
+    "tests": [
+      "test/online.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "SD24-the-welcome-unmarked",
+    "file": "src/net/online.js",
+    "old": "if (ws) this._welcomed.add(ws); }",
+    "new": "if (ws) void ws; }",
+    "tests": [
+      "test/online.test.js",
+      "test/relayh1.test.js",
+      "test/invisnet.test.js"
+    ]
+  }
+]
