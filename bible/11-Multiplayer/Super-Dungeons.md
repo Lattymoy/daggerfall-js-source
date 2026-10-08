@@ -239,7 +239,8 @@ Bay's people crowd thickest, their many souls press the world thin, and a dungeo
 of the Warp - a Hollow - whose deepest hall opens on the Hour.
 
 The realm is a made level (`world/sdRealm.js`, the Court's pattern: a made location `0x7ffff200`, block index 900200,
-one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes) laid
+one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes, 25-30 the
+Endings' lights, 31-32 the Threshold's cobbles and the edge line, 33-35 the Rift's) laid
 along +Z in the dungeon's frame:
 
 | stage | where | what |

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "SD26-R6-the-rifts-red-renumbered",
+    "file": "src/world/sdRiftArt.js",
+    "old": "export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 35 });",
+    "new": "export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 36 });",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-R6-the-endings-lights-unsaid",
+    "file": "bible/11-Multiplayer/Super-Dungeons.md",
+    "old": "23-24 the Echoes, 25-30 the\nEndings' lights, 31-32",
+    "new": "23-24 the Echoes, 31-32",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  }
+]
