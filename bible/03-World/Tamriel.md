@@ -146,7 +146,7 @@ frame, the rest is the Bay's fit, the pan out to the frame's edge, the continent
 beyond it and nothing picked there, Off as it was. Mutants `tools/mutants/tamriel.json` (37: 34 dead, 3 equivalent as recorded), and map1's four clamp and
 band records re-aimed by content.
 
-Merged to main 2026-10-08 as #702, under `[skip ci]` at Mac's word ("Skip ci and merge"); the deploy that merge skipped was run by the follow-up merge after it.
+Merged to main 2026-10-08 as #702 at Mac's word ("Skip ci and merge"), with the CI-skipping marker in its merge title; the deploy that skipped - and again under #703, whose merge message quoted the marker - ran from #704's merge.
 
 ## TAMRIEL2 - the land mass, streamed (2026-10-08)
 
