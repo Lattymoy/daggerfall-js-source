@@ -1,14 +1,5 @@
 [
   {
-    "name": "CS-chair-a-table",
-    "file": "src/world/cardTables.js",
-    "old": "new Set([41130])",
-    "new": "new Set([41130, 41100])",
-    "tests": [
-      "test/cards2_seat.test.js"
-    ]
-  },
-  {
     "name": "CS-spacing",
     "file": "src/world/cardTables.js",
     "old": "export const SEAT_SPACING = 0.75;",
@@ -259,42 +250,6 @@
     "tests": [
       "test/cards2_seat.test.js",
       "test/cards2b_seated.test.js"
-    ]
-  },
-  {
-    "name": "CS-census-any-building",
-    "file": "tools/cardTableCensus.mjs",
-    "old": "      if (b.buildingTypes[r] !== BUILDING_TYPES.Tavern) return;",
-    "new": "",
-    "tests": [
-      "test/cards2_seat.test.js"
-    ]
-  },
-  {
-    "name": "CS-census-any-type",
-    "file": "tools/cardTableCensus.mjs",
-    "old": "if (o.objectType !== PROP_MODEL_TYPE || o.modelIdNum",
-    "new": "if (o.modelIdNum",
-    "tests": [
-      "test/cards2_seat.test.js"
-    ]
-  },
-  {
-    "name": "CS-census-blocks-counted",
-    "file": "tools/cardTableCensus.mjs",
-    "old": "row.count++; row.blocks.add(b.name);",
-    "new": "row.count++; row.blocks.add(`${b.name}:${row.count}`);",
-    "tests": [
-      "test/cards2_seat.test.js"
-    ]
-  },
-  {
-    "name": "CS-ctx-no-tables",
-    "file": "src/scenes/interiorContext.js",
-    "old": "tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }",
-    "new": "}",
-    "tests": [
-      "test/cards2_seat.test.js"
     ]
   },
   {

@@ -1,17 +1,16 @@
 // CARDS2 (2026-10-07, bible/11-Multiplayer/Tavern-Cards.md section 2; Mac: "needing to be in a tavern and being set up
 // in a sort of table enviroment"): THE CARD TABLE AND ITS SEAT. Driven: the seats a table's box holds and their fixed
 // order, the probe's veto, the seated eye's look at the table, the six kept round the sides, the nearest free seat,
-// what counts as something to sit over, what stands a seated player up, the census's tally over fake blocks. Held by
-// source: the interior context's table list behind the prop gate, and the interior host's seat - its target, its
+// what counts as something to sit over, what stands a seated player up. Held by source: the interior context's table
+// list (TAVERN-TABLE: the tavern's own prop, test/taverntable.test.js), and the interior host's seat - its target, its
 // press, its stand, its held motor, its eye, its teardown - with the four hosts named.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CARD_TABLE_MODELS, isCardTableModel, SEAT_SPACING, SEAT_SIDE_MIN, SEAT_SURFACE_MAX, SEAT_TAKEN_RADIUS,
+  SEAT_SPACING, SEAT_SIDE_MIN, SEAT_SURFACE_MAX, SEAT_TAKEN_RADIUS,
   seatSpots, cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, yawToward,
 } from '../src/world/cardTables.js';
-import { tavernFurniture } from '../tools/cardTableCensus.mjs';
 import { SEATED_EYE_HEIGHT, SEAT_OUT } from '../src/player/seatPose.js';
 import { trs } from '../src/world/mat4.js';
 
@@ -20,9 +19,7 @@ const box = (x1, z1, y0 = 0, top = 0.8) => ({ min: [0, y0, 0], max: [x1, top, z1
 const round = (v) => Math.round(v * 1e6) / 1e6;
 const at = (s) => [round(s.lx), round(s.lz), s.side, s.nx, s.nz];
 
-test('CARDS2 the table\'s ids: 41130, the one table this tree can name', () => {
-  assert.deepEqual([...CARD_TABLE_MODELS], [41130]);
-  assert.deepEqual([41130, 41100, 41106, 41000].map(isCardTableModel), [true, false, false, false], 'a chair, a bench, a bed are no table');
+test('CARDS2 the seat\'s numbers (TAVERN-TABLE: the table is the tavern\'s own prop - no Daggerfall model is one)', () => {
   assert.deepEqual([SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, round(SEATED_EYE_HEIGHT), SEAT_SURFACE_MAX, SEAT_TAKEN_RADIUS], [0.75, 0.6, 0.35, 1.22, 0.55, 0.3], 'the seated eye the seated body\'s head, the sitter\'s distance its own (seatPose.js)');
 });
 
@@ -115,27 +112,10 @@ test('CARDS2 the nearest free seat; something to sit over; what stands you up; t
   }
 });
 
-test('CARDS2 the census: the tavern\'s props in the furniture range, counted, sized, the table marked', () => {
-  const rmbs = [
-    { name: 'TVRNAS01.RMB', buildingTypes: [15, 2], interiors: [
-      [{ modelIdNum: 41130, objectType: 3 }, { modelIdNum: 41100, objectType: 3 }, { modelIdNum: 41100, objectType: 3 }, { modelIdNum: 41100, objectType: 2 }, { modelIdNum: 1234, objectType: 3 }],
-      [{ modelIdNum: 41130, objectType: 3 }],   // not a tavern
-    ] },
-    { name: 'TVRNAS02.RMB', buildingTypes: [15], interiors: [[{ modelIdNum: 41100, objectType: 3 }, { modelIdNum: 43999, objectType: 3 }, { modelIdNum: 44000, objectType: 3 }]] },
-  ];
-  const sizes = { 41100: [0.5, 1, 0.5], 41130: [2, 0.8, 1] };
-  assert.deepEqual(tavernFurniture(rmbs, (id) => sizes[id] ?? null), [
-    { model: 41100, count: 3, blocks: 2, size: [0.5, 1, 0.5], table: false },
-    { model: 41130, count: 1, blocks: 1, size: [2, 0.8, 1], table: true },
-    { model: 43999, count: 1, blocks: 1, size: null, table: false },
-  ]);
-});
-
-test('CARDS2 the interior context lists its card tables, a prop like the furniture after it', () => {
+test('CARDS2 the interior context lists its card tables - TAVERN-TABLE: the prop alone, no model of the room\'s', () => {
   const src = read('src/scenes/interiorContext.js');
-  const gate = src.indexOf('    if (p.objectType !== PROP_MODEL_TYPE) continue;');
-  const push = src.indexOf('    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) { const b = localAabb(cpu.positions); tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }');
-  assert.ok(gate > 0 && push > gate, 'behind the prop gate - a non-prop table model is scenery, as a non-prop shelf is');
+  assert.equal(src.split('tables.push(').length - 1, 1, 'one push');
+  assert.ok(src.includes('      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix });'), 'the prop\'s: the table\'s own box and its matrix');
   assert.match(src, /^ {4}tables, {4}\/\/ CARDS2: the card tables$/m);
 });
 

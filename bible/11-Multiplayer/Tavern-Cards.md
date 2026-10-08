@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -18,6 +18,8 @@ slices, and a slice that ships one records any change here first.**
 - Mac, 2026-10-08: **"So what about card collections? I think we add a new tab in holdings for the weapon codex and card
   collection"**; asked, he answered: **"One 'Collections' tab"** (a Codex | Cards switch on one Holdings entry), the
   collectible cards **"Painted in code"**, and the scope **"Tab + CARDS7 + CARDS8"** (section 26).
+- the owner, 2026-10-08, asking where Gothway Garden's card table was: **"Put a table in gothway tavern"**, and then
+  **"Lets instead place a specific table in each inn. A new property specifficaly used for the card table"** (section 28).
 
 ## How to read this page
 
@@ -48,11 +50,13 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **FACT:** `src/world/buildingNames.js` keys the tavern (`BUILDING_TYPES.Tavern` 15, `isTavern`), and an interior is a
   presence room by building (`src/net/online.js`, `interior:${loc}.${layoutRoomKey(bk, layout)}`), so every player in
   one tavern already stands in one room and sees the others (`src/net/remotePlayers.js`).
-- **MEASURE (CARDS2, still open):** which interior models in the tavern blocks are tables. The record does not guess
-  model ids, and this container carries no ARENA2: CARDS2 ships the one id the tree can name (41130) and the census
-  that names the rest (section 11).
+- **MEASURE (CARDS2) - RETIRED by TAVERN-TABLE (section 28):** which interior models in the tavern blocks are tables.
+  CARDS2 shipped the one id the tree could name (41130) and a census for the rest (section 11); the card table is now
+  its own prop, so no Daggerfall model is one and the census went with the question.
 - **DECIDED: a table is a card table if it is a table model in a tavern interior** with clear floor on at least two
-  sides. No placed prop, no new mesh: the game finds the tables Daggerfall already put there. Two to six seats per
+  sides. No placed prop, no new mesh: the game finds the tables Daggerfall already put there. **CHANGED (the owner,
+  2026-10-08, section 28):** the card table is a prop of its own, one in every tavern on clear floor found from its
+  entrance - and the only card table: Daggerfall's own tables are furniture. Two to six seats per
   table, set by its footprint (MEASURE: the seat spacing, from the table's size).
 - **DECIDED: sitting.** Activating a card table offers its game; accepting puts the player in a SEAT. Seated, the
   camera moves to a fixed seat view over the table (the player's eyes at the seat, looking at the table's centre),
@@ -277,7 +281,8 @@ Mac: **"Continue"**.
 - **Pins:** `test/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
   survivor was a finite guard the upper bound already made, and it was deleted rather than pinned.
 - **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open (CARDS2b landed after
-  it; section 12). Superseded since: the seated eye is 1.22 m (CARDS2b, the seated head's), the seats stand 0.35 m
+  it; section 12). Superseded since: TAVERN-TABLE (section 28) retired the one id and the census - the card table is a
+  prop of its own, and the FLAGGED sentence above is gone from `world/cardTables.js`; the seated eye is 1.22 m (CARDS2b, the seated head's), the seats stand 0.35 m
   out, square to their side and round the table's own box, and "the nearest free seat" counts the others' (AUDIT
   CARDS, section 13).
 
@@ -787,3 +792,97 @@ section 26 and the gold tables' AUDIT CARDS-4 fixes - the record is `01-Overview
   (NEW-3). Recorded: a top-up's row stays held until its receipt, so a character delete waits on it (N-4; no gold lost).
 - **Pins:** `test/auditcards5_gold.test.js`, `_items`, `_ui`; `cards7_rules` 31, `cards8_faces` 15, `cards8_catalog` 9;
   `tools/mutants/auditcards5.json`.
+
+## 28. TAVERN-TABLE (2026-10-08): every tavern's own card table, a prop of its own
+
+The owner, asking where Gothway Garden's card table was and told a tavern's own tables may hold none the tree can name:
+**"Put a table in gothway tavern"** - built, then, before it merged: **"Lets instead place a specific table in each inn.
+A new property specifficaly used for the card table"**.
+
+- **The departure.** Section 2 decided no placed prop: a card table was a table Daggerfall already stood, and only 41130
+  was nameable (section 11), so a tavern might have none. Now every tavern (`isTavern`) stands one card table of its
+  own, and it is the ONLY card table: the interior context lists no model of Daggerfall's (the census tool,
+  `tools/cardTableCensus.mjs`, DELETED, and `CARD_TABLE_MODELS` went with the question - the flag in `world/cardTables.js` is
+  retired).
+- **The prop** (`world/cardTableProp.js`, pure). A poker table, 1.5 by 1 m: a wooden top 6 cm thick at 0.8 m (the
+  seated pose's own table, `SEAT_TOP_DEFAULT`) on four 7 cm legs 10 cm in from the corners, the felt inlaid a 4 cm rail
+  in, 2 mm proud, so the felt is the table's top and the cards lie on it; and a stool at each of its six seats, 0.48 m
+  high, under the seated hips (AUDIT TAVERN-TABLE, section 29, set the top, the rail and the stools). The TABLE's own
+  box (`CARD_TABLE_BOX`, the stools apart) seats six (`seatSpots`: two a long side, one an end). THE ART IS OURS: the felt (green, a nap
+  per texel) and the wood (brown, a grain along its rows) are painted texel by texel from a fixed hash, 64 square, the
+  same on every client and in node; a string archive (`cardtable`, `felt` and `wood`), uploaded opaque with its mip
+  chain as a model's material is, the wood's uvs each face's own metres (the grain along a top, round a side, up a
+  leg). Every face winds as a card's plate does.
+- **The floor** (`world/placedCardTable.js`, pure). Found, not guessed. From the record's FIRST enter marker (199.8,
+  else 199.4 - the record's, not the door walked through) the room's floor is walked on a 0.5 m grid, up to 16 m each
+  way. A cell is walkable where the floor met looking down from 1.9125 m (a head's height: a bench, a chair, the bar's
+  counter is met first and is no floor) is the entrance's storey within 0.2125 m, and a body (0.2875 m) is clear at
+  0.6 m and 1.5 m. The table stands on the first cell the walk reaches at least 3 m in (its own steps) - by the walk, so
+  a wall or a closed door keeps it in the room the player enters - whose table and ring (SEAT_OUT + 0.4 m, its stools
+  and a seated body) are all walked cells, clear of the room's doors (1.5 m; an action door's hinge), people (0.6 m),
+  flats and markers (0.5 m) on that storey; along x there, else turned a quarter; on the highest floor under its top.
+  EVERY CLIENT THE SAME TABLE: the grid stands an eighth and a sixteenth of a unit off Daggerfall's 1/40 m lattice and
+  every threshold half a unit off it, so no probe meets a tie a client's own float32 world frame could break either way
+  (AUDIT TAVERN-TABLE, section 29: on the lattice, two clients could stand it 6 m apart).
+- **The table in the room** (`scenes/interiorContext.js`, `opts.placeCardTable`). Stood after the room's own models and
+  its closed doors, so the walk sees the whole room. It is one of the room's models - drawn by its own mesh, never the
+  static merge (AUDIT TAVERN-TABLE H1, section 29), in the collider and on the automap (its key the next placement
+  index, past the record's own) - and its one `tables` row, the table's own box and world box, so its seats,
+  the seat, the regulars, the relay's table and the watch are CARDS2-CARDS6's, unchanged. Its mesh is the room's,
+  freed by `destroy()`; its two textures the renderer's, uploaded once. A room with no enter marker or no such floor
+  stands none, and says so in the console.
+- **THE FOUR HOSTS.** `scenes/worldModes.js` asks for it (`placeCardTable`: a tavern) in the one interior build
+  `scenes/world.js` and `scenes/exterior.js` both enter buildings through; `scenes/dungeonContext.js` stands no tavern.
+  The `?interior` viewer (`scenes/interior.js`) does not ask: it has no body to seat.
+- **Not verified in a live tavern.** No ARENA2 here: the walk is pinned on fake rooms, and the build on a fake room
+  through the real collider (its six seats found by the host's own seat probe, each over its stool). Where it lands in
+  each tavern, and how it looks under the tavern's light, is the owner's first eye; `cards.html` (`src/tools/cardsLab.js`)
+  draws the same prop.
+- **Pins:** `test/taverntable.test.js`, 17 tests (15 at TAVERN-TABLE, 17 at its audit); `test/cards2_seat.test.js`
+  re-aimed (the ids and the census gone, the context's one table the prop's). `tools/mutants/taverntable.json`: 80 -
+  79 dead, 1 equivalent (the felt's nap transposed is another felt as good); `tools/mutants/cards2.json` loses the five
+  records of the id and the census.
+- **Ledger:** section A row TAVERN CARDS.
+
+## 29. AUDIT TAVERN-TABLE (2026-10-08): the tavern's table audited
+
+The owner: **"Audit this"**. Three lanes read a frozen snapshot of section 28 (`ba3d3686`): the floor's walk, the table
+in the room and everything keyed by a table, and the prop with what reads its geometry. Every finding below was
+reproduced against the real code before it was fixed.
+
+- **H1 - the table was never drawn.** `render/staticBatch.js` reads a merged key's archive as a number
+  (`key.split('_').map(Number)`), and the prop's string archive (`cardtable`) came out NaN: the merge drew nothing for
+  it, and the room skips a merged entry - in every tavern a table that collided, seated, dealt and was invisible. Two
+  lanes found it; the build's pin read `_batched` and never the merge. FIXED: the prop is drawn by its own mesh, never
+  merged (one draw); the build test now reads the room's merge and holds every archive in it a number.
+- **M1 - every seat sat on air.** The walk's ring keeps a seat's floor clear, so no chair could stand under a seat,
+  and the prop had none. FIXED: a stool at each seat, where `seatSpots` stands it (0.34 m square, 0.48 m high, on four
+  legs), under the seated hips; the seat's own probe sits over it (`seatFloorOk`). The table's own box
+  (`CARD_TABLE_BOX`) is what seats it and what the walk places, the stools apart.
+- **M2 - gold owed where no table stands.** The relay hands a player the cash-outs it owes them in a room only on a
+  look, and a room with no table sent none - so gold staked at a Daggerfall table before TAVERN-TABLE, in a tavern whose
+  prop finds no floor, was owed for good. FIXED: a tavern looks once on entering, table or none (the relay answers a
+  look at no table with what it owes).
+- **M3 - two clients could stand the table 6 m apart.** The walk's probes run in each client's own world frame (the
+  streamer's compensation, every placement rounded to float32), and its thresholds sat on Daggerfall's 1/40 m lattice -
+  a dais exactly 0.2 m high flipped between walkable and not (54 of 200 frames one way). FIXED: the grid off the
+  lattice by an eighth and a sixteenth of a unit, every threshold half a unit off (slack 0.2125, body 0.2875, probe
+  1.9125); a pin frames a lattice room as sixty clients' worlds and holds one answer (the un-fixed walk gives two).
+  What remains: a lattice corner can come within two hundredths of a millimetre of the body's radius, which a room has
+  to stand exactly so to meet.
+- **M4 - the ring asked twice the floor it said, and never turned.** Its cells reached a step past the ring's edge,
+  each with its own clear radius beyond (a 4.7 by 3.7 m room for a 3.1 by 2.6 m ring), and a hall the table fit only
+  across stood none. FIXED: the cells out to where their own radius reaches the edge (the ring now SEAT_OUT + 0.4, its
+  stools in it), and the table turned a quarter where only across does it fit.
+- **L1** the slab met a tall race's thighs at 0.76 m - the top is the seated pose's own 0.8; **L2** the chip stacks
+  stood on a 7 cm rail - it is 4 cm, under a stack's near edge; **L3** the table stood at the entrance's floor (a
+  doorstep floated it) - it stands on the highest floor under its top; **L4** the wood's uvs ran across a side and a
+  leg - each face's own metres now; **L5** section 11 named the retired flag in the present tense - pointed here;
+  **L6** `cards.html` drew a box of its own - it draws the prop. A comment called the felt flush; it is 2 mm proud.
+- **Recorded, not changed.** While old clients are still open after a deploy, table 0 is the first 41130 table to them
+  and the prop to new ones: the relay refuses the second sitter ('table differs') and hands the stake back, so no gold
+  is lost, and it ends when they reload. A save or a Recall anchor made where the table now stands lands the body in
+  its geometry, as any furniture placed after a save would (what the motor's resolve then does is not measured here,
+  with no tavern to load into). The walk costs 16-59 ms
+  in node on rooms of 264 to 48k triangles, once a visit, inside the async build.
+- **Pins:** `test/taverntable.test.js` 17; `tools/mutants/taverntable.json` 80 (79 dead, 1 equivalent).
