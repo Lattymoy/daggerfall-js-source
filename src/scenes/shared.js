@@ -284,7 +284,9 @@ export function createSkyController(gl, params) {
   };
   /** EVENT1: a reflected sky ({zenith, horizon}) under the dread - the water mirrors the sky it is under, on either lane;
    *  SUNBABY1: and under the sun baby, its flower sky's blue. */
-  const dreaded = (ws) => sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil);   // SUNBABY2: the wrath's sky
+  /** AUDIT SD III (V8): and the water's sky brass as the sky over it is. */
+  const brassed = (ws) => (brassW > 0 ? { ...ws, zenith: sdBrassGrade(ws.zenith, brassW), horizon: sdBrassGrade(ws.horizon, brassW) } : ws);
+  const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -406,11 +408,17 @@ export function createSkyController(gl, params) {
       dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
     },
+    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/sdOmen.js sdAirWeight) - the fog and
+     *  the water's sky lean to it, and (AUDIT SD III, V8) every pass that draws the sky grades by it as the haze is graded:
+     *  the fogged land met the sky a step apart at the skyline. 0 is exactly the sky there was. */
+    setBrass(w) {
+      brassW = Math.max(0, Math.min(1, Number(w) || 0));
+      for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.brass = brassW;
+    },
     /** SUNBABY1: the sun baby's weight this frame, 0..1 (world/sunbabySky.js createSunbaby) - its flower sky is drawn over
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
      *  it is, the sky's frame (use) stands on the clear day the host shows, without the weather map's storm cells, its
      *  violence or its approaching front. 0 and false are exactly the sky there was. */
-    setBrass(w) { brassW = Math.max(0, Math.min(1, Number(w) || 0)); },   // SD19: the brass air near a standing Hollow (systems/sdOmen.js sdAirWeight)
     setSunbaby(w, on = false) {
       sunbabyW = Math.max(0, Math.min(1, Number(w) || 0));
       sunbabyOn = !!on;

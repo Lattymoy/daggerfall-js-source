@@ -24,14 +24,14 @@
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
-import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, inArena } from '../net/sdRemnant.js';
-import { HIT_KINDS } from '../net/gateBrain.js';
+import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, SD_STUN_MS, inArena } from '../net/sdRemnant.js';
+import { HIT_KINDS, wrapYaw } from '../net/gateBrain.js';
 import { sdBodyAt, sdHeartsOf, sdHourOver, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { remnantArt } from '../world/sdRemnantArt.js';
 import { ensureSdHallArt } from './sdHall.js';
 import { buildRemnantParts, buildHeartModel, buildGearModel, remnantMatrix, remnantScale } from '../world/sdRemnantModel.js';
-import { remnantRig, rigMatrices, restRig, sdGearsAt, gearMatrix, SD_RIG_PARTS } from './sdRemnantRig.js';
+import { remnantRig, rigMatrices, restRig, sdGearsAt, gearMatrix, sdKeptList, SD_RIG_PARTS } from './sdRemnantRig.js';
 import { bossStandIn, crystalStandIn, hostStandIn } from '../world/gateBoss.js';
 
 /** The look the stand-ins wear for the formulas (characters/enemyBasics.js): an Iron Atronach's - a thing of metal. */
@@ -44,6 +44,18 @@ export const SD_KNEEL_M = 1.6;
 export const SD_REM_SINK_MS = 4000;
 export const SD_ECHO_SINK_MS = 1500;
 export const SD_HEART_SPIN = 0.9;
+/** AUDIT SD III (V6): how long it takes to kneel and to rise from it (ms) - it dropped its 1.6 m in a frame, and stood
+ *  again in one; and how fast a body turns as it is drawn (radians a second): it faced each new aim in a frame, up to
+ *  120 degrees at once. A half-turn in 0.9 s - inside the quickest wind-up of a blow that needs its facing (the Hour-
+ *  Hand's under the Quickened Gears, 1.09 s), so the law's facing is the drawn one by the time any blow lands. */
+export const SD_KNEEL_EASE_MS = 400;
+export const SD_TURN_RATE = 3.5;
+/** A body's drawn facing `was` turned toward `to` by at most `rate` x `dt` (seconds) - the shortest way round. Pure. */
+export const sdTurnToward = (was, to, dt, rate = SD_TURN_RATE) => {
+  if (was == null || !Number.isFinite(was)) return to;
+  const d = wrapYaw(to - was), step = rate * Math.max(0, dt || 0);
+  return Math.abs(d) <= step ? to : wrapYaw(was + Math.sign(d) * step);
+};
 /** SD17: the gears in flight at once at most - a Volley's five marks from each of three bodies. */
 export const SD_GEAR_DRAWS = SD_BLOWS.volley.max * 3;
 const ZERO = new Float32Array(16);
@@ -52,6 +64,10 @@ const NONE = Object.freeze([]);
  *  written (and not frozen: one shape with the frame's own poses, filled in place, so their reads stay one kind). */
 const HIDDEN = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
 const _remPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
+/** AUDIT SD III (V5): where a body's walk has it, found in place each frame (net/sdFightLink.js sdBodyAt's `out`). */
+const _bodyAt = [0, 0];
+/** AUDIT SD III (V5): the gears in flight, a list kept and filled in place (a frame of a Volley's flight made 1.7 KB). */
+const _gears = sdKeptList();
 const _echoPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
 const _heartPose = { x: 0, z: 0, yw: 0, sink: 0, shown: true };
 /** An Echo's scale beside the Remnant's (world/sdRemnantModel.js remnantScale), once. */
@@ -76,11 +92,22 @@ const live = (s) => s.fi > 0 && !s.lost;
 /**
  * WHERE THE REMNANT STANDS at `now` and how: `{ x, z, yw, sink, shown }` (the arena's frame; `sink` metres under the
  * floor). Waiting at its start with no fight to fight; gone outside time in the Dragon Break; risen out of the floor at
- * the centre over the break for the Last Moment; kneeling while stunned; sinking away where it fell. Pure (AUDIT SD II,
- * L2 F9: into `out` when one is given - the set's frame makes nothing waiting for a fight).
+ * the centre over the break for the Last Moment; kneeling while stunned; sinking away where it fell. AUDIT SD III (V6): a
+ * LOST fight's body sinks where it stood and rises again at its start - it stood there at once; and it kneels and rises
+ * over SD_KNEEL_EASE_MS. Pure (AUDIT SD II, L2 F9: into `out` when one is given - the set's frame makes nothing waiting
+ * for a fight).
  * @param {any} s the fight (net/sdFightLink.js SdFightState) @param {number} now the relay's clock @param {any} [out]
  */
 export function remnantPose(s, now, out = { x: 0, z: 0, yw: 0, sink: 0, shown: false }) {
+  if (s.fi > 0 && s.lost > 0 && !s.fell) {
+    const since = Math.max(0, now - s.lost);
+    if (since < SD_REM_SINK_MS) {
+      const [x, z] = s.rem ? sdBodyAt(s.rem, s.lost) : SD_REM_START;
+      return posed(out, x, z, s.rem?.yw ?? Math.PI, (since / SD_REM_SINK_MS) * SD_REM.h, s.ph !== 2);   // outside time, it is gone already
+    }
+    const up = since - SD_REM_SINK_MS;
+    return posed(out, SD_REM_START[0], SD_REM_START[1], Math.PI, up < SD_BREAK_MS ? (1 - up / SD_BREAK_MS) * SD_REM.h : 0, true);
+  }
   if (!live(s)) return posed(out, SD_REM_START[0], SD_REM_START[1], Math.PI, 0, true);
   const B = s.rem;
   if (s.fell) {
@@ -88,25 +115,31 @@ export function remnantPose(s, now, out = { x: 0, z: 0, yw: 0, sink: 0, shown: f
     return posed(out, B.x, B.z, B.yw, Math.min(SD_REM.h, sink), sink < SD_REM.h);
   }
   if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, false);   // outside time
-  const [x, z] = sdBodyAt(B, now);
+  const at = sdBodyAt(B, now, _bodyAt), x = at[0], z = at[1];
   const rising = now < s.ou ? Math.min(1, (s.ou - now) / SD_BREAK_MS) * SD_REM.h : 0;
-  const kneel = now < s.su ? SD_KNEEL_M : 0;
+  const kneel = now < s.su ? SD_KNEEL_M * Math.max(0, Math.min(1, (now - (s.su - SD_STUN_MS)) / SD_KNEEL_EASE_MS, (s.su - now) / SD_KNEEL_EASE_MS)) : 0;
   return posed(out, x, z, B.yw, Math.max(rising, kneel), true);
 }
 /**
  * WHERE ECHO `e` STANDS at `now`: `{ x, z, yw, sink, shown }` - rising out of the floor at its spot until it stands,
- * sinking away where it fell; none outside the Dragon Break. Pure (into `out` when one is given - AUDIT SD II, L2 F9).
+ * sinking away where it fell; none outside the Dragon Break. AUDIT SD III (V6): one standing as its fight is lost sinks
+ * where it stood. Pure (into `out` when one is given - AUDIT SD II, L2 F9).
  * @param {any} s @param {number} e @param {number} now @param {any} [out]
  */
 export function echoPose(s, e, now, out = { x: 0, z: 0, yw: 0, sink: 0, shown: false }) {
+  const L = s.fi > 0 && s.lost > 0 && !s.fell && s.ph === 2 ? s.ec?.[e] ?? null : null;
+  if (L && L.h > 0) {
+    const sink = (Math.max(0, now - s.lost) / SD_ECHO_SINK_MS) * SD_ECHO.h, [x, z] = sdBodyAt(L, s.lost);
+    return posed(out, x, z, L.yw, Math.min(SD_ECHO.h, sink), sink < SD_ECHO.h);
+  }
   const E = live(s) && !s.fell && s.ph === 2 ? s.ec?.[e] ?? null : null;
   if (!E) return posed(out, 0, 0, 0, SD_ECHO.h, false);
   if (!(E.h > 0)) {
     const sink = E.dn > 0 ? (Math.max(0, now - E.dn) / SD_ECHO_SINK_MS) * SD_ECHO.h : SD_ECHO.h;
     return posed(out, E.x, E.z, E.yw, Math.min(SD_ECHO.h, sink), sink < SD_ECHO.h);
   }
-  const [x, z] = sdBodyAt(E, now);
-  return posed(out, x, z, E.yw, now < E.up ? Math.min(1, (E.up - now) / SD_BREAK_MS) * SD_ECHO.h : 0, true);
+  const at = sdBodyAt(E, now, _bodyAt);
+  return posed(out, at[0], at[1], E.yw, now < E.up ? Math.min(1, (E.up - now) / SD_BREAK_MS) * SD_ECHO.h : 0, true);
 }
 /** Whether the Reset's Hearts take blows at `now`: while it winds up, not in its last SD_HEARTS_CLOSE_MS (the law's
  *  heartsOpen, read off the page's fight). Pure. */
@@ -141,6 +174,15 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   const heartIns = Array.from({ length: SD_HEARTS[1] }, (_, c) => { const h = crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c); h.name = SD_REMNANT_NAMES.heart; return h; });
   let blowSeq = 0;
   const blowMet = new Set();
+  /** AUDIT SD III (V6): each body's drawn facing - the Remnant's, then the Echoes' (NaN: not shown last frame; a typed
+   *  list, so a frame boxes no number) - each turned to the pose's at SD_TURN_RATE, never in a frame; shown afresh, a body
+   *  stands as it faces. */
+  const facing = new Float64Array(3).fill(NaN);
+  const turn = (p, k, dt) => {
+    if (!p.shown) facing[k] = NaN;
+    else if (facing[k] !== p.yw) facing[k] = p.yw = sdTurnToward(facing[k], p.yw, dt);   // a body at rest calls nothing (AUDIT SD II, L2 F9)
+    return p;
+  };
   /** AUDIT WB11 W3's law: every body one swing, shaft or blast of mine meets between two frames carries one number; a
    *  second meeting of a body already met is a blow of its own. */
   function blowQ(who) {
@@ -200,16 +242,16 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
         if (inArena(ax, az) && L.inDue(t) && sendIn()) L.sentIn(t);
       }
       if (!draws) return;
-      place(remDraw, remnantPose(s, t, _remPose), 1);
+      place(remDraw, turn(remnantPose(s, t, _remPose), 0, dt), 1);   // AUDIT SD III (V6): turned, never snapped
       limbs(partDraws[0], remDraw, -1, s, t);   // SD17: its body moved
-      for (let e = 0; e < echoDraws.length; e++) { place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE); limbs(partDraws[1 + e], echoDraws[e], e, s, t); }
+      for (let e = 0; e < echoDraws.length; e++) { place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE); limbs(partDraws[1 + e], echoDraws[e], e, s, t); }
       // SD17: the Volley's gears in flight
-      const gears = live(s) ? sdGearsAt(s, t) : NONE;
+      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;
       for (let g = 0; g < gearDraws.length; g++) {
         const d = gearDraws[g], q = gears[g];
         if (!d) continue;
         if (!q) { hide(d); continue; }
-        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix); d.hidden = false;
+        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.hidden = false;   // AUDIT SD III (V12): on edge along its flight
       }
       const cx = live(s) && !s.fell ? sdHeartsOf(s, t) : null;   // standing while the Reset winds up - gone as it lands
       for (let c = 0; c < heartDraws.length; c++) {

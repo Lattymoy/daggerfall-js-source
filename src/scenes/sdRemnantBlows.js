@@ -342,6 +342,10 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     },
     /** The floor's shapes this frame (the arena's frame). */
     shapes: () => shapes,
+    /** AUDIT SD III (V13): the telegraph pass built now - as the Hour is stood in, never in its first blow's frame. */
+    warm() {
+      if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[sd] the telegraph would not build', e?.message ?? e); pass = null; } }
+    },
     /** The telegraphs over the arena's floor, in the dungeon arm's world pass. Answers whether any drew. */
     drawPass(proj, view, eye, seconds, fog = null) {
       if (!shapes.length) return false;

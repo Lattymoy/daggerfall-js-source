@@ -103,24 +103,14 @@ export function sdAirDusk(minute) {
 }
 /** THE BRASS AIR'S WEIGHT, 0..SD_AIR.max: the column's light (sdOmenLight), the distance's and the hour's. Pure. */
 export const sdAirWeight = (light, d, minute) => SD_AIR.max * clamp01(light) * sdAirNear(d) * sdAirDusk(minute);
-/** The brass the haze leans to by its own brightness: the ramp's stops (luminance, colour). */
-export const SD_BRASS_RAMP = Object.freeze([
-  Object.freeze({ at: 0, color: Object.freeze([0.16, 0.1, 0.04]) }),
-  Object.freeze({ at: 0.45, color: Object.freeze([0.62, 0.42, 0.16]) }),
-  Object.freeze({ at: 0.9, color: Object.freeze([1.0, 0.8, 0.42]) }),
-]);
-const LUMA = [0.2126, 0.7152, 0.0722];
-/** `rgb` (the land's haze) graded toward the brass by `w` - a new array, `rgb` never written. Pure. */
-export function sdBrassGrade(rgb, w) {
-  const k = clamp01(w || 0);
-  if (k === 0) return [rgb[0], rgb[1], rgb[2]];
-  const l = LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2], [s0, s1, s2] = SD_BRASS_RAMP;
-  const [a, b, f] = l < s1.at ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))] : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];
-  return [0, 1, 2].map((i) => rgb[i] + (a[i] + (b[i] - a[i]) * f - rgb[i]) * k);
-}
-/** The light under it - each channel toward SD_BRASS_TINT by `w`; a fresh Float32Array (the renderer's light). Pure. */
+/** The brass the haze leans to by its own brightness, and the grade toward it - world/sdBrassSky.js since AUDIT SD III
+ *  (V8), whose GLSL grades the sky the same. */
+export { SD_BRASS_RAMP, sdBrassGrade } from '../world/sdBrassSky.js';
+/** The light under it - each channel toward SD_BRASS_TINT by `w`; a fresh Float32Array (the renderer's light) - `rgb`
+ *  itself where there is no brass and it is one already (AUDIT SD III, V15: none made every outdoor frame for nothing).
+ *  Pure. */
 export const SD_BRASS_TINT = Object.freeze([1.1, 0.92, 0.62]);
-export const sdBrassLight = (rgb, w) => new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));
+export const sdBrassLight = (rgb, w) => (!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0)))));
 /** The banner at its door: within this many metres of its centre. */
 export const SD_BANNER_M = 60;
 /** The banner's words: its name, what it is, its state ("fades in 1d 04h", "collapsing"). */

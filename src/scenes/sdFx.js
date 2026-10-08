@@ -17,7 +17,7 @@
 // Read off the fight this page holds, each turn as it happens (a page that comes late takes the fight as it stands - the
 // voice's law, scenes/sdRemnantVoice.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, stompFrontAt } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_ARENA_SLACK, stompFrontAt, handAngleAt, inArena } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
 import { GateFxRenderer, FX_BURST_MS, FX_BURSTS_MAX, FX_LIGHT_MS } from '../render/gateFx.js';
 import { SD_REM_SINK_MS } from './sdRemnant.js';
@@ -57,6 +57,18 @@ export const SD_FX_COLUMN = Object.freeze({ n: 3, at: 1500, step: 250 });
 export const SD_FX_FLASH_MS = 400;
 /** The Stomp's ring throws its dust at this many points, this long into its roll. */
 export const SD_RING_DUST = Object.freeze({ n: 6, after: 400 });
+/** AUDIT SD III (V1): THE ARENA'S FLOOR, the dungeon's frame - where every burst's sparks come to rest (render/gateFx.js
+ *  `floor`). None was ever said, and the gate's pass rests a burst's sparks at its own height when none is: eleven of the
+ *  seventeen kinds - the Pulse's, the Hearts', an Echo's, the stun's, the fall's - piled their spent sparks on an unseen
+ *  pane 1.2-4.4 m in the air. */
+export const SD_FX_FLOOR_Y = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)[1];
+/** The fall's white-gold flash: six metres over the arena's heart (the dungeon's frame). */
+const FLASH_AT = Object.freeze(realmToDungeon(SD_ARENA.x, 6, SD_ARENA.z));
+/** A body with no place: the arena's heart. */
+const NO_PLACE = Object.freeze([0, 0]);
+/** AUDIT SD III (V3): the Hour-Hand's flash stands this far before its body's chest, on the beam's first bearing - at
+ *  the chest a metre up, it stood inside the Remnant's heart crystal, lighting its inside. */
+export const SD_HAND_FLASH_OUT = 1.2;
 
 /**
  * The Hour's blows seen on this screen. `link` the fight's (net/sdFightLink.js), `feet()` mine in the dungeon's frame
@@ -68,15 +80,27 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
   const bursts = [];
   let k = null, pass = null, passTried = false, flashAt = -Infinity;
   const live = [];
+  /** AUDIT SD III (V5): the lights a frame reads, kept and filled in place - each a pooled `{ x, y, z, range, color }`
+   *  (a caller reads them that frame, never later) */
+  const lit = [], litPool = [];
+  let nLit = 0;
+  const putLight = (x, y, z, range, r, g, b) => {
+    let o = litPool[nLit];
+    if (!o) { o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] }; litPool[nLit] = o; }
+    o.x = x; o.y = y; o.z = z; o.range = range; o.color[0] = r; o.color[1] = g; o.color[2] = b;
+    lit[nLit++] = o;
+  };
   const where = (x, y, z) => realmToDungeon(SD_ARENA.x + x, y, SD_ARENA.z + z);
-  const add = (p, at0, kd, color, floor = NaN) => {
+  const add = (p, at0, kd, color, floor = SD_FX_FLOOR_Y) => {   // AUDIT SD III (V1): on the arena's floor
     let b = bursts.length < FX_BURSTS_MAX ? null : bursts.reduce((o, q) => (q.at0 < o.at0 ? q : o));
     if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN }; bursts.push(b); }
     b.at[0] = p[0]; b.at[1] = p[1]; b.at[2] = p[2]; b.at0 = at0; b.kind = kd; b.color = color; b.floor = floor;
   };
   /** My feet in the arena's frame, or null. */
   const mine = () => { const f = feet(); if (!f) return null; const r = dungeonToRealm(f[0], f[1], f[2]); return [r[0] - SD_ARENA.x, r[2] - SD_ARENA.z]; };
-  const felt = (kd, x, z) => { const m = mine(); if (!m) return; const s = sdShake(kd, Math.hypot(m[0] - x, m[1] - z)); if (s >= 0.05) shake(s); };
+  // AUDIT SD III (V4): the whole arena's shakes (a reach of nought) are felt in the arena alone - the Hall and the Steps
+  // were kicked by every Pulse, Reset and End, which strike nobody there
+  const felt = (kd, x, z) => { const m = mine(); if (!m) return; if (!(SD_SHAKE[kd]?.[1] > 0) && !inArena(m[0], m[1], SD_ARENA_SLACK)) return; const s = sdShake(kd, Math.hypot(m[0] - x, m[1] - z)); if (s >= 0.05) shake(s); };
   const bodyOf = (s, b) => (b === SD_BODY.remnant ? s.rem : b === SD_BODY.hour ? null : s.ec?.[b - SD_BODY.gold]);
   const colorOf = (b) => (b === SD_BODY.gold ? SD_FX_COLOR.gold : b === SD_BODY.silver ? SD_FX_COLOR.silver : SD_FX_COLOR.brass);
   const blowsOf = (s) => {
@@ -101,7 +125,11 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       const r = stompFrontAt(a, a.at + SD_RING_DUST.after);
       for (let i = 0; i < SD_RING_DUST.n; i++) { const g = (i / SD_RING_DUST.n) * Math.PI * 2; add(where(a.x + Math.sin(g) * r, 0.1, a.z + Math.cos(g) * r), a.at + SD_RING_DUST.after, SD_FX_KINDS.ring, color); }
       felt('stomp', a.x, a.z);
-    } else if (A === SD_BLOWS.hand) add(where(bx, (b === SD_BODY.remnant ? SD_REM.h : SD_ECHO.h) * 0.55, bz), a.at, SD_FX_KINDS.hand, b === SD_BODY.remnant ? SD_FX_COLOR.gold : color);
+    } else if (A === SD_BLOWS.hand) {
+      // AUDIT SD III (V3): out of its chest along the beam's first bearing - never inside the heart crystal
+      const g = handAngleAt(a, a.at) ?? a.yw ?? 0, out = (b === SD_BODY.remnant ? SD_REM.r : SD_ECHO.r) + SD_HAND_FLASH_OUT;
+      add(where(bx + Math.sin(g) * out, (b === SD_BODY.remnant ? SD_REM.h : SD_ECHO.h) * 0.55, bz + Math.cos(g) * out), a.at, SD_FX_KINDS.hand, b === SD_BODY.remnant ? SD_FX_COLOR.gold : color);
+    }
     else if (A === SD_BLOWS.volley) {
       for (const q of a.tg ?? []) add(where(q[0], 0.1, q[1]), a.at, SD_FX_KINDS.volley, color);
       const m = mine();
@@ -111,6 +139,19 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     else if (A === SD_BLOWS.end) { add(where(0, 3, 0), a.at, SD_FX_KINDS.end, SD_FX_COLOR.end); felt('end', 0, 0); }
   }
 
+  /** Its body's place at `t`, `y` up - `{ p, x, z }`, kept (a turn's burst copies `p`). */
+  const _rem = { p: [0, 0, 0], x: 0, z: 0 }, _remAt = [0, 0];
+  const remAt = (s, t, y) => { const at = s.rem ? sdBodyAt(s.rem, t, _remAt) : NO_PLACE; _rem.x = at[0]; _rem.z = at[1]; _rem.p = where(at[0], y, at[1]); return _rem; };
+  /** A Heart's burst, risen or broken, in its Ending's light. */
+  const heartBurst = (s, t, q, kd) => add(where(q[0], 1.2, q[1]), t, kd, sdHeartColorOf(s));
+  /** A blow seen landing once (the newest 48 remembered). */
+  const landing = (s, b, a, t) => {
+    if (k.blows.has(a.i) || t < a.at) return;
+    k.blows.add(a.i);
+    if (k.blows.size > 48) k.blows.delete(k.blows.values().next().value);
+    if (t - a.at < SD_FX_LAND_LATE_MS) landed(s, b, a, t);
+  };
+
   return {
     /** One frame: every landing and turn since the last, seen. */
     frame() {
@@ -118,11 +159,10 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       for (let i = bursts.length - 1; i >= 0; i--) if (Number.isFinite(t) && t - bursts[i].at0 > FX_BURST_MS + 200) bursts.splice(i, 1);
       if (!s || !(s.fi > 0) || !Number.isFinite(t)) { k = null; return; }
       if (!k || k.fi !== s.fi) { k = seen(s, t); return; }
-      const rem = (y) => { const [x, z] = s.rem ? sdBodyAt(s.rem, t) : [0, 0]; return { p: where(x, y, z), x, z }; };
       // its fall: the burst out of its chest and the flash, then the column as it sinks, then the way home's light
       if (s.fell && !k.fell) {
         k.fell = true;
-        if (t - s.fell.at < SD_FX_LATE_MS) { const r = rem(SD_REM.h * 0.5); add(r.p, s.fell.at, SD_FX_KINDS.fall, SD_FX_COLOR.gold); flashAt = s.fell.at; felt('fall', r.x, r.z); k.column = 0; k.home = false; }
+        if (t - s.fell.at < SD_FX_LATE_MS) { const r = remAt(s, t, SD_REM.h * 0.5); add(r.p, s.fell.at, SD_FX_KINDS.fall, SD_FX_COLOR.gold); flashAt = s.fell.at; felt('fall', r.x, r.z); k.column = 0; k.home = false; }
       }
       if (s.fell) {
         const since = t - s.fell.at, [x, z] = s.rem ? sdBodyAt(s.rem, s.fell.at) : [0, 0];
@@ -133,42 +173,43 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       if (s.lost) return;
       // its wake, the stun, the slip
       const awake = t >= s.op;
-      if (awake && !k.awake && t - s.op < SD_FX_LATE_MS) { const r = rem(0.1); add(r.p, s.op, SD_FX_KINDS.wake, SD_FX_COLOR.brass); felt('wake', r.x, r.z); }
+      if (awake && !k.awake && t - s.op < SD_FX_LATE_MS) { const r = remAt(s, t, 0.1); add(r.p, s.op, SD_FX_KINDS.wake, SD_FX_COLOR.brass); felt('wake', r.x, r.z); }
       k.awake = awake;
       const stun = t < s.su;
-      if (stun && !k.stun) { const r = rem(SD_REM.h * 0.6); add(r.p, t, SD_FX_KINDS.stun, sdHeartColorOf(s)); felt('stun', r.x, r.z); }
+      if (stun && !k.stun) { const r = remAt(s, t, SD_REM.h * 0.6); add(r.p, t, SD_FX_KINDS.stun, sdHeartColorOf(s)); felt('stun', r.x, r.z); }
       k.stun = stun;
-      if (!k.slipped && s.m > 0 && s.h / s.m < SD_SLIP_FRAC) { k.slipped = true; add(rem(SD_REM.h * 0.5).p, t, SD_FX_KINDS.slip, SD_FX_COLOR.brass); }
-      // its Echoes risen and broken
-      (s.ec ?? []).forEach((E, i) => {
-        const up = E.h > 0, was = k.ec[i] ?? false;
-        if (up !== was) {
-          const [x, z] = sdBodyAt(E, t), color = i === 0 ? SD_FX_COLOR.gold : SD_FX_COLOR.silver;
-          if (up) add(where(x, SD_ECHO.h * 0.5, z), t, SD_FX_KINDS.echoRise, color);
-          else { add(where(x, SD_ECHO.h * 0.5, z), t, SD_FX_KINDS.echoFall, color); felt('echoFall', x, z); }
+      if (!k.slipped && s.m > 0 && s.h / s.m < SD_SLIP_FRAC) { k.slipped = true; add(remAt(s, t, SD_REM.h * 0.5).p, t, SD_FX_KINDS.slip, SD_FX_COLOR.brass); }
+      // its Echoes risen and broken (AUDIT SD III, V5: walked in place - a frame of a living fight made 496 bytes)
+      const ec = s.ec;
+      if (ec) {
+        for (let i = 0; i < ec.length; i++) {
+          const E = ec[i], up = E.h > 0, was = k.ec[i] ?? false;
+          if (up !== was) {
+            const [x, z] = sdBodyAt(E, t), color = i === 0 ? SD_FX_COLOR.gold : SD_FX_COLOR.silver;
+            if (up) add(where(x, SD_ECHO.h * 0.5, z), t, SD_FX_KINDS.echoRise, color);
+            else { add(where(x, SD_ECHO.h * 0.5, z), t, SD_FX_KINDS.echoFall, color); felt('echoFall', x, z); }
+          }
+          k.ec[i] = up;
         }
-        k.ec[i] = up;
-      });
-      if (!s.ec) k.ec = [];
+      } else if (k.ec.length) k.ec = [];
       // the Hearts risen and broken - the last one's break and the Hearts' going in one word (the stun's) seen as one
-      const X = s.cx, heart = (q, kd) => add(where(q[0], 1.2, q[1]), t, kd, sdHeartColorOf(s));
+      const X = s.cx;
       if (X && X.i !== k.cx) {
         k.cx = X.i; k.hearts = X.c.map((q) => q[2]); k.cxc = X.c;
-        for (const q of X.c) heart(q, SD_FX_KINDS.heartRise);
+        for (let j = 0; j < X.c.length; j++) heartBurst(s, t, X.c[j], SD_FX_KINDS.heartRise);
       } else if (X) {
-        X.c.forEach((q, j) => { if ((k.hearts[j] ?? 0) > 0 && !(q[2] > 0)) heart(q, SD_FX_KINDS.heartBreak); k.hearts[j] = q[2]; });
+        for (let j = 0; j < X.c.length; j++) { const q = X.c[j]; if ((k.hearts[j] ?? 0) > 0 && !(q[2] > 0)) heartBurst(s, t, q, SD_FX_KINDS.heartBreak); k.hearts[j] = q[2]; }
         k.cxc = X.c;
-      } else {
-        if (k.cx !== null && stun) k.cxc.forEach((q, j) => { if ((k.hearts[j] ?? 0) > 0) heart(q, SD_FX_KINDS.heartBreak); });
+      } else if (k.cx !== null || k.hearts.length || k.cxc.length) {
+        // AUDIT SD III (V10): the Hearts left standing burst as they go - broken (the stun's word) or spent by the Reset's
+        // landing, which took them out of the air with nothing to show for it
+        if (k.cx !== null) for (let j = 0; j < k.cxc.length; j++) { if ((k.hearts[j] ?? 0) > 0) heartBurst(s, t, k.cxc[j], SD_FX_KINDS.heartBreak); }
         k.cx = null; k.hearts = []; k.cxc = [];
       }
       // the landings
-      for (const [b, a] of blowsOf(s)) {
-        if (k.blows.has(a.i) || t < a.at) continue;
-        k.blows.add(a.i);
-        if (k.blows.size > 48) k.blows.delete(k.blows.values().next().value);
-        if (t - a.at < SD_FX_LAND_LATE_MS) landed(s, b, a, t);
-      }
+      if (s.rem?.atk) landing(s, SD_BODY.remnant, s.rem.atk, t);
+      if (ec) for (let i = 0; i < ec.length; i++) if (ec[i].h > 0 && ec[i].atk) landing(s, SD_BODY.gold + i, ec[i].atk, t);
+      if (s.clk) landing(s, SD_BODY.hour, s.clk, t);
     },
     /** The bursts standing at `t` (the fight's clock), as the spark pass takes them. */
     bursts(t) {
@@ -179,15 +220,20 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
     /** The light the landings throw at `t`: each lit burst's flash where it fell, fading over FX_LIGHT_MS, and the fall's
      *  white-gold over the arena - in the Hour's light channel. */
     lights(t) {
-      const out = [];
-      for (const b of bursts) {
-        const L = b.kind?.light, dt = t - b.at0;
+      nLit = 0;
+      for (let i = 0; i < bursts.length; i++) {
+        const b = bursts[i], L = b.kind?.light, dt = t - b.at0;
         if (!L || !(dt >= 0 && dt < FX_LIGHT_MS)) continue;
         const f = L[0] * (1 - dt / FX_LIGHT_MS);
-        out.push({ x: b.at[0], y: b.at[1] + 1, z: b.at[2], range: L[1], color: b.color.map((v) => v * f) });
+        putLight(b.at[0], b.at[1] + 1, b.at[2], L[1], b.color[0] * f, b.color[1] * f, b.color[2] * f);
       }
-      if (t >= flashAt && t - flashAt < SD_FX_FLASH_MS) { const f = 4 * (1 - (t - flashAt) / SD_FX_FLASH_MS), p = where(0, 6, 0); out.push({ x: p[0], y: p[1], z: p[2], range: 40, color: [f, f * 0.9, f * 0.7] }); }
-      return out;
+      if (t >= flashAt && t - flashAt < SD_FX_FLASH_MS) { const f = 4 * (1 - (t - flashAt) / SD_FX_FLASH_MS); putLight(FLASH_AT[0], FLASH_AT[1], FLASH_AT[2], 40, f, f * 0.9, f * 0.7); }
+      lit.length = nLit;
+      return lit;
+    },
+    /** AUDIT SD III (V13): the spark pass built now - as the Hour is stood in, never in the frame of its first landing. */
+    warm(gl) {
+      if (!passTried && gl) { passTried = true; try { pass = new GateFxRenderer(gl); } catch (e) { console.warn('[sd] the blows\' sparks would not build', e?.message ?? e); pass = null; } }
     },
     /** Draw the standing bursts with the gate's spark pass (made the first time there is one). */
     draw(gl, proj, view, eye, t, fog = null, viewH = 0) {

@@ -155,7 +155,7 @@
   {
     "name": "SD6C-the-bridge-never-laid",
     "file": "src/scenes/sdHall.js",
-    "old": "      if (bridgeDraw) { bridgeDraw.object.matrix = identity(); bridgeDraw.hidden = false; }\n",
+    "old": "      if (bridgeDraw) { layAt = first ? -Infinity : now(); bridgeDraw.object.matrix = first ? identity() : bridgeLayMatrix(0); bridgeDraw.hidden = false; }   // AUDIT SD III (V10): laid, as it is heard\n",
     "new": "",
     "tests": [
       "test/sd6c_hall.test.js"

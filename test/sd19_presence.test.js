@@ -72,7 +72,7 @@ test('SD19 THE BRASS GRADE: the haze toward the brass its own brightness falls o
 
 test('SD19 THE SKY AND THE LIGHT, by source: the sky controller grades the land\'s haze last, after the sun baby\'s and the dread, by a clamped weight; the world reads the air only outside by its column\'s light and the eye, hands it to the sky before the fog is read, and leans both lights by it', () => {
   const sh = read('src/scenes/shared.js');
-  assert.match(sh, /setBrass\(w\) \{ brassW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\); \}/);
+  assert.match(sh, /setBrass\(w\) \{[^\n]*\n\s*brassW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\n\s*for \(const r of \[sky, enhancedSky, dynamicSky, clouds\]\) if \(r\) r\.brass = brassW;/);   // AUDIT SD III (V8, PIN MOVED): and the sky graded as its haze
   assert.match(sh, /const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;[^\n]*\n\s*return brassW > 0 \? sdBrassGrade\(d, brassW\) : d;/, 'last: over the dread and the sun baby');
   const w = read('src/scenes/world.js');
   assert.match(w, /const sdAirNow = \(eye, minuteNow\) => \{\n\s*const o = sdHost\?\.omen\(\);\n\s*if \(!o\?\.hollow\?\.site \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \|\| !eye\) return 0;/);

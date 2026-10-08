@@ -18,6 +18,7 @@ import { lifeVertices } from '../src/render/deadlands.js';
 import { SD_SKY_PERIOD } from '../src/render/sdSky.js';
 import { SD_ORRERY, SD_ARENA, SD_REALM_ORIGIN } from '../src/net/sdBrain.js';
 import { SD_FIRST_STEP } from '../src/world/sdHall.js';
+import { mirrorProjectionX, perspective, lookAt, multiply } from '../src/world/mat4.js';
 import { SD_COURSE_END } from '../src/world/sdSteps.js';
 
 const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
@@ -70,12 +71,21 @@ test('SD14c ON THE HOUR\'S CLOCK: every mote whole over the sky\'s period (the s
       if (d > 0.5) assert.ok(Math.min(m0.alpha, m1.alpha) < 0.02, `kind ${k} jumped ${d.toFixed(2)} m seen (${m0.alpha.toFixed(3)}, ${m1.alpha.toFixed(3)})`);
     }
   }
-  const angAt = (m) => Math.atan2(m.p[2] - SD_ARENA.z, m.p[0] - SD_ARENA.x);
-  const hour = motes.find((m) => m[0] === 2), h0 = sdMoteAt(...hour, 100), h1 = sdMoteAt(...hour, 100.5);
-  assert.ok(Math.sin(angAt(h1) - angAt(h0)) < 0, 'the Hour\'s motes against the clock');
-  const dust = motes.find((m) => m[0] === 0), d0 = sdMoteAt(...dust, 100), d1 = sdMoteAt(...dust, 101);
-  const dAng = (m) => Math.atan2(m.p[2] - SD_ORRERY.z, m.p[0] - SD_ORRERY.x);
-  assert.ok(Math.sin(dAng(d1) - dAng(d0)) > 0, 'the hall\'s dust with it');
+  // AUDIT SD III (V7, PIN MOVED): the sense AS THE EYE SEES IT from above, through the game's own camera - its one
+  // mirror (world/mat4.js mirrorProjectionX) turns a falling angle clockwise on screen. The pin read the raw angle, and the
+  // two turned the other way round on every screen
+  const turnSeen = (kind, centre) => {
+    const vp = multiply(mirrorProjectionX(perspective(1.2, 1, 0.1, 1000)), lookAt([centre.x, 200, centre.z], [centre.x, 0, centre.z], [0, 0, 1]));
+    const scr = (p) => { const w = vp[3] * p[0] + vp[7] * p[1] + vp[11] * p[2] + vp[15]; return [(vp[0] * p[0] + vp[4] * p[1] + vp[8] * p[2] + vp[12]) / w, (vp[1] * p[0] + vp[5] * p[1] + vp[9] * p[2] + vp[13]) / w]; };
+    let anti = 0;
+    for (const m of motes.filter((q) => q[0] === kind).slice(0, 40)) {
+      const p0 = sdMoteAt(...m, 100).p, p1 = sdMoteAt(...m, 100.25).p, o = scr([centre.x, p0[1], centre.z]), a = scr(p0), b = scr(p1);
+      anti += Math.sign((a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]));
+    }
+    return anti;
+  };
+  assert.equal(turnSeen(2, SD_ARENA), 40, 'the Hour\'s motes against the clock - anticlockwise, every one');
+  assert.equal(turnSeen(0, SD_ORRERY), -40, 'the hall\'s dust with the stones - clockwise, every one');
 });
 
 test('SD14c THE SHADER HOLDS THE LAW - its vertex stage RUN for motes of every kind at several times puts each where sdMoteAt does, at its alpha and warmth (the realm\'s origin added); a mote under SD_MOTE_MIN_PX drawn that wide and faded by how much smaller it is (mutants: the shader off the law; small motes dropped; small motes at full light)', () => {

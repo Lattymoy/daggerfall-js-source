@@ -56,8 +56,8 @@
   {
     "name": "SD18B-the-stone-the-first",
     "file": "src/ui/sdMarksView.js",
-    "old": "const k = E ? SD_STONES.findIndex((st) => st.key === E.id) : -1;",
-    "new": "const k = E ? 0 : -1;",
+    "old": "k: E0 ? SD_STONES.findIndex((st) => st.key === E0.id) : -1 };",
+    "new": "k: E0 ? 0 : -1 };",
     "tests": [
       "test/sd18b_seen.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "SD18B-no-stone",
     "file": "src/scenes/world.js",
-    "old": "      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds());",
+    "old": "      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);",
     "new": "      const stone = null;",
     "tests": [
       "test/sd18b_seen.test.js"

@@ -17,10 +17,10 @@
 //     handle turns it. A Ledger plaque's riddle shows on its plaque as the ray finds it, and is said when it is pressed.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { orreryOf, SD_STONES, SD_STONE_SETTLE_MS, SD_FRAY_MAX, stoneInReach, dungeonToRealm, sdHour, sdHourWord } from '../net/sdBrain.js';
+import { orreryOf, SD_STONES, SD_STONE_SETTLE_MS, SD_FRAY_MAX, stoneInReach, dungeonToRealm, realmToDungeon, sdHour, sdHourWord } from '../net/sdBrain.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { hallArt } from '../world/sdHallArt.js';
-import { buildHallModel, buildHandModel, buildLitModel, buildFrayModel, buildBridgeModel, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox, dialCentre, beforeStone, SD_PLAQUE, SD_FRAY_RING } from '../world/sdHall.js';
+import { buildHallModel, buildHandModel, buildLitModel, buildFrayModel, buildBridgeModel, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox, dialCentre, beforeStone, SD_PLAQUE, SD_FRAY_RING, SD_BRIDGE } from '../world/sdHall.js';
 import { identity } from '../world/mat4.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 
@@ -36,6 +36,16 @@ export const SD_HALL_TEXT = Object.freeze({
   plaque: (k) => `Ledger Plaque ${['I', 'II', 'III', 'IV', 'V', 'VI'][k]}`,
   hour: (h) => `Its hand stands at the ${sdHourWord(h)} hour.`,
 });
+/** AUDIT SD III (V10): the Concord's bridge is LAID - out across the void from the hall's rim over this long, easing in;
+ *  it stood whole in a frame. One that held before I came stands whole. */
+export const SD_BRIDGE_LAY_MS = 900;
+const BRIDGE_Z0 = realmToDungeon(SD_BRIDGE.x, 0, SD_BRIDGE.z0)[2];
+/** The bridge's matrix `k` (0..1) of the way laid: stretched along its length from the hall's rim. */
+export function bridgeLayMatrix(k, out = new Float32Array(16)) {
+  const e = 1 - (1 - Math.max(0, Math.min(1, k))) ** 3;
+  out.fill(0); out[0] = 1; out[5] = 1; out[10] = Math.max(1e-3, e); out[14] = (1 - Math.max(1e-3, e)) * BRIDGE_Z0; out[15] = 1;
+  return out;
+}
 /** The keys the activation ray wins: a stone's handle (`sdstone:<i>:f` forward, `:b` back), a plaque (`sdplaque:<k>`). */
 export const sdStoneKey = (i, a) => `sdstone:${i}:${a > 0 ? 'f' : 'b'}`;
 export const sdPlaqueKey = (k) => `sdplaque:${k}`;
@@ -80,6 +90,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
   const shown = o ? [...o.start] : [], want = o ? [...o.start] : [];
   const lastTurn = SD_STONES.map(() => -Infinity);
   let lit = 0, fray = 0, ok = false, rate = SD_HAND_RATE;
+  let layAt = -Infinity;   // AUDIT SD III (V10): when the bridge began to be laid (-Infinity: laid)
   /** AUDIT SD II (L2 F9): where I stand, one scratch (it was a fresh array a frame); the activation boxes, made once at the
    *  stand (they never move - the hover pick asked for 18 KB of them twice a frame); and the fray's arc held full at a
    *  snap until `frayFullUntil`, its word's own count after (L2 F16). */
@@ -123,7 +134,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     else if (!(now() < frayFullUntil)) setFray(frayArc(w.f));
     if (w.ok && !ok) {
       ok = true;
-      if (bridgeDraw) { bridgeDraw.object.matrix = identity(); bridgeDraw.hidden = false; }
+      if (bridgeDraw) { layAt = first ? -Infinity : now(); bridgeDraw.object.matrix = first ? identity() : bridgeLayMatrix(0); bridgeDraw.hidden = false; }   // AUDIT SD III (V10): laid, as it is heard
       if (!first) { play(SD_HALL_SOUNDS.chime, dialCentre(0), 1, 1); say(SD_HALL_TEXT.concord); }
     }
   }
@@ -160,6 +171,10 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
       if (pos) { feet[0] = pos[0]; feet[1] = pos[1]; feet[2] = pos[2]; }
       if (w && w !== word && o && w.s === s && Array.isArray(w.st)) { word = w; hear(w); }
       if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayArc(frayWant)); }   // AUDIT SD II (L2 F16): the full arc's moment over
+      if (layAt !== -Infinity && bridgeDraw) {   // AUDIT SD III (V10): the bridge laid out across the void, then whole
+        const k = (now() - layAt) / SD_BRIDGE_LAY_MS;
+        if (k >= 1) { layAt = -Infinity; bridgeDraw.object.matrix = identity(); } else bridgeDraw.object.matrix = bridgeLayMatrix(k, bridgeDraw.object.matrix);
+      }
       const step = Math.max(0, dt) * rate;
       for (let i = 0; i < hands.length; i++) {
         const d = way(shown[i], want[i]);

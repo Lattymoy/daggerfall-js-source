@@ -131,11 +131,11 @@ float star(vec3 d, float scale, float density) {
   float h = dhash(c.xy + c.z * 17.17);
   if (h < density) return 0.0;
   vec3 j = vec3(dhash(c.yz + 3.1), dhash(c.zx + 5.7), dhash(c.xy + 9.3)) - 0.5;
-  return smoothstep(0.12, 0.0, length(f - j * 0.6)) * (0.5 + 0.5 * h);
+  return (1.0 - smoothstep(0.0, 0.12, length(f - j * 0.6))) * (0.5 + 0.5 * h);   // AUDIT SD III (V14): every smoothstep's edges rising - reversed ones are undefined in GLSL
 }
 float segment(vec2 p, vec2 a, vec2 b, float w) {
   vec2 pa = p - a, ba = b - a; float t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-  return smoothstep(w, w * 0.25, length(pa - ba * t));
+  return 1.0 - smoothstep(w * 0.25, w, length(pa - ba * t));
 }
 // THE AURORAE's curtain at (azimuth, elevation) and the drift: AUDIT SD II (L2 F7) its noise read round a circle (the
 // Deadlands' ridge's way) - read off the raw azimuth, which leaps from PI to -PI, it was cut by a hard seam toward -z;
@@ -167,7 +167,7 @@ void main() {
   if (e > ${f4(SD_AURORA.low)} && e < ${f4(SD_AURORA.high)}) {
     float drift = ${f4(SD_AURORA.turns)} * TAU * uTime / PERIOD;
     float curtain = auroraCurtain(az, e, drift);
-    float k = smoothstep(0.55, 1.0, curtain) * smoothstep(${f4(SD_AURORA.low)}, ${f4(SD_AURORA.low)} + 0.2, e) * smoothstep(${f4(SD_AURORA.high)}, ${f4(SD_AURORA.high)} - 0.25, e);
+    float k = smoothstep(0.55, 1.0, curtain) * smoothstep(${f4(SD_AURORA.low)}, ${f4(SD_AURORA.low)} + 0.2, e) * (1.0 - smoothstep(${f4(SD_AURORA.high)} - 0.25, ${f4(SD_AURORA.high)}, e));
     float hem = smoothstep(0.55, 0.7, curtain) * (1.0 - smoothstep(0.7, 0.95, curtain));
     col += (BRASS * 0.55 * k + MANTELLA * 0.25 * hem * k) * uGain;
   }
@@ -177,8 +177,8 @@ void main() {
     float r = length(p);
     if (r < 1.25) {
       float ang = atan(p.x, p.y);
-      float ring = smoothstep(${f4(SD_CLOCK_RING_W)}, 0.0, abs(r - 1.0)) * 0.5;
-      float hourMark = smoothstep(0.06, 0.0, length(p - 0.9 * vec2(sin(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0), cos(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0))));
+      float ring = (1.0 - smoothstep(0.0, ${f4(SD_CLOCK_RING_W)}, abs(r - 1.0))) * 0.5;
+      float hourMark = 1.0 - smoothstep(0.0, 0.06, length(p - 0.9 * vec2(sin(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0), cos(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0))));
       float back = -TAU * uTime / PERIOD;
       float hHand = segment(p, vec2(0.0), 0.55 * vec2(sin(back * ${f4(SD_CLOCK_FACE.hourTurns)}), cos(back * ${f4(SD_CLOCK_FACE.hourTurns)})), 0.035);
       float mHand = segment(p, vec2(0.0), 0.85 * vec2(sin(back * ${f4(SD_CLOCK_FACE.minuteTurns)}), cos(back * ${f4(SD_CLOCK_FACE.minuteTurns)})), 0.022);

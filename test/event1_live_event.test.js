@@ -292,13 +292,13 @@ test('EVENT1 grade: the GLSL twin is made from the same stops, dim and weights, 
   assert.match(DREAD_GLSL, /if \(w <= 0\.0\) return c;/, 'no event: the colour as it was');
   // the four passes
   assert.ok(COMPOSITE_FS.includes(DREAD_GLSL) && COMPOSITE_UNIFORMS.includes('uDread'));
-  assert.match(COMPOSITE_FS, /float op = 1\.0 - c\.a;[\s\S]*dreadGrade\(c\.rgb \/ op, uDread\) \* op/, 'the cloud\'s own colour is graded, its opacity put back');
+  assert.match(COMPOSITE_FS, /float op = 1\.0 - c\.a;[\s\S]*dreadGrade\(c\.rgb \/ op, uDread\), uBrass\) \* op/, 'the cloud\'s own colour is graded, its opacity put back');   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.ok(DYNAMIC_FS.includes(DREAD_GLSL) && DYNAMIC_UNIFORMS.includes('uDread'));
-  assert.match(DYNAMIC_FS, /outColor = vec4\(dreadGrade\(enc, uDread\), 1\.0\);/);
+  assert.match(DYNAMIC_FS, /outColor = vec4\(brassGrade\(dreadGrade\(enc, uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   const enhanced = rd('src/render/enhancedSky.js'), classic = rd('src/render/skyRenderer.js');
-  assert.match(enhanced, /outColor = vec4\(dreadGrade\(out3, uDread\), 1\.0\);/);
+  assert.match(enhanced, /outColor = vec4\(brassGrade\(dreadGrade\(out3, uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.match(enhanced, /gl\.uniform1f\(u\.uDread, this\.dread\);/);
-  assert.match(classic, /outColor = vec4\(dreadGrade\(mix\(color, uFogColor, uFogMix\), uDread\), 1\.0\);/);
+  assert.match(classic, /outColor = vec4\(brassGrade\(dreadGrade\(mix\(color, uFogColor, uFogMix\), uDread\), uBrass\), 1\.0\);/);   // AUDIT SD III (V8, PIN MOVED): the brass air's grade after the dread's
   assert.match(classic, /gl\.uniform1f\(this\.uDread, this\.dread\);/);
 });
 

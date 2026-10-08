@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   remnantRig, rigMatrices, restRig, arenaBase, apply4, handAt, sdGearsAt, sdBeamsAt, sdBeamDraws, beamReach, gearFlightOf,
-  SD_REM_STATES, SD_RIG_PARTS, SD_RIG_JOINTS, SD_REM_HAND, SD_WAKE_MS, SD_SLIP_EVERY_MS, SD_GEAR_ARC_M, SD_BEAM_END_Y, SD_BEAM_FADE_MS, LEAN, TWIST, NOD,
+  SD_REM_STATES, SD_RIG_PARTS, SD_RIG_JOINTS, SD_REM_HAND, SD_WAKE_MS, SD_SLIP_EVERY_MS, SD_GEAR_ARC_M, SD_BEAM_FLOOR_Y, SD_BEAM_DROP_M, SD_BEAM_FADE_MS, LEAN, TWIST, NOD,
 } from '../src/scenes/sdRemnantRig.js';
 import { buildRemnantParts, buildRemnantModel, buildGearModel, SD_REMNANT_PARTS, SD_REMNANT_BODY, SD_GEAR, remnantMatrix } from '../src/world/sdRemnantModel.js';
 import { createSdRemnant, SD_GEAR_DRAWS } from '../src/scenes/sdRemnant.js';
@@ -46,8 +46,8 @@ test('SD17 THE BODY IN SEVEN PARTS: its pelvis and the six its rig turns - toget
     assert.ok(near(parts.reduce((n, p) => n + sum(p.positions), 0), sum(whole.positions), 1e-2), 'the same faces');
     const xs = (p) => Array.from({ length: p.positions.length / 3 }, (_, i) => p.positions[i * 3]);
     const ys = (p) => Array.from({ length: p.positions.length / 3 }, (_, i) => p.positions[i * 3 + 1]);
-    assert.ok(xs(parts[1]).every((x) => x < 0) && xs(parts[2]).every((x) => x > 0), 'its right leg at -x (it faces +z), its left at +x');
-    assert.ok(xs(parts[5]).every((x) => x < 0) && xs(parts[6]).every((x) => x > 0), 'its arms the same');
+    assert.ok(xs(parts[1]).every((x) => x > 0) && xs(parts[2]).every((x) => x < 0), 'its right leg at +x, its left at -x - +x the side its own right shows on through the camera\'s one mirror');   // AUDIT SD III (V11, PIN MOVED): its right was at -x, and every screen saw it point with its left
+    assert.ok(xs(parts[5]).every((x) => x > 0) && xs(parts[6]).every((x) => x < 0), 'its arms the same');
     assert.ok(ys(parts[1]).every((y) => y <= SD_RIG_JOINTS.hip + 1e-6), 'the legs below their hips');
     assert.ok(ys(parts[0]).every((y) => y >= B.legH - 1e-6 && y <= SD_RIG_JOINTS.waist + 1e-6), 'the pelvis between the hips and the waist');
     assert.ok(ys(parts[3]).every((y) => y >= SD_RIG_JOINTS.waist - 1e-6 && y <= SD_RIG_JOINTS.neck + 1e-6), 'the torso between the waist and the neck');
@@ -69,18 +69,18 @@ test('SD17 EIGHTEEN STATES TO THE WARDEN\'S TEN - at rest the parts stand where 
   const r = restRig();
   r.legs[0] = 0.8; r.legs[1] = -0.6; r.trunk[LEAN] = 0.4; r.trunk[TWIST] = -1.1; r.trunk[NOD] = 0.5; r.arms[0][0] = 2.2; r.arms[0][1] = 0.7; r.arms[1][0] = -0.5; r.arms[1][1] = 1.1;
   const P = rigMatrices(base, r), at = (m, p) => apply4(m, p);
-  assert.ok(nearV(at(P[0], [-B.legX, SD_RIG_JOINTS.hip, 0]), at(base, [-B.legX, SD_RIG_JOINTS.hip, 0]), 1e-5), 'its right hip');
-  assert.ok(nearV(at(P[1], [B.legX, SD_RIG_JOINTS.hip, 0]), at(base, [B.legX, SD_RIG_JOINTS.hip, 0]), 1e-5), 'its left hip');
+  assert.ok(nearV(at(P[0], [B.legX, SD_RIG_JOINTS.hip, 0]), at(base, [B.legX, SD_RIG_JOINTS.hip, 0]), 1e-5), 'its right hip');   // AUDIT SD III (V11, PIN MOVED): its right at +x
+  assert.ok(nearV(at(P[1], [-B.legX, SD_RIG_JOINTS.hip, 0]), at(base, [-B.legX, SD_RIG_JOINTS.hip, 0]), 1e-5), 'its left hip');
   assert.ok(nearV(at(P[2], [0, SD_RIG_JOINTS.waist, 0]), at(base, [0, SD_RIG_JOINTS.waist, 0]), 1e-5), 'the waist');
   assert.ok(nearV(at(P[3], [0, SD_RIG_JOINTS.neck, 0]), at(P[2], [0, SD_RIG_JOINTS.neck, 0]), 1e-5), 'the neck on the torso');
-  assert.ok(nearV(at(P[4], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), at(P[2], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), 1e-5), 'its right shoulder on the torso');
-  assert.ok(nearV(at(P[5], [B.armX, SD_RIG_JOINTS.shoulder, 0]), at(P[2], [B.armX, SD_RIG_JOINTS.shoulder, 0]), 1e-5), 'its left shoulder on the torso');
+  assert.ok(nearV(at(P[4], [B.armX, SD_RIG_JOINTS.shoulder, 0]), at(P[2], [B.armX, SD_RIG_JOINTS.shoulder, 0]), 1e-5), 'its right shoulder on the torso');
+  assert.ok(nearV(at(P[5], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), at(P[2], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), 1e-5), 'its left shoulder on the torso');
   // the turns' senses: a leg's forward swing puts its foot forward; a lean forward its chest; an arm's raise forward its hand; a nod its face down
   const one = (f) => { const q = restRig(); f(q); return rigMatrices(arenaBase(0, 0, 0), q); };
-  assert.ok(apply4(one((q) => { q.legs[0] = 0.5; })[0], [-B.legX, 0, 0])[2] > 1, 'the foot forward');
+  assert.ok(apply4(one((q) => { q.legs[0] = 0.5; })[0], [B.legX, 0, 0])[2] > 1, 'the foot forward');   // AUDIT SD III (V11, PIN MOVED): its right at +x
   assert.ok(apply4(one((q) => { q.trunk[LEAN] = 0.3; })[2], [0, SD_RIG_JOINTS.neck, 0])[2] > 0.5, 'the chest forward');
   assert.ok(apply4(one((q) => { q.arms[0][0] = Math.PI / 2; })[4], SD_REM_HAND[0])[2] > 2.5, 'the hand forward');
-  assert.ok(apply4(one((q) => { q.arms[0][1] = 0.8; })[4], SD_REM_HAND[0])[0] < -B.armX - 1.5, 'its right arm out to its right');
+  assert.ok(apply4(one((q) => { q.arms[0][1] = 0.8; })[4], SD_REM_HAND[0])[0] > B.armX + 1.5, 'its right arm out to its right');   // AUDIT SD III (V11, PIN MOVED): +x
   assert.ok(apply4(one((q) => { q.trunk[NOD] = 0.5; })[3], [0, SD_RIG_JOINTS.neck + 0.5, B.headD / 2])[1] < SD_RIG_JOINTS.neck + 0.5, 'its face down');
   assert.ok(apply4(one((q) => { q.trunk[TWIST] = Math.PI / 2; })[2], [0, SD_RIG_JOINTS.neck, 1])[0] > 0.9, 'turned as a facing turns: +z toward +x');
 });
@@ -151,7 +151,7 @@ test('SD17 EVERY BLOW MOVED: the Stomp\'s leg raised over the floor and slammed 
   // the Hand: the right hand along the bearing - at a quarter of the sweep, and at three quarters, turned the other way
   for (const [sw, k] of [[1, 0.25], [1, 0.75], [-1, 0.25]]) {
     const A = SD_BLOWS.hand, hs = s(A, T0, { sw }), t = T0 + A.active * k, P = partsAt(hs, -1, t);
-    const shoulder = apply4(P[4], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), hand = apply4(P[4], SD_REM_HAND[0]);
+    const shoulder = apply4(P[4], [B.armX, SD_RIG_JOINTS.shoulder, 0]), hand = apply4(P[4], SD_REM_HAND[0]);   // AUDIT SD III (V11, PIN MOVED): its right shoulder at +x
     const bearing = 0.4 + sw * (A.arc * k - A.arc / 2);
     assert.ok(near(Math.atan2(hand[0] - shoulder[0], hand[2] - shoulder[2]), bearing, 1e-6), `the hand down the bearing (sw ${sw}, ${k})`);
     assert.ok(Math.abs(hand[1] - shoulder[1]) < 0.6, 'held out, about level (its lean dips it)');
@@ -199,7 +199,12 @@ test('SD17 THE GEARS IN FLIGHT: from between its hands as the arms throw, arcing
   assert.deepEqual(sdBeamsAt(hs(0), T0 + A.active), [], 'none after');
   const open = sdBeamsAt(hs(Math.PI), T0 + A.active / 2)[0];   // bearing pi: toward -z, clear of every pillar
   assert.ok(nearV(open.a, handAt(hs(Math.PI), -1, 0, T0 + A.active / 2)), 'out of its right hand');
-  assert.ok(near(open.reach, A.len) && nearV(open.b, [Math.sin(Math.PI) * A.len, SD_BEAM_END_Y, Math.cos(Math.PI) * A.len], 1e-9), 'its full length to the floor');
+  // AUDIT SD III (V2, PIN MOVED): its band on the floor from its body's rim to its full length, the law's width across;
+  // its light falling from the hand to the floor SD_BEAM_DROP_M past the hand's own reach
+  const along = (m) => [Math.sin(Math.PI) * m, SD_BEAM_FLOOR_Y, Math.cos(Math.PI) * m];
+  assert.ok(near(open.reach, A.len) && nearV(open.f1, along(A.len), 1e-9) && nearV(open.f0, along(SD_REM.r), 1e-9) && open.w === A.width, 'its band, its full length to the floor');
+  const fwd = open.a[0] * Math.sin(Math.PI) + open.a[2] * Math.cos(Math.PI);
+  assert.ok(nearV(open.b, along(Math.max(SD_REM.r, fwd) + SD_BEAM_DROP_M), 1e-9) && SD_BEAM_FLOOR_Y < 0.1, 'its light down to the floor before the hand');
   // toward a pillar: the bearing at mid-sweep is the facing - face the first pillar
   const [px, pz] = SD_PILLARS[0], toPillar = Math.atan2(px, pz), blocked = sdBeamsAt(hs(toPillar), T0 + A.active / 2)[0];
   assert.ok(blocked.reach < Math.hypot(px, pz) && blocked.reach > Math.hypot(px, pz) - 2, `stopped at its face: ${blocked.reach.toFixed(2)} m`);
@@ -259,7 +264,8 @@ test('SD17 THE SCENE AND THE WORLD: the parts stood after the Hearts and turned 
   assert.match(src, /gl\.blendFunc\(gl\.ONE, gl\.ONE\);\n\s+gl\.depthMask\(false\);/);
   assert.equal(typeof SdBeamRenderer, 'function');
   // the world
-  assert.match(W, /import \{ sdBeamDraws \} from '\.\/sdRemnantRig\.js';/);
-  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\)\) : \[\]; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);
+  // AUDIT SD III (V5, PIN MOVED): into a list the world keeps - a frame of a sweep made 3.4 KB
+  assert.match(W, /import \{ sdBeamDraws, sdKeptList \} from '\.\/sdRemnantRig\.js';[^\n]*\n[^\n]*\nconst _sdBeamDraws = sdKeptList\(\), NO_SD_BEAMS = Object\.freeze\(\[\]\);/);
+  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\), _sdBeamDraws\) : NO_SD_BEAMS; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);
   assert.match(W, /_sdBeamPass = new SdBeamRenderer\(renderer\.gl\);/);
 });

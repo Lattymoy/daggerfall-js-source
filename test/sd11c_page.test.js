@@ -581,7 +581,7 @@ function fightHost() {
     sdBeats: { frame: () => null, leave: () => {} }, titleCardModel: () => null, drawGateGround: () => log.push('ground'), drawSdTitleCard: () => log.push('card'),
     sdMarksCardModel: () => null, sdMarksOf: () => null, drawGateMarksCard: () => log.push('marks'), performance: { now: () => 0 },   // SD18b (PIN MOVED): the Hour's marks card - none to draw
   };
-  const body = `let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false;\n${fnOf('sdFightHeard')}\n${constOf('sdFightFrame')}\nreturn { sdFightHeard, sdFightFrame, held: () => _sdFightHeld };`;
+  const body = `let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false, _sdPassesWarm = true;\n${fnOf('sdFightHeard')}\n${constOf('sdFightFrame')}\nreturn { sdFightHeard, sdFightFrame, held: () => _sdFightHeld };`;   // AUDIT SD III (V13, PIN MOVED): the passes already warm
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
   return { ...api, log, at: (s) => { slot = s; }, receipts: env._sdReceipts };
 }

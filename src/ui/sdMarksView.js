@@ -8,7 +8,8 @@
 //
 // Pure: `sdMarksViewOf` and `sdMarksCardModel` are the pins' door. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { sdEndingOf, sdOmensOf, validSdMarks, sdMarksOf } from '../net/sdMarks.js';
-import { SD_STONES, SD_STONE_POS, realmToDungeon } from '../net/sdBrain.js';
+import { SD_STONES, realmToDungeon } from '../net/sdBrain.js';
+import { stonePoint, SD_DIAL } from '../world/sdHall.js';   // AUDIT SD III (V3): the light before the stone's face
 
 /** THE SIGNS - one path each on a 24-unit box (`fill` a solid sign; the rest stroked). */
 export const SD_MARK_ICONS = Object.freeze({
@@ -81,14 +82,28 @@ export const sdOmensLine = (mk) => sdOmensOf(mk).map((o) => o.name).join(' - ');
 
 /** SD18b: THE ENDING'S STONE LIT in the Orrery's hall - the stone its Hollow keeps glowing in its light, breathing on the
  *  hall's clock (`t` seconds): `{ x, y, z, range, color }` in the dungeon's frame, for the Hour's light channel; null for a
- *  slot with no Ending. Pure. */
-export const SD_STONE_LIGHT = Object.freeze({ y: 2.4, range: 9, gain: 1.8, breathe: 0.15, hz: 0.25 });
-export function sdEndingStoneLight(slot, t = 0) {
-  const E = slot != null ? sdEndingOf(sdMarksOf(slot)) : null;
-  const k = E ? SD_STONES.findIndex((st) => st.key === E.id) : -1;
-  if (k < 0) return null;
-  const P = SD_STONE_POS[k], d = realmToDungeon(P.x, SD_STONE_LIGHT.y, P.z), b = SD_STONE_LIGHT.gain * (1 - SD_STONE_LIGHT.breathe + SD_STONE_LIGHT.breathe * Math.sin(t * Math.PI * 2 * SD_STONE_LIGHT.hz));
-  return { x: d[0], y: d[1], z: d[2], range: SD_STONE_LIGHT.range, color: E.light.map((v) => v * b), stone: k };
+ *  slot with no Ending. Pure. AUDIT SD III (V3): the light stands `out` before the stone's face at its dial's height
+ *  (world/sdHall.js stonePoint) - it stood at the slab's own foot-centre 2.4 m up, inside the solid stone, a hand's
+ *  breadth under its cap: the face it was to light was the one place it never reached. */
+export const SD_STONE_LIGHT = Object.freeze({ up: SD_DIAL.y, out: 0.6, range: 9, gain: 1.8, breathe: 0.15, hz: 0.25 });
+/** Each stone's light's place, the dungeon's frame, and each slot's Ending and stone - found once (AUDIT SD III, V5: the
+ *  light is asked every frame). */
+const _stoneLightAt = new Map(), _stoneOfSlot = new Map();
+/** `out` (kept by the caller) is filled and answered in place - the light the Hour's channel reads every frame makes
+ *  nothing (AUDIT SD III, V5: 1.1 KB a frame); a fresh one when none is given. */
+export function sdEndingStoneLight(slot, t = 0, out = null) {
+  if (slot == null) return null;
+  let had = _stoneOfSlot.get(slot);
+  if (!had) { const E0 = sdEndingOf(sdMarksOf(slot)); had = { E: E0, k: E0 ? SD_STONES.findIndex((st) => st.key === E0.id) : -1 }; _stoneOfSlot.set(slot, had); }
+  const E = had.E, k = had.k;
+  if (!E || k < 0) return null;
+  let d = _stoneLightAt.get(k);
+  if (!d) { const P = stonePoint(k, 0, SD_STONE_LIGHT.up, SD_STONE_LIGHT.out); d = realmToDungeon(P[0], P[1], P[2]); _stoneLightAt.set(k, d); }
+  const b = SD_STONE_LIGHT.gain * (1 - SD_STONE_LIGHT.breathe + SD_STONE_LIGHT.breathe * Math.sin(t * Math.PI * 2 * SD_STONE_LIGHT.hz));
+  const o = out ?? { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], stone: -1 };
+  o.x = d[0]; o.y = d[1]; o.z = d[2]; o.range = SD_STONE_LIGHT.range; o.stone = k;
+  o.color[0] = E.light[0] * b; o.color[1] = E.light[1] * b; o.color[2] = E.light[2] * b;
+  return o;
 }
 
 /** The card's words, and how long it stands as a fighter steps into the Hour (the gate's own span). */

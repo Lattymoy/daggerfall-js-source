@@ -22,7 +22,7 @@
 //
 // Pure: the scene (scenes/sdRemnant.js) stands the parts by `rigMatrices`, the gears by `gearMatrix`, and the world's
 // pass draws the beams (render/sdBeam.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
+import { SD_ARENA, SD_REALM_ORIGIN } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_BREAK_MS, atkWindup, blowShape, behindPillar } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
 import { SD_REMNANT_BODY } from '../world/sdRemnantModel.js';
@@ -54,8 +54,14 @@ export const SD_GEAR_FLIGHT_MS = 900;
 export const SD_GEAR_FLIGHT_SHARE = 0.45;
 export const SD_GEAR_ARC_M = 7;
 export const SD_GEAR_SPIN = 9;
-/** The beam's far end's height over the floor (m), and how fine its stop at a pillar is found (halvings). */
-export const SD_BEAM_END_Y = 1;
+/** AUDIT SD III (V2): THE BEAM ON THE FLOOR. The law's Hour-Hand is a band its width across on the ground, from its body
+ *  to its reach (net/sdRemnant.js handSwept) - and its beam was drawn from the hand, six metres up, to a metre over the
+ *  floor at its reach, half a metre to 1.6 across: over the head of every body it struck inside 20 m, a third of the
+ *  law's width. Its light now falls from the hand to the floor SD_BEAM_DROP_M past the hand's own reach, and runs out
+ *  along the floor to its reach as the law's band - SD_BEAM_FLOOR_Y over it (clear of the floor's depth), from the
+ *  body's rim, the blow's own width across. How fine its stop at a pillar is found (halvings). */
+export const SD_BEAM_FLOOR_Y = 0.04;
+export const SD_BEAM_DROP_M = 6;
 const BEAM_STEPS = 18;
 
 /** Nothing, shared (never written). */
@@ -112,7 +118,7 @@ function stunned(out, t, su) {
 }
 /** Walking: a stride every `stride` metres, a leg planted at each footfall the voice hears. */
 function walking(out, m, t, stride) {
-  const len = Math.hypot(m.tx - m.x, m.tz - m.z), along = Math.min(len, (Math.max(0, t - m.at) / 1000) * m.v);
+  const lx = m.tx - m.x, lz = m.tz - m.z, len = Math.sqrt(lx * lx + lz * lz), along = Math.min(len, (Math.max(0, t - m.at) / 1000) * m.v);   // AUDIT SD III (V5): no Math.hypot a frame
   if (!(len > 1e-6 && along < len)) return;
   const amp = Math.min(1, along, len - along), c = Math.cos((Math.PI * along) / stride), T = out.trunk;
   out.state = 'walk';
@@ -234,7 +240,7 @@ export function mul4(out, a, b) {
 }
 const _m = new Float64Array(16);
 /** The joints' places in the body's own frame (x, y - each on its own side), in SD_RIG_PARTS' order. */
-const PIVOT = new Float64Array([-B.legX, SD_RIG_JOINTS.hip, B.legX, SD_RIG_JOINTS.hip, 0, SD_RIG_JOINTS.waist, 0, SD_RIG_JOINTS.neck, -B.armX, SD_RIG_JOINTS.shoulder, B.armX, SD_RIG_JOINTS.shoulder]);
+const PIVOT = new Float64Array([B.legX, SD_RIG_JOINTS.hip, -B.legX, SD_RIG_JOINTS.hip, 0, SD_RIG_JOINTS.waist, 0, SD_RIG_JOINTS.neck, B.armX, SD_RIG_JOINTS.shoulder, -B.armX, SD_RIG_JOINTS.shoulder]);   // AUDIT SD III (V11): its right at +x
 /** The turn the next `joint` makes: pitch about x, roll about z, twist about y (AUDIT SD II, L2 F9's law: a number handed
  *  to a function is a box made, so the joint and its angles go by index and by this array). */
 const ANG = new Float64Array(3);
@@ -272,14 +278,19 @@ export function rigMatrices(base, rig, out = SD_RIG_PARTS.map(() => new Float32A
   // the head: about the neck, on the torso
   ANG[0] = T[NOD]; ANG[2] = 0; joint(_j, 3); mul4(_j, _torso, _j); mul4(out[3], base, _j);
   // the arms: about the shoulders, on the torso - forward (-p), then outward (toward their own side)
-  ANG[0] = -A[0][0]; ANG[1] = -A[0][1]; joint(_j, 4); mul4(_j, _torso, _j); mul4(out[4], base, _j);
-  ANG[0] = -A[1][0]; ANG[1] = A[1][1]; joint(_j, 5); mul4(_j, _torso, _j); mul4(out[5], base, _j);
+  ANG[0] = -A[0][0]; ANG[1] = A[0][1]; joint(_j, 4); mul4(_j, _torso, _j); mul4(out[4], base, _j);   // AUDIT SD III (V11): its right at +x, outward +x
+  ANG[0] = -A[1][0]; ANG[1] = -A[1][1]; joint(_j, 5); mul4(_j, _torso, _j); mul4(out[5], base, _j);
   return out;
 }
-/** A point of a part's own frame (the body's) where `m` stands it. */
-export const apply4 = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
+/** A point of a part's own frame (the body's) where `m` stands it - into `out` when one is given (AUDIT SD III, V5). */
+export const apply4 = (m, p, out = null) => {
+  const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], z = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
+  if (!out) return [x, y, z];
+  out[0] = x; out[1] = y; out[2] = z;
+  return out;
+};
 /** The hands, in their arms' own frame: the arms' feet. */
-export const SD_REM_HAND = Object.freeze([Object.freeze([-B.armX, B.armBot, 0]), Object.freeze([B.armX, B.armBot, 0])]);
+export const SD_REM_HAND = Object.freeze([Object.freeze([B.armX, B.armBot, 0]), Object.freeze([-B.armX, B.armBot, 0])]);   // AUDIT SD III (V11): its right at +x
 
 /** A body's base matrix in the ARENA's frame, on its floor (no sink): where its parts' points are asked. */
 export function arenaBase(x, z, yw, scale = 1, out = new Float64Array(16)) {
@@ -288,39 +299,60 @@ export function arenaBase(x, z, yw, scale = 1, out = new Float64Array(16)) {
   out[0] = c; out[2] = -s; out[5] = scale; out[8] = s; out[10] = c; out[12] = x; out[13] = 0; out[14] = z; out[15] = 1;
   return out;
 }
-const _base = new Float64Array(16), _parts = SD_RIG_PARTS.map(() => new Float64Array(16)), _rig = restRig();
-/** Where body `who`'s hand `h` (0 its right, 1 its left) stands at `t`, in the arena's frame. Pure. */
-export function handAt(s, who, h, t) {
+const _base = new Float64Array(16), _parts = SD_RIG_PARTS.map(() => new Float64Array(16)), _rig = restRig(), _handBody = [0, 0];
+/** Where body `who`'s hand `h` (0 its right, 1 its left) stands at `t`, in the arena's frame (into `out` when one is
+ *  given). Pure. */
+export function handAt(s, who, h, t, out = null) {
   const Bd = who < 0 ? s.rem : s.ec?.[who];
   if (!Bd) return null;
-  const [x, z] = sdBodyAt(Bd, t);
-  arenaBase(x, z, Bd.yw ?? 0, who < 0 ? 1 : SD_ECHO.h / SD_REM.h, _base);
+  const at = sdBodyAt(Bd, t, _handBody);   // AUDIT SD III (V5): in place
+  arenaBase(at[0], at[1], Bd.yw ?? 0, who < 0 ? 1 : SD_ECHO.h / SD_REM.h, _base);
   rigMatrices(_base, remnantRig(s, who, t, _rig), /** @type {any} */ (_parts));
-  return apply4(_parts[4 + h], SD_REM_HAND[h]);
+  return apply4(_parts[4 + h], SD_REM_HAND[h], out);
 }
+
+/** AUDIT SD III (V5): A KEPT LIST for a frame's caller - its records made once and filled in place each frame (the
+ *  gears in flight made 1.7 KB a frame, the beam 3.4 KB). A pure call (none given) makes its own. */
+export const sdKeptList = () => Object.defineProperty([], 'pool', { value: [] });
+/** The list's next record, made the first time it is wanted. */
+function keptNext(list, make) {
+  let o = list.pool[list.length];
+  if (!o) { o = make(); list.pool[list.length] = o; }
+  list.push(o);
+  return o;
+}
+const newGear = () => ({ x: 0, y: 0, z: 0, spin: 0, who: 0, k: 0, yaw: 0 });
+const newBeam = () => ({ a: [0, 0, 0], b: [0, 0, 0], f0: [0, 0, 0], f1: [0, 0, 0], w: 0, k: 0, who: 0, bearing: 0, reach: 0, active: 0 });
+const _gearR = [0, 0, 0], _gearL = [0, 0, 0];
 
 /**
  * THE VOLLEY'S GEARS IN FLIGHT at `t`: each of each standing body's Volley marks, from between its hands as they leave
- * them to its mark as it lands - `{ x, y, z, spin, who, k }` in the arena's frame. Pure.
+ * them to its mark as it lands - `{ x, y, z, spin, who, k, yaw }` in the arena's frame (`yaw` its flight's bearing), into
+ * `out` (an sdKeptList) when one is given. Pure.
  */
-export function sdGearsAt(s, t) {
-  /** @type {any[]} */ let out = /** @type {any} */ (NONE);   // AUDIT SD II (L2 F9)'s law: a frame with nothing in flight makes nothing
-  if (!live(s) || s.fell) return out;
+export function sdGearsAt(s, t, out = null) {
+  /** @type {any[]} */ let list = /** @type {any} */ (NONE);   // AUDIT SD II (L2 F9)'s law: a frame with nothing in flight makes nothing
+  if (out) out.length = 0;
+  if (!live(s) || s.fell) return list;
   for (let who = -1; who < (s.ec?.length ?? 0); who++) {
     const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
     if (!a || a.a !== SD_BLOWS.volley.id || (who >= 0 && !(Bd.h > 0))) continue;
     const w = atkWindup(a, SD_BLOWS.volley, s.ph, who < 0 ? SD_BODY.remnant : SD_BODY.gold + who), fl = gearFlightOf(w), go = a.at - fl;
     if (!(t >= go && t < a.at)) continue;
-    const r = handAt(s, who, 0, go), l = handAt(s, who, 1, go);
+    const r = handAt(s, who, 0, go, _gearR), l = handAt(s, who, 1, go, _gearL);
     if (!r || !l) continue;
-    const from = [(r[0] + l[0]) / 2, (r[1] + l[1]) / 2, (r[2] + l[2]) / 2], k = (t - go) / fl;
-    if (out === NONE) out = [];
-    (a.tg ?? []).forEach((q, i) => {
-      const y = from[1] + (0.4 - from[1]) * k + SD_GEAR_ARC_M * 4 * k * (1 - k);
-      out.push({ x: from[0] + (q[0] - from[0]) * k, y, z: from[2] + (q[1] - from[2]) * k, spin: (t / 1000) * SD_GEAR_SPIN + i, who, k });
-    });
+    const fx = (r[0] + l[0]) / 2, fy = (r[1] + l[1]) / 2, fz = (r[2] + l[2]) / 2, k = (t - go) / fl, tg = a.tg;
+    if (!tg) continue;
+    for (let i = 0; i < tg.length; i++) {
+      const q = tg[i];
+      if (list === NONE) list = out ?? sdKeptList();
+      const g = keptNext(list, newGear);
+      g.x = fx + (q[0] - fx) * k; g.y = fy + (0.4 - fy) * k + SD_GEAR_ARC_M * 4 * k * (1 - k); g.z = fz + (q[1] - fz) * k;
+      g.spin = (t / 1000) * SD_GEAR_SPIN + i; g.who = who; g.k = k;
+      g.yaw = Math.atan2(q[0] - fx, q[1] - fz);   // AUDIT SD III (V12): its flight's bearing
+    }
   }
-  return out;
+  return list;
 }
 
 /** The distance along bearing `b` from (x, z) to the first pillar's face, `len` at most. Pure. */
@@ -331,14 +363,18 @@ export function beamReach(x, z, b, len) {
   for (let i = 0; i < BEAM_STEPS; i++) { const m = (lo + hi) / 2; if (behindPillar(x, z, x + sx * m, z + cz * m)) hi = m; else lo = m; }
   return hi;
 }
+/** A point `m` metres along bearing (sx, cz) from (x, z), on the floor where the beam's light lies, into `out`. */
+function onFloor(out, x, z, sx, cz, m) { out[0] = x + sx * m; out[1] = SD_BEAM_FLOOR_Y; out[2] = z + cz * m; return out; }
 /**
- * THE HOUR-HAND'S BEAMS at `t`: each sweeping body's, out of its pointing hand along the sweep's bearing - `{ a, b, k,
- * who, bearing }` (its hand and its far end, the arena's frame, `k` its share of the sweep), stopped at a pillar's face.
- * Pure.
+ * THE HOUR-HAND'S BEAMS at `t`: each sweeping body's, out of its pointing hand along the sweep's bearing - `{ a, b, f0,
+ * f1, w, k, who, bearing }` (its hand and where its light meets the floor; AUDIT SD III, V2: the band on the floor from
+ * its body's rim to its reach and the band's width - the arena's frame, `k` its share of the sweep), stopped at a
+ * pillar's face; into `out` (an sdKeptList) when one is given. Pure.
  */
-export function sdBeamsAt(s, t) {
-  /** @type {any[]} */ let out = /** @type {any} */ (NONE);
-  if (!live(s) || s.fell) return out;
+export function sdBeamsAt(s, t, out = null) {
+  /** @type {any[]} */ let list = /** @type {any} */ (NONE);
+  if (out) out.length = 0;
+  if (!live(s) || s.fell) return list;
   const A = SD_BLOWS.hand;
   for (let who = -1; who < (s.ec?.length ?? 0); who++) {
     const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
@@ -346,34 +382,48 @@ export function sdBeamsAt(s, t) {
     const S = blowShape(a);   // SD18a: the Turning Tide's wider, longer sweep
     if (!(t >= a.at && t < a.at + S.active) || (who >= 0 && !(Bd.h > 0))) continue;
     const k = (t - a.at) / S.active, bearing = a.yw + (a.sw ?? 1) * (S.arc * k - S.arc / 2);
-    const reach = beamReach(a.x, a.z, bearing, A.len), hand = handAt(s, who, 0, t);
-    if (!hand) continue;
-    if (out === NONE) out = [];
-    out.push({ a: hand, b: [a.x + Math.sin(bearing) * reach, SD_BEAM_END_Y, a.z + Math.cos(bearing) * reach], k, who, bearing, reach, active: S.active });
+    if (list === NONE) list = out ?? sdKeptList();
+    const g = keptNext(list, newBeam), hand = handAt(s, who, 0, t, g.a);
+    if (!hand) { list.length--; continue; }
+    const reach = beamReach(a.x, a.z, bearing, A.len), sx = Math.sin(bearing), cz = Math.cos(bearing);
+    const rim = Math.min(reach, who < 0 ? SD_REM.r : SD_ECHO.r), fwd = (hand[0] - a.x) * sx + (hand[2] - a.z) * cz;
+    onFloor(g.b, a.x, a.z, sx, cz, Math.min(reach, Math.max(rim, fwd) + SD_BEAM_DROP_M));
+    onFloor(g.f0, a.x, a.z, sx, cz, rim); onFloor(g.f1, a.x, a.z, sx, cz, reach);
+    g.w = S.width; g.k = k; g.who = who; g.bearing = bearing; g.reach = reach; g.active = S.active;
   }
-  return out;
+  return list.length ? list : NONE;
 }
 
 /** The beam's light coming up and going out over the sweep's first and last moments (ms). */
 export const SD_BEAM_FADE_MS = Object.freeze([120, 220]);
-/** THE BEAMS AS THE PASS DRAWS THEM (render/sdBeam.js): `{ a, b, alpha }` in the DUNGEON's frame. Pure. */
-export function sdBeamDraws(s, t) {
-  const to = (p) => realmToDungeon(SD_ARENA.x + p[0], p[1], SD_ARENA.z + p[2]), beams = sdBeamsAt(s, t);
+/** A point of the arena's frame in the dungeon's, into `out`. */
+function toDungeon(out, p) { out[0] = SD_REALM_ORIGIN[0] + SD_ARENA.x + p[0]; out[1] = SD_REALM_ORIGIN[1] + p[1]; out[2] = SD_REALM_ORIGIN[2] + SD_ARENA.z + p[2]; return out; }
+const newDraw = () => ({ a: [0, 0, 0], b: [0, 0, 0], f0: [0, 0, 0], f1: [0, 0, 0], w: 0, alpha: 0 });
+const _beamsAt = sdKeptList();
+/** THE BEAMS AS THE PASS DRAWS THEM (render/sdBeam.js): `{ a, b, f0, f1, w, alpha }` in the DUNGEON's frame - into `out`
+ *  (an sdKeptList) when one is given. Pure. */
+export function sdBeamDraws(s, t, out = null) {
+  if (out) out.length = 0;
+  const beams = sdBeamsAt(s, t, out ? _beamsAt : null);
   if (!beams.length) return NONE;
-  return beams.map((g) => {
-    const ms = g.k * g.active, alpha = Math.min(1, ms / SD_BEAM_FADE_MS[0], (g.active - ms) / SD_BEAM_FADE_MS[1]);
-    return { a: to(g.a), b: to(g.b), alpha: Math.max(0, alpha) };
-  });
+  const list = out ?? sdKeptList();
+  for (let i = 0; i < beams.length; i++) {
+    const g = beams[i], d = keptNext(list, newDraw), ms = g.k * g.active, alpha = Math.min(1, ms / SD_BEAM_FADE_MS[0], (g.active - ms) / SD_BEAM_FADE_MS[1]);
+    toDungeon(d.a, g.a); toDungeon(d.b, g.b); toDungeon(d.f0, g.f0); toDungeon(d.f1, g.f1); d.w = g.w; d.alpha = Math.max(0, alpha);
+  }
+  return list;
 }
 
 /** A gear stood at (x, y, z) of the arena's frame, turned on edge to face its flight and spun by `spin`, in the DUNGEON's
  *  frame (column-major), into `out`. */
-export function gearMatrix(x, y, z, spin, out = new Float32Array(16)) {
-  const c = Math.cos(spin), s = Math.sin(spin);
-  // on edge (its disc in the x-y plane), spun about z
-  out[0] = c; out[1] = s; out[2] = 0; out[3] = 0;
-  out[4] = -s; out[5] = c; out[6] = 0; out[7] = 0;
-  out[8] = 0; out[9] = 0; out[10] = 1; out[11] = 0;
+export function gearMatrix(x, y, z, spin, out = new Float32Array(16), yaw = 0) {
+  // AUDIT SD III (V12): ON EDGE ALONG ITS FLIGHT - its disc (the model's x-y plane) turned about y so it stands in its
+  // flight's bearing `yaw` and the vertical, then spun about its axle the way a wheel rolls forward: it flew flat to the
+  // arena's z whichever way it was thrown
+  const c = Math.cos(-spin), s = Math.sin(-spin), ct = Math.cos(yaw - Math.PI / 2), st = Math.sin(yaw - Math.PI / 2);
+  out[0] = ct * c; out[1] = s; out[2] = -st * c; out[3] = 0;
+  out[4] = -ct * s; out[5] = c; out[6] = st * s; out[7] = 0;
+  out[8] = st; out[9] = 0; out[10] = ct; out[11] = 0;
   out[12] = SD_REALM_ORIGIN[0] + SD_ARENA.x + x; out[13] = SD_REALM_ORIGIN[1] + y; out[14] = SD_REALM_ORIGIN[2] + SD_ARENA.z + z; out[15] = 1;
   return out;
 }

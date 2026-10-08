@@ -107,7 +107,7 @@ void main() {
   col *= 1.0 - 0.5 * exp(-(r - 0.3) * (r - 0.3) * 30.25) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)
   col += mix(vec3(1.0, 0.84, 0.56), vec3(0.5, 1.0, 0.66), th) * exp(-r * 6.0) * uHeat * 1.7;                                    // the eye (the Mantella's green)
   vec2 sc = vec2(turn * 200.0, lr * 26.0 - uTime * 22.0);
-  float spark = step(0.993, vh(floor(sc))) * smoothstep(0.5, 0.15, abs(fract(sc.x) - 0.5)) * smoothstep(0.5, 0.25, abs(fract(sc.y) - 0.5)) * smoothstep(0.05, 0.3, r);
+  float spark = step(0.993, vh(floor(sc))) * (1.0 - smoothstep(0.15, 0.5, abs(fract(sc.x) - 0.5))) * (1.0 - smoothstep(0.25, 0.5, abs(fract(sc.y) - 0.5))) * smoothstep(0.05, 0.3, r);
   col += mix(vec3(1.0, 0.76, 0.38), vec3(1.0, 0.9, 0.58), th) * spark * fire * 2.2;                                             // embers streaking in
   col *= 1.0 - 0.35 * smoothstep(0.75, 1.05, r);                                                 // darker at the corners
   float tint = clamp(uCover, 0.0, 1.0) * 0.5;

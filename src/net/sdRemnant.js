@@ -250,7 +250,7 @@ const r2 = (v) => Math.round(v * 100) / 100;
 /** A point of the realm's frame in the arena's. */
 export const arenaOf = (x, z) => [x - SD_ARENA.x, z - SD_ARENA.z];
 /** Whether a point of the arena's frame stands on it (`pad` past its rim). */
-export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x, z) <= SD_ARENA.r + pad;
+export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad);   // AUDIT SD III (V5): squared - Math.hypot's builtin boxes its numbers, and a frame asks it
 /** AUDIT SD II (L4 C2): how far past its rim a pose still stands in the fight - a fifth of a second at a run (a pose's
  *  age). The gate's POSE_SLACK (3) reached the Steps: the last Crumble step's last 0.6 m stand 28.4 m from the arena's
  *  centre, and the Pulse, the Reset and the End struck there, the realm counted the body present and took its `in` -
@@ -263,9 +263,10 @@ export const SD_ARENA_SLACK = 1.5;
  *  fight's bodies: absent, as a closed socket is (net/gateBrain.js ABSENT_RETIRE_MS takes its share out). */
 export const SD_POSE_FRESH_MS = 25_000;
 /** A point kept within `r` of the arena's centre. */
-export function keepInArena(x, z, r) {
-  const d = Math.hypot(x, z);
-  return d <= r ? [x, z] : [(x / d) * r, (z / d) * r];
+export function keepInArena(x, z, r, out = null) {   // AUDIT SD III (V5): into `out` when one is given - a frame's walk makes nothing
+  const d = Math.sqrt(x * x + z * z), o = out ?? [0, 0];
+  if (d <= r) { o[0] = x; o[1] = z; } else { o[0] = (x / d) * r; o[1] = (z / d) * r; }
+  return o;
 }
 /** The STOMP's ring: how far out its front stands at `now` (null outside its roll). */
 export function stompRingAt(atk, now) {
@@ -309,21 +310,25 @@ export function handSwept(atk, x, z, t0, t1) {
  *  shades a body there (net/sdStrike.js sdBlowVerdict `over`). Fourteen metres up, a Levitate's reach, the top was the
  *  one place the Hour-Hand never struck: a body on it stood inside the square that shades. */
 export const SD_PILLAR_OVER_Y = SD_PILLAR_H - 0.5;
-/** Whether a pillar stands between (ox, oz) and (x, z) - the segment meets one's square, short of the far end. */
+/** Whether a pillar stands between (ox, oz) and (x, z) - the segment meets one's square, short of the far end. AUDIT SD
+ *  III (V5): its two slabs in plain numbers - it made four lists a pillar a call, and the arena read asks it a thousand
+ *  times a frame while a Hand's sweep stands over my feet. */
 export function behindPillar(ox, oz, x, z) {
-  const w = SD_PILLAR_W / 2;
-  for (const [px, pz] of SD_PILLARS) {
+  const w = SD_PILLAR_W / 2, dx = x - ox, dz = z - oz;
+  for (let i = 0; i < SD_PILLARS.length; i++) {
+    const px = SD_PILLARS[i][0], pz = SD_PILLARS[i][1];
     let t0 = 0, t1 = 1;
-    const d = [x - ox, z - oz], o = [ox, oz], lo = [px - w, pz - w], hi = [px + w, pz + w];
-    let hit = true;
-    for (let k = 0; k < 2 && hit; k++) {
-      if (Math.abs(d[k]) < 1e-9) { if (o[k] < lo[k] || o[k] > hi[k]) hit = false; continue; }
-      let a = (lo[k] - o[k]) / d[k], b = (hi[k] - o[k]) / d[k];
-      if (a > b) [a, b] = [b, a];
-      t0 = Math.max(t0, a); t1 = Math.min(t1, b);
-      if (t0 > t1) hit = false;
+    if (Math.abs(dx) < 1e-9) { if (ox < px - w || ox > px + w) continue; } else {
+      const a = (px - w - ox) / dx, b = (px + w - ox) / dx;
+      t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+      if (t0 > t1) continue;
     }
-    if (hit && t0 < 1) return true;
+    if (Math.abs(dz) < 1e-9) { if (oz < pz - w || oz > pz + w) continue; } else {
+      const a = (pz - w - oz) / dz, b = (pz + w - oz) / dz;
+      t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+      if (t0 > t1) continue;
+    }
+    if (t0 < 1) return true;
   }
   return false;
 }

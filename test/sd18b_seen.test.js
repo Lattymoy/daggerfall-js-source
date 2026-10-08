@@ -27,7 +27,7 @@ import { arenaToDungeon } from '../src/scenes/sdRemnant.js';
 import { createSdBeats, sdGroundModel, sdWakeText, SD_BEAT_TEXT } from '../src/scenes/sdArenaRead.js';
 import { remnantBarModel } from '../src/ui/sdRemnantBar.js';
 import { createSdHall } from '../src/scenes/sdHall.js';
-import { buildFrayModel, SD_FRAY_RING } from '../src/world/sdHall.js';
+import { buildFrayModel, SD_FRAY_RING, stonePoint } from '../src/world/sdHall.js';
 import { TELEGRAPH_STYLE, TELEGRAPH_EDGE_DAGON } from '../src/render/gateTelegraph.js';
 
 const T0 = 1_800_000_000_000;
@@ -159,12 +159,12 @@ test('SD18b A STRIKE IN ITS ELEMENT: softened by my resistance (the save door - 
 test('SD18b THE HALL: the Ending\'s own stone lit in its light, breathing on the hall\'s clock - in the Hour\'s light channel; the fray\'s arc round once by the Hollow\'s own snap (the Fraying\'s thirty-six)', () => {
   const slot = 5, E = sdEndingOf(sdMarksOf(slot)), k = SD_STONES.findIndex((s) => s.key === E.id);
   const L0 = sdEndingStoneLight(slot, 0), L1 = sdEndingStoneLight(slot, 1);
-  const d = realmToDungeon(SD_STONE_POS[k].x, SD_STONE_LIGHT.y, SD_STONE_POS[k].z);
+  const P = stonePoint(k, 0, SD_STONE_LIGHT.up, SD_STONE_LIGHT.out), d = realmToDungeon(P[0], P[1], P[2]);   // AUDIT SD III (V3, PIN MOVED): before its face, at its dial
   assert.deepEqual([L0.x, L0.y, L0.z, L0.range, L0.stone], [d[0], d[1], d[2], SD_STONE_LIGHT.range, k]);
   assert.ok(L0.color.every((v, i) => near(v, E.light[i] * SD_STONE_LIGHT.gain * (1 - SD_STONE_LIGHT.breathe))));
   assert.ok(L1.color[0] !== L0.color[0], 'breathing');
   assert.equal(sdEndingStoneLight(null, 0), null);
-  assert.match(W, /const stone = sdEndingStoneLight\(modes\?\.sdRealmSlot\?\.\(\) \?\? null, deadlandsSeconds\(\)\);/);
+  assert.match(W, /const stone = sdEndingStoneLight\(modes\?\.sdRealmSlot\?\.\(\) \?\? null, deadlandsSeconds\(\), _sdStoneLight\);/);   // AUDIT SD III (V5, PIN MOVED): into its kept light
   // the fray's arc by the Hollow's own snap
   const fraySlot = [...Array(216).keys()].map((x) => x + 1).find((sl) => sdMarksOf(sl).includes('fraying'));
   const plainSlot = [...Array(216).keys()].map((x) => x + 1).find((sl) => !sdMarksOf(sl).includes('fraying'));

@@ -68,15 +68,15 @@ const FOR_GOOD = Object.freeze(['the Hour has closed', 'an older Hour']);
  * (net/sdRemnant.js stepWalk - kept within SD_REM.keep of the centre). Pure.
  * @param {SdBody|null|undefined} B @param {number} now @returns {[number, number]}
  */
-export function sdBodyAt(B, now) {
-  if (!B) return [STILL.x, STILL.z];
+export function sdBodyAt(B, now, out = null) {   // AUDIT SD III (V5): into `out` when one is given - a frame's bodies make nothing
+  const o = out ?? [0, 0];
+  if (!B) { o[0] = STILL.x; o[1] = STILL.z; return o; }
   const m = B.mv;
-  if (!m || !(m.v > 0)) return [B.x, B.z];
-  const len = Math.hypot(m.tx - m.x, m.tz - m.z);
-  if (len < 1e-6) return [m.tx, m.tz];
+  if (!m || !(m.v > 0)) { o[0] = B.x; o[1] = B.z; return o; }
+  const lx = m.tx - m.x, lz = m.tz - m.z, len = Math.sqrt(lx * lx + lz * lz);   // never Math.hypot in a frame: its builtin boxes its numbers
+  if (len < 1e-6) { o[0] = m.tx; o[1] = m.tz; return o; }
   const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);
-  const p = keepInArena(m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along, SD_REM.keep);
-  return [p[0], p[1]];
+  return keepInArena(m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along, SD_REM.keep, o);
 }
 /** Whether a blow in flight is done by `now` - landed, its span and its stillness after spent (the law sends no word for
  *  its end). Pure. */

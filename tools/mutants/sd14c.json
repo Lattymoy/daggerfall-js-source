@@ -56,8 +56,8 @@
   {
     "name": "SD14c-the-orbit-with-the-clock",
     "file": "src/render/sdMotes.js",
-    "old": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU - (T / SD_SKY_PERIOD) * turns * TAU;",
-    "new": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU + (T / SD_SKY_PERIOD) * turns * TAU;",
+    "old": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU + (T / SD_SKY_PERIOD) * turns * TAU;",
+    "new": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU - (T / SD_SKY_PERIOD) * turns * TAU;",
     "tests": [
       "test/sd14c_motes.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD14c-the-shader-off-the-law",
     "file": "src/render/sdMotes.js",
-    "old": "    float ang = c * TAU + T / PERIOD * TAU, rad = sqrt(a) * ${f(SD_MOTE_HALL.r)};",
-    "new": "    float ang = c * TAU + T / PERIOD * TAU, rad = a * ${f(SD_MOTE_HALL.r)};",
+    "old": "    float ang = c * TAU - T / PERIOD * TAU, rad = sqrt(a) * ${f(SD_MOTE_HALL.r)};",
+    "new": "    float ang = c * TAU - T / PERIOD * TAU, rad = a * ${f(SD_MOTE_HALL.r)};",
     "tests": [
       "test/sd14c_motes.test.js"
     ]

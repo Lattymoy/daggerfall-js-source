@@ -353,8 +353,8 @@
   {
     "name": "SD9E-unlit",
     "file": "src/scenes/world.js",
-    "old": "      const lit = sdSpoilsPool?.lights() ?? [], fx =",
-    "new": "      const lit = [], fx =",
+    "old": "      const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx =",
+    "new": "      const lit = NO_SD_LIGHTS, fx =",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

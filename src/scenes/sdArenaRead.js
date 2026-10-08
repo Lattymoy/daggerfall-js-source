@@ -17,7 +17,8 @@
 // Pure but for the beats' memory. The arena's frame throughout (x, z from its centre). Not a DFU member. Ledger A
 // (SUPER-DUNGEONS).
 import { SD_ARENA } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, atkWindup, blowShape, sdProfileOf, stompFrontAt, handSwept, behindPillar, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PILLARS, atkWindup, blowShape, sdProfileOf, stompFrontAt, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
+import { SD_PILLAR_W } from '../net/sdBrain.js';
 import { TELEGRAPH_NOW_MS } from '../render/gateTelegraph.js';
 import { screenBearing } from './gateCourt.js';
 import { SD_ELEMENT_COLOR, SD_ELEMENT_GROUND, sdTint } from './sdRemnantBlows.js';
@@ -69,14 +70,152 @@ export function sdWayOut(inside, fx, fz) {
   return best ? { dir: [best.dx, best.dz], m: best.m } : null;
 }
 
+/** AUDIT SD III (V5): THE HOUR-HAND'S GROUND, made once a frame - net/sdRemnant.js handSwept's own sums over its sweep
+ *  from `t` on, and the pillars' shade (behindPillar's two slabs), in plain numbers: the way out asks it a thousand times
+ *  a frame, and every call into the law boxed its four numbers (8 KB a frame in a Hand's path). Pinned equal to the law
+ *  over a grid of places and moments. */
+const _sweep = { ax: 0, az: 0, yw: 0, sw: 1, len: 0, w2: 0, arc: 0, a0: 0, a1: 0, over: false };
+export function handSweepOf(atk, S, t, over = false, out = _sweep) {
+  const t0 = Math.max(t, atk.at), t1 = atk.at + S.active;
+  out.ax = atk.x; out.az = atk.z; out.yw = atk.yw; out.sw = atk.sw ?? 1; out.len = S.len; out.w2 = S.width / 2; out.arc = S.arc;
+  out.a0 = S.arc * Math.max(0, (t0 - atk.at) / S.active); out.a1 = S.arc * Math.min(1, (t1 - atk.at) / S.active); out.over = !!over;
+  return out;
+}
+/** Whether (x, z) is in a sweep handSweepOf made - handSwept's test, then the shade unless it stands `over` the pillars. */
+export function handSweepHas(H, x, z) {
+  const dx = x - H.ax, dz = z - H.az, d = Math.sqrt(dx * dx + dz * dz);
+  if (d > H.len || !(H.a1 >= H.a0)) return false;
+  const half = d > H.w2 ? Math.asin(H.w2 / d) : Math.PI;
+  let r = (Math.atan2(dx, dz) - H.yw + Math.PI) % (2 * Math.PI);   // net/gateBrain.js wrapYaw's
+  if (r < 0) r += 2 * Math.PI;
+  const u = H.sw * (r - Math.PI) + H.arc / 2;
+  if (!(u + half >= H.a0 && u - half <= H.a1)) return false;
+  if (H.over) return true;
+  const w = SD_PILLAR_W / 2;
+  for (let i = 0; i < SD_PILLARS.length; i++) {   // behindPillar(ax, az, x, z): the segment meets a pillar's square short of its far end
+    const px = SD_PILLARS[i][0], pz = SD_PILLARS[i][1];
+    let t0 = 0, t1 = 1;
+    if (Math.abs(dx) < 1e-9) { if (H.ax < px - w || H.ax > px + w) continue; } else {
+      const a = (px - w - H.ax) / dx, b = (px + w - H.ax) / dx;
+      t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+      if (t0 > t1) continue;
+    }
+    if (Math.abs(dz) < 1e-9) { if (H.az < pz - w || H.az > pz + w) continue; } else {
+      const a = (pz - w - H.az) / dz, b = (pz + w - H.az) / dz;
+      t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+      if (t0 > t1) continue;
+    }
+    if (t0 < 1) return false;
+  }
+  return true;
+}
+/** The blows whose ground is a place (the Stomp's disc, the Hand's sweep, a Volley's marks) - the rest strike the whole
+ *  arena, and no step answers them. */
+const isPlace = (A) => A === SD_BLOWS.stomp || A === SD_BLOWS.hand || A === SD_BLOWS.volley;
 /** Whether (x, z) is in blow `atk`'s ground still to strike at `t` - the Stomp's disc, the Hand's sweep from `t` on
- *  (shade a pillar's - none `over` a pillar's top, AUDIT SD III F8), a Volley's mark; null for a shape that is not a place. */
-function insideOf(A, atk, t, over = false) {
-  const S = blowShape(atk) ?? A;   // SD18a: the blow its frame says
-  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= S.r;
-  if (A === SD_BLOWS.hand) return (x, z) => handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar(atk.x, atk.z, x, z));
-  if (A === SD_BLOWS.volley) return (x, z) => (atk.tg ?? []).some((q) => Math.hypot(x - q[0], z - q[1]) <= S.r);
-  return null;
+ *  (shade a pillar's - none `over` a pillar's top, AUDIT SD III F8), a Volley's mark (`S` its shape). AUDIT SD III (V5):
+ *  one plain function, never a shape's closure - the way out asks it a thousand times a frame, and through a closure
+ *  every point's two numbers were boxed: 7-32 KB a frame while a blow stood over my feet. */
+function insideAt(A, atk, S, t, over, x, z) {
+  if (A === SD_BLOWS.stomp) { const dx = x - atk.x, dz = z - atk.z; return dx * dx + dz * dz <= S.r * S.r; }
+  if (A === SD_BLOWS.hand) return handSweepHas(handSweepOf(atk, S, t, over), x, z);
+  const tg = atk.tg;
+  if (!tg) return false;
+  for (let i = 0; i < tg.length; i++) { const dx = x - tg[i][0], dz = z - tg[i][1]; if (dx * dx + dz * dz <= S.r * S.r) return true; }
+  return false;
+}
+/** sdWayOut's walk over a blow's own ground - its numbers its own, nothing made but the answer: one walk a shape (AUDIT
+ *  SD III, V5 - one walk for all three kept every place's numbers boxed for the one shape that calls out of it). */
+function wayOutOf(A, atk, S, t, over, fx, fz) {
+  if (A === SD_BLOWS.stomp) return discWay(atk.x, atk.z, S.r, fx, fz);
+  if (A === SD_BLOWS.hand) return sweepWay(handSweepOf(atk, S, t, over), fx, fz);
+  return marksWay(atk.tg ?? NO_MARKS, S.r, fx, fz);
+}
+const NO_MARKS = Object.freeze([]);
+/** The steps each bearing's walk takes at most (sdWayOut's SD_PERIL_STEP_M up to SD_PERIL_REACH_M) - the walks count
+ *  them whole and take each step's metres from the count: a number stepped by adding boxed itself every step in the
+ *  marks' walk, 3 KB a frame while a Volley's mark stood under my feet (AUDIT SD III, V5). */
+const PERIL_STEPS = Math.floor(SD_PERIL_REACH_M / SD_PERIL_STEP_M + 1e-9);
+const wayOf = (bm, bx, bz) => (bm < Infinity ? { dir: [bx, bz], m: bm } : null);
+/** The way out of the Stomp's disc. */
+function discWay(ax, az, r, fx, fz) {
+  const R2 = (SD_ARENA.r - SD_PERIL_RIM_M) ** 2, r2 = r * r;
+  let bm = Infinity, bx = 0, bz = 0;
+  for (let b = 0; b < SD_PERIL_BEARINGS; b++) {
+    const a = (b / SD_PERIL_BEARINGS) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a);
+    for (let k = 1; k <= PERIL_STEPS; k++) {
+      const m = k * SD_PERIL_STEP_M;
+      if (m >= bm) break;
+      const x = fx + dx * m, z = fz + dz * m;
+      if (x * x + z * z > R2) break;
+      if ((x - ax) * (x - ax) + (z - az) * (z - az) > r2) { bm = m; bx = dx; bz = dz; break; }
+    }
+  }
+  return wayOf(bm, bx, bz);
+}
+/** The way out of a Volley's marks. */
+function marksWay(tg, r, fx, fz) {
+  const R2 = (SD_ARENA.r - SD_PERIL_RIM_M) ** 2, r2 = r * r;
+  let bm = Infinity, bx = 0, bz = 0;
+  for (let b = 0; b < SD_PERIL_BEARINGS; b++) {
+    const a = (b / SD_PERIL_BEARINGS) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a);
+    for (let k = 1; k <= PERIL_STEPS; k++) {
+      const m = k * SD_PERIL_STEP_M;
+      if (m >= bm) break;
+      const x = fx + dx * m, z = fz + dz * m;
+      if (x * x + z * z > R2) break;
+      let inside = false;
+      for (let i = 0; i < tg.length && !inside; i++) inside = (x - tg[i][0]) * (x - tg[i][0]) + (z - tg[i][1]) * (z - tg[i][1]) <= r2;
+      if (!inside) { bm = m; bx = dx; bz = dz; break; }
+    }
+  }
+  return wayOf(bm, bx, bz);
+}
+/** The way out of the Hour-Hand's sweep - handSweepHas's own sums in the walk itself (a call a place boxed its two
+ *  numbers: 12 KB a frame). Pinned equal to sdWayOut over handSweepHas. */
+function sweepWay(H, fx, fz) {
+  const R2 = (SD_ARENA.r - SD_PERIL_RIM_M) ** 2, w = SD_PILLAR_W / 2, ax = H.ax, az = H.az;
+  if (!(H.a1 >= H.a0)) return null;
+  let bm = Infinity, bx = 0, bz = 0;
+  for (let b = 0; b < SD_PERIL_BEARINGS; b++) {
+    const a = (b / SD_PERIL_BEARINGS) * Math.PI * 2, sx = Math.sin(a), sz = Math.cos(a);
+    for (let k = 1; k <= PERIL_STEPS; k++) {
+      const m = k * SD_PERIL_STEP_M;
+      if (m >= bm) break;
+      const x = fx + sx * m, z = fz + sz * m;
+      if (x * x + z * z > R2) break;
+      const dx = x - ax, dz = z - az, d = Math.sqrt(dx * dx + dz * dz);   // never Math.hypot: its builtin boxes its arguments
+      let inside = d <= H.len;
+      if (inside) {
+        const half = d > H.w2 ? Math.asin(H.w2 / d) : Math.PI;
+        let r = (Math.atan2(dx, dz) - H.yw + Math.PI) % (2 * Math.PI);
+        if (r < 0) r += 2 * Math.PI;
+        const u = H.sw * (r - Math.PI) + H.arc / 2;
+        inside = u + half >= H.a0 && u - half <= H.a1;
+      }
+      if (inside && !H.over) {
+        for (let i = 0; i < SD_PILLARS.length && inside; i++) {
+          const px = SD_PILLARS[i][0], pz = SD_PILLARS[i][1];
+          let t0 = 0, t1 = 1, cut = true;
+          if (Math.abs(dx) < 1e-9) { if (ax < px - w || ax > px + w) cut = false; } else {
+            const p = (px - w - ax) / dx, q = (px + w - ax) / dx;
+            t0 = Math.max(t0, Math.min(p, q)); t1 = Math.min(t1, Math.max(p, q));
+            if (t0 > t1) cut = false;
+          }
+          if (cut) {
+            if (Math.abs(dz) < 1e-9) { if (az < pz - w || az > pz + w) cut = false; } else {
+              const p = (pz - w - az) / dz, q = (pz + w - az) / dz;
+              t0 = Math.max(t0, Math.min(p, q)); t1 = Math.min(t1, Math.max(p, q));
+              if (t0 > t1) cut = false;
+            }
+          }
+          if (cut && t0 < 1) inside = false;
+        }
+      }
+      if (!inside) { bm = m; bx = sx; bz = sz; break; }
+    }
+  }
+  return wayOf(bm, bx, bz);
 }
 
 /**
@@ -87,30 +226,30 @@ function insideOf(A, atk, t, over = false) {
  */
 export function sdPerilAt(s, t, fx, fz, yaw = null, over = false) {
   if (!s || !(s.fi > 0) || s.fell || s.lost || s.ended > 0 || !Number.isFinite(fx) || !Number.isFinite(fz)) return null;
-  const blows = [];
-  if (s.rem?.atk) blows.push([SD_BODY.remnant, s.rem.atk]);
-  (s.ec ?? []).forEach((E, i) => { if (E.h > 0 && E.atk) blows.push([SD_BODY.gold + i, E.atk]); });
-  let best = null, jump = null;
-  for (const [b, atk] of blows) {
+  // AUDIT SD III (V5): the blows walked in place - no list of them, no closure a blow, no object until there is a peril
+  let bestAtk = null, bestA = null, bestW = 0, jumpAtk = null;
+  const ec = s.ec, n = ec ? ec.length : 0;
+  for (let i = -1; i < n; i++) {
+    const atk = i < 0 ? s.rem?.atk : ec[i].h > 0 ? ec[i].atk : null;
+    if (!atk) continue;
     const A = SD_BLOW_BY_ID[atk.a];
     if (!A || !Number.isFinite(atk.at)) continue;
-    const w = atkWindup(atk, A, s.ph, b), end = atk.at + Math.max((blowShape(atk) ?? A).active, 0);
+    const S = blowShape(atk) ?? A, w = atkWindup(atk, A, s.ph, i < 0 ? SD_BODY.remnant : SD_BODY.gold + i), end = atk.at + Math.max(S.active, 0);
     if (A === SD_BLOWS.stomp && t >= atk.at && t <= end) {
-      const d = Math.hypot(fx - atk.x, fz - atk.z), front = stompFrontAt(atk, t);
-      if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name, el: blowShape(atk)?.el ?? null };
+      const ddx = fx - atk.x, ddz = fz - atk.z, d = Math.sqrt(ddx * ddx + ddz * ddz), front = stompFrontAt(atk, t);   // never Math.hypot (V5)
+      if (d > front && d - front <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;
       continue;
     }
     const live = A === SD_BLOWS.hand ? t < end : t < atk.at;
-    if (!live || t < atk.at - w || (best && best.at <= atk.at)) continue;
-    const inside = insideOf(A, atk, t, over);
-    if (!inside || !inside(fx, fz)) continue;
-    best = { at: atk.at, name: A.name, t: w > 0 ? Math.max(0, Math.min(1, (t - (atk.at - w)) / w)) : 1, color: sdTint(A.key, blowShape(atk)?.el), inside };   // SD18b: in its floor's colour
+    if (!live || t < atk.at - w || (bestAtk && bestAtk.at <= atk.at) || !isPlace(A) || !insideAt(A, atk, S, t, over, fx, fz)) continue;
+    bestAtk = atk; bestA = A; bestW = w;
   }
-  if (best) {
-    const way = Number.isFinite(yaw) ? sdWayOut(best.inside, fx, fz) : null;
-    return { name: best.name, t: best.t, now: best.at - t <= TELEGRAPH_NOW_MS, color: best.color, arrow: way ? screenBearing(way.dir, /** @type {number} */ (yaw)) : null, way, jump: false };
+  if (bestAtk && bestA) {
+    const S = blowShape(bestAtk) ?? bestA, way = Number.isFinite(yaw) ? wayOutOf(bestA, bestAtk, S, t, over, fx, fz) : null;
+    const tt = bestW > 0 ? Math.max(0, Math.min(1, (t - (bestAtk.at - bestW)) / bestW)) : 1;
+    return { name: bestA.name, t: tt, now: bestAtk.at - t <= TELEGRAPH_NOW_MS, color: sdTint(bestA.key, S.el), arrow: way ? screenBearing(way.dir, /** @type {number} */ (yaw)) : null, way, jump: false };   // SD18b: in its floor's colour
   }
-  if (jump) return { name: jump.name, t: 1, now: true, color: sdTint('stomp', jump.el), arrow: null, way: null, jump: true };
+  if (jumpAtk) return { name: SD_BLOWS.stomp.name, t: 1, now: true, color: sdTint('stomp', blowShape(jumpAtk)?.el), arrow: null, way: null, jump: true };
   return null;
 }
 

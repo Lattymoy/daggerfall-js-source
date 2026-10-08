@@ -17,7 +17,7 @@ import { glslFunctions } from './glsl.mjs';
 import { lookAt, perspective, mirrorProjectionX, multiply, identity, transformPoint } from '../src/world/mat4.js';
 import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_ARENA, SD_STONE_POS, realmToDungeon, dungeonToRealm, inOrreryHall, SD_FRAY_LASH } from '../src/net/sdBrain.js';
 import {
-  buildRealmModel, realmColliderTris, realmLights, realmLampFeet, realmLampTris, realmLighting, realmLightsNear, realmLightsWith, walkNearZ, walkFarZ,
+  buildRealmModel, realmColliderTris, realmLights, realmLampFeet, realmLampTris, realmLighting, realmLightsNear, realmLightsWith, SD_LIGHTS_CAP, walkNearZ, walkFarZ,
   SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_ISLAND_SIDES, SD_RIM_W, SD_RIM_H,
   SD_KERB_W, SD_KERB_H, SD_LAMP_H, SD_LAMP_HEAD, SD_LAMP_POST_W,
 } from '../src/world/sdRealm.js';
@@ -471,8 +471,12 @@ test('AUDIT SD II L2 F9: THE SAME LIGHTS AND THE SAME SKY, made in place - realm
   };
   const spoil = (k) => ({ x: k, y: 2, z: -k, range: 5 + k, color: [0.1 * k, 0.2, 0.3] });
   for (const [n, e, eye] of [[0, 0, realmToDungeon(0, 0, 0)], [2, 0, realmToDungeon(0, 0, 220)], [3, 2, realmToDungeon(0, 0, 0)], [8, 30, realmToDungeon(0, 0, 42)], [1, 1, null], [2, 0, realmToDungeon(5, 0, 100)]]) {
-    const lit = litOf(n), extra = Array.from({ length: e }, (_, k) => spoil(k));
-    const want = withCourtLights(lit, [...extra, ...realmLightsNear(eye)]);
+    const lit = litOf(n), extra = Array.from({ length: e }, (_, k) => spoil(k)), rest = [...extra, ...realmLightsNear(eye)];
+    // AUDIT SD III (V9, PIN MOVED): past the cap the spoils' and the lamps sorted in by how far the eye stands outside
+    // each one's reach (stable) - at or under it, the court's own order
+    const outside = (l) => { const dx = l.x - eye[0], dy = l.y - eye[1], dz = l.z - eye[2]; return Math.max(0, Math.sqrt(dx * dx + dy * dy + dz * dz) - l.range); };
+    const order = eye && n + rest.length > SD_LIGHTS_CAP ? rest.map((l, i) => [outside(l), i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, i]) => rest[i]) : rest;
+    const want = withCourtLights(lit, order);
     const got = realmLightsWith(lit, extra, eye);
     assert.deepEqual([[...got.data], [...got.colors], [...got.carried]], [[...want.data], [...want.colors], [...want.carried]], `${n} of the arm's, ${e} spoils'`);
     assert.equal(got.data.carried, got.carried, 'the mask on the data, where the renderer lifts it');
@@ -604,7 +608,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
     sdBeats: { frame: () => null, leave() {} }, titleCardModel: () => null, drawGateGround() {}, drawSdTitleCard() {},
     sdMarksCardModel: () => null, sdMarksOf: () => null, drawGateMarksCard() {}, performance: { now: () => 0 },   // SD18b (PIN MOVED): the Hour's marks card
   };
-  const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));
+  const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false, _sdPassesWarm = true;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));   // AUDIT SD III (V13, PIN MOVED): the passes already warm
   const word = { k: 'pz', s: 3, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 6, ok: true };
   h.sdHallHeard(word);
   h.sdFightFrame();

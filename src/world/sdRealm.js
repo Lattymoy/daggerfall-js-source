@@ -429,6 +429,11 @@ export function realmLightsNear(eye) {
  *  when a frame wants more, each length's views kept: world/gateArena.js withCourtLights' composition, which the court
  *  keeps (it made three arrays and an array a lamp, every frame). Pinned equal to it. */
 const _hourLit = { cap: 0, data: new Float32Array(0), colors: new Float32Array(0), carried: new Uint8Array(0), views: new Map() };
+/** AUDIT SD III (V9): the lights a frame lights at the least (render/renderer.js's classic cap): past it, the Hour's own
+ *  (the spoils', the landings' flashes, the Ending's stone) and its lamps are sorted in together by how far the eye
+ *  stands outside each one's reach - every flash went first, and a busy moment put out the lamps nearest the player. */
+export const SD_LIGHTS_CAP = 16;
+const _litKey = new Float64Array(64), _litIdx = new Int32Array(64);
 export function realmLightsWith(lit, extra, eye) {
   const n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
   if (m > H.cap) {
@@ -440,8 +445,19 @@ export function realmLightsWith(lit, extra, eye) {
   for (let j = 0; j < n * 3; j++) H.colors[j] = lit.colors[j];
   const lc = lit.data.carried;
   for (let j = 0; j < m; j++) H.carried[j] = j < n && lc ? lc[j] : 0;
+  const k = m - n, sorted = !!eye && m > SD_LIGHTS_CAP && k <= _litIdx.length;
+  if (sorted) {
+    for (let i = 0; i < k; i++) {
+      const l = i < extra.length ? extra[i] : lamps[i - extra.length], dx = l.x - eye[0], dy = l.y - eye[1], dz = l.z - eye[2];
+      const key = Math.max(0, Math.sqrt(dx * dx + dy * dy + dz * dz) - l.range);
+      let j = i - 1;
+      while (j >= 0 && _litKey[j] > key) { _litKey[j + 1] = _litKey[j]; _litIdx[j + 1] = _litIdx[j]; j--; }
+      _litKey[j + 1] = key; _litIdx[j + 1] = i;
+    }
+  }
   for (let i = n; i < m; i++) {
-    const l = i - n < extra.length ? extra[i - n] : lamps[i - n - extra.length];
+    const q = sorted ? _litIdx[i - n] : i - n;
+    const l = q < extra.length ? extra[q] : lamps[q - extra.length];
     H.data[i * 4] = l.x; H.data[i * 4 + 1] = l.y; H.data[i * 4 + 2] = l.z; H.data[i * 4 + 3] = l.range;
     H.colors[i * 3] = l.color[0]; H.colors[i * 3 + 1] = l.color[1]; H.colors[i * 3 + 2] = l.color[2];
   }

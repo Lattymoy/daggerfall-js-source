@@ -121,7 +121,7 @@ test('WEATHER3d: THE BOLT lights its own cloud - aimed at the storm\'s middle, a
   assert.equal(boltOf({ x: 1, z: 0, r: 5000, strength: 3 }, [0, 0]).strength, 1, 'clamped');
   assert.ok(COMPOSITE_UNIFORMS.includes('uBolt') && COMPOSITE_UNIFORMS.includes('uBoltCos'));
   assert.match(COMPOSITE_FS, /float bolt = uBolt\.w \* smoothstep\(uBoltCos, mix\(uBoltCos, 1\.0, 0\.6\), dot\(dir, uBolt\.xyz\)\);/);
-  assert.match(COMPOSITE_FS, /vec3 cloud = op > 1e-4 \? dreadGrade\(c\.rgb \/ op, uDread\) \* op : c\.rgb;\s*\n\s*outColor = vec4\(cloud \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'on the cloud\'s own radiance - clear sky that way stays dark (EVENT1: the radiance graded by the live event, c.rgb itself without one)');
+  assert.match(COMPOSITE_FS, /vec3 cloud = op > 1e-4 \? brassGrade\(dreadGrade\(c\.rgb \/ op, uDread\), uBrass\) \* op : c\.rgb;[^\n]*\n\s*outColor = vec4\(cloud \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'on the cloud\'s own radiance - clear sky that way stays dark (EVENT1: the radiance graded by the live event, c.rgb itself without one)');
   const vc = rd('src/render/volumetricClouds.js');
   assert.match(vc, /gl\.uniform4f\(u\.uBolt, b \? b\.dir\[0\] : 0, b \? b\.dir\[1\] : 1, b \? b\.dir\[2\] : 0, b \? b\.strength : 0\); gl\.uniform1f\(u\.uBoltCos, b \? b\.cos : 1\);/, 'no strike, no light');
   assert.match(vc, /setBolt\(b\) \{ this\.bolt = b \? boltOf\(b, this\.cam\) : null; \}/);

@@ -20,8 +20,8 @@
   {
     "name": "SD17-the-arms-off-the-torso",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "ANG[0] = -A[0][0]; ANG[1] = -A[0][1]; joint(_j, 4); mul4(_j, _torso, _j); mul4(out[4], base, _j);",
-    "new": "ANG[0] = -A[0][0]; ANG[1] = -A[0][1]; joint(_j, 4); mul4(out[4], base, _j);",
+    "old": "ANG[0] = -A[0][0]; ANG[1] = A[0][1]; joint(_j, 4); mul4(_j, _torso, _j); mul4(out[4], base, _j);",
+    "new": "ANG[0] = -A[0][0]; ANG[1] = A[0][1]; joint(_j, 4); mul4(out[4], base, _j);",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD17-the-right-arm-rolls-inward",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "ANG[0] = -A[0][0]; ANG[1] = -A[0][1];",
-    "new": "ANG[0] = -A[0][0]; ANG[1] = A[0][1];",
+    "old": "ANG[0] = -A[0][0]; ANG[1] = A[0][1];",
+    "new": "ANG[0] = -A[0][0]; ANG[1] = -A[0][1];",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD17-gears-not-from-the-hands",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "const from = [(r[0] + l[0]) / 2, (r[1] + l[1]) / 2, (r[2] + l[2]) / 2], k = (t - go) / fl;",
-    "new": "const from = [0, 4, 0], k = (t - go) / fl;",
+    "old": "const fx = (r[0] + l[0]) / 2, fy = (r[1] + l[1]) / 2, fz = (r[2] + l[2]) / 2, k = (t - go) / fl, tg = a.tg;",
+    "new": "const fx = 0, fy = 4, fz = 0, k = (t - go) / fl, tg = a.tg;",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD17-gears-flat",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "const y = from[1] + (0.4 - from[1]) * k + SD_GEAR_ARC_M * 4 * k * (1 - k);",
-    "new": "const y = from[1] + (0.4 - from[1]) * k;",
+    "old": "g.y = fy + (0.4 - fy) * k + SD_GEAR_ARC_M * 4 * k * (1 - k);",
+    "new": "g.y = fy + (0.4 - fy) * k;",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD17-the-beam-through-pillars",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "const reach = beamReach(a.x, a.z, bearing, A.len), hand = handAt(s, who, 0, t);",
-    "new": "const reach = A.len, hand = handAt(s, who, 0, t);",
+    "old": "const reach = beamReach(a.x, a.z, bearing, A.len), sx = Math.sin(bearing), cz = Math.cos(bearing);",
+    "new": "const reach = A.len, sx = Math.sin(bearing), cz = Math.cos(bearing);",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD17-the-beam-never-fades",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "return { a: to(g.a), b: to(g.b), alpha: Math.max(0, alpha) };",
-    "new": "return { a: to(g.a), b: to(g.b), alpha: 1 };",
+    "old": "d.w = g.w; d.alpha = Math.max(0, alpha);",
+    "new": "d.w = g.w; d.alpha = 1;",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "SD17-the-gears-never-flown",
     "file": "src/scenes/sdRemnant.js",
-    "old": "      const gears = live(s) ? sdGearsAt(s, t) : NONE;",
+    "old": "      const gears = live(s) ? sdGearsAt(s, t, _gears) : NONE;",
     "new": "      const gears = NONE;",
     "tests": [
       "test/sd17_body.test.js"
@@ -308,8 +308,8 @@
   {
     "name": "SD17-the-legs-swapped",
     "file": "src/world/sdRemnantModel.js",
-    "old": "for (const s of [-1, 1]) box(into(s < 0 ? 'legR' : 'legL')",
-    "new": "for (const s of [-1, 1]) box(into(s < 0 ? 'legL' : 'legR')",
+    "old": "for (const s of [-1, 1]) box(into(s > 0 ? 'legR' : 'legL')",
+    "new": "for (const s of [-1, 1]) box(into(s > 0 ? 'legL' : 'legR')",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SD17-the-beam-writes-depth",
     "file": "src/render/sdBeam.js",
-    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
-    "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
+    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
+    "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
     "tests": [
       "test/sd17_body.test.js"
     ]

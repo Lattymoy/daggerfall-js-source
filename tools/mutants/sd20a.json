@@ -237,8 +237,8 @@
   {
     "name": "SD20A-F8-the-read-shaded",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "(over || !behindPillar(atk.x, atk.z, x, z))",
-    "new": "!behindPillar(atk.x, atk.z, x, z)",
+    "old": "  if (H.over) return true;",
+    "new": "  if (false) return true;",
     "tests": [
       "test/sd20a_fight.test.js"
     ]

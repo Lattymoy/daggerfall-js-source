@@ -337,8 +337,8 @@
   {
     "name": "SD18A-the-read-the-tables",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "  const S = blowShape(atk) ?? A;   // SD18a: the blow its frame says\n",
-    "new": "  const S = A;\n",
+    "old": "    const S = blowShape(atk) ?? A, w = atkWindup(atk, A, s.ph,",
+    "new": "    const S = A, w = atkWindup(atk, A, s.ph,",
     "tests": [
       "test/sd18a_marks.test.js"
     ]

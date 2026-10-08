@@ -362,7 +362,7 @@
   {
     "name": "SD8A-no-shade",
     "file": "src/net/sdRemnant.js",
-    "old": "    if (hit && t0 < 1) return true;",
+    "old": "    if (t0 < 1) return true;",
     "new": "    if (false) return true;",
     "tests": [
       "test/sd8a_remnant.test.js"

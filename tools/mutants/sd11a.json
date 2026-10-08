@@ -304,8 +304,8 @@
   {
     "name": "SD11A-L2F9-the-remnant-pose-made",
     "file": "src/scenes/sdRemnant.js",
-    "old": "place(remDraw, remnantPose(s, t, _remPose), 1);",
-    "new": "place(remDraw, remnantPose(s, t), 1);",
+    "old": "remnantPose(s, t, _remPose), 0, dt)",
+    "new": "remnantPose(s, t), 0, dt)",
     "tests": [
       "test/sd11a_scenes.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "SD11A-L2F9-the-echo-poses-made",
     "file": "src/scenes/sdRemnant.js",
-    "old": "place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
-    "new": "place(echoDraws[e], echoPose(s, e, t), ECHO_SCALE);",
+    "old": "echoPose(s, e, t, _echoPose), 1 + e, dt)",
+    "new": "echoPose(s, e, t), 1 + e, dt)",
     "tests": [
       "test/sd11a_scenes.test.js"
     ],

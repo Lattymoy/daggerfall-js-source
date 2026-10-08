@@ -228,7 +228,7 @@ test('SUNBABY1 host: the sky controller draws the flower sky over the sky and it
   assert.match(shared, /setSunbaby\(w, on = false\) \{\s*sunbabyW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\s*sunbabyOn = !!on;\s*if \(sunbabyW > 0\) \{ const p = sunbabyPass\(\); if \(p\) p\.weight = sunbabyW; \}\s*else if \(sunbabySky\) sunbabySky\.weight = 0;/);
   assert.match(shared, /try \{ sunbabySky = new SunbabySkyRenderer\(gl\); \} catch/, 'built the first time it shows, and a failed build costs the flowers, never the frame');
   assert.match(shared, /const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SUNBABY2 moved it: the wrath's horizon; SD19 (PIN MOVED): the brass graded over it
-  assert.match(shared, /const dreaded = \(ws\) => sunbabyWaterSky\(dreadW > 0 \? [^\n]*: ws, sunbabyW, sunbabyEvil\);/, 'the water, on either lane');   // SUNBABY2 moved it: the wrath's sky
+  assert.match(shared, /const dreaded = \(ws\) => brassed\(sunbabyWaterSky\(dreadW > 0 \? [^\n]*: ws, sunbabyW, sunbabyEvil\)\);/, 'the water, on either lane');   // AUDIT SD III (V8, PIN MOVED): and the brass air's after it   // SUNBABY2 moved it: the wrath's sky
   assert.match(shared, /use\(skyIndex, minuteOfDay, showNightSky = true, extra = null\) \{\s*if \(sunbabyOn && extra\) extra = \{ \.\.\.extra, violence: extra\.weather, cells: null, cloudBase: null, approach: 0 \};/, 'no storm cell, no violence, no front under the sun baby');
 });
 

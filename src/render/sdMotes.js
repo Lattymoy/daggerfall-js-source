@@ -64,9 +64,11 @@ export function sdMoteAt(kind, a, b, c, t) {
   /** @param {readonly number[]} s @param {number} u */
   const turnsOf = (s, u) => Math.floor(s[0] + u * (s[1] - s[0]));
   if (kind === 0) {
-    // the hall's dust: a ring turning once a period (the Orrery's own way round), each speck bobbing
+    // the hall's dust: a ring turning once a period (the Orrery's own way round - clockwise as the eye sees it from
+    // above), each speck bobbing. AUDIT SD III (V7): its angle FALLS - the camera's one mirror (world/mat4.js) turns a
+    // falling angle clockwise on screen; it rose, and the dust turned against the stones
     const life = SD_SKY_PERIOD / turnsOf(SD_MOTE_TURNS.dust, a), u = ((T + b * life) % life) / life;
-    const ang = c * TAU + (T / SD_SKY_PERIOD) * TAU, rad = Math.sqrt(a) * SD_MOTE_HALL.r;
+    const ang = c * TAU - (T / SD_SKY_PERIOD) * TAU, rad = Math.sqrt(a) * SD_MOTE_HALL.r;
     const y = SD_MOTE_HALL.y[0] + (SD_MOTE_HALL.y[1] - SD_MOTE_HALL.y[0]) * (0.5 + 0.5 * Math.sin(u * TAU + c * 9));
     return { p: [SD_ORRERY.x + Math.cos(ang) * rad, y, SD_ORRERY.z + Math.sin(ang) * rad], size: 0.05 + 0.05 * b, alpha: 0.35 + 0.35 * Math.sin(u * Math.PI), heat: 0.3 };
   }
@@ -79,8 +81,9 @@ export function sdMoteAt(kind, a, b, c, t) {
     return { p: [x, y, z0 + (z1 - z0) * ((a * 7.31 + b * 3.7) % 1)], size: 0.12 + 0.12 * c, alpha: Math.min(1, u * 8) * (1 - u) * (1 - u), heat: 1 - u };
   }
   if (kind === 2) {
-    // the Hour's motes: orbiting the arena's centre AGAINST the clock, breathing
-    const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU - (T / SD_SKY_PERIOD) * turns * TAU;
+    // the Hour's motes: orbiting the arena's centre AGAINST the clock (anticlockwise as the eye sees it from above),
+    // breathing. AUDIT SD III (V7): its angle RISES - it fell, and through the camera's one mirror they turned with it
+    const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU + (T / SD_SKY_PERIOD) * turns * TAU;
     const rad = SD_MOTE_ARENA.r[0] + (SD_MOTE_ARENA.r[1] - SD_MOTE_ARENA.r[0]) * Math.sqrt(b);
     const y = SD_MOTE_ARENA.y[0] + (SD_MOTE_ARENA.y[1] - SD_MOTE_ARENA.y[0]) * ((a * 5.17 + c * 2.3) % 1);
     return { p: [SD_ARENA.x + Math.cos(ang) * rad, y, SD_ARENA.z + Math.sin(ang) * rad], size: 0.16 + 0.1 * a, alpha: 0.4 + 0.3 * Math.sin((T / SD_SKY_PERIOD) * turns * 4 * TAU + b * 11), heat: 0.55 };
@@ -111,7 +114,7 @@ void main() {
   vec3 p; float size;
   if (aSeed.x < 0.5) {
     float life = PERIOD / turnsOf(vec2(${f(SD_MOTE_TURNS.dust[0])}, ${f(SD_MOTE_TURNS.dust[1])}), a), u = mod(T + b * life, life) / life;
-    float ang = c * TAU + T / PERIOD * TAU, rad = sqrt(a) * ${f(SD_MOTE_HALL.r)};
+    float ang = c * TAU - T / PERIOD * TAU, rad = sqrt(a) * ${f(SD_MOTE_HALL.r)};
     float y = ${f(SD_MOTE_HALL.y[0])} + ${f(SD_MOTE_HALL.y[1] - SD_MOTE_HALL.y[0])} * (0.5 + 0.5 * sin(u * TAU + c * 9.0));
     p = vec3(${f(SD_ORRERY.x)} + cos(ang) * rad, y, ${f(SD_ORRERY.z)} + sin(ang) * rad);
     size = 0.05 + 0.05 * b; vAlpha = 0.35 + 0.35 * sin(u * 3.141592653589793); vHeat = 0.3;
@@ -122,7 +125,7 @@ void main() {
     p = vec3(x, y, ${f(SD_MOTE_VOID.z[0])} + ${f(voidZ1() - SD_MOTE_VOID.z[0])} * fract(a * 7.31 + b * 3.7));
     size = 0.12 + 0.12 * c; vAlpha = min(1.0, u * 8.0) * (1.0 - u) * (1.0 - u); vHeat = 1.0 - u;
   } else if (aSeed.x < 2.5) {
-    float turns = turnsOf(vec2(${f(SD_MOTE_TURNS.hour[0])}, ${f(SD_MOTE_TURNS.hour[1])}), a), ang = c * TAU - T / PERIOD * turns * TAU;
+    float turns = turnsOf(vec2(${f(SD_MOTE_TURNS.hour[0])}, ${f(SD_MOTE_TURNS.hour[1])}), a), ang = c * TAU + T / PERIOD * turns * TAU;
     float rad = ${f(SD_MOTE_ARENA.r[0])} + ${f(SD_MOTE_ARENA.r[1] - SD_MOTE_ARENA.r[0])} * sqrt(b);
     float y = ${f(SD_MOTE_ARENA.y[0])} + ${f(SD_MOTE_ARENA.y[1] - SD_MOTE_ARENA.y[0])} * fract(a * 5.17 + c * 2.3);
     p = vec3(${f(SD_ARENA.x)} + cos(ang) * rad, y, ${f(SD_ARENA.z)} + sin(ang) * rad);

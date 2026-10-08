@@ -2,7 +2,7 @@
   {
     "name": "SD15-the-disc-unread",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= S.r;\n",
+    "old": "  if (A === SD_BLOWS.stomp) { const dx = x - atk.x, dz = z - atk.z; return dx * dx + dz * dz <= S.r * S.r; }\n",
     "new": "",
     "tests": [
       "test/sd15_read.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "SD15-no-way-out",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "    const way = Number.isFinite(yaw) ? sdWayOut(best.inside, fx, fz) : null;",
-    "new": "    const way = null;",
+    "old": "way = Number.isFinite(yaw) ? wayOutOf(bestA, bestAtk, S, t, over, fx, fz) : null;",
+    "new": "way = null;",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SD15-the-ring-never-called",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name, el: blowShape(atk)?.el ?? null };\n",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;\n",
     "new": "",
     "tests": [
       "test/sd15_read.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SD15-the-shade-ignored",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar(atk.x, atk.z, x, z));",
-    "new": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active);",
+    "old": "    if (t0 < 1) return false;\n  }\n  return true;\n}",
+    "new": "    if (t0 < 1) void 0;\n  }\n  return true;\n}",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD15-the-beams-past-read",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && (over || !behindPillar",
-    "new": "handSwept(atk, x, z, atk.at, atk.at + S.active) && (over || !behindPillar",
+    "old": "  const t0 = Math.max(t, atk.at), t1 = atk.at + S.active;",
+    "new": "  const t0 = atk.at, t1 = atk.at + S.active;",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD15-the-echoes-unread",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "  (s.ec ?? []).forEach((E, i) => { if (E.h > 0 && E.atk) blows.push([SD_BODY.gold + i, E.atk]); });\n  let best = null, jump = null;",
-    "new": "  let best = null, jump = null;",
+    "old": "const atk = i < 0 ? s.rem?.atk : ec[i].h > 0 ? ec[i].atk : null;",
+    "new": "const atk = i < 0 ? s.rem?.atk : null;",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD15-the-latest-of-two",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "if (!live || t < atk.at - w || (best && best.at <= atk.at)) continue;",
-    "new": "if (!live || t < atk.at - w || (best && best.at >= atk.at)) continue;",
+    "old": "(bestAtk && bestAtk.at <= atk.at)",
+    "new": "(bestAtk && bestAtk.at >= atk.at)",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD15-the-pulse-in-it",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "  return null;\n}\n\n/**\n * A BLOW STILL TO COME",
-    "new": "  return (x, z) => Math.hypot(x, z) <= SD_ARENA.r;\n}\n\n/**\n * A BLOW STILL TO COME",
+    "old": "|| !isPlace(A) || !insideAt(A, atk, S, t, over, fx, fz)) continue;",
+    "new": "|| (isPlace(A) && !insideAt(A, atk, S, t, over, fx, fz))) continue;",
     "tests": [
       "test/sd15_read.test.js"
     ]

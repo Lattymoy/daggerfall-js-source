@@ -2533,3 +2533,66 @@ slot told from `next`, two ahead held; a death past the list refused at the door
 THE FOUR HOSTS: none wired - the relay (`server/src/index.js`) and the account service (`server-account/src/sds.js`)
 alone. `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED: a cell's
 tell, a realm's door and a claim's roll are the servers' - no host reads them differently.
+
+#### SD20c - the Hour seen
+
+| | what was wrong | now |
+|---|---|---|
+| V1 | THE SPARKS RESTED IN THE AIR. The gate's spark pass rests a burst's spent sparks on the `floor` the burst says, and at its own height when it says none: eleven of the Hour's seventeen kinds said none - the Pulse's, the Hearts', an Echo's, the stun's, the fall's - and their spent sparks lay on unseen panes 1.2-4.4 m in the air | every burst on the arena's floor (`scenes/sdFx.js` `SD_FX_FLOOR_Y`, the dungeon's frame) |
+| V2 | THE BEAM PASSED OVER THE HEADS IT STRUCK. The Hour-Hand's light ran from the hand 5.9 m up to a metre over the floor at its reach, 0.55-1.6 m across; the law strikes a band 3 m across on the ground, from its body out to 34 m - a fighter it struck stood under the light, outside its width | the band it sweeps laid flat on the floor (`render/sdBeam.js` `uFlat`: from its body's rim to its reach, the law's width across, level and never narrowed or widened by the eye, its rims bright - `scenes/sdRemnantRig.js` `sdBeamsAt`'s `f0`, `f1`, `w`); the light out of the hand falls to the floor `SD_BEAM_DROP_M` (6 m) past the hand's own reach (`SD_BEAM_FLOOR_Y`) |
+| V3 | THE LIGHTS STOOD INSIDE THE STONE. The Ending's stone light stood at its slab's foot-centre 2.4 m up - inside the solid stone, a hand's breadth under its cap, the face it was to light the one place it never reached; the Hour-Hand's flash stood at its chest a metre up, inside the Remnant's heart crystal | the stone's light 0.6 m before its face at its dial's height (`ui/sdMarksView.js` `SD_STONE_LIGHT`, `world/sdHall.js` `stonePoint`); the Hand's flash `SD_HAND_FLASH_OUT` (1.2 m) out of its chest along the beam's first bearing |
+| V4 | THE WHOLE ARENA'S SHAKES SHOOK THE HALL. A blow of the whole arena - the Pulse, the Reset, the End, the fall, the wake - shook every camera in the Hour, the Hall's and the Steps' too, where it strikes nobody | felt on the arena alone (`felt`: within its rim and the law's slack, `SD_ARENA_SLACK`); a blow with a reach shakes by its nearness wherever I stand, as the gate's landings do |
+| V5 | A FRAME OF THE FIGHT MADE KILOBYTES. Measured in a child (a 64 MB young space, the least of six windows): the arena read with a blow over my feet 10.7-32 KB a frame (each place of its way out's walk a call through a closure that boxed its numbers, and `Math.hypot`'s builtin its own), a Volley's mark 3 KB more (its walk's metres stepped by adding, a number that boxed itself every step), the beam 3.4 KB, the gears 1.7 KB, the Hour's lines past the cap 1.4 KB, the stone's light 1.1 KB, the blows seen 0.5 KB, the set 0.24 KB | the read walks its own sums - one plain walk a shape, the Hand's ground in plain numbers (`scenes/sdArenaRead.js` `handSweepOf` and `handSweepHas`, pinned equal to the law's `handSwept` and its shade), each walk a whole count of steps; the law's `behindPillar`, `keepInArena` and `inArena` in plain numbers (in the relay's bundle: `world176` re-hashed in place); the beams, the gears and the Hour's lights into lists kept and filled in place (`scenes/sdRemnantRig.js` `sdKeptList`), the stone's light, the bodies' places and each landing's light into kept records. Now nothing a frame for the blows seen, their lights, the Hour's lines, a body's walk, the keep, the pillars and the floor; 16 B the stone's light; 40-370 B the read under a blow; 0.3 KB the gears, 0.5 KB the beam and its pass, 0.14-0.4 KB the set |
+| V6 | THE BODIES SNAPPED. Each body faced each new aim in a frame - up to 120 degrees at once; it dropped its 1.6 m kneel in a frame and stood from it in one; a lost fight's Remnant stood at its start at once | its drawn facing turned toward the law's at `SD_TURN_RATE` (3.5 radians a second, the short way round - a half-turn in 0.9 s, inside the quickest wind-up of a blow that needs its facing, so the drawn facing is the law's by any landing; `scenes/sdRemnant.js` `sdTurnToward`); the kneel eased down and up over `SD_KNEEL_EASE_MS` (400 ms); a lost fight's Remnant sinks where it stood and rises at its start, and an Echo standing as the fight is lost sinks where it stood |
+| V7 | THE MOTES WOUND THE WRONG WAY. The Hour's motes run against the clock and the hall's dust with its stones - and both turned the other way round on every screen: the pin read the raw angle, and the camera's one mirror (`world/mat4.js` `mirrorProjectionX`) turns it | both senses flipped, the JS and the GLSL alike (`render/sdMotes.js`); the pin measures each as the eye sees it, through the game's own camera |
+| V8 | THE BRASS AIR MET THE SKY A STEP APART. SD19 graded the land's haze toward the brass near a standing Hollow and left the sky as it was: at the skyline the fogged land met the sky a step apart - 15/-4/-34 on a clear noon's horizon, 23/-6/-48 under an overcast dusk | `world/sdBrassSky.js`: one ramp - its JS for the haze and the water's sky (`systems/sdOmen.js` re-exports it, SD19's door), its GLSL generated from the same stops for the four passes that draw the sky (the classic, the enhanced, the dynamic skies, the clouds' composite), each grading its final colour by its own `uBrass` after the dread's; `scenes/shared.js` `setBrass` tells each pass its weight |
+| V9 | A BUSY MOMENT PUT OUT THE LAMPS. Past the frame's sixteen lights the Hour's own - the spoils', every landing's flash, the stone's - went first, and in a busy moment the lamps nearest the player went dark | sorted in with the lamps by how far the eye stands outside each one's reach (`world/sdRealm.js` `SD_LIGHTS_CAP`, `realmLightsWith`) |
+| V10 | THE HEARTS AND THE BRIDGE POPPED. The Hearts the Reset's landing spent left the air with nothing to show for it; the Concord's bridge stood whole in a frame | the spent Hearts burst as they go (`scenes/sdFx.js`); the bridge laid out across the void from the hall's rim over `SD_BRIDGE_LAY_MS` (900 ms), easing in (`scenes/sdHall.js` `bridgeLayMatrix`) - one that held before I came stands whole |
+| V11 | IT POINTED WITH ITS LEFT. The Remnant's right arm and leg were built at -x - the side its own left shows on through the camera's mirror: every screen saw it sweep the Hour-Hand with its left hand | its right at +x (`world/sdRemnantModel.js`; `scenes/sdRemnantRig.js` - its joints, its hands, each arm rolling out to its own side) |
+| V12 | THE GEARS FLEW FLAT. The Volley's gears flew flat to the arena's z whichever way they were thrown | on edge along their flight, rolling forward (`gearMatrix`'s `yaw`, `sdGearsAt`'s bearing) |
+| V13 | THE PASSES COMPILED MID-FIGHT. The beam's, the sparks' and the floor's telegraph's programs were each built on their first use - a stall in the frame its first blow landed in | built as the Hour is first stood in (`scenes/world.js` `_sdPassesWarm`; `warm` on the blows seen and the blows' driver), a pass that will not build tried once |
+| V14 | REVERSED SMOOTHSTEP. GLSL leaves `smoothstep(a, b, x)` undefined for a >= b: the beam's ends, the Hour's shards and its clock - and ten more across the port: the Deadlands' horizon and channels, the enhanced sky's near horizon (and its CPU twin), the gate veil's sparks, the ink dungeon's hatching, the sun baby's skin, shadow and horns | every one rising, its fall written `1 - smoothstep(...)` - the same curve |
+| V15 | THE BRASS LIGHT MADE A LIST. `sdBrassLight` made a new list every outdoor frame, near a Hollow or not | at nought the light handed in is handed back (`systems/sdOmen.js`) |
+
+SAID SO, and left: while a blow is in flight the rig's own numbers (a walk, a blow's pose) and the read's answer make a few
+hundred bytes a frame - numbers boxed across the rig's calls, and the answer's own three objects; a young space takes them
+in a scavenge no frame notices.
+
+Pins: `test/sd20c_render.test.js` (12 - every burst on the floor and the gate's pass reading it; the whole arena's shakes
+on the arena, a reach's anywhere; the band drawn rim to reach at the law's width, run on the vertex stage itself, its
+uniform's precision one; the turn, the short way round, and the lost fight's bodies where they stood; the gears on edge,
+rolling forward; the brass GLSL equal to its JS on the GLSL evaluator and every sky pass grading by it; no reversed
+smoothstep in any module or in the Hour's shaders as built; the brass light at nought; the passes built as the Hour is
+stood in, tried once; the lights sorted in by their reach's edge; the read's plain-number law equal to the law's over
+20,000 places and moments, its ways out to `sdWayOut`'s; a frame of the fight measured in a child, each path under its
+bound); `tools/mutants/sd20c.json` (53, all dead). RE-AIMED BY CONTENT, each still dead: `event1.json`
+(`EVENT1-composite-premultiplied`), `sd11a.json` (`SD11A-L2F9-the-remnant-pose-made`, `SD11A-L2F9-the-echo-poses-made`),
+`sd14c.json` (`SD14c-the-orbit-with-the-clock`, `SD14c-the-shader-off-the-law`), `sd15.json` (`SD15-the-disc-unread`,
+`SD15-no-way-out`, `SD15-the-ring-never-called`, `SD15-the-shade-ignored`, `SD15-the-beams-past-read`,
+`SD15-the-echoes-unread`, `SD15-the-latest-of-two`, `SD15-the-pulse-in-it`), `sd16.json` (`SD16-a-landing-seen-twice`,
+`SD16-a-landing-seen-however-late`, `SD16-the-hand-at-its-feet`, `SD16-the-last-heart-unseen`,
+`SD16-a-heart-broken-every-frame`, `SD16-a-fall-seen-however-late`; and `SD16-hearts-broken-by-the-reset`, renamed
+`SD16-hearts-spent-by-the-reset-unseen` - what it made is the law now, so it puts back the stun's gate), `sd17.json`
+(`SD17-the-arms-off-the-torso`, `SD17-the-right-arm-rolls-inward`, `SD17-the-legs-swapped`, `SD17-the-beam-never-fades`,
+`SD17-gears-not-from-the-hands`, `SD17-gears-flat`, `SD17-the-beam-through-pillars`, `SD17-the-gears-never-flown`,
+`SD17-the-beam-writes-depth`), `sd18a.json` (`SD18A-the-read-the-tables`), `sd18b.json` (`SD18B-the-stone-the-first`,
+`SD18B-no-stone`), `sd19.json` (`SD19-sky-brass-unclamped`; `SD19-the-grade-one-brass`, `SD19-the-grade-unweighted` and
+`SD19-the-grade-in-place`, moved with the ramp to `world/sdBrassSky.js`), `sd20a.json` (`SD20A-F8-the-read-shaded`),
+`sd6c.json` (`SD6C-the-bridge-never-laid`), `sd8a.json` (`SD8A-no-shade`), `sd8c.json` (`SD8C-no-kneel`,
+`SD8C-an-echo-unscaled`), `sd9e.json` (`SD9E-unlit`), `wb6a.json` (`WB6a-the-horizon-not-the-skys`). PINS MOVED:
+`test/sd14c_motes.test.js` (each sense through the game's camera), `test/sd16_fx.test.js` (the Hand's flash out of its
+chest, the fall's feet on the arena, the spent Hearts' burst, the Hour's lights into one kept list),
+`test/sd17_body.test.js` (its right at +x, the band and the light's drop, the world's kept beams), `test/sd18b_seen.test.js`
+(the stone's light before its face, into the world's kept light), `test/sd19_presence.test.js` (`setBrass` telling the sky's
+passes), `test/event1_live_event.test.js`, `test/enhancedSky.test.js`, `test/sunbaby1_event.test.js` and
+`test/weather3d_distantstorms.test.js` (each sky pass's final colour, the brass after the dread; the water's sky),
+`test/sd8c_remnant_page.test.js` (the kneel eased), `test/sd9e_spoils.test.js` (the Hour's lights composed into the kept
+list), `test/sd11a_scenes.test.js` (the lights sorted in past the cap), `test/sd11c_page.test.js` (its harness's warm
+flag), `test/sd6c_hall.test.js` (the bridge laid), `test/audit39_render.test.js` and `test/wb6a_deadlands.test.js` (the
+rising edges), `test/relayversion.test.js` (`world176` re-hashed in place).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the passes built as the Hour is stood in; the Hour's lights, the stone's light
+and the beams into kept lists; the read's feet); `scenes/worldModes.js` FLAGGED - the mode machine draws none of the Hour's
+passes; `scenes/dungeonContext.js` FLAGGED - the realm's set and its draws are the world host's, the dungeon host stands
+the Hour's level alone; `scenes/exterior.js` FLAGGED - the `?exterior` bench draws the sky's passes, which take the brass
+weight the controller sets (none there: there is no Hollow offline).

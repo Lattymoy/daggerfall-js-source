@@ -84,7 +84,7 @@ test('WB6a the sea: a disc facing up, no hole under the court, its rim inside th
   assert.ok(SEA_FADE[0] < SEA_FADE[1] && SEA_FADE[1] <= SEA_R, 'the rim has become the horizon before the disc ends');
   for (const s of [DEAD_SKY_FS, DEAD_SEA_FS]) assert.ok(s.includes(HORIZON_GLSL), 'the one horizon, in both');
   assert.match(DEAD_SEA_FS, /col = mix\(col, deadHorizon\(normalize\(vWorld - uCamPos\)\), rimT\);/, 'the rim becomes it');
-  assert.match(DEAD_SKY_FS, /col = mix\(col, deadHorizon\(d\), smoothstep\(0\.22, 0\.0, e\)\);/, 'and the sky\'s horizon is it');
+  assert.match(DEAD_SKY_FS, /col = mix\(col, deadHorizon\(d\), 1\.0 - smoothstep\(0\.0, 0\.22, e\)\);/, 'and the sky\'s horizon is it');   // AUDIT SD III (V14, PIN MOVED): its edges rising, the same curve
   assert.match(DEAD_SEA_FS, /col = mix\(uHaze, col, fogFactorAt\(vWorld\)\);/, 'fogged by the frame\'s own fog');
 });
 

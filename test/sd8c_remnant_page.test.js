@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   SD_BODY, SD_BLOWS, SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_ECHO_SPOTS, SD_OPENING_MS, SD_BREAK_MS, SD_PHASE_AT, SD_PHASE_NAMES,
-  SD_RESET_FIRST_MS, SD_RESET_EVERY_MS, SD_HEARTS, SD_HEARTS_CLOSE_MS, SD_LOST_MS, SD_ENDS_MS, SD_PILLARS,
+  SD_RESET_FIRST_MS, SD_RESET_EVERY_MS, SD_HEARTS, SD_HEARTS_CLOSE_MS, SD_LOST_MS, SD_ENDS_MS, SD_PILLARS, SD_STUN_MS,
   newRemnantFight, joinRemnant, stepRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, heartsOpen, remnantStateOf, behindPillar, windupFor,
 } from '../src/net/sdRemnant.js';
 import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
@@ -18,7 +18,7 @@ import { dpsRef, HIT_KINDS, PHASE_AT } from '../src/net/gateBrain.js';
 import { sdRoomKey } from '../src/net/sdLaw.js';
 import { PIXEL_M } from '../src/net/gateLaw.js';
 import {
-  createSdRemnant, remnantPose, echoPose, heartsOpenAt, remnantOpenAt, arenaToDungeon, SD_KNEEL_M, SD_REM_SINK_MS, SD_ECHO_SINK_MS,
+  createSdRemnant, remnantPose, echoPose, heartsOpenAt, remnantOpenAt, arenaToDungeon, SD_KNEEL_M, SD_KNEEL_EASE_MS, SD_REM_SINK_MS, SD_ECHO_SINK_MS,
   SD_REMNANT_MOBILE, SD_REMNANT_NAMES,
   SD_GEAR_DRAWS,
 } from '../src/scenes/sdRemnant.js';
@@ -345,7 +345,12 @@ test('SD8c THE SET STANDS THE BODIES: the Remnant, the two Echoes and the most H
   assert.deepEqual(remnantPose(SD_FIGHT_EMPTY, T0), { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, sink: 0, shown: true }, 'no fight: waiting');
   const walking = foldSdFight(s0, validSdOut({ k: 'mv', b: 0, x: 0, z: 8, tx: 0, tz: 0, v: 2, at: T0 + 9000 }), T0 + 9000);
   assert.deepEqual([remnantPose(walking, T0 + 10_000).x, remnantPose(walking, T0 + 10_000).z], [0, 6]);
-  assert.equal(remnantPose({ ...walking, su: T0 + 20_000 }, T0 + 10_000).sink, SD_KNEEL_M, 'kneeling, stunned');
+  assert.equal(remnantPose({ ...walking, su: T0 + 15_000 }, T0 + 10_000).sink, SD_KNEEL_M, 'kneeling, stunned');
+  // AUDIT SD III (V6, PIN MOVED): down and up over SD_KNEEL_EASE_MS - it dropped and stood in a frame
+  const stunAt = T0 + 10_000, su = stunAt + SD_STUN_MS;
+  assert.equal(remnantPose({ ...walking, su }, stunAt).sink, 0, 'as the stun begins');
+  assert.ok(Math.abs(remnantPose({ ...walking, su }, stunAt + SD_KNEEL_EASE_MS / 2).sink - SD_KNEEL_M / 2) < 1e-9, 'half down');
+  assert.ok(Math.abs(remnantPose({ ...walking, su }, su - SD_KNEEL_EASE_MS / 2).sink - SD_KNEEL_M / 2) < 1e-9, 'half up');
   assert.equal(remnantPose({ ...walking, ph: 2 }, T0 + 10_000).shown, false, 'outside time');
   const back = { ...walking, ph: 3, ou: T0 + 10_000 + SD_BREAK_MS / 2 };
   assert.ok(near(remnantPose(back, T0 + 10_000).sink, SD_REM.h / 2), 'rising at its return');

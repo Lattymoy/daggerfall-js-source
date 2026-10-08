@@ -263,7 +263,7 @@
   {
     "name": "SD8C-no-kneel",
     "file": "src/scenes/sdRemnant.js",
-    "old": "  const kneel = now < s.su ? SD_KNEEL_M : 0;",
+    "old": "  const kneel = now < s.su ? SD_KNEEL_M * Math.max(0, Math.min(1, (now - (s.su - SD_STUN_MS)) / SD_KNEEL_EASE_MS, (s.su - now) / SD_KNEEL_EASE_MS)) : 0;",
     "new": "  const kneel = 0;",
     "tests": [
       "test/sd8c_remnant_page.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "SD8C-an-echo-unscaled",
     "file": "src/scenes/sdRemnant.js",
-    "old": "place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
-    "new": "place(echoDraws[e], echoPose(s, e, t, _echoPose), 1);",
+    "old": "turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE);",
+    "new": "turn(echoPose(s, e, t, _echoPose), 1 + e, dt), 1);",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

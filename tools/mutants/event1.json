@@ -344,8 +344,8 @@
   {
     "name": "EVENT1-composite-premultiplied",
     "file": "src/render/volumetricClouds.js",
-    "old": "dreadGrade(c.rgb / op, uDread) * op",
-    "new": "dreadGrade(c.rgb, uDread)",
+    "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op",
+    "new": "brassGrade(dreadGrade(c.rgb, uDread), uBrass)",
     "tests": [
       "test/event1_live_event.test.js"
     ]

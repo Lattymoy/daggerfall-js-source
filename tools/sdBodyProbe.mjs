@@ -99,7 +99,7 @@ window.drawAll = (names) => {
     if (name === 'beam' && beamPass) {
       // the beam in the arena's frame here (the probe stands the body at the arena's origin)
       const to = (p) => { const d = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); return [p[0] - d[0], p[1] - d[1], p[2] - d[2]]; };
-      const beams = sdBeamDraws(s, t).map((g) => ({ ...g, a: to(g.a), b: to(g.b) }));
+      const beams = sdBeamDraws(s, t).map((g) => ({ ...g, a: to(g.a), b: to(g.b), f0: to(g.f0), f1: to(g.f1) }));   // AUDIT SD III (V2): and its band on the floor
       beamDrew = beamPass.draw(beams, P, V, eye, 3.5, null);
       res.beamLine = beams[0];
       res.beamVP = Array.from(VP);

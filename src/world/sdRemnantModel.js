@@ -69,7 +69,9 @@ export const eyeRecordOf = (ending) => SD_REMNANT_ENDING_RECORD[ending] ?? SD_RE
 function emitRemnant(metal, into, ending = null) {
   const B = SD_REMNANT_BODY, W = SD_REMNANT_WEAR[metal];
   // the legs, the hip
-  for (const s of [-1, 1]) box(into(s < 0 ? 'legR' : 'legL'), W.metal, s * B.legX, 0, 0, B.legW, B.legH, B.legD);
+  // AUDIT SD III (V11): its right side at +x - through the camera's one mirror (world/mat4.js) +x is the side a body's own
+  // right shows on; at -x it pointed the Hour-Hand with what every screen showed as its left
+  for (const s of [-1, 1]) box(into(s > 0 ? 'legR' : 'legL'), W.metal, s * B.legX, 0, 0, B.legW, B.legH, B.legD);
   box(into('pelvis'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);
   let f = into('torso');
   // the cage: bars on an ellipse about the heart, from the hip to the shoulders
@@ -82,7 +84,7 @@ function emitRemnant(metal, into, ending = null) {
   // the shoulders, the arms hanging from them, the head and its eyes
   const sy = cy0 + B.cageH;
   box(f, W.metal, 0, sy, 0, B.shoulderW, B.shoulderH, B.shoulderD);
-  for (const s of [-1, 1]) box(into(s < 0 ? 'armR' : 'armL'), W.metal, s * B.armX, B.armBot, 0, B.armW, sy + B.shoulderH - B.armBot, B.armD);
+  for (const s of [-1, 1]) box(into(s > 0 ? 'armR' : 'armL'), W.metal, s * B.armX, B.armBot, 0, B.armW, sy + B.shoulderH - B.armBot, B.armD);
   const hy = sy + B.shoulderH, headH = SD_REM.h - hy;
   f = into('head');
   box(f, W.joint, 0, hy, 0, B.headW, headH, B.headD);

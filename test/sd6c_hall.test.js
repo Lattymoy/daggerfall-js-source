@@ -20,7 +20,7 @@ import {
   hallArt, hallFaceArt, hallEmblemArt, hallPlaqueArt, hallGlowArt, SD_SIGNS, SD_PIPS, SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD,
   SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD, SD_GLOW_COLORS, SD_HALL_ART_SIZE, SD_EMBLEM_SIZE,
 } from '../src/world/sdHallArt.js';
-import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS } from '../src/scenes/sdHall.js';
+import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS, SD_BRIDGE_LAY_MS } from '../src/scenes/sdHall.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const near = (a, b, e = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < e);
@@ -249,8 +249,16 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.equal(r.hall.concord, true);
   assert.ok(r.sounds.some((x) => x.rec === SD_HALL_SOUNDS.chime));
   assert.deepEqual(r.said, [SD_HALL_TEXT.concord]);
+  // AUDIT SD III (V10, PIN MOVED): LAID out across the void from the hall's rim over SD_BRIDGE_LAY_MS, then whole - it
+  // stood whole in a frame
+  assert.equal(bridge.hidden, false, 'drawn');
+  assert.ok(bridge.object.matrix[10] < 0.01, 'its length not yet laid');
+  r.tick(SD_BRIDGE_LAY_MS / 2); r.hall.frame(0.016, atStone(0), null);
+  assert.ok(bridge.object.matrix[10] > 0.5 && bridge.object.matrix[10] < 1, `half the time, most of the way: ${bridge.object.matrix[10].toFixed(3)}`);
+  const z0 = realmToDungeon(SD_BRIDGE.x, 0, SD_BRIDGE.z0)[2], k = bridge.object.matrix[10];
+  assert.ok(Math.abs(z0 * k + bridge.object.matrix[14] - z0) < 1e-3, 'stretched from the hall\'s rim');
+  r.tick(SD_BRIDGE_LAY_MS); r.hall.frame(0.016, atStone(0), null);
   assert.deepEqual([...bridge.object.matrix], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 'the bridge laid');
-  assert.equal(bridge.hidden, false, 'and drawn');
   r.hall.clear();
   assert.ok(r.dropped.length >= 5, 'every mesh freed');
 });
