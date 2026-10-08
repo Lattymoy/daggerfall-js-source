@@ -18,7 +18,7 @@
 // port's other outdoor looks are - the hosts build the renderer only under it (sky.enhanced), the mod's own switch
 // (MOD_SETTINGS 'heat-haze' Enabled, on by default - MO1) and `?haze=off` the kill door beside it.
 
-import { modSetting } from './modSettings.js';
+import { modSetting, modSettingsGeneration } from './modSettings.js';
 import { NetRandom } from '../formats/netRuntime.js';
 import { pageParam } from './pageQuery.js';
 
@@ -111,24 +111,38 @@ export function heatHazeSettings(read = (k) => modSetting(HEAT_HAZE_VENDOR, k)) 
 /** The settings an ineligible frame reads when the mod's switch is off - the strength falls to 0 at once. */
 export const HAZE_OFF = Object.freeze({ enabled: false, allowSubtropical: false, intensity: 0, distance: 400.4, ringHeight: 1006, noiseScale: 4.5, animationSpeed: 4 });
 
-/** The mod's switch with the kill door beside it - the hosts read this once a frame. */
+/** The mod's switch with the kill door beside it. */
 export const heatHazeOn = (search = globalThis.location?.search ?? '') => modSetting(HEAT_HAZE_VENDOR, 'Enabled') === true && pageParam('haze', search) !== 'off';
+
+let _hazeGen = -1, _hazeSettings = null;
+/** AUDIT ENVIRONS W7: the settings a frame reads (the hosts' once a frame): HAZE_OFF with the switch off, else the mod's keys - read
+ *  again only when one was written (modSettingsGeneration: LoadSettings is the mod's callback, not a frame's read). */
+export function hazeFrameSettings() {
+  if (!heatHazeOn()) return HAZE_OFF;
+  const g = modSettingsGeneration();
+  if (g !== _hazeGen || !_hazeSettings) { _hazeGen = g; _hazeSettings = heatHazeSettings(); }
+  return _hazeSettings;
+}
 
 /**
  * HeatHazeMod's per-frame state. `tick(frame)` takes
- *   { dt, exterior, climate, weather, minuteOfDay, foot: [x, y, z], grounded, settings? }
- * - `dt` unscaled seconds, `foot` the player's capsule foot in scene space - and answers
- *   { visible, intensity, center: [x, y, z], radius, halfHeight, noiseScale, animationSpeed }:
+ *   { dt, time, exterior, climate, weather, minuteOfDay, foot: [x, y, z], grounded, settings? }
+ * - `dt` unscaled seconds (the strength's ease: Time.unscaledDeltaTime), `time` the frame's game seconds (Time.deltaTime:
+ * none while the game is paused, the travel's time scale over them - the shimmer's clock, _Time.y), `foot` the player's
+ * capsule foot in scene space - and answers
+ *   { visible, intensity, center: [x, y, z], radius, halfHeight, noiseScale, animationSpeed, seconds }:
  * the ring's world transform (radius = FullStrengthDistance, halfHeight = RingHeight / 2 - the 70-unit half height of
- * the mesh times RingHeight / 140) and the strength to draw it at. `visible` is the renderer's `enabled`
- * (currentIntensity > 1e-4).
+ * the mesh times RingHeight / 140), the strength to draw it at and the shader's clock. `visible` is the renderer's
+ * `enabled` (currentIntensity > 1e-4).
  */
 export function createHeatHaze() {
   let current = 0;
   let layerY = 0;
   let layerKnown = false;
+  let seconds = 0;
   return {
-    tick({ dt = 0, exterior = false, climate = -1, weather = null, minuteOfDay = 0, foot = [0, 0, 0], grounded = true, settings = heatHazeSettings() } = {}) {
+    tick({ dt = 0, time = dt, exterior = false, climate = -1, weather = null, minuteOfDay = 0, foot = [0, 0, 0], grounded = true, settings = heatHazeSettings() } = {}) {
+      seconds += Math.max(0, time);   // AUDIT ENVIRONS W4: the shimmer's clock is the game's (_Time.y), held by a pause
       // UpdateRingTransform: the layer's height is taken while grounded (or the first time)
       if (grounded || !layerKnown) { layerY = foot[1] + HAZE.layerHeightOffset; layerKnown = true; }
       const eligible = meetsRules(exterior, climate, isDayMinute(minuteOfDay), weather, settings.allowSubtropical);
@@ -148,8 +162,12 @@ export function createHeatHaze() {
         halfHeight: settings.ringHeight / 2,
         noiseScale: settings.noiseScale,
         animationSpeed: settings.animationSpeed,
+        seconds,
       };
     },
+    /** The floating origin moved the scene by `offset`: the layer held while airborne keeps its height over the land
+     *  (AUDIT ENVIRONS I7). */
+    offsetOrigin(offset) { if (offset) layerY += offset[1]; },
     /** An ineligible frame the host does not tick (inside, underground): the strength is 0 at once, as the mod's
      *  Update sets it on every frame the rules fail. */
     suppress() { current = 0; },

@@ -288,7 +288,8 @@ const DEG = f32(Math.PI / 180);
  * WindMod, ticked by the host. `tick(frame)` takes
  *   { dt, outside, weather, date: { year, month, day }, minuteOfDay, absoluteDay, season, climate, mapPixel: { x, y },
  *     heading: [x, z] | null, settings }
- * - `dt` unscaled seconds, `weather` DFU's number or the port's word, `season` DFU's Seasons, `climate` the map's
+ * - `dt` the frame's game seconds (Time.deltaTime: none while the game is paused, the travel's time scale over them),
+ * `weather` DFU's number or the port's word, `season` DFU's Seasons, `climate` the map's
  * climate index, `heading` the outdoors' wind's unit direction in scene x, z (null: the mod's own daily heading) - and
  * answers the frame:
  *   { on, outside, strength, gust, currentGust, profile, swayPhase, shiverPhase, direction: [x, z], presentation, windyDay,
@@ -444,9 +445,11 @@ export function createWindfall({ settings: initial = WINDFALL_BUILT_IN } = {}) {
         const a = f32(direction * DEG);
         dir = [f32(Math.cos(a)), f32(Math.sin(a))];   // the scene is Unity's frame (x east, z north)
       }
+      const started = events;
+      events = [];   // AUDIT ENVIRONS I8: the frame's gusts are handed over with it - the console's (triggerGust) start a list of their own
       return {
         on: true, outside, strength: outside ? baseline : 0, gust: outside ? gust : 0, currentGust: gust, profile: current, swayPhase, shiverPhase, direction: dir,
-        presentation, windyDay: windy || storm, storm, events,
+        presentation, windyDay: windy || storm, storm, events: started,
       };
     },
     // ---- IHasModSaveData ----

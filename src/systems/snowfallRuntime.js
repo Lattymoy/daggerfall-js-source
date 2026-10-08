@@ -29,6 +29,8 @@ import {
   outsideWeight, rectWeight, pathEdgeDistance, interpolateQuad, snowfallSettings,
 } from './snowfall.js';
 import { roundToInt } from './mathf.js';
+import { dateFromClassicMinutes, seasonValue, SEASONS } from './gameDate.js';
+import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
 
 const f32 = Math.fround;
 
@@ -77,6 +79,7 @@ export const FAR = Object.freeze({ res: 641, radius: 320, recenter: 48, snap: 16
  * @typedef {object} SnowWorld
  * @property {(x: number, z: number) => (SnowTerrain|null)} terrainAt - the loaded tile under a scene point
  * @property {(ring: number) => SnowTerrain[]} terrainsNear - the loaded tiles within `ring` pixels of the player's, nearest ring first
+ * @property {(minX: number, minZ: number, maxX: number, maxZ: number) => SnowTerrain[]} terrainsIn - the loaded tiles on the map pixels a global box (metres) touches, row by row (SnowContextData.Prepare's scan: StreamingWorld.GetTerrainFromPixel on each)
  * @property {(x: number, z: number) => number[]} toGlobal - a scene point in global metres (WorldX / SceneMapRatio)
  * @property {(minX: number, minZ: number, maxX: number, maxZ: number) => {minX:number,minZ:number,maxX:number,maxZ:number}[]} settlements - the vanilla locations' rectangles (global metres) on the map pixels the box touches
  * @property {(gx: number, gz: number, radius: number) => any[]} [footprints] - Location Loader's authored footprints near a global point
@@ -116,12 +119,11 @@ export class SnowContext {
     const span = Math.ceil((radius + Math.max(feather, reach)) * 40) / 40;
     const minGX = Math.max(0, gx - span), minGZ = Math.max(0, gz - span), maxGX = Math.min(819200, gx + span), maxGZ = Math.min(409600, gz + span);
     if (s?.basicRoadsIntegration) {
-      for (const t of this.world.terrainsNear(Math.ceil(span / 819.2) + 1)) {
+      for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {   // AUDIT ENVIRONS S1: the box's own map pixels, wherever the player stands
         const roads = t.roads;
         if (!roads || (roads.pathTiles === 0 && roads.roadTiles === 0)) continue;
         const o = t.origin(v3());
         const [ox, oz] = this.world.toGlobal(o[0], o[2]);
-        if (ox > maxGX || oz > maxGZ || ox + t.size < minGX || oz + t.size < minGZ) continue;
         this.roads.push({ data: roads, x: ox, z: oz, tileMetres: f32(t.size / 128), archive: t.winterArchive, mapX: t.mapX, mapY: t.mapY });
       }
     }
@@ -252,7 +254,7 @@ export class SnowfallRuntime {
     this.lastEnvironmentEligible = false;
     this.npcTargets = new Map();
     this.nextNpcSampleTime = 0;
-    this.npcSegmentsWritten = 0;
+    this.npcSegmentsWritten = 0; this.npcSamplePasses = 0;
     this.stampAttempts = 0; this.stampsWritten = 0; this.lastStampChanged = 0; this.lastStampStatus = 'not evaluated';
     this.staleCancellations = 0;
     this.local = this._newLocal();
@@ -348,9 +350,10 @@ export class SnowfallRuntime {
    * citizen), corpses [{ id, x, z, alive() }] (the scan: every body lying outdoors, global metres) }.
    */
   frame(f) {
-    const s = this.settings, L = this.local;
+    const s = this.settings;
+    let L = this.local;
     this.frameStart = this.clock();
-    if (L.resourceRebuild) { this._rebuildGrid(); }
+    if (L.resourceRebuild) { this._rebuildGrid(); L = this.local; }   // AUDIT ENVIRONS S3: CreateGridResources - the frame goes on with the new window
     this._updateEligibility(f);
     if (this.corpseScanPending) {
       this.corpseScanPending = false;
@@ -478,6 +481,7 @@ export class SnowfallRuntime {
     const lattice = this.local.lattice;
     this.local = this._newLocal();
     this.local.lattice = lattice;
+    this.refillRemainder = 0;   // AUDIT ENVIRONS S8: CreateGridResources' own
     this.dirty.localMesh = this.dirty.localStatic = true; this.rects.local.all();
     this.dirty.gridRebuilt = true;
   }
@@ -688,6 +692,7 @@ export class SnowfallRuntime {
     if (!s.npcTracksEnabled) { this._resetNpcAnchors(); return; }
     if (f.now < this.nextNpcSampleTime) return;
     this.nextNpcSampleTime = f.now + NPC_SAMPLE_INTERVAL_SECONDS;
+    this.npcSamplePasses++;
     const seen = new Set();
     for (const n of f.npcs ?? []) {
       seen.add(n.id);
@@ -731,7 +736,7 @@ export class SnowfallRuntime {
       history: fullSnowMask(MID.history), scroll: fullSnowMask(MID.history),
       context0: new SnowContext(this.world, this.coverage),
       center: [0, 0], buildCenter: [0, 0], lattice: [0, 0], localCenter: [0, 0], baseY: 0,
-      active: false, ready: false, building: false, rebuildPending: false, hasDeformation: false, visible: false,
+      active: false, ready: false, building: false, rebuildPending: false, hasDeformation: false, visible: false, lastHistoryChanged: 0,
       meshCursor: 0, staticCursor: 0, nextRetry: 0, nextHistoryUpload: 0, historyDirty: false,
       pending: [], completed: 0, cancelled: 0, blankets: new Map(),
     };
@@ -834,7 +839,7 @@ export class SnowfallRuntime {
     if (!M.active || width <= 0) return;
     const seg = [sx, sz, ex, ez, width, remaining];
     if (!M.ready || !this._midInside(seg)) { while (M.pending.length >= MID.pendingMax) M.pending.shift(); M.pending.push(seg); return; }
-    this._midRasterize(seg);
+    M.lastHistoryChanged = this._midRasterize(seg);
   }
   _midRefill(step) {
     const M = this.mid;
@@ -847,7 +852,7 @@ export class SnowfallRuntime {
   }
   _midClearHistory() {
     const M = this.mid;
-    M.history.fill(255); M.hasDeformation = false; M.historyDirty = true; M.pending.length = 0;
+    M.history.fill(255); M.hasDeformation = false; M.historyDirty = true; M.pending.length = 0; M.lastHistoryChanged = 0;
     this.rects.mid.all();
   }
   _midProjectCorpses() {
@@ -879,8 +884,10 @@ export class SnowfallRuntime {
   }
   _blanketTick(shouldBeActive, handoff, f, allowBuild, innerRadius) {
     const B = this.blanket, s = this.settings;
+    const was = B.active;
     B.active = shouldBeActive && s.streamedBlanketPrototype && !!handoff;
     if (!B.active) return;
+    if (!was) B.lastPixel = null;   // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them
     B.handoff = handoff;
     B.innerRadius = innerRadius;
     for (const o of B.overlays.values()) if (o.ready && o.contextRevision !== B.contextRevision) { this._blanketContext(o); break; }
@@ -929,9 +936,10 @@ export class SnowfallRuntime {
     while (!B.building && B.queue.length) {
       const t = B.queue.shift();
       B.queued.delete(t);
+      if (!B.live.has(t)) continue;   // AUDIT ENVIRONS S7: ProcessBuildQueue - a tile no longer standing in the drawn rings is not built (activeInHierarchy)
       if (!t.tileMap || t.tileMap.length < 16384) { B.failed++; continue; }
       let o = B.overlays.get(t);
-      if (!o) { o = { t, ready: false, pos: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), nrm: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), ctx: new Float32Array(BLANKET.mesh * BLANKET.mesh * 4), statics: new Uint8Array(BLANKET.staticRes * BLANKET.staticRes * 4), contextRevision: -1, stamp: null }; B.overlays.set(t, o); }
+      if (!o) { o = { t, ready: false, pos: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), nrm: new Float32Array(BLANKET.mesh * BLANKET.mesh * 3), ctx: new Float32Array(BLANKET.mesh * BLANKET.mesh * 4), statics: new Uint8Array(BLANKET.staticRes * BLANKET.staticRes * 4), contextRevision: -1, stamp: null, minY: 0, maxY: 0 }; B.overlays.set(t, o); }
       B.building = { t, o, cursor: 0, pos: new Float32Array(o.pos.length), nrm: new Float32Array(o.nrm.length), stamp: t.stamp };
     }
     const b = B.building;
@@ -950,6 +958,9 @@ export class SnowfallRuntime {
     if (b.cursor >= BLANKET.mesh * BLANKET.mesh) {
       const o = b.o;
       o.pos = b.pos; o.nrm = b.nrm; o.stamp = b.stamp;
+      let lo = Infinity, hi = -Infinity;   // ApplyMeshBounds: the tile's ground's span (its renderer's bounds, the frustum's cull)
+      for (let k = 1; k < b.pos.length; k += 3) { const y = b.pos[k]; if (y < lo) lo = y; if (y > hi) hi = y; }
+      o.minY = lo; o.maxY = hi;
       this._blanketContext(o);
       o.ready = true;
       B.completed++;
@@ -1077,11 +1088,12 @@ export class SnowfallRuntime {
     this.worldReset({ session: true });
     this.corpseProjectionPending = false;
   }
-  /** CompleteSession: the game is in - the clocks start from now. */
-  completeSession(gameSeconds, snowing = false) {
+  /** CompleteSession: the game is in - the clocks start from now (AUDIT ENVIRONS S8: `now` real seconds, ResetRefillClock's
+   *  first tick half a second on; `snowing` the weather's now, WeatherManager.IsSnowing). */
+  completeSession(gameSeconds, snowing = false, now = 0) {
     this.worldReset({ session: true });
     this.corpseScanPending = true;
-    this.lastGameSeconds = gameSeconds; this.refillRemainder = 0; this.isSnowing = snowing;
+    this.lastGameSeconds = gameSeconds; this.nextRefillTime = now + REFILL_INTERVAL_SECONDS; this.refillRemainder = 0; this.isSnowing = snowing;
     this.snowpack.resetClock(gameSeconds);
     this.dirty.depths = true;
   }
@@ -1165,27 +1177,62 @@ export class SnowfallRuntime {
     };
   }
 
+  /** The most the blanket stands over the ground it lies on: the deepest depth any context resolves (the snowpack's,
+   *  the caps', the ceilings', a debug override) and the surface offset - a tile's bounds over its ground's span. */
+  blanketRise() {
+    const s = this.settings;
+    return Math.max(this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s.wildernessMaximumDepth, s.settlementMaximumDepth) + SNOW_SURFACE_OFFSET;
+  }
+
   /** The console's snow_status. */
-  status(f = null) {
-    const L = this.local, s = this.settings;
+  status(f = null, x = {}) {
+    const L = this.local, s = this.settings, M = this.mid, B = this.blanket, F = this.far;
+    const b = (v) => (v ? 'True' : 'False');   // a C# bool's ToString
     let min = 255, deformed = 0;
     for (let k = 0; k < L.dynamic.length; k += 4) { min = Math.min(min, L.dynamic[k]); if (L.dynamic[k] < 255) deformed++; }
-    return [
+    const p = f?.rawPlayer ?? null;   // the motor's, whatever the switch (the frame's own player is the switch's)
+    let terrain = 'unavailable';
+    if (x.climate != null && f) {   // PlayerGPS.ClimateSettings and the calendar's season (WorldTime.Now.SeasonValue)
+      const cs = getWorldClimateSettings(x.climate), season = seasonValue(dateFromClassicMinutes(Math.floor(f.gameSeconds / 60)));
+      const type = Object.keys(CLIMATE_BASE_TYPES).find((k) => CLIMATE_BASE_TYPES[k] === cs.climateType) ?? String(cs.climateType);
+      const seasonName = Object.keys(SEASONS).find((k) => SEASONS[k] === season);
+      terrain = `climateIndex=${x.climate} climateType=${type} season=${seasonName} expectedArchive=${cs.groundArchive + (cs.climateType !== CLIMATE_BASE_TYPES.Desert && season === SEASONS.Winter ? 1 : 0)} bundledWinterArchives=103,303,403`;
+    }
+    const amb = x.ambient ?? [0, 0, 0];
+    const at = p ? [p.x, p.z] : null;
+    const midProgress = `${M.meshCursor}/${MID.mesh * MID.mesh}+${M.staticCursor}/${MID.staticRes * MID.staticRes}`;
+    let ready = 0;
+    for (const o of B.overlays.values()) if (o.ready) ready++;
+    const visible = B.active ? [...B.overlays.values()].filter((o) => o.ready && B.live.has(o.t)).length : 0;
+    const building = B.building ? `${B.building.cursor}/${BLANKET.mesh * BLANKET.mesh}` : '0/0';
+    const roads = !s.basicRoadsIntegration ? 'basicRoads=disabled'
+      : !at || f?.inside ? 'basicRoads=exterior context unavailable'
+        : (() => {   // RoadStatus: the context's read at the player, before the coverage and the tracks
+          const c = this.context.sample(at[0], at[1]);
+          const depth = resolveSnowDepth(contextOf(c[0], c[1], c[2], c[3]), this.renderedDepth, this.renderedSettlementDepth, this.renderedLocationDepth, s);
+          return `basicRoads=${x.roads ?? 'not sampled'} pathWeight=${(c[2] / 255).toFixed(2)} pathCap=${s.pathMaximumDepth.toFixed(2)}m bermWeight=${(c[3] / 255).toFixed(2)} contextDepth=${depth.toFixed(3)}m (before coverage/tracks)`;
+        })();
+    return [   // AUDIT ENVIRONS S6: GetRuntimeStatus, line for line
       'Dynamic Snow runtime',
-      `active=${s.enabled && this.lastEnvironmentEligible} meshReady=${L.meshReady} staticReady=${L.staticReady}`,
+      `active=${b(s.enabled && this.lastEnvironmentEligible)} exterior=${b(!!f && !f.inside)} meshReady=${b(L.meshReady)} staticReady=${b(L.staticReady)}`,
+      `playerGrounded=${b(p?.grounded)} controllerGrounded=${b(p?.grounded)} swimming=${b(p?.swimming)} levitating=${b(p?.levitating)}`,
       `stampAttempts=${this.stampAttempts} stampSegmentsWritten=${this.stampsWritten} lastPixelsChanged=${this.lastStampChanged}`,
-      `maskMinimum=${min}/255 deformedPixels=${deformed} hasDeformation=${L.hasDeformation} pendingSegments=${L.pending.length}`,
+      `maskMinimum=${min}/255 deformedPixels=${deformed} dirty=${b(this.rects.local.any)} hasDeformation=${b(L.hasDeformation)} fullUpload=${b(this.rects.local.full)} pendingSegments=${L.pending.length}`,
       `localBuild=${!L.recentering ? 'idle' : L.fullRebuild ? 'full' : 'recenter'} progress=${L.meshCursor + L.statCursor}/${L.res * L.res + L.sres * L.sres} staleRetargets=${this.staleCancellations}`,
-      `npcTargets=${this.npcTargets.size} npcSegmentsWritten=${this.npcSegmentsWritten}`,
+      `terrain=${terrain}`,
+      `lighting=ambient(${amb[0].toFixed(3)},${amb[1].toFixed(3)},${amb[2].toFixed(3)}) probes=${x.surface ? 'Off' : 'unavailable'}`,
+      `npcTargets=${this.npcTargets.size} npcSegmentsWritten=${this.npcSegmentsWritten} npcSamplePasses=${this.npcSamplePasses}`,
       `persistentTrackCells=${this.tracks.count}/65536`,
       `savePayload=v1 raw=${this.tracks.lastSaveRawBytes}B compressed=${this.tracks.lastSaveCompressedBytes}B base64=${this.tracks.lastSaveBase64Characters}chars evictions=${this.tracks.evictedCells} (last save)`,
-      `farTracks=ready=${this.far.ready} center=(${this.far.center[0].toFixed(1)},${this.far.center[1].toFixed(1)}) radius=320m cells=${this.tracks.count} changed=${this.far.lastChanged} rebuilds=${this.far.rebuilds}`,
-      `midDetail=active=${this.mid.active} ready=${this.mid.ready} building=${this.mid.building} builds=${this.mid.completed} retargets=${this.mid.cancelled} history=${this.mid.hasDeformation} pending=${this.mid.pending.length}`,
-      `streamedBlanket=enabled=${s.streamedBlanketPrototype} active=${this.blanket.active} readyTiles=${[...this.blanket.overlays.values()].filter((o) => o.ready).length} queued=${this.blanket.queue.length} builds=${this.blanket.completed} failures=${this.blanket.failed}`,
+      `farTracks=ready=${b(F.ready)} center=(${F.center[0].toFixed(1)},${F.center[1].toFixed(1)}) radius=320m cells=${this.tracks.count} changed=${F.lastChanged} rebuilds=${F.rebuilds}`,
+      `midDetail=active=${b(M.active)} ready=${b(M.ready)} building=${b(M.building)} center=(${M.center[0].toFixed(1)},${M.center[1].toFixed(1)}) progress=${midProgress} builds=${M.completed} retargets=${M.cancelled} history=${b(M.hasDeformation)}px=${M.lastHistoryChanged} pending=${M.pending.length} vertices=${MID.mesh * MID.mesh}`,
+      `streamedBlanket=enabled=${b(s.streamedBlanketPrototype)} active=${b(B.active)} readyTiles=${ready} visibleTiles=${visible} queued=${B.queue.length} mesh=${BLANKET.mesh} building=${building} builds=${B.completed} failures=${B.failed}`,
+      `localVertices=${L.res * L.res} localMaskUploads=${x.uploads ?? 0}`,
       `snowpack=vanillaLocation:${this.snowpack.settlementDepth.toFixed(2)}m wilderness:${this.snowpack.wildernessDepth.toFixed(2)}m phase:${this.snowpack.phaseWasSnowing ? 'snow' : 'clear'} progress:${(this.snowpack.phaseProgressSeconds / 3600).toFixed(2)}h renderedWilderness:${this.renderedDepth.toFixed(2)}m`,
+      `context=vanillaLocations:${this.context.settlements.length} playerWeight:${(at ? this.context.sampleSettlement(at[0], at[1]) / 255 : 0).toFixed(2)} vanillaLocationDepth:${this.renderedSettlementDepth.toFixed(2)}m locationLoader:absent locations:${this.context.locations.length} playerCapWeight:${(at ? this.context.sampleLocationCap(at[0], at[1]) / 255 : 0).toFixed(2)}`,
+      `lastStamp=${this.lastStampStatus === 'not grounded' ? `rejected: grounded=${b(p?.grounded)}, controllerGrounded=${b(p?.grounded)}, swimming=${b(p?.swimming)}, levitating=${b(p?.levitating)}` : this.lastStampStatus}`,
       `corpses active=${this.corpses.activeCount}`,
-      f?.player ? `context=vanillaLocations:${this.context.settlements.length} playerWeight:${(this.context.sampleSettlement(f.player.x, f.player.z) / 255).toFixed(2)}` : 'context=unavailable',
-      `lastStamp=${this.lastStampStatus}`,
+      roads,
     ].join('\n');
   }
 }

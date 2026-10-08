@@ -238,7 +238,7 @@ import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';  
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units (GR2's slider inside it); the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
-import { createHeatHaze, heatHazeOn, heatHazeSettings, HAZE_OFF } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
 import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
 import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
@@ -959,6 +959,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     terrainDistance: 1,
     pixelAt: (x, z) => (x >= snowSW[0] && x < snowSW[0] + TERRAIN_SIZE && z >= snowSW[2] && z < snowSW[2] + TERRAIN_SIZE ? snowTile : null),
     pixelsNear: () => [snowTile],
+    pixelOn: (x, y) => (x === snowPixel.x && y === snowPixel.y ? snowTile : null),
     translation: (p, out) => { out[0] = snowSW[0]; out[1] = 0; out[2] = snowSW[2]; return out; },
     height: (p, lx, lz) => {
       const x = lx + snowSW[0], z = lz + snowSW[2];
@@ -4981,7 +4982,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
       heatHaze.suppress();   // HAZE1: inside, the strength is 0 at once (world.js's twin note)
-      windfall.frame({ dt, outside: false, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel, feet: player.pos, height: player.height });   // WINDFALL1: WindMod.Update indoors (world.js's twin)
+      windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel, feet: player.pos, height: player.height });   // WINDFALL1: WindMod.Update indoors (world.js's twin; AUDIT ENVIRONS W1: on the game's seconds)
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
@@ -5505,8 +5506,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
-    const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
-      heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin
+    const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
+      heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin (AUDIT ENVIRONS W1)
     snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
@@ -5784,9 +5785,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // cloud and for the shadow it casts. Null when there is no enhanced
     // sky, which is the classic skin and every interior.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
+    snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground under it, by the ground's own program (world.js's twin)
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
-    snowfall.draw();   // SNOWFALL1: the snow on the town's ground, by the ground's own program (world.js's twin)
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
     // EV3: per-batch skip off the build-time boxes; the clocks above
     // ticked already, so an off-screen fire keeps its frame.
@@ -5903,9 +5904,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
     // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
     if (hazeGl) {
-      const hz = heatHaze.tick({ dt, exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
-        grounded: !walkMode || !!player.grounded, settings: heatHazeOn() ? heatHazeSettings() : HAZE_OFF });
-      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], now / 1000)) renderer.markForeignPass();
+      const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,
+        grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
+      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     const precipShown = enhancedFront ? fx.shown : precipMode;

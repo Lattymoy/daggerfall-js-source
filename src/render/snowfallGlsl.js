@@ -25,6 +25,11 @@
 export const SNOW_ATTR = Object.freeze({ pos: 0, normal: 1, uv: 2, ctxA: 3, blanket: 4, ctxB: 5, ctxC: 6, blanketNormal: 7 });
 /** The texture units the snow's five pictures take - above every unit the world programs reserve (0-15). */
 export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 20 });
+/** AUDIT ENVIRONS G2: the pass's `Offset -0.25, -0.25` (the shader asset, every pass): the snow a quarter of a resolvable step and a quarter
+ *  of its slope nearer the eye than the ground it lies on, so a snow surface standing at the ground's own height - a
+ *  contact ramp's first texel, a faded rim - is the snow's and not a speckle of both. Under the sea's film
+ *  (render/waterSurface.js WATER_LAYER_UNITS), a layer of the one stack. */
+export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });
 
 /** The law both programs share: Resolve, one bounded read of a track mask, and what a track and a body leave. */
 const SNOW_COMMON_GLSL = `
@@ -64,6 +69,21 @@ float snowRemain(vec2 m, float depth) {
   return min(corpse, track);
 }
 float snowStep(float t) { return t * t * (3.0 - 2.0 * t); }
+// BasicRoadsClassifier.PathEdgeDistance's sign, as the shader reads it: on a track tile's painted edge or inside it (the
+// blanket's static mask carries a path tile in its blue) - the vertex's surface offset and the fragment's coverage both
+float snowOnPath(float b, vec2 statUV) {
+  float code = floor(b * 255.0 + 0.5);
+  float rec = floor(code * 0.25);
+  float turn = code - rec * 4.0;
+  vec2 f = fract(clamp(statUV * 128.0, vec2(0.0), vec2(127.99999237060546875)));
+  vec2 p = turn == 1.0 ? vec2(1.0 - f.x, f.y) : turn == 2.0 ? vec2(1.0 - f.y, 1.0 - f.x) : turn == 3.0 ? vec2(f.x, 1.0 - f.y) : f.yx;
+  float x = p.y, y = p.x, d = 1.0;
+  if (rec == 51.0 || rec == 52.0) d = abs(x - y) - 0.5;
+  if (rec == 12.0 || rec == 27.0) d = y - x + 0.5;
+  if (rec == 10.0 || rec == 25.0) d = y - x - 0.5;
+  if (rec == 11.0 || rec == 26.0) d = 0.5 - x;
+  return d <= 0.0 ? 1.0 : 0.0;
+}
 `;
 
 /** The vertex program (the DXBC's FORWARDBASE vertex shader). */
@@ -101,17 +121,23 @@ void main() {
   vec2 xz = (uModel * vec4(aPos, 1.0)).xz;
   vec2 dynUV = (xz - uSnowDynMap.xy) * uSnowDynMap.z;
   vec2 statUV = (xz - uSnowStatMap.xy) * uSnowStatMap.z;
-  vec2 dyn = snowDynAt(dynUV);
-  if (uSnowFlags.x >= 0.5) {   // the erosion: a track a texel wide is not lost between two vertices
-    dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy));
-    dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(1.0, -1.0)));
-    dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(-1.0, 1.0)));
-    dyn = min(dyn, snowDynAt(dynUV - uSnowDynTexel.xy));
-  }
   vec4 st = textureLod(uSnowStatic, statUV, 0.0);
-  float depth = snowResolve(textureLod(uSnowContext, statUV, 0.0));
-  float remain = 1.0 + uSnowFlags.x * (snowRemain(dyn, depth) - 1.0);
-  float lifted = depth * clamp(st.r * 2.0, 0.0, 1.0) * remain;
+  float lifted = 0.0;
+  if (!blanket) {   // AUDIT ENVIRONS G8: the blanket rises by its vertex's own context - the masks' depth and tracks are the window's and the ring's
+    float depth = snowResolve(textureLod(uSnowContext, statUV, 0.0));
+    float remain = 1.0;
+    if (uSnowFlags.x != 0.0) {   // _DynamicDepthEnabled: what the tracks left (with it off, the mask's read changes nothing)
+      vec2 dyn = snowDynAt(dynUV);
+      if (uSnowFlags.x >= 0.5) {   // the erosion: a track a texel wide is not lost between two vertices
+        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy));
+        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(1.0, -1.0)));
+        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(-1.0, 1.0)));
+        dyn = min(dyn, snowDynAt(dynUV - uSnowDynTexel.xy));
+      }
+      remain = 1.0 + uSnowFlags.x * (snowRemain(dyn, depth) - 1.0);
+    }
+    lifted = depth * clamp(st.r * 2.0, 0.0, 1.0) * remain;
+  }
   float fade = 1.0;
   if (uSnowRadius.y > 0.0) {   // the edge fade: the grid's own border
     vec2 e2 = min(aUV, 1.0 - aUV);
@@ -126,7 +152,9 @@ void main() {
   float span = uSnowOuter.w - uSnowOuter.z;
   float outerFade = uSnowOuter.z < uSnowOuter.w ? 1.0 - snowStep(clamp(outer / span, 0.0, 1.0)) : 1.0;
   fade = 1.0 + uSnowBoundaryFade * (fade * outerFade - 1.0);
-  float offset = st.g * uSnowRadius.z * st.a * fade;
+  float cover = st.g;   // AUDIT ENVIRONS G9: the coverage the surface offset stands on - on the blanket, a painted track edge's too (the fragment's test)
+  if (blanket && st.b != 0.0) cover = max(cover, snowOnPath(st.b, statUV));
+  float offset = cover * uSnowRadius.z * st.a * fade;
   float y = aPos.y + (blanket ? vDepth : fade * lifted) + offset;
   vec3 n = aNormal;
   if (morph) {   // toward the blanket's surface over the ring's outer band
@@ -147,6 +175,10 @@ void main() {
 const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE TILE (DynamicSnow's fragment program); the light below is the ground's own
   vec4 sn = vSnow;
   bool blanket = uSnowFlags.y > 0.5, morph = uSnowFlags.z > 0.5;
+  // AUDIT ENVIRONS G10: the albedo's footprint, taken before the first discard (a derivative beside a discarded fragment
+  // is undefined in GLSL ES 3.00 - the CLIP_AFTER law): its mip is the one its whole quad picks, as the mod's pass reads it
+  vec2 albedoUV = vWorldPos.xz / max(uSnowRadius.w, 0.001);
+  vec2 albedoDx = dFdx(albedoUV), albedoDy = dFdy(albedoUV);
   if (uSnowRadius.y > 0.0) {
     vec2 e2 = min(sn.xy, 1.0 - sn.xy);
     if (snowStep(clamp(2.0 * uSnowRadius.x * min(e2.x, e2.y) / uSnowRadius.y, 0.0, 1.0)) - 0.001 < 0.0) discard;
@@ -159,32 +191,34 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   float outer = max(o2.x, o2.y) - uSnowOuter.z;
   float span = uSnowOuter.w - uSnowOuter.z;
   if (uSnowOuter.z < uSnowOuter.w && 0.99999 - snowStep(clamp(outer / span, 0.0, 1.0)) < 0.0) discard;
+  // AUDIT ENVIRONS G8: the masks have one level each - read at it (textureLod), the read's place free of the discards above
   vec2 statUV = (vWorldPos.xz - uSnowStatMap.xy) * uSnowStatMap.z;
-  vec4 st = texture(uSnowStatic, statUV);
+  vec4 st = textureLod(uSnowStatic, statUV, 0.0);
   float coverage = st.g;
   if (blanket && st.b != 0.0) coverage = max(coverage, snowOnPath(st.b, statUV));
-  vec4 ctx = texture(uSnowContext, statUV);
+  if (coverage - 0.005 < 0.0) discard;
+  vec4 ctx = blanket ? vec4(0.0) : textureLod(uSnowContext, statUV, 0.0);   // the blanket's depth and path are its vertices'
   float pathW = blanket ? sn.w : ctx.b;
   float depth = blanket ? sn.z : snowResolve(ctx);
-  if (coverage - 0.005 < 0.0) discard;
   vec2 dynUV = (vWorldPos.xz - uSnowDynMap.xy) * uSnowDynMap.z;
-  float remain = snowRemain(snowBounded(texture(uSnowDynamic, dynUV).rg, dynUV, uSnowDynMap.w), depth);
+  float remain = snowRemain(snowBounded(textureLod(uSnowDynamic, dynUV, 0.0).rg, dynUV, uSnowDynMap.w), depth);
   if (morph) {   // the ring hands its tracks to the far mask, and its depth and path to its vertices', over its outer band
     float m = snowStep(clamp(outer / (span - 8.0), 0.0, 1.0));
-    vec2 farUV = (vWorldPos.xz - uSnowFarMap.xy) * uSnowFarMap.z;
-    float far = snowRemain(snowBounded(texture(uSnowFar, farUV).rg, farUV, 1.0), sn.z);
-    remain += m * (far - remain);
-    depth += m * (sn.z - depth);
-    pathW += m * (sn.w - pathW);
+    if (m > 0.0) {   // inside the band's start the hand-off is none: the far mask unread
+      vec2 farUV = (vWorldPos.xz - uSnowFarMap.xy) * uSnowFarMap.z;
+      float far = snowRemain(snowBounded(textureLod(uSnowFar, farUV, 0.0).rg, farUV, 1.0), sn.z);
+      remain += m * (far - remain);
+      depth += m * (sn.z - depth);
+      pathW += m * (sn.w - pathW);
+    }
   }
-  vec3 albedo = ${decode('texture(uSnowAlbedo, vWorldPos.xz / max(uSnowRadius.w, 0.001)).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.03);
+  vec3 albedo = ${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.03);
   float dd = clamp(depth * 1.3333334, 0.0, 1.0);
   dd = (dd + (sqrt(dd) - dd) * 0.25) * uSnowDarkening;
   vec3 tex = albedo * (1.0 - dd * (1.0 - remain));
 `;
 
-/** The fragment's own declarations: the law, the far mask and the albedo, and the blanket's path test (Basic Roads'
- *  track edge, as the blanket's static mask carries a path tile in its blue). */
+/** The fragment's own declarations: the law (the blanket's path test with it), the far mask and the albedo. */
 const SNOW_FS_DECL = `precision highp sampler2D;   // the vertex program's samplers are the same uniforms, at its precision
 in vec4 vSnow;
 uniform vec4 uSnowFarMap;     // _FarTrackMapping
@@ -192,20 +226,6 @@ uniform float uSnowDarkening; // _CompressionDarkening
 uniform sampler2D uSnowFar;
 uniform sampler2D uSnowAlbedo;
 ${SNOW_COMMON_GLSL}
-// BasicRoadsClassifier.PathEdgeDistance's sign, as the shader reads it: on a track tile's painted edge or inside it
-float snowOnPath(float b, vec2 statUV) {
-  float code = floor(b * 255.0 + 0.5);
-  float rec = floor(code * 0.25);
-  float turn = code - rec * 4.0;
-  vec2 f = fract(clamp(statUV * 128.0, vec2(0.0), vec2(127.99999237060546875)));
-  vec2 p = turn == 1.0 ? vec2(1.0 - f.x, f.y) : turn == 2.0 ? vec2(1.0 - f.y, 1.0 - f.x) : turn == 3.0 ? vec2(f.x, 1.0 - f.y) : f.yx;
-  float x = p.y, y = p.x, d = 1.0;
-  if (rec == 51.0 || rec == 52.0) d = abs(x - y) - 0.5;
-  if (rec == 12.0 || rec == 27.0) d = y - x + 0.5;
-  if (rec == 10.0 || rec == 25.0) d = y - x - 0.5;
-  if (rec == 11.0 || rec == 26.0) d = 0.5 - x;
-  return d <= 0.0 ? 1.0 : 0.0;
-}
 `;
 
 const DECODE_FROM = '  vec2 unwrapped = vLocalXZ / uTileSize;\n';

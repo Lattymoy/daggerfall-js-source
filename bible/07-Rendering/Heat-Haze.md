@@ -65,7 +65,12 @@ strength, over the target's size in pixels.
 it every outdoor frame, draw it as a foreign pass (`markForeignPass`), and
 stand it down on their indoor branch (`suppress` - the strength 0 at once, as
 the mod's Update sets it on every ineligible frame); the world host carries
-the noise's phase across the floating origin. `scenes/worldModes.js` and
+the noise's phase across the floating origin and a teleport's re-anchor, the
+layer held while airborne across a recentre's height, and reads the arrival's
+layer afresh (AUDIT ENVIRONS I2, I7). The strength eases on the real clock
+(the mod's `unscaledDeltaTime`); the shimmer runs on the game's seconds - the
+shader's `_Time.y`, held by a pause and scaled with the world (W4) - and the
+mod's keys are read when one is written (`hazeFrameSettings`, W7). `scenes/worldModes.js` and
 `scenes/dungeonContext.js` are FLAGGED, not wired: no desert sky stands
 indoors or underground, and their frames run inside the hosts' indoor branch.
 Online the haze is the player's own (`systems/onlineLane.js`

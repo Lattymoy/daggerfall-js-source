@@ -347,17 +347,17 @@
   {
     "name": "SNOWFALL1-exterior-snow-undrawn",
     "file": "src/scenes/exterior.js",
-    "old": "    snowfall.draw();   // SNOWFALL1: the snow on the town's ground",
-    "new": "    // snowfall.draw();   // SNOWFALL1: the snow on the town's ground",
+    "old": "    snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground",
+    "new": "    // snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground",
     "tests": [
       "test/snowfall1_runtime.test.js"
     ]
   },
   {
-    "name": "SNOWFALL1-draw-cull-left-off",
+    "name": "SNOWFALL1-draw-offset-left-on",
     "file": "src/render/renderer.js",
-    "old": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)\n    gl.enable(gl.CULL_FACE);",
-    "new": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)",
+    "old": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this.stats.draws++;",
+    "new": "    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);\n    this.stats.draws++;",
     "tests": [
       "test/snowfall1_runtime.test.js"
     ]

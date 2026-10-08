@@ -63,7 +63,7 @@ import { getPref } from '../systems/uiPrefs.js';
 import { AIR_TUNING } from './airPass.js';   // FLICKER-FIX: the calmer eye
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
-import { windfallLawOn, swayShare, windfallLeanMax } from './windfallSway.js';   // WINDFALL1: the flora's lean while Windfall's law stands
+import { windfallLawOn, swayShare, windfallLeanMax, windfallAnchorAfterShift } from './windfallSway.js';   // WINDFALL1: the flora's lean while Windfall's law stands
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
@@ -1256,7 +1256,10 @@ export class ShadowPass {
     // object, which the host moved; a mesh's and a tile's matrix and spheres are the pass's copies.
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
-      if (r.kind === REC_BB) continue;
+      if (r.kind === REC_BB) {   // its batches' origins are the host's, moved; AUDIT ENVIRONS W3: its law's anchor is the record's copy - the land's place kept, as the host keeps its own (WINDFALL1)
+        if (windfallLawOn(r.windfall)) { const a = windfallAnchorAfterShift([r.windfall[6], r.windfall[7]], offset); r.windfall[6] = a[0]; r.windfall[7] = a[1]; }
+        continue;
+      }
       r.matrix[12] += offset[0]; r.matrix[13] += offset[1]; r.matrix[14] += offset[2];
       if (!r.bounded) continue;
       r.sphere[0] += offset[0]; r.sphere[1] += offset[1]; r.sphere[2] += offset[2];

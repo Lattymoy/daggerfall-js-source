@@ -93,15 +93,16 @@ export function hazeCylinder(segments = HAZE.cylinderSegments, half = HAZE.cylin
 }
 
 /** The two reads' phases for a world displacement `anchor` ([x, y, z] metres the scene sits from the land) and the
- *  clock (`speedTime` = _AnimationSpeed x seconds) at `noiseScale` - each fract'd, as the wrapped texture reads it. */
-export function hazePhase(anchor, speedTime, noiseScale) {
+ *  clock (`speedTime` = _AnimationSpeed x seconds) at `noiseScale` - each fract'd, as the wrapped texture reads it -
+ *  into `out` (the draw's own four: no array a frame - AUDIT ENVIRONS W7). */
+export function hazePhase(anchor, speedTime, noiseScale, out = [0, 0, 0, 0]) {
   const k = noiseScale * HAZE_AXES.scale;
   const ax = anchor[0] * HAZE_AXES.a[0] + anchor[2] * HAZE_AXES.a[1];
   const bx = anchor[0] * HAZE_AXES.b[0] + anchor[2] * HAZE_AXES.b[1];
   const up = anchor[1] * HAZE_AXES.up;
-  const raw = [ax * k * HAZE_AXES.k1, up * k * HAZE_AXES.k1, bx * k * HAZE_AXES.k2, up * k * HAZE_AXES.k2]
-    .map((v, i) => v + speedTime * HAZE_DRIFT[i]);
-  return raw.map((v) => v - Math.floor(v));
+  out[0] = ax * k * HAZE_AXES.k1; out[1] = up * k * HAZE_AXES.k1; out[2] = bx * k * HAZE_AXES.k2; out[3] = up * k * HAZE_AXES.k2;
+  for (let i = 0; i < 4; i++) { const v = out[i] + speedTime * HAZE_DRIFT[i]; out[i] = v - Math.floor(v); }
+  return out;
 }
 
 export class HeatHazeRenderer {
@@ -142,6 +143,7 @@ export class HeatHazeRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** The land's displacement from the scene, metres, kept across the floating origin's shifts (double precision). */
     this.anchor = [0, 0, 0];
+    this._phase = [0, 0, 0, 0];
   }
 
   /** The floating origin moved the scene by `offset` (the hosts' `state.update` answer): the land did not move. */
@@ -153,7 +155,7 @@ export class HeatHazeRenderer {
   /**
    * Draw the ring over the frame as it stands. `state` is systems/heatHaze.js createHeatHaze().tick's answer;
    * `viewport` the world's pixel rect ([x, y, w, h], the renderer's worldViewportPx or the drawing buffer's whole);
-   * `seconds` the page's clock (Unity's _Time.y). Answers true when it drew (the host then marks the foreign pass).
+   * `seconds` the shader's clock (Unity's _Time.y: the game's seconds - systems/heatHaze.js tick's `seconds`). Answers true when it drew (the host then marks the foreign pass).
    * @param {{visible: boolean, intensity: number, center: number[], radius: number, halfHeight: number, noiseScale: number, animationSpeed: number}} state
    * @param {Float32Array|number[]} proj @param {Float32Array|number[]} view @param {number[]} viewport @param {number} seconds
    */
@@ -186,7 +188,7 @@ export class HeatHazeRenderer {
     gl.uniform1i(this.loc.grab, 1);
     gl.uniform1f(this.loc.intensity, state.intensity);
     gl.uniform1f(this.loc.noiseScale, state.noiseScale);
-    gl.uniform4fv(this.loc.phase, hazePhase(this.anchor, state.animationSpeed * seconds, state.noiseScale));
+    gl.uniform4fv(this.loc.phase, hazePhase(this.anchor, state.animationSpeed * seconds, state.noiseScale, this._phase));
     gl.uniform4f(this.loc.port, vx, vy, vw, vh);
     gl.disable(gl.BLEND);
     gl.depthMask(false);

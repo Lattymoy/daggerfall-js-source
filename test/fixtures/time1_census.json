@@ -1016,25 +1016,25 @@
   },
   {
    "file": "src/scenes/world.js",
-   "has": "windfall.frame({ dt, outside: false, weather, minutes: skyMinutes()",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes()",
    "clock": "sky",
    "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
   },
   {
    "file": "src/scenes/world.js",
-   "has": "const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes()",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes()",
    "clock": "sky",
    "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
   },
   {
    "file": "src/scenes/exterior.js",
-   "has": "windfall.frame({ dt, outside: false, weather, minutes: skyMinutes()",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: false, weather, minutes: skyMinutes()",
    "clock": "sky",
    "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
   },
   {
    "file": "src/scenes/exterior.js",
-   "has": "const windfallLaw = windfall.frame({ dt, outside: true, weather, minutes: skyMinutes()",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes()",
    "clock": "sky",
    "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
   },

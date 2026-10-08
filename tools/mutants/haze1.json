@@ -182,8 +182,8 @@
   {
     "name": "HAZE1-phase-axis-scale",
     "file": "src/render/heatHaze.js",
-    "old": "const raw = [ax * k * HAZE_AXES.k1,",
-    "new": "const raw = [ax * k * HAZE_AXES.k2,",
+    "old": "out[0] = ax * k * HAZE_AXES.k1;",
+    "new": "out[0] = ax * k * HAZE_AXES.k2;",
     "tests": [
       "test/haze1_heatHaze.test.js"
     ]

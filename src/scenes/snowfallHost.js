@@ -38,17 +38,20 @@ async function defaultMasks() {
     return new Uint8Array(await r.arrayBuffer());
   }));
 }
-/** The mod's albedo (snow_albedo.png). */
+/** The mod's albedo (snow_albedo.png), decoded bottom row first - a Unity texture's v = 0 is its picture's last row,
+ *  and WebGL ignores UNPACK_FLIP_Y_WEBGL for an ImageBitmap, so the flip is the decode's (its bytes as authored). AUDIT
+ *  ENVIRONS G3: it was drawn mirrored north to south. */
 async function defaultAlbedo() {
   const r = await fetch(artUrl('snow_albedo.png'));
   if (!r.ok) throw new Error(`snow_albedo.png: ${r.status}`);
-  return createImageBitmap(await r.blob());
+  return createImageBitmap(await r.blob(), { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
 }
 
 /**
  * @typedef {object} SnowGround - what a host stands the snow on
  * @property {(x: number, z: number) => any} pixelAt - its ground's tile (a map pixel's) under a scene point, or null
  * @property {(ring: number) => any[]} pixelsNear - the tiles within `ring` of the player's, nearest ring first (the player's own first)
+ * @property {(x: number, y: number) => any} pixelOn - the tile standing on a map pixel, or null (StreamingWorld.GetTerrainFromPixel)
  * @property {(p: any, out: number[]) => number[]} translation - a tile's scene origin (its south-west corner) now
  * @property {(p: any, lx: number, lz: number) => number} height - the drawn ground's y there, in the tile's frame
  * @property {(p: any, lx: number, lz: number, out: number[]) => number[]} normal - its unit normal
@@ -79,6 +82,11 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
   let gen = -1, settings = snowfallSettings();
   let runtime = null, surface = null, pending = null, failed = false, asked = false, disposed = false;
   let wasInside = null, lastFrame = null, gameSecondsNow = 0, frameNo = 0, nextPrune = 0;
+  let roadStatus = 'not sampled';   // AUDIT ENVIRONS S6: BasicRoadsContextCache.Status - the last tile's classification's word
+  let climateNow = -1, desertNow = false;   // the climate's base type, read when the climate index changes
+  let broken = false;            // AUDIT ENVIRONS I5: a frame threw: the snow stops there (its save kept), the host's frame never with it
+  let completePending = false;   // AUDIT ENVIRONS S2: a session begun (a load, a new game, the runtime's first frame): CompleteSession on the next frame's clock
+  const promotions = [];         // AUDIT ENVIRONS S5: [tile, replaced, ...] - rebuilds found while the runtime asked for a tile, heard once its frame is done
   const tiles = new WeakMap();   // a host tile -> its SnowTerrain
   const byPixel = new Map();     // "x,y" -> the SnowTerrain last made on that map pixel: a rebuilt tile's new one replaces it
   const bodies = new Map();      // a body's key -> its impression's handle { id, x, z (global metres), alive() }
@@ -116,8 +124,10 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
           roadsMade = true;
           try {
             const net = ground.roads?.(p) ?? null;
-            if (net && t.tileMap?.length === 16384) roads = new BasicRoadsTerrain(t.mapX, t.mapY, t.tileMap, net.authored, net, net.rect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 });
-          } catch { roads = null; }
+            if (!net) roadStatus = 'absent/disabled';   // BasicRoadsBridge.TryReadNetwork: no Basic Roads network
+            else if (t.tileMap?.length === 16384) { roads = new BasicRoadsTerrain(t.mapX, t.mapY, t.tileMap, net.authored, net, net.rect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 }); roadStatus = 'ready'; }
+            else roadStatus = 'promoted terrain unavailable';
+          } catch (e) { roads = null; roadStatus = `classification unavailable: ${e?.message ?? e}`; }
         }
         return roads;
       },
@@ -126,12 +136,26 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     const key = `${t.mapX},${t.mapY}`;
     const was = had ?? byPixel.get(key) ?? null;
     byPixel.set(key, t);
-    if (was && was !== t) { t.replaced = was; if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was); }   // OnPromoteTerrainData: its ground was rebuilt
+    // OnPromoteTerrainData: its ground was rebuilt. The event is never the runtime's own frame's (DFU raises it from the
+    // streaming world's), so one found while a build asked for the tile is heard when that frame is done (flushPromotions)
+    if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }
     return t;
+  }
+  /** The rebuilds found since the runtime last heard: each a tile replacing the one its map pixel stood before. */
+  function flushPromotions(now) {
+    for (let i = 0; i < promotions.length; i += 2) runtime?.terrainPromoted(promotions[i], now, promotions[i + 1]);
+    promotions.length = 0;
   }
   const world = ground && {
     terrainAt: (x, z) => terrainOf(ground.pixelAt(x, z)),
     terrainsNear: (ring) => ground.pixelsNear(ring).map(terrainOf).filter(Boolean),
+    terrainsIn: (minX, minZ, maxX, maxZ) => {   // AUDIT ENVIRONS S1: SnowContextData.Prepare's scan - the box's map pixels row by row, each its loaded tile
+      const b = snowPixelBox(minX, minZ, maxX, maxZ), out = [];
+      for (let y = b.y0; y <= b.y1; y++) {
+        for (let x = b.x0; x <= b.x1; x++) { const t = terrainOf(ground.pixelOn?.(x, y) ?? null); if (t && t.mapX === x && t.mapY === y) out.push(t); }
+      }
+      return out;
+    },
     toGlobal: (x, z) => ground.toGlobal(x, z),
     settlements: (a, b, c, d) => ground.settlements(a, b, c, d),
     footprints: () => [],   // LocationLoaderBridge: Location Loader is not the port's - none stand
@@ -163,9 +187,15 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       .then(([masks, albedo]) => {
         if (disposed) return;   // a later boot's host stands now
         runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: readSettings() });
-        if (gl && renderer) { surface = new SnowfallSurface(gl, renderer); if (albedo) surface.setAlbedo(albedo); }
-        if (pending) { runtime.restoreSaveData(pending, gameSecondsNow); pending = null; }
-        runtime.completeSession(gameSecondsNow, false);
+        if (gl && renderer) {
+          try {   // AUDIT ENVIRONS I5: the snow's program built now, beside its surface - a driver that will not build it costs the snow, never the frame
+            renderer.prepareTerrainSnow?.();
+            surface = new SnowfallSurface(gl, renderer);
+            if (albedo) surface.setAlbedo(albedo);
+          } catch (e) { surface?.dispose(); surface = null; console.warn('[snowfall] the snow surface would not build - the snow is kept, never drawn:', e?.message ?? e); }
+        }
+        if (pending) { runtime.restoreSaveData(pending, 0); pending = null; }
+        completePending = true;   // the mod's late Initialize: RestoreTrackData, then CompleteSession - on the frame's own clock
       })
       .catch((e) => { failed = true; console.warn('[snowfall] the surface masks would not load - the snow stands nowhere:', e?.message ?? e); });
   }
@@ -173,17 +203,55 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
   registerModSaveData(SNOWFALL_VENDOR, {
     newSaveData: newSnowfallSaveData,
     getSaveData: () => (runtime ? runtime.writeSaveData(newSnowfallSaveData()) : (pending ?? newSnowfallSaveData())),
-    restoreSaveData: (data) => {   // OnStartLoad's BeginSession, RestoreSaveData, OnLoad's CompleteSession
+    // OnStartLoad's BeginSession and RestoreSaveData (CanSimulate false: the snowpack's clock at 0); OnLoad's CompleteSession
+    // on the loaded game's clock - the next frame's, as a host restores the save's time after the mods' records
+    restoreSaveData: (data) => {
       const d = data ?? newSnowfallSaveData();
       if (!runtime) { pending = d; return; }
       runtime.beginSession();
-      if (!runtime.restoreSaveData(d, gameSecondsNow)) console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');
-      runtime.completeSession(gameSecondsNow, false);
+      if (!runtime.restoreSaveData(d, 0)) console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');
+      completePending = true;
     },
-    newGame: () => { pending = null; if (runtime) { runtime.beginSession(); runtime.completeSession(gameSecondsNow, false); } },
+    newGame: () => { pending = null; if (runtime) { runtime.beginSession(); completePending = true; } },   // OnNewGame's BeginSession; OnStartGame's CompleteSession
   });
-  registerCommand(SNOWFALL_COMMAND.name, SNOWFALL_COMMAND.description, SNOWFALL_COMMAND.usage, () => (runtime ? runtime.status(lastFrame) : 'Dynamic Snow controller is not initialized.'));
+  registerCommand(SNOWFALL_COMMAND.name, SNOWFALL_COMMAND.description, SNOWFALL_COMMAND.usage, () => (runtime
+    ? runtime.status(lastFrame, { climate: lastFrame ? climateNow : null, ambient: renderer?.ambientLight ?? null, surface: !!surface, uploads: surface?.localUploads ?? 0, roads: roadStatus })
+    : 'Dynamic Snow controller is not initialized.'));
   gateConsoleCommand(SNOWFALL_COMMAND.name, () => enhanced && snowfallOn());
+
+  /** The frame's work (DynamicSnowController.Update's), once the runtime stands. */
+  function tick(f) {
+    frameNo++;
+    const s = readSettings();
+    const inside = !!f.inside;
+    if (wasInside !== null && inside !== wasInside) runtime.worldReset();   // HandleTransitionInterior / Exterior
+    wasInside = inside;
+    const ci = f.climate ?? 0;
+    if (ci !== climateNow) { climateNow = ci; desertNow = getWorldClimateSettings(ci)?.climateType === 0; }
+    const enabled = s.enabled && snowfallOn();
+    bodiesOf(typeof f.corpses === 'function' ? f.corpses() : f.corpses);
+    const npcs = f.npcs;
+    const frame = {
+      now: f.now, inside, enabled, player: enabled ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
+      rawPlayer: f.player ?? null,   // the motor's, for snow_status
+      winter: !!f.winter, desert: desertNow, snowing: weatherFlags(f.weather).snowing, gameSeconds: gameSecondsNow,
+      get npcs() { return (typeof npcs === 'function' ? npcs() : npcs) ?? []; },   // asked at the NPC sample's pace (every 0.1 s)
+      get corpses() { return [...bodies.values()]; },   // the scan's list
+    };
+    lastFrame = frame;
+    if (completePending) { completePending = false; runtime.completeSession(gameSecondsNow, frame.snowing, f.now); }
+    runtime.frame(frame);
+    flushPromotions(f.now);
+    // the GPU's share outdoors alone, where the hosts call this before their world frame opens (beginFrame forgets
+    // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door
+    if (!inside) surface?.sync(runtime, f.now);
+    if (f.now >= nextPrune) {   // a map pixel left far behind can no longer be replaced: its last tile let go
+      nextPrune = f.now + 5;
+      const near = new Set(world.terrainsNear(Math.max(4, (world.terrainDistance ?? 3) + 1)).map((t) => `${t.mapX},${t.mapY}`));
+      for (const k of byPixel.keys()) if (!near.has(k)) byPixel.delete(k);
+      flushPromotions(f.now);
+    }
+  }
 
   const host = {
     get runtime() { return runtime; },
@@ -195,49 +263,37 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
      * winter (the sky's season), climate (the map's climate index at the player), npcs, corpses }.
      */
     frame(f) {
-      if (!enhanced || !world || disposed) return;
+      if (!enhanced || !world || disposed || broken) return;
       gameSecondsNow = Math.floor(f.seconds ?? 0);
       start();
       if (!runtime) return;
-      frameNo++;
-      const s = readSettings();
-      const inside = !!f.inside;
-      if (wasInside !== null && inside !== wasInside) runtime.worldReset();   // HandleTransitionInterior / Exterior
-      wasInside = inside;
-      const climate = getWorldClimateSettings(f.climate ?? 0);
-      const enabled = s.enabled && snowfallOn();
-      bodiesOf(typeof f.corpses === 'function' ? f.corpses() : f.corpses);
-      const npcs = f.npcs;
-      const frame = {
-        now: f.now, inside, enabled, player: enabled ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
-        winter: !!f.winter, desert: climate?.climateType === 0, snowing: weatherFlags(f.weather).snowing, gameSeconds: gameSecondsNow,
-        get npcs() { return (typeof npcs === 'function' ? npcs() : npcs) ?? []; },   // asked at the NPC sample's pace (every 0.1 s)
-        get corpses() { return [...bodies.values()]; },   // the scan's list
-      };
-      lastFrame = frame;
-      runtime.frame(frame);
-      // the GPU's share outdoors alone, where the hosts call this before their world frame opens (beginFrame forgets
-      // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door
-      if (!inside) surface?.sync(runtime, f.now);
-      if (f.now >= nextPrune) {   // a map pixel left far behind can no longer be replaced: its last tile let go
-        nextPrune = f.now + 5;
-        const near = new Set(world.terrainsNear(Math.max(4, (world.terrainDistance ?? 3) + 1)).map((t) => `${t.mapX},${t.mapY}`));
-        for (const k of byPixel.keys()) if (!near.has(k)) byPixel.delete(k);
+      try { tick(f); } catch (e) {
+        broken = true; surface?.dispose(); surface = null;
+        console.warn('[snowfall] a snow frame threw - the snow stops here, its save kept:', e?.stack ?? e);
       }
     },
     /** DaggerfallTerrain.OnPromoteTerrainData: a host tile stood (its pixel built, or built again) - its blanket is to
      *  make, and the nearer tiers over it build again. A tile replacing an older one on its map pixel says so itself. */
     promoted(p) {
-      if (!runtime || !p) return;
+      if (!runtime || !p || broken) return;
       const fresh = !tiles.has(p);
       const t = terrainOf(p);
       if (t && fresh && !t.replaced) runtime.terrainPromoted(t, lastFrame?.now ?? 0, null);
+      flushPromotions(lastFrame?.now ?? 0);
     },
     /** DynamicSnowController's HandleEnemyDeath: a foe fallen outdoors - `corpse` { id, x, z (global metres), alive() }. */
     enemyDied(corpse) { runtime?.enemyDied(corpse); },
-    /** Draw the snow (after the ground, with the opaque world) - the renderer's own draws (drawSnow), no seam owed.
-     *  Answers whether any surface was drawn. */
-    draw() { return !!(surface && runtime && surface.draw(runtime)); },
+    /** Draw the snow (with the opaque world, before the ground under it) - the renderer's own draws (drawSnow), no seam
+     *  owed. `outside` the host's frustum test for a blanket tile's bounds (snowfallSurface.js draw), or none. Answers
+     *  whether any surface was drawn. A draw that throws (a lane's program that will not build) lets the surface go, once. */
+    draw(outside = null) {
+      if (!surface || !runtime || broken) return false;
+      try { return surface.draw(runtime, outside); } catch (e) {
+        console.warn('[snowfall] the snow would not draw - its surface is let go:', e?.message ?? e);
+        surface.dispose(); surface = null;
+        return false;
+      }
+    },
     /** FloatingOrigin.OnPositionUpdate. */
     offsetOrigin(offset) { runtime?.offsetOrigin(offset); },
     /** The world under the snow was rebuilt (a fast travel, a load's arrival) - every tier stands again. */
@@ -284,9 +340,7 @@ export function authoredTiles(location, mapsFile, blocksFile, authored = new Uin
 /** SnowContextData.Prepare's scan: the vanilla locations' rectangles (global metres) on the map pixels a global box
  *  touches. `at(x, y)` the location standing on a map pixel (ContentReader.HasLocation + GetLocation), or null. */
 export function settlementsIn(at, minX, minZ, maxX, maxZ) {
-  const a = worldCoordToMapPixel(Math.trunc(minX * 40), Math.trunc(minZ * 40)), b = worldCoordToMapPixel(Math.trunc(maxX * 40), Math.trunc(maxZ * 40));
-  const x0 = Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1 = Math.max(0, Math.min(999, Math.max(a.x, b.x)));
-  const y0 = Math.max(0, Math.min(499, Math.min(a.y, b.y))), y1 = Math.max(0, Math.min(499, Math.max(a.y, b.y)));
+  const { x0, x1, y0, y1 } = snowPixelBox(minX, minZ, maxX, maxZ);
   const out = [];
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
@@ -296,4 +350,14 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
     }
   }
   return out;
+}
+
+/** SnowContextData.Prepare's box on the map: the map pixels (clamped to the map) a global box in metres touches -
+ *  MapsFile.WorldCoordToMapPixel of its corners in world units, its rows running north to south. */
+export function snowPixelBox(minX, minZ, maxX, maxZ) {
+  const a = worldCoordToMapPixel(Math.trunc(minX * 40), Math.trunc(minZ * 40)), b = worldCoordToMapPixel(Math.trunc(maxX * 40), Math.trunc(maxZ * 40));
+  return {
+    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),
+    y0: Math.max(0, Math.min(499, Math.min(a.y, b.y))), y1: Math.max(0, Math.min(499, Math.max(a.y, b.y))),
+  };
 }

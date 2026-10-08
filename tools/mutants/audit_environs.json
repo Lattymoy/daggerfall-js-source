@@ -1,0 +1,364 @@
+[
+  {
+    "name": "AUDIT-ENVIRONS-S1-roads-round-the-player",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {",
+    "new": "for (const t of this.world.terrainsNear(Math.ceil(span / 819.2) + 1)) {",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S2-restore-on-the-last-clock",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      if (!runtime.restoreSaveData(d, 0)) console.warn",
+    "new": "      if (!runtime.restoreSaveData(d, gameSecondsNow)) console.warn",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S2-complete-at-once",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      completePending = true;",
+    "new": "console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      runtime.completeSession(gameSecondsNow, false, lastFrame?.now ?? 0);",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S3-frame-on-the-old-window",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "if (L.resourceRebuild) { this._rebuildGrid(); L = this.local; }",
+    "new": "if (L.resourceRebuild) { this._rebuildGrid(); }",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S8-rebuild-keeps-the-remainder",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    this.refillRemainder = 0;   // AUDIT ENVIRONS S8: CreateGridResources' own\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S8-refill-clock-at-once",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "this.nextRefillTime = now + REFILL_INTERVAL_SECONDS; this.refillRemainder = 0; this.isSnowing = snowing;",
+    "new": "this.refillRemainder = 0; this.isSnowing = snowing;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S4-no-requeue-on-reactivation",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    if (!was) B.lastPixel = null;",
+    "new": "    if (!was) B.lastPixel = B.lastPixel;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S7-far-tiles-built",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      if (!B.live.has(t)) continue;",
+    "new": "      if (!B.live.has(t) && false) continue;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S5-promotion-inside-the-build",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }",
+    "new": "if (was && was !== t) { t.replaced = was; if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was); }",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S6-terrain-line-dropped",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      `terrain=${terrain}`,\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-S6-js-booleans",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "const b = (v) => (v ? 'True' : 'False');",
+    "new": "const b = (v) => String(!!v);",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G1-no-seam-before-the-uploads",
+    "file": "src/render/snowfallSurface.js",
+    "old": "const gl = this.gl, L = rt.local, M = rt.mid, B = rt.blanket, F = rt.far;\n    this._seam();",
+    "new": "const gl = this.gl, L = rt.local, M = rt.mid, B = rt.blanket, F = rt.far;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G3-flip-asked-of-the-bitmap",
+    "file": "src/render/snowfallSurface.js",
+    "old": "    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);",
+    "new": "    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);\n    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G3-decoded-top-down",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "createImageBitmap(await r.blob(), { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' })",
+    "new": "createImageBitmap(await r.blob())",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G4-levels-blended",
+    "file": "src/render/snowfallSurface.js",
+    "old": "gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);",
+    "new": "gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G2-no-layer",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });",
+    "new": "export const SNOW_LAYER = Object.freeze({ factor: 0, units: 0 });",
+    "tests": [
+      "test/snowfall1_runtime.test.js",
+      "test/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G5-faces-both",
+    "file": "src/render/renderer.js",
+    "old": "    gl.enable(gl.POLYGON_OFFSET_FILL);\n    gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);",
+    "new": "    gl.disable(gl.CULL_FACE);\n    gl.enable(gl.POLYGON_OFFSET_FILL);\n    gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G8-blanket-reads-the-window",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "  if (!blanket) {   // AUDIT ENVIRONS G8",
+    "new": "  if (true) {   // AUDIT ENVIRONS G8",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G8-far-mask-everywhere",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "    if (m > 0.0) {   // inside the band's start the hand-off is none: the far mask unread",
+    "new": "    if (true) {   // inside the band's start the hand-off is none: the far mask unread",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G9-offset-without-the-path",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "  if (blanket && st.b != 0.0) cover = max(cover, snowOnPath(st.b, statUV));\n",
+    "new": "",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G10-implicit-gradient",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb",
+    "new": "texture(uSnowAlbedo, albedoUV).rgb",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I5-draw-unguarded",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      try { return surface.draw(runtime, outside); } catch (e) {",
+    "new": "      try { return surface.draw(runtime, outside); } catch (e) { throw e;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I5-frame-unguarded",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      try { tick(f); } catch (e) {",
+    "new": "      try { tick(f); } catch (e) { throw e;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I5-wind-frame-unguarded",
+    "file": "src/scenes/windfallHost.js",
+    "old": "      try { return tick(f); } catch (e) {",
+    "new": "      try { return tick(f); } catch (e) { throw e;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I5-program-at-the-draw",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "            renderer.prepareTerrainSnow?.();\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I2-snow-left-in-the-old-frame",
+    "file": "src/scenes/world.js",
+    "old": "    snowfall.offsetOrigin(state.initOffset);\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js",
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I7-layer-left-behind",
+    "file": "src/systems/heatHaze.js",
+    "old": "offsetOrigin(offset) { if (offset) layerY += offset[1]; },",
+    "new": "offsetOrigin(offset) { },",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-I8-frame-gusts-replayed",
+    "file": "src/systems/windfall.js",
+    "old": "      const started = events;\n      events = [];",
+    "new": "      const started = events;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W3-record-anchor-left-behind",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (windfallLawOn(r.windfall)) { const a = windfallAnchorAfterShift([r.windfall[6], r.windfall[7]], offset); r.windfall[6] = a[0]; r.windfall[7] = a[1]; }\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W4-shimmer-on-the-real-clock",
+    "file": "src/systems/heatHaze.js",
+    "old": "      seconds += Math.max(0, time);",
+    "new": "      seconds += Math.max(0, dt);",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W4-host-page-clock",
+    "file": "src/scenes/world.js",
+    "old": "renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();",
+    "new": "renderer.gl.drawingBufferHeight], now / 1000)) renderer.markForeignPass();",
+    "tests": [
+      "test/haze1_heatHaze.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W7-keys-read-every-frame",
+    "file": "src/systems/heatHaze.js",
+    "old": "  if (g !== _hazeGen || !_hazeSettings) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W5-burst-at-the-flow",
+    "file": "src/render/windfallParticles.js",
+    "old": "      const at = flow.emitAt ?? flow.position;",
+    "new": "      const at = flow.position;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-W1-wind-on-the-real-clock",
+    "file": "src/scenes/world.js",
+    "old": "    const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true,",
+    "new": "    const windfallLaw = windfall.frame({ dt, outside: true,",
+    "tests": [
+      "test/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G6-cull-ignored",
+    "file": "src/render/snowfallSurface.js",
+    "old": "          if (outside(box, og[0], og[1], og[2])) continue;",
+    "new": "          if (outside(box, og[0], og[1], og[2]) && false) continue;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G6-bounds-without-the-snow",
+    "file": "src/render/snowfallSurface.js",
+    "old": "box[4] = o.maxY + rise;",
+    "new": "box[4] = o.maxY;",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G6-span-unread",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "      for (let k = 1; k < b.pos.length; k += 3) { const y = b.pos[k]; if (y < lo) lo = y; if (y > hi) hi = y; }\n",
+    "new": "",
+    "tests": [
+      "test/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G7-snow-after-the-ground",
+    "file": "src/scenes/exterior.js",
+    "old": "    snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground under it, by the ground's own program (world.js's twin)\n    renderer.drawTerrain(groundSurface, identityMatrix,\n      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);",
+    "new": "    renderer.drawTerrain(groundSurface, identityMatrix,\n      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);\n    snowfall.draw();   // SNOWFALL1 (AUDIT ENVIRONS G7): the snow before the town's ground under it, by the ground's own program (world.js's twin)",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G7-world-snow-after-the-ground",
+    "file": "src/scenes/world.js",
+    "old": "    if (!tvf) snowfall.draw(cullOn ? snowOutside : null);\n    // GROUND-LAST: the ground of every visible pixel, after every opaque\n    // mesh of every pixel (see the queue above). Before the sky, the ring,\n    // the water and the flats, as it always was: the water reads its depth\n    // and the flats are cut-outs blended over it.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);\n    if (deepWaters) groundQueue.sort(dwClipLast);   // FAR-CLIP1: the cap's pixels last - one swap to the clip program a frame\n    for (const p of groundQueue) {\n      if (p.deepWaters?.hide) continue;   // DW-C: DeepWaterTerrainCapRenderer.Apply - a pure-ocean pixel's drawHeightmap = false\n      const pixelMatrix = p._pixelMatrix;\n      renderer.drawTerrain(p.dwTerrain ?? p.terrain, pixelMatrix,   // DW-C: what the cap clipped whole is out of the index set (the cull)\n        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));   // FAR-CLIP1: and the rest of its clip is the clip program's - DeepWaterTerrainCapRenderer.ApplyWaterTexelClip's material, per terrain it patched; ECOTONE1: a border pixel's neighbours' sets\n    }\n",
+    "new": "    // GROUND-LAST: the ground of every visible pixel, after every opaque\n    // mesh of every pixel (see the queue above). Before the sky, the ring,\n    // the water and the flats, as it always was: the water reads its depth\n    // and the flats are cut-outs blended over it.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);\n    if (deepWaters) groundQueue.sort(dwClipLast);   // FAR-CLIP1: the cap's pixels last - one swap to the clip program a frame\n    for (const p of groundQueue) {\n      if (p.deepWaters?.hide) continue;   // DW-C: DeepWaterTerrainCapRenderer.Apply - a pure-ocean pixel's drawHeightmap = false\n      const pixelMatrix = p._pixelMatrix;\n      renderer.drawTerrain(p.dwTerrain ?? p.terrain, pixelMatrix,   // DW-C: what the cap clipped whole is out of the index set (the cull)\n        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));   // FAR-CLIP1: and the rest of its clip is the clip program's - DeepWaterTerrainCapRenderer.ApplyWaterTexelClip's material, per terrain it patched; ECOTONE1: a border pixel's neighbours' sets\n    }\n    if (!tvf) snowfall.draw(cullOn ? snowOutside : null);\n",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ENVIRONS-G6-world-unculled",
+    "file": "src/scenes/world.js",
+    "old": "    if (!tvf) snowfall.draw(cullOn ? snowOutside : null);",
+    "new": "    if (!tvf) snowfall.draw(null);",
+    "tests": [
+      "test/snowfall1_runtime.test.js"
+    ]
+  }
+]

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SnowCoverage, SNOWFALL_BUILT_IN, roadCorners } from '../src/systems/snowfall.js';
 import { SnowfallRuntime, MID, BLANKET, FAR, SNOW_GUARD_BAND, SNOW_FRAME_BUDGET_MS } from '../src/systems/snowfallRuntime.js';
-import { createSnowfallHost, snowfallNetwork, settlementsIn, authoredTiles, newSnowfallSaveData, SNOWFALL_COMMAND, snowfallOn } from '../src/scenes/snowfallHost.js';
+import { createSnowfallHost, snowfallNetwork, settlementsIn, snowPixelBox, authoredTiles, newSnowfallSaveData, SNOWFALL_COMMAND, snowfallOn } from '../src/scenes/snowfallHost.js';
 import { SNOW_VS, snowTerrainFs, SNOW_ATTR, SNOW_UNITS } from '../src/render/snowfallGlsl.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../src/render/classicShadowLane.js';
@@ -42,6 +42,7 @@ function syntheticWorld() {
     shift,
     terrainAt: (x, z) => tileOf(500 + Math.floor((x - shift[0]) / SIZE), 250 - Math.floor((z - shift[1]) / SIZE)),
     terrainsNear: (ring) => { const out = []; for (let r = 0; r <= ring; r++) for (let j = -r; j <= r; j++) for (let k = -r; k <= r; k++) if (Math.max(Math.abs(j), Math.abs(k)) === r) out.push(tileOf(500 + k, 250 + j)); return out; },
+    terrainsIn: (minX, minZ, maxX, maxZ) => { const b = snowPixelBox(minX, minZ, maxX, maxZ), out = []; for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) out.push(tileOf(x, y)); return out; },
     toGlobal: (x, z) => [500 * SIZE + x - shift[0], 249 * SIZE + z - shift[1]],
     settlements: () => [],
     terrainDistance: 1,
@@ -193,6 +194,7 @@ test('SNOWFALL1 the host: the masks load once, the runtime starts on the first f
     size: SIZE, terrainDistance: 1,
     pixelAt: (x, z) => pixel(500 + Math.floor(x / SIZE), 250 - Math.floor(z / SIZE)),
     pixelsNear: (ring) => { const out = []; for (let j = -ring; j <= ring; j++) for (let k = -ring; k <= ring; k++) out.push(pixel(500 + k, 250 + j)); return out; },
+    pixelOn: (x, y) => pixel(x, y),
     translation: (p, out) => { out[0] = (p.x - 500) * SIZE; out[1] = 0; out[2] = -(p.y - 250) * SIZE; return out; },
     height: () => 0, normal: (p, lx, lz, out) => { out[0] = 0; out[1] = 1; out[2] = 0; return out; },
     tileMap: () => tileMap, climate: () => 231, mapPixel: (p) => ({ x: p.x, y: p.y }),
@@ -288,24 +290,34 @@ test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment progr
     assert.ok(!snow.slice(snow.indexOf('void main() {')).includes('unwrapped'), `${name}: the tile decode is gone`);
     assert.match(snow, /SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE TILE/);
     assert.match(snow, /in vec4 vSnow;/);
-    if (fs.includes('elDecode(')) assert.match(snow, /elDecode\(texture\(uSnowAlbedo/, `${name}: the albedo decoded as the lane decodes its pictures`);
+    if (fs.includes('elDecode(')) assert.match(snow, /elDecode\(textureGrad\(uSnowAlbedo, albedoUV, albedoDx, albedoDy\)/, `${name}: the albedo decoded as the lane decodes its pictures`);
+    // AUDIT ENVIRONS: the albedo's footprint taken before the first discard (CLIP_AFTER's law), and the mask reads where they count
+    const span = snow.slice(snow.indexOf('SNOWFALL1: THE MOD\'S SNOW IN PLACE OF THE TILE'));
+    assert.ok(span.indexOf('dFdx(albedoUV)') > 0 && span.indexOf('dFdx(albedoUV)') < span.indexOf('discard;'), `${name}: the gradient before any discard`);
+    assert.ok(span.indexOf('if (coverage - 0.005 < 0.0) discard;') < span.indexOf('textureLod(uSnowContext'), `${name}: the coverage's discard before the context's read`);
+    assert.match(span, /if \(m > 0\.0\) \{[^}]*textureLod\(uSnowFar,/, `${name}: the far mask read only inside the ring's hand-off band`);
     for (const v of ['vNormal', 'vWorldPos', 'vLocalXZ']) assert.match(fs, new RegExp(`in vec[23] ${v};`), `${name} reads ${v}`);
   }
   for (const v of ['out vec3 vNormal;', 'out vec3 vWorldPos;', 'out vec2 vLocalXZ;', 'out vec4 vSnow;']) assert.ok(SNOW_VS.includes(v), v);
+  // AUDIT ENVIRONS: the vertex law's surface offset stands on the blanket's painted track edge as the fragment's coverage
+  // does (DynamicSnow.glsl: max(onPath, st.g) before _SurfaceOffset); the blanket reads no window mask (it rises by its own)
+  assert.match(SNOW_VS, /float cover = st\.g;[^\n]*\n\s*if \(blanket && st\.b != 0\.0\) cover = max\(cover, snowOnPath\(st\.b, statUV\)\);\n\s*float offset = cover \* uSnowRadius\.z \* st\.a \* fade;/);
+  assert.match(SNOW_VS, /if \(!blanket\) \{[^\n]*\n\s*float depth = snowResolve\(textureLod\(uSnowContext/);
   assert.throws(() => snowTerrainFs('void main() { }'), /ONE span/);
   assert.deepEqual(Object.values(SNOW_ATTR), [0, 1, 2, 3, 4, 5, 6, 7]);
   for (const u of Object.values(SNOW_UNITS)) assert.ok(u >= 16 && u < 32, `unit ${u}: above the world's 0-15, under WebGL2's 32`);
 });
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on their lane over the ground they draw, tick it indoors (the surfaces hidden, the snowpack by the event clock) and outdoors (the walkers and the bodies handed), draw it after the ground and before the sky - a later boot\'s host letting the last one\'s surfaces go; world.js tells it each pixel published and carries it across the floating origin; the interiors and the dungeons build none (THE FOUR HOSTS: their frames are the hosts\' indoor branch) (mutants: a host unwired; the draw before the ground; the promote dropped)', () => {
+test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on their lane over the ground they draw, tick it indoors (the surfaces hidden, the snowpack by the event clock) and outdoors (the walkers and the bodies handed), draw it with the opaque world before the ground under it (AUDIT ENVIRONS G7: the ground\'s fragments under the snow rejected before they shade) - a later boot\'s host letting the last one\'s surfaces go; world.js tells it each pixel published, carries it across the floating origin and culls its blanket\'s tiles to the frustum; the interiors and the dungeons build none (THE FOUR HOSTS: their frames are the hosts\' indoor branch) (mutants: a host unwired; the draw after the ground; the promote dropped)', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
     assert.match(s, /const snowfall = createSnowfallHost\(\{ gl: renderer\.gl, renderer, enhanced: !!sky\.enhanced, ground: /, `${host}: built on the lane, over its ground`);
     assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: true, player: null, weather, seconds: worldMinutes\(\) \* 60, winter: season === SEASON\.Winter, /, `${host}: ticked indoors`);
     assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: season === SEASON\.Winter, [^\n]*npcs: snowNpcs, corpses: snowBodies \}\);/, `${host}: ticked outdoors, the walkers and the bodies handed`);
-    const ground = s.indexOf('renderer.drawTerrain('), draw = s.search(/^ {4}(if \(!tvf\) )?snowfall\.draw\(\);/m), sky = s.indexOf('sky.draw(', draw);
-    assert.ok(ground > 0 && draw > ground && sky > draw, `${host}: the snow after the ground, before the sky`);
+    const draw = s.search(/^ {4}(if \(!tvf\) )?snowfall\.draw\(/m), ground = s.indexOf('renderer.drawTerrain(', draw), deck = s.lastIndexOf('renderer.setCloudShadow(sky?.cloudShadow ?? null);', draw);
+    assert.ok(draw > 0 && deck > 0 && deck < draw && ground > draw, `${host}: the snow under the frame's cloud deck, before the ground under it`);
+    assert.equal(s.indexOf('renderer.drawTerrain(', s.lastIndexOf('renderer.setCloudShadow(sky?.cloudShadow ?? null);', ground) + 1), ground, `${host}: and no ground drawn between the deck and the snow`);
     const tick = s.search(/^ {4}snowfall\.frame\(\{ now: now \/ 1000, inside: false/m), begin = s.indexOf('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);');
     assert.ok(tick > 0 && begin > tick, `${host}: the snow's uploads before the world frame opens (beginFrame forgets the shadows they move)`);
     assert.match(s, /for \(const f of exteriorFoes\.foes\) if \(!f\.dead && f\.ai\?\.feet\) out\.push\(\{ id: f, [^\n]*grounded: !!f\.ai\.isGrounded, radius: BODY_CAPSULE_RADIUS, citizen: false \}\);/, `${host}: the foes`);
@@ -315,14 +327,15 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
   const w = read('src/scenes/world.js');
   assert.match(w, /snowfall\.offsetOrigin\(r\.offset\);/);
   assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(key\)\);/m, 'OnPromoteTerrainData');
-  assert.match(w, /if \(!tvf\) snowfall\.draw\(\);/, 'never under the travel view');
+  assert.match(w, /if \(!tvf\) snowfall\.draw\(cullOn \? snowOutside : null\);/, 'never under the travel view, its blanket culled to the frustum');
+  assert.match(w, /const snowOutside = \(box, x, y, z\) => aabbOutside\(_planes, box, x, y, z\);/, 'by the frame\'s own planes');
   assert.match(w, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground the snow reads is the one surfaceAt answers');
   assert.match(w, /bare: \(p, lx, lz\) => !!p\.deepWaters && carvedFloorLocalY\(p\.deepWaters, lx, lz\) != null,/, 'the carved sea is bare');
   assert.match(w, /const net = raw\?\.source === 'basic-roads' \? snowfallNetwork\(raw, p\.px, p\.py\) : null;/, 'Basic Roads\' own network, or none');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /createSnowfallHost/, `${host}: none`);
 });
 
-test('SNOWFALL1 the renderer\'s snow draw: the installed set\'s snow program, the frame\'s block once a frame, the five pictures on units 16-20 through the selector, both faces over the ground by the mod\'s own 8 mm - and every state it touched handed back (cull on, the generic attributes 0,0,0,1, unit 0 selected) (mutants: the cull left off; a generic left set; the frame block every draw)', async () => {
+test('SNOWFALL1 the renderer\'s snow draw: the installed set\'s snow program, the frame\'s block once a frame, the five pictures on units 16-20 through the selector, its back faces culled as the ground\'s and a quarter step over it (the pass\'s own Offset, SNOW_LAYER) - and every state it touched handed back (the offset off, the generic attributes 0,0,0,1, unit 0 selected) (mutants: the offset left on; a generic left set; the frame block every draw)', async () => {
   const { Renderer } = await import('../src/render/renderer.js');
   const log = [];
   const ids = new Map();
@@ -357,7 +370,10 @@ test('SNOWFALL1 the renderer\'s snow draw: the installed set\'s snow program, th
   const binds = log.slice(log.findIndex((c) => c[0] === 'activeTexture' && c[1] === glEnum('TEXTURE0') + 16)).filter((c) => c[0] === 'bindTexture').slice(0, 5).map((c) => c[2].id);
   assert.deepEqual(binds, ['d', 's', 'c', 'f', 'a'], 'dynamic, static, context, far, albedo');
   const order = log.map((c) => c[0] === 'enable' || c[0] === 'disable' ? `${c[0]}:${[...ids].find(([, v]) => v === c[1])?.[0]}` : c[0] === 'polygonOffset' ? `offset:${c[1]},${c[2]}` : c[0] === 'drawElements' ? 'draw' : null).filter(Boolean);
-  assert.deepEqual(order.slice(0, 3), ['disable:CULL_FACE', 'draw', 'enable:CULL_FACE'], 'both faces, the cull handed back - and no window-depth layer of its own');
+  // AUDIT ENVIRONS: the pass's own Offset -0.25, -0.25 (SNOW_LAYER) round the draw and nothing else switched - its back
+  // faces culled as the ground's are (no Cull statement: Unity's Back; the grids wind as the ground's)
+  assert.deepEqual(order.slice(0, 4), ['enable:POLYGON_OFFSET_FILL', 'offset:-0.25,-0.25', 'draw', 'disable:POLYGON_OFFSET_FILL'], 'a quarter step over the ground, the offset handed back');
+  assert.ok(!order.includes('disable:CULL_FACE'), 'the cull left on');
   const generic = calls('vertexAttrib4f');
   assert.deepEqual(generic.map((c) => c.slice(1)), [[SNOW_ATTR.ctxA, -1, 0, 0, 0], [SNOW_ATTR.ctxA, 0, 0, 0, 1]], 'the local window\'s Excluded context, and 0,0,0,1 again after it');
   const model = log.filter((c) => c[0] === 'uniformMatrix4fv' && c[1]?.name === 'uModel').at(-1)[3];

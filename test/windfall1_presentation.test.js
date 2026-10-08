@@ -304,14 +304,17 @@ test('WINDFALL1 the hosts: world.js and exterior.js build the one runtime on the
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
     assert.match(s, /const windfall = createWindfallHost\(\{ gl: renderer\.gl, enhanced: !!sky\.enhanced \}\);/, `${host}: built on the lane`);
-    assert.match(s, /windfall\.frame\(\{ dt, outside: false, /, `${host}: ticked indoors`);
-    assert.match(s, /const windfallLaw = windfall\.frame\(\{ dt, outside: true, [^\n]*\n\s*heading: wd\.on \? wd\.dir : null,/, `${host}: ticked outdoors on the one wind`);
+    // AUDIT ENVIRONS: WindMod.Update's Time.deltaTime - held by a pause, scaled with the world (the host's own scale)
+    const scaled = host.endsWith('world.js') ? 'dt: gamePaused\\(\\) \\? 0 : dt \\* worldTimeScale\\(\\)' : 'dt: gamePaused\\(\\) \\? 0 : dt \\* hccTimeScale\\(\\)';
+    assert.match(s, new RegExp(`windfall\\.frame\\(\\{ ${scaled}, outside: false, `), `${host}: ticked indoors, on the game's seconds`);
+    assert.match(s, new RegExp(`const windfallLaw = windfall\\.frame\\(\\{ ${scaled}, outside: true, [^\\n]*\\n\\s*heading: wd\\.on \\? wd\\.dir : null,`), `${host}: ticked outdoors on the one wind, on the game's seconds`);
     assert.match(s, /renderer\.setFlatWind\([^\n]*, floraSwayOn\(\) && wd\.on \? windfallLaw : null\);/, `${host}: the law under the sway's switch`);
     assert.ok(s.indexOf('windfall.draw(proj, view, renderer.flatLightAt(') < s.indexOf('if (hazeGl) {', s.indexOf('windfall.draw(proj')), `${host}: the particles before the haze grabs the world`);
     assert.equal((s.match(/batch\.windfall = windfallResponse\(archive, record/g) || []).length, 3, `${host}: the far picture, the season's and the classic batch`);
     assert.match(s, /windfallOf: \(proto\) => _?lptWindfall\.get\(proto\) \?\? 0/, `${host}: the 3D trees by their far pictures' mask`);
   }
   assert.match(read('src/scenes/world.js'), /windfall\.offsetOrigin\(r\.offset\);/);
+  assert.match(read('src/scenes/world.js'), /csaReanchor\(state\.initOffset\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*snowfall\.offsetOrigin\(state\.initOffset\);\n\s*windfall\.offsetOrigin\(state\.initOffset\);/, 'AUDIT ENVIRONS: a teleport\'s new frame carries the anchor and the leaves in the air, as a recentre does');
   assert.match(read('src/scenes/yardNature.js'), /batch\.windfall = pic\.windfall;/);
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /createWindfallHost/, `${host}: none`);
   // the passes: the shadow and the air replay by the law the flats were drawn with

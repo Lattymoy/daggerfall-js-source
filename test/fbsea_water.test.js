@@ -14,6 +14,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { WATER_LAYER_UNITS } from '../src/render/waterSurface.js';
+import { SNOW_LAYER } from '../src/render/snowfallGlsl.js';
 import { DeepWatersRenderer } from '../src/render/deepWatersRender.js';
 import { ComeSailAwayRenderer, WAVE_FS } from '../src/render/comeSailAwayRender.js';
 import { boxLevels, wavePaintLevels, wavePictureMean } from '../src/systems/comeSailAwayWaves.js';
@@ -72,7 +73,13 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: THE SEA\'S STACK IN WINDOW DEPTH - the
   // WATER1 wears the film's place (it met the law first - WATER-AUDIT M3's offset, now the table's)
   const water1 = RENDERER.slice(RENDERER.indexOf('  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {'));
   assert.match(water1, /gl\.enable\(gl\.POLYGON_OFFSET_FILL\);\n\s+gl\.polygonOffset\(0, WATER_LAYER_UNITS\.surface\);/);
-  assert.equal((RENDERER.match(/gl\.polygonOffset\(/g) ?? []).length, 1, 'no other offset in the world renderer to agree with it');
+  // AUDIT ENVIRONS (the snow's pass, its own `Offset -0.25, -0.25`): the world renderer's one other offset is the snow's
+  // layer of this stack - a quarter step over the ground it lies on, under the film (the constant terms' order)
+  const offsets = RENDERER.match(/gl\.polygonOffset\([^)]*\)/g) ?? [];
+  assert.deepEqual(offsets.sort(), ['gl.polygonOffset(0, WATER_LAYER_UNITS.surface)', 'gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units)'], 'no other offset in the world renderer to agree with it');
+  assert.deepEqual({ ...SNOW_LAYER }, { factor: -0.25, units: -0.25 });
+  assert.ok(Object.isFrozen(SNOW_LAYER));
+  assert.ok(WATER_LAYER_UNITS.surface < SNOW_LAYER.units && SNOW_LAYER.units < 0, 'the snow over the ground and under the film');
 });
 
 test('FIELD BUGS 2026-09-29 (the sea) #4: ILIAC PUDDLE NO MORE\'S TOP IS THE FILM - its every draw inside the film\'s layer, the far arm (its own depth written) and the underside outside it; Come Sail Away\'s breakers inside theirs; each switched off after (mutants: the top unlayered, the far arm layered, the breakers unlayered, a layer left on)', () => {

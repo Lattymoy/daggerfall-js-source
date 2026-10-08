@@ -1275,7 +1275,7 @@ import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
-import { SNOW_VS, snowTerrainFs, SNOW_UNITS } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
+import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -5751,6 +5751,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  streaming host asks as Iliac Puddle No More mounts, beside the mod's own
    *  programs, so the first frame that draws a coast does not compile it. */
   prepareTerrainClip() { this._ensureTerrainClip(); }
+  /** RenderSettings.ambientLight's stand-in: the ambient the world programs light by this frame (snow_status reads it - AUDIT ENVIRONS S6). */
+  get ambientLight() { return this._ambient; }
+  /** SNOWFALL1 (AUDIT ENVIRONS I5): the installed set's snow program, built when the snow's surface is made (scenes/
+   *  snowfallHost.js) - not inside the first frame that draws snow; a fault here is the snow's own, which then stands nowhere. */
+  prepareTerrainSnow() { this._ensureTerrainSnow(); }
 
   /** SNOWFALL1: the set's SNOW program - the mod's vertex law (SNOW_VS) over the set's own ground fragment program with
    *  its tile decode swapped for the mod's snow (snowTerrainFs) - and its tables, built the first time a snow surface is
@@ -5773,8 +5778,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * `tex` its five pictures { dynamic, static, context, far, albedo }. The installed set's snow program: the ground's
    * own light on the mod's snow - the sun and its shadow, the moon, the clouds' shadow, the lanterns, the fog. It casts
    * nothing (the mod's ShadowCastingMode.Off), writes depth as the ground does, stands over it by the mod's own 8 mm
-   * surface offset, and both faces draw (a heightfield seen from above). A draw of this file's own (its program, its vertex array and unit 0 through the shadows; its pictures
-   * on units no shadow keeps), so no seam is owed after it.
+   * surface offset and its pass's own Offset (SNOW_LAYER: a layer of the sea's one stack, under the film - AUDIT
+   * ENVIRONS G2), and culls its back faces as the pass does (no Cull statement: Unity's Back; the grids wind as the
+   * ground's - G5). A draw of this file's own (its program, its vertex array and unit 0 through the shadows; its
+   * pictures on units no shadow keeps), so no seam is owed after it.
    */
   drawSnow(surface, u, tex) {
     this._close2D();   // PERF-2D
@@ -5825,9 +5832,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the tiers' missing channels read as their generic values (the local window's own context is Excluded)
     for (const [loc, v] of surface.generic ?? []) gl.vertexAttrib4f(loc, v[0], v[1], v[2], v[3]);
     this._bindVao(surface.vao);
-    gl.disable(gl.CULL_FACE);
-    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);   // over the ground by the mod's own 8 mm (uSnowRadius.z) - no window-depth layer of its own (the sea's stack is the world's one)
-    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);   // AUDIT ENVIRONS G2: the snow's layer in the sea's stack (render/snowfallGlsl.js SNOW_LAYER) - over the ground, under the film
+    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
     this.stats.draws++;
     this._bindVao(null);
     for (const [loc] of surface.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);

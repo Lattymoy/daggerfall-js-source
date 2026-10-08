@@ -20,6 +20,7 @@ export class SnowfallSurface {
   constructor(gl, renderer) {
     this.gl = gl;
     this.renderer = renderer;
+    this._seam();
     this.white = this._texture(1, 1, gl.NEAREST, new Uint8Array([255, 255, 255, 255]));
     this.albedo = null;
     this.local = null;
@@ -29,24 +30,37 @@ export class SnowfallSurface {
     this.tiles = new Map();
     this.nextHistoryUpload = 0;
     this.drawn = 0;
+    this.localUploads = 0;   // UploadDynamicMask's count (snow_status)
+    this._og = [0, 0, 0];
+    this._box = new Float32Array(6);   // a blanket tile's bounds, local to its origin (the cull's)
   }
 
-  /** The mod's albedo (snow_albedo.png, 64 x 64): Point, repeated - mipmapped here so the far blanket does not grain. */
+  /** The mod's albedo (snow_albedo.png, 64 x 64, its seven levels - m_MipCount 7): Point, repeated - the level nearest
+   *  the footprint, no blend between two (FilterMode.Point; AUDIT ENVIRONS G4). `image` decoded bottom row first
+   *  (scenes/snowfallHost.js: an ImageBitmap takes no UNPACK_FLIP_Y_WEBGL), so its first row is Unity's v = 0. */
   setAlbedo(image) {
     const gl = this.gl;
+    this._seam();
     if (this.albedo) gl.deleteTexture(this.albedo);
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);   // a picture's top row is the texture's last (Unity's uv)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.albedo = tex;
+  }
+
+  /** AUDIT ENVIRONS G1: the seam a GL user outside the renderer owes it before it binds a buffer or a picture - the 2D
+   *  run the last frame left open closed (an index buffer bound under its vertex array would become that array's: the
+   *  HUD's quads drew nothing after the first blanket tile), the vertex array unbound for real, every shadow forgotten
+   *  (EV6). */
+  _seam() {
+    this.renderer?.endUiRun?.();
+    this.renderer?.markForeignPass?.();
   }
 
   _texture(w, h, filter, data = null) {
@@ -98,6 +112,7 @@ export class SnowfallSurface {
    */
   sync(rt, now) {
     const gl = this.gl, L = rt.local, M = rt.mid, B = rt.blanket, F = rt.far;
+    this._seam();
     // the local window - rebuilt whole when its resolution changes
     if (!this.local || this.local.res !== L.res || this.local.mres !== L.mres || this.local.sres !== L.sres || rt.dirty.gridRebuilt) {
       rt.dirty.gridRebuilt = false;
@@ -110,7 +125,7 @@ export class SnowfallSurface {
     if (rt.dirty.localMesh) { rt.dirty.localMesh = false; this._rewrite(this.local.mesh.buffers[0], L.pos); this._rewrite(this.local.mesh.buffers[1], L.nrm); }
     if (rt.dirty.localStatic) { rt.dirty.localStatic = false; this._upload(this.local.statics, L.sres, L.statics); this._upload(this.local.context, L.sres, L.context); }
     const lp = rt.rects.local.take();
-    if (lp) this._upload(this.local.dynamic, L.mres, L.dynamic, lp);
+    if (lp) { this._upload(this.local.dynamic, L.mres, L.dynamic, lp); this.localUploads++; }
     // the middle ring
     if (!this.mid) {
       const mesh = this._mesh([[SNOW_ATTR.pos, 3, M.pos], [SNOW_ATTR.normal, 3, M.nrm], [SNOW_ATTR.uv, 2, M.uv], [SNOW_ATTR.ctxA, 4, M.ctxA], [SNOW_ATTR.blanket, 4, M.heights],
@@ -158,10 +173,12 @@ export class SnowfallSurface {
 
   /**
    * Draw the tiers the runtime stands this frame, nearest first. Answers whether any was drawn (the host marks the
-   * seam on it).
+   * seam on it). `outside(box, x, y, z)` (or null: none culled) answers whether a box at a place is outside the
+   * frame's frustum - each blanket tile is its own renderer in the mod, culled by its bounds (AUDIT ENVIRONS G6).
    * @param {any} rt
+   * @param {((box: Float32Array, x: number, y: number, z: number) => boolean)|null} [outside]
    */
-  draw(rt) {
+  draw(rt, outside = null) {
     this.drawn = 0;
     if (!this.albedo || !this.local) return false;
     const R = this.renderer, tiers = rt.visibleTiers(), depth = rt.depthUniforms();
@@ -176,8 +193,14 @@ export class SnowfallSurface {
       this.drawn++;
     }
     if (tiers.blanket) {
+      const rise = outside ? rt.blanketRise() : 0, box = this._box;
       for (const [o, g] of this.tiles) {
         if (!o.ready || !rt.blanket.live.has(o.t)) continue;
+        if (outside) {
+          const og = o.t.origin(this._og);
+          box[0] = 0; box[1] = o.minY; box[2] = 0; box[3] = o.t.size; box[4] = o.maxY + rise; box[5] = o.t.size;
+          if (outside(box, og[0], og[1], og[2])) continue;
+        }
         R.drawSnow(g.mesh, { ...rt.blanketUniforms(o, distant), ...depth }, { dynamic: distant ? this.far : this.white, static: g.statics, context: this.white, far: this.white, albedo: this.albedo });
         this.drawn++;
       }

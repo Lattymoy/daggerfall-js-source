@@ -317,8 +317,8 @@
   {
     "name": "WINDFALL1-leaves-downwind",
     "file": "src/systems/windfallEffects.js",
-    "old": "flowTo(flows.leaves, [p[0] - wx * 13, p[1] + 7, p[2] - wz * 13]",
-    "new": "flowTo(flows.leaves, [p[0] + wx * 13, p[1] + 7, p[2] + wz * 13]",
+    "old": "flowTo(flows.leaves, p[0] - wx * 13, p[1] + 7, p[2] - wz * 13,",
+    "new": "flowTo(flows.leaves, p[0] + wx * 13, p[1] + 7, p[2] + wz * 13,",
     "tests": [
       "test/windfall1_presentation.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "WINDFALL1-box-twice-as-wide",
     "file": "src/render/windfallParticles.js",
-    "old": "this.pos[i * 3] = flow.position[0] + (R() - 0.5) * bx;",
-    "new": "this.pos[i * 3] = flow.position[0] + (R() - 0.5) * bx * 2;",
+    "old": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;",
+    "new": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X * 2;",
     "tests": [
       "test/windfall1_presentation.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "WINDFALL1-runtime-lane-ignored",
     "file": "src/scenes/windfallHost.js",
-    "old": "      if (!enhanced) return null;\n",
-    "new": "",
+    "old": "      if (!enhanced || broken) return null;\n      try { return tick(f); }",
+    "new": "      if (broken) return null;\n      try { return tick(f); }",
     "tests": [
       "test/windfall1_presentation.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "WINDFALL1-runtime-indoor-law",
     "file": "src/scenes/windfallHost.js",
-    "old": "      return f.outside ? windfallUniforms(wf, anchor, law) : null;",
-    "new": "      return windfallUniforms(wf, anchor, law);",
+    "old": "    return f.outside ? windfallUniforms(wf, anchor, law) : null;",
+    "new": "    return windfallUniforms(wf, anchor, law);",
     "tests": [
       "test/windfall1_presentation.test.js"
     ]

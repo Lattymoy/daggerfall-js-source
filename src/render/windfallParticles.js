@@ -60,6 +60,7 @@ void main() {
 /** Floats an instance carries: x, y, z, size, rotation, tile. */
 const INSTANCE_FLOATS = 6;
 const TAU = Math.PI * 2;
+const [BOX_X, BOX_Y, BOX_Z] = WINDFALL_EMITTER.box;   // AUDIT ENVIRONS W7: the emitter's box, read once (not a destructure a particle)
 
 /** One system's live particles, in flat arrays (EVERY ALLOCATION HAS AN OWNER: made once at its cap). */
 class ParticleSystemSim {
@@ -72,13 +73,13 @@ class ParticleSystemSim {
     this.count = 0; this.owed = 0;
   }
   clear() { this.count = 0; this.owed = 0; }
-  /** Emit one at the flow's emitter (a box about its place). */
-  emitOne(flow) {
+  /** Emit one at an emitter (a box about `at`, the flow's place). */
+  emitOne(at) {
     if (this.count >= this.shape.maxParticles) return;
-    const i = this.count++, R = this.random, s = this.shape, [bx, by, bz] = WINDFALL_EMITTER.box;
-    this.pos[i * 3] = flow.position[0] + (R() - 0.5) * bx;
-    this.pos[i * 3 + 1] = flow.position[1] + (R() - 0.5) * by;
-    this.pos[i * 3 + 2] = flow.position[2] + (R() - 0.5) * bz;
+    const i = this.count++, R = this.random, s = this.shape;
+    this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;
+    this.pos[i * 3 + 1] = at[1] + (R() - 0.5) * BOX_Y;
+    this.pos[i * 3 + 2] = at[2] + (R() - 0.5) * BOX_Z;
     this.age[i] = 0;
     this.life[i] = s.lifetime[0] + (s.lifetime[1] - s.lifetime[0]) * R();
     this.size[i] = s.size[0] + (s.size[1] - s.size[0]) * R();
@@ -90,9 +91,13 @@ class ParticleSystemSim {
    *  and the noise. `t` the systems' clock (the noise's scroll). */
   step(flow, dt, t) {
     if (flow.clear) { this.clear(); flow.clear = false; }
-    for (; flow.emit > 0; flow.emit--) this.emitOne(flow);
+    if (flow.emit > 0) {   // AUDIT ENVIRONS W5: a burst (Emit), where it was asked for
+      const at = flow.emitAt ?? flow.position;
+      for (; flow.emit > 0; flow.emit--) this.emitOne(at);
+      flow.emitAt = null;
+    }
     this.owed += flow.rate * dt;
-    while (this.owed >= 1) { this.emitOne(flow); this.owed -= 1; }
+    while (this.owed >= 1) { this.emitOne(flow.position); this.owed -= 1; }
     if (flow.rate <= 0) this.owed = 0;
     const [vx, vy, vz] = flow.velocity, ns = flow.noiseStrength, f = WINDFALL_EMITTER.noiseFrequency, sc = t * WINDFALL_EMITTER.noiseScroll;
     let w = 0;

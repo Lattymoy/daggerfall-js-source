@@ -95,7 +95,9 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
   again and the nearer tiers over it rebuild.
 - **BASIC ROADS' OWN ROADS.** BasicRoadsBridge reads the Basic Roads MOD, so
   the classification reads Hazelnut's network or none (the rule World of
-  Daggerfall's loader keeps): the port's generated fallback is not his mod.
+  Daggerfall's loader keeps): the port's generated fallback is not his mod. A
+  tier's context reads the roads of the map pixels its own box touches
+  (SnowContextData.Prepare's scan; AUDIT ENVIRONS S1 - not the player's).
   The authored ground is the location's blocks' (BlocksFile.CheckName's
   names, as the ground stamped under it).
 - **WHO WALKS IT.** The player (the fly camera stands the tiers round the eye
@@ -105,8 +107,14 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
 - **THE CLOCKS.** The snowpack and the refill are a meter of the world's time:
   the EVENT clock's game seconds (`worldMinutes()`, TIME1's census); winter is
   the sky's season (`season`, the ground's own); the tiers' budgets and
-  retries are real seconds. Online the mod is the player's own
-  (`systems/onlineLane.js`).
+  retries are real seconds. A load restores the record at the clock's nought
+  and completes its session on the next frame - the LOADED game's clock (AUDIT
+  ENVIRONS S2: the hosts restore the mods' records before the save's clock).
+  Online the mod is the player's own (`systems/onlineLane.js`).
+- **A TELEPORT'S NEW FRAME.** `state.init`'s re-anchor (a load, a fast travel,
+  a respawn) carries the tiers, their tracks and the last stamp by its move
+  (`initOffset`) as a recentre does, so the old place's tracks stay on the old
+  place and the arrival's first stamp is no trench (AUDIT ENVIRONS I2).
 
 ## THE FOUR HOSTS
 
@@ -114,10 +122,14 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
 (`createSnowfallHost`) over the ground they draw, tick it on their indoor
 branch (`inside: true` - the surfaces hidden, the snowpack and the refill
 kept) and outdoors (the player, the walkers, the bodies - its uploads before
-the world frame opens), and draw it after the ground and before the sky; the
-next host a boot builds lets the last one's surfaces go (a claimed loop never
-draws again). The world host tells it each pixel published and carries it
-across the floating origin. The town host stands its one city in its map pixel's 128 x 128 where
+the world frame opens, behind the renderer's seam), and draw it with the
+opaque world BEFORE the ground under it (AUDIT ENVIRONS G7: GROUND-LAST's own
+law a layer up - a ground fragment under the snow fails the depth test before
+it shades, the picture the same); the next host a boot builds lets the last
+one's surfaces go (a claimed loop never draws again). The world host tells it
+each pixel published, carries it across the floating origin and a teleport's
+re-anchor, and culls its blanket's tiles to the frame's frustum by their
+bounds (G6: each tile's renderer in the mod is culled by its own). The town host stands its one city in its map pixel's 128 x 128 where
 the streamed world lays it (GetLocationTerrainTileOrigin), bare past the
 town's tiles (it draws no ground there). `scenes/worldModes.js` (the
 interiors) and `scenes/dungeonContext.js` (the dungeons) are FLAGGED, not
@@ -136,8 +148,11 @@ the mod indoors, and no snow lies there.
   loader's cap never applies (World of Daggerfall's sites keep their own
   ground).
 - **LIT BY THE GROUND'S PROGRAM** (above). It stands over the ground by the
-  mod's own 8 mm surface offset and no window-depth layer of its own: the
-  sea's stack (WATER_LAYER_UNITS) is the world renderer's one offset.
+  mod's own 8 mm surface offset and its pass's own `Offset -0.25, -0.25`
+  (`SNOW_LAYER`, a layer of the sea's stack - over the ground, under the film;
+  AUDIT ENVIRONS G2 withdrew SNOWFALL1's departure, which left the snow at the
+  ground's own height fighting it), its back faces culled as the pass culls
+  them (G5).
 - **THE RIDE OF THE STRIDE.** The far pixels' tiers read the surface drawn at
   their stride (Unity's Terrain.SampleHeight reads its full heightmap).
 - **THE TRAVEL VIEW** draws no snow - its eye is the traveller's, raised over
@@ -159,4 +174,6 @@ second exception. The dynamic snow: `test/snowfall1_model.test.js` (12) and
 `test/snowfall1_runtime.test.js` (15); `tools/mutants/snowfall1.json` (42, all
 dead). The shader's variants compile and draw in Chromium's WebGL2 on both
 lanes (a synthetic hill through the real renderer, the mod's masks and
-albedo: the snow on the ground, the track in it, no GL error).
+albedo: the snow on the ground, the track in it, no GL error). AUDIT ENVIRONS
+(`01-Overview/Audit-Environs.md`): `test/audit_environs.test.js` (14),
+`tools/mutants/audit_environs.json`.

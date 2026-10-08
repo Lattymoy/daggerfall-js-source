@@ -174,13 +174,17 @@ their indoor branch (`outside: false` - the gust eases out, the sources fade,
 the particles stop), hand its law to the flats' call beside WIND3's
 (`renderer.setFlatWind(wind, law)`), draw its particles with the opaque world
 before the haze grabs it, and tag every nature batch and far picture with its
-mask; the world host carries its anchor across the floating origin.
+mask; the world host carries its anchor and its leaves across the floating
+origin and a teleport's re-anchor alike (AUDIT ENVIRONS I2: `state.init`'s
+`initOffset`, beside the boats').
 `scenes/worldModes.js` (the interiors) and `scenes/dungeonContext.js` (the
 dungeons) are FLAGGED, not wired: their frames run inside the exterior hosts'
 indoor branch, which ticks the mod indoors, and no flora stands there.
 
 The day the mod plans by is the SKY's (`skyMinutes()`, TIME1's census - the
-date and hour the player sees), and online the mod is the player's own
+date and hour the player sees); its frame runs on the game's seconds -
+WindMod.Update's `Time.deltaTime`, held by a pause and scaled with the world
+(AUDIT ENVIRONS W1: `worldTimeScale`, the town's `hccTimeScale`) - and online the mod is the player's own
 (`systems/onlineLane.js` `ONLINE_PLAYERS_OWN_MODS`): nothing it does stands,
 rolls or is written for anyone else.
 
@@ -202,8 +206,11 @@ rolls or is written for anyone else.
   three smooth channels of sines at the module's frequency and scroll, added
   to the velocity at its strength.
 - **THE PARTICLES' LIGHT** is the flats' at the player
-  (`renderer.flatLightAt`), unfogged as the wisps are; the mod's Lambert takes
-  the sun's directional light and the ambient probes.
+  (`renderer.flatLightAt`), unfogged as the wisps are. The mod's pass takes the
+  sun's directional light alone (`Particles.glsl`: `_LightColor0` x the probe's
+  occlusion x `max(N.L, 0)` through a camera-facing normal, no ambient term), so
+  in DFU its leaves and snow are black when the player looks toward the sun and
+  near black at night (AUDIT ENVIRONS W6: the record corrected).
 - **THE SNOW'S PICTURE** is the mod's own flake (its fallback material): the
   stock snow material it prefers is DFU's particle prefab's, which the port's
   precipitation does not have.

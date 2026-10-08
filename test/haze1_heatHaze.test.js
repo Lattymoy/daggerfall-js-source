@@ -179,12 +179,16 @@ test('HAZE1 the hosts (THE FOUR HOSTS RULE): world.js and exterior.js build the 
     const s = read(host);
     assert.match(s, /const hazeGl = sky\.enhanced \? new HeatHazeRenderer\(renderer\.gl\) : null;/, `${host}: built on the enhanced lane`);
     assert.match(s, /heatHaze\.suppress\(\);/, `${host}: indoors, at once`);
-    assert.match(s, /settings: heatHazeOn\(\) \? heatHazeSettings\(\) : HAZE_OFF \}\);/, `${host}: the switch read per frame`);
+    assert.match(s, /settings: hazeFrameSettings\(\) \}\);/, `${host}: the switch read per frame (the keys when one is written)`);
+    // AUDIT ENVIRONS: the ease on the real clock (unscaledDeltaTime), the shimmer on the game's (_Time.y)
+    assert.match(s, new RegExp(`heatHaze\\.tick\\(\\{ dt, time: gamePaused\\(\\) \\? 0 : dt \\* ${host.endsWith('world.js') ? 'worldTimeScale' : 'hccTimeScale'}\\(\\), `), `${host}: the shimmer's clock held by a pause, scaled with the world`);
+    assert.match(s, /\], hz\.seconds\)\) renderer\.markForeignPass\(\);/, `${host}: drawn on the haze's own clock, not the page's`);
   }
   const w = read('src/scenes/world.js');
   assert.ok(w.indexOf('if (hz.visible && !tvf && hazeGl.draw(') < w.indexOf('    drawFalling();   // RAIN-OVER-GRASS'), 'world.js: before what falls');
   assert.ok(w.indexOf('labGrass.draw(proj, view') < w.indexOf('if (hz.visible && !tvf && hazeGl.draw('), 'world.js: after the grass');
-  assert.match(w, /hazeGl\?\.offsetOrigin\(r\.offset\);/);
+  assert.match(w, /hazeGl\?\.offsetOrigin\(r\.offset\);[^\n]*\n\s*heatHaze\.offsetOrigin\(r\.offset\);/, 'world.js: the noise and the held layer across the floating origin');
+  assert.match(w, /windfall\.offsetOrigin\(state\.initOffset\);\n\s*hazeGl\?\.offsetOrigin\(state\.initOffset\);\n\s*heatHaze\.reset\(\);/, 'world.js: a teleport\'s new frame carries the noise, and the arrival reads its layer afresh');
   const e = read('src/scenes/exterior.js');
   assert.ok(e.indexOf('if (hz.visible && hazeGl.draw(') < e.indexOf('const precipShown = enhancedFront ? fx.shown : precipMode;'), 'exterior.js: before what falls');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /HeatHaze/, `${host}: no exterior to haze`);

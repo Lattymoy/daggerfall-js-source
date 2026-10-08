@@ -82,7 +82,7 @@ export function gustParticleResponse(gust) {
 
 /** A flow the renderer runs: where the system stands, how many a second it emits, the velocity over lifetime, the
  *  noise's strength - and a clear or an emit owed (StopParticles' Clear, TriggerLeafTest's Emit). */
-const newFlow = () => ({ position: [0, 0, 0], rate: 0, velocity: [0, 0, 0], noiseStrength: 0.5, clear: false, emit: 0 });
+const newFlow = () => ({ position: [0, 0, 0], rate: 0, velocity: [0, 0, 0], noiseStrength: 0.5, clear: false, emit: 0, emitAt: null });
 
 /**
  * WindEnvironmentEffects. `sources` { gust, ambient, ruffle } - Unity AudioSources (`volume`, `pitch`, `isPlaying`,
@@ -150,8 +150,8 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
     }
     wasGusting = gusting;
   }
-  const flowTo = (f, position, wind, rate, horizontal, vertical, gust) => {
-    f.position[0] = position[0]; f.position[1] = position[1]; f.position[2] = position[2];
+  const flowTo = (f, x, y, z, wind, rate, horizontal, vertical, gust) => {   // AUDIT ENVIRONS W7: the place written in place, no array a flow a frame
+    f.position[0] = x; f.position[1] = y; f.position[2] = z;
     f.rate = Math.max(0, rate);
     f.velocity[0] = wind[0] * horizontal; f.velocity[1] = vertical; f.velocity[2] = wind[1] * horizontal;
     f.noiseStrength = 0.5 + gust * 1.8;
@@ -196,15 +196,15 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
       const ruffleOn = cfg.audioEnabled && f.weather !== WEATHER_SNOW && !winterSet && canopy > 0 && seasonal > 0;
       updateRuffleAudio(ruffleOn, canopy * seasonal, f.windyDay, f.storm, f.gust);
       const response = gustParticleResponse(f.gust);
-      flowTo(flows.leaves, [p[0] - wx * 13, p[1] + 7, p[2] - wz * 13], f.windDirection,
+      flowTo(flows.leaves, p[0] - wx * 13, p[1] + 7, p[2] - wz * 13, f.windDirection,
         leavesOn ? response * canopy * seasonal * (f.storm ? 48 : 32) * cfg.leafAmount : 0, 5.5 + f.gust * 7, -0.35, f.gust);
       const ambientBase = f.storm ? 2.6 : f.windyDay ? 1.3 : 0.25;
-      flowTo(flows.ambientLeaves, [p[0] - wx * 4, p[1] + 8, p[2] - wz * 4], f.windDirection,
+      flowTo(flows.ambientLeaves, p[0] - wx * 4, p[1] + 8, p[2] - wz * 4, f.windDirection,
         leavesOn ? ambientBase * canopy * seasonal * cfg.ambientLeafAmount : 0, (f.storm ? 3 : f.windyDay ? 1.6 : 0.55) + f.gust * 1.5, -0.65, 0.15 + f.gust * 0.35);
       const snowOn = cfg.snowFlurriesEnabled && f.season === SEASON_WINTER && winterSet && canopy > 0;
       const steady = f.storm ? 1.4 : f.windyDay ? 0.8 : 0.25;
       const upwind = lerp(4, 13, response);
-      flowTo(flows.snow, [p[0] - wx * upwind, p[1] + 7, p[2] - wz * upwind], f.windDirection,
+      flowTo(flows.snow, p[0] - wx * upwind, p[1] + 7, p[2] - wz * upwind, f.windDirection,
         snowOn ? (steady + response * (f.storm ? 220 : 160)) * canopy * cfg.snowFlurryAmount : 0, (f.storm ? 2.8 : f.windyDay ? 1.5 : 0.45) + f.gust * 8.5, -0.8, 0.15 + f.gust * 0.85);
       return flows;
     },
@@ -239,11 +239,15 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
       playRuffle(1, true, 1);
       return `Played a leaf-ruffle test clip at mod volume ${cfg.audioVolume.toFixed(2)}.`;
     },
-    /** TriggerLeafTest: sixty leaves from 8 m upwind and 4 up, blown at 8 m/s. */
+    /** TriggerLeafTest: sixty leaves from 8 m upwind and 4 up, blown at 8 m/s - Emit(60) at the test's place, where they
+     *  stand however the next frame's UpdatePresentation moves the flow (AUDIT ENVIRONS W5: the burst keeps its own place,
+     *  `emitAt`). */
     triggerLeafTest(playerPos, dir) {
       suppressed = false;
-      flowTo(flows.leaves, [playerPos[0] - dir[0] * 8, playerPos[1] + 4, playerPos[2] - dir[1] * 8], dir, 0, 8, -0.25, 1);
-      flows.leaves.emit += 60;
+      const l = flows.leaves;
+      flowTo(l, playerPos[0] - dir[0] * 8, playerPos[1] + 4, playerPos[2] - dir[1] * 8, dir, 0, 8, -0.25, 1);
+      l.emitAt = [l.position[0], l.position[1], l.position[2]];
+      l.emit += 60;
       return "Emitted 60 test leaves with shader 'Windfall/Particles'.";
     },
     /** For the tests. */

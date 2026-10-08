@@ -52,6 +52,8 @@ export function createWindfallHost({ gl = null, enhanced = false, engine = defau
   const right = new Float32Array(3), up = new Float32Array(3);   // the camera's plane, a draw's scratch
   let last = null;   // the last frame's model answer and the player's centre (the console's)
   let picturesAsked = false;
+  let natureKey = -1, natureArchive = 0;   // AUDIT ENVIRONS W7: the climate's nature set for the season, read when either changes
+  let broken = false;   // AUDIT ENVIRONS I5: a frame threw - the wind stops there (the sources faded out), the host's frame never with it
 
   /** The settings, read again only when one was written (modSettingsGeneration) - LoadSettings is a callback. */
   function readSettings() {
@@ -99,54 +101,66 @@ export function createWindfallHost({ gl = null, enhanced = false, engine = defau
     return `Usage: ${WINDFALL_COMMAND.usage}`;
   }
 
-  return {
+  /** The frame's work (WindMod.Update's). */
+  function tick(f) {
+    const s = readSettings();
+    const on = s.enabled && windfallOn();
+    const dt = Math.max(0, Number(f.dt) || 0);
+    const minutes = Math.floor(f.minutes ?? 0);
+    const date = dateFromClassicMinutes(minutes);
+    const season = seasonValue(date);
+    const climate = f.climate ?? 0;
+    const wf = model.tick({
+      dt, outside: !!f.outside, weather: f.weather, date, minuteOfDay: date.hour * 60 + date.minute, absoluteDay: Math.floor(minutes / 1440),
+      season, climate, mapPixel: f.mapPixel ?? { x: 0, y: 0 }, heading: f.heading ?? null, settings: on ? s : settingsOff,
+    });
+    const feet = f.feet ?? [0, 0, 0];
+    const center = [feet[0], feet[1] + (f.height ?? 1.8) / 2, feet[2]];   // DFU's PlayerObject: the controller's centre
+    last = { wf, center, outside: !!f.outside };
+    if (!wf.on) {   // WindMod.Update's else: the strength and the gust 0, the presentation suppressed
+      effects.suppress(dt, true);
+      particles?.step(effects.flows, dt);
+      return null;
+    }
+    for (const e of wf.events) effects.playWindEvent(e.peak, e.windy, e.storm);
+    const winter = season === SEASONS.Winter, nk = climate * 2 + (winter ? 1 : 0);
+    if (nk !== natureKey) { natureKey = nk; natureArchive = getNatureArchive(getWorldClimateSettings(climate)?.natureArchive, winter ? CLIMATE_SEASON.Winter : CLIMATE_SEASON.Summer); }
+    effects.update({
+      outside: !!f.outside, weather: windfallWeather(f.weather), natureArchive, season, climate,
+      windyDay: wf.windyDay, storm: wf.storm, gust: wf.currentGust, windDirection: wf.direction, dt, playerPos: center,
+    });
+    if (f.outside) {
+      if (s.presentation.audioEnabled) sound.load();
+      loadPictures();
+    }
+    particles?.step(effects.flows, dt);
+    return f.outside ? windfallUniforms(wf, anchor, law) : null;
+  }
+
+  const host = {
     model, effects, particles,
     /**
-     * The frame. `f` { dt, outside, weather (the port's word), minutes (the world clock's classic minutes), climate
+     * The frame. `f` { dt (the frame's game seconds - WindMod.Update's Time.deltaTime: none while the game is paused, the
+     * travel's time scale over them), outside, weather (the port's word), minutes (the world clock's classic minutes), climate
      * (the map's climate index at the player), mapPixel { x, y }, heading (the outdoors' wind's unit direction - systems/
      * windDrive.js `dir` - or null), feet [x, y, z] (the player's), height (the player's, for the centre DFU's
      * PlayerObject stands at) }. Answers the law the flats lean by this frame (render/windfallSway.js's eight
      * numbers), or null where the mod's law does not stand (off the lane, the mod off, indoors).
      */
     frame(f) {
-      if (!enhanced) return null;
-      const s = readSettings();
-      const on = s.enabled && windfallOn();
-      const dt = Math.max(0, Number(f.dt) || 0);
-      const minutes = Math.floor(f.minutes ?? 0);
-      const date = dateFromClassicMinutes(minutes);
-      const season = seasonValue(date);
-      const climate = f.climate ?? 0;
-      const wf = model.tick({
-        dt, outside: !!f.outside, weather: f.weather, date, minuteOfDay: date.hour * 60 + date.minute, absoluteDay: Math.floor(minutes / 1440),
-        season, climate, mapPixel: f.mapPixel ?? { x: 0, y: 0 }, heading: f.heading ?? null, settings: on ? s : settingsOff,
-      });
-      const feet = f.feet ?? [0, 0, 0];
-      const center = [feet[0], feet[1] + (f.height ?? 1.8) / 2, feet[2]];   // DFU's PlayerObject: the controller's centre
-      last = { wf, center, outside: !!f.outside };
-      if (!wf.on) {   // WindMod.Update's else: the strength and the gust 0, the presentation suppressed
-        effects.suppress(dt, true);
-        particles?.step(effects.flows, dt);
+      if (!enhanced || broken) return null;
+      try { return tick(f); } catch (e) {
+        broken = true;
+        try { effects.suppress(1, true); sound.dispose(); } catch { /* the wind is gone either way */ }
+        console.warn('[windfall] a wind frame threw - the wind stops here:', e?.stack ?? e);
         return null;
       }
-      for (const e of wf.events) effects.playWindEvent(e.peak, e.windy, e.storm);
-      const natureArchive = getNatureArchive(getWorldClimateSettings(climate)?.natureArchive, season === SEASONS.Winter ? CLIMATE_SEASON.Winter : CLIMATE_SEASON.Summer);
-      effects.update({
-        outside: !!f.outside, weather: windfallWeather(f.weather), natureArchive, season, climate,
-        windyDay: wf.windyDay, storm: wf.storm, gust: wf.currentGust, windDirection: wf.direction, dt, playerPos: center,
-      });
-      if (f.outside) {
-        if (s.presentation.audioEnabled) sound.load();
-        loadPictures();
-      }
-      particles?.step(effects.flows, dt);
-      return f.outside ? windfallUniforms(wf, anchor, law) : null;
     },
     /** The particles, drawn: the leaves in the season's sheet, then the snow - billboards in the camera's own plane
      *  (Unity's Billboard mode: its right and its up, read off `view`). `light` the flats' light at the player
      *  (renderer.flatLightAt). Answers whether it drew (the host marks the foreign pass). */
     draw(proj, view, light) {
-      if (!particles) return false;
+      if (!particles || broken) return false;
       right[0] = view[0]; right[1] = view[4]; right[2] = view[8];
       up[0] = view[1]; up[1] = view[5]; up[2] = view[9];
       return particles.draw(effects.leafSeason, proj, view, right, up, light);
@@ -161,4 +175,5 @@ export function createWindfallHost({ gl = null, enhanced = false, engine = defau
     /** EVERY ALLOCATION HAS AN OWNER: the particles' GL and the sources. */
     dispose() { particles?.dispose(); sound.dispose(); },
   };
+  return host;
 }
