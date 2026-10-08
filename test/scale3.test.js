@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   parseArgs, KNOBS, LOAD_SERVICE, localFetch, localWebSocket, relayTally, percentile, townPixel, poseAt, saveText, botStorage,
-  FIRE_MINUTE, FIRE_HOUR,
+  FIRE_MINUTE, FIRE_HOUR, reservoir, mergeFleets, POSE_SAMPLE_MAX,
 } from '../tools/loadHarness.mjs';
 import { CRON_MINUTE, CRON_HOUR } from '../server-account/src/cron.js';
 import { pixelDistance, worldRoom, cellHaloFor, RANGE_PIXELS } from '../src/net/wire.js';
@@ -138,4 +138,30 @@ test('SCALE3: a checkpoint\'s save is the size asked, a fresh character\'s shape
   assert.equal(percentile([], 0.5), null);
   assert.equal(percentile([5, 1, 3, 2, 4], 0.5), 3);
   assert.equal(percentile([5, 1, 3, 2, 4], 1), 5);
+});
+
+test('SCALE3: a fleet spread over threads adds up - every route\'s calls, statuses and times, every frame count by type, every close and refusal summed across the fleets, the pose ages\' reservoirs pooled; a reservoir holds its bound however many it is offered, the first offered kept whole until it fills (mutants: a fleet\'s counts dropped, the bound outrun)', () => {
+  const list = [];
+  for (let i = 1; i <= 10; i++) reservoir(list, i, i, 4);
+  assert.equal(list.length, 4, 'the bound held');
+  assert.ok(list.every((v) => v >= 1 && v <= 10));
+  const first = [];
+  for (let i = 1; i <= 3; i++) reservoir(first, i * 10, i, 4);
+  assert.deepEqual(first, [10, 20, 30], 'under its bound, every one kept');
+  assert.ok(POSE_SAMPLE_MAX >= 50_000);
+  const fleet = (k) => ({
+    bots: 10 * k,
+    account: [['/v1/heartbeat', { n: k, statuses: { 200: k }, ms: [k] }], ...(k === 2 ? [['/v1/auth/token', { n: 1, statuses: { 503: 1 }, ms: [9] }]] : [])],
+    relay: { opened: k, synthetic: 0, inFrames: 100 * k, inBytes: 1000 * k, outFrames: 10 * k, outBytes: 50 * k, inByType: { pose: 90 * k, pong: 10 * k }, outByType: { pose: 10 * k }, closes: { 1006: k }, refusals: { busy: k }, poseMs: [k, k], poseSeen: 5 * k },
+  });
+  const m = mergeFleets([fleet(1), fleet(2)]);
+  assert.equal(m.bots, 30);
+  assert.deepEqual(m.account.byRoute.get('/v1/heartbeat'), { n: 3, statuses: { 200: 3 }, ms: [1, 2] });
+  assert.deepEqual(m.account.byRoute.get('/v1/auth/token'), { n: 1, statuses: { 503: 1 }, ms: [9] });
+  assert.deepEqual([m.relay.inFrames, m.relay.inBytes, m.relay.outFrames, m.relay.outBytes, m.relay.opened], [300, 3000, 30, 150, 3]);
+  assert.deepEqual(m.relay.inByType, { pose: 270, pong: 30 });
+  assert.deepEqual(m.relay.closes, { 1006: 3 });
+  assert.deepEqual(m.relay.refusals, { busy: 3 });
+  assert.deepEqual(m.relay.poseMs, [1, 1, 2, 2]);
+  assert.equal(m.poseSeen, 15);
 });

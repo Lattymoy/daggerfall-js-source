@@ -88,5 +88,25 @@
       "test/scale3.test.js"
     ],
     "note": "a checkpoint's save without its moment"
+  },
+  {
+    "name": "SCALE3-fleet-dropped",
+    "file": "tools/loadHarness.mjs",
+    "old": "  for (const f of finals) {\n    bots += f.bots;",
+    "new": "  for (const f of finals.slice(1)) {\n    bots += f.bots;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "the first fleet's tallies left out of the run's"
+  },
+  {
+    "name": "SCALE3-reservoir-unbounded",
+    "file": "tools/loadHarness.mjs",
+    "old": "  if (list.length < max) { list.push(v); return; }",
+    "new": "  list.push(v); return;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a crowded run's pose ages kept without bound"
   }
 ]

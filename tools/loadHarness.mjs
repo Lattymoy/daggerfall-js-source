@@ -66,6 +66,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { request as httpRequest } from 'node:http';
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { isMain } from './lib/isMain.mjs';
 import { OnlineSession } from '../src/net/online.js';
@@ -113,7 +114,8 @@ export const KNOBS = Object.freeze({
   registered: [1, 'the share registered (a guest is refused the mail, the Motherlodes and the board\'s writes)'],
   'chat-every': [300, 'seconds between a bot\'s lines on the hub (0: silent)'],
   'save-kb': [48, 'the realm save a checkpoint carries, in KB of JSON before packing'],
-  setup: [8, 'bots set up at once'],
+  setup: [8, 'bots set up at once (a fleet\'s)'],
+  threads: [1, 'worker threads the fleet is spread over - a crowd of a hundred in one cell outruns one thread\'s event loop, and its pose ages are then the fleet\'s own queue'],
   port: [8870, 'the account service listens here, the relay on the next port'],
   json: ['', 'a file to write every figure to'],
   keep: [0, '1 keeps the state directory (the D1 file, the Durable Objects) for a look afterwards'],
@@ -540,44 +542,170 @@ function tickBot(bot, ctx, o) {
 
 // ═══ THE RUN ═══════════════════════════════════════════════════════════════════════════════════════════════════════
 
+/** The pose ages a fleet keeps for its percentiles - a reservoir, so a long crowded run neither grows without bound nor
+ *  loses its late poses (every pose heard has the same chance of being kept). */
+export const POSE_SAMPLE_MAX = 100_000;
+/** Keep `v` in `list`, a uniform reservoir of `max` over the `seen` values offered. */
+export function reservoir(list, v, seen, max = POSE_SAMPLE_MAX) {
+  if (list.length < max) { list.push(v); return; }
+  const j = Math.floor(Math.random() * seen);
+  if (j < max) list[j] = v;
+}
+
+/**
+ * A FLEET: bots `from`..`to` of the run, with its own tallies - in this thread (`--threads 1`) or a worker thread of
+ * its own, the main thread asking it the same six questions either way. The services, the clock and the storm are the
+ * main thread's; a fleet only plays.
+ */
+export class Fleet {
+  constructor({ o, accountPort, relayPort, runTag, from, to }) {
+    this.o = o;
+    this.relay = relayTally();
+    this.poseSeen = 0;
+    const relay = this.relay;
+    const keepAge = relay.poseMs;
+    relay.poseMs = { push: (v) => { this.poseSeen += 1; reservoir(keepAge, v, this.poseSeen); }, list: keepAge };
+    const t0 = Date.now();
+    this.ctx = {
+      svc: { accountPort }, relayUrl: `ws://127.0.0.1:${relayPort}`, account: accountTally(), runTag,
+      WS: localWebSocket({ port: relayPort, tally: relay }), clock: () => Date.now() - t0, ownerOf: new WeakMap(), trace: o.trace === 1,
+    };
+    relay.onWelcome = (ws, room) => { const b = this.ctx.ownerOf.get(ws); if (b) b.welcomedAt.set(room, Date.now()); };
+    this.bots = [];
+    for (let n = from; n < to; n++) this.bots.push(makeBot(n, o, this.ctx));
+    this.ticker = null;
+    this.mark = null;
+  }
+  async setUp() {
+    for (let i = 0; i < this.bots.length; i += this.o.setup) await Promise.all(this.bots.slice(i, i + this.o.setup).map((b) => setUp(b, this.o)));
+    return this.bots.length;
+  }
+  async connect(rampMs) {
+    console.warn = () => {}; console.info = () => {};   // the sessions' own chatter, not the run's
+    this.ticker = setInterval(() => { for (const b of this.bots) tickBot(b, this.ctx, this.o); }, 50);
+    const start = Date.now();
+    for (let i = 0; i < this.bots.length; i++) {
+      const due = start + (i / this.bots.length) * rampMs;
+      if (due > Date.now()) await sleep(due - Date.now());
+      connect(this.bots[i], this.ctx);
+      this.bots[i].clocks = accountClocks(this.bots[i], this.o);
+      this.bots[i].nextLine = Date.now() + Math.random() * this.o['chat-every'] * 1000;
+    }
+    return true;
+  }
+  /** Play begins: every tally from nought. */
+  play() {
+    this.ctx.account = accountTally();
+    const r = this.relay;
+    for (const k of ['inFrames', 'inBytes', 'outFrames', 'outBytes']) r[k] = 0;
+    r.inByType = {}; r.outByType = {}; r.closes = {}; r.refusals = {};
+    r.poseMs.list.length = 0; this.poseSeen = 0;
+    return true;
+  }
+  /** The storm begins: nobody is back until a welcome says so. */
+  stormBegin() {
+    for (const b of this.bots) b.welcomedAt.clear();
+    this.mark = { calls: this.ctx.account.at.length, refusals: { ...this.relay.refusals } };
+    return true;
+  }
+  /** The second since the last asked: the calls (mints among them, failures), the refusals, and the bots back in their cell. */
+  second() {
+    const calls = this.ctx.account.at.slice(this.mark.calls);
+    this.mark.calls = this.ctx.account.at.length;
+    const refused = {};
+    for (const [m, n] of Object.entries(this.relay.refusals)) if (n - (this.mark.refusals[m] ?? 0) > 0) refused[m] = n - (this.mark.refusals[m] ?? 0);
+    this.mark.refusals = { ...this.relay.refusals };
+    const trace = {};
+    if (this.ctx.trace) {
+      for (const b of this.bots) for (const [i, ss] of b.sessions.entries()) {
+        const k = `${['cell', 'hub', 'region'][i]}:${ss.status}${ss.terminal ? '!' : ''}${ss.error ? `(${String(ss.error).slice(0, 40)})` : ''}${ss._retryAt != null ? `+${Math.round((ss._retryAt - Date.now()) / 1000)}s` : ''}`;
+        trace[k] = (trace[k] ?? 0) + 1;
+      }
+    }
+    return {
+      mints: calls.filter(([, route]) => route === '/v1/auth/token').length,
+      calls: calls.length,
+      failed: calls.filter(([, , st]) => st === 'offline' || parseInt(st, 10) >= 500).length,
+      back: this.bots.filter((b) => b.welcomedAt.has(b.cell)).length,
+      refused, trace,
+    };
+  }
+  /** Play ends: every session left, every clock stopped, the tallies handed back. */
+  finish() {
+    clearInterval(this.ticker);
+    for (const b of this.bots) for (const ss of b.sessions) { try { ss.leave(); } catch { /* gone */ } }
+    for (const b of this.bots) { b.heartbeat?.stop(); b.stopBeat?.(); }
+    const r = this.relay;
+    return {
+      bots: this.bots.length,
+      account: [...this.ctx.account.byRoute].map(([route, row]) => [route, row]),
+      relay: { ...r, onWelcome: null, poseMs: r.poseMs.list, poseSeen: this.poseSeen },
+    };
+  }
+}
+
+/** A fleet in a worker thread of its own - the same six questions, asked by message. */
+function remoteFleet(data) {
+  const w = new Worker(new URL(import.meta.url), { workerData: { role: 'fleet', ...data } });
+  let seq = 0;
+  const waiting = new Map();
+  w.on('message', (m) => { const f = waiting.get(m.id); if (f) { waiting.delete(m.id); m.error ? f.reject(new Error(m.error)) : f.resolve(m.r); } });
+  w.on('error', (e) => { for (const f of waiting.values()) f.reject(e); waiting.clear(); });
+  const ask = (t, ...args) => new Promise((resolve, reject) => { const id = ++seq; waiting.set(id, { resolve, reject }); w.postMessage({ id, t, args }); });
+  return {
+    setUp: () => ask('setUp'), connect: (ms) => ask('connect', ms), play: () => ask('play'), stormBegin: () => ask('stormBegin'),
+    second: () => ask('second'), finish: async () => { const r = await ask('finish'); await w.terminate(); return r; },
+    stop: () => w.terminate(),
+  };
+}
+
+/** The fleet's tallies, merged: the account calls by route and the relay's counts, the pose ages' reservoirs pooled. */
+export function mergeFleets(finals) {
+  const account = accountTally();
+  const relay = relayTally();
+  let bots = 0, poseSeen = 0;
+  for (const f of finals) {
+    bots += f.bots;
+    for (const [route, row] of f.account) {
+      const m = account.byRoute.get(route) ?? { n: 0, statuses: {}, ms: [] };
+      m.n += row.n;
+      for (const [k, v] of Object.entries(row.statuses)) m.statuses[k] = (m.statuses[k] ?? 0) + v;
+      for (const v of row.ms) m.ms.push(v);
+      account.byRoute.set(route, m);
+    }
+    for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];
+    for (const k of ['inByType', 'outByType', 'closes', 'refusals']) for (const [t, v] of Object.entries(f.relay[k])) relay[k][t] = (relay[k][t] ?? 0) + v;
+    for (const v of f.relay.poseMs) relay.poseMs.push(v);   // a loop: a reservoir's hundred thousand would overrun a spread's arguments
+    poseSeen += f.relay.poseSeen;
+  }
+  return { bots, account, relay, poseSeen };
+}
+
 async function main(o) {
   const state = mkdtempSync(join(tmpdir(), 'scale3-load-'));
   const out = { knobs: o, started: new Date().toISOString() };
   const restore = { warn: console.warn, info: console.info };
-  const onSignal = () => { stopAll(); process.exit(130); };
+  let fleets = [];
+  const onSignal = () => { for (const f of fleets) f.stop?.(); stopAll(); process.exit(130); };
   process.on('SIGINT', onSignal); process.on('SIGTERM', onSignal);
   try {
     const svc = await standServices(o, state);
-    const relay = relayTally();
-    const ctx = {
-      svc, relayUrl: `ws://127.0.0.1:${svc.relayPort}`, account: accountTally(), runTag: Math.random().toString(36).slice(2, 6),
-      WS: localWebSocket({ port: svc.relayPort, tally: relay }), clock: () => Date.now() - t0, ownerOf: new WeakMap(), trace: o.trace === 1,
-    };
-    const t0 = Date.now();
-    console.log(`== setting up ${o.bots} bots (${o.setup} at once): guest, ${o.registered < 1 ? 'some ' : ''}registered, a realm character and its first save`);
-    const bots = Array.from({ length: o.bots }, (_, n) => makeBot(n, o, ctx));
-    for (let i = 0; i < bots.length; i += o.setup) await Promise.all(bots.slice(i, i + o.setup).map((b) => setUp(b, o)));
-    console.warn = () => {}; console.info = () => {};   // the sessions' own chatter, not the run's
-    // welcomes, by bot and room: when each came back after a storm
-    relay.onWelcome = (ws, room) => { const b = ctx.ownerOf.get(ws); if (b) b.welcomedAt.set(room, Date.now()); };
-
-    console.log(`== connecting over ${o.ramp} s`);
-    const ticker = setInterval(() => { for (const b of bots) tickBot(b, ctx, o); }, 50);
-    const rampStart = Date.now();
-    for (let i = 0; i < bots.length; i++) {
-      const due = rampStart + (i / bots.length) * o.ramp * 1000;
-      if (due > Date.now()) await sleep(due - Date.now());
-      connect(bots[i], ctx);
-      bots[i].clocks = accountClocks(bots[i], o);
-      bots[i].nextLine = Date.now() + Math.random() * o['chat-every'] * 1000;
+    const runTag = Math.random().toString(36).slice(2, 6);
+    const threads = Math.max(1, Math.min(o.threads, o.bots));
+    for (let k = 0; k < threads; k++) {
+      const data = { o, accountPort: svc.accountPort, relayPort: svc.relayPort, runTag, from: Math.floor((k * o.bots) / threads), to: Math.floor(((k + 1) * o.bots) / threads) };
+      fleets.push(threads === 1 ? new Fleet(data) : remoteFleet(data));
     }
+    console.log(`== setting up ${o.bots} bots in ${threads} fleet${threads > 1 ? 's, a thread each' : ''} (${o.setup} at once a fleet): guest, ${o.registered < 1 ? 'some ' : ''}registered, a realm character and its first save`);
+    await Promise.all(fleets.map((f) => f.setUp()));
+    console.log(`== connecting over ${o.ramp} s`);
+    await Promise.all(fleets.map((f) => f.connect(o.ramp * 1000)));
+    console.warn = () => {}; console.info = () => {};
     await sleep(5000);
 
     console.log(`== playing for ${o.minutes} min${o.scenario === 'storm' ? `, the relay restarted at ${Math.round(o['storm-at'] * 100)}%` : ''}`);
     await serviceStats(svc.accountPort);   // the setup's and the ramp's points and rows are not the play's - drained
-    ctx.account = accountTally();
-    for (const k of ['inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] = 0;
-    relay.inByType = {}; relay.outByType = {}; relay.poseMs = []; relay.closes = {}; relay.refusals = {};
+    await Promise.all(fleets.map((f) => f.play()));
     const playStart = Date.now();
     const playMs = o.minutes * 60_000;
     await fireCron(svc.accountPort, FIRE_HOUR);
@@ -599,23 +727,22 @@ async function main(o) {
     let storm = null;
     if (o.scenario === 'storm') {
       const stormAt = playStart + playMs * o['storm-at'];
-      await sleep(Math.max(0, stormAt - Date.now()));
-      storm = await theStorm(bots, ctx, svc, relay, fold, playStart + playMs);
+      while (Date.now() < stormAt) { await sleep(Math.min(30_000, stormAt - Date.now())); fold(await serviceStats(svc.accountPort)); }
+      storm = await theStorm(fleets, o.bots, svc, fold, playStart + playMs);
     }
-    const left = playStart + playMs - Date.now();
-    if (left > 0) await sleep(left);
+    while (Date.now() < playStart + playMs) { await sleep(Math.min(30_000, playStart + playMs - Date.now())); fold(await serviceStats(svc.accountPort)); }
     const playedMs = Date.now() - playStart;
-    clearInterval(ticker);
     clearInterval(clockTimer);
+    const merged = mergeFleets(await Promise.all(fleets.map((f) => f.finish())));
+    fleets = [];
     fold(await serviceStats(svc.accountPort));
-    for (const b of bots) for (const s of b.sessions) quietly(() => s.leave());
-    for (const b of bots) { b.heartbeat?.stop(); b.stopBeat?.(); }
     console.warn = restore.warn; console.info = restore.info;
 
-    out.report = report({ bots, o, ctx, relay, statsSum, playedMs, storm });
+    out.report = report({ bots: merged.bots, o, account: merged.account, relay: merged.relay, poseSeen: merged.poseSeen, statsSum, playedMs, storm, threads });
     if (o.json) writeFileSync(o.json, JSON.stringify(out, null, 2));
   } finally {
     console.warn = restore.warn; console.info = restore.info;
+    for (const f of fleets) f.stop?.();
     stopAll();
     if (!o.keep) rmSync(state, { recursive: true, force: true });
     else console.log(`== the state is kept at ${state}`);
@@ -625,45 +752,33 @@ async function main(o) {
 
 /** A DEPLOY: the relay's process killed - every socket in the game closes at once - and started again on the same state.
  *  Second by second until the run ends: the mints asked, the service's statements, the hellos refused, the bots back. */
-async function theStorm(bots, ctx, svc, relay, fold, endsAt) {
+async function theStorm(fleets, total, svc, fold, endsAt) {
   console.log('== the storm: the relay restarted under the fleet');
-  for (const b of bots) b.welcomedAt.clear();
+  await Promise.all(fleets.map((f) => f.stormBegin()));
   const at = Date.now();
   const seconds = [];
-  const mark = { calls: ctx.account.at.length, refusals: { ...relay.refusals }, closes: { ...relay.closes } };
   const restarting = svc.restartRelay();
   let up = null;
   restarting.then((ok) => { up = ok ? Date.now() : -1; });
-  const back = (b) => b.welcomedAt.has(b.cell);
-  const share = (q) => bots.filter(back).length >= Math.ceil(q * bots.length);
   const reached = {};
   while (Date.now() < endsAt) {
     await sleep(1000);
     const s = await serviceStats(svc.accountPort);
     fold(s);
-    const calls = ctx.account.at.slice(mark.calls);
-    mark.calls = ctx.account.at.length;
-    const refused = {};
-    for (const [m, n] of Object.entries(relay.refusals)) if (n - (mark.refusals[m] ?? 0) > 0) refused[m] = n - (mark.refusals[m] ?? 0);
-    mark.refusals = { ...relay.refusals };
-    seconds.push({
-      t: Math.round((Date.now() - at) / 1000),
-      mints: calls.filter(([, route]) => route === '/v1/auth/token').length,
-      calls: calls.length,
-      failed: calls.filter(([, , st]) => st === 'offline' || parseInt(st, 10) >= 500).length,
-      statements: s.points.reduce((a, p) => a + Number(p.doubles?.[2] ?? 0), 0),
-      back: bots.filter(back).length,
-      refused,
-    });
-    for (const q of [0.25, 0.5, 0.9, 1]) if (reached[q] == null && share(q)) reached[q] = Math.round((Date.now() - at) / 100) / 10;
-    if (ctx.trace) {
-      const tally = {};
-      for (const b of bots) for (const [i, ss] of b.sessions.entries()) {
-        const k = `${['cell', 'hub', 'region'][i]}:${ss.status}${ss.terminal ? '!' : ''}${ss.error ? `(${String(ss.error).slice(0, 40)})` : ''}${ss._retryAt != null ? `+${Math.round((ss._retryAt - Date.now()) / 1000)}s` : ''}`;
-        tally[k] = (tally[k] ?? 0) + 1;
-      }
-      console.log(`   trace t+${Math.round((Date.now() - at) / 1000)}s ${JSON.stringify(tally)}`);
+    const parts = await Promise.all(fleets.map((f) => f.second()));
+    const refused = {}, trace = {};
+    for (const p of parts) {
+      for (const [m, n] of Object.entries(p.refused)) refused[m] = (refused[m] ?? 0) + n;
+      for (const [k, n] of Object.entries(p.trace)) trace[k] = (trace[k] ?? 0) + n;
     }
+    const sum = (k) => parts.reduce((a, p) => a + p[k], 0);
+    const back = sum('back');
+    seconds.push({
+      t: Math.round((Date.now() - at) / 1000), mints: sum('mints'), calls: sum('calls'), failed: sum('failed'),
+      statements: s.points.reduce((a, p) => a + Number(p.doubles?.[2] ?? 0), 0), back, refused,
+    });
+    for (const q of [0.25, 0.5, 0.9, 1]) if (reached[q] == null && back >= Math.ceil(q * total)) reached[q] = Math.round((Date.now() - at) / 100) / 10;
+    if (Object.keys(trace).length) console.log(`   trace t+${Math.round((Date.now() - at) / 1000)}s ${JSON.stringify(trace)}`);
     if (reached[1] != null && seconds.length > 5 && seconds.slice(-3).every((x) => x.mints === 0)) break;
   }
   await restarting;
@@ -676,10 +791,10 @@ const pad = (s, n) => String(s).padEnd(n);
 const lpad = (s, n) => String(s).padStart(n);
 const r1 = (x) => (x == null ? '-' : Math.round(x * 10) / 10);
 
-function report({ bots, o, ctx, relay, statsSum, playedMs, storm }) {
-  const botHours = (bots.length * playedMs) / 3_600_000;
-  const botSeconds = (bots.length * playedMs) / 1000;
-  const routes = [...ctx.account.byRoute].map(([route, row]) => {
+function report({ bots, o, account, relay, poseSeen, statsSum, playedMs, storm, threads }) {
+  const botHours = (bots * playedMs) / 3_600_000;
+  const botSeconds = (bots * playedMs) / 1000;
+  const routes = [...account.byRoute].map(([route, row]) => {
     const svc = statsSum.byRoute.get(route) ?? { n: 0, statements: 0 };
     return {
       route, requests: row.n, perBotHour: row.n / botHours, statuses: row.statuses,
@@ -697,7 +812,7 @@ function report({ bots, o, ctx, relay, statsSum, playedMs, storm }) {
     .sort((a, b) => b.rowsRead - a.rowsRead);
   const rows = statements.reduce((a, s) => ({ read: a.read + s.rowsRead, written: a.written + s.rowsWritten }), { read: 0, written: 0 });
 
-  console.log(`\n== THE ACCOUNT SERVICE - ${bots.length} bots, ${r1(playedMs / 60_000)} min of play (${r1(botHours)} bot-hours)`);
+  console.log(`\n== THE ACCOUNT SERVICE - ${bots} bots, ${r1(playedMs / 60_000)} min of play (${r1(botHours)} bot-hours)`);
   console.log(`${pad('route', 30)}${lpad('req', 7)}${lpad('/bot-h', 9)}${lpad('p50', 7)}${lpad('p95', 7)}${lpad('stmt/req', 10)}${lpad('stmt/bot-h', 12)}  statuses`);
   for (const r of routes) {
     console.log(`${pad(r.route, 30)}${lpad(r.requests, 7)}${lpad(r1(r.perBotHour), 9)}${lpad(r.p50 ?? '-', 7)}${lpad(r.p95 ?? '-', 7)}${lpad(r1(r.statementsPerRequest), 10)}${lpad(r1(r.statementsPerBotHour), 12)}  ${JSON.stringify(r.statuses)}`);
@@ -706,11 +821,11 @@ function report({ bots, o, ctx, relay, statsSum, playedMs, storm }) {
   console.log(`\nD1 rows a bot-hour: ${r1(rows.read / botHours)} read, ${r1(rows.written / botHours)} written. The ten statements reading the most:`);
   for (const s of statements.slice(0, 10)) console.log(`  ${lpad(r1(s.rowsReadPerBotHour), 9)} rows/bot-h  ${lpad(s.n, 6)}x  ${s.sql.slice(0, 110)}`);
 
-  console.log(`\n== THE RELAY, at the bots - ${r1(botSeconds)} bot-seconds`);
+  console.log(`\n== THE RELAY, at the bots - ${r1(botSeconds)} bot-seconds, the fleet in ${threads} thread${threads > 1 ? 's' : ''}`);
   console.log(`frames a bot-second: ${r1(relay.inFrames / botSeconds)} in, ${r1(relay.outFrames / botSeconds)} out; bytes a bot-second: ${r1(relay.inBytes / botSeconds)} in, ${r1(relay.outBytes / botSeconds)} out`);
   console.log(`in by type:  ${JSON.stringify(relay.inByType)}`);
   console.log(`out by type: ${JSON.stringify(relay.outByType)}`);
-  console.log(`a pose, sender to listener: p50 ${percentile(relay.poseMs, 0.5) ?? '-'} ms, p95 ${percentile(relay.poseMs, 0.95) ?? '-'} ms, p99 ${percentile(relay.poseMs, 0.99) ?? '-'} ms (${relay.poseMs.length} heard)`);
+  console.log(`a pose, sender to listener: p50 ${percentile(relay.poseMs, 0.5) ?? '-'} ms, p95 ${percentile(relay.poseMs, 0.95) ?? '-'} ms, p99 ${percentile(relay.poseMs, 0.99) ?? '-'} ms (${poseSeen} heard, ${relay.poseMs.length} kept)`);
   console.log(`closes by code: ${JSON.stringify(relay.closes)}; refusals: ${JSON.stringify(relay.refusals)}`);
 
   if (storm) {
@@ -727,7 +842,16 @@ function report({ bots, o, ctx, relay, statsSum, playedMs, storm }) {
   };
 }
 
-if (isMain(import.meta.url)) {
+// A FLEET'S THREAD: the six questions, answered as they come
+if (!isMainThread && workerData?.role === 'fleet') {
+  const fleet = new Fleet(workerData);
+  parentPort.on('message', async (m) => {
+    try { parentPort.postMessage({ id: m.id, r: await fleet[m.t](...(m.args ?? [])) }); }
+    catch (e) { parentPort.postMessage({ id: m.id, error: String(e?.stack ?? e) }); }
+  });
+}
+
+if (isMainThread && isMain(import.meta.url)) {
   let o;
   try { o = parseArgs(process.argv.slice(2)); } catch (e) { console.error(String(e?.message ?? e)); process.exit(2); }
   if (o.help) {
