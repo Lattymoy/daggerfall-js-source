@@ -187,6 +187,11 @@ directory by `test/audit18_bible_docs.test.js`:
   spell's rounded, a prince's arch, a location's landscape), a magicka gem and
   a power shield, one of 35 emblems drawn from paths, the name banner and the
   rules box; the back a compass rose of the Bay - no ARENA2 pixel, no raster.
+- `iliacTableDraw.js` - CARDS10 ILIAC HAND ON THE CLOTH (2026-10-08,
+  `11-Multiplayer/Tavern-Cards.md` section 29): one atlas of every card's and
+  holding's painted face (`iliacCardFaces.js`), the back and the stock, and a
+  plate a card made the first time it is drawn (`cardTableDraw.js` plateModel's
+  shape); every plate and the atlas freed with the game.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
   its view-space box touches, uploaded as two integer textures (the grid's
