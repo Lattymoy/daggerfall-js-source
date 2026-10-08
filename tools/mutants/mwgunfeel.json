@@ -1,0 +1,101 @@
+[
+  {
+    "name": "MW-GUN-FEEL-the-kick-upside-down",
+    "file": "src/combat/gunFeel.js",
+    "old": "  return { pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
+    "new": "  return { pitch: (-k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-pump-never-comes-up",
+    "file": "src/combat/gunFeel.js",
+    "old": "  return smooth(0, f.reloadIn, share) * (1 - smooth(1 - f.reloadOut, 1, share));",
+    "new": "  return smooth(0, f.reloadIn, share);",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-turn-about-the-eye",
+    "file": "src/combat/gunFeel.js",
+    "old": "  const py = pivot[1] * unitsPerMetre, pz = pivot[2] * unitsPerMetre;",
+    "new": "  const py = 0 * pivot[1], pz = 0 * pivot[2];",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-back-away-from-the-eye",
+    "file": "src/combat/gunFeel.js",
+    "old": "  const tz = pz - (s * py + c * pz) + back * unitsPerMetre;",
+    "new": "  const tz = pz - (s * py + c * pz) - back * unitsPerMetre;",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-pose-dropped-at-the-draw",
+    "file": "src/combat/fpArm.js",
+    "old": "      const view = gunFeel ? multiply(armKickMatrix(gunFeel, MW_UNITS_PER_METER), lens, new Float32Array(16)) : lens;",
+    "new": "      const view = gunFeel ? lens : lens;",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-laid-behind-the-lens",
+    "file": "src/combat/fpArm.js",
+    "old": "      const view = gunFeel ? multiply(armKickMatrix(gunFeel, MW_UNITS_PER_METER), lens, new Float32Array(16)) : lens;",
+    "new": "      const view = gunFeel ? multiply(lens, armKickMatrix(gunFeel, MW_UNITS_PER_METER), new Float32Array(16)) : lens;",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-open-on-the-machine-clock",
+    "file": "src/combat/weaponRig.js",
+    "old": "    if (_tlShotAt < 0 || m.now < tlReloadFrom(m) - 1e-9) return;\n",
+    "new": "\n",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-kick-never-handed-over",
+    "file": "src/combat/weaponRig.js",
+    "old": "    fpArm.setGunFeel(sheathed ? null : armGunPose(-_tlKick.y, share));",
+    "new": "    fpArm.setGunFeel(sheathed ? null : armGunPose(0 * _tlKick.y, share));",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-share-from-the-click",
+    "file": "src/combat/weaponRig.js",
+    "old": "    const from = _tlShotAt >= 0 ? tlReloadFrom(m) : Infinity;",
+    "new": "    const from = _tlShotAt >= 0 ? m.cooldownUntil - 1.7 : Infinity;",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-classic-open-withheld",
+    "file": "src/combat/weaponRig.js",
+    "old": "* (m.tick ?? GUN_TICK_SECONDS));\n",
+    "new": "* (m.tick ?? GUN_TICK_SECONDS) + 0.5);\n",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  },
+  {
+    "name": "MW-GUN-FEEL-the-tail-never-rests",
+    "file": "src/combat/gunFeel.js",
+    "old": "  const k = Number.isFinite(kickPx) && Math.abs(kickPx) >= ARM_KICK_REST_PX ? kickPx : 0;",
+    "new": "  const k = Number.isFinite(kickPx) ? kickPx : 0;",
+    "tests": [
+      "test/mwgunfeel.test.js"
+    ]
+  }
+]

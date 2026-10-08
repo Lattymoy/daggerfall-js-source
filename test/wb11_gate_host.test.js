@@ -664,7 +664,7 @@ test('WB11 the plumbing, read: the world host sends a blow on one of his host as
   assert.match(d, /if \(foe\.host != null\) \{ hitEnemy = true; swingOnHost\(foe, damage, lookDir\); continue; \}/);
   assert.match(d, /const hb = gateHostBodies\(\)\.find\(\(q\) => missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);/, 'the shaft');
   assert.match(d, /castAtHost: opts\.gateHost \? \(sp, i\) => spellOnHost\(sp, i\) : null,/, 'the spell');
-  assert.match(d, /const landOnHost = \(hb, damage, r\) => !!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r \}\);/);
+  assert.match(d, /const landOnHost = \(hb, damage, r\) => \(sdRemnant \? sdRemnant\.echoHit\(\{ i: hb\.host, d: damage, r \}\) : !!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r \}\)\);/);   // PIN MOVED (SD8c): an Echo's in the Hour
   assert.match(g, /const crystals = \[\.\.\.crystalMarksFor\(sp\), \.\.\.hostMarksFor\(sp\)\];/);
   assert.match(g, /if \(mark\?\.host != null\) \{ try \{ return !!castAtHost\?\.\(sp, mark\.host\); \} catch \{ return false; \} \}/);
   assert.match(r, /else if \(m\.k === 'ahit'\) this\._gateFan\(applyHostHit\(f, a\.sub, m\.i, m\.d, m\.r, a\.pose && !a\.pose\.dd \? this\._courtOf\(a\.pose\) : null, now, m\.q\)\);/, 'the relay judges it (AUDIT WB11 W3: by its blow\'s sequence)');

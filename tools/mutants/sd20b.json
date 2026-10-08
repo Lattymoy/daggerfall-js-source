@@ -1,0 +1,75 @@
+[
+  {
+    "name": "SD20B-R1-the-premature-word-kept",
+    "file": "server/src/index.js",
+    "old": "if (!(Number.isSafeInteger(ans.s) && owed.s > ans.s)) this._sdTold.add(owed.s);",
+    "new": "this._sdTold.add(owed.s);",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R3-next-unsaid",
+    "file": "server/src/index.js",
+    "old": "s: held?.s ?? 0, ...(Number.isSafeInteger(held?.next) ? { next: held.next } : {}) });",
+    "new": "s: held?.s ?? 0 });",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R3-next-unkept",
+    "file": "server/src/index.js",
+    "old": "at: Date.now(), ...(Number.isSafeInteger(ans.next) ? { next: ans.next } : {}) };",
+    "new": "at: Date.now() };",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R3-the-next-slot-held-whole",
+    "file": "server/src/index.js",
+    "old": " && !(m.s === known.s + 1 && now >= (known.next ?? Infinity))) return;",
+    "new": ") return;",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R3-any-slot-ahead",
+    "file": "server/src/index.js",
+    "old": "!(m.s === known.s + 1 && now >= (known.next ?? Infinity))",
+    "new": "!(m.s > known.s && now >= (known.next ?? Infinity))",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R2-the-death-past-the-list-forgotten",
+    "file": "server/src/index.js",
+    "old": "if (realm.dead.length >= SD_FIGHTERS_MAX) { await this.state.storage.put(sdDeadKey(sub), 1); return; }",
+    "new": "if (realm.dead.length >= SD_FIGHTERS_MAX) return;",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R2-the-key-never-read",
+    "file": "server/src/index.js",
+    "old": " || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null)",
+    "new": "",
+    "tests": [
+      "test/sd20b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD20B-R4-the-receipts-seed",
+    "file": "server-account/src/sds.js",
+    "old": "sdHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0)",
+    "new": "sdHonoursRoll(c.c)",
+    "tests": [
+      "test/sd20b_relay.test.js",
+      "test/sd9b_claim.test.js"
+    ]
+  }
+]

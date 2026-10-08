@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct94) BEFORE the site.
+-- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site.
 --
 -- Mac: "Keep going with the arc/slices" (bible/11-Multiplayer/Chapters-Arc.md
 -- section 5.1, CHAP3a). The law is src/net/npcChapterLaw.js; the service

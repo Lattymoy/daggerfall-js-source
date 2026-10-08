@@ -52,7 +52,8 @@
 // - DECIDED: no XP - the Essence's XP was its disenchanting's (a log's
 //   was its fall's, PROF0 25's law).
 //
-// Legendary, Aetheric, Artifact and Sigil pieces are neither (law 7).
+// Legendary, Aetheric, Artifact and Sigil pieces are neither (law 7) - nor, since GILDED1 (systems/gilded.js), a Gilded
+// one: a static roll is its record's to the last number.
 // ═══════════════════════════════════════════════════════════════════
 
 import { RECIPES, recipeById, QUALITY_EFFECTS, MASTERWORK, craftXp, ARMOR_LEATHER, ARMOR_CHAIN } from './recipeLaw.js';
@@ -63,8 +64,8 @@ export const TEMPER_TOP = 3;
 export const TEMPER_KINDS = Object.freeze(['weapon', 'plate', 'shield', 'chain', 'leather', 'garment']);
 /** Whether a recipe's piece takes a temper. */
 export const temperableRecipe = (/** @type {any} */ r) => !!r && TEMPER_KINDS.includes(r.kind);
-/** The Loot Rarity tiers law 7 keeps from the crafter. */
-export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact']);
+/** The Loot Rarity tiers law 7 keeps from the crafter (GILDED1: the Gilded rung's too). */
+export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);
 /** A piece's quality as a temper reads it: a made or tempered piece's own, every other Daggerfall's (Standard). */
 export const pieceQuality = (/** @type {any} */ item) => (Number.isInteger(item?.quality) ? item.quality : 1);
 
@@ -101,7 +102,7 @@ export const temperFrom = (q) => Number.isInteger(q) && q >= 0 && q < TEMPER_TOP
 
 /**
  * WHY A PIECE MAY NOT BE TEMPERED, or null: 'not' (no recipe tempers it), 'masterwork' (a maker's), 'top' (Superior -
- * no step left), 'rarity' (Legendary, Aetheric or Artifact - law 7), 'sigil' (a Sigil's piece - law 7).
+ * no step left), 'rarity' (Legendary, Aetheric, Artifact or Gilded - law 7), 'sigil' (a Sigil's piece - law 7).
  * @param {any} item
  */
 export function temperRefusal(item) {

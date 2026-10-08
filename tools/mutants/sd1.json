@@ -1,0 +1,172 @@
+[
+  {
+    "name": "SD1-a-day-not-two",
+    "file": "src/net/sdLaw.js",
+    "old": "export const SD_LIFETIME_MS = 48 * 3600 * 1000;",
+    "new": "export const SD_LIFETIME_MS = 24 * 3600 * 1000;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "A Hollow stands two days unbeaten."
+  },
+  {
+    "name": "SD1-it-never-fades",
+    "file": "src/net/sdLaw.js",
+    "old": "  return now < rec.until ? rec.ph : 'gone';",
+    "new": "  return rec.ph;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "Unbeaten, it fades at its time."
+  },
+  {
+    "name": "SD1-the-collapse-never-ends",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (rec.fellAt != null) return now < rec.fellAt + SD_COLLAPSE_MS ? 'fell' : 'gone';",
+    "new": "  if (rec.fellAt != null) return 'fell';",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "The collapse ends it, three minutes after the kill."
+  },
+  {
+    "name": "SD1-two-at-once",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (prev && (sdPhase(prev, now) !== 'gone' || now < prev.next)) return null;",
+    "new": "  if (prev && now < prev.next) return null;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "One at a time: never a rise over a standing Hollow."
+  },
+  {
+    "name": "SD1-no-rest",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (prev && (sdPhase(prev, now) !== 'gone' || now < prev.next)) return null;",
+    "new": "  if (prev && sdPhase(prev, now) !== 'gone') return null;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "The rest between one end and the next rise."
+  },
+  {
+    "name": "SD1-found-twice",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (!rec || sdPhase(rec, now) !== 'risen') return null;\n  return /** @type {SdRecord} */ ({ ...rec, ph: 'found'",
+    "new": "  if (!rec) return null;\n  return /** @type {SdRecord} */ ({ ...rec, ph: 'found'",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "Found once, while it has risen."
+  },
+  {
+    "name": "SD1-an-unfound-fall",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (!rec || sdPhase(rec, now) !== 'found') return null;\n  const count",
+    "new": "  if (!rec) return null;\n  const count",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "Nobody enters an unfound Hollow, so nothing falls in one."
+  },
+  {
+    "name": "SD1-the-count-unbounded",
+    "file": "src/net/sdLaw.js",
+    "old": "Math.max(0, Math.min(SD_FIGHTERS_MAX, n))",
+    "new": "n",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "A fall counts at most the seats a fight has."
+  },
+  {
+    "name": "SD1-gone-unsaid",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };\n",
+    "new": "",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "Its time ran: the director says so before it rests."
+  },
+  {
+    "name": "SD1-one-player-a-crowd",
+    "file": "src/net/sdLaw.js",
+    "old": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN) qual.push(r);",
+    "new": "if (Number(counts?.[r] ?? 0) >= 1) qual.push(r);",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "One player is no crowd."
+  },
+  {
+    "name": "SD1-the-last-region-never-rests",
+    "file": "src/net/sdLaw.js",
+    "old": "  const pool = qual.length > 1 ? qual.filter((r) => r !== last) : qual;",
+    "new": "  const pool = qual;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "One crowd does not keep every Hollow."
+  },
+  {
+    "name": "SD1-a-tie-always-the-first",
+    "file": "src/net/sdLaw.js",
+    "old": "  return best[sdRoll(s, 1) % best.length];",
+    "new": "  return best[0];",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "A tie is broken by the slot's roll - every tied region takes a turn."
+  },
+  {
+    "name": "SD1-a-find-from-anywhere-in-the-pixel",
+    "file": "src/net/sdLaw.js",
+    "old": "  return Math.hypot(pose.x - cx, pose.z - cz) <= SD_FOUND_RADIUS_M * UNITS_PER_M;",
+    "new": "  return Math.hypot(pose.x - cx, pose.z - cz) <= PIXEL_UNITS;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "The finder stands near the Hollow, not anywhere in its pixel."
+  },
+  {
+    "name": "SD1-the-map-unflipped",
+    "file": "src/net/sdLaw.js",
+    "old": "cz = (500 - claim.py - 0.5) * PIXEL_UNITS;",
+    "new": "cz = (claim.py + 0.5) * PIXEL_UNITS;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "MapsFile's z runs north; the map's y runs south."
+  },
+  {
+    "name": "SD1-a-find-without-its-instant",
+    "file": "src/net/wire.js",
+    "old": "  if ((out.ph === 'found' || out.ph === 'fell') && out.foundAt == null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "A find is said with its instant."
+  },
+  {
+    "name": "SD1-a-padded-room",
+    "file": "src/net/sdLaw.js",
+    "old": "const SD_ROOM = /^sd:[1-9]\\d{0,8}$/;",
+    "new": "const SD_ROOM = /^sd:\\d{1,9}$/;",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "The wire admits the keys the hub mints, no zero and no padding."
+  },
+  {
+    "name": "SD1-the-city-left-in-the-name",
+    "file": "src/net/sdLaw.js",
+    "old": "  return city ? name.replace('{city}', () => city) : SD_NAMES[0];",
+    "new": "  return name.replace('{city}', () => city);",
+    "tests": [
+      "test/sd1_sdlaw.test.js"
+    ],
+    "note": "A name that needs a city it has not got falls back."
+  }
+]

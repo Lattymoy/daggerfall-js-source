@@ -67,6 +67,14 @@
 // piece in its hoard SERPENT_SET_CHANCE of the time
 // (systems/serpentSpoils.js), rolled after everything the hoard rolled
 // before; no drop, shelf or Broker carries it, as no raid set's is.
+//
+// SD9d (2026-10-07, the Super Dungeons arc): and THE BRASS OF NUMIDIUM
+// (systems/sigilSets.js 'numidium'), what the Warp kept of the Walking
+// Brass: nine fixed records of Dwarven make - the Dwemer's brass - a
+// round shield and a one-handed Longsword among them, every number at
+// the Legendary band's TOP, as the Regalia's (the hardest fight in the
+// game). The Brass Remnant's spoils carry a piece NUMIDIUM_SET_CHANCE
+// of the time, rolled after everything they rolled before.
 // ═══════════════════════════════════════════════════════════════════
 
 import { setItemFields, mintCondition, itemBaseValue } from './itemTemplates.js';
@@ -222,9 +230,38 @@ export const SERPENT_SET_PIECES = Object.freeze([
   coil('fang', "Sethrakul's Fang", 'Weapons', 121, [m('damage'), m('stat', 'agility'), m('skill', SKILLS.LongBlade)],
     'A fang of the Old Coil, ground to an edge by a Hammerfell smith who would not say how.'),
 ]);
-/** EVERY AETHERIC RECORD - the Regalia, then the raiding parties', then (SERPENT-SET) the Old Coil's - and the one every
- *  reader asks. */
-export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES]);
+// ── SD9d: THE BRASS OF NUMIDIUM ─────────────────────────────────────
+/** SD9d (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): the Brass Remnant's own,
+ *  nine in the places' order - the seven body pieces, a round shield (a gear's face) and a ONE-HANDED Longsword, so all
+ *  nine are worn at once - Dwarven, the Dwemer's brass. The hardest fight in the game pays what the gate's Warden does:
+ *  every affix at the Legendary band's TOP (the Regalia's), the blow the sigil's greatest. One resistance of an element at
+ *  most, and never magic or shock (Dwemer Brass, the set's 2-piece tier, carries those): no two pieces stack an element
+ *  toward the saving throw's immunity (the Regalia's AUDIT FINAL lesson). */
+const t = (id, param) => (param === undefined ? { id, value: top(id) } : { id, param, value: top(id) });
+const brass = (key, name, group, templateIndex, affixes, lore) => record(`numidium-${key}`, name, group, templateIndex, 'numidium', 'Dwarven', SIGIL_POWER_MAX, affixes, lore);
+export const NUMIDIUM_SET_PIECES = Object.freeze([
+  brass('visage', 'The Brass Visage', 'Armor', 107, [t('armor'), t('stat', 'intelligence'), t('resist', 'fire')],
+    'The face the Walking Brass turned on the Bay. Its eyes are cold now, and they still look out.'),
+  brass('right-pauldron', 'Right Pauldron of the Walking Brass', 'Armor', 106, [t('armor'), t('stat', 'strength'), t('skill', SKILLS.LongBlade)],
+    'Every rivet is a Dwemer smith\'s mark, and no two smiths are the same.'),
+  brass('left-pauldron', 'Left Pauldron of the Walking Brass', 'Armor', 105, [t('armor'), t('stat', 'endurance'), t('resist', 'frost')],
+    'It kept the cold of a thousand years under the mountain, and gave none of it back.'),
+  brass('heartcage', 'The Heartcage', 'Armor', 102, [t('armor'), t('stat', 'willpower'), t('skill', SKILLS.Mysticism)],
+    'It caged a heart of shattered soul-gem light. It is warm, and it beats.'),
+  brass('hands', "The Tonal Architect's Hands", 'Armor', 103, [t('armor'), t('stat', 'agility'), t('skill', SKILLS.CriticalStrike)],
+    'Cut to the hands of the one who sang the Brass awake.'),
+  brass('greaves', 'Greaves of the Unmade Stride', 'Armor', 104, [t('armor'), t('stat', 'speed'), t('resist', 'poison')],
+    'They stepped across a Dragon Break and came out on the other side.'),
+  brass('boots', 'Boots of the Unmoored Step', 'Armor', 108, [t('armor'), t('stat', 'luck'), t('skill', SKILLS.Jumping)],
+    'Made for a road over nothing. They never miss a step.'),
+  brass('gear-face', 'The Gear-Face', 'Armor', 110, [t('armor'), t('stat', 'endurance'), t('weight')],
+    'A gear of the Walking Brass, its teeth filed round. It still turns when no one is looking.'),
+  brass('hour-hand', 'The Hour-Hand', 'Weapons', 120, [t('damage'), t('stat', 'strength'), t('skill', SKILLS.LongBlade)],
+    'Broken from the colossus\'s heart-clock. It points at what is about to end.'),
+]);
+/** EVERY AETHERIC RECORD - the Regalia, then the raiding parties', then (SERPENT-SET) the Old Coil's, then (SD9d) the
+ *  Walking Brass's - and the one every reader asks. */
+export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);
 export const aethericById = (id) => AETHERIC_RECORDS.find((r) => r.id === id) ?? null;
 registerAethericLore((item) => aethericById(item?.aetheric)?.lore ?? null);   // the card's last line, as a Legendary's
 /** A record's make as the item wears it: its material's id in its group's table. */
@@ -329,4 +366,15 @@ export const SERPENT_SET_CHANCE = RAID_SET_CHANCE;
 export function rollSerpentSetPiece(rolls = Math.random) {
   if (!(rolls() < SERPENT_SET_CHANCE)) return null;
   return mintAetheric(SERPENT_SET_PIECES[Math.min(SERPENT_SET_PIECES.length - 1, Math.floor(rolls() * SERPENT_SET_PIECES.length))]);
+}
+
+/** SD9d: the share of the Brass Remnant's spoils that carries a piece of the Brass of Numidium - a third (the design's: the
+ *  hardest fight, the rarest feat - a Hollow rises after a rest and falls once). */
+export const NUMIDIUM_SET_CHANCE = 1 / 3;
+/** SD9d, THE SPOILS' LAST ROLL (systems/sdSpoils.js, after everything they rolled before - every earlier spoils stays what
+ *  it was for its seed): null most times; else one Numidium piece, the same seed choosing which. One roll when nothing
+ *  drops, two when a piece does. */
+export function rollNumidiumPiece(rolls = Math.random) {
+  if (!(rolls() < NUMIDIUM_SET_CHANCE)) return null;
+  return mintAetheric(NUMIDIUM_SET_PIECES[Math.min(NUMIDIUM_SET_PIECES.length - 1, Math.floor(rolls() * NUMIDIUM_SET_PIECES.length))]);
 }

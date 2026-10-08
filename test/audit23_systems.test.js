@@ -156,7 +156,7 @@ test('AUDIT 23 characters-7 + items-1: the spawn bands and the pile gender ride 
   const dc = src('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnDistanceType: e\.spawnDistanceType \?\? 0/g) ?? []).length, 2,
     'both foe constructions pass the marker band');
-  assert.ok(dc.includes('const items = generateLootItems(lootKey, { level: effectiveLevel(playerEntity), gender: playerEntity.gender }, undefined, elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});') && dc.includes('const items = rollPileItems();'), 'piles roll the player gender (WORLD8: through the one pile roll)');
+  assert.ok(dc.includes('const items = generateLootItems(lootKey, { level: effectiveLevel(playerEntity), gender: playerEntity.gender }, undefined, _superTier ? { itemChanceScale: SUPER_LOOT_DROP_MULT } : elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});') && dc.includes('const items = rollPileItems();'), 'piles roll the player gender (WORLD8: through the one pile roll)');   // SD4a (PIN MOVED): a Super dungeon's +50% before the Elite's
   // AUDIT 62 F22: the STREET watch runs the exterior band, and it is
   // the mount that says so - EnemySenses.cs:267 reads
   // PlayerEnterExit.IsPlayerInside per classic tick, so the pool that

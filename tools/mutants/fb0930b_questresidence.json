@@ -2,8 +2,8 @@
   {
     "name": "RES-RING-the-ring-keyed-on-questName-alone",
     "file": "src/ui/townSheet.js",
-    "old": "      if (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey)) continue;   // RES-RING",
-    "new": "      if (!b?.questName || !found.has(b.buildingKey)) continue;   // RES-RING",
+    "old": "if (!named.has(b?.buildingKey) && (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey))) continue;   // RES-RING",
+    "new": "if (!named.has(b?.buildingKey) && (!b?.questName || !found.has(b.buildingKey))) continue;   // RES-RING",
     "tests": ["test/fb0930b_questresidence.test.js"]
   },
   {

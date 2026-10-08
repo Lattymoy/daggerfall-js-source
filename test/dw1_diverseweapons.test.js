@@ -128,7 +128,7 @@ test('DW1: the atlas asks by the per-template name under the flag, and by the cl
   // and the rig's art cache carries the name the atlas is asked by, or
   // a longsword and a broadsword share the first one's frames
   const rig = src('src/combat/weaponRig.js');
-  assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? '' : atlasFileName\(item, WEAPON_FILE\[type\] \?\? ''\)\}`;/);
+  assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? \(gilded \? 'gilded' : ''\) : atlasFileName\(item, WEAPON_FILE\[type\] \?\? ''\)\}`;/);
   assert.match(rig, /loadFpsWeaponArt\(fetchBytes, palette, renderer, type, item\?\.material \?\? 0, item\)/, 'SpecificWeapon reaches the loader');
 });
 

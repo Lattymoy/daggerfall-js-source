@@ -252,10 +252,11 @@ test('WB9f the seams, by source: the court stands the spoils and their words whe
   assert.match(wm, /spoilContents: \(key\) => host\.spoilContents\?\.\(key\) \?\? null,/);
   assert.match(read('src/scenes/dungeonContext.js'), /if \(kind === 'spoil'\) return opts\.spoilContents\?\.\(key\) \?\? null;/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /spoilTargets: \(\) => spoilsPool\?\.targets\(\) \?\? null,/);
-  assert.match(w, /spoilName: \(key\) => spoilsPool\?\.nameOf\(key\) \?\? null,/);
-  assert.match(w, /spoilContents: \(key\) => spoilsPool\?\.contentsOf\(key\) \?\? null,/);
-  assert.match(w, /takeSpoil: \(key\) => !!spoilsPool\?\.pick\(key\),/);
+  assert.match(w, /spoilTargets: \(\) => floorPool\(\)\?\.targets\(\) \?\? null,/);   // SD9e: the floor of the place I stand in - the court's, or the Hour's (PIN MOVED)
+  assert.match(w, /spoilName: \(key\) => floorPool\(\)\?\.nameOf\(key\) \?\? null,/);
+  assert.match(w, /spoilContents: \(key\) => floorPool\(\)\?\.contentsOf\(key\) \?\? null,/);
+  assert.match(w, /takeSpoil: \(key\) => !!floorPool\(\)\?\.pick\(key\),/);
+  assert.match(w, /const floorPool = \(\) => \(modes\?\.sdRealmSlot\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/, 'the court\'s pool anywhere but the Hour');
   assert.match(w, /itemName: \(item\) => lootPileName\(\[item\]\),/);
   const gc = read('src/scenes/gateCourt.js');
   assert.match(gc, /spoils\?\.frame\(onSpoilRest\);/);

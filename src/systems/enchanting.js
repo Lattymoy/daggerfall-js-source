@@ -50,6 +50,7 @@ import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10
 import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // and their classic type back to the catalogue's key
 import { isAetheric } from './aetheric.js';   // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
+import { isGilded } from './gilded.js';   // GILDED1: nor a Gilded one - a static roll takes no enchantment
 
 /** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
  *  two picker buttons test against (DaggerfallItemMakerWindow.cs:629,
@@ -213,7 +214,7 @@ export const NO_MORE_SIDE_EFFECTS = 'No further side-effects may be enchanted in
  * budget over its powers. It is refused as the port's other services refuse it (reforge.js salvageRefusal,
  * reforgePrice). The line is the port's own.
  */
-export const itemMakerRefuses = (item) => isAetheric(item);
+export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);
 export const AETHERIC_TAKES_NO_ENCHANTMENT = 'An Aetheric piece takes no enchantment.';
 
 /**

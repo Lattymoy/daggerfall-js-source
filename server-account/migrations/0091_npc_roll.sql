@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct93) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site:
 -- the new site asks /v1/chapters/roll as a realm character comes online.
 --
 -- Mac: "completely overhaul the NPC guild system and reputation system",

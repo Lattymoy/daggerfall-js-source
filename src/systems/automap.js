@@ -266,6 +266,8 @@ export function snapshotAutomap(nowMinutes = null) {
       // EM3-3D: the walked trail, only where there is one (an older reader ignores it; see automapTrailTick)
       ...(rec.trail?.size ? { trail: [...rec.trail] } : {}),
       ...(rec.trailAll ? { trailAll: true } : {}),
+      // AUDIT SD III (D1): the drops taken, one-way steps of the way out (an older reader ignores them)
+      ...(rec.drops?.size ? { drops: [...rec.drops.values()].map((d) => [...d]) } : {}),
       // c2/S8: :2199 / :2202 - the two user collections are COPIED into
       // the state on every save. Sorted-list order is the law for the
       // notes (AddNext reads Keys positionally), insertion order for the
@@ -286,6 +288,12 @@ export function snapshotAutomap(nowMinutes = null) {
  *  automap only `if (automapState != null)` (:1503-1509), so loading
  *  an old save never erases the maps explored this session (A1
  *  review - the wipe-on-null arm). */
+/** AUDIT SD III (D1): a saved record's drops, read back - each six finite numbers, keyed as trailDrop keys them. */
+function dropsOf(list) {
+  const rec = { drops: new Map() };
+  for (const d of list) if (Array.isArray(d) && d.length === 6 && d.every(Number.isFinite)) trailDrop(rec, d.slice(0, 3), d.slice(3));
+  return rec.drops;
+}
 export function restoreAutomap(snap) {
   if (!snap) return;
   _dungeons = new Map();
@@ -314,6 +322,8 @@ export function restoreAutomap(snap) {
       teleporters: new Map(Array.isArray(rec.teleporters) ? rec.teleporters : []),
       // EM3-3D: the walked trail comes back where it was saved; a save without one gets one at the first scan
       ...(Array.isArray(rec.trail) ? { trail: new Set(rec.trail) } : {}),
+      // AUDIT SD III (D1): the drops come back with it - six numbers each, or none
+      ...(Array.isArray(rec.drops) ? { drops: dropsOf(rec.drops) } : {}),
       // EM3-3D fix: `trailPartial` (the first cut's flag) is NOT restored. It was set on every dungeon entered with
       // that build - the reveal scan runs before the trail tick, so the first trail always found a map already
       // there - and it made the sheet draw every model the scan had touched. A trail with points is the truth.
@@ -499,7 +509,7 @@ export function bindAutomapLayout(rec, model) {
     // the portals with the discovery, and does not keep half of each.
     rec.notes = new Map();
     rec.teleporters = new Map();
-    delete rec.trail; delete rec.trailAll;   // EM3-3D: the walked trail is of a layout that is gone
+    delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)
     rec.blockNames = [...model.blockNames];
     return false;
   }
@@ -916,7 +926,7 @@ export function hideAllAutomap(rec) {
   if (!rec) return false;
   rec.revealed = new Set();
   rec.entranceDiscovered = false;
-  rec.trail = new Set(); delete rec.trailAll;   // EM3-3D: nothing is known, so nothing was walked
+  rec.trail = new Set(); delete rec.trailAll; delete rec.drops;   // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)
   return true;
 }
 
@@ -934,15 +944,80 @@ export function hideAllAutomap(rec) {
  * a record with no trail point at all (a save older than the trail) shows its reveal until its first step.
  */
 export const TRAIL_CELL = 1;
-export function automapTrailTick(rec, eye, eyeHeight = EYE_HEIGHT) {
-  if (!rec || !eye) return false;
-  if (!rec.trail) rec.trail = new Set();
-  const x = Math.floor(eye[0] / TRAIL_CELL), z = Math.floor(eye[2] / TRAIL_CELL);
-  const y = Math.round((eye[1] - eyeHeight) * 2) / 2;
-  const key = `${x},${y},${z}`;
+/** AUDIT DELVE (B1/C1/E3): THE STEP BETWEEN TWO SAMPLES, FILLED. The scan is 5 Hz and a run is 8 m/s, so one sample
+ *  stands 1.6 m from the last and the cell between was never recorded - a trail of islands, and the way out
+ *  (systems/wayOut.js) could not walk it. A step up to this long (m) is walked, and every cell along it stood in; past
+ *  it the player was carried (a teleporter, a fall, a load), and nothing between is. */
+export const TRAIL_FILL_M = 3;
+/** AUDIT SD III (D1): A FALL IS ONE WAY. A landing this far below where its fall began (m - the way out's own step,
+ *  systems/wayOut.js WAY_STEP_DY) is not filled from the last sample stood in, and nothing taken in the air is stood in:
+ *  the fill laid a fall as a column of cells half a metre apart, and the way out (a step either way) walked the player
+ *  back up drops of two, four and six metres they could not climb. A hop, a riser stepped down, a jump up: filled. */
+export const TRAIL_FALL_M = 1;
+/** AUDIT SD III (D1): a landing's step from the last sample stood in may be this long and still be filled (m) - the
+ *  samples taken in the air between are not stood in, so a run down a stair whose motor left the ground a moment
+ *  stood two samples from its last. */
+export const TRAIL_LAND_FILL_M = 2 * TRAIL_FILL_M;
+/** The last sample's feet, per record (never saved: a record loaded or entered again starts unfilled). */
+const _trailLast = new WeakMap();
+/** AUDIT SD III (D1): the height the fall under way began at, per record - set while a sample is taken in the air. */
+const _trailFall = new WeakMap();
+/** AUDIT SD III (D1): the most drops a record keeps (its oldest go first). */
+export const TRAIL_DROPS_MAX = 256;
+/** AUDIT SD III (D1): A DROP IS A WAY DOWN. A landing more than TRAIL_FALL_M below its fall's start is kept on the
+ *  record as a one-way edge - the last place stood in before the fall, then the landing ([x, y, z, x, y, z], feet),
+ *  once a pair of cells - so the way out (systems/wayOut.js, a teleporter's own kind of step) walks down it and never
+ *  up. Saved with the trail. */
+function trailDrop(rec, from, to) {
+  if (!rec.drops) rec.drops = new Map();
+  const key = `${Math.floor(from[0] / TRAIL_CELL)},${Math.round(from[1] * 2) / 2},${Math.floor(from[2] / TRAIL_CELL)}>${Math.floor(to[0] / TRAIL_CELL)},${Math.round(to[1] * 2) / 2},${Math.floor(to[2] / TRAIL_CELL)}`;
+  if (rec.drops.has(key)) return;
+  rec.drops.set(key, [from[0], from[1], from[2], to[0], to[1], to[2]]);
+  if (rec.drops.size > TRAIL_DROPS_MAX) rec.drops.delete(rec.drops.keys().next().value);
+}
+/** AUDIT SD III (D1): a record's drops as the way out's one-way steps - each `{ entrance: { pos }, exit: { pos } }`,
+ *  a teleporter's own shape - after its teleporters. */
+export function automapWaySteps(rec) {
+  const out = [];
+  for (const t of rec?.teleporters?.values?.() ?? []) out.push(t);
+  for (const d of rec?.drops?.values?.() ?? []) out.push({ entrance: { pos: [d[0], d[1], d[2]] }, exit: { pos: [d[3], d[4], d[5]] } });
+  return out;
+}
+function trailMark(rec, x, y, z) {
+  const key = `${Math.floor(x / TRAIL_CELL)},${Math.round(y * 2) / 2},${Math.floor(z / TRAIL_CELL)}`;
   if (rec.trail.has(key)) return false;
   rec.trail.add(key);
   return true;
+}
+/** One sample of the trail: the feet under `eye`. `fallFrom` (AUDIT SD III, D1) the height the motor's fall under way
+ *  began at (its fallStart), or null on the ground - a sample in the air is not stood in, and the landing is filled
+ *  from the last sample stood in only when it is no more than TRAIL_FALL_M below where the fall began. */
+export function automapTrailTick(rec, eye, eyeHeight = EYE_HEIGHT, fallFrom = null) {
+  if (!rec || !eye) return false;
+  if (!rec.trail) rec.trail = new Set();
+  const feet = [eye[0], eye[1] - eyeHeight, eye[2]];
+  if (Number.isFinite(fallFrom)) {
+    const was = _trailFall.get(rec);
+    _trailFall.set(rec, was == null ? fallFrom : Math.max(was, fallFrom));
+    return false;
+  }
+  const last = _trailLast.get(rec);
+  _trailLast.set(rec, feet);
+  const fell = _trailFall.get(rec);
+  _trailFall.delete(rec);
+  let added = false;
+  const d = last ? Math.hypot(feet[0] - last[0], feet[1] - last[1], feet[2] - last[2]) : 0;
+  const drop = fell != null && fell - feet[1] > TRAIL_FALL_M;
+  if (drop && last) trailDrop(rec, last, feet);
+  const reach = fell == null ? TRAIL_FILL_M : drop ? 0 : TRAIL_LAND_FILL_M;
+  if (d > TRAIL_CELL && d <= reach) {
+    const steps = Math.ceil(d / (TRAIL_CELL / 2));   // half a cell apart: no cell the step crosses is skipped
+    for (let s = 1; s < steps; s++) {
+      const t = s / steps;
+      if (trailMark(rec, last[0] + (feet[0] - last[0]) * t, last[1] + (feet[1] - last[1]) * t, last[2] + (feet[2] - last[2]) * t)) added = true;
+    }
+  }
+  return trailMark(rec, feet[0], feet[1], feet[2]) || added;
 }
 /** The trail as world points (the middle of each cell stood in, at the feet's height). */
 export function automapTrailPoints(rec) {

@@ -11,7 +11,9 @@ six lenses and fixed what they found (`01-Overview/Audit-Chapters-2.md`) - its t
 ("You can decide whatever is best": 3.6, 5.1). CHAP2b BUILT (2026-10-08, Mac: "Keep going with the arc/slices"; a
 receipt's standing and the receipt writs - section 4, its record at the foot). CHAP3a BUILT (2026-10-08, the same
 words; a member's own writ and the week's Merit - section 5.1, its record at the foot). CHAP3b (Strength at the
-Turning, the bands on the halls, the sheet) is next.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
+Turning, the bands on the halls, the sheet) is next. Merged with main past the Super Dungeons arc (2026-10-08): the
+arc's migrations are `0091_npc_roll` to `0094_npc_merit` and its service `acct95` - the records below name the numbers
+they were built under.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
 parent, cited by file and symbol, never by line, so the page survives the next merge.
 
 Its neighbours: `11-Multiplayer/Seats-Arc.md` (SEAT0 - the week, the Season, the Tides and the witnessed influence this
@@ -297,7 +299,7 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
   no two chapters could). AUDIT CHAP2 E5: a chapter's writs are the Court's law's slots AFTER its first, which is the
   table's top tier - two a chapter had made every other hall writ that one, a quarter richer than a Court writ. A writ's
   id is `h:day:region:faction:slot`; it rides the Court's `writs` table (kind `hall`, its `faction`) and its day's
-  posting is `hall_writ_days` (migration `0091_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
+  posting is `hall_writ_days` (migration `0092_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
   Thieves Guild's fence in another town are CHAP2b's.
 - **Widened** (AUDIT CHAP2 R3): every chapter posts delivery writs in its own families - the Fighters, the Brotherhood
   and the orders too, whose rows in the table above name receipt writs alone - and the Thieves Guild's are ordinary
@@ -351,7 +353,7 @@ BUILT, CHAP2b (2026-10-08, Mac: "Keep going with the arc/slices") - the receipt 
 - **After the receipt, never instead of it** (`server-account/src/npcReceipts.js` creditReceipt): the claim's own row
   first, the credit after it in the claim's answer (`chapters`), as the seats' gate influence is; a credit that fails is
   answered `counted: false` and the claim stands. Each line is kept once by its id (`npc_receipt_credits`, migration
-  `0092_npc_receipts`: a receipt's `gate:<day>` or `raid:<key>`, a member's day's writ `wgate:<day>`, `wraid:<day>`), so
+  `0093_npc_receipts`: a receipt's `gate:<day>` or `raid:<key>`, a member's day's writ `wgate:<day>`, `wraid:<day>`), so
   a receipt claimed again credits nothing. The Roll's head moves under the credit's own tag (a claim that read it
   before is refused its write), the claim sequence untouched (AUDIT CHAP2 C1); never past 100, what is owed trimmed; only
   while the character stands; the tab refreshes and says "The Fighters Guild will remember it." (`hallRememberLine`).
@@ -527,17 +529,17 @@ classic skin, the row off, the service unreachable - the living world is exactly
 
 DECIDED.
 
-- **Account service (D1)**: BUILT (CHAP1, migration `0090_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
+- **Account service (D1)**: BUILT (CHAP1, migration `0091_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
   last_rid, tag, seeded_at, updated_at - every write moves `seq` on under its own `tag`, a claim names `last_rid`);
   `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at); `npc_rep_events` (seq,
   char_id, player, faction_id, asked, credited, rid, at - AUDIT CHAP2 S6: a claim with no reputation line leaves a line
-  of faction 0, its id). BUILT (CHAP2a, migration `0091_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
+  of faction 0, its id). BUILT (CHAP2a, migration `0092_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
   with `kind` ('court', 'hall'; CHAP3a: 'member'), `faction` and (CHAP3a) `owner`, `UNIQUE (day, region, kind,
   faction, owner, slot)`; `hall_writ_days` (day,
   region, posted, at); AUDIT CHAP2: `npc_hall_strikes` (map_id, by, at) and `npc_roll_heads.kseq`, the claim sequence
-  (C1). BUILT (CHAP2b, migration `0092_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
+  (C1). BUILT (CHAP2b, migration `0093_npc_receipts`): `npc_receipt_credits` (char_id, faction_id, ref, player, amount,
   tag, at - one line a guild a receipt, one a guild a member a day for its writ). BUILT (CHAP3a, migration
-  `0093_npc_merit`): `npc_chapter_merit` (week, faction, region, account, char_id, source - 'writ', 'gate', 'raid' -
+  `0094_npc_merit`): `npc_chapter_merit` (week, faction, region, account, char_id, source - 'writ', 'gate', 'raid' -
   amount, ref, at; `UNIQUE (char_id, faction, source, ref)`, the draft's `(source, ref)` narrowed to one line a
   character an act a guild). Still drawn: `npc_chapters` (key - guild faction and region - strength, event, event_state
   JSON, doctrine, focus); `npc_chapter_seats` (key, seat, char_id, since);
@@ -677,7 +679,7 @@ the law and every place this slice narrowed it (BUILT, CHAP1).
   whatever moved while the claim was out) and the memberships off both books (`rollMembersOf`). AUDIT CHAP moved the
   credit to a pace with what it leaves owed (`rollDrain`), the cap to a customs crossing's and a member's rank's need,
   and the adoption to the factions the client holds; it added `rollRankCapOf` and `rollKeptOf`.
-- **The service.** `server-account/src/npcRoll.js` over migration `0090_npc_roll`: `POST /v1/chapters/roll` reads the
+- **The service.** `server-account/src/npcRoll.js` over migration `0091_npc_roll`: `POST /v1/chapters/roll` reads the
   Roll, seeding it the first time from the save's standing (twenty-two rows and a head, one batch, each INSERT OR
   IGNORE); `POST /v1/chapters/claim` credits what moved, in one batch whose first statement moves the head's `seq` on
   and whose every other write stands only at that `seq` under the claim's id - a lost race writes nothing and says
@@ -731,7 +733,7 @@ The second slice's delivery half; section 4 carries the law and every narrowing 
   town read over all its reports, kept by the isolate a minute). `professions.js`: the day's hall writs written down
   beside the Court's (`hall_writ_days`), listed to an account the Chapters are open to (a hidden guild's to its
   members on the Roll), delivered as a Court writ is
-  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0091_npc_halls` rebuilds
+  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0092_npc_halls` rebuilds
   `world_witness` (the kind) and `writs` (the kind and the faction). The service is `acct94`; deploy it before the
   site.
 - **The client.** `src/net/npcHallBook.js` (a town's halls off `buildingSummaries`' rows, reported once a day a town),
@@ -778,7 +780,7 @@ The second slice's receipt half; section 4 carries the law and its calls (BUILT,
 - **The law.** `src/net/npcChapterLaw.js`: the kinds (`RECEIPT_KINDS`), a guild's asks (`hallReceiptKindsOf`), a
   receipt's own and its writ's ids (`receiptRef`, `receiptWritRef`), what one receipt credits (`receiptCreditsOf`) and
   the line it says (`hallRememberLine`).
-- **The service.** `server-account/src/npcReceipts.js` over migration `0092_npc_receipts`: `creditReceipt`, run by the
+- **The service.** `server-account/src/npcReceipts.js` over migration `0093_npc_receipts`: `creditReceipt`, run by the
   gate and raid claim routes after the receipt's own row (`server-account/src/index.js`), and `receiptAsks`, the board's
   asks beside its writs (`professions.js` listWrits). A realm character's delete and an undone customs take its lines.
   Still `acct94` - nothing of the arc has shipped.
@@ -800,7 +802,7 @@ The third slice's first half; section 5.1 carries the law and what building it n
 - **The law.** `src/net/npcChapterLaw.js`: Merit's numbers (`MERIT_WRIT`, `MERIT_RECEIPT`, `MERIT_TENURE_S`,
   `MERIT_CAP_WEEK`, `MERIT_SOURCES`), its week (`meritWeekOf`), a writ's own share (`meritOfWrit`), a member's own writ
   (`memberWrit`, `memberWritId`), a chapter's writ (`isChapterWrit`) and the board's line (`meritLineOf`).
-- **The service.** `server-account/src/npcMerit.js` over migration `0093_npc_merit` (and 0091's writs rebuild, grown in
+- **The service.** `server-account/src/npcMerit.js` over migration `0094_npc_merit` (and 0092's writs rebuild, grown in
   place - nothing of it shipped - by the kind `member` and its `owner`): `meritStatement`, the Merit line with its every
   bound, in the act's own batch; `meritOfAct`, an act's lines; `meritAsks`, the board's. `professions.js` posts, lists
   and delivers a member's own writ (postMemberWrits, listWrits, deliverWrit); `npcReceipts.js` creditReceipt adds a

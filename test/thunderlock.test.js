@@ -38,6 +38,7 @@ import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEl
 // FIELD-GUN: the two the audit could not see, because every pin it
 // wrote asked about REGISTRATION and none of them picked the thing up.
 import { equipItem, getEquipSlot, getItemHands, EQUIP_SLOTS, ITEM_HANDS } from '../src/systems/equip.js';
+import { stockShopShelf, SHOP_ITEM_GROUPS } from '../src/systems/shopStock.js';   // SHOP-PELLETS: the shot sold, the gun never
 import { installThunderlockIcons, ICON_FILES } from '../src/systems/thunderlock.js';
 import { isVendorArchive, vendorRecordCount, clearVendorTextures } from '../src/systems/textureReplacement.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
@@ -239,11 +240,22 @@ test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sal
 
   // NOT FOR SALE, and it takes no code: a shelf is built from DFU's
   // own group enum table, and a custom template is not in it.
+  // PIN MOVED (SHOP-PELLETS, 2026-10-07, Mac: "allowing the purchase of
+  // the ammunition in stores"): the counter sells its SHOT now
+  // (shopStock.js shopPelletStack), through the pellet's one mint - and
+  // the shelf still knows nothing of the GUN, and no shelf of any shop,
+  // stocked whole, carries one.
   const shelf = readFileSync('src/systems/shopStock.js', 'utf8');
-  assert.ok(!shelf.includes('Thunderlock') && !shelf.includes('thunderlock'),
-    'the shop stock knows nothing about it');
+  assert.ok(!/createThunderlock|THUNDERLOCK_TEMPLATE|isThunderlock/.test(shelf), 'the shop stock never names the gun');
+  assert.match(shelf, /import \{ createPellets \} from '\.\/thunderlock\.js';/, 'only its shot');
   assert.ok(!GROUP_TEMPLATE_INDICES.Weapons?.includes(THUNDERLOCK_TEMPLATE),
     'and it is not in the Weapons enum a shelf draws from');
+  for (const buildingType of Object.keys(SHOP_ITEM_GROUPS).map(Number)) {
+    for (const quality of [1, 20]) {
+      const all = stockShopShelf({ buildingType, quality }, { level: 30 }, { rolls: () => 0 });
+      assert.ok(!all.some(isThunderlock), `building ${buildingType} at quality ${quality}: no gun on the shelf`);
+    }
+  }
 });
 
 test('the find adds to a list rather than promoting one, and claims its own legendary', () => {

@@ -59,6 +59,7 @@ import { CloudNoise } from './cloudNoise.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
+import { SD_BRASS_GLSL } from '../world/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 
 /** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -1335,9 +1336,11 @@ uniform float uFlash;     // lightning: the WHOLE sky lit for the frame (the mar
 uniform vec4 uBolt;       // WEATHER3d: a DISTANT storm's strike - xyz the direction to its cloud, w its light
 uniform float uBoltCos;   // ...and the cosine of the cone its cloud fills from here
 uniform float uDread;     // EVENT1: the live event's grade, 0 = none
+uniform float uBrass;     // AUDIT SD III (V8): the brass air's, 0 = none
 out vec4 outColor;
 const float PI = 3.14159265;
 ${DREAD_GLSL}
+${SD_BRASS_GLSL}
 // CLOUD-SQUARE (FIELD BUGS 2026-10-01 #3): "Clouds in the distance sometimes look square". A map texel is a third of
 // a degree (two thirds on the low tier) - 6 to 23 screen pixels - and each was marched from its own jittered start,
 // so a far cloud a few texels across, magnified by one bilinear tap, was a cluster of soft squares. A cubic B-spline
@@ -1386,7 +1389,7 @@ void main() {
   // EVENT1: THE CLOUD GRADED, NOT ITS PREMULTIPLIED SUM - c.rgb carries the cloud's opacity (1 - c.a: the composite
   // is sky * T + cloud), so the grade reads the cloud's own colour and puts the opacity back; clear sky adds nothing
   float op = 1.0 - c.a;
-  vec3 cloud = op > 1e-4 ? dreadGrade(c.rgb / op, uDread) * op : c.rgb;
+  vec3 cloud = op > 1e-4 ? brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op : c.rgb;   // AUDIT SD III (V8): the brass air's after the dread's
   outColor = vec4(cloud * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);
 }`;
 
@@ -1402,7 +1405,7 @@ void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos', 'uDread'];   // EVENT1: the live event's grade   // WEATHER3d: the distant strike
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos', 'uDread', 'uBrass'];   // EVENT1: the live event's grade   // WEATHER3d: the distant strike
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -1444,6 +1447,8 @@ export class VolumetricClouds {
     this.flash = 0;
     /** EVENT1: the live event's grade over the clouds, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
+    /** AUDIT SD III (V8): the brass air's grade over them, 0..1 (world/sdBrassSky.js) - the host's. */
+    this.brass = 0;
     this.bolt = null;   // WEATHER3d: a distant strike's light, or none
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
     this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
@@ -1659,6 +1664,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uFlash, this.flash);
     gl.uniform1f(u.uDread, this.dread);   // EVENT1
+    gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
     const b = this.bolt;   // WEATHER3d
     gl.uniform4f(u.uBolt, b ? b.dir[0] : 0, b ? b.dir[1] : 1, b ? b.dir[2] : 0, b ? b.strength : 0); gl.uniform1f(u.uBoltCos, b ? b.cos : 1);
     gl.bindVertexArray(this.vao);

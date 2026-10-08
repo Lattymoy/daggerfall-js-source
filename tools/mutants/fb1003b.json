@@ -20,8 +20,8 @@
   {
     "name": "AETHERICMAKER-predicate-false",
     "file": "src/systems/enchanting.js",
-    "old": "export const itemMakerRefuses = (item) => isAetheric(item);",
-    "new": "export const itemMakerRefuses = (item) => false && isAetheric(item);",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
+    "new": "export const itemMakerRefuses = (item) => false && isAetheric(item) || isGilded(item);",
     "tests": [
       "test/fb1003b_aethericmaker.test.js"
     ]

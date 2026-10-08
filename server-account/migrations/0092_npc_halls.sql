@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct94) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site:
 -- the new site reports a town's guild halls as it walks in.
 --
 -- Mac: "Do it" (bible/11-Multiplayer/Chapters-Arc.md section 4, CHAP2a).

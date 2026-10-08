@@ -127,7 +127,7 @@ test('WBX8 the seams, by source: the host reads the omen\'s sky each exterior fr
   assert.match(w, /const skyDreadW = Math\.max\(dreadW, gateSky\?\.weight \?\? 0\);/);
   assert.match(w, /sky\.setDread\(skyDreadW, dreadCloudGlow\(boltFrame\.bolts\)\);/);
   assert.match(w, /\(1 - DREAD_KEY_DIM \* skyDreadW\)/);
-  assert.match(w, /dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\)\);/);   // SUNBABY2 moved it: the key, reddened under the sun baby's wrath
+  assert.match(w, /dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\)\);/);   // SUNBABY2 moved it: the key, reddened under the sun baby's wrath; SD19 moved it: leaning brass near a Hollow (PIN MOVED)
   assert.match(w, /gateStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand, weight: gateSky\?\.weight \?\? 0, centre: gateSky \? _gateStormC : null \}\);/);
   assert.match(w, /if \(jump\) \{ dreadStorm\.reset\(\); gateStorm\.reset\(\); \}/);
   assert.doesNotMatch(w, /sky\.setDread\(dreadW,/, 'the event alone no longer grades the sky');

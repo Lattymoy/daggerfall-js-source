@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SET-an-enchanted-aetheric-fades",
     "file": "src/systems/rarityTier.js",
-    "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric';",
-    "new": "export const stampedTier = (item) => rolledTier(item);",
+    "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric' || item?.rarity === 'gilded';",
+    "new": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'gilded';",
     "tests": [
       "test/pcaao.test.js"
     ]

@@ -336,10 +336,12 @@ test('GUIDE1 THE MACHINE NEVER KNOWS - a whole game, twice: the same quest (a Pl
   assert.equal(engineDraws, 0, 'no look drew from Math.random');
   assert.deepEqual(seen.events, ['urgent', 'updated', 'ended'], 'the lens saw the one-day clock lose its first minute, the step, and the ending');
   assert.match(seen.first.latest.lines.join(' '), /asked me, in Arkay's name, to find .+ at The Feather and Dog in Bigtown\./, 'the quiet read\'s words: the questor, the first divine, a name, the building and the town');
-  assert.deepEqual(seen.first.target, {
+  const { building: firstBuilding, ...firstTarget } = seen.first.target;
+  assert.deepEqual(firstTarget, {
     symbol: 'pub', kind: 'building', locationName: 'Bigtown', regionName: REGION, buildingName: 'The Feather and Dog',
     onMap: true, here: false, find: { regionIndex: RI, regionName: REGION, locationName: 'Bigtown' },
   });
+  assert.ok(firstBuilding?.buildingKey > 0, 'GUIDE8\'s Town tier (AUDIT DELVE): the building the entry names, by its key');
 });
 
 test('GUIDE1 NOTHING THE JOURNAL HAS NOT SAID - the target over producer-minted Places (a local tavern, a fixed town, a questor): the LAST Place an entry names, DFU\'s law, and the logbook\'s through the same export; the building only when the entry names the building; the town when the entry names it, when it is on the player\'s map, or when the player stands in it - and only the target\'s own macros say anything; the region when named that way or through the town; `find` exactly when HandleQuestClicks would offer the box - on the map and not here; a Person names no target; an entry with no Place points nowhere (mutants: the first Place for the last; the building without `_p_`; the town without being said; any symbol\'s macro saying it; `find` off the map or here; the town underfoot unnamed)', () => {
@@ -362,22 +364,26 @@ test('GUIDE1 NOTHING THE JOURNAL HAS NOT SAID - the target over producer-minted 
   assert.equal(q.getPlace({ name: 'pub' }).siteDetails.buildingName, 'The Feather and Dog', 'the producer named the tavern');
   const t = (id, onMap = false, here = 'Elsewhere') => entryTarget(q.getMessage(id), { canFindPlace: () => onMap, currentLocationName: () => here });
   const off = { onMap: false, here: false, find: null };
+  // GUIDE8's Town tier (AUDIT DELVE): the building the entry NAMES, by its town's map id and key - only then
+  const pubSite = q.getPlace({ name: 'pub' }).siteDetails;
+  const pubBuilding = { mapId: pubSite.mapId, buildingKey: pubSite.buildingKey };
+  assert.ok(pubBuilding.buildingKey > 0);
 
   // AUDIT GUIDE W1: the town's own name (`__p_`) says the town, never its region - off the map, the region is said only
   // by the entry (`____p_`) or DFU's box
-  assert.deepEqual(t(1010), { symbol: 'pub', kind: 'building', locationName: 'Bigtown', regionName: null, buildingName: 'The Feather and Dog', ...off });
-  assert.deepEqual(t(1011), { symbol: 'pub', kind: 'building', locationName: 'Bigtown', regionName: null, buildingName: null, ...off }, '"somewhere in Bigtown" stays somewhere');
-  assert.deepEqual(t(1012), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, ...off });
-  assert.deepEqual(t(1013), { symbol: 'keep', kind: null, locationName: null, regionName: REGION, buildingName: null, ...off }, 'the region said, the town not');
-  assert.deepEqual(t(1013, true), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, onMap: true, here: false, find: { regionIndex: RI, regionName: REGION, locationName: 'Llugwych' } }, 'on the map, DFU\'s find-place box names it');
-  assert.deepEqual(t(1013, true, 'Llugwych'), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, onMap: true, here: true, find: null }, 'standing in it: named, and nothing to travel to');
+  assert.deepEqual(t(1010), { symbol: 'pub', kind: 'building', locationName: 'Bigtown', regionName: null, buildingName: 'The Feather and Dog', building: pubBuilding, ...off });
+  assert.deepEqual(t(1011), { symbol: 'pub', kind: 'building', locationName: 'Bigtown', regionName: null, buildingName: null, building: null, ...off }, '"somewhere in Bigtown" stays somewhere');
+  assert.deepEqual(t(1012), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, building: null, ...off });
+  assert.deepEqual(t(1013), { symbol: 'keep', kind: null, locationName: null, regionName: REGION, buildingName: null, building: null, ...off }, 'the region said, the town not');
+  assert.deepEqual(t(1013, true), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, building: null, onMap: true, here: false, find: { regionIndex: RI, regionName: REGION, locationName: 'Llugwych' } }, 'on the map, DFU\'s find-place box names it');
+  assert.deepEqual(t(1013, true, 'Llugwych'), { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, building: null, onMap: true, here: true, find: null }, 'standing in it: named, and nothing to travel to');
   assert.deepEqual(t(1013, false, 'Llugwych').locationName, null, 'AUDIT GUIDE W2: the map says no - the Llugwych underfoot is another of the name, and names nothing');
   // the fixed-town route (exterior.js) asks the map nothing: the town the player stands in is named, and its region,
   // by the standing alone - the entry says only `_keep_`
   assert.deepEqual(entryTarget(q.getMessage(1017), { currentLocationName: () => 'Llugwych' }),
-    { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, onMap: null, here: true, find: null }, 'standing in it, no map asked: named');
-  assert.deepEqual(t(1017), { symbol: 'keep', kind: null, locationName: null, regionName: null, buildingName: null, ...off }, 'a fixed town has no building name to say, and `_p_` says nothing else');
-  assert.deepEqual(t(1018), { symbol: 'pub', kind: null, locationName: null, regionName: REGION, buildingName: null, ...off }, 'the questor\'s name says nothing of the tavern\'s');
+    { symbol: 'keep', kind: 'town', locationName: 'Llugwych', regionName: REGION, buildingName: null, building: null, onMap: null, here: true, find: null }, 'standing in it, no map asked: named');
+  assert.deepEqual(t(1017), { symbol: 'keep', kind: null, locationName: null, regionName: null, buildingName: null, building: null, ...off }, 'a fixed town has no building name to say, and `_p_` says nothing else');
+  assert.deepEqual(t(1018), { symbol: 'pub', kind: null, locationName: null, regionName: REGION, buildingName: null, building: null, ...off }, 'the questor\'s name says nothing of the tavern\'s');
   assert.equal(t(1014).symbol, 'keep', 'the LAST Place the entry names');
   assert.equal(lastPlaceMentionedInMessage(q.getMessage(1014)), q.getPlace({ name: 'keep' }), 'the logbook\'s law, the same export');
   assert.equal(t(1015), null);

@@ -608,7 +608,7 @@
   },
   {
     "name": "T-MIG-KIND",
-    "file": "server-account/migrations/0091_npc_halls.sql",
+    "file": "server-account/migrations/0092_npc_halls.sql",
     "old": "'seat', 'npchall'))",
     "new": "'seat'))",
     "tests": [
@@ -620,7 +620,7 @@
   },
   {
     "name": "T-MIG-WRITS-UNIQUE",
-    "file": "server-account/migrations/0091_npc_halls.sql",
+    "file": "server-account/migrations/0092_npc_halls.sql",
     "old": "UNIQUE (day, region, kind, faction, owner, slot)",
     "new": "UNIQUE (day, region, kind, owner, slot)",
     "tests": [
@@ -1456,7 +1456,7 @@
   },
   {
     "name": "T-MIG-HEADS-PK",
-    "file": "server-account/migrations/0090_npc_roll.sql",
+    "file": "server-account/migrations/0091_npc_roll.sql",
     "old": "char_id     TEXT PRIMARY KEY,",
     "new": "char_id     TEXT,",
     "tests": [
@@ -1468,7 +1468,7 @@
   },
   {
     "name": "T-MIG-ROLL-PK",
-    "file": "server-account/migrations/0090_npc_roll.sql",
+    "file": "server-account/migrations/0091_npc_roll.sql",
     "old": ",\n  PRIMARY KEY (char_id, faction_id)\n);",
     "new": "\n);",
     "tests": [
@@ -2029,7 +2029,7 @@
   },
   {
     "name": "AUDIT-CHAP2-MIG-STRIKES",
-    "file": "server-account/migrations/0091_npc_halls.sql",
+    "file": "server-account/migrations/0092_npc_halls.sql",
     "old": "CREATE TABLE IF NOT EXISTS npc_hall_strikes (",
     "new": "CREATE TABLE IF NOT EXISTS npc_hall_strikes_x (",
     "tests": [

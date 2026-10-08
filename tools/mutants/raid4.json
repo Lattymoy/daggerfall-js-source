@@ -102,8 +102,8 @@
   {
     "name": "RAID4-inspect-without-raids",
     "file": "server-account/src/index.js",
-    "old": ", raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id) }, 200, origin);",
-    "new": ", serpents: await serpentRecordOf(ctx, body.id) }, 200, origin);",
+    "old": ", raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }",
+    "new": ", serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }",
     "tests": [
       "test/raid4_rewards.test.js"
     ]

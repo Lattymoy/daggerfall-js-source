@@ -682,15 +682,15 @@ test('SET3 the round: each recovering power is said ready again at the first mag
 
 test('SET3 the HUD\'s read of the powers: the Rampage\'s stacks and seconds, the halving, the fury and every recovery - whole seconds left, 0 for one not running (mutants: a window read past its end)', () => {
   fresh(); online(1);
-  assert.deepEqual(setPowerStates(), { rampage: 0, rampageLeft: 0, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0 });
+  assert.deepEqual(setPowerStates(), { rampage: 0, rampageLeft: 0, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0, gearLeft: 0, hourRecoverLeft: 0 });
   const e = wearSet(player(), 'dagon', 6);
   door([], { me: e });
   at(10);
   reportPlayerKill(RAT); reportPlayerKill(RAT);
   at(10.5);
-  assert.deepEqual(setPowerStates(), { rampage: 2, rampageLeft: 12, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0 });
+  assert.deepEqual(setPowerStates(), { rampage: 2, rampageLeft: 12, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0, gearLeft: 0, hourRecoverLeft: 0 });
   at(22);
-  assert.deepEqual(setPowerStates(), { rampage: 0, rampageLeft: 0, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0 }, 'every window past its end: 0, never a count below it');
+  assert.deepEqual(setPowerStates(), { rampage: 0, rampageLeft: 0, halvedLeft: 0, unbrokenLeft: 0, wrathLeft: 0, wrathRecoverLeft: 0, eventideLeft: 0, riposteLeft: 0, blood: 0, bloodLeft: 0, markLeft: 0, ward: 0, wardRecoverLeft: 0, coil: 0, coilLeft: 0, shedRecoverLeft: 0, gearLeft: 0, hourRecoverLeft: 0 }, 'every window past its end: 0, never a count below it');
   fresh(); online(1);
   const m = wearSet(player(), 'malacath', 6);
   m.health = 5;
@@ -705,7 +705,7 @@ test('SET3 the HUD\'s read of the powers: the Rampage\'s stacks and seconds, the
 test('SET3 the host: world.js imports the powers (registering them) and gives them its voice - the parry\'s ring for Unbroken, a fire cast for the Wrath, a magic cast for Eventide, through the cast sounds\' ID door; the running host\'s door names my entity (mutants: the powers never imported; a cast sound spent as a raw index; a thrown sound breaking the save)', () => {
   const w = strip(read('src/scenes/world.js'));
   assert.match(w, /import \{ setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow \} from '\.\.\/systems\/sigilSetPowers\.js';/);   // AUDIT SETS L3: and the held blow's two doors
-  assert.match(w, /setSetPowersVoice\(\{ sound: \(name\) => \{\s*if \(name === 'unbroken'\) audio\.playOneShot\(SOUND\.Parry6, 1\);\s*else if \(name === 'wrath'\) audio\.playOneShotId\(SPELL_CAST_SOUND\[0\], 1\);\s*else if \(name === 'eventide'\) audio\.playOneShotId\(SPELL_CAST_SOUND\[4\], 1\);\s*else if \(name === 'mark'\) audio\.playOneShot\(SOUND\.DrawWeapon, 1\);\s*else if \(name === 'ward'\) audio\.playOneShot\(SOUND\.EquipMaceOrHammer, 1\);\s*else if \(name === 'shed'\) audio\.playOneShot\(SOUND\.SplashLarge, 1\);\s*\} \}\);/);   // SERPENT-SET: Shed Skin's splash
+  assert.match(w, /setSetPowersVoice\(\{ sound: \(name\) => \{\s*if \(name === 'unbroken'\) audio\.playOneShot\(SOUND\.Parry6, 1\);\s*else if \(name === 'wrath'\) audio\.playOneShotId\(SPELL_CAST_SOUND\[0\], 1\);\s*else if \(name === 'eventide'\) audio\.playOneShotId\(SPELL_CAST_SOUND\[4\], 1\);\s*else if \(name === 'mark'\) audio\.playOneShot\(SOUND\.DrawWeapon, 1\);\s*else if \(name === 'ward'\) audio\.playOneShot\(SOUND\.EquipMaceOrHammer, 1\);\s*else if \(name === 'shed'\) audio\.playOneShot\(SOUND\.SplashLarge, 1\);\s*else if \(name === 'gear'\) audio\.playOneShotId\(SD_HALL_SOUNDS\.clunk, 1\);\s*else if \(name === 'hour'\) audio\.playOneShotId\(SD_HALL_SOUNDS\.toll, 1\);\s*\} \}\);/);   // SERPENT-SET: Shed Skin's splash; SD9d: Gearward's clunk, The Hour Turns' toll (PIN MOVED)
   assert.match(strip(read('src/scenes/hostMagic.js')), /player: \(\) => playerEntity,/);
   assert.match(strip(read('src/scenes/hostMagic.js')), /player: \(\) => playerEntity,\s*clear: \(a, b\) => burstClear\(collider, a, b\),/, 'AUDIT SET M4: the host\'s door answers the Nova\'s ray with its own collider');
   assert.equal(eventideBundle(3).element, 4, 'Eventide\'s bundle rides the magic element - its cast sound\'s index');

@@ -244,6 +244,31 @@ by it). The HUD's chip shows Shed Skin's recovery; its sound is a large splash, 
 pays the gate's currency too - a Deadlands Ember, every hoard (section 7's Broker and the insignia take it as a
 breach's; `Sea-Serpent.md` section 8).
 
+## 6d. The Brass Remnant's own set (SD9d, 2026-10-07)
+
+`Super-Dungeons.md` section 11: one more Aetheric set, **The Brass of Numidium** - what the Warp kept of the Walking
+Brass - and its patron no Daedra: Kagrenac, the Tonal Architect who built it. Nine fixed records of Dwarven make, the
+Dwemer's brass - the seven body pieces, a round shield and a ONE-HANDED Longsword, so all nine are worn at once (the
+design had named a longsword, a war axe and a staff: three weapons for the one place a set counts) - every affix at the
+Legendary band's TOP (armour 20, an attribute 15, a resistance 50, a skill 30, weight 50, damage 40) and the
+Hour-Hand's blow the sigil's greatest (12): the hardest fight in the game pays what the gate's Warden does, the
+Regalia's measure. One resistance of an element at most, and never magic or shock - the 2-piece tier carries them.
+Nothing drops it but the Brass Remnant: its spoils carry a piece a third of the time, rolled after everything they
+rolled before (`systems/aetheric.js` `NUMIDIUM_SET_PIECES`, `NUMIDIUM_SET_CHANCE`, `rollNumidiumPiece`; the spoils are
+SD9e's). No world drop, shelf or Broker rolls one.
+
+The Brass Visage, the Right and Left Pauldrons of the Walking Brass, The Heartcage, The Tonal Architect's Hands,
+Greaves of the Unmade Stride, Boots of the Unmoored Step, The Gear-Face (Round Shield), The Hour-Hand (Longsword).
+
+| pieces | ability | Faint -> Ascendant |
+|---|---|---|
+| 2 | **Dwemer Brass** - magic and shock resistance | +4 -> +10 each |
+| 4 | **Gearward** - the next foe's blow that lands on you is lighter, in whole points; then the gear winds again (its recovery, the card's tag). A fall, a poison's round or a spell is never lightened and never unwinds it, nor is a blow too small to lighten by a whole point; the Brass Remnant's own blows and its Echoes' are a foe's for it, never the Hour's magic (section 8) | 15% -> 30%; recovers 18 -> 12 s |
+| 6 | **The Hour Turns** - a blow that would kill you does not: you are left at 1 and that share of your health returns at once; then it must recover. A death save, as Unbroken is - a fall's death is turned back too - and never worn with the Bulwark (six and six is past nine places) | 15% -> 25%; recovers 90 -> 60 s |
+
+The Hour Turns heals through the one heal a power gives (`systems/playerHeal.js`). The HUD's chip shows its recovery.
+Their sounds are the Orrery hall's (`scenes/sdHall.js`): Gearward the hall's gear, The Hour Turns its low bell.
+
 ## 7. The Sigil Broker - Sigil Stones buy the day's stock (SET7)
 
 A Daedra trader (the game has no Dremora sprite; a Daedra Seducer stands in) is held at each breach's faithful's
@@ -296,6 +321,13 @@ gold - a stone's only worth is at its own vendor.
   him, and his fall is no kill of the Rampage's or Eventide's. The court is the gate's own fight. AUDIT SETS L4: and so
   Riposte and Blood for Blood never arm off his strikes, No Escape and Iron Hide never trigger on his fall, and Run Them
   Down never reads him under half (his stand-in holds a billion); a blow his ward turns aside spends no power.
+- The Brass Remnant is out of every reach power's reach as the Warden is (its strikes land through the court's door,
+  no struck tail) - but one power answers it (AUDIT SD): its own set's Gearward, which would otherwise never meet the
+  fight that drops it. A body's own blow - the Stomp, the Hand, the Volley, the Remnant's or an Echo's; never the Hour's
+  unresisted magic over the whole floor (the Pulse, the Reset, the End), never the burning brass - is marked as a world
+  boss's as it lands (`scenes/sdRemnantBlows.js` `bodysBlow` -> `setBossStruck`), taken by the damage door as it
+  opens, and read by Gearward alone: Spite, the Wrath, Riposte, Blood for Blood and Shed Skin hear no foe in it, and the
+  loot's blow listeners none. The Warden's court marks nothing (its bytes are the gate's).
 - AUDIT SETS M2: a client older than RAID4b cannot read a raid set's sigil. A room's container word it cannot read is
   now marked unreadable and never landed, claimed, closed over or opened - from this build on; a tab still running a
   build before it refuses the list and claims the container with its own roll, as it did. The relay's deploy drops
@@ -311,6 +343,8 @@ gold - a stone's only worth is at its own vendor.
   the next breach.
 - The raiding parties' sets (6b) come from a town defended online, at a relay that keeps raids (RAID3), and from
   nothing else: offline, a town's cleanse pays RAID1's reputation alone.
+- The Brass of Numidium (6d) comes from the Brass Remnant's spoils and nothing else: a Super Dungeon's last fight,
+  online, at a relay that keeps the Hollows (`Super-Dungeons.md` section 11).
 - A Sigil Stone is bound (SS1, SS3, SS4), and so is every piece the Broker sells (SS4): it is never traded, dropped,
   put in a container or sold - a container is the room's once it is opened online, a body is granted to whoever loots
   it, and a shop's shelf is the room's too - and a list a peer hands over lands without one. It goes into the player's
@@ -906,3 +940,23 @@ Pinned: `test/serpentset.test.js` (the law, the records, the drop, the hoard, th
 `tools/mutants/serpentset.json` (48, all dead). The older pins it moved: SET1's and RAID4b's set lists, SET3's states and
 voice, SERPENT1's hoard list; their records re-aimed by content (SET1's order, SET3's bow and its two Wrath records -
 Shed Skin carries the same crossing and guard - LOOT4's three heal records, now `systems/playerHeal.js`'s).
+
+### SD9d - the Brass Remnant's own set (2026-10-07)
+
+Section 6d, whole but for the roll that pays it (the Brass Remnant's spoils, SD9e); the record is
+`Super-Dungeons.md`'s SD9d. The law (`systems/sigilSets.js` `numidium`, Aetheric and naming no raiding party;
+`systems/sigil.js` names it after the serpent's), its three powers through SET2's seams (`systems/sigilSetPowers.js` -
+the fold for Dwemer Brass; the damage modifier for Gearward, a foe's blow alone; a death save for The Hour Turns, tried
+when no Bulwark answers, and the hurt listener's heal as the door says it saved; the round's "ready again"; its chip;
+the states), the nine records (`systems/aetheric.js` `NUMIDIUM_SET_PIECES`, `NUMIDIUM_SET_CHANCE`, `rollNumidiumPiece`;
+`AETHERIC_RECORDS` ends with them) and the voice (`scenes/world.js`: the Orrery hall's gear and its low bell). The
+wire's check is the raid sets' (AUDIT SETS L6). Pinned: `test/sd9d_numidium.test.js`; `tools/mutants/sd9d.json` (44,
+all dead).
+
+### AUDIT SD - Gearward and the world boss (2026-10-07)
+
+`Super-Dungeons.md`'s SD10b (C7, C8). The Remnant's blows came through the court's door with no foe's mark, so Gearward
+never answered the fight its set drops in; now a body's own blow (never the Hour's magic) is marked as a world boss's
+(`setBossStruck`, taken as the door opens, a blow's window old at most) and Gearward alone reads it (section 8). And a
+blow too small to lighten by a whole point no longer spends the winding. Pinned: `test/sd10b_audit.test.js`; `tools/mutants/sd10b.json` (its C7 and
+C8 records, all dead); `tools/mutants/sd9d.json`'s Gearward records re-aimed by content.

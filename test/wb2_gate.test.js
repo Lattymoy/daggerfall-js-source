@@ -377,7 +377,7 @@ test('WB2 the seams: online alone, stood before the lights, the stone in the wor
   assert.match(w, /gate: _gatePick,   \/\/ WB2/);
   assert.match(w, /gate: gatePool \? pickActivatableHit\(cam\.pos, _hd, \[\.\.\.gatePool\.targets\(\), \.\.\.\(riteHost\?\.targets\(\) \?\? \[\]\)\], collider\) : null,/, 'the plaque races it too');
   assert.match(w, /\(key\) => gatePool\?\.hoverName\(key\) \?\? null,/);
-  assert.match(w, /if \(gatePool && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) drawGateBanner\(null\);/, 'the countdown leaves with the street');
+  assert.match(w, /if \(\(gatePool \|\| sdHost\) && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) drawGateBanner\(null\);/, 'the countdown leaves with the street');   // SD19 (PIN MOVED): a Hollow's door's banner too
   assert.match(read('src/player/activationRace.js'), /firmFirst\(\[gate, broker, camp, water,/, 'the gate heads the tie order (SET7: the Broker who stands beside it right after)');
   assert.ok(PORTAL_CENTRE_Y > ARCH_Y0 && PORTAL_CENTRE_Y < ARCH_Y1);
 });

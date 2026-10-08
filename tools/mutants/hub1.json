@@ -248,9 +248,9 @@
   {
     "name": "HUB1-box-title-dropped",
     "file": "src/ui/heldMap.js",
-    "old": "const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : [])];",
-    "new": "const hubRows = [...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : [])];",
-    "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e SEAT-TIP): the seat's line names its holder",
+    "old": "const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];",
+    "new": "const hubRows = [...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];",
+    "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e SEAT-TIP): the seat's line names its holder; re-aimed BY CONTENT (TIER1): a dungeon's tier rides the same rows, after the seat",
     "tests": [
       "test/heldmap.test.js"
     ]

@@ -318,7 +318,9 @@ test('RR3b the hosts and the save: the four hosts bind the reader and await the 
   assert.match(ld, /registerWorldDataAsset\(baseName\(path\), json, \(\) => modSetting\(vendor, 'Enabled'\) === true\)/, 'a mod that is off is a mod DFU never loaded');
   assert.match(ld, /installWorldDataReplacement\(\);/);
   const w = rd('src/scenes/world.js'), e = rd('src/scenes/exterior.js');
-  assert.equal((w.match(/locationIndex: (dfLoc|loc)\.locationIndex \?\? 0/g) ?? []).length, 4, 'world.js: the four merge sites');
+  // AUDIT DELVE (PIN MOVED): GUIDE8's Town tier reads the town's summaries for the compass's building - a fifth site,
+  // with the same location index
+  assert.equal((w.match(/locationIndex: (dfLoc|loc)\.locationIndex \?\? 0/g) ?? []).length, 5, 'world.js: the five merge sites');
   assert.equal((e.match(/locationIndex: dfLocation\.locationIndex \?\? 0/g) ?? []).length, 4, 'exterior.js: the four merge sites');
   assert.match(rd('src/systems/talkTopics.js'), /export function mergeNamedBuildings\(exteriorBuildings, blocks, \{ locationIndex = 0 \} = \{\}\) \{/);
   assert.match(rd('src/world/buildingSummaries.js'), /mergeNamedBuildings\(exteriorBuildings \?\? \[\], blocks \?\? \[\], \{ locationIndex: nameOpts\.locationIndex \?\? 0 \}\)/);

@@ -1,0 +1,218 @@
+[
+  {
+    "name": "SD6A-a-stone-turning-itself-two",
+    "file": "src/net/sdBrain.js",
+    "old": "(_, j) => (i === j ? 1 : 0)));",
+    "new": "(_, j) => (i === j ? 2 : 0)));",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-partner-after-it",
+    "file": "src/net/sdBrain.js",
+    "old": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "new": "    const partners = sdShuffle(r, order.filter((x) => x !== order[p])).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-partner-by-nothing",
+    "file": "src/net/sdBrain.js",
+    "old": "gear[order[p]][j] = [-2, -1, 1, 2][sdPick(r, 4)];",
+    "new": "gear[order[p]][j] = [-2, -1, 0, 2][sdPick(r, 4)];",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-lone-stone-among-the-later",
+    "file": "src/net/sdBrain.js",
+    "old": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "new": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : sdPick(r, 3));",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-false-opposite",
+    "file": "src/net/sdBrain.js",
+    "old": "    if (roll < 0.2) { truth[a] = sdHour(truth[b] + 6);",
+    "new": "    if (roll < 0.2) { truth[a] = sdHour(truth[b] + 5);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-false-mirror",
+    "file": "src/net/sdBrain.js",
+    "old": "    else if (roll < 0.5) { truth[a] = sdHour(-truth[b]);",
+    "new": "    else if (roll < 0.5) { truth[a] = sdHour(1 - truth[b]);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-an-offset-of-six",
+    "file": "src/net/sdBrain.js",
+    "old": "    else { const k = sdPick(r, 11) - 5;",
+    "new": "    else { const k = sdPick(r, 13) - 6;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-three-plain",
+    "file": "src/net/sdBrain.js",
+    "old": "    if (q < 2) { truth[a] = sdPick(r, SD_HOURS);",
+    "new": "    if (q < 3) { truth[a] = sdPick(r, SD_HOURS);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-start-a-few-turns-off",
+    "file": "src/net/sdBrain.js",
+    "old": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
+    "new": "  while (sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-start-past-the-fray",
+    "file": "src/net/sdBrain.js",
+    "old": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);",
+    "new": "  while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-solve-reading-the-gear-transposed",
+    "file": "src/net/sdBrain.js",
+    "old": "    for (let q = p + 1; q < order.length; q++) have += t[order[q]] * gear[order[q]][j];",
+    "new": "    for (let q = p + 1; q < order.length; q++) have += t[order[q]] * gear[j][order[q]];",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-fray-shortened",
+    "file": "src/net/sdBrain.js",
+    "old": "export const SD_FRAY_MAX = 48;",
+    "new": "export const SD_FRAY_MAX = 30;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-snap-on-the-Concord",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
+    "new": "  if (f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-snap-keeps-the-fray",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
+    "new": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; x = true; }",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-Concord-not-kept",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (state.ok) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-back-turn-turned-forward",
+    "file": "src/net/sdBrain.js",
+    "old": "export const orreryTurn = (o, st, i, a) => st.map((h, j) => sdHour(h + a * o.gear[i][j]));",
+    "new": "export const orreryTurn = (o, st, i, a) => st.map((h, j) => sdHour(h + Math.abs(a) * o.gear[i][j]));",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-dial-counting-wrong",
+    "file": "src/net/sdBrain.js",
+    "old": "m + (sdHour(h) === o.truth[j] ? 1 : 0), 0);",
+    "new": "m + (sdHour(h) === o.truth[j] ? 1 : 0), 1);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-reach-widened",
+    "file": "src/net/sdBrain.js",
+    "old": "Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack;",
+    "new": "Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack + 0.5;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-hall's-edge-moved",
+    "file": "src/net/sdBrain.js",
+    "old": "Math.hypot(x - SD_ORRERY.x, z - SD_ORRERY.z) <= SD_ORRERY.r;",
+    "new": "Math.hypot(x - SD_ORRERY.x, z - SD_ORRERY.z) <= SD_ORRERY.r + 1;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-mirror-read-forwards",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (c.kind === 'mirror') return sdHour(a + b) === 0;",
+    "new": "  if (c.kind === 'mirror') return sdHour(a - b) === 0;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-an-opposite-read-as-the-same",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (c.kind === 'opposite') return a === sdHour(b + 6);",
+    "new": "  if (c.kind === 'opposite') return a === sdHour(b);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-more-and-fewer-swapped",
+    "file": "src/net/sdBrain.js",
+    "old": "${c.k > 0 ? 'more' : 'fewer'}.`;",
+    "new": "${c.k > 0 ? 'fewer' : 'more'}.`;",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-stone-on-the-walk",
+    "file": "src/net/sdBrain.js",
+    "old": "export const SD_STONE_BEARINGS = Object.freeze([30, 90, 150, 210, 270, 330].map(",
+    "new": "export const SD_STONE_BEARINGS = Object.freeze([0, 60, 120, 180, 240, 300].map(",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-twelve-shown-as-nothing",
+    "file": "src/net/sdBrain.js",
+    "old": "export const sdHourShown = (h) => sdHour(h) || SD_HOURS;",
+    "new": "export const sdHourShown = (h) => sdHour(h);",
+    "tests": [
+      "test/sd6a_orrery.test.js"
+    ]
+  }
+]

@@ -268,6 +268,21 @@ const vendorEntryOf = (archive, record, map = 'Albedo') => {
   for (const e of _vendor.values()) if (e.archive === Number(archive) && e.record === Number(record) && e.frame === 0 && e.map === map) return e;
   return null;
 };
+/** THUNDERLOCK-ART (AUDIT SD III; Mac: "The thunderlock/ammo also doesnt recieve proper artwork in slots like the
+ *  hotbar or inventory"): A STAND-IN TAKES NO DYE. DISC22-D taught every icon door to ask a record by the item's dye
+ *  (GetItemImage's TryImportTexture by item.dyeColor, ItemHelper.cs:458) - right for a dyed set (Roleplay Realism Items'
+ *  520_10-0_Iron .. _Daedric), and a miss for the port's own art, which is ONE truecolor picture with no dyed forms: the
+ *  Thunderlock is Dwarven and its pellets Iron, so the doors asked 560_0-0_Dwarven and 561_0-0_Iron, nothing answered,
+ *  and every pack tile and hotbar slot drew the initials. An imported texture is drawn as it is - DFU's ChangeDye is
+ *  the classic arm's alone (:466-476) - so a stand-in registered undyed, whose record has no dyed entry at all, answers
+ *  every dye with itself. A record with any dyed entry (a dyed set) still answers by its dyes alone, as before. */
+const standInDye = (archive, record, frame, map, dye) => {
+  if (!dyeToken(dye) || _vendor.has(textureKey(archive, record, frame, map, dye))) return dye;
+  const bare = _vendor.get(textureKey(archive, record, frame, map));
+  if (!bare?.standIn) return dye;
+  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;
+  return null;
+};
 const decodedOf = (archive, record) => {
   const bare = _decoded.get(textureKey(archive, record, 0));
   if (bare) return bare;
@@ -375,6 +390,7 @@ export function setBundleTextures(entries) {
 export const bundleTextureCount = () => _bundle.size;
 /** A bundle texture's paperdoll `<rect>` ({ x, y, width, height } in the doll's own pixels), or null. */
 export function textureReplacementRect(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
   if (_index.has(key) || vendorOf(key)) return null;
   return _bundle.get(key)?.rect ?? null;
@@ -453,6 +469,7 @@ export const textureTierEpoch = () => `${_tierGen}:${textureReplacementEnabled()
 /** Synchronous, and for the same reason music's is: the upload path
  *  has to know which branch it is on before it can proceed. */
 export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
   const v = vendorOf(key);
   if (v) return !v.gate || v.gate() === true;   // DW3: a gated entry answers only while its switch is on
@@ -465,6 +482,7 @@ export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo'
  * not load is a cosmetic failure with the classic art right behind it.
  */
 export async function textureReplacementBytes(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   if (!hasTextureReplacement(archive, record, frame, map, dye)) return null;
   const entry = entryFor(textureKey(archive, record, frame, map, dye));
   if (entry?.build || entry?.image) return null;   // WD2: a derived picture has no file to hand over - it is built, never loaded; DFMOD1: nor has a bundle's
@@ -625,6 +643,7 @@ const _decoding = new Map();   // textureKey -> Promise<color32 | null>, the ask
  *  is registered for the key, it is gated off, or it would not decode.
  *  The gate is read here too, so a gated-off icon costs no fetch. */
 export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo', dye = null, { decode = decodePng } = {}) {
+  dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
   const entry = liveEntry(key);   // AUDIT VE R1: the entry that answers now - decodedTexture's
   if (decodedFrom(key, entry)) return Promise.resolve(decodedTexture(archive, record, frame, map, dye));
@@ -653,6 +672,7 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
  *  and upload either without knowing which it got. Null means "draw the
  *  classic". */
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
   const v = vendorOf(key);
   // AUDIT VE R1/R8: the picture of the entry that answers now, never a stale one

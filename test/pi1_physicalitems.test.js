@@ -198,7 +198,7 @@ test('PI1 the rarity dress: a Magic-or-better item wears its tier\'s rim, strong
   const at = (rarity) => ({ ...sword(), rarity });
   assert.equal(rarityRim(sword()), null);
   for (const tier of ['magic', 'rare', 'legendary']) assert.deepEqual(rarityRim(at(tier)), [...tierColour(tier), PI_RIM[tier]]);
-  assert.deepEqual({ ...PI_RIM }, { magic: 0.3, rare: 0.45, legendary: 0.6, aetheric: 0.7, artifact: 0.7 });
+  assert.deepEqual({ ...PI_RIM }, { magic: 0.3, rare: 0.45, legendary: 0.6, aetheric: 0.7, artifact: 0.7, gilded: 0.8 }, 'GILDED1: the top rung the strongest');
   setPref('lootRarity', false);
   try { assert.equal(rarityRim(at('rare')), null); } finally { setPref('lootRarity', true); }
 });

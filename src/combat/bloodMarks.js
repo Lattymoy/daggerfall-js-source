@@ -76,6 +76,14 @@ const DOWN = Object.freeze([0, -1, 0]);
  *  ceiling instead of a floor. */
 const UP = Object.freeze([0, 1, 0]);
 
+/** AUDIT SD II (L2 F8): A SURFACE THAT MOVES TAKES NO MARK. A mark is
+ *  laid in the world's frame and stays where it was laid; a mover's
+ *  bucket - the collider carries its transform (`bucketPose`): the
+ *  Shattered Hour's swinging, blinking and falling steps, a ship's deck
+ *  - goes on without it, and the stain was left hanging in the void
+ *  where the step had been. Whether hit `h` is such a surface. */
+export const onMover = (col, h) => h?.key != null && !!col?.bucketPose?.(h.key);
+
 /** How far UP a drop looks. A dungeon ceiling is a body's height or
  *  two above where blood spawns; past that the room is too big for a
  *  hit to reach and the blood is somebody else's problem. It is longer
@@ -447,6 +455,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       if (run > 1e-6 && col.raycastHit) {
         const wall = col.raycastHit(pos, [ox / run, 0, oz / run], run);
         if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {
+          if (onMover(col, wall)) continue;   // AUDIT SD II (L2 F8): it met a surface that moves
           const wx = pos[0] + (ox / run) * wall.dist, wz = pos[2] + (oz / run) * wall.dist;
           ensure();
           // BLOOD2b: a wall's mark is a RUN - the bead where it met the
@@ -483,6 +492,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // `surfaceHit` is the same ray plus that floor, nearer wins.
       const h = col.surfaceHit([fromX, pos[1], fromZ], dir, reach);
       if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;
+      if (onMover(col, h)) continue;   // AUDIT SD II (L2 F8): a surface that moves takes no mark
       const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];
       // A CEILING IS A SURFACE TEST, not a position one: the
       // reference's own `Dot(normal, down) > 0.7`. A drop that went up
@@ -558,6 +568,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     const h = col.surfaceHit([feet[0], feet[1] + DRIP_FROM, feet[2]], DOWN, MARK_DROP);
     if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
     if (h.dist < DRIP_FROM - STEP_ABOVE) return null;   // BLOOD AUDIT 5: a surface above the feet is not the floor the body lies on
+    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): nor one that moves
     ensure();
     const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'pool');
     flush();
@@ -617,6 +628,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // the terrain's drawn ground the knee ray exists for sits centimetres
     // above the capsule's floor, never a quarter of a metre.
     if (h.dist < DRIP_FROM - STEP_ABOVE) return null;
+    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up
     const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];
     // in a wet mark? A FLOOR mark - the ceiling's test the other way up
     // (BLOOD AUDIT 4: the same number, by its name), never a print, and

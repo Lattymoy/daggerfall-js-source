@@ -72,6 +72,8 @@ import { sharedActionMatches, takeLocalActions } from './quest/shareActions.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 import { BUILD_TAG } from '../buildTag.js';   // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
+import { relayQuestOnline } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
+import { isOnlinePage } from './onlineLane.js';
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
  *  QUEST_FRAME_MAX - its own oversized-frame arm, the same scale
@@ -265,9 +267,12 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   // SHARE-MEND: the markers travel slim - made whole AFTER the shape check (AUDIT D3): it holds every resource's symbol
   // to a string, and a forged Place's number there threw out of the receipt instead of being refused in words
   const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data)));
+  // AUDIT SD III (D5): online, the copy's dungeons laid on the world's own sizes, as a load lays a saved quest's
+  // (questRepair.js relayQuestOnline) - an older page's copy was laid whole, and pointed into blocks this build has not
+  const relay = (q) => { if (ctx.online ?? isOnlinePage()) relayQuestOnline(q, { carriesQuestItem: ctx.carriesQuestItem ?? null }); };
   if (check.resync) {
     const quest = machine.updateSharedQuest(questName, safe);
-    if (quest) return { ok: true, quest, resync: true };
+    if (quest) { relay(quest); return { ok: true, quest, resync: true }; }
     // AUDIT SHARE-MEND D4: a copy that still stands was not GONE - the restore choked on the partner's (machine.js
     // logs why), most often another build of the game, and the receiver was told they no longer had it
     const still = machine.sharedCandidateNamed?.(questName) ?? null;
@@ -281,6 +286,7 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };
   const quest = machine.receiveSharedQuest(safe);
   if (!quest) return { ok: false, reason: 'restore' };   // SHARE-MEND: the restore choked (machine.js logs why) - not a forged envelope
+  relay(quest);
   if (check.meta?.quest?.oneTime) questLists.markOneTimeAccepted(questName);
   return { ok: true, quest };
 }

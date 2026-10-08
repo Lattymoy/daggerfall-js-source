@@ -34,8 +34,8 @@ const seq = (...v) => { let i = 0; return () => v[i++]; };
 const counted = (fn) => { const c = { n: 0 }; c.rolls = () => { c.n++; return fn(); }; return c; };
 
 test('SET6 the rung: Aetheric stands between the Legendary and the Artifact - rank 4, the Artifact moved to 5 - in the aether\'s pale blue-white, a tint of its own; an Aetheric piece wears its own field; the ladder never ROLLS it and never re-rolls a piece that wears it (mutants: the rung out of its place; the roll taking it)', () => {
-  assert.deepEqual(RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact']);
-  assert.deepEqual(RARITY_ORDER.map((t) => RARITIES[t].rank), [0, 1, 2, 3, 4, 5], 'the order is the rank');
+  assert.deepEqual(RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded'], 'GILDED1: the Gilded rung over the Artifact');
+  assert.deepEqual(RARITY_ORDER.map((t) => RARITIES[t].rank), [0, 1, 2, 3, 4, 5, 6], 'the order is the rank');
   assert.equal(AETHERIC, 'aetheric');
   assert.deepEqual({ label: RARITIES.aetheric.label, colour: RARITIES.aetheric.colour }, { label: 'Aetheric', colour: '#bfe8ff' });
   assert.equal(RARITIES.aetheric.tint.length, 4);

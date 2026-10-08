@@ -75,6 +75,8 @@ export function createAutomapWindow(deps = {}) {
         party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)
         portals: deps.portals ?? null,   // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)
         fires: deps.fires ?? null,   // REST3: the dungeon's own campfires (the classic 3D arm ignores them)
+        echoes: deps.echoes ?? null,   // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)
+        quests: deps.quests ?? null,   // GUIDE8: the Exact tier's quest marks (the classic 3D arm ignores them)
       },
     });
   }
