@@ -29,47 +29,43 @@ import { CLIMATES } from '../src/formats/mapsFile.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-// ── FIXTURES: a picture and its picker, 320 x 200, drawn by law ──────────────
-// Palette: 0 parchment (tan), 1 sea (blue), 2 ink (dark). The picture is parchment to its border, a blue sea inside
-// a margin, and land painted in parchment over the sea; the picker names each land's race, generously past the coast
-// (the race screen's click targets), and 0 where no homeland claims the pixel.
+// ── FIXTURES: a picture and its picker, 320 x 200, drawn by the picture's own law ───────────────────────
+// Palette: 0 parchment (tan), 1 the coastline (blue), 2 ink (dark). The picture is parchment everywhere - its sea IS
+// the parchment - with one thin blue line round every land, the Imperial Province's included; the picker names each
+// homeland's land exactly (the masks are the provinces' own shapes) and 0 everywhere else.
 const PAL = (i) => (i === 1 ? [40, 60, 200] : i === 2 ? [30, 20, 10] : [210, 180, 130]);
 const W = PICTURE_W, H = PICTURE_H;
-const MARGIN = 6;
 const rect = (x0, y0, x1, y1) => (x, y) => x >= x0 && y >= y0 && x < x1 && y < y1;
-/** The authored shape of the fixture: id => land rectangle (picture px). Breton 1 west, Redguard 2 under it, Nord 3
- *  east, and an unclaimed inland patch between them that is the Imperial remainder. */
-const LANDS = {
-  1: rect(40, 30, 140, 90),
-  2: rect(40, 90, 140, 150),
-  3: rect(180, 30, 280, 90),
-};
+/** The homelands: Breton 1 west, Redguard 2 under it, Nord 3 east; between Breton and Nord the Imperial Province,
+ *  which no race claims - enclosed by the three masks and the coastline. */
+const LANDS = { 1: rect(40, 30, 140, 90), 2: rect(40, 90, 140, 150), 3: rect(180, 30, 280, 90) };
+const IMPERIAL = rect(140, 30, 180, 90);
+/** Two holes in Breton's mask, each ringed in blue (lakes): the fit's scale hangs on their spacing. */
 const LAKES = [rect(50, 36, 56, 42), rect(70, 40, 74, 44)];
-const IMPERIAL = rect(148, 60, 172, 120);   // sea on both sides of it, clear of every picker: its own ring
-/** Where a race's picker blob reaches: its land plus 4 px of sea round it, plus the whole parchment border for race 1
- *  (the picker's generous blob over the frame - not land). */
-const PICKS = {
-  1: (x, y) => rect(36, 26, 144, 90)(x, y) || x < MARGIN || y < MARGIN || x >= W - MARGIN || y >= H - MARGIN,
-  2: rect(36, 90, 144, 154),
-  3: rect(176, 26, 284, 94),
-};
-function fixture({ speck = true, labelOverSea = true } = {}) {
+/** An unclaimed pocket inside Redguard's mask with no line round it (the Inner Sea's shape): sea, not the remainder. */
+const POND = rect(60, 100, 66, 106);
+const SPECK = rect(200, 150, 203, 153);   // 9 px of Nord mask in the sea: a painted word
+const HELMET = rect(286, 100, 316, 190);   // a blue ring in the sea enclosing MORE parchment than the Imperial Province, touching no mask
+const STRIP = rect(100, 0, 200, 3);   // Breton's mask over the picture's top edge: the frame, not land
+const GAP = [160, 29];   // one missing pixel of the coastline, north of the Imperial Province
+function fixture({ speck = true } = {}) {
   const picture = { width: W, height: H, data: new Uint8Array(W * H) };
   const picker = { width: W, height: H, data: new Uint8Array(W * H) };
+  const isLake = (x, y) => LAKES.some((l) => l(x, y));
+  const union = (x, y) => (IMPERIAL(x, y) || Object.values(LANDS).some((r) => r(x, y))) && !isLake(x, y);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
-      const border = x < MARGIN || y < MARGIN || x >= W - MARGIN || y >= H - MARGIN;
-      let land = border || IMPERIAL(x, y);
-      for (const id in LANDS) if (LANDS[id](x, y)) land = true;
-      for (const lake of LAKES) if (lake(x, y)) land = false;   // two lakes in Breton land: the fit's scale hangs on their spacing
-      if (speck && rect(200, 150, 203, 153)(x, y)) land = true;   // a 9 px speck claimed by race 3: a painted word
-      if (labelOverSea && rect(60, 170, 90, 172)(x, y)) picture.data[i] = 2;   // ink over the sea: still sea? no - ink is not blue, so this is "not sea"
-      else picture.data[i] = land ? 0 : 1;
-      for (const id in PICKS) if (PICKS[id](x, y)) picker.data[i] = Number(id);
-      if (speck && rect(200, 150, 203, 153)(x, y)) picker.data[i] = 3;
+      for (const id in LANDS) if (LANDS[id](x, y) && !isLake(x, y) && !POND(x, y)) picker.data[i] = Number(id);
+      if (STRIP(x, y)) picker.data[i] = 1;
+      if (speck && SPECK(x, y)) picker.data[i] = 3;
+      let line = false;
+      if (!union(x, y)) for (let dy = -1; dy <= 1 && !line; dy++) for (let dx = -1; dx <= 1; dx++) if (union(x + dx, y + dy)) { line = true; break; }
+      if (line || (HELMET(x, y) && !rect(287, 101, 315, 189)(x, y))) picture.data[i] = 1;
+      if (rect(60, 170, 90, 172)(x, y)) picture.data[i] = 2;   // ink over the sea
     }
   }
+  picture.data[GAP[1] * W + GAP[0]] = 0;
   return { picture, picker };
 }
 const count = (arr, v) => { let n = 0; for (const a of arr) if (a === v) n++; return n; };
@@ -96,7 +92,7 @@ test('TAMRIEL3 trace: pieces are the 4-connected runs of a mask, each knowing wh
   assert.equal(SPECK_PX, 12);
 });
 
-test('TAMRIEL3 trace: a pixel is land of a province where the picker names it and the painting is not sea; the picker\'s blob over the parchment border is cut (it touches the edge); a speck is dropped; the Imperial Province is the inland remainder; ink over the sea is not an island', () => {
+test('TAMRIEL3 trace: a pixel is land of a province where the picker names it; a mask\'s piece over the picture\'s edge is cut; a speck is dropped; the Imperial Province is the largest unclaimed region the coastline and the masks enclose that touches a mask - a one-pixel gap in the line closed, the line itself sea, a pocket in a mask sea, a ring in the sea sea; ink over the sea is not an island', () => {
   const { picture, picker } = fixture();
   const t = traceTamrielPicture(picker, picture, PAL);
   assert.ok(t); assert.equal(t.w, W); assert.equal(t.h, H);
@@ -104,15 +100,18 @@ test('TAMRIEL3 trace: a pixel is land of a province where the picker names it an
   assert.deepEqual(at(90, 60), [1, 1], 'Breton land');
   assert.deepEqual(at(90, 120), [1, 2], 'Redguard land');
   assert.deepEqual(at(230, 60), [1, 3], 'Nord land');
-  assert.deepEqual(at(160, 90), [1, IMPERIAL_ID], 'the remainder');
-  assert.deepEqual(at(146, 90), [0, 0], 'the strait between');
-  assert.deepEqual(at(38, 60), [0, 0], 'the picker reaches 4 px past the coast; the sea is sea');
-  assert.deepEqual(at(2, 2), [0, 0], 'the border is the picker\'s but touches the edge: not land');
+  assert.deepEqual(at(160, 60), [1, IMPERIAL_ID], 'the remainder: enclosed, unclaimed, touching Breton and Nord');
+  assert.deepEqual(at(160, 90), [0, 0], 'south of it the sea');
+  assert.deepEqual(at(39, 60), [0, 0], 'the coastline is sea');
+  assert.deepEqual(at(160, 29), [1, IMPERIAL_ID], 'a one-pixel gap in the line is closed, and the gap itself is land');
+  assert.deepEqual(at(150, 1), [0, 0], 'a mask over the picture\'s edge is the frame, not land');
   assert.deepEqual(at(201, 151), [0, 0], 'a 9 px speck is a painted word');
-  assert.deepEqual(at(70, 171), [0, 0], 'ink over the sea is claimed by no race: not land');
-  assert.deepEqual(at(52, 38), [0, 0], 'a lake: the picker claims it, the painting says sea');
-  assert.equal(count(t.land, 1), 100 * 60 * 3 + 24 * 60 - 36 - 16, 'exactly the four lands, less the lakes');
-  assert.equal(count(t.province, IMPERIAL_ID), 24 * 60);
+  assert.deepEqual(at(70, 171), [0, 0], 'ink over the sea is claimed by no race and no barrier: not land');
+  assert.deepEqual(at(52, 38), [0, 0], 'a lake: a hole in the mask');
+  assert.deepEqual(at(63, 103), [0, 0], 'an unclaimed pocket inside a mask (the Inner Sea) is sea, not the remainder');
+  assert.deepEqual(at(300, 150), [0, 0], 'a ring in the sea touching no mask (the helmet) is sea, though it encloses more than the Imperial Province');
+  assert.equal(count(t.land, 1), 100 * 60 * 3 + 40 * 60 - 36 - 16 - 36 + 1, 'exactly the four lands, less the lakes and the pond, plus the gap');
+  assert.equal(count(t.province, IMPERIAL_ID), 40 * 60 + 1);
   // a speck of SPECK_PX stands
   const { picture: p2, picker: k2 } = fixture({ speck: false });
   for (let y = 150; y < 153; y++) for (let x = 200; x < 204; x++) { p2.data[y * W + x] = 0; k2.data[y * W + x] = 3; }
@@ -139,7 +138,9 @@ test('TAMRIEL3 trace: a province painted to the picture\'s border keeps its edge
   assert.deepEqual(asked, ['TMAP00I0.IMG'], 'the picture first; a missing file rejects and the host says so');
   const src = read('src/ui/tamrielTrace.js');
   assert.match(src, /fetchBytes\('TAMRIEL2\.IMG'\)/);
-  assert.match(src, /import \{ seaIndices, inlandRemainder \} from '\.\/provinceMap\.js';/, 'the chargen\'s own sea and remainder laws');
+  assert.match(src, /import \{ seaIndices \} from '\.\/provinceMap\.js';/, 'the chargen\'s own blue');
+  assert.match(src, /own\.load\(await fetchBytes\(picture\.paletteName\), picture\.paletteName\); pal = own;/, 'the painting on ITS palette (MAP.PAL)');
+  assert.ok(!src.includes('inlandRemainder('), 'the chargen\'s remainder is not called: it reads a blue sea the picture has not');
 });
 
 // ── THE LAND MODULE ──────────────────────────────────────────────
@@ -180,7 +181,7 @@ test('TAMRIEL3 land: provinceKeyAt and coastDistanceAt answer the trace where on
   assert.equal(provinceKeyAt(90.4, 60.9), 'HighRock');
   assert.equal(provinceKeyAt(90, 120), 'Hammerfell');
   assert.equal(provinceKeyAt(230, 60), 'Skyrim');
-  assert.equal(provinceKeyAt(160, 90), 'Imperial');
+  assert.equal(provinceKeyAt(160, 60), 'Imperial');
   assert.equal(provinceKeyAt(20, 100), null, 'sea');
   assert.equal(provinceKeyAt(-1, 5), null); assert.equal(provinceKeyAt(W, 5), null); assert.equal(provinceKeyAt(5, H), null);
   assert.equal(provinceKeyAt(W + 90, 59), null, 'past the east edge is not the next row\'s land');
@@ -270,19 +271,21 @@ test('TAMRIEL3 ground: with a trace set the height law and the climate read the 
   assert.equal(tamrielClimateAt(720, 1440), provinceByKey('Hammerfell').climate, 'the picture\'s Hammerfell is the Desert');
   assert.notEqual(provinceByKey('Hammerfell').climate, CLIMATES.Woodlands);
   assert.equal(tamrielClimateAt(Math.round((20 - 50) * 18), Math.round((100 - 40) * 18)), CLIMATES.Ocean, 'the fixture\'s sea');
-  assert.equal(tamrielClimateAt(Math.round((160 - 50) * 18), Math.round((90 - 40) * 18)), CLIMATES.Woodlands, 'the Imperial remainder');
+  assert.equal(tamrielClimateAt(Math.round((160 - 50) * 18), Math.round((60 - 40) * 18)), CLIMATES.Woodlands, 'the Imperial remainder');
   const r = rasterizeTamriel({ cell: 18 });
   assert.equal(r.width, 320); assert.equal(r.height, 200, 'one cell a picture pixel at the live scale');
   assert.equal(r.province[100 * 320 + 20], PROVINCE_NONE);
   assert.equal(r.heightBytes[100 * 320 + 20], 0);
   assert.equal(r.climate[100 * 320 + 20], CLIMATES.Ocean);
   assert.equal(r.province[60 * 320 + 90], PROVINCES.findIndex((p) => p.key === 'HighRock'));
-  assert.equal(r.climate[90 * 320 + 160], CLIMATES.Woodlands);
+  assert.equal(r.climate[60 * 320 + 160], CLIMATES.Woodlands);
   assert.ok(r.heightBytes[60 * 320 + 90] >= SHORE_BYTE);
   assert.equal(r.province[60 * 320 + 40], PROVINCES.findIndex((p) => p.key === 'HighRock'), 'the first land cell at the live scale');
   assert.equal(r.province[60 * 320 + 39], PROVINCE_NONE);
   assert.equal(r.province[60 * 320 + 139], PROVINCES.findIndex((p) => p.key === 'HighRock'));
-  assert.equal(r.province[60 * 320 + 140], PROVINCE_NONE);
+  assert.equal(r.province[60 * 320 + 140], PROVINCES.findIndex((p) => p.key === 'Imperial'), 'the border, to the cell');
+  assert.equal(r.province[120 * 320 + 139], PROVINCES.findIndex((p) => p.key === 'Hammerfell'));
+  assert.equal(r.province[120 * 320 + 140], PROVINCE_NONE, 'the last land cell at the live scale');
   assert.ok(py > 0);
 });
 
@@ -294,22 +297,22 @@ test('TAMRIEL3 ink: tracedChains links the land mask\'s pixel edges into coast c
   setTamrielTrace(trace);
   setTamrielFit({ ox: 50 * 18, oy: 40 * 18, ppu: 18 });
   const ch = tracedChains(trace);
-  assert.ok(ch.coast.length >= 3, `${ch.coast.length} coast chains: the west block (Breton and Redguard joined), the remainder, the Nord block`);
+  assert.equal(ch.coast.length, 4, `${ch.coast.length} coast chains: one continent (Breton, the Imperial Province, Nord and Redguard joined), two lakes, the pond`);
   for (const c of ch.coast) for (const p of c) {
     const [px, py] = bayToPicture(p.x, p.y);
     assert.ok(px >= 39 && px <= 281 && py >= 29 && py <= 151, 'every coast point on the lands\' outline');
   }
-  assert.equal(ch.borders.length, 1, 'Breton|Redguard, and no other: a land-land edge within a province is no border');
-  for (const p of ch.borders[0]) assert.ok(Math.abs(bayToPicture(p.x, p.y)[1] - 90) < 1.5, 'the Breton|Redguard border runs along y = 90');
-  assert.ok(ch.borders[0].length >= 2);
-  const [bx0, bx1] = [bayToPicture(ch.borders[0][0].x, 0)[0], bayToPicture(ch.borders[0][ch.borders[0].length - 1].x, 0)[0]];
-  assert.ok(Math.min(bx0, bx1) < 42 && Math.max(bx0, bx1) > 138, 'from coast to coast');
+  assert.ok(ch.borders.length >= 1 && ch.borders.length <= 3, `${ch.borders.length} border chains: Breton|Redguard, Breton|Imperial, Imperial|Nord, meeting at one point`);
+  const online = (p) => { const [px, py] = bayToPicture(p.x, p.y); return Math.abs(py - 90) < 1.5 || Math.abs(px - 140) < 1.5 || Math.abs(px - 180) < 1.5; };
+  for (const c of ch.borders) for (const p of c) assert.ok(online(p), 'every border point on one of the three province changes - a land-land edge within a province is no border');
+  const bpts = ch.borders.flat().map((p) => bayToPicture(p.x, p.y));
+  assert.ok(bpts.some(([px]) => px < 42) && bpts.some(([px, py]) => Math.abs(py - 90) < 1.5 && px > 138), 'Breton|Redguard from coast to the meeting point');
+  assert.ok(bpts.some(([px, py]) => Math.abs(px - 180) < 1.5 && py < 32), 'Imperial|Nord up to the coast');
   assert.deepEqual(ch.labels.map((l) => l.key).sort(), ['Hammerfell', 'HighRock', 'Imperial', 'Skyrim']);
   const hr = ch.labels.find((l) => l.key === 'HighRock');
   assert.ok(hr.px > 60 && hr.px < 120 && hr.py > 40 && hr.py < 80, 'the label deep in its land');
   const pts = ch.coast.reduce((n, c) => n + c.length, 0);
-  assert.ok(pts < 120, `${pts} points: five rectangles, the staircase simplified to their corners (unsimplified, near a thousand)`);
-  assert.equal(ch.coast.length, 5, 'the west block, two lakes, the remainder, the Nord block');
+  assert.ok(pts < 120, `${pts} points: rectangles, the staircase simplified to their corners (unsimplified, near a thousand)`);
 });
 
 test('TAMRIEL3 ink: placeCity keeps a city on its own province\'s land, moves one within CITY_SNAP_PX onto it, leaves one further off; and on the authored shape every city stands where it is', () => {
@@ -327,7 +330,7 @@ test('TAMRIEL3 ink: placeCity keeps a city on its own province\'s land, moves on
   assert.equal(placeCity({ name: 'c', province: 'HighRock', at: [20, 60] }), null, '20 px out is left off');
   assert.deepEqual(placeCity({ name: 'c7', province: 'HighRock', at: [33, 23] }), [40.5, 30.5], '7 by 7 (9.9 px) reaches the corner');
   assert.equal(placeCity({ name: 'c8', province: 'HighRock', at: [32, 22] }), null, '8 by 8 (11.3 px) is past the reach, square or not');
-  assert.deepEqual(placeCity({ name: 'd', province: 'Imperial', at: [160, 90] }), [160, 90]);
+  assert.deepEqual(placeCity({ name: 'd', province: 'Imperial', at: [160, 60] }), [160, 60]);
   const wrong = placeCity({ name: 'e', province: 'Skyrim', at: [90, 60] });
   assert.equal(wrong, null, 'on another province\'s land, no Skyrim within reach');
 });

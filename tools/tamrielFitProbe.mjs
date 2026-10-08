@@ -122,9 +122,9 @@ console.log(`frame: BAY_ORIGIN (${BAY_ORIGIN.x}, ${BAY_ORIGIN.y}) at ${PIXELS_PE
 // What the world host does at boot: trace the two files, fit the Bay's land on the picture's, install both - then the
 // seam again on the trace, and `trace.ppm`: the traced land tinted by province, the sea blue, the fitted Bay's
 // rectangle black. The fit's numbers are what the player's game runs on; nothing here is committed.
-const artPal = new DFPalette();
-artPal.load(file('ART_PAL.COL'), 'ART_PAL.COL');
-const trace = traceTamrielPicture(pick, bmp, paletteReader(picture.palette ?? artPal));
+const mapPal = new DFPalette();   // the painting's own palette (MAP.PAL), as the host reads it
+mapPal.load(file(picture.paletteName || 'ART_PAL.COL'), picture.paletteName || 'ART_PAL.COL');
+const trace = traceTamrielPicture(pick, bmp, paletteReader(mapPal));
 if (!trace) { console.log('trace: the picture traced to nothing (the two files differ in size?)'); }
 else {
   const landPx = trace.land.reduce((n, v) => n + v, 0);
