@@ -34,5 +34,50 @@
     "tests": [
       "test/sd26_text.test.js"
     ]
+  },
+  {
+    "name": "SD26-T2-a-cut-line-lost",
+    "file": "src/scenes/sdVoice.js",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-cut-behind-its-rank",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    while (i < waiting.length && waiting[i].rank < w.rank) i++;",
+    "new": "    while (i < waiting.length && waiting[i].rank <= w.rank) i++;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-a-line-nearly-read-again",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some",
+    "new": "    if (waiting.some",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-threads-word-back",
+    "file": "src/scenes/sdVoice.js",
+    "old": "if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
+    "new": "if (standing && r < standing.rank) back(standing, t);",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-wait-not-begun-anew",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    waiting.splice(i, 0, { text: w.text, rank: w.rank, at: t, key: w.key });",
+    "new": "    waiting.splice(i, 0, { text: w.text, rank: w.rank, at: t - 4000, key: w.key });",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
   }
 ]

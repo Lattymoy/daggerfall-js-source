@@ -70,8 +70,9 @@ test('SD11d THE HOUR\'S VOICE: a line said with nothing standing shows at once f
   r.set(r.shown[1].at + 200); r.v.say('The Last Moment! The Remnant returns.');
   assert.equal(r.last(), 'The Last Moment! The Remnant returns.', 'more urgent: at once');
   // the readout waited past its life: let go, and the note behind the turn shown
+  // PIN MOVED (AUDIT SD IV T2): and the note the turn cut 200 ms in said again first, whole - cut, it was lost (sd26_text)
   r.across(30_000);
-  assert.deepEqual(r.shown.map((x) => x.text), [a, 'Your spoils spill across the arena floor.', 'The Last Moment! The Remnant returns.', 'The spoils of the Last Moment are in your pack.'], `a readout ${SD_VOICE_WAIT_MS[SD_VOICE_RANK.readout]} ms stale is let go`);
+  assert.deepEqual(r.shown.map((x) => x.text), [a, 'Your spoils spill across the arena floor.', 'The Last Moment! The Remnant returns.', 'Your spoils spill across the arena floor.', 'The spoils of the Last Moment are in your pack.'], `a readout ${SD_VOICE_WAIT_MS[SD_VOICE_RANK.readout]} ms stale is let go`);
   // the same line waits once
   const q = voice();
   q.v.say(a); q.v.say('The Hour casts you back.'); q.v.say('The Hour casts you back.');

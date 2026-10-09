@@ -8,8 +8,9 @@
 // The law (the gate's WB13e, made one door): a line stands for its length (gateCourt.js courtSaySeconds) and is never
 // replaced inside it by a line no more urgent; a line said while another stands waits its turn - the fight's turns first
 // (`turn`: the kill, a phase, an order, a refusal, a way out), then what the floor says (`note`), then the readouts
-// (`readout`), each rank in the order said; a line more urgent than the one standing cuts it. A line that has waited
-// past its life is let go (a readout's moment passes); the same line waiting twice waits once. A line of a THREAD (`key`
+// (`readout`), each rank in the order said; a line more urgent than the one standing cuts it, and the cut line goes
+// back to the head of its rank to be read whole (AUDIT SD IV, T2). A line that has waited past its life is let go (a
+// readout's moment passes); the same line waiting twice waits once. A line of a THREAD (`key`
 // - the Reset's Hearts: its call, then each one broken and how many stand) says the thread anew: it takes the place of
 // the thread's line standing or waiting, never queued behind it - five Hearts broken in a second queued five counts, and
 // the stun's "Strike now!" stood seven seconds late, as the stun ran out.
@@ -21,6 +22,8 @@ import { courtSaySeconds } from './gateCourt.js';
 export const SD_VOICE_RANK = Object.freeze({ turn: 0, note: 1, readout: 2 });
 /** How long a line may wait for the screen before it is let go, ms - a turn's or a note's, and a readout's (it says a time). */
 export const SD_VOICE_WAIT_MS = Object.freeze([8000, 8000, 5000]);
+/** AUDIT SD IV (T2): a line cut with less than this left of its time was read (ms); one cut sooner goes back. */
+export const SD_VOICE_READ_MS = 1000;
 
 /**
  * @param {{ show: (text: string, seconds: number) => void, now: () => number, seconds?: (text: string) => number }} o
@@ -31,7 +34,16 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds }) {
   let standing = null;
   /** @type {{ text: string, rank: number, at: number, key: string|null }[]} */
   const waiting = [];
-  const put = (text, rank, t, key) => { show(text, seconds(text)); standing = { rank, until: t + seconds(text) * 1000, key }; };
+  const put = (text, rank, t, key) => { show(text, seconds(text)); standing = { text, rank, until: t + seconds(text) * 1000, key }; };
+  /** AUDIT SD IV (T2): A LINE CUT IS SAID AGAIN - back at the head of its rank, to be read whole, its wait begun anew: the
+   *  way home's rising cut the collapse's first readout (its count, and where the way home is) 0.5 s into its 3.7, and
+   *  a no-spoils note was cut the frame it was said - each lost for good. Not a thread's line its newer word replaced. */
+  const back = (w, t) => {
+    if (w.until - t < SD_VOICE_READ_MS || waiting.some((x) => x.text === w.text)) return;
+    let i = 0;
+    while (i < waiting.length && waiting[i].rank < w.rank) i++;
+    waiting.splice(i, 0, { text: w.text, rank: w.rank, at: t, key: w.key });
+  };
   function pump(t) {
     if (standing && t < standing.until) return;
     standing = null;
@@ -51,6 +63,7 @@ export function createSdVoice({ show, now, seconds = courtSaySeconds }) {
       pump(t);
       if (!standing || r < standing.rank || (k !== null && standing.key === k)) {
         if (k !== null) { const j = waiting.findIndex((w) => w.key === k); if (j >= 0) waiting.splice(j, 1); }
+        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);
         put(text, r, t, k);
         return;
       }
