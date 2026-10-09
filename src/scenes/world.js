@@ -14855,6 +14855,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+      // DEATH-LOAD (issue #642): F11 off a death in the street loaded the save UNDER the screen and left "YOU DIED"
+      // standing - the enhanced screen waits on Enter, which then ended the run; the classic one's timer ended it
+      // anyway. The dungeon's load drops its own (dungeonContext.js quickLoad); a building's goes with
+      // forceExitToExterior. Here, the moment the save is the entity's and before the first await, so neither a
+      // timer nor an Enter can end the run while the load is still landing.
+      closeDeathScreen();
+      _deathWasOnline = null;   // armed fresh for the NEXT death, as every respawn does
       hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.

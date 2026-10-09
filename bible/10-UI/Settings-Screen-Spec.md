@@ -665,7 +665,7 @@ An `unavailable` row draws **no box, no trough, no well, no pill**. Where its co
 | `Daggerfall/MyDaggerfallUnitySavePath` | `this browser` | Saves live in this browser and survive a reload. |
 | `Daggerfall/MyDaggerfallUnityScreenshotsPath` | `downloads` | Pictures go wherever your browser puts downloads. |
 | `Video/ResolutionWidth` / `Height` | `your window` | The picture already fills the window you give it. (dialog shows the live canvas size) |
-| `Video/ExclusiveFullscreen` | `browser` | Use your browser's own fullscreen - F11 on a desktop. |
+| `Video/ExclusiveFullscreen` | `browser` | Use your browser's own fullscreen, from its menu - F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux). (issue #642: F11 is the game's QuickLoad, in the page and the desktop shell alike) |
 
 The words *unsupported*, *broken*, *missing* and *not implemented* appear nowhere on this screen — pinned (T2).
 
