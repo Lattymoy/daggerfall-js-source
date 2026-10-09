@@ -74,7 +74,7 @@
   {
     "name": "INT1-the-count-unread",
     "file": "src/systems/itemLaw.js",
-    "old": "if (numbers.length < lo || numbers.length > hi + cursed || procs.length > 1) out.push('affixes');",
+    "old": "if (numbers.length < lo || numbers.length > hi + extra || procs.length > 1) out.push('affixes');",
     "new": "if (procs.length > 1) out.push('affixes');",
     "tests": [
       "test/int1_itemlaw.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "INT1-a-poisoned-cuirass",
     "file": "src/systems/itemLaw.js",
-    "old": "&& !(item.group === 'Weapons' && item.poisonType >= POISON_MIN && item.poisonType <= POISON_MAX)) out.add('poison');",
-    "new": "&& !(item.poisonType >= POISON_MIN && item.poisonType <= POISON_MAX)) out.add('poison');",
+    "old": "!(item.group === 'Weapons' && item.poisonType >= LAW_POISON_FIRST",
+    "new": "!(item.poisonType >= LAW_POISON_FIRST",
     "tests": [
       "test/int1_itemlaw.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "INT1-the-wire-unlawed",
     "file": "src/systems/loot.js",
-    "old": "  if (_itemLaw && _itemLaw(out, { receiver: true }).length) return null;\n",
-    "new": "",
+    "old": "const lawRefuses = (/** @type {any} */ it) => !!_itemLaw && _itemLaw(it, { receiver: true }).length > 0;",
+    "new": "const lawRefuses = (/** @type {any} */ it) => false && !!it;",
     "tests": [
       "test/int1_itemlaw.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "INT1-the-worth-uncapped",
     "file": "src/systems/itemLaw.js",
-    "old": "  return Math.min(value, worthCeiling(item)) * stack;",
-    "new": "  return value * stack;",
+    "old": "  return Math.max(Math.min(value, worthCeiling(item)), floor) * stack;",
+    "new": "  return Math.max(value, floor) * stack;",
     "tests": [
       "test/int1_itemlaw.test.js"
     ]

@@ -165,9 +165,11 @@ vitality and judges every blow, cast and step (`src/net/siegeRef.js`,
 INT1-INT6 (2026-10-09, `06-Systems/Integrity-Arc.md`, Mac: "I want to do
 everything and do it properly"): what a REALM character carries away from
 any room is judged at its checkpoint - the item law over every piece, the
-ids' duplicate ledger, the wealth budget - and a breach holds its trade, so
-what a modified client conjures in a room never reaches another player
-through the service. The relay's rooms are unchanged by it; lanes 2 and 3 of
+ids' ledger, the wealth budget - and a breach holds its trade, so an
+impossible piece, or a copy that keeps its id, reaches no other player
+through the service. Lawful loot past what play earns is the budget's: it
+measures first, and holds once staff turn it on. The relay's rooms are
+unchanged by it; lanes 2 and 3 of
 that arc (duels, the wild zone and the bosses refereed) are this section's
 next exceptions.
 

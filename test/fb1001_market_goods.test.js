@@ -431,9 +431,10 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   const eve = await playing(s, 'Eve', { items: [plain(weapon), sigilStone(), plain(armour), plain(own), plain(theirs)] });
   const mac = await s.registered('Mac');
   // INT2 (PIN MOVED): each row the piece's own template - the judge reads a crafted piece's provenance against the template
-  // the service minted it for (server-account/src/judge.js judgeProducts)
+  // the service minted it for (server-account/src/judge.js judgeProducts); PIN MOVED (its audit): and its own quality -
+  // a piece claiming a quality past its row's is no craft
   for (const [who, piece] of [[eve.who, own], [mac, theirs]]) {
-    s.raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'x', ?, ?, ?, 1, 1, 'p1.x', ?)`).run(piece.provenance, who.id, who.character, piece.recipe, piece.templateIndex, piece.material ?? 0, _now);
+    s.raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'x', ?, ?, ?, ?, 1, 'p1.x', ?)`).run(piece.provenance, who.id, who.character, piece.recipe, piece.templateIndex, piece.material ?? 0, piece.quality, _now);
   }
   let root = null;
   const said = [];

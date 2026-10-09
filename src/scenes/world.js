@@ -22583,7 +22583,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
   _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils
   // INT3: the judge's hold, said to the player each time a landed checkpoint moves it (systems/realmSaves.js)
-  if (realmSession) realmSession.onTradeHeld = (prev, now) => { const t = tradeHeldNotice(prev, now); if (t) townTalk.say(t); };
+  if (realmSession) realmSession.onTradeHeld = (prev, now, why) => { const t = tradeHeldNotice(prev, now, why); if (t) townTalk.say(t); };
   _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } };
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word

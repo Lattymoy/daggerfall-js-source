@@ -20,8 +20,8 @@
   {
     "name": "INT2-the-world-owned",
     "file": "server-account/src/judge.js",
-    "old": "    if (rooms.has(scene)) for (const c of arrayOf(scene?.lootContainers)) out.push(...lists(c?.items));",
-    "new": "    for (const c of arrayOf(scene?.lootContainers)) out.push(...lists(c?.items));",
+    "old": "    if (rooms.has(sc) || rented.has(sc?.sceneName)) for (const c of arrayOf(sc?.lootContainers))",
+    "new": "    for (const c of arrayOf(sc?.lootContainers))",
     "tests": [
       "test/int2_judge.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "INT2-the-loan-unowed",
     "file": "server-account/src/judge.js",
-    "old": "banks += Math.max(0, Number(a?.accountGold) || 0) - Math.max(0, Number(a?.loanTotal) || 0);",
-    "new": "banks += Math.max(0, Number(a?.accountGold) || 0);",
+    "old": "  const w = Math.trunc(purse + banks - Math.min(owed, realmLoanOwedMax(Number(level))) + deeds + goods);",
+    "new": "  const w = Math.trunc(purse + banks + deeds + goods);",
     "tests": [
       "test/int2_judge.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "INT3-the-trade-unheld",
     "file": "server-account/src/realmTrade.js",
-    "old": "  if ((gives(firstHalf) && holdRefusal(other)) || (gives(half) && holdRefusal(row))) return refuse(db, sid, 'trade-held', playerId, asker, true);\n",
+    "old": "  if (heldBy) return refuse(db, sid, heldBy.error, playerId, asker, true);\n",
     "new": "",
     "tests": [
       "test/int2_judge.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "INT3-a-listing-inbound",
     "file": "server-account/src/market.js",
-    "old": "  }, { outbound: true });   // INT3: a listing hands the piece to the market's buyers",
-    "new": "  });   // INT3: a listing hands the piece to the market's buyers",
+    "old": "  }, { outbound: true, escrow: true });   // INT3: a listing hands the piece to the market's buyers",
+    "new": "  }, { escrow: true });   // INT3: a listing hands the piece to the market's buyers",
     "tests": [
       "test/int2_judge.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "INT6-the-clean-dropped",
     "file": "server-account/src/realm.js",
-    "old": "  const keep = new Set([key, row.obj, j.clean_obj].filter(Boolean));",
+    "old": "  const keep = new Set([key, row.obj, stood.clean_obj].filter(Boolean));",
     "new": "  const keep = new Set([key, row.obj].filter(Boolean));",
     "tests": [
       "test/int2_judge.test.js"

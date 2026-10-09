@@ -7,10 +7,15 @@
 //
 //   /v1/mod/realm-holds      the characters held or flagged, with their last finding
 //   /v1/mod/realm-findings   one character's findings and its wealth by the hour
-//   /v1/mod/realm-clear      lift a hold (its strikes with it), clear a flag
+//   /v1/mod/realm-clear      lift a hold (its strikes with it), clear a flag - and the law's finding standing is EXCUSED
+//                            (`law_excused`: staff judged it wrong, and the same signature holds nothing again; a new
+//                            one does), the budget's bucket full again
 //   /v1/mod/realm-hold       hold a character's trade by hand ('staff')
 //   /v1/mod/realm-rollback   the character back to its last checkpoint judged clean (kept by checkpointRealm), its seat
-//                            taken from any tab (the lease cleared - the next join loads the clean save)
+//                            taken from any tab (the lease cleared - the next join loads the clean save). Never past a
+//                            move the service made since (`svc_seq` - a sale's piece would come back), nor for the dead
+//
+// Every act moves the row's `judge_rev`: a checkpoint judging the row as it stood before the act writes no verdict over it.
 //   /v1/mod/realm-budget     the measure (gain an hour of play, by level band) and the budget's config; `set` writes it
 //
 // THE MEASURE (Mac: "Measure 7 days, then enforce"). realm_wealth_hours keeps each character's hour - the gain no witness
@@ -21,7 +26,7 @@
 
 import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, realmSaveTextOf, dropObjects } from './realm.js';
-import { budgetConfig, budgetConfigOf, BUDGET_DEFAULT } from './budget.js';
+import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT } from './budget.js';
 import { wealthOf } from './judge.js';
 
 /** How long the judge's findings are kept (the hourly sweep, cron.js). */
@@ -51,7 +56,8 @@ const rowOf = (/** @type {any} */ db, /** @type {unknown} */ id) => (typeof id =
 
 /**
  * ONE REVIEW ACT, by its route's name - `{ error }` 'not-developer' (403), 'body' (400), 'no-realm-character' (404),
- * 'no-clean' (409: no clean checkpoint kept to roll back to), or the act's answer.
+ * 'no-clean' (409: no clean checkpoint kept to roll back to), 'service-moved' (409: the service moved the record since
+ * it), 'dead' (409), or the act's answer.
  * @param {any} ctx @param {any} player @param {any} env @param {string} act @param {any} body
  */
 export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {}) {
@@ -72,6 +78,7 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
       if (!config) return { error: 'body' };
       await db.prepare("INSERT INTO realm_config (key, value, at, by) VALUES ('budget', ?, ?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value, at = excluded.at, by = excluded.by")
         .bind(JSON.stringify(config), nowS, by).run();
+      forgetBudgetConfig(db);
     }
     return measure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
   }
@@ -88,29 +95,35 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
     };
   }
   if (act === 'clear') {
+    // the hold lifted, the flag cleared, the law's standing finding excused (judged by a person and found wrong - the
+    // same signature holds nothing again, a new one does), the bucket full again (null: the next judgement fills it)
     await db.batch([
-      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, strikes = 0, review = NULL WHERE id = ?').bind(row.id),
-      staffFinding(db, row, nowS, { act: 'clear', by, note, was: row.held, review: row.review }),
+      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, strikes = 0, review = NULL, law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?').bind(row.id),
+      staffFinding(db, row, nowS, { act: 'clear', by, note, was: row.held, review: row.review, excused: row.law_sig ?? null }),
     ]);
     return { ok: true };
   }
   if (act === 'hold') {
     await db.batch([
-      db.prepare("UPDATE realm_characters SET held = 'staff', held_at = ? WHERE id = ?").bind(nowS, row.id),
+      db.prepare("UPDATE realm_characters SET held = 'staff', held_at = ?, judge_rev = judge_rev + 1 WHERE id = ?").bind(nowS, row.id),
       staffFinding(db, row, nowS, { act: 'hold', by, note }),
     ]);
     return { ok: true };
   }
   if (act === 'rollback') {
+    if (row.dead_at != null) return { error: 'dead' };
     if (!row.clean_obj || !bucket) return { error: 'no-clean' };
+    // never past a move the service made: a sale's piece, a vault's, a trade's would come back while it stands elsewhere
+    if (row.svc_seq != null && row.svc_seq > (row.clean_seq ?? 0)) return { error: 'service-moved' };
     const object = await bucket.get(row.clean_obj);
-    const save = parse(await realmSaveTextOf(object) ?? '');
+    const text = await realmSaveTextOf(object);
+    const save = parse(text ?? '');
     if (!save) return { error: 'no-clean' };
     // the clean save becomes the record, one sequence on, its seat taken from any tab - and the hold lifted with what made it
     const moved = await db.prepare(
-      'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, lease = NULL, judged_seq = seq + 1, held = NULL, held_at = NULL, strikes = 0,'
-      + ' wealth = ?, witnessed = 0, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ?',
-    ).bind(wealthOf(save), nowS, row.id, row.clean_obj, row.seq).run();
+      'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, bytes = ?, lease = NULL, judged_seq = seq + 1, clean_seq = seq + 1, held = NULL, held_at = NULL,'
+      + ' strikes = 0, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
+    ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save), nowS, row.id, row.clean_obj, row.seq).run();
     if (!moved.meta.changes) return { error: 'no-clean' };
     await staffFinding(db, row, nowS, { act: 'rollback', by, note, from: row.seq, to: row.clean_seq }).run();
     await dropObjects(bucket, [row.prev === row.clean_obj ? null : row.prev]);   // the save before the one rolled away: nothing names it now
@@ -118,9 +131,6 @@ export async function reviewAct({ db, bucket, nowS }, player, env, act, body = {
   }
   return { error: 'body' };
 }
-
-/** The value at quantile `q` of a sorted list (the nearest rank). */
-const quantile = (/** @type {number[]} */ sorted, /** @type {number} */ q) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)] : null);
 
 /**
  * THE MEASURE over the last `days`: every character-hour that played MEASURE_PLAYED_MIN or more, as gold an hour of play,
@@ -131,15 +141,22 @@ const quantile = (/** @type {number[]} */ sorted, /** @type {number} */ q) => (s
 export async function measure(db, nowS, days) {
   const config = await budgetConfig(db);
   const since = nowS - days * 24 * 3600;
-  const { results = [] } = await db.prepare('SELECT level, gain, played_s FROM realm_wealth_hours WHERE hour >= ? AND played_s >= ?').bind(since, MEASURE_PLAYED_MIN).all();
-  const would = await db.prepare("SELECT detail FROM realm_findings WHERE at >= ? AND kind IN ('measure', 'budget')").bind(since).all();
+  // asked by the database, a band at a time - each quantile one row of the band's rates in order (AUDIT INT: every hour of
+  // thirty days was read into the Worker)
+  const rate = 'CAST(ROUND(gain * 3600.0 / played_s) AS INTEGER)';
+  const where = 'hour >= ?1 AND played_s >= ?2 AND level > ?3 AND level <= ?4';
+  const bands = [];
   let lo = 0;
-  const bands = config.bands.map((/** @type {any} */ b) => {
-    const rates = results.filter((/** @type {any} */ r) => r.level > lo && r.level <= b.upTo).map((/** @type {any} */ r) => Math.round((r.gain * 3600) / r.played_s)).sort((x, y) => x - y);
-    const over = (would.results ?? []).map((/** @type {any} */ r) => parse(r.detail)).filter((d) => d && d.level > lo && d.level <= b.upTo).length;
-    const out = { from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: rates.length, quantiles: MEASURE_QUANTILES.map((q) => [q, quantile(rates, q)]), most: rates.length ? rates[rates.length - 1] : null, overs: over };
+  for (const b of config.bands) {
+    const n = Number((await db.prepare(`SELECT COUNT(*) AS n FROM realm_wealth_hours WHERE ${where}`).bind(since, MEASURE_PLAYED_MIN, lo, b.upTo).first())?.n ?? 0);
+    const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM realm_wealth_hours WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?5`)
+      .bind(since, MEASURE_PLAYED_MIN, lo, b.upTo, rank).first())?.r ?? null;
+    const quantiles = [];
+    for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);
+    const overs = Number((await db.prepare("SELECT COUNT(*) AS n FROM realm_findings WHERE at >= ?1 AND kind IN ('measure', 'budget') AND json_extract(detail, '$.level') > ?2 AND json_extract(detail, '$.level') <= ?3")
+      .bind(since, lo, b.upTo).first())?.n ?? 0);
+    bands.push({ from: lo + 1, upTo: b.upTo, rate: b.rate, cap: b.cap, hours: n, quantiles, most: n ? await at(n - 1) : null, overs });
     lo = b.upTo;
-    return out;
-  });
+  }
   return { days, config, isDefault: config === BUDGET_DEFAULT, bands };
 }

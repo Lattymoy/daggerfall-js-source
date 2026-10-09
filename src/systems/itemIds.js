@@ -21,10 +21,8 @@
 // its owner by no route.
 // ═══════════════════════════════════════════════════════════════════
 
-import { ITEM_UID_RE } from './itemLaw.js';
-
-/** A letter of credit's template (inventory.js LETTER_OF_CREDIT_TEMPLATE). */
-const LETTER_TEMPLATE = 275;
+import { ITEM_UID_RE, lawTemplate } from './itemLaw.js';
+import { LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';
 /** The tiers a piece wears that make it valuable (rarityTier.js ROLLED_TIERS, and the two minted whole). */
 const VALUABLE_TIERS = Object.freeze(['magic', 'rare', 'legendary', 'aetheric', 'gilded']);
 
@@ -32,7 +30,7 @@ const VALUABLE_TIERS = Object.freeze(['magic', 'rare', 'legendary', 'aetheric', 
 export function valuablePiece(/** @type {any} */ it) {
   if (!it || typeof it !== 'object' || it.bound === true || it.questItem === true) return false;
   if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;
-  if (it.templateIndex === LETTER_TEMPLATE) return true;
+  if (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE) return true;
   return VALUABLE_TIERS.includes(it.rarity) || it.magic === true || it.artifact === true || typeof it.provenance === 'string';
 }
 
@@ -71,10 +69,15 @@ export const TRADE_HELD_NOTICES = Object.freeze({
   staff: 'The realm\'s staff have frozen this character\'s trading.',
 });
 export const TRADE_OPEN_NOTICE = 'This character\'s trading is open again.';
+/** The law's hold, naming the piece it found (`name`, its template's). */
+export const tradeHeldLawNotice = (/** @type {string} */ name) => `The realm is reviewing this character: a ${name} it carries is not as the game makes it. Trading is frozen until it is gone.`;
 /** What to say when a checkpoint's answer moves the hold from `prev` to `now` (each a reason or null) - a notice, or
- *  null when nothing changed or nothing is known (`undefined`: no answer that says). */
-export function tradeHeldNotice(/** @type {string | null | undefined} */ prev, /** @type {string | null | undefined} */ now) {
+ *  null when nothing changed or nothing is known (`undefined`: no answer that says). `why`: the first thing the law found
+ *  (`{ t }`, its template) - the notice names it, so a player held over a piece can find it. */
+export function tradeHeldNotice(/** @type {string | null | undefined} */ prev, /** @type {string | null | undefined} */ now, /** @type {{ t?: number } | null} */ why = null) {
   if (now === undefined || now === prev) return null;
   if (now == null) return prev ? TRADE_OPEN_NOTICE : null;
+  const name = now === 'law' && why ? lawTemplate(why.t)?.name : null;
+  if (typeof name === 'string' && name) return tradeHeldLawNotice(name);
   return /** @type {any} */ (TRADE_HELD_NOTICES)[now] ?? TRADE_HELD_NOTICES.law;
 }

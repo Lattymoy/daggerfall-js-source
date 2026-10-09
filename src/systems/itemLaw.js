@@ -51,13 +51,15 @@ import { SIGIL_BANDS, sigilFloor, validSigil } from './sigil.js';
 import { setPieceKind, setById, WORLD_SET_IDS } from './sigilSets.js';
 import { BROKER_PRICES } from './sigilBroker.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
-import { enchantmentSettings, forcedEnchantments, hasItemMakerFlag, ITEM_MAKER_FLAGS, ENCHANTMENT_EXCLUSIONS } from './enchantmentCatalogue.js';
+import { enchantmentSettings, forcedEnchantments, hasItemMakerFlag, ITEM_MAKER_FLAGS, ENCHANTMENT_EXCLUSIONS, SOUL_COUNT } from './enchantmentCatalogue.js';
 import { itemEnchantmentPower, craftedJewelRecipe, MAX_ENCHANTMENTS } from './enchanting.js';
-import { isStackable, ARROW_TEMPLATE } from './inventory.js';
-import { setItemLaw, LOOT_STACK_MAX } from './loot.js';
+import { isStackable, ARROW_TEMPLATE, GOLD_TEMPLATE, GLASS_BOTTLE_TEMPLATE } from './inventory.js';
+import { setItemLaw, LOOT_STACK_MAX, ITEM_GROUP_NAME_BY_CLASS } from './loot.js';
 import { CREATE_ITEM_ROWS, MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES } from './createItemRows.js';
 import { cardById } from '../net/iliacCards.js';
-import { PROVENANCE_RE } from '../net/recipeLaw.js';
+import { PROVENANCE_RE, REPAIR_KIT_TEMPLATE } from '../net/recipeLaw.js';
+import { ILIAC_CARD_TEMPLATE, CARD_BINDER_TEMPLATE, BINDER_DECKS_MAX } from './iliacItems.js';
+import { POTENT } from '../net/alchemyLaw.js';
 import { RRI_TEMPLATES } from './rriItems.js';
 import { BANDAGE_TEMPLATE } from './rriRealism.js';
 import { FORAGING_TEMPLATES } from './foragingLaw.js';
@@ -74,7 +76,6 @@ import './thunderlock.js';
 import './gateSpoils.js';
 import './ayleidStones.js';
 import './walletItem.js';
-import './iliacItems.js';
 import './livingWorld/keepsake.js';
 import './legacy/heirloom.js';
 import './comeSailAwayItems.js';
@@ -117,23 +118,25 @@ export function templateGroups(/** @type {number} */ i) {
 
 /** The armour materials a piece may carry: leather, chain (and the classic second chain), the ten plates. */
 const ARMOR_MATERIALS = Object.freeze([0x0000, 0x0100, 0x0103, 0x0200, 0x0201, 0x0202, 0x0203, 0x0204, 0x0205, 0x0206, 0x0207, 0x0208, 0x0209]);
-/** The poisons a foe's blade carries (poisons.js POISON_START_VALUE and its eight), or none (-1). */
-const POISON_MIN = 128, POISON_MAX = 135;
-/** A soul a trap may hold (enchantmentCatalogue SOUL_COUNT: EnemyBasics' first 43). */
-const SOUL_MAX = 42;
-/** DFU's Soul Gem - the one item a soul is trapped in, beside Azura's Star (an artifact). */
-const SOUL_TRAP_TEMPLATE = 274;
+/** The poisons a foe's blade carries (poisons.js POISON_START_VALUE and its eight - pinned equal by
+ *  test/int1_itemlaw.test.js: the Worker bundles no poisons.js, whose diseases ride with it), or none (-1). */
+const LAW_POISON_FIRST = 128, LAW_POISON_LAST = 135;
+/** The souls a trap may hold: a monster's (enchantmentCatalogue SOUL_COUNT, EnemyBasics' first 43) and a person's - DFU's
+ *  kill door traps any foe's mobile id (mysticism.js attemptSoulTrap; only Azura's Star asks `< 128`), a guard's and a
+ *  knight's among them (AUDIT INT: a human soul's gem was a finding). The item maker reads only the first. */
+const soulLawful = (/** @type {unknown} */ v) => isInt(v) && ((/** @type {number} */ (v) >= 0 && /** @type {number} */ (v) < SOUL_COUNT) || (/** @type {number} */ (v) >= HUMAN_SOUL_FIRST && /** @type {number} */ (v) <= HUMAN_SOUL_LAST));
+/** The people a foe may be (mobileTypes.js: Mage 128 to the City Watch's knight 146). */
+const HUMAN_SOUL_FIRST = 128, HUMAN_SOUL_LAST = 146;
+/** DFU's Soul Gem - the one item a soul is trapped in, beside Azura's Star (the table's tenth artifact, createArtifact's
+ *  index 9 - ARTIFACT_RECORDS). */
+const SOUL_TRAP_TEMPLATE = 274, AZURAS_STAR = 9;
 /** A conjured item's group and template (createItemRows.js CREATE_ITEM_ROWS - a piece of armour, a steel weapon, the
  *  robes of either cut) - the only items that vanish. */
 const SUMMONED = new Set(CREATE_ITEM_ROWS.flatMap((/** @type {any} */ r) => (r.kind === 'robes'
   ? [`MensClothing:${MENS_PLAIN_ROBES}`, `WomensClothing:${WOMENS_PLAIN_ROBES}`]
   : [`${r.kind === 'armor' ? 'Armor' : 'Weapons'}:${r.templateIndex}`])));
-/** The Repair Kit's template (profTemplates.js), the Glass Bottle's (a potion's), a card's and a Card Binder's. */
-const KIT_TEMPLATE = 692, BOTTLE_TEMPLATE = 83, CARD_TEMPLATE = 581, BINDER_TEMPLATE = 582;
-/** A Card Binder holds at most this many decks (iliacItems.js). */
-const BINDER_DECKS_MAX = 12;
-/** A Potent potion's share (net/alchemyLaw.js): a Journeyman's 25, a Master's 40. */
-const POTENT_SHARES = Object.freeze([25, 40]);
+/** A Potent potion's share (net/alchemyLaw.js POTENT): a Journeyman's, a Master's. */
+const POTENT_SHARES = Object.freeze([POTENT.pct, POTENT.masterPct]);
 /** The skeleton key's world texture (mysticism.js castBySkeletonKey) - an artifact's alone. */
 const SKELETON_KEY_TEXTURE = Object.freeze({ archive: 432, record: 20 });
 /** An artifact's index (createArtifact: `(i << 1) | 1`, i in 0..22). */
@@ -155,7 +158,6 @@ const stacks = (/** @type {any} */ item, /** @type {any} */ row) => isStackable(
   || (item.group === BANDAGE.group && item.templateIndex === BANDAGE.templateIndex);
 /** Gold is a count, not a stack the wire carries: a purse dropped, a wagon's coin, a death in the wild lay piles past the
  *  wire's bound (loot.js LOOT_STACK_MAX) in an honest save. */
-const GOLD_TEMPLATE = 276;
 const stackMax = (/** @type {any} */ item) => (item.group === 'Currency' && item.templateIndex === GOLD_TEMPLATE ? Number.MAX_SAFE_INTEGER : LOOT_STACK_MAX);
 const isInt = (/** @type {unknown} */ v) => Number.isInteger(v);
 const has = (/** @type {any} */ o, /** @type {string} */ k) => o[k] !== undefined && o[k] !== null;
@@ -202,9 +204,9 @@ export function itemFindings(v, opts = {}) {
   // ── a conjured item: only Create Item's, and it vanishes ─────────────
   if (has(item, 'timeForItemToDisappear') && item.timeForItemToDisappear > 0 && !SUMMONED.has(`${item.group}:${item.templateIndex}`)) out.add('summoned');
   // ── a poisoned blade, a trapped soul, an artifact's marks ────────────
-  if (has(item, 'poisonType') && item.poisonType !== -1 && !(item.group === 'Weapons' && item.poisonType >= POISON_MIN && item.poisonType <= POISON_MAX)) out.add('poison');
+  if (has(item, 'poisonType') && item.poisonType !== -1 && !(item.group === 'Weapons' && item.poisonType >= LAW_POISON_FIRST && item.poisonType <= LAW_POISON_LAST)) out.add('poison');
   if (has(item, 'trappedSoulType') && item.trappedSoulType !== -1
-    && !((item.templateIndex === SOUL_TRAP_TEMPLATE || item.artifact === true) && isInt(item.trappedSoulType) && item.trappedSoulType >= 0 && item.trappedSoulType <= SOUL_MAX)) out.add('soul');
+    && !((item.templateIndex === SOUL_TRAP_TEMPLATE || (item.artifact === true && isInt(item.artifactIndexBitfield) && item.artifactIndexBitfield >> 1 === AZURAS_STAR)) && soulLawful(item.trappedSoulType))) out.add('soul');
   if (has(item, 'artifactIndexBitfield')) {
     const b = item.artifactIndexBitfield;
     if (item.artifact !== true || !isInt(b) || b < 1 || b > ARTIFACT_BITFIELD_MAX || (b & 1) !== 1) out.add('artifact');
@@ -214,12 +216,12 @@ export function itemFindings(v, opts = {}) {
   if (has(item, 'provenance') && !PROVENANCE_RE.test(item.provenance)) out.add('provenance');
   if (has(item, 'uid') && !ITEM_UID_RE.test(item.uid)) out.add('uid');
   if (has(item, 'quality') && !has(item, 'provenance') && item.quality !== 2 && item.quality !== 3) out.add('crafted');   // a found piece tempered reaches 3 (temperLaw TEMPER_TOP)
-  if ((has(item, 'kitMetal') || item.fieldKit === true) && item.templateIndex !== KIT_TEMPLATE) out.add('crafted');
+  if ((has(item, 'kitMetal') || item.fieldKit === true) && item.templateIndex !== REPAIR_KIT_TEMPLATE) out.add('crafted');
   if (has(item, 'hand') && !(item.group === 'Jewellery' && has(item, 'provenance'))) out.add('crafted');
-  if (has(item, 'potent') && !(item.templateIndex === BOTTLE_TEMPLATE && POTENT_SHARES.includes(item.potent))) out.add('crafted');
-  if (has(item, 'card') && !(item.templateIndex === CARD_TEMPLATE && cardById(item.card))) out.add('card');
-  if (has(item, 'decks') && !(item.templateIndex === BINDER_TEMPLATE && item.decks.length <= BINDER_DECKS_MAX
-    && item.decks.every((/** @type {any} */ d) => d.cards.every((/** @type {string} */ c) => cardById(c))))) out.add('card');
+  if (has(item, 'potent') && !(item.templateIndex === GLASS_BOTTLE_TEMPLATE && POTENT_SHARES.includes(item.potent))) out.add('crafted');
+  if (has(item, 'card') && !(item.templateIndex === ILIAC_CARD_TEMPLATE && cardById(item.card))) out.add('card');
+  if (has(item, 'decks') && !(item.templateIndex === CARD_BINDER_TEMPLATE && Array.isArray(item.decks) && item.decks.length <= BINDER_DECKS_MAX
+    && item.decks.every((/** @type {any} */ d) => Array.isArray(d?.cards) && d.cards.every((/** @type {string} */ c) => cardById(c))))) out.add('card');
   // ── the Broker's binding ────────────────────────────────────────────
   if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');
   // ── the ladder, the records, the sigil and the enchantments ──────────
@@ -280,8 +282,10 @@ function tierFindings(/** @type {any} */ item) {
   const numbers = own.filter((a) => !AFFIX_KINDS[a?.id]?.proc);
   if (tier === 'magic' || tier === 'rare') {
     const [lo, hi] = AFFIX_COUNTS[tier];
-    const cursed = isCursed(item) ? 1 : 0;
-    if (numbers.length < lo || numbers.length > hi + cursed || procs.length > 1) out.push('affixes');
+    // a curse's line is one more - and stays when the temple lifts the curse (lootCurse.js liftCurse keeps it, by design;
+    // AUDIT INT: 405 of 760 lifted Rares were findings). A Rare may carry one past its count, cursed or lifted
+    const extra = tier === 'rare' ? 1 : 0;
+    if (numbers.length < lo || numbers.length > hi + extra || procs.length > 1) out.push('affixes');
     for (const a of own) {
       const band = AFFIX_RANGES[a?.id]?.[tier];
       if (band && !(a.value >= band[0] && a.value <= band[1])) out.push('affixes');
@@ -313,9 +317,10 @@ function tierFindings(/** @type {any} */ item) {
     const top = band ? Math.ceil((band[0] + band[1]) / 2) : Infinity;
     const onRecord = sig.some((w) => w.id === a?.id && (w.param ?? null) === (a?.param ?? null));
     if (!band || a.value < top || a.value > band[1] || onRecord) out.push('affixes');
-    if (item.exalted !== true && !isCursed(item)) out.push('affixes');
-    if (isCursed(item) && AFFIX_KINDS[a?.id]?.proc) out.push('curse');
-  } else if (item.exalted === true || isCursed(item)) out.push('affixes');
+    // an Exalted's line, a curse's - or a curse's the temple lifted (no mark of either, and a number, as a curse's is:
+    // AUDIT INT, every lifted Legendary was a finding)
+    if (item.exalted !== true && AFFIX_KINDS[a?.id]?.proc) out.push(isCursed(item) ? 'curse' : 'affixes');
+  } else if (item.exalted === true || isCursed(item)) out.push('affixes');   // an Exalted's line or a curse's, never neither
   if (item.exalted === true && isCursed(item)) out.push('curse');
   if (has(item, 'reforged') && !(item.exalted === true && item.reforged === sig.length)) out.push('reforged');
   if (has(item, 'honed') && item.exalted !== true) out.push('honed');
@@ -363,6 +368,70 @@ const MAKER_GROUPS = Object.freeze(['Weapons', 'Armor', 'Gems', 'Jewellery', ...
 /** A classic save's ten slots, kept whole by its importer (classicSave.js classicItemFromRecord) - `None` among them. */
 const classicSlots = (/** @type {any[]} */ rows) => rows.length === 10 && rows.some((e) => e?.type === T.None);
 
+// ── DFU's magic items, by its own table ──────────────────────────────
+//
+// DFU's MagicItemTemplates.txt (Assets/Resources, "a JSON dump of fixed MAGIC.DEF" - DFU's ItemHelper; MIT) is MAGIC.DEF
+// as DFU reads it: 36 regular magic items, each ONE enchantment, and 23 artifacts, each a fixed set. The port reads the
+// player's own MAGIC.DEF (shared.js loadMagicRegistries), which DFU's fixes may differ from in a row's PARAM - never in
+// the rows' kinds or their count - so the law holds the kinds and the counts, and leaves the params to the catalogue's
+// range. Pinned to the file's rows by test/int1_itemlaw.test.js.
+
+/** The kinds a regular magic item's one row is (every RegularMagicItem row of the table). */
+export const REGULAR_MAGIC_TYPES = Object.freeze([T.CastWhenUsed, T.CastWhenHeld, T.CastWhenStrikes, T.VampiricEffect, T.AbsorbsSpells, T.EnhancesSkill]);
+/** The artifacts in the table's order (createArtifact's index - `artifactIndexBitfield >> 1`): each one's ItemGroups
+ *  number and index in it, and its rows' kinds. */
+export const ARTIFACT_RECORDS = Object.freeze([
+  [25, 2, [T.SpecialArtifactEffect]], [3, 0, [T.SpecialArtifactEffect]], [3, 11, [T.SpecialArtifactEffect]], [25, 2, [T.SpecialArtifactEffect]],
+  [15, 11, [T.SpecialArtifactEffect]], [7, 0, [T.SpecialArtifactEffect]], [3, 2, [T.SpecialArtifactEffect]], [25, 2, [T.SpecialArtifactEffect]],
+  [25, 0, [T.SpecialArtifactEffect]], [25, 0, [T.SpecialArtifactEffect]],
+  [3, 13, [T.CastWhenStrikes, T.CastWhenStrikes]],   // Volendrung
+  [25, 2, [T.CastWhenHeld, T.CastWhenUsed, T.CastWhenUsed]],   // Warlock's Ring
+  [3, 17, [T.CastWhenStrikes, T.CastWhenStrikes, T.CastWhenStrikes]],   // Auriel's Bow
+  [25, 0, [T.CastWhenHeld, T.CastWhenUsed, T.AbsorbsSpells]],   // Necromancer's Amulet
+  [3, 9, [T.CastWhenUsed, T.CastWhenUsed, T.CastWhenUsed, T.EnhancesSkill]],   // Chrysamere
+  [2, 0, [T.RegensHealth, T.CastWhenUsed, T.CastWhenUsed]],   // Lord's Mail
+  [3, 2, [T.CastWhenHeld, T.RegensHealth]],   // Staff of Magnus
+  [25, 2, [T.CastWhenUsed, T.CastWhenHeld]],   // Ring of Khajiit
+  [2, 0, [T.StrengthensArmor, T.CastWhenUsed, T.CastWhenUsed, T.CastWhenUsed]],   // Ebony Mail
+  [2, 10, [T.CastWhenUsed, T.CastWhenHeld, T.CastWhenUsed, T.StrengthensArmor]],   // Auriel's Shield
+  [2, 10, [T.CastWhenHeld, T.CastWhenUsed]],   // Spell Breaker
+  [25, 5, [T.CastWhenUsed, T.EnhancesSkill]],   // Skeleton's Key
+  [3, 8, [T.CastWhenStrikes, T.CastWhenStrikes, T.CastWhenUsed, T.EnhancesSkill]],   // Ebony Blade
+].map((/** @type {any} */ [group, index, types]) => Object.freeze({ group: /** @type {number} */ (group), index: /** @type {number} */ (index), types: /** @type {number[]} */ (types) })));
+/** The rows a piece's table record leaves room for: every live row's kind, counted, within the record's. */
+const withinKinds = (/** @type {any[]} */ rows, /** @type {number[]} */ types) => {
+  const left = [...types];
+  for (const e of rows) {
+    if (e.type === T.None) continue;
+    const i = left.indexOf(e.type);
+    if (i < 0) return false;
+    left.splice(i, 1);
+  }
+  return true;
+};
+/** A regular magic item (createRegularMagicItem): one row - a kind the table's regular items carry. */
+function regularMagicFindings(/** @type {any[]} */ found) {
+  const live = found.filter((e) => e.type !== T.None);
+  return live.length === 1 && REGULAR_MAGIC_TYPES.includes(live[0].type) ? [] : ['enchantments'];
+}
+/** An artifact (createArtifact, or a classic save's - legacyArtifactIndexBitfieldCheck): its index, its record's template,
+ *  its record's rows' kinds. */
+function artifactFindings(/** @type {any} */ item, /** @type {any[]} */ found) {
+  const b = item.artifactIndexBitfield;
+  const rec = isInt(b) && (b & 1) === 1 ? ARTIFACT_RECORDS[b >> 1] : null;
+  if (!rec) return ['artifact'];
+  if (item.templateIndex !== GROUP_TEMPLATE_INDICES[ITEM_GROUP_NAME_BY_CLASS[rec.group]]?.[rec.index]) return ['artifact'];
+  return withinKinds(found, rec.types) ? [] : ['artifact'];
+}
+
+/** A CLASSIC SAVE'S PIECE: ten slots kept whole by its importer (classicSave.js classicItemFromRecord), `None` among them
+ *  - an offline character's, come into the realm through customs. The classic item maker's own law is not this tree's,
+ *  so the law takes the piece as it stands, and the realm keeps it the character's: no route of the service hands it to
+ *  another player (realm.js prepareRealmRecord, realmTrade.js - 'piece-legacy'; RESTORE's word for what customs brings,
+ *  Mac: "Keep all, can't sell"). AUDIT INT: ten slots dressed so carried any nine powers to the market. */
+export const classicPiece = (/** @type {any} */ item) => !!item && typeof item === 'object' && item.artifact !== true && item.magic !== true
+  && Array.isArray(item.enchantments) && classicSlots(item.enchantments);
+
 /** The enchantments' findings: rows the catalogue knows, an artifact's effect on an artifact, the maker's rows within
  *  the maker's law and the item's budget. */
 function enchantmentFindings(/** @type {any} */ item) {
@@ -370,16 +439,20 @@ function enchantmentFindings(/** @type {any} */ item) {
   const out = [];
   if (Array.isArray(item.customEnchantments) && item.customEnchantments.length) out.push('enchantments');   // nothing in this tree writes it
   const rows = Array.isArray(item.enchantments) ? item.enchantments : [];
-  if (!rows.length) return out;
+  // DFU's own magic is never without its rows - an artifact's or a magic item's flag on a piece without them is a word
+  if (!rows.length) return item.artifact === true ? [...out, 'artifact'] : item.magic === true ? [...out, 'enchantments'] : out;
   if (rows.length > MAX_ENCHANTMENTS + 1) return [...out, 'enchantments'];   // DFU's cap keeps eleven (enchanting.js applyEnchantments)
   for (const e of rows) {
+    if (!e || typeof e !== 'object') return [...out, 'enchantments'];   // AUDIT INT: a null row threw, and the checkpoint with it
     if (!(e.type >= T.None && e.type <= T.SpecialArtifactEffect) || !(e.param >= -128 && e.param <= 127)) return [...out, 'enchantments'];
     if (e.type === T.SpecialArtifactEffect && item.artifact !== true) return [...out, 'artifact'];
   }
-  const legacy = item.magic === true || item.artifact === true || classicSlots(rows);
   const maker = rows.filter(isMakerRow);
   const found = rows.filter((e) => !isMakerRow(e));
-  if (!legacy) {
+  // DFU'S OWN MAGIC (AUDIT INT: `magic: true` carried any ten rows; `artifact: true` any power) - proven by DFU's table
+  if (item.artifact === true) out.push(...artifactFindings(item, found));
+  else if (item.magic === true) out.push(...regularMagicFindings(found));
+  else if (!classicSlots(rows)) {
     // found rows: a rolled tier's flavour or record (tierFindings held it), a curse's drawback (validCurse), a crafted
     // jewel's roll - never anything else on an item no MAGIC.DEF made
     const tier = item.rarity;
@@ -459,13 +532,15 @@ export function worthCeiling(/** @type {any} */ item) {
   const legacy = item.magic === true || item.artifact === true ? WORTH_MARGIN * 10 : 0;
   return base + lines + RARE_ENCHANT_WORTH + EXALTED_WORTH + (aethericById(item.aetheric) ? AETHERIC_WORTH : 0) + (has(item, 'gilded') ? GILDED_WORTH : 0) + WORTH_MARGIN + legacy;
 }
-/** What one item is worth to the wealth measure: its price, never past its ceiling, times its stack. A letter of credit
- *  is gold (realmGoldLaw.js liquidWorthOf counts it) and is not an item's worth here. */
+/** What one item is worth to the wealth measure: its price, never past its ceiling and never under what the piece IS - its
+ *  base and its lines' worth (AUDIT INT: a forged piece priced at nothing was worth nothing to the budget) - times its
+ *  stack. A letter of credit is gold (realmGoldLaw.js liquidWorthOf counts it) and is not an item's worth here. */
 export function itemWorth(/** @type {any} */ item) {
-  if (!item || typeof item !== 'object') return 0;
+  if (!item || typeof item !== 'object' || !lawTemplate(item.templateIndex)) return 0;
   const value = typeof item.value === 'number' && Number.isFinite(item.value) && item.value > 0 ? item.value : 0;
   const stack = isInt(item.stackCount) && item.stackCount > 1 ? item.stackCount : 1;
-  return Math.min(value, worthCeiling(item)) * stack;
+  const floor = itemBaseValue(item, lawTemplate) + affixesWorth(Array.isArray(item.affixes) ? item.affixes.filter(validAffix) : [], item);
+  return Math.max(Math.min(value, worthCeiling(item)), floor) * stack;
 }
 
 setItemLaw(itemFindings);

@@ -29,8 +29,9 @@
 // dishonest one a refusal or a copy the ledger sees.
 // ═══════════════════════════════════════════════════════════════════
 
-import { REALM_ID_RE, LEASE_RE, mintObjectKey, dropObjects, dropIfUnnamed, realmSaveTextOf, holdRefusal, anyDupe } from './realm.js';
-import { wealthOf, ownedUids } from './judge.js';   // INT5: the trade's wealth, witnessed; INT4: the ids it moves
+import { REALM_ID_RE, LEASE_RE, mintObjectKey, dropObjects, dropIfUnnamed, realmSaveTextOf, holdRefusal } from './realm.js';
+import { wealthOf, ledgerPieces, classicCount } from './judge.js';   // INT5: the trade's wealth, witnessed; INT4: the pieces it moves
+import { piecesRefusal, ledgerMoves } from './ledger.js';   // INT4: a piece a side may give, and the ledger moved with it
 import { REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: the text's bound
 import { realmTradeHalfOf, halvesAgree, settleRealmTrade, REALM_TRADE_SID_RE, REALM_TRADE_TTL_S } from '../../src/net/realmTradeLaw.js';
 import { canon } from '../../src/net/canon.js';
@@ -129,7 +130,9 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   if (!other || other.lease !== t.a_lease || other.seq !== t.a_seq || !other.obj) return refuse(db, sid, 'moved', playerId, asker, true);
   // INT3: A SIDE THE JUDGE HOLDS GIVES NOTHING - its goods and its gold are what the hold keeps from every other player
   const gives = (/** @type {any} */ h) => h.give.items.length > 0 || h.give.gold > 0;
-  if ((gives(firstHalf) && holdRefusal(other)) || (gives(half) && holdRefusal(row))) return refuse(db, sid, 'trade-held', playerId, asker, true);
+  // (its own word: 'trade-held', or 'record-unjudged' - AUDIT INT, a record no checkpoint had read was told it was held)
+  const heldBy = (gives(firstHalf) ? holdRefusal(other) : null) ?? (gives(half) ? holdRefusal(row) : null);
+  if (heldBy) return refuse(db, sid, heldBy.error, playerId, asker, true);
 
   // EACH RECORD AS ITS OWN LAST CHECKPOINT LEFT IT
   const [objA, objB] = await Promise.all([bucket.get(other.obj), bucket.get(row.obj)]);
@@ -138,10 +141,12 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   if (!saveA || !saveB || typeof saveA !== 'object' || typeof saveB !== 'object') return refuse(db, sid, 'no-data', playerId, asker, true);
   const s = settleRealmTrade(saveA, saveB, firstHalf, half);
   if (!s.ok) return refuse(db, sid, s.why ?? 'goods', playerId, asker, true);
-  // INT4: a piece the ledger marked a duplicate leaves no record by any route
-  const leftOf = (/** @type {any} */ was, /** @type {any} */ now) => { const after = new Set(ownedUids(now)); return ownedUids(was).filter((u) => !after.has(u)); };
-  const left = [...leftOf(saveA, s.a), ...leftOf(saveB, s.b)];
-  if (left.length && await anyDupe(db, left)) return refuse(db, sid, 'piece-dupe', playerId, asker, true);
+  // INT4: a piece leaves a record only as its own - held by it, unclaimed, no copy (ledger.js piecesRefusal)
+  const piecesA = [ledgerPieces(saveA), ledgerPieces(s.a)], piecesB = [ledgerPieces(saveB), ledgerPieces(s.b)];
+  const leftOf = (/** @type {any[][]} */ [was, now]) => { const after = new Set(now.map((p) => p.key)); return [...new Set(was.map((p) => p.key))].filter((k) => !after.has(k)); };
+  const why = (classicCount(s.a) < classicCount(saveA) || classicCount(s.b) < classicCount(saveB) ? 'piece-legacy' : null)   // a classic save's piece: its character's
+    ?? (await piecesRefusal(db, t.a_char, leftOf(piecesA))) ?? (await piecesRefusal(db, id, leftOf(piecesB)));
+  if (why) return refuse(db, sid, why, playerId, asker, true);
   // INT5: what the trade moved, witnessed on both rows - a trade is no gain the budget charges
   const movedA = wealthOf(s.a) - wealthOf(saveA), movedB = wealthOf(s.b) - wealthOf(saveB);
   const textA = JSON.stringify(s.a), textB = JSON.stringify(s.b);
@@ -154,11 +159,19 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   await bucket.put(keyA, textA);
   await bucket.put(keyB, textB);
   const result = JSON.stringify({ a: { seq: t.a_seq + 1, ...s.toA }, b: { seq: seq + 1, ...s.toB } });
-  const move = 'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, updated_at = ?, witnessed = witnessed + ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?';
+  // INT6: a side the judge last found clean is clean still - its clean one follows the trade (realm.js prepareRealmRecord's
+  // reason); `svc_seq` says the service moved it
+  const move = (/** @type {any} */ r) => `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${r.clean_obj != null && r.clean_obj === r.obj ? ', clean_obj = ?3, clean_seq = ?1' : ''}
+    WHERE id = ?6 AND player = ?7 AND lease = ?8 AND seq = ?9`;
+  // INT4: the ledger follows both: what left each record, then what came into each - a piece passing between them lands
+  // where it went
+  const movesA = ledgerMoves(db, { player: t.a_player, char: t.a_char, seq: t.a_seq + 1, nowS }, piecesA[0], piecesA[1]);
+  const movesB = ledgerMoves(db, { player: playerId, char: id, seq: seq + 1, nowS }, piecesB[0], piecesB[1]);
   try {
     await db.batch([
-      db.prepare(move).bind(t.a_seq + 1, bytesA, keyA, nowS, movedA, t.a_char, t.a_player, t.a_lease, t.a_seq),
-      db.prepare(move).bind(seq + 1, bytesB, keyB, nowS, movedB, id, playerId, lease, seq),
+      db.prepare(move(other)).bind(t.a_seq + 1, bytesA, keyA, nowS, movedA, t.a_char, t.a_player, t.a_lease, t.a_seq),
+      db.prepare(move(row)).bind(seq + 1, bytesB, keyB, nowS, movedB, id, playerId, lease, seq),
+      ...movesA.left, ...movesB.left, ...movesA.entered, ...movesB.entered,
       db.prepare("UPDATE realm_trades SET state = 'done', result = ?, b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'").bind(result, playerId, id, seq, canon(half), sid),
       // THE GUARD: both records at their new objects under their leases, and this trade sealed by this half - or the
       // insert happens, the CHECK refuses it, and the batch rolls back whole

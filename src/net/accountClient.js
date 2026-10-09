@@ -628,6 +628,9 @@ export const REFUSALS = Object.freeze({
   'trade-held': 'The realm is reviewing this character, and its trading is frozen until the review ends.',
   'record-unjudged': 'The realm has not read this character\'s latest save yet. Play a moment and try again.',
   'piece-dupe': 'Copies of that piece were found in the realm. It cannot be traded, sold or stored for others.',
+  'piece-claimed': 'Another character in the realm shows that piece too. Wait a few minutes while the realm settles whose it is.',
+  'piece-legacy': 'That came into the realm from a classic save through customs. It stays yours, and the realm does not trade it.',
+  'service-moved': 'The realm moved that character\'s record since its last clean save, so it cannot be rolled back to it.',   // INT6: staff's
   'no-clean': 'That character has no save the realm judged clean to roll back to.',   // INT6: the review's rollback (tools/realmReview.mjs)
 });
 

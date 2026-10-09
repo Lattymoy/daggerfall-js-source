@@ -56,6 +56,7 @@ const GILD = await load('../src/systems/gilded.js');
 const REFORGE = await load('../src/systems/reforge.js');
 const CODEX = await load('../src/systems/lootCodex.js');
 const MAGIC_DEF = await load('../src/formats/magicDef.js');
+const { DFU_MAGIC_ITEMS } = await load('./dfuMagicItems.mjs');
 const SHOP = await load('../src/systems/shopStock.js');
 const CONTAINER = await load('../src/systems/containerLoot.js');
 const SCENE_CACHE = await load('../src/systems/sceneCache.js');
@@ -228,25 +229,12 @@ function craftMagicDef(records) {
   }
   return buf;
 }
-/** Regular rows over the classic enchantment kinds (MAGIC.DEF's own: group 0, 1 and 2), and the twenty-three artifacts
- *  (type 1/2), each carrying its SpecialArtifactEffect beside a classic one. */
+/** DFU's own MAGIC.DEF (test/dfuMagicItems.mjs - its MagicItemTemplates.txt, the table DFU reads): the thirty-six regular
+ *  magic items, one row each, and the twenty-three artifacts, as readMagicDef answers them. PIN MOVED (INT1's audit,
+ *  2026-10-09): the sweep minted its magic from sixty-four invented records of one to three rows of any kind - shapes no
+ *  MAGIC.DEF holds, which the item law now proves against DFU's table. */
 function fakeMagicTemplates() {
-  // sixty-four regular rows (the quest mint's "item class 4 subclass N" names an index into them), each one to three
-  // classic enchantments of the kinds MAGIC.DEF carries (CastWhenUsed .. BadRepWith - never SpecialArtifactEffect)
-  const regular = range(64).map((i) => {
-    const kinds = range(1 + (i % 3)).map((k) => (i * 7 + k * 11) % 26);
-    return { name: `Honest Magic ${i}`, type: 0, group: i % 3, value: 500 + 50 * i, uses: 50 + 25 * (i % 12), ench: kinds.map((t, k) => [t, t === 0 || t === 1 || t === 2 ? (i * 13 + k) % 100 : (i + k) % 6]) };
-  });
-  const ARTIFACT_ROWS = [
-    [2, 1], [3, 0], [3, 7], [25, 0], [3, 6], [7, 0], [3, 2], [25, 1], [3, 2], [14, 0], [3, 10], [25, 2],
-    [3, 16], [25, 3], [3, 3], [2, 0], [3, 2], [25, 0], [2, 0], [2, 9], [3, 5], [27, 0], [3, 3],
-  ];
-  const names = LOOT.ARTIFACT_SUB_TYPE_NAMES;
-  const artifacts = ARTIFACT_ROWS.map(([group, groupIndex], i) => ({
-    name: String(names[i] ?? `Artifact ${i}`).replace(/_/g, ' '), type: i % 2 ? 2 : 1, group, groupIndex,
-    ench: [[26, i], [i % 3 === 0 ? 1 : 0, 10 + (i % 7)]], uses: 1000 + i, value: 50000 + 1000 * i, material: group === 3 ? i % 10 : 4,
-  }));
-  return MAGIC_DEF.readMagicDef(craftMagicDef([...regular, ...artifacts]));
+  return MAGIC_DEF.readMagicDef(craftMagicDef(DFU_MAGIC_ITEMS));
 }
 
 // ── the player a sweep plays as ──────────────────────────────────────

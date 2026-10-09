@@ -47,8 +47,8 @@
   {
     "name": "GOLDMARKET-piece-unmarked",
     "file": "server-account/src/market.js",
-    "old": "UPDATE products SET owner = ?1, listed = 0, bought_with = 'gold' WHERE",
-    "new": "UPDATE products SET owner = ?1, listed = 0 WHERE",
+    "old": "UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold' WHERE",
+    "new": "UPDATE products SET owner = ?1, credited = 0, listed = 0 WHERE",
     "tests": [
       "test/goldmarket_service.test.js"
     ]

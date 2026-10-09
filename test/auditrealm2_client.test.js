@@ -522,7 +522,7 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     const state = {
       playerEntity, duelMgr, log, checkpointAllowed, online: {}, playerSpawned: true, seatOut: () => seatOut, performance: { now: () => 1 },
       ownWalkWaiting: () => false,   // AUDIT LIVED1b S1: no raise waiting
-      stampItemIds: () => 0,   // INT4: a checkpoint stamps the valuable pieces' ids first
+      stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
       townTalk: { overlay: null, say: () => {} }, DeathScreen: class {}, QUICK_SAVE_NAME: 'QuickSave', exitAutosaveNames: () => [], worldQuickSave: null,
       modes: { deathUp: () => false, quickSaveNow: () => { log.push({ health: playerEntity.health, effects: playerEntity.activeEffects.map((a) => a.name) }); return true; } },
       maxFatigue: () => 50, surfacePlayer: () => {}, console: { error() {} },
@@ -597,7 +597,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   const realmCheckpoint = mount(`${W.fn('realmCheckpoint')}\nreturn realmCheckpoint;`, {
     realmSession: { lost: null }, townTalk: { overlay: null }, DeathScreen: class {}, playerEntity: { health: 10 }, QUICK_SAVE_NAME: 'QuickSave',
     modes: { deathUp: () => false, quickSaveNow: () => answer }, worldQuickSave: null,
-    stampItemIds: () => 0,   // INT4: a checkpoint stamps the valuable pieces' ids first
+    stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
   });
   assert.equal(realmCheckpoint(), false, 'the composer refused: no checkpoint');
   const session = { transact: () => new Promise(() => {}), abandon() {} };

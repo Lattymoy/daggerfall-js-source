@@ -573,8 +573,20 @@ export const LOOT_ARRAY_FIELDS = Object.freeze(itemFieldsOfKind('array'));
 let _itemLaw = null;
 export function setItemLaw(fn) { _itemLaw = typeof fn === 'function' ? fn : null; }
 
-/** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
+/** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted: its shape
+ *  (wireLootItem) and the item law. */
 export function validLootItem(v) {
+  const out = wireLootItem(v);
+  return out && !lawRefuses(out) ? out : null;
+}
+/** INT1: the item law's word on a clamped record - its fields agree with each other as a producer mints them (a tier's
+ *  lines its tier's, a record's its record's, a sigil its band's, the maker's rows within the item's power). The
+ *  receiver's own marks were stripped, never judged. */
+const lawRefuses = (/** @type {any} */ it) => !!_itemLaw && _itemLaw(it, { receiver: true }).length > 0;
+
+/** One item record off the wire, clamped to a copy - or null when its SHAPE is not one this port could have minted (a
+ *  template it has not, a field not its kind, a mark that disagrees with its item). The law is validLootItem's. */
+function wireLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   if (v.templateIndex == null || validItemField('templateIndex', v.templateIndex) === undefined) return null;
   if (!templateByIndex(v.templateIndex)) return null;   // AUDIT WORLD6a B1: an item the port has no template for is not an item
@@ -591,10 +603,6 @@ export function validLootItem(v) {
   if (!validImprint(out)) return null;   // LOOT10: an imprint only as the Reforge makes one
   if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one
   if (!validSocket(out)) return null;   // LOOT20: a socket only as the pass and the Reforge make one
-  // INT1: and the item law - its fields agree with each other as a producer mints them (a tier's lines its tier's, a
-  // record's its record's, a sigil its band's, the maker's rows within the item's power). The receiver's own marks are
-  // stripped below, never judged
-  if (_itemLaw && _itemLaw(out, { receiver: true }).length) return null;
   // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port
@@ -618,12 +626,19 @@ export const LOOT_NEWER_TEXT = 'Something in here is from a newer version of the
 /** AUDIT ONLINE2 F4: a body's pile a peer granted that this build cannot read - handed back to its owner. */
 export const LOOT_NEWER_TAKE_TEXT = 'Something on this body is from a newer version of the game. Reload to take it.';
 
-/** A container's whole list off the wire - every item clamped, or null when the list is not one. An EMPTY list is
+/** A container's whole list off the wire - every item clamped, or null when the list is not one (a record of no shape
+ *  this build reads - a newer game's piece). A piece the item law refuses is left out, the rest kept. An EMPTY list is
  *  the commonest word a room says about a container ("it is emptied"), so it is valid and is not null. */
 export function validLootList(v) {
   if (!Array.isArray(v) || v.length > LOOT_LIST_MAX) return null;
   const out = [];
-  for (const e of v) { const it = validLootItem(e); if (!it) return null; out.push(it); }
+  for (const e of v) {
+    const it = wireLootItem(e);
+    if (!it) return null;
+    // INT1 (AUDIT INT): a piece the item law refuses is no item - IT goes, never the list: a forged piece in a chest, a
+    // body or a shelf cost every honest piece beside it ("from a newer version of the game", which no reload mends)
+    if (!lawRefuses(it)) out.push(it);
+  }
   return out;
 }
 

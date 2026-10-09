@@ -48,39 +48,55 @@ export function budgetConfigOf(/** @type {unknown} */ v) {
   for (let i = 1; i < c.bands.length; i++) if (c.bands[i].upTo <= c.bands[i - 1].upTo) return null;
   return { enforce: c.enforce, bands: c.bands.map((/** @type {any} */ b) => ({ upTo: b.upTo, rate: b.rate, cap: b.cap })) };
 }
+/** How long an isolate keeps the config it read (AUDIT INT: every checkpoint asked for it) - a change staff make is
+ *  read at once where they made it (forgetBudgetConfig), and within a minute everywhere. */
+export const BUDGET_CONFIG_KEEP_MS = 60_000;
+/** @type {WeakMap<object, { at: number, config: any }>} */
+const kept = new WeakMap();
 /** The config standing: staff's, else the first setting. */
 export async function budgetConfig(/** @type {any} */ db) {
+  const k = kept.get(db);
+  if (k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS) return k.config;
   const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'budget'").first();
   let c = null;
   try { c = budgetConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
-  return c ?? BUDGET_DEFAULT;
+  const config = c ?? BUDGET_DEFAULT;
+  if (db && typeof db === 'object') kept.set(db, { at: Date.now(), config });
+  return config;
 }
+/** A staff change made here: the next read asks the database. */
+export const forgetBudgetConfig = (/** @type {any} */ db) => { if (db && typeof db === 'object') kept.delete(db); };
 /** The band a level plays in: the first whose top it does not pass, else the last. */
 export const bandOf = (/** @type {{ bands: readonly any[] }} */ config, /** @type {number} */ level) => config.bands.find((b) => level <= b.upTo) ?? config.bands[config.bands.length - 1];
 
 /**
- * ONE STEP OF THE BUCKET, pure: `allowance` (null - the character's first judgement, the cutover's baseline: full, and
- * nothing charged), filled by `played` seconds at the band's rate up to its cap, then spent by `gain` (the rise no
- * witness explains; a fall spends nothing and refills nothing - spending gold is not earning it). Answers the bucket after
- * and whether the gain went past it (`over`, the gold past).
- * @param {{ allowance: number | null, played: number, gain: number, band: { rate: number, cap: number } }} s
+ * ONE STEP OF THE BUCKET, pure: `allowance` (null - the character's first judgement: full), filled by `played` seconds
+ * at the band's rate up to its cap - a bucket a win's spoils filled past the cap is never cut down to it (AUDIT INT: a
+ * full bucket's grant was clamped away before the gain was charged) - then spent by `gain` (the rise no witness
+ * explains; a fall spends nothing and refills nothing - spending gold is not earning it). Answers the bucket after and
+ * whether the gain went past it (`over`, the gold past). While the budget only measures (`enforce` off), the bucket
+ * keeps no debt: what went past is the measure's finding, and the line staff later set starts every character even
+ * (AUDIT INT: a week's measured debt would have held everyone in it the moment enforce came on).
+ * @param {{ allowance: number | null, played: number, gain: number, band: { rate: number, cap: number }, enforce?: boolean }} s
  */
-export function stepBudget({ allowance, played, gain, band }) {
-  if (allowance == null) return { allowance: band.cap, over: 0 };
-  const filled = Math.min(band.cap, Math.max(allowance, allowance + Math.floor((band.rate * Math.max(0, played)) / 3600)));
+export function stepBudget({ allowance, played, gain, band, enforce = true }) {
+  const start = allowance ?? band.cap;
+  const fill = Math.floor((band.rate * Math.max(0, played)) / 3600);
+  const filled = start >= band.cap ? start : Math.min(band.cap, start + fill);
   const left = filled - Math.max(0, gain);
-  return { allowance: left, over: left < 0 ? -left : 0 };
+  return { allowance: enforce ? left : Math.max(0, left), over: left < 0 ? -left : 0 };
 }
 
 /**
  * A SIGNED WIN'S SPOILS, as the bucket's fill: the playing character of the account (the one holding a lease - one an
- * account) gains spoilsGrant at its level, once a receipt is RECORDED (a claim answered again grants nothing). A
- * character not yet judged has no bucket to fill; its first judgement starts it full.
+ * account) gains spoilsGrant at the level the realm TRUSTS (verdict.js trustedLevel - never the level its tile claims:
+ * AUDIT INT, a level of 1000 written in one save made a win worth two million), once a receipt is RECORDED (a claim
+ * answered again grants nothing). A character not yet judged has no bucket to fill; its first judgement starts it full.
  * @param {any} db @param {string} playerId
  */
 export async function grantSpoils(db, playerId) {
   await db.prepare(
-    "UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(json_extract(summary, '$.level'), 1))"
+    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1))'
     + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL',
   ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL).run();
 }
