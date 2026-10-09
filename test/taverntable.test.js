@@ -181,14 +181,17 @@ test('TAVERN-TABLE an open floor: the first cell the walk reaches PLACE_FROM_DOO
   assert.deepEqual(walk({ min: [0, 0, 0], max: [1.2, 0.8, 0.8] }, [1, 0, 2], room({ floorAt: () => 0.25 })), { x: 3.4, y: 0.25, z: 1.6, yawDeg: 0, cx: 4, cz: 2 });
 });
 
-test('TAVERN-TABLE nearest by the WALK, not the crow: a wall beside the entrance turns it the other way; through a doorway, the room beyond; the ring exactly as wide as it says', () => {
+test('TAVERN-TABLE nearest by the WALK, not the crow: a wall beside the entrance turns it the other way; through a doorway, the room beyond - never across the doorway\'s mouth (WALK-WHOLE); the ring exactly as wide as it says', () => {
   const wall = { min: [1.4, 0, -20], max: [1.6, 3, 20] };
   assert.deepEqual(walk(BOX, [0, 0, 0], room({ boxes: [wall] })), BACK);
-  // a doorway: the room beyond is walked to - along x its ring would meet the doorway's jambs, turned it clears them
+  // a doorway: the floor behind the entrance is nearer than the room beyond once the doorway's mouth is no spot - turned
+  // at 3 m, its ring would close the one way through it (WALK-WHOLE, FIELD BUGS 2026-10-09c)
   const gap = [{ min: [1.4, 0, -20], max: [1.6, 3, -0.6] }, { min: [1.4, 0, 0.6], max: [1.6, 3, 20] }];
-  const g = walk(BOX, [0, 0, 0], room({ boxes: gap }));
-  assert.deepEqual(g, { ...AT3, yawDeg: 90 });
-  assert.ok(g.cx - 0.4 - PLACE_RING_M >= 1.6, 'the table and its ring stand past the wall');
+  assert.deepEqual(walk(BOX, [0, 0, 0], room({ boxes: gap })), BACK);
+  // ...and with the entrance's side closed behind it, the room beyond is walked to, its ring off the doorway's mouth
+  const g = walk(BOX, [0, 0, 0], room({ boxes: [...gap, { min: [-1.6, 0, -20], max: [-1.4, 3, 20] }] }));
+  assert.equal(g.yawDeg, 90);
+  assert.ok(g.cx - 0.4 - PLACE_RING_M >= 1.6 + PLACE_CELL, 'the table and its ring stand past the wall, a cell clear of the doorway at least');
   // AUDIT TAVERN-TABLE M4: the ring asks the floor it says and no more - its edge 1.35 m out, a cell\'s own clear the
   // rest: a hall to 4.25 m holds the table at 2.5 (its ring to 3.85, the last cell 4.0 clear to 4.29), to 4.0 m none
   assert.equal(walk(BOX, [0, 0, 0], room({ floorAt: hall(-0.5, 4.0, -1.5, 1.5) })), null);
@@ -199,7 +202,7 @@ test('TAVERN-TABLE turned a quarter where only across does it fit (AUDIT TAVERN-
   // a hall long in z and narrow in x: along x the ring wants 1.35 m each side of the middle, across 1.15
   const narrow = hall(-1.25, 1.25, -12, 12);
   const sp = walk(BOX, [0, 0, 0], room({ floorAt: narrow }));
-  assert.deepEqual(sp, { x: 0, y: 0.4, z: 3, yawDeg: 90, cx: 0, cz: 3 });
+  assert.deepEqual(sp, { x: 0, y: 0.4, z: 9.5, yawDeg: 90, cx: 0, cz: 9.5 }, 'at the hall\'s end - nearer, across the hall, it closed the rest of it (WALK-WHOLE)');
   assert.equal(walk({ min: [-0.4, -0.4, -0.6], max: [0.4, 0.4, 0.6] }, [0, 0, 0], room({ floorAt: narrow })).yawDeg, 0, 'a table already long in z stands as it is');
   assert.equal(walk(BOX, [0, 0, 0], room({ floorAt: hall(-1, 1, -12, 12) })), null, 'too narrow either way');
   // its middle turned with it: an off-centre box's translation is its turned middle back from the cell
@@ -257,7 +260,7 @@ test('TAVERN-TABLE the walk is bounded: a room past PLACE_REACH_M stands nothing
   const far = room({ floorAt: (x, z) => (Math.abs(x) <= 0.25 && z >= 0 ? 0 : z >= 14.5 ? 0 : null) });
   assert.equal(walk(BOX, [0, 0, 0], far), null, 'a hall whose ring would need cells past the reach (never read past the grid)');
   const near = room({ floorAt: (x, z) => (Math.abs(x) <= 0.25 && z >= 0 ? 0 : z >= 13 ? 0 : null) });
-  assert.deepEqual(walk(BOX, [0, 0, 0], near), { x: 0, y: 0.4, z: 14, yawDeg: 0, cx: 0, cz: 14 }, 'down a corridor to the hall it opens on');
+  assert.deepEqual(walk(BOX, [0, 0, 0], near), { x: 0, y: 0.4, z: 15, yawDeg: 0, cx: 0, cz: 15 }, 'down a corridor to the hall it opens on - a lane clear of the corridor\'s mouth (WALK-WHOLE)');
   const r = room({ floorAt: hall(-3, 3, -3, 3) });
   placedTableSpot(BOX, [0, 0, 0], r);
   const side = 2 * Math.round(PLACE_REACH_M / PLACE_CELL) + 1;
@@ -274,11 +277,12 @@ test('TAVERN-TABLE every client the same table (AUDIT TAVERN-TABLE M3): a room o
   let seed = 7;
   const rand = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
   const Ts = Array.from({ length: 60 }, () => [(rand() - 0.5) * 4000, (rand() - 0.5) * 3800, (rand() - 0.5) * 4000]);
-  // a floor's edge on a lattice line an un-offset grid's cell would sit on (x = 1.45, from a start at -0.05)
+  // a floor's edge on a lattice line an un-offset grid's cell would sit on (x = 1.45, from a start at -0.05) - a hall the
+  // table stands across, so at its end (WALK-WHOLE)
   const edge = (wx, wz, w) => (wx >= w(-1.65, 0) && wx <= w(1.45, 0) && Math.abs(wz - w(0, 2)) <= 10 ? w(0, 1) : null);
   // a dais exactly an on-lattice slack (0.2 m) high
   const dais = (wx, wz, w) => (wx >= w(2.25, 0) ? w(0.2, 1) : w(0, 1));
-  for (const [start, floorAt, want] of [[[-0.05, 0, 0], edge, { x: -0.55, y: 0.4, z: 2.5, yawDeg: 90, cx: -0.55, cz: 2.5 }], [[0, 0, 0], dais, { ...AT3, y: 0.6 }]]) {
+  for (const [start, floorAt, want] of [[[-0.05, 0, 0], edge, { x: -0.05, y: 0.4, z: 7.5, yawDeg: 90, cx: -0.05, cz: 7.5 }], [[0, 0, 0], dais, { ...AT3, y: 0.6 }]]) {
     // where it stands and how it turns are the walk's decisions - one answer; its height the frame's own floor, to a millimetre
     const got = new Set(Ts.map((T) => { const sp = rel(placedTableSpot(BOX, start, framed(T, floorAt))); return JSON.stringify({ ...sp, y: Math.round(sp.y * 1000) / 1000 }); }));
     assert.deepEqual([...got].map((g) => JSON.parse(g)), [want]);
