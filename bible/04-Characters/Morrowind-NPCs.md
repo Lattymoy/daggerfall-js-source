@@ -99,7 +99,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
-| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
+| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
@@ -471,4 +471,88 @@ anchored quad and its peer body; PR-BOW1b's peer body; INVIS-LOOK's quad
 and box calls; the INVISLOOK half-cut,
 three MH1, PR-BOW1's no-anchor, OW4-J6's upright, OW-PEERS' unleaned and
 INVISLOOK's late-pass mutants re-aimed by content.
+
+### 10b. The dungeon's foes in their bodies (SHIPPED 2026-10-09)
+
+- A FOE, READ FOR ITS BODY (`characters/foeBodies.js`). Only a CLASS foe
+  (Daggerfall's people, the mobiles past 127; the creatures are MWNPC9's).
+  Its look: a race drawn off its SEED - its species and the layout point
+  that stood it (`marker`; else its spawn point, else its sequence), facts
+  every machine in the room shares, so a foe is the same person on each -
+  weighted to the Bay (Breton 30, Redguard 25, Nord 10, Wood Elf 9, Dark
+  and High Elf 8, Khajiit and Argonian 5); a face 0..9 off the same seed;
+  its own gender; what it WEARS - its equip table, read as the player's
+  look is (composeLook) - and under it a shirt, legs and shoes from its
+  gender's wardrobe in common dyes, each only where no piece of its own
+  stands (boots on the feet: no shoes). The look is kept on the foe while
+  it wears the same, so a foe is one build for its life. Its actor: the
+  motor's feet and yaw (the player's own convention, forward sin/cos),
+  moving, and running only in pursuit (the give-up timer both motors keep);
+  its weapon out; a swing per new attack count (the stream's `_atkA`, its
+  low ranged bit dropped), the strike drawn from the count; a cast per
+  cast count; a RECOIL per health drop the host's hit flash has marked
+  (`_hfAt`); dead, a death's roll off its seed. Its tells (`foeFx`): the
+  glint, the elite's pulse and clock and the dissolve the host has already
+  dressed its billboard in, in one object a foe, rewritten in place.
+- THE LANE CARRIES THE DRESSING (`npcBodies.js`). `stand(lane, actor,
+  conceal, flash, fx)`: the concealment the billboard would draw (ECV1 -
+  the body drawn veiled after the opaque world, `drawVeiled`), the hit
+  flash, the tells; the living stand before the dead (PeerBodies'
+  priority). `npcBodiesOn()` is every host's gate - the enhanced skin,
+  Morrowind data, and the tier not Off; `createHostNpcBodies` the lane as
+  every host makes it.
+- THE CAST-ONLY BILLBOARD (renderer.js `drawBillboards`, airPass.js). A
+  foe in its body keeps its billboard in the pass with `castOnly`: it
+  records its shadow (a skinned body casts none - MWNPC1) and draws
+  nothing, in neither phase, and blooms nothing. The host sets it AFTER
+  the lane has synced each frame, so a body arriving or leaving is never a
+  frame drawn twice or not at all.
+- THE DUNGEON CONTEXT (`dungeonContext.js` drawFoes - both dungeon hosts'
+  one frame function): the lane a frame (none while unwanted, the old one
+  let go); every live class foe offered dressed as its billboard; every
+  dead class foe from the kill (`f.corpse`) until its corpse is freed, its
+  corpse flat cast-only under the body; the sync; the cast-only marks; the
+  bodies in one bind of the sprite target; the veiled after the last
+  opaque flat; the lane gone with the context.
+- THE SWITCH. The Features row `mw-npc-bodies` ("Morrowind People", the
+  world group): Off, Near (the default), All - the viewer's own, as the
+  Steel Helm is, read every frame, so it lands at once.
+
+PROVEN. `test/mwnpc5_foes.test.js` (3): the class foe alone; one seed,
+one person on every machine, another place or species another; a
+thousand foes near the Bay's weights, all ten faces; the gender's
+wardrobe; the armour as worn with the clothes under it and no shoes beside
+boots; the look kept, and new (the same person) when a helm goes on; the
+stride, the run only in pursuit, the blows without the ranged bit, a
+strike never Idle and varying, the casts, a recoil per new hit mark, the
+deaths off the seed and varied across foes; the tells and their one
+object. `test/mwnpc5_dungeon.test.js` (5): the cast-only billboard on a
+recording GL (not drawn opaque or veiled, recorded for the shadow, skipped
+by the bloom); the lane's dressing per body and undressed the next frame,
+and a lane of one standing the farther living foe over the nearer dead;
+the Features row and its tiers the lane's own; the dungeon context's
+wiring in its order by source; and THE FOE HOSTS ENUMERATED - every module
+that dresses a foe's billboard (`setBatchHitFlash` off `foeHitFlash`) is
+named, wired or flagged. `tools/mutants/mwnpc5b.json`: 31 mutants, 31
+dead (a 32nd, a frame check on the lane's dressing, was equivalent - a
+lingering body is never drawn - and the check went, not the mutant's
+record). Pins moved: the Features list and its notes' ceiling (+150, the
+row's own size); MWNPC4's `cr` is the cast's RANGE (castRange - the rig's
+castSpell takes it so), and two MWNPC4 mutants re-aimed onto the lane's
+tier table; ENHNOTICE3's latch kept beside its door, and FOE-SPACING's and
+WORLD2's loop (the lane begins above the frame's count, not inside the
+spacing); FT18's and FT8's row counts (+1); PERF-EXT10: `castOnly` is minted
+by the billboard factory as every field a host writes is (HARD3's count of
+the minted fields 54 to 55, the BillboardBatch typedef naming it).
+
+THE FOUR HOSTS (rule 17e). scenes/dungeonContext.js WIRED (the dungeon
+host and the world's dungeon arm both run it). scenes/world.js,
+scenes/worldModes.js and scenes/exterior.js FLAGGED: their foes are the
+encounter pool's (scenes/exteriorFoes.js, `batches()` at each), wired as
+one in MWNPC5c; the watch (scenes/cityGuards.js) is MWNPC6's. The
+enumeration in MWNPC5b-e fails a new foe host that is neither.
+
+NOT PROVEN HERE: a dungeon in a browser with retail data - a dungeon
+needs the game's own files, which no fixture carries; the frame's order
+is pinned by source and each part by its own test.
 

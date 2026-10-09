@@ -286,7 +286,9 @@ import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js'; import
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
-import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
+import { getPref } from '../systems/uiPrefs.js';
+import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
+import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice
 import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
 import { FOE_LEVEL_MAX, CELL_LOOSE_PUPPETS, sharedClassicMinutes, hitClassField, hitClassOf } from '../net/wire.js';   // TELL8: a blow's class on a hit   // SEARCH1: a room's search stamp, read as the world minute it was searched at   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level; SUMMON-SYNC: an owner's loose stands a reader stands, the cell's allowance
@@ -2146,6 +2148,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // below reads it, and a `let` is in its temporal dead zone until its
   // line runs - a call from inside the build would have thrown rather
   // than refused.
+  // MWNPC5b (bible/04-Characters/Morrowind-NPCs.md section 10b): THE FOES IN THEIR BODIES - the NPC lane this context
+  // stands its class foes in (characters/npcBodies.js), made the first frame it is wanted and let go with the context
+  // (or the frame it stops being wanted); `_npcStood` the frame's foes offered to it, whose billboards cast alone once
+  // the lane has synced
+  let _npcLane = null;
+  const _npcStood = [];
   let _ctxDead = false;
   function pushDungeonWindow(win) {
     if (!win) return false;
@@ -7352,6 +7360,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // over frames instead of spiking one. Created lazily: the world
     // object outlives the bake and every foe reads the same one.
     if (enhancedNav.world) enhancedNav.world.pathBudget = enhancedNav.world.budgetPerFrame;
+    // MWNPC5b: the lane, this frame - none while it is not wanted (and the one standing let go)
+    const npcLane = npcBodiesOn() ? (_npcLane ??= createHostNpcBodies({ renderer, collider: () => collider })) : null;
+    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
+    _npcStood.length = 0;
+    npcLane?.begin();
     let _fi = -1;
     _peerFrame++;   // WORLD3: the peers' feet are read once a frame
     // FOE-SPACING: two bodies in one spot are pushed apart (characters/foeSpacing.js) - never a room's foe this page
@@ -7730,6 +7743,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           o[0] = f.ai.feet[0]; o[1] = spriteOriginY(f.ai.feet[1], f.idleH, szH, _bh); o[2] = f.ai.feet[2];
           f.batch.origin = o;
         } else f.batch.origin = f.ai.feet;
+        // MWNPC5b: a class foe is offered to its body, dressed as its billboard is - concealed, flashing, its tells; the
+        // billboard draws until the lane says the body stands (below), and casts its shadow either way
+        f.batch.castOnly = false;
+        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
         _mobileBatches.push(f.batch);
         continue;
       }
@@ -7749,6 +7766,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const s = f.rig.scale, p = f.ai.feet;
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
+    }
+    // MWNPC5b: THE DEAD IN THEIR BODIES - the death played where they fell (the pose's `dd`), the corpse flat casting its
+    // shadow alone while the body lies there; the living stand first (the lane's priority). Then the frame's bodies,
+    // synced, drawn in one bind of the sprite target (MWNPC2), and every offered foe's billboard cast-only where its
+    // body stands - after the sync, so a body arriving or leaving is never a frame drawn twice or not at all.
+    for (const f of foes) {
+      if (f.corpseBatch) f.corpseBatch.castOnly = false;
+      // the body from the kill (f.corpse, raised at the death - the flat is minted after its texture warms), until the
+      // corpse is freed
+      if (npcLane && f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }
+    }
+    if (npcLane) {
+      npcLane.end(dt, eye);
+      for (const f of _npcStood) { const b = f.dead ? f.corpseBatch : f.batch; if (b) b.castOnly = npcLane.has('foe', foeId(f)); }
+      renderer.beginCharacterSpriteBatch?.();
+      try { npcLane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
     }
     // C11: the sprite mobiles draw as one billboard pass. The right
     // axis is the NEGATED view row - the same (cos yaw, 0, -sin yaw)
@@ -7783,6 +7816,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // INVIS-LOOK (2026-09-27): the host's concealed peers' bodies, translucent - after the last opaque flat (the foes),
     // before the water and the screen quads that end the world pass (WATER-D1's law, below)
+    _npcLane?.drawVeiled();   // MWNPC5b: the concealed foes' bodies, translucent - after the last opaque flat, as the peers' below
     opts.lateWorldDraw?.();
     senseFrame(eye);   // SENSE1: the look round - asked for (Info mode), then lit; after the last opaque flat, as the nodes' glow is
     // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
@@ -10281,6 +10315,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // B1: OnDestroy for every quest foe standing in this dungeon -
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();
+      _npcLane?.destroy(); _npcLane = null;   // MWNPC5b: the foes' bodies leave with the context
       // AUDIT 59 F2: the nav worker leaves with the context. Every
       // dungeon entry made a new NavClient (one worker) and nothing
       // terminated it, so each visit left a live worker behind once

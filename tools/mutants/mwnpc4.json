@@ -263,8 +263,8 @@
  {
   "name": "MWNPC4-lane-off-ignored",
   "file": "src/characters/npcBodies.js",
-  "old": "      const limits = NPC_BODY_TIERS[want];",
-  "new": "      const limits = NPC_BODY_TIERS[want] ?? NPC_BODY_TIERS.near;",
+  "old": "      const limits = tiers[want] ?? null;",
+  "new": "      const limits = tiers[want] ?? tiers.near;",
   "tests": [
    "test/mwnpc4_npclane.test.js"
   ]
@@ -272,7 +272,7 @@
  {
   "name": "MWNPC4-lane-unknown-tier-kept",
   "file": "src/characters/npcBodies.js",
-  "old": "    const want = Object.prototype.hasOwnProperty.call(NPC_BODY_TIERS, t) ? t : NPC_BODIES_DEFAULT;",
+  "old": "    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;",
   "new": "    const want = t;",
   "tests": [
    "test/mwnpc4_npclane.test.js"

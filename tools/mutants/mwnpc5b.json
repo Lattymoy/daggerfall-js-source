@@ -1,0 +1,281 @@
+[
+ {
+  "name": "MWNPC5b-foe-creature-offered",
+  "file": "src/characters/foeBodies.js",
+  "old": "export const isClassFoe = (f) => !!f?.entity?.isClass;",
+  "new": "export const isClassFoe = (f) => !!f?.entity;",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-seed-ignores-place",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (at) for (const v of [at[0], at[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));",
+  "new": "  if (at) h = mix(h);",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-seed-ignores-species",
+  "file": "src/characters/foeBodies.js",
+  "old": "  let h = mix((f.mobileType | 0) + 0x9e3779b9);",
+  "new": "  let h = mix(0x9e3779b9);",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-seed-not-kept",
+  "file": "src/characters/foeBodies.js",
+  "old": "  return (f._mwSeed = h);",
+  "new": "  return h + (f._mwSeedN = (f._mwSeedN | 0) + 1);",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-race-unweighted",
+  "file": "src/characters/foeBodies.js",
+  "old": "  for (const [name, w] of FOE_RACES) { if (r < w) { race = name; break; } r -= w; }",
+  "new": "  race = FOE_RACES[r % FOE_RACES.length][0];",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-gender-ignored",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const gender = f.gender === 'female' ? 'female' : 'male';",
+  "new": "  const gender = 'male';",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-no-shirt",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (!has.has(EQUIP_SLOTS.ChestClothes)) items.push(",
+  "new": "  if (false) items.push(",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-shoes-over-boots",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (!has.has(EQUIP_SLOTS.Feet)) items.push(",
+  "new": "  if (true) items.push(",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-worn-dropped",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const items = [...worn];",
+  "new": "  const items = [];",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-look-not-kept",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;",
+  "new": "  if (false) return f._mwLook;",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-look-kept-past-change",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;",
+  "new": "  if (f._mwLook) return f._mwLook;",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-face-one",
+  "file": "src/characters/foeBodies.js",
+  "old": "faceIndex: mix(h ^ 0xfa) % 10,",
+  "new": "faceIndex: 0,",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-run-always",
+  "file": "src/characters/foeBodies.js",
+  "old": "    running: !!f.ai.moving && f.ai.giveUpTimer > 0,",
+  "new": "    running: !!f.ai.moving,",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-swings-with-ranged-bit",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const swings = (f._atkA | 0) >> 1;",
+  "new": "  const swings = f._atkA | 0;",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-strike-fixed",
+  "file": "src/characters/foeBodies.js",
+  "old": "    strike: 1 + (swings % 6),",
+  "new": "    strike: 1,",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-hit-every-frame",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (f._hfAt != null && f._hfAt !== f._mwHitAt) {",
+  "new": "  if (f._hfAt != null) {",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-dead-unrolled",
+  "file": "src/characters/foeBodies.js",
+  "old": "    dead: f.dead ? 1 + (mix(foeSeed(f) ^ 0xdead) % 5) : 0,",
+  "new": "    dead: f.dead ? 1 : 0,",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-fx-weak-glint",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const glint = batch.glint && batch.glint[3] > 0 ? batch.glint : null;",
+  "new": "  const glint = batch.glint ?? null;",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-fx-allocates",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const fx = f._mwFx ?? (f._mwFx = { glint: null, elite: 0, time: 0, dissolve: null });",
+  "new": "  const fx = { glint: null, elite: 0, time: 0, dissolve: null };",
+  "tests": [
+   "test/mwnpc5_foes.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-castonly-drawn",
+  "file": "src/render/renderer.js",
+  "old": "      if (b.castOnly) continue;   // MWNPC5b",
+  "new": "      // MWNPC5b",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-castonly-veiled-drawn",
+  "file": "src/render/renderer.js",
+  "old": "      if (b.castOnly || !(b.conceal || isSpectralArchive(b.archive))) continue;",
+  "new": "      if (!(b.conceal || isSpectralArchive(b.archive))) continue;",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-lane-dressing-dropped",
+  "file": "src/characters/npcBodies.js",
+  "old": "      r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame;",
+  "new": "      r.conceal = null; r.flash = 0; r.fx = null; r.dead = !!actor.dead; r.frame = frame;",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-lane-dead-first",
+  "file": "src/characters/npcBodies.js",
+  "old": "  const syncOpts = { priority: (id) => !seen(id)?.dead,",
+  "new": "  const syncOpts = { priority: null,",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-lane-veiled-undrawn",
+  "file": "src/characters/npcBodies.js",
+  "old": "    drawVeiled() { bodies?.drawVeiled(); },",
+  "new": "    drawVeiled() {},",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-lane-on-when-off",
+  "file": "src/characters/npcBodies.js",
+  "old": "  return isEnhanced() && morrowindDataCount() > 0 && getPref('mwNpcBodies') !== 'off';",
+  "new": "  return isEnhanced() && morrowindDataCount() > 0;",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-row-default-all",
+  "file": "src/systems/features.js",
+  "old": "key: 'mwNpcBodies', initial: 'near',",
+  "new": "key: 'mwNpcBodies', initial: 'all',",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-host-not-offered",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "        if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }",
+  "new": "        if (npcLane && isClassFoe(f)) _npcStood.push(f);",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-host-castonly-sticks",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "        f.batch.castOnly = false;\n        if (npcLane && isClassFoe(f))",
+  "new": "        if (npcLane && isClassFoe(f))",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-host-dead-unoffered",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      if (npcLane && f.dead && f.corpse && isClassFoe(f) && f.ai) {",
+  "new": "      if (false) {",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-host-lane-kept-off",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5b-host-lane-outlives",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      _npcLane?.destroy(); _npcLane = null;   // MWNPC5b",
+  "new": "      // MWNPC5b",
+  "tests": [
+   "test/mwnpc5_dungeon.test.js"
+  ]
+ }
+]

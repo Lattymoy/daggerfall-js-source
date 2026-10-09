@@ -5772,11 +5772,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // DISC29-E: the shadow record's `_shAnim` (a flat animating in place, which the lo tier keeps) - a boolean, born
     // undefined as `_shMovedAt` (AUDIT PRE-MERGE 0929 E1: `_shPlacedAt`, the stillness it was once judged by, is gone).
     // IDLER-STICKY: `_shIdler`, a flat whose look changed where it stands - a mover for good (shadowPass.js), born undefined.
+    // MWNPC5b: `castOnly` - a foe standing in its Morrowind body: the billboard casts its shadow and draws nothing, born undefined.
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _scales: scales ?? null, lptProto: undefined, farH: undefined,
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
       _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,
+      castOnly: undefined,
       _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
@@ -7090,6 +7092,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // SHADOW-REACH records without drawing (recordShadowBillboards) - the
     // one this pass never saw, and so never keyed.
     for (const b of batches) {
+      if (b.castOnly) continue;   // MWNPC5b: a foe stood in its Morrowind body - its billboard casts the shadow (recorded above) and draws nothing
       if (isSpectralArchive(b.archive) || b.conceal) continue;
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
       billboardKey(b);
@@ -7123,7 +7126,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // shader reads only when uConceal says plain.
     let blended = null;
     for (const b of batches) {
-      if (!(b.conceal || isSpectralArchive(b.archive))) continue;
+      if (b.castOnly || !(b.conceal || isSpectralArchive(b.archive))) continue;   // MWNPC5b: nor in the blended phase
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too
       (blended ??= []).push(b);
     }

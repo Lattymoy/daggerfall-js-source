@@ -192,7 +192,7 @@ test('MWNPC4d the lane: the NPCs as synthetic peers under the tier\'s caps - Off
   assert.equal(NPC_BODIES_DEFAULT, 'near');
   assert.ok(NPC_BODY_TIERS.all.max > NPC_BODY_TIERS.near.max && NPC_BODY_TIERS.all.range > NPC_BODY_TIERS.near.range);
   assert.equal(npcPeerId('foe', 7), 'npc:foe:7');
-  assert.deepEqual(npcShown({ feet: [1, 2, 3], yaw: 0.5, moving: true, running: true, drawn: true, swings: 4, strike: 2, casts: 1, castRate: 3, hits: 2, dead: 1 }),
+  assert.deepEqual(npcShown({ feet: [1, 2, 3], yaw: 0.5, moving: true, running: true, drawn: true, swings: 4, strike: 2, casts: 1, castRange: 3, hits: 2, dead: 1 }),
     { x: 1, y: 2, z: 3, yaw: 0.5, pitch: 0, mv: 2, wd: 1, an: 4, as: 2, cn: 1, cr: 3, ht: 2, dd: 1 });
   assert.deepEqual(npcShown({ feet: [NaN, 0, 0] }), { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, mv: 0, wd: 0, an: 0, as: 0, cn: 0, cr: 0, ht: 0, dd: 0 }, 'nothing known: standing, unhurt');
   let tier = 'near';

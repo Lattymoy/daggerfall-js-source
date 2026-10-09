@@ -1070,6 +1070,19 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSpellEffects', initial: true, online: 'player' }),
   }),
+  // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
+  // MORROWIND BODIES - the NPC lane (characters/npcBodies.js NPC_BODY_TIERS): Off, the classic sprites; Near, the nearest
+  // dozen within a street's width; All, two dozen across a square. The VIEWER'S, as the Steel Helm is: how this machine
+  // draws the people, never the wire. Read every frame by each host's lane (npcBodiesOn and its tier), so it lands at once.
+  Object.freeze({
+    id: 'mw-npc-bodies',
+    group: 'world',
+    title: 'Morrowind People',
+    note: 'With the Morrowind body, the people around you stand in Morrowind bodies too, foes first. Near keeps the closest dozen; All stands more, at more cost.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwNpcBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),
+  }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
   // CHARACTER. Every other mod's switch lands on the running game; this
