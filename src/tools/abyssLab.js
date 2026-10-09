@@ -16,6 +16,10 @@
 //                    the arena's floor and the sky read it (render/sdArenaGlow.js), from a made fight state
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
+//   SD-LOOK S8, the Brass Remnant (scenes/sdRemnant.js reads the same made fight): ?fight=stomp|hand|volley|pulse|reset&wt=<share
+//                    of its wind-up> its tell | stun&st=<s into its 8> the dial's ember hand | reset&hearts=<n>&broke=<k> the rib
+//                    lamps | fell&age=<s> the heart torn out, the dial rolling | break[&down=0|1&et=<s into the window>] the
+//                    Echoes, the living one's dial on its partner's window; views remnant, remnant-back, remnant-side
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -28,7 +32,8 @@ import { SD_HOUR_GRADE } from '../world/sdLook.js';
 import { SdVeilRenderer, SD_VEIL_MODE } from '../render/sdVeil.js';
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL } from '../render/sdStompWall.js';
-import { SD_BLOWS } from '../net/sdRemnant.js';
+import { SD_BLOWS, SD_REM_START, SD_ECHO_SPOTS } from '../net/sdRemnant.js';
+import { SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
 import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
@@ -68,6 +73,10 @@ const VIEWS = {
   'hollow-side': { at: [-4.6, 1.7, 3.6], yaw: 50, pitch: 4, hollow: true },
   'hollow-ret': { at: [2.2, 1.7, 5.0], yaw: 20, pitch: 6, hollow: true },
   'hollow-close': { at: [0, 2.6, 2.6], yaw: 0, pitch: 8, hollow: true },
+  // SD-LOOK S8: the Remnant where a fight begins it (facing the way in), from the front, behind and its right
+  remnant: { at: [0, 4.2, SD_ARENA.z + SD_REM_START[1] - 13], yaw: 0, pitch: 6 },
+  'remnant-back': { at: [0, 6, SD_ARENA.z + SD_REM_START[1] + 11], yaw: 180, pitch: 2 },
+  'remnant-side': { at: [-12, 4.5, SD_ARENA.z + SD_REM_START[1] - 4], yaw: 70, pitch: 4 },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }
@@ -111,7 +120,8 @@ const hall = createSdHall({ renderer, s: LAB_SLOT });
 hall.stand({ dynamicDraws, collider: null });
 const steps = createSdSteps({ renderer });
 steps.stand({ dynamicDraws, collider: null });
-const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(LAB_SLOT)[0] });
+const labLink = { state: () => labFight() ?? SD_FIGHT_EMPTY, now: () => clock * 1000, inDue: () => false, sentIn() {}, joined: () => false };   // SD-LOOK S8: the made fight
+const remnant = createSdRemnant({ renderer, link: () => labLink, ending: sdMarksOf(LAB_SLOT)[0] });
 remnant.stand({ dynamicDraws });
 const arenaGlow = new SdArenaGlowRenderer(gl);
 const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords(), HELD = [SD_HOLD_WALL];
@@ -207,7 +217,32 @@ function labFight() {
   else if (f === 'end') s.clk = { a: SD_BLOWS.end.id, at: t + 1000, i: 9 };
   else if (f === 'break') s.ec = [{ h: 100 }, { h: 100 }];
   else if (f === 'live') { s.op = t - Number(params.get('ft') ?? 0.4) * 900_000; s.ends = s.op + 900_000; }
+  labRemnantFight(s, f, t);   // SD-LOOK S8: the Remnant's own
   return s;
+}
+/** SD-LOOK S8: the made fight as the Remnant's set reads it - its body where a fight begins it, facing the way in (its
+ *  blows from there); &wt a blow that share into its wind-up; the stun, the Reset's Hearts, the fall, the Break's Echoes. */
+function labRemnantFight(s, f, t) {
+  const R = s.rem, wt = params.has('wt') ? Number(params.get('wt')) : null, into = (A) => t + (1 - wt) * A.windup;
+  Object.assign(s, { h: 900, m: 1000, ou: 0, cx: null, mk: null, n: 0 });
+  Object.assign(R, { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, mv: null });
+  const atk = (A, extra = {}) => ({ a: A.id, at: wt != null ? into(A) : t + 400, x: R.x, z: R.z, yw: R.yw, i: 6, ...extra });
+  if (f === 'stomp' && wt != null) R.atk = atk(SD_BLOWS.stomp);
+  else if (f === 'hand') R.atk = atk(SD_BLOWS.hand, { sw: 1 });
+  else if (f === 'volley') R.atk = atk(SD_BLOWS.volley, { tg: [[-6, -4], [0, -8], [7, -3]] });
+  else if (f === 'pulse' && wt != null) s.clk = { a: SD_BLOWS.pulse.id, at: into(SD_BLOWS.pulse), i: 7 };
+  else if (f === 'reset') {
+    s.ph = 3;
+    if (wt != null) R.atk.at = into(SD_BLOWS.reset);
+    const n = Number(params.get('hearts') ?? 5), broke = Number(params.get('broke') ?? 0);
+    s.cx = { i: R.atk.i, m: 60, c: Array.from({ length: n }, (_, k) => [Math.sin((k / n) * Math.PI * 2) * 10, Math.cos((k / n) * Math.PI * 2) * 10, k < broke ? 0 : 60]) };
+  } else if (f === 'stun') { s.ph = 3; s.su = t + (8 - Number(params.get('st') ?? 4)) * 1000; }
+  else if (f === 'fell') s.fell = { at: t - Number(params.get('age') ?? 0.6) * 1000, top: [], n: 0 };
+  else if (f === 'break') {
+    s.ph = 2;
+    s.ec = SD_ECHO_SPOTS.map(([x, z]) => ({ x, z, yw: Math.PI, mv: null, atk: null, h: 100, m: 100, up: t - 5000, dn: 0 }));
+    if (params.has('down')) { const E = s.ec[Number(params.get('down'))]; E.h = 0; E.dn = t - Number(params.get('et') ?? 5) * 1000; }
+  }
 }
 const _glowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity };
 function labClock() {

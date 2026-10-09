@@ -29,7 +29,7 @@ import {
 import { SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD, SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
 import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 import { createSdSteps, ensureSdStepsArt, sdStepKey, SD_CHECKS_KEY } from '../src/scenes/sdSteps.js';
-import { createSdRemnant, ensureSdRemnantArt } from '../src/scenes/sdRemnant.js';
+import { createSdRemnant, ensureSdRemnantArt, SD_GEAR_DRAWS, SD_DECOR_DRAWS } from '../src/scenes/sdRemnant.js';
 import { SD_RIG_PARTS } from '../src/scenes/sdRemnantRig.js';   // SD17 (PIN MOVED): the bodies' parts
 import { SD_HEARTS } from '../src/net/sdRemnant.js';
 import { createSdEnd, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
@@ -536,7 +536,9 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   rem.stand({ dynamicDraws: rl });
   rem.frame(1 / 60, realmToDungeon(0, 0, 42));
   // SD17 (PIN MOVED): the Remnant's own turned parts (after the Hearts) stand with it
-  const H = 3 + SD_HEARTS[1], up = rl.map((d, i) => i === 0 || (i >= H && i < H + SD_RIG_PARTS.length));
+  // PIN MOVED (SD-LOOK S8): and its decor after the gears - its back-dial, its hand and its rib lamps (never its heart torn out)
+  const H = 3 + SD_HEARTS[1], dec = H + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS, up = rl.map((d, i) => i === 0 || (i >= H && i < H + SD_RIG_PARTS.length) || i === dec || i === dec + 1 || i === dec + SD_DECOR_DRAWS.indexOf('lamps'));
+  assert.equal(rl.length, dec + SD_DECOR_DRAWS.length);
   assert.deepEqual(rl.map((d) => !d.hidden), up, 'no fight: the Remnant stands, its Echoes, hearts and gears hidden');
   for (const [i, d] of rl.entries()) if (!up[i]) assert.ok(d.object.matrix.every((v) => v === 0));
   // a body shown, hidden and shown again where it stood: hidden says so, and it is drawn again (a still body keeps its
