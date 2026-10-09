@@ -35,8 +35,9 @@ test('WORLD6b-iii(b): the wire - the halo is the neighbouring cells whose neares
   assert.deepEqual(cellHaloFor(60, 207), [cell(3, 13)], 'the bottom edge');
   assert.deepEqual(cellHaloFor(48, 192), [cell(2, 11), cell(3, 11), cell(2, 12)], 'a corner: the three neighbours that touch it');
   assert.deepEqual(cellHaloFor(63, 207), [cell(4, 12), cell(3, 13), cell(4, 13)], 'the other corner');
-  assert.deepEqual(cellHaloFor(0, 0), [], 'the map\'s corner: no cell below zero');
-  assert.deepEqual(cellHaloFor(0, 200), [], 'the map\'s left edge: no cell below zero (mid-cell in y)');
+  // PIN MOVED (TV-BEYOND): the map's edge is no wall - the cells past the Bay are the world's (fb1009_beyond)
+  assert.deepEqual(cellHaloFor(0, 0), [cell(-1, -1), cell(0, -1), cell(-1, 0)], 'the map\'s corner: the three cells past it');
+  assert.deepEqual(cellHaloFor(0, 200), [cell(-1, 12)], 'the map\'s left edge: the cell past it (mid-cell in y)');
   assert.deepEqual(cellHaloFor(NaN, 200), []); assert.deepEqual(cellHaloFor(48, undefined), []);
 });
 

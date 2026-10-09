@@ -353,8 +353,8 @@
   {
     "name": "CARDS10-wire-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const ILIAC_RELAY_MIN = 181;",
-    "new": "export const ILIAC_RELAY_MIN = 180;",
+    "old": "export const ILIAC_RELAY_MIN = 182;",
+    "new": "export const ILIAC_RELAY_MIN = 181;",
     "tests": [
       "test/cards10_relay.test.js"
     ],

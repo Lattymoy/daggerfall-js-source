@@ -84,11 +84,13 @@ export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hou
  *   warn?: (text: string) => void,
  *   inHour?: () => boolean,
  *   standing?: () => (number|null),
+ *   ground?: (px: number, py: number) => boolean,
  * }} o SD10: `warn` the collapse's readouts (over the screen), `inHour` whether I stand in the Hour rather than the Hollow.
  *   AUDIT SD II (L1 F2, F3): `castOut` answers false when it could not act (the dead are the death's) - asked again the
- *   next frame; `standing` the slot of the Hollow or Hour I stand in, or null
+ *   next frame; `standing` the slot of the Hollow or Hour I stand in, or null. AUDIT SD IV (F37): `ground` whether a pixel's
+ *   plateau is dry (the spawns' own SPAWN-SHORE test)
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null }) {
+export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null, ground = () => true }) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -116,7 +118,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     if (memo && memo.s === r.s) return memo.none ? null : memo;
     const sc = scan();
     if (!sc) { warmScan(); return null; }
-    const site = findSdSite(r, sc, cities(r.r));
+    const site = findSdSite(r, sc, cities(r.r), ground);   // AUDIT SD IV (F37): on dry ground
     const template = site ? pickSdTemplate(r.s, templates()) : null;
     const loc = site && template ? sdHollowLocation(r, site, template, where(site.px, site.py)) : null;
     if (!loc) { memo = { s: r.s, none: true }; console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`); return null; }
@@ -199,12 +201,13 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
         if (sendFound({ s: stood.s, px, py }, worldRoom(px, py))) { foundSentAt = t; foundSentS = stood.s; }
       }
     }
+    // AUDIT SD IV (T7): the find owed first - a Hollow found in its last hour faded in chat before it was found
+    sayOwed(t);
     // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
     if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
       const hh = hollowOf(rec);
       if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }
     }
-    sayOwed(t);
   }
 
   return {

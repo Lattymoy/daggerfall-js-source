@@ -181,6 +181,8 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  // WOD-PEAKS: the port's own switch for the mod's mountain spires - off, the landforms' rounded peaks stand instead.
+  'world-of-daggerfall': Object.freeze(['Mountains']),
   // DW-D: twenty-four keys in one section, and these six are what a player
   // reaches for first - how far the sea lets you see and how thick it is,
   // how much of it shows through from above, the swim's burst and speed,

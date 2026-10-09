@@ -83,8 +83,8 @@
   {
     "name": "ACQUIRE1-the-wire-keeps-the-mark",
     "file": "src/systems/loot.js",
-    "old": "  delete out.acquired;\n",
-    "new": "",
+    "old": "  for (const k of RECEIVER_MARKS) delete out[k];\n",
+    "new": "  for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete out[k];\n",
     "tests": [
       "test/lootbanner.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ACQUIRE1-the-zone-record-keeps-the-mark",
     "file": "src/systems/wildDeath.js",
-    "old": "  delete copy.acquired;",
-    "new": "",
+    "old": "  for (const k of RECEIVER_MARKS) delete copy[k];",
+    "new": "  for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete copy[k];",
     "tests": [
       "test/lootbanner.test.js"
     ]

@@ -36,7 +36,7 @@ const code = (p) => read(p).replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]
 test('AUDIT FOES FOE4: a blow goes while my BODY is wrong - the mismatch stops the puppet looking right, never the blow landing', () => {
   const d = code('src/scenes/dungeonContext.js');
   // REST-SYNC re-aim: the number is the layout's index or, for a shared encounter's puppet, the room's (`xs`)
-  assert.match(d, /if \(fromPlayer && damage >= 0\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: pi \}\), dmg: damage, kind,/,
+  assert.match(d, /if \(fromPlayer && damage >= 0\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: foe\._surI \?\? pi \}\), dmg: damage, kind,/,
     'the divert asks the provenance and the sign, and nothing about the body');
   assert.doesNotMatch(d, /!foe\._pupMismatch\) opts\.onFoeHit/,
     'the retired gate is gone, not merely joined by an OR');

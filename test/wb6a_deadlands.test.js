@@ -175,7 +175,7 @@ test('WB6a the seams, by source: the court is lit as itself before the frame beg
   const dark = wm.indexOf('renderer.setMoonlight(null);');
   const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
   assert.ok(dark > 0 && dark < light && light < begin, 'after the dungeon\'s dark, before the frame reads it');
-  const dyn = wm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);');   // AUDIT SD II (L2 F11 - PIN MOVED): a hidden draw skipped
+  const dyn = wm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);');   // AUDIT SD II (L2 F11 - PIN MOVED): a hidden draw skipped; SD-LOOK (S2, PIN MOVED): a culled one too, each with its own remap and shadow
   const back = wm.indexOf('\n      if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });');
   const flats = wm.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches');
   const statics = wm.indexOf('if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);');

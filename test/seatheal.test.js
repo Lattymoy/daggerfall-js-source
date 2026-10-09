@@ -47,6 +47,7 @@ function joiner() {
     const _layoutFoes = foes.length, _locationKey = 'dungeon:7';
     const _retypeFails = new Map(), _retyping = new Set(), RETYPE_TRIES = 3, GENDER_BIT = ['male', 'female'];
     const setFoeDead = (f, d) => { f.dead = !!d; };
+    const _surplus = new Map(), _surplusPending = new Map(), clearSurplus = () => {}, hideBeyondHostLayout = () => {}, surplusRecord = () => {}, dropSurplus = () => {};   // DESYNC-ZERO: a host's layout foes past mine - none in this room (test/desynczero.test.js)
     const _sharedById = new Map(), applySharedRecords = () => {};   // REST-SYNC: the room's shared encounters - none stand in this room (test/restsync.test.js)
     ${fnSrc(D, 'applyFoeRecord')}
     ${fnSrc(D, 'setAuthority')}

@@ -84,11 +84,17 @@ export function openStepBlocked(climateAt, heightAt, ax, ay, bx, by, leaving = f
  * it said so, ~70-380 ms; the pieces the step law joins (stepKind, folded once a session and per road network, ~0.15 s,
  * the first time a pick misses its first box) say it at once. `climateAt`/`heightAt` the host's reads; `waterByte` the
  * heightmap's shore (world/roadsProducer.js WATER_BYTE).
+ * TV-BEYOND (2026-10-09): `beyond(x, y)` - the host's - answers whether a pixel PAST the table is dry ground (TAMRIEL2's
+ * land beyond the Bay, where the world streams it); without it, off the table is the sea, DFU's empty edge of the world.
+ * Its answers are kept (BEYOND_CACHE_MAX, dropped whole): the ground past the Bay costs a province test a pixel.
  * @param {(x:number, y:number) => number} climateAt
  * @param {(x:number, y:number) => number} heightAt
  * @param {number} waterByte
+ * @param {number} [width]
+ * @param {number} [height]
+ * @param {((x:number, y:number) => boolean)|null} [beyond]
  */
-export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H) {
+export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H, beyond = null) {
   const climate = new Uint8Array(width * height), heights = new Uint8Array(width * height);
   // OW-WOD-PATH: the World of Daggerfall massifs (WodWorld mountainPixels), one byte a pixel - set by the host when the
   // mod's list is read or grows (setRocks), null while it stands none
@@ -98,7 +104,20 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   }
   const climateOf = (x, y) => climate[y * width + x];
   const heightOf = (x, y) => heights[y * width + x];
-  const isWater = (x, y) => x < 0 || y < 0 || x >= width || y >= height || heights[y * width + x] <= waterByte;
+  /** @type {Map<string, boolean>} */
+  const dryBeyond = new Map();
+  const beyondDry = (x, y) => {
+    if (!beyond) return false;
+    const k = `${x},${y}`;
+    let dry = dryBeyond.get(k);
+    if (dry === undefined) {
+      if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();
+      dry = !!beyond(x, y);
+      dryBeyond.set(k, dry);
+    }
+    return dry;
+  };
+  const isWater = (x, y) => (x < 0 || y < 0 || x >= width || y >= height ? !beyondDry(x, y) : heights[y * width + x] <= waterByte);
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
   // massif is left freely, as its own peaks are (AUDIT OW4 J1: `leaving`, the flood fill over peakAt)
   const openBlocked = () => false;   // MOUNTAINS WALKABLE
@@ -117,7 +136,7 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
         for (const [bit, dx, dy] of DIR_DELTA) {
           const bx = x + dx, by = y + dy;
           if (bx < 0 || by < 0 || bx >= width || by >= height) continue;
-          if (stepKind(x, y, bx, by, bit, width, roads, tracks, isWater, openBlocked, 0, false) < 0) continue;
+          if (stepKind(x, y, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, 0, false) < 0) continue;
           out[y * width + x] |= bit;
           entered[by * width + bx] = 1;
         }
@@ -142,6 +161,7 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
     land = { roads, tracks, root };
     return root;
   };
+  const onTable = (p) => p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
   return {
     isWater,
     peakAt: peak,
@@ -152,6 +172,8 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
      *  peaks (the start's own range is walked freely - the search answers). */
     apart: (from, to, { roads = null, tracks = null } = {}) => {
       if (peak(from.x, from.y)) return false;
+      // TV-BEYOND: an end past the table is in no piece - the pieces are the Bay's - so the search answers it
+      if (!onTable(from) || !onTable(to)) return false;
       const root = pieces(roads, tracks);
       const about = (p) => {
         const set = new Set();
@@ -176,6 +198,8 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
 export const ROUTE_MARGINS = Object.freeze([6, 20, 60, MAP_W]);
 /** The most cells one search may expand before it gives up - a guard, never reached by a route the view can show. */
 export const ROUTE_MAX_EXPANSIONS = 200000;
+/** TV-BEYOND: the most answers about the ground past the table routeGround keeps before it drops them all. */
+export const BEYOND_CACHE_MAX = 1 << 16;
 
 /** The edge back: N<->S, NE<->SW, E<->W, SE<->NW. */
 export const OPPOSITE_BIT = Object.freeze({ 128: 8, 64: 4, 32: 2, 16: 1, 8: 128, 4: 64, 2: 32, 1: 16 });
@@ -213,12 +237,14 @@ export function edgeKind(a, b, bit, roads, tracks) {
  * refused. `goal`: 0 an ordinary step; 1 onto the goal (the sea not asked - the traveller may ask for the shore); 2 onto
  * an exempt goal (a place: nor the peaks' law). `leaving`: the step starts in the start's own peaks (AUDIT OW4 J1).
  */
-function stepKind(ax, ay, bx, by, bit, width, roads, tracks, isWater, openBlocked, goal, leaving) {
+function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving) {
   if (goal === 0 && isWater(bx, by)) return -1;
   // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own
   // ROADS 6, whose stricter half would refuse a coast road's own diagonal)
   if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;
-  const kind = edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);
+  // TV-BEYOND: past the table there is no road's byte - the open ground (a column off the west edge read the row above's)
+  const off = ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height;
+  const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);
   // OW-MOUNTAINS; AUDIT OW3 J5: no step out of the start is exempt (a ridge beside it was crossed on the exempt step), and
   // the step onto the goal only for a place (`goalExempt`) - a spot's is asked (a plateau's cliff was walked straight up);
   // AUDIT OW4 J1: `leaving` only out of the start's own peaks - never out of a range a road led into
@@ -293,10 +319,16 @@ export function planRoute(from, to, { roads = null, tracks = null, isWater = () 
   // 24-pixel trips cost more than they should). A path that leaves a box `margin` wide goes margin + 1 pixels out and
   // as many back, at no less than a road's cost a step - so a route costing no more than that is the best there is,
   // and one costing more is searched for again in the next box.
+  // TV-BEYOND (2026-10-09, the field: "CRASH (2) RangeError: invalid array length" from a click on the Overworld in the
+  // wilds past the Alik'r): THE BOX HOLDS ITS ENDS. It was clamped to the map, and TAMRIEL2 streams the land past it - two
+  // ends beyond an edge clamped it inside out (a negative width: the typed arrays threw), and one beyond it was indexed
+  // into the box's far side (a route that began at a pixel the traveller never stood on). The bounds are the map and the
+  // two ends; the ground past the map is the host's to answer (routeGround's `beyond`)
+  const bounds = { x0: Math.min(0, from.x, to.x), x1: Math.max(width - 1, from.x, to.x), y0: Math.min(0, from.y, to.y), y1: Math.max(height - 1, from.y, to.y) };
   let best = null, box = '', asked = false;
   for (const margin of margins) {
     // AUDIT OW4 J3: a rung whose box the map's edges clamp to the last one's is that search again - skipped
-    const key = `${Math.max(0, Math.min(from.x, to.x) - margin)},${Math.min(width - 1, Math.max(from.x, to.x) + margin)},${Math.max(0, Math.min(from.y, to.y) - margin)},${Math.min(height - 1, Math.max(from.y, to.y) + margin)}`;
+    const key = `${Math.max(bounds.x0, Math.min(from.x, to.x) - margin)},${Math.min(bounds.x1, Math.max(from.x, to.x) + margin)},${Math.max(bounds.y0, Math.min(from.y, to.y) - margin)},${Math.min(bounds.y1, Math.max(from.y, to.y) + margin)}`;
     if (key === box) continue;
     // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider
     // one - no way by land said at once, where it searched every box to the whole map first; a pick the first box routes
@@ -306,17 +338,17 @@ export function planRoute(from, to, { roads = null, tracks = null, isWater = () 
     // AUDIT OW5 J3 (the audit before the merge): THE WHOLE MAP'S RUNG IS NEVER CUT SHORT - its box is every cell there is,
     // so the map itself bounds it. Even a small margin can clip to the full map; capping that search at 200 000
     // expansions would skip the identical final box and falsely refuse a reachable trip. Use actual bounds.
-    const cap = key === `0,${width - 1},0,${height - 1}` ? Infinity : maxExpansions;
-    const r = search(from, to, { roads, tracks, isWater, width, height, margin, maxExpansions: cap, openBlocked, goalExempt, peakAt, sea });
+    const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;
+    const r = search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions: cap, openBlocked, goalExempt, peakAt, sea });
     if (r && (!best || r.cost <= best.cost)) best = r;
     if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;
   }
   return best;
 }
 
-function search(from, to, { roads, tracks, isWater, width, height, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea }) {
-  const x0 = Math.max(0, Math.min(from.x, to.x) - margin), x1 = Math.min(width - 1, Math.max(from.x, to.x) + margin);
-  const y0 = Math.max(0, Math.min(from.y, to.y) - margin), y1 = Math.min(height - 1, Math.max(from.y, to.y) + margin);
+function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea }) {
+  const x0 = Math.max(bounds.x0, Math.min(from.x, to.x) - margin), x1 = Math.min(bounds.x1, Math.max(from.x, to.x) + margin);
+  const y0 = Math.max(bounds.y0, Math.min(from.y, to.y) - margin), y1 = Math.min(bounds.y1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
   const local = (x, y) => (y - y0) * bw + (x - x0);
   const cells = bw * bh, layers = sea ? 3 : 1;   // OWS2: a state is a cell in a layer
@@ -389,7 +421,7 @@ function search(from, to, { roads, tracks, isWater, width, height, margin, maxEx
       } else {
         // the land's step: the sea refused (never the goal - the traveller may ask for the shore), and the peaks: stepKind,
         // the one law (AUDIT OW4 J3)
-        const kind = stepKind(cx, cy, nx, ny, STEP_BIT[d], width, roads, tracks, isWater, openBlocked, n !== goal ? 0 : goalExempt ? 2 : 1, leaving);
+        const kind = stepKind(cx, cy, nx, ny, STEP_BIT[d], width, height, roads, tracks, isWater, openBlocked, n !== goal ? 0 : goalExempt ? 2 : 1, leaving);
         if (kind < 0) continue;
         kindIx = kind; step = diag * KIND_COST[kind];
       }

@@ -13,7 +13,7 @@ import { POPULATE_RADIUS, createEnemySpawner } from '../src/scenes/deepWatersEnc
 import { CELL_PUPPETS_MAX, CELL_LOOSE_PUPPETS, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX } from '../src/net/wire.js';
 import { ONLINE_ROOM_MOD_KEYS } from '../src/systems/onlineLane.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
-import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, DEEP_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, DEEP_PUPPETS_MAX, ENCOUNTER_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const K = 'General.MaxLiveEnemies';
@@ -104,7 +104,7 @@ test('DEEP-SHARE executed: an owner\'s twenty deep foes ride named and a reader 
   const reader4 = pool('mmm-0002');
   reader4.applyFoes('bbb-0004', { ...bigFrame, dz: ['1', -1, 1.5, null, { i: 2 }] });
   for (let i = 0; i < 5; i++) await settle();
-  assert.equal(reader4.foes.filter((f) => f.puppet === 'bbb-0004' && !f.dead).length, CELL_PUPPETS_MAX, 'a `dz` that names nothing is none: the old allowance');
+  assert.equal(reader4.foes.filter((f) => f.puppet === 'bbb-0004' && !f.dead).length, ENCOUNTER_PUPPETS_MAX, 'a `dz` that names nothing is none: the encounter allowance (DESYNC-ZERO: ENCOUNTER_PUPPETS_MAX)');
   assert.equal(reader4.deepPuppetsNear([100, 0, 100], DEEP_SHARE_RADIUS), 0);
   const other = pool('ccc-0003'), reader2 = pool('mmm-0002');
   for (let i = 0; i < 20; i++) await other.spawnFoe(0, [100 + i, 0, 100], { feetGiven: true, loose: true, transient: true });
@@ -112,7 +112,7 @@ test('DEEP-SHARE executed: an owner\'s twenty deep foes ride named and a reader 
   assert.equal(plain.dz, undefined, 'a loose stand that is not the deep\'s is not named');
   reader2.applyFoes('ccc-0003', plain);
   for (let i = 0; i < 5; i++) await settle();
-  assert.equal(reader2.foes.filter((f) => f.puppet === 'ccc-0003' && !f.dead).length, CELL_PUPPETS_MAX, 'held to the owner\'s old allowance');
+  assert.equal(reader2.foes.filter((f) => f.puppet === 'ccc-0003' && !f.dead).length, Math.min(20, ENCOUNTER_PUPPETS_MAX), 'held to the owner\'s encounter allowance (DESYNC-ZERO: ENCOUNTER_PUPPETS_MAX)');
   assert.equal(reader2.deepPuppetsNear([100, 0, 100], DEEP_SHARE_RADIUS), 0);
 });
 

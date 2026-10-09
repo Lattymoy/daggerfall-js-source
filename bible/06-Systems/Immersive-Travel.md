@@ -243,6 +243,15 @@ character's own clock (LIVED1).
     type"); online that clamp is skipped - the world's clock - and the travel
     map's door refuses them by day instead (LIVED1), so the driver's map refuses
     the same, with the hour night falls.
+12. **The WALLAA09 driver wears a face** (DRIVER-FACE, FIELD BUGS 2026-10-09b,
+    "NPC Shrarton in Tasoparet face sprite missing."). WALLAA09's driver is the
+    flat TEXTURE.357 record 3, which FLATS.CFG has no row for, under a faction
+    with no flat of its own, so GetPortraitIndexFromStaticNPCBillboard stood its
+    starting record 410 - TFAC00I0's grey "OOPS! Tell Mack NOW!" - in DFU with
+    the mod as here, at every walled city's WALLAA09 gate. While the mod is
+    loaded the flat wears classic's own bearded man's face (182.3, 429), written
+    into FLATS.CFG's dictionary as Roleplay & Realism writes it
+    (`immersiveTravel.js` `IT_DRIVER_FACE`). `test/fb1009b_driverface.test.js`.
 
 ## Pins
 

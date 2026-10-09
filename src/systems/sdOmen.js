@@ -116,12 +116,13 @@ export const SD_BANNER_M = 60;
 /** The banner's words: its name and its state ("fades in 1d 04h", "collapsing") - AUDIT SD III (T1): what it is is the
  *  card's beside it, and with it a long name ran the banner off both sides of a phone. */
 export const sdBannerText = (name, rec, now) => { const w = sdStateWords(rec, now); return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`; };
-/** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel - the Sunfall - under the
+/** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel, its Sunfall, under the
  *  Brazen Hide and the Short Hour." AUDIT SD III (T11): each mark's article small inside the line (net/sdLaw.js sdNameIn)
- *  - it read "under The Brazen Hide and The Short Hour". */
+ *  - it read "under The Brazen Hide and The Short Hour". AUDIT SD IV (T9): its signature the Ending's own ("its
+ *  Lion's Roar") - it hung between dashes, "Sentinel - Sunfall - under", the aside WB13b's law forbids. */
 export function sdMarksLine({ name, s }) {
   const mk = sdMarksOf(s), E = sdEndingOf(mk), O = sdOmensOf(mk);
-  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.` : '';
+  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.` : '';
 }
 /** A found Hollow's last hour, said to the realm once. */
 export const SD_HOUR_LEFT_MS = 60 * 60 * 1000;

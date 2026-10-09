@@ -2,15 +2,15 @@
   {
     "name": "TRADE-KNOWN-knowing-made-volatile",
     "file": "src/net/realmTradeLaw.js",
-    "old": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', 'equipSlot', 'questItem']);",
-    "new": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', 'equipSlot', 'questItem', 'isIdentified']);",
+    "old": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS]);",
+    "new": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS, 'isIdentified']);",
     "tests": ["test/fb1001_identify.test.js"]
   },
   {
     "name": "TRADE-KNOWN-the-realm-strips-it-from-the-moved-record",
     "file": "src/net/realmTradeLaw.js",
-    "old": "delete rec.equipSlot; delete rec.questItem;",
-    "new": "delete rec.equipSlot; delete rec.questItem; delete rec.isIdentified;",
+    "old": "for (const k of RECEIVER_MARKS) delete rec[k];",
+    "new": "for (const k of RECEIVER_MARKS) delete rec[k]; delete rec.isIdentified;",
     "tests": ["test/fb1001_identify.test.js"]
   },
   {
@@ -23,8 +23,8 @@
   {
     "name": "TRADE-KNOWN-the-clamp-strips-it",
     "file": "src/systems/loot.js",
-    "old": "delete out.equipSlot; delete out.questItem;",
-    "new": "delete out.equipSlot; delete out.questItem; delete out.isIdentified;",
+    "old": "for (const k of RECEIVER_MARKS) delete out[k];",
+    "new": "for (const k of RECEIVER_MARKS) delete out[k]; delete out.isIdentified;",
     "tests": ["test/fb1001_identify.test.js"]
   },
   {

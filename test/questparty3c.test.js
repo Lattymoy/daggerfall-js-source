@@ -77,7 +77,7 @@ function side(self, { layout = [], own = [] } = {}) {
     opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: layout.length, foes, _authority: true, _encId: undefined, _ctxDead: false, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownGen: 0, _ownPups: new Map(), _ownPending: new Map(), _ownOwners: new Map(), _ownPendLoose: new Set(), _ownAdopted: new Map(), _ownKept: new Map(),
-    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
+    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, LOOSE_PUPPETS_MAX: 24, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
     validFoeRecord, validQuestTags, validLooseSeqs, companionNames, questMarkerYields, GENDER_BIT: ['male', 'female'],   // PIN MOVED (AUDIT WK-U3, 2026-10-01): the own lane reads companions' names beside their places
     _sharedFoe: () => false, fightN: () => 1, canStandFoe: () => true,
     applyFoeRecord: (f, r) => { if (r.f) f.ai.feet = [...r.f]; if (Number.isFinite(r.h)) f.entity.health = r.h; if (r.d === 1) f.dead = true; f._pup = { feet: [...(r.f ?? f.ai.feet)], yaw: r.y ?? 0 }; },
@@ -443,7 +443,7 @@ test('AUDIT pre-merge D5 + Q3: a marker\'s foe taken keeps its flag in the heir\
   assert.deepEqual(h2.ownFrame(true).qf, [[t2._ownSeq, QUEST, '_vampire_', 2]], 'a touched one stays touched');
   assert.equal(fr.lf, undefined, 'never as a loose stand');
   assert.equal(heir.applyOwnHit('zzz-0009', { own: 1, i: took._ownSeq, dmg: 5 }), true, 'a party member\'s blow lands');
-  assert.equal(heir.applyOwnHit('bob-0005', { own: 1, i: took._ownSeq, dmg: 5 }), false, 'a stranger\'s does not');
+  assert.equal(heir.applyOwnHit('bob-0005', { own: 1, i: took._ownSeq, dmg: 5 }), true, 'DESYNC-ZERO: a stranger\'s lands too - the foe stands for the room, the credit stays the party\'s');
 });
 
 test('AUDIT pre-merge D1: the removal door (Dispel\'s, a quest\'s) refuses a puppet - a party member\'s own foe, a room foe while another holds the seat - and takes my own', () => {
@@ -478,7 +478,7 @@ test('AUDIT pre-merge D8: what I take is bounded - a peer naming me heir on fres
     await tick();
   }
   const taken = me.foes.filter((x) => x._ownFrom == null && !x.dead).length;
-  assert.equal(taken, QUEST_PUPPETS_MAX + CELL_LOOSE_PUPPETS, `bounded at the owners' allowances (${taken} of 60 offered)`);
+  assert.equal(taken, QUEST_PUPPETS_MAX + 24, `bounded at the owners' allowances (${taken} of 60 offered) - DESYNC-ZERO: the room's loose allowance is LOOSE_PUPPETS_MAX (24)`);
 });
 
 test('AUDIT DISC28 QS-J: the orphan law\'s pick whose copy holds no such quest takes the orphan from the record it kept - it stands for the party; a kept record goes as a stood one goes, bounded as one is, and never stands, credits a kill, or outlives its owner\'s return', async () => {

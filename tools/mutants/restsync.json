@@ -220,7 +220,7 @@
   {
     "name": "RESTSYNC-the-blow-by-pool-index",
     "file": "src/scenes/dungeonContext.js",
-    "old": "opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: pi }), dmg: damage, kind,",
+    "old": "opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), dmg: damage, kind,",
     "new": "opts.onFoeHit?.({ i: pi, dmg: damage, kind,",
     "tests": [
       "test/restsync.test.js"

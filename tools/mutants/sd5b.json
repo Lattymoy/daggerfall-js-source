@@ -2,8 +2,8 @@
   {
     "name": "SD5B-the-hands-run-forwards",
     "file": "src/render/sdSky.js",
-    "old": "      float back = -TAU * uTime / PERIOD;",
-    "new": "      float back = TAU * uTime / PERIOD;",
+    "old": "float hourA = -SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = -SKY_TAU",
+    "new": "float hourA = SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = SKY_TAU",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD5B-the-minute-hand-the-hour's",
     "file": "src/render/sdSky.js",
-    "old": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.38, r: 0.36, hourTurns: 1, minuteTurns: 12 });",
-    "new": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.38, r: 0.36, hourTurns: 1, minuteTurns: 1 });",
+    "old": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.2, r: 0.34, hourTurns: 1, minuteTurns: 12 });",
+    "new": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.2, r: 0.34, hourTurns: 1, minuteTurns: 1 });",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -42,7 +42,9 @@
     "new": "  Object.freeze({ name: 'sentinel', az: -2.1, halfW: 0.38, depth: 0.26, turns: 1 }),",
     "tests": [
       "test/sd5b_sky.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "SD-LOOK: six cities now, three turning each way (Daggerfall, the Underking +; Sentinel, Orsinium, the Blades -, Wayrest ++) - one city turned leaves both ways in the sky; the law (not all one way) stands, and no single edit can break it"
   },
   {
     "name": "SD5B-the-aurorae-off-the-period",
@@ -74,8 +76,8 @@
   {
     "name": "SD5B-the-clock-handed-unwrapped",
     "file": "src/render/sdSky.js",
-    "old": "    gl.uniform1f(U.uTime, sdSkyClock(seconds));",
-    "new": "    gl.uniform1f(U.uTime, seconds);",
+    "old": "    gl.uniform1f(U.uTime, sdSkyClock(seconds));\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
+    "new": "    gl.uniform1f(U.uTime, seconds);\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -83,8 +85,8 @@
   {
     "name": "SD5B-the-haze-not-the-frame's",
     "file": "src/render/sdSky.js",
-    "old": "    gl.uniform3fv(U.uHaze, fog?.color ?? [0.2, 0.15, 0.07]);",
-    "new": "    gl.uniform3fv(U.uHaze, [0.2, 0.15, 0.07]);",
+    "old": "    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
+    "new": "    gl.uniform3fv(U.uHaze, NO_HAZE);",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -164,8 +166,8 @@
   {
     "name": "SD5B-the-sky-on-the-wall-clock",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      if (p?.draw(proj, view, performance.now() / 1000, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      if (p?.draw(proj, view, performance.now() / 1000, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js"
     ]
@@ -173,8 +175,8 @@
   {
     "name": "SD5B-the-foreign-pass-unmarked",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color));",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow());   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js",
       "test/glstate.test.js"
@@ -183,8 +185,8 @@
   {
     "name": "SD5B-the-sky-in-the-court's-light",
     "file": "src/scenes/world.js",
-    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();",
-    "new": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), 1)) renderer.markForeignPass();",
+    "old": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
+    "new": "      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), 1, sdSkyClockNow())) renderer.markForeignPass();   // SD-LOOK S7: its face tells the fight",
     "tests": [
       "test/sd5b_sky.test.js"
     ]

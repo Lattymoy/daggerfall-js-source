@@ -19,7 +19,7 @@ THE VERIFIER IS READING), each told to reproduce every finding with a script bef
 | E | the client online, the panel, the gestures, the seated sprite and the records | the real relay Room joined to the real host half (`openIliacTableGame`) through the client's own receive path, every frame queued so the lane chose the network's order; the worldModes card block sliced and run over fakes; Chromium with touch at 390x844 for the gestures, the hand on screen and the squeeze; every record of sections 32-34 against the code; `cards9.json` and `cards10.json` run (101 of 101 dead) |
 
 Between the audit and its fixes the branch took main (#710-#720 - section 33's merge note): main's two tables a tavern
-(section 30) and its touch layer standing down at the seat (section 31) came in, the relay became world181, the service
+(section 30) and its touch layer standing down at the seat (section 31) came in, the relay became world181 (world182 at a second merge, past main's TV-BEYOND), the service
 acct99 and the board's migration 0095. Every finding was reproduced again on the LIVE tree before its fix - lane E's
 first was already fixed on main as CARDS-TOUCH, found live and shipped on its own (#720) - and pinned after it.
 
