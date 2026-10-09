@@ -191,14 +191,16 @@ export function drawVendorPage(detail, rerender, kit) {
     detail.append(grid, el('p', 'vendor-sum', VENDOR_PAGE_TEXT.stays));
 
     detail.append(divider('Sold'));
-    const sold = mine.sold ?? [];
+    // LW15: the town's patrons' purchases beside the players' - each named, the buyer the town's own resident
+    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));
     if (!sold.length) detail.append(el('p', 'px-note', VENDOR_PAGE_TEXT.noSales));
     const sg = el('div', 'vendor-rows');
     let total = 0;
     for (const s of sold) {
       total += Number(s.gets) || 0;
       const row = el('div', 'vendor-row');
-      row.append(el('b', null, nameOf(s.item)), el('span', 'vendor-meta', `${goldText(s.total)} - you got ${goldText(s.gets)} · ${townOf(s.vendor?.map)} · ${agoText(s.at)}`));
+      const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null;   // LW15: "Sold to Ada Lark of Wayrest"
+      row.append(el('b', null, nameOf(s.item)), el('span', 'vendor-meta', `${who ? `Sold to ${who} - ` : ''}${goldText(s.total)} - you got ${goldText(s.gets)} · ${townOf(s.vendor?.map)} · ${agoText(s.at)}`));
       lookable(row, `d:${s.listing}:${s.at}`, s.item);
       sg.append(row);
     }

@@ -1046,6 +1046,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs)",
+   "clock": "sky",
+   "why": "LW15: a patron's sale, told by its real hour and minute, read as the shared sky's minute the town's patron comes at (an online sky day is a real hour)"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"

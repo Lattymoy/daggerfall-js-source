@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9-LW14 BUILT 2026-10-09; LW15-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW15 BUILT 2026-10-09; LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -626,99 +626,91 @@ Moved pins: `lw1_livingWorld` (EVENTS' `poached`), `lw7b_beyond` (the divers' de
 
 Pins: `test/lw14_deep.test.js` (10). Mutants: `tools/mutants/lw14.json` (46).
 
-## 8. LW15 - the patrons
+## 8. LW15 - the patrons (BUILT 2026-10-09)
 
 Mac: "npc autonomy that can visit player shops and purchase from them"; "Players can set up decorations that can be
-used as shops".
+used as shops". The law both ends read is `src/net/patronLaw.js`; the service's reckoning is
+`server-account/src/market.js reckonPatrons`; the client's half is `src/systems/livingWorld/patrons.js` and the day's
+errand in `dayPlan.js`.
 
 ### 8.1 Who decides a sale: the service, by a law both ends read (`net/patronLaw.js`)
 
-The service holds the trader's stock and the seller's gold. It bundles no ARENA2, so it cannot know a town's people or
-its size. It runs a cron every minute and every hour (`server-account/src/cron.js`). So:
+- **THE HOUR IS THE WINDOW.** Each open trader listing (gold, a pack's piece, at a trader of a home whose `entry` is
+  `public`, its owner the seller, no guild's hall) is offered to its town's patrons once for each whole real hour it
+  stands (an online sky day is a real hour, TIME1).
+- **THE PRICE DECIDES** (`patronCap`, `patronOdds`): the cap is PATRON_PAY_SHARE (0.6) of the piece's worth as the
+  service judges it (`itemLaw.js itemWorth`); with r the price over the cap, the hour's odds are 0.25 at r <= 0.5,
+  0.12 at r <= 0.75, 0.05 at r <= 1, and none above it (PATRON_ODDS). Nothing for nothing: a price under 1, or a
+  piece with no cap, never sells.
+- **A CRAFTED PIECE NO DEARER** (`patronWorth`): its worth is no more than the piece it was made as - the crafted
+  marks off (`provenance`, `quality`, `hand`, `kitMetal`, `fieldKit`, `potent`), its value nothing. Shops are the
+  floor, crafting the ceiling: a patron never pays a crafter more than a found piece fetches.
+- **NEVER** a quest's piece or a keepsake (`patronTakes`: `questItem`, `livingKeepsake`, the keepsake's template
+  1800); the listing's own laws (`goodRefusal`, `lawfulItem`) already stand before it.
+- **THE TOWN'S DEMAND IS SHARED** (`patronHour`): the hour's sales are the lowest draws under their odds
+  (`patronDraw`, the listing's and the hour's alone), at most PATRON_TOWN_HOUR (4) for the town's traders together
+  (the hour's sales already made counted), PATRON_SELLER_HOUR (2) a seller, PATRON_SELLER_DAY_GOLD (20,000) a seller's
+  real day.
+- **THE BUYER**: the service names a SEED and a MINUTE of the hour (`patronSeed`, `patronMinute`), never a person.
+- **THE HOURS RECKONED** (`patronHours`): from the one after the listing's last (`market_listings.patron_hour`; none,
+  its own first whole hour) to the last whole one, at most PATRON_RECKON_HOURS (48).
 
-- **THE HOUR IS THE WINDOW.** An online sky day is a real hour (TIME1). Each open listing at a trader is offered to the
-  town's patrons once for each real hour it stands.
-- **THE PRICE DECIDES.**
-  - The cap is PATRON_PAY_SHARE of the piece's worth as the service judges it (`itemLaw.js itemWorth`, already the
-    market's judge). Proposed: 0.6. An online counter's sale pays at most half its least ask (ONLINE_SALE_SHARE), so a
-    patron pays about a fifth more than a counter would.
-  - Above the cap, a patron never buys.
-  - At or under it, the hour's chance depends on how far under. With r the price over the cap, `patronOdds(r)` is
-    0.25 at r <= 0.5, 0.12 at r <= 0.75 and 0.05 at r <= 1 (proposed).
-- **THE TOWN'S DEMAND IS SHARED.** A town's traders together sell at most PATRON_TOWN_HOUR (proposed 4) pieces an hour
-  to patrons. The hour's winners are the lowest draws (`hash(listing id, hour)`), so ten traders in one town share the
-  custom one alone would have had.
-- **THE CEILINGS.**
-  - A seller sells at most PATRON_SELLER_HOUR (2) pieces to patrons an hour, and at most PATRON_SELLER_DAY_GOLD
-    (proposed 20,000) gold a real day.
-  - A patron never takes a piece `lawfulItem` refuses (as any listing), a quest item or a keepsake.
-  - A crafted piece's cap is no higher than a bought one's. This is where the Economy arc's crafted-piece cap is
-    built.
-- **THE BUYER.** The service names a SEED (`hash(listing, hour)`) and a MINUTE within the hour, never a person. The
-  client deals the seed to one of the town's residents (8.3).
-- **PAID AS A SALE IS PAID.**
-  - The 5% tax and 1% fee are burnt; the rest goes to `market_gold`, bounded by MARKET_GOLD_HELD_MAX.
-  - A `market_sales` row is written whose buyer is the patron's mark (`patron:<map>:<seed>`).
-  - No delivery: the piece leaves the realm, a sink of goods.
-  - Every patron's gold is written to the wealth measure as the service's own faucet (`server-account/src/budget.js`,
-    a kind `patron`), so staff can read it before the budget is enforced (Integrity arc, call 2).
-- **WHEN IT RUNS.**
-  - Lazily, on every read of a trader (`/v1/market/vendor`, `/vendors`, `/myvendors`), and in the hour's cron (a new
-    HOUR_JOBS entry, `patrons`).
-  - Each run covers the hours since the listing's last reckoning, kept in a new column `patron_hour`. The dice are
-    pure, so sales reckoned late are the same sales.
-  - At most PATRON_RECKON_HOURS (48) are reckoned: a listing nobody read for thirty days is reckoned for two.
-- **IDEMPOTENT**, as the market is: the sale row's key is `(buyer = the patron mark, rid = the hour)`, with
-  `mustChange`, and the listing must be open and unsold in the same statement.
+### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0097_patrons.sql`)
 
-### 8.2 Which traders the town walks into
-
-- A trader in a home the town may enter: the home's `entry` is `public` (`homeLaw.js HOME_ENTRIES`). A private home's
-  trader sells to the players its owner lets in, never to the street (proposed, Mac's call).
-- The home's building is one of the living town's doors on its street (LW-WALLS' street). Its map id and building key
-  are the ones the homes registry keys by (`talkTopics.js makeBuildingKey`), the same as the LivingTown's doors.
+- **THE SALE**, each its own batch: its row (`market_patron_sales`, keyed by the listing - reckoned twice, sold once),
+  written only while the listing is open at the same price and the seller's held gold has room (MARKET_GOLD_HELD_MAX:
+  a patron passes a trader whose purse is full by), with `mustChange`; the listing `sold`; the 5% tax and 1% fee burnt
+  (`goldSaleOf`), the rest to the seller's held gold (`market_gold`); the gold written to the service's own faucet
+  (`budget.js faucetStatement`, kind `patron`, table `realm_faucets` by the hour), for staff to read before a budget is
+  enforced. No delivery: the piece leaves the realm.
+- **WHEN**: lazily on every read of a trader - `/v1/market/vendor` (its town), `/vendors` (its region), `/myvendors`
+  (the owner's towns) - and in the hour's cron (HOUR_JOBS `patrons`: PATRON_CRON_TOWNS (40) towns waiting a firing,
+  inside the job's share of the firing's statements). A reckoning its budget stops marks the last whole hour it
+  reached, so firing by firing a town nobody reads is reckoned through. The dice are pure: reckoned late, the same
+  sales as reckoned every hour.
+- **TOLD**: within PATRON_TOLD_S (a day), newest first, each `{ listing, map, vendor, buildingKey, hour, minute, seed,
+  price, name }` - a trader's read its own, the region's read its region's (a trader sold out still tells its last
+  day's); `/myvendors` answers `patronSold`, each with `patron: { map, seed, hour, minute }`.
+- Built differently from the design: the sale is its own table, not a `market_sales` row whose buyer is the patron's
+  mark (`market_sales.buyer` is a player's key), keyed by the listing rather than `(buyer, rid)`.
 
 ### 8.3 Drawn, by the client
 
-- **WHICH HOUSES KEEP A TRADER.** The town's homes registry (`onlineHomes.js`, read per town already) and the region's
-  traders (`/v1/market/vendors`, whose rows carry `map` and `buildingKey`) tell the LivingTown which of its houses
-  keep one. A trader's answer gains its recent PATRON SALES: `{ listing, hour, minute, seed, item's name }`.
-- **THE BUYER DEALT.** The seed goes to one of the town's residents who is FREE at that minute: their plan's entry is a
-  stay at a social spot, the market or home, between 08:00 and 20:00. Plans are pure, so every reader deals the same
-  resident. Their day gains an errand: to the home's door, in, to the trader's place, and out again. It is dayPlan's
-  shop errand shape, with `at` the home's door.
-- **BROWSERS.** The town's errands now count a public trader's house among the shops of its kind (`dayPlan.js
-  ERRAND_NEEDS`: a trader whose stock is mostly weapons belongs with the smiths' shops, and so on), PATRON_BROWSE_SHARE
-  (0.1) of the time. Browsers go in, look and come out. They never buy: only the service sells.
-- **INSIDE.** A public home with a trader stands its patrons and browsers at the trader (the decor piece's place, read
-  off the home's decor). LW-FIX6's "never a player's own room" still keeps the town out of every other home and every
-  other room of the owner's. The trader's room of a public home is the one exception.
-- **THE OWNER IS TOLD.** `vendorPage.js`'s sales read "Sold to Ada Lark of Wayrest - Steel Longsword, 1,240 gold", the
-  seed's resident named by the client. The town now and then talks of a good find at the player's house (LW16).
+- **THE TOWN'S TRADERS** (`world.js livingPatronsStep`): online, while a living town stands outside, the region's
+  traders (`/v1/market/vendors`) read once each PATRON_READ_S (600 s) of real time: each town's public traders' houses
+  and the sales told, their minutes as sky minutes (`skyClassicMinutes`). Each town's LivingTown asks its own
+  (`patronsOf`) and plans its day again when the word changes. Offline, nothing: no service, no sale.
+- **THE BUYER DEALT** (`patrons.js patronOf`): the seed goes to one of the town's households (the census's `h` roll,
+  never the watch, a visitor or a guardsman), in the order of their ids - every reader deals the same one.
+- **THE ERRAND** (`patronVisits`, `dayPlan.js patronErrand`): to the trader's house's door at the sale's minute, in
+  for PATRON_STAY_MIN (25), and out again - laid in its minute's place among the day's intents, the stay it falls in
+  cut for it and taken up again after (a keeper slips out to the trader's and back to the counter). A sale's minute
+  outside PATRON_OPEN_H (08:00-20:00) - a third of a real hour's minutes are a sky night - comes at its place in the
+  open hours' fold. Built differently from the design: the buyer is any household, not one FREE at the minute; the
+  errand makes the time.
+- **BROWSERS** (`dayPlan.js` `browse`): PATRON_BROWSE_SHARE (0.1) of a household's errands go to one of the town's
+  public traders' houses instead, on a draw of their own - they look and never buy. A town with no trader plans as it
+  did (pinned by a digest of LW14's plans). Built differently: any errand, not by the trader's stock's kind.
+- **THE OWNER IS TOLD** (`vendorPage.js`): its sales to patrons beside its sales to players, "Sold to Ada Lark of
+  Wayrest - ..." - the host's `patronName` (`livingPatronName`: the town's LivingTown's dealt resident where it
+  stands, else "a townsperson of" it).
+- Not built: INSIDE (8.2 of the design) - a patron or a browser goes in at the house's door and comes out; the town is
+  still never inside a player's home. The town's talk of a good find at the player's house is LW16's.
 
 ### 8.4 The four hosts, the service, the pins
 
-- `scenes/world.js`: WIRED (the town's traders, the buyer's errand).
-- `scenes/worldModes.js`: WIRED (inside the home: the patrons at the trader).
-- `scenes/dungeonContext.js` and `scenes/exterior.js`: none.
-- The service:
-  - a new migration in `server-account/migrations` (`patron_hour`, the patron's buyer mark);
-  - `server-account/src/market.js` (the reckoning);
-  - `server-account/src/cron.js` (HOUR_JOBS);
-  - `server-account/src/budget.js` (the faucet's kind).
+- `scenes/world.js`: WIRED (the region's traders read, each town's `patronsOf`, the Vendor page's `patronName`).
+- `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
+- The service: migration `0097_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales`, `realm_faucets`),
+  `market.js` (the reckoning, the reads), `cron.js` (HOUR_JOBS `patrons`), `budget.js` (FAUCET_KINDS,
+  `faucetStatement`). The account service redeploys on merge.
 
-  The account service redeploys on merge.
-
-Pins:
-- the law's odds, ceilings and town share, both ends (the client's reader and the service's) against one table;
-- reckoning twice gives the same sales;
-- reckoning late equals reckoning on time;
-- the cap at worth;
-- a crafted piece no dearer;
-- a private home's trader sells to no patron;
-- the seed dealt alike by two readers;
-- a browser never buys;
-- offline, nothing.
+Pins: `test/lw15_patrons.test.js` (6) - the law (the share, the odds, the over, the draws, the takes, a crafted piece
+no dearer, the hour's odds measured); the hour (the town, the seller, the day, the order, the hours); the service
+through the real Worker over node:sqlite (the sale, the gold, the faucet, twice the same, late and hourly each the
+law's own fold, a private home none, a piece taken back mid-reckoning none, a full purse none, the region's read); the
+cron firing by firing; the dealing, the errand cut and taken up, the night's fold, the browser, the Vendor page's
+words; the host's seams. Mutants: `tools/mutants/lw15.json` (63).
 
 ## 9. LW16 - the word travels
 

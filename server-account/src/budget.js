@@ -100,3 +100,12 @@ export async function grantSpoils(db, playerId) {
     + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL',
   ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL).run();
 }
+
+/** LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE SERVICE'S OWN FAUCETS - gold it pays that no player paid (a
+ *  patron's purchase: market.js reckonPatrons) - kept by the hour and kind (realm_faucets) beside the wealth's hours, so
+ *  staff read what the living world mints before the budget is enforced (Living World II decision 7). */
+export const FAUCET_KINDS = Object.freeze(['patron']);
+/** One faucet's gold written to its hour. @param {any} db @param {string} kind @param {number} hour @param {number} gold */
+export const faucetStatement = (db, kind, hour, gold) => db.prepare(
+  'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',
+).bind(hour, FAUCET_KINDS.includes(kind) ? kind : 'patron', Math.max(0, Math.trunc(Number(gold) || 0)));

@@ -61,7 +61,9 @@ import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's c
 import { tideCourier } from '../../src/net/tideLaw.js';
 import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
 import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects, realmHoldOf } from './realm.js';   // GOLD-MARKET
-import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed
+import { lawfulItem, itemWorth } from '../../src/systems/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed; LW15: a patron's judge
+import { patronHour, patronHours, patronWorth, patronTakes, PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // LW15: the patrons
+import { faucetStatement } from './budget.js';   // LW15: the service's own faucet, measured
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // GOLD-MARKET: a gold sale moves a realm record's gold
 import { CHAR_ID_RE } from './service.js';
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
@@ -1811,9 +1813,11 @@ export async function marketVendor(ctx, player, env, { vendor = null } = {}) {
   const v = await db.prepare(`SELECT d.map_id, d.id, h.building_key, h.region, h.owner_name, h.player FROM home_decor d
     JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key WHERE ${VENDOR_STANDS_SQL}`).bind(vend.map, vend.id).first();
   if (!v) return { error: 'vendor-gone' };
+  await reckonPatrons(ctx, { maps: [vend.map] }).catch(() => null);   // LW15: the town's patrons first, lazily
   const { results = [] } = await db.prepare(`SELECT * FROM market_listings WHERE vendor_map = ?1 AND vendor_id = ?2 AND state = 'open'
     AND expires_at > ?3 AND seller = ?4 ORDER BY at DESC LIMIT ${VENDOR_STOCK_SHOWN}`).bind(vend.map, vend.id, nowS, v.player).all();
-  return { ok: true, vendor: vendorView(v, player.id), rows: results.map((l) => listingView(l, player.id)) };
+  const patrons = (await patronsTold(db, [vend.map], nowS).catch(() => [])).filter((p) => p.vendor === vend.id);
+  return { ok: true, vendor: vendorView(v, player.id), rows: results.map((l) => listingView(l, player.id)), patrons };
 }
 
 /**
@@ -1830,6 +1834,7 @@ export async function marketVendors(ctx, player, env, { region, character = null
   const closed = shut(player, env);
   if (closed) return closed;
   if (!regionOk(region)) return { error: 'bad-region' };
+  await reckonPatrons(ctx, { region }).catch(() => null);   // LW15: the region's patrons first, lazily
   const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
   const { results = [] } = await db.prepare(`SELECT l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
       h.entry AS v_entry, (h.player = ?3 AND h.char_id = ?4) AS v_mine,
@@ -1843,6 +1848,7 @@ export async function marketVendors(ctx, player, env, { region, character = null
     ORDER BY l.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`).bind(nowS, region, player.id, me).all();
   return {
     ok: true, region,
+    patrons: await patronsTold(db, { region }, nowS).catch(() => []),   // LW15: the region's patrons' purchases, for its towns to draw
     rows: results.map((l) => listingView(l, player.id, {
       vendor: { map: Number(l.v_map), id: l.v_id }, map: Number(l.v_map), buildingKey: Number(l.v_key), owner: l.v_owner,
       // the house's door, as the town answer says it to this character (homeMayEnter's own fields)
@@ -1867,14 +1873,22 @@ export async function marketMyVendors(ctx, player, env, { character } = {}) {
   const { results: traders = [] } = await db.prepare(`SELECT d.map_id, d.id, h.building_key, h.region, h.owner_name, h.player FROM home_decor d
     JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
     WHERE h.player = ?1 AND h.char_id = ?2 AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}' ORDER BY h.map_id, d.id`).bind(me, character).all();
+  await reckonPatrons(ctx, { maps: [...new Set(traders.map((v) => Number(v.map_id)))] }).catch(() => null);   // LW15: my traders' towns' patrons first
   const { results: stock = [] } = await db.prepare(`SELECT * FROM market_listings WHERE seller = ?1 AND char_id = ?2 AND vendor_id IS NOT NULL AND state = 'open'
     AND expires_at > ?3 ORDER BY at DESC LIMIT ${VENDOR_STOCK_SHOWN * 2}`).bind(me, character, nowS).all();
   const { results: sold = [] } = await db.prepare(`SELECT s.listing, s.price, s.total, s.tax, s.tithe, s.fee, s.at, l.item, l.vendor_map, l.vendor_id
     FROM market_sales s JOIN market_listings l ON l.id = s.listing
     WHERE s.seller = ?1 AND l.char_id = ?2 AND l.vendor_id IS NOT NULL ORDER BY s.at DESC LIMIT ${VENDOR_STOCK_SHOWN}`).bind(me, character).all();
   const gold = await db.prepare('SELECT gold FROM market_gold WHERE player = ?1 AND char_id = ?2').bind(me, character).first();
+  // LW15: what the town's patrons bought - the buyer the seed the client deals to a resident of the town
+  const { results: patronSold = [] } = await db.prepare(`SELECT s.listing, s.map, s.hour, s.minute, s.seed, s.price, s.tax, s.fee, s.gets, s.at, l.item, l.vendor_map, l.vendor_id
+    FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing WHERE s.seller = ?1 AND s.char_id = ?2 ORDER BY s.at DESC LIMIT ${VENDOR_STOCK_SHOWN}`).bind(me, character).all();
   return {
     ok: true,
+    patronSold: patronSold.map((s) => ({
+      listing: s.listing, item: goodOf(s.item), price: Number(s.price), total: Number(s.price), gets: Number(s.gets), at: Number(s.at),
+      vendor: { map: Number(s.vendor_map), id: s.vendor_id }, patron: { map: Number(s.map), seed: Number(s.seed), hour: Number(s.hour), minute: Number(s.minute) },
+    })),
     traders: traders.map((v) => vendorView(v, me)),
     stock: stock.map((l) => listingView(l, me, { vendor: { map: Number(l.vendor_map), id: l.vendor_id } })),
     sold: sold.map((s) => ({
@@ -1885,3 +1899,112 @@ export async function marketMyVendors(ctx, player, env, { character } = {}) {
     gold: Number(gold?.gold ?? 0),
   };
 }
+
+// ─── LW15: THE PATRONS (bible/06-Systems/Living-World-II.md "LW15") ─
+
+/** The towns one firing of the hour's cron reckons (the rest the next, or their next read). */
+export const PATRON_CRON_TOWNS = 40;
+/** How far back a trader's answer tells its patrons' purchases (the client draws the buyer coming in). */
+export const PATRON_TOLD_S = 86_400;
+/** A trader's listings the patrons see: gold, a pack's piece, at a trader of a home the town may enter (`public`) whose
+ *  owner stocks it, standing. */
+const PATRON_SQL = `l.state = 'open' AND l.vendor_id IS NOT NULL AND l.currency = 'gold' AND l.kind = 'item' AND h.entry = 'public'
+  AND h.player = l.seller AND d.yard = 0 AND h.guild_id IS NULL AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'`;
+const PATRON_FROM = `FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
+  JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key`;
+
+/**
+ * LW15: THE PATRONS RECKONED (src/net/patronLaw.js, both ends' law) - each town's traders' listings over the whole hours
+ * since they were last reckoned (at most PATRON_RECKON_HOURS): the hour's sales, each its own batch - the piece sold
+ * (gone from the realm: no delivery), the 5% tax and the 1% fee burnt, the rest to the seller's held gold (never past
+ * MARKET_GOLD_HELD_MAX: a patron passes by a trader whose purse is full), the gold written to the service's own faucet
+ * (budget.js, kind `patron`). Keyed by the listing (market_patron_sales): reckoned twice, sold once; reckoned late, the
+ * same sales (the dice are the listing's and the hour's). `maps` the towns to reckon, `region` a region's, else (the
+ * hour's cron) the towns waiting, PATRON_CRON_TOWNS of them.
+ * @param {any} ctx @param {{ maps?: number[] | null, region?: number | null }} [o]
+ */
+export async function reckonPatrons(ctx, { maps = null, region = null } = {}) {
+  const { db, nowS } = ctx;
+  const hourNow = Math.floor(nowS / PATRON_HOUR_S);
+  let towns = Array.isArray(maps) ? maps.filter((m) => Number.isSafeInteger(m)) : null;
+  if (!towns) {
+    const { results = [] } = await db.prepare(`SELECT DISTINCT l.vendor_map AS map ${PATRON_FROM} WHERE ${PATRON_SQL}
+      AND COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S}) < ?1 - 1 ${regionOk(region) ? 'AND h.region = ?2' : ''} LIMIT ${PATRON_CRON_TOWNS}`)
+      .bind(hourNow, ...(regionOk(region) ? [region] : [])).all();
+    towns = results.map((r) => Number(r.map));
+  }
+  let sold = 0;
+  for (const map of towns) {
+    if (ctx.budget && !ctx.budget()) break;   // the cron's share of the firing spent: the rest the next
+    const { results: rows = [] } = await db.prepare(`SELECT l.id, l.seller, l.char_id, l.price, l.item, l.at, l.expires_at, l.patron_hour, l.region
+      ${PATRON_FROM} WHERE ${PATRON_SQL} AND l.vendor_map = ?1`).bind(map).all();
+    if (!rows.length) continue;
+    const ls = rows.map((r) => {
+      const item = goodOf(r.item);
+      return { id: r.id, seller: r.seller, char: r.char_id, price: Number(r.price), at: Number(r.at), expires: Number(r.expires_at), last: r.patron_hour == null ? null : Number(r.patron_hour),
+        region: Number(r.region), worth: item ? patronWorth(item, itemWorth) : 0, takes: patronTakes(item) };
+    });
+    const hours = [...new Set(ls.flatMap((l) => patronHours(l.last, l.at, nowS)))].sort((a, b) => a - b);
+    const gone = new Set();
+    let partial = false, reached = null;
+    for (const hour of hours) {
+      if (ctx.budget && !ctx.budget()) { partial = true; break; }   // an hour unreckoned stays to reckon: the mark moved to the last whole one
+      const open = ls.filter((l) => !gone.has(l.id) && Math.floor(l.at / PATRON_HOUR_S) + 1 <= hour && l.expires >= (hour + 1) * PATRON_HOUR_S && (l.last == null || l.last < hour));
+      if (!open.length) continue;
+      const day = utcDay(hour * PATRON_HOUR_S);
+      const townN = Number((await db.prepare('SELECT COUNT(*) AS n FROM market_patron_sales WHERE map = ?1 AND hour = ?2').bind(map, hour).first())?.n ?? 0);
+      const sellers = [...new Set(open.map((l) => l.seller))];
+      const sellerHour = new Map(), sellerDay = new Map();
+      for (const s of sellers) {
+        const r = await db.prepare('SELECT SUM(hour = ?2) AS n, SUM(CASE WHEN day = ?3 THEN price ELSE 0 END) AS g FROM market_patron_sales WHERE seller = ?1 AND (hour = ?2 OR day = ?3)').bind(s, hour, day).first();
+        sellerHour.set(s, Number(r?.n ?? 0)); sellerDay.set(s, Number(r?.g ?? 0));
+      }
+      for (const sale of patronHour(open, hour, { sold: townN, sellerHour, sellerDay })) {
+        const l = /** @type {any} */ (open.find((x) => x.id === sale.id));
+        const { tax, fee, gets } = goldSaleOf(0, sale.price);
+        const at = hour * PATRON_HOUR_S + sale.minute * 60;
+        try {
+          await db.batch([
+            // THE DECISION: the listing open, its seller's held gold with room - the sale its own row, once
+            db.prepare(`INSERT OR IGNORE INTO market_patron_sales (listing, map, hour, minute, seed, seller, char_id, region, price, tax, fee, gets, at, day)
+              SELECT l.id, ?2, ?3, ?4, ?5, l.seller, l.char_id, l.region, l.price, ?6, ?7, ?8, ?9, ?10 FROM market_listings l WHERE l.id = ?1 AND l.state = 'open'
+                AND l.price = ?11 AND COALESCE((SELECT gold FROM market_gold WHERE player = l.seller AND char_id = l.char_id), 0) + ?8 <= ?12`)
+              .bind(l.id, map, hour, sale.minute, sale.seed, tax, fee, gets, at, day, sale.price, MARKET_GOLD_HELD_MAX),
+            mustChange(db),
+            db.prepare(`UPDATE market_listings SET own = 0, bought = 0, state = 'sold', closed_at = ?2 WHERE id = ?1`).bind(l.id, at),
+            db.prepare(`INSERT INTO market_gold (player, char_id, gold) VALUES (?1, ?2, ?3)
+              ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`).bind(l.seller, l.char, gets),
+            faucetStatement(db, 'patron', hour, gets),
+          ]);
+          gone.add(l.id);
+          sold++;
+        } catch { /* sold already, taken back, or the purse full: the patron passes it by */ }
+      }
+      reached = hour;
+    }
+    // the hours reckoned: each listing still open, to the last whole hour - or, the budget spent, to the last hour the
+    // reckoning finished (the next firing goes on from it: a town nobody reads is reckoned through, firing by firing)
+    const mark = partial ? reached : hourNow - 1;
+    if (mark != null) {
+      await db.prepare(`UPDATE market_listings SET patron_hour = ?2 WHERE vendor_map = ?1 AND state = 'open' AND vendor_id IS NOT NULL AND currency = 'gold'
+        AND (patron_hour IS NULL OR patron_hour < ?2)`).bind(map, mark).run();
+    }
+  }
+  return { sold, towns: towns.length };
+}
+
+/** LW15: a town's patrons' purchases told to a reader (the client deals each seed to a resident and draws them coming
+ *  in at the house the trader stands in): within PATRON_TOLD_S, newest first - of the towns `maps`, or of a region's
+ *  (a trader sold out still tells its last day's). @param {any} db @param {number[] | { region: number }} of @param {number} nowS */
+async function patronsTold(db, of, nowS) {
+  const maps = Array.isArray(of) ? of : null;
+  if (maps && !maps.length) return [];
+  const where = maps ? `s.map IN (${maps.map((_, i) => `?${i + 2}`).join(', ')})` : 's.region = ?2';
+  const { results = [] } = await db.prepare(`SELECT s.listing, s.map, s.hour, s.minute, s.seed, s.price, s.at, l.item, l.vendor_id, d.building_key FROM market_patron_sales s
+    JOIN market_listings l ON l.id = s.listing LEFT JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
+    WHERE ${where} AND s.at > ?1 ORDER BY s.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`)
+    .bind(nowS - PATRON_TOLD_S, ...(maps ?? [/** @type {{ region: number }} */ (of).region])).all();
+  return results.map((r) => ({ listing: r.listing, map: Number(r.map), vendor: r.vendor_id, buildingKey: r.building_key == null ? null : Number(r.building_key),
+    hour: Number(r.hour), minute: Number(r.minute), seed: Number(r.seed), price: Number(r.price), at: Number(r.at), name: String(goodOf(r.item)?.name ?? '') }));
+}
+

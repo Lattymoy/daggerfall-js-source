@@ -58,6 +58,7 @@ import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
 import { NEWS_DAYS } from './trips.js';
+import { patronVisits } from './patrons.js';   // LW15: a patron's errand to a player's trader
 
 /** AUDIT LEGACY II B2: whose household a resident is of - their own `household` when they live here beyond the census
  *  (Project Legacy's line), else their census house; null for none. */
@@ -263,6 +264,7 @@ export class LivingTown {
    *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
    *   familyNews?: (t: number) => readonly any[] | null,
    *   dangers?: () => (readonly number[][] | null),
+   *   patronsOf?: () => ({ v: number, told: readonly { door: number, t: number, seed: number }[], traders: readonly number[] } | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
@@ -296,7 +298,7 @@ export class LivingTown {
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
-    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any }>} LW-DAWN `other`: the day kept beside it */
+    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any, pv?: number }>} LW-DAWN `other`: the day kept beside it; LW15 `pv` the patrons' word it was made on */
     this._plans = new Map();
     this._paths = createPathBook(nav);
     this._timer = Infinity;
@@ -410,7 +412,7 @@ export class LivingTown {
     const crew = this._crewOf.get(res.id) ?? null;
     // AUDIT LEGACY II B3: a resident whose HOME changed (Project Legacy's line moved into a house bought, or to the home
     // the player marked) is planned again at once - kept by the day alone, they slept the rest of it in the old house
-    if (!e || e.day !== day || e.home !== res.home || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
+    if (!e || e.day !== day || e.home !== res.home || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN)) || (e.pv ?? 0) !== this._patronV()) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved; LW15: the patrons' word changed
       const other = besideDay(e, day);   // LW-DAWN
       const roads = this._roadsOf(day);
       const visit = roads?.visitorOf.get(res.id) ?? null;
@@ -435,13 +437,36 @@ export class LivingTown {
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
       } else {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize, ...this._patronsFor(res, day) });   // LW15: a patron's errand, a browser's
       }
-      e = { day, plan, roads: !!roads, home: res.home, other };
+      e = { day, plan, roads: !!roads, home: res.home, other, pv: this._patronV() };
       this._planGen++;
       this._plans.set(res.id, e);
     }
     return e.plan;
+  }
+
+  /** LW15: the patrons' word's version (the host's - a new sale read, the town's traders changed): a plan made before it
+   *  is made again. */
+  _patronV() { return this.o.patronsOf?.()?.v ?? 0; }
+  /**
+   * LW15: A RESIDENT'S PATRON ERRANDS on `day` - the sales told dealt to the town's households (patrons.js patronVisits,
+   * every reader the same), each its house's door - and the public traders' doors a browser's errand may take.
+   * @param {any} res @param {number} day @returns {{ errands?: any[], browse?: any[] }}
+   */
+  _patronsFor(res, day) {
+    const p = this.o.patronsOf?.();
+    if (!p) return {};
+    if (this._patronDay?.day !== day || this._patronDay?.v !== p.v) {
+      const byRes = new Map();
+      for (const v of patronVisits(p.told ?? [], day, this.residents)) {
+        if (!byRes.has(v.resId)) byRes.set(v.resId, []);
+        byRes.get(v.resId).push({ at: this.places.doors.get(v.door) ?? null, from: v.from, dur: v.dur });
+      }
+      this._patronDay = { day, v: p.v, byRes, browse: (p.traders ?? []).map((k) => this.places.doors.get(k)).filter(Boolean) };
+    }
+    const errands = this._patronDay.byRes.get(res.id) ?? [];
+    return { ...(errands.length ? { errands } : {}), ...(this._patronDay.browse.length ? { browse: this._patronDay.browse } : {}) };
   }
 
   /** The roads' word for a day, kept (undefined while its ways are being asked - the day is planned without them and

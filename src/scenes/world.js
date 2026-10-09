@@ -133,6 +133,7 @@ import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on t
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost } from './caravanHost.js';   // LW11: the caravan's door
 import { createHideouts, BAND_LIVE_M } from './hideouts.js';   // LW12: a band's hideout, stood
+import { patronOf, patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron dealt, named
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble, takeOf as outlawTakeOf, TAKE_DAYS as OUTLAW_TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
@@ -3282,6 +3283,45 @@ export async function bootWorld(canvas, renderer, params, status) {
       return true;
     },
   }));
+  // LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE PATRONS DRAWN - the region's public traders and what the
+  // service's patrons bought of them (market.js reckonPatrons, its `patrons`), read once each PATRON_READ_S of real time
+  // while a living town stands online; each town's LivingTown asks its own (`patronsOf`): the sales told as sky minutes
+  // (an online sky day is a real hour), the traders' doors
+  const PATRON_READ_S = 600;
+  /** @type {Map<number, { v: number, told: { door: number, t: number, seed: number }[], traders: number[] }>} */
+  const _livingPatrons = new Map();
+  let _livingPatronsAt = -Infinity, _livingPatronsV = 0, _livingPatronsBusy = false;
+  const livingPatronsStep = (nowS, regionOf) => {
+    if (!params.has('online') || !marketBook || _livingPatronsBusy || nowS - _livingPatronsAt < PATRON_READ_S) return;
+    const region = regionOf();
+    if (region == null || region < 0) return;
+    _livingPatronsBusy = true;
+    _livingPatronsAt = nowS;
+    Promise.resolve(marketBook.vendors(region)).then((r) => {
+      if (!r?.ok) return;
+      const rows = r.data?.rows ?? [];
+      const byMap = new Map();
+      for (const row of rows) {
+        if (row.home?.entry !== 'public') continue;
+        if (!byMap.has(row.map)) byMap.set(row.map, { told: [], traders: new Set() });
+        byMap.get(row.map).traders.add(Number(row.buildingKey));
+      }
+      for (const p of r.data?.patrons ?? []) {
+        const door = p.buildingKey;
+        if (!Number.isSafeInteger(door)) continue;
+        if (!byMap.has(p.map)) byMap.set(p.map, { told: [], traders: new Set() });
+        byMap.get(p.map).told.push({ door, t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000 + _sharedOffsetMs), seed: p.seed });
+      }
+      _livingPatronsV++;
+      for (const [map, e] of byMap) _livingPatrons.set(map, { v: _livingPatronsV, told: e.told, traders: [...e.traders] });
+    }).catch(() => {}).finally(() => { _livingPatronsBusy = false; });
+  };
+  /** LW15: who of a town a patron's sale names, for the Vendor page - its LivingTown's dealt resident where the town
+   *  stands, else a townsperson of it. @param {{ map: number, seed: number }} pt */
+  const livingPatronName = (pt) => {
+    const lt = livingTownOfMap(pt.map);
+    return patronWords(lt ? patronOf(pt.seed, lt.residents) : null, livingTownOfId(pt.map >>> 0)?.name ?? '');
+  };
   /** LW7/LW11: a traveller struck down - the hand's turn, and the road's report of it. */
   const livingRoadSlay = (res, t, seen) => { livingSlay(res, t, seen); caravanHostOf().slain(res, t); };
   /** LW3/LW11: a hand caught in a traveller's purse - their regard, and the road's report; no watch, so no town's crime
@@ -5615,6 +5655,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets - here they stay in
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
+          patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,   // LW15: its patrons' errands, its traders' doors
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
@@ -25923,6 +25964,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   setVendorPage({
     shown: () => vendorMarketOpen() && marketBook.goldOk === true,
     mine: () => marketBook.myVendors(), search: (region) => vendorReachable(region),
+    patronName: (pt) => livingPatronName(pt),   // LW15: who of the town bought it
     regionHere: vendorRegionHere, regionNames: REGION_NAMES, nameOf: vendorNameOf, townOf: vendorTownOf, stats: vendorItemStats,
     take: (row) => vendorTake(row), collectGold: async () => {
       const region = vendorRegionHere();
@@ -32689,6 +32731,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; caravanHostOf().step(); }   // LW11: the hold-ups, the reports carried in, the escort - anywhere (a report lands, an escort ends, indoors too)
     if (livingWorldOn() && _mode() === 'exterior' && !tvf) { livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }   // LW12: a band's hideout near, stood
     else _livingHideoutsHost?.clear();
+    if (livingWorldOn() && _mode() === 'exterior') livingPatronsStep(Date.now() / 1000, () => { const p = playerTravelPixel(); return p ? maps.getRegionIndexAt(p.x, p.y) : null; });   // LW15: the region's patrons, now and then
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon

@@ -42,7 +42,7 @@
 // RESTORE's rewind) runs nothing: a write in the rewind's minute would vanish with it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { closeAuctions, pruneMarketHistory, SETTLE_MAX } from './market.js';
+import { closeAuctions, pruneMarketHistory, SETTLE_MAX, reckonPatrons } from './market.js';
 import { closeGuildWrits } from './writs.js';
 import { closeContracts } from './contracts.js';
 import { settleDue } from './seatTurning.js';
@@ -175,6 +175,8 @@ export const HOUR_JOBS = Object.freeze([
     'DELETE FROM realm_findings WHERE id IN (SELECT id FROM realm_findings WHERE at < ?1 LIMIT ?2)', ctx.nowS - REALM_FINDINGS_KEEP_S), SWEEP_ROWS)],
   ['realm-wealth-hours', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM realm_wealth_hours WHERE rowid IN (SELECT rowid FROM realm_wealth_hours WHERE hour < ?1 LIMIT ?2)', ctx.nowS - REALM_WEALTH_KEEP_S), SWEEP_ROWS)],
+  // LW15 (bible/06-Systems/Living-World-II.md): the towns' patrons at their traders, the towns waiting (a read reckons its own)
+  ['patrons', async (ctx) => (await reckonPatrons(ctx, {})).sold],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in
