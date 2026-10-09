@@ -1679,6 +1679,26 @@ export function createWorldModes(host) {
   /** MWNPC8c (section 13c): A QUEST'S STOOD PERSON (standQuestFlatIn - Azura summoned, a questor at a marker) read as
    *  the click reads them (clickQuestFlat: the Person's gender, faction and name seed through the bridge's SetLayoutData,
    *  the marker's hash), their born billboard pair for the child's law. An item's or a foe's stand is no one. */
+  /** DQ1: A QUEST STAND'S NPCData, BUILT IN ONE PLACE - SetLayoutData(marker position, person) (GameObjectHelper:1062 ->
+   *  StaticNPC.cs:245-255): the hash from the SCALED marker ints truncated, flags/nameSeed from the Person (-1 falls back
+   *  to the hash), buildingKey from the runtime data, mapID never written. The click stamps and names off it; MWNPC8c's
+   *  body reads it. */
+  const questStandNpcData = (s, person, buildingKey) => {
+    const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+    // AUDIT 24 (the seven-slice sweep): through the bridge's
+    // SetLayoutData, not a hand-rolled literal. The literal carried
+    // eight of NPCData's thirteen fields - no race (so QuestMCP.Oath's
+    // clicked-NPC arm, the one the main quests lean on before a
+    // questor is set, read undefined every time) and no context.
+    return questBridge.layoutNpcData({
+      hash,
+      gender: person.gender,
+      factionID: person.factionId ?? 0,
+      nameSeed: person.nameSeed ?? -1,
+      buildingKey,
+      mapID: 0,
+    });
+  };
   const questStandLook = (s, buildingKey) => {
     if (s._mwLook !== undefined) return s._mwLook;
     const person = s.behaviour?.targetResource ?? null;
@@ -1686,8 +1706,7 @@ export function createWorldModes(host) {
     if (person.isPerson !== true) return (s._mwLook = null);
     const dict = townTalk?.factionDict ?? null;
     if (!dict || !questBridge) return null;   // never before the faction table
-    const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
-    const data = questBridge.layoutNpcData({ hash, gender: person.gender, factionID: person.factionId ?? 0, nameSeed: person.nameSeed ?? -1, buildingKey, mapID: 0, billboardArchiveIndex: s.archive, billboardRecordIndex: s.record });
+    const data = { ...questStandNpcData(s, person, buildingKey), billboardArchiveIndex: s.archive, billboardRecordIndex: s.record };   // the born pair: the child's law
     return personLook(s, data, dict.get(person.factionId ?? 0) ?? null);
   };
   /** MWNPC8c: a list of quest stands offered on `lane` - a stood, active person at their base where the marker they ride
@@ -2570,22 +2589,7 @@ export function createWorldModes(host) {
     // truncated, flags/nameSeed from the Person (-1 falls back to the
     // hash), buildingKey from the runtime data, mapID never written.
     const person = s.behaviour?.targetResource;
-    const npcData = () => {
-      const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
-      // AUDIT 24 (the seven-slice sweep): through the bridge's
-      // SetLayoutData, not a hand-rolled literal. The literal carried
-      // eight of NPCData's thirteen fields - no race (so QuestMCP.Oath's
-      // clicked-NPC arm, the one the main quests lean on before a
-      // questor is set, read undefined every time) and no context.
-      return questBridge.layoutNpcData({
-        hash,
-        gender: person.gender,
-        factionID: person.factionId ?? 0,
-        nameSeed: person.nameSeed ?? -1,
-        buildingKey,
-        mapID: 0,
-      });
-    };
+    const npcData = () => questStandNpcData(s, person, buildingKey);   // MWNPC8c: the one builder, which the body reads too
     // DISC29-H: INFO LOOKS, IT DOES NOT TOUCH. The quest-resource arm
     // clicks "only ... when not in info mode" (PlayerActivate.cs:
     // 334-338), and a static NPC in Info is PresentNPCInfo's one line

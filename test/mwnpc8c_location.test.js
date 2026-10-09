@@ -38,9 +38,10 @@ test('MWNPC8c-b the quests\' stands: a person read as the click reads them (an i
   const m = rd('src/scenes/worldModes.js');
   ordered(m, ['const questStandLook = (s, buildingKey) => {', 'if (s._mwLook !== undefined) return s._mwLook;', 'if (!person) return null;   // asked again',
     'if (person.isPerson !== true) return (s._mwLook = null);', 'if (!dict || !questBridge) return null;   // never before the faction table',
-    'const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));',
-    'gender: person.gender, factionID: person.factionId ?? 0, nameSeed: person.nameSeed ?? -1, buildingKey, mapID: 0, billboardArchiveIndex: s.archive, billboardRecordIndex: s.record',
+    'const data = { ...questStandNpcData(s, person, buildingKey), billboardArchiveIndex: s.archive, billboardRecordIndex: s.record };',
     'return personLook(s, data, dict.get(person.factionId ?? 0) ?? null);'], 'the reading');
+  ordered(m, ['const questStandNpcData = (s, person, buildingKey) => {', 'const questStandLook = (s, buildingKey) => {', 'const npcData = () => questStandNpcData(s, person, buildingKey);'],
+    'one NPCData builder (DQ1), the body\'s reading and the click\'s');
   ordered(m, ['const offerQuestStands = (list, lane, on, buildingKey, eye, dt) => {', 'if (!s.batch) continue;', 'const look = on && s.active !== false && !s.dead ? questStandLook(s, buildingKey) : null;',
     'if (!look) { s.batch.castOnly = false; continue; }', 'f[0] = o ? s.x + o[0] : s.x; f[1] = o ? s.y + o[1] : s.y; f[2] = o ? s.z + o[2] : s.z;', 'lane.offer(personActor(s, look, f, eye, dt), s.batch);'], 'the offer');
   ordered(m, ['offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);', 'peopleBodies.draw(canvas, proj, view, mwv.eye, dt);', 'renderer.drawBillboards([...interiorCtx.billboardBatches,'], 'the room\'s');

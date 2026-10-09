@@ -823,9 +823,10 @@ and a faction id, not an RDB record, and kept their billboards.
   there; their billboard cast-only where a body stands. A person was never
   cover here (AUDIT TACT B3) and their own batch makes none. The host never
   unloads its location, so the lane lasts the scene, as the walkers' does.
-- THE QUESTS' STANDS (worldModes.js). A stood quest PERSON is read as
-  their click reads them (`clickQuestFlat`: the Person's gender, faction
-  and name seed through the bridge's SetLayoutData, the marker's hash),
+- THE QUESTS' STANDS (worldModes.js). A stood quest PERSON is read off
+  the record their click reads (`questStandNpcData`, DQ1's one builder,
+  now shared: the Person's gender, faction and name seed through the
+  bridge's SetLayoutData, the marker's hash),
   with their born billboard pair for the child's law; an item's or a foe's
   stand is no one, and nobody is read before the faction table and the
   bridge. Offered where the marker they ride has carried them
@@ -841,8 +842,10 @@ person out of the groups, their own batch and none for an editor flat, the
 reading, the offer and the draw before the flats) and the quests' stands
 (the reading, an item or a foe no one, never before the table; the offer
 at the rider's feet, only while stood; the room's lane and the dungeon's
-`also`, before the billboards). `tools/mutants/mwnpc8c.json`: 17 mutants,
-17 dead. Pins moved: AUDIT TACT B3's exterior.js pin (no person reaches
+`also`, before the billboards). `tools/mutants/mwnpc8c.json`: 18 mutants,
+18 dead. Pins moved: AUDIT TACT B3's exterior.js pin (no person reaches
 the groups' cover now), MWNPC8b's enumeration (exterior.js wired) and its
-dungeon pins (drawPeople's `also`, read by prefix).
+dungeon pins (drawPeople's `also`, read by prefix), and DQ1's (the
+stand's NPCData still built in one place - `questStandNpcData`, which the
+click and the body call).
 
