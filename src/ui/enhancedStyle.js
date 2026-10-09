@@ -1691,6 +1691,12 @@ ${badgeCss()}
   font-family: var(--body, sans-serif); color: var(--bone);
 }
 .hmroot:active { cursor: grabbing; }
+/* FIELD BUGS 2026-10-09e MAP-SCALE ("icons and text too small on high resolutions"): THE MAP'S SCALE (ui/mapScale.js,
+   set on the root by ui/heldMap.js _layout as --hm-ui) - every piece over the sheet is zoomed by it as one, as the
+   sheet's own ink is drawn at it. A zoomed box multiplies its viewport units too (standardized CSS zoom), so every
+   bound below that is written in vw or vh divides by it: a bound stays the screen's, its margins the chrome's. */
+.hmroot { --hm-ui: 1; }
+.hmroot > :not(.hmstage) { zoom: var(--hm-ui, 1); }
 /* MAP3: the hands lane - the Morrowind arm and the world show through,
    the ink canvas lies on the held paper under its matrix3d */
 .hmroot.hmlanehands .hmink { will-change: transform; }
@@ -1700,7 +1706,7 @@ ${badgeCss()}
 .hmroot .hmfoot { background: rgba(10, 12, 17, 0.94); padding: 6px 10px; border-radius: 4px;
   /* EM3-3D fix (Mac's shot: the key tips ran into the HUD's bars): near-opaque, so the vitals and the HUD's words
      under the window do not read through the line, and never wider than the screen - it wraps instead */
-  max-width: calc(100vw - 36px); flex-wrap: wrap; row-gap: 4px; }
+  max-width: calc(100vw / var(--hm-ui, 1) - 36px); flex-wrap: wrap; row-gap: 4px; }
 .hmstage { position: absolute; will-change: transform; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
    it is scaled smooth - a pixelated downscale would alias its dither.
@@ -1734,7 +1740,7 @@ ${badgeCss()}
 .hmsearch input:focus { outline: none; border-color: var(--brass); }
 .hmresults {
   display: none; position: absolute; top: 100%; left: 0; right: 0;
-  margin: 4px 0 0; padding: 0; list-style: none; max-height: 46vh;
+  margin: 4px 0 0; padding: 0; list-style: none; max-height: calc(46vh / var(--hm-ui, 1));
   overflow: auto; background: rgba(10, 13, 17, 0.94);
   border: 1px solid var(--iron); z-index: 1;
 }
@@ -1749,7 +1755,7 @@ ${badgeCss()}
 .hmfindme { pointer-events: auto; margin-right: 8px; }
 .hmcard {
   display: none; position: absolute; right: 18px; bottom: 18px;
-  width: min(340px, calc(100vw - 36px)); padding: 18px 20px;
+  width: min(340px, calc(100vw / var(--hm-ui, 1) - 36px)); padding: 18px 20px;
   background: rgba(10, 13, 17, 0.92); border: 1px solid var(--iron);
   margin-bottom: env(safe-area-inset-bottom);
 }
@@ -1800,7 +1806,7 @@ ${badgeCss()}
 .hmports.on { color: var(--brass); border-color: var(--brass); }
 .hmbox {
   display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(460px, calc(100vw - 36px)); max-height: 70vh; overflow: auto; padding: 18px 22px;
+  width: min(460px, calc(100vw / var(--hm-ui, 1) - 36px)); max-height: calc(70vh / var(--hm-ui, 1)); overflow: auto; padding: 18px 22px;
   background: rgba(10, 13, 17, 0.94); border: 1px solid var(--iron); z-index: 2;
 }
 .hmbox.open { display: block; }
@@ -1817,7 +1823,7 @@ ${badgeCss()}
   .hmsearch { flex: 1 1 100%; order: 3; }
   .hmhint { display: none; }
   .hmcard { right: 12px; bottom: 76px; }
-  .hmfoot { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
+  .hmfoot { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw / var(--hm-ui, 1) - 24px); }
   /* AUDIT GUIDE K6: the legend wraps inside the foot - it ran nowrap off a phone's edge, the quest's word first lost */
   .hmlegend { flex: 1 1 auto; flex-wrap: wrap; min-width: 0; }
 }
@@ -5357,7 +5363,7 @@ ${paceControlsCss('tview')}
 .hmbox-row, .hmbox-grid { color: #c5bda2; }
 /* EVENT-TIP: a world event's card at the pointer - the gate's ring, a raided town (ui/eventMapMarks.js) - in the
    pixel home's plaque language; placed in viewport pixels over the root (ui/heldMap.js _showTip) */
-.hmtip { position: absolute; z-index: 3; display: none; pointer-events: none; max-width: min(320px, calc(100vw - 16px));
+.hmtip { position: absolute; z-index: 3; display: none; pointer-events: none; max-width: min(320px, calc(100vw / var(--hm-ui, 1) - 16px));
   padding: 8px 12px; background: rgba(10,12,17,0.9); border: 2px solid rgba(216,207,174,0.7);
   outline: 2px solid rgba(125,116,96,0.35); outline-offset: 2px; color: #d8cfae; font-family: inherit;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
@@ -5372,7 +5378,7 @@ ${paceControlsCss('tview')}
    hover card's rule is: the key was born in the pixel home. Its toggles wear that home's frame at the foot's size -
    the gold pair while their kinds are shown, the ghost frame and a struck word while the store's flag hides them -
    and the glyphs' words are in the rows' bone. */
-.hmkey { position: absolute; left: 0; bottom: calc(100% + 4px); width: max-content; max-width: calc(100vw - 36px);
+.hmkey { position: absolute; left: 0; bottom: calc(100% + 4px); width: max-content; max-width: calc(100vw / var(--hm-ui, 1) - 36px);
   display: grid; grid-template-columns: max-content auto; gap: 3px 10px; align-items: center;
   padding: 6px 10px; border-radius: 4px; background: rgba(10, 12, 17, 0.94); pointer-events: auto; }
 .hmkeyrow { display: contents; }
@@ -5394,7 +5400,7 @@ ${paceControlsCss('tview')}
    stand and the zone's laws, in the held map's plaque language (the hover card's frame, the key's bone and brass): a
    panel on the right of the paper, the room the zone map's view leaves it (ZONE_LEGEND_W). Each ring's swatch is its
    fill on the sheet; the ring I stand in wears the brass edge. A solid panel, so a press on it is never a drag. */
-.hmwild { position: absolute; z-index: 2; top: 76px; right: 18px; width: min(300px, calc(100vw - 36px));
+.hmwild { position: absolute; z-index: 2; top: 76px; right: 18px; width: min(300px, calc(100vw / var(--hm-ui, 1) - 36px));
   max-height: calc(100% - 170px); overflow: hidden; padding: 12px 14px 14px; pointer-events: auto;
   display: flex; flex-direction: column;   /* LEGEND-FIT: the laws scroll, the foot's buttons never leave the panel */
   background: rgba(10,12,17,0.92); border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
@@ -5424,13 +5430,13 @@ ${paceControlsCss('tview')}
 .hmroot .act.hmkeyzone { border-color: var(--cinnabar); color: #f3d7c9; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 @media (max-width: 860px) {
   /* a phone keeps the paper: the legend a compact strip of the four rings under the search, the laws left to the HUD */
-  .hmwild { top: 128px; bottom: auto; right: 12px; left: 12px; width: auto; max-height: 30vh; padding: 8px 10px 10px; }
+  .hmwild { top: 128px; bottom: auto; right: 12px; left: 12px; width: auto; max-height: calc(30vh / var(--hm-ui, 1)); padding: 8px 10px 10px; }
   .hmwild-rules, .hmwild-depth { display: none; }
   .hmwild-ring { padding: 3px 8px; }
   .hmwild-title { font-size: 15px; }
 }
 @media (max-width: 860px) {
-  .hmkey { max-width: calc(100vw - 24px); }
+  .hmkey { max-width: calc(100vw / var(--hm-ui, 1) - 24px); }
   .hmkeyname { display: none; }   /* a phone keeps the toggles and the glyphs; each glyph's title names it */
   /* the card rides up to clear the foot row here (bottom: 76px), which is where the key stands: while a place is
      picked the key steps aside, or it would lie over the card's own Travel button */

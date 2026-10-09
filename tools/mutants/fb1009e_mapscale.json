@@ -1,0 +1,72 @@
+[
+  {
+    "name": "MAP-SCALE-auto-never-grows",
+    "file": "src/ui/mapScale.js",
+    "old": "  return Math.min(MAP_SCALE_MAX, Math.round((h / MAP_SCALE_BASE_H) * 20) / 20);",
+    "new": "  return 1;",
+    "tests": ["test/fb1009e_mapscale.test.js", "test/heldmap.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-choice-unclamped",
+    "file": "src/ui/mapScale.js",
+    "old": "  if (Number.isFinite(n) && n > 0) return Math.max(MAP_SCALE_MIN, Math.min(MAP_SCALE_MAX, n));",
+    "new": "  if (Number.isFinite(n) && n > 0) return n;",
+    "tests": ["test/fb1009e_mapscale.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-paper-at-full-size",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._paper = { w: pw / k, h: ph / k, dpr: dpr * k, k };",
+    "new": "    this._paper = { w: pw, h: ph, dpr, k };",
+    "tests": ["test/heldmap.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-pointer-not-divided",
+    "file": "src/ui/heldMap.js",
+    "old": "    return [(clientX - r.left) / k, (clientY - r.top) / k];",
+    "new": "    return [clientX - r.left, clientY - r.top];",
+    "tests": ["test/heldmap.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-hands-box-full-size",
+    "file": "src/ui/heldMap.js",
+    "old": "      Object.assign(c.ink.style, { left: '0px', top: '0px', width: `${pw / k}px`, height: `${ph / k}px` });",
+    "new": "      Object.assign(c.ink.style, { left: '0px', top: '0px' });",
+    "tests": ["test/heldmap.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-tip-not-divided",
+    "file": "src/ui/heldMap.js",
+    "old": "    box.style.left = `${at.left / k}px`;",
+    "new": "    box.style.left = `${at.left}px`;",
+    "tests": ["test/heldmap.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-chrome-unzoomed",
+    "file": "src/ui/heldMap.js",
+    "old": "    root.style.setProperty?.('--hm-ui', String(k));",
+    "new": "    void root;",
+    "tests": ["test/heldmap.test.js", "test/fb1009e_mapscale.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-a-choice-waits-for-the-next-open",
+    "file": "src/ui/heldMap.js",
+    "old": "    const key = `${vw}x${vh}@${dpr}|${inset}|${this._lane}|${k}`;",
+    "new": "    const key = `${vw}x${vh}@${dpr}|${inset}|${this._lane}`;",
+    "tests": ["test/heldmap.test.js", "test/fb1009e_mapscale.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-a-bound-left-whole",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  width: min(340px, calc(100vw / var(--hm-ui, 1) - 36px)); padding: 18px 20px;",
+    "new": "  width: min(340px, calc(100vw - 36px)); padding: 18px 20px;",
+    "tests": ["test/fb1009e_mapscale.test.js"]
+  },
+  {
+    "name": "MAP-SCALE-the-row-steps-nowhere",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      const next = nextMapScale(getPref('mapScale'), dir);",
+    "new": "      const next = getPref('mapScale');",
+    "tests": ["test/fb1009e_mapscale.test.js"]
+  }
+]

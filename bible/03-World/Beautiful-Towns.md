@@ -240,6 +240,13 @@ elsewhere.
   THEIR LOCATION KEYS (`layoutPins.js` `CURATED_CLASSIC`'s second row, asked before any type or grid, since the mod
   replaces their files); the twelve villages laying `TEMPASA2` out among their own houses stay the author's (FIELD BUGS
   2026-10-04d TEMPLE-HOME).
+- **The port's curation: a house the hills bury.** Beautiful Villages' `TEMPASD1` - the temple design it lays in
+  Akatosh's standalone temples, the Gentle Redeemer of Akatosh among them - stands its House2 #6 (model 159) inside two
+  of the author's hills, the one walled door of both packs (AUDIT FB1005 T3); a quest seats its person in a House2, and
+  An Item On Loan sent a player to it. The house stands on the block's nearest clear ground at the author's facing,
+  24.8 m east, its record (so DFU's building key, so a quest's house) kept and the automap stamped at its new footprint
+  (`world/curatedPlacements.js`, measured by `tools/curatedPlacements.mjs`; applied at the door beside the temple
+  summoners). A later pack that moves the house keeps its own (FIELD BUGS 2026-10-09e HILL-HOUSE).
 - **The port's curation: quest markers no player reaches.** Six of the packs' interior designs (51 interiors, 1,105
   buildings in 665 towns) hold a quest marker no one can reach - under the floor, in an attic, inside a stair, outside a
   wall. Each of the eight stands at its measured floor spot, keyed by pack, block, record, kind and position
