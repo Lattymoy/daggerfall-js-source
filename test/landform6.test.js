@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
-import { createLandforms, landformClimates, landformSites, hillsAt, hillsTopOf, HILLS_TOP, LANDFORM_KNEE, LANDFORM_CEILING, LANDFORM_DIALS, reliefLift } from '../src/world/landforms.js';
+import { createLandforms, landformClimates, landformSites, hillsAt, hillsTopOf, HILLS_TOP, LANDFORM_KNEE, LANDFORM_CEILING, LANDFORM_DIALS, reliefLift, peakField, PEAK_MEAN } from '../src/world/landforms.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { CLIMATES } from '../src/formats/mapsTables.js';
 import { syntheticWoodsBytes, network } from './landformWorld.mjs';
@@ -45,7 +45,7 @@ const LAND = Object.fromEntries(Object.entries(CLIMATES).map(([k, c]) => [k, sta
 
 test('LANDFORM6: every climate wears its own land - CLIMATE.PAK\'s ten values, any other the woodlands\'; the tallest hill is the mountains\', and the ceiling counts it', () => {
   const tops = Object.fromEntries(Object.entries(CLIMATES).map(([k, c]) => [k, hillsTopOf(c)]));
-  const top = (land) => land.high * land.upland, L = LANDFORM_DIALS.lands;
+  const top = (land) => land.high * land.upland + (land.peaks ? land.peaks.high : 0), L = LANDFORM_DIALS.lands;   // PIN MOVED (LANDFORM8): a mountain land's tallest is a peak on its tallest hill
   assert.deepEqual(tops, {
     Ocean: top(L.ocean), Desert: top(L.desert), Desert2: top(L.desert2), Mountain: top(L.mountain), Rainforest: top(L.rainforest),
     Swamp: top(L.swamp), Subtropical: top(L.subtropical), MountainWoods: top(L.mountainWoods), Woodlands: top(L.woodlands), HauntedWoodlands: top(L.haunted),
@@ -187,4 +187,39 @@ test('LANDFORM6: the climates ride every kernel - the worker keeps the posted ta
   assert.ok(world.indexOf('dilateCoastalClimate(maps, 2)') > 0 && world.indexOf('dilateCoastalClimate(maps, 2)') < world.indexOf('_landformClimates = landformClimates('), 'after the dilation, as every pixel streams the climates');
   assert.match(world, /_landformClimates = landformClimates\(\(x, y\) => maps\.getClimateIndex\(x, y\)\);/, 'the climate map\'s own values');
   assert.match(world, /terrainGen\.setLandformTables\(\{ sites: _landformSites, climates: _landformClimates \}\);/, 'handed to both kernels with the sites');
+});
+
+test('LANDFORM8 (WOD-PEAKS): the mountain lands stand rounded peaks where World of Daggerfall\'s spires stood - a bell from summit to foot, no taller than its land\'s `peaks.high`, 550 m to a kilometre across its radius, centred so the land\'s mean is its own, and no other land wears one', () => {
+  const L = LANDFORM_DIALS.lands;
+  assert.deepEqual(Object.keys(L).filter((k) => L[k].peaks), ['mountainWoods', 'mountain'], 'the mountains and their woods alone');
+  assert.ok(L.mountain.peaks.high * 1.25 <= 200 && L.mountainWoods.peaks.high * 1.25 <= 140, 'not super huge: 200 m and 140 m at the most');
+  // the field: 0..1, round on top (the summit is a smooth maximum), easing to nothing at the foot
+  const { cell, fill } = L.mountain.peaks;
+  let best = { v: 0, x: 0, y: 0 }, sum = 0, n = 0;
+  for (let y = 0; y < 6 * cell; y += 4) for (let x = 0; x < 6 * cell; x += 4) {
+    const v = peakField(x, y, cell, fill);
+    assert.ok(v >= 0 && v <= 1);
+    if (v > best.v) best = { v, x, y };
+    sum += v; n++;
+  }
+  assert.ok(best.v > 0.3, 'peaks stand');
+  const s = 2;   // the summit: no crease - the field falls by about the same either side of it, and slowly
+  const around = [[s, 0], [-s, 0], [0, s], [0, -s]].map(([dx, dy]) => best.v - peakField(best.x + dx, best.y + dy, cell, fill));
+  assert.ok(Math.max(...around) < 0.01, `a round top (${around.map((d) => d.toFixed(4)).join(', ')})`);
+  // the steepest a bell's flank stands: high x pi / 2 over its narrowest radius, at most some 30 degrees
+  const slope = (L.mountain.peaks.high * 1.25 * Math.PI / 2) / (0.24 * cell * 6.4);
+  assert.ok(Math.atan(slope) * 180 / Math.PI < 31, `the steepest flank ${(Math.atan(slope) * 180 / Math.PI).toFixed(1)} degrees`);
+  // centred: PEAK_MEAN is the field's own mean per unit of fill, within a twentieth
+  assert.ok(Math.abs(sum / n / fill - PEAK_MEAN) / PEAK_MEAN < 0.05, `the mean ${(sum / n / fill).toFixed(4)} against PEAK_MEAN ${PEAK_MEAN.toFixed(4)}`);
+  // the land wears them: over a broad sweep of all-mountain country the hills reach past anything the ridges alone can
+  // stand (their tallest is high x upland), and the land's mean stays at its own height - the peaks centred
+  const cl = landformClimates(() => CLIMATES.Mountain);
+  let top = -Infinity, total = 0, count = 0;
+  for (let y = 0; y < 60000; y += 97) for (let x = 0; x < 60000; x += 101) {
+    const h = hillsAt(x + 128 * 300, y + 128 * 200, LANDFORM_KNEE + 3000, LANDFORM_KNEE + 2000, null, cl);
+    if (h > top) top = h;
+    total += h; count++;
+  }
+  assert.ok(top > L.mountain.high * L.mountain.upland + 0.3 * L.mountain.peaks.high, `peaks stand on the hills (${top.toFixed(1)} units at the highest)`);
+  assert.ok(Math.abs(total / count) < 2, `and the land's mean is its own (${(total / count).toFixed(2)} units)`);
 });

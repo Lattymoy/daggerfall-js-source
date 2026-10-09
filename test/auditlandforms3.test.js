@@ -203,7 +203,7 @@ test('AUDIT LANDFORMS III C2: a site\'s level stands on its own climate\'s land 
   const MOUNTAIN = filled(CLIMATES.Mountain), TOWNS = [{ px: 610, py: 245, loc: loc(6, 6) }], sites = landformSites(TOWNS);
   const level = (o) => siteOf(upland, 610, 245, TOWNS[0].loc, memo(createLandforms({ woods: upland, ...o }), upland)).level;
   const mountain = level({ climates: MOUNTAIN }), wood = level({}), bare = level({ hills: false });
-  assert.ok(Math.abs(mountain - wood) > 1 && Math.abs(bare - wood) > 1, `the climates and the hills stand the pixel's land apart (${mountain.toFixed(2)}, ${wood.toFixed(2)}, ${bare.toFixed(2)} units)`);
+  assert.ok(Math.abs(mountain - wood) > 0.5 && Math.abs(bare - wood) > 1, `the climates and the hills stand the pixel's land apart - PIN MOVED (LANDFORM8): the mountains' centred peaks bring their mean a little nearer the woods' here (${mountain.toFixed(2)}, ${wood.toFixed(2)}, ${bare.toFixed(2)} units)`);
   // asked in turn of one world - the woodlands' first, so a level kept across tables would answer the mountains' wrong
   for (const [o, want, what] of [[{}, wood, 'woodlands'], [{ climates: MOUNTAIN }, mountain, 'mountain'], [{ hills: false }, bare, 'hill-less']]) {
     const s = generateSamples(upland, 610, 245, H, createLandforms({ woods: upland, sites, ...o }));

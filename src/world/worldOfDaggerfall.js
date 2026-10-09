@@ -49,6 +49,9 @@ export const WOD_VENDOR = 'world-of-daggerfall';
 /** The mod's switch, read where the world mounts (the loader is built
  *  once per world, as DFU builds it once per run). */
 export const wodOn = () => !!modSetting(WOD_VENDOR, 'Enabled');
+/** WOD-PEAKS: the mod's Mountains layouts - the faceted spires - stood at all (modSettings.js `Mountains`, off). Read with
+ *  the switch, once a world. */
+export const wodMountainsOn = () => !!modSetting(WOD_VENDOR, 'Mountains');
 
 const IN_BROWSER = typeof window !== 'undefined';
 // Vite's glob doors (the dynamic-skies pattern): the packs as URLs the
@@ -150,9 +153,10 @@ export class WodWorld {
    *   prefabs:() => Promise<Map<string,?string>>}} sources
    * @param {{online?:boolean, warn?:(m:string) => void, schedule?:(fn:() => void, ms:number) => void}} [opts]
    */
-  constructor(sources, { online = false, warn = (m) => console.warn(m), schedule = (fn, ms) => { setTimeout(fn, ms); } } = {}) {
+  constructor(sources, { online = false, mountains = false, warn = (m) => console.warn(m), schedule = (fn, ms) => { setTimeout(fn, ms); } } = {}) {
     this.sources = sources;
     this.online = online;
+    this.mountains = !!mountains;   // WOD-PEAKS: the Mountains layouts stood (off by default - the landforms' rounded peaks stand instead)
     this.warn = warn;
     this.session = new LocationSession();
     /** name -> LocationPrefab, or null for a file that failed to read */
@@ -293,7 +297,10 @@ export class WodWorld {
     // WOD6: a late landing swaps the list whole, and a build awaits between its pick and its placements - the
     // instance's identity is read here, from the list the pick came from, never through its index into a newer one
     const session = this.session;
-    return pickLocations(tile, session, (name) => this.prefabs.get(name) ?? null, pathsPoint, siteClear)
+    // WOD-PEAKS: with the Mountains layouts off, one is no prefab at all - the pick refuses it as a missing file, so it
+    // neither levels the ground nor stands a piece, and the instance's pixel takes the rest of its list as it would
+    const prefabOf = this.mountains ? (name) => this.prefabs.get(name) ?? null : (name) => (WOD_MOUNTAIN_PREFAB.test(name ?? '') ? null : this.prefabs.get(name) ?? null);
+    return pickLocations(tile, session, prefabOf, pathsPoint, siteClear)
       .map((pick) => ({ ...pick, locationID: session.locationID[pick.index], name: session.name[pick.index], prefabName: session.prefab[pick.index] }));   // FOREST1: and its prefab's name - a site or a rock field   // PROF2: the instance's name - its Rocks and Mountains pieces anchor Mining's nodes
   }
 
@@ -318,6 +325,7 @@ export class WodWorld {
     if (this._mountains && this._mountains.session === s && this._mountains.count === s.count) return this._mountains.table;
     const table = new Uint8Array(WOD_MAP_W * WOD_MAP_H);
     for (let i = 0; i < s.count; i++) {
+      if (!this.mountains) break;   // WOD-PEAKS: no spires stood, none for the route to go round
       if (!WOD_MOUNTAIN_PREFAB.test(s.prefab[i] ?? '')) continue;
       const x = s.worldX[i], y = s.worldY[i];
       if (x >= 0 && y >= 0 && x < WOD_MAP_W && y < WOD_MAP_H) table[x + y * WOD_MAP_W] = 1;
@@ -379,7 +387,7 @@ export function wodLightColors(count, nPlayer, selColors, shared) {
 let _world = null;
 /** The page's one loader (LocationModLoader's GameObject), made on the
  *  first world that mounts with the mod on and kept for the page. */
-export function openWodWorld({ online = false, sources = browserWodSources } = {}) {
-  if (!_world || _world.online !== online) _world = new WodWorld(sources, { online });
+export function openWodWorld({ online = false, sources = browserWodSources, mountains = wodMountainsOn() } = {}) {
+  if (!_world || _world.online !== online || _world.mountains !== !!mountains) _world = new WodWorld(sources, { online, mountains });   // WOD-PEAKS: a flip of the Mountains switch is a new list's world
   return _world;
 }

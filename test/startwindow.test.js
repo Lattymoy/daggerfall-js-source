@@ -369,6 +369,10 @@ test('U21c: the logo uploads LINEAR/CLAMP, where classic art stays NEAREST/REPEA
     'and with no opts at all');
   assert.deepEqual(textureParams(gl, { smooth: true }), { wrap: 'CLAMP', filter: 'LINEAR' },
     'smooth gives LINEAR + CLAMP_TO_EDGE - REPEAT would sample the opposite edge');
+  // HAND-SEAM: a classic sprite drawn as one quad that never tiles keeps NEAREST and drops the wrap
+  assert.deepEqual(textureParams(gl, { clamp: true }), { wrap: 'CLAMP', filter: 'NEAREST' },
+    'clamp: pixel-exact, and a fragment a hair past the edge reads the edge, not the far side');
+  assert.deepEqual(textureParams(gl, { clamp: true, smooth: true }), { wrap: 'CLAMP', filter: 'LINEAR' }, 'smooth still wins');
 });
 
 // ---------------------------------------------------------------------------

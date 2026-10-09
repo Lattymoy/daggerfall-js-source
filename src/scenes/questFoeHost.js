@@ -207,6 +207,34 @@ export function questShareTag(machine, f, partied) {
   return { q: quest.questName, s };
 }
 
+/** DESYNC-ZERO (2026-10-09, the owner: "monster desyncs should never happen in dungeons and outside"): EVERY QUEST'S
+ *  FOE RIDES - a private quest's too. Its tag names the quest and the Foe as a shared one's does, and `pv: 1` says no
+ *  party shares it: everyone in the place stands it, anyone may strike it (its owner's quest counts the kill - it dies
+ *  on the owner's machine), and a member of its owner's party whose own copy holds the same quest counts it too
+ *  (partyQuestFoe). A world quest's foe is not here - it rides as an encounter's (CURSE-SYNC). */
+export function questPrivateTag(machine, f) {
+  const b = f?.questBehaviour;
+  if (!b || !machine || isWorldQuestFoe(f)) return null;
+  const quest = machine.getQuest?.(b.questUID) ?? null;
+  const s = b.targetSymbol?.name;
+  if (!quest || quest.questTombstoned || typeof s !== 'string' || typeof quest.questName !== 'string') return null;
+  return { q: quest.questName, s, pv: 1 };
+}
+
+/** DESYNC-ZERO (the owner: "when a party member kills the quest monsters it also counts for the quest owner or everyone
+ *  who also has this quest ... in the SAME party"): my Foe for a party member's quest foe - my copy kept in step with the
+ *  party (sharedQuestFoe), or else any live copy of the same quest I hold, by name, and its Foe by symbol. The CALLER
+ *  asks only for a party member's foe. */
+export function partyQuestFoe(machine, tag) {
+  if (!machine || !tag || typeof tag.q !== 'string' || typeof tag.s !== 'string') return null;
+  const linked = sharedQuestFoe(machine, tag);
+  if (linked) return linked;
+  const quest = machine.sharedCandidateNamed?.(tag.q) ?? null;
+  if (!quest || quest.questTombstoned || !quest.resources) return null;
+  for (const r of quest.resources.values()) if (r.isFoe && r.symbol?.name === tag.s) return r;
+  return null;
+}
+
 /** CURSE-SYNC (2026-09-27, the bug-reports channel: "Monsters aren't syncing ... The ghost on daggerfall ... We all had
  *  to kill them ... And everyone had to kill thier ow[n]"). A WORLD QUEST'S FOES ARE THE WORLD'S. S0000977, the Curse of
  *  Daggerfall, is no player's story: the tutorial starts it for every character as it ends (_TUTOR__'s `_no_`: `start
@@ -315,7 +343,7 @@ export function creditKeptKills(machine, ledger, owner, rows, now) {
   if (!machine || !ledger || !owner || !Array.isArray(rows)) return 0;
   let n = 0;
   for (const r of rows) {
-    const foe = sharedQuestFoe(machine, r);
+    const foe = partyQuestFoe(machine, r);   // DESYNC-ZERO: a linked copy, or any copy of the same quest this member holds
     if (!foe || !ledger.credit(owner, r.q, r.s, r.i, now)) continue;
     if (!foe.injuredTrigger) foe.setInjured?.();
     foe.incrementKills?.();

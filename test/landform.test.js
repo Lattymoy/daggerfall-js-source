@@ -131,7 +131,7 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   // the shipped file carries one byte over 127: a 255 at map pixel (470, 355), in the sea off Tigonus - DFU's
   // kernel stands it at its ceiling, a 1.9 km pillar; unclamped and lifted it was 5 km
   assert.equal(LANDFORM_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(127 * 8) + HILLS_TOP);   // PIN MOVED (LANDFORM5): and the tallest hill
-  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3180.06) < 0.01, 'about 3.2 km');   // PIN MOVED (LANDFORM6): the mountains' hills are the tallest
+  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3380.06) < 0.01, 'about 3.4 km');   // PIN MOVED (LANDFORM6): the mountains' hills are the tallest; PIN MOVED (LANDFORM8): and their peaks stand on them
   const LIFT_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(127 * 8);   // the glitch's top with the hills left out (LANDFORM5)
   assert.equal(reliefLift(255 * 8), reliefLift(127 * 8), 'the lift is level past the top');
   assert.ok(reliefLift(126 * 8) < reliefLift(127 * 8), '...and rising up to it');

@@ -133,7 +133,7 @@ export function createPlayerMagic({
   startCastAnim = null,
   // CAST-SPEED: are the hands still in motion - FPSSpellCasting.IsPlayingAnim, the ONE pair every host's rig plays
   // (combat/fpsSpellCasting.js), or a release still held for the Morrowind arm. A test hands in its own.
-  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld,
+  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld || fpsSpellCasting.recovering,   // CAST-RECOVER: and the last cast's recovery
   // ALLY-CAST (2026-09-23): the party mate under the crosshair within `reach`, as {id, name} or null - the host's own
   // pick (player/socialPick.js pickPeerInFront over its peers, party membership and the link's reach); and the door
   // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.

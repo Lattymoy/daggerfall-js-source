@@ -27,7 +27,7 @@ import { mapPixelToWorldCoord } from '../src/formats/mapsFile.js';
 import { OnlineSession } from '../src/net/online.js';
 import { CHAT_WORLD_ROOM } from '../src/net/wire.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
-import { questShareTag, sharedQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe, partnerStandsQuestFoes, mintQuestFoeWave, KeptKillLedger } from '../src/scenes/questFoeHost.js';
+import { questShareTag, sharedQuestFoe, questPrivateTag, partyQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe, partnerStandsQuestFoes, mintQuestFoeWave, KeptKillLedger } from '../src/scenes/questFoeHost.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -104,7 +104,7 @@ const makeHost = new Function('d', `
   ${lift(W, 'link.onQuestShared = (acct, name, quest) => {')}
   return { questSyncTick, shareQuestWithParty };
 `);
-const makeSeam = new Function('d', `const { questShareTag, questBridge, social, sharedQuestFoe, keptKills, questBehaviourFor, adoptsOrphanQuestFoe, online, player, peersNear } = d;\n${lift(W, '  const questShareSeam = {')}\nreturn questShareSeam;`);
+const makeSeam = new Function('d', `const { questShareTag, questPrivateTag, partyQuestFoe, questBridge, social, sharedQuestFoe, keptKills, questBehaviourFor, adoptsOrphanQuestFoe, online, player, peersNear } = d;\n${lift(W, '  const questShareSeam = {')}\nreturn questShareSeam;`);
 /** world.js's two partner calls - the open air's and the room's - each its own argument list, verbatim. */
 const callOf = (re) => { const m = re.exec(W); assert.ok(m, `world.js carries ${re}`); return m[1]; };
 const OUTDOOR = callOf(/\n {6}if \(partnerStandsQuestFoes\((\{[^\n]*\})\)\) return true;/);
@@ -157,7 +157,7 @@ function party() {
       shareSignature: QS.shareSignature, prepareQuestShare: QS.prepareQuestShare, link: s, social, receiveSharedQuest: QS.receiveSharedQuest,
       activeMemberships: () => ({}), playerEntity: {}, _questSharer: st.sharer, setMidScreenText: () => {}, sayShareRefusal: QS.sayShareRefusal,
       _questRefusalSaid: new Set(), shareRefusalText: QS.shareRefusalText, SHARE_REFUSAL_TEXT: QS.SHARE_REFUSAL_TEXT });
-    const seam = makeSeam({ questShareTag, questBridge: { machine: m }, social, sharedQuestFoe, keptKills: new KeptKillLedger(), questBehaviourFor, adoptsOrphanQuestFoe, online: { id: peer }, player: { feetAt: () => st.feet }, peersNear: () => [] });
+    const seam = makeSeam({ questShareTag, questPrivateTag, partyQuestFoe, questBridge: { machine: m }, social, sharedQuestFoe, keptKills: new KeptKillLedger(), questBehaviourFor, adoptsOrphanQuestFoe, online: { id: peer }, player: { feetAt: () => st.feet }, peersNear: () => [] });
     const p = pool(peer, seam);
     // world.js's _liveSharer (:16516), over this seat's machine and its sharer map
     const _liveSharer = (q) => (m.hasSharedQuestNamed(q) ? (st.sharer.get(q) ?? null) : null);

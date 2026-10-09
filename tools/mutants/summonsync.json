@@ -74,8 +74,8 @@
   {
     "name": "SUMMONSYNC-uncapped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "ownPuppetsOf(from, lo) >= (lo ? CELL_LOOSE_PUPPETS : QUEST_PUPPETS_MAX)",
-    "new": "ownPuppetsOf(from, lo) >= (lo ? QUEST_PUPPETS_MAX : QUEST_PUPPETS_MAX)",
+    "old": "ownPuppetsOf(from, lo) >= (lo ? LOOSE_PUPPETS_MAX : QUEST_PUPPETS_MAX)",
+    "new": "ownPuppetsOf(from, lo) >= (lo ? Infinity : QUEST_PUPPETS_MAX)",
     "tests": [
       "test/summonsync.test.js"
     ]

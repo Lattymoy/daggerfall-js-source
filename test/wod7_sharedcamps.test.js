@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { wodSiteId, validSites, validSiteTags, yieldsTo, WOD_SITES_MAX, WOD_CAMP_PUPPETS_MAX, WOD_CLAIM_WINDOW_MS, WOD_AGE_MAX } from '../src/world/wodShared.js';
-import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, ENCOUNTER_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
 import { CELL_PUPPETS_MAX } from '../src/net/wire.js';
 import { isPeerTarget } from '../src/characters/enemyTargets.js';
 
@@ -179,7 +179,7 @@ test('WOD7: a reader stands an owner\'s camp under WOD_CAMP_PUPPETS_MAX, apart f
   const C = createExteriorFoes(poolRig()); C.setNet(netFor('cccc-0003'));
   C.applyFoes('aaaa-0001', { ...frame, st: frame.st.map(([i]) => [i, 'not a site']) });
   await flush();
-  assert.equal(C.foes.filter((f) => f.puppet && !f.dead).length, CELL_PUPPETS_MAX);
+  assert.equal(C.foes.filter((f) => f.puppet && !f.dead).length, Math.min(frame.f.length, ENCOUNTER_PUPPETS_MAX), 'DESYNC-ZERO: the ordinary allowance is ENCOUNTER_PUPPETS_MAX');
 });
 
 // ── the host ────────────────────────────────────────────────────────────

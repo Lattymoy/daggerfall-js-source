@@ -398,15 +398,6 @@
     ]
   },
   {
-    "name": "DISC28-J-accept-any-party-foe",
-    "file": "src/scenes/world.js",
-    "old": "accepts: (from, tag) => !!social?.isPartyPeer(from) && !!sharedQuestFoe(questBridge?.machine, tag),",
-    "new": "accepts: (from) => !!social?.isPartyPeer(from),",
-    "tests": [
-      "test/disc28_quest.test.js"
-    ]
-  },
-  {
     "name": "DISC28-K-early-return-again",
     "file": "src/systems/discovery.js",
     "old": "  if (renamed == null || renamed === rec.displayName) return false;",

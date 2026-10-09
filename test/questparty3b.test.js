@@ -90,9 +90,9 @@ test('QUEST-PARTY 3b executed: a marker\'s foe rides flagged (1, and 2 once a bl
   imp.entity.health = imp.entity.maxHealth - 3;
   assert.deepEqual(a.p.foesFrame(true).qf.find((e) => e[0] === imp.seq), [imp.seq, 'M0B00Y16', '_imp_', 3], 'touched');
   const m = pool('mmm-0002');
-  m.p.applyFoes('aaa-0001', { ...frame, qf: frame.qf.map((e) => (e[0] === imp.seq ? [e[0], e[1], e[2], 7] : e)) });
+  m.p.applyFoes('aaa-0001', { ...frame, qf: frame.qf.map((e) => (e[0] === imp.seq ? [e[0], e[1], e[2], 8] : e)) });
   await settle();
-  assert.equal(m.p.foes.filter((f) => f.puppet === 'aaa-0001' && f._pupQuest?.s === '_imp_').length, 0, 'a flag outside 0-3 is a malformed word: no quest foe');
+  assert.equal(m.p.foes.filter((f) => f.puppet === 'aaa-0001' && f._pupQuest?.s === '_imp_').length, 0, 'a flag outside 0-7 is a malformed word: no quest foe (DESYNC-ZERO: 4 is the private-quest bit)');
 });
 
 test('QUEST-PARTY 3b executed: two party members in one building each stood the imp at its marker - the higher id\'s untouched copy stands down, its copy of the quest counts the other\'s, and a stranger\'s frame stands down nothing', async () => {
