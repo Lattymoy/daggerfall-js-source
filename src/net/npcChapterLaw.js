@@ -1143,3 +1143,26 @@ export function schismWinner(/** @type {[number, number]} */ sums, /** @type {nu
 export const successionHeir = (/** @type {number | null} */ master, /** @type {number | null} */ top) => (Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);
 /** A hall writ's day count under a doctrine: one more for "more writs". */
 export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) => count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);
+
+// ─── CHAP6c: A CHAPTER'S SEASON, AS THE CLIENT READS IT (Chapters-Arc 7, 9) ─
+/** A doctrine in words ("cheaper training"), or null. */
+export const chapterDoctrineWords = (/** @type {unknown} */ d) => (chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null);
+/**
+ * A CHAPTER'S SEASON as the sheet or the board says it - `{ event, season, rival, shut, doctrine, sides, heir }`, each
+ * checked and anything else none: the Season's event, the Season's number (its candidates' names are drawn on it), a
+ * Rivalry's rival (a hidden one is never sent to a stranger), its halls shut, the doctrine holding, a Schism's two
+ * doctrines, a Succession's heir once named.
+ * @param {any} c
+ */
+export function chapterSeasonOf(c) {
+  const event = chapterEventOk(c?.event) ? String(c.event) : null;
+  return {
+    event,
+    season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,
+    rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,
+    shut: c?.shut === true,
+    doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,
+    sides: event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk) ? [String(c.sides[0]), String(c.sides[1])] : null,
+    heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,
+  };
+}

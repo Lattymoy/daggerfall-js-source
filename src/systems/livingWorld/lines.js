@@ -468,6 +468,34 @@ export const CHAPTER_NEWS = Object.freeze({
 });
 /** CHAP5b: the days a week a chapter's news is told in its town - drawn on the seed, by the town and its guild. */
 export const CHAPTER_NEWS_DAYS = 2;
+/** CHAP6c (Chapters-Arc 9: "keyed by the event and its standing"): WHAT THE TOWN SAYS OF A CHAPTER'S SEASON - by its
+ *  event, and its halls shut; told before its band's news (an event is the Season's story; the band the week's). Calm is
+ *  no news. Worded as CHAPTER_NEWS is: `{guild}` never first, never the subject. */
+export const CHAPTER_EVENT_NEWS = Object.freeze({
+  schism: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here is split over who leads it.', 'Two of them, and neither will give way.']),
+    Object.freeze(['There is a quarrel in the hall of {guild}, they say.', 'Over what it stands for, I hear.']),
+  ]),
+  succession: Object.freeze([
+    Object.freeze(['They say the head of the hall of {guild} is stepping down.', 'And who follows? That is the question.']),
+  ]),
+  crackdown: Object.freeze([
+    Object.freeze(['The watch is after the chapter of {guild} here, they say.', 'Then its members had best keep their heads down.']),
+    Object.freeze(['They say the hall of {guild} is watched day and night.', 'I would not be seen going in.']),
+  ]),
+  rivalry: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here has a rival this Season.', 'One of them will come out of it the poorer.']),
+  ]),
+  decline: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),
+  ]),
+  ascendancy: Object.freeze([
+    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),
+  ]),
+  shut: Object.freeze([
+    Object.freeze(['They say the halls of {guild} here are shut, by the watch\'s order.', 'For the whole Season, I hear.']),
+  ]),
+});
 
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
@@ -477,7 +505,7 @@ export const NEWS_SHARE = 0.4;
  *  LEGACY6: or Project Legacy's house's (`kin`). CHAP5b: or a guild's chapter's (`chapter`).
  *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean, chapter?: boolean }} item */
 const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]   // LEGACY6: the house's own words
-  : item.chapter ? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]   // CHAP5b: a chapter's standing
+  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season
   : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']

@@ -1411,6 +1411,8 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     /** CHAP4d: a chapter's Master names its Focus this week; and a region's Chronicle of its chapters' seats */
     focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, region, focus }),
     history: (region) => post('/v1/chapters/history', { region }),
+    /** CHAP6b: a member backs a side of its chapter's Schism, or names a candidate of its Succession (CHAP6c's board) */
+    back: (character, faction, region, side) => post('/v1/chapters/back', { character, faction, region, side }),
   };
 }
 

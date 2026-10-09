@@ -502,7 +502,9 @@ function eventView(/** @type {any} */ r, /** @type {number | null} */ n, /** @ty
   const rival = event === 'rivalry' && Number.isSafeInteger(e.data.rival) && named(e.data.rival) ? e.data.rival : null;
   return {
     event, ...(rival !== null ? { rival } : {}), ...(shut ? { shut: true } : {}), ...(doctrine ? { doctrine } : {}),
-    // CHAP6b: a Schism's two doctrines (side 0's, side 1's), a Succession's heir once named
+    // CHAP6b: a Schism's two doctrines (side 0's, side 1's), a Succession's heir once named; CHAP6c: and the Season their
+    // candidates' names are drawn on (the client's, net/chapterEvents.js)
+    ...(event === 'schism' || event === 'succession' ? { season: n } : {}),
     ...(event === 'schism' ? { sides: schismDoctrinesOf(n, Number(r.faction), Number(r.region)) } : {}),
     ...(event === 'succession' && Number.isSafeInteger(e.data.heir) ? { heir: e.data.heir } : {}),
   };

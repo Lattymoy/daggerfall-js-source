@@ -246,11 +246,12 @@
   {
     "name": "CHAP5B-NEWS-STEADY",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "return c && /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[c.band] ? [",
-    "new": "return c ? [",
+    "old": "return c && kind && (/** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[kind] || /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[kind]) ? [",
+    "new": "return c && kind ? [",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5B-NEWS-NAME",
@@ -273,11 +274,12 @@
   {
     "name": "CHAP5B-POOL",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.chapter ? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]   // CHAP5b: a chapter's standing\n",
+    "old": "  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season\n",
     "new": "",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5B-FALLBACK",
@@ -318,28 +320,31 @@
   {
     "name": "CHAP5B-HOST-BAND",
     "file": "src/scenes/world.js",
-    "old": "return strength == null ? null : { band: chapterBandOf(strength).band, name:",
-    "new": "return strength == null ? null : { band: 'steady', name:",
+    "old": "return c == null ? null : { band: chapterBandOf(c.strength).band, name:",
+    "new": "return c == null ? null : { band: 'steady', name:",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5B-HOST-NAME",
     "file": "src/scenes/world.js",
-    "old": "name: `the ${hallPosterName(f)}` };",
-    "new": "name: hallPosterName(f) };",
+    "old": "name: `the ${hallPosterName(f)}`, event: c.event ?? null",
+    "new": "name: hallPosterName(f), event: c.event ?? null",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5B-HOST-REGION",
     "file": "src/scenes/world.js",
-    "old": "const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(f, region) ?? null : null;\n    return strength == null ? null : { band:",
-    "new": "const strength = chapterSheet?.strengthOf(f, 0) ?? null;\n    return strength == null ? null : { band:",
+    "old": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(f, region) ?? null : null;",
+    "new": "const c = chapterSheet?.chapterOf(f, 0) ?? null;",
     "tests": [
       "test/chap5b_people.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   }
 ]

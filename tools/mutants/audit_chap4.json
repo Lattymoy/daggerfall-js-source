@@ -634,10 +634,11 @@
   {
     "name": "AUDIT-CHAP4-C-FOCUS-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (!alive) { work.sayLate?.(said.text); return; }",
-    "new": "    if (!alive) { return; }",
+    "old": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
+    "new": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
     "tests": [
       "test/audit_chap4.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   }
 ]

@@ -682,6 +682,7 @@ import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hal
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
+import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
@@ -1639,8 +1640,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingChapterOf = (/** @type {number} */ faction, /** @type {number} */ x, /** @type {number} */ y) => {
     const f = chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction;
     const region = (() => { try { return maps.getRegionIndexAt(x, y); } catch { return null; } })();
-    const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(f, region) ?? null : null;
-    return strength == null ? null : { band: chapterBandOf(strength).band, name: `the ${hallPosterName(f)}` };
+    const c = Number.isInteger(region) ? chapterSheet?.chapterOf(f, region) ?? null : null;
+    // CHAP6c: and its Season's event and shut halls, for the town's talk
+    return c == null ? null : { band: chapterBandOf(c.strength).band, name: `the ${hallPosterName(f)}`, event: c.event ?? null, shut: c.shut === true };
   };
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
@@ -25520,6 +25522,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       sayLate: (text) => chatNotice(text),   // AUDIT CHAP3 C5: a writ filled after the board closed says its line in the chat
       // CHAP4d: a chapter's Master names its Focus here, for the character playing
       setFocus: hallDoor && realmSession ? (faction, focus) => hallDoor.focus(realmSession.id, faction, region, focus) : null,
+      // CHAP6c: and a member backs its chapter's Season's side here, for the character playing
+      back: hallDoor && realmSession ? (faction, side) => hallDoor.back(realmSession.id, faction, region, side) : null,
       // PROF6: the guild writs and commissions beside the Court's, while the Marks are this account's too
       ...(writBook && marksBook?.state?.open !== false ? {
         writs: writBook, regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', pieces: commissionPieces,
@@ -27587,7 +27591,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
       const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
       const title = c ? chapterRollTitle(faction, region) : null;
-      return title ? { title, lines: chapterRollLines(faction, c) } : null;
+      return title ? { title, lines: [...chapterRollLines(faction, c), ...chapterSeasonLines(faction, /** @type {number} */ (region), c)] } : null;   // CHAP6c: and its Season
     },
     rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),   // AUDIT CHAP4 C3: from the page's first frame - before the Roll's first word DFU's review promoted to 8 and 9
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and

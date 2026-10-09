@@ -95,11 +95,12 @@
   {
     "name": "CHAP3C-SHEET-KEY",
     "file": "src/net/chapterSheet.js",
-    "old": "next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats) });",
-    "new": "next.set(`${c.f}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats) });",
+    "old": "next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });",
+    "new": "next.set(`${c.f}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });",
     "tests": [
       "test/chap3c_halls.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP3C-SHEET-ROWS",

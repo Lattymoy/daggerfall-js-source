@@ -293,7 +293,9 @@ test('CHAP6b the board and the sheet: a Schism\'s two doctrines, a Succession\'s
   const l = (await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret)).body;
   const view = (c) => [c.faction ?? c.f, c.event, c.sides ?? null, c.heir ?? null, c.doctrine ?? null, c.backed ?? null];
   assert.deepEqual(l.chapters.map(view), [[MAGES, 'succession', null, 2, 'training', null], [FIGHTERS, 'schism', schismDoctrinesOf(1, FIGHTERS, ANTICLERE), null, null, 1]]);
+  assert.deepEqual(l.chapters.map((c) => c.season ?? null), [1, 1], 'CHAP6c: the Season their candidates are named on');
   const sheet = (await s.call('/v1/chapters/list', {}, s.who.secret)).body;
+  assert.deepEqual(sheet.chapters.map((c) => c.season ?? null), [1, 1]);
   assert.deepEqual(sheet.chapters.map(view), [[MAGES, 'succession', null, 2, 'training', null], [FIGHTERS, 'schism', schismDoctrinesOf(1, FIGHTERS, ANTICLERE), null, null, null]], 'the sheet is no one\'s');
 });
 

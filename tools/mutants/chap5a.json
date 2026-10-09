@@ -182,20 +182,22 @@
   {
     "name": "CHAP5A-SHEET-SEATS",
     "file": "src/net/chapterSheet.js",
-    "old": "{ strength: c.strength, seats: chapterRollSeatsOf(c.seats) }",
-    "new": "{ strength: c.strength, seats: Array.isArray(c.seats) ? c.seats : [] }",
+    "old": "{ strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) }",
+    "new": "{ strength: c.strength, seats: Array.isArray(c.seats) ? c.seats : [], season: chapterSeasonOf(c) }",
     "tests": [
       "test/chap5a_roll.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5A-SHEET-COPY",
     "file": "src/net/chapterSheet.js",
-    "old": "return s === undefined ? null : { strength: s.strength, seats: s.seats.map((x) => ({ ...x })) };",
-    "new": "return s === undefined ? null : { strength: s.strength, seats: s.seats };",
+    "old": "seats: s.seats.map((x) => ({ ...x })), ...s.season",
+    "new": "seats: s.seats, ...s.season",
     "tests": [
       "test/chap5a_roll.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5A-SHEET-STRENGTH",
@@ -265,11 +267,12 @@
   {
     "name": "CHAP5A-HOST-TITLE",
     "file": "src/scenes/world.js",
-    "old": "return title ? { title, lines: chapterRollLines(faction, c) } : null;",
-    "new": "return c ? { title, lines: chapterRollLines(faction, c) } : null;",
+    "old": "return title ? { title, lines: [...chapterRollLines(faction, c),",
+    "new": "return c ? { title, lines: [...chapterRollLines(faction, c),",
     "tests": [
       "test/chap5a_roll.test.js"
-    ]
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP5A-SHELF-OF",

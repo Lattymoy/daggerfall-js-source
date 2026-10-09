@@ -25,8 +25,9 @@ section 9, its record at the foot). AUDIT CHAP4 (2026-10-09, Mac: "Lets do a dee
 all of it again through six lenses and fixed what they found (`01-Overview/Audit-Chapters-4.md`, its record at the
 foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a Decline's weeks, the Season's end - section
 7, its record at the foot); CHAP6b BUILT (2026-10-09, the same word; the Schism's backing and doctrine, the
-Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c (the events on the client and the
-titles) is next. Merged with main
+Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c BUILT (2026-10-09, the same word;
+the Season's words and a member's choices on the client - sections 7 and 9, its record at the foot); CHAP6d (the events
+on the halls) and CHAP6e (the titles) are next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -556,7 +557,10 @@ read at a town's entry and again once ten minutes old (`SHEET_KEPT_MS`, the seat
 refusal that is the account's stopping it for the page - and forgetting what it held, so every hall is DFU's own again
 (AUDIT CHAP3 C2); its readers ask it synchronously and are answered as it last stood. BUILT (CHAP5a): each chapter's
 `seats` - `[{ seat, name }]`, its Master first, then its officers by their tenure, each by the name its character carries
-now - and the tab keeps them as the roll reads them (`chapterOf`). Its Season's event and standing are CHAP6's.
+now - and the tab keeps them as the roll reads them (`chapterOf`). BUILT (CHAP6a-6c): its Season - `event`, a Rivalry's
+public `rival`, `shut`, the `doctrine` holding, a Schism's `sides`, a Succession's `heir` and the `season` their
+candidates are named on - kept as `chapterSeasonOf` reads it (each field checked). NARROWED: the event's STANDING (a
+Schism's sides' Merit, a race's lead) is not published - the sheet says what the Season is, not who leads it.
 
 ## 6. The seats - ranks 8 and 9 (CHAP4)
 
@@ -766,6 +770,24 @@ BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcCha
   Fighters Guild's hall took a new head" (the heir's name is the census's, read in the hall's town). The opening week
   clears a developers' doctrine with the rest.
 
+BUILT (CHAP6c, 2026-10-09, Mac: "continue"), the words and the choices on the client - `src/net/chapterEvents.js`
+(`chapterCandidateName`, `chapterSeasonLines`, `chapterBackChoices`, `chapterBackedLine`), `npcChapterLaw.js`
+(`chapterSeasonOf`, `chapterDoctrineWords`):
+
+- **The candidates are named by the event's roll**: DFU's FullName on the region's name bank (MapsFile.RegionRaces), on
+  a seed the Season, the chapter and the candidate's place make - the census's own `residentName`, so DFU's global
+  stream is put back as it stood - the same name for every reader. NARROWED: named, not yet walking the hall's streets.
+- **The board** says each chapter's Season under its line - "The chapter is split this Season: Alda Copperham stands
+  for cheaper training, Bryn Hearthwing for more writs."; a Succession's three or its heir; a Crackdown, a Rivalry (a
+  hidden rival "a rival in the shadows"), a Decline, an Ascendancy; the doctrine holding; shut halls - and offers a member
+  of the guild (its Merit line stands on the board) its choices: "Back a side:" or "Name who follows:", the one it backs
+  marked; a press backs it through the door, says so ("You back Alda Copperham, for cheaper training."), reads the list
+  again, and an answer after the board closed is said in the chat. **The hall's roll** says the Season after its seats.
+  **The town** talks of a chapter's Season before its band (9).
+- **Still to build**: what the events do to the halls on the client - an Ascendancy's prices, the training's and the
+  shelf's doctrines, the shut halls (CHAP6d); the titles - a Master's "High" in an Ascendancy, the Season's Master's title
+  for good (CHAP6e, a relay change).
+
 ## 8. Rivals and patrons (CHAP7)
 
 - **Rivals** (DECIDED, CALL 5): the port's own table in the law module, never FACTION.TXT. Each pair is a Rivalry's
@@ -804,14 +826,17 @@ classic skin, the row off, the service unreachable - the living world is exactly
   sheet was there first. Shut halls wait for the Crackdown that shuts them (7, CHAP6).
 - **The Schism's candidates and the Succession's heir** are residents of the hall, drawn from the census by the event's
   roll, and are known to every player by the same name. CHAP6b: the service holds them by index - a Schism's side 0 and
-  1, a Succession's candidate 0 to 2 - and the census's names are the client's (CHAP6c).
+  1, a Succession's candidate 0 to 2 - and the census's names are the client's (CHAP6c). BUILT (CHAP6c): named by the
+  event's roll on the region's bank (`chapterCandidateName`, section 7); NARROWED, not yet walking its streets.
 - **Their words**: `systems/livingWorld/lines.js` gains the chapter's lines, keyed by the event and its standing ("They say
   the Wayrest Mages are split over who leads them"); the rumour mill (`systems/rumorMill.js`) carries the Season's
   chapter news. BUILT (CHAP5b), the standing's: `CHAPTER_NEWS` by a chapter's band - Failing, Thriving, Ascendant; a
   Steady chapter is no news - told as the town's news (`LivingTown.chapterNews`, beside the roads', the deeds' and the
   house's) on two days of the week, its own drawn on the seed by the town and the guild, for each chapter of the town's
   guild halls and temples the sheet names; `{guild}` the chapter's guild ("the Fighters Guild"). The event's lines and
-  the rumour mill's Season news are CHAP6's, with the events.
+  the rumour mill's Season news are CHAP6's, with the events. BUILT (CHAP6c): `CHAPTER_EVENT_NEWS` by the Season's
+  event and shut halls, told before the band's news on the same two days (`LivingTown.chapterNews`: shut halls first,
+  then its event - Calm none - else its band); the host's `livingChapterOf` reads the whole chapter off the sheet.
 - **The hall's roll**: the seats' holders, named on a board inside each hall. BUILT (CHAP5a), NARROWED: a DFU guild hall
   has no board, and placing one in DFU's own block geometry is a decor change of its own; its BOOKSHELF is the hall's
   reading (DFU's `DaggerfallBookshelf`, as the palace's shelf is the Hall of Records), so the roll is the shelf's first
@@ -916,7 +941,8 @@ DECIDED.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings. CHAP6a BUILT (2026-10-09): the roll,
    the Decline's weeks, the Season's end (the Rivalries, the Crackdowns' shut halls, the Chronicle's lines), the events
    on the sheet and the board (7). CHAP6b BUILT (2026-10-09): the Schism's backing and its doctrine, the Succession's
-   heir, the Master's vote (7).
+   heir, the Master's vote (7). CHAP6c BUILT (2026-10-09): the Season's words on the board, the roll and in the town,
+   the candidates named, a member's choices on the board (7, 9).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
@@ -1463,3 +1489,24 @@ The sixth slice's second; section 7 carries the law and what building it narrowe
   content (AUDIT CHAP2's, CHAP3b's, CHAP4d's, AUDIT CHAP4's S6, CHAP6a's six), all dead; three older pins moved (PIN
   MOVED: CHAP4d's writs' count, CHAP6a's Schism line, ACC1b's table list). `src/net/accountClient.js`: the four
   refusals' words (ACC1e walks the service for every one).
+
+## CHAP6c - the Season's words and a member's choices, as built (2026-10-09, Mac: "continue")
+
+The sixth slice's third; sections 7 and 9 carry the law and what building it narrowed (BUILT, CHAP6c).
+
+- **The law.** `src/net/npcChapterLaw.js`: `chapterSeasonOf` (a chapter's Season as the sheet or the board says it, each
+  field checked), `chapterDoctrineWords`. `src/net/chapterEvents.js` (new, the client's): `CHAPTER_CANDIDATE_SALT`,
+  `chapterCandidateName`, `chapterSeasonLines`, `chapterBackChoices`, `chapterBackedLine`.
+- **The tab.** `src/net/chapterSheet.js`: each chapter's Season kept, a copy. `src/ui/noticeWindow.js`: the Season's
+  lines under each chapter, a member's choices, `backSide` (the door, the word, the read again, the late word in the
+  chat). `src/net/accountClient.js`: `accountRoll.back`. `src/scenes/world.js`: the board's `back` door; the roll's
+  Season lines; `livingChapterOf` the whole chapter, its event and shut halls. `src/systems/livingWorld/lines.js`:
+  `CHAPTER_EVENT_NEWS` and the news pool's reading of it; `livingTown.js`: `chapterNews` the Season first.
+  `server-account/src/npcChapters.js`: the sheet's and the board's `season` for a Schism and a Succession.
+- **Pins.** `test/chap6c_words.test.js`, 9 tests: the Season as the sheet says it; the candidates' names (golden, the
+  stream put back); every line; a member's choices and what a backing says; the sheet's Season; the board (the lines,
+  the choices to a member alone, the mark, the press, the word, the read; a Succession's names, a refusal, a late word);
+  the town's talk (shut first, then the event, else the band; the words); the wiring. `tools/mutants/chap6c.json`: 62
+  mutants, all dead. Eleven older records re-aimed by content (CHAP3c's, CHAP4d's, CHAP5a's, CHAP5b's, AUDIT CHAP4's),
+  all dead; three older pins moved (PIN MOVED: CHAP5a's sheet and roll, CHAP5b's host); CHAP6a's and CHAP6b's boards
+  pin the `season` sent.

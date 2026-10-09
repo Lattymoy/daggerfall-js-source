@@ -410,12 +410,12 @@
   {
     "name": "CHAP4D-BOARD-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = said;\n    loadWrits(true);\n",
-    "new": "    word = said;\n    render();\n",
+    "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function takeWrit",
+    "new": "    word = said;\n    render();\n  }\n\n  async function takeWrit",
     "tests": [
       "test/chap4d_focus.test.js"
     ],
-    "note": "AUDIT CHAP4 C: re-aimed at the Focus's word computed before the board's closing is asked (a late one said in the chat)."
+    "note": "AUDIT CHAP4 C: re-aimed at the Focus's word computed before the board's closing is asked (a late one said in the chat). CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
   {
     "name": "CHAP4D-SEAM-HOST",

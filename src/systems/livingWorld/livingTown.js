@@ -53,7 +53,7 @@ import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth'
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
@@ -274,7 +274,7 @@ export class LivingTown {
    *   takeKeepsake?: (item: any) => void,
    *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
    *   familyNews?: (t: number) => readonly any[] | null,
-   *   chapterOf?: (faction: number) => ({ band: string, name: string } | null),
+   *   chapterOf?: (faction: number) => ({ band: string, name: string, event?: string | null, shut?: boolean } | null),
    *   dangers?: () => (readonly number[][] | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
@@ -450,7 +450,9 @@ export class LivingTown {
       const w = lwSeed(this.o.town.mapId, f, 0x63686170) % 7;   // 'chap'
       if (!GUILD_DAY_OFFSETS.slice(0, CHAPTER_NEWS_DAYS).some((o) => d === (w + o) % 7)) return [];
       const c = this.o.chapterOf?.(f);
-      return c && /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[c.band] ? [{ kind: c.band, chapter: true, guild: c.name, who: '', foe: '', place: '' }] : [];
+      // CHAP6c: its Season first - shut halls, then its event (Calm is none) - else its band
+      const kind = c?.shut ? 'shut' : c?.event && /** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[c.event] ? c.event : c?.band;
+      return c && kind && (/** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[kind] || /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[kind]) ? [{ kind, chapter: true, guild: c.name, who: '', foe: '', place: '' }] : [];
     });
   }
 

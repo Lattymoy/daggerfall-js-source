@@ -358,6 +358,7 @@ test('CHAP6a the board and the sheet say each chapter\'s Season\'s event - a Riv
   s.put(JULIANOS, 50, { event: 'crackdown', season: 0, shut: 0 });   // last Season's event, and a shut that was last Season's
   const l = (await s.call('/v1/writs/list', { character: s.R.id, region: ANTICLERE }, s.who.secret)).body;
   assert.deepEqual(l.chapters.map((c) => [c.faction, c.event ?? null, c.rival ?? null, c.shut ?? false]), [[JULIANOS, null, null, false], [MAGES, 'rivalry', JULIANOS, true], [FIGHTERS, 'rivalry', null, false]]);
+  assert.ok(l.chapters.every((c) => c.season === undefined), 'CHAP6c: no Season sent where no candidate is named');
   const sheet = (await s.call('/v1/chapters/list', {}, s.who.secret)).body;
   assert.deepEqual(sheet.chapters.map((c) => [c.f, c.event ?? null, c.rival ?? null, c.shut ?? false]), [[JULIANOS, null, null, false], [MAGES, 'rivalry', JULIANOS, true], [FIGHTERS, 'rivalry', null, false]]);
 });

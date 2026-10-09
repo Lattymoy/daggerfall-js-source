@@ -52,7 +52,8 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
+import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf } from '../net/npcChapterLaw.js';
+import { chapterSeasonLines, chapterBackChoices, chapterBackedLine } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season - its lines, a member's choices   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions
@@ -162,7 +163,7 @@ function injectSkin(doc = document) {
  *   nowS?: () => number,
  *   onExit?: (() => void) | null,
  *   work?: ({ book: any, region: number, regionName: string, countName: (key: string, n: number) => string,
- *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, setFocus?: ((faction: number, focus: string) => Promise<any>) | null, writs?: any, regionNameOf?: (r: number) => string,
+ *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, setFocus?: ((faction: number, focus: string) => Promise<any>) | null, back?: ((faction: number, side: number) => Promise<any>) | null, writs?: any, regionNameOf?: (r: number) => string,
  *     pieces?: (c: any) => any[], settle?: () => any, onList?: (data: any) => void, forgetMarket?: () => void } | null),
  *   market?: (any | null),
  *   guilds?: boolean,
@@ -510,6 +511,19 @@ export function mountNoticeBoard(host, deps) {
   }
 
   /** CHAP4d: a chapter's Master names its Focus - the list read again, the line its answer. */
+  /** CHAP6c: a member backs a side of its chapter's Season (a Schism's side, a Succession's candidate) - said as a
+   *  Focus is, in the chat when the board closed first. @param {any} c @param {number} side */
+  async function backSide(c, side) {
+    if (busy || workBusy || !work.back) return;
+    busy = true; render();
+    const r = await work.back(c.faction, side);
+    const said = r?.ok ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) { work.sayLate?.(said.text); return; }
+    busy = false;
+    word = said;
+    loadWrits(true);
+  }
+
   async function setFocus(faction, focus) {
     if (busy || workBusy || !work.setFocus) return;
     busy = true; render();
@@ -556,6 +570,15 @@ export function mountNoticeBoard(host, deps) {
       if (c.master && c.focuses?.length && work.setFocus) {
         const row = el('p', 'notice-chapter notice-focus-pick', 'Your chapter\'s Focus this week: ');
         for (const f of c.focuses) row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));
+        body.append(row);
+      }
+      // CHAP6c: its Season - the event, the doctrine, shut halls - and, for a member of its guild here (its Merit line
+      // stands on the board), the sides it may back
+      for (const line of chapterSeasonLines(c.faction, work.region, c)) body.append(el('p', 'notice-chapter notice-season', line));
+      const choices = work.back && (writs?.merit ?? []).some((m) => m.faction === c.faction) ? chapterBackChoices(c.faction, work.region, c) : [];
+      if (choices.length) {
+        const row = el('p', 'notice-chapter notice-back-pick', c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ');
+        for (const ch of choices) row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));
         body.append(row);
       }
     }
