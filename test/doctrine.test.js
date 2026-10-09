@@ -434,8 +434,8 @@ const PUBLIC_ALLOWLIST = new Map([
   // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes. MW-STEEL4
   // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones, its inverse binds the bind of the vendored
   // retail skeleton (vendor/weapon-sheathing, Greatness7's, credited) - numbers of a skeleton, no Bethesda geometry.
-  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on stripped out by tools/fbxStrip.mjs (the plate skirt kept since MW-STEEL2); committed so the files below are a DERIVATION the gate can re-run"],
-  ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
+  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the closed helm (steel_armor.fbx, 2026-10-09 - MW-STEEL5), committed as it came: it carries no Morrowind head or neck; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Steel_Plate_Open_Helm.fbx', "SUPPLIED - the open helm alone out of Mac's first export (New_Ship.fbx, 2026-10-06), every other object - and the Morrowind Breton head and neck it was fitted on - stripped by tools/fbxStrip.mjs (MW-STEEL5); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Pauldron.png', "SUPPLIED - the pauldrons' painting as Mac sent it (his steelpauldrons texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Gauntlet.png', "SUPPLIED - the gauntlets' painting as Mac sent it (his newgloves texture), committed as its DDS's source"],

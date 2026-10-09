@@ -1,0 +1,137 @@
+[
+  {
+    "name": "MWSTEEL5-the-helms-a-unit-lower",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "export const HELM_LIFT = 4;",
+    "new": "export const HELM_LIFT = 3;",
+    "tests": [
+      "test/mwsteel5.test.js",
+      "test/mwsteel1.test.js"
+    ],
+    "note": "The helms a unit lower on the head: the crown's clearance over the game's head is no longer Mac's, and the shipped NIFs are not what the bake makes."
+  },
+  {
+    "name": "MWSTEEL5-no-lift",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "export const HELM_LIFT = 4;",
+    "new": "export const HELM_LIFT = 0;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ],
+    "note": "The helms where the scene fitted them: the scalp through the crown, Mac's screenshot."
+  },
+  {
+    "name": "MWSTEEL5-the-closed-helm-lifted-past-the-open",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  ], HELM_LIFT - 1),",
+    "new": "  ], HELM_LIFT),",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ],
+    "note": "Mac's export already stands the closed helm a unit higher: lifted the whole way it stands a unit over the open one."
+  },
+  {
+    "name": "MWSTEEL5-the-open-helm-left-down",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])], HELM_LIFT),",
+    "new": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])]),",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-lifted-forward-not-up",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    positions: mesh.positions.map((v, i) => (i % 3 === 2 ? up(v) : v)),",
+    "new": "    positions: mesh.positions.map((v, i) => (i % 3 === 1 ? up(v) : v)),",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-bounds-left-behind",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    bounds: { min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])], max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])] },",
+    "new": "    bounds: mesh.bounds,",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-bake-ignores-the-lift",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0)",
+    "new": "liftMesh(bakeObject(trees[p.file], s.object, s.box), 0)",
+    "tests": [
+      "test/mwsteel5.test.js",
+      "test/mwsteel1.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-band-dropped-from-the-cuirass",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [[-10.69, -9.98, 85.82], [10.44, 10.28, 89.57]]),\n",
+    "new": "",
+    "tests": [
+      "test/mwsteel5.test.js",
+      "test/mwsteel1.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-pauldrons-by-their-old-names",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.003'",
+    "new": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.001'",
+    "tests": [
+      "test/mwsteel5.test.js",
+      "test/mwsteel1.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-import-skips-the-box",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  for (const x of shapes) bakeObject(tree, x.object, x.box);",
+    "new": "",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-import-keeps-the-body",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    set: drop.length ? stripFbx(bytes, { drop }).bytes : Buffer.from(bytes),",
+    "new": "    set: Buffer.from(bytes),",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-import-measures-what-is-not-there",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  const carried = Object.fromEntries(Object.entries(reference).filter(([, name]) => names.includes(name)));",
+    "new": "  const carried = Object.fromEntries(Object.entries(reference));",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-open-helm-keeps-everything",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  return stripFbx(bytes, { drop: names.filter((n) => !keep.has(n)) }).bytes;",
+    "new": "  return stripFbx(bytes, { drop: [] }).bytes;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ],
+    "equivalent": true,
+    "why": "The committed open-helm source is already that helm alone, so taking it out again is the file either way - the pin that would see it needs MW-STEEL1's export, which carries Bethesda's head and is not committed. The strip itself is fbxStrip's, pinned by mwsteel1.test.js."
+  },
+  {
+    "name": "MWSTEEL5-the-open-helm-from-any-file",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "  if (absent.length) throw new Error(`this export carries no open helm (${absent.map((n) => `\"${n}\"`).join(', ')})`);",
+    "new": "",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  }
+]

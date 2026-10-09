@@ -35,7 +35,7 @@ const sourceText = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf
 const STEEL = ARMOR_MATERIAL.Steel;
 const SET = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templateIndex, material: STEEL }));
 const BIND = plateBind(RETAIL_SKELETON_BYTES);
-const trees = { open: readFbx(raw(SOURCE.open)), closed: readFbx(raw(SOURCE.closed)) };
+const trees = { set: readFbx(raw(SOURCE.set)), openHelm: readFbx(raw(SOURCE.openHelm)) };
 const sceneMeshes = (id) => { const p = PIECES.find((q) => q.id === id); return p.shapes.map((s) => bakeObject(trees[p.file], s.object, s.box)); };
 const nifOf = (id) => parseNif(new Uint8Array(raw(meshFile(id))));
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -189,7 +189,8 @@ test('MW-STEEL4: through the binder retail\'s armour takes - every piece a skinn
     assert.deepEqual(asm.notes, [], 'nothing skipped, nothing unmatched');
     for (const a of worn.adds) {
       const drawn = zone(asm, a.slot);
-      assert.equal(drawn.length, a.partName === 'hair' && helmStyle === 'closed' ? 2 : 1, `${a.slot} is drawn`);
+      // a shape per painting - the closed helm's shell and visor, the cuirass's breastplate and waist band (MW-STEEL5)
+      assert.equal(drawn.length, PIECES.find((p) => meshFile(p.id).endsWith(`/${a.model}`)).shapes.length, `${a.slot} is drawn`);
       assert.ok(drawn.every((p) => p.kind === 'skinned'), `${a.slot}: a skinned part, drawn by skinBatch`);
     }
     const { tracks, sampleTrack, frame } = bindPoseTracks(retailSkeleton());
