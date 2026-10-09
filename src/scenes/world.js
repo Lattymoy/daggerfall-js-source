@@ -773,6 +773,7 @@ import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ring
 // death's drop and its one piece, the fights between players, the room's remains as piles, and the HUD's two glyphs
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
 import { setWildHere, wildHere, isWildRegion, wildMaskOf, wildInside, wildNear, setWildDeath, wildDeath, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME } from '../systems/wildZone.js';
+import { createPartyTruce } from '../systems/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wildZone.js';   // GREATER-GIANT
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { takeWildDrop, takeWildGold, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
@@ -21768,12 +21769,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() || modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too
   /** Is this player one I may fight (and be fought by): standing in the zone, never of my party, never my duel's
    *  opponent (a duel's blows are the duel's own). */
+  const _wildTruce = createPartyTruce();   // PARTY-TRUCE: a party left is no fight for ten minutes, both ways
   const wildFair = (peerId) => {
     if (!peerId || !wildCan()) return false;
     if (social?.isPartyPeer(peerId)) return false;
+    if (_wildTruce.holds(peerId, Date.now())) return false;   // PARTY-TRUCE: nor one who just left it, or whose party I left
     if (duelMgr.live && duelMgr.opponent === peerId) return false;
     return wildAtWire(duelWorldOf(peerId));
   };
+  /** PARTY-TRUCE: the row a party's walk asks with when it ends in the zone or at its edge - the walk is the one door
+   *  into it no journey's gate asks (wildJourney: "The Overworld map's journeys are walked, never asked"). */
+  const wildWalkRow = (x, y) => { const m = wildMask(); return online?.wildOk && m && wildNear(m, x, y) ? WILD_TEXT.walkInto : null; };   // wildNear: inside, or within its band
   /** The fair players' bodies in this scene (peersNear's { id, feet, height }). */
   const wildBodiesNow = () => {
     if (!wildCan()) return NO_BODIES;
@@ -22062,6 +22068,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { wdunFrame(); } catch (e) { console.warn('[wdun]', e?.message ?? e); }   // PVPDUNGEONS: the hub's word, the heartbeat, the day's halls
     const here = _onlineWorldSession() && !!online?.wildOk && isWildRegion(_questRegionIndex()) && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })();   // the cut zone, not the whole region
     if (false) void 0;   // WILD2: the rings' mask, for the hosts with no map of their own
+    if (_wildTruce.frame(social?.partyPeers?.() ?? new Set(), Date.now()).length && here) townTalk.say(WILD_TEXT.truce);   // PARTY-TRUCE
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
       // WILD2: the ring under my feet (a building's or a dungeon's: its door's pixel) - 1 the outer, 4 the heart
       let ring = 0;
@@ -25748,7 +25755,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const where = tw.sx != null ? TRAVEL_VIEW_TEXT.theSpot : (tvPlaceSummary(tw.x, tw.y)?.name ?? TRAVEL_VIEW_TEXT.theSpot);   // AUDIT OW5 P5: "to the marked spot"
       const round = tw.at;
       const box = new YesNoBoxWindow({
-        rows: [`${leadRow.name ?? 'Your leader'} leads the party to ${where}.`, 'Travel with them?'],
+        rows: [`${leadRow.name ?? 'Your leader'} leads the party to ${where}.`, ...[wildWalkRow(tw.x, tw.y)].filter(Boolean), 'Travel with them?'],   // PARTY-TRUCE: the zone named
         onYes: () => walkAnswered(box, round, true),
         onNo: () => walkAnswered(box, round, false),
       });

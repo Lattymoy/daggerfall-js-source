@@ -270,8 +270,8 @@
   {
     "name": "FOOT-IN-the-pixel-unasked",
     "file": "src/scenes/mineHost.js",
-    "old": "        if (!onPixel(foot[0], foot[1]) || insideRocks(pieces, foot[0], foot[1])) continue;   // FOOT-IN\n",
-    "new": "        if (insideRocks(pieces, foot[0], foot[1])) continue;   // FOOT-IN\n",
+    "old": "        if (!onPixel(foot[0], foot[1]) || insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
+    "new": "        if (insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
     "tests": [
       "test/fb1001_rockfoot.test.js"
     ]

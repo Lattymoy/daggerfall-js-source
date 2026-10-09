@@ -33,8 +33,15 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool(),"`), so it rides the save and
   the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
 - **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
-  (`systems/loot.js:"delete out.acquired;"`) and off the zone's death record (`wildDeath.js:"delete copy.acquired;"`). A piece
-  another player hands over - a trade, the zone's remains, the market, a room's chest - is new to its taker.
+  (`systems/loot.js:"for (const k of RECEIVER_MARKS) delete out[k];"`) and off the zone's death record
+  (`wildDeath.js:"for (const k of RECEIVER_MARKS) delete copy[k];"`). A piece another player hands over - a trade, the
+  zone's remains, the market, a room's chest - is new to its taker.
+- **And the realm's trade law reads the same list (MARK-WIRE, FIELD BUGS 2026-10-09b).** The three receiver's marks are
+  ONE list, `realmTradeLaw.js:"export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired']);"`,
+  which the realm's volatile fields spread and its moved record strips. ACQUIRE1 first added the mark to the wire's clamp
+  and the death record and not there: the pack's record carried it, the List form's offer did not, and the market, a
+  stall and a realm trade refused every marked piece ("The realm does not hold that piece where your pack had it" -
+  `01-Overview/Field-Bugs-2026-10-09b.md`).
 - **Cards** stack, and a card that lands on a stack the player already holds merges into it and is gone as a record. So a
   card's arrival is its count rising: the three lists' total of that card, frame to frame, less what a marked record new
   to the lists brought (a stack of the player's own back from a chest).

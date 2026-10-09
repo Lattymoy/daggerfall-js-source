@@ -709,6 +709,17 @@ its body race it and are asked to stop. Nothing timed one out, so a fetch that n
 for the session and the retry never asked again. When the arrays land after a pixel's first build, what lies on its
 ground rides the rebuilt ground (G1/G2, `03-World/Landforms.md` THE SAVES).
 
+## CANAL-ARM - an arm a path carries is the path's (FIELD BUGS 2026-10-09b, a port departure)
+
+The Discord's "River/Stream Creation Turned Some Roads into Canals": "a lot of towns that usually have straight dirt
+roads to them now have canals". His arrays share a compass arm between a path and a river or a stream at 32 arms of 30
+pixels (a water and a path that both meet a pixel's centre - a town's - from one side). This painter paints the water
+before the track, his order, so the whole arm was water where the dirt track ran, and a river on a road's arm flanked
+the road with its banks; LANDFORM3 cuts the painted water into the land, and the room's rivers are on - a straight
+sunken channel up to the town. `roadsProducer.js` `waterOffPaths` gives each such arm to its path, once, as the arrays
+load: the painter, the channel's cut and the maps all read the arrays, so all three agree. A crossing shares no arm,
+and its ford or causeway stands as it did. Pinned by `test/fb1009b_canalarm.test.js`.
+
 ## VERGE1 - clear roadsides: nothing of the wild stands over a road (2026-10-07, a port departure)
 
 Mac: *"Making sure objects, like trees, avoid pathways and roads. Currently

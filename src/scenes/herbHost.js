@@ -133,12 +133,12 @@ export function herbKind({ book }) {
   return {
     id: 'herb',
     professions: Object.freeze(['herbalism']),
-    nodesOf({ px, py, day, info, confirmed, specs, entry }) {
+    nodesOf({ px, py, day, info, confirmed, specs, entry, near }) {
       if (!HERB_TABLES[info.climate]) return [];
       return standPatches({
         px, py, day, climate: info.climate, confirmed, seasonalEye: specs('herbalism')[100] === 'seasonal-eye',
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null,   // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js)
-        rocks: entry.rocks ?? [],   // NODE-CLEAR: and never inside a rock piece
+        rocks: [...(entry.rocks ?? []), ...(near ?? [])],   // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too
         verge: entry.verge ?? null,   // VERGE1: nor over a road
         beach: entry.beach ?? null,   // AUDIT LANDFORMS II H2: the beach line DFU's own blend draws in a town's pixel
       });

@@ -284,7 +284,7 @@ test('AUDIT REALM2 S4: an offer is its record BOTH ways - a record carrying what
   const wire = validLootItem(dagger);
   assert.ok(recordIsOffered(JSON.parse(JSON.stringify(dagger)), wire), 'an honest record is its wire projection');
   assert.ok(recordIsOffered({ ...dagger, equipSlot: null, questItem: false, stackCount: 3, value: 1 }, wire), 'its count, its price and the receiver\'s marks aside');
-  assert.deepEqual(TRADE_VOLATILE_FIELDS, ['stackCount', 'value', 'equipSlot', 'questItem']);
+  assert.deepEqual(TRADE_VOLATILE_FIELDS, ['stackCount', 'value', 'equipSlot', 'questItem', 'acquired']);
   const minimal = validLootItem({ templateIndex: 113, material: 9 });
   for (const [why, rec] of [
     ['a worn edge', { ...dagger, currentCondition: 1 }],

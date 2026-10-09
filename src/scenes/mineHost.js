@@ -146,12 +146,15 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
  * that stands on the stone off the roads by its glow's half width (MINE_MARKS); a vein or a boulder at a rock piece's
  * foot keeps the piece's own clearance (ROADS-CLEAR).
  * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean,
- *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][],
+ *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], near?: number[][],
  *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
  */
-export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, samples, tilemap, locationRect = null, rocks = [], verge = null, beach = null }) {
+export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, samples, tilemap, locationRect = null, rocks = [], near = [], verge = null, beach = null }) {
   const out = [];
   const pieces = rocks ?? [];
+  // ROCK-NEAR (FIELD BUGS 2026-10-09b): what no node may stand inside - this pixel's pieces and the ones its built
+  // neighbours stand that reach into it (`near`, gatherHost.js nearRocks). A node stands BESIDE its own pixel's alone.
+  const solid = near?.length ? [...pieces, ...near] : pieces;
   const clear = verge ? (x, z) => verge(x, z, MINE_MARKS.vein.w / 2) : null;   // VERGE1
   /** ROCK-SHARE: the feet taken - a piece holds a node on each of its sides NODE_SPACING_M apart */
   const taken = [];
@@ -164,7 +167,7 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
     for (const { i } of order) {
       for (const [tx, tz] of footTargets(pieces[i], x, z)) {
         const foot = rockFoot(pieces[i], tx, tz);
-        if (!onPixel(foot[0], foot[1]) || insideRocks(pieces, foot[0], foot[1])) continue;   // FOOT-IN
+        if (!onPixel(foot[0], foot[1]) || insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR
         if (taken.some((t) => Math.hypot(t[0] - foot[0], t[1] - foot[1]) < NODE_SPACING_M)) continue;
         taken.push(foot);
         return { rock: pieces[i], foot };
@@ -199,8 +202,8 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
         // VEIN-CLEAR (FIELD BUGS 2026-10-01): a rock field stands on stone, so the stone tile nearest could lie under a
         // piece of it - a vein stood inside the rock, glowing and marked, that no look could reach (the ray to it is the
         // rock's); it stands on the nearest stone outside every piece, as a rock's foot does (AUDIT 29 C11)
-        const outside = (a) => (a && !insideRocks(rocks ?? [], a.x, a.z) ? a : null);
-        const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, rocks ?? [], clear, beach) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach));
+        const outside = (a) => (a && !insideRocks(solid, a.x, a.z) ? a : null);
+        const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, clear, beach) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach));
         if (at) local = [at.x, at.y, at.z];
       }
       if (!local) continue;
@@ -241,14 +244,15 @@ function standAnywhere(samples, tilemap, locationRect, rocks, clear = null, beac
  * what: 'motherlode', slot, tier, material, local, rock, lift, lode }`, `local` pixel-local metres.
  * VERGE1: `verge`, when handed, keeps a heap that stands on the stone off the roads by its glow's half width
  * (MOTHERLODE_MARK) - the heart is where a pixel's roads meet, and its nearest stone was often on the verge.
- * @param {{ lodes: any[], samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], taken?: number[][],
+ * @param {{ lodes: any[], samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], near?: number[][], taken?: number[][],
  *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
  */
-export function standMotherlodes({ lodes, samples, tilemap, locationRect = null, rocks = [], taken = [], verge = null, beach = null }) {
+export function standMotherlodes({ lodes, samples, tilemap, locationRect = null, rocks = [], near = [], taken = [], verge = null, beach = null }) {
   const out = [];
   const pieces = rocks ?? [];
+  const solid = near?.length ? [...pieces, ...near] : pieces;   // ROCK-NEAR: a neighbour's piece reaching in is rock too
   const stone = verge ? (x, z) => verge(x, z, MOTHERLODE_MARK.w / 2) : null;   // VERGE1
-  const clear = (x, z) => onPixel(x, z) && !insideRocks(pieces, x, z) && ![...taken, ...out.map((n) => n.local)].some((t) => Math.hypot(t[0] - x, t[2] - z) < NODE_SPACING_M);
+  const clear = (x, z) => onPixel(x, z) && !insideRocks(solid, x, z) && ![...taken, ...out.map((n) => n.local)].some((t) => Math.hypot(t[0] - x, t[2] - z) < NODE_SPACING_M);
   for (const lode of lodes ?? []) {
     const cx = TERRAIN_SIZE / 2, cz = TERRAIN_SIZE / 2;
     let local = null, rock = null;
@@ -267,9 +271,11 @@ export function standMotherlodes({ lodes, samples, tilemap, locationRect = null,
       // no clear foot at a piece: the stone nearest its heart, else where nature stands there - a Motherlode stands
       // wherever its pixel can hold it, a vein beside it or not (it is the day's one; a vein moves aside for none)
       const t = Math.floor(WORLD_MAP_TILE_DIM / 2);
-      const at = nearestStone(samples, tilemap, locationRect, t, t, VEIN_STONE_REACH, pieces, stone, beach) ?? natureStandsAt(samples, tilemap, locationRect, t, t, stone, beach)
-        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone, beach);
-      if (at && onPixel(at.x, at.z) && !insideRocks(pieces, at.x, at.z)) local = [at.x, at.y, at.z];
+      // ROCK-NEAR: the heart's own stand asked as the stone's is - one inside a rock passed over for standAnywhere's
+      const free = (a) => (a && onPixel(a.x, a.z) && !insideRocks(solid, a.x, a.z) ? a : null);
+      const at = nearestStone(samples, tilemap, locationRect, t, t, VEIN_STONE_REACH, solid, stone, beach) ?? free(natureStandsAt(samples, tilemap, locationRect, t, t, stone, beach))
+        ?? standAnywhere(samples, tilemap, locationRect, solid, stone, beach);
+      if (free(at)) local = [at.x, at.y, at.z];
     }
     if (!local) continue;
     out.push({ key: lode.key, what: 'motherlode', slot: lode.k, tier: MOTHERLODE_TIER, material: lode.material, local, rock, lift: 0.9, lode });
@@ -368,9 +374,10 @@ export function mineKind({ book, lodes = null, marks = null }) {
   return {
     id: 'mine',
     professions: Object.freeze(['mining']),
-    nodesOf({ px, py, day, info, confirmed, entry }) {
+    nodesOf({ px, py, day, info, confirmed, entry, near }) {
       const stone = {
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null, rocks: entry.rocks ?? [],   // AUDIT 29 C8
+        near: near ?? [],   // ROCK-NEAR: the neighbours' pieces reaching in
         beach: entry.beach ?? null,   // AUDIT LANDFORMS II H2: the beach line DFU's own blend draws in a town's pixel
         verge: entry.verge ?? null,   // VERGE1: off the roads
       };
