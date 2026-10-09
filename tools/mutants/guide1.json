@@ -340,8 +340,8 @@
   {
     "name": "GUIDE1-order-read-as-written",
     "file": "src/ui/questRail.js",
-    "old": "    const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);",
-    "new": "    const written = writtenOrder(q).map((j) => ({ ...read[j], lines: readLines(q.messages[j], q.steps?.[j] ?? null, q) ?? [] })).filter((e) => e.lines.length);",
+    "old": "  const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);",
+    "new": "  const written = writtenOrder(q).map((j) => ({ ...read[j], lines: readLines(q.messages[j], q.steps?.[j] ?? null, q) ?? [] })).filter((e) => e.lines.length);",
     "tests": [
       "test/guide1_questLens.test.js"
     ]

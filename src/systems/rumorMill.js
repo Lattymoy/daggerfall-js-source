@@ -60,6 +60,8 @@
 //   resolvingError()      - TextManager 'resolvingError'
 //                           ('...never mind...')
 //   npcsKnowEverything()  - the debug setting (default false)
+//   questAway(questID)    - QUEST-SHELF's audit: the quest is set aside -
+//                           its rumors kept, told by no one while away
 //   questRumorWeight      - DaggerfallUnity.Settings.QuestRumorWeight
 //                           (default 50)
 //   rolls                 - Math.random-compatible (Random.Range +
@@ -186,6 +188,7 @@ export class RumorMill {
       // the bulletin filter matches entry.textID against the allowed
       // ids - and runs FIRST, before any type check
       if (readingSign && !ALLOWED_BULLETIN_TEXT_IDS.includes(entry.textID)) continue;
+      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue;   // QUEST-SHELF's audit
       if (entry.rumorType === RUMOR_TYPE.CommonRumor) {
         // the region gate (the crime-wave arm; DFU dropped classic's
         // ruler regioning by never stamping those - the CODE is the law)

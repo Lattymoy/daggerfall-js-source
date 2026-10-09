@@ -7,7 +7,7 @@
 // receipt (Chapters-Arc 3.3), and HALL_WRIT_REP more for the chapter's
 // receipt writ, its first such receipt of the UTC day there (section 4).
 // The law is src/net/npcChapterLaw.js (receiptCreditsOf); the record is
-// migration 0095_npc_receipts.
+// migration 0097_npc_receipts.
 //
 // AFTER THE RECEIPT, NEVER INSTEAD OF IT. The claim's own row is written
 // first (accounts.js claimGate, raids.js claimRaid) and its answer stands

@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { scene, terrain } from './csaScene.mjs';
 import { sea, readyPool } from './navalSea.mjs';
 import {
-  titleDeed, titleOf, fleetBook, fleetShip, knowShip, retitle, creditShip, forgetShip, loanOwed, settleCredit, _resetFleetForTests,
+  titleDeed, titleOf, fleetBook, fleetShip, knowShip, retitle, forgetShip, loanOwed, settleCredit, restoreFleetSaveData, _resetFleetForTests,
 } from '../src/systems/fleet.js';
 import { mintDeed, mintBoatItem, BOAT_PARTS_TEMPLATE } from '../src/systems/comeSailAwayItems.js';
 import { PARTS_STANDING_TEXT } from '../src/systems/comeSailAway.js';
@@ -120,19 +120,21 @@ test('AUDIT HOLDINGS F3: a Large Boat\'s rig picked again is hers - her record a
   assert.equal(fleetShip(630).variant, 3, 'a rig no Large Boat has is no rig');
 });
 
-test('AUDIT HOLDINGS F4/F5: the bank\'s claim - a boat bought as parts on credit carries it as a deed does; cleared once her bank is owed nothing (settleCredit)', () => {
+test('AUDIT HOLDINGS F4: the bank\'s claim - a small boat\'s, restored from a save made while SHIP-CREDIT stood (F5: bought as parts on credit), cleared once her bank is owed nothing (settleCredit) - and the page\'s own sweep settles it (SHIP-CREDIT WITHDRAWN 2026-10-08: no purchase stamps one now)', () => {
   _resetFleetForTests();
-  const r = creditShip(640, 0, 0, 300, { region: 3, due: 50 });
+  const parts = (uid) => ({ uid, hull: 0, variant: 0, value: 300, name: '', upgrades: {}, credit: { region: 3, due: 50 }, port: null, title: false });
+  restoreFleetSaveData({ v: 1, ships: [parts(640)] });
+  const r = fleetShip(640);
   const accounts = Array.from({ length: 62 }, () => ({ loanTotal: 0, loanDueDate: 0 }));
   accounts[3] = { loanTotal: 300, loanDueDate: 50 };
   assert.deepEqual(loanOwed(r, accounts), { region: 3, owed: 300 });
   accounts[3].loanTotal = 0;
   assert.equal(settleCredit(accounts), 1);
   assert.equal(r.credit, null);
-  assert.equal(creditShip(640, 9, 0, 1, { region: 1 }), null, 'no such hull');
   // the page's own sweep settles it: owed, kept; owed nothing, cleared
   const s = csaWithBook();
-  const owed = creditShip(641, 0, 0, 300, { region: 3, due: 50 });
+  restoreFleetSaveData({ v: 1, ships: [parts(641)] });
+  const owed = fleetShip(641);
   accounts[3].loanTotal = 300;
   const host = fleetOver(s, undefined, accounts);
   host.model();

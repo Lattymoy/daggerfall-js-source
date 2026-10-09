@@ -114,6 +114,7 @@ on:
       - "src/characters/itemTemplates.json"
       - "src/net/sdReceipt.js"
       - "src/net/sdMarks.js"
+      - "src/net/postLaw.js"
       - "src/systems/wind.js"
       - ".github/workflows/account-deploy.yml"
   workflow_dispatch:

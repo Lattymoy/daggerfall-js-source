@@ -70,8 +70,8 @@ test('FOUNDER5 the names: a handle in FOUNDER_HANDLES holds Founder whenever it 
 test('FOUNDER5 the config: FOUNDER_HANDLES is a var in wrangler.toml beside the developers\' and moderators\' lists; the version moved to acct92 (CRAFT2-CRAFT5 on to acct93 since, SD9b\'s acct94 after it, and SCALE4a-c\'s acct95 after that)', () => {
   const toml = src('server-account/wrangler.toml');
   assert.match(toml, /^FOUNDER_HANDLES = "[^"]*"$/m);
-  assert.match(toml, /^ACCOUNT_VERSION = "acct97"$/m);   // PIN MOVED: acct97, the Chapters (CHAP1-CHAP4c) past TAVERN CARDS' acct96 and SCALE4's acct95 at the merges
-  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct97';/);   // PIN MOVED: acct97, the Chapters (CHAP1-CHAP4c) past TAVERN CARDS' acct96 and SCALE4's acct95 at the merges; PIN MOVED: CRAFT2-CRAFT5's acct93, then SD9b's acct94 (the Super Dungeons arc's merges of main), then SCALE4a-c's acct95 (acct94 on its branch, renumbered past SD9b at the merge)
+  assert.match(toml, /^ACCOUNT_VERSION = "acct98"$/m);   // PIN MOVED: acct98, the Chapters (CHAP1-CHAP5b) past SERVER-POST's acct97, TAVERN CARDS' acct96 and SCALE4's acct95 at the merges
+  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct98';/);   // PIN MOVED: acct98, the Chapters (CHAP1-CHAP5b) past SERVER-POST's acct97, TAVERN CARDS' acct96 and SCALE4's acct95 at the merges; PIN MOVED: CRAFT2-CRAFT5's acct93, then SD9b's acct94 (the Super Dungeons arc's merges of main), then SCALE4a-c's acct95 (acct94 on its branch, renumbered past SD9b at the merge)
 });
 
 // ── THE SERVICE, end to end ─────────────────────────────────────────

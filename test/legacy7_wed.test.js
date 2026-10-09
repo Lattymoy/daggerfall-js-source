@@ -595,3 +595,22 @@ test('LEGACY7 part three the inspect card: the Propose button beside the Challen
   assert.match(w, /realmUnions\(realmIoNow\(\)\)\.then\(\(r\) => \{ if \(r\.ok\) legacyHost\?\.unionsHeard\(r\.unions\); \}\)/);
   assert.match(rd('server/src/index.js'), /this\._send\(tws, JSON\.stringify\(\{ t: 'wed', id: a\.id, \.\.\.\(typeof a\.sub === 'string' && a\.sub \? \{ sub: a\.sub \} : \{\}\), \.\.\.\(typeof a\.ci === 'string' && a\.ci \? \{ sc: a\.ci \} : \{\}\), data: m\.data \}\)\);/);
 });
+
+test('FIELD BUGS 2026-10-08 THE WEDDING GATE LETS A CHARACTER WHO MAY WED WED (Sahh: two Enduring or two Bloodlines characters "cannot seem to marry each other", the button grey at every temple): the world host\'s wedCan, run out of its own text - the house\'s null (may wed) is null, every refusal the house\'s own, \'house\' only with no house host, \'busy\' dead, under a death, or with no relay to carry it (mutant: `?? \'house\'` back - the null read as no house)', () => {
+  const lines = rd('src/scenes/world.js').split('\n');
+  const a = lines.findIndex((l) => /^  const wedCan = \(\) => /.test(l));
+  assert.ok(a >= 0, 'world.js holds wedCan');
+  let b = a;
+  while (!/;$/.test(lines[b])) b++;
+  const make = new Function('playerEntity', 'modes', 'online', 'legacyHost', `${lines.slice(a, b + 1).join('\n')}\nreturn wedCan;`);
+  const open = { status: 'open', wedOk: true };
+  const alive = { health: 10 };
+  const host = (why) => ({ wedRefusal: () => why });
+  assert.equal(make(alive, null, open, host(null))(), null, 'may wed: the button lit, the ask and the answer sent');
+  for (const why of ['house', 'busy', 'wed', 'temple']) assert.equal(make(alive, null, open, host(why))(), why, `the house's own ${why}`);
+  assert.equal(make(alive, null, open, null)(), 'house', 'no house host');
+  assert.equal(make({ health: 0 }, null, open, host(null))(), 'busy', 'lying dead');
+  assert.equal(make(alive, { deathUp: () => true }, open, host(null))(), 'busy', 'under a death');
+  assert.equal(make(alive, null, { status: 'open', wedOk: false }, host(null))(), 'busy', 'a relay that cannot carry it');
+  assert.equal(make(alive, null, { status: 'closed', wedOk: true }, host(null))(), 'busy', 'offline');
+});

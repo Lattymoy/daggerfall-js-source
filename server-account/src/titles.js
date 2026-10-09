@@ -147,6 +147,20 @@ export const isNamedFounder = (player, env) =>
   typeof player?.handle === 'string' && !!player.handle
   && founderHandles(env).has(player.handle.toLowerCase());
 
+/** HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura,
+ *  a title named Hour's First, and each the gilded gun"): THE FIRST GROUP TO BREAK AN ABYSS DUNGEON, by name - the
+ *  accounts the first clear's claims name (sd_kills, slot 1; .github/workflows/sd-clears.yml read them). A list in config,
+ *  the developers' law (FOUNDER5's): held while listed, and a guest - no handle - never is. It grants the title Hour's
+ *  First and its aura, The First Hour, and no glyph (TIER_LISTS would owe one). */
+export function hoursFirstHandles(env) {
+  return handleList(env?.HOURS_FIRST_HANDLES);
+}
+export const isHoursFirst = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle
+  && hoursFirstHandles(env).has(player.handle.toLowerCase());
+/** HOURS-FIRST: the aura Hour's First carries - The Turning Hour in the first dawn's light (render/auraRing.js). */
+export const HOURS_FIRST_AURA = 'firsthour';
+
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can
  *  check it against the sentence Mac wrote. */
@@ -310,6 +324,7 @@ export function titlesHeld(player, env) {
   // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
   // held for good. A guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');
+  if (isHoursFirst(player, env)) held.push('hoursfirst');   // HOURS-FIRST: by name
   return held;
 }
 
@@ -328,6 +343,7 @@ export function aurasHeld(player, env) {
   // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js
   // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');
+  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
   return held;
 }

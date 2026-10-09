@@ -289,8 +289,8 @@
   {
     "name": "TIME3-a-copy-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
-    "new": "    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
+    "new": "    questData = { ...questData, ...NO_SHELF };\n    const quest = this._newQuest();",
     "tests": [
       "test/time3_quests.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "TIME3-a-resync-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = this._onThisClock(questData);   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
-    "new": "    const scratch = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
+    "new": "    questData = { ...questData, ...NO_SHELF };\n    const scratch = this._newQuest();",
     "tests": [
       "test/time3_quests.test.js"
     ]

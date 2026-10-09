@@ -35,7 +35,7 @@ test('CHAP4c the vocabulary: three chapter title ids, last in the closed list; e
   assert.deepEqual(row.ts, [4121, 2], 'the relay stamps the claim off the token');
   assert.deepEqual(readBadge({ title: 'chapterofficer', ts: [4121, 2], glyphs: [] }).ts, [4121, 2], 'and reads it back');
   assert.equal(readBadge({ title: 'founder', ts: [4121, 2], glyphs: [] }).ts, undefined, 'never beside a title that rides alone');
-  assert.equal(RELAY_VERSION, 'world179');   // PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
+  assert.equal(RELAY_VERSION, 'world180');   // PIN MOVED: world180, CHAP4c (the chapters' seats' titles on the token - past HOURS-FIRST's world179 at the merge of main); PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
 });
 
 // ── THE LAW AND THE WORDS ───────────────────────────────────────────
