@@ -115,7 +115,7 @@ reopens exactly that door - unless the service knows what it handed out. So it c
   counted**. A deposit by the Stores page, a writ or the market never moves more than the count, and never gold's to a
   station. What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
   guarantee, kept with the door open one way more. A station's own put-in is the exception, by the owner's word
-  (BAG-CRAFT, section 14): it moves what the pack holds past the count too, as bought.
+  (BAG-CRAFT, section 14): it moves what the pack holds past the count too, as **loose** - a station's alone (section 15).
 - A lie about `held` can only cut the count, never raise it. **What it bounds and what it does not**: a client may say
   it holds more than it does - a pack that sold three Red Roses saying it still holds them - and the count is then not
   cut; those units stay counted and may be deposited. That is not prevented. It is bounded: never past what the service
@@ -180,7 +180,7 @@ Stores"); a gold listing takes its Stores' own and gold's units alone.
 | Threat | Answer |
 |---|---|
 | A save-edited material deposited into the Stores | Only the carried count moves; it is cut to the pack and never raised (5) |
-| A looted DFU herb sold to a writ as a harvested one | It is held, never counted: a writ uses the count, not the items (5); a station works it as bought, never own (14) |
+| A looted DFU herb sold to a writ as a harvested one | It is held, never counted: a writ uses the count, not the items (5); a station works it loose, which no writ, guild or sale takes (14, 15) |
 | Gold's goods spent at a station through the bag | A station's shortfall moves bought and own alone (6) |
 | A client claims it holds more than it does | `held` only cuts the count; the units stay counted, bounded by what was handed out (5) |
 | A stale `held` (an answer lost, a twin request) cuts units the pack is about to get | The cut only against the count the client heard, once a request, never by a twin of a landed act (5, 10) |
@@ -307,19 +307,41 @@ With the count's goods the path was whole (a Steel Longsword from a bag of count
 - **Its put-in is the deposit's `work` order** (`DEPOSIT_ORDERS.work`, `looseOrder`) - a craft, a brew, a smelt and a
   temper: the counted units first, bought then own, as `spend` moves them, then the units the count does not hold, as
   many as `held` names past the count once cut (`server-account/src/professions.js` depositStores). Those go into the
-  Stores as **bought** (`LOOSE_ORIGIN`) and the count is not touched for them; the answer says them (`loose`). The
-  stamp, the checkpoint before the ask and the give-back on a refusal are the deposit's own (section 7).
-- **Bought, never own**: no gatherer's word - it raises no seat's influence, and a piece made of it is bought (AUDIT
-  PROF-541 B7: listed for Marks, never for gold over the wall).
+  Stores as **loose** (`LOOSE_ORIGIN`, the Stores' fourth origin - section 15) and the count is not touched for them;
+  the answer says them (`loose`). The stamp, the checkpoint before the ask and the give-back on a refusal are the
+  deposit's own (section 7).
+- **Loose, a station's alone** (section 15): never own (no gatherer's word - it raises no seat's influence), never
+  bought (no writ, guild Stores or Drakes sale takes it), never gold's; a station spends it first, and what it makes of
+  it stays walled.
 - **A writ, the market and the Stores page's Put in are unchanged**: they move the service's count alone (`spend`,
   `all`; `book.held`), and a writ whose count moved since it was heard is refused `carried-short`, its units given back.
 
-What this gives up, and the owner's call: law 3's guarantee was that nothing edited into a save reaches the economy. A
-station's put-in now takes the client's word for what the pack holds - bounded by `heldOk` and a deposit's 200, never
-own and never gold's - so a modified client can craft from goods it never had, and sell the pieces for Marks. Recorded
-here, and at `Professions-Arc.md` law 3, so the next reader does not read the old guarantee as standing.
+What this gives up, and the owner's call: a station's put-in takes the client's word for what the pack holds (a
+deposit's 200 at a time, the professions' hourly bound on acts). A modified client can therefore craft from goods it
+never had and earn the craft's XP - and nothing more: since the audit (section 15) none of those goods, nor anything a
+station makes of them, reaches a writ, the guild Stores, a Drakes listing or fill, or the carried count; a piece of
+them lists for gold alone, as any pack's piece does (MARKET-ANY). Law 3's guarantee stands for the economy, and
+`Professions-Arc.md` law 3 says where the door is.
 
 Pinned by `test/fb1009c_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
 in one press through the real Worker; the law; the service's `work`, `spend` and `all` and a full Store; the book's
 doors; the anvil and the forge over a real carrying book); `tools/mutants/fb1009c_bagcraft.json`. The record:
 `01-Overview/Field-Bugs-2026-10-09c.md`. ACCOUNT_VERSION `acct99`.
+
+## 15. The audit - AUDIT BAG-CRAFT (2026-10-09, Mac: "Audit this")
+
+Three cold reviews were launched on the frozen head and stopped on a rate limit before reporting; the three lanes (the
+service and the economy, the client, the tests and the docs) were then read in full, each finding reproduced against
+the real Worker or the real modules before it was fixed, pinned and mutated (`tools/mutants/auditbagcraft.json`).
+
+| # | Found | Fixed |
+|---|---|---|
+| A1 (HIGH) | A `work` put-in is no station's act but a request any client may send, and its units went into the Stores as **bought** - every door law 3 walls. Reproduced: 200 Mithril Ore no pack held, put in by a bare `work` deposit, listed for Drakes (100) and withdrawn counted as carried (50) - and by the same reads delivered to a Court writ, the guild Stores or a guild writ, and filled into a Drakes order. Section 14's "sell the pieces for Marks" understated it | **The stations' wall** - GOLD-MARKET's turned the other way: the Stores' fourth origin, `loose` (migration `0095_loose_origin.sql`; `bagLaw.js` LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS). A station alone spends it, first (`professions.js` workableSql and workStatements - a craft, a smelt, `alchemy.js`'s brew, a temper); a writ, the guild Stores and the market read own and bought (`spendableSql`); a withdrawal takes it after gold's and never counts it; a smelt's products of it are loose, a craft's piece of it is walled to gold (`bought_with` 'gold' - MARKET-ANY's pack-piece law: no Drakes listing, commission or auction), a temper with it walls the piece the same, a Ram Kit of it is loose (no camp's writ takes it); a brew never reckons it unbruised. The book reads it as a station's (`storesWorkable`) and no writ's (`storesHeld`); the Stores page counts it in the total and the room and says it ("from your pack", LOOSE_GOODS_LINE) |
+| C1 | The book's door pins read the source with `includes`, which a comment quoting the line would satisfy | Pinned on lines of code (`codeHas`) |
+| C2 | No pin held a writ's put-in reading the Stores' loose units as already in (the audit's own survivor) | Pinned: the counted unit goes in all the same |
+| B1 (LOW, kept) | A craft refused by the service after its put-in (a rank, a fee) leaves the moved goods in the Stores | Not changed: they are loose there, the next station's, and Take out gives them back to the pack uncounted |
+
+What the wall costs an honest player: a piece made of looted goods lists for gold alone, as the looted goods
+themselves would from the pack; and a Ram Kit of them stays a station's. Pinned by `test/auditbagcraft.test.js` (the
+wall at every door, through the real Worker - the gold wall's own test the pattern; the stations' spends and products;
+the brew's unbruised count; the Stores page over a real carrying book) and `test/fb1009c_bagcraft.test.js`.

@@ -215,7 +215,7 @@ export const BAG_PAGE_WORDS = Object.freeze({
 });
 /** AUDIT2 BAG1 U1: how many more units of a row's material the Stores take - their bound less what they hold, every
  *  origin (the deposit's own decision, server-account/src/professions.js depositStores). */
-export const storesRoomOf = (book, row) => Math.max(0, (book?.state?.caps?.stores ?? STORES_MAX) - ((row?.own | 0) + (row?.bought | 0) + (row?.gold | 0)));
+export const storesRoomOf = (book, row) => Math.max(0, (book?.state?.caps?.stores ?? STORES_MAX) - ((row?.own | 0) + (row?.bought | 0) + (row?.gold | 0) + (row?.loose | 0)));   // AUDIT BAG-CRAFT A1: every origin fills it
 /** BAG1: the page's rows for a carrying book - every material the Stores hold or the character carries, each with its
  *  Stores split (`own`, `bought`, `gold`) and `carried`: what the bag and the pack hold of it that the service counts. */
 export function carryRows(book, carriedHeld) {
@@ -588,21 +588,24 @@ export function storesRows(stores, { family = null, query = '', sort = 'tier' } 
   const q = String(query ?? '').trim().toLowerCase();
   const rows = [...stores.values()].map((s) => {
     const m = material(s.material);
-    return { ...s, name: nameOf(s.material), family: m?.family ?? null, tier: m?.tier ?? 0, value: m?.value ?? 0, total: s.own + s.bought + (s.gold | 0), carried: s.carried | 0 };   // GOLD-MARKET: what gold bought is held too; BAG1: what is carried beside it
+    return { ...s, name: nameOf(s.material), family: m?.family ?? null, tier: m?.tier ?? 0, value: m?.value ?? 0, total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried: s.carried | 0 };   // GOLD-MARKET: what gold bought is held too; BAG1: what is carried beside it; AUDIT BAG-CRAFT A1: and what a station's put-in brought loose
   }).filter((r) => r.total + r.carried > 0 && (!family || r.family === family) && (!q || r.name.toLowerCase().includes(q)));
   const byName = (a, b) => a.name.localeCompare(b.name);
   rows.sort(sort === 'name' ? byName : sort === 'count' ? (a, b) => (b.total - a.total) || byName(a, b) : (a, b) => (a.tier - b.tier) || byName(a, b));
   return rows;
 }
 
-/** A Stores card's split: own, bought and (GOLD-MARKET) bought with gold - "own" alone where nothing was bought. */
+/** A Stores card's split: own, bought and (GOLD-MARKET) bought with gold - "own" alone where nothing was bought. AUDIT
+ *  BAG-CRAFT A1: and what a station's put-in brought from the pack, loose. */
 export function storesSplit(r) {
-  const gold = r.gold | 0;
-  if (!gold) return r.bought ? `${r.own} own · ${r.bought} bought` : 'own';
-  return [r.own ? `${r.own} own` : null, r.bought ? `${r.bought} bought` : null, `${gold} bought with gold`].filter(Boolean).join(' · ');
+  const gold = r.gold | 0, loose = r.loose | 0;
+  if (!gold && !loose) return r.bought ? `${r.own} own · ${r.bought} bought` : 'own';
+  return [r.own ? `${r.own} own` : null, r.bought ? `${r.bought} bought` : null, gold ? `${gold} bought with gold` : null, loose ? `${loose} from your pack` : null].filter(Boolean).join(' · ');
 }
 /** GOLD-MARKET: what the page says of a material gold bought (Professions-Arc 10.8's wall). */
 export const GOLD_GOODS_LINE = 'Bought with gold: to your pack, or back on the market for gold. No station, craft, writ or silver sale takes it.';
+/** AUDIT BAG-CRAFT A1: what the page says of a material a station's put-in brought from the pack - the stations' wall. */
+export const LOOSE_GOODS_LINE = 'From your pack: for a station\'s work, or back to your pack. No writ, guild or sale takes it - only what you gathered or took from your Stores.';
 
 /**
  * THE STORES PAGE.
@@ -677,6 +680,7 @@ export function drawStoresPage(detail, rerender, kit) {
       ? 'Withdrawn, a material is an item in your pack and never goes back into the Stores. Writs are delivered at a Notice Board\'s Work tab.'
       : staysLine(pick)));   // SEAT2b part two: a siege work's road
     if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', GOLD_GOODS_LINE));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', LOOSE_GOODS_LINE));   // AUDIT BAG-CRAFT A1: an older book's page (another device's put-in)
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawForge(detail, rerender, kit);
@@ -807,6 +811,7 @@ function drawCarryStores(detail, rerender, kit) {
     detail.append(el('p', 'px-note', withdrawable(pick.material) ? BAG_PAGE_WORDS.takenNote
       : staysLine(pick)));
     if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', GOLD_GOODS_LINE));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', LOOSE_GOODS_LINE));   // AUDIT BAG-CRAFT A1: a carrying book's page
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawForge(detail, rerender, kit);

@@ -2,7 +2,8 @@
 // craft from their inventory, not just the store") - A STATION WORKS WHAT THE BAG AND THE PACK HOLD, counted or not: a
 // craft, a brew, a smelt and a temper put their shortfall in from every unit the bag, the pack and the wagon hold but
 // gold's (net/bagLaw.js carriedWorkable), by the deposit's `work` order, which the service takes past its carried count
-// into the Stores as bought (server-account/src/professions.js depositStores). A writ, the market and the Stores page's
+// into the Stores as loose - a station's alone (server-account/src/professions.js depositStores; AUDIT BAG-CRAFT A1,
+// test/auditbagcraft.test.js, the stations' wall at every other door). A writ, the market and the Stores page's
 // Put in still move only what the service handed out. bible/06-Systems/Materials-Bag.md section 14;
 // bible/01-Overview/Field-Bugs-2026-10-09c.md.
 import './chargenDom.mjs';
@@ -14,13 +15,16 @@ import '../src/systems/profTemplates.js';
 import { standService, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY } from '../src/net/accountClient.js';
 import { createProfBook, mintProfRid } from '../src/net/profBook.js';
-import { DEPOSIT_ORDERS, LOOSE_ORIGIN, looseOrder, depositOrderOk, carriedWorkable, carriedUsable, BAG_TEMPLATE } from '../src/net/bagLaw.js';
+import { DEPOSIT_ORDERS, LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS, looseOrder, depositOrderOk, carriedWorkable, carriedUsable, BAG_TEMPLATE } from '../src/net/bagLaw.js';
 import { heldOf, roomFor, mintCarried, takeCarried, giveCarried, bagTakesOf } from '../src/systems/materialsBag.js';
 import { setItemFields } from '../src/systems/itemTemplates.js';
 import { xpForRank, STORES_MAX } from '../src/net/professionLaw.js';
 import { mintPieces } from '../src/systems/smithItems.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+/** AUDIT BAG-CRAFT C1: a source pin on a line of CODE - its text at a line's start past the indent, so a comment that
+ *  quotes it (`// const ready = ...`) never satisfies it. */
+const codeHas = (text, line) => text.split('\n').some((l) => l.trimStart().startsWith(line));
 const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 /** A character of strength 50 with a Materials Bag on its back. */
@@ -49,7 +53,7 @@ async function stand({ rank = 10 } = {}) {
 
 // ─── THE DONE-WHEN ───────────────────────────────────────────────────
 
-test('BAG-CRAFT DONE WHEN: a Steel Longsword from raw goods the service never counted, every one in the Materials Bag and none in the Stores, in one press through the real Worker - the chain\'s works and the craft put each shortfall in from the bag; the bag spent of exactly them; the sword minted; the Stores keep them as bought, the carried count untouched', async () => {
+test('BAG-CRAFT DONE WHEN: a Steel Longsword from raw goods the service never counted, every one in the Materials Bag and none in the Stores, in one press through the real Worker - the chain\'s works and the craft put each shortfall in from the bag; the bag spent of exactly them; the sword minted; each put in loose, the carried count untouched', async () => {
   const { door, mac, raw, stores, carried } = await stand();
   const e = body();
   for (const [m, n] of Object.entries(RAW)) assert.deepEqual(mintCarried(e, m, n), { bag: n, pack: 0, left: 0 }, `${m} into the bag - looted, traded, withdrawn before the bag: no count`);
@@ -69,17 +73,18 @@ test('BAG-CRAFT DONE WHEN: a Steel Longsword from raw goods the service never co
     assert.deepEqual(stores(m), {}, `${m}: spent`);
     assert.deepEqual(carried(m), {}, `${m}: the count never touched - it held none`);
   }
-  const moved = raw.prepare('SELECT material, qty, own, bought, gold FROM prof_deposits WHERE player = ? ORDER BY material').all(mac.id).map((d) => [d.material, Number(d.qty), Number(d.own) + Number(d.bought) + Number(d.gold)]);
-  assert.deepEqual(moved, [['hide:rat', 2, 0], ['log:pine', 3, 0], ['metal:copper', 1, 0], ['metal:iron', 6, 0]], 'each a deposit of units the count did not hold');
+  const moved = raw.prepare('SELECT material, qty, own, bought, gold, loose FROM prof_deposits WHERE player = ? ORDER BY material').all(mac.id).map((d) => [d.material, Number(d.qty), Number(d.own) + Number(d.bought) + Number(d.gold), Number(d.loose)]);
+  assert.deepEqual(moved, [['hide:rat', 2, 0, 2], ['log:pine', 3, 0, 3], ['metal:copper', 1, 0, 1], ['metal:iron', 6, 0, 6]], 'each a deposit of units the count did not hold, put in loose');
 });
 
 // ─── THE LAW ─────────────────────────────────────────────────────────
 
-test('BAG-CRAFT law: the `work` order is a station\'s - spend\'s counted order, then units the count does not hold, as bought; a station works every unit held but gold\'s, counted or not; a writ\'s and the market\'s read is the count\'s alone (mutants: work not loose; spend loose; the loose origin own; gold\'s worked; the cut skipped)', () => {
+test('BAG-CRAFT law: the `work` order is a station\'s - spend\'s counted order, then units the count does not hold, as loose (AUDIT A1: a station spends own, bought and loose, loose first; a writ own and bought); a station works every unit held but gold\'s, counted or not; a writ\'s and the market\'s read is the count\'s alone (mutants: work not loose; spend loose; the loose origin own; gold\'s worked; the cut skipped)', () => {
   assert.deepEqual(DEPOSIT_ORDERS, { all: ['gold', 'bought', 'own'], spend: ['bought', 'own'], work: ['bought', 'own'] });
   assert.deepEqual(['all', 'spend', 'work', 'loose', null].map(looseOrder), [false, false, true, false, false]);
   assert.deepEqual(['all', 'spend', 'work', 'loose'].map(depositOrderOk), [true, true, true, false]);
-  assert.equal(LOOSE_ORIGIN, 'bought', 'never own (no gatherer\'s word), never gold\'s (no station spends it)');
+  assert.equal(LOOSE_ORIGIN, 'loose', 'AUDIT A1: its own origin - never own (no gatherer\'s word), never bought (a writ\'s, a guild\'s, a sale\'s), never gold\'s');
+  assert.deepEqual([STATION_ORIGINS, WRIT_ORIGINS], [['loose', 'bought', 'own'], ['own', 'bought']], 'the stations\' wall: loose first at a station, never at a writ');
   const cases = [
     [{}, 10, 10, 0], [{ own: 2 }, 10, 10, 2], [{ own: 2, bought: 1, gold: 3 }, 10, 7, 3],
     [{ own: 2, bought: 1, gold: 9 }, 2, 2, 2], [{ gold: 9 }, 5, 0, 0], [{ own: 4 }, 0, 0, 0], [{ own: 4 }, -3, 0, 0],
@@ -90,7 +95,7 @@ test('BAG-CRAFT law: the `work` order is a station\'s - spend\'s counted order, 
 
 // ─── THE SERVICE ─────────────────────────────────────────────────────
 
-test('BAG-CRAFT the service: a `work` deposit moves what the client holds past the count into the Stores as bought, the count untouched; the counted units first, bought then own; never past what is held, never gold\'s; `spend` and `all` move the count alone; a repeat is answered as made (mutants: work past held; spend loose; the loose part own; the count cut for loose units; gold\'s moved)', async () => {
+test('BAG-CRAFT the service: a `work` deposit moves what the client holds past the count into the Stores as loose, the count untouched; the counted units first, bought then own; never past what is held, never gold\'s; `spend` and `all` move the count alone; a repeat is answered as made (mutants: work past held; spend loose; the loose part own; the count cut for loose units; gold\'s moved)', async () => {
   const { door, mac, raw, stores, carried, count } = await stand();
   const rid = () => mintProfRid();
   const OAK = 'log:oak';
@@ -103,21 +108,21 @@ test('BAG-CRAFT the service: a `work` deposit moves what the client holds past t
   const w = await put(4, 10, 'work', id);
   assert.equal(w.ok, true, JSON.stringify(w));
   assert.deepEqual([w.data.own, w.data.bought, w.data.gold, w.data.loose], [0, 0, 0, 4]);
-  assert.deepEqual(stores(OAK), { bought: 4 }, 'as bought');
+  assert.deepEqual(stores(OAK), { loose: 4 }, 'as loose (AUDIT A1)');
   assert.deepEqual(carried(OAK), {}, 'the count untouched');
   const again = await put(4, 10, 'work', id);
   assert.deepEqual([again.ok, again.data.repeat, again.data.loose], [true, true, 4], 'a repeat answered as made');
-  assert.deepEqual(stores(OAK), { bought: 4 }, 'and moves nothing');
+  assert.deepEqual(stores(OAK), { loose: 4 }, 'and moves nothing');
   // never past what is held
   assert.equal((await put(7, 6, 'work')).error, 'carried-short');
-  assert.deepEqual(stores(OAK), { bought: 4 });
+  assert.deepEqual(stores(OAK), { loose: 4 });
   // counted first - bought, then own - then the loose part; the count moves by its own alone
   count(OAK, 'own', 2);
   count(OAK, 'bought', 1);
   const mix = await put(5, 6, 'work');   // held 6, counted 3: 3 loose may move
   assert.equal(mix.ok, true, JSON.stringify(mix));
   assert.deepEqual([mix.data.own, mix.data.bought, mix.data.gold, mix.data.loose], [2, 1, 0, 2]);
-  assert.deepEqual(stores(OAK), { bought: 7, own: 2 }, 'own as own, bought and loose as bought');
+  assert.deepEqual(stores(OAK), { bought: 1, loose: 6, own: 2 }, 'each origin as it was, the loose part loose');
   assert.deepEqual(carried(OAK), {});
   // gold's walled: held 5 of which the count names 3 gold - 2 may move
   count(OAK, 'gold', 3);
@@ -151,7 +156,10 @@ test('BAG-CRAFT the book: a station\'s put-in covers its shortfall from what is 
   assert.deepEqual([(await book.ensureInStores([{ key: 'metal:iron', n: 6 }], { work: true })).error, heldOf(e, 'metal:iron')], ['materials-short', 5], 'a station\'s past what is held: nothing moved');
   const station = await book.ensureInStores([{ key: 'metal:iron', n: 2 }, { key: 'metal:iron', n: 1 }], { work: true });
   assert.deepEqual(station, { ok: true, moved: 3 });
-  assert.deepEqual([heldOf(e, 'metal:iron'), book.storesHeld('metal:iron'), book.workable('metal:iron'), book.held('metal:iron')], [2, 3, 5, 3]);
+  assert.deepEqual([heldOf(e, 'metal:iron'), book.storesHeld('metal:iron'), book.storesWorkable('metal:iron'), book.workable('metal:iron'), book.held('metal:iron')], [2, 0, 3, 5, 0],
+    'AUDIT A1: put in loose - a station\'s three, no writ\'s');
+  assert.deepEqual(await book.ensureInStores([{ key: 'metal:iron', n: 3 }], { work: true }), { ok: true, moved: 0 }, 'a station\'s next press spends the loose three where they are');
+  assert.deepEqual(await book.ensureInStores([{ key: 'metal:iron', n: 4 }], { work: true }), { ok: true, moved: 1 }, 'and puts in only what they lack');
   // a writ's put-in of units the count named when it was heard, cut since (another device): the service's count decides
   const COPPER = 'metal:copper';
   mintCarried(e, COPPER, 4);
@@ -162,6 +170,12 @@ test('BAG-CRAFT the book: a station\'s put-in covers its shortfall from what is 
   const stale = await book.ensureInStores([{ key: COPPER, n: 2 }]);
   assert.deepEqual([stale.ok, stale.error], [false, 'carried-short'], 'never the loose units for a writ');
   assert.deepEqual([heldOf(e, COPPER), book.storesHeld(COPPER)], [4, 0], 'given back');
+  // a writ's put-in beside the Stores' loose units: they are no writ's - the counted unit goes in all the same
+  count('metal:iron', 'own', 1);
+  assert.equal((await book.refresh({ force: true })).ok, true);
+  assert.deepEqual([book.storesWorkable('metal:iron'), book.storesHeld('metal:iron'), heldOf(e, 'metal:iron')], [4, 0, 1]);
+  assert.deepEqual(await book.ensureInStores([{ key: 'metal:iron', n: 1 }]), { ok: true, moved: 1 }, 'AUDIT A1: never read as already in');
+  assert.equal(book.storesHeld('metal:iron'), 1);
   // the doors: every station's press works the bag; a Court writ's delivery does not (by source - their own suites drive them)
   const pb = src('src/net/profBook.js');
   for (const line of [
@@ -170,10 +184,10 @@ test('BAG-CRAFT the book: a station\'s put-in covers its shortfall from what is 
     'const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)], { work: true }) : { ok: true };',
     'const ready = work ? await book.ensureInStores(work.inputs.map((i) => ({ key: i.key, n: i.n * count })), { work: true }) : { ok: true };',
     'const ready = asked ? await book.ensureInStores([{ key: asked.material, n: asked.qty }]) : { ok: true };',
-  ]) assert.ok(pb.includes(line), line);
+  ]) assert.ok(codeHas(pb, line), line);
   const w = src('src/scenes/world.js');
-  assert.ok(w.includes('const ready = await profBook.ensureInStores([{ key: material, n: Number(ask.units) || 0 }]);'), 'a guild writ\'s supply: the count alone');
-  assert.ok(w.includes('putIn: (key, n) => profBook.ensureInStores([{ key, n }]),'), 'the market\'s: the count alone');
+  assert.ok(codeHas(w, 'const ready = await profBook.ensureInStores([{ key: material, n: Number(ask.units) || 0 }]);'), 'a guild writ\'s supply: the count alone');
+  assert.ok(codeHas(w, 'putIn: (key, n) => profBook.ensureInStores([{ key, n }]),'), 'the market\'s: the count alone');
 });
 
 // ─── THE STATIONS ────────────────────────────────────────────────────

@@ -119,8 +119,8 @@
   {
     "name": "GOLDMARKET-spendable-takes-gold",
     "file": "server-account/src/professions.js",
-    "old": "AND material = ${m} AND origin != 'gold'), 0)`;",
-    "new": "AND material = ${m}), 0)`;",
+    "old": "AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;",
+    "new": "AND origin IN (${originsSql([...WRIT_ORIGINS, 'gold'])})), 0)`;",
     "tests": [
       "test/goldmarket_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GOLDMARKET-withdraw-gold-last",
     "file": "server-account/src/professions.js",
-    "old": "      order: ['gold', 'bought', 'own'],",
-    "new": "      order: ['bought', 'own', 'gold'],",
+    "old": "      order: ['gold', LOOSE_ORIGIN, 'bought', 'own'],",
+    "new": "      order: [LOOSE_ORIGIN, 'bought', 'own', 'gold'],",
     "tests": [
       "test/goldmarket_service.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "GOLDMARKET-craft-takes-gold",
     "file": "server-account/src/professions.js",
-    "old": "    held.push(`${spendableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);",
+    "old": "    held.push(`${workableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${17 + 2 * i}), 0) >= ?${18 + 2 * i}`);",
     "tests": [
       "test/goldmarket_service.test.js"
@@ -182,7 +182,7 @@
   {
     "name": "GOLDMARKET-smelt-takes-gold",
     "file": "server-account/src/professions.js",
-    "old": "    held.push(`${spendableSql('?1', '?2', k)} >= ${need}`);",
+    "old": "    held.push(`${workableSql('?1', '?2', k)} >= ${need}`);",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k}), 0) >= ${need}`);",
     "tests": [
       "test/goldmarket_service.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "GOLDMARKET-profbook-drops-gold",
     "file": "src/net/profBook.js",
-    "old": "state.stores.set(s.material, { material: s.material, own: s.own | 0, bought: s.bought | 0, ...(gold > 0 ? { gold } : {}) });",
-    "new": "state.stores.set(s.material, { material: s.material, own: s.own | 0, bought: s.bought | 0 });",
+    "old": "...(gold > 0 ? { gold } : {}), ...(loose > 0",
+    "new": "...(loose > 0",
     "tests": [
       "test/goldmarket_client.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "GOLDMARKET-stores-total-no-gold",
     "file": "src/ui/profPages.js",
-    "old": "total: s.own + s.bought + (s.gold | 0), carried: s.carried | 0 };",
-    "new": "total: s.own + s.bought, carried: s.carried | 0 };",
+    "old": "total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried: s.carried | 0 };",
+    "new": "total: s.own + s.bought + (s.loose | 0), carried: s.carried | 0 };",
     "tests": [
       "test/goldmarket_client.test.js"
     ]

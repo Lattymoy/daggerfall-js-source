@@ -20,7 +20,7 @@
   {
     "name": "BAGCRAFT-the-loose-origin-own",
     "file": "src/net/bagLaw.js",
-    "old": "export const LOOSE_ORIGIN = 'bought';",
+    "old": "export const LOOSE_ORIGIN = 'loose';",
     "new": "export const LOOSE_ORIGIN = 'own';",
     "tests": [
       "test/fb1009c_bagcraft.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "BAGCRAFT-service-loose-stored-nowhere",
     "file": "server-account/src/professions.js",
-    "old": "  const into = (o) => (o === LOOSE_ORIGIN ? `qty - ${['own', 'bought', 'gold'].filter((x) => x !== o).join(' - ')}` : o);",
-    "new": "  const into = (o) => o;",
+    "old": "SELECT player, char_id, material, '${LOOSE_ORIGIN}', loose FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND loose > 0",
+    "new": "SELECT player, char_id, material, '${LOOSE_ORIGIN}', loose FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND 0",
     "tests": [
       "test/fb1009c_bagcraft.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BAGCRAFT-book-workable-the-count",
     "file": "src/net/profBook.js",
-    "old": "workable(material) { return this.storesHeld(material) + this.carriedWorkable(material); },",
-    "new": "workable(material) { return this.storesHeld(material) + this.carriedUsable(material); },",
+    "old": "workable(material) { return this.storesWorkable(material) + this.carriedWorkable(material); },",
+    "new": "workable(material) { return this.storesWorkable(material) + this.carriedUsable(material); },",
     "tests": [
       "test/fb1009c_bagcraft.test.js"
     ]

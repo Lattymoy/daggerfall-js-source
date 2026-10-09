@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-CRAFT1-F1-gold-uncounted",
     "file": "src/net/chainLaw.js",
-    "old": " - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0));",
-    "new": " - ((s?.bought ?? 0) | 0));",
+    "old": " - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0));",
+    "new": " - ((s?.loose ?? 0) | 0));",
     "tests": [
       "test/craft1_chain.test.js"
     ]

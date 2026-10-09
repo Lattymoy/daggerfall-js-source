@@ -25,11 +25,11 @@ again (every carried act cuts the count to what the pack holds, never raises it)
 ## BAG-CRAFT: a station works what is carried, counted or not
 
 - `net/bagLaw.js`: `DEPOSIT_ORDERS.work` - a station's put-in, `spend`'s counted order and then the units the count
-  does not hold (`looseOrder`), into the Stores as `LOOSE_ORIGIN` (bought); `carriedWorkable` - every unit held but the
+  does not hold (`looseOrder`), into the Stores as `LOOSE_ORIGIN` (loose, since the audit - below); `carriedWorkable` - every unit held but the
   gold-bought ones the count still names.
 - `server-account/src/professions.js` depositStores: a `work` deposit moves past the count, as many as `held` names
-  past it once cut, into the Stores as bought, the count untouched for them; the answer's `loose`. ACCOUNT_VERSION
-  `acct99`, no migration.
+  past it once cut, into the Stores as loose, the count untouched for them; the answer's `loose`. ACCOUNT_VERSION
+  `acct99`, migration `0095_loose_origin.sql` (the audit's).
 - `net/profBook.js`: `workable` (a station's read); `ensureInStores(inputs, { work })` - a craft (and its chain), a
   brew, a smelt and a temper by `work`; a Court writ, a guild writ and the market by `spend`, as before.
 - `ui/profPages.js` workOf: every station's read, one home.
@@ -39,8 +39,21 @@ Found on the way and fixed before it shipped: the service's statement bound `hel
 range"). `?9` is bound only where `work` reads it.
 
 What it gives up - the owner's call, recorded at `06-Systems/Professions-Arc.md` law 3 and `Materials-Bag.md` 14: a
-station's put-in takes the client's word for what the pack holds (bounded, never own, never gold's), so a modified
-client can craft from goods it never had.
+station's put-in takes the client's word for what the pack holds, so a modified client can craft from goods it never
+had, and earn the craft's XP. Since the audit, nothing more.
 
 Pinned by `test/fb1009c_bagcraft.test.js`; `tools/mutants/fb1009c_bagcraft.json` (21, all dead). Nine mutant records
 of BAG1, CRAFT1, CRAFT4, PROF4, KNIGHT-HOUSE and GATEKEYS re-aimed by content to the lines this moved.
+
+## AUDIT BAG-CRAFT (same day, Mac: "Audit this")
+
+The record is `06-Systems/Materials-Bag.md` section 15. **A1 (HIGH)**: the `work` put-in's units went into the Stores
+as bought, and a `work` put-in is a request any client may send - reproduced against the real Worker, 200 Mithril Ore
+no pack held listed for Drakes and withdrawn counted as carried, and by the same reads open to a Court writ, the guild
+Stores, a guild writ and a Drakes order. Fixed by the stations' wall: the Stores' fourth origin, `loose` (migration
+`0095_loose_origin.sql`), spent by a station alone and first, read by no writ, guild or Drakes door, given back to the
+pack uncounted; a smelt's products of it loose, a piece of it walled to gold. **C1**: source pins a comment could
+satisfy, now on lines of code. **C2**: the audit's own survivor, a writ's put-in reading the loose units as in, pinned.
+**B1 (LOW)**: a refused craft's put-in stays in the Stores - kept, loose there and the next station's.
+`test/auditbagcraft.test.js` (4); `tools/mutants/auditbagcraft.json` (23, all dead); 23 records of BAG1, CRAFT1,
+CRAFT4, GOLD-MARKET, PROF2, PROF12 and BAG-CRAFT re-aimed by content (41 with BAG-CRAFT's own list, all dead).

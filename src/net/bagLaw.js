@@ -105,10 +105,18 @@ export const depositOrderOk = (o) => typeof o === 'string' && Object.hasOwn(DEPO
  *  station's alone (a craft, a brew, a smelt, a temper): a writ, the market and the Stores page's Put in still move only
  *  what the service handed out. */
 export const looseOrder = (o) => o === 'work';
-/** BAG-CRAFT: the origin the Stores keep a unit the count did not hold under - bought: never a character's own (no
- *  gatherer's word - it raises no seat's influence), never gold's (a station spends it), and a piece made of it is
- *  bought (AUDIT PROF-541 B7: never listed for gold over the wall). */
-export const LOOSE_ORIGIN = 'bought';
+/** BAG-CRAFT: the origin the Stores keep a unit the count did not hold under. AUDIT BAG-CRAFT A1: `loose` - its own, not
+ *  bought: as bought it went to a writ, the guild Stores, a Drakes listing or fill, and a withdrawal counted it carried
+ *  (every door law 3 walls), a `work` put-in being no station's act but a request any client may send. A station alone
+ *  spends it (STATION_ORIGINS); everything else reads `own` and `bought` (WRIT_ORIGINS); a withdrawal gives it back to
+ *  the pack uncounted. GOLD-MARKET's wall turned the other way (migration 0095_loose_origin.sql). */
+export const LOOSE_ORIGIN = 'loose';
+/** AUDIT BAG-CRAFT A1: what a writ, the guild Stores and the market's Drakes side spend of the Stores - never gold's
+ *  (GOLD-MARKET), never loose (the stations' wall). */
+export const WRIT_ORIGINS = Object.freeze(['own', 'bought']);
+/** AUDIT BAG-CRAFT A1: what a station spends of the Stores, first to last - the loose units first (they are for nothing
+ *  else), then bought, then own (the order a craft always spent in, so a character's own stay for writs, PROF0 7). */
+export const STATION_ORIGINS = Object.freeze([LOOSE_ORIGIN, 'bought', 'own']);
 
 /** A held count the client says: a whole number from 0 to CARRIED_MAX x 10 (a pack may hold looted pieces of the same
  *  template beside the carried ones - DFU's own Red Rose and a gathered one are one item) - or null. */

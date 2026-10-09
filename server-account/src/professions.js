@@ -86,7 +86,7 @@ import { stationSteps } from '../../src/net/fortLaw.js';   // SEAT2b part two (7
 import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls standing at the seat
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
-import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
+import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -128,12 +128,14 @@ export function trackView(row, profession, nowS) {
 export const freeBit = (rank) => (rank === 50 ? 1 : rank === 100 ? 2 : 0);
 export const trackRow = (db, player, character, profession) =>
   db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?3').bind(player, character, trackOf(profession)).first();
-/** A Stores row's origin as a count's name - own, bought (with Drakes) or GOLD-MARKET's gold (bought with gold). */
-const originOf = (o) => (o === 'bought' || o === 'gold' ? o : 'own');
+/** A Stores row's origin as a count's name - own, bought (with Drakes), GOLD-MARKET's gold (bought with gold) or AUDIT
+ *  BAG-CRAFT's loose (a station's put-in the count did not hold - bagLaw.js LOOSE_ORIGIN). */
+const originOf = (o) => (o === 'bought' || o === 'gold' || o === LOOSE_ORIGIN ? o : 'own');
 /** GOLD-MARKET: a Stores count's gold units said only where there are any - a Stores nothing bought with gold keeps the
- *  shape every client before it read ({ material, own, bought }). */
+ *  shape every client before it read ({ material, own, bought }). AUDIT BAG-CRAFT: and its loose units likewise. */
 const withGold = (s) => {
   if (!(s.gold > 0)) delete s.gold;
+  if (!(s[LOOSE_ORIGIN] > 0)) delete s[LOOSE_ORIGIN];
   return s;
 };
 /** One material's count in a character's Stores, own, bought and (GOLD-MARKET) bought with gold, where held. PROF5: the
@@ -185,10 +187,15 @@ export function clampStatements(db, { player, character, material, held, rid, se
 }
 /** BAG1: a count's total in SQL, every origin - `m` the material's SQL, `p` and `c` the player's and the character's. */
 const carriedSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_carried WHERE player = ${p} AND char_id = ${c} AND material = ${m}), 0)`;
-/** GOLD-MARKET: THE UNITS A STATION, A CRAFT, A WRIT OR A DRAKES ACT MAY SPEND of a material in SQL - own and bought,
- *  never bought with gold (the wall: gold's goods go to the pack or back on the market for gold, nowhere else). `m` the
- *  material's SQL, `p` and `c` the player's and the character's. */
-export const spendableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin != 'gold'), 0)`;
+/** GOLD-MARKET: THE UNITS A WRIT, THE GUILD STORES OR A DRAKES ACT MAY SPEND of a material in SQL - own and bought,
+ *  never bought with gold (the wall: gold's goods go to the pack or back on the market for gold, nowhere else); AUDIT
+ *  BAG-CRAFT A1: never loose (bagLaw.js WRIT_ORIGINS - the stations' wall: a unit the service never handed out reaches
+ *  no writ, no guild and no sale). `m` the material's SQL, `p` and `c` the player's and the character's. */
+const originsSql = (list) => list.map((o) => `'${o}'`).join(', ');
+export const spendableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;
+/** AUDIT BAG-CRAFT A1: THE UNITS A STATION MAY SPEND - a craft, a smelt, a brew, a temper: own, bought and loose, never
+ *  gold's (bagLaw.js STATION_ORIGINS); spent by `workStatements`, loose first. */
+export const workableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;
 /** A character's harvests today, by profession. */
 async function todayOf(db, player, character, day) {
   const { results = [] } = await db.prepare('SELECT profession, COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND char_id = ?2 AND day = ?3 GROUP BY profession')
@@ -814,6 +821,11 @@ export function spendOrigins(db, { player, character, materialSql, qtySql, guard
   out.push(unbruisedClamp(db, { player, character, materialSql, guard, binds }));   // AUDIT PROF12 A1
   return out;
 }
+/** AUDIT BAG-CRAFT A1: A STATION'S SPEND - `qtySql` units over STATION_ORIGINS, loose first, then bought, then own (the
+ *  order spendStatements charges the last two in); the caller's decision holds them by `workableSql`. */
+export const workStatements = (db, opts) => spendOrigins(db, { ...opts, order: STATION_ORIGINS });
+/** AUDIT BAG-CRAFT A1: what a station may spend of a Stores count (`storeOf`'s shape) - own, bought and loose. */
+export const workHeld = (st) => (st?.own ?? 0) + (st?.bought ?? 0) + (st?.[LOOSE_ORIGIN] ?? 0);
 
 /**
  * WITHDRAW TO PACK: `{ character, material, qty, rid }` - `qty` units out of the Stores, bought first, for the client to
@@ -848,23 +860,26 @@ export async function withdrawStores(ctx, player, env, { character, material: ke
     ...(carrying ? clampStatements(db, { player: player.id, character, material: key, held, rid, seen: seenOk(seen) ? seen : null,
       twin: 'NOT EXISTS (SELECT 1 FROM prof_withdrawals WHERE player = ?1 AND rid = ?5)' }) : []),
     // THE DECISION: the Stores hold the units; BAG1: what it takes of each origin, read in the spend order (gold's, then
-    // bought, then own); and, carrying, room in the carried count
-    db.prepare(`INSERT OR IGNORE INTO prof_withdrawals (player, rid, char_id, material, qty, at, n, carry, own, bought, gold)
-      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?5 - g - b, b, g
-      FROM (SELECT MIN(?5, ${originHeld('gold')}) AS g, MIN(?5 - MIN(?5, ${originHeld('gold')}), ${originHeld('bought')}) AS b)
+    // AUDIT BAG-CRAFT A1's loose, then bought, then own); and, carrying, room in the carried count
+    db.prepare(`INSERT OR IGNORE INTO prof_withdrawals (player, rid, char_id, material, qty, at, n, carry, own, bought, gold, loose)
+      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?5 - g - l - b, b, g, l
+      FROM (SELECT g, l, MIN(?5 - g - l, ${originHeld('bought')}) AS b
+        FROM (SELECT g, MIN(?5 - g, ${originHeld(LOOSE_ORIGIN)}) AS l FROM (SELECT MIN(?5, ${originHeld('gold')}) AS g)))
       WHERE COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0) >= ?5
         AND (?8 = 0 OR ${carriedSql('?1', '?2', '?4')} + ?5 <= ?9)`)
       .bind(player.id, character, rid, key, qty, nowS, nonce, carrying ? 1 : 0, CARRIED_MAX),
     // BAG1: counted as carried, each origin as it left - BEFORE the spend, whose unbruised clamp reads the own units the
-    // Stores and the count hold together: counted after it, a withdrawn unbruised herb lost its count at the spend
+    // Stores and the count hold together: counted after it, a withdrawn unbruised herb lost its count at the spend. AUDIT
+    // BAG-CRAFT A1: never the loose units - the service never handed them out, and back in the pack they are as they were
     ...(carrying ? ['own', 'bought', 'gold'].map((o) => db.prepare(`INSERT INTO prof_carried (player, char_id, material, origin, qty)
       SELECT player, char_id, material, '${o}', ${o} FROM prof_withdrawals WHERE player = ?1 AND rid = ?2 AND n = ?3 AND carry = 1 AND ${o} > 0
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_carried.qty + excluded.qty`).bind(player.id, rid, nonce)) : []),
-    // GOLD-MARKET: every origin goes to the pack - gold's first (the goods the wall keeps out of everything else)
+    // GOLD-MARKET: every origin goes to the pack - gold's first (the goods the wall keeps out of everything else); AUDIT
+    // BAG-CRAFT A1: the loose units next, walled the other way
     ...spendOrigins(db, {
       player: player.id, character, materialSql: '?3', qtySql: '?4',
       guard: 'EXISTS (SELECT 1 FROM prof_withdrawals WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [key, qty, rid, nonce],
-      order: ['gold', 'bought', 'own'],
+      order: ['gold', LOOSE_ORIGIN, 'bought', 'own'],
     }),
   ]);
   const made = await db.prepare('SELECT * FROM prof_withdrawals WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
@@ -872,15 +887,12 @@ export async function withdrawStores(ctx, player, env, { character, material: ke
   if (made) return answer(made, { repeat: true });
   if (carrying) {
     const s = await storeOf(db, player.id, character, key);
-    if ((s.own + s.bought + (s.gold ?? 0)) >= qty) return { error: 'carried-full', material: key };
+    if ((s.own + s.bought + (s.gold ?? 0) + (s[LOOSE_ORIGIN] ?? 0)) >= qty) return { error: 'carried-full', material: key };
   }
   return { error: 'stores-short' };
 }
 
 // ─── BAG1: A DEPOSIT - WHAT IS CARRIED, INTO THE STORES ─────────────
-
-/** BAG-CRAFT: a deposit row's units the carried count did not hold - its qty past its own, bought and gold. */
-const looseOf = (row) => Number(row.qty) - Number(row.own) - Number(row.bought) - Number(row.gold);
 
 /**
  * PUT IN: `{ character, material, qty, held, order, rid }` - `qty` carried units of a material into the Stores, each
@@ -893,8 +905,8 @@ const looseOf = (row) => Number(row.qty) - Number(row.own) - Number(row.bought) 
  * the cut, `stores-full` past the Stores' 5,000.
  * BAG-CRAFT (FIELD BUGS 2026-10-09c, Mac: "I just want players to also be able to craft from their inventory, not just
  * the store"): `work` - a station's shortfall - moves `spend`'s counted units and then units the count does not hold, as
- * many as `held` names past the count once cut (bagLaw.js looseOrder), into the Stores as bought (LOOSE_ORIGIN); the
- * count is not touched for them. Its row's `qty` past its own, bought and gold is that loose part.
+ * many as `held` names past the count once cut (bagLaw.js looseOrder), into the Stores as loose (LOOSE_ORIGIN - AUDIT
+ * BAG-CRAFT A1: a station's alone); the count is not touched for them. Its row's `loose` says them.
  */
 export async function depositStores(ctx, player, env, { character, material: key, qty, held, order = 'all', rid, seen = null } = {}) {
   const { db, nowS, rand } = ctx;
@@ -902,7 +914,7 @@ export async function depositStores(ctx, player, env, { character, material: key
   if (refused) return refused;
   const answer = async (row, extra = {}) => ({
     ok: true, ...extra, material: row.material, qty: Number(row.qty), own: Number(row.own), bought: Number(row.bought), gold: Number(row.gold),
-    ...(looseOf(row) > 0 ? { loose: looseOf(row) } : {}),   // BAG-CRAFT: what the count did not hold - said where some moved
+    ...(Number(row.loose) > 0 ? { loose: Number(row.loose) } : {}),   // BAG-CRAFT: what the count did not hold - said where some moved
     store: await storeOf(db, player.id, row.char_id, row.material), carried: await carriedOf(db, player.id, row.char_id, row.material),
   });
   const prior = await db.prepare('SELECT * FROM prof_deposits WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
@@ -928,9 +940,8 @@ export async function depositStores(ctx, player, env, { character, material: key
   // BAG-CRAFT: a station's deposit may move what the client holds past the count (read after the cut, in this batch) too
   const loose = looseOrder(order);
   const movable = `${seq.map(cHeld).join(' + ')}${loose ? ' + MAX(0, ?9 - COALESCE((SELECT SUM(qty) FROM prof_carried WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0))' : ''}`;
-  // what each origin's Stores row is given: what left the count as it, and (BAG-CRAFT) the loose part as LOOSE_ORIGIN's -
-  // a row's qty is its three origins' whole for every order but `work`
-  const into = (o) => (o === LOOSE_ORIGIN ? `qty - ${['own', 'bought', 'gold'].filter((x) => x !== o).join(' - ')}` : o);
+  // BAG-CRAFT: the loose part - what the counted origins do not cover of the deposit (none but for `work`)
+  const loosePart = loose ? `?5 - (${of('own')}) - (${of('bought')}) - (${of('gold')})` : '0';
   const mine = 'EXISTS (SELECT 1 FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3)';
   await db.batch([
     // the count cut to what the client held - only while this request has made nothing (a racing twin of a landed deposit
@@ -938,8 +949,8 @@ export async function depositStores(ctx, player, env, { character, material: key
     ...clampStatements(db, { player: player.id, character, material: key, held, rid, seen: seenOk(seen) ? seen : null,
       twin: 'NOT EXISTS (SELECT 1 FROM prof_deposits WHERE player = ?1 AND rid = ?5)' }),
     // THE DECISION: the count holds the units in the order's origins; the Stores have room; what moves of each, read now
-    db.prepare(`INSERT OR IGNORE INTO prof_deposits (player, rid, char_id, material, qty, own, bought, gold, at, n)
-      SELECT ?1, ?3, ?2, ?4, ?5, ${of('own')}, ${of('bought')}, ${of('gold')}, ?6, ?7
+    db.prepare(`INSERT OR IGNORE INTO prof_deposits (player, rid, char_id, material, qty, own, bought, gold, loose, at, n)
+      SELECT ?1, ?3, ?2, ?4, ?5, ${of('own')}, ${of('bought')}, ${of('gold')}, ${loosePart}, ?6, ?7
       WHERE ${movable} >= ?5
         AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0) + ?5 <= ?8`)
       .bind(player.id, character, rid, key, qty, nowS, nonce, STORES_MAX, ...(loose ? [held] : [])),   // ?9 bound only where read
@@ -948,9 +959,13 @@ export async function depositStores(ctx, player, env, { character, material: key
       db.prepare(`UPDATE prof_carried SET qty = qty - (SELECT ${o} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3)
         WHERE player = ?1 AND char_id = ?4 AND material = ?5 AND origin = '${o}' AND ${mine}`).bind(player.id, rid, nonce, character, key),
       db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
-        SELECT player, char_id, material, '${o}', ${into(o)} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND ${into(o)} > 0
+        SELECT player, char_id, material, '${o}', ${o} FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND ${o} > 0
         ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, rid, nonce),
     ]),
+    // AUDIT BAG-CRAFT A1: the loose part into the Stores as loose - a station's alone, never bought
+    db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
+      SELECT player, char_id, material, '${LOOSE_ORIGIN}', loose FROM prof_deposits WHERE player = ?1 AND rid = ?2 AND n = ?3 AND loose > 0
+      ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, rid, nonce),
     db.prepare('DELETE FROM prof_carried WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player.id, character),
   ]);
   const made = await db.prepare('SELECT * FROM prof_deposits WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
@@ -990,6 +1005,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     const prof = r.xp ?? r.more?.profession ?? null;
     return {
       ok: true, ...extra, recipe: row.recipe, count: Number(row.count), own: Number(row.own), bought: Number(row.bought), xp: Number(row.xp),
+      ...(Number(row.loose) > 0 ? { loose: Number(row.loose) } : {}),   // AUDIT BAG-CRAFT A1: products made of loose goods, loose
       ...(r.act ? { first: Number(row.first) === 1, clean: Number(row.clean) === 1 } : {}),   // PROF11: a mason's work's first and its chisel
       track: prof ? trackView(await trackRow(db, player.id, row.char_id, prof), prof, nowS) : null,
       stores: await Promise.all([r.out, ...r.inputs.map((inp) => inp.key)].map((k) => storeOf(db, player.id, row.char_id, k))),
@@ -1026,32 +1042,36 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
   // ?1 player ?2 character ?3 rid ?4 recipe ?5 count ?6 out ?7 STORES_MAX ?8 xp ?9 now ?10 nonce ?11 the first time's XP
   // (PROF11: a mason's work's; 0 for every other) ?12 the chisel clean; the inputs ?13 on, two a one
   const binds = [player.id, character, rid, r.id, count, r.out, STORES_MAX, xp, nowS, nonce, r.act && firstCraftPays(r) ? FIRST_CRAFT_XP : 0, act ? 1 : 0];
-  const held = [], boughtOf = [];
+  const held = [], boughtOf = [], looseOf = [];
   r.inputs.forEach((inp, i) => {
     const k = `?${13 + 2 * i}`, need = `?${14 + 2 * i}`;
     binds.push(inp.key, inp.n * count);
-    held.push(`${spendableSql('?1', '?2', k)} >= ${need}`);   // GOLD-MARKET: never gold's units
-    // the products bought: the most any input's bought units reach, product by product (professionLaw smeltOrigin)
-    boughtOf.push(`((MIN(COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = 'bought'), 0), ${need}) + ${inp.n} - 1) / ${inp.n})`);
+    held.push(`${workableSql('?1', '?2', k)} >= ${need}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too
+    const unitsOf = (o) => `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${o}'), 0)`;
+    // the products bought: the most any input's bought units reach, product by product (professionLaw smeltOrigin) - AUDIT
+    // BAG-CRAFT A1: past its loose ones, which go first; and the products loose, the most any input's loose units reach
+    boughtOf.push(`((MIN(${unitsOf(LOOSE_ORIGIN)} + ${unitsOf('bought')}, ${need}) + ${inp.n} - 1) / ${inp.n})`);
+    looseOf.push(`((MIN(${unitsOf(LOOSE_ORIGIN)}, ${need}) + ${inp.n} - 1) / ${inp.n})`);
   });
-  const bought = boughtOf.length > 1 ? `MAX(${boughtOf.join(', ')})` : boughtOf[0];
+  const most = (list) => (list.length > 1 ? `MAX(${list.join(', ')})` : list[0]);
+  const bought = most(boughtOf), loose = most(looseOf);   // `bought` the products loose or bought, `loose` the loose ones
   await db.batch([
     // THE DECISION: every input held, the product's room - and its origin, read before a unit moves; the XP what the
     // track can take under the crafter's limit (AUDIT 29 A14: the answer says what was credited); PROF11: a mason's
     // first of a work its 500 laid on (`f`, kept), and its chisel kept
-    db.prepare(`INSERT OR IGNORE INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, xp, at, n, first, clean)
-      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * MIN(?5, ${bought}),
+    db.prepare(`INSERT OR IGNORE INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, loose, xp, at, n, first, clean)
+      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * (MIN(?5, ${bought}) - MIN(?5, ${loose})), ${per} * MIN(?5, ${loose}),
         MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12
       FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND char_id = ?2 AND recipe = ?4) THEN 1 ELSE 0 END AS f)
       WHERE ${held.join(' AND ')}
         AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?6), 0) + ${per} * ?5 <= ?7`).bind(...binds),
-    // the inputs out, each bought first
-    ...r.inputs.flatMap((inp) => spendStatements(db, {
+    // the inputs out, each bought first - AUDIT BAG-CRAFT A1: its loose units before them
+    ...r.inputs.flatMap((inp) => workStatements(db, {
       player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND rid = ?5 AND n = ?6)',
       binds: [inp.key, inp.n * count, rid, nonce],
     })),
-    // the products in, own and bought as the decision read them
-    ...['own', 'bought'].map((origin) => db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
+    // the products in, own, bought and (AUDIT BAG-CRAFT A1) loose as the decision read them
+    ...['own', 'bought', LOOSE_ORIGIN].map((origin) => db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
       SELECT ?1, ?2, ?4, '${origin}', ${origin} FROM prof_smelts WHERE player = ?1 AND rid = ?3 AND n = ?5 AND ${origin} > 0
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, character, rid, r.out, nonce)),
     // the XP the decision credited, under the crafter's limit - a smelt's Smithing; a log's none (PROF0 25)
@@ -1065,7 +1085,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
   if (made) return answer(made, { repeat: true });
   for (const inp of r.inputs) {
     const st = await storeOf(db, player.id, character, inp.key);
-    if (st.own + st.bought < inp.n * count) return { error: st.own + st.bought + (st.gold ?? 0) >= inp.n * count ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET: short only of what gold bought
+    if (workHeld(st) < inp.n * count) return { error: workHeld(st) + (st.gold ?? 0) >= inp.n * count ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET: short only of what gold bought
   }
   return { error: 'stores-full', material: r.out };
 }
@@ -1199,7 +1219,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   const held = [];
   inputs.forEach((inp, i) => {
     binds.push(inp.key, inp.n);
-    held.push(`${spendableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);   // GOLD-MARKET: never gold's units
+    held.push(`${workableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too
   });
   // CRAFT2 (Professions-Arc 41.2): a first craft is its PATTERN AT ITS TIER's (recipeLaw firstCraftKin) - any recipe of it
   // made before (the first Ebony Longsword's after an Adamantium one, a Gold Ruby Ring's after a Gold Ring) and this is
@@ -1214,8 +1234,11 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // smeltOrigin; a craft spends no gold's units): a piece of the counter's Linen was 'own', and its disenchant's Essence
   // own too - listed for gold over the wall. Read inside the batch, as the decision's own (?13 on: the inputs' keys)
   // (AUDIT PROF-541 R2-S5: `at` the first input key's bind - the kit's statement binds them from ?6)
-  const boughtAnySql = (/** @type {number} */ at) => `${inputs.map((_, i) => `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${at + i} AND origin = 'bought'), 0) > 0`).join(' OR ') || '0'}`;
-  const boughtWith = `CASE WHEN ${boughtAnySql(13)} THEN 'marks' END`;
+  // AUDIT BAG-CRAFT A1: AND A PIECE MADE OF LOOSE GOODS IS WALLED TO GOLD - 'gold' where any input held a loose unit (spent
+  // first): the service never saw those goods, and a piece made of them lists as a pack's piece does (MARKET-ANY: for
+  // gold alone, never Drakes, no Drakes commission or auction - law 3); a Ram Kit of them is loose, a station's alone
+  const anySql = (/** @type {number} */ at, /** @type {string} */ origin) => `${inputs.map((_, i) => `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${at + i} AND origin = '${origin}'), 0) > 0`).join(' OR ') || '0'}`;
+  const boughtWith = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 'gold' WHEN ${anySql(13, 'bought')} THEN 'marks' END`;
   if (siege) held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = '${RAM_KIT.key}'), 0) + ?6 <= ${STORES_MAX}`);   // SEAT2b part two: the kit's room
   await db.batch([
     // THE DECISION: every input held - and the XP what the track can take under the crafter's limit, the first craft's
@@ -1230,13 +1253,13 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
     // AUDIT PROF-541 B7: and bought where its inputs were, minted BEFORE the inputs go (their bought units read as they stand) -
     // SEAT2b part two: a siege work's kits into the Stores instead
     ...(siege ? [db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
-      SELECT ?1, ?2, ?4, CASE WHEN ${boughtAnySql(6)} THEN 'bought' ELSE 'own' END, count FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?5
+      SELECT ?1, ?2, ?4, CASE WHEN ${anySql(6, LOOSE_ORIGIN)} THEN '${LOOSE_ORIGIN}' WHEN ${anySql(6, 'bought')} THEN 'bought' ELSE 'own' END, count FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?5
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, character, rid, RAM_KIT.key, nonce, ...inputs.map((inp) => inp.key))]
       : provs.map((p, i) => db.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at, marked, dye, hand, bought_with)
         SELECT ?4, ?1, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith} FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?5`)
         .bind(player.id, character, rid, p, nonce, maker, r.id, r.templateIndex, r.material, records[i], marked, hand, ...inputs.map((inp) => inp.key)))),   // PROF9: a dish's hand (0069)
-    // the inputs out, each bought first
-    ...inputs.flatMap((inp) => spendStatements(db, {
+    // the inputs out, each bought first - AUDIT BAG-CRAFT A1: its loose units before them
+    ...inputs.flatMap((inp) => workStatements(db, {
       player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],
     })),
     // the XP the decision credited, under the crafter's limit - the recipe's profession's
@@ -1250,7 +1273,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   if (made) return craftAnswer(db, player, made, nowS, { repeat: true });
   for (const inp of inputs) {
     const st = await storeOf(db, player.id, character, inp.key);
-    if (st.own + st.bought < inp.n) return { error: st.own + st.bought + (st.gold ?? 0) >= inp.n ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET
+    if (workHeld(st) < inp.n) return { error: workHeld(st) + (st.gold ?? 0) >= inp.n ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET
   }
   if (siege) return { error: 'stores-full', material: RAM_KIT.key };   // SEAT2b part two: every input held - the kit's room is what failed
   return { error: 'stores-short' };
@@ -1327,12 +1350,16 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
     db.prepare(`INSERT OR IGNORE INTO prof_tempers (player, rid, char_id, recipe, provenance, quality, material, qty, xp, at, n)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8,
         MAX(0, MIN(?9, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?12), 0))), ?10, ?11
-      WHERE ${spendableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)
+      WHERE ${workableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)   // AUDIT BAG-CRAFT A1: a station's loose units too
       .bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, temperXp(r, rank), nowS, nonce, craft),
-    // the input out, bought first
-    ...spendStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }),
-    // a made piece's row at its new quality, its record re-signed
-    ...(provenance !== null ? [db.prepare(`UPDATE products SET quality = ?4, record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)] : []),
+    // a made piece's row at its new quality, its record re-signed - AUDIT BAG-CRAFT A1: walled to gold where the input held a
+    // loose unit (spent first), read before the spend - a piece raised with goods the service never handed out lists as a
+    // pack's piece does (for gold alone)
+    ...(provenance !== null ? [db.prepare(`UPDATE products SET quality = ?4, record = ?5,
+        bought_with = CASE WHEN COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?7 AND material = ?8 AND origin = '${LOOSE_ORIGIN}'), 0) > 0 THEN 'gold' ELSE bought_with END
+      WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance, character, cost.key)] : []),
+    // the input out, bought first - AUDIT BAG-CRAFT A1: its loose units before them
+    ...workStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }),
     // the XP the decision credited, under the crafter's limit - the craft's
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
       SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_tempers WHERE player = ?1 AND rid = ?3 AND n = ?6
@@ -1347,10 +1374,10 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
     if (!p) return { error: 'prof-no-piece' };
     if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };
     const st = await storeOf(db, player.id, character, cost.key);
-    if (st.own + st.bought >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home
+    if (workHeld(st) >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home
   }
   const st = await storeOf(db, player.id, character, cost.key);
-  return { error: st.own + st.bought + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };
+  return { error: workHeld(st) + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };
 }
 
 // ─── THE SMITH'S STOCK (PROF0 24) ────────────────────────────────────
