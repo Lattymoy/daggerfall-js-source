@@ -25,13 +25,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_duel_rk ON duel_results (rk) WHERE rk IS N
 
 -- INT9, A DEATH IN THE OPEN ZONE (server-account/src/wild.js wildFall): its drop taken off the fallen's record once, by its
 -- remains' id - the relay's (a fall it signed, net/wildReceipt.js `f1`) or the service's (a death to a foe). A second
--- asking is answered these records with a fresh order. Swept WILD_FALLS_KEEP_S after `at` (server-account/src/cron.js).
+-- asking is answered these records and the SAME order - issued at `oi`, for room `wm`, good its minute alone (AUDIT INT9:
+-- a fresh order each asking laid one fall's drop again in a room that had let its emptied remains go). Swept
+-- WILD_FALLS_KEEP_S after `at` (server-account/src/cron.js).
 --   r        the remains' id (twelve hex: the relay's, or a digest of the character and its tab's nonce - a foe's)
 --   char_id  the fallen's realm character        player  its account        killer  the killer's account (NULL: a foe)
 --   at       when the drop was taken, epoch s     items   the records taken (JSON, the wire's - net/wildLaw.js)
 --   kept     the ledger keys the record kept back (JSON - a copy, another's piece, a claim waiting)
 --   burnt    1 where the judge held the record (lane 1's freeze): the drop taken, none of it given to the room
 --   wi       0 where the first record is the killer's worn piece, else -1
+--   wm       the room its remains are laid in (the relay's room key: the order names it - AUDIT INT9)
+--   oi       when its order was issued, epoch s (its every order the same - AUDIT INT9)
+--   wg       the fallen's guild then (the order names it: no guildmate takes from the remains), or NULL
+--   tk       what the record lost, as the fallen's game finds it again (JSON `{ took, gold }` - wildDropLaw.js wildTookOf)
 CREATE TABLE IF NOT EXISTS wild_falls (
   r TEXT PRIMARY KEY,
   char_id TEXT NOT NULL,
@@ -41,6 +47,10 @@ CREATE TABLE IF NOT EXISTS wild_falls (
   items TEXT NOT NULL,
   kept TEXT NOT NULL DEFAULT '[]',
   burnt INTEGER NOT NULL DEFAULT 0,
-  wi INTEGER NOT NULL DEFAULT -1
+  wi INTEGER NOT NULL DEFAULT -1,
+  wm TEXT NOT NULL DEFAULT '',
+  oi INTEGER NOT NULL DEFAULT 0,
+  wg TEXT,
+  tk TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_wild_falls_at ON wild_falls (at);

@@ -3,10 +3,12 @@
 // INT9 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md; Mac: "I want to do everything and
 // do it properly"): A FALL IN THE OPEN ZONE, SIGNED BY THE RELAY THAT REFEREED IT.
 //
-//     f1.<base64url({ f, c, k, r, w, i, e })>.<base64url(64-byte Ed25519 signature)>
+//     f1.<base64url({ f, c, k, r, w, wt?, i, e })>.<base64url(64-byte Ed25519 signature)>
 //         f the fallen's account   c its realm character ('' - none signed)   k the killer's account   r the remains' id
 //         (twelve hex, the relay's)   w the worn piece the killer took (its place in the fallen's worn offer -
-//         systems/wildDropLaw.js wornOffer - or -1, none)   i issued   e expires (i + WILD_RECEIPT_TTL_S)
+//         systems/wildDropLaw.js wornOffer - or -1, none)   wt that piece's template and material as the offer showed it
+//         (AUDIT INT9: the service matches it against what the fallen really wears - the place alone was an index into a
+//         list the fallen built)   i issued   e expires (i + WILD_RECEIPT_TTL_S)
 //
 // WILD1 left a fall to the fallen's own machine (its health at none), and its drop and its worn piece to the fallen's own
 // hands - so a client that never took a blow never fell, and one that fell gave what it chose. Now the relay holds the
@@ -46,14 +48,15 @@ export function wildReceiptValid(/** @type {any} */ c) {
   if (typeof c.c !== 'string' || (c.c !== '' && !REALM_CHARACTER_RE.test(c.c))) return false;
   if (typeof c.r !== 'string' || !WILD_REMAINS_RE.test(c.r)) return false;
   if (!Number.isInteger(c.w) || c.w < -1 || c.w >= WILD_WORN_MAX) return false;
+  if (c.wt !== undefined && !(Array.isArray(c.wt) && c.wt.length === 2 && c.wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > WILD_RECEIPT_TTL_S) return false;
   return true;
 }
 /** MINT - the relay's half; unsigned (`f1.<body>.`) with no key, which the service declines. */
-export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number }} */ { f, c, k, r, w }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null }} */ { f, c, k, r, w, wt = null }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintWildReceipt needs an integer epoch-seconds clock');
-  const claims = { f, c, k, r, w, i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
+  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
   if (!wildReceiptValid(claims)) throw new TypeError('mintWildReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${WILD_RECEIPT_V}.${body}.`;

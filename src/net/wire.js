@@ -3558,6 +3558,7 @@ export function validWedData(d) {
 //          both said so (INT9: the relay cannot see the map)
 //   pick   the killer's choice of ONE worn piece of a fall of its own (`r` the remains' id, `w` its place in the offer) -
 //          the relay waits on it before it signs the fall (net/wildReceipt.js `f1`)
+//          (AUDIT INT9: `t`, `m` - the piece's template and material as the offer showed it, signed as the receipt's `wt`)
 //   fall   a deposit, WILD_ITEMS_MAX records a frame, `last` on the final one - INT9: every chunk carries the account
 //          service's `remains` order (`o` - net/identityToken.js): its id is the order's, its records digest to the
 //          order's, or the room keeps none of it (net/wildLaw.js)
@@ -3710,6 +3711,11 @@ export function validWildData(d) {
     if (d.k === 'pick') {
       if (!intIn(d.w, -1, WILD_ITEMS_MAX - 1)) return null;
       out = { k: 'pick', r, w: d.w };   // INT9: the killer's choice, the relay's to sign
+      // AUDIT INT9: and what the offer showed there - its template and material, signed beside the place (`wt`)
+      if (d.t !== undefined || d.m !== undefined) {
+        if (d.w < 0 || !intIn(d.t, 0, 65535) || !intIn(d.m, 0, 65535)) return null;
+        out.t = d.t; out.m = d.m;
+      }
     } else if (d.k === 'fall') {
       const p = wildPoint(d.p), items = wildItems(d.items);
       if (!p || !items || (d.last !== 0 && d.last !== 1)) return null;

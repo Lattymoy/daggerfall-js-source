@@ -185,6 +185,10 @@ export async function ledgerStep(db, at, pieces) {
 const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) =>
   chunks(keys, UPSERT_ROWS).map((part) => db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at) VALUES ${part.map((_, i) => `(?${3 + i}, ?1, ?2)`).join(', ')}`).bind(char, nowS, ...part));
 
+/** INT9 (AUDIT): `keys` written down as copies `char` holds - a death's dropped pieces, whose ids the remains carry afresh
+ *  (server-account/src/wild.js): never charged, and moved by no route. */
+export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) => copyRows(db, keys, char, nowS);
+
 /** Keys `char` let go: no row - or, where a copy of the piece is known, a row kept `gone`, so the copy cannot take it up. */
 function letGoSteps(/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) {
   return [

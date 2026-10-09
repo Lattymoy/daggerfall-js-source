@@ -24,7 +24,7 @@ import { WILD_ITEMS_MAX } from '../net/wire.js';
 
 // THE LAW - INT9: its home is systems/wildDropLaw.js (a leaf the account Worker bundles: the service takes a death's drop
 // off the record), re-exported here
-export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath } from './wildDropLaw.js';
+export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from './wildDropLaw.js';
 
 /** A list cut into the wire's chunks. */
 export function wildChunks(list, size = WILD_ITEMS_MAX) {

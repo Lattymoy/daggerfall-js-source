@@ -28,10 +28,15 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from './siegeRef.js';
 
-/** The zone referee's own numbers: how long a fighter no player has struck takes to be whole again, how long a killer has
- *  to pick a worn piece before the fall is signed without one, the party's truce (systems/wildZone.js
- *  WILD_PARTY_TRUCE_MS, pinned equal - the hub holds it for the relay), and the most fighters and falls a room keeps. */
-export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 60_000, truceMs: 10 * 60_000, fightersMax: 200, fallsMax: 64 });
+/** The zone referee's own numbers: how long a fighter no player has struck - and that has stood in the zone as long - takes
+ *  to be whole again; how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
+ *  (systems/wildZone.js WILD_PARTY_TRUCE_MS, pinned equal - the hub holds it for the relay); how long a fallen stays down
+ *  before its word that it stands in the zone raises it (the death screen's WILD_DEATH_HOLD_S, pinned equal - AUDIT INT9:
+ *  it rose on its next word, where it fell, whole), and how long one away from the zone that long comes back whole; how
+ *  long a fighter whose pose jumped past any run strikes nothing (AUDIT INT9: a jump was never believed, so a gallop, a
+ *  respawn or a reconnect left its place stale for good - now it is believed, and the jumper waits); the most fighters
+ *  and falls a room keeps. */
+export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 60_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64 });
 
 /** A room's zone: its fighters by account, its falls waiting on a pick or a signature. */
 export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
@@ -39,35 +44,63 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
  * kept (`id` its socket's id now, `lv` the Renown its token signs, `ci` its realm character), its place the pose it
- * stands at. A fighter down rises whole on its word that it stands in the zone again (its respawn). Answers the fighter.
+ * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
+ * `{ hp, max, down, downAt, at }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is older than
+ * the mend. A fighter down rises whole on its word that it stands in the zone again once WILD_REF.riseMs has passed
+ * (its respawn - never at once). One away from the zone WILD_REF.riseMs comes back whole; one back sooner keeps its bar
+ * and mends only once it has stood in the zone WILD_REF.mendMs unstruck (AUDIT INT9: a word off and on was a heal).
+ * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, ci = '' }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
-    if (st.fighters.size >= WILD_REF.fightersMax) for (const [k, v] of st.fighters) if (!v.zone) { st.fighters.delete(k); break; }
+    if (st.fighters.size >= WILD_REF.fightersMax) for (const [k, v] of st.fighters) if (!v.zone && !v.down) { st.fighters.delete(k); break; }
     if (st.fighters.size >= WILD_REF.fightersMax) return null;
-    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, struckAt: -Infinity, down: false };
+    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity };
+    if (carry && now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0)) {
+      x.outAt = carry.at;   // it fought elsewhere a moment ago - never away from the zone
+      if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; }
+      else if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
+    }
     st.fighters.set(sub, x);
   }
   x.id = id; if (ci) x.ci = ci;
-  if (z && x.down) { const fresh = newFighter(lv, now); x.f = fresh; x.down = false; x.struckAt = -Infinity; }
+  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
+  if (z && !x.zone) {
+    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }
+    x.zoneAt = now;
+  }
+  if (!z && x.zone) x.outAt = now;
   x.zone = !!z;
   return x;
 }
 
-/** A FIGHTER'S POSE (`{ x, y, z }`, the world frame): believed for reach only at a run the referee allows (refereeStep, on
- *  the fighter's own carried allowance). */
+/** A FIGHTER'S SOCKET GONE from the room (no other of its account's left): out of the zone, and its place in a full room
+ *  any newcomer's (AUDIT INT9: a closed tab kept its `zone` for good, and a room of 200 such refused every newcomer). */
+export function wildGone(st, sub, now) {
+  const x = st.fighters.get(sub);
+  if (x && x.zone) { x.zone = false; x.outAt = now; }
+}
+
+/** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall. */
+export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now } : null; };
+
+/** A FIGHTER'S POSE (`{ x, y, z }`, the world frame): believed at a run the referee allows (refereeStep, on the fighter's
+ *  own carried allowance); past it - a gallop, a respawn, a teleport - believed too, and the fighter JUMPED: it strikes
+ *  nothing for WILD_REF.jumpMs (AUDIT INT9: a pose past the run was never believed, and the place stayed stale for good). */
 export function wildPose(st, sub, p, now) {
   const x = st.fighters.get(sub);
   if (!x || !p || !Number.isFinite(p.x) || !Number.isFinite(p.z)) return false;
-  if (!x.pose || refereeStep(x.pose, p, now - x.poseAt, x.f)) { x.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z }; x.poseAt = now; }
+  if (x.pose && !refereeStep(x.pose, p, now - x.poseAt, x.f)) x.jumpAt = now;
+  x.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z }; x.poseAt = now;
   return true;
 }
 
-/** Whole again: a fighter no player has struck for WILD_REF.mendMs (never one down) - its vitality alone (INT10: its own
- *  casts' window is its rate, never mended - the striker is unstruck, and every cast it made would have cleared it). */
-const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };
+/** Whole again: a fighter no player has struck for WILD_REF.mendMs that has stood in the zone as long (never one down) - its
+ *  vitality alone (INT10: its own casts' window is its rate, never mended - the striker is unstruck, and every cast it made
+ *  would have cleared it). */
+const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };
 
 /**
  * A BLOW OR A CAST in the zone - `by` and `to` accounts, `kin` the caller's word that the two are of one party or under its
@@ -85,6 +118,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
+  if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   mend(a, now); mend(t, now);
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
@@ -92,20 +126,35 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why };
   t.struckAt = now;
   if (!res.fell) return { ok: true, dealt: res.dealt, fell: false, fall: null, why: null };
-  t.down = true;
-  if (st.falls.size >= WILD_REF.fallsMax) st.falls.delete(st.falls.keys().next().value);
-  const fall = { r: rid, fallen: to, fallenId: t.id, ci: t.ci, killer: by, killerId: a.id, at: now, w: -1, picked: false };
+  t.down = true; t.downAt = now;
+  // a full room's oldest fall is SIGNED without its pick, never forgotten (AUDIT INT9: one pushed out was never signed - no
+  // drop at all): the caller signs `evicted`
+  let evicted = null;
+  if (st.falls.size >= WILD_REF.fallsMax) { evicted = st.falls.values().next().value; evicted.picked = true; st.falls.delete(evicted.r); }
+  const fall = { r: rid, fallen: to, fallenId: t.id, ci: t.ci, killer: by, killerId: a.id, at: now, w: -1, wt: null, picked: false };
   st.falls.set(rid, fall);
-  return { ok: true, dealt: res.dealt, fell: true, fall, why: null };
+  return { ok: true, dealt: res.dealt, fell: true, fall, evicted, why: null };
 }
 
-/** THE KILLER'S PICK (`w` - its place in the fallen's worn offer): its own fall's, once, inside WILD_REF.pickMs. Answers
- *  the fall, now ready to sign, or null. */
-export function wildPick(st, killer, rid, w, now) {
+/** THE KILLER'S PICK (`w` - its place in the fallen's worn offer; `wt` - the piece's template and material as the offer
+ *  showed it, `[t, m]`, which the service matches against what the fallen really wears, AUDIT INT9: the place alone was an
+ *  index into a list the fallen built): its own fall's, once, inside WILD_REF.pickMs. Answers the fall, now ready to
+ *  sign, or null. */
+export function wildPick(st, killer, rid, w, now, wt = null) {
   const fall = st.falls.get(rid);
   if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;
   if (!Number.isInteger(w) || w < -1 || w >= 16) return null;
   fall.w = w; fall.picked = true;
+  if (Array.isArray(wt) && wt.length === 2 && wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536)) fall.wt = [wt[0], wt[1]];
+  return fall;
+}
+
+/** A FALL SIGNED AT ONCE, without its pick - where no body is searched (a building's or a dungeon's room: the worn offer is
+ *  the open country's). Answers the fall, or null. */
+export function wildSignNow(st, rid) {
+  const fall = st.falls.get(rid);
+  if (!fall || fall.picked) return null;
+  fall.picked = true;
   return fall;
 }
 

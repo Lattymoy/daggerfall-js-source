@@ -157,7 +157,10 @@ export async function listRealm({ db, nowS }, /** @type {string} */ playerId) {
  *  offline character's id (what a build from before the realm names), another account's character, one deleted, none. */
 export async function realmCharacterHeld({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return false;
-  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone
+  // INT9 (AUDIT): AND IN PLAY - a lease held. The token's `ci` is whose record a death in the zone drops from, and its `cl`
+  // and `wa` what a referee reads: a tab playing one character named a poor other (its lease freed at the join) and its
+  // deaths dropped the other's record
+  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone
 }
 
 /** ARENA4b: the highest level a token's `cl` claim says - the summary's own bound (realmSummaryOf's `level`). */
@@ -680,7 +683,7 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   // the sequence it read alone
   const steps = [
     db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
-      WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8' : 'lease = ?8'} AND seq = ?9`)
+      WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8 AND dead_at IS NULL' : 'lease = ?8'} AND seq = ?9`)
       .bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),
     mustChange(db),
     ...moves.left,

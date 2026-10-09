@@ -120,7 +120,7 @@
 // and node 22 - and in none of the shared globals lists, because this
 // is the first module in src/net/ to need it.
 
-import { sanitizeName, NAME_MAX } from './wire.js';
+import { sanitizeName, NAME_MAX, streamsFoes } from './wire.js';
 import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
 import { worksOf } from './siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
@@ -653,13 +653,14 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
  * A death in the open zone drops what the ACCOUNT SERVICE took off the fallen character's judged record
  * (server-account/src/wild.js), never what the fallen's own game hands over. The relay has no door to the service, so the
  * service hands the depositor ITS WORD on the drop, an order the room checks with the key it already holds:
- * `{o:'remains', s, wr, wh, wn, wk?, wi?, i, e}` - account `s`'s fall left remains `wr` holding `wn` records whose list
- * (JSON, as the service answered it) digests to `wh` (hex SHA-256); `wk` the killer whose worn piece is the list's record
- * `wi`, theirs alone to take. The room keeps a deposit only whose records digest to `wh` (net/wildLaw.js), and opens it
- * to takes only then.
+ * `{o:'remains', s, wr, wh, wn, wm, wk?, wi?, wg?, i, e}` - account `s`'s fall left remains `wr` holding `wn` records whose
+ * list (JSON, as the service answered it) digests to `wh` (hex SHA-256), to be laid in room `wm` alone (AUDIT INT9: an
+ * order named no room, so one fall was laid in two); `wk` the killer whose worn piece is the list's record `wi`, theirs
+ * alone to take; `wg` the fallen's guild, whose members take nothing of it (PVPDUNGEONS - whoever lays it). The room keeps
+ * a deposit only whose records digest to `wh` (net/wildLaw.js), and opens it to takes only then.
  */
 /** A remains order's fields - no other order kind carries one. */
-export const REMAINS_FIELDS = Object.freeze(['wr', 'wh', 'wn', 'wk', 'wi']);
+export const REMAINS_FIELDS = Object.freeze(['wr', 'wh', 'wn', 'wm', 'wk', 'wi', 'wg']);
 /** A remains' id (the relay's twelve hex, or the service's for a death no receipt names), and the most records a
  *  remains holds (net/wire.js WILD_REMAINS_ITEMS_MAX, pinned equal). */
 export const REMAINS_ID_RE = /^[0-9a-f]{12}$/;
@@ -668,14 +669,16 @@ export const REMAINS_RECORDS_MAX = 96;
 export function remainsOrderValid(c) {
   if (typeof c.wr !== 'string' || !REMAINS_ID_RE.test(c.wr) || typeof c.wh !== 'string' || !DECK_DIGEST_RE.test(c.wh)) return false;
   if (!Number.isSafeInteger(c.wn) || c.wn < 0 || c.wn > REMAINS_RECORDS_MAX) return false;
+  if (typeof c.wm !== 'string' || c.wm.length > 64 || !streamsFoes(c.wm)) return false;
+  if (c.wg !== undefined && !(typeof c.wg === 'string' && GUILD_ID_RE.test(c.wg))) return false;
   if (c.wk === undefined && c.wi === undefined) return true;
   return typeof c.wk === 'string' && ID_RE.test(c.wk) && c.wk !== c.s && Number.isSafeInteger(c.wi) && c.wi >= 0 && c.wi < c.wn;
 }
 /** INT9: MINT A REMAINS ORDER - the service's word that account `s`'s fall left remains `wr` of `wn` records digesting to
- *  `wh` (`wk`, `wi`: the killer's worn piece, theirs alone). */
-export async function mintRemainsOrder({ s, wr, wh, wn, wk = undefined, wi = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+ *  `wh`, for room `wm` (`wk`, `wi`: the killer's worn piece, theirs alone; `wg`: the fallen's guild). */
+export async function mintRemainsOrder({ s, wr, wh, wn, wm, wk = undefined, wi = undefined, wg = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintRemainsOrder needs an integer epoch-seconds clock');
-  const claims = { o: 'remains', s, wr, wh, wn, ...(wk !== undefined ? { wk, wi } : {}), i: nowS, e: nowS + ttlS };
+  const claims = { o: 'remains', s, wr, wh, wn, wm, ...(wk !== undefined ? { wk, wi } : {}), ...(wg !== undefined ? { wg } : {}), i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintRemainsOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
