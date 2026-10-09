@@ -27,6 +27,10 @@
 //      share, up to `share` at the hem, divided between the left and right leg by which side of the middle the vertex
 //      stands (`centre` units either side of x = 0 split it), so the plates swing with the stride and part between
 //      the legs no further than they must.
+//   4. MW-EBONY1: or it hangs OVER its joints (`hang.mode` 'over' - a breastplate whose tassets reach the thighs, a
+//      cloak): above `top` the joint law alone, below it the joint law's own answer keeps 1 - share and the legs
+//      take the share, so the waist is one surface - nothing changes where the share is nought. The legs weigh in by
+//      the hang alone: the joint law never picks them, so a plate over the thigh is not the thigh's outright.
 //
 // Welded vertices (one position, split by a seam in the UVs or the normals) are weighted once and share the answer,
 // so a seam never opens under a pose. Every list is normalised to 1; a vertex carries one bone or a joint's two (a
@@ -79,15 +83,13 @@ export function jointWeights(positions, bones, { hang = null } = {}) {
   const children = bones.map((b) => bones.flatMap((c, j) => (c.parent === b.name ? [j] : [])));
   /** The joint blend across child c's origin: c's share, by where p stands along c's axis. */
   const across = (p, c) => { const L = bones[c].blend ?? 1; return smoothstep((dot(sub(p, bones[c].from), axis[c]) + L) / (2 * L)); };
-  const weigh = (p) => {
-    if (hang) {
-      const legs = smoothstep((hang.top - p[2]) / (hang.top - hang.bottom)) * hang.share;
-      const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));
-      return [[index.get(hang.root), 1 - legs], [index.get(hang.legs[0]), legs * (1 - right)], [index.get(hang.legs[1]), legs * right]];
-    }
+  const over = hang?.mode === 'over';
+  if (hang && hang.mode != null && !over) throw new Error(`a hang's mode is 'over' or none, not "${hang.mode}"`);
+  const legIndex = over ? new Set(hang.legs.map((n) => index.get(n))) : null;
+  const joint = (p) => {
     const d = bones.map((b) => segmentDistance(p, b.from, b.to) - (b.bias ?? 0));
-    let k = 0;
-    for (let i = 1; i < d.length; i++) if (d[i] < d[k]) k = i;
+    let k = legIndex?.has(0) ? -1 : 0;
+    for (let i = 0; i < d.length; i++) if (!legIndex?.has(i) && (k < 0 || d[i] < d[k])) k = i;
     const b = bones[k];
     if (b.parent) {
       const L = b.blend ?? 1;
@@ -95,11 +97,20 @@ export function jointWeights(positions, bones, { hang = null } = {}) {
     }
     let c = -1;
     for (const j of children[k]) {
+      if (legIndex?.has(j)) continue;
       const L = bones[j].blend ?? 1;
       if (dot(sub(p, bones[j].from), axis[j]) > -L && (c < 0 || d[j] < d[c])) c = j;
     }
     if (c >= 0) { const w = across(p, c); return [[c, w], [k, 1 - w]]; }
     return [[k, 1]];
+  };
+  const weigh = (p) => {
+    if (!hang) return joint(p);
+    const legs = smoothstep((hang.top - p[2]) / (hang.top - hang.bottom)) * hang.share;
+    const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));
+    const shares = [[index.get(hang.legs[0]), legs * (1 - right)], [index.get(hang.legs[1]), legs * right]];
+    if (!over) return [[index.get(hang.root), 1 - legs], ...shares];
+    return [...joint(p).map(([i, w]) => [i, w * (1 - legs)]), ...shares];
   };
   const { rep, first } = weldGroups(positions);
   const lists = first.map((v) => {

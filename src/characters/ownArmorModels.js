@@ -72,10 +72,12 @@ export const STEEL_HELM_STYLES = Object.freeze(['closed', 'open']);
 export const STEEL_HELM_DEFAULT = STEEL_HELM_STYLES[0];
 
 const part = (p, model, hides = null) => Object.freeze({ part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}) });
-const steel = (id, name, templateIndex, { parts, styles = null }) => Object.freeze({
-  id, name, templateIndex, material: ARMOR_MATERIAL.Steel, parts: Object.freeze(parts),
+const plate = (material) => (id, name, templateIndex, { parts, styles = null }) => Object.freeze({
+  id, name, templateIndex, material, parts: Object.freeze(parts),
   ...(styles ? { styles: Object.freeze(styles) } : {}),
 });
+const steel = plate(ARMOR_MATERIAL.Steel);
+const ebony = plate(ARMOR_MATERIAL.Ebony);   // MW-EBONY1
 
 /** MW-STEEL1: Mac's steel plate, piece by piece (tools/bakeSteelPlate.mjs bakes the meshes, skinned - MW-STEEL4). Each
  *  piece fills the ARMO_PART slots a retail piece of its shape fills, so the priority law and the skin shadows are the
@@ -135,6 +137,42 @@ const brigandine = (metal) => Object.freeze({
   parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),
 });
 
+/** MW-EBONY1 (2026-10-09, Mac: "The ebony armor set and its textures"; asked, Ebony only): Mac's ebony plate,
+ *  Daggerfall's seven classic pieces in Ebony (tools/bakeEbonyPlate.mjs bakes the meshes, skinned as the steel plate's
+ *  are). Each piece fills the slots its steel twin fills and hides what it hides - the breastplate the cuirass and its
+ *  plates the skirt, each gauntlet its hand over the wrist and forearm, the greaves the upper legs, each boot its foot
+ *  over the ankle and knee, the helm the HAIR (one helm, no styles). Mithril and Adamantium keep the Morrowind ebony
+ *  they wore (mwItemMap.js DF_TO_MW_ARMOR_MATERIAL). */
+function ebonyPlate() {
+  return [
+    ebony('daggerfall_ebony_cuirass', 'Ebony Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
+      parts: [part('cuirass', 'ebony_plate_cuirass.nif'), part('skirt', 'ebony_plate_skirt.nif')],
+    }),
+    ebony('daggerfall_ebony_gauntlets', 'Ebony Gauntlets', CLASSIC_ARMOR_TEMPLATE.Gauntlets, {
+      parts: [
+        part('right hand', 'ebony_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),
+        part('left hand', 'ebony_plate_gauntlet_left.nif', ['left wrist', 'left forearm']),
+      ],
+    }),
+    ebony('daggerfall_ebony_greaves', 'Ebony Greaves', CLASSIC_ARMOR_TEMPLATE.Greaves, {
+      parts: [part('right upper leg', 'ebony_plate_greave_right.nif'), part('left upper leg', 'ebony_plate_greave_left.nif')],
+    }),
+    ebony('daggerfall_ebony_left_pauldron', 'Ebony Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
+      parts: [part('left pauldron', 'ebony_plate_pauldron_left.nif')],
+    }),
+    ebony('daggerfall_ebony_right_pauldron', 'Ebony Right Pauldron', CLASSIC_ARMOR_TEMPLATE.Right_Pauldron, {
+      parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif')],
+    }),
+    ebony('daggerfall_ebony_helm', 'Ebony Helm', CLASSIC_ARMOR_TEMPLATE.Helm, { parts: [part('hair', 'ebony_plate_helm.nif')] }),
+    ebony('daggerfall_ebony_boots', 'Ebony Boots', CLASSIC_ARMOR_TEMPLATE.Boots, {
+      parts: [
+        part('right foot', 'ebony_plate_boot_right.nif', ['right ankle', 'right knee']),
+        part('left foot', 'ebony_plate_boot_left.nif', ['left ankle', 'left knee']),
+      ],
+    }),
+  ];
+}
+
 /**
  * The port's own worn models.
  *
@@ -160,6 +198,7 @@ const brigandine = (metal) => Object.freeze({
 export const OWN_MW_ARMOR = Object.freeze([
   ...BRIGANDINE_METALS.map(brigandine),
   ...steelPlate(),
+  ...ebonyPlate(),
 ]);
 
 /** The own model this worn piece wears, or null for everything that

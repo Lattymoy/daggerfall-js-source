@@ -89,6 +89,8 @@ import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the 
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
+import { fitCloakOver, fitStowedGear, HIP_PITCH_LIMIT } from '../formats/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it
+import { isCloakSlot } from '../characters/ownClothingModels.js';   // MW-CLOAK1
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
@@ -1551,6 +1553,18 @@ export function hangHipLight(arm) {
   return hang;
 }
 
+/** MW-CLOAK1: THE CLOAK'S FITS on a third-person assembly (formats/mwCloakFit.js) - the cloak eased back over every
+ *  piece whose slot `underSlots` names (the body's skin parts and what it wears; null: the cloak is fitted already, as
+ *  on a weapon swap), then each holster bone's pieces against it: slung gear over it, hip gear pitched under it. A body
+ *  with no cloak answers nulls and is not touched. Answers `{ cloak, gear, notes }`. */
+export function fitThirdPersonCloak(arm, underSlots) {
+  const isCloak = (p) => isCloakSlot(p.slot);
+  const cloak = underSlots ? fitCloakOver(arm, { isCloak, isUnder: (p) => underSlots.has(p.slot) }) : null;
+  const gear = fitStowedGear(arm, { isCloak, isGear: (p) => HOLSTER_SLOTS.includes(p.slot) });
+  const notes = (gear ?? []).filter((r) => r.how === 'unresolved').map((r) => `holster @ ${r.bone}: no pitch within ${HIP_PITCH_LIMIT} degrees keeps it in front of the cloak - it hangs as it was`);
+  return { cloak, gear, notes };
+}
+
 /** MW-D50: the archives' DIRECTORY - "is this path in any attached
  *  .bsa" - the one question pickWeaponRecord asks of them. Not
  *  findLoaded: that one throws for a path known but not yet read
@@ -1828,6 +1842,7 @@ async function buildTpBody({
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
     hangHipLight(arm);   // HT-WAIST: the hook and the anchor, once, on the assembled skeleton
+    const cloakFit = fitThirdPersonCloak(arm, new Set([...skinRows, ...worn.adds].map((row) => row.slot)));   // MW-CLOAK1
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
@@ -1897,7 +1912,7 @@ async function buildTpBody({
       werewolf: !!werewolf,   // WEREWOLF1
       leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...cloakFit.notes, ...(arm.notes || [])],   // MW-CLOAK1: and the cloak's
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -4328,8 +4343,9 @@ export function createFpArm() {
             const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);
             t.arm.pieces = t.arm.pieces.filter((p) => !swapped.has(p.slot));
             bindPartsInto(t.arm, [...tResolved.parts, ...tHolster.parts]);
+            const tFit = fitThirdPersonCloak(t.arm, null);   // MW-CLOAK1: the new holster against the cloak already fitted
             t.holster = tHolster.info;
-            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes];
+            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes, ...tFit.notes];
             const tFresh = t.arm.pieces.filter((p) => swapped.has(p.slot));
             // MW-LOAD: same cover for the third-person rig's new pieces.
             await preloadArmTextures(tFresh, archives, gen);
