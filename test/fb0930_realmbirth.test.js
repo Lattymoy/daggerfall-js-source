@@ -53,7 +53,7 @@ async function frontDoor(search, choice, realmId = null) {
   const params = new URLSearchParams(search);
   for (const k of BOOT_DOOR_KEYS) params.delete(k);   // the clear before the menu (route above holds it to main.js)
   const load = async (p) => {
-    if (p === './ui/enhancedMenu.js') return { takePickedSaveKey: () => null, takePickedRealmId: () => realmId };
+    if (p === './ui/enhancedMenu.js') return { takePickedSaveKey: () => null, takePickedRealmId: () => realmId, takePickedLegacyBirth: () => null };
     if (p === './systems/testRoom.js') return { testStartsOutdoors };
     throw new Error(`the front door imports ${p}: the pin needs it`);
   };

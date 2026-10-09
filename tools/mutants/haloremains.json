@@ -1,0 +1,47 @@
+[
+  {
+    "name": "HALOREM-primary-only",
+    "file": "src/net/online.js",
+    "old": "      } else {\n        // HALO-REMAINS (2026-10-09",
+    "new": "      } else if (primary) {\n        // HALO-REMAINS (2026-10-09",
+    "tests": [
+      "test/haloremains.test.js"
+    ]
+  },
+  {
+    "name": "HALOREM-take-to-primary",
+    "file": "src/net/wildRemains.js",
+    "old": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {",
+    "new": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {",
+    "tests": [
+      "test/haloremains.test.js"
+    ]
+  },
+  {
+    "name": "HALOREM-crossing-clears",
+    "file": "src/net/wildRemains.js",
+    "old": "        if (rooms.has(rec.room)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/haloremains.test.js"
+    ]
+  },
+  {
+    "name": "HALOREM-halo-socket-ignored",
+    "file": "src/net/online.js",
+    "old": "    const h = this._halo.get(room);\n    return h?.status === 'open' ? h.ws : null;\n  }\n  /** HALO-REMAINS: every room",
+    "new": "    return null;\n  }\n  /** HALO-REMAINS: every room",
+    "tests": [
+      "test/haloremains.test.js"
+    ]
+  },
+  {
+    "name": "HALOREM-host-own-room-only",
+    "file": "src/scenes/world.js",
+    "old": "    wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);",
+    "new": "    wildRemains.setRooms(online?.status === 'open' ? [online.room] : []);",
+    "tests": [
+      "test/haloremains.test.js"
+    ]
+  }
+]

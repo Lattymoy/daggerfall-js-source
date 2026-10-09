@@ -1305,15 +1305,25 @@ export class OnlineSession {
     return h?.status === 'open' ? h.ws : null;
   }
 
+  /** HALO-REMAINS: the open socket of `room` - my own room's (null or my room) or a held halo's - or null. */
+  _roomSocket(room = null) {
+    if (room == null || room === this.room) return this.status === 'open' ? this._ws : null;
+    const h = this._halo.get(room);
+    return h?.status === 'open' ? h.ws : null;
+  }
+  /** HALO-REMAINS: every room this session holds a socket in now - my own and each halo's (connecting too). */
+  heldRooms() { return this.room ? [this.room, ...this._halo.keys()] : []; }
+
   /** WILD1: one wild frame out - a DIRECTED one (a blow, a fallen's gear, a pick, a gift) to the player it names through
    *  the socket that reports them (`_wildSocketFor`), or the ROOM's (a deposit, a take) on my own room's socket -
    *  through the wire's own projection first, WILD_HZ_MAX a second, never at a relay that would close the socket for it.
    *  TRUE MEANS THE FRAME LEFT THE SOCKET; false is refused to the caller, never queued here. */
-  sendWild(data) {
+  sendWild(data, room = null) {
     const d = validWildData(data);
     if (!d || !this.wildOk) return false;
     if (wildDirected(d) && d.to === this.id) return false;
-    const ws = wildDirected(d) ? this._wildSocketFor(d.to) : (this.status === 'open' ? this._ws : null);
+    // HALO-REMAINS: a room's word (a take) goes to the room that keeps those remains - mine, or a halo's open socket
+    const ws = wildDirected(d) ? this._wildSocketFor(d.to) : this._roomSocket(room);
     if (!ws) return false;
     const gate = wildGate(this._wildBucket, this._now());
     if (!gate.pass) return false;
@@ -2592,7 +2602,11 @@ export class OnlineSession {
       // are its own room's, said again when I stand in it.
       if (m.data !== undefined) {
         this._directedIn(m, now, 'wild', this._inWildBuckets, wildInGate, WILD_IN_HZ_MAX, (d) => { const v = validWildData(d); return v && wildDirected(v) ? v : null; }, (id, d) => this.onWild?.(id, d, subOf(m)));
-      } else if (primary) {
+      } else {
+        // HALO-REMAINS (2026-10-09, the owner: "i died in the pvp zone again and still my pile isnt there"): a HALO's
+        // room word too, with its room. The relay says a room's remains at a socket's hello alone, and walking back to
+        // them a player hello's their cell AS A HALO first (from the cell beside it) - the words were dropped here, and
+        // the crossing PROMOTES that socket without a new hello, so they were never said again: the pile never stood
         const o = validWildOut(m);
         if (o) this._deliver('wild', () => this.onWildRoom?.(o, room));
       }

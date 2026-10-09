@@ -7282,7 +7282,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
     // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
     // record (its heir chosen, unborn), and the fallen's save asks again.
-    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits - load the fallen's save to try again.`); releaseUnloadGuard(); exitToTitleMenu(); };
+    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits - ${realmNew ? 'choose who carries it on from the Online page' : 'load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
     Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
       spellsByIndex = sbi;
       const r = host?.bornResult({ careers, factionDict });
@@ -20348,10 +20348,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WILD1: my room's word on its remains (net/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
     // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
+    // HALO-REMAINS: a halo's word too - the cell beside mine says its remains at its hello, and a crossing into it promotes
+    // that socket with no hello again; the book holds every room I hold (its records go when their room is let go)
     online.onWildRoom = (w, room) => {
-      if (room !== online.room) return;
-      wildRemains.setRoom(room);
-      wildRemains.onWord(w);
+      if (!online.heldRooms().includes(room)) return;
+      wildRemains.setRooms(online.heldRooms());
+      wildRemains.onWord(w, room);
       if (w?.k === 'gone') { remainsGone(w.r); forgetMine(w.r); }   // WILD-WAYPOINT: all taken, or let go - the flag goes with them; WILD-KEEP: and the kept record
     };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
@@ -22299,7 +22301,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { giantNoticeFrame(); } catch (e) { console.warn('[giants] notice', e?.message ?? e); }   // GIANT-FALL
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
-    wildRemains.setRoom(online?.status === 'open' ? online.room : null);
+    wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
     wildRemains.setPool(wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null));
     wildRemains.tick();
     setLootMarksLive(wildRemains.hasMine());   // my remains' red line stands with the rarity row off too
@@ -22486,7 +22488,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onNoGift: (from) => { _wildGiftNames.delete(from); townTalk.say(WILD_TEXT.gone); },
   });
   const wildRemains = createWildRemains({
-    send: (d) => online?.sendWild(d) === true,
+    send: (d, room) => online?.sendWild(d, room) === true,   // HALO-REMAINS: a take to the room that keeps the pile
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || ((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt && (online.drawable().find((d) => d.id === rec.oid).gt === myGuildTag())))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
