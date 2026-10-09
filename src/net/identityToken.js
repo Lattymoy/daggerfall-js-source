@@ -275,7 +275,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, wa?: [number, 0|1], hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -299,10 +299,19 @@ export function nameIsIssuable(name) {
  *      the rights read; a face drawing the badge leaves these out
  *   ar the account's arena rating this season, absent for a guest (ARENA4)
  *   cl the level of the character the client named at the mint, as the
- *      realm keeps it (server-account/src/realm.js - the summary's
- *      `level`), absent when it named none or from a service before
- *      ARENA4b; the relay's ladder vitality reads it (net/arenaLaw.js
- *      ladderVitality) and never a health the client claims
+ *      realm keeps it (server-account/src/realm.js realmLevelOf - INT7:
+ *      the level its judge TRUSTS, `level_seen`, once a checkpoint was
+ *      judged; the summary's `level` before), absent when it named none
+ *      or from a service before ARENA4b; the relay's ladder vitality
+ *      reads it (net/arenaLaw.js ladderVitality) and never a health the
+ *      client claims
+ *   wa that realm character's ARMS (INT7, net/siegeRef.js armsOf): `[reach,
+ *      bow]` - the most reach (a weapon's top and its material's
+ *      modifier) of any lawful weapon its JUDGED pack holds, 0 for none,
+ *      and 1 where a lawful bow is among them; beside a 1 `rc` alone,
+ *      absent before its first judged checkpoint and from a service
+ *      before INT7. Every referee's clip of a blow between players
+ *      (net/siegeRef.js siegeBlowMax, net/arenaLaw.js arenaBlowCap)
  *   hn hc hb hg  that realm character's HOUSE (LEGACY7, net/houseLaw.js):
  *      the line's surname, the member's given name, 1 for a Bloodline,
  *      the generation's numeral - `hn` or none of them; absent for a
@@ -318,6 +327,10 @@ export const CHARACTER_LEVEL_MIN = 1;
 export const CHARACTER_LEVEL_MAX = 1000;
 /** ARENA4b: a character level a token may carry - a whole number in bounds, never a stand-in. */
 export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;
+/** INT7: the most reach a weapon has (net/siegeRef.js ARMS_TOP_MAX - a Daedric Thunderlock's 26 + 6, pinned equal). */
+export const ARMS_TOP_MAX = 32;
+/** INT7: an arms claim a token may carry - `[reach, bow]`, the reach a whole number 0..ARMS_TOP_MAX, the bow 0 or 1. */
+export const armsIssuable = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isSafeInteger(wa[0]) && wa[0] >= 0 && wa[0] <= ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
 
 /** The account id's own shape - the same one `net/social.js` already
  *  keeps in `dagger.online.account`, so an id minted by SOC1 is an id
@@ -390,6 +403,8 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // ARENA4b: the named character's level (the relay's ladder vitality reads it): absent from a service before it and from a
   // mint that named no character; present, a whole number from 1 to the realm's 1000
   if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;
+  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
+  if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
   if (!houseClaimOk(c)) return false;   // LEGACY7: the house - absent for none, each field of its shape or refused
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
@@ -403,7 +418,8 @@ export const TOKEN_MAX_CHARS = 1024;
 /** AUDIT LEGACY III O11: THE LONGEST BODY the relay's hello takes (net/wire.js TOKEN_RE, pinned equal) - the minter asks
  *  it beside TOKEN_MAX_CHARS. The wire's 640 was the tighter of the two and the minter never asked it: every optional
  *  claim at once was 639 characters of body, so a house (LEGACY7) carried such a token to 739 - minted, and refused at
- *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778. */
+ *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778; INT7's arms
+ *  (`wa`) at their widest, 794. */
 export const TOKEN_BODY_MAX = 800;
 /** A token's body, the part between its version and its signature. */
 export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').split('.')[1] ?? '';
@@ -412,7 +428,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, hn?:string, hc?:string, hb?:1, hg?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], hn?:string, hc?:string, hb?:1, hg?:number}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -437,6 +453,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.gx !== undefined && who.gx.length) claims.gx = who.gx;   // GLYPH-WEAR: only while a glyph is taken off - a player hiding none mints the bytes they always did
   if (who?.ar !== undefined) claims.ar = who.ar;   // ARENA4: only for a registered account - a guest mints the bytes it always did
   if (who?.cl !== undefined) claims.cl = who.cl;   // ARENA4b: only when a character was named - a mint naming none, the bytes as before
+  if (who?.wa !== undefined) claims.wa = who.wa;   // INT7: only for a realm character judged since - before one, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
   if (who?.hn !== undefined) { claims.hn = who.hn; for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k]; }
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse

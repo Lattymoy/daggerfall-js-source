@@ -118,14 +118,51 @@ export const SIEGE_CRIT_MAX = 2;
 /**
  * THE MOST ONE BLOW MAY DEAL: (the weapon's top + its material + the attacker's bonuses at their caps) x a critical's
  * most. `w` a weapon template (null or -1 hand-to-hand), `m` its material (0 Iron to 9 Daedric). 0 for a template this
- * table does not name.
+ * table does not name. INT7: a weapon's top and material never past the striker's SIGNED arms (`wa`, armsOk - the most
+ * any weapon its judged record holds reaches); a fist is every character's, its own most.
  */
-export function siegeBlowMax(w, m) {
+export function siegeBlowMax(w, m, wa = null) {
   if (w == null || w === -1) return (SIEGE_FIST_MAX + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;
-  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : SIEGE_WEAPON_MAX[w];
-  if (!top) return 0;
-  const mat = Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0;
-  return Math.max(0, top + mat + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;
+  const reach = armsTop(w, m);
+  if (reach == null) return 0;
+  return Math.max(0, (armsOk(wa) ? Math.min(reach, wa[0]) : reach) + SIEGE_BONUS_MAX) * SIEGE_CRIT_MAX;
+}
+
+// ─── INT7: THE ARMS SIGNED (bible/06-Systems/Integrity-Arc.md, lane 2) ───
+
+/** A weapon's REACH: its top (SIEGE_WEAPON_MAX, the Thunderlock's span) plus its material's modifier (Iron's -1 to
+ *  Daedric's 6) - the one number both referees' caps grow with (arenaLaw.js arenaBlowCap's table is this one, pinned
+ *  equal). Null for a template neither names. */
+export function armsTop(w, m) {
+  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];
+  if (!top) return null;
+  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);
+}
+/** The most reach a weapon has: a Daedric Thunderlock's (26 + 6) - net/identityToken.js ARMS_TOP_MAX, pinned equal. */
+export const ARMS_TOP_MAX = SIEGE_THUNDERLOCK.max + SIEGE_MATERIAL_MOD[SIEGE_MATERIAL_MOD.length - 1];
+/** A signed arms claim's shape (identityToken.js `wa`): `[reach, bow]` - the reach a whole number 0..ARMS_TOP_MAX (0: no
+ *  weapon), the bow 0 or 1. */
+export const armsOk = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isInteger(wa[0]) && wa[0] >= 0 && wa[0] <= ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
+/**
+ * A CHARACTER'S ARMS, off its pack (`items` - the save's own list: every weapon it can take in hand without a trip
+ * elsewhere, worn or carried): `[reach, bow]` - the most reach any LAWFUL weapon there has (armsTop; 0 for none), and 1
+ * where a lawful bow is among them (siegeIsBow - a shaft is a bow's). `lawful(item)` is the item law's word on one piece
+ * (server-account/src/judge.js - a piece the law refuses arms nobody). DECIDED: the pack, never the one in hand - a
+ * fighter swaps weapons mid-fight, and the signature is minted once a room; the cap is the honest most of what it
+ * carries, never what one swing claimed.
+ * @param {unknown} items @param {(it: any) => boolean} lawful
+ * @returns {[number, 0|1]}
+ */
+export function armsOf(items, lawful) {
+  let reach = 0, bow = /** @type {0|1} */ (0);
+  for (const it of Array.isArray(items) ? items : []) {
+    if (!it || typeof it !== 'object' || it.group !== 'Weapons') continue;
+    const r = armsTop(it.templateIndex, it.material ?? 0);
+    if (r == null || !lawful(it)) continue;
+    reach = Math.max(reach, Math.max(0, r));
+    if (siegeIsBow(it.templateIndex)) bow = 1;
+  }
+  return [reach, bow];
 }
 /** Whether a template is a bow (its blow a shaft's). */
 export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template;
@@ -166,12 +203,14 @@ function spend(f, now) {
  * A BLOW JUDGED (6.1) - `by` and `to` the two fighters' states, `from` and `at` their last poses (null: unknown), `held`
  * the weapon the striker's look carries (siegeHeld - null: none matching the claim), `d` the damage claimed, `r` its kind
  * (SIEGE_HIT). Answers `{ ok, dealt, fell, why }` and moves the states: the striker's bucket spent first (as the gate's),
- * the target's vitality down by the clipped damage, a fall at none left.
+ * the target's vitality down by the clipped damage, a fall at none left. INT7: `wa` the striker's SIGNED arms (the
+ * token's, armsOk - null: a token from before them): the clip never past their reach, and a shaft only where they hold
+ * a bow.
  * @param {any} by @param {any} to
- * @param {{ from?: any, at?: any, held?: any, d?: number, r?: number }} o
+ * @param {{ from?: any, at?: any, held?: any, d?: number, r?: number, wa?: any }} o
  * @param {number} now
  */
-export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0, r = SIEGE_HIT.Melee } = {}, now) {
+export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0, r = SIEGE_HIT.Melee, wa = null } = {}, now) {
   if (!by || !to || by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };
   if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };
   if (!spend(by, now)) return { ok: false, dealt: 0, fell: false, why: 'rate' };
@@ -179,11 +218,11 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   if (!held) return { ok: false, dealt: 0, fell: false, why: 'weapon' };
   if (!from || !at) return { ok: false, dealt: 0, fell: false, why: 'reach' };
   const shaft = r === SIEGE_HIT.Shaft;
-  if (shaft !== siegeIsBow(held.w)) return { ok: false, dealt: 0, fell: false, why: 'weapon' };
+  if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1)) return { ok: false, dealt: 0, fell: false, why: 'weapon' };   // INT7: a shaft a signed bow's
   const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;
   if (metres(from, at) > reach) return { ok: false, dealt: 0, fell: false, why: 'reach' };
   const want = Math.max(0, Math.trunc(Number(d) || 0));
-  const got = Math.min(want, siegeBlowMax(held.w, held.m), to.hp);
+  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
@@ -465,12 +504,13 @@ export const siegeThroneBarred = (b) => !!b?.gate && !b.breached;
  * a blow on a fighter; a melee blow alone (DECIDED: a gate is battered and a Ram hacked at close quarters - a shaft does
  * neither, and a spell's harm is a fighter's), within the weapon's reach of the work's edge, standing on the field's
  * ground; the damage clipped to the weapon's bucket, the work's share of it at least 1. Answers `{ ok, dealt, broke, why }`
- * with the work's vitality moved - `broke` at none left.
+ * with the work's vitality moved - `broke` at none left. INT7: `wa` the striker's signed arms, the clip held to them as a
+ * blow on a fighter's is (siegeBlowMax).
  * @param {any} by @param {any} work
- * @param {{ point?: any, size?: number, from?: any, ground?: number|null, held?: any, d?: number, r?: number, share?: number }} o
+ * @param {{ point?: any, size?: number, from?: any, ground?: number|null, held?: any, d?: number, r?: number, share?: number, wa?: any }} o
  * @param {number} now
  */
-export function refereeWorkBlow(by, work, { point = null, size = 0, from = null, ground = null, held = null, d = 0, r = SIEGE_HIT.Melee, share = 1 } = {}, now) {
+export function refereeWorkBlow(by, work, { point = null, size = 0, from = null, ground = null, held = null, d = 0, r = SIEGE_HIT.Melee, share = 1, wa = null } = {}, now) {
   if (!by || !work || !point) return { ok: false, dealt: 0, broke: false, why: 'no-work' };
   if (by.down || work.hp <= 0) return { ok: false, dealt: 0, broke: false, why: 'down' };
   if (!spend(by, now)) return { ok: false, dealt: 0, broke: false, why: 'rate' };
@@ -478,7 +518,7 @@ export function refereeWorkBlow(by, work, { point = null, size = 0, from = null,
   if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack + size) return { ok: false, dealt: 0, broke: false, why: 'reach' };
   if (ground != null && Math.abs(from.y - ground) / SIEGE_UNITS_PER_M > SIEGE_HEIGHT_M) return { ok: false, dealt: 0, broke: false, why: 'reach' };
   const want = Math.max(0, Math.trunc(Number(d) || 0));
-  const got = Math.min(want, siegeBlowMax(held.w, held.m));
+  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa));
   if (got <= 0) return { ok: false, dealt: 0, broke: false, why: 'nothing' };
   by.clipped += want - got;
   by.dealt += got;

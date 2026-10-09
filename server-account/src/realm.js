@@ -49,7 +49,7 @@ import { SAVE_MAX_BYTES } from './service.js';
 import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';   // AUDIT REALM L1-F7: a deleted guildmaster hands the guild over first
 import { liquidWealthOf, customsAllowance, REALM_BIRTH_LEVEL, REALM_BIRTH_WEALTH_MAX } from '../../src/net/realmGoldLaw.js';
 import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/cardWorthLaw.js';   // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
-import { ID_RE } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an account named by its id
+import { ID_RE, armsIssuable } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an account named by its id; INT7: the arms' claim
 import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
@@ -162,16 +162,28 @@ export async function realmCharacterHeld({ db }, /** @type {string} */ playerId,
 
 /** ARENA4b: the highest level a token's `cl` claim says - the summary's own bound (realmSummaryOf's `level`). */
 export const REALM_LEVEL_CLAIM_MAX = 1000;
-/** ARENA4b: THE LEVEL ON A REALM CHARACTER'S TILE - its summary's `level`, the word its client's checkpoint wrote
- *  (realmSummaryOf projects it) - which the identity mint signs as `cl` beside `rc`. Null for anything else: not one of
- *  this account's realm characters, no summary yet, a level outside 1..REALM_LEVEL_CLAIM_MAX. */
+/** ARENA4b: THE LEVEL ON A REALM CHARACTER'S TILE - which the identity mint signs as `cl` beside `rc`. INT7: THE LEVEL
+ *  THE JUDGE TRUSTS (`level_seen` - verdict.js trustedLevel: the save's own, never risen faster than play allows) once a
+ *  checkpoint was judged; before one, its summary's `level`, the word its client's checkpoint wrote (realmSummaryOf
+ *  projects it - AUDIT PRE-MERGE 1003 S2's "never read against the save", now read against it). Null for anything else:
+ *  not one of this account's realm characters, no summary yet, a level outside 1..REALM_LEVEL_CLAIM_MAX. */
 export async function realmLevelOf({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return null;
-  const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare('SELECT summary, level_seen FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   let summary = null;
   try { summary = row?.summary ? JSON.parse(row.summary) : null; } catch { summary = null; }
-  const lv = summary?.level;
+  const lv = row?.level_seen ?? summary?.level;
   return Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null;
+}
+
+/** INT7: A REALM CHARACTER'S ARMS as its last judged checkpoint found them (verdict.js, `arms_top` and `arms_bow` - the
+ *  most reach of its pack's lawful weapons, a lawful bow) - which the identity mint signs as `wa` beside `rc`. Null
+ *  before its first judged checkpoint since INT7, and for anything that is not one of this account's realm characters. */
+export async function realmArmsOf({ db }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
+  if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return null;
+  const row = await db.prepare('SELECT arms_top, arms_bow FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const wa = row && row.arms_top != null ? [row.arms_top, row.arms_bow === 1 ? 1 : 0] : null;
+  return armsIssuable(wa) ? /** @type {[number, 0|1]} */ (wa) : null;
 }
 
 /** ONE CHARACTER IN PLAY AN ACCOUNT: every lease of this account but `keep`'s is dropped. */
