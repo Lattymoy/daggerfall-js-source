@@ -49,6 +49,19 @@
 // implemented", nine paintings; asked which metal wears which, he took the map offered - one per metal): EVERY METAL
 // OF THE BRIGANDINE JERKIN wears the brigandine now, each in its own painting - the one mesh, baked once per metal
 // with that metal's texture (tools/bakeBrigandine.mjs). Steel keeps MW-BRIG1's red.
+//
+// ═══ MW-FIT1: WHAT THE PLATE COVERS ════════════════════════════════
+//
+// (2026-10-09, a player's report Mac passed on, over the paperdoll in both sets: "the upper arm is still visible with
+// the steel armor", "the ebony armor gets the same issue", "the helmet elevation is too much", "the coif has to cover
+// the neck".) A PAULDRON IS A SLEEVE: both sets' pauldrons close round the upper arm from the shoulder to the elbow,
+// where the gauntlet's cuff takes over (measured on the bind - every ray out of the upper arm's bone line meets the
+// pauldron), so each hides its upper arm as a gauntlet hides its forearm - and the skin that came up through the steel
+// is not drawn. A CLOSED HELM IS THE HEAD: a retail helmet that fills the head's slot is the closed helm, and no head
+// is drawn under it (bible/02-Formats/Morrowind-Rules.md, "A helmet force-deletes hair before its own parts are
+// added"); the steel plate's closed helm and the ebony helm hide it, and stand where Mac fitted them on the body, the
+// coif hung to the collar (tools/bakeSteelPlate.mjs HELM_LIFT is the open helm's alone). The open helm shows the face,
+// so it keeps the head.
 import { ARMOR_MATERIAL, isPlate } from '../systems/armorMaterials.js';
 
 /** Roleplay & Realism Items' Jerkin (systems/rriItems.js RRI_TEMPLATES,
@@ -85,11 +98,11 @@ const ebony = plate(ARMOR_MATERIAL.Ebony);   // MW-EBONY1
  *  morrowind steel armor's skirt") the plate skirt under it Morrowind's skirt slot - modelled from the same cuirass mesh
  *  as the breastplate, shadowing nothing (ARMO_PART's skirt row), so a clothing skirt worn over it takes the slot at its
  *  higher priority as the law says; each gauntlet its hand, hiding the wrist and forearm under it; the greaves the
- *  upper legs; each pauldron its pauldron; each boot its foot, hiding the ankle and knee. The helm fills the HAIR slot,
- *  which hides the hair and leaves the head - the open helm shows the face, and the closed one's eye slit looks onto
- *  it. */
+ *  upper legs; each pauldron its pauldron, hiding the upper arm it sleeves to the elbow (MW-FIT1); each boot its foot,
+ *  hiding the ankle and knee. The helm fills the HAIR slot, which hides the hair; the open helm leaves the head, its
+ *  face showing, and the closed one hides it (MW-FIT1). */
 function steelPlate() {
-  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);
+  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);   // MW-FIT1: a closed helm is the head
   const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif')]);
   return [
     steel('daggerfall_steel_cuirass', 'Steel Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
@@ -105,10 +118,10 @@ function steelPlate() {
       parts: [part('right upper leg', 'steel_plate_greave_right.nif'), part('left upper leg', 'steel_plate_greave_left.nif')],
     }),
     steel('daggerfall_steel_left_pauldron', 'Steel Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
-      parts: [part('left pauldron', 'steel_plate_pauldron_left.nif')],
+      parts: [part('left pauldron', 'steel_plate_pauldron_left.nif', ['left upper arm'])],
     }),
     steel('daggerfall_steel_right_pauldron', 'Steel Right Pauldron', CLASSIC_ARMOR_TEMPLATE.Right_Pauldron, {
-      parts: [part('right pauldron', 'steel_plate_pauldron_right.nif')],
+      parts: [part('right pauldron', 'steel_plate_pauldron_right.nif', ['right upper arm'])],
     }),
     steel('daggerfall_steel_helm', 'Steel Helm', CLASSIC_ARMOR_TEMPLATE.Helm, {
       parts: helmClosed, styles: { closed: helmClosed, open: helmOpen },
@@ -140,9 +153,10 @@ const brigandine = (metal) => Object.freeze({
 /** MW-EBONY1 (2026-10-09, Mac: "The ebony armor set and its textures"; asked, Ebony only): Mac's ebony plate,
  *  Daggerfall's seven classic pieces in Ebony (tools/bakeEbonyPlate.mjs bakes the meshes, skinned as the steel plate's
  *  are). Each piece fills the slots its steel twin fills and hides what it hides - the breastplate the cuirass and its
- *  plates the skirt, each gauntlet its hand over the wrist and forearm, the greaves the upper legs, each boot its foot
- *  over the ankle and knee, the helm the HAIR (one helm, no styles). Mithril and Adamantium keep the Morrowind ebony
- *  they wore (mwItemMap.js DF_TO_MW_ARMOR_MATERIAL). */
+ *  plates the skirt, each gauntlet its hand over the wrist and forearm, each pauldron its pauldron over the upper arm,
+ *  the greaves the upper legs, each boot its foot over the ankle and knee, the helm the HAIR over the head (one helm,
+ *  closed, no styles). Mithril and Adamantium keep the Morrowind ebony they wore (mwItemMap.js
+ *  DF_TO_MW_ARMOR_MATERIAL). */
 function ebonyPlate() {
   return [
     ebony('daggerfall_ebony_cuirass', 'Ebony Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
@@ -158,12 +172,12 @@ function ebonyPlate() {
       parts: [part('right upper leg', 'ebony_plate_greave_right.nif'), part('left upper leg', 'ebony_plate_greave_left.nif')],
     }),
     ebony('daggerfall_ebony_left_pauldron', 'Ebony Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
-      parts: [part('left pauldron', 'ebony_plate_pauldron_left.nif')],
+      parts: [part('left pauldron', 'ebony_plate_pauldron_left.nif', ['left upper arm'])],
     }),
     ebony('daggerfall_ebony_right_pauldron', 'Ebony Right Pauldron', CLASSIC_ARMOR_TEMPLATE.Right_Pauldron, {
-      parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif')],
+      parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif', ['right upper arm'])],
     }),
-    ebony('daggerfall_ebony_helm', 'Ebony Helm', CLASSIC_ARMOR_TEMPLATE.Helm, { parts: [part('hair', 'ebony_plate_helm.nif')] }),
+    ebony('daggerfall_ebony_helm', 'Ebony Helm', CLASSIC_ARMOR_TEMPLATE.Helm, { parts: [part('hair', 'ebony_plate_helm.nif', ['head'])] }),
     ebony('daggerfall_ebony_boots', 'Ebony Boots', CLASSIC_ARMOR_TEMPLATE.Boots, {
       parts: [
         part('right foot', 'ebony_plate_boot_right.nif', ['right ankle', 'right knee']),
@@ -190,8 +204,9 @@ function ebonyPlate() {
  * as a retail armour mesh's do, and is bound exactly as one.
  *
  * `hides`, per part: the slots a part covers beyond its own, reserved with no mesh so their skin is not drawn (a
- * gauntlet over the wrist and forearm, a boot over the ankle and knee) - reserveIndividualPart's occupation, at the
- * armour's priority like the part itself.
+ * gauntlet over the wrist and forearm, a boot over the ankle and knee, a pauldron over the upper arm, a closed helm
+ * over the head) - reserveIndividualPart's occupation, at the armour's priority like the part itself. A part the
+ * first person does not draw hides nothing from it (mwItemMap.js composeWornArmor's `fpShadows`, MW-FIT1).
  *
  * `styles`: a piece that comes more than one way (the steel helm), the parts of each - `parts` is the default's.
  */

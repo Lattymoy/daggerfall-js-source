@@ -367,9 +367,10 @@ moves past 2 m, stops being parked or a caravan, or is gone, I am stood
 outside behind its door and told "The caravan has moved on. You step
 outside." A repaint reaches the room live.
 
-**The relay** (world185, re-hashed in place - world183 until the merge
-past main's CHAP4c and PERF-RELAY1): the `caravan` frame and its keeping,
-`relaySupportsCaravan` at 185, and the park record's `we`/`wg`.
+**The relay** (world186, re-hashed in place - world183, then world185,
+until the merges past main's CHAP4c, PERF-RELAY1 and INT7-INT10): the
+`caravan` frame and its keeping,
+`relaySupportsCaravan` at 186, and the park record's `we`/`wg`.
 
 **Known limits.** Visitors see the pieces as the owner placed them the last
 time the owner stood in the caravan online. A paint changed inside reaches
@@ -468,14 +469,14 @@ Items and economy, motion and drawing, the caravan's room, and online.
   - A parked peer's wheels do not roll when the ground re-stands it.
   - A peer's change of kind starts its wheels afresh.
 
-### The final audit (five lenses, after the merge that renumbered world185)
+### The final audit (five lenses, after the merges that renumbered the relay world185, then world186)
 
 The relay and the visits, the riders and the wheels, the caravan's room as a
 house, the windows' render half, and the items with the docs and the pins.
 Each fix is pinned in `test/wagons2_final.test.js` (or beside its own law's
 tests) and has its mutants in `tools/mutants/wagons2_final.json`.
 
-- **The relay** (world185 re-hashed in place).
+- **The relay** (re-hashed in place; world186 since main's INT7-INT10 took world185).
   - The `caravan` frame's second is the room's, not a socket's
     (`CARAVAN_DOC_MIN_MS`): one account's many sockets in its own room were
     one second each.
@@ -548,8 +549,8 @@ on the glass is the fix, not made blind here.
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
 horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData) - and, since
 WAGONS2, its paint (`wl`). That is a relay change, so RELAY_VERSION is
-`world185` (world182, then world183, on the branch - renumbered past
-main's at each merge). Until the relay is deployed, a parked wagon the relay restores
+`world186` (world182, world183, then world185, on the branch - renumbered
+past main's at each merge). Until the relay is deployed, a parked wagon the relay restores
 comes back as the Small Cart, as built.
 
 ## THE FOUR HOSTS

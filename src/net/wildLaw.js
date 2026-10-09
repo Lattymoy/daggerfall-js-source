@@ -16,6 +16,14 @@
 //
 // PURE: nothing here touches a socket or storage. The relay (server/src/index.js `_wild*`) reads and writes; this is
 // the law both its arms and the pins read. It imports wire.js alone (already in the bundle).
+//
+// INT9 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md): AND WHAT A REMAINS HOLDS IS THE
+// ACCOUNT SERVICE'S WORD. The fallen's own game handed its records over, so a crafted one deposited whatever it liked
+// for its friends to take. Now the service takes the drop off the fallen's judged record (server-account/src/wild.js)
+// and signs it - a `remains` order (net/identityToken.js): the remains' id, how many records and their digest, and the
+// killer whose worn piece one of them is. A deposit carries the order; the room keeps the records, and opens the remains
+// to takes only when they digest to the order's (`ok`); the killer's piece is the killer's alone. The service fits the
+// drop to the room's own bounds first (remainsFit - the same law foldFall keeps), so an honest deposit always digests.
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REMAINS_MS, WILD_ROOM_REMAINS_MAX, sanitizeName, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS } from './wire.js';
 
@@ -25,15 +33,56 @@ export const WILD_REMAINS_BYTES_MAX = 100 * 1024;
 export const WILD_REMAINS_PREFIX = 'wild:';
 export const wildRemainsKey = (r) => `${WILD_REMAINS_PREFIX}${r}`;
 
-/** A new remains - nothing in it yet; its first `fall` fills it. */
-export function newRemains({ r, os = null, oid = null, nm = '', p, now, gi = null }) {
-  return { r, gi: typeof gi === 'string' && gi ? gi : null, os: typeof os === 'string' && os ? os : null, oid: typeof oid === 'string' && oid ? oid : null, nm: sanitizeName(nm ?? ''), p: [p[0], p[1], p[2]], at: now, open: true, items: [] };
+/** A new remains - nothing in it yet; its first `fall` fills it. INT9: `wh`, `wn` the order's digest and count (the room
+ *  opens it to takes only when its records match), `wk`, `wi` the killer and its piece's place (theirs alone); `lastAt`
+ *  its carrier's last chunk (a deposit stalled half-way is another carrier's to lay - remainsTakeover). */
+export function newRemains({ r, os = null, oid = null, nm = '', p, now, gi = null, wh = null, wn = 0, wk = null, wi = -1 }) {
+  return { r, gi: typeof gi === 'string' && gi ? gi : null, os: typeof os === 'string' && os ? os : null, oid: typeof oid === 'string' && oid ? oid : null, nm: sanitizeName(nm ?? ''), p: [p[0], p[1], p[2]], at: now, lastAt: now, open: true, items: [],
+    wh: typeof wh === 'string' ? wh : null, wn: Number.isSafeInteger(wn) ? wn : 0, wk: typeof wk === 'string' && wk ? wk : null, wi: Number.isSafeInteger(wi) ? wi : -1, ok: false };
 }
+/** INT9 (AUDIT): the most one record's JSON may weigh in a remains - a realm trade's own bound (net/realmTradeLaw.js
+ *  REALM_TRADE_RECORD_MAX, pinned equal): a chunk of WILD_ITEMS_MAX of them and its order fit the wire's frame (net/wire.js
+ *  WILD_DATA_MAX), where a heavier one was signed and then never fit through it. */
+export const WILD_RECORD_BYTES_MAX = 4096;
+/** INT9 (AUDIT): how long a remains emptied or let go stays the room's word on its id - a TOMBSTONE, said to nobody - so the
+ *  service's order for it (good one minute from its first minting) lays nothing twice; past it a full room may let it go. */
+export const WILD_TOMB_MIN_MS = 3 * 60_000;
+/** INT9 (AUDIT): how long a deposit may stall half-way before another carrier of a good order lays it instead. */
+export const WILD_STALL_MS = 10_000;
+/** INT9: THE DROP FITTED TO A REMAINS - the records the room keeps of a list, in order: WILD_REMAINS_ITEMS_MAX of them
+ *  and WILD_REMAINS_BYTES_MAX of their JSON, as foldFall keeps them (the rest is let go - "the fallen already let it go").
+ *  The account service fits its drop with it before it signs, so every honest deposit is kept whole and digests. */
+export function remainsFit(items) {
+  const out = [];
+  let bytes = 2;   // JSON.stringify([]).length
+  for (const it of Array.isArray(items) ? items : []) {
+    if (out.length >= WILD_REMAINS_ITEMS_MAX) break;
+    const size = JSON.stringify(it).length + 1;
+    if (bytes + size > WILD_REMAINS_BYTES_MAX) break;
+    bytes += size;
+    out.push(it);
+  }
+  return out;
+}
+/** INT9 (AUDIT): may this record lie in a remains at all - WILD_RECORD_BYTES_MAX of JSON (a heavier piece stays with the
+ *  fallen, as one past the remains' count does). */
+export const recordFits = (it) => JSON.stringify(it).length <= WILD_RECORD_BYTES_MAX;
 
 /** Is it still lying here at `now`? */
 export const remainsLive = (rec, now) => !!rec && now - rec.at < WILD_REMAINS_MS;
 /** Has every record been taken (and no more are owed)? */
 export const remainsEmpty = (rec) => !rec.open && rec.items.every((it) => it == null);
+/** INT9 (AUDIT): a TOMBSTONE - vouched for and emptied: kept, said to nobody, its id never laid again while it lives (a
+ *  remains emptied was let go, and its fall's order laid the same records again - one fall, its drop taken twice). */
+export const remainsSpent = (rec) => !!rec?.ok && remainsEmpty(rec);
+/** INT9 (AUDIT): a deposit stalled half-way (unvouched, its carrier silent WILD_STALL_MS) is laid afresh by `oid`, another
+ *  carrier of the same good order - the first carrier's chunks never closed it, and nobody else's could. True when taken
+ *  over (the remains emptied and reopened for `oid`). */
+export function remainsTakeover(rec, oid, now) {
+  if (!rec || rec.ok || rec.oid === oid || now - (rec.lastAt ?? rec.at) < WILD_STALL_MS) return false;
+  rec.oid = oid; rec.items = []; rec.open = true; rec.lastAt = now;
+  return true;
+}
 /** What is left of its life, ms - the `ri` word's `ttl` (the room's clock, never the client's). */
 export const remainsTtl = (rec, now) => Math.max(0, Math.min(WILD_REMAINS_MS, rec.at + WILD_REMAINS_MS - now));
 
@@ -43,8 +92,9 @@ export const remainsTtl = (rec, now) => Math.max(0, Math.min(WILD_REMAINS_MS, re
  * own maker may add to it, and only while it is open. Returns `{ off, items }` - where the kept ones begin and the kept
  * ones - or null when nothing could be taken (a stranger's chunk, a closed remains).
  */
-export function foldFall(rec, { oid, items, last }) {
+export function foldFall(rec, { oid, items, last }, now = null) {
   if (!rec || !rec.open || rec.oid !== oid) return null;
+  if (Number.isFinite(now)) rec.lastAt = now;
   const off = rec.items.length;
   let bytes = JSON.stringify(rec.items).length;
   const kept = [];
@@ -64,7 +114,9 @@ export function foldFall(rec, { oid, items, last }) {
  * A take: `n` of record `i`, the whole record when `n` reaches its stack. Answers the record as its taker gets it (the
  * stored one whole, or a copy at the count taken) and how many left - or null when there is nothing there to take.
  */
-export function takeFrom(rec, i, n) {
+export function takeFrom(rec, i, n, sub = null) {
+  if (!rec?.ok) return null;   // INT9: a remains whose records the order never vouched for is nobody's
+  if (i === rec.wi && rec.wk && sub !== rec.wk) return null;   // INT9: the killer's worn piece is the killer's alone
   const it = rec?.items?.[i];
   if (!it) return null;
   const stack = Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1;
@@ -76,8 +128,8 @@ export function takeFrom(rec, i, n) {
 /** The room's remains as `ri` words for a socket that just said hello (or for a new chunk): WILD_ITEMS_MAX a word, the
  *  last one `end`. A remains with nothing left says nothing. */
 export function remainsWords(rec, now) {
-  if (!remainsLive(rec, now) || remainsEmpty(rec)) return [];
-  const head = { t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now) };
+  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return [];   // INT9: a remains the order never vouched for is said to nobody
+  const head = { t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now), ...(rec.wk ? { wk: rec.wk, wi: rec.wi } : {}) };
   const out = [];
   const total = rec.items.length;
   if (!total) return [{ ...head, off: 0, items: [], end: rec.open ? 0 : 1 }];
@@ -88,18 +140,23 @@ export function remainsWords(rec, now) {
   return out;
 }
 
-/** Past WILD_ROOM_REMAINS_MAX the oldest makes room: its id, or null while there is room. */
-export function remainsEvict(map) {
+/** Past WILD_ROOM_REMAINS_MAX the oldest makes room: its id; null while there is room. INT9 (AUDIT): a tombstone younger
+ *  than WILD_TOMB_MIN_MS is never let go - with nothing else to let go the room is full (`''`: lay nothing). */
+export function remainsEvict(map, now = Infinity) {
   if (map.size < WILD_ROOM_REMAINS_MAX) return null;
   let old = null;
-  for (const rec of map.values()) if (!old || rec.at < old.at) old = rec;
-  return old?.r ?? null;
+  for (const rec of map.values()) {
+    if (remainsSpent(rec) && now - rec.at < WILD_TOMB_MIN_MS) continue;
+    if (!old || rec.at < old.at) old = rec;
+  }
+  return old?.r ?? '';
 }
 
 /** A remains read back from storage, checked for the shape this file writes - or null. */
 export function remainsOf(v) {
   if (!v || typeof v !== 'object' || typeof v.r !== 'string' || !Array.isArray(v.items) || !Array.isArray(v.p) || v.p.length !== 3 || !Number.isFinite(v.at)) return null;
-  return { r: v.r, os: typeof v.os === 'string' ? v.os : null, oid: typeof v.oid === 'string' ? v.oid : null, nm: typeof v.nm === 'string' ? v.nm : '', p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0], at: v.at, open: v.open === true, items: v.items.map((it) => (it && typeof it === 'object' ? it : null)) };
+  return { r: v.r, gi: typeof v.gi === 'string' && v.gi ? v.gi : null, os: typeof v.os === 'string' ? v.os : null, oid: typeof v.oid === 'string' ? v.oid : null, nm: typeof v.nm === 'string' ? v.nm : '', p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0], at: v.at, lastAt: Number.isFinite(v.lastAt) ? v.lastAt : v.at, open: v.open === true, items: v.items.map((it) => (it && typeof it === 'object' ? it : null)),   // INT9 (AUDIT): the guild kept too - a woken room let the fallen's guildmates take
+    wh: typeof v.wh === 'string' ? v.wh : null, wn: Number.isSafeInteger(v.wn) ? v.wn : 0, wk: typeof v.wk === 'string' ? v.wk : null, wi: Number.isSafeInteger(v.wi) ? v.wi : -1, ok: v.ok === true };   // INT9
 }
 
 

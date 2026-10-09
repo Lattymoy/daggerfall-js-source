@@ -94,6 +94,15 @@
 //   as the screenshot is (tools/helmLiftProbe.mjs), shows that scalp with the head 3.2 to 4.3 units higher up its bone
 //   than the scene put it - so the helms are raised HELM_LIFT up the head bone, the skin's frame and every other piece
 //   untouched. (A head bigger than the scene's Breton, or an offset front to back, the probe cannot rule out.)
+//
+// ═══ MW-FIT1: THE CLOSED HELM IS THE HEAD ════════════════════════════
+//
+// (2026-10-09, a player's report Mac passed on: "the helmet elevation is too much", "the coif has to cover the
+// neck".) Lifted onto the game's head, a helm rises off the body Mac hung it on - its rim HELM_LIFT over the collar, a
+// band of neck under it - and a head that stands lower than Mac's screenshot read sees the whole helm ride high. A
+// closed helm needs no head under it: retail's closed helmets fill the head's slot and the head is not drawn
+// (characters/ownArmorModels.js hides it). So the closed helm stands where Mac fitted it on the body, no lift; only the
+// open helm, whose face shows the head inside it, is still raised onto the game's head (HELM_LIFT).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx, childrenNamed, nodeAt, objectName } from './fbxRead.mjs';
@@ -285,8 +294,9 @@ const shape = (object, texture, box) => Object.freeze({ object, texture, box: Ob
 const piece = (id, file, shapes, lift = 0) => Object.freeze({ id, file, shapes: Object.freeze(shapes), ...(lift ? { lift } : {}) });
 
 /**
- * MW-STEEL5: HOW FAR UP THE HEAD BONE THE GAME'S HEAD STANDS OVER THE SCENE'S (units) - and so how far the helms are
- * raised over where Mac fitted them on the scene's Breton head (MW-STEEL1's export, the shell from 112.88 to 131.82).
+ * MW-STEEL5: HOW FAR UP THE HEAD BONE THE GAME'S HEAD STANDS OVER THE SCENE'S (units) - and so how far the open helm is
+ * raised over where Mac fitted it on the scene's Breton head (MW-STEEL1's export, the shell from 112.88 to 131.82); the
+ * closed helm hides the head and is not raised (MW-FIT1).
  * Read off Mac's screenshot (2026-10-09, the set worn, from behind, the scalp standing up through the closed helm's
  * crown) by tools/helmLiftProbe.mjs: the set worn on retail's skeleton in its idle, with a stand-in for the scene's
  * head (SCENE_BODY's box, an ellipsoid) on the head bone, drawn from behind at three heights of eye, shows the
@@ -298,8 +308,8 @@ export const HELM_LIFT = 4;
 
 /**
  * Each piece, the object(s) it is read from, the texture each wears, and the scene box (min, max) each object was
- * read at - in the scene's own numbers, the placement the bake keeps. MW-STEEL5: a helm's `lift` raises it onto the
- * game's head (HELM_LIFT) - the closed one a unit less, Mac's export already standing it a unit higher.
+ * read at - in the scene's own numbers, the placement the bake keeps. MW-STEEL5: the open helm's `lift` raises it onto
+ * the game's head (HELM_LIFT); MW-FIT1: the closed helm, which hides the head, stands where Mac's export puts it.
  */
 export const PIECES = Object.freeze([
   piece('cuirass', 'set', [
@@ -319,7 +329,7 @@ export const PIECES = Object.freeze([
   piece('helm_closed', 'set', [
     shape('Sphere', 'helm', [[-7.5, -7.93, 113.88], [7.5, 8.95, 132.82]]),
     shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),
-  ], HELM_LIFT - 1),
+  ]),
 ]);
 
 /** One Mesh Model of a parsed scene, with its Geometry - the tree bakeMesh takes, which wants exactly one mesh. */
@@ -360,7 +370,7 @@ export function liftMesh(mesh, lift) {
 }
 
 /** One piece's shapes as the bake places them: each object held to the box it was read at, then raised by the piece's
- *  `lift` (MW-STEEL5, the helms). `trees` - the parsed sources, by SOURCE's keys. */
+ *  `lift` (MW-STEEL5, the open helm). `trees` - the parsed sources, by SOURCE's keys. */
 export const pieceMeshes = (trees, p) => p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0));
 
 /**

@@ -382,8 +382,8 @@
   {
     "name": "SEAT2a2-pass-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake', 'deck']);",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake', 'deck', 'remains']);",
     "tests": [
       "test/seat2a_battle.test.js",
       "test/seat2a_relay.test.js"

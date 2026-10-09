@@ -2,8 +2,8 @@
   {
     "name": "ARENA4B-TOK-ANOTHERS",
     "file": "server-account/src/realm.js",
-    "old": "const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();",
-    "new": "const row = await db.prepare('SELECT summary FROM realm_characters WHERE id = ? OR player = ?').bind(id, playerId).first();",
+    "old": "const row = await db.prepare('SELECT summary, level_seen FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();",
+    "new": "const row = await db.prepare('SELECT summary, level_seen FROM realm_characters WHERE id = ? OR player = ?').bind(id, playerId).first();",
     "tests": [
       "test/arena4b_token.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "ARENA4B-TOK-SUMMARY-UNREAD",
     "file": "server-account/src/realm.js",
-    "old": "const lv = summary?.level;",
+    "old": "const lv = row?.level_seen ?? summary?.level;",
     "new": "const lv = 12;",
     "tests": [
       "test/arena4b_token.test.js"

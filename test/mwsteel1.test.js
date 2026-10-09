@@ -132,7 +132,7 @@ test('MW-STEEL1: Steel alone wears the plate - the seven classic pieces; Silver 
   assert.deepEqual(mwItemReport([R('steel_helmet')]).find((r) => r.item === 'Silver Helm').found, ['steel_helmet']);
 });
 
-test('MW-STEEL1: the set composes into retail\'s slots - the breastplate the cuirass, a gauntlet its hand over its wrist and forearm, a boot its foot over its ankle and knee, the helm the HAIR', () => {
+test('MW-STEEL1: the set composes into retail\'s slots - the breastplate the cuirass, a gauntlet its hand over its wrist and forearm, a boot its foot over its ankle and knee, a pauldron over its upper arm, the helm the HAIR (the closed one over the head)', () => {
   const worn = composeWornArmor({ pieces: SET, armors: [], bodyPool: [] });
   assert.deepEqual(worn.notes, []);
   assert.deepEqual(worn.adds.map((a) => [a.partName, a.model]), [
@@ -142,9 +142,10 @@ test('MW-STEEL1: the set composes into retail\'s slots - the breastplate the cui
     ['right upper leg', 'steel_plate_greave_right.nif'], ['left upper leg', 'steel_plate_greave_left.nif'],
     ['right pauldron', 'steel_plate_pauldron_right.nif'], ['left pauldron', 'steel_plate_pauldron_left.nif'],
   ]);
-  assert.deepEqual(worn.shadows, ['hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
-    'foot:right', 'foot:left', 'ankle:right', 'ankle:left', 'knee:right', 'knee:left', 'upperleg:right', 'upperleg:left'],
-  'the head is left - the open helm shows the face and the closed one\'s eye slit looks onto it; the skirt shadows nothing - the groin skin stays under it, as ARMO_PART\'s skirt row says');
+  assert.deepEqual(worn.shadows, ['head', 'hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
+    'upperarm:right', 'upperarm:left', 'foot:right', 'foot:left', 'ankle:right', 'ankle:left', 'knee:right', 'knee:left', 'upperleg:right', 'upperleg:left'],
+  'MW-FIT1: the closed helm hides the head and each pauldron its upper arm; the skirt shadows nothing - the groin skin stays under it, as ARMO_PART\'s skirt row says');
+  assert.equal(composeWornArmor({ pieces: SET, armors: [], bodyPool: [], helmStyle: 'open' }).shadows.includes('head'), false, 'the open helm shows the face - the head is left');
   // MW-STEEL2: the plate skirt is the Steel Cuirass's second part - Morrowind's skirt slot, which hides no skin
   assert.deepEqual(ownArmorModelFor(SET[0]).parts.map((p) => [p.part, p.model]), [['cuirass', 'steel_plate_cuirass.nif'], ['skirt', 'steel_plate_skirt.nif']]);
   assert.deepEqual(ARMO_PART.find((r) => r.name === 'skirt'), { name: 'skirt', bones: ['groin'], shadows: null });
