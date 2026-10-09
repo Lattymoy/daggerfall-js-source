@@ -2024,8 +2024,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const szE = eliteSize(f.entity) * lastStandSize(f.entity);   // ELITE FOES: a quarter larger (onto locals - the cache's object is shared); RVN4: phase two a tenth
       const szG = szE * wildGiantSize(f.entity);   // WILD3: a giant of the open zone, four times over
       const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
+      // WAGONS2: a companion seated in my wagon's back is DRAWN where the wagon is drawn - grown with it under the
+      // Overworld (scenes/crewAshore.js ai.seatDraw, the pool's seatDrawn); its body stays on the seat itself
+      const _sd = f.ai?.seatDraw?.() ?? null, _sg = _sd?.g > 1 ? _sd.g : 1;
       f.batch.record = rkey;
-      f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
+      f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
       // records (DaggerfallMobileUnit.cs:407-410); a walker its feet.
       const _bh = f.mobile.basics.behaviour ?? 'General';
@@ -2033,7 +2036,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         const org = f._origin ?? (f._origin = [0, 0, 0]);
         org[0] = f.ai.feet[0]; org[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); org[2] = f.ai.feet[2];
         f.batch.origin = org;
-      } else f.batch.origin = f.ai.feet;
+      } else f.batch.origin = _sg > 1 ? _sd.feet : f.ai.feet;
       out.push(f.batch);
     }
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals

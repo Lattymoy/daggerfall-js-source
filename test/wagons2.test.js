@@ -249,7 +249,7 @@ function fakeRenderer() {
   r.uploadTexture = (a, rec, px, o) => { const k = `${a}_${rec}${o?.opaque ? '#opaque' : ''}`; if (!r.textures.has(k)) r.textures.set(k, { px, o }); };
   r.evictTexture = (k) => { r.evicted.push(k); r.textures.delete(k); };
   r.createMesh = (model) => ({ model });
-  r.drawMesh = (gpu, m, remap, o) => r.draws.push({ gpu, remap, o });
+  r.drawMesh = (gpu, m, remap, o) => r.draws.push({ gpu, m: [...m], remap, o });
   r.createBillboardBatch = () => ({ origin: [0, 0, 0] });
   r.destroyBillboardBatch = () => {};
   return r;
@@ -367,4 +367,50 @@ test('WAGONS2 THE OVERWORLD\'S RIDERS: a rider seated in another\'s wagon sets o
   assert.ok(riders.seated(), 'heard again: the grace starts over from the next frame unheard');
   now = t0 + RIDE_LOST_GRACE_MS; riders.frame();
   assert.equal(riders.seated(), false, 'past the grace: stood down');
+});
+
+test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider under the Overworld, and what sits in its back is drawn in it - a seat as drawn is the drawn body\'s own point (the last draw\'s grow), the others seated drawn there (their entries replaced, the list\'s own untouched), my body drawn on my seat while I sit in a grown wagon and no longer once I get down, a companion\'s sprite stood and grown there; the bodies themselves stay on the true seats (mutants: the seat ungrown, the glue unapplied, my body drawn at its capsule, a companion\'s sprite unmoved)', async () => {
+  const r = fakeRenderer();
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'openWagon', bakedWagon: async (k) => bakeOf(k), riders: { passengers: () => [['bob', 1]] } });
+  const pose = { active: true, position: [0, 1, -6], rotation: [0, 0, 0, 1], hitch: [0, 1, 1], axle: [0, 1, -6], steer: 0 };
+  pool.attach(runtimeOf({ deployed: null, moving: { pose, cargoTier: 0, wheel: { angle: 0 } } }));
+  pool.partsOf('openWagon');
+  await flush();
+  r.draws.length = 0;
+  pool.draw(r, null, { selfGrow: 8, grow: () => 8 });
+  const body = r.draws[0].m, seat = pool.partsOf('openWagon').seats[1];
+  const s = pool.seatDrawn('', 1);
+  assert.equal(s.g, 8);
+  const want = [0, 1, 2].map((k) => body[k] * seat.feet[0] + body[4 + k] * seat.feet[1] + body[8 + k] * seat.feet[2] + body[12 + k]);
+  assert.ok(s.feet.every((v, k) => near(v, want[k], 1e-4)), `the seat where the grown body puts it: ${s.feet} vs ${want}`);
+  assert.ok(Math.abs(s.feet[2] - pool.mySeat(1).feet[2]) > 10, 'and far from the true seat a grown wagon is drawn past');
+  const list = [{ id: 'bob', shown: { x: 0, y: 0, z: 0, n: 'Bob' } }, { id: 'ann', shown: { x: 5, y: 0, z: 5 } }];
+  const theirs = list[0];
+  pool.seatGlue(list, { toWire: (q) => q.map((v) => v + 1000) });
+  assert.deepEqual([list[0].shown.x, list[0].shown.y, list[0].shown.z], s.feet.map((v) => v + 1000));
+  assert.deepEqual([list[0].shown.deckKey, list[0].shown.n], ['wagon::1', 'Bob'], 'its seat for its pace; the rest of its pose kept');
+  assert.equal(theirs.shown.x, 0, 'the online list\'s own entry untouched');
+  assert.deepEqual(list[1].shown, { x: 5, y: 0, z: 5 }, 'nobody else moved');
+  pool.draw(r, null);
+  assert.equal(pool.seatDrawn('', 1).g, 1, 'off the Overworld: the true seat');
+  // my body, riding in another's grown wagon
+  let drawn = 'unset';
+  const fakePool = { peerRide: () => ({ model: 'openWagon', kind: 1, passengers: [['me', 0]], go: null, declined: [], position: [0, 0, 0], wire: [0, 0, 0] }), peerSeat: () => ({ feet: [1, 1, 1], yaw: 0 }), seatDrawn: () => ({ feet: [9, 9, 9], yaw: 0, g: 6 }), mySeatCount: () => 0 };
+  const riders = createWagonRiders({ selfId: () => 'me', name: (i) => i, now: () => 0, say() {}, changed() {}, pool: fakePool, pin() {}, unpin() {}, jumpPressed: () => false, travel() {}, canTravel: () => true, traveling: () => false, prompt: { render() {} }, drawAt: (f) => { drawn = f; } });
+  riders.press('ann', 'wagon:ride', 1); riders.frame(); riders.frame();
+  assert.deepEqual(drawn, [9, 9, 9], 'drawn on the grown seat');
+  fakePool.seatDrawn = () => ({ feet: [9, 9, 9], yaw: 0, g: 1 });
+  riders.frame();
+  assert.equal(drawn, null, 'ungrown: at its capsule, which stands on the seat');
+  fakePool.seatDrawn = () => ({ feet: [9, 9, 9], yaw: 0, g: 6 }); riders.frame();
+  riders.getDown();
+  assert.equal(drawn, null, 'got down: at its capsule');
+  // a companion's sprite (scenes/exteriorFoes.js batches) and the crew layer's hand-off
+  const ef = src('scenes/exteriorFoes.js');
+  assert.match(ef, /const _sd = f\.ai\?\.seatDraw\?\.\(\) \?\? null, _sg = _sd\?\.g > 1 \? _sd\.g : 1;/);
+  assert.match(ef, /f\.batch\.size = \{ w: \(o\.flip \? -sz\.w : sz\.w\) \* _sg, h: sz\.h \* _sg \};/);
+  assert.match(ef, /\} else f\.batch\.origin = _sg > 1 \? _sd\.feet : f\.ai\.feet;/);
+  const w = src('scenes/world.js');
+  assert.match(w, /: online\.drawable\(\); if \(hccOn\(\)\) hcc\.seatGlue\(drawable, \{ toWire: campToWire \}\);/);
+  assert.equal((w.match(/seatDraw: \(i\) => wagonRiders\?\.companionSeatDrawn\(/g) ?? []).length, 2, 'both companion layers');
 });

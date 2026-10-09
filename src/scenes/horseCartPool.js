@@ -548,22 +548,73 @@ export function createHorseCartPool({
    *  (`selfGrow`, the view's own step) and how far another player is at a point (`grow`, OW-PEERS' peerGrow); a cart's
    *  trailing wagon - mine and theirs - is drawn grown with its rider about the hitch. A parked wagon and a following
    *  team are world objects beside a horse billboard drawn at its own size, and stay at theirs. */
-  function draw(r = renderer, texRemap = null, { selfGrow = 1, grow = null } = {}) {
+  function draw(r = renderer, texRemap = null, grows = {}) {
+    _lastGrows = grows ?? {};   // WAGONS2: the seats as drawn read the grow this pass drew at
     let n = 0;
     const s = shown();
-    if (s?.wagon) {
+    const mine = drawnFrameOf('', grows, s);
+    if (mine) {
+      if (drawWagon(r, texRemap, mine.at, mine.rotation, s.wagon.tier, grownTurn('', s.wagon.turn ?? { angle: s.wagon.angle }, mine.g), mine.g, s.wagon.model, s.wagon.hitched, s.wagon.look)) n++;
+    } else _grownWheels.delete('');
+    for (const [owner, p] of _peers) {
+      const f = drawnFrameOf(owner, grows);
+      if (!f) continue;
+      if (drawWagon(r, texRemap, f.at, f.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, f.g), f.g, p.wagon.model, f.hitched, p.wagon.look)) n++;
+    }
+    return n;
+  }
+  /** WAGONS2: WHERE A WAGON IS DRAWN THIS FRAME - mine (`owner` '') or an owner's: its point, its rotation, how many
+   *  times its size (WAGON-HITCH x OW-BIG's grow under the Overworld - `grows` the host's `{ selfGrow, grow }`) and
+   *  whether a horse bears it - the one frame the draw and the seats in its back (seatDrawn, seatGlue) stand on. Null
+   *  where no wagon of that owner's is drawn. */
+  function drawnFrameOf(owner, { selfGrow = 1, grow = null } = {}, s = owner === '' ? shown() : null) {
+    if (owner === '') {
+      if (!s?.wagon) return null;
       const g = s.wagon.kind === HCC_WIRE_KIND.Trailing && s.wagon.hitch ? selfGrow : 1;
       // AUDIT WAGON-HITCH A1 x B: grown from where its wheels stand (the drawn position leans downhill on a slope, and
       // grown that lean is g times as long)
       const at = g > 1 && s.wagon.axle ? grownHitchedPosition(s.wagon.axle, s.wagon.hitch, g, groundYAt, s.wagon.axle[1]) : grownHitchedPosition(s.wagon.position, s.wagon.hitch, g, groundYAt);
-      if (drawWagon(r, texRemap, at, s.wagon.rotation, s.wagon.tier, grownTurn('', s.wagon.turn ?? { angle: s.wagon.angle }, g), g, s.wagon.model, s.wagon.hitched, s.wagon.look)) n++;
-    } else _grownWheels.delete('');
-    for (const [owner, p] of _peers) {
-      if (!p.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) continue;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
-      const g = p.hitch && grow ? grow(p.hitch) : 1;
-      if (drawWagon(r, texRemap, grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), p.shownRotation ?? p.wagon.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, g), g, p.wagon.model, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched, p.wagon.look)) n++;
+      return { wagon: s.wagon, at, rotation: s.wagon.rotation, g, hitched: !!s.wagon.hitched };
     }
-    return n;
+    const p = _peers.get(owner);
+    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
+    const g = p.hitch && grow ? grow(p.hitch) : 1;
+    return { wagon: p.wagon, at: grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), rotation: p.shownRotation ?? p.wagon.rotation, g, hitched: p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched };
+  }
+  /** WAGONS2: seat `k` of a wagon AS DRAWN this frame (drawnFrameOf - grown with it under the Overworld): its floor
+   *  under the rider (`feet`), the way they face (radians, the camera's) and the wagon's grow `g`; or null. The seat a
+   *  body stands on in the world is the wagon's own (peerSeat, mySeat - the pose the wire carries); this is where it is
+   *  DRAWN. */
+  let _lastGrows = {};
+  function seatDrawn(owner, k, grows = _lastGrows) {
+    const f = drawnFrameOf(owner, grows);
+    const parts = f ? partsOf(f.wagon.model) : null;
+    const seat = parts?.seats?.[k];
+    if (!seat) return null;
+    const local = pitchedPoint(parts, seat.feet, f.hitched ? parts.hitchPitch ?? 0 : 0).map((v) => v * f.g);
+    const off = quatRotate(f.rotation, local), fwd = quatRotate(f.rotation, [0, 0, 1]);
+    return { feet: [f.at[0] + off[0], f.at[1] + off[1], f.at[2] + off[2]], yaw: Math.atan2(fwd[0], fwd[2]) + (seat.yaw * Math.PI) / 180, g: f.g };
+  }
+  /** WAGONS2: THE OTHERS SEATED IN A WAGON'S BACK, DRAWN IN IT - comeSailAwayAboard.js glue's law for a wagon: each
+   *  entry of `drawable` (online.drawable()'s, a fresh list - its entries replaced, never written) whose player a drawn
+   *  wagon's word seats (mine - my own riders' book - or another owner's `ps`) stands on that seat as the wagon is
+   *  drawn here (seatDrawn: on its ease, grown with it under the Overworld - their own client pins them to its
+   *  ungrown seat, which the Overworld draws a speck short of the grown bed), its place in the bed its `deck` so its
+   *  pace reads as sitting still (net/peerPace.js). `toWire` the scene's point in the pose's frame; `grows` the last
+   *  draw's (the frame's online pass runs before its draw - the grow a frame old, its pace the camera's). */
+  function seatGlue(drawable, { toWire = (q) => q, grows = _lastGrows } = {}) {
+    const seated = new Map();
+    for (const [peer, k] of riders?.passengers?.() ?? []) seated.set(peer, ['', k]);
+    for (const [owner, p] of _peers) for (const [peer, k] of p.wagon?.passengers ?? []) if (!seated.has(peer)) seated.set(peer, [owner, k]);
+    if (!seated.size) return drawable;
+    for (let i = 0; i < drawable.length; i++) {
+      const d = drawable[i], at = d?.shown ? seated.get(d.id) : null;
+      const seat = at ? seatDrawn(at[0], at[1], grows) : null;
+      if (!seat) continue;
+      const w = toWire(seat.feet);
+      drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [0, 0, at[1]], deckKey: `wagon:${at[0]}:${at[1]}` } };
+    }
+    return drawable;
   }
 
   // ── the ray: the activation targets (RegisterCustomActivation at 3.2 - the runtime's ACTIVATION_REACH)
@@ -942,6 +993,7 @@ export function createHorseCartPool({
     phys,
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount,
+    seatDrawn, seatGlue, drawnFrameOf,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,
   };
 }

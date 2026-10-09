@@ -187,5 +187,40 @@
     "old": "if (isWithinHorizontalDistance(playerPosition(), nearestOnWagon(pos, gp?.forward ?? w.heading, playerPosition()), WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
     "new": "if (isWithinHorizontalDistance(playerPosition(), pos, WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
     "tests": ["test/wagons2_wheels.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-seat-ungrown",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const local = pitchedPoint(parts, seat.feet, f.hitched ? parts.hitchPitch ?? 0 : 0).map((v) => v * f.g);",
+    "new": "    const local = pitchedPoint(parts, seat.feet, f.hitched ? parts.hitchPitch ?? 0 : 0);",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-glue-unapplied",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [0, 0, at[1]], deckKey: `wagon:${at[0]}:${at[1]}` } };",
+    "new": "      void w;",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-my-body-drawn-at-its-capsule",
+    "file": "src/scenes/wagonRiders.js",
+    "old": "    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null);",
+    "new": "    deps.drawAt?.(null);",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-a-companions-sprite-unmoved",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      } else f.batch.origin = _sg > 1 ? _sd.feet : f.ai.feet;",
+    "new": "      } else f.batch.origin = f.ai.feet;",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-the-glue-from-the-host",
+    "file": "src/scenes/world.js",
+    "old": "if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });",
+    "new": "if (false) hcc.seatGlue(drawable, { toWire: campToWire });",
+    "tests": ["test/wagons2.test.js"]
   }
 ]

@@ -18,7 +18,8 @@
 //
 // deps = { selfId(), name(id) -> string, now() -> ms, say(text), changed() (my word moved), pool: the cart's pool (peerRide, peerSeat, mySeatCount),
 //          pin(feet, yaw) (stand me there, the motor held), unpin(feet) (stand me down beside the wagon), jumpPressed(),
-//          travel({x, y}, besideAt, ownerName) (the party's journey), canTravel() (outdoors, not busy), prompt: { open, render } }
+//          travel({x, y}, besideAt, ownerName) (the party's journey), canTravel() (outdoors, not busy), prompt: { open, render },
+//          drawAt(feet | null) (WAGONS2: where my body is DRAWN while I sit - the seat of a wagon drawn grown, or null) }
 // Not a DFU member. Ledger A (WAGONS1).
 import { createRideBook, validRideWord, rideWord, RIDE_TEXT, RIDE_ASK_TTL_MS, RIDE_ASK_REACH, companionSeats } from '../systems/wagonSeats.js';
 import { WAGON_KINDS } from '../systems/wagonKinds.js';
@@ -66,6 +67,7 @@ export function createWagonRiders(deps) {
   function getDown(text = RIDE_TEXT.gotOff) {
     const was = ride;
     ride = null;
+    deps.drawAt?.(null);   // WAGONS2
     if (was) deps.changed?.();
     if (was?.seat != null) {
       const at = deps.pool.peerSeat(was.owner, was.seat);
@@ -120,6 +122,7 @@ export function createWagonRiders(deps) {
     for (const [r, until] of [...declinedUntil]) if (until <= now) declinedUntil.delete(r);
     deps.prompt?.render?.();
     // the rider's end
+    if (ride?.seat == null) deps.drawAt?.(null);   // WAGONS2: no seat, the body drawn where it stands
     if (!ride) return;
     if (deps.traveling?.() && ride.go != null) ride.wait = now + ARRIVE_WAIT_MS;   // the far end's wait runs from the arrival
     const r = deps.pool.peerRide(ride.owner);
@@ -150,6 +153,10 @@ export function createWagonRiders(deps) {
     }
     const at = deps.pool.peerSeat(ride.owner, ride.seat);
     if (at) deps.pin(at.feet, at.yaw);
+    // WAGONS2: and DRAWN on the seat as the wagon is drawn - under the Overworld, grown with it (pinned on its own seat,
+    // the body stood a speck short of the grown bed)
+    const drawn = deps.pool.seatDrawn?.(ride.owner, ride.seat) ?? null;
+    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null);
   }
 
   return {
@@ -170,6 +177,15 @@ export function createWagonRiders(deps) {
       const k = companionSeats(n, book.passengers().map((e) => e[1]), i + 1, riding)[i];
       return k >= 0 ? deps.pool.mySeat(k) : null;
     },
+    /** WAGONS2: that companion's seat as my wagon is DRAWN (the pool's seatDrawn - grown with it under the Overworld,
+     *  `grows` the host's), or null - where the draw stands them; their body stays on the seat itself. */
+    companionSeatDrawn(i, riding, grows) {
+      const n = deps.pool.mySeatCount();
+      const k = companionSeats(n, book.passengers().map((e) => e[1]), i + 1, riding)[i];
+      return k >= 0 ? deps.pool.seatDrawn?.('', k, grows) ?? null : null;
+    },
+    /** WAGONS2: the wagon and seat I sit in (`{ owner, seat }`), or null. */
+    seatedIn: () => (ride?.seat != null ? { owner: ride.owner, seat: ride.seat } : null),
     /** A journey's word said long enough: quiet again. */
     quietGo() { go = null; },
     clear() { book.clear(); ride = null; go = null; declinedUntil.clear(); },
