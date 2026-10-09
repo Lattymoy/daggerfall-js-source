@@ -63,7 +63,7 @@ const live = (o = {}) => ({ ...SD_FIGHT_EMPTY, fi: 3, op: T0 - 60_000, ends: T0 
 
 // ── the pillars dressed ─────────────────────────────────────────────────
 
-test('S7 THE PILLARS DRESSED INSIDE THE LAW: every face of each pillar\'s dress (its basalt, its brass) inside its square from the floor to SD_PILLAR_H - the plinth flush with the square at the floor, the cap flat across the whole square at its top, the shaft chamfered in from it with three brass bands and a conduit in each chamfer, its stone wound out; the collider the four squares exactly (pillarQuads\' boxes), and nothing of the dress on it (mutants: a band past the square; the cap over the law\'s top; the plinth in from the square; a prism wound in; the dress on the collider)', () => {
+test('S7 THE PILLARS DRESSED INSIDE THE LAW: every face of each pillar\'s dress (its basalt, its brass) inside its square from the floor to SD_PILLAR_H - the plinth flush with the square at the floor, the cap flat across the whole square at its top, the shaft chamfered in from it with three brass bands and a conduit in each chamfer, its stone wound out; the collider the four squares exactly (pillarQuads\' boxes), and nothing of the dress on it (mutants: a band past the square; the cap over the law\'s top; the plinth in from the square; a prism wound in; the collider drawn in to the shaft)', () => {
   const tris = trisOf(buildRealmModel()), dress = [[], [], [], []];
   for (const t of tris) { const k = pillarOf(t); if (k >= 0) dress[k].push(t); }
   for (let k = 0; k < 4; k++) {
@@ -183,7 +183,7 @@ test('S7 THE DIAL, run from the pass\'s own shader: a dark enamel face inside a 
   assert.equal(f.dialPart(at(Math.PI / 12, tickR), 2), P.enamel, 'enamel between');
 });
 
-test('S7 THE WATCHING HANDS: every dial\'s hand points at the Remnant\'s heart as seen on its own plane - where it waits, where it walked to at the last whole second (the escapement: taken at each anchored second, eased over its first quarter and held, never where it stands this instant); outside time each pillar at the Echo standing nearest it, at an Echo\'s heart; once it has fallen at the way home\'s place (the host\'s own, clear of the pillars); nothing to watch, XII (mutants: on now, no lag; the right turned over; the first Echo, never the nearest; its heart\'s height at the floor; the way home at the fall unmoved)', () => {
+test('S7 THE WATCHING HANDS: every dial\'s hand points at the Remnant\'s heart as seen on its own plane - where it waits, where it walked to at the last whole second (the escapement: taken at each anchored second, eased over its first quarter and held, never where it stands this instant); outside time each pillar at the Echo standing nearest it, at an Echo\'s heart; once it has fallen at the way home\'s place (the host\'s own, clear of the pillars); nothing to watch, XII (mutants: on now, no lag; the right turned over; the first Echo, never the nearest; its heart\'s height at the floor; the way home at the fall unmoved; the tick never eased)', () => {
   const D = sdPillarDials(), out = new Float32Array(16);
   const toward = (d, at) => { const v = sub(at, d.at), u = v[0] * d.right[0] + v[2] * d.right[2], s = Math.hypot(u, v[1]); return [u / s, v[1] / s]; };
   const pointsAt = (hands, target, why) => D.forEach((d, i) => {
@@ -311,7 +311,7 @@ test('S7 THE MARK: the Warden\'s WBX4 mark under the Remnant, always while it st
 
 // ── the hosts ───────────────────────────────────────────────────────────
 
-test('S7 THE HOSTS BY SOURCE: the world host draws the pillars\' watch in the arena\'s reads (the hands, the dimming, the End off the numerals\' own word) and lays the bodies\' marks under the blows; the dungeon arm dims the arena\'s lamps by the world host\'s word; the blows\' pass draws the marks first, whether or not a blow is in flight; the lab draws all three and its ?law the pillars\' squares; the dungeon host and the exterior host untouched (mutants: the pillars\' watch undrawn; the marks never handed; the dimming never asked)', () => {
+test('S7 THE HOSTS BY SOURCE: the world host draws the pillars\' watch in the arena\'s reads (the hands, the dimming, the End off the numerals\' own word) and lays the bodies\' marks under the blows; the dungeon arm dims the arena\'s lamps by the world host\'s word; the blows\' pass draws the marks first, whether or not a blow is in flight; the lab draws all three and its ?law the pillars\' squares; the dungeon host and the exterior host untouched (mutants: the pillars\' watch undrawn; the marks never handed; the dimming never asked; the marks drawn under nothing)', () => {
   const W = read('src/scenes/world.js');
   assert.match(W, /_sdPillarPass = new SdPillarPassRenderer\(renderer\.gl\);/);
   assert.match(W, /if \(_sdPillarPass\.draw\(proj, view, sdPillarLookAt\(s, t, _sdPillarLook, _sdGlowMemo\), fog, [^\n]*\)\) drew = true;/);
@@ -334,7 +334,7 @@ test('S7 THE HOSTS BY SOURCE: the world host draws the pillars\' watch in the ar
   assert.match(R, /for \(let k = 0; k < 4; k\+\+\) for \(const \[a, b, c, d\] of pillarQuads\(k\)\) out\.push/);
 });
 
-test('S7 THE ARENA\'S WATCH MAKES NOTHING - L2 F9\'s measure (a child with a 64 MB young space, the least of six windows, against a control that must show): the watching hands over a walking Remnant and over the Dragon Break, the dimming through a Reset, the marks, the pass\'s look, the lights dimmed - none past 2 bytes a frame (mutants: the hands\' target made a frame; the dimming\'s ease made a frame; the marks\' list made a frame)', () => {
+test('S7 THE ARENA\'S WATCH MAKES NOTHING - L2 F9\'s measure (a child with a 64 MB young space, the least of six windows, against a control that must show): the watching hands over a walking Remnant and over the Dragon Break, the dimming through a Reset, the marks, the pass\'s look, the lights dimmed - none past 2 bytes a frame (mutants: the hands\' target made a frame; the look\'s dimming made a frame; the marks\' list made a frame)', () => {
   const url = (p) => JSON.stringify(pathToFileURL(join(ROOT, p)).href);
   const script = `
     const W = await import(${url('src/scenes/sdArenaWatch.js')});
