@@ -55,13 +55,15 @@ test('AUDIT CARDS-4 M relay: a void of another room\'s or another account\'s ord
   assert.deepEqual(receipts(b).map((x) => [x.j, x.w]), [[other.cj, 'refused']]);
   const lo = await order(r, nowS(), { s: 'acct-peer-b', ca: 200 });
   await word(r, b, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: lo.stake, ct: 1 });
+  // PIN MOVED (TAVERN-TABLES, world180): a room's one gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the
+  // buy-in's two edges sit at it side by side, where they stood at tables 2 and 3 (chips tables now, no stake seated)
   const a = await join(r, 'peer-a');
-  const hi = await order(r, nowS(), { s: 'acct-peer-a', ca: 1000, ct: 2 });
-  await word(r, a, { op: 'sit', table: 2, chair: 0, chairs: 2, bb: 10, stake: hi.stake });
-  assert.equal(r.room._holdem.get(2)?.seats[0]?.stack, 1000, 'a hundred big blinds sits');
-  const lo2 = await order(r, nowS(), { s: 'acct-peer-b', ca: 200, ct: 3 });
-  await word(r, b, { op: 'sit', table: 3, chair: 0, chairs: 2, bb: 10, stake: lo2.stake });
-  assert.equal(r.room._holdem.get(3)?.seats[0]?.stack, 200, 'twenty big blinds sits');
+  const hi = await order(r, nowS(), { s: 'acct-peer-a', ca: 1000, ct: 1 });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: hi.stake });
+  assert.equal(r.room._holdem.get(1)?.seats[0]?.stack, 1000, 'a hundred big blinds sits');
+  const lo2 = await order(r, nowS(), { s: 'acct-peer-b', ca: 200, ct: 1 });
+  await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: lo2.stake });
+  assert.equal(r.room._holdem.get(1)?.seats[1]?.stack, 200, 'twenty big blinds sits');
 }));
 
 test('AUDIT CARDS-4 M relay: owed cash-outs - told on a sit, never past their life, the newest kept past the bound, sent to the account\'s other sockets too', () => withRoom(async ({ r, tick, nowS }) => {
