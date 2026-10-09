@@ -153,6 +153,15 @@
     ]
   },
   {
+    "name": "SD25-HANG-the-teeth-faces-unglinting",
+    "file": "src/world/sdWorksModel.js",
+    "old": "[0, tipV[0]], [1, tipV[0]], [1, tipV[1]], [0, tipV[1]], from);",
+    "new": "uv(rg, g0), uv(rg, g1), uv(rt, t1), uv(rt, t0), from);",
+    "tests": [
+      "test/sd25_hang.test.js"
+    ]
+  },
+  {
     "name": "SD25-HANG-the-furnace-narrowed",
     "file": "src/render/sdSky.js",
     "old": "export const SD_FURNACE = Object.freeze({ from: 0.6, full: 1.3 });",
