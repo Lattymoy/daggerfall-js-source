@@ -5604,7 +5604,7 @@ export function createWorldModes(host) {
     // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
     // CHAP6d: the whole chapter - its band, and its Season's: an Ascendancy's tenth, the doctrines' tenth and two qualities
     const chapterHere = () => host.chapterHere?.(guild?.factionId ?? null) ?? null;   // AUDIT CHAP3 C6: the host's region, the chapters' own
-    const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service);
+    const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service, host.guildId?.() ?? null);   // CHAP7b: a patron's members the Thriving price
     const shelfQuality = () => chapterHallShelf(b?.quality ?? 0, chapterHere());
     const closeSelf = () => closeSpellWindow(flow);
     const now = () => interiorTicker.ownMinutes;   // already CLASSIC minutes (AUDIT 21 F2); LIVED1: a service's clock (training's cooldown, a blessing) is the character's own

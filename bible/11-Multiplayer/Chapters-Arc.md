@@ -32,7 +32,8 @@ halls - sections 7 and 9, its record at the foot); CHAP6e BUILT (2026-10-09, the
 High Master in an Ascendancy, a Season's Master for good - sections 6 and 7, its record at the foot); CHAP7a BUILT
 (2026-10-09, the same word; the patrons on the service - a guild's sealed bid in escrow, the Season's opening Turning
 burning the highest and sending the rest home, the patron on the sheet, the board and in the Chronicle - section 8, its
-record at the foot); CHAP7b (the patrons on the client: the board's bid, the banner, the members' prices) is next. Merged with main
+record at the foot); CHAP7b BUILT (2026-10-09, the same word; the patrons on the client - the board's bid, the banners at
+the chapter's halls, the members' Thriving prices - section 8, its record at the foot). The arc's seven slices stand. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -890,7 +891,30 @@ grown in place:
   the board, to a guildmaster alone, its own guild's bid for the Season after (`patronBid`, `{ season, marks }`).
 - **No seat influence** (CALL 6): nothing of it touches the Seats' tables.
 - **Still to build** (CHAP7b): the board's bid and its words, the patron's banner in the chapter's halls, its members'
-  Thriving prices there.
+  Thriving prices there - BUILT, below.
+
+BUILT (CHAP7b, 2026-10-09, Mac: "continue"), the patrons on the client - `src/net/npcChapterLaw.js`
+(`CHAPTER_PATRON_BAND`, `CHAPTER_PATRON_PRICE`, `chapterPatronMember`, `chapterHallFactor`'s `guildId`,
+`CHAPTER_PATRON_RAISES`, `chapterPatronBidsOf`, `chapterPatronSheetLine`, `chapterPatronBidLine`, `chapterPatronBidSaid`),
+`src/net/chapterSheet.js` (the patron kept), `src/scenes/chapterBanners.js` (new), `src/scenes/world.js`,
+`src/scenes/worldModes.js`, `src/ui/noticeWindow.js`, `src/net/accountClient.js` (`accountRoll.patron`):
+
+- **The members' prices**: a hall's price factor for a reader whose player guild is its chapter's patron this Season is
+  the Thriving band's (0.9) whatever the chapter's Strength - a Failing chapter's patron's members pay 0.9, not 1.25 -
+  and an Ascendancy's and the training doctrine's tenths lie on it as on anyone's; the shelf is the band's (8 named
+  the prices alone). The host hands the hall the playing account's guild (its GuildBook's).
+- **The banners**: the sheet keeps each chapter's patron and its arms (`heraldryOf` - arms that are not, none); a town's
+  guild halls and temples, by their guild, are kept at its build (`chapterHalls`), and a hall whose chapter - the hall's
+  guild in the pixel's politic region (AUDIT CHAP3 C6) - has a patron with arms hangs them, two banners beside its door,
+  on the halls' and the seats' own pass (`hallBannerAnchors`, `bannerKeyOf`; the nearest of all of them drawn). A patron
+  with no arms, a door unmeasured, a chapter the sheet does not name: none. NARROWED: beside the door, outside - DFU's
+  hall interiors are its own blocks, as a player guild's hall's banners are its street's.
+- **The board** names each chapter's patron ("Its patron this Season: Grey Lanterns [GLN]."), and to its guild's
+  guildmaster alone (the board sends the bid to it alone) its bid for the Season after - "Your guild bids 1,500 silver for
+  its patronage in the Season of First Seed." - and what it may bid: none standing, 1,000, 2,000 or 5,000; standing,
+  500, 1,000 or 5,000 more, under the cap (`chapterPatronBidsOf`). A press bids through the door (`/v1/chapters/patron`,
+  a Marks request id of its own), says so, and reads the list again; a refusal in its words; an answer after the board
+  closed is said in the chat. A press answered twice escrows once: a bid no higher than it stands is refused.
 
 ## 9. The living world shows it (CHAP5)
 
@@ -1035,7 +1059,8 @@ DECIDED.
    the Season's Master on the token (6, 7).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds. The rivals BUILT with the Rivalry (CHAP6a,
    8). CHAP7a BUILT (2026-10-09): the patrons on the service - the bid, the Season's decision, the patron on the sheet,
-   the board and in the Chronicle (8).
+   the board and in the Chronicle (8). CHAP7b BUILT (2026-10-09): the board's bid, the banners at the chapter's halls,
+   the members' Thriving prices (8).
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
 
@@ -1672,3 +1697,26 @@ The seventh slice's first; section 8 carries the law and what building it narrow
   this one, a gone guild's highest at a live chapter, a treasury that never held a Mark, a raise another raise beat to
   the table, a request id another act spent, a raise past the cap, more than one move at once). Six older records re-aimed by content (CHAP6a's three, CHAP6b's two, AUDIT CHAP4's reset); two kept one site
   by giving the bid's shape check its own order. One older pin moved (PIN MOVED: ACC1b's tables).
+
+## CHAP7b - the patrons on the client, as built (2026-10-09, Mac: "continue")
+
+The seventh slice's last; section 8 carries the law and what building it narrowed (BUILT, CHAP7b). The arc's seven
+slices stand.
+
+- **The law.** `src/net/npcChapterLaw.js`: `CHAPTER_PATRON_BAND`, `CHAPTER_PATRON_PRICE`, `chapterPatronMember`,
+  `chapterHallFactor`'s `guildId`, `CHAPTER_PATRON_RAISES`, `chapterPatronBidsOf`, `chapterPatronSheetLine`,
+  `chapterPatronBidLine`, `chapterPatronBidSaid`.
+- **The tab.** `src/net/chapterSheet.js`: each chapter's patron kept, its arms checked, a copy. `src/scenes/chapterBanners.js`
+  (new): a patron's banners at its chapter's halls. `src/scenes/world.js`: each town's halls by their guild at its build,
+  the banners on the halls' pass, the modes host's `guildId`, the board's `patron` door. `src/scenes/worldModes.js`: the
+  hall priced with the reader's guild. `src/ui/noticeWindow.js`: the patron's line, a guildmaster's bid and its choices,
+  `bidPatron`. `src/net/accountClient.js`: `accountRoll.patron`.
+- **Pins.** `test/chap7b_patrons_client.test.js`, 6 tests: the members' price (a Failing chapter's, the Season's tenths
+  on it, another guild's, none); the board's words and offers (the cap); the sheet's patron (its arms, a copy); the
+  banners (two a hall, the region, the arms, the door, no region); the board (the lines, the offers, a press and its word,
+  a refusal, a late answer, no door, no bid); the wiring. `tools/mutants/chap7b.json`: 44 mutants, 43 dead and one
+  equivalent as recorded (the banners' anchors' guard and `?.` hang the same) - two survived the first pins and have
+  their own now (no guild against a patron with no id; no chapter asked for no region). Six older records
+  re-aimed by content (CHAP3c's, CHAP5a's, CHAP6c's two, CHAP6d's two). Older pins moved (PIN MOVED): CHAP5a's and
+  CHAP6c's sheets (the patron), CHAP3c's and CHAP6d's price factor (the reader's guild), AUDIT SEATS-3 C4's banners'
+  pass (a patron's banners on it).

@@ -95,8 +95,8 @@
   {
     "name": "CHAP3C-SHEET-KEY",
     "file": "src/net/chapterSheet.js",
-    "old": "next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });",
-    "new": "next.set(`${c.f}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });",
+    "old": "next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron: sheetPatronOf(c.patron) });",
+    "new": "next.set(`${c.f}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron: sheetPatronOf(c.patron) });",
     "tests": [
       "test/chap3c_halls.test.js"
     ],

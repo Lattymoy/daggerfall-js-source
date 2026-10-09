@@ -344,8 +344,8 @@
   {
     "name": "CHAP6C-SHEET-SEASON",
     "file": "src/net/chapterSheet.js",
-    "old": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });",
-    "new": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(null) });",
+    "old": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron:",
+    "new": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(null), patron:",
     "tests": [
       "test/chap6c_words.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "CHAP6C-SHEET-COPY",
     "file": "src/net/chapterSheet.js",
-    "old": "sides: s.season.sides ? [...s.season.sides] : null };",
-    "new": "sides: s.season.sides };",
+    "old": "sides: s.season.sides ? [...s.season.sides] : null,\n",
+    "new": "sides: s.season.sides,\n",
     "tests": [
       "test/chap6c_words.test.js"
     ]

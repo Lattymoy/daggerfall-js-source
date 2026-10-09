@@ -19,14 +19,23 @@
 //
 // CHAP6c (2026-10-09, Mac: "continue"; Chapters-Arc 7): and each chapter's Season - its event, its doctrine, its halls
 // shut (npcChapterLaw.js chapterSeasonOf) - for the roll's lines and the town's talk.
+//
+// CHAP7b (2026-10-09, Mac: "continue"; Chapters-Arc 8): and each chapter's patron this Season - `{ id, name, tag,
+// heraldry }`, each checked (npcChapterLaw.js chapterPatronOf, heraldryLaw.js heraldryOf) - for its halls' banners and its
+// members' prices.
 // ═══════════════════════════════════════════════════════════════════
 
-import { chapterRollSeatsOf, chapterSeasonOf } from './npcChapterLaw.js';   // CHAP5a: the seats as the roll reads them; CHAP6c: the Season's event
+import { chapterRollSeatsOf, chapterSeasonOf, chapterPatronOf } from './npcChapterLaw.js';   // CHAP5a: the seats as the roll reads them; CHAP6c: the Season's event; CHAP7b: its patron
+import { heraldryOf } from './heraldryLaw.js';   // CHAP7b: a patron's arms, as every face draws them
 
 /** How long a read of the sheet stands before the next is asked (the seats' list's own beat). */
 export const SHEET_KEPT_MS = 10 * 60_000;
 /** The refusals that end the asking for the page - the Chapters are not this account's. */
 export const SHEET_STOPS = Object.freeze(['chapters-closed', 'no-session', 'auth']);
+
+/** CHAP7b: a sheet's patron as the tab keeps it - `{ id, name, tag, heraldry }` (its arms null where the guild has none)
+ *  - or null. */
+const sheetPatronOf = (/** @type {any} */ p) => { const k = chapterPatronOf(p); return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null; };
 
 /**
  * THE SHEET. `refresh()` asks the service where the last read is stale (answers whether it asked); `strengthOf(faction,
@@ -34,7 +43,7 @@ export const SHEET_STOPS = Object.freeze(['chapters-closed', 'no-session', 'auth
  * @param {{ door: { list: () => Promise<any> }, nowMs?: () => number }} o
  */
 export function createChapterSheet({ door, nowMs = () => Date.now() }) {
-  /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[], season: ReturnType<typeof chapterSeasonOf> }>} */
+  /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[], season: ReturnType<typeof chapterSeasonOf>, patron: any }>} */
   let strengths = new Map();
   let readAt = -Infinity;
   let busy = false;
@@ -45,9 +54,9 @@ export function createChapterSheet({ door, nowMs = () => Date.now() }) {
     readAt = nowMs();
     Promise.resolve().then(() => door.list()).then((r) => {
       if (r?.ok && Array.isArray(r.data?.chapters)) {
-        /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[], season: ReturnType<typeof chapterSeasonOf> }>} */
+        /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[], season: ReturnType<typeof chapterSeasonOf>, patron: any }>} */
         const next = new Map();
-        for (const c of r.data.chapters) if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) });
+        for (const c of r.data.chapters) if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron: sheetPatronOf(c.patron) });
         strengths = next;
       } else if (SHEET_STOPS.includes(r?.error)) {
         // AUDIT CHAP3 C2: and what it held forgotten - the Chapters shut to the account, every hall is DFU's own again
@@ -66,11 +75,12 @@ export function createChapterSheet({ door, nowMs = () => Date.now() }) {
       return s === undefined ? null : s.strength;
     },
     /** CHAP5a: the chapter as the sheet last said it - `{ strength, seats }`, a copy - or null; asked as strengthOf is.
-     *  CHAP6c: and its Season, chapterSeasonOf's fields beside them. */
+     *  CHAP6c: and its Season, chapterSeasonOf's fields beside them; CHAP7b: and its `patron`. */
     chapterOf(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
       refresh();
       const s = strengths.get(`${faction}|${region}`);
-      return s === undefined ? null : { strength: s.strength, seats: s.seats.map((x) => ({ ...x })), ...s.season, sides: s.season.sides ? [...s.season.sides] : null };
+      return s === undefined ? null : { strength: s.strength, seats: s.seats.map((x) => ({ ...x })), ...s.season, sides: s.season.sides ? [...s.season.sides] : null,
+        patron: s.patron ? { ...s.patron } : null };   // CHAP7b: its patron, a copy
     },
     get stopped() { return stopped; },
   };

@@ -95,7 +95,7 @@ test('CHAP6c the sheet keeps each chapter\'s Season beside its Strength and seat
   sheet.refresh();
   await tick(); await tick();
   const c = sheet.chapterOf(FIGHTERS, ANTICLERE);
-  assert.deepEqual(c, { strength: 60, seats: [], event: 'schism', season: 1, rival: null, shut: false, doctrine: 'shelf', sides: ['training', 'writs'], heir: null });
+  assert.deepEqual(c, { strength: 60, seats: [], event: 'schism', season: 1, rival: null, shut: false, doctrine: 'shelf', sides: ['training', 'writs'], heir: null, patron: null });   // PIN MOVED (CHAP7b): and its patron
   c.sides[0] = 'gold';
   assert.deepEqual(sheet.chapterOf(FIGHTERS, ANTICLERE).sides, ['training', 'writs'], 'a copy');
   assert.deepEqual([sheet.chapterOf(MAGES, ANTICLERE).event, sheet.chapterOf(MAGES, ANTICLERE).shut], [null, true]);

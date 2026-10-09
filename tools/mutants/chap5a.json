@@ -182,8 +182,8 @@
   {
     "name": "CHAP5A-SHEET-SEATS",
     "file": "src/net/chapterSheet.js",
-    "old": "{ strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c) }",
-    "new": "{ strength: c.strength, seats: Array.isArray(c.seats) ? c.seats : [], season: chapterSeasonOf(c) }",
+    "old": "{ strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron:",
+    "new": "{ strength: c.strength, seats: Array.isArray(c.seats) ? c.seats : [], season: chapterSeasonOf(c), patron:",
     "tests": [
       "test/chap5a_roll.test.js"
     ],

@@ -107,7 +107,7 @@ test('CHAP6d the living town reads a shut hall as its own band - its plans made 
 
 test('CHAP6d the wiring: the host hands the hall its whole chapter; each window priced by its own service; the three shelves by the chapter; a shut hall\'s services refused before any window (mutants: each seam)', () => {
   const modes = src('src/scenes/worldModes.js');
-  assert.match(modes, /const chapterFactor = \(\/\*\* @type \{string\} \*\/ service\) => chapterHallFactor\(chapterHere\(\), service\);/);
+  assert.match(modes, /const chapterFactor = \(\/\*\* @type \{string\} \*\/ service\) => chapterHallFactor\(chapterHere\(\), service, host\.guildId\?\.\(\) \?\? null\);/);   // PIN MOVED (CHAP7b): and the reader's guild, a patron's members' price
   assert.match(modes, /const shelfQuality = \(\) => chapterHallShelf\(b\?\.quality \?\? 0, chapterHere\(\)\);/);
   assert.match(modes, /if \(chapterHallShut\(host\.chapterHere\?\.\(guild\.factionId\) \?\? null\)\) \{ townTalk\?\.say\?\.\(CHAPTER_HALL_SHUT_LINE\); return; \}\n\s+if \(!guildServiceArtLoaded\(\) \|\| !_shopFont\) return;/);
   assert.match(modes, /const bookFactor = chapterFactor\('spells'\);/);

@@ -179,7 +179,7 @@ test('CHAP3c a spell made: the maker\'s gold cost with the hall\'s factor laid o
 test('CHAP3c the wiring: the hall\'s chapter read off its guild and region; training, the spellbook and the maker given its factor, the three shelves its quality; the sheet built online, asked at a town\'s entry, handed to the interiors (mutants: each seam)', () => {
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /const chapterHere = \(\) => host\.chapterHere\?\.\(guild\?\.factionId \?\? null\) \?\? null;/);   // PIN MOVED (CHAP6d): the whole chapter, its Season beside its band   // PIN MOVED (AUDIT CHAP3 C6: the host's region)
-  assert.match(modes, /const chapterFactor = \(\/\*\* @type \{string\} \*\/ service\) => chapterHallFactor\(chapterHere\(\), service\);/);   // PIN MOVED (CHAP6d): by the service it prices
+  assert.match(modes, /const chapterFactor = \(\/\*\* @type \{string\} \*\/ service\) => chapterHallFactor\(chapterHere\(\), service, host\.guildId\?\.\(\) \?\? null\);/);   // PIN MOVED (CHAP6d): by the service it prices; PIN MOVED (CHAP7b): and the reader's guild, a patron's members' price
   assert.match(modes, /const shelfQuality = \(\) => chapterHallShelf\(b\?\.quality \?\? 0, chapterHere\(\)\);/);   // PIN MOVED (CHAP6d): the doctrine's shelf beside the band's
   assert.match(modes, /priceFactor: chapterFactor\('training'\),   \/\/ CHAP3c: the hall's chapter's band on the training's price/);   // PIN MOVED (CHAP6d): the training's own factor
   // PIN MOVED (AUDIT CHAP3 C1: read once a window)

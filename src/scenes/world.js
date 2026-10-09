@@ -254,7 +254,7 @@ import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/onlineLane.
 import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel - a driver's map and its fast travel; AUDIT IT1 W4: the mod loaded for the game
 // SOFTCAP1: mentor mode, the party's overlay
 import { createForagingWait } from './foragingWait.js';
-import { createMarksBook } from '../net/marksBook.js';   // MARKS1: the account's Marks - the balance, the Bank's sale, a guild's treasury   // FORAGE4: online, Foraging's quest time is a wait on the wait page
+import { createMarksBook, mintMarksRid } from '../net/marksBook.js';   // MARKS1: the account's Marks - the balance, the Bank's sale, a guild's treasury   // FORAGE4: online, Foraging's quest time is a wait on the wait page
 import { createNoticeBook, parseNoteCommand, planNoteAnswer, NOTE_LETTER_LOST } from '../net/noticeBook.js';   // NOTICE1: this device's Notice Boards - a town's board read, a note pinned
 import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen } from '../ui/noticeDoor.js';   // NOTICE1: the board's window, through its one door
 import { createProfBook } from '../net/profBook.js';   // PROF1: this character's professions - its Stores, its day, its harvests kept until answered
@@ -680,6 +680,7 @@ import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
+import { createChapterBanners } from './chapterBanners.js';   // CHAP7b: a patron's banners at its chapter's halls
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
 import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
@@ -5843,6 +5844,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // before every banner the town flies, measured here; hung and lit while a Festival rules (scenes/seatFestival.js)
     const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern), boards: pixelBoards, bounty: pixelBoardSplit }) : null;
     const festivalLanterns = festivalAnchors ? festivalLanternsOf([...(seatAnchors ?? []), ...festivalAnchors]) : null;
+    // CHAP7b (Chapters-Arc 8): the town's guild halls and temples, by their guild - a chapter's patron's banners hang at them
+    const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
+      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)
+      .map((b) => [b.buildingKey, b.factionId]) : []);
     // SEAT2a part four (Seats-Arc 6.2): the battlefield the town's own records give - the banners, the Throne, the camps
     // (systems/siegeField.js), the same on every machine; sent for a battle's pass from the Seat tab
     const siegeField = pixelBoardSplit ? siegeFieldOf({
@@ -5868,6 +5873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
+      chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
@@ -11847,6 +11853,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     built: () => built, seatAt: (mapId) => seatHere(mapId), translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
     version: () => (seatBook.open === true ? 1 : 0),
   }) : null;
+  // CHAP7b (Chapters-Arc 8): a patron's banners at its chapter's halls (scenes/chapterBanners.js), on the same pass, off the
+  // chapter sheet - the hall's guild in the pixel's politic region, as its prices read it
+  const chapterBanners = chapterSheet && bannerPass ? createChapterBanners({
+    built: () => built, regionAt: (px, py) => { try { return maps.getRegionIndexAt(px, py); } catch { return null; } },
+    chapterOf: (faction, region) => chapterSheet.chapterOf(faction, region), translation: (px, py) => state.pixelTranslation(px, py), eye: () => cam.pos,
+  }) : null;
   // FESTIVAL-STAGE (Seats-Arc 7.6): whether a Festival rules at a town - its streets' music, its lanterns lit
   const festivalStage = seatBook ? createFestivalStage({ seatAt: (mapId) => seatHere(mapId), version: () => (seatBook.open === true ? 1 : 0) }) : null;
   /** GUILD1d + SEAT1a: this frame's banners - the halls' and the seats', the nearest BANNERS_MAX of them. */
@@ -11860,6 +11872,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     all.length = 0;
     for (const b of hallBanners?.list() ?? []) all.push(b);
     for (const b of seatBanners?.list() ?? []) all.push(b);
+    for (const b of chapterBanners?.list() ?? []) all.push(b);   // CHAP7b
     if (all.length <= BANNERS_MAX) return all;
     _hungEye = cam.pos;
     all.sort(_hungByEye);
@@ -25524,6 +25537,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       setFocus: hallDoor && realmSession ? (faction, focus) => hallDoor.focus(realmSession.id, faction, region, focus) : null,
       // CHAP6c: and a member backs its chapter's Season's side here, for the character playing
       back: hallDoor && realmSession ? (faction, side) => hallDoor.back(realmSession.id, faction, region, side) : null,
+      // CHAP7b: and its guild's guildmaster bids for a chapter's patronage here, for the Season after
+      patron: hallDoor && realmSession ? (faction, marks) => hallDoor.patron(realmSession.id, faction, region, marks, mintMarksRid()) : null,
       // PROF6: the guild writs and commissions beside the Court's, while the Marks are this account's too
       ...(writBook && marksBook?.state?.open !== false ? {
         writs: writBook, regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', pieces: commissionPieces,
@@ -27574,6 +27589,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
+    // CHAP7b (Chapters-Arc 8): the playing account's player guild - a chapter's patron's members pay the Thriving prices
+    guildId: () => guildBook?.guild?.id ?? null,
     // CHAP3c: a hall's chapter's Strength, its band on the hall - AUDIT CHAP3 C6: in the region the chapters are keyed by
     // (the politic map's, as the hall's witness and the board read it), never the location record's. CHAP6d: the whole
     // chapter (chapterSheet.js chapterOf) - its band and its Season on the hall

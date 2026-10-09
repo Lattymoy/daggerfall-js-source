@@ -1417,6 +1417,8 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     history: (region) => post('/v1/chapters/history', { region }),
     /** CHAP6b: a member backs a side of its chapter's Schism, or names a candidate of its Succession (CHAP6c's board) */
     back: (character, faction, region, side) => post('/v1/chapters/back', { character, faction, region, side }),
+    /** CHAP7a: a guild's guildmaster bids its treasury's silver for a chapter's patronage in the Season after (CHAP7b's board) */
+    patron: (character, faction, region, marks, rid) => post('/v1/chapters/patron', { character, faction, region, marks, rid }),
   };
 }
 

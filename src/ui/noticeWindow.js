@@ -52,7 +52,7 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf } from '../net/npcChapterLaw.js';
+import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf, chapterPatronSheetLine, chapterPatronBidLine, chapterPatronBidsOf, chapterPatronBidSaid } from '../net/npcChapterLaw.js';   // CHAP7b: a chapter's patron, a guildmaster's bid
 import { chapterSeasonLines, chapterBackChoices, chapterBackedLine } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season - its lines, a member's choices   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
@@ -163,7 +163,7 @@ function injectSkin(doc = document) {
  *   nowS?: () => number,
  *   onExit?: (() => void) | null,
  *   work?: ({ book: any, region: number, regionName: string, countName: (key: string, n: number) => string,
- *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, setFocus?: ((faction: number, focus: string) => Promise<any>) | null, back?: ((faction: number, side: number) => Promise<any>) | null, writs?: any, regionNameOf?: (r: number) => string,
+ *     onTaken?: (r: any) => (string|void), sayLate?: (text: string) => void, setFocus?: ((faction: number, focus: string) => Promise<any>) | null, back?: ((faction: number, side: number) => Promise<any>) | null, patron?: ((faction: number, marks: number) => Promise<any>) | null, writs?: any, regionNameOf?: (r: number) => string,
  *     pieces?: (c: any) => any[], settle?: () => any, onList?: (data: any) => void, forgetMarket?: () => void } | null),
  *   market?: (any | null),
  *   guilds?: boolean,
@@ -524,6 +524,19 @@ export function mountNoticeBoard(host, deps) {
     loadWrits(true);
   }
 
+  /** CHAP7b: a guildmaster bids its guild's silver for a chapter's patronage in the Season after - said as a backing is,
+   *  in the chat when the board closed first. @param {any} c @param {number} marks */
+  async function bidPatron(c, marks) {
+    if (busy || workBusy || !work.patron) return;
+    busy = true; render();
+    const r = await work.patron(c.faction, marks);
+    const said = r?.ok ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' } : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) { work.sayLate?.(said.text); return; }
+    busy = false;
+    word = said;
+    loadWrits(true);
+  }
+
   async function setFocus(faction, focus) {
     if (busy || workBusy || !work.setFocus) return;
     busy = true; render();
@@ -579,6 +592,17 @@ export function mountNoticeBoard(host, deps) {
       if (choices.length) {
         const row = el('p', 'notice-chapter notice-back-pick', c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ');
         for (const ch of choices) row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));
+        body.append(row);
+      }
+      // CHAP7b: its patron this Season; and, for its guild's guildmaster (the board sends its bid to it alone), the guild's
+      // own bid for the Season after and what it may bid
+      const patronLine = chapterPatronSheetLine(c.patron);
+      if (patronLine) body.append(el('p', 'notice-chapter notice-patron', patronLine));
+      const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;
+      if (bidLine) {
+        body.append(el('p', 'notice-chapter notice-patron', bidLine));
+        const row = el('p', 'notice-chapter notice-patron-pick', c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: ');
+        for (const m of chapterPatronBidsOf(c.patronBid)) row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, m)));
         body.append(row);
       }
     }

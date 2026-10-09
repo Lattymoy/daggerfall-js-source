@@ -1195,11 +1195,13 @@ export function chapterSeasonOf(c) {
 export const CHAPTER_HALL_SERVICES = Object.freeze(['training', 'spells']);
 /** A HALL'S PRICE FACTOR for `service` ('training' or 'spells') by its chapter as the sheet says it (`{ strength, event,
  *  doctrine }` - chapterSheet.js chapterOf's), or 1 for none: its band's (chapterPriceFactor), an Ascendancy's tenth, the
- *  training's doctrine's tenth. */
-export function chapterHallFactor(/** @type {any} */ chapter, /** @type {string} */ service) {
+ *  training's doctrine's tenth. CHAP7b: `guildId` the reader's player guild - its patron's members pay the Thriving
+ *  band's price whatever the chapter's Strength (Chapters-Arc 8), the Season's tenths on it as on anyone's. */
+export function chapterHallFactor(/** @type {any} */ chapter, /** @type {string} */ service, /** @type {string | null} */ guildId = null) {
   if (!chapter) return 1;
   const s = chapterSeasonOf(chapter);
-  return chapterPriceFactor(chapter.strength) * (s.event === 'ascendancy' ? CHAPTER_EVENT_EFFECTS.ascendancyPrice : 1)
+  const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : chapterPriceFactor(chapter.strength);
+  return band * (s.event === 'ascendancy' ? CHAPTER_EVENT_EFFECTS.ascendancyPrice : 1)
     * (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);
 }
 /** A HALL'S SHELF QUALITY by its chapter as the sheet says it: its band's step and "a deeper shelf"'s two
@@ -1249,4 +1251,43 @@ export function chapterPatronLine(/** @type {any} */ row) {
   const name = typeof row?.data?.name === 'string' ? row.data.name.trim().slice(0, GUILD_NAME_MAX) : '';
   if (!season || !name) return null;
   return `For ${season}, ${name} took the patronage of the ${hallPosterName(row.faction)}.`;
+}
+
+// ─── CHAP7b: THE PATRONS ON THE CLIENT (Chapters-Arc 8, CALL 6) ─────
+// A patron's members pay the Thriving band's prices in its chapter's halls, whatever the chapter's Strength; the board
+// names a chapter's patron, and offers its own guild's guildmaster the bid for the Season after.
+
+/** The band whose prices a patron's members pay (CALL 6). */
+export const CHAPTER_PATRON_BAND = 'thriving';
+/** That band's price factor. */
+export const CHAPTER_PATRON_PRICE = /** @type {{ price: number }} */ (CHAPTER_BANDS.find((b) => b.band === CHAPTER_PATRON_BAND)).price;
+/** Whether the reader's player guild (`guildId`) is the chapter's patron this Season. */
+export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;
+/** What a guildmaster's board offers to bid: none standing, the least, twice it and five times it; else its standing bid
+ *  raised by 500, 1,000 and 5,000 - each under the cap. */
+export const CHAPTER_PATRON_RAISES = Object.freeze([500, 1000, 5000]);
+export function chapterPatronBidsOf(/** @type {any} */ bid) {
+  const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;
+  const offers = now ? CHAPTER_PATRON_RAISES.map((r) => now + r) : [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);
+  return offers.filter((m) => patronBidOk(m, now));
+}
+const silverOf = (/** @type {number} */ n) => `${n.toLocaleString('en-US')} silver`;
+/** The board's line for a chapter's patron this Season: "Its patron this Season: Grey Lanterns [GLN]." - null for none. */
+export function chapterPatronSheetLine(/** @type {any} */ patron) {
+  const p = chapterPatronOf(patron);
+  return p ? `Its patron this Season: ${p.name}${p.tag ? ` [${p.tag}]` : ''}.` : null;
+}
+/** The board's line for a guildmaster's own bid: "Your guild bids 1,500 silver for its patronage in the Season of First
+ *  Seed." - or that it has not bid; null for no bid to say. */
+export function chapterPatronBidLine(/** @type {any} */ bid) {
+  const season = seatSeasonName(bid?.season);
+  if (!season || !Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;
+  return bid.marks > 0 ? `Your guild bids ${silverOf(bid.marks)} for its patronage in ${season}.` : `Your guild has not bid for its patronage in ${season}.`;
+}
+/** What a bid made says: "Your guild bids 1,500 silver for the patronage of the Fighters Guild in the Season of First
+ *  Seed." - null for a guild or a Season it cannot name. */
+export function chapterPatronBidSaid(/** @type {unknown} */ faction, /** @type {unknown} */ season, /** @type {number} */ marks) {
+  const name = seatSeasonName(season);
+  if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;
+  return `Your guild bids ${silverOf(marks)} for the patronage of the ${hallPosterName(/** @type {number} */ (faction))} in ${name}.`;
 }

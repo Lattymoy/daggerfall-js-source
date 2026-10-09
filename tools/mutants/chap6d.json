@@ -29,8 +29,8 @@
   {
     "name": "CHAP6D-FACTOR-BAND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return chapterPriceFactor(chapter.strength) * (s.event === 'ascendancy'",
-    "new": "return 1 * (s.event === 'ascendancy'",
+    "old": "const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : chapterPriceFactor(chapter.strength);",
+    "new": "const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : 1;",
     "tests": [
       "test/chap6d_halls.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CHAP6D-MODES-FACTOR",
     "file": "src/scenes/worldModes.js",
-    "old": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service);",
-    "new": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(null, service);",
+    "old": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service, host.guildId?.() ?? null);",
+    "new": "const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(null, service, host.guildId?.() ?? null);",
     "tests": [
       "test/chap6d_halls.test.js"
     ]
