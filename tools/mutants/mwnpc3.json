@@ -1,0 +1,119 @@
+[
+ {
+  "name": "MWNPC3-copy-not-kept",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (b) { m.delete(path); m.set(path, b); return b; }",
+  "new": "  if (false) { m.delete(path); m.set(path, b); return b; }",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-archive-bytes-handed-out",
+  "file": "src/combat/fpArm.js",
+  "old": "  b = src.slice();\n  m.set(path, b);",
+  "new": "  b = src;\n  m.set(path, b);",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-copies-unbounded",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (m.size > NIF_COPY_CAP) m.delete(m.keys().next().value);",
+  "new": "  if (false) m.delete(m.keys().next().value);",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-ask-not-refreshed",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (b) { m.delete(path); m.set(path, b); return b; }",
+  "new": "  if (b) { return b; }",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-assembly-parses-its-own",
+  "file": "src/formats/mwFirstPerson.js",
+  "old": "    if (parseNif) mod.parseNif = parseNif;\n",
+  "new": "\n",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-texture-made-every-range",
+  "file": "src/combat/fpArm.js",
+  "old": "  let held = byWrap.get(key);\n  if (!held) {",
+  "new": "  let held = byWrap.get(key);\n  if (true) {",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-first-release-deletes",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (--held.holds > 0) return false;",
+  "new": "  --held.holds;",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-wrap-not-keyed",
+  "file": "src/combat/fpArm.js",
+  "old": "  const key = `${wrap.wrapS}:${wrap.wrapT}`;",
+  "new": "  const key = 'one';",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-sweep-always",
+  "file": "src/combat/fpArm.js",
+  "old": "    const sweep = reachSweep ? clipSweepTimes(sources, idleCheck) : null;",
+  "new": "    const sweep = clipSweepTimes(sources, idleCheck);",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-peers-sweep",
+  "file": "src/net/peerBodies.js",
+  "old": "    reachSweep: false,   // MWNPC3",
+  "new": "    reachSweep: true,   // MWNPC3",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-max-ignored",
+  "file": "src/net/peerBodies.js",
+  "old": "    this._max = limits?.max ?? BODIES_MAX;",
+  "new": "    this._max = BODIES_MAX;",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-range-ignored",
+  "file": "src/net/peerBodies.js",
+  "old": "    this._range = limits?.range ?? BODY_RANGE;",
+  "new": "    this._range = BODY_RANGE;",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC3-budget-ignored",
+  "file": "src/net/peerBodies.js",
+  "old": "    this._skinBudget = limits?.skinBudget ?? SKIN_BUDGET;",
+  "new": "    this._skinBudget = SKIN_BUDGET;",
+  "tests": [
+   "test/mwnpc3_bodyservice.test.js"
+  ]
+ }
+]

@@ -297,7 +297,7 @@ test('AUDIT DYE-ICON 2: a mount\'s own textures are loaded before it renders - a
   const pic = await arm.mountPicture(staff(WEAPON_MATERIALS.Ebony));
   assert.match(pic?.key ?? '', /:ebony staff:256$/, 'its own record');
   const hung = textures.slice(n);
-  assert.equal(hung.length, 2, 'both its pieces textured');
+  assert.equal(hung.length, 1, 'both its pieces textured - by ONE upload: they wear the one file (PIN MOVED, MWNPC3: a picture is uploaded once a renderer, acquireCharacterTexture)');
   const file = decodeTextureImage('textures/tx_fixturd.dds', f('fixture.dds')).mips[0].rgba;
   for (const mips of hung) assert.deepEqual([...mips[0].rgba], [...file], 'the file\'s own texels (unpreloaded: the 8x8 magenta warning, cached with the picture)');
 });
@@ -588,7 +588,7 @@ test('AUDIT DYE-ICON r3 2: a mount whose texture read failed is no picture, and 
   assert.match(pic?.key ?? '', /^mount:11:ebony staff:256$/, 'asked again: the file loads, and it is pictured');
   const file = decodeTextureImage('textures/tx_fixturd.dds', f('fixture.dds')).mips[0].rgba;
   const hung = textures.slice(t);
-  assert.equal(hung.length, 2);
+  assert.equal(hung.length, 1, 'the one file both pieces wear, uploaded once (PIN MOVED, MWNPC3)');
   for (const mips of hung) assert.deepEqual([...mips[0].rgba], [...file], 'the file\'s own texels, never the warning');
   assert.ok((await arm.mountPicture(staff(WEAPON_MATERIALS.Ebony))) === pic, 'and that picture is kept');
 });

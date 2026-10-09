@@ -304,7 +304,7 @@ test('PERF-ZONE2 the world frame\'s CPU zones tile in order, and each new mark s
 test('AUDIT PERF-RIG1 F2: releasing a mesh clears the texture handle on every range it deletes (by content - the release needs a GL)', () => {
   const arm = rd('src/combat/fpArm.js');
   const body = arm.slice(arm.indexOf('function releaseGpu(m) {'), arm.indexOf('\n  }\n', arm.indexOf('function releaseGpu(m) {')));
-  assert.match(body, /for \(const r of m\.ranges \|\| \[\]\) if \(r\.tex\) \{ gl\.deleteTexture\(r\.tex\); r\.tex = null; \}/);
+  assert.match(body, /for \(const r of m\.ranges \|\| \[\]\) if \(r\.tex\) \{ releaseCharacterTexture\(renderer, r\.tex\); r\.tex = null; \}/);   // PIN MOVED (MWNPC3): the texture is shared now - the release lets go of the range's hold (the last hold deletes), and the handle goes with it as before
   // and every release site that keeps its assembly drops its pack beside the mesh - the two laws together
   for (const m of arm.matchAll(/releaseMesh\(\);(.{0,40})/g)) {
     const tail = arm.slice(m.index, m.index + 400);

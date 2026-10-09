@@ -2024,10 +2024,14 @@ export function checkRequiredBones(report) {
  * rather than a second copy of the same arithmetic - which is what lets
  * the result be re-posed at all.
  */
-export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [] }) {
+export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [], parseNif = null }) {
   const mod = {};
   try {
     ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
+    // MWNPC3: a caller's parse - fpArm.js's parseNifOnce, so a mesh one body parsed is the next body's parse. A parsed
+    // NIF is never written after its read (flattenNif copies every array it transforms, and a skin's bones are fresh
+    // objects over the parse's read-only lists), so one parse serves every assembly that binds it.
+    if (parseNif) mod.parseNif = parseNif;
     ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
       skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
       accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,

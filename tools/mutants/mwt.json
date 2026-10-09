@@ -2,8 +2,8 @@
   {
     "name": "MWT1-the-held-light-takes-no-attitude-the-right-bone-the-wrong-way-up",
     "file": "src/combat/fpArm.js",
-    "old": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1",
-    "new": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice() });",
+    "old": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: nifBytes(arc, path), preTransform: LIGHT_ATTITUDE });   // MWT1",
+    "new": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: nifBytes(arc, path) });",
     "tests": [
       "test/mwtorch.test.js"
     ]

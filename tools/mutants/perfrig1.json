@@ -159,8 +159,8 @@
  {
   "name": "AUDIT-PERF-RIG1-F2-deleted-texture-handle-kept",
   "file": "src/combat/fpArm.js",
-  "old": "      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }",
-  "new": "      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); }",
+  "old": "      for (const r of m.ranges || []) if (r.tex) { releaseCharacterTexture(renderer, r.tex); r.tex = null; }   // MWNPC3: a hold let go - the last one deletes",
+  "new": "      for (const r of m.ranges || []) if (r.tex) { releaseCharacterTexture(renderer, r.tex); }   // MWNPC3: a hold let go - the last one deletes",
   "tests": [
    "test/perfrig1.test.js"
   ]

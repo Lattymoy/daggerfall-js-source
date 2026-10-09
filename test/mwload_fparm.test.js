@@ -299,7 +299,10 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
   // A synchronous read of ARCHIVE bytes. Every one of them is
   // `<an archive>.get(<path>)`, and every archive here is named by the
   // find that produced it.
-  const READ = /\b(?:arc|tarc|skelArc|ammoArc)\.get\(|find\((?:p|path)\)\.get\(/;
+  // MWNPC3 (PIN MOVED): a mesh's bytes are read through nifBytes(<an archive>, <path>) now - one copy an archive and
+  // path, every body's - so a call of it IS a read, swept like the `.get` it wraps (and the `find(...)` ones, whose
+  // `?.get` the old pattern never met, swept with them).
+  const READ = /\b(?:arc|tarc|skelArc|ammoArc)\.get\(|find\((?:p|path)\)\.get\(|\bnifBytes\((?:arc|tarc|skelArc|ammoArc|find\()/;
   // What makes a read legal: the load that brought its bytes in
   // (loadFromArchives and the three preloads that call it), or
   // findLoaded, which is the ASSERTION that some earlier function's
@@ -317,6 +320,8 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
     ['collectArmTextures', 'synchronous by contract; every call site preloads through preloadArmTextures'],
     ['resolveTorchPart', 'MW-D51: resolveWeaponParts\' twin for the carried light; all three call sites preload through torchPartPaths'],
     ['resolveHipLanternPart', 'HT-WAIST: resolveTorchPart\'s twin for the lantern at the waist; both call sites preload through hipLanternPartPaths'],
+    ['nifBytes', 'MWNPC3: the copy door - its archive is the caller\'s, and every call of it is a read this scan sweeps'],
+    ['ownBodyPart', 'MW-BRIG2: synchronous, its `find` the caller\'s; its one call site (buildTpBody) loads ahead of it'],
   ]);
   const nameOf = (line) => (line.match(/(?:function\s+)?([A-Za-z][\w$]*)\s*\(/) || [])[1] ?? '?';
 
@@ -359,6 +364,8 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
   assert.equal(callsCovered('resolveTorchPart({', 'loadFromArchives\\([\\s\\S]*torchPartPaths\\(|torchPartPaths\\('), 3);
   // HT-WAIST resolveHipLanternPart: buildTpBody and setHipLight's slow path.
   assert.equal(callsCovered('resolveHipLanternPart({', 'loadFromArchives\\([\\s\\S]*hipLanternPartPaths\\(|hipLanternPartPaths\\('), 2);
+  // MWNPC3 ownBodyPart: the third-person build's part loop, inside its load.
+  assert.equal(callsCovered('...ownBodyPart(', 'loadFromArchives\\('), 1);
   // collectArmTextures: the two builds and the swap's two rigs.
   // renderGroundMesh's own call is the ICON's, and the icon opens its
   // door in preloadIcon before the synchronous getter is ever reached -

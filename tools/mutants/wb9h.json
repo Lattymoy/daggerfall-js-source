@@ -74,7 +74,7 @@
   {
     "name": "WB9h-the-budget-ignored",
     "file": "src/net/peerBodies.js",
-    "old": "(b.rank > 0 && skins < SKIN_BUDGET)",
+    "old": "(b.rank > 0 && skins < this._skinBudget)",
     "new": "(b.rank > 0)",
     "tests": [
       "test/wb9h_crowd_bodies.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "WB9h-the-meshless-made-to-wait",
     "file": "src/net/peerBodies.js",
-    "old": "      const pose = b.rank === 3 || (b.rank > 0 && skins < SKIN_BUDGET);",
-    "new": "      const pose = b.rank > 0 && skins < SKIN_BUDGET;",
+    "old": "      const pose = b.rank === 3 || (b.rank > 0 && skins < this._skinBudget);",
+    "new": "      const pose = b.rank > 0 && skins < this._skinBudget;",
     "tests": [
       "test/wb9h_crowd_bodies.test.js"
     ]
@@ -167,7 +167,7 @@
   {
     "name": "WB9h-the-pool-unbounded",
     "file": "src/net/peerBodies.js",
-    "old": "    while (this._spares.length > SPARE_MAX) {",
+    "old": "    while (this._spares.length > this._spareMax) {",
     "new": "    while (false) {",
     "tests": [
       "test/wb9h_crowd_bodies.test.js"

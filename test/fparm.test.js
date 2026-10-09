@@ -3183,8 +3183,12 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   assert.equal(clipSweepTimes(null, null).length, 25);
   // and the build uses it
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /const sweep = clipSweepTimes\(sources, idleCheck\);\n    const union = clipUnionBounds\(arm, poseAt, sweep\);/,
+  // PIN MOVED (MWNPC3): the sweep is the default (the player's arm); a rig never looked out of (reachSweep: false -
+  // the peers' and the NPCs' builds) takes the idle's reach instead
+  assert.match(arm, /const sweep = reachSweep \? clipSweepTimes\(sources, idleCheck\) : null;\n    const union = sweep \? clipUnionBounds\(arm, poseAt, sweep\) : null;/,
     'the build must measure the reach over the sweep');
+  assert.match(arm, /const reach = union \? armReach\(eye, union\) : idleReach;/);
+  assert.match(arm, /reachSweep = true,/, 'and sweeps unless asked not to');
   // AUDIT 37 F1: and the IDLE reach is measured SEPARATELY, over the
   // idle's own times - not aliased to the swept one, which would put
   // the near plane back on the widest pose.

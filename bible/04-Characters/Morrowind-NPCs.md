@@ -95,7 +95,7 @@ Each line is a slice's acceptance, not an aspiration:
 |---|---|---|
 | MWNPC1 GPU SKIN | the third-person body's skin in the vertex shader: static stream, per-pose palette, face normals from the triangle's own derivatives, boxes off the palette (rule 42), the CPU path kept for the first-person arm and as the fallback | renderer + fpArm: every third-person body (player, peers, family, regulars) |
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
-| MWNPC3 THE BODY SERVICE | third-only builds, a shared NIF parse cache, shared GL textures, time-sliced builds, the global body pool and its budget | all |
+| MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE ACTOR RIG | an actor's clips off its own machine: MobileUnit's idle/move/attack/ranged/spell/hurt/death, facing off `ai.yaw` / `facingYaw`, the Morrowind group ladders the player's rig already climbs | all four |
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
@@ -255,3 +255,68 @@ the character block). And the picture: `tools/mwSpriteBatchProbe.mjs`
 draws three fixture bodies into one frame the old way and again through
 the batch - one bind, the two frames identical texel for texel; a quad
 that ignores its tile's origin differs by 1,149 texels.
+
+## 8. MWNPC3 - WHAT A BODY COSTS TO BUILD AND HOLD, SHARED (SHIPPED 2026-10-09)
+
+A body is built once and held for its life; MWNPC1 and MWNPC2 took the
+per-frame cost. What remained was the build - "a multi-second mesh parse on
+a retail body", the stutter WB9h found in a crowd - and what a body holds.
+
+- ONE PARSE A MESH. Every build copied each mesh's bytes out of its archive
+  (`.slice()`) and parsed the copy: a fresh copy a build, so
+  `parseNifOnce`'s memo (keyed by the bytes) never met a mesh twice and
+  every body re-parsed every part it wore. `nifBytes(arc, path)` copies a
+  mesh ONCE per archive (keyed by the archive object and the path, the
+  oldest let go past `NIF_COPY_CAP`, 384) and hands every build the same
+  copy; both assemblies take `parseNifOnce` (mwFirstPerson.js
+  `assembleFirstPersonArm`'s new `parseNif`), so the second body wearing a
+  part binds the first body's parse. Safe because a parsed NIF is read and
+  never written (flattenNif copies every array it transforms; a skin's
+  bones are fresh objects over the parse's read-only lists). In play,
+  `loadMorrowindArchives` answers one set of archive objects a data
+  generation, so the sharing spans every rig on the page; a new generation
+  is new archives, new copies, new parses.
+- ONE GL TEXTURE A PICTURE. The decoded image was already shared
+  (TEXTURE_CACHE, SKINNED_MIPS); the GL upload was a body's own, a range at
+  a time. `acquireCharacterTexture(renderer, mips, wrap)` makes a texture
+  for the first range that wears a picture under a wrap and holds it for
+  every later one; `releaseGpu` lets go of a range's hold
+  (`releaseCharacterTexture`) and the last hold deletes - AUDIT PERF-RIG1
+  F2's handle still cleared with it.
+- NO SWEEP FOR A BODY NO ONE LOOKS OUT OF. PX27's reach sweep poses the
+  first-person arm at nine samples of every clip of every source - the
+  build's one pure-posing span - and frames only the first-person lens. A
+  peer's body, the family's, the card table's (and the NPCs' to come) are
+  drawn in third person alone: `peerBuildOpts` asks `reachSweep: false`, and
+  their far plane takes the idle's reach. The player's arm still sweeps.
+- AN INSTANCE'S OWN LIMITS. `new PeerBodies({ limits: { max, range,
+  skinBudget, spareMax } })`, each defaulting to the module's constant, so
+  the peers, the family and the card table read what they read and the NPC
+  lane (MWNPC4) stands its own caps beside them.
+
+PROVEN. `test/mwnpc3_bodyservice.test.js` (5): a second body from the same
+archives parses nothing and a fresh set parses afresh (by `nifParseCount`);
+the copies' identity, their cap and recency; a texture made once, held,
+keyed by picture, wrap and renderer, deleted at the last hold and made
+again after; the sweepless build's far plane its idle reach while the
+player's still sweeps; an instance standing three bodies, one skin a frame
+and a 20 m range where a plain one stands eight. `tools/mutants/mwnpc3.json`:
+13 mutants, 13 dead. Pins moved: PX27 and MF1 (the sweep is conditional),
+AUDIT PERF-RIG1 F2 (the release lets go a hold), MW-BRIG2, MW-STEEL4 and WS1
+(the bytes are `nifBytes`' copy, the binder takes the shared parse);
+SHADOW-FANG and AUDIT DYE-ICON 2 / r3 2 counted a GL upload a range, and
+count one a picture now (the wolf's fur both views wear, the staff's file
+both pieces wear: one upload each); MW-LOAD's source law sweeps a
+`nifBytes(<archive>, ...)` call as the read it is (stronger: its `find(...)`
+reads, whose `?.get` the old pattern never met, are swept too), with
+`nifBytes` and `ownBodyPart` exempt as synchronous doors and
+`ownBodyPart`'s one call site pinned inside its load; and the MWT1,
+PERF-RIG1 F2 and three WB9h mutants re-aimed by content.
+
+NOT DONE HERE, and said so. The build still assembles the first-person arm
+for a body only ever drawn in third person (its meshes now one shared parse,
+its GL upload never made - the arm's mesh is minted by a first-person draw),
+and a build's remaining work - binding, skin transfer, the face match - is
+still one task between its awaits; a build gate across every lane and a
+cap across every instance are the NPC lane's to bring (MWNPC4), where the
+crowd that needs them first stands.

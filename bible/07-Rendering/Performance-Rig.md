@@ -592,5 +592,6 @@ the third-person body, the player's and every peer's: the stream is uploaded onc
 affine a bone, kilobytes), and the character vertex shader blends; `?gpuskin=off` is the bisect back. The
 first-person arm keeps the CPU skin. The record, the laws it keeps and its proof (the GLSL run beside the CPU skin in
 a real page, 0 texels apart) are `04-Characters/Morrowind-NPCs.md` section 6, the first slice of the MW-NPC arc. Still
-open from this page: the build is a long main-thread task (MWNPC3). MWNPC2 (section 7 there) closed the other: every
+open from this page: the build is a long main-thread task - MWNPC3 (section 8 there) shares its parse across bodies and drops a
+peer's reach sweep; a build gate across lanes is MWNPC4's. MWNPC2 (section 7 there) closed the other: every
 seen body's picture is taken in ONE bind of the sprite target now, a tile each, where each body took its own pass.

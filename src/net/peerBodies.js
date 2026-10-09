@@ -227,6 +227,7 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
     // DISC12: the hand in use; WEREWOLF1: a wolf holds nothing (the build refuses the hand anyway)
     weapon: wolf ? null : stub.equip.slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: false,
+    reachSweep: false,   // MWNPC3: a peer is never looked out of - no first-person reach sweep in its build
     ...(wolf ? { werewolf: true, ...(skin ? { skin } : {}) } : {}),   // WEREWOLF1: Bloodmoon's wolf - its skeleton, head, hair and robe; SHADOW-FANG: its skin
   };
 }
@@ -311,9 +312,16 @@ export class PeerBodies {
    * @param {() => number} [p.generation] HARD3: the Morrowind data's generation. Destructured since MWBODY1 and never documented, which is how a caller finds out a parameter exists - by reading the destructuring.
    * @param {(m: string) => void} [p.warn] HARD3: likewise - the injected warn a test reads instead of the console.
    * @param {() => any} [p.collider] CLIMB6: the scene's collider, for a peer's floor under its climb (climbPose.js floorGapAt).
+   * @param {{max?: number, range?: number, skinBudget?: number, spareMax?: number}} [p.limits] MWNPC3: this instance's own
+   *   caps - the most bodies, the range they stand to, the skins a frame, the spares kept. Every one defaults to the
+   *   module's constant, so the peers, the family and the card table read what they read; the NPC lane sets its own.
    */
-  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null }) {
+  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null }) {
     this.renderer = renderer;
+    this._max = limits?.max ?? BODIES_MAX;   // MWNPC3: the instance's caps (limits)
+    this._range = limits?.range ?? BODY_RANGE;
+    this._skinBudget = limits?.skinBudget ?? SKIN_BUDGET;
+    this._spareMax = limits?.spareMax ?? SPARE_MAX;
     this._collider = collider;   // CLIMB6: the host's, for the floor under a hanging peer's feet
     this.enabled = enabled;
     this._generation = generation;   // the Morrowind data's generation: a re-attach releases every body built from the last (weaponRig's fpRecheck, for the peers)
@@ -464,7 +472,7 @@ export class PeerBodies {
     want.sort((a, b) => (a.pri === b.pri ? a.d2 - b.d2 : a.pri ? -1 : 1));
     for (const [id, b] of this._bodies) b.pri = priority ? !!priority(id) : false;
     for (const w of want) {
-      if (this._bodies.size >= BODIES_MAX) {
+      if (this._bodies.size >= this._max) {
         if (!this._maySwap(w, now) || !this._yield(w.d2, w.pri, w.key)) break;
       }
       const peer = w.peer;
@@ -549,7 +557,7 @@ export class PeerBodies {
     // (see online.js lerpAngle), and a loop over a large one never falls.
     b.yaw += wrapAngle(peerBodyYaw(peer.shown) - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);   // CLIMB5: to the wall, on the climb
     b.d2 = near ? dist2(f, near) : 0;
-    b.far = !!near && b.d2 > BODY_RANGE * BODY_RANGE;
+    b.far = !!near && b.d2 > this._range * this._range;
     b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw);
     // CLIMB6: the climb the body's limbs take - the hold rebuilt from the pose, a move from its kind, lip and time
     b.cam.climb = (b.climbTrack ??= new PeerClimbTrack()).input(peer.shown, f, b.yaw, this._now(), this._collider());
@@ -590,7 +598,7 @@ export class PeerBodies {
     if (due.length > 1) due.sort(bySkinRank);
     let skins = 0;
     for (const b of due) {
-      const pose = b.rank === 3 || (b.rank > 0 && skins < SKIN_BUDGET);
+      const pose = b.rank === 3 || (b.rank > 0 && skins < this._skinBudget);
       if (pose) skins++;
       else if (b.rank > 0) b.owed = true;
       else if (!b.inView) b.stale = true;
@@ -766,7 +774,7 @@ export class PeerBodies {
   _keepSpare(b, keep = null) {
     b.rig.attach(this.renderer, null);
     this._spares.push({ key: b.key, rig: b.rig, weapon: b.weapon, ammo: b.ammo, at: this._now() });
-    while (this._spares.length > SPARE_MAX) {
+    while (this._spares.length > this._spareMax) {
       const i = this._spares.findIndex((x) => x.key !== keep);
       this._unloadSpare(this._spares.splice(Math.max(0, i), 1)[0]);
     }

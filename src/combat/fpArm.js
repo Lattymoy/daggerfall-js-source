@@ -841,9 +841,79 @@ function parseNifOnce(bytes, cache = parseNifOnce.cache) {
   if (cache.has(bytes)) return cache.get(bytes);
   const nif = parseNif(bytes);
   cache.set(bytes, nif);
+  parseNifOnce.parses++;   // MWNPC3: the parses the memo could not answer - the pins' count of the one parse a mesh
   return nif;
 }
 parseNifOnce.cache = new WeakMap();
+parseNifOnce.parses = 0;
+/** MWNPC3: how many meshes the builds have PARSED (a memo hit is not one) - the shared parse's pins read it. */
+export const nifParseCount = () => parseNifOnce.parses;
+
+/**
+ * MWNPC3 (2026-10-09, the MW-NPC arc's third slice, bible/04-Characters/Morrowind-NPCs.md section 8): ONE COPY OF A
+ * MESH'S BYTES, FOR EVERY BODY. Every build copied each part's bytes out of its archive (`.slice()`) and parsed the
+ * copy - a fresh copy a build, so parseNifOnce's memo (keyed by the bytes) never met the same mesh twice, and every
+ * body re-parsed every mesh it wore: the player's on each equip, each peer's, and a crowd of NPCs wearing the same
+ * dozen body parts. A mesh's bytes are copied ONCE per archive now and handed to every build that asks, so the memo
+ * answers the second body from the first's parse (a parsed NIF is read, never written - mwFirstPerson.js
+ * assembleFirstPersonArm's note). Keyed by the archive object and the path (a whole-buffer archive answers a fresh
+ * view each `get`; a lazy one its cached bytes - both key the same), the copy is kept per archive while it lives, the
+ * oldest let go past NIF_COPY_CAP, and its parse with it (the memo is weak). A path the archive cannot answer is
+ * `undefined`, as `find(path)?.get(path)?.slice()` was.
+ */
+/**
+ * MWNPC3: ONE GL TEXTURE A PICTURE, FOR EVERY BODY. The decoded image was already shared (TEXTURE_CACHE, by data
+ * generation and file; SKINNED_MIPS for a painted one) - but every mesh uploaded its own GL copy of every texture it
+ * wore, one a range a body: a crowd in one outfit held the same skin, shirt and hair a body at a time on the GPU. A
+ * texture is ACQUIRED now, per renderer, by the image it uploads (its mips array - the caches hand every body the same
+ * one) and its wrap: the first range makes it, every later range holds it, and the mesh's release lets go of its
+ * holds - the last hold deletes it. Answers the texture; `releaseCharacterTexture` answers whether it was deleted.
+ */
+const SHARED_TEXTURES = new WeakMap();   // renderer -> Map(mips -> Map(wrapKey -> { tex, holds }))
+const TEXTURE_HOLDS = new WeakMap();     // texture -> { byWrap, key } - its slot, for the release
+export function acquireCharacterTexture(renderer, mips, wrap) {
+  let byMips = SHARED_TEXTURES.get(renderer);
+  if (!byMips) SHARED_TEXTURES.set(renderer, (byMips = new Map()));
+  let byWrap = byMips.get(mips);
+  if (!byWrap) byMips.set(mips, (byWrap = new Map()));
+  const key = `${wrap.wrapS}:${wrap.wrapT}`;
+  let held = byWrap.get(key);
+  if (!held) {
+    held = { tex: renderer.createCharacterTexture(mips, wrap), holds: 0 };
+    byWrap.set(key, held);
+    if (held.tex && typeof held.tex === 'object') TEXTURE_HOLDS.set(held.tex, { byMips, mips, byWrap, key });
+  }
+  held.holds++;
+  return held.tex;
+}
+export function releaseCharacterTexture(renderer, tex) {
+  const slot = tex && typeof tex === 'object' ? TEXTURE_HOLDS.get(tex) : null;
+  if (!slot) { renderer?.gl?.deleteTexture(tex); return true; }   // not one of ours: as before, deleted
+  const held = slot.byWrap.get(slot.key);
+  if (!held || held.tex !== tex) return false;
+  if (--held.holds > 0) return false;
+  slot.byWrap.delete(slot.key);
+  if (!slot.byWrap.size) slot.byMips.delete(slot.mips);
+  TEXTURE_HOLDS.delete(tex);
+  renderer?.gl?.deleteTexture(tex);
+  return true;
+}
+
+export const NIF_COPY_CAP = 384;
+const NIF_COPIES = new WeakMap();   // archive -> Map(path -> bytes), insertion-ordered: the oldest first
+export function nifBytes(arc, path) {
+  if (!arc) return undefined;
+  let m = NIF_COPIES.get(arc);
+  if (!m) NIF_COPIES.set(arc, (m = new Map()));
+  let b = m.get(path);
+  if (b) { m.delete(path); m.set(path, b); return b; }
+  const src = arc.get(path);
+  if (!src) return src;
+  b = src.slice();
+  m.set(path, b);
+  if (m.size > NIF_COPY_CAP) m.delete(m.keys().next().value);
+  return b;
+}
 
 /** getArrowBone's FIRST branch: does the ACTOR's own skeleton carry the
  *  ammo type's attach bone? */
@@ -1460,7 +1530,7 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
   if (!arc) { notes.push(`torch: ${path} (${rec.id}) is not in your archives`); return { parts, torchInfo, notes }; }
   const carries = hasBone ? hasBone(TORCH_BONE) : skeletonHasBone(skeletonBytes, TORCH_BONE);
   if (!carries) { notes.push(`torch: this skeleton has no "${TORCH_BONE}" - nowhere to hold it`); return { parts, torchInfo, notes }; }
-  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1
+  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: nifBytes(arc, path), preTransform: LIGHT_ATTITUDE });   // MWT1
   torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire, attitude: true };
   return { parts, torchInfo, notes };
 }
@@ -1514,7 +1584,7 @@ export function resolveHipLanternPart({ hipLight = false, allLights, find, skele
   if (!carries) { notes.push(`hiplight: this skeleton has no "${HIP_LIGHT_BONE}" - nowhere to hang it`); return { parts, hipInfo, notes }; }
   // The hang is the part's own: the swing writes `rot` each frame, the bind fills the hook and the anchor.
   const hang = { rot: Float32Array.from(PLUMB), hookLocal: null, anchor: null };
-  parts.push({ slot: HIP_LIGHT_SLOT, bones: [HIP_LIGHT_BONE], bytes: arc.get(path).slice(), hang });
+  parts.push({ slot: HIP_LIGHT_SLOT, bones: [HIP_LIGHT_BONE], bytes: nifBytes(arc, path), hang });
   hipInfo = { id: rec.id, name: rec.name, model: rec.model, bone: HIP_LIGHT_BONE, fire: !!rec.fire };
   return { parts, hipInfo, notes };
 }
@@ -1576,7 +1646,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
     } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
       notes.push(`weapon: this skeleton has no "${own.bone}" bone to hang ${own.name} on`);
     } else {
-      parts.push({ slot: 'weapon', bones: [own.bone], bytes: arc.get(path).slice() });
+      parts.push({ slot: 'weapon', bones: [own.bone], bytes: nifBytes(arc, path) });
       weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true };
     }
     // THE BORROWED TYPE IS WHAT GOES BACK, not None, and it is the
@@ -1611,7 +1681,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
         const typed = weaponAttachBone(mwType);
         const bone = typed === 'Weapon Bone' || skeletonHasBone(skeletonBytes, typed)
           ? typed : 'Weapon Bone';
-        const weaponBytes = arc.get(path).slice();
+        const weaponBytes = nifBytes(arc, path);
         parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
         weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone,
           // MW-D28: the record's own attack speed (character.cpp:1326).
@@ -1651,7 +1721,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                   // MW-D34: `ammo` marks the one part attachArrow
                   // instances BARE - no BoneOffset of its own
                   // (weaponanimation.cpp:87-93, getInstance direct).
-                  slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  slot: 'arrow', bones: [arrowBone], bytes: nifBytes(ammoArc, ammoPath), preTransform: pre,
                   ammo: true,
                 });
                 arrowInfo = {
@@ -1687,7 +1757,7 @@ export function ownBodyPaths(add, rows) {
 export function ownBodyPart(add, rows, find) {
   if (!add.skinFrom) return {};
   return {
-    skinFrom: ownBodyPaths(add, rows).map((b) => ({ slot: b.slot, bytes: find(b.path)?.get(b.path)?.slice() })).filter((b) => b.bytes),
+    skinFrom: ownBodyPaths(add, rows).map((b) => ({ slot: b.slot, bytes: nifBytes(find(b.path), b.path) })).filter((b) => b.bytes),
     fitTo: add.fitTo ?? null,
   };
 }
@@ -1721,7 +1791,7 @@ async function buildTpBody({
     await loadFromArchives(archives, [skeletonPath]);
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
-    const skeletonBytes = skelArc.get(skeletonPath).slice();
+    const skeletonBytes = nifBytes(skelArc, skeletonPath);
 
     // WEREWOLF1: the wolf's head and hair, by id - every other skin slot is empty, the robe is the body
     const rows = werewolf ? werewolfHeadRows(parts) : playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });
@@ -1761,7 +1831,7 @@ async function buildTpBody({
       if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
       // partName rides along: a worn add's slot is a label carrying its
       // record id, and the binder's part rules key on the part itself.
-      partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice(),
+      partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: nifBytes(arc, path),
         ...ownBodyPart(row, rows, find) });   // MW-BRIG2: the body under it; MW-BRIG3: the part it is fitted onto
     }
     if (!partBytes.length) {
@@ -1785,7 +1855,7 @@ async function buildTpBody({
     // not the wolf's (npcanimation.cpp:503-510)
     const boneSourcePaths = werewolf ? [] : boneSourcesFor(TP_BASE_MODEL, skeletonPath, archives);
     await loadFromArchives(archives, [...boneSourcePaths, ...holsterPartPaths({ weaponModel: resolvedWeapon.weaponInfo?.model })]);
-    const boneSources = boneSourcePaths.map((path) => ({ name: path, bytes: find(path)?.get(path)?.slice() })).filter((b) => b.bytes);
+    const boneSources = boneSourcePaths.map((path) => ({ name: path, bytes: nifBytes(find(path), path) })).filter((b) => b.bytes);
     const resolvedHolster = sheathing
       ? resolveHolsterParts({
         mwType: resolvedWeapon.mwType, weaponModel: resolvedWeapon.weaponInfo?.model,
@@ -1801,7 +1871,7 @@ async function buildTpBody({
     const resolvedHip = resolveHipLanternPart({ hipLight, allLights, find, skeletonBytes, has: archiveHas(archives), hasBone: boneProbe(skeletonBytes, boneSources) });
     partBytes.push(...resolvedHip.parts);
 
-    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources });
+    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce });   // MWNPC3: one parse a mesh, every body
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
@@ -1893,6 +1963,7 @@ export async function buildFpArm({
   hipLight = false,   // HT-WAIST: a lit lantern hung at the waist at the build (the third-person body's alone)
   werewolf = false,   // WEREWOLF1: the transformed werewolf - Bloodmoon's wolf, in both views
   skin = null,   // SHADOW-FANG (AUDIT D2): the wolf's skin (characters/werewolfSkin.js), painted in the build - a person wears none
+  reachSweep = true,   // MWNPC3: PX27's every-clip reach sweep - the first-person far plane's; false for a rig that never draws first person
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   // WEREWOLF1: THE WOLF HOLDS NOTHING. setWerewolf's unequipAll empties both hands and every slot
@@ -2065,7 +2136,7 @@ export async function buildFpArm({
     await loadFromArchives(archives, [skeletonPath]);
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
-    const skeletonBytes = skelArc.get(skeletonPath).slice();
+    const skeletonBytes = nifBytes(skelArc, skeletonPath);
 
     // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
     // here, once, and the third person receives the verdicts instead
@@ -2198,7 +2269,7 @@ export async function buildFpArm({
     for (const w of fpRows) {
       const arc = find(w.path);
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
-      partBytes.push({ slot: w.slot, bones: w.bones, bytes: arc.get(w.path).slice() });
+      partBytes.push({ slot: w.slot, bones: w.bones, bytes: nifBytes(arc, w.path) });
     }
     // And the fp camera sees what the reference shows it: gauntlets,
     // sleeves, the shield - fpWornAdds' filter - never a helmet in
@@ -2208,7 +2279,7 @@ export async function buildFpArm({
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice() });
+      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: nifBytes(arc, path) });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
@@ -2242,7 +2313,7 @@ export async function buildFpArm({
         esm: esmDiagnosis(esmNames, parts, race),
       };
     }
-    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, parseNif: parseNifOnce });   // MWNPC3: one parse a mesh, every body
     stage('meshes');
     // MW-D11: the textures the assembled pieces NAME, resolved through
     // rule 36's path law and decoded now - while the archives are still
@@ -2355,8 +2426,12 @@ export async function buildFpArm({
     // every clip costs one build-time pass over poses already
     // computable, and cannot under-measure a pose the rig can reach.
     stage('meshes');   // MF1: the sweep below is posing, not loading - it gets its own span
-    const sweep = clipSweepTimes(sources, idleCheck);
-    const union = clipUnionBounds(arm, poseAt, sweep);
+    // MWNPC3: A BODY NO ONE LOOKS OUT OF SWEEPS NOTHING. The sweep poses the first-person arm at nine samples of every
+    // clip of every source - the build's one pure-posing span (MF1's `sweep`), and it frames only the first-person
+    // lens. A peer's body, the family's, the card table's and every NPC's are drawn in third person alone, so their
+    // builds (`reachSweep: false` - peerBuildOpts) take the idle's reach for both planes and skip the sweep.
+    const sweep = reachSweep ? clipSweepTimes(sources, idleCheck) : null;
+    const union = sweep ? clipUnionBounds(arm, poseAt, sweep) : null;
     const c = idleCheck;
     const idleTimes = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
     poseAt(c.startTime);
@@ -2385,8 +2460,8 @@ export async function buildFpArm({
     // which is the pose it was tuned against and the one the arm holds
     // closest to the eye.
     const eye = firstPersonEye(arm.mats, cameraRef);
-    const reach = armReach(eye, union);
     const idleReach = armReach(eye, clipUnionBounds(arm, poseAt, idleTimes));
+    const reach = union ? armReach(eye, union) : idleReach;   // MWNPC3: no sweep, the idle's
     poseAt(c.startTime);
     if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
     if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
@@ -3066,7 +3141,7 @@ export function createFpArm() {
       // AUDIT PERF-RIG1 F2: and the HANDLE goes with the texture. PERF-RIG1's
       // pack hands the same range objects back while the pieces stand, so a
       // range must never carry a deleted texture into the next mesh.
-      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }
+      for (const r of m.ranges || []) if (r.tex) { releaseCharacterTexture(renderer, r.tex); r.tex = null; }   // MWNPC3: a hold let go - the last one deletes
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
       if (m.skin) renderer.releaseCharacterSkin(m);   // MWNPC1: and a skinned body's palette
@@ -3150,7 +3225,7 @@ export function createFpArm() {
       const entry = textures.get(r.textureFile);
       if (!entry) continue;
       const m = r.piece.material;
-      r.tex = renderer.createCharacterTexture(skin ? skinnedMipsOf(entry.image, skin, skinUseOf(r.piece, r.textureFile)) : entry.image.mips, wrapModes(m ? m.clampMode : 3));
+      r.tex = acquireCharacterTexture(renderer, skin ? skinnedMipsOf(entry.image, skin, skinUseOf(r.piece, r.textureFile)) : entry.image.mips, wrapModes(m ? m.clampMode : 3));   // MWNPC3: one GL copy a picture, every body
       r.alphaCut = m && m.alphaTest ? (m.alphaThreshold || 0) / 255 : 0;
     }
   }
@@ -5650,6 +5725,7 @@ export function createFpArm() {
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,
+        idleReach: built && built.ok ? built.idleReach ?? null : null,   // MWNPC3: the near plane's - and a sweepless build's far plane too
         clip: built && built.ok ? { start: built.clip.startTime, stop: built.clip.stopTime } : null,
         // MW-D12: the card reports the ANIMATION state, because "built"
         // stopped being the whole question the moment there were two

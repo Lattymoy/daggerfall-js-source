@@ -217,7 +217,8 @@ test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuir
   assert.match(fp, /const bodyUnder = \(add\) => ownBodyPaths\(add, rows\);/);
   assert.match(fp, /\.\.\.worn\.adds\.flatMap\(bodyUnder\)\.map\(\(b\) => b\.path\),   \/\/ MW-BRIG2/);
   assert.match(fp, /\.\.\.ownBodyPart\(row, rows, find\) \}\);/);
-  assert.match(fp, /if \(!add\.skinFrom\) return \{\};\n  return \{\n    skinFrom: ownBodyPaths\(add, rows\)\.map\(\(b\) => \(\{ slot: b\.slot, bytes: find\(b\.path\)\?\.get\(b\.path\)\?\.slice\(\) \}\)\)\.filter\(\(b\) => b\.bytes\),/);
+  // PIN MOVED (MWNPC3): the body's bytes are the archive's one copy (nifBytes), where each build sliced its own
+  assert.match(fp, /if \(!add\.skinFrom\) return \{\};\n  return \{\n    skinFrom: ownBodyPaths\(add, rows\)\.map\(\(b\) => \(\{ slot: b\.slot, bytes: nifBytes\(find\(b\.path\), b\.path\) \}\)\)\.filter\(\(b\) => b\.bytes\),/);
 });
 
 test('MW-BRIG2: the shipped files are re-made from the committed sources, byte for byte, and read back', () => {
