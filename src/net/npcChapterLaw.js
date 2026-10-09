@@ -846,36 +846,50 @@ export function bookCappedLine(/** @type {unknown} */ factions) {
 // a bounded claim, `ts` [the chapter's key, the Season], worded by the client - worded without gender (nothing about a
 // player is guessed), so not the guild's own rank titles (Archmage, Matriarch), which the hall's own window keeps.
 // A Master who loses the seat is its Former Master for the rest of the Season. A hidden guild's seat gives no title.
+// CHAP6e (Chapters-Arc 7): a Master in its chapter's Ascendancy is its High Master for the Season, and a Master who held
+// the seat a whole Season keeps "Master of the Fighters Guild, Anticlere, Season 3" for good.
 
 /** A chapter's key on a title's claim: its guild faction x 100 + its region (both whole, the region under 100). */
 export const chapterTitleKey = (/** @type {number} */ f, /** @type {number} */ region) => f * 100 + region;
 /** The chapter a title's key names, or null. */
 export const chapterOfTitleKey = (/** @type {unknown} */ k) => (typeof k === 'number' && Number.isSafeInteger(k) && k >= 0 ? { f: Math.floor(k / 100), region: k % 100 } : null);
-const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Officer', formermaster: 'Former Master' });
-/** A chapter's title worded off its claim - "Master of the Fighters Guild, Anticlere" - null for a claim that names no
- *  chapter (or a hidden guild's). */
+const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Officer', formermaster: 'Former Master', highmaster: 'High Master', seasonmaster: 'Master' });
+/** CHAP6e: the Season a kept title names - a counted Season's, never Season 0's (which crowns no one), inside the claim's bound. */
+const keptSeasonOk = (/** @type {unknown} */ n) => Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;
+/** A chapter's title worded off its claim - "Master of the Fighters Guild, Anticlere"; CHAP6e "High Master of the
+ *  Fighters Guild, Anticlere", "Master of the Fighters Guild, Anticlere, Season 3" - null for a claim that names no
+ *  chapter (or a hidden guild's), or a kept title no Season. */
 export function chapterTitleText(/** @type {unknown} */ title, /** @type {unknown} */ ts) {
   const words = typeof title === 'string' ? /** @type {Record<string, string>} */ (CHAPTER_TITLE_WORDS)[title] : null;
   const c = Array.isArray(ts) ? chapterOfTitleKey(ts[0]) : null;
   if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;
+  if (title === 'seasonmaster') return keptSeasonOk(/** @type {any[]} */ (ts)[1]) ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}, Season ${/** @type {any[]} */ (ts)[1]}` : null;
   return `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}`;
 }
 /**
- * THE TITLES A CHARACTER'S SEATS GIVE IT: `seats` `[{ f, region, seat }]` it holds now, `lost` `[{ f, region }]` the
- * chapters whose Master's seat it lost this Season - `[{ title, ts }]`, best first: a Master's seat's ('chaptermaster'),
- * an officer's ('chapterofficer'), a Master's seat lost and not held again ('formermaster'), each by guild then region;
- * never a hidden guild's. `season` the Season on the claim.
- * @param {Iterable<any>} seats @param {Iterable<any>} lost @param {number} season
+ * THE TITLES A CHARACTER'S SEATS GIVE IT: `seats` `[{ f, region, seat, high }]` it holds now, `lost` `[{ f, region }]`
+ * the chapters whose Master's seat it lost this Season - `[{ title, ts }]`, best first: a Master's seat's
+ * ('chaptermaster'), an officer's ('chapterofficer'), a Master's seat lost and not held again ('formermaster'), each by
+ * guild then region; never a hidden guild's. `season` the Season on the claim. CHAP6e: a Master's seat at a chapter in
+ * its Ascendancy (`high`) is marked `high` - the mint signs it 'highmaster' in its place - and first among the Masters';
+ * `kept` `[{ f, region, season }]` the Seasons it held a Master's seat whole, each 'seasonmaster' with that Season on its
+ * claim, last, the newest Season first.
+ * @param {Iterable<any>} seats @param {Iterable<any>} lost @param {number} season @param {Iterable<any>} [kept]
  */
-export function chapterTitlesOf(seats, lost, season) {
-  const held = [...seats].filter((s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region));
+export function chapterTitlesOf(seats, lost, season, kept = []) {
+  const shown = (/** @type {any} */ s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region);
+  const held = [...seats].filter(shown);
   const masterAt = new Set(held.filter((s) => s.seat === 'master').map((s) => `${s.f}|${s.region}`));
   const by = (/** @type {any} */ a, /** @type {any} */ b) => a.f - b.f || a.region - b.region;
   const rows = (/** @type {any[]} */ list, /** @type {string} */ title) => list.sort(by).map((s) => ({ title, ts: [chapterTitleKey(s.f, s.region), season] }));
-  const former = [...lost].filter((s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region) && !masterAt.has(`${s.f}|${s.region}`));
+  const former = [...lost].filter((s) => shown(s) && !masterAt.has(`${s.f}|${s.region}`));
   const once = new Map(former.map((s) => [`${s.f}|${s.region}`, s]));
-  return [...rows(held.filter((s) => s.seat === 'master'), 'chaptermaster'), ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),
-    ...rows([...once.values()], 'formermaster')];
+  const masters = held.filter((s) => s.seat === 'master');
+  const high = masters.filter((s) => s.high === true);
+  const seasons = new Map([...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]));
+  return [...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })), ...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),
+    ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'), ...rows([...once.values()], 'formermaster'),
+    ...[...seasons.values()].sort((a, b) => b.season - a.season || by(a, b)).map((s) => ({ title: 'seasonmaster', ts: [chapterTitleKey(s.f, s.region), s.season] }))];
 }
 
 // ─── CHAP4d: THE FOCUS AND THE CHRONICLE (Chapters-Arc 6) ───────────

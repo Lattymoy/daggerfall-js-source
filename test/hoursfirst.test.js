@@ -35,7 +35,7 @@ const env = { HOURS_FIRST_HANDLES: ' Duck , ArtemisGodfrey,terra ' };
 const FIRST_CLEAR = ['aether', 'ArtemisGodfrey', 'CycleD0se', 'Duck', 'Kobakk', 'MackyWackyDeeJew', 'mayaamano', 'Nirnroot', 'ofrizz', 'rosalina', 'ShikiX3', 'Temegast', 'Terra'];
 
 test('HOURS-FIRST the vocabulary: the title and the aura join the closed lists last; "Hour\'s First" and "The First Hour" in words; the title drawn rose gold into pearl into the dawn\'s white, edged in black, its one colour the rose gold and no other title\'s; the aura\'s button in its paint; no glyph (mutants: another title\'s paint; the gradient\'s order; the colour the Hourbreaker\'s)', () => {
-  assert.deepEqual(TITLES.slice(-4), ['hoursfirst', 'chaptermaster', 'chapterofficer', 'formermaster']);   // PIN MOVED (CHAP4c): the Chapters' three after it, at the merge of main - their relay world180 after its world179
+  assert.deepEqual(TITLES.slice(-6), ['hoursfirst', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);   // PIN MOVED (CHAP4c): the Chapters' three after it, at the merge of main - their relay world180 after its world179; PIN MOVED (CHAP6e): and their two more
   assert.equal(AURAS.at(-1), 'firsthour');
   assert.equal(TITLE_TEXT.hoursfirst, "Hour's First");
   assert.equal(AURA_TEXT.firsthour, 'The First Hour');

@@ -447,8 +447,12 @@ test('AUDIT CHAP4 T6, T8: the orders the record states - a tied candidate\'s cha
   const names = sheet.chapters.find((x) => x.f === MAGES && x.region === ANTICLERE).seats.map((x) => x.name);
   assert.deepEqual(names, [[b.id, 'Bren'], [c3.id, 'Cass']].sort((x, y) => (x[0] < y[0] ? -1 : 1)).map((x) => x[1]));
   const R2 = await seatRealm(s.env, a.who.secret, 'Alba');
-  // the larger id at the lower guild - the seats' own order (guild first) is not the characters'
-  const [lo, hi] = [R2.id, a.id].sort();
+  // the larger id at the lower guild - the seats' own order (guild first) is not the characters'; PIN MOVED (CHAP6e): and
+  // the later character the lower id, so the characters' own order (made first, first) is not it either - a random id
+  // was the lower half the time, and the unsorted list passed then
+  const lo = `0${R2.id.slice(1)}`, hi = a.id;
+  assert.ok(lo < hi);
+  s.raw.prepare('UPDATE realm_characters SET id = ? WHERE id = ?').run(lo, R2.id);
   s.raw.prepare('DELETE FROM npc_chapter_seats WHERE account = ?').run(a.who.id);
   for (const [id, f] of [[hi, MAGES], [lo, FIGHTERS]]) s.raw.prepare("INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (?, ?, ?, ?, 'officer', ?, ?, ?)").run(f, ANTICLERE, id, a.who.id, WEEK, WEEK, NOW);
   assert.deepEqual((await chapterTitlesOfAccount(s.env.DB, a.who.id, NOW)).map((x) => x.char), [lo, hi]);

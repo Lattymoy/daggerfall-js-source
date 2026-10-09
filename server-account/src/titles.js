@@ -310,7 +310,8 @@ export function titlesHeld(player, env) {
   // account's guildmaster characters' guilds hold (seatTurning.js seatTitlesOf), read by the caller and laid on the row
   // as `seatTitles` for this request alone
   if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);
-  // CHAP4c (Chapters-Arc 6): AND A CHAPTER'S SEAT'S - its Master, an officer, a Master who lost the seat this Season -
+  // CHAP4c (Chapters-Arc 6): AND A CHAPTER'S SEAT'S - its Master, an officer, a Master who lost the seat this Season
+  // (CHAP6e: and a Master's of a whole Season, kept for good; a High Master is signed in the Master's place, never held) -
   // derived from the account's characters' seats (npcChapters.js chapterTitlesOfAccount), laid on the row as
   // `chapterTitles` for this request alone, while CHAPTER_TITLES is on
   if (Array.isArray(player?.chapterTitles)) for (const t of player.chapterTitles) if (CHAPTER_TITLES.includes(t) && !held.includes(t)) held.push(t);

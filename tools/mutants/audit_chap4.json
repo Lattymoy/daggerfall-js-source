@@ -435,7 +435,7 @@
   {
     "name": "AUDIT-CHAP4-T1-SEASON-N",
     "file": "server-account/src/npcChapters.js",
-    "old": "const season = seasonOf(week, zero)?.n ?? 0;",
+    "old": "const season = counted ?? 0;",
     "new": "const season = 0;",
     "tests": [
       "test/audit_chap4.test.js"
@@ -562,8 +562,8 @@
   {
     "name": "AUDIT-CHAP4-T8-TITLES-SORT",
     "file": "server-account/src/npcChapters.js",
-    "old": "const chars = [...new Set([...seatsHere, ...lostHere].map((r) => String(r.char_id)))].sort();",
-    "new": "const chars = [...new Set([...seatsHere, ...lostHere].map((r) => String(r.char_id)))];",
+    "old": "[...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id)))].sort();",
+    "new": "[...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id)))];",
     "tests": [
       "test/audit_chap4.test.js"
     ]

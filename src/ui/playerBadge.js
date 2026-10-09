@@ -103,6 +103,8 @@ export const TITLE_TEXT = Object.freeze({
   chaptermaster: 'Chapter Master',
   chapterofficer: 'Chapter Officer',
   formermaster: 'Former Master',
+  highmaster: 'High Master',      // CHAP6e: a Master's in its chapter's Ascendancy
+  seasonmaster: 'Season Master',  // CHAP6e: a Season's Master's, kept for good
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -249,6 +251,10 @@ export const TITLE_RGBA = Object.freeze({
   chaptermaster: Object.freeze([0.498, 0.698, 0.898, 1]),   // #7fb2e5
   chapterofficer: Object.freeze([0.659, 0.769, 0.867, 1]),  // #a8c4dd
   formermaster: Object.freeze([0.604, 0.627, 0.659, 1]),    // #9aa0a8
+  // CHAP6e: a High Master's the banner's blue made bright and deep in an Ascendancy; a Season's Master's the same blue
+  // aged to slate, the colour of a banner kept on a hall's wall
+  highmaster: Object.freeze([0.365, 0.612, 0.925, 1]),      // #5d9cec
+  seasonmaster: Object.freeze([0.435, 0.561, 0.722, 1]),    // #6f8fb8
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left

@@ -426,7 +426,9 @@ const seasonStartOf = (/** @type {number} */ week, /** @type {number | null} */ 
  * CHAP4c: THE CHAPTERS' TITLES OF AN ACCOUNT'S STANDING CHARACTERS, `[{ char, title, ts }]` - each character's, best
  * first (npcChapterLaw.js chapterTitlesOf): its seats now, and the Masters' seats it lost this Season (the Chronicle's
  * rows from the Season's first week). `character` narrows it to one. AUDIT CHAP4 E3: only a chapter confirmed now - a
- * struck chapter's seats and its Masters' loss title nobody.
+ * struck chapter's seats and its Masters' loss title nobody. CHAP6e: a Master's seat at a chapter whose Ascendancy is
+ * this counted Season's is marked `high`; and every Season a character held a Master's seat whole (the Chronicle's
+ * 'season' rows) is its 'seasonmaster' for good - a chapter struck since or not.
  * @param {any} db @param {string} playerId @param {number} nowS @param {number | null} [zero] @param {string | null} [character]
  */
 export async function chapterTitlesOfAccount(db, playerId, nowS, zero = null, character = null) {
@@ -435,15 +437,23 @@ export async function chapterTitlesOfAccount(db, playerId, nowS, zero = null, ch
   const { results: seats = [] } = await db.prepare(`SELECT x.char_id, x.faction, x.region, x.seat FROM npc_chapter_seats x ${who}`).bind(playerId, character).all();
   const { results: lost = [] } = await db.prepare(`SELECT x.char_id, x.faction, x.region FROM npc_chapter_history x ${who}
     AND x.kind = 'seat' AND json_extract(x.data, '$.from') = 'master' AND x.week >= ?3`).bind(playerId, character, seasonStartOf(week, zero)).all();
-  const season = seasonOf(week, zero)?.n ?? 0;
-  if (!seats.length && !lost.length) return [];
+  const { results: whole = [] } = await db.prepare(`SELECT x.char_id, x.faction, x.region, x.data FROM npc_chapter_history x ${who}
+    AND x.kind = 'season'`).bind(playerId, character).all();
+  const counted = seasonOf(week, zero)?.n ?? null;
+  const season = counted ?? 0;
+  if (!seats.length && !lost.length && !whole.length) return [];
   const confirmed = new Set((await allChapters(db, nowS)).map((c) => `${c.faction}|${c.region}`));
+  const { results: rising = [] } = counted != null && seats.some((r) => r.seat === 'master')
+    ? await db.prepare("SELECT faction, region FROM npc_chapters WHERE event = 'ascendancy' AND event_season = ?1").bind(counted).all() : { results: [] };
+  const ascendant = new Set(rising.map((/** @type {any} */ c) => `${c.faction}|${c.region}`));
   const kept = (/** @type {any[]} */ rows) => rows.filter((r) => confirmed.has(`${r.faction}|${r.region}`));
   const seatsHere = kept(seats), lostHere = kept(lost);
-  const chars = [...new Set([...seatsHere, ...lostHere].map((r) => String(r.char_id)))].sort();
+  const heldOf = (/** @type {any} */ r) => { try { return Number(JSON.parse(r.data)?.season); } catch { return NaN; } };
+  const chars = [...new Set([...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id)))].sort();
   return chars.flatMap((ch) => chapterTitlesOf(
-    seatsHere.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region), seat: String(r.seat) })),
+    seatsHere.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region), seat: String(r.seat), high: ascendant.has(`${r.faction}|${r.region}`) })),
     lostHere.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region) })), season,
+    whole.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region), season: heldOf(r) })),
   ).map((t) => ({ char: ch, ...t })));
 }
 

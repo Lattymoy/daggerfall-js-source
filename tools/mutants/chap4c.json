@@ -2,8 +2,8 @@
   {
     "name": "CHAP4C-VOCAB-ID",
     "file": "src/net/identityToken.js",
-    "old": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster']);",
-    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer']);",
+    "old": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'highmaster', 'seasonmaster']);",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP4C-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Officer', formermaster: 'Former Master' });",
-    "new": "const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Officer', formermaster: 'Master' });",
+    "old": "formermaster: 'Former Master', highmaster: 'High Master',",
+    "new": "formermaster: 'Master', highmaster: 'High Master',",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP4C-TEXT-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  return `${words} of",
-    "new": "if (!words || !c || !isRollFaction(c.f) || !regionOk(c.region)) return null;\n  return `${words} of",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "new": "if (!words || !c || !isRollFaction(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP4C-TEXT-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  return `${words} of",
-    "new": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f)) return null;\n  return `${words} of",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "new": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f)) return null;\n  if (title === 'seasonmaster')",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP4C-OF-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const held = [...seats].filter((s) => isRollFaction(s?.f) && !hallHidden(s.f) &&",
-    "new": "const held = [...seats].filter((s) => isRollFaction(s?.f) &&",
+    "old": "const shown = (/** @type {any} */ s) => isRollFaction(s?.f) && !hallHidden(s.f) &&",
+    "new": "const shown = (/** @type {any} */ s) => isRollFaction(s?.f) &&",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP4C-OF-ONCE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...rows([...once.values()], 'formermaster')];",
-    "new": "...rows([...former], 'formermaster')];",
+    "old": "...rows([...once.values()], 'formermaster'),",
+    "new": "...rows([...former], 'formermaster'),",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP4C-OF-RANK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return [...rows(held.filter((s) => s.seat === 'master'), 'chaptermaster'), ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),",
-    "new": "return [...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'), ...rows(held.filter((s) => s.seat === 'master'), 'chaptermaster'),",
+    "old": "...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),\n    ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),",
+    "new": "...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'),\n    ...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),",
     "tests": [
       "test/chap4c_titles.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "CHAP4C-MINT-SIGN",
     "file": "server-account/src/index.js",
-    "old": ": CHAPTER_TITLES.includes(wornT) ? (chapterT ? { t: wornT, ts: chapterT.ts } : {}) : (wornT ? { t: wornT } : {});",
+    "old": ": CHAPTER_TITLES.includes(wornT) ? (chapterT ? { t: chapterT.high ? 'highmaster' : wornT, ts: chapterT.ts } : {}) : (wornT ? { t: wornT } : {});",
     "new": ": (wornT ? { t: wornT } : {});",
     "tests": [
       "test/chap4c_titles.test.js"

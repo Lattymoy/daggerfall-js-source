@@ -28,7 +28,9 @@ foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a De
 Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c BUILT (2026-10-09, the same word;
 the Season's words and a member's choices on the client - sections 7 and 9, its record at the foot); CHAP6d BUILT
 (2026-10-09, the same word; the Season on the halls - an Ascendancy's prices, the doctrines' training and shelf, the shut
-halls - sections 7 and 9, its record at the foot); CHAP6e (the titles) is next. Merged with main
+halls - sections 7 and 9, its record at the foot); CHAP6e BUILT (2026-10-09, the same word; the Season's two titles - a
+High Master in an Ascendancy, a Season's Master for good - sections 6 and 7, its record at the foot); CHAP7 (rivals and
+patrons) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -660,6 +662,8 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
   Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
   Master's seat again; a token signs it, with its claim, only for a character that holds it.
+- **Two more** (CHAP6e, section 7): `highmaster`, signed in a Master's place in its chapter's Ascendancy, and
+  `seasonmaster`, a Season's Master's for good - the same claim, the same relay version grown in place.
 - **The order of the deploy** (the SHADOW-FANG order): the relay `world182` first - deployed by
   `.github/workflows/relay-deploy.yml` on the merge to main, as the live relay's version differs (it drops every
   connected player; AUDIT CHAP4 R2: this said "by hand") - a token with a title the live relay does not know is refused
@@ -733,14 +737,15 @@ BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/n
   in the shadows": a public line naming the underworld's chapter would say where it keeps its halls), and a 'season'
   row for each Master placed at or before the Turning that opened the Season and sitting still at its end ("Through the
   Season of Morning Star, Alda held the Master's seat of the Fighters Guild." - never Season 0's, which crowns no one, as
-  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6e's (a relay change).
+  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6e's (a relay change) -
+  BUILT, below.
 - **The sheet and the board** carry each chapter's Season's event (`event`), a Rivalry's rival where it is public (a
   hidden rival to its members alone, on the board), and `shut`. The opening week ('on' after 'dev') clears every
   developers' event and shut hall with their Strength.
 - **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b) - BUILT,
   below; every event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut
   halls, the doctrines' training and shelf, the candidates' names, the titles (CHAP6c) - the words and the names BUILT
-  (CHAP6c), the halls (CHAP6d), the titles still to build (CHAP6e).
+  (CHAP6c), the halls (CHAP6d), the titles (CHAP6e) - all BUILT, below.
 
 BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcChapterLaw.js` (`CHAPTER_DOCTRINES`,
 `CHAPTER_DOCTRINE_EFFECTS`, `schismDoctrinesOf`, `chapterBackOk`, `schismWinner`, `successionHeir`,
@@ -789,7 +794,7 @@ BUILT (CHAP6c, 2026-10-09, Mac: "continue"), the words and the choices on the cl
   **The town** talks of a chapter's Season before its band (9).
 - **Still to build**: what the events do to the halls on the client - an Ascendancy's prices, the training's and the
   shelf's doctrines, the shut halls (CHAP6d) - BUILT, below; the titles - a Master's "High" in an Ascendancy, the
-  Season's Master's title for good (CHAP6e, a relay change).
+  Season's Master's title for good (CHAP6e, a relay change) - BUILT, below.
 
 BUILT (CHAP6d, 2026-10-09, Mac: "continue"), the Season on the halls - `src/net/npcChapterLaw.js` (`chapterHallFactor`,
 `chapterHallShelf`, `chapterHallShut`, `CHAPTER_HALL_SHUT_LINE`, `CHAPTER_EVENT_EFFECTS.ascendancyPrice`), the hall's
@@ -812,6 +817,27 @@ services window (`src/scenes/worldModes.js`), the host's `chapterHere` (`src/sce
 - **The host** hands the window the hall's whole chapter off the sheet (`chapterHere`, the band's `chapterStrength` it
   replaced); none known - offline, the classic skin, a hidden guild, a chapter the sheet does not name - every hall is
   DFU's own, as the band's.
+
+BUILT (CHAP6e, 2026-10-09, Mac: "continue"), the Season's two titles - `src/net/identityToken.js` (`CHAPTER_TITLES`'s
+`highmaster` and `seasonmaster`), `src/net/npcChapterLaw.js` (`chapterTitleText`, `chapterTitlesOf`'s `high` and
+`kept`), `server-account/src/npcChapters.js` (`chapterTitlesOfAccount`), the mint (`server-account/src/index.js`), the
+badge (`src/ui/playerBadge.js`):
+
+- **The High Master**: a Master's seat at a chapter whose Ascendancy is this counted Season's (the event the chapter drew
+  for it) is signed `highmaster` on the token in the Master's place, with the Master's own claim - "High Master of the
+  Fighters Guild, Anticlere". NARROWED: no title of its own in the wardrobe - an account wears its Master's title and
+  the mint adds "High" for the Season, so the Master who wore it before keeps wearing it, and nothing is left worn and
+  unheld when the Season ends; a character with two Masters' seats signs its Ascendancy's first. No Season counted,
+  every chapter Calm: no High Master.
+- **The Season's Master**: every 'season' row of the Chronicle (CHAP6a: a Master placed at or before the Turning that
+  opened the Season and sitting at its end) titles its character for good - `seasonmaster`, "Master of the Mages Guild,
+  Daggerfall, Season 3", its claim the chapter and the Season it held. NARROWED: one title in the wardrobe, its newest
+  Season signed (then by guild and region); held with no seat now, at a chapter struck since (for good is for good);
+  never a hidden guild's, a dead character's (the seats' own law), nor Season 0's.
+- **The relay**: the two ids join the closed list last, riding with the seats' claim (`titleClaimed`) - `world182` grown
+  in place (undeployed, its law re-hashed), deployed before `CHAPTER_TITLES` is turned on, as CHAP4c's three.
+- **The badge**: the High Master in the banner's blue made bright (#5d9cec), the Season's Master the same blue aged to
+  slate (#6f8fb8); "High Master" and "Season Master" where the claim names no chapter this client knows.
 
 ## 8. Rivals and patrons (CHAP7)
 
@@ -970,7 +996,8 @@ DECIDED.
    on the sheet and the board (7). CHAP6b BUILT (2026-10-09): the Schism's backing and its doctrine, the Succession's
    heir, the Master's vote (7). CHAP6c BUILT (2026-10-09): the Season's words on the board, the roll and in the town,
    the candidates named, a member's choices on the board (7, 9). CHAP6d BUILT (2026-10-09): an Ascendancy's prices, the
-   doctrines' training and shelf, the shut halls and their people (7, 9).
+   doctrines' training and shelf, the shut halls and their people (7, 9). CHAP6e BUILT (2026-10-09): the High Master and
+   the Season's Master on the token (6, 7).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
@@ -1080,6 +1107,7 @@ is Mac's to overrule.
 | A Succession | three candidates, named at the Season's third Turning (`SUCCESSION_CANDIDATES`, `SUCCESSION_TURNING`) | 7 |
 | The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
 | A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
+| The Season's titles | a High Master for its chapter's Ascendancy, signed in the Master's place; a Season's Master for good, its newest Season signed (`chapterTitlesOf`, `chapterTitlesOfAccount`; CHAP6e) | 7 |
 | The hall's evenings by band | none shut (`GUILD_DAYS_SHUT`, CHAP6d), Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
 | The town's talk of a chapter | on 2 days of the week, its own, three apart (`CHAPTER_NEWS_DAYS`, `src/systems/livingWorld/lines.js`); none Steady | 9 |
 | The seats' beat on the tab | 10 minutes with nothing to claim before the Roll is asked again (`ROLL_SEATS_MS`, AUDIT CHAP4 C1) | 6 |
@@ -1559,3 +1587,27 @@ The sixth slice's fourth; sections 7 and 9 carry the law and what building it na
   wiring. `tools/mutants/chap6d.json`: 24 mutants, all dead. Three older records re-aimed by content (CHAP3c's host,
   training and hook), all dead; four older pins moved (PIN MOVED: CHAP3c's host, factor, training and hook; CHAP6a's
   effects table, the Ascendancy's price).
+
+## CHAP6e - the Season's two titles, as built (2026-10-09, Mac: "continue")
+
+The sixth slice's last; sections 6 and 7 carry the law and what building it narrowed (BUILT, CHAP6e).
+
+- **The token and the relay.** `src/net/identityToken.js`: `highmaster` and `seasonmaster` join CHAPTER_TITLES and
+  TITLES, last, each with the seats' claim. RELAY_VERSION `world182` grown in place - undeployed, its law re-hashed in
+  `test/relayversion.test.js` (bytes `3012337d...` before it).
+- **The law.** `src/net/npcChapterLaw.js`: `chapterTitleText` words both (a Season's Master's Season 1 to 9999);
+  `chapterTitlesOf` marks a Master's seat in an Ascendancy `high`, first among the Masters', and adds each Season held
+  whole (`kept`), last, newest first, once.
+- **The service.** `server-account/src/npcChapters.js` `chapterTitlesOfAccount`: the Ascendancies of the counted Season
+  read off `npc_chapters`, the Chronicle's 'season' rows read for good; `index.js`: the mint signs `highmaster` in the
+  Master's place. `titles.js`: the wardrobe's comment. Still `acct99`; `CHAPTER_TITLES` still shipped "off".
+- **The client.** `src/ui/playerBadge.js`: the two plain words and colours.
+- **Pins.** `test/chap6e_titles.test.js`, 6 tests: the vocabulary, the claim and the relay's carry; the words (the
+  Season's guard, a hidden guild's none, the plain words, the colours); the law (the mark, the order, the kept Seasons'
+  guards); the High Master through the service (the mint, never worn alone, another Season's or event's, an officer's,
+  no Season counted); the Season's Master (shut, none yet, with no seat, a struck chapter, hidden, unreadable, another
+  character's, dead, the newest signed); the wiring. `tools/mutants/chap6e.json`: 34 mutants, all dead. Ten older
+  records re-aimed by content (CHAP4c's eight, AUDIT CHAP4's two), all dead - AUDIT CHAP4 T8's survived once: its pin
+  passed the unsorted list whenever the random ids fell in the characters' own order, so it now gives the later
+  character the lower id (PIN MOVED). Older pins moved (PIN MOVED): the vocabulary's newest (acc3titles, aegis, primarch,
+  crystalfist, hoursfirst), CHAP4c's three ids and colours, SEAT1c's mint line.
