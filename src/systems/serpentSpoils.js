@@ -34,6 +34,7 @@ import { spoilsBase, magicOrBetter, sigilStone } from './gateSpoils.js';
 import { applyRarity, lastPass } from './lootRarity.js';
 import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
 import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
+import { bossCardRoll } from './bossCards.js';   // CARDS9: Sethrakul's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - two thirds of a gate boss's. */
 export const SERPENT_SPOILS_GOLD_PER_LEVEL = 160;
@@ -89,7 +90,10 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was
   const coil = dealt ? rollSerpentSetPiece(rolls) : null;
   if (coil) pieces.push({ item: coil, tier: coil.rarity });
-  return { gold, pieces, embers: serpentEmbers() };
+  // CARDS9 (Tavern-Cards section 32): SETHRAKUL'S OWN CARD - a dealer's alone, one draw more after the set piece's, so
+  // every hoard before it is what it was; kept beside the pieces
+  const card = dealt ? bossCardRoll('serpent', rolls) : null;
+  return { gold, pieces, embers: serpentEmbers(), card };
 }
 
 /** The hoard as the spoils pool hands it over (scenes/spoilsPool.js's pieces): each item, then (SERPENT-SET) the embers,
@@ -99,6 +103,7 @@ export function serpentSpoilsList(seed, level, earned) {
   const s = rollSerpentSpoils(seed, level, earned);
   return [
     ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric' }] : []),   // CARDS9: the Old Coil's card, after the pieces
     ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),
     { kind: 'gold', gold: s.gold, tier: 'common' },
   ];

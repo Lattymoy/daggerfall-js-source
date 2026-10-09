@@ -53,7 +53,7 @@ import { arenaReplaysRestore } from '../systems/arenaReplay.js';   // ARENA5: yo
 import { createArenaGate, nearArenaGate } from './arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
 import { createArenaOnline } from './arenaOnline.js';   // ARENA4: the arena online - the hall, a relay's bout, the boards and the receipts
 import { arenaFloorRoomOf } from '../net/arenaLaw.js';   // ARENA4: a bout's room (ARENA4b: or the hour's exhibition's)
-import { accountArena } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service
+import { accountArena, accountIliac, iliacRefusalText } from '../net/accountClient.js';   // ARENA4: the arena's records on the account service; CARDS10: Iliac Hand's season board; AUDIT CARDS-6 E14: and its refusals' own words
 import { fighterIdentity } from '../systems/arenaFighters.js';   // ARENA4: the relay's fighters billed by the bout's seed
 import { bossStandIn } from '../world/gateBoss.js';   // ARENA4: my opponent's stand-in for the formulas
 import { closeArenaDoor, arenaDoorOpen } from '../ui/arenaDoor.js'; import { createArenaSessionButton } from '../ui/arenaSessionButton.js';   // HOTFIX 1003f: the session's button on the screen   // ARENA4: the window goes when a bout calls
@@ -297,6 +297,7 @@ import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName }
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createCardStakes } from '../net/cardStakes.js';   // CARDS6: a realm character's card stakes
+import { createIliacClaims } from '../net/iliacClaims.js';   // CARDS10: the ranked games' results carried to the service
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
@@ -661,6 +662,8 @@ import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, 
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
+import { guildCardRoll, guildNameOfFaction } from '../systems/cardSources.js';   // CARDS9: a guild quest's card
+import { mintIliacCard, iliacCardName } from '../systems/iliacItems.js';   // CARDS9: the card minted, and named as it is said
 import { storesIn, spendStore, mintStores } from '../systems/naval/navalStores.js';
 import { orderRows } from '../systems/naval/shipCrew.js';   // SHIP-CREW: the orders list   // SEA-REPAIR: carpenter's stores in a hold   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -1777,6 +1780,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     ? createCardStakes({ door: accountCards({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
       realm: { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) }, wallet: realmWallet,
       character: () => characterIdOf(playerEntity), region: () => _questRegionIndex(), now: () => Date.now() + _sharedOffsetMs })
+    : null;
+  // CARDS10 (bible/11-Multiplayer/Tavern-Cards.md section 33): ILIAC HAND'S SEASON BOARD - the service's door, and the
+  // ranked games' signed results this device carries to it (net/iliacClaims.js), offered at once and again while kept
+  const iliacDoor = accountIliac({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  const iliacClaims = params.has('online')
+    ? createIliacClaims({ claim: (r) => iliacDoor.claim(r), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, me: () => iliacDoor.me(),   // the one store (AUDIT WB A6): its memory every reader's
+      // AUDIT CARDS-6 D9 (E17): A RECEIPT'S LIFE IS THE RELAY'S (AUDIT ONLINE2 F2's law, the gate's and the serpent's carriers'
+      // relayNowS - declared far below, so said here as the seats' book says it): the device's clock let a receipt go on
+      // add, eight days fast; and the retry's clock the shared one (it was written inside that line's comment, never passed)
+      nowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null), nowMs: () => Date.now() + _sharedOffsetMs,
+      onCounted: (a) => townTalk?.say?.(a.rated ? `Iliac Hand: the game is on the season's board - your rating ${a.rating} (${a.delta >= 0 ? '+' : ''}${a.delta}).` : 'Iliac Hand: the game is kept, but not counted - you have played that opponent often enough today.'),
+      onGuest: () => townTalk?.say?.('Iliac Hand: register your account to keep your ranked games on the board.') })
     : null;
   // PROF6 (bible/06-Systems/Professions-Arc.md 28): the writs' book - a guild writ posted, supplied, withdrawn; a
   // commission posted, filled (the piece KEPT before it is asked), cancelled, declined; the guild Stores (net/writBook.js).
@@ -14426,6 +14441,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
     // AUDIT CARDS-2 H1: nor with chips on a card table - the purse is short the buy-in and the chips are in no save
     if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }
+    // CARDS10: nor with a card staked on a game of Iliac Hand - the card it may cost is in no save
+    if (modes?.iliacStaked?.()) { if (!quiet) townTalk.say('You cannot save with a card staked on the table.'); return false; }
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
@@ -16346,7 +16363,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     quickSave: worldQuickSave,
     quickLoad: worldQuickLoad,
     relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
-    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
+    savingPrevented: () => !!naval?.saveRefused?.() || !!modes?.cardTableLive?.() || !!modes?.iliacStaked?.(),   // AUDIT NAV1 (B14): the pause's Save says why, as worldQuickSave refuses it; AUDIT CARDS-2 H1: and chips on a card table
     // ONLINE-LOAD1: this host's own live-session flag (`online`,
     // not `onlineOn` - see worldQuickLoad's own header for why),
     // for the enhanced Load pane (enhancedMenu.js paneLoad) to
@@ -17298,6 +17315,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // window frees, the RMB swing tests `!townTalk.overlayActive`).
     paused: () => gamePaused(),
     cardTable: () => !!modes?.cardSeated?.(),   // CARDS-TOUCH: seated at a card table, the finger is the table's (ui/touch.js)
+    cardHeld: () => !!modes?.cardPressHeld?.(),   // AUDIT CARDS-6 E1: a finger the cards took is never the stick (ui/touch.js)
   };
   const touch = attachTouch(canvas, inputHooks);
   const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
@@ -18768,6 +18786,30 @@ export async function bootWorld(canvas, renderer, params, status) {
   // RENOWN1: a quest that ENDED IN SUCCESS pays its Renown XP online - the tracker is built with the online session
   // below, so the bridge's hook reaches it through this door (null until then, and offline for good)
   let renownQuestEnded = null;
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32; section 6.3: "A guild's quest can pay a card of that guild"):
+  // a guild quest done pays one of its guild's cards one time in three - the best its quester's rank in that guild
+  // reaches (systems/cardSources.js guildCardRoll) - once a quest, however its end is heard again. Offline and online
+  // alike: a card is an item, and the realm bounds what crosses (net/cardWorthLaw.js customs).
+  // AUDIT CARDS-6 (the lane's latent): THE ONCE IS A CHARACTER'S. The set lives as long as the host, and an offline load
+  // restores another character in place (save.js restorePlayer) with its quests at their own saved uids - so the bare uid
+  // a first character was paid for stopped a second's restored quest of the same uid from paying. Keyed by the
+  // character's id with the quest's. AUDIT CARDS-6 A4: and a temple's hall walked to its divine (the faction table).
+  const cardQuestPaid = new Set();
+  const cardQuestEnded = (q) => {
+    if (!q?.questSuccess || !(q.factionId > 0)) return;
+    const quest = String(q.uid ?? q.questName ?? '');
+    const key = `${playerEntity.characterId ?? ''}|${quest}`;
+    if (!quest || cardQuestPaid.has(key)) return;
+    cardQuestPaid.add(key);
+    const dict = townTalk.factionDict ?? null;
+    const name = guildNameOfFaction(q.factionId, dict);
+    const rank = Object.values(activeMemberships(playerEntity)).find((m) => m?.guild === name)?.rank ?? 0;
+    const id = guildCardRoll(q.factionId, rank, Math.random, dict);
+    const card = id ? mintIliacCard(id) : null;
+    if (!card) return;
+    addItem(playerEntity.items, card);
+    try { townTalk.say(`The guild adds a card to your reward: ${iliacCardName(card).replace(/^Card: /, '')}.`); } catch { /* no talk host yet: the card is in the pack */ }
+  };
   const _heldItemIndex = (dfItem) => {
     const items = playerEntity.items ?? [];
     const direct = items.indexOf(dfItem);
@@ -18835,6 +18877,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
       renownQuestEnded?.(q);   // RENOWN1: a quest done online pays its Renown XP
+      cardQuestEnded(q);   // CARDS9: and a guild's quest, now and then, one of its guild's cards
       naval?.raidEnded(q);   // NAV-D: a raid the sea fight started - won (its leader down) or run out - ends its boarding
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
@@ -20346,6 +20389,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
+    online.onIliac = (f) => modes?.iliacOnlineFrame?.(f);   // CARDS10: the relay's Iliac table, to the room's host
     online.onHoldem = (f) => modes?.cardOnlineFrame?.({ ...f, at: performance.now() });   // CARDS5: the relay's card table, to the room's host - AUDIT CARDS-3 D1: on the cloth's clock (the session's own `now` is the epoch's)
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
@@ -23025,6 +23069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
     serpentClaims?.tick();
     sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
+    iliacClaims?.tick();   // CARDS10: and the ranked Iliac games', on theirs
     if (!serpentHost) return;
     const street = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.();
     let fight = false;
@@ -27150,6 +27195,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
+    // CARDS10: the relay that deals Iliac Hand - a word to the room's Iliac table, who I am at it; a ranked seat's deck
+    // vouched for by the service (a realm character's own cards, the record checkpointed first); the results carried
+    iliacOnline: { ok: () => !!online?.iliacOk, send: (w) => !!online?.sendIliac(w), id: () => online?.id ?? null, now: () => Date.now() + _sharedOffsetMs, welcomes: () => online?.holdemWelcomes ?? 0 },   // AUDIT CARDS-6 E5: my socket's welcomes (the card tables' one count)
+    iliacRanked: {
+      // AUDIT CARDS-6 E14: a guest's account is offered no ranked seat - it was, and every vouch it asked failed
+      why: () => (!realmSession ? 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.' : !iliacDoor.me() ? 'Sign in to play ranked.' : iliacDoor.guest() ? iliacRefusalText('ranked-needs-account') : null),
+      vouch: async (deck) => {
+        if (!realmSession) return { ok: false, why: 'Ranked games are a realm character\'s.' };
+        // AUDIT CARDS-6 E6: A READ (realmGoldAct's `read`) - the order moves nothing on the record, so an answer lost is
+        // "not answering", never the session's end; asked as an act (`needsAnswer`) a lost answer or a `seq` was
+        // `unknown`, and the player was thrown to the title menu for asking to play cards
+        const r = await realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), read: true, call: (realm) => iliacDoor.deck({ character: characterIdOf(playerEntity), realm, deck }) });
+        if (r?.ok && typeof r.data?.order === 'string') return { ok: true, order: r.data.order };
+        return { ok: false, why: iliacRefusalText(r?.error, r?.card) };   // AUDIT CARDS-6 E14/D7: in Iliac Hand's words, a short deck's card named
+      },
+      board: () => iliacDoor.board(),   // the season's board (iliac.js iliacBoardOf)
+    },
+    iliacClaims,
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),

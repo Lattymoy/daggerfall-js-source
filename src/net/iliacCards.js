@@ -42,6 +42,8 @@ export const CARD_EMBLEMS = Object.freeze([
   // AUDIT CARDS-5 B: a picture of its own for each artifact, a Prince without one, and the creatures and spells the first
   // set drew with a neighbour's (render/iliacCardFaces.js EMBLEM_KEYS - the beetle went, the scorpion its own and no card an insect)
   'razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun',
+  // CARDS9: the bosses' own - the Burning Gate, the Old Coil, the Brass Remnant's turning gear
+  'gate', 'serpent', 'gear',
 ]);
 
 /** A card, frozen to its effect records. */
@@ -225,6 +227,15 @@ export const ILIAC_CARDS = Object.freeze([
     fx: [{ on: 'ongoing', do: 'buff', to: 'all.mine', tag: 'orc', n: 2 }], text: 'Ongoing: your orc units have +2 power.', flavor: 'The god of curses remembers every orc by name.' },
   { id: 'meridia', name: 'Meridia', kind: 'prince', cost: 5, power: 5, tier: 'legendary', tags: ['daedra', 'prince'], emblem: 'daedric',
     fx: [{ on: 'ongoing', do: 'weaken', to: 'all.theirs', tag: 'undead', n: 2 }], text: 'Ongoing: enemy undead units have -2 power.', flavor: 'Her light finds the dead wherever they hide.' },
+  // ── the bosses' own (CARDS9, section 32: "the Oblivion Gate's boss and the Sea Serpent can drop their own, at the
+  //    aetheric tier" - and the Abyss Dungeon's, Mac: "Dont forget about a card needing to come from the abyss dungeon
+  //    also"). Found only in their spoils (systems/cardSources.js BOSS_CARDS): no pack, no regular, no foe deals them. ──
+  { id: 'valkynaz-ruhn', name: 'Valkynaz Ruhn', kind: 'unit', cost: 6, power: 8, tier: 'aetheric', tags: ['daedra'], emblem: 'gate',
+    fx: [{ on: 'reveal', do: 'destroy', to: 'here.theirs', pick: 'weakest' }], text: 'Reveal: destroy the weakest enemy unit here.', flavor: 'Warden of the Burning Gate. He was set to hold it, and he holds it.' },
+  { id: 'sethrakul', name: 'Sethrakul', kind: 'unit', cost: 6, power: 9, tier: 'aetheric', tags: ['sea', 'beast'], emblem: 'serpent',
+    fx: [{ on: 'end', do: 'weaken', to: 'here.theirs', n: 1 }], text: 'End of turn: enemy units here lose 1 power.', flavor: 'The Old Coil rises where the packet lanes run deep.' },
+  { id: 'brass-remnant', name: 'Brass Remnant', kind: 'unit', cost: 6, power: 7, tier: 'aetheric', tags: [], emblem: 'gear',
+    fx: [{ on: 'end', do: 'buff', to: 'self', n: 1 }], text: 'End of turn: this gains +1 power.', flavor: 'It keeps the Hour in the Abyss. Every turn of the Hour turns it harder.' },
 ].map(deepFreeze));
 
 /** THE HOLDINGS: the places of the Iliac Bay the game lays between the players, each bending its own ground. */

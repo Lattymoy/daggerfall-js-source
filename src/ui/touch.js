@@ -144,12 +144,16 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?(), stickRuns?(), aimHold?(), cardTable?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?(), stickRuns?(), aimHold?(), cardTable?(), cardHeld?() }
  *   - cardTable: CARDS-TOUCH (2026-10-09, bible/11-Multiplayer/Tavern-Cards.md section 31) - true while the player sits
  *     at a card table: the finger on the view is the table's (scenes/worldModes.js cardPointerListen reads the hand, the
  *     chips and the cloth), so the layer's look, swing and tap stand down - a tap was the activate press, and seated
  *     the press stands him up (folded out of turn, cashed out), from a tap on his own cards. The stick still walks him
  *     off the seat; the panel's Stand up stands him.
+ *   - cardHeld: AUDIT CARDS-6 E1 - true while the card table's own listeners hold a press (the hand, the chips carried):
+ *     the finger just put down is theirs (their pointerdown runs before this layer's touchstart), so it is never the
+ *     stick, even on the stick's half - the hand reaches over the middle of a phone's screen, and a squeeze pulled down
+ *     or a push up from its left edge walked him off the seat.
  *   - stickRuns: AUDIT PRE-MERGE 0928 U3 - false stands the stick's 80%-throw Run down (the boat's helm); absent, it runs.
  *   - aimHold: NAV-H - true while the attack is a held aim (a helm with guns): the swipe presses it once and the
  *     finger's drag under it is a look - the guns are laid by the view; the lift fires them. Absent, the drag swings.
@@ -591,7 +595,8 @@ export function attachTouch(canvas, hooks = {}) {
       const fixed = fixedStick();
       const fc = fixed ? fixedCentre() : null;
       const onStick = !fixed || Math.hypot(x - fc[0], y - fc[1]) <= STICK_RADIUS * FIXED_STICK_REACH;
-      if (x < w / 2 && stickId === null && onStick) {
+      // AUDIT CARDS-6 E1: a finger the card table took is the table's - never the stick, whichever half it landed on
+      if (x < w / 2 && stickId === null && onStick && !hooks.cardHeld?.()) {
         stickId = t.identifier;
         stickStart = e.timeStamp; stickTravel = 0; stickX = stickY = 0;
         stickOrigin = fixed ? fc : [x, y];

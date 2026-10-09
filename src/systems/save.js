@@ -22,6 +22,7 @@ import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './we
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';
 import { arenaLadderSnapshot, arenaLadderRestore } from './arenaLadder.js';
 import { regularsBookRestore } from './cardTableSession.js';   // AUDIT CARDS-2 H2: the tavern regulars' purses, by the day   // ARENA2: the arena's ladder, offline
+import { forfeitsBookRestore } from './iliacTableSession.js';   // CARDS10: the regulars' forfeits
 import { arenaLeagueSnapshot, arenaLeagueRestore } from './arenaLeague.js';   // ARENA3: the banners, the season, the Records page, the book
 import { arenaReplaysSnapshot, arenaReplaysRestore } from './arenaReplay.js';   // ARENA5: your ladder replays
 import { snapshotStanding, restoreStanding } from './standing.js';   // REP: the standing book   // S42: the CONDITION half of RegionDataRecord
@@ -456,6 +457,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // AUDIT CARDS-2 H2: THE TAVERN REGULARS' BOOK (systems/cardTableSession.js) - each card table's regulars' purses and
   // tempers for the game day, so a load puts them back as it puts the purse back; additive (an older save keeps none)
   snap.cardRegulars = regularsBookRestore(entity.cardRegulars);
+  snap.iliacForfeits = forfeitsBookRestore(entity.iliacForfeits);   // CARDS10: the regulars who paid a card tonight
   // ARENA5: YOUR LADDER REPLAYS (systems/arenaReplay.js) - the last three ladder bouts, each its own versioned record,
   // on the arena record beside the ladder (an older save reads back with none; the ladder's own read ignores the field)
   snap.arena.replays = arenaReplaysSnapshot(entity.arenaReplays ?? []);
@@ -728,6 +730,9 @@ export function repairItemLists(repairLists) {
     const n = repairRarityBases(list);
     if (n) console.info(`[save] RARITY-WEAR: ${n} rolled piece(s) on a base nothing can wear moved to one a slot takes`);
   }
+  // AUDIT CARDS-6 A6: every card worth its tier's worth (iliacItems.js cleanBinders - a card minted before CARDS9 carried
+  // a coin's) in every list, not the pack's alone: one in the wagon, the bag or a house chest kept its coin after a load
+  for (const list of repairLists) cleanBinders(list);
 }
 
 /** PORTAL1 (AUDIT PORTAL1 U9): how many saves this page has restored - every load, whichever host runs it, passes the one
@@ -993,6 +998,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   restoreStanding(entity, snap.standing);   // REP: a pre-REP save restores an empty book
   entity.arenaLadder = arenaLadderRestore(snap.arena);   // ARENA2: a save from before the ladder climbs from tier 1
   entity.cardRegulars = regularsBookRestore(snap.cardRegulars);   // AUDIT CARDS-2 H2: a save from before the book seats fresh regulars
+  entity.iliacForfeits = forfeitsBookRestore(snap.iliacForfeits);   // CARDS10: a save from before the book owes no regular's card
   entity.arenaReplays = arenaReplaysRestore(snap.arena?.replays);   // ARENA5: a save from before the replays keeps none
   entity.arenaLeague = arenaLeagueRestore(snap.arenaLeague);   // ARENA3: a save from before the banners wears none
   // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right

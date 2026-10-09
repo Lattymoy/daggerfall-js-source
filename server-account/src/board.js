@@ -41,6 +41,7 @@
 // ═════════════════════════════════════════════════════════════════════
 import { mintId, accountKind, displayName, isMuted, overRate } from './accounts.js';
 import { isDeveloper, canModerate, titleWorn, glyphsShown, SPROUT_S } from './titles.js';
+import { withIliacHonoursAll } from './iliac.js';   // CARDS10: and Iliac Hand's season #1's title
 import { withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: the arena's honours on an author's badge
 import { guildActorOf } from './guilds.js';
 import { heraldryOfRow } from './halls.js';   // GUILD1e: a recruitment note's guild's banner
@@ -122,7 +123,7 @@ export async function readBoard({ db, nowS }, reader, env, map) {
   const rows = new Map();
   if (authors.length) {
     const { results: found = [] } = await db.prepare(`SELECT * FROM players WHERE id IN (${authors.map(() => '?').join(', ')})`).bind(...authors).all();
-    for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
+    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
   }
   const live = await liveCount(db, reader.id, nowS);
   return {

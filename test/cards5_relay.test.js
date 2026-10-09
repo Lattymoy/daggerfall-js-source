@@ -142,7 +142,8 @@ test('CARDS5 the words both ways: the client\'s checked by the wire, the relay\'
   assert.equal(validHoldemOut({ table: 1, hole: { handNo: 1, cards: [0, 51] } }), true);
   assert.equal(validHoldemOut({ table: 1, hole: { handNo: 1, cards: [0, 52] } }), false);
   assert.equal(validHoldemOut({ table: 1, error: 'taken' }), true);
-  assert.equal(HOLDEM_RELAY_MIN, 176);
+  // PIN MOVED (AUDIT CARDS-6 E20): TAVERN CARDS is world178 since the merge (176 on its branch) - main's 176 and 177 deal nothing
+  assert.equal(HOLDEM_RELAY_MIN, 178);
   assert.equal(relaySupportsHoldem(RELAY_VERSION), true);
   assert.equal(relaySupportsHoldem('world175'), false, 'the live relay closes on the frame - never sent it');
 });
