@@ -653,7 +653,7 @@ const GLYPHS = {
     }
     part(ctx);
   },
-  // CARDS9 (section 28): the bosses' own pictures - the Gate's Warden, the Sea Serpent, the Abyss Dungeon's Remnant.
+  // CARDS9 (section 30): the bosses' own pictures - the Gate's Warden, the Sea Serpent, the Abyss Dungeon's Remnant.
   gate(ctx) {         // the Burning Gate: a horned arch of black iron, its gap a tongue of fire, spikes along its crown
     ctx.moveTo(-0.42, 0.46); ctx.lineTo(-0.42, -0.06); ctx.quadraticCurveTo(-0.42, -0.42, 0, -0.44);
     ctx.quadraticCurveTo(0.42, -0.42, 0.42, -0.06); ctx.lineTo(0.42, 0.46); ctx.lineTo(0.26, 0.46); ctx.lineTo(0.26, -0.04);

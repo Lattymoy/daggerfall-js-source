@@ -5,7 +5,7 @@
 -- Applied exactly once through the `d1_migrations` ledger, which the
 -- deploy runs (ACC1-CI).
 --
--- bible/11-Multiplayer/Tavern-Cards.md section 29. A ranked game of Iliac
+-- bible/11-Multiplayer/Tavern-Cards.md section 31. A ranked game of Iliac
 -- Hand between two accounts' vouched-for decks, refereed and SIGNED by the
 -- relay (src/net/iliacReceipt.js i1), is ONE row keyed by the game's id -
 -- whichever of the two carries it first (server-account/src/iliac.js

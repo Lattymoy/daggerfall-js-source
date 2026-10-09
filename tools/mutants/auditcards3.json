@@ -1862,7 +1862,7 @@
   {
     "name": "D7-never-looks",
     "file": "src/scenes/worldModes.js",
-    "old": "cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && interiorCtx.tables?.length) cardLooksDue.push(0);",
+    "old": "cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0);",
     "new": "cardLooksDue = [];",
     "tests": [
       "test/auditcards2_cloth.test.js",
@@ -1882,7 +1882,8 @@
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cards6b_topup.test.js",
-      "test/cardsbay_faces.test.js"
+      "test/cardsbay_faces.test.js",
+      "test/taverntable.test.js"
     ]
   },
   {

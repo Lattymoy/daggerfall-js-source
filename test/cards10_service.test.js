@@ -1,4 +1,4 @@
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND'S SEASON BOARD AND THE DECK A RANKED
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): ILIAC HAND'S SEASON BOARD AND THE DECK A RANKED
 // SEAT PLAYS, driven on the real Worker over SQLite (server-account/src/iliac.js). The deck order: a realm character's
 // own thirty cards vouched for (the service's order on its digest, the room's to check), a card it lacks refused, an
 // offline character or a guest never ranked. The claim: the relay's signed result (net/iliacReceipt.js) one row a game

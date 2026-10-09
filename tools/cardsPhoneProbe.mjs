@@ -1,4 +1,4 @@
-// THE CARD TABLE'S FRAME COST (CARDS3c, bible/11-Multiplayer/Tavern-Cards.md section 30; section 3, MEASURE: "the frame
+// THE CARD TABLE'S FRAME COST (CARDS3c, bible/11-Multiplayer/Tavern-Cards.md section 32; section 3, MEASURE: "the frame
 // cost ... the interior frame is already measured against phones; the slice reports the cost on the probe before it
 // ships"). Opens the card table lab (cards.html, src/tools/cardsLab.js `bench`) headless and times its frames with the
 // cards and without - the Hold'em evening at its busiest street and an Iliac Hand cloth at its last turn - first at the

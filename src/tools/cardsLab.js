@@ -1,5 +1,6 @@
-// THE CARD TABLE LAB (CARDS3, bible/11-Multiplayer/Tavern-Cards.md section 3). A tavern table with no tavern: a plain
-// felt-topped box on a plain floor, its seats stood by world/cardTables.js, a seeded evening of the table
+// THE CARD TABLE LAB (CARDS3, bible/11-Multiplayer/Tavern-Cards.md section 3). A tavern table with no tavern: the
+// tavern's own card table (world/cardTableProp.js - AUDIT TAVERN-TABLE L6: the lab drew a box of its own) on a plain
+// floor, its seats stood by world/cardTables.js, a seeded evening of the table
 // (systems/cardTableSession.js - the player checking and calling, the patrons by their tempers) played to a pinned
 // clock, and the cards and chips drawn by render/cardTableDraw.js through the game's own renderer, with the table's
 // panel (ui/cardTableHud.js) over it. No game data: the felt and the floor are flat colours, the cards our own paint.
@@ -16,6 +17,7 @@ import { CardTableSession } from '../systems/cardTableSession.js';
 import { createCardTableDraw } from '../render/cardTableDraw.js';
 import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD } from '../world/cardTableProp.js';   // AUDIT TAVERN-TABLE L6: the game's table
 import { heldMatrices, squeezeMatrix } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them; CARDS3c: squeezed
 import { newGame, commit as iliacCommit, reveal as iliacReveal, iliacView, ILIAC_TURNS } from '../net/iliacHand.js';   // CARDS10: an Iliac game's cloth, for the frame's cost
 import { STARTER_DECK } from '../net/iliacCards.js';
@@ -36,8 +38,8 @@ const renderer = new Renderer(canvas);
 
 /** A flat colour as a 4x4 color32. */
 const flat = (r, g, b) => ({ width: 4, height: 4, colors: new Uint8ClampedArray(Array.from({ length: 16 }, () => [r, g, b, 255]).flat()) });
-renderer.uploadTexture('cardslab', 'felt', flat(28, 92, 52));
-renderer.uploadTexture('cardslab', 'wood', flat(92, 60, 34));
+renderer.uploadTexture(CARD_TABLE_ARCHIVE, FELT_RECORD, paintFelt(), { mips: true, opaque: true });   // the table's own, as the interior uploads them
+renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });
 renderer.uploadTexture('cardslab', 'floor', flat(70, 56, 44));
 
 /** A box from `min` to `max` on one texture: `top` its top face's texture, the rest `side`. */
@@ -65,10 +67,9 @@ function boxModel(min, max, top, side) {
   return { positions: new Float32Array(positions), normals: new Float32Array(normals), uvs: new Float32Array(uvs), indices: new Uint32Array(indices), subMeshes };
 }
 
-// The table: 2 m by 1 m, its top at 0.8 m, on a floor.
-const table = { aabb: { min: [-1, 0, -0.5], max: [1, 0.8, 0.5] } };
-const tableMesh = renderer.createMesh(boxModel([-1, 0.74, -0.5], [1, 0.8, 0.5], 'felt', 'wood'));
-const legs = [[-0.9, -0.4], [0.9, -0.4], [-0.9, 0.4], [0.9, 0.4]].map(([x, z]) => renderer.createMesh(boxModel([x - 0.04, 0, z - 0.04], [x + 0.04, 0.74, z + 0.04], 'wood', 'wood')));
+// The table: the tavern's own, its stools and all, on a floor - its seats round the table's own box.
+const table = { aabb: CARD_TABLE_BOX, box: CARD_TABLE_BOX };
+const tableMesh = renderer.createMesh(cardTablePropModel());
 const floorMesh = renderer.createMesh(boxModel([-6, -0.02, -6], [6, 0, 6], 'floor', 'floor'));
 const IDENT = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
@@ -116,7 +117,6 @@ function frameDraw(withCards = true, asBacks = false) {
   renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
   renderer.drawMesh(floorMesh, IDENT, null);
   renderer.drawMesh(tableMesh, IDENT, null);
-  for (const m of legs) renderer.drawMesh(m, IDENT, null);
   const p = scene.poses(T, session.view());
   // CARDS3b: from the seat, the player's settled two held up (`peek` 0..1 from the page's query), as worldModes cardDrawGame
   if (camKind === 'seat') {

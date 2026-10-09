@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 28; Mac: "Dont forget about a card needing to come
+// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Dont forget about a card needing to come
 // from the abyss dungeon also"): THE BOSSES' OWN CARDS - section 6.3, "the Oblivion Gate's boss and the Sea Serpent can
 // drop their own, at the aetheric tier", and the Abyss Dungeon's Brass Remnant beside them. Its own small module (the
 // card and the item, nothing heavier): the three hoards import it (systems/gateSpoils.js, serpentSpoils.js, sdSpoils.js),

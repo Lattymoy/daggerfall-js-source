@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29; section 6.4, DECIDED: "a ladder. Online wins rank
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31; section 6.4, DECIDED: "a ladder. Online wins rank
 // a player on a season board, the Arena's way"): A RANKED GAME'S RECEIPT - the relay's word on how a game of Iliac Hand
 // between two vouched-for decks ended, the arena players' bout receipt's twin (net/arenaReceipt.js `a: 'p'`).
 //

@@ -1,4 +1,4 @@
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): THE RELAY DEALS ILIAC HAND. Driven: the relay's
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): THE RELAY DEALS ILIAC HAND. Driven: the relay's
 // Iliac table (net/iliacTable.js) - its two seats of a cloth's chairs, a deck the law refuses refused, the first game
 // after the second seat; the deal from the relay's own source, each seat's hand in a frame to that seat ALONE, the room a
 // spectator's view (no hand, no deck); a commit hidden (the room hears that, never what); the turn turned over once both

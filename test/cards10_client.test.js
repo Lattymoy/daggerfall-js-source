@@ -1,4 +1,4 @@
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND ONLINE, THE CLIENT'S HALF. Driven:
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): ILIAC HAND ONLINE, THE CLIENT'S HALF. Driven:
 // the relay's table as this client sees it (systems/iliacRemoteTable.js) - my own view while I play, the spectator's
 // while I watch, the last board kept after the end until the next deal, the relay's clock through its skew; the ranked
 // results' carrier (net/iliacClaims.js) - kept, offered, let go on an answer that settles it, kept on one that does not,

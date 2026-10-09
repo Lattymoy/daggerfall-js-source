@@ -43,7 +43,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // KIT-ROLL: the 
 import { renownLootQuarters, lootEased } from './renownLoot.js';
 import { isCardRecord } from '../net/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
 
-/** CARDS9 (Tavern-Cards section 28): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
+/** CARDS9 (Tavern-Cards section 30): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
  *  common blade (rank 2: past a supply's 1 and a Common piece's 0, level with a Magic piece's). */
 export const CARD_CAP_RANK = 2;
 /** The most a plain foe's body carries, gold included. */

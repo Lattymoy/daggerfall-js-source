@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND'S PANEL AT THE TAVERN TABLE - the
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): ILIAC HAND'S PANEL AT THE TAVERN TABLE - the
 // port's own enhanced panel beside the Hold'em one (ui/cardTableHud.js: the same dark plate and gold, outside the window
 // stack, the world going on while it stands), where the player picks a deck and a regular, stages his turn and commits it.
 //

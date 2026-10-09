@@ -626,7 +626,7 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
 }
 
-/* ═══ CARDS10: THE DECK ORDER (bible/11-Multiplayer/Tavern-Cards.md section 29) ═════════════════════════════════════
+/* ═══ CARDS10: THE DECK ORDER (bible/11-Multiplayer/Tavern-Cards.md section 31) ═════════════════════════════════════
  *
  * Section 6.4, DECIDED: online wins rank a player on a season board. A deck the client names is a deck the client
  * chose - any thirty the law takes, whether its character holds them or not. So a RANKED seat brings the service's word

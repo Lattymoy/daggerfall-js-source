@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29; section 6.4: "At the same tavern table, seated the
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31; section 6.4: "At the same tavern table, seated the
 // same way. Offline against a patron who has a deck of his own"): ILIAC HAND ON THE SEAT - the host's half of the game,
 // its own module so the interior host (scenes/worldModes.js, THE FOUR HOSTS: the one with taverns) hands it what it needs
 // and keeps one slot for it, as it keeps one for the Hold'em game.

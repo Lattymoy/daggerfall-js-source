@@ -1,4 +1,4 @@
-// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 28; Mac: "Lets build every inch of this. Dont forget
+// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Lets build every inch of this. Dont forget
 // about a card needing to come from the abyss dungeon also"): WHERE CARDS COME FROM, AND WHAT ONE IS WORTH. A card's
 // worth is its tier's (net/cardWorthLaw.js); the realm's customs bound the cards a character brings, on the client's
 // copy and at the service's first save; a tavern keeper sells packs of five, the last rare or better; a foe drops its

@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 28; Mac: "Lets build every inch of this. Dont forget
+// CARDS9 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Lets build every inch of this. Dont forget
 // about a card needing to come from the abyss dungeon also"): WHERE CARDS COME FROM. Section 6.3's list, built:
 //
 //   FOES      "A slain creature can drop its own card (a rare draw). A rat drops a rat." - FOE_CARDS names the card each

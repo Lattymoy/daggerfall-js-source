@@ -272,7 +272,7 @@ function mainButtons() {
   talkBtn.onclick = talk;
   const food = el('button', 'act tavern-act', 'Food & drink');
   food.onclick = openFood;
-  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 28; 6.3: "Tavern keepers sell packs"): the keeper's packs of
+  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 30; 6.3: "Tavern keepers sell packs"): the keeper's packs of
   // Iliac Hand cards at this counter's price - the port's own row (DFU's tavern sells no cards), on this skin's panel;
   // the classic window keeps DFU's four, and its players buy at the card table's panel (scenes/worldModes.js)
   const pack = el('button', 'act tavern-act', `Card pack (${packPrice()} gold)`);

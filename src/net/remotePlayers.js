@@ -489,7 +489,7 @@ export const ridingLoopName = (id) => `peerRide:${id}`;
 export const PEER_RIDE_STALE_MS = 1000;
 
 /**
- * CARDS2c (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 30; Mac: "Lets build every inch of this"): THE SPRITE
+ * CARDS2c (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 32; Mac: "Lets build every inch of this"): THE SPRITE
  * LANE SEATED. Eye Of The Beholder's walkers and the paperdoll have no sitting art, so a peer seated at a card table
  * (the pose's `st`, CARDS2b's table top) stood at the seat. A sprite cannot bend; it SINKS - its feet lowered by the
  * seat's own hip drop (player/seatPose.js SEAT_HIP_DROP, the Morrowind body's), so its hips stand where the seated rig's

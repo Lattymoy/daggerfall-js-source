@@ -278,7 +278,6 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/systems/playerTorch.js` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/ui/enhancedMenu.js` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/pauseWindow.js` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
-- `src/world/cardTables.js` - FLAGGED: CARD_TABLE_MODELS holds the one ARCH3D id this tree can name as a table - 41130, "Table" in the vendored World of Daggerfall's model list (vendor/world-of-daggerfall/Scripts/LocationHelper.cs, its {"41130", "Table"} row). The tavern blocks' other tables are unmeasured: the container carries no ARENA2, and `node tools/cardTableCensus.mjs <arena2>` lists every furniture model the tavern interiors stand, with its count and its size, for Mac's eye.
 
 ## Audits
 

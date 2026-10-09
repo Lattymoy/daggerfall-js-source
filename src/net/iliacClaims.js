@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): THE RANKED GAMES' RECEIPTS THIS DEVICE CARRIES
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): THE RANKED GAMES' RECEIPTS THIS DEVICE CARRIES
 // TO THE ACCOUNT SERVICE - the arena's carrier's law (net/arenaClaims.js) for Iliac Hand's signature (net/iliacReceipt.js).
 //
 // THE RELAY SIGNS, THE ACCOUNT SERVICE COUNTS, THIS FILE CARRIES. A receipt the relay hands this socket at a ranked

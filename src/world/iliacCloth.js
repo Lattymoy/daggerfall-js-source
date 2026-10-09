@@ -1,5 +1,5 @@
 // @ts-check
-// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 29): ILIAC HAND'S PICTURE ON THE CLOTH - pure, the
+// CARDS10 (2026-10-08, bible/11-Multiplayer/Tavern-Cards.md section 31): ILIAC HAND'S PICTURE ON THE CLOTH - pure, the
 // Hold'em scene's way (world/cardScene.js): what the game's state says is where a card is, and this says how it lies and
 // how it got there. Section 3, DECIDED: "the physics is the picture, never the rules".
 //
