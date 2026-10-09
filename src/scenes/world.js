@@ -32344,6 +32344,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livePersonBatches.length = keep;
     }
     if (deepWaters && livePersonBatches.length) dwFlagColumnFlats(livePersonBatches);   // DW-F: the foes, the corpses and the piles in a carved sea take the column's share
+    exteriorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC5c: the foes in their bodies - what batches() offered this frame, before the billboards draw (cast-only where a body stands)
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);
     if (castBatches.length) renderer.recordShadowBillboards(castBatches, camRight, UP_Y);   // SHADOW-REACH: the flats the view cull rejected, for the maps alone (the wind is the frame's, set above)
     if (deepWaters) drawDeepWatersSurfaces(now);   // DW-C: the sea's surface - the mod's Transparent queue, after every opaque thing and every cut-out flat
@@ -32620,6 +32621,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (hz.visible && !tvf && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires
+    exteriorFoes.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
     // (each once: both duellists say it). After the grass, from the view's own eye (mwv.eye, the bolts' law), fogged as

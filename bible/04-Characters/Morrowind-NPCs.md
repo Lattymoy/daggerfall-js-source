@@ -99,7 +99,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
-| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
+| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
@@ -555,4 +555,47 @@ enumeration in MWNPC5b-e fails a new foe host that is neither.
 NOT PROVEN HERE: a dungeon in a browser with retail data - a dungeon
 needs the game's own files, which no fixture carries; the frame's order
 is pinned by source and each part by its own test.
+
+### 10c. The encounter pool's foes - every other foe host (SHIPPED 2026-10-09)
+
+The dungeon context's law on the pool the other three hosts draw
+(`scenes/exteriorFoes.js`, one factory: world.js's exterior,
+worldModes.js's interiors, exterior.js): `batches()` makes the lane the
+first frame it is wanted (and lets it go the frame it is not), offers
+every live class foe dressed as its billboard (its `castOnly` reset at
+the offer) and every dead class foe from the kill until its corpse is
+collected; `drawBodies(canvas, proj, view, eye, dt)` syncs the lane,
+marks each offered billboard - the corpse marker's flat for the dead -
+cast-only where its body stands, and draws the bodies in one bind;
+`drawVeiledBodies()` draws the concealed; a `drawBodies` with nothing
+offered since the last (a frame the host drew no pool) syncs nothing; the
+lane follows the floating
+origin (`offsetAll`) and leaves with the pool (`destroy`). Each host calls
+`drawBodies` after `batches()` and before those billboards draw (the world
+host just before its person billboards, with the body pass's eye,
+`mwv.eye` - DISC19-F's order of the pools, the leash and the town watch
+untouched; the interior beside its foe billboards; exterior.js its own),
+and `drawVeiledBodies` after the peers' (the building's, after INVIS-LOOK's
+last opaque draw).
+
+A foe's look is asked every frame, so it is now a COMPARE: the same pieces
+in the same slots, by reference, is the same look - no copy, no compose;
+only a change composes it again.
+
+PROVEN. `test/mwnpc5_pool.test.js` (2): the real pool with a recording
+lane - the class foe and the dead class foe offered, never the creature;
+the offer dressed with the host's own hit flash (a strike this moment) and
+the hit a recoil; the sync then the draw with the host's eye; the
+cast-only marks after the sync (the corpse's flat too, never the
+creature's), reset the next frame the body is gone; the veiled; the
+origin; the lane let go when unwanted (every billboard drawn again), made
+again when wanted, gone with the pool, a second draw with nothing offered
+syncing nothing - and the three hosts by source.
+`tools/mutants/mwnpc5c.json`: 19 mutants, 19 dead. The foe-host
+enumeration (MWNPC5b-e) names the pool WIRED now.
+
+THE FOUR HOSTS (rule 17e): ALL WIRED. scenes/dungeonContext.js (10b);
+scenes/world.js, scenes/worldModes.js (interiors) and scenes/exterior.js
+through the pool. The watch (scenes/cityGuards.js) is a population of its
+own, MWNPC6's.
 

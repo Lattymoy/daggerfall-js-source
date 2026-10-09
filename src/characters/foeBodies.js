@@ -8,7 +8,7 @@
 // are the foe's own stable draw (Daggerfall's class foes have neither; one Breton for every bandit is the plan's own
 // complaint), and the tells are the batch's as the host set them.
 import { composeLook } from '../net/remotePlayers.js';
-import { EQUIP_SLOTS } from '../systems/equip.js';
+import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -57,6 +57,16 @@ export const isClassFoe = (f) => !!f?.entity?.isClass;
  *  one), so a foe that picks up nothing is one build for its life. */
 export function foeLook(f) {
   const e = f.entity;
+  // MWNPC5c: asked every frame, so the common answer is a compare - the same pieces in the same slots (by reference,
+  // no allocation) is the same look; only a change composes it again
+  const slots = equipTableOf(e);
+  const held = f._mwLookSlots;
+  if (f._mwLook && held && held.length === slots.length) {
+    let same = true;
+    for (let i = 0; i < slots.length; i++) if (slots[i] !== held[i]) { same = false; break; }
+    if (same) return f._mwLook;
+  }
+  f._mwLookSlots = slots.slice();
   const worn = composeLook(e, { eotbSet: null }).items;
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;

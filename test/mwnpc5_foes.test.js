@@ -61,6 +61,9 @@ test('MWNPC5b-1 the class foe alone; its look - the same foe the same person, th
   const f = foe({ slots: { RightHand: sword } });
   const l1 = foeLook(f);
   assert.equal(foeLook(f), l1, 'the same object - one body for its life');
+  const snap = f._mwLookSlots;
+  foeLook(f);
+  assert.equal(f._mwLookSlots, snap, 'unchanged: a compare of the slots, no copy and no compose');
   f.entity.equip.slots[EQUIP_SLOTS.Head] = { templateIndex: 100, group: 'Armor', material: 1 };
   const l2 = foeLook(f);
   assert.notEqual(l2, l1, 'a helm put on: a new look');

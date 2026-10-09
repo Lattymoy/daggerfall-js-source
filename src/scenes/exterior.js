@@ -5921,6 +5921,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       exteriorFoes.update(foeDt,
         walkMode ? player.pos : cam.pos, eye, _senses);
       personBatches.push(...exteriorFoes.batches());
+      exteriorFoes.drawBodies(canvas, proj, view, eye, foeDt);   // MWNPC5c: the foes in their bodies - before the person billboards draw
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
@@ -5932,6 +5933,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
       if (hcc.enabled) personBatches.push(...hcc.batches());   // HCC: the horse on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
+      exteriorFoes.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, after the person billboards
     }
     // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();

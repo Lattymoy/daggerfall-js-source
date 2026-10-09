@@ -146,7 +146,7 @@ test('MWNPC5b-d the dungeon context by source: the lane a frame (none while unwa
 test('MWNPC5b-e THE FOE HOSTS, ENUMERATED: every module that dresses a foe\'s billboard is named - wired, or flagged with the slice that wires it', () => {
   const HOSTS = {
     'src/scenes/dungeonContext.js': 'wired',   // MWNPC5b: both dungeon hosts' one frame function
-    'src/scenes/exteriorFoes.js': 'MWNPC5c',   // the encounter pool: world.js's exterior, worldModes.js's interiors, exterior.js
+    'src/scenes/exteriorFoes.js': 'wired',     // MWNPC5c: the encounter pool - world.js's exterior, worldModes.js's interiors, exterior.js (mwnpc5_pool.test.js)
     'src/scenes/cityGuards.js': 'MWNPC6',      // the watch
   };
   const found = [];

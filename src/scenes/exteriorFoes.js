@@ -100,7 +100,9 @@ import { revenantRoutable, revenantRouted, revenantRoutedEvent, revenantFleeStep
 import { revenantMayYield, beginYield, yieldStep, slipEvent, kneelPose, beginExecution, executionStep, finishExecution, beginSpare, spareDone, fateDissolve, fateModel, dropFateHeld, revenantWillHolds, beginTearAway, revenantLastStandDue, beginLastStand, roarStep } from '../systems/revenantFate.js';   // REVENANT-FATE: beaten, it yields - kill it or spare it
 import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt away, or gathered through a portal
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
-import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson's one blow
+import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
+import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
+import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -212,6 +214,9 @@ export function carrySiteFoe(from, to) {
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
+  // MWNPC5c: the foes' Morrowind bodies - whether the lane is wanted (every host's gate, npcBodiesOn) and how one is
+  // made (the hosts' own lane); a test hands its own
+  wantNpcBodies = npcBodiesOn, makeNpcBodies = null,
   // TIME1: the SKY's minute - the wilds' night (SOFTCAP5's share) is the sky's; `currentMinute` is the character's own
   // (the poison's anchor, the alert, the disease day). A host that hands none reads the one clock, as offline.
   skyMinute = null,
@@ -1990,11 +1995,26 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _net?.onPeerHit?.({ to, k, i: f.seq, grant: [], n: _foesSeq });   // nothing on it: the body says so
   }
 
+  // MWNPC5c (bible/04-Characters/Morrowind-NPCs.md section 10c): THE POOL'S FOES IN THEIR BODIES - the dungeon
+  // context's law (section 10b) on the encounter pool, so every host that draws it (world.js's exterior, worldModes.js's
+  // interiors, exterior.js) has it at once: batches() offers the class foes to the lane, dressed as their billboards
+  // are; drawBodies syncs the lane, marks each offered billboard cast-only where its body stands and draws the bodies in
+  // one bind; drawVeiledBodies draws the concealed after the host's opaque world
+  let _npcLane = null;
+  const _npcStood = [];
+  let _npcOffered = false;   // batches() offered this frame - drawBodies syncs what was offered, never a frame twice
+
   /** Live sprite + corpse batches for the draw - the guard shape:
    *  record/size/origin mutate per frame, frames upload lazily. */
   function batches() {
     const out = [];
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
+    // MWNPC5c: the lane, this frame - none while it is not wanted (and the one standing let go)
+    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostNpcBodies({ renderer, collider: () => collider }))) : null;
+    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
+    _npcStood.length = 0;
+    npcLane?.begin();
+    _npcOffered = !!npcLane;
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
@@ -2033,8 +2053,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         org[0] = f.ai.feet[0]; org[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); org[2] = f.ai.feet[2];
         f.batch.origin = org;
       } else f.batch.origin = f.ai.feet;
+      // MWNPC5c: a class foe offered to its body, dressed as its billboard is; the billboard draws until drawBodies says
+      // the body stands, and casts its shadow either way
+      f.batch.castOnly = false;
+      if (npcLane && isClassFoe(f)) { npcLane.stand('foe', foeActor(f), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }
       out.push(f.batch);
     }
+    // MWNPC5c: the dead from the kill until the corpse is collected, the corpse flat casting alone under the body
+    for (const c of corpseBatches) c.batch.castOnly = false;
+    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals
   }
 
@@ -2099,6 +2126,22 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    * keeps the handle by mistake draws nothing rather than drawing
    * freed GL objects.
    */
+  /** MWNPC5c: the bodies batches() offered this frame - the lane synced, each offered foe's billboard (a corpse's flat
+   *  for the dead) cast-only where its body stands, the bodies drawn in one bind of the sprite target. A host calls it
+   *  after batches() and BEFORE it draws those billboards, with its frame's lens and eye.
+   *  @param {any} canvas @param {Float32Array} proj @param {Float32Array} view @param {number[]} eye @param {number} dt */
+  function drawBodies(canvas, proj, view, eye, dt) {
+    const lane = _npcLane;
+    if (!lane || !_npcOffered) return;   // nothing offered this frame (a frame the host drew no pool): nothing synced again
+    _npcOffered = false;
+    lane.end(dt, eye);
+    for (const f of _npcStood) { const b = f.dead ? f.corpseMarker?.batch : f.batch; if (b) b.castOnly = lane.has('foe', foeId(f)); }
+    renderer.beginCharacterSpriteBatch?.();
+    try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
+  }
+  /** MWNPC5c: the concealed foes' bodies, translucent - after the host's opaque world. */
+  function drawVeiledBodies() { _npcLane?.drawVeiled(); }
+
   function destroy() {
     // AUDIT-39r: the epoch turns FIRST, so anything already in flight
     // (a spawn between its two awaits, a corpse marker waiting on its
@@ -2108,6 +2151,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;
     foes.length = 0;
+    _npcLane?.destroy(); _npcLane = null;   // MWNPC5c: the bodies with them
     portals.clear();   // COMPANION-PORTAL: and the portals standing
     for (const s of spawning) s.capped = false;   // AUDIT 68 S20-encounter-cap-race: a cancelled spawn holds no slot in the next world
     _lostSites.clear();   // AUDIT WB12d (C1): a site a race gave away is the old world's - the epoch above already ends its spawns in flight
@@ -2145,6 +2189,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // AUDIT 39: the spawns still crossing their awaits move too.
     for (const s of spawning) { s.feet[0] += offset[0]; s.feet[1] += offset[1]; s.feet[2] += offset[2]; }
     portals.offsetAll(offset);   // COMPANION-PORTAL
+    _npcLane?.offsetAll(offset);   // MWNPC5c: the bodies' feet with the origin (AUDIT MWBODY B2's law for the peers)
     for (const c of corpseBatches) {
       c.pos[0] += offset[0]; c.pos[1] += offset[1]; c.pos[2] += offset[2];
       renderer.destroyBatch(c.batch);
@@ -3140,7 +3185,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
   const encounterRoom = () => encounterCap() - activeCount() - spawning.filter((s) => s.capped).length;
 
-  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(foes, 'foeCorpse', corpseLens), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js); PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
+  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, drawBodies, drawVeiledBodies, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(foes, 'foeCorpse', corpseLens), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js); PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

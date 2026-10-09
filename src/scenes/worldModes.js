@@ -10327,6 +10327,7 @@ export function createWorldModes(host) {
     // the exterior host makes for its foes.
     if (interiorFoes) {
       const _foeBatches = interiorFoes.batches();
+      interiorFoes.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC5c: the foes in their bodies - before their billboards draw (cast-only where a body stands)
       if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
     // ROAD-B: the indoor WATCH drives and draws on the same axis, in
@@ -10367,6 +10368,7 @@ export function createWorldModes(host) {
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
+    interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });   // LOOT11: the lines of light over a building's finds - additive, after the veiled bodies
     // C9: the interior FP weapon - gesture/swing/sounds through the
     // rig; the strike frame runs the WeaponEnvDamage ray against the
