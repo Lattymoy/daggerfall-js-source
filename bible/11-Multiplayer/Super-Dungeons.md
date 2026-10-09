@@ -2258,7 +2258,9 @@ colossus of brass - the Remnant under gold under silver:
   (the bark, the Hour's bell under it); the Dragon Break (the Orrery's chime, low - it steps outside time) and the
   Last Moment (its deepest bark, the storm's roll); back from outside time (the gears grinding together); stunned (its
   bark, a ring) and up again (the gears); the gears slipping once under a fifth of its health; its cry at its fall; the
-  ground's shock under its Stomp; the Hour's bell, lowest, when the fight is lost.
+  ground's shock under its Stomp (AUDIT SD IV, SD26 A4: the Stomp's own landing, `SD_BLOW_CUES.land.stomp` - the
+  voice's quake started the same thud a second time in the same frame, and is gone); the Hour's bell, lowest, when the
+  fight is lost.
 - **Its Echoes**, each at its own pitch: risen (the chime), striding (`SD_ECHO_STRIDE_M`), hurt, broken (the shatter).
 - **Each blow's release** (WB13d's law): `SD_RELEASE_MS` (350 ms) before it lands, once - the Stomp's body, the Hand's
   swing, the Volley's gears loosed, the Pulse's roll, the Reset's ring, the End's bell.

@@ -70,5 +70,14 @@
     "tests": [
       "test/sd26_audio.test.js"
     ]
+  },
+  {
+    "name": "SD26-A4-the-quake-back",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      k.t = t;\n    },\n    /** Out of the Hour",
+    "new": "      for (const [b, a] of blowsOf(s)) if (b === SD_BODY.remnant && a.a === SD_BLOWS.stomp.id && t >= a.at && t - a.at < 17) play({ clip: BODY_FALL, pitch: 0.3, volume: 1.8, reach: 70 }, rem(0.5));\n      k.t = t;\n    },\n    /** Out of the Hour",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
   }
 ]

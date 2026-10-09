@@ -113,3 +113,21 @@ test('SD26 THE BRASS\'S POWERS SOUND THE HALL\'S OWN RECORDS (A3): SD_HALL_SOUND
   assert.deepEqual(heard('hour'), [SD_HALL_SOUNDS.toll], 'The Hour Turns: the Hour\'s bell');
   assert.deepEqual(heard('wrath'), [SPELL_CAST_SOUND[0] - 3], 'a spell\'s cast sound is an ID, and stays one');
 });
+
+test('SD26 A STOMP LANDS AS ONE THUD (A4): on a Stomp\'s landing frame the blows played its landing (BODY_FALL at 0.28) and the voice its quake (BODY_FALL at 0.30) - one clip started twice in the same frame, 1.2 semitones apart, a louder phasing smear; and the quake\'s End arm was dead (the End is the Hour\'s clock blow, never the Remnant\'s). The ground\'s shock is the landing: the voice and the blows over one Stomp start the thud once (mutants: the quake back)', () => {
+  let t = T0;
+  const s = { fi: 2, ph: 1, op: T0 - 60_000, ou: 0, su: 0, stunAt: 0, h: 1000, m: 1000, rem: { x: 0, z: 0, yw: 0, mv: null, atk: null }, ec: null, clk: null, cx: null, fell: null, lost: 0 };
+  const plays = [];
+  const audio = { play3d: (clip, at, volume, o) => { plays.push({ t, clip, pitch: o?.pitch }); return 1; } };
+  const link = { state: () => s, now: () => t, counted: () => false };
+  const voice = createSdRemnantVoice({ audio, link, feet: () => null });
+  const blows = createSdRemnantBlows({ audio, link, feet: () => null, player: () => null });
+  const step = (ms) => { t += ms; voice.frame(); blows.frame(); };
+  step(0);
+  const lands = T0 + 2000;
+  s.rem.atk = { k: 'atk', b: SD_BODY.remnant, i: 7, a: SD_BLOWS.stomp.id, at: lands, x: 0, z: 0, yw: 0, tg: [] };
+  while (t < lands + 600) step(16);
+  const thuds = plays.filter((p) => p.clip === BOSS_CUES.quake.clip && p.t >= lands && p.t < lands + 400);
+  assert.equal(thuds.length, 1, `the landing, once: ${JSON.stringify(thuds)}`);
+  assert.ok(plays.some((p) => p.clip === BOSS_CUES.quake.clip && p.t < lands), 'its wind-up and release still heard');
+});
