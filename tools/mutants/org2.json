@@ -1,0 +1,166 @@
+[
+  {
+    "name": "ORG2-a-row-with-no-place",
+    "file": "src/ui/settingsMap.js",
+    "old": "      \"feat:grass\", \"feat:wind\", ",
+    "new": "      \"feat:wind\", ",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-row-placed-twice",
+    "file": "src/ui/settingsMap.js",
+    "old": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:mod-foraging\"]),",
+    "new": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:mod-foraging\", \"feat:grass\"]),",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-moved-key-filed-away-from-its-row",
+    "file": "src/ui/settingsMap.js",
+    "old": "      \"feat:land-view-distance\", \"Experimental/TerrainDistance\", ",
+    "new": "      \"feat:land-view-distance\", ",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-optionPath-without-the-section",
+    "file": "src/ui/settingsMap.js",
+    "old": "...(section && w.tab.sections.length > 1 ? [w.section.title] : [])",
+    "new": "...[]",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-high-is-not-how-it-ships",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default'",
+    "new": "values: Object.freeze({ 'land-view-distance': 5, grass: 0.5, 'cloud-quality': 'default'",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-preset-value-off-its-row",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "'cloud-quality': 'hi', 'ground-sharpness': 'max'",
+    "new": "'cloud-quality': 'ultra', 'ground-sharpness': 'max'",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-one-row-is-enough-for-a-preset",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "PRESET_ROWS.every((id) =>",
+    "new": "PRESET_ROWS.some((id) =>",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-the-preset-past-the-lane",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (i >= 0 && i !== st.at) st.set(i);",
+    "new": "    if (i >= 0 && i !== st.at) setPref(c.key, p.values[id]);",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-the-preset-past-the-room",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (!st || st.locked || !c?.tiers) continue;",
+    "new": "    if (!st || !c?.tiers) continue;",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-tab-restores-everything",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  const items = tab.sections.flatMap((s) => s.items);\n  for (const item of items) {\n    if (!isSettingItem(item)",
+    "new": "  const items = CATEGORIES.flatMap((t) => t.sections).flatMap((s) => s.items);\n  for (const item of items) {\n    if (!isSettingItem(item)",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-tab-restore-leaves-its-rows",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  featuresDefaults(items.filter((i) => i.startsWith('feat:'))",
+    "new": "  void (items.filter((i) => i.startsWith('feat:'))",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-tab-restore-leaves-its-port-rows",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (pref && Object.hasOwn(PREF_DEFAULTS, pref) && onlineForcedPref(pref) === undefined) setPref(pref, PREF_DEFAULTS[pref]);",
+    "new": "    void pref;",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-tab-restore-spends-the-keep",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "{ spendKeep: false });",
+    "new": "{ spendKeep: true });",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-the-search-reads-the-open-tab",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    let found = 0;\n    for (const tab of CATEGORIES) {",
+    "new": "    let found = 0;\n    for (const tab of [CATEGORIES.find((c) => c.id === category) ?? CATEGORIES[0]]) {",
+    "tests": [
+      "test/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-a-search-keeps-the-staged-binds",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    discardControlsStaging();   // FIX-F: a search repaints the page",
+    "new": "    // FIX-F: a search repaints the page",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-the-old-door-lands-nowhere",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (id === 'features') id = 'settings';",
+    "new": "",
+    "tests": [
+      "test/org2_options.test.js",
+      "test/features.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-graphics-not-first",
+    "file": "src/ui/settingsMap.js",
+    "old": "export const CATEGORIES = Object.freeze([\n  tab(\"graphics\"",
+    "new": "export const CATEGORIES = Object.freeze([\n  tab(\"graphics2\"",
+    "tests": [
+      "test/org2_options.test.js",
+      "test/settingsUI.test.js"
+    ]
+  },
+  {
+    "name": "ORG2-the-phone-sheet-see-through",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .shell .detail { background: rgb(10,12,17); border-left: 0; }\n",
+    "new": "",
+    "tests": [
+      "test/features.test.js"
+    ]
+  }
+]

@@ -25,6 +25,7 @@ import { TERRAIN_EDGE } from '../systems/comeSailAway.js';
 import { batteriesOf } from '../systems/naval/navalShips.js';
 import { CREW_ORDERS, CREW_ROLES } from '../systems/naval/shipCrew.js';
 import { MOBILE } from '../systems/naval/navalBoarding.js';
+import { optionPath } from '../ui/settingsMap.js';   // ORG2: a switch named in a line says where it lives
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */
@@ -121,7 +122,7 @@ export function createFleetHost(deps) {
       : !st.wants && !st.fire ? 'She needs no repairs.'
       : st.inFight ? 'Her hands are fighting her.'
       : null;
-    const yard = !n ? 'The shipwrights are not at work (Features > Naval Combat).'
+    const yard = !n ? `The shipwrights are not at work (Naval Combat, ${optionPath('feat:naval-combat')}).`   // ORG2
       : !atPort ? 'A shipwright works at a port.'
       : at.where === 'away' || at.where === 'packed' ? 'Bring her to this port first.'
       : inFight ? 'Not while she is fighting.'

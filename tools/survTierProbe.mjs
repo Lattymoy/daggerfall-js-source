@@ -2,7 +2,7 @@
 //
 // The node pins hold the row, the table and the shelf to one another
 // (test/survtiers.test.js); what they cannot do is press the bar. This
-// does: the Features pane draws the tile as Off | Casual | Hard with
+// does: the Settings screen (ORG2: the Gameplay tab) draws the tile as Off | Casual | Hard with
 // Casual pressed on a fresh shelf, each press writes the tier's STORED
 // value (Off the old switch's own `false`, Casual nothing - the default
 // is not a choice), the rail says what each tier costs, and a shelf
@@ -38,7 +38,8 @@ const open = async (shelf = null) => {
     await page.locator('.px-acctstage').click({ position: { x: 5, y: 5 } });
     await page.waitForSelector('.px-acctstage', { state: 'detached' });
   }
-  await page.locator('.doorbtn.door-features').first().click();
+  await page.locator('.doorbtn.door-settings').first().click();   // ORG2: the Features rows are Settings' tabs
+  await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Gameplay/ }).first().click();
   await page.waitForSelector('.ft-tile');
   const tile = page.locator('.ft-tile').filter({ hasText: 'Climates & Calories' }).first();
   return { ctx, page, tile, errors };
@@ -54,10 +55,10 @@ const shot = async (tile, name) => { if (SHOTS) await tile.screenshot({ path: `$
   check('three segments, in order', JSON.stringify(s.map((x) => x.label)) === JSON.stringify(['Off', 'Casual', 'Hard']), s.map((x) => x.label).join(' | '));
   check('Casual is pressed on a fresh shelf', s.find((x) => x.pressed)?.label === 'Casual');
   check('the tile reads on', (await tile.getAttribute('data-on')) === '1');
-  await tile.hover();
+  await tile.locator('.ft-tile-main').click();   // ORG2: a press on the row's name picks it for the help pane
   await page.waitForTimeout(60);
-  const note = await page.evaluate(() => document.querySelector('.ft-rail .ft-rail-note')?.textContent ?? '');
-  check('the rail says what each tier costs', /Casual\u2019s needs only borrow stamina/.test(note) && /repay it when met/.test(note) && /Hard costs attributes and health/.test(note) && /Off is the classic game/.test(note), note.slice(0, 160));
+  const note = await page.evaluate(() => document.querySelector('.detail .ft-card .ft-rail-note')?.textContent ?? '');
+  check('the help pane says what each tier costs', /On Casual, unmet needs only drain some stamina/.test(note) && /comes back once you\u2019ve seen to them/.test(note) && /on Hard they cost attributes and health/.test(note) && /Off is the classic game/.test(note), note.slice(0, 160));
   await shot(tile, 'surv-tier-casual');
   await tile.locator('.ft-segb').filter({ hasText: 'Hard' }).click();
   check('pressing Hard stores the tier by name', (await stored(page)) === 'hard', String(await stored(page)));
