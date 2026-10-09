@@ -1,0 +1,92 @@
+[
+  {
+    "name": "SNOWLESS1-ground-as-drawn-ignored",
+    "file": "src/world/climateSwaps.js",
+    "old": "return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);",
+    "new": "return groundIsSnowy(climateSettings, season);",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-the-add-on-not-asked",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;",
+    "new": "return s?.kind === 'array';",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-the-door-never-registered",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "setSnowlessGround(winterGroundSnowless);",
+    "new": "setSnowlessGround(null);",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-weather-reads-the-archive-law",
+    "file": "src/systems/weatherSim.js",
+    "old": "const snowy = groundWearsSnow(getWorldClimateSettings(climateIndex)",
+    "new": "const snowy = groundIsSnowy(getWorldClimateSettings(climateIndex)",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-snow-falls-on-bare-ground",
+    "file": "src/systems/weatherSim.js",
+    "old": "if (word === WEATHER_ENUM.snow) return snowy ? word : WEATHER_ENUM.rain;",
+    "new": "if (word === WEATHER_ENUM.snow) return word;",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-snow-never-asked",
+    "file": "src/systems/weatherSim.js",
+    "old": "if (!snowGroundLawOn() || (word !== WEATHER_ENUM.rain && word !== WEATHER_ENUM.thunder && word !== WEATHER_ENUM.snow)) return word;",
+    "new": "if (!snowGroundLawOn() || (word !== WEATHER_ENUM.rain && word !== WEATHER_ENUM.thunder)) return word;",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-snowfall-tile-wears-the-mask",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "bare: snowless ? () => true : ground.bare",
+    "new": "bare: false ? () => true : ground.bare",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-the-desert-edge-snows",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);",
+    "new": "const snowless = winterGroundSnowless(winterArchive);",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-snowfall-stands-in-the-snowless-swamp",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "desertNow = cs?.climateType === 0 || winterGroundSnowless(winterArchiveOf(cs));",
+    "new": "desertNow = cs?.climateType === 0;",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  },
+  {
+    "name": "SNOWLESS1-the-map-lets-snow-pass",
+    "file": "src/systems/weatherSim.js",
+    "old": "    if (word !== 'rain' && word !== 'thunder' && word !== 'snow') return word;",
+    "new": "    if (word !== 'rain' && word !== 'thunder') return word;",
+    "tests": [
+      "test/fb1009_snowless.test.js"
+    ]
+  }
+]

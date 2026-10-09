@@ -600,6 +600,18 @@ const rgbOf = (hex) => {
   const h = hex.replace('#', '');
   return `${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}`;
 };
+/** AUDIT HAUL-CARDS C4 (moved here from ui/pickupFeed.js at LOOT-BANNER, its second reader - ui/lootBanner.js): a HUD
+ *  surface that is words over the world (brass, parchment, the tiers' colours) on a veil lighter than this - Stone's panel,
+ *  0.10 relative luminance - reads at 2:1; such a theme's veil is its ink, every other its panel. */
+export const HUD_VEIL_LIGHT = 0.06;
+/** A colour's relative luminance (WCAG). */
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+/** The veil a theme lays under a HUD surface's words: its panel, or its ink where the panel is too light. */
+export const hudVeil = (th) => (th.ink && luminance(th.panel) > HUD_VEIL_LIGHT ? th.ink : th.panel);
+
 export const PLUS_THEMES = Object.freeze({
   slate: { name: 'Slate', swatch: '#171b21' },   // the kit as it stands
   stone: { name: 'Stone', swatch: '#6a6a64', ink: '#3c3c38', slate: '#4a4a45', iron: '#77776f',

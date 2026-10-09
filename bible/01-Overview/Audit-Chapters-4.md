@@ -23,7 +23,7 @@ Every finding was re-read here before a line moved. Each fix carries an `AUDIT C
 `test/audit_chap4.test.js` (27), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
 older records the fixes moved were re-aimed by content and run again, all dead; two were retired with the carry they
 mutated (CHAP4a's `CHAP4A-CARRY`, `CHAP4A-SCORE-CARRY` - E1); AUDIT CHAP3's `A3-S2-OFF`, recorded equivalent, dies now
-(S2). The service stays `acct98` and the relay `world180`: none of the arc has shipped, so migrations `0095`, `0099` and
+(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world181` since the merge of main past PERMADEATH-HOUSES and TAVERN-TABLES): none of the arc has shipped, so migrations `0095`, `0099` and
 `0100` grew in place; nothing here changes what the relay reads.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:
@@ -87,12 +87,12 @@ migrations `0095`, `0099`, `0100`)
 | T10 | low | The rolls' justification, the news pools, the Focus's faction guard. | Pinned. |
 | T (equivalence) | low | `A3-D2-STEP0`'s reason held for whole qualities only. | Its reason narrowed. |
 
-**The record** - R1 to R17: the six migrations' deploy line (`acct98`); the relay's deploy (on the merge to main, by
+**The record** - R1 to R17: the six migrations' deploy line (`acct98`, `acct99` since); the relay's deploy (on the merge to main, by
 `relay-deploy.yml`, not by hand); Appendix A (the computed regions for `ALL_CHAPTERS_KEPT_MS`, the book's 7, the
 Chronicle's 60, the roll's name, the evenings by band, the talk's days, the seats' beat); AUDIT CHAP's D6 kept; section
 11's tables (`open`, `focus`, `focus_week`, the history's `at`, `dormant`); three forward pointers; `service.js`'s
 migration numbers (and main's two names); the route list and the sheet's shape; Testing's rows (chap1's version,
-audit_chap2's 158 and 8, chap4c's relay, founder5's history); chap4c's header and its relay pin (`world180`, its own
+audit_chap2's 158 and 8, chap4c's relay, founder5's history); chap4c's header and its relay pin (`world180`, `world181` since; its own
 row); Active-Arcs' CHAP4c/4d attribution; the Page-Index line; AUDIT CHAP2's renumbering history; the stock law's
 comment (count alone); the tracker's lease stop (that lease alone).
 

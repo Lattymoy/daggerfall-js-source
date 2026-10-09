@@ -158,8 +158,8 @@
   {
     "name": "CSAK-peers-peek-late",
     "file": "src/scenes/comeSailAwayPeers.js",
-    "old": "const p = nextPose(s, l.boats[i], l.toScene, dt, l.age + Math.max(0, dt));",
-    "new": "const p = nextPose(s, l.boats[i], l.toScene, dt, l.age);",
+    "old": "const p = nextPose(s, w, l.toScene, dt, l.age + Math.max(0, dt));",
+    "new": "const p = nextPose(s, w, l.toScene, dt, l.age);",
     "tests": [
       "test/csa_together.test.js"
     ]
@@ -836,6 +836,24 @@
     "file": "src/scenes/world.js",
     "old": "if (!csaRuntime || !csaOn() || !isEnhancedPlus() || typeof document === 'undefined' || !walkMode) {",
     "new": "if (!csaRuntime || !csaOn() || typeof document === 'undefined' || !walkMode) {",
+    "tests": [
+      "test/csa_together.test.js"
+    ]
+  },
+  {
+    "name": "FB1009-peek-unnamed-place",
+    "file": "src/scenes/comeSailAwayPeers.js",
+    "old": "if (!w || w.hull !== s.hull) return null;",
+    "new": "if (w.hull !== s.hull) return null;",
+    "tests": [
+      "test/csa_together.test.js"
+    ]
+  },
+  {
+    "name": "FB1009-peek-other-hull",
+    "file": "src/scenes/comeSailAwayPeers.js",
+    "old": "if (!w || w.hull !== s.hull) return null;",
+    "new": "if (!w) return null;",
     "tests": [
       "test/csa_together.test.js"
     ]

@@ -1,6 +1,6 @@
 // CHAP4c (2026-10-08, Mac: "Your call", the Chapters arc's seats - bible/11-Multiplayer/Chapters-Arc.md section 6): THE
 // CHAPTERS' TITLES ON THE TOKEN - three generic ids (a chapter's Master, an officer, a Master who lost the seat this
-// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world180; AUDIT CHAP4 R12);
+// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world181; AUDIT CHAP4 R12, then past TAVERN-TABLES at the merge);
 // the client wording them without gender; the service deriving them from the seats and the Chronicle, behind
 // CHAPTER_TITLES (shipped off: the relay goes first).
 import { test } from 'node:test';
@@ -35,7 +35,7 @@ test('CHAP4c the vocabulary: three chapter title ids, last in the closed list; e
   assert.deepEqual(row.ts, [4121, 2], 'the relay stamps the claim off the token');
   assert.deepEqual(readBadge({ title: 'chapterofficer', ts: [4121, 2], glyphs: [] }).ts, [4121, 2], 'and reads it back');
   assert.equal(readBadge({ title: 'founder', ts: [4121, 2], glyphs: [] }).ts, undefined, 'never beside a title that rides alone');
-  assert.equal(RELAY_VERSION, 'world180');   // PIN MOVED: world180, CHAP4c (the chapters' seats' titles on the token - past HOURS-FIRST's world179 at the merge of main); PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
+  assert.equal(RELAY_VERSION, 'world181');   // PIN MOVED: world181, CHAP4c (past TAVERN-TABLES' world180 at the merge of main); PIN MOVED: world180, CHAP4c (the chapters' seats' titles on the token - past HOURS-FIRST's world179 at the merge of main); PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
 });
 
 // ── THE LAW AND THE WORDS ───────────────────────────────────────────
@@ -135,7 +135,7 @@ test('CHAP4c a Former Master: a Master\'s seat lost this Season titles its chara
 
 test('CHAP4c the wiring: the relay\'s version is a new one with its law; the toml ships the switch off; the wardrobe and the mint lay the chapters\' titles (mutants: each seam)', () => {
   assert.match(rd('server-account/wrangler.toml'), /\nCHAPTER_TITLES = "off"\n/);
-  assert.match(rd('test/relayversion.test.js'), /\n  world180: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (AUDIT CHAP4 R12): world180, CHAP4c's own row - world179's is HOURS-FIRST's since the merge of main
+  assert.match(rd('test/relayversion.test.js'), /\n  world181: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (AUDIT CHAP4 R12): CHAP4c's own row - world179's is HOURS-FIRST's and world180's TAVERN-TABLES' since the merges of main
   const ix = rd('server-account/src/index.js');
   assert.match(ix, /const withSeatTitles = async \(ctx, player, env\) => withChapterTitles\(ctx, /);
   assert.match(ix, /const worn = await withChapterTitles\(ctx, seats \? /);

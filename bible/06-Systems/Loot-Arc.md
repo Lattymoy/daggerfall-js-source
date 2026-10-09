@@ -200,7 +200,7 @@ Exalted 10 and 2,000.
 
 **The codex.** Every Legendary record - and every Aetheric piece - a character has TAKEN is in its codex, with the day
 it was first found. The first find is said and heard (the HUD's line, the level-up's fanfare): *"Wyrmbane - a
-Legendary! It joins your codex."* The Codex window lists every Legendary record (thirty at LOOT10; the wardrobe's six and the Thunderlock since - AUDIT CARDS-5 R1) and the Aetheric sets - and so does the Holdings rail's Collections page (`11-Multiplayer/Tavern-Cards.md` section 26), the same rows and lines: a found record's name,
+Legendary! It joins your codex."* (LOOT-BANNER, 2026-10-09: on Enhanced Plus the loot banner announcing the piece says it instead - a "New to your codex" chip and the same chime; the classic skin keeps the line. `10-UI/Loot-Banner.md` section 4.) The Codex window lists every Legendary record (thirty at LOOT10; the wardrobe's six and the Thunderlock since - AUDIT CARDS-5 R1) and the Aetheric sets - and so does the Holdings rail's Collections page (`11-Multiplayer/Tavern-Cards.md` section 26), the same rows and lines: a found record's name,
 lore, lines, power and where it is found; an unfound one's place and its hint (*"Said to be carried by the
 undead"*). It rides the character's save (a mod record).
 

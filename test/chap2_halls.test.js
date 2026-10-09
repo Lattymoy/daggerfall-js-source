@@ -459,7 +459,7 @@ test('CHAP2a the wiring: the halls witnessed at the town\'s entry edge off the r
   assert.match(board, /`Wanted: \$\{w\.qty\} \$\{work\.countName\(w\.material, w\.qty\)\}, for the \$\{poster\} in \$\{work\.regionName\}`/);
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/witness'/);
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/witness' \? await witnessHall\(ctx, who\.player, env, body\)/);
-  assert.match(src('server-account/src/service.js'), /ACCOUNT_VERSION = 'acct98'/);   // PIN MOVED: acct98, the Chapters (CHAP1-CHAP5b) past SERVER-POST and HOURS-FIRST's acct97 at the merge of main; PIN MOVED: acct97, the Chapters past TAVERN CARDS' acct96 at the merge; acct96, the Chapters past SCALE4's acct95 at the merge; acct95, the Chapters (CHAP1-CHAP3a) past SD9b at the merge
+  assert.match(src('server-account/src/service.js'), /ACCOUNT_VERSION = 'acct99'/);   // PIN MOVED: acct99, the Chapters past PERMADEATH-HOUSES' acct98 at the merge of main; PIN MOVED: acct98, the Chapters (CHAP1-CHAP5b) past SERVER-POST and HOURS-FIRST's acct97 at the merge of main; PIN MOVED: acct97, the Chapters past TAVERN CARDS' acct96 at the merge; acct96, the Chapters past SCALE4's acct95 at the merge; acct95, the Chapters (CHAP1-CHAP3a) past SD9b at the merge
   assert.match(src('server-account/wrangler.toml'), /CHAPTERS_OPEN = "dev"/);
   assert.match(src('server-account/migrations/0096_npc_halls.sql'), /kind IN \('pixel', 'dungeon', 'hub', 'seat', 'npchall'\)/);
 });

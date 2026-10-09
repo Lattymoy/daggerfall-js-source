@@ -505,7 +505,18 @@ export function createWorldModes(host) {
     const t = interiorCtx?.tables?.[i];
     return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];   // the room never moves: probed once a visit (AUDIT CARDS B6: round the table's own box, turned by its matrix)
   };
+  /** TAVERN-TABLES (section 30): the room's table at `i` plays for gold - online, the relay's own index for it
+   *  (net/holdemTable.js HOLDEM_GOLD_TABLE, the gold-felted table scenes/interiorContext.js stands second). */
+  const cardTableGold = (i) => !!interiorCtx?.tables?.[i]?.gold;
+  /** TAVERN-TABLES: why this player may not sit at the gold table (a key of CARD_GOLD_BARRED), or null - online it seats
+   *  a realm character's stake, at a relay that deals, and nobody else; offline it is a table like the other. */
+  const cardGoldBarred = (i) => (!cardTableGold(i) || !isOnlinePage() ? null : !host.cardStakes?.goldOk?.() ? 'realm' : !host.cardOnline?.ok?.() ? 'relay' : null);
+  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold - only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold, and the relay is not dealing right now - the green table plays for chips.' });
   function sitAtCardTable(i) {
+    // TAVERN-TABLES: told before he sits - the relay refuses a sit at the gold table with no stake, and the refusal
+    // stood him up (the owner's report: one table, and "it doesnt let him use gold tables")
+    const barred = cardGoldBarred(i);
+    if (barred) { say(CARD_GOLD_BARRED[barred]); return; }
     const seats = cardSeatsOf(i);
     const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));   // AUDIT CARDS B3: another player's seat is theirs
     if (k < 0) { say('Every seat at this table is taken.'); return; }
@@ -566,7 +577,7 @@ export function createWorldModes(host) {
     if (cardGame) closeCardGame();
     const stakes = stakesFor(interiorBuilding?.quality ?? 10);
     // CARDS6: online, a realm character plays for gold at the relay's table - its stake held by the service (net/cardStakes.js)
-    const goldOnline = !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();
+    const goldOnline = cardTableGold(cardSeat?.table ?? -1) && !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();   // TAVERN-TABLES: at the gold table alone - a realm character plays for chips at the other
     const friendly = !goldOnline && (!!host.realmAct || isOnlinePage());
     const buyIn = buyInRange(goldOnline ? host.cardStakes.purse() ?? 0 : friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
     const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), regulars: null, barks: new Map(), key: cardTableKey(), day: cardDay(), session: null, remote: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer), paintedAt: 0 };   // CARDS3: the draw makes nothing until the first card

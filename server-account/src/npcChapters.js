@@ -188,7 +188,7 @@ async function seatsPlaced(db, week, turning, open, opened, chapters) {
 }
 
 /** CHAP4c: whether the chapters' titles are minted for this account - the Chapters open to it and CHAPTER_TITLES on. The
- *  relay must carry the three ids (RELAY_VERSION world180) before this is turned on: a token with a title the relay does
+ *  relay must carry the three ids (RELAY_VERSION world181) before this is turned on: a token with a title the relay does
  *  not know is refused at the hello. */
 export const chapterTitlesOpenFor = (/** @type {any} */ player, /** @type {any} */ env) => env?.CHAPTER_TITLES === 'on' && chaptersOpenFor(player, env);
 

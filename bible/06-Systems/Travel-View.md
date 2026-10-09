@@ -2009,3 +2009,16 @@ reader's own doors; the model's pick and place; the grow; the matrix and the dra
 and draw run over stubs); `tools/mutants/owdungeons.json` (45, all dead). RE-AIMED BY CONTENT, each still dead: `ow3d.json`
 (`OW3D3-spawns-snapshotted`) and `ow4d.json` (`OW4D4-filed-dropped`) - TV6's spawns line has a twin in the models' list,
 so each names TV6's own by the `isFound, spawns:` beside it.
+
+**TV-BURST and TV-PIN (FIELD BUGS 2026-10-09, Shabalako: "The first time I open the overworld travel the game has a big
+freeze").** The view's first frame started all twelve loads at once, inside its draw - each one's blocks laid and its
+ARCH3D meshes read on that frame, then its model built and its pictures and its climate's uploaded. Now the loads start
+ONE A FRAME, the nearest first, and none until the view is fully up (`systems/travelDungeonModels.js`
+`startDungeonLoads`, `TV_DUNGEON_LOADS_PER_FRAME`; the host hands the view frame's `fullyUp`); what left the set is
+still let go every frame. The view down lets every model go to its place's shelf (`dropTvDungeonModels` - they were
+held, undrawn, until a load), so the next view starts its own. And the climate's pictures went up through the host's
+PINNED door (`dataPipeline.js` pinnedUpload): every climate and season picture of every dungeon the view ever stood
+stayed on the GPU for the session. They go through the place's own hold now (`remapSubMeshes` handed `getTexture` and
+the hold's `uploadRecord`), and are freed with it - proved on the real pipeline and renderer over a counting GL in
+`test/fb1009_travelperf.test.js` (with `tools/mutants/fb1009_travelperf.json`); `owdungeons.test.js`'s draw pin and
+four of its records re-aimed by content, each still dead.

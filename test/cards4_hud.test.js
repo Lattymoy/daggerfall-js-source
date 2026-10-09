@@ -114,7 +114,7 @@ test('CARDS4 the interior host: the table on the seat, the purse only off the on
   has("    say('You take a seat at the card table.');\n    if (cardSeat.free.length || host.cardOnline?.ok?.()) openCardGame(cardSeat.free.length + 1);", 'sitting opens the table - sized to the free chairs; online the relay\'s table needs none');
   has('    closeCardGame({ cashOut });   // CARDS4: every road off the seat cashes the table out', 'standing closes it - press, step, swing, Escape, a hit, the forced exit and the door all stand through standFromCardTable');
   has('    const friendly = !goldOnline && (!!host.realmAct || isOnlinePage());', 'a realm character, or any online page, plays a friendly game - CARDS6: but at the relay\'s gold table, for its staked gold');
-  has('    const goldOnline = !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();', 'CARDS6: a realm character online, at a relay that deals');
+  has('    const goldOnline = cardTableGold(cardSeat?.table ?? -1) && !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();', 'CARDS6: a realm character online, at a relay that deals - PIN MOVED (TAVERN-TABLES, world180): at the gold table alone');
   has('    const buyIn = buyInRange(goldOnline ? host.cardStakes.purse() ?? 0 : friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);');
   has("      if (!game.friendly && amount > goldAmount(playerEntity)) { paintCardGame(); return; }", 'the buy-in from the purse, never more than it holds, never online');
   has("      if (!game.friendly) deductGold(playerEntity, amount);");

@@ -10043,9 +10043,19 @@ home's alone - they are about other players.
   (YARD-LIGHT, below: no light OF ITS OWN - a yard's lamp lights as the town lights its own.)
 - **The frame** is the building's own place in its town (`world/rmbLayout.js` `recordAt`, the subrecord's origin -
   not a DFU field) in the world's axes, as a room's pieces stand from the door; `scenes/world.js` records each
-  building's frame and the box round its models at the build (`homeFrames`).
-- **The lot** (`scenes/homeYards.js` yardLot, yardWhyNot): the house's footprint and six metres round it, never inside
-  the house (its roof neither) and never on another building's footprint. The client measures it - the service has no
+  building's frame, the box round its models and - FB1009 HOME-FOOT - the ground its models stand on at the build
+  (`homeFrames`: `world.js:"const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);"`).
+- **The lot** (`scenes/homeYards.js` yardLot, yardWhyNot): the box round the house and six metres round it, never inside
+  the house (its roof neither) and never on another building's ground. FB1009 HOME-FOOT (the Discord's "Property
+  Problem": "I can't place in front of my door but I can place in front of another's home"): a building's ground is
+  what its models' faces cover seen from above - roofs, eaves, a stair's treads, never a wall
+  (`homeYards.js:"export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {"`, 0.4 m cells, measured
+  once a model), placed where the building stands (footRectsAt) - not the box round them. Hammerfell's houses are
+  L-shaped or stand an outside stair before their door (ARCH3D 600, 709 and their kin), so the box held the open ground
+  their door opens onto: the step before the owner's own door was "inside your house" for 5,166 of the desert's 11,701
+  houses, and a neighbour whose door is in its box's side stood free. On that ground 930 still are (a door under its
+  own roof), and every point inside a door stays the house; a frame without its ground is its box, as before. The
+  client measures it - the service has no
   town to measure in - and the decorator refuses a piece off it (`placeOk`: "Outside your lot - keep it within the
   marked edge.", "That is inside your house...", "That is another building's ground."); the lot's edge is MARKED while
   a piece is placed (four upright bands on the decal pass, `lot`).

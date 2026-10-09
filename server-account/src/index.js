@@ -192,7 +192,7 @@ import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: th
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
-import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
+import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
 import { roomsOf, offerRoom, withdrawRoom, rentRoom, collectRent } from './rent.js';   // HOME-RENT: a home's rooms, rented
 import {
   foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
@@ -1187,6 +1187,13 @@ const service = {
           if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // as /v1/homes/claim answers it
           const status = r.error === 'home-taken' || r.error === 'home-arena' ? 409 : r.error === 'home-rate' ? 429 : r.error === 'no-deed' || r.error === 'no-realm-character' ? 404 : 400;
           return no(r.error, status, origin);
+        }
+        if (path === '/v1/homes/inherit') {
+          // PERMADEATH-HOUSES: a fallen member's home taken up by a living realm character of their line (homes.js
+          // inheritHome) - the tombstone gate above has already refused a `character` that is dead
+          const r = await inheritHome(hctx, who.player, body);
+          if (!('error' in r)) return json(r, 200, origin);
+          return no(r.error, r.error === 'not-heir' ? 403 : r.error === 'no-home' ? 404 : r.error === 'homes-need-account' ? 403 : 400, origin);
         }
         if (path === '/v1/homes/claim') {
           const r = await claimHome(hctx, who.player, body);
