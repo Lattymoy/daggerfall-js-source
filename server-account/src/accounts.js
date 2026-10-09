@@ -42,6 +42,7 @@ import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';   // MOD1: the longest mute - the command and the service agree in one place
 import { verifyReceipt } from '../../src/net/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
+import { verifyDuelReceipt } from '../../src/net/duelReceipt.js';   // INT8: a duel's result, the relay's
 import { TERMS_VERSION, PRIVACY_VERSION, LEGAL_VERSION_RE } from '../../src/net/legalLaw.js';   // TERMS1: the documents a new account agrees to - one home both ends
 import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
@@ -788,43 +789,22 @@ export async function setEmail({ db }, playerId, email) {
 // ═══ DUEL1 (2026-09-24) - THE DUELLING RECORD ════════════════════════
 //
 // Mac: "Add a dueling K/D to the profile menu and player inspect
-// profile", per account. A duel is fought between two clients over the
-// relay (src/net/duelSession.js); THE LOSER'S OWN CLIENT reports it,
-// naming the winner by the account the relay verified off the winner's
-// token and stamped on the winner's frames. So this service is told a
-// loss by the account that took it - never a win by the account that
-// claims it - and the one thing a lying client can do to the record is
-// hand somebody else wins at the cost of its own losses. The bounds
-// keep even that honest: a loser reports at most once a
-// DUEL_REPORT_GAP_S (a duel has a count and a fight in it before it
-// can end), one pair's results are capped at DUEL_PAIR_DAY_MAX a day,
-// so two friends cannot mint a hundred wins an evening, and one
-// winner's at DUEL_WINNER_DAY_MAX a day, from anyone.
+// profile", per account. A player's wins are the rows of duel_results
+// naming them the winner, and their losses the rows naming them the
+// loser. DUEL1 wrote a row on the LOSER's own report, naming the winner
+// by the account the relay stamped on the winner's frames; INT8 (below)
+// writes it on the relay's signed receipt instead, and the report
+// retired with the defender-resolved blow (the route answers `retired`).
 //
-// AUDIT DUEL1 A1: AND A RECORD IS BETWEEN TWO REGISTERED ACCOUNTS. A
-// guest costs nothing to make (a POST, sixty an address a quarter of an
-// hour), so with guests counted, five of them posting a loss each every
-// sixteen seconds gave any account they named fifty wins in a quarter
-// of an hour - no duel, no relay. A registered account is a handle and
-// a password; a guest's duel is fought, and simply not counted.
-//
-// ONE STATEMENT IS THE WRITE, AND THE BOUNDS ARE IN IT. The INSERT
-// lands only when the winner exists, the gap has passed and the pair is
-// under its bound - measured inside the same statement, so two tabs
-// reporting at once cannot both slip under a bound that a read-then-
-// write would have checked twice against the same state.
-export const DUEL_REPORT_GAP_S = 15;
+// AUDIT DUEL1 A1: A RECORD IS BETWEEN TWO REGISTERED ACCOUNTS. A guest
+// costs nothing to make, so a guest's duel is fought, and simply not
+// counted. One pair's results are capped at DUEL_PAIR_DAY_MAX a day, so
+// two friends cannot mint a hundred wins an evening, and one winner's at
+// DUEL_WINNER_DAY_MAX a day, from anyone - measured inside the one
+// INSERT that is the write, so two claims at once cannot both slip under
+// a bound a read-then-write would have checked twice.
 export const DUEL_PAIR_DAY_MAX = 10;
 export const DUEL_WINNER_DAY_MAX = 20;
-/** AUDIT DUEL1 B5: a DOUBLE KNOCKOUT is a draw. Each side's own fall ends
- *  its own duel as lost, so both losers report, and each report names
- *  the other. Two reports in opposite directions this close together are
- *  one exchange: the second finds the first and takes it away, and
- *  neither counts. Closer than any second duel between the two could
- *  follow (the heal's hold, an ask, an answer and the 3 s count). The
- *  one row a report can remove names ITS OWN SENDER the winner, so all
- *  a lying client can take away is a win of its own. */
-export const DUEL_MUTUAL_S = 4;
 const DAY_S = 24 * 3600;
 
 /** An account's record: `{ wins, losses }`, counted off the results. */
@@ -835,45 +815,56 @@ export async function duelRecordOf({ db }, playerId) {
   return { wins: n(w), losses: n(l) };
 }
 
+// ═══ INT8 (2026-10-09) - A DUEL'S RESULT, THE RELAY'S ═════════════════
+//
+// The INTEGRITY arc's lane 2 (bible/06-Systems/Integrity-Arc.md; Mac: "I
+// want to do everything and do it properly"). DUEL1's record was the
+// LOSER's own report - a client that never said it lost never did, and
+// a double knockout was two reports racing. Now the relay that refereed
+// the bout (src/net/duelRef.js) hands BOTH fighters a receipt naming the
+// winner (src/net/duelReceipt.js `d1`), signed with the key the gates'
+// receipts are; either fighter carries it here, and it is counted ONCE -
+// its bout's id is the row's (`rk`, unique). A draw mints nothing.
+//
+// DUEL1's bounds stand, inside the one INSERT: two registered accounts
+// (AUDIT DUEL1 A1), the same winner over the same loser at most
+// DUEL_PAIR_DAY_MAX a day, one winner's at most DUEL_WINNER_DAY_MAX a
+// day. The report's gap and the mutual draw retire with the report: the
+// relay paces the bouts and says a draw itself.
 /**
- * The loser's report: `winner` the account the relay stamped on the
- * winner's frames. `{ recorded, wins, losses }` - the loser's own record
- * after it - or `{ error }` for a winner that is no account's shape or
- * is the loser themselves. A report a bound refuses is `recorded: false`
- * with `why` - 'guest' (either side has no handle), 'draw' (the winner's
- * own loss to this loser came in DUEL_MUTUAL_S ago: a double knockout,
- * and that row is gone too), 'gap', 'pair' or 'winner' - not an error:
- * the duel was fought, it simply does not count.
+ * A duel's receipt carried by one of its two fighters (the session's
+ * account must be one of `f`). `{ recorded, wins, losses }` - the
+ * caller's own record after it; `recorded` true where the bout is
+ * counted, by this claim or by its other fighter's - or `{ recorded:
+ * false, why }` ('guest', 'pair', 'winner'): the duel was fought, and
+ * simply does not count. `{ error }`: 'no-gate-key', 'receipt' (with
+ * its `why`), 'not-yours'.
  */
-export async function reportDuelLoss({ db, nowS }, loser, winner) {
-  if (typeof winner !== 'string' || !ID_RE.test(winner)) return { error: 'no-player' };
-  if (winner === loser.id) return { error: 'self' };
-  if (!loser.handle) {
-    const w = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(winner).first();
-    if (!w) return { error: 'no-player' };
-    return { recorded: false, why: 'guest', ...(await duelRecordOf({ db }, loser.id)) };
-  }
-  const mutual = await db.prepare('DELETE FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at >= ?3 - ?4')
-    .bind(winner, loser.id, nowS, DUEL_MUTUAL_S).run();
-  if (Number(mutual?.meta?.changes ?? 0) > 0) return { recorded: false, why: 'draw', ...(await duelRecordOf({ db }, loser.id)) };
+export async function claimDuel({ db, nowS, subtle }, player, receipt, publicKey) {
+  if (!publicKey) return { error: 'no-gate-key' };
+  const v = await verifyDuelReceipt(receipt, publicKey, { subtle, nowS });
+  if (!v.ok) return { error: 'receipt', why: v.why };
+  const c = v.claims;
+  if (!c.f.includes(player.id)) return { error: 'not-yours' };
+  const winner = c.f[c.w], loser = c.f[1 - c.w];
   const r = await db.prepare(
-    `INSERT INTO duel_results (loser, winner, at)
-     SELECT ?1, ?2, ?3
-     WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)
-       AND NOT EXISTS (SELECT 1 FROM duel_results WHERE loser = ?1 AND at > ?3 - ?4)
+    `INSERT INTO duel_results (loser, winner, at, rk)
+     SELECT ?1, ?2, ?3, ?4
+     WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)
+       AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)
+       AND NOT EXISTS (SELECT 1 FROM duel_results WHERE rk = ?4)
        AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) < ?6
        AND (SELECT COUNT(*) FROM duel_results WHERE winner = ?2 AND at > ?3 - ?5) < ?7`,
-  ).bind(loser.id, winner, nowS, DUEL_REPORT_GAP_S, DAY_S, DUEL_PAIR_DAY_MAX, DUEL_WINNER_DAY_MAX).run();
-  const recorded = Number(r?.meta?.changes ?? 0) > 0;
-  if (recorded) return { recorded, ...(await duelRecordOf({ db }, loser.id)) };
-  // Refused: which bound, read after the fact - the INSERT above is still the only write, so this can only name one
-  const w = await db.prepare('SELECT handle FROM players WHERE id = ?1').bind(winner).first();
-  if (!w) return { error: 'no-player' };
+  ).bind(loser, winner, c.i, c.n, DAY_S, DUEL_PAIR_DAY_MAX, DUEL_WINNER_DAY_MAX).run();
+  const mine = () => duelRecordOf({ db }, player.id);
+  if (Number(r?.meta?.changes ?? 0) > 0) return { recorded: true, ...(await mine()) };
+  // Refused or already counted: which, read after the fact - the INSERT above is still the only write
+  if (await db.prepare('SELECT 1 AS x FROM duel_results WHERE rk = ?1').bind(c.n).first()) return { recorded: true, ...(await mine()) };
+  const handles = await db.prepare('SELECT COUNT(*) AS n FROM players WHERE id IN (?1, ?2) AND handle IS NOT NULL').bind(loser, winner).first();
   const n = (row) => Number(row?.n ?? 0);
-  const gap = n(await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND at > ?2 - ?3').bind(loser.id, nowS, DUEL_REPORT_GAP_S).first());
-  const pair = n(await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?4').bind(loser.id, winner, nowS, DAY_S).first());
-  const why = !w.handle ? 'guest' : gap > 0 ? 'gap' : pair >= DUEL_PAIR_DAY_MAX ? 'pair' : 'winner';
-  return { recorded, why, ...(await duelRecordOf({ db }, loser.id)) };
+  const pair = n(await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?4').bind(loser, winner, c.i, DAY_S).first());
+  const why = n(handles) < 2 ? 'guest' : pair >= DUEL_PAIR_DAY_MAX ? 'pair' : 'winner';
+  return { recorded: false, why, ...(await mine()) };
 }
 
 // ═══ WB5b (2026-09-25) - THE GATES CLOSED ════════════════════════════

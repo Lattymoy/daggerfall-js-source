@@ -3279,7 +3279,7 @@ The times are Discord's stamps (`<t:...:R>`), drawn in each reader's own clock.
   (`serpentHeraldRole`). That role is the only mention Discord may make; a finder's and a fighter's names are held to
   letters, digits, spaces and a little punctuation (`heraldName`). No webhook, no herald: nothing posted, nothing kept.
 
-**The relay: `world185`** (NOT YET DEPLOYED - a deploy drops every player once). `net/sdHerald.js` and
+**The relay: `world186`** (`world185` on its branch, renumbered past main's INT7-INT10 `world185` at the merge; NOT YET DEPLOYED - a deploy drops every player once). `net/sdHerald.js` and
 `formats/mapsTables.js` join the bundle (the herald after `sdLaw.js`; the table a verbatim leaf that imports nothing).
 No frame changes shape, no client changes, and nothing else in the order moves.
 
@@ -3289,7 +3289,7 @@ fade. The grace exists so that this is rare; posting a correction would need a f
 
 Pins: `test/sdherald.test.js` (10 - the names, each post, what is owed through a Hollow's life, the hub over the real
 Room with Discord stubbed, no webhook, the door and the order by source); `tools/mutants/sdherald.json` (34, all dead).
-PIN MOVED: RELAY_VERSION's pin in 37 files, disc7's list of versions, soc1.json's S38-version-not-bumped (world185),
+PIN MOVED: RELAY_VERSION's pin in 37 files, disc7's list of versions, soc1.json's S38-version-not-bumped (world186),
 relayversion's bundle graph, and `test/sd3_relay.test.js`'s pin on the hub's alarm (the herald after the director's
 beat); two records re-aimed by content - `discordgates.json`'s door (the door holds `sdRole` too) and `serpent2.json`'s
 beat off the alarm (the alarm line ends with this herald's beat) - both lists and `sd3.json` run again, all dead.

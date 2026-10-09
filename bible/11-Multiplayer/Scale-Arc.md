@@ -385,7 +385,7 @@ could be served by a D1 read replica. And the tables nothing swept grew for ever
 **Measured:** -13.7% statements on SCALE4a's (-15.1% of the play's) and -15.3% rows read. The board's read went from 6
 statements to 4, and the sweeps' scans are gone from the rows read. The clock itself cost 4.4 statements a bot-hour
 here: six minutes' firings and one hour's. On a quiet world it is about five statements a minute and seventeen an hour,
-however many play (pinned, AUDIT SCALE D7) - nineteen since INT2/INT5's two sweeps (`06-Systems/Integrity-Arc.md`).
+however many play (pinned, AUDIT SCALE D7) - twenty since INT2/INT5's two sweeps and INT9's (`06-Systems/Integrity-Arc.md`).
 
 **Pins.** `test/scale4b.test.js` (6), over the real Worker. `tools/mutants/scale4b.json`: 27 mutants, 27 dead
 (SCALE4b-sessions-unindexed retired by AUDIT SCALE A6); five earlier records re-aimed by content, and the 18 aimed into

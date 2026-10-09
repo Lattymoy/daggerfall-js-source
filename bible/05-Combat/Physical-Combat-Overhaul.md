@@ -109,7 +109,8 @@ Daedric cuirass's 6.4-10.6 a monster's blow -> 0 and an armed foe's 6.4 ->
 
 **Below the reduction (AUDIT ECON W1, 2026-10-01).** DFU's member is handed
 the damage the blow DEALT - after the overhaul's armour reduction, as the
-duel already read it (`scenes/world.js`, the defender's own damage). DFU's
+duel already read it (`scenes/world.js`, the defender's own damage - INT8, 2026-10-09: the duel's blow is the relay's
+since, and its wear the striker's on what the referee let land). DFU's
 armour turns a blow aside, and the blow wears nothing; the redone formula
 lets nearly every blow land (a Knight's on a steel-clad player 0.70 -> 0.97
 of his swings) and takes its share off instead, so the share it took wears

@@ -30,10 +30,13 @@ const mkPlayer = (o = {}) => ({ isPlayer: true, level: 9, raceId: 2, stats: stat
 const SWORD = 118;   // a Long Blade's template (characters/weapons.js weaponSkillUsed)
 const AXE = 127;     // an Axe's - a weapon whose skill slot is NOT the long blade's
 
-/** The frame a striker's host would send, through the relay's own law. */
+/** The strike a striker's own game rolls (scenes/world.js duelStrikeOut, siegeStrikeOut): its sheet, its weapon, its
+ *  swing. PIN MOVED (INT8, bible/06-Systems/Integrity-Arc.md lane 2): this was the frame a striker's host SENT, through
+ *  the relay's law, for the DEFENDER to resolve - a sheet rides no wire now (the referee clips the striker's number), and
+ *  the same strike is rolled on the striker's own machine against a stand-in of its own sheet. */
 function strikeFrom(attacker, weapon, { by = 'melee', sw = 'StrikeDown', at } = {}) {
   const w = duelWeaponOf(weapon);
-  return validDuelData({ to: 'peer-0002', s: 'abc123def0', k: 'strike', n: 1, by, p: [1000, 0, 1000], a: duelAttackerOf(attacker, weapon), ...(w ? { w } : {}), sw, ...(at ? { at } : {}) });
+  return { by, a: duelAttackerOf(attacker, weapon), ...(w ? { w } : {}), sw, ...(at ? { at } : {}) };
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
@@ -45,7 +48,7 @@ test('DUEL1 THE STUB IS THE STRIKER: the defender\'s resolution off the wire\'s 
         if (weapon) weapon.currentCondition = Math.round(weapon.maxCondition * 0.8);
         const attacker = mkPlayer({ skills: { ...skillsAll(35), [SKILLS.LongBlade]: 64, [SKILLS.Axe]: 88, [SKILLS.HandToHand]: 41, [SKILLS.CriticalStrike]: 27, [SKILLS.Backstabbing]: 12 } });
         const frame = strikeFrom(attacker, weapon);
-        assert.ok(frame, 'the sheet passes the relay\'s law');
+        assert.ok(frame.a, 'the striker\'s sheet');
         let total = 0;
         for (let seed = 1; seed <= 60; seed++) {
           const d1 = mkPlayer({ level: 7, raceId: 1 }), d2 = clone(d1);
@@ -71,7 +74,8 @@ test('DUEL1 the sheet the wire carries: level and attributes clamped at the hone
   assert.equal(a.sk[0], 100, 'Long Blade, the longsword\'s, clamped');
   assert.equal(duelAttackerOf(big, null).sk[0], 20, 'a fist\'s first slot is HandToHand');
   assert.deepEqual(a.cf, [0, 0x00070000, 0]);
-  assert.ok(validDuelData({ to: 'peer-0002', s: 'abc123def0', k: 'strike', n: 1, by: 'melee', p: [1, 1, 1], a }), 'clamped, it passes');
+  // PIN MOVED (INT8): 'clamped, it passes' the relay's law - a sheet rides no wire now; a strike carries its number
+  assert.equal(validDuelData({ to: 'peer-0002', s: 'abc123def0', k: 'strike', n: 1, by: 'melee', p: [1, 1, 1], a }), null, 'a sheet and no number: refused');
   const w = createWeapon(SWORD, 3, () => 0.5);
   w.currentCondition = Math.round(w.maxCondition / 4);
   assert.deepEqual(duelWeaponOf(w), { t: SWORD, m: 3, c: 25 });
@@ -160,7 +164,7 @@ test('DUEL1 WHERE A BLOW MAY COME FROM: the striker\'s claimed feet near where t
   assert.equal(duelBlowPlausible({ k: 'spell', p: at(2 * DUEL_RADIUS_M + DUEL_POS_SLACK_M + 1) }, me, at(2 * DUEL_RADIUS_M + DUEL_POS_SLACK_M + 1), DUEL_RADIUS_M), false, 'from beyond the ring');
 });
 
-test('DUEL1 hosts by source: the swing reaches my opponent before any pool and is theirs when it left; my shaft on them is a strike and a foe\'s stops on them; my harmful spells meet them as a mark (touch, missile, blast, area) through the duel\'s door; the defender resolves on its own sheet with the floor and answers; the travel map, a journey, rest and every door refuse a duellist (mutants: the melee arm after the pools; the shaft\'s damage dealt at home; the spell sink unfloored; a door out of the ring)', () => {
+test('DUEL1 hosts by source: the swing reaches my opponent before any pool and is theirs when it left; my shaft on them is a strike and a foe\'s stops on them; my harmful spells meet them as a mark (touch, missile, blast, area) through the duel\'s door; INT8: my blow out a number rolled on my own sheet for the referee, the defender\'s half gone; the travel map, a journey, rest and every door refuse a duellist (mutants: the melee arm after the pools; the shaft\'s damage dealt at home; a defender\'s half left; a door out of the ring)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(duelMeleeHit\(cam\.pos, makeInView\(proj, view, multiply\)\)\) \{\s*\n\s*tallySwingSkills\(playerEntity, weaponRig\.playerWeapon\.weapon\);\s*\n\s*surfacePlayer\(\);\s*\n\s*\} else if \(!cityGuards\.resolvePlayerHit/, 'the duel arm first, the ladder after');
   assert.match(w, /\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\), \.\.\.duelArrowTargets\(\)\]/);
@@ -168,10 +172,14 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   // PIN MOVED (AUDIT-SEATS): the shaft's target's id rides too - outside a duel, a battle's foe it struck (G5's shaft)
   assert.match(w, /onPlayerArrowHitFoe: \(m, t\) => \(t\?\.duel \? duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id\) : playerArrowHitFoe\(m, t, \{/);
   assert.match(w, /castAtDuel: \(id, sp\) => duelSpellOut\(id, sp\),/);
-  assert.match(w, /hurt: \(n\) => \{ if \(n > 0\) hurtPlayer\(playerEntity, n, _duelScope \? \{ spare: duelSpare \} : undefined\); \}/);
-  assert.match(w, /_duelScope = true;\s*\n\s*try \{ magic\.applySpellToPlayer\(spell, d\.level, null, \{ duelCast: true \}\); \} finally \{ _duelScope = false; \}/);
-  assert.match(w, /const r = resolveDuelStrike\(d, playerEntity, \{ backFacing: isBackFacing\(cam\.yaw, player\.feetAt\(\), from\) \}\);\s*\n\s*if \(r\.dmg > 0\) \{\s*\n\s*hurtPlayer\(playerEntity, r\.dmg, \{ spare: duelSpare \}\);/);
-  assert.match(w, /if \(!duelBlowPlausible\(d, \[\.\.\._duelTrail\.map\(\(e\) => e\.p\), campToWire\(player\.feetAt\(\)\)\], duelWorldOf\(duel\.peer\), DUEL_RADIUS_M\)\) return null;/, 'AUDIT DUEL1 B6: the trail of my own feet, now last');
+  // PIN MOVED (INT8): the defender resolved the opponent's blow on its own sheet with the floor (`spare`), its spell
+  // landing under `_duelScope` - the referee holds a duel's every blow now: the save's health is never a duel's, and my
+  // own blow out is a number rolled at home for the relay to clip
+  assert.match(w, /hurt: \(n\) => \{ if \(n > 0\) hurtPlayer\(playerEntity, n\); \},/);
+  assert.equal(/_duelScope|duelSpare|registerDuelFell|duelBlowIn/.test(w), false, 'no defender\'s half left');
+  assert.match(w, /const r = resolveDuelStrike\(\{ by, a, \.\.\.\(w \? \{ w \} : \{\}\), \.\.\.\(sw \? \{ sw \} : \{\}\), \.\.\.at \}, duelStub\(a\)\.stub\);/, 'rolled on my own sheet');
+  assert.match(w, /const n = duelMgr\.blow\('strike', \{ by, p: campToWire\(player\.feetAt\(\)\), d: Math\.trunc\(r\.dmg\),/, 'sent as a number');
+  assert.match(w, /const n = duelMgr\.blow\('spell', \{ p: campToWire\(player\.feetAt\(\)\), d: siegeCastClamp\(harm, false\) \}\);/, 'a spell\'s harm, counted at home');
   // NAV-H (2026-09-28): a hostile ship in reach joined the same doors, after the duel and the foes
   assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{[^\n]*\n\s*townTalk\.say\(CANNOT_TRAVEL_ENEMIES_TEXT\);/, 'the travel map');
   assert.equal((w.match(/enemiesNearby: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(/g) ?? []).length, 2, 'rest and a journey');

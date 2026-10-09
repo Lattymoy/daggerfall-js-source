@@ -778,8 +778,8 @@
  {
   "name": "CROWN1R-relay-strike",
   "file": "server/src/index.js",
-  "old": "    if (b?.kind === 'royal' && (heal || !royalMayStrike(b, a.sub, target.sub, now))) return;",
-  "new": "    if (b?.kind === 'royal' && heal) return;",
+  "old": "    if (b?.kind === 'royal' && (m.k === 'cast' || !royalMayStrike(b, a.sub, target.sub, now))) return;",
+  "new": "    if (b?.kind === 'royal' && m.k === 'cast') return;",
   "tests": [
    "test/crown1_royal_relay.test.js"
   ]
@@ -787,7 +787,7 @@
  {
   "name": "CROWN1R-relay-heal",
   "file": "server/src/index.js",
-  "old": "    if (b?.kind === 'royal' && (heal || !royalMayStrike(b, a.sub, target.sub, now))) return;",
+  "old": "    if (b?.kind === 'royal' && (m.k === 'cast' || !royalMayStrike(b, a.sub, target.sub, now))) return;",
   "new": "    if (b?.kind === 'royal' && !royalMayStrike(b, a.sub, target.sub, now)) return;",
   "tests": [
    "test/crown1_royal_relay.test.js"

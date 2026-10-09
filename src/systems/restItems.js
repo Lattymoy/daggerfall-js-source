@@ -31,7 +31,7 @@
 // (the Ember Jar and the Tonic, 4 each). The Bedroll stays the counter's - online's own rest point, bought.
 // ═══════════════════════════════════════════════════════════════════
 import { registerCustomTemplates, registerItemUseHandler, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
-import { REST_ITEM, REST_ITEM_GROUP, BEDROLL_NIGHTS, CANDLE_USES, SALTS_USES, REST_ITEM_ROWS } from './restItemRows.js';   // INT1: the rows' leaf - the item law reads them headless
+import { REST_ITEM, REST_ITEM_GROUP, BEDROLL_NIGHTS, CANDLE_USES, SALTS_USES, REST_ITEM_ROWS, isRestItem } from './restItemRows.js';   // INT1: the rows' leaf - the item law reads them headless
 import { isOnlinePage } from './onlineLane.js';
 import { survivalOn } from './survival/switch.js';
 import { survivalOf, sleepStage, wakingHeld, WAKING_DEBT_HOURS } from './survival/needs.js';
@@ -68,7 +68,9 @@ export { REST_ITEM, REST_ITEM_GROUP, BEDROLL_NIGHTS, CANDLE_USES, SALTS_USES, RE
 registerCustomTemplates(REST_ITEM_ROWS);
 
 const INDICES = new Set(Object.values(REST_ITEM));
-export const isRestItem = (item) => !!item && INDICES.has(item.templateIndex);
+// INT9: the predicate's home is systems/restItemRows.js (the rows' leaf - a death in the zone's drop reads it on the account
+// Worker), re-exported here
+export { isRestItem };
 registerLootSupply('REST', isRestItem);   // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)
 export const isBedroll = (item) => item?.templateIndex === REST_ITEM.Bedroll;
 export const isEmberJar = (item) => item?.templateIndex === REST_ITEM.EmberJar;

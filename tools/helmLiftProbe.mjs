@@ -14,8 +14,9 @@
 // SCREENSHOT_SCALP_RATIO.
 //
 // HOW IT READS. The set is worn on the retail skeleton in its idle (its rest) through the binder the game uses. The
-// closed helm is put back where the screenshot drew it - MW-STEEL1's fit, the shipped helm lowered HELM_LIFT up the head
-// bone (Mac's new export raised it 1 and the bake HELM_LIFT - 1). The stand-in head is raised `raise` up the head bone
+// closed helm is put back where the screenshot drew it - MW-STEEL1's fit, the shipped helm lowered up the head bone by
+// what stands it over that fit (`overFit`: Mac's new export raised it 1, and since MW-FIT1 the bake raises it no more,
+// the head hidden under it). The stand-in head is raised `raise` up the head bone
 // over where the scene put it, and the pair is drawn from behind (an id per pixel, perspective, depth-tested). Down the
 // column through the helm, beside the plume: the rows of head above the shell's first row, over the rows of shell under
 // it - the ratio the screenshot measures. Mac's camera's height is not known, so three heights of eye are read; each
@@ -24,11 +25,16 @@
 //
 // WHAT IT DOES NOT RULE OUT. A head bigger than the scene's Breton (the screenshot's race is not recorded) would show
 // the same scalp at a smaller raise, and a shot from behind sees nothing of an offset front to back.
+//
+// MW-FIT1 (2026-10-09, a player's report: "the helmet elevation is too much", "the coif has to cover the neck"): the
+// closed helms hide the head now, as retail's closed helmets do, and stand where Mac fitted them, so what this reads is
+// the OPEN helm's lift alone - the one helm with a head under it. `wornSet('open')` wears it, and the shipped open helm
+// is what the head must stay inside.
 import { readFileSync } from 'node:fs';
 import { assembleFirstPersonArm } from '../src/formats/mwFirstPerson.js';
 import { composeWornArmor } from '../src/formats/mwItemMap.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
-import { HELM_LIFT, SCENE_BODY, RETAIL_SKELETON, plateBind } from './bakeSteelPlate.mjs';
+import { HELM_LIFT, SCENE_BODY, RETAIL_SKELETON, PIECES, plateBind } from './bakeSteelPlate.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 /** Mac's screenshot (968x2376), the column through the helm's centre: skin from row 521 to 575, the helm under it to
@@ -40,10 +46,19 @@ export const RAISES = Object.freeze([2, 3, 4, 5, 6]);
 const VIEW = Object.freeze({ back: 75, target: [0, 0, 112], width: 400, height: 560, fov: 55, column: 210 });
 const ID = Object.freeze({ none: 0, shell: 1, visor: 2, body: 3, head: 4 });
 
-/** The Steel set worn on the retail skeleton at rest, through the binder; `helm` its closed helm's two shapes. */
-export async function wornSet() {
+/** How far the shipped helm of `style` stands up the head bone over MW-STEEL1's fit - where the screenshot drew the
+ *  closed one: its lift, and how much higher than that fit its export stands it (the open helm's export IS the fit). */
+export function overFit(style) {
+  const helm = PIECES.find((p) => p.id === `helm_${style}`);
+  const fit = PIECES.find((p) => p.id === 'helm_open').shapes[0].box[0][2];
+  return +((helm.lift ?? 0) + helm.shapes[0].box[0][2] - fit).toFixed(6);
+}
+
+/** The Steel set worn on the retail skeleton at rest, through the binder, its helm the `style` asked (the closed helm,
+ *  the screenshot's, by default). */
+export async function wornSet(style = 'closed') {
   const steel = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templateIndex, material: ARMOR_MATERIAL.Steel }));
-  const worn = composeWornArmor({ pieces: steel, armors: [], bodyPool: [], helmStyle: 'closed' });
+  const worn = composeWornArmor({ pieces: steel, armors: [], bodyPool: [], helmStyle: style });
   const skeletonBytes = new Uint8Array(readFileSync(new URL(`../${RETAIL_SKELETON}`, import.meta.url)));
   // no attach bones: the plate ships skinned, rebound by its own bones' names (rule 12), and the vendored hierarchy
   // carries none of base_anim's part nodes to attach at
@@ -51,7 +66,7 @@ export async function wornSet() {
     bytes: new Uint8Array(readFileSync(new URL(`../src/assets/mw/meshes/${a.model}`, import.meta.url))) }));
   const asm = await assembleFirstPersonArm({ skeletonBytes, parts });
   if (!asm.ok) throw new Error(asm.error);
-  return { asm, bind: plateBind(skeletonBytes).get('Bip01 Head'), head: asm.mats.get(asm.skeleton.byName.get('bip01 head')) };
+  return { style, asm, bind: plateBind(skeletonBytes).get('Bip01 Head'), head: asm.mats.get(asm.skeleton.byName.get('bip01 head')) };
 }
 
 const unbind = (m, p) => { const d = [p[0] - m.t[0], p[1] - m.t[1], p[2] - m.t[2]]; return [0, 1, 2].map((c) => m.a[c] * d[0] + m.a[3 + c] * d[1] + m.a[6 + c] * d[2]); };
@@ -121,7 +136,7 @@ function idBuffer(meshes, eye) {
 export function scalpRatio(set, { raise, eyeZ, helm: at = 'scene' }) {
   const { asm, head } = set;
   const up = [head.a[0], head.a[3], head.a[6]];   // the head bone's own X - the way the bake lifted the helm
-  const back = at === 'scene' ? up.map((x) => x * HELM_LIFT) : null;
+  const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;
   const meshes = asm.pieces.map((p) => {
     const helm = p.slot.startsWith('hair');
     return { positions: p.positions, indices: p.indices, id: helm ? (/visor/.test(p.material?.textureFile ?? '') ? ID.visor : ID.shell) : ID.body, shift: helm ? back : null };
@@ -162,5 +177,5 @@ if (isMain(import.meta.url)) {
   console.log(`scalp over helm, the column through the helm (the screenshot's: ${SCREENSHOT_SCALP_RATIO})`);
   console.log(`  eye   ${RAISES.map((x) => `raise ${x}`.padStart(9)).join('')}   -> the screenshot's at`);
   for (const row of r.rows) console.log(`  ${String(row.eyeZ).padEnd(5)} ${row.ratios.map((x) => x.toFixed(2).padStart(9)).join('')}   -> ${row.raise == null ? 'outside the raises' : row.raise.toFixed(2)}`);
-  console.log(`  the head stands ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)} up its bone over the scene's; HELM_LIFT is ${HELM_LIFT}`);
+  console.log(`  the head stands ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)} up its bone over the scene's; HELM_LIFT (the open helm's) is ${HELM_LIFT}`);
 }

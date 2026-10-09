@@ -2,7 +2,7 @@
   {
     "name": "REALM-DOOR-rc-any-realm-shaped-id",
     "file": "server-account/src/realm.js",
-    "old": "  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(id, playerId).first());",
+    "old": "  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());",
     "new": "  return true;",
     "tests": ["test/realmdoor.test.js"],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the door refuses a tombstone too."
@@ -10,8 +10,8 @@
   {
     "name": "REALM-DOOR-rc-any-account",
     "file": "server-account/src/realm.js",
-    "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(id, playerId).first());",
-    "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND ? IS NOT NULL AND dead_at IS NULL').bind(id, playerId).first());",
+    "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());",
+    "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND ? IS NOT NULL AND dead_at IS NULL AND lease IS NOT NULL').bind(id, playerId).first());",
     "tests": ["test/realmdoor.test.js"],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the door refuses a tombstone too."
   },

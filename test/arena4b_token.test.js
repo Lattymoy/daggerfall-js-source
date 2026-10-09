@@ -1,5 +1,5 @@
-// ARENA4b (2026-10-03): THE `cl` CLAIM AT THE MINT - a realm character's own level, off its tile's summary
-// (server-account/src/realm.js realmLevelOf), signed into the identity token beside `rc` by /v1/auth/token
+// ARENA4b (2026-10-03): THE `cl` CLAIM AT THE MINT - a realm character's own level (server-account/src/realm.js
+// realmLevelOf - INT7: the level its judge trusts, else its tile's summary), signed into the identity token beside `rc` by /v1/auth/token
 // (server-account/src/index.js), for the relay to read. Driven through the real Worker over node:sqlite
 // (test/accountDb.mjs); the claim's own law in src/net/identityToken.js claimsValid.
 import { test } from 'node:test';
@@ -11,7 +11,7 @@ import { REALM_LEVEL_CLAIM_MAX, realmLevelOf } from '../server-account/src/realm
 
 const { subtle } = globalThis.crypto;
 
-test('ARENA4b the mint signs a realm character\'s level as `cl` - its tile\'s, as its checkpoint last said; none for another character, none named, a tile with no level or one out of bounds (mutants: `cl` minted for an offline character; the summary\'s level unread; the bound dropped; another account\'s character read)', async (t) => {
+test('ARENA4b the mint signs a realm character\'s level as `cl` - INT7: the level its judge trusts, else (no checkpoint judged) its tile\'s; none for another character, none named, a tile with no level or one out of bounds (mutants: `cl` minted for an offline character; the summary\'s level unread; the bound dropped; another account\'s character read; INT7 the trusted level unread)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const S = await standService();
   const raw = S.env.DB._raw;
@@ -25,11 +25,24 @@ test('ARENA4b the mint signs a realm character\'s level as `cl` - its tile\'s, a
     return v.claims;
   };
   const tile = (summary) => raw.prepare('UPDATE realm_characters SET summary = ? WHERE id = ?').run(summary == null ? null : JSON.stringify(summary), R.id);
+  // PIN MOVED (INT7, bible/06-Systems/Integrity-Arc.md lane 2): this asserted the tile's level (12) signed whatever the
+  // judge made of it - AUDIT PRE-MERGE 1003 S2's "never read against the save". A judged character's `cl` is now the
+  // level its judge trusts (`level_seen`: a level no play earned is never signed - the seat's first save claimed 12 at
+  // no time played), and the tile's word moves it no more; the tile is read only before any checkpoint was judged.
   tile({ level: 12, className: 'Knight', race: 'Breton', gender: 'male', face: 3, region: 'Daggerfall' });
+  const seen = () => raw.prepare('SELECT level_seen FROM realm_characters WHERE id = ?').get(R.id).level_seen;
+  assert.ok(seen() >= 1, 'the seat\'s first save was judged');
   const c = await claimsOf({ character: R.id });
-  assert.deepEqual([c.rc, c.cl], [1, 12], 'the realm character\'s own level, beside its `rc`');
+  assert.deepEqual([c.rc, c.cl], [1, seen()], 'the level its judge trusts, beside its `rc`');
+  raw.prepare('UPDATE realm_characters SET level_seen = 12 WHERE id = ?').run(R.id);
+  tile({ level: 40 });
+  assert.equal((await claimsOf({ character: R.id })).cl, 12, 'INT7: the trusted level, never the tile\'s word past it');
   assert.equal('cl' in (await claimsOf({ character: 'char-aldric' })), false, 'an offline character\'s: none');
   assert.equal('cl' in (await claimsOf({})), false, 'none named: none');
+  // no checkpoint judged since INT2: the tile's word, held to its bound
+  raw.prepare('UPDATE realm_characters SET level_seen = NULL WHERE id = ?').run(R.id);
+  tile({ level: 12 });
+  assert.equal((await claimsOf({ character: R.id })).cl, 12, 'before a judged checkpoint: the tile\'s');
   tile(null);
   assert.equal('cl' in (await claimsOf({ character: R.id })), false, 'a tile with no summary yet');
   tile({ level: 0 });
@@ -44,7 +57,8 @@ test('ARENA4b the mint signs a realm character\'s level as `cl` - its tile\'s, a
     body: JSON.stringify({ name: 'Aldric', level: 14, goldPieces: 100, items: [] }),
   });
   assert.equal(put.status, 200);
-  assert.equal((await claimsOf({ character: R.id })).cl, 14, 'as the last checkpoint\'s tile says');
+  assert.equal(seen(), 14, 'judged: a level it held no trusted one under is the save\'s own');
+  assert.equal((await claimsOf({ character: R.id })).cl, 14, 'as the last checkpoint\'s judge trusts it');
   const B = await S.registered('Bran');
   const other = await S.call('/v1/auth/token', { character: R.id }, B.secret);
   const ov = await verifyToken(other.body.token, S.identityPublic, { subtle, nowS: T0 });
