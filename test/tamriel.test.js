@@ -251,7 +251,7 @@ test('TAMRIEL1 ink: the Bay\'s open coast ends are the chain ends on its edge, a
   // a cut end on the west edge beside a Bay end on the NORTH edge, within reach: never joined across edges
   const corner = stitchToBay([[{ x: 0, y: 10 }, { x: -40, y: 10 }]], [{ x: 20, y: 0 }]);
   assert.equal(corner.joined, 0); assert.deepEqual(corner.chains[0][0], { x: 0, y: 10 });
-  assert.equal(STITCH_REACH, 40);
+  assert.equal(STITCH_REACH, 64, 'PIN MOVED (TAMRIEL4): four of the picture\'s pixels at the fit\'s scale, where it was 40');
 });
 
 test('TAMRIEL1 ink: the built model has no coast point on the Bay\'s own ground, its cut ends lie on the Bay\'s edge, every city beyond the Bay, and the model is minted once a coast array', () => {

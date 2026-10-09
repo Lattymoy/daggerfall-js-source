@@ -9,11 +9,13 @@ import assert from 'node:assert/strict';
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { _resetYardsKept } from '../server-account/src/decor.js';   // YARD-SHED: a stood service is a fresh isolate - no town's yards kept
+import { forgetChapters } from '../server-account/src/npcHalls.js';   // AUDIT CHAP3 T4: nor any region's chapters - a test's first read is its own database's
 import { renownXpFor } from '../src/net/renown.js';
 import { mintReceipt, importReceiptKey } from '../src/net/gateReceipt.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
 import { r2, seatRealm } from './realmSeat.mjs';   // MERGE 2: a founding is a realm character's (AUDIT REALM2 S2)
 import { GUILD_FOUND_GOLD } from '../src/net/guildLaw.js';
+import { ROLL_FACTIONS } from '../src/net/npcChapterLaw.js';   // AUDIT CHAP4 E3: a scene's chapters confirmed
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -53,6 +55,7 @@ export const T0 = 1_800_000_000;
 export async function standService(extra = {}) {
   _resetKeyForTests();
   _resetYardsKept();
+  forgetChapters();
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const gk = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
@@ -106,3 +109,10 @@ export async function standService(extra = {}) {
 
 /** A device's storage holding `who`'s session (net/accountClient.js SESSION_KEY). */
 export const sessionStorageOf = (sessionKey, who) => ({ getItem: (k) => (k === sessionKey ? JSON.stringify({ secret: who.secret, id: who.id }) : null) });
+
+/** AUDIT CHAP4 E3: A SCENE'S CHAPTERS CONFIRMED - each region's kept row (npcHalls.js npc_hall_regions, AUDIT CHAP3 S3)
+ *  naming `factions` (every guild of the Roll by default), as its witnessed towns' reports would leave it: the seats are
+ *  placed, and the titles minted, only at a chapter confirmed now. */
+export function confirmChapters(raw, regions, factions = ROLL_FACTIONS) {
+  for (const g of regions) raw.prepare('INSERT OR REPLACE INTO npc_hall_regions (region, chapters, ver, done, at) VALUES (?, ?, 1, 1, 0)').run(g, JSON.stringify([...factions]));
+}

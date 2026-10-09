@@ -1,0 +1,382 @@
+[
+  {
+    "name": "CHAP4A-OFFICERS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const CHAPTER_SEATS = Object.freeze({ master: 1, officer: 3 });",
+    "new": "export const CHAPTER_SEATS = Object.freeze({ master: 1, officer: 2 });",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-RANKS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SEAT_RANK = Object.freeze({ master: 9, officer: 8 });",
+    "new": "export const SEAT_RANK = Object.freeze({ master: 9, officer: 7 });",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-BOOK-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_BOOK_RANK_MAX = 7;",
+    "new": "export const ROLL_BOOK_RANK_MAX = 8;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-BOOK-UNCAPPED",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX))",
+    "new": "Math.min(whole(reported), rollRankCapOf(rep)))",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-BOOK-FLOOR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(0,",
+    "new": "export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(-1,",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-TENURE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SEAT_TENURE_S = 14 * 86_400;",
+    "new": "export const SEAT_TENURE_S = 13 * 86_400;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-AGE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SEAT_ACCOUNT_AGE_S = 7 * 86_400;",
+    "new": "export const SEAT_ACCOUNT_AGE_S = 6 * 86_400;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-WEEKS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const SEAT_MERIT_WEEKS = 4;",
+    "new": "export const SEAT_MERIT_WEEKS = 5;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ELIG-MEMBER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return !!row && (row.member === true || row.member === 1) && rollRep(row.rep) >= ROLL_SEAT_LINE",
+    "new": "return !!row && rollRep(row.rep) >= ROLL_SEAT_LINE",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ELIG-LINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rollRep(row.rep) >= ROLL_SEAT_LINE",
+    "new": "rollRep(row.rep) > ROLL_SEAT_LINE",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ELIG-TENURE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(row.joinedAt) <= atS - SEAT_TENURE_S",
+    "new": "(row.joinedAt) < atS - SEAT_TENURE_S",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ELIG-AGE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S",
+    "new": "(row.registeredAt) < atS - SEAT_ACCOUNT_AGE_S",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ELIG-NO-AGE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "&& at(row.registeredAt) && /** @type {number} */ (row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S;",
+    "new": ";",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SCORE-TENTHS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.round(Math.max(0, whole(merit)) * 10);",
+    "new": "Math.round(Math.max(0, whole(merit)));",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-NO-MERIT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "&& typeof c?.account === 'string' && whole(c?.merit) > 0)",
+    "new": "&& typeof c?.account === 'string' && whole(c?.merit) >= 0)",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-FACTION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": ".filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) &&",
+    "new": ".filter((c) => regionOk(c?.region) &&",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-TENURE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "|| whole(a.joinedAt) - whole(b.joinedAt) ||",
+    "new": "|| whole(b.joinedAt) - whole(a.joinedAt) ||",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "|| (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)\n      || a.faction - b.faction",
+    "new": "|| (a.char > b.char ? -1 : a.char < b.char ? 1 : 0)\n      || a.faction - b.faction",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-SAT-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const sat = new Set([...sitting].map((s) => `${key(s)}|${s.char}`));",
+    "new": "const sat = new Set([...sitting].map((s) => `${s.faction}|${s.char}`));",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-ACCOUNT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (held.has(`${c.account}|${c.faction}`) || (seat === 'master'",
+    "new": "if ((seat === 'master'",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-ACCOUNT-GUILD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    held.add(`${c.account}|${c.faction}`);",
+    "new": "    held.add(`${c.account}|${c.region}`);",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-MASTER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "|| (seat === 'master' && masters.has(c.char))) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-PASSES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  for (const seat of CHAPTER_SEAT_KINDS) {\n    for (const c of order) {",
+    "new": "  for (const seat of [...CHAPTER_SEAT_KINDS].reverse()) {\n    for (const c of order) {",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-COUNT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(seat)].length ?? 0) >= CHAPTER_SEATS[",
+    "new": "(seat)].length ?? 0) > CHAPTER_SEATS[",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-PLAN-ORDER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    return fa - fb || ra - rb;",
+    "new": "    return ra - rb || fa - fb;",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-CHANGES-ALL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return [...out.values()].filter((c) => c.from !== c.to)",
+    "new": "return [...out.values()].filter(() => true)",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-WINDOW",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const from = Math.max(Math.min(week - SEAT_MERIT_WEEKS + 1,",
+    "new": "const from = Math.max(Math.min(week - SEAT_MERIT_WEEKS,",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-DEV",
+    "file": "server-account/src/npcChapters.js",
+    "old": "dev == null ? -Infinity : Number(dev) + 1);",
+    "new": "-Infinity);",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-GATE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const counted = lines.filter((r) => r.source !== 'gate' || agreed.get(",
+    "new": "const counted = lines.filter((r) => true || agreed.get(",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-DEAD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "ON c.id = r.char_id AND c.player = r.player AND c.dead_at IS NULL JOIN players",
+    "new": "ON c.id = r.char_id AND c.player = r.player JOIN players",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-MEMBER",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    WHERE r.member = 1 AND r.dormant = 0 AND r.char_id IN (SELECT value FROM json_each(?1))`)",
+    "new": "    WHERE r.dormant = 0 AND r.char_id IN (SELECT value FROM json_each(?1))`)",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ],
+    "equivalent": true,
+    "why": "The read's `member = 1` only spares rows: every row it returns is asked again by npcChapterLaw.js seatEligibleAt, whose first clause is the membership (pinned by CHAP4A-ELIG-MEMBER), so a former member's row read without it is refused there and places nothing."
+  },
+  {
+    "name": "CHAP4A-SVC-TURNING",
+    "file": "server-account/src/npcChapters.js",
+    "old": "registeredAt: r.registered_at }, turning))",
+    "new": "registeredAt: r.registered_at }, turning - 1))",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-OPENED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const { results: sat = [] } = opened ? { results: [] } : await",
+    "new": "const { results: sat = [] } = await",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-SINCE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "since.get(`${p.faction}|${p.region}|${p.char}`) ?? week]",
+    "new": "week]",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-DELETE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "      db.prepare('DELETE FROM npc_chapter_seats WHERE true'),\n",
+    "new": "",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-HISTORY",
+    "file": "server-account/src/npcChapters.js",
+    "old": ".bind(week, nowS, JSON.stringify(seats.changes)),",
+    "new": ".bind(week, nowS, '[]'),",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-SVC-PLACED",
+    "file": "server-account/src/npcChapters.js",
+    "old": ".bind(week, nowS, JSON.stringify(seats.rows)),",
+    "new": ".bind(week, nowS, '[]'),",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ROUTE-SEATS",
+    "file": "server-account/src/index.js",
+    "old": "&& /** @type {any} */ (r).roll) /** @type {any} */ (r).roll.seats = await chapterSeatsOf(ctx.db, body?.character);",
+    "new": "&& false) /** @type {any} */ (r).roll.seats = await chapterSeatsOf(ctx.db, body?.character);",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ROLL-SEED",
+    "file": "server-account/src/npcRoll.js",
+    "old": "rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
+    "new": "rank: member ? reported.get(f) : null,",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ROLL-CLAIM",
+    "file": "server-account/src/npcRoll.js",
+    "old": "rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
+    "new": "rank: member ? ranks.get(f) : null,",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-ROLL-BOOKLESS",
+    "file": "server-account/src/npcRoll.js",
+    "old": "line = { ...line, rank: rollBookRankOf(line.rank, line.rep) };",
+    "new": "line = { ...line, rank: line.rank };",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  },
+  {
+    "name": "CHAP4A-DELETE-SEATS",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats (the Chronicle keeps their story)\n",
+    "new": "",
+    "tests": [
+      "test/chap4a_seats.test.js"
+    ]
+  }
+]

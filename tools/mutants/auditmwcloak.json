@@ -1,0 +1,308 @@
+[
+  {
+    "name": "AUDITMWCLOAK-fit-at-rest-alone",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "radius = CLOAK_EASE_RADIUS, poses = CLOAK_FIT_POSES }) {",
+    "new": "radius = CLOAK_EASE_RADIUS, poses = [{}] }) {",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Fitted at rest alone: an arm swung back brings a pauldron through the shoulders."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-strides-without-arms",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "'bip01 r calf': ['z', 45], 'bip01 l upperarm': ['z', 25], 'bip01 r upperarm': ['z', -25] }),",
+    "new": "'bip01 r calf': ['z', 45] }),",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "One stride with its arms swung back, the other with none: the right arm swung back is not held."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-pose-push-as-the-binds",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "const d = solve3(Array.from(J.subarray(v * 9, v * 9 + 9)), [0, -step, 0]);",
+    "new": "const d = [0, -step, 0];",
+    "tests": ["test/mwcloak2.test.js", "test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
+    "note": "A pose's step back written into the bind as it is, not through the vertex's own blend: rest is not the bind, and a strided thigh's share turns it."
+  },
+  {
+    "name": "AUDITMWCLOAK-deep-points-chased",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "if (over > room + 1e-6) { deepSeen.add(sheetCellKey(u[v], u[v + 2])); continue; }",
+    "new": "if (false) { deepSeen.add(sheetCellKey(u[v], u[v + 2])); continue; }",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A rod far through the cloak chased: its ring creeps up to the limit pass after pass, and nothing names it."
+  },
+  {
+    "name": "AUDITMWCLOAK-one-pass",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "for (let pass = 0; pass < 12; pass++) {",
+    "new": "for (let pass = 0; pass < 1; pass++) {",
+    "tests": ["test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
+    "note": "One pass, the loop's second never moving anything here.",
+    "equivalent": true,
+    "why": "On every body the port dresses one pass clears every pose: a pose's push is exact in that pose (its own triangle the whole way, straight back), the ease moves a fold's layers together, and no pose of CLOAK_FIT_POSES turns a bone far enough from another to turn its step back forward. The loop is kept for one that does; on these it costs a second pass that moves nothing."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-ease-one-bucket",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "for (let i = bx - 1; i <= bx + 1; i++) {",
+    "new": "for (let i = bx; i <= bx; i++) {",
+    "tests": ["test/mwcloak2.test.js", "test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
+    "note": "A vertex asks its own bucket alone: the ease is cut off at every bucket's edge along x."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-ease-linear",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "const ease = through[k + 2] * (1 - d2) ** 2;",
+    "new": "const ease = through[k + 2] * (1 - d2);",
+    "tests": ["test/mwcloak2.test.js"],
+    "note": "The falloff (1 - (d / 8)^2) alone: the cloak round a pauldron pushed further back than the documented law, the eased vertices' mean 1.90 for 1.66."
+  },
+  {
+    "name": "AUDITMWCLOAK-no-push-limit",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "export const CLOAK_PUSH_LIMIT = 10;",
+    "new": "export const CLOAK_PUSH_LIMIT = 100;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "No limit a body's armour could reach: a rod forty units through the cloak is chased, and nothing names it."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-cloak-not-re-skinned",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "if (assembly.pose && assembly.mats) assembly.fns.skinBatch(cloak.batch, assembly.skeleton, assembly.pose, assembly.mats, cloak.positions, cloak.normals ?? null);",
+    "new": "if (false) assembly.fns.skinBatch(cloak.batch, assembly.skeleton, assembly.pose, assembly.mats, cloak.positions, cloak.normals ?? null);",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "The fitted cloak drawn as baked until the next pose."
+  },
+  {
+    "name": "AUDITMWCLOAK-slung-moved-any-distance",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "if (best.need > moveLimit) { rows.push({ bone, slung, how: 'unresolved', by: 0 }); continue; }",
+    "new": "if (false) { rows.push({ bone, slung, how: 'unresolved', by: 0 }); continue; }",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A slab spanning the chest pushed off the back however far it takes."
+  },
+  {
+    "name": "AUDITMWCLOAK-hip-vertices-only",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "while (deg <= pitchLimit && !clearAt(posed, deg)) deg++;",
+    "new": "while (false) deg++;",
+    "tests": ["test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
+    "note": "The hip pitch held to the vertices alone: a rod across the back whose ends are past the cloak's sides is called clear, its middle behind the sheet."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-hip-never-unresolved",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "if (deg > pitchLimit) { rows.push({ bone, slung, how: 'unresolved', by: 0 }); continue; }",
+    "new": "if (false) { rows.push({ bone, slung, how: 'unresolved', by: 0 }); continue; }",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A hip blade no pitch within the limit clears pitched one degree past it."
+  },
+  {
+    "name": "AUDITMWCLOAK-pitched-normals-unturned",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "if (lin && p.sourceNormals) {",
+    "new": "if (false) {",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A pitched blade lit as it hung: its normals off its faces by the pitch."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-follow-not-hooked",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "assembly.afterPose = (a) => applyCloakFollow(a, follow);",
+    "new": "assembly.afterPose = null;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Fitted at rest and never followed: the hem sweeps through the hip blade on every step."
+  },
+  {
+    "name": "AUDITMWCLOAK-a-stale-follow-kept",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "  assembly.afterPose = null;\n  if (!cloak) return null;",
+    "new": "  if (!cloak) return null;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A body that took its cloak off keeps the last cloak's follow."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-gap-always-the-clearance",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "group.need[i] = Math.min(clearance, Math.abs(gap));",
+    "new": "group.need[i] = clearance;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Every contact held to the whole clearance: gear that sat nearer at rest is turned at rest, the bows into the plate."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-side-always-front",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "group.s[i] = gap >= 0 ? 1 : -1;",
+    "new": "group.s[i] = 1;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Gear behind the cloak held in front of it: slung gear pulled through the sheet."
+  },
+  {
+    "name": "AUDITMWCLOAK-slung-never-slides",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "ref, pieces, slide: side < 0,",
+    "new": "ref, pieces, slide: false,",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Slung gear only turned: leaning back, the bow and the greatsword have no turn that clears."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-slide-priced-inverted",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "tr[0] += u0 / slideCost; tr[1] += u1 / slideCost; tr[2] += u2 / slideCost;",
+    "new": "tr[0] += u0 * slideCost; tr[1] += u1 * slideCost; tr[2] += u2 * slideCost;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "The slide the law asks for scaled by the price twice over: a hundredth of it is taken."
+  },
+  {
+    "name": "AUDITMWCLOAK-one-round",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "for (let round = 0; round < rounds; round++) {",
+    "new": "for (let round = 0; round < 1; round++) {",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "The linear law taken once and its step capped to a round: the stride needs more than a round turns."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-turn-uncapped",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "const wt = Math.hypot(w0, w1, w2), wl = maxTurn / rounds;",
+    "new": "const wt = Math.hypot(w0, w1, w2), wl = Infinity;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A round turns as far as the linear law says, far from where it was taken."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-hook-never-run",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "if (assembly.afterPose) assembly.afterPose(assembly);",
+    "new": "if (false) assembly.afterPose(assembly);",
+    "tests": ["test/auditmwcloak.test.js", "test/mwcloak1.test.js"],
+    "note": "poseAssembly never runs the follow: every frame the gear hangs where its bone puts it."
+  },
+  {
+    "name": "AUDITMWCLOAK-seated-the-whole-thigh",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "const off = weights[k] * (1 - CLOAK_SEATED_SHARE);",
+    "new": "const off = 0;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Seated, the cloak keeps its thighs' whole share: the hem wraps forward under them past the knees."
+  },
+  {
+    "name": "AUDITMWCLOAK-seated-the-weight-lost",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "      for (const [v, w] of moved) {",
+    "new": "      for (const [v, w] of []) {",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "The thighs' share taken and given to no bone: the hem shrinks toward the rig's root."
+  },
+  {
+    "name": "AUDITMWCLOAK-seated-for-good",
+    "file": "src/formats/mwCloakFit.js",
+    "old": "cloak.batch = seated ? cloak.seatedBatch : cloak.standingBatch;",
+    "new": "cloak.batch = cloak.seatedBatch ?? cloak.standingBatch;",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Once seated, the cloak hangs seated standing up."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-fits-measure-a-seat",
+    "file": "src/combat/fpArm.js",
+    "old": "seatCloak(arm, false, isCloak);   // the fits measure",
+    "new": "void isCloak;   // the fits measure",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A swap fitted on the seated batch: the standing cloak is not restored first."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-frame-never-seats",
+    "file": "src/combat/fpArm.js",
+    "old": "if (t.cloaked) seatCloak(t.arm, !!(cam && cam.seat));",
+    "new": "if (false) seatCloak(t.arm, !!(cam && cam.seat));",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A seated body's cloak never seated."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-tail-under-the-cloak",
+    "file": "src/combat/fpArm.js",
+    "old": "underSlots.has(slot) && slot !== 'tail' && ",
+    "new": "underSlots.has(slot) && ",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A beast's tail counted under the cloak: the cloak chased out to the limit over it."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-shield-under-the-cloak",
+    "file": "src/combat/fpArm.js",
+    "old": " && !/^shield\\b/.test(slot);",
+    "new": ";",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A carried shield counted under the cloak."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-deep-unnamed",
+    "file": "src/combat/fpArm.js",
+    "old": "if (cloak?.deep) notes.push(",
+    "new": "if (false) notes.push(",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "A thing left through the cloak named nowhere."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-unresolved-unnamed",
+    "file": "src/combat/fpArm.js",
+    "old": ".filter((r) => r.how === 'unresolved')",
+    "new": ".filter(() => false)",
+    "tests": ["test/auditmwcloak.test.js"],
+    "note": "Gear left as it hangs named nowhere."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-icon-a-robe",
+    "file": "src/combat/fpArm.js",
+    "old": "if (cloak) return { id: `${cloak.id}_${cloak.painting}`, model: cloak.model };",
+    "new": "if (false) return { id: `${cloak.id}_${cloak.painting}`, model: cloak.model };",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "A cloak's icon the Morrowind robe its row once dressed it as."
+  },
+  {
+    "name": "AUDITMWCLOAK-a-leg-a-parents-blend",
+    "file": "tools/skinWeights.mjs",
+    "old": "if (b.parent && !legIndex?.has(index.get(b.parent))) {",
+    "new": "if (b.parent) {",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "Hung over its joints, a calf blends into its thigh as a parent: the thigh weighed twice."
+  },
+  {
+    "name": "AUDITMWCLOAK-a-leg-a-childs-blend",
+    "file": "tools/skinWeights.mjs",
+    "old": "      if (legIndex?.has(j)) continue;",
+    "new": "      if (false) continue;",
+    "tests": ["test/mwcloak1.test.js"],
+    "note": "Hung over its joints, a thigh blends in at its own origin as the pelvis's child: the waist not one surface."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-bow-tie-untied",
+    "file": "tools/meshSubdivide.mjs",
+    "old": "for (let v = 0; v < n; v++) if (rim[v].length > 2) throw",
+    "new": "for (let v = 0; v < n; v++) if (false) throw",
+    "tests": ["test/mwcloak2.test.js"],
+    "note": "A bow tie's waist smoothed by two of its four rim neighbours: one wing dragged across the other."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-old-bounds",
+    "file": "tools/meshSubdivide.mjs",
+    "old": "    bounds: { min, max },",
+    "new": "    bounds: mesh.bounds,",
+    "tests": ["test/mwcloak2.test.js"],
+    "note": "The subdivided mesh carries its control net's bounds."
+  },
+  {
+    "name": "AUDITMWCLOAK-the-stray-island-kept",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "{ acrossTheMiddle: 'left' }",
+    "new": "{}",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The left boot ships its stray island across the middle, inside the right greave."
+  },
+  {
+    "name": "AUDITMWCLOAK-any-vertex-across-drops-the-island",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "wholly.set(r, (wholly.get(r) ?? true) && across(v));",
+    "new": "wholly.set(r, (wholly.get(r) ?? false) || across(v));",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "An island dropped for one vertex past the slack: the boot itself goes."
+  }
+]

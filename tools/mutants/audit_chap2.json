@@ -1,0 +1,2060 @@
+[
+  {
+    "name": "T-LAW-SWITCH-DEFAULT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "CHAPTERS_SWITCH.includes(v) ? v : 'off')",
+    "new": "CHAPTERS_SWITCH.includes(v) ? v : 'dev')",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-REP-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.max(MIN_REPUTATION, Math.min(cap, whole(v)))",
+    "new": "Math.max(MIN_REPUTATION, Math.min(MAX_REPUTATION, whole(v)))",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-RANKCAP-LOOP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "for (let i = 0; i < RANK_REQ_REPUTATION.length; i++) if (r >=",
+    "new": "for (let i = 0; i < RANK_REQ_REPUTATION.length - 1; i++) if (r >=",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MAP-MIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (keys.length < min ||",
+    "new": "if (keys.length <= min ||",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-SEED-MIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION",
+    "new": "(x) => x > MIN_REPUTATION && x <= MAX_REPUTATION",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-DELTA-SPAN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.abs(x) <= ROLL_DELTA_MAX, 1)",
+    "new": "Math.abs(x) < ROLL_DELTA_MAX, 1)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-LOSS-OWED",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "owed: owedUnder(rep, owed - fromOwed), credited",
+    "new": "owed: owedUnder(rep, owed), credited",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-DRAIN-ROOM",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const take = Math.min(owed, Math.max(0, ROLL_GAIN_DAY_MAX - today));",
+    "new": "const take = Math.min(owed, ROLL_GAIN_DAY_MAX);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-DELTAS-NONZERO",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (d !== 0) out[f] = d;",
+    "new": "out[f] = d;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MEMBERS-SORT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": ".sort((a, b) => a[0] - b[0]).map(",
+    "new": ".sort((a, b) => b[0] - a[0]).map(",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-KEY-NULL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null)",
+    "new": "((list ?? []).map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(','))",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-FACTIONNAME",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "raw.replace(/^The /, 'the ')",
+    "new": "raw",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "`h:${day}:${region}:${faction}:${slot}`",
+    "new": "`h:${day}:${region}:${slot}:${faction}`",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-FAM-ORDERS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(Object.values(ORDERS)).includes(faction)) return ['metals', 'wood'];",
+    "new": "(Object.values(ORDERS)).includes(faction)) return ['metals'];",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-FAM-DIVINES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(Object.values(DIVINES)).includes(faction)) return ['herbs'];",
+    "new": "(Object.values(DIVINES)).includes(faction)) return ['herbs', 'stone'];",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-NAME-THIEVES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (faction === GUILD_FACTION_IDS.ThievesGuild) return 'Thieves Guild';",
+    "new": "if (faction === GUILD_FACTION_IDS.ThievesGuild) return 'The Thieves Guild';",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-WRITS-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!isRollFaction(faction) || !table?.length) return [];",
+    "new": "if (!table?.length) return [];",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-PARSE-CANON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return h && hallReportText(h) === text ? h : null;",
+    "new": "return h;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-HOUR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const HALL_WITNESS_HOUR = 24;",
+    "new": "export const HALL_WITNESS_HOUR = 25;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-RID-LEN",
+    "file": "src/net/npcRollTracker.js",
+    "old": "rand(new Uint8Array(12))",
+    "new": "rand(new Uint8Array(11))",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-VALUES-ROW",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (row) out[f] = rollRep(row.rep);",
+    "new": "out[f] = rollRep(row?.rep);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-FAIL-WAIT",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    nextAt = now() + wait;",
+    "new": "    nextAt = now();",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-ADOPT-WRITE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    write(a.local);\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-HELDKEY",
+    "file": "src/net/npcRollTracker.js",
+    "old": "heldKey = rollMembersKey(membersOf(roll.members));",
+    "new": "heldKey = null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-LASTSENT",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    lastSentAt = now();\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-CREDITED",
+    "file": "src/net/npcRollTracker.js",
+    "old": "const credited = r.data.credited ?? {};",
+    "new": "const credited = {};",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-CUT-EMPTY",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (cut.length) onCeiling(cut);",
+    "new": "onCeiling(cut);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-NOVALUES",
+    "file": "src/net/npcRollTracker.js",
+    "old": "      if (!values) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-NEXTAT",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (stopped || busy || now() < nextAt) return;",
+    "new": "if (stopped || busy || now() <= nextAt) return;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-WRITE",
+    "file": "src/net/npcHallBook.js",
+    "old": "      write(t);\n      let r = null;",
+    "new": "      let r = null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-DAYMS",
+    "file": "src/net/npcHallBook.js",
+    "old": "Math.floor(nowMs() / 86_400_000)",
+    "new": "Math.floor(nowMs() / 3_600_000)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-STOPPED-GUARD",
+    "file": "src/net/npcHallBook.js",
+    "old": "if (!h || stopped) return false;",
+    "new": "if (!h) return false;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-TEMPLE",
+    "file": "src/net/npcHallBook.js",
+    "old": "b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple",
+    "new": "b?.buildingType !== BUILDING_TYPES.GuildHall",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-ROWS-RANK",
+    "file": "server-account/src/npcRoll.js",
+    "old": "rank: x.rank == null ? null : Number(x.rank)",
+    "new": "rank: Number(x.rank)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-CLAIM-EMPTY",
+    "file": "server-account/src/npcRoll.js",
+    "old": "!(empty || rollDeltasOk(deltas))",
+    "new": "!rollDeltasOk(deltas)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-LINES-ALL",
+    "file": "server-account/src/npcRoll.js",
+    "old": "const lines = changed.filter(([, , asked]) => asked);",
+    "new": "const lines = changed;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-KEPT-LE",
+    "file": "server-account/src/npcHalls.js",
+    "old": "nowMs - kept.at < CHAPTERS_KEPT_MS",
+    "new": "nowMs - kept.at <= CHAPTERS_KEPT_MS",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-WITNESS-FORGET",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (r?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news\n",
+    "new": "  if (r?.meta?.changes) { /* forgets nothing */ }\n",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
+  },
+  {
+    "name": "T-HALLS-KEPT-SET",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  _kept.set(region, { at: nowMs, chapters });\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-REGION-BIND",
+    "file": "server-account/src/npcHalls.js",
+    "old": ".bind(key, player.id, hallReportText(h), h.region, nowS, h.key),",
+    "new": ".bind(key, player.id, hallReportText(h), null, nowS, h.key),",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-HALLS-BADHALL",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (!h) return { error: 'bad-hall' };\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-POST-EARLY-COURT",
+    "file": "server-account/src/professions.js",
+    "old": "if (courtDone && hallDone) return;",
+    "new": "if (courtDone) return;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-POST-HALLDONE-BIND",
+    "file": "server-account/src/professions.js",
+    "old": "'SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(day, region)",
+    "new": "'SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(region, day)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-POST-DAYS-INSERT",
+    "file": "server-account/src/professions.js",
+    "old": "      db.prepare('INSERT OR IGNORE INTO hall_writ_days (day, region, posted, at) VALUES (?1, ?2, ?3, ?4)').bind(day, region, halls.length, nowS),\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-LIST-ORDER",
+    "file": "server-account/src/professions.js",
+    "old": "ORDER BY kind, faction, slot",
+    "new": "ORDER BY kind, slot",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-HIDDEN-BIND",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(character, player).all();\n  return new Set(",
+    "new": ".bind(player, character).all();\n  return new Set(",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-ROUTE-HALLS-ACCOUNT",
+    "file": "server-account/src/index.js",
+    "old": "'halls-need-account': 403, 'halls-rate': 429",
+    "new": "'halls-rate': 429",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-ROUTE-HALLS-RATE",
+    "file": "server-account/src/index.js",
+    "old": "'halls-rate': 429,",
+    "new": "'halls-rate': 400,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-ROUTE-NODATA",
+    "file": "server-account/src/index.js",
+    "old": "'no-data': 404, lease: 409, 'roll-unseeded'",
+    "new": "'no-data': 400, lease: 409, 'roll-unseeded'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-ROUTE-SWITCH",
+    "file": "server-account/src/index.js",
+    "old": "        if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);\n        // CHAP2a",
+    "new": "        // CHAP2a",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-MIG-KIND",
+    "file": "server-account/migrations/0099_npc_halls.sql",
+    "old": "'seat', 'npchall'))",
+    "new": "'seat'))",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-MIG-WRITS-UNIQUE",
+    "file": "server-account/migrations/0099_npc_halls.sql",
+    "old": "UNIQUE (day, region, kind, faction, owner, slot)",
+    "new": "UNIQUE (day, region, kind, owner, slot)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LIST-KIND-ARM",
+    "file": "server-account/src/professions.js",
+    "old": "const shown = (w) => w.kind === 'court' || (halls &&",
+    "new": "const shown = (w) => (halls &&",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-ISFAC-TYPE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "typeof id === 'number' && ROLL_SET.has(id)",
+    "new": "ROLL_SET.has(id)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "equivalent": true,
+    "why": "Set.has is SameValueZero: no string id ever matches a number in the set"
+  },
+  {
+    "name": "T-LAW-WHOLE-FINITE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(typeof v === 'number' && Number.isFinite(v) ? Math.trunc(v) : 0)",
+    "new": "(typeof v === 'number' ? Math.trunc(v) : 0)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-ORIGIN-EMPTY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "typeof row?.origin === 'string' && row.origin !== ''",
+    "new": "typeof row?.origin === 'string'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MAP-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "keys.length > ROLL_FACTIONS.length) return false;",
+    "new": "keys.length >= ROLL_FACTIONS.length) return false;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-ADOPT-BASE-HAS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "base && Object.hasOwn(base, f) ?",
+    "new": "base ?",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-GUILD-TABLE-OWN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return Object.hasOwn(table, m[2]) ?",
+    "new": "return m[2] in table ?",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MEMBER-RANK0",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (f == null || !(rank >= 0)) continue;",
+    "new": "if (f == null || !(rank > 0)) continue;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MEMBERSOK-LEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!Array.isArray(v) || v.length > ROLL_FACTIONS.length) return false;",
+    "new": "if (!Array.isArray(v) || v.length >= ROLL_FACTIONS.length) return false;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT CHAP2 E3 refuses a third temple or order, and only twenty-two distinct ids exist (a repeat is refused), so no list of twenty-two or more is ever a book - the length guard is the early way out"
+  },
+  {
+    "name": "T-LAW-MEMBERSOK-NEG",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "!Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;",
+    "new": "!Number.isSafeInteger(rank) || rank > ROLL_RANK_MAX) return false;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-LAW-MEMBERSOK-INT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "typeof rank !== 'number' || !Number.isSafeInteger(rank) ||",
+    "new": "typeof rank !== 'number' ||",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-HIDDEN-THIEVES",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);",
+    "new": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood]);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-NAME-OWL",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Owl: 'Knights of the Owl'",
+    "new": "Owl: 'Knights of the Owls'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-NAME-HAWK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Hawk: 'Knights of the Hawk'",
+    "new": "Hawk: 'Order of the Hawk'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-NAME-SCARAB",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Scarab: 'Order of the Scarab'",
+    "new": "Scarab: 'Knights of the Scarab'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-DICE-REGION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "gateHash(HALL_WRIT_SALT, day, region, faction, slot, k)",
+    "new": "gateHash(HALL_WRIT_SALT, day, 0, faction, slot, k)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-SALT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const HALL_WRIT_SALT = 0x4a11;",
+    "new": "export const HALL_WRIT_SALT = 0x4a12;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-KEY-ZERO",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "key < 0 || key > 0xffffffff",
+    "new": "key < 1 || key > 0xffffffff",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-KEY-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "key < 0 || key > 0xffffffff",
+    "new": "key < 0 || key >= 0xffffffff",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-REPORT-EVERY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (!factions.every(isRollFaction)) return null;",
+    "new": "if (!factions.some(isRollFaction)) return null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALL-REPORT-LEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "factions.length > ROLL_FACTIONS.length) return null;",
+    "new": "factions.length >= ROLL_FACTIONS.length) return null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-STOP-LEASE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "'chapters-closed', 'lease', 'no-realm-character'",
+    "new": "'chapters-closed', 'no-realm-character'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-STOP-DEAD",
+    "file": "src/net/npcRollTracker.js",
+    "old": "'no-data', 'dead', 'auth'",
+    "new": "'no-data', 'auth'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-STOP-CLAIM",
+    "file": "src/net/npcRollTracker.js",
+    "old": "'roll-seed', 'roll-claim']",
+    "new": "'roll-seed']",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-SEEDED",
+    "file": "src/net/npcRollTracker.js",
+    "old": "const from = r.data.seeded ? values :",
+    "new": "const from = false ? values :",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-REFRESH-BASE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (stopped || !base) return;",
+    "new": "if (stopped) return;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-TAB-REFRESH-STOPPED",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (stopped || !base) return;",
+    "new": "if (!base) return;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "equivalent": true,
+    "why": "tick returns on a stop before the refresh is read"
+  },
+  {
+    "name": "T-TAB-WRITE-STORE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (store) for (const [f, rep] of Object.entries(values))",
+    "new": "for (const [f, rep] of Object.entries(values))",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-KEY",
+    "file": "src/net/npcHallBook.js",
+    "old": "export const HALL_REPORTED_KEY = 'chap2.halls';",
+    "new": "export const HALL_REPORTED_KEY = 'chap2.hall';",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-MAX",
+    "file": "src/net/npcHallBook.js",
+    "old": "export const HALL_REPORTED_MAX = 200;",
+    "new": "export const HALL_REPORTED_MAX = 2;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-SORT",
+    "file": "src/net/npcHallBook.js",
+    "old": ".sort((a, b) => b[1] - a[1]).slice(0, HALL_REPORTED_MAX)",
+    "new": ".sort((a, b) => a[1] - b[1]).slice(0, HALL_REPORTED_MAX)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-SLICE",
+    "file": "src/net/npcHallBook.js",
+    "old": ".slice(0, HALL_REPORTED_MAX)",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-CATCH",
+    "file": "src/net/npcHallBook.js",
+    "old": "try { r = await door.witness(h); } catch { /* the next day asks again */ }",
+    "new": "r = await door.witness(h);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-BOOK-STORED-SHAPE",
+    "file": "src/net/npcHallBook.js",
+    "old": "if (v && typeof v === 'object' && !Array.isArray(v)) reported = v;",
+    "new": "if (v) reported = v;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-VIEW-OWED",
+    "file": "server-account/src/npcRoll.js",
+    "old": "if (row.owed > 0) owed[f] = row.owed;",
+    "new": "owed[f] = row.owed;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-DRAIN-OWEDCHG",
+    "file": "server-account/src/npcRoll.js",
+    "old": "if (d.credited !== 0 || d.owed !== row.owed) paid.push(",
+    "new": "if (d.credited !== 0) paid.push(",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-READ-NOPAY",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq };",
+    "new": "    if (false) return { roll: viewOf(kseq, rows), from: kseq };",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-SVC-READ-RACE",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    if (!moved?.meta?.changes) {\n      const why = await heldUnder(db, player.id, who.character, who.lease);\n      return 'error' in why ? why : { error: 'roll-busy' };\n    }\n    for (const [f, r] of paid)",
+    "new": "    for (const [f, r] of paid)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-SEED-NULLMEMBERS",
+    "file": "server-account/src/npcRoll.js",
+    "old": "!(seed?.members === null || rollMembersOk(seed?.members))",
+    "new": "!rollMembersOk(seed?.members)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-SEED-AFTER",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  if (!after) {\n    const why = await heldUnder(db, player.id, who.character, who.lease);\n    return 'error' in why ? why : { error: 'roll-busy' };\n  }\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-SVC-CLAIM-SEQ",
+    "file": "server-account/src/npcRoll.js",
+    "old": "return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited };",
+    "new": "return { roll: viewOf(kseq, rows), credited };",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-SVC-HELD-REALMID",
+    "file": "server-account/src/npcRoll.js",
+    "old": "!REALM_ID_RE.test(character) || typeof lease",
+    "new": "typeof lease",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-RATE-WINDOW",
+    "file": "server-account/src/npcHalls.js",
+    "old": "HALL_WITNESS_HOUR, 3600)",
+    "new": "HALL_WITNESS_HOUR, 60)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-RATE-KEY",
+    "file": "server-account/src/npcHalls.js",
+    "old": "`hall-witness:${player.id}`",
+    "new": "`hall-witness:`",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-HALLS-SUBQUERY",
+    "file": "server-account/src/npcHalls.js",
+    "old": "AND key IN (SELECT key FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND region = ? AND key LIKE ?)`)",
+    "new": "AND region = ? AND key LIKE ?`)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-HALLS-SORT",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  return [...factions].sort((a, b) => a - b);\n}",
+    "new": "  return [...factions];\n}",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "T-POST-EARLY-REMOVED",
+    "file": "server-account/src/professions.js",
+    "old": "  if (courtDone && hallDone) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "hall_writ_days is written only beside or after writ_days, so with both done the chapters are [] and AUDIT CHAP2 S1's guard returns before any read"
+  },
+  {
+    "name": "T-POST-COUNT-ACTIVE",
+    "file": "server-account/src/professions.js",
+    "old": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
+    "new": "hallWrits(day, region, f, doctrineWritCount(hallWritCountIn(0, strengths.get(f)), events.get(f)?.doctrine), table, focuses.get(f) ?? null)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "note": "CHAP6b: re-aimed by content (the doctrine and the backing beside it)."
+  },
+  {
+    "name": "T-POST-TIER-QTY",
+    "file": "server-account/src/professions.js",
+    "old": "w.faction, w.slot, w.material, w.tier, w.units,",
+    "new": "w.faction, w.slot, w.material, w.units, w.tier,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-POST-HALLDONE-SKIP",
+    "file": "server-account/src/professions.js",
+    "old": "const chapters = hallDone ? [] : await regionChapters(",
+    "new": "const chapters = await regionChapters(",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "as above: hallDone implies courtDone, and the kept chapters answer without a read"
+  },
+  {
+    "name": "T-LIST-FILLED-ARM",
+    "file": "server-account/src/professions.js",
+    "old": "(halls && (w.filled_by === player.id || (w.kind",
+    "new": "(halls && ((w.kind",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-HIDDEN-THIEVES-SQL",
+    "file": "server-account/src/professions.js",
+    "old": "faction_id IN (${GUILD_FACTION_IDS.ThievesGuild}, ${GUILD_FACTION_IDS.DarkBrotherhood})",
+    "new": "faction_id IN (${GUILD_FACTION_IDS.DarkBrotherhood})",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "T-CREDIT-HEAD-PLAYER",
+    "file": "server-account/src/professions.js",
+    "old": "WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)",
+    "new": "WHERE char_id = ?2 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT CHAP2 S5's death check on the same statement asks the realm character by id AND player, so the head's own player clause is the second of two"
+  },
+  {
+    "name": "T-CREDIT-ROLL-PLAYER",
+    "file": "server-account/src/professions.js",
+    "old": "WHERE char_id = ?2 AND player = ?1 AND faction_id = (SELECT faction",
+    "new": "WHERE char_id = ?2 AND faction_id = (SELECT faction",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "the npc_roll UPDATE asks the head's tag, which only the player-scoped head UPDATE sets"
+  },
+  {
+    "name": "T-CREDIT-HEAD-FILLED",
+    "file": "server-account/src/professions.js",
+    "old": "AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)\n",
+    "new": "AND player = ?1 AND (?5 IS NOT NULL)\n",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-CREDIT-REP-TAG",
+    "file": "server-account/src/professions.js",
+    "old": "\n          AND EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ?2 AND tag = ?6)`)",
+    "new": " AND (?6 IS NOT NULL)`)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ],
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it."
+  },
+  {
+    "name": "T-BOARD-SEAL",
+    "file": "src/ui/noticeWindow.js",
+    "old": "${poster ? 'seal-guild' : 'seal-court'}",
+    "new": "${poster ? 'seal-court' : 'seal-court'}",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/board_ui.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "T-BOARD-KIND-TEXT",
+    "file": "src/ui/noticeWindow.js",
+    "old": "poster ? 'Hall writ' : 'Court writ'",
+    "new": "poster ? 'Court writ' : 'Court writ'",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/board_ui.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "T-BOARD-PAY-STANDING",
+    "file": "src/ui/noticeWindow.js",
+    "old": " : poster ? ` and standing with the ${poster}` : ''}`",
+    "new": " : ''}`",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/board_ui.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "T-BOARD-TODAY-LABEL",
+    "file": "src/ui/noticeWindow.js",
+    "old": "`Writs today: ${today.filled} of ${today.max}",
+    "new": "`Court writs today: ${today.filled} of ${today.max}",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/board_ui.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_client.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-WIRE-GETSAVE",
+    "file": "src/scenes/world.js",
+    "old": "getSaveData: () => rollKept,",
+    "new": "getSaveData: () => null,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-WIRE-CHARACTER",
+    "file": "src/scenes/world.js",
+    "old": "character: () => realmSession.id,",
+    "new": "character: () => null,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-WIRE-HALLBOOK-STORAGE",
+    "file": "src/scenes/world.js",
+    "old": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;",
+    "new": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: null }) : null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "T-WIRE-REMEMBER-LINE",
+    "file": "src/scenes/world.js",
+    "old": "${hall ? ` The ${hall} will remember it${merit}.` : ''}",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-WIRE-ROLL-IO-STORAGE",
+    "file": "src/scenes/world.js",
+    "old": "io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),\n    character: () => realmSession.id,",
+    "new": "io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: null }),\n    character: () => realmSession.id,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-MIG-HEADS-PK",
+    "file": "server-account/migrations/0098_npc_roll.sql",
+    "old": "char_id     TEXT PRIMARY KEY,",
+    "new": "char_id     TEXT,",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-MIG-ROLL-PK",
+    "file": "server-account/migrations/0098_npc_roll.sql",
+    "old": ",\n  PRIMARY KEY (char_id, faction_id)\n);",
+    "new": "\n);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ],
+    "note": "AUDIT CHAP2: the pins lens recorded it equivalent; the audit's own pins kill it.",
+    "equivalent": true,
+    "why": "redundant with the heads' primary key and the tag guard: no second seed's rows ever stand"
+  },
+  {
+    "name": "T-HALL-FALLBACK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const from = own.length ? own : table;",
+    "new": "const from = own;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-DOOR-WITNESS-PATH",
+    "file": "src/net/accountClient.js",
+    "old": "witness: (hall) => post('/v1/chapters/witness', { hall }),",
+    "new": "witness: (hall) => post('/v1/chapters/witnes', { hall }),",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "T-DOOR-WITNESS-BODY",
+    "file": "src/net/accountClient.js",
+    "old": "witness: (hall) => post('/v1/chapters/witness', { hall }),",
+    "new": "witness: (hall) => post('/v1/chapters/witness', hall),",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-KSEQ-EVERY",
+    "file": "server-account/src/npcRoll.js",
+    "old": ".bind(claimed ? 1 : 0, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
+    "new": ".bind(1, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-READ-FROM-SEQ",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq };",
+    "new": "    if (!paid.length) return { roll: viewOf(seq, rows), from: seq };",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-DRAIN-SEQ",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    return { roll: viewOf(kseq, rows), from: kseq };   // AUDIT CHAP2 C1: owed paid is the service's own credit",
+    "new": "    return { roll: viewOf(seq + 1, rows), from: seq };",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-VIEW-SEQ",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  const head = await db.prepare('SELECT kseq FROM npc_roll_heads WHERE char_id = ?').bind(character).first();\n  return head ? viewOf(Number(head.kseq), await rowsOf(db, character)) : null;",
+    "new": "  const head = await db.prepare('SELECT seq FROM npc_roll_heads WHERE char_id = ?').bind(character).first();\n  return head ? viewOf(Number(head.seq), await rowsOf(db, character)) : null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-BOARD-ORDER",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) { if (said) work.sayLate?.(said); return; }",
+    "new": "    if (!alive) return;\n    const said = r?.ok ? work.onTaken?.(r) : null;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/board_ui.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_client.test.js",
+      "test/audit_chap3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C1-REPEAT-REFRESH",
+    "file": "src/scenes/world.js",
+    "old": "    if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();",
+    "new": "    if (isChapterWrit(d.writ?.kind) && !d.repeat) rollTracker?.refresh();",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C2-SENT-KEY",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    if (c.members) heldKey = rollMembersKey(c.members);\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C3-GENERATION",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    doneGen = Math.max(doneGen, g);",
+    "new": "    doneGen = askGen;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C4-LEASE-RESUME",
+    "file": "src/net/npcRollTracker.js",
+    "old": "      if (stopped === 'lease' && lease() && lease() !== stoppedLease) { stopped = null; nextAt = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C7-HELD",
+    "file": "src/scenes/world.js",
+    "old": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat && rollTracker?.held ? hallPosterName",
+    "new": "const hall = isChapterWrit(d.writ?.kind) && !d.repeat ? hallPosterName",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-C8-YOUNG",
+    "file": "src/net/npcHallBook.js",
+    "old": " || (r?.ok && r.data?.why === 'young')) stopped = true;",
+    "new": ") stopped = true;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E9-BOOK-DONE",
+    "file": "src/net/npcHallBook.js",
+    "old": "      if ((r?.ok && r.data?.counted === true) || HALL_DONE_ERRORS.includes(r?.error)) { t[String(h.key)] = HALL_DONE + dayNow(); write(t); }\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E9-BOOK-DONE-READ",
+    "file": "src/net/npcHallBook.js",
+    "old": "      if (at === dayNow() || at >= HALL_DONE) return false;",
+    "new": "      if (at === dayNow()) return false;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-D2-HIDDEN-JOIN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];",
+    "new": "=> rollRep(rep) >= RANK_REQ_REPUTATION[0];",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S7-OWED-JOIN",
+    "file": "server-account/src/npcRoll.js",
+    "old": "joinRecordable(line.rep + line.owed, f)",
+    "new": "joinRecordable(line.rep, f)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-D3-SEAT-LINE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
+    "new": "  return Math.max(RANK_REQ_REPUTATION[r], top);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-D3-BAND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const top = r < ROLL_RANK_MAX ? RANK_REQ_REPUTATION[r + 1] - 1 : MAX_REPUTATION;",
+    "new": "  const top = RANK_REQ_REPUTATION[r];",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-D4-EITHER-BOOK",
+    "file": "src/systems/guildHallReveal.js",
+    "old": "    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) out[g.guildGroup] = book[g.guildGroup];",
+    "new": "    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) void book;",
+    "tests": [
+      "test/audit63_guilds_court.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-STRUCK",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/audit_chap4.test.js"
+    ],
+    "note": "AUDIT CHAP4 T: since AUDIT CHAP3 S5 asks the strike again inside the write, this first check is told apart only by a witness the age refuses - pinned there (a young account at a struck town is answered struck)."
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-STRIKE-DELETE",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    db.prepare(`DELETE FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND key LIKE ?`).bind(`%:${key}`),",
+    "new": "    db.prepare('SELECT ?').bind(`%:${key}`),",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-STRIKE-RECORD",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    db.prepare('INSERT OR IGNORE INTO npc_hall_strikes (map_id, by, at) VALUES (?, ?, ?)').bind(key, dev.handle ?? null, nowS),",
+    "new": "    db.prepare('SELECT ?, ?, ?').bind(key, dev.handle ?? null, nowS),",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-STRIKE-DEV",
+    "file": "server-account/src/npcHalls.js",
+    "old": "export async function strikeHall({ db, nowS }, dev, env, { key } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
+    "new": "export async function strikeHall({ db, nowS }, dev, env, { key } = {}) {",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-LIST-DEV",
+    "file": "server-account/src/npcHalls.js",
+    "old": "export async function listHalls({ db, nowS }, dev, env, { region } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
+    "new": "export async function listHalls({ db, nowS }, dev, env, { region } = {}) {",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-IGNORED",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    const kept = list.filter((r) => !ignored.has(r.account));\n    const f = /** @type {any} */ (witnessedFact(kept, parseHallReport));",
+    "new": "    const kept = list;\n    const f = /** @type {any} */ (witnessedFact(kept, parseHallReport));",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-IGNORED-WITNESS",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (hallFacts(await regionRows(db, h.region), nowS).ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E1-AUDIT-FLAG",
+    "file": "server-account/src/npcHalls.js",
+    "old": "      audit: (factConfirmed(f) && agreeing === SEAT_WITNESSES_AUDIT) || f.state === 'disputed' });",
+    "new": "      audit: f.state === 'disputed' });",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E2-RATE",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E2-RATE-BOUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_CLAIMS_HOUR = 120;",
+    "new": "export const ROLL_CLAIMS_HOUR = 121;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E2-STATUS",
+    "file": "server-account/src/index.js",
+    "old": "  'roll-rate': 429,   // AUDIT CHAP2 E2: the claims' hour\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E3-BOOKS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return temples <= ROLL_BOOKS && orders <= ROLL_BOOKS;",
+    "new": "  return true;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E3-BOOKS-BOUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_BOOKS = 2;",
+    "new": "export const ROLL_BOOKS = 3;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E5-TOP-SLOT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(1);",
+    "new": "const drawn = courtWrits(day, region, count + 1, from, dice).slice(0, count);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E7-VERSION-READ",
+    "file": "server-account/src/npcHalls.js",
+    "old": "AND region = ? AND key LIKE ?)`).bind(region, `${HALL_REPORT_V}:%`).all();",
+    "new": "AND region = ? AND ? IS NOT NULL)`).bind(region, `${HALL_REPORT_V}:%`).all();",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E7-VERSION-KEY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const hallWitnessKey = (/** @type {number} */ mapId) => `${HALL_REPORT_V}:${mapId}`;",
+    "new": "export const hallWitnessKey = (/** @type {number} */ mapId) => `${mapId}`;",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E8-NULL-BOOK",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    } else if (line.member && line.rank != null && line.rank > rollBookRankOf(line.rank, line.rep)) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S1-ORDER",
+    "file": "server-account/src/professions.js",
+    "old": "  if (courtDone && !chapters.length) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S2-ORACLE",
+    "file": "server-account/src/professions.js",
+    "old": "  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a\n  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };",
+    "new": "  if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };\n  if (w.filled_by) return { error: 'writ-taken' };\n  if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };\n  if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S3-STATUS",
+    "file": "server-account/src/index.js",
+    "old": "  'chapters-closed': 403,   // AUDIT CHAP2 S3",
+    "new": "  'chapters-closed-x': 403,   // AUDIT CHAP2 S3",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S5-DEAD",
+    "file": "server-account/src/professions.js",
+    "old": "\n        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)`)",
+    "new": "`)",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js",
+      "test/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-S6-MARKER",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  const record = lines.length ? lines.map(([f, , asked]) => [f, asked, credited[f]]) : [[0, 0, 0]];",
+    "new": "  const record = lines.map(([f, , asked]) => [f, asked, credited[f]]);",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-U1-LAYOUTS",
+    "file": "src/scenes/world.js",
+    "old": "if (witness && hallBook && (!homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length))) {",
+    "new": "if (witness && hallBook) {",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-U2-REGION",
+    "file": "src/scenes/world.js",
+    "old": "if (factions.length && Number.isInteger(region)) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region, factions });",
+    "new": "if (factions.length && Number.isInteger(region)) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region: dfLoc.regionIndex, factions });",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-MIG-STRIKES",
+    "file": "server-account/migrations/0099_npc_halls.sql",
+    "old": "CREATE TABLE IF NOT EXISTS npc_hall_strikes (",
+    "new": "CREATE TABLE IF NOT EXISTS npc_hall_strikes_x (",
+    "tests": [
+      "test/accountworker.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CHAP2-E6-HELD-AT-79",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Math.min(ROLL_SEAT_LINE - 1, Math.max(RANK_REQ_REPUTATION[r], top));",
+    "new": "  return Math.max(RANK_REQ_REPUTATION[r], Math.min(ROLL_SEAT_LINE - 1, top));",
+    "tests": [
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js",
+      "test/chap1_roll.test.js",
+      "test/chap2_halls.test.js"
+    ]
+  }
+]

@@ -56,8 +56,9 @@ export function seatsOpenFor(player, env) {
   const s = seatsSwitchOf(env?.SEATS_OPEN);
   return s === 'on' || (s === 'dev' && isDeveloper(player, env));
 }
-/** An account a week registered may witness (SEAT0 3.2), as a harvest's and a hub's do. */
-const witnessOf = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;
+/** An account a week registered may witness (SEAT0 3.2), as a harvest's and a hub's do - and a guild hall's (CHAP2a,
+ *  npcHalls.js reads this one). */
+export const witnessOf = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;
 
 /** Whether a seat's key was struck (a history row), so it is never witnessed again. */
 async function struck(db, key) {

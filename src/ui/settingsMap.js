@@ -132,7 +132,7 @@ export const CATEGORIES = Object.freeze([
     sec("dungeons", "Dungeon help", [
       "feat:dungeon-sense", "feat:dungeon-echoes", "feat:dungeon-way-out"]),
     sec("maps", "Maps", [
-      "feat:enhanced-map", "feat:dungeon-map-3d", "feat:tamriel-map", "GUI/TravelMapLocationsOutline", "GUI/EnableGeographicBackgrounds"]),
+      "port:mapScale", "feat:enhanced-map", "feat:dungeon-map-3d", "feat:tamriel-map", "GUI/TravelMapLocationsOutline", "GUI/EnableGeographicBackgrounds"]),
     sec("townmap", "Town map", [
       "Map/ExteriorMapDefaultZoomLevel", "Map/ExteriorMapResetZoomLevelOnNewLocation", "Map/AutomapTempleColor", "Map/AutomapShopColor",
       "Map/AutomapTavernColor", "Map/AutomapHouseColor"]),
@@ -142,6 +142,8 @@ export const CATEGORIES = Object.freeze([
     sec("windows", "Inventory, talk & shops", [
       "GUI/HelmAndShieldMaterialDisplay", "GUI/EnableInventoryInfoPanel", "GUI/EnableEnhancedItemLists",
       "GUI/EnableModernConversationStyleInTalkWindow", "GUI/ShopQualityPresentation", "GUI/ShopQualityHUDDelay"]),
+    sec("sheet", "Character sheet", [
+      "port:standingAll"]),
     sec("tooltips", "Tooltips", [
       "GUI/EnableToolTips", "GUI/ToolTipDelayInSeconds", "GUI/ToolTipTextColor", "GUI/ToolTipBackgroundColor"]),
     sec("start", "Starting up & loading", [

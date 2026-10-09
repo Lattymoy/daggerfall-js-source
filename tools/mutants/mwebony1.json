@@ -1,0 +1,82 @@
+[
+  {
+    "name": "MWEBONY1-the-tassets-swing-less",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "top: 84, bottom: 62, share: 0.7, centre: 4 }",
+    "new": "top: 84, bottom: 62, share: 0.5, centre: 4 }",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The breastplate's tassets take half the thigh where they took seven tenths: the shipped NIF is not what the bake makes, and the hang law is not the pinned one."
+  },
+  {
+    "name": "MWEBONY1-the-hang-starts-higher",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "top: 84, bottom: 62, share: 0.7, centre: 4 }",
+    "new": "top: 90, bottom: 62, share: 0.7, centre: 4 }",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The thighs reach up into the breastplate's waist."
+  },
+  {
+    "name": "MWEBONY1-the-skirt-to-the-steel-hem",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "hang: Object.freeze({ ...PLATE_RIG.skirt.hang, bottom: 60 }) }),",
+    "new": "hang: PLATE_RIG.skirt.hang }),",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The ebony skirt hangs to the steel skirt's hem, not its own."
+  },
+  {
+    "name": "MWEBONY1-the-helm-left-down",
+    "file": "tools/bakeEbonyPlate.mjs",
+    "old": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], HELM_LIFT),",
+    "new": "[[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])]),",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The helm where the scene fitted it: the steel helms' lesson (MW-STEEL5) forgotten."
+  },
+  {
+    "name": "MWEBONY1-mithril-wears-it",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "const ebony = plate(ARMOR_MATERIAL.Ebony);",
+    "new": "const ebony = plate(ARMOR_MATERIAL.Mithril);",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The set worn by Mithril, which keeps the Morrowind ebony; Ebony keeps it instead."
+  },
+  {
+    "name": "MWEBONY1-the-gauntlets-hide-nothing",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "        part('right hand', 'ebony_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),",
+    "new": "        part('right hand', 'ebony_plate_gauntlet_right.nif'),",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The right wrist and forearm skin drawn under the gauntlet's cuff."
+  },
+  {
+    "name": "MWEBONY1-no-repeat-still-this-door",
+    "file": "tools/fbxMesh.mjs",
+    "old": "  if (keep.length === pts.length || keep.length < 3) return null;",
+    "new": "  if (keep.length < 3) return null;",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "A face with no repeated corner answered by the fallback, which is for repeats alone."
+  },
+  {
+    "name": "MWEBONY1-no-fallback",
+    "file": "tools/fbxMesh.mjs",
+    "old": "        tris = earClipRepeated(pts);",
+    "new": "        tris = null;",
+    "tests": ["test/mwebony1.test.js"],
+    "note": "The breastplate's eight faces with a corner named twice refused again: the bake throws."
+  },
+  {
+    "name": "MWEBONY1-over-is-the-root-hang",
+    "file": "tools/skinWeights.mjs",
+    "old": "    if (!over) return [[index.get(hang.root), 1 - legs], ...shares];",
+    "new": "    return [[index.get(hang.root), 1 - legs], ...shares];",
+    "tests": ["test/mwebony1.test.js", "test/mwcloak1.test.js"],
+    "note": "A hang over its joints rides the pelvis alone: the breastplate's chest no longer on its spine."
+  },
+  {
+    "name": "MWEBONY1-the-legs-in-the-joint-law",
+    "file": "tools/skinWeights.mjs",
+    "old": "    for (let i = 0; i < d.length; i++) if (!legIndex?.has(i) && (k < 0 || d[i] < d[k])) k = i;",
+    "new": "    for (let i = 0; i < d.length; i++) if ((k < 0 || d[i] < d[k])) k = i;",
+    "tests": ["test/mwebony1.test.js", "test/mwcloak1.test.js"],
+    "note": "The joint law picks a thigh outright for a plate over it."
+  }
+]

@@ -401,8 +401,8 @@
   {
     "name": "SEAT1c-token-seat-title-bare",
     "file": "src/net/identityToken.js",
-    "old": "  if (SEAT_TITLES.includes(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
-    "new": "  if (!SEAT_TITLES.includes(c.t) && c.ts !== undefined) return false;",
+    "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
+    "new": "  if (!titleClaimed(c.t) && c.ts !== undefined) return false;",
     "tests": [
       "test/seat1c_titles.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "SEAT1c-token-claim-anywhere",
     "file": "src/net/identityToken.js",
-    "old": "  if (SEAT_TITLES.includes(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
-    "new": "  if (SEAT_TITLES.includes(c.t) && !seatTitleClaimOk(c.ts)) return false;",
+    "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
+    "new": "  if (titleClaimed(c.t) && !seatTitleClaimOk(c.ts)) return false;",
     "tests": [
       "test/seat1c_titles.test.js"
     ]
@@ -428,7 +428,7 @@
   {
     "name": "SEAT1c-wire-claim-unstamped",
     "file": "src/net/wire.js",
-    "old": "  if (typeof t === 'string' && SEAT_TITLES.includes(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
     "new": "",
     "tests": [
       "test/seat1c_titles.test.js"
@@ -437,7 +437,7 @@
   {
     "name": "SEAT1c-wire-claim-anywhere",
     "file": "src/net/wire.js",
-    "old": "  if (typeof t === 'string' && SEAT_TITLES.includes(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
     "new": "  if (from?.ts) row.ts = from.ts;",
     "tests": [
       "test/seat1c_titles.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "SEAT1c-mint-title-for-any-character",
     "file": "server-account/src/index.js",
-    "old": ": SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {}) : (wornT ? { t: wornT } : {});",
-    "new": ": SEAT_TITLES.includes(wornT) ? { t: wornT, ts: seatBadge?.ts ?? [0, 0] } : (wornT ? { t: wornT } : {});",
+    "old": ": SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {})\n",
+    "new": ": SEAT_TITLES.includes(wornT) ? { t: wornT, ts: seatBadge?.ts ?? [0, 0] }\n",
     "tests": [
       "test/seat1c_titles.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "SEAT1c-client-plain-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : null) ?? TITLE_TEXT[key];",
-    "new": "  const text = TITLE_TEXT[key];",
+    "old": "const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key)",
+    "new": "const text = (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key)",
     "tests": [
       "test/seat1c_titles.test.js"
     ]
