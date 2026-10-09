@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSdBeats, SD_BEAT_TEXT, SD_BEAT_LAST_MS } from '../src/scenes/sdArenaRead.js';
 import { titleCardModel } from '../src/ui/gateTitleCard.js';
-import { sdBarNear } from '../src/ui/sdRemnantBar.js';
+import { sdBarNear, remnantBarModel, SD_BAR_CSS } from '../src/ui/sdRemnantBar.js';
 import { SD_ARENA } from '../src/net/sdBrain.js';
-import { createSdVoice, SD_VOICE_RANK, SD_VOICE_READ_MS } from '../src/scenes/sdVoice.js';
+import { createSdVoice, SD_VOICE_RANK, SD_VOICE_READ_MS, SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
 import { SD_BLOWS_TEXT } from '../src/scenes/sdRemnantBlows.js';
 import { sdCollapseLine } from '../src/scenes/sdHost.js';
 import { SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
@@ -17,12 +17,14 @@ import { SD_SPOILS_TEXT } from '../src/systems/sdSpoils.js';
 import { SD_HOME_TEXT } from '../src/scenes/sdEnd.js';
 import { SD_REM_SINK_MS } from '../src/scenes/sdRemnant.js';
 import { SD_RECEIPT_WAIT_MS } from '../src/scenes/sdSpoils.js';
-import { SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
 import { courtSaySeconds } from '../src/scenes/gateCourt.js';
 import { MidScreenText } from '../src/ui/midScreenText.js';
 import { ENHANCED_CSS } from '../src/ui/enhancedStyle.js';
 import { MARKS_CARD_CSS } from '../src/ui/gateMarksView.js';
 import { DAMAGE_CHART_CSS } from '../src/ui/gateDamageChart.js';
+import { drawGateBossBar, destroyGateBossBar, BOSS_BAR_CSS } from '../src/ui/gateBossBar.js';
+import { ONLINE_DRESS_CSS } from '../src/ui/enhancedPlusStyle.js';
+import { SD_BLOWS, SD_BODY } from '../src/net/sdRemnant.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -208,4 +210,50 @@ test('SD26 THE MESSAGE LINE ITS OWN WIDTH, ON THE SCREEN AT EVERY HUD SCALE (T5)
   assert.match(mid, /width: max-content; max-width: calc\(min\(680px, 86vw\) \/ var\(--hud-scale, 1\)\);/, 'its content\'s width, to the cap over the scale');
   assert.doesNotMatch(prison, /scale\(/, 'the prison\'s line is never scaled');
   assert.match(prison, /max-width: min\(680px, 86vw\);/, 'so its cap is whole');
+});
+
+/** A document the bar is drawn into (wb9a's). */
+function fakeDoc() {
+  const node = (tag) => {
+    const n = { tag, style: {}, className: '', textContent: '', children: [], append(...c) { this.children.push(...c); }, remove() { this.gone = true; }, setAttribute() {} };
+    let html = '';
+    Object.defineProperty(n, 'innerHTML', { get: () => html, set: (v) => { html = v; } });
+    return n;
+  };
+  const styles = [];
+  return { doc: { createElement: node, body: node('body'), head: { append: (s) => styles.push(s) }, getElementById: (id) => styles.find((s) => s.id === id) ?? null } };
+}
+
+test('SD26 THE REMNANT\'S BAR IN ITS OWN COLOURS (T6): SD20e T3 took Dagon\'s red and the gate\'s orange off the Hour\'s banner and card, and the bar kept both - the Reset and the End on Dagon\'s pulsing blood-red plate in the gate\'s cream, the omens\' signs on its row the gate\'s orange beside the card\'s brass, its last minute pulsing the gate\'s red. On the brass bar the call stands on a brass plate in its own colour (the Mantella\'s green, the End\'s red) over both skins\' dagon rules; the omens\' signs are the card\'s brass, written again when one node turns from the gate\'s fight to the Hour\'s; the last minute pulses brass; the gate keeps its own (mutants: the Hour on Dagon\'s plate; the call in the gate\'s cream; the omens the gate\'s orange; the look unread by the row; the last minute the gate\'s red)', () => {
+  const NOW = 1_800_000_000_000;
+  const s = { fi: 2, ph: 3, op: NOW - 600_000, ou: 0, su: 0, h: 300, m: 1000, rem: { x: 0, z: 0, yw: 0, mv: null, atk: { k: 'atk', b: SD_BODY.remnant, i: 7, a: SD_BLOWS.reset.id, at: NOW + 4000, x: 0, z: 0, yw: 0, tg: [] } }, ec: null, clk: null, cx: { i: 7, m: 500, c: [[6, 0, 100], [-6, 0, 100], [0, 6, 100]] }, fell: null, lost: 0, ends: NOW + 9e6, mk: ['blades', 'quickened', 'hardened'] };
+  const m = remnantBarModel(s, NOW);
+  assert.equal(m.theme, 'brass'); assert.ok(m.callout.dagon); assert.equal(m.callout.color, SD_BAR_CSS.reset);
+  const { doc } = fakeDoc();
+  destroyGateBossBar();
+  drawGateBossBar(m, { doc });
+  const root = doc.body.children[0];
+  assert.match(root.className, /\bbrass\b/);
+  const find = (n, cls) => (n.className?.split?.(' ').includes(cls) ? n : n.children?.map((c) => find(c, cls)).find(Boolean) ?? null);
+  const callout = find(root, 'wb-boss-callout');
+  assert.match(callout.className, /\bdagon\b/); assert.equal(callout.style.color, SD_BAR_CSS.reset, 'the call\'s own colour on its node');
+  // its plate: the brass, the call's colour inherited - over the classic sheet's and the Plus skin's dagon rules
+  const brass = /\n\.wb-boss-bar\.brass \.wb-boss-callout\.dagon \.wb-boss-callout-text \{([^}]*)\}/.exec(BOSS_BAR_CSS)?.[1] ?? '';
+  assert.match(brass, /color: inherit;/, 'the call\'s own colour, not the gate\'s cream');
+  assert.match(brass, /animation-name: wb-brass-plate;/, 'its own plate');
+  const plate = /@keyframes wb-brass-plate \{ from \{ background: rgba\((\d+),(\d+),(\d+)[^}]*\} to \{ background: rgba\((\d+),(\d+),(\d+)/.exec(BOSS_BAR_CSS);
+  assert.ok(plate && Number(plate[1]) - Number(plate[3]) < 2.5 * (Number(plate[2]) - Number(plate[3])) && Number(plate[4]) - Number(plate[6]) < 2.5 * (Number(plate[5]) - Number(plate[6])), 'brass, never blood');
+  const classes = (sel) => (sel.match(/\.[\w-]+/g) ?? []).length;
+  const plus = /\n(body \.wb-boss-callout\.dagon \.wb-boss-callout-text) \{/.exec(ONLINE_DRESS_CSS)?.[1];
+  assert.ok(plus && classes('.wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text') > classes(plus), 'over the Plus skin\'s cream');
+  // the omens' signs in the card's brass; the same marks under the gate's look, the gate's orange
+  const row = find(root, 'wb-boss-marks');
+  const signs = () => row.children.map((c) => c.children[0].children[0].style.color);
+  assert.deepEqual(signs().slice(1), ['#e8c060', '#e8c060'], 'the omens the Hour\'s brass');
+  drawGateBossBar({ ...m, theme: undefined }, { doc });
+  assert.deepEqual(signs().slice(1), ['#ffb27a', '#ffb27a'], 'one node, the gate\'s look: its own orange again');
+  destroyGateBossBar();
+  // its last minute: brass
+  assert.match(BOSS_BAR_CSS, /\n\.wb-boss-bar\.brass \.wb-boss-wrath\.near \{[^}]*animation-name: wb-brass-near;[^}]*\}/);
+  assert.match(BOSS_BAR_CSS, /\n\.wb-boss-wrath\.near \{[^}]*animation: wb-wrath-near /, 'the gate\'s own still red');
 });

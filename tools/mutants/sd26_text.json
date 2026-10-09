@@ -214,5 +214,50 @@
     "tests": [
       "test/sd26_text.test.js"
     ]
+  },
+  {
+    "name": "SD26-T6-the-hour-on-dagons-plate",
+    "file": "src/ui/gateBossBar.js",
+    "old": "background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": "background: rgba(60,42,8,0.9); }",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-call-in-the-gates-cream",
+    "file": "src/ui/gateBossBar.js",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; ",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { ",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-omens-the-gates-orange",
+    "file": "src/ui/gateBossBar.js",
+    "old": "m.color : theme === 'brass' ? '#e8c060' : '#ffb27a';",
+    "new": "m.color : '#ffb27a';",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-look-unread-by-the-row",
+    "file": "src/ui/gateBossBar.js",
+    "old": "if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
+    "new": "if (marksKey !== shown.marks) {",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-last-minute-the-gates-red",
+    "file": "src/ui/gateBossBar.js",
+    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
   }
 ]

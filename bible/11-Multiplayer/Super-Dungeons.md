@@ -1509,7 +1509,10 @@ struck player's own machine) - here they are named on the bar alone.
   seconds first, then a blow still winding up (its own, then an Echo's by name), the Hour's own, the stun, a blow landed
   (AUDIT SD II: the Hour's own came first and took the Reset's countdown); a fallen Echo's rising counted, its chip
   pulsing its last five seconds, and the Remnant's return (*"It returns - 3s"*); the Echoes' health; the next Reset; the
-  Hour's end in its last five minutes; Felled, then faded. Over the screen near the arena alone.
+  Hour's end in its last five minutes; Felled, then faded. Over the screen near the arena alone. In the Hour's colours
+  through and through (AUDIT SD IV, SD26 T6: the Reset and the End were called on Dagon's red plate, the omens' signs
+  the gate's orange, its last minute pulsing the gate's red): its calls on a brass plate in their own colour, the omens'
+  signs the card's brass, its last minute brass.
 - **The pillars stand**: the arena's four pillars on the realm's collider (`world/sdRealm.js` `realmPillarTris`, one
   geometry with their draw) - the same squares the Hour-Hand's shade is judged by (`behindPillar`): a body stands behind
   one, never walks through it.
