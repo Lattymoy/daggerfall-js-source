@@ -52,6 +52,8 @@
 //   POST /v1/mod/mute { target, minutes } -> { ok, target, name, until, order }
 // CUSTOMS-PASS, a developer alone - one character of one account through customs (tools/customsPass.mjs):
 //   POST /v1/mod/customs-pass { name | account, revoke? } -> { ok, target, name, open, changed }
+//   POST /v1/mod/realm-holds | realm-findings { id } | realm-clear { id, note? } | realm-hold { id, note? }
+//        | realm-rollback { id, note? } | realm-budget { days?, set? }   INT6: the review of the judge's verdicts (review.js)
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
@@ -217,6 +219,8 @@ import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
   realmCharacterHeld, realmLevelOf, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
+import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
+import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
@@ -253,14 +257,20 @@ const no = (why, status, origin) => json({ error: why }, status, origin);
 /** REALM P1: each realm refusal's status - a bad shape 400 (the default), a character that is not the caller's 404, a
  *  lease another tab holds or a sequence that is not the next 409 (the tab that lost it goes offline), the account's
  *  bound 409, customs refused 403/409, no storage 503. */
+/** INT3/INT4 (the INTEGRITY arc - bible/06-Systems/Integrity-Arc.md): THE JUDGE'S REFUSALS, the same at every route that
+ *  hands a realm character's value to another player - its trade held, its record unread since the judge shipped, a
+ *  piece the id ledger marked a duplicate - each a conflict with what stands (realm.js holdRefusal, prepareRealmRecord). */
+const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409 });
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
+  ...JUDGE_STATUS,
   'rent-taken': 409, 'rent-held': 409, 'rent-rooms': 409, 'rent-none': 409, 'rent-own': 403, 'realm-only': 403,
   'rent-rate': 429, 'no-rent-room': 404, 'no-home': 404,
 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
 const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
+  ...JUDGE_STATUS,   // INT3/INT4
   'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409, 'too-many-characters': 409,
   'customs-never-online': 403, 'customs-other-account': 403, 'customs-already': 409, 'no-storage': 503,   // CUSTOMS-ELSEWHERE: the other account's
   'trade-spent': 409,   // REALM P2.1: a trade's sid another pair settled
@@ -281,9 +291,12 @@ const REALM_STATUS = Object.freeze({
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
 const PASS_STATUS = Object.freeze({ 'not-developer': 403, 'no-player': 404, ambiguous: 409 });
+/** INT6: the review's refusals - no developer 403, no such character 404, nothing clean to roll back to 409. */
+const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
 const GUILD_STATUS = Object.freeze({
+  ...JUDGE_STATUS,   // INT3/INT4
   'guilds-need-account': 403, 'guild-rank': 403, 'guild-renown': 403,
   'no-guild': 404, 'no-invite': 404, 'no-member': 404, 'no-player': 404,
   'guild-already': 409, 'guild-name-taken': 409, 'guild-tag-taken': 409, 'guild-full': 409, 'guild-master-leaves': 409,
@@ -367,6 +380,7 @@ const SEAT_STATUS = Object.freeze({
  *  no such writ 404, a conflict with what stands (the day, the hour, a bound, the Stores, a node or writ taken) 409, the
  *  hour's acts spent 429, a bad shape 400 (the default). */
 const PROF_STATUS = Object.freeze({
+  ...JUDGE_STATUS,   // INT3/INT4
   'prof-need-account': 403, 'prof-closed': 403, 'marks-closed': 403, 'prof-rank': 403,
   'no-writ': 404, 'bad-recipe': 404,
   'prof-pixel': 409, 'prof-day': 409, 'prof-late': 409, 'stores-full': 409, 'stores-short': 409,   // ANY-HOUR: no `prof-night` - no node keeps hours; CAP-OFF: no `prof-cap` - no day's cap
@@ -403,6 +417,7 @@ const PROF_STATUS = Object.freeze({
  *  listing, order or delivery 404, a conflict with what stands (the Marks, the Stores, the units, the road, the price
  *  moved, one's own goods) 409, the hour's acts spent 429, a bad shape 400 (the default). */
 const MARKET_STATUS = Object.freeze({
+  ...JUDGE_STATUS,   // INT3/INT4
   'prof-need-account': 403, 'market-closed': 403, 'not-moderator': 403,
   'market-gone': 404,
   'marks-short': 409, 'marks-full': 409, 'stores-full': 409, 'stores-short': 409, 'market-own': 409, 'market-short': 409,
@@ -890,6 +905,7 @@ const service = {
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
         // MARKS1: THE FIRST FAUCET - a receipt that made its row strikes the gate's Marks, in the row's own batch
         // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
         // line's id); `marks` null where Marks are not this account's
@@ -917,6 +933,7 @@ const service = {
           contracts: (key, nonce) => contractPayStatements(ctx, who.player, env, { key, nonce }),
         });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
         let order = null;
         if (r.renown?.rose) {
           const key = await signingKey(env, subtle);
@@ -945,6 +962,7 @@ const service = {
           strike: (d, nonce, earned) => serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),
         });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
         const key = r.renown?.rose ? await signingKey(env, subtle) : null;   // a level that rose: its signed order, for the rooms
         const signed = key ? await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS }) : null;
         const answer = { ...r };
@@ -959,6 +977,7 @@ const service = {
         // refusal says its rung, as the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend.
         const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
         return json(r, 200, origin);
       }
 
@@ -1344,7 +1363,7 @@ const service = {
         const r = await act();
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
         // AUDIT CARDS-4 A4: and why a receipt was refused - the device keeps one refused on its signature or clock
-        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, 400, origin);
+        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, JUDGE_STATUS[r.error] ?? 400, origin);   // INT3: a held stake's own
         return json(r, 200, origin);
       }
 
@@ -1426,6 +1445,15 @@ const service = {
         const key = await signingKey(env, subtle);
         const order = key ? await mintOrder({ s: r.target, mu: r.until }, key, { subtle, nowS }) : null;
         return json({ ...r, order }, 200, origin);
+      }
+
+      // INT6 (bible/06-Systems/Integrity-Arc.md): THE REVIEW - a developer's read of the judge's verdicts and the acts on
+      // them (review.js): the held, a character's findings, a hold lifted or laid, a rollback to the last clean save, the
+      // measure and the budget's config. 403 for a caller who is not one.
+      if (path.startsWith('/v1/mod/realm-') && request.method === 'POST') {
+        const act = path.slice('/v1/mod/realm-'.length);
+        const r = await reviewAct({ ...ctx, bucket: env.SAVES }, who.player, env, act, body);
+        return r.error ? no(r.error, REVIEW_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/mod/customs-pass' && request.method === 'POST') {

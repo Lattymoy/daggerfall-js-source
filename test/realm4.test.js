@@ -302,13 +302,19 @@ test('REALM P2.1: a record that moves under the settle rolls the WHOLE batch bac
 
 test('REALM P2.1: a write that loses its race never touches the current save - a checkpoint racing a join drops its own object', { timeout: 60_000 }, async () => {
   const { env, A } = await pair();
-  const realPrepare = env.DB.prepare.bind(env.DB);
+  // INT2 (PIN MOVED): the checkpoint's move rides one batch with the judge's verdict (server-account/src/verdict.js) - the
+  // join lands as that batch is sent, where it landed as the lone UPDATE ran
+  const realPrepare = env.DB.prepare.bind(env.DB), realBatch = env.DB.batch.bind(env.DB);
   let armed = true;
   env.DB.prepare = (sql) => {
     const st = realPrepare(sql);
     if (!armed || !/^UPDATE realm_characters SET seq = \?, bytes = \?, obj = \?/.test(sql)) return st;
-    armed = false;
-    return { ...st, bind(...a) { st.bind(...a); return this; }, async run() { await realmJoin(A.io, A.char.id); return st.run(); } };
+    st.checkpointMove = true;
+    return st;
+  };
+  env.DB.batch = async (list) => {
+    if (armed && list.some((st) => st.checkpointMove)) { armed = false; env.DB.prepare = realPrepare; await realmJoin(A.io, A.char.id); }
+    return realBatch(list);
   };
   const current = [...env.SAVES._map.keys()];
   const lost = await realmPut(A.io, A.char.id, { lease: A.char.lease, seq: 2 }, '{"lost":"race"}');
@@ -335,7 +341,7 @@ async function tabs({ escrowB = true } = {}) {
   const A = await r.player(), B = await r.player();
   const entA = { name: 'Arthago', items: [dagger(), arrows(3)], goldPieces: 50, stats: { strength: 60 } };
   const entB = { name: 'Brisienna', items: [arrows(10)], goldPieces: 5, stats: { strength: 60 } };
-  const snap = (e) => JSON.stringify({ name: e.name, items: e.items, goldPieces: e.goldPieces });
+  const snap = (e) => JSON.stringify({ name: e.name, level: 1, items: e.items, goldPieces: e.goldPieces });   // INT2 (PIN MOVED): a character the judge reads - every save carries its level
   A.char = await character(A, 'Arthago', JSON.parse(snap(entA)));
   B.char = await character(B, 'Brisienna', JSON.parse(snap(entB)));
   const q = [], said = { A: [], B: [] };

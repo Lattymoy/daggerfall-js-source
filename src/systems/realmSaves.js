@@ -462,6 +462,19 @@ export function createRealmSession({
     lost = error;
     try { onLost(error); } catch (e) { console.warn('[realm] the lost handler failed', e); }
   };
+  // INT3 (bible/06-Systems/Integrity-Arc.md): THE JUDGE'S HOLD, as the last landed checkpoint said it - null for none,
+  // undefined before any answer said (a service from before the judge says nothing). `session.onTradeHeld(prev, now)` is
+  // told each time it moves; the answer a checkpoint's callers get stays `{ ok, seq }`.
+  /** @type {string | null | undefined} */
+  let tradeHeld;
+  const heard = (/** @type {unknown} */ v) => {
+    if (v === undefined) return;
+    const now = typeof v === 'string' ? v : null;
+    if (now === tradeHeld) return;
+    const prev = tradeHeld;
+    tradeHeld = now;
+    try { session.onTradeHeld?.(prev ?? null, now); } catch (e) { console.warn('[realm] the hold handler failed', e); }
+  };
   /** AUDIT REALM2 C4: a save's callers told how the put that carried it went - once. */
   const answer = (/** @type {{ waiters: Array<(r: any) => void> }} */ job, /** @type {any} */ r) => { for (const settle of job.waiters.splice(0)) settle(r); };
   async function drain() {
@@ -481,6 +494,7 @@ export function createRealmSession({
         }
         if (r.ok) {
           unsure = false; current = r.data?.seq ?? current + 1; last = { ok: true, seq: current }; answer(job, last);
+          heard(r.data?.tradeHeld);
           landedKey = idleKeyOf(job.text, job.summary); landedAt = now();   // SCALE2b
           // RESCUE-SAVE: the newest save landed - no copy; or a newer one waits, its copy at the sequence now held
           missed = false;
@@ -518,6 +532,10 @@ export function createRealmSession({
   const session = {
     id,
     get seq() { return current; },
+    /** INT3: the judge's hold the last landed checkpoint said - a reason, null for none, undefined before any said. */
+    get tradeHeld() { return tradeHeld; },
+    /** INT3: told `(prev, now)` each time the hold moves - the host's to set. @type {((prev: string | null, now: string | null) => void) | null} */
+    onTradeHeld: null,
     get lost() { return lost; },
     get waiting() { return !!pending; },
     /** A checkpoint of this save text; answers a promise of the outcome - the put that carried it, or a newer one's. */

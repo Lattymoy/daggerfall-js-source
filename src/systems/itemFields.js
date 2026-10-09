@@ -54,7 +54,8 @@ export const validEnchantment = (e) => !!e && typeof e === 'object' && !Array.is
   && Number.isInteger(e.type) && Number.isInteger(e.param);
 /** A repair ticket (repairService.js): the shop's key and two minutes. */
 export const validRepairData = (r) => !!r && typeof r === 'object' && !Array.isArray(r)
-  && typeof r.buildingKey === 'string' && Number.isInteger(r.timeStarted) && Number.isInteger(r.repairTime);
+  && (typeof r.buildingKey === 'string' || Number.isInteger(r.buildingKey))   // INT1: the shop's key as makeBuildingKey mints it - a number
+  && Number.isInteger(r.timeStarted) && Number.isInteger(r.repairTime);
 
 /** CARDS8: a Card Binder's deck (systems/iliacItems.js) - a name and the catalog ids of its cards, a deck's worth. */
 export const BINDER_DECK_NAME_MAX = 40;
@@ -165,6 +166,10 @@ export const ITEM_FIELDS = Object.freeze({
   // a pile, a body and a shelf (systems/rriRealism.js) - which an online counter's sale reads at best (tradeModes.js
   // saleConditionPercentage); absent on a piece handed over whole
   foundCondition: int({ min: 0 }),
+  // INT4 (bible/06-Systems/Integrity-Arc.md): a valuable piece's id (systems/itemIds.js) - 16 hex, minted at a realm
+  // checkpoint and the piece's from then on: the wire carries it (never the receiver's, as `acquired` is), and the
+  // service's ledger reads it (server-account/src/verdict.js ledgerStep)
+  uid: str(),
   // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
   // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
   acquired: bool(),

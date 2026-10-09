@@ -141,7 +141,8 @@ test('AUDIT REALM2 S1: a character born online starts where chargen starts one -
   assert.equal(s.env.SAVES._map.size, 0);
   // chargen's own - level 1, the purse to the bound - lands; the NEXT checkpoint is no birth (the first is what the
   // realm's later checks measure from)
-  assert.deepEqual(Object.values(await first(freshSave({ goldPieces: REALM_BIRTH_WEALTH_MAX }))), [200, { ok: true, seq: 1 }]);
+  // INT2 (PIN MOVED): a checkpoint's answer says the judge's hold - none for chargen's own
+  assert.deepEqual(Object.values(await first(freshSave({ goldPieces: REALM_BIRTH_WEALTH_MAX }))), [200, { ok: true, seq: 1, tradeHeld: null }]);
   assert.equal((await s.put(made.id, JSON.stringify({ level: 2, goldPieces: REALM_BIRTH_WEALTH_MAX * 2 }), P.secret, { lease: made.lease, seq: 2 })).status, 200);
 });
 
@@ -162,7 +163,7 @@ test('AUDIT REALM2 S1: a customs character\'s first save carries no more than th
     ['no JSON', 'not a save'],
   ]) assert.deepEqual(Object.values(typeof save === 'string' ? await s.put(c.id, save, P.secret, { lease: c.lease, seq: 1 }) : await first(save)), [403, { error: 'customs-allowance' }], why);
   assert.equal(s.env.SAVES._map.size, 0);
-  assert.deepEqual(Object.values(await first({ name: 'Legacy', level: 3, goldPieces: allowance })), [200, { ok: true, seq: 1 }], 'the copy customs capped');
+  assert.deepEqual(Object.values(await first({ name: 'Legacy', level: 3, goldPieces: allowance })), [200, { ok: true, seq: 1, tradeHeld: null }], 'the copy customs capped');   // INT2 (PIN MOVED): the hold said
   // a customs asked with no level is held to a first level's allowance
   const origin2 = 'offline-legacy-04';
   s.exec('INSERT INTO realm_census (player, char_id) VALUES (?, ?)', P.id, origin2);
@@ -285,7 +286,7 @@ test('AUDIT REALM2 S4: an offer is its record BOTH ways - a record carrying what
   assert.ok(recordIsOffered(JSON.parse(JSON.stringify(dagger)), wire), 'an honest record is its wire projection');
   assert.ok(recordIsOffered({ ...dagger, equipSlot: null, questItem: false, stackCount: 3, value: 1 }, wire), 'its count, its price and the receiver\'s marks aside');
   assert.deepEqual(TRADE_VOLATILE_FIELDS, ['stackCount', 'value', 'equipSlot', 'questItem']);
-  const minimal = validLootItem({ templateIndex: 113, material: 9 });
+  const minimal = validLootItem({ templateIndex: 113, group: 'Weapons', material: 9 });   // INT1 (PIN MOVED): a piece with no group is no piece the item law takes
   for (const [why, rec] of [
     ['a worn edge', { ...dagger, currentCondition: 1 }],
     ['an enchantment nobody was shown', { ...dagger, enchantments: [{ type: 9, param: 0 }] }],
@@ -367,16 +368,17 @@ test('AUDIT REALM2 S7: two checkpoints under one lease race to one sequence - th
   const c = await s.character(P, 'Racer', { name: 'Racer', goldPieces: 1 });
   const realPut = s.env.SAVES.put.bind(s.env.SAVES);
   s.env.SAVES.put = async (k, b) => { await new Promise((r) => { setTimeout(r, 20); }); return realPut(k, b); };
+  // INT2 (PIN MOVED): saves the judge reads clean, and the answer that says so
   const [x, y] = await Promise.all([
-    s.put(c.id, '{"v":"first"}', P.secret, { lease: c.lease, seq: 2 }),
-    s.put(c.id, '{"v":"retry"}', P.secret, { lease: c.lease, seq: 2 }),
+    s.put(c.id, JSON.stringify(freshSave({ name: 'Racer', v: 'first' })), P.secret, { lease: c.lease, seq: 2 }),
+    s.put(c.id, JSON.stringify(freshSave({ name: 'Racer', v: 'retry' })), P.secret, { lease: c.lease, seq: 2 }),
   ]);
-  assert.deepEqual([x, y].map((r) => [r.status, r.body]).sort((m, n) => m[0] - n[0]), [[200, { ok: true, seq: 2 }], [409, { error: 'seq', seq: 2 }]]);
+  assert.deepEqual([x, y].map((r) => [r.status, r.body]).sort((m, n) => m[0] - n[0]), [[200, { ok: true, seq: 2, tradeHeld: null }], [409, { error: 'seq', seq: 2 }]]);
   assert.equal(s.rows('SELECT lease FROM realm_characters')[0].lease, c.lease, 'the lease stands');
   // a join while the checkpoint's object is on its way
   let joined = null;
   s.env.SAVES.put = async (k, b) => { joined = await s.call('/v1/realm/join', { id: c.id }, P.secret); return realPut(k, b); };
-  assert.deepEqual(Object.values(await s.put(c.id, '{"v":"late"}', P.secret, { lease: c.lease, seq: 3 })), [409, { error: 'lease' }]);
+  assert.deepEqual(Object.values(await s.put(c.id, JSON.stringify(freshSave({ name: 'Racer', v: 'late' })), P.secret, { lease: c.lease, seq: 3 })), [409, { error: 'lease' }]);
   assert.equal(joined.status, 200);
 });
 

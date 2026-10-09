@@ -623,6 +623,12 @@ export const REFUSALS = Object.freeze({
   'cards-other-character': 'That cash-out belongs to another of your characters - it is paid to the one that staked it.',
   'cards-cashout-failed': 'The cash-out could not be paid. Try again.',
   'cards-held': 'This character has gold staked at a card table. Collect it before the character is deleted.',
+  // INT3/INT4 (bible/06-Systems/Integrity-Arc.md): the judge's own (server-account/src/realm.js holdRefusal,
+  // prepareRealmRecord)
+  'trade-held': 'The realm is reviewing this character, and its trading is frozen until the review ends.',
+  'record-unjudged': 'The realm has not read this character\'s latest save yet. Play a moment and try again.',
+  'piece-dupe': 'Copies of that piece were found in the realm. It cannot be traded, sold or stored for others.',
+  'no-clean': 'That character has no save the realm judged clean to roll back to.',   // INT6: the review's rollback (tools/realmReview.mjs)
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw

@@ -51,6 +51,8 @@ import { displayName } from './accounts.js';
 import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character brought in links its first play
 import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
 import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
+import { wealthOf, ownedUids } from './judge.js';   // INT5: what the service's own writes move, witnessed; INT4: the ids it moves
+import { verdictOn } from './verdict.js';   // INT2-INT5: the verdict on every checkpoint, in the checkpoint's own batch
 
 /** Realm characters an ACCOUNT may hold. A new one past it is refused; nothing is ever deleted to make room. */
 export const REALM_CHARACTERS_MAX = 6;
@@ -392,7 +394,10 @@ export async function customsRealm(ctx, playerId, { origin, name, summary = null
 export async function joinRealm({ db, rand, nowS }, playerId, id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return { error: 'body' };
   const lease = mintLease(rand);
-  const took = await db.prepare('UPDATE realm_characters SET lease = ?, lease_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL').bind(lease, nowS, id, playerId).run();
+  // INT5: and the account's played seconds as it takes the seat - the budget fills from here, never from the time the account
+  // spent on another of its characters
+  const took = await db.prepare('UPDATE realm_characters SET lease = ?3, lease_at = ?4, played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL')
+    .bind(id, playerId, lease, nowS).run();
   // LEGACY7: a tombstone is never joined again - an older save is never played past a death
   if (!took.meta.changes) return { error: (await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first()) ? 'dead' : 'no-realm-character' };
   await freeOthers({ db }, playerId, id);
@@ -440,11 +445,33 @@ export function firstSaveRefusal(text, row) {
   return shaped && liquidWealthOf(save) <= customsAllowance(level) ? null : { error: 'customs-allowance' };
 }
 
+/** INT2-INT6: the judge's columns on a character's row (migration 0095), as verdict.js reads them. */
+export const JUDGE_COLUMNS = 'judged_seq, held, held_at, strikes, review, wealth, witnessed, allowance, played_at, clean_obj, clean_seq';
+
+/**
+ * INT3: THE HOLD, AS A ROUTE ASKS IT - before any act that hands a realm character's value to another player (a market
+ * listing or purchase, a trade's half, a guild's vault or treasury, a rent, a card table's stake, a disenchant whose
+ * Essence the market sells). Answers null, or `{ error }`: 'trade-held' (the judge holds its trade - verdict.js holdOf), or
+ * 'record-unjudged' (no checkpoint read since INT2 shipped: the tab checkpoints before every act, so this is a record no tab has
+ * written since, and it moves nothing until one does).
+ * @param {{ held?: string | null, judged_seq?: number | null } | null} row
+ */
+export function holdRefusal(row) {
+  if (!row) return null;
+  if (row.held) return { error: 'trade-held', held: row.held };
+  if (row.judged_seq == null) return { error: 'record-unjudged' };
+  return null;
+}
+
 /**
  * A CHECKPOINT: the save, under the current lease, at `seq + 1`. The row is asked first (a stale lease or sequence is
  * refused before a byte is written), the object lands at a key of its own, and the row moves to it only if the lease
  * and sequence still hold - so a join or a trade between the two leaves the current save untouched, and the losing
- * write's object is dropped. The save two back goes; the one before stays. Answers `{ ok, seq }` or `{ error }`:
+ * write's object is dropped. The save two back goes; the one before stays, and (INT6) the last one judged clean.
+ * INT2: AND EVERY CHECKPOINT IS READ - the judge's verdict (verdict.js verdictOn: the character law, the item law, the
+ * id ledger, the budget, the hold) lands in the batch that moves the row. A verdict never refuses the save: it holds the
+ * character's trade (Mac: "Freeze trading"). Answers `{ ok, seq, tradeHeld }` - the hold standing (null for none), said
+ * so the tab can tell its player - or `{ error }`:
  * 'lease' - another tab or device has the character now; 'seq' - not the next one, with the service's `seq` beside it,
  * so a tab whose last checkpoint landed but whose answer was lost can resync; the first save's own words
  * (firstSaveRefusal).
@@ -454,31 +481,54 @@ export function firstSaveRefusal(text, row) {
 export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id, lease, seq, summary = null }, body, bytes) {
   if (!bucket) return { error: 'no-storage' };
   if (!REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease) || !Number.isSafeInteger(seq) || /** @type {number} */ (seq) < 1) return { error: 'body' };
-  const row = await db.prepare('SELECT seq, lease, prev, origin_id, summary, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare(`SELECT seq, lease, obj, prev, origin_id, summary, dead_at, ${JUDGE_COLUMNS} FROM realm_characters WHERE id = ? AND player = ?`).bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
   if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again
   if (row.lease !== lease) return { error: 'lease' };
   if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };   // the service's own: a client whose last answer was lost resyncs
+  // REALM-GZIP: opened first, packed or not - INT2: EVERY checkpoint, never the first alone
+  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);
   if (seq === 1) {
-    // AUDIT REALM2 S1: a new character's, or customs' own - before a byte lands. REALM-GZIP: opened first, packed or not
-    const refused = firstSaveRefusal(await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES), row);
+    // AUDIT REALM2 S1: a new character's, or customs' own - before a byte lands
+    const refused = firstSaveRefusal(text, row);
     if (refused) return refused;
   }
+  let save = null;
+  try { save = JSON.parse(/** @type {string} */ (text)); } catch { save = null; }
+  const said = realmSummaryOf(summary);
+  // INT2: the tile's level is judged as it is CLAIMED - a checkpoint that brings no tile leaves the row's, claimed and judged
+  // with an earlier save
+  let summaryNow = null;
+  try { summaryNow = JSON.parse(said ?? 'null'); } catch { summaryNow = null; }
   const key = mintObjectKey(rand, playerId, id, /** @type {number} */ (seq));
   await bucket.put(key, body);
-  const moved = await db.prepare(
-    'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ?'
-    + ' WHERE id = ? AND player = ? AND lease = ? AND seq = ?',
-  ).bind(seq, bytes, key, nowS, realmSummaryOf(summary), nowS, id, playerId, lease, /** @type {number} */ (seq) - 1).run();
-  if (!moved.meta.changes) {
-    await dropObjects(bucket, [key]);
-    // AUDIT REALM2 S7: WHY IT DID NOT MOVE, read again - two checkpoints under one lease (a retry beside a slow one, the
-    // page's beside the timer's) race to one sequence, and the loser was told 'lease': "another tab has the character",
-    // and its tab ended the session. Its own write won; 'seq', with the service's, is the truth, and the tab resyncs.
-    return (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' };
+  // INT2-INT5: THE VERDICT, in the batch that moves the row - a checkpoint that loses its race writes no verdict
+  const v = await verdictOn({ db, nowS }, { player: playerId, char: id, seq: /** @type {number} */ (seq), key }, row, save, summaryNow);
+  const j = v.set;
+  try {
+    await db.batch([
+      db.prepare(
+        'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ?,'
+        + ' judged_seq = ?, held = ?, held_at = ?, strikes = ?, review = ?, wealth = ?, witnessed = 0, allowance = ?, played_at = ?, clean_obj = ?, clean_seq = ?'
+        + ' WHERE id = ? AND player = ? AND lease = ? AND seq = ?',
+      ).bind(seq, bytes, key, nowS, said, nowS, j.judged_seq, j.held, j.held_at, j.strikes, j.review, j.wealth, j.allowance, j.played_at,
+        j.clean_obj, j.clean_seq, id, playerId, lease, /** @type {number} */ (seq) - 1),
+      mustChange(db),
+      ...v.steps,
+    ]);
+  } catch {
+    // AUDIT REALM2 S3: a batch that threw may have landed - the object stays when the row names it
+    if (!(await dropIfUnnamed(db, bucket, playerId, id, key))) {
+      // AUDIT REALM2 S7: WHY IT DID NOT MOVE, read again - two checkpoints under one lease (a retry beside a slow one, the
+      // page's beside the timer's) race to one sequence, and the loser was told 'lease': "another tab has the character",
+      // and its tab ended the session. Its own write won; 'seq', with the service's, is the truth, and the tab resyncs.
+      return (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' };
+    }
   }
-  await dropObjects(bucket, [row.prev]);   // two back now: the one before the last stays
-  return { ok: true, seq };
+  // two back now: the one before the last stays - and INT6's clean one, kept for staff, whichever it is
+  const keep = new Set([key, row.obj, j.clean_obj].filter(Boolean));
+  await dropObjects(bucket, [...new Set([row.prev, row.clean_obj])].filter((k) => k && !keep.has(k)));
+  return { ok: true, seq, tradeHeld: j.held ?? null };
 }
 
 /** THE SAVE, as it stands - for a join's load, and for "Copy to offline", which needs no lease: a copy played offline
@@ -518,32 +568,58 @@ export function realmAtOf(/** @type {any} */ v) {
  * gold and the act land together or neither does. After the batch the caller drops `prev` (it landed) or `key` (it did
  * not). Answers `{ steps, key, prev, seq }` or `{ error }`: 'lease' or 'seq' (the record is not where the tab says - a
  * checkpoint's own words, `seq` with the service's), `change`'s own word, 'no-data'.
+ *
+ * INT3: AN ACT THAT HANDS VALUE TO ANOTHER PLAYER says so (`outbound`) - a listing, a purchase, a vault's deposit, a
+ * treasury's, a rent, a stake, a disenchant - and is refused while the judge holds the character (holdRefusal: 'trade-held',
+ * 'record-unjudged'); and (INT4) a change that takes out a piece whose id the ledger has marked a duplicate is refused
+ * 'piece-dupe', whatever the act: no route moves that piece again. INT5: the wealth the change moves is WITNESSED - the
+ * row's `witnessed` takes it in the same step, so the budget never charges a gain the service itself made. INT6: the
+ * last checkpoint judged clean is never `prev` to drop.
  * @param {any} ctx @param {string} playerId @param {{ id: string, lease: string, seq: number }} at
- * @param {(save: any) => string | null} change
+ * @param {(save: any) => string | null} change @param {{ outbound?: boolean }} [opts]
  */
-export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change) {
+export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false } = {}) {
   if (!bucket) return { error: 'no-storage' };
-  const row = await db.prepare('SELECT seq, lease, obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
+  const row = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
   if (row.lease !== at.lease) return { error: 'lease' };
   if (row.seq !== at.seq || !row.obj) return { error: 'seq', seq: row.seq };
+  if (outbound) {
+    const held = holdRefusal(row);
+    if (held) return held;
+  }
   const object = await bucket.get(row.obj);
   let save = null;
   try { save = JSON.parse(await realmSaveTextOf(object)); } catch { save = null; }   // REALM-GZIP: packed or plain
   if (!save || typeof save !== 'object' || Array.isArray(save)) return { error: 'no-data' };
+  const before = wealthOf(save);
+  const uidsBefore = new Set(ownedUids(save));
   const refused = change(save);
   if (refused) return { error: refused };
+  // INT4: a piece marked a duplicate leaves no record by any route
+  const left = [...uidsBefore].filter((u) => !ownedUids(save).includes(u));
+  if (left.length && await anyDupe(db, left)) return { error: 'piece-dupe' };
   const text = JSON.stringify(save);
   const bytes = new TextEncoder().encode(text).byteLength;
   if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' };   // REALM-GZIP: written plain, within the text's bound
   const key = mintObjectKey(rand, playerId, at.id, at.seq + 1);
   await bucket.put(key, text);
   const steps = [
-    db.prepare('UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?')
-      .bind(at.seq + 1, bytes, key, nowS, at.id, playerId, at.lease, at.seq),
+    db.prepare('UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, updated_at = ?, witnessed = witnessed + ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?')
+      .bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),
     mustChange(db),
   ];
-  return { steps, key, prev: row.prev, seq: at.seq + 1 };
+  return { steps, key, prev: row.prev === row.clean_obj ? null : row.prev, seq: at.seq + 1 };
+}
+
+/** INT4: whether any of these ids is marked a duplicate in the ledger. */
+export async function anyDupe(/** @type {any} */ db, /** @type {string[]} */ uids) {
+  for (let i = 0; i < uids.length; i += 90) {
+    const chunk = uids.slice(i, i + 90);
+    const r = await db.prepare(`SELECT 1 FROM item_uids WHERE state = 'dupe' AND uid IN (${chunk.map(() => '?').join(', ')}) LIMIT 1`).bind(...chunk).first();
+    if (r) return true;
+  }
+  return false;
 }
 
 /** AUDIT REALM2 S3: AFTER A BATCH THAT THREW, the object it wrote goes only if the row names it nowhere (`obj` or
@@ -551,8 +627,8 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
  *  row that had moved to it named a save that was gone - a trade's two records, a guild deposit's, the character's live
  *  save deleted and its next join 'no-data'. Answers whether the row names it (the batch landed). */
 export async function dropIfUnnamed(/** @type {any} */ db, /** @type {any} */ bucket, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {string} */ key) {
-  const row = await db.prepare('SELECT obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
-  if (row && (row.obj === key || row.prev === key)) return true;
+  const row = await db.prepare('SELECT obj, prev, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true;   // INT6: the clean one kept, too
   await dropObjects(bucket, [key]);
   return false;
 }

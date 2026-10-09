@@ -128,7 +128,7 @@ export async function vaultPut(ctx, player, { character, realm = null, pick, ite
     if (!moved || moved.length !== 1) return 'vault-goods';
     piece = moved[0];
     return JSON.stringify(piece).length > REALM_TRADE_RECORD_MAX ? 'vault-goods' : null;
-  });
+  }, { outbound: true });   // INT3: a deposit hands the piece to the guild's members
   if ('error' in prep) return prep;
   const who = displayName(player);
   const name = pieceName(piece);

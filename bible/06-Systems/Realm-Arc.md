@@ -5,7 +5,10 @@ resources", then: "I wanna do this as comprehensively as possible. A true separa
 play offline. Honestly I also want to take into account of how we can balance the gold economy, eliminate duping,
 eliminate true overpowered builds online, and overall bring the experience more in line with a balanced MMO".
 
-**Status: phases 0 and 1 BUILT on the branch (2026-09-28); decisions 1-4 taken.** Phases 2-5 are next. Items still marked **OPEN** are Mac's call. The research behind it was
+**Status: phases 0 and 1 BUILT on the branch (2026-09-28); decisions 1-4 taken.** Phases 2-5 are next. Phase 3 (validation:
+caps, budgets, item ids, quarantine and a review tool) is BUILT by the INTEGRITY arc's lane 1, INT1-INT6 (2026-10-09,
+`06-Systems/Integrity-Arc.md`) - the quarantine as Mac called it there, a hold on the character's trade, never a refused
+checkpoint. Items still marked **OPEN** are Mac's call. The research behind it was
 read on main at 6108d8bd. Code is cited by file and symbol, not line, so the page survives drift.
 
 ## What this supersedes, for online characters only
@@ -203,10 +206,10 @@ Items have no unique ids: "the port's items have no UID" (`save.js`), and "the p
   A copy of the blob is also worthless as a way in, because the Online door loads only from the service - with one
   exception since RESCUE-SAVE: the device's own copy of a save the service never took, which a join plays while the
   record still stands at its `seq`. An edited copy is therefore a way in, as a scripted checkpoint under the lease
-  always was (the service reads no checkpoint past the first; section 4's budget model is the answer to both).
-  **Decided (AUDIT RESCUE-SAVE P1, Mac 2026-09-30: "1" - accept it for now):** it stands until section 4's checks, which
-  answer an edited copy and a scripted checkpoint alike. (`server-account/src/realm.js`'s header still says a copy is
-  no way in; its next edit takes this sentence.)
+  always was. **Decided (AUDIT RESCUE-SAVE P1, Mac 2026-09-30: "1" - accept it for now):** it stood until section 4's
+  checks, which answer an edited copy and a scripted checkpoint alike - and INT2 built them (2026-10-09,
+  `06-Systems/Integrity-Arc.md`): every checkpoint is judged, and what it carries past the law or the budget holds the
+  character's trade.
 - **Crashes.** A crash loses at most two minutes of play, and never a hand-over, because every hand-over is settled on
   the service first.
 - **What the service has not taken, the device keeps (RESCUE-SAVE).** The newest save handed to the session is written

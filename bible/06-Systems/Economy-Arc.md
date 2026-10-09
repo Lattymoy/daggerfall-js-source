@@ -80,12 +80,13 @@ current design "does not work in an enjoyable manner"):
 
 ## Where the economy stands (2026-10-01)
 
-- **Authority.** A realm character's gold is checked once, at its first save
-  (`server-account/src/realm.js`, `src/net/realmGoldLaw.js`); every later
-  checkpoint is stored as written, and every source - loot, quests, shop
-  sales, gate spoils (`src/systems/gateSpoils.js`) - is computed by the
-  client. "Assume infinite wealth" is already literally true. The budgets and
-  telemetry `06-Systems/Realm-Arc.md` planned are not built. A market
+- **Authority.** Every source - loot, quests, shop sales, gate spoils
+  (`src/systems/gateSpoils.js`) - is computed by the client. Until INT2
+  (2026-10-09, `06-Systems/Integrity-Arc.md`) a realm character's gold was
+  checked once, at its first save, and "Assume infinite wealth" was literally
+  true; since, every checkpoint is judged - the item law over every piece, the
+  wealth against a budget the time played fills (MEASURE first, then enforced
+  by staff) - and a breach holds the character's trade. A market
   listing's wear is the client's word too: a lie about it buys a kit's work,
   and since KIT-CEILING a smith's - gold such a client can write for itself
   (`06-Systems/Professions-Arc.md`, "What the listing carries").

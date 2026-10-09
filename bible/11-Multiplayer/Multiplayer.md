@@ -162,6 +162,15 @@ town's Charter changes hands - there the relay holds every fighter's
 vitality and judges every blow, cast and step (`src/net/siegeRef.js`,
 `11-Multiplayer/Seats-Arc.md` 6.1). Everywhere else this section stands.
 
+INT1-INT6 (2026-10-09, `06-Systems/Integrity-Arc.md`, Mac: "I want to do
+everything and do it properly"): what a REALM character carries away from
+any room is judged at its checkpoint - the item law over every piece, the
+ids' duplicate ledger, the wealth budget - and a breach holds its trade, so
+what a modified client conjures in a room never reaches another player
+through the service. The relay's rooms are unchanged by it; lanes 2 and 3 of
+that arc (duels, the wild zone and the bosses refereed) are this section's
+next exceptions.
+
 ### The state model is the save
 
 `systems/save.js` already knows how to snapshot the world and restore

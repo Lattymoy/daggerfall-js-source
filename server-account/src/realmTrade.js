@@ -29,7 +29,8 @@
 // dishonest one a refusal or a copy the ledger sees.
 // ═══════════════════════════════════════════════════════════════════
 
-import { REALM_ID_RE, LEASE_RE, mintObjectKey, dropObjects, dropIfUnnamed, realmSaveTextOf } from './realm.js';
+import { REALM_ID_RE, LEASE_RE, mintObjectKey, dropObjects, dropIfUnnamed, realmSaveTextOf, holdRefusal, anyDupe } from './realm.js';
+import { wealthOf, ownedUids } from './judge.js';   // INT5: the trade's wealth, witnessed; INT4: the ids it moves
 import { REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: the text's bound
 import { realmTradeHalfOf, halvesAgree, settleRealmTrade, REALM_TRADE_SID_RE, REALM_TRADE_TTL_S } from '../../src/net/realmTradeLaw.js';
 import { canon } from '../../src/net/canon.js';
@@ -88,7 +89,7 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   // lands both records and the trade's row in one batch, so a row read after the record sees any settle that moved it.
   // The row read first let a settle land between the two reads, and the half was told 'seq' - the tab gave its goods
   // back while the realm had moved them, and its next checkpoint wrote them over the settle.
-  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
   if (row.lease !== lease) return { error: 'lease' };
   // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it
@@ -124,8 +125,11 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   let firstHalf = null;
   try { firstHalf = realmTradeHalfOf(JSON.parse(t.a_half)); } catch { firstHalf = null; }
   if (!firstHalf || !halvesAgree(firstHalf, half)) return refuse(db, sid, 'mismatch', playerId, asker, true);
-  const other = await db.prepare('SELECT seq, lease, obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(t.a_char, t.a_player).first();
+  const other = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(t.a_char, t.a_player).first();
   if (!other || other.lease !== t.a_lease || other.seq !== t.a_seq || !other.obj) return refuse(db, sid, 'moved', playerId, asker, true);
+  // INT3: A SIDE THE JUDGE HOLDS GIVES NOTHING - its goods and its gold are what the hold keeps from every other player
+  const gives = (/** @type {any} */ h) => h.give.items.length > 0 || h.give.gold > 0;
+  if ((gives(firstHalf) && holdRefusal(other)) || (gives(half) && holdRefusal(row))) return refuse(db, sid, 'trade-held', playerId, asker, true);
 
   // EACH RECORD AS ITS OWN LAST CHECKPOINT LEFT IT
   const [objA, objB] = await Promise.all([bucket.get(other.obj), bucket.get(row.obj)]);
@@ -134,6 +138,12 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   if (!saveA || !saveB || typeof saveA !== 'object' || typeof saveB !== 'object') return refuse(db, sid, 'no-data', playerId, asker, true);
   const s = settleRealmTrade(saveA, saveB, firstHalf, half);
   if (!s.ok) return refuse(db, sid, s.why ?? 'goods', playerId, asker, true);
+  // INT4: a piece the ledger marked a duplicate leaves no record by any route
+  const leftOf = (/** @type {any} */ was, /** @type {any} */ now) => { const after = new Set(ownedUids(now)); return ownedUids(was).filter((u) => !after.has(u)); };
+  const left = [...leftOf(saveA, s.a), ...leftOf(saveB, s.b)];
+  if (left.length && await anyDupe(db, left)) return refuse(db, sid, 'piece-dupe', playerId, asker, true);
+  // INT5: what the trade moved, witnessed on both rows - a trade is no gain the budget charges
+  const movedA = wealthOf(s.a) - wealthOf(saveA), movedB = wealthOf(s.b) - wealthOf(saveB);
   const textA = JSON.stringify(s.a), textB = JSON.stringify(s.b);
   const bytesA = utf8Bytes(textA), bytesB = utf8Bytes(textB);
   if (bytesA > REALM_TEXT_MAX_BYTES || bytesB > REALM_TEXT_MAX_BYTES) return refuse(db, sid, 'too-large', playerId, asker, true);   // REALM-GZIP: written plain, within the text's bound
@@ -144,11 +154,11 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
   await bucket.put(keyA, textA);
   await bucket.put(keyB, textB);
   const result = JSON.stringify({ a: { seq: t.a_seq + 1, ...s.toA }, b: { seq: seq + 1, ...s.toB } });
-  const move = 'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?';
+  const move = 'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, updated_at = ?, witnessed = witnessed + ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?';
   try {
     await db.batch([
-      db.prepare(move).bind(t.a_seq + 1, bytesA, keyA, nowS, t.a_char, t.a_player, t.a_lease, t.a_seq),
-      db.prepare(move).bind(seq + 1, bytesB, keyB, nowS, id, playerId, lease, seq),
+      db.prepare(move).bind(t.a_seq + 1, bytesA, keyA, nowS, movedA, t.a_char, t.a_player, t.a_lease, t.a_seq),
+      db.prepare(move).bind(seq + 1, bytesB, keyB, nowS, movedB, id, playerId, lease, seq),
       db.prepare("UPDATE realm_trades SET state = 'done', result = ?, b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'").bind(result, playerId, id, seq, canon(half), sid),
       // THE GUARD: both records at their new objects under their leases, and this trade sealed by this half - or the
       // insert happens, the CHECK refuses it, and the batch rolls back whole
@@ -166,6 +176,7 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
     await dropIfUnnamed(db, bucket, playerId, id, keyB);
     return refuse(db, sid, 'moved', playerId, asker, true);
   }
-  await dropObjects(bucket, [other.prev, row.prev]);   // two back now, for both: the one before the trade stays
+  // two back now, for both: the one before the trade stays - and (INT6) each one's last clean checkpoint, kept for staff
+  await dropObjects(bucket, [other.prev === other.clean_obj ? null : other.prev, row.prev === row.clean_obj ? null : row.prev]);
   return { state: 'done', seq: seq + 1, items: s.toB.items, gold: s.toB.gold };
 }

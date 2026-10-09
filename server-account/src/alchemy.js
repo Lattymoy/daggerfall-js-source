@@ -217,7 +217,7 @@ export async function disenchantPiece(ctx, player, env, { character, provenance,
     const items = Array.isArray(save.items) ? save.items : [];
     const at = items.findIndex((rec) => rec?.provenance === provenance);
     return at >= 0 && tradeableRecord(items[at]) && takeTradeGoods(save, { items: [items[at]], gold: 0 }, [at]) ? null : 'prof-piece-gone';
-  }) : null;
+  }, { outbound: true }) : null;   // INT3: the Essence it yields goes to the Stores, and the market sells it
   if (prep?.error) return prep;
   const nonce = mintId(rand);
   const decided = 'EXISTS (SELECT 1 FROM prof_disenchants WHERE player = ?1 AND rid = ?2 AND n = ?3)';

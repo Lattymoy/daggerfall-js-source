@@ -133,6 +133,9 @@ test('AUDIT CARDS-4 M service: a stake or a claim whose batch landed and lost it
     const objs = () => s.env.SAVES._map.size;
     const body = (x) => ({ character: R.id, realm: R.at(), region: 17, room: 'interior:m1.2', table: 0, bb: 10, amount: 500, rid: `card-pin-${String(++n).padStart(8, '0')}`, ...x });
     await s.call('/v1/cards/stake', body({}), who.secret);   // the record now holds its save and the one before it
+    // INT6 (PIN MOVED): and its last checkpoint judged clean, kept for staff past the two it rotates (the seat's first) -
+    // one act more and the rotation stands on its own
+    await s.call('/v1/cards/stake', body({}), who.secret);
     const before = objs();
     const ok = (await s.call('/v1/cards/stake', body({}), who.secret)).body;
     assert.equal(ok.amount, 500);

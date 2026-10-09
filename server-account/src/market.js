@@ -61,6 +61,7 @@ import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's c
 import { tideCourier } from '../../src/net/tideLaw.js';
 import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
 import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';   // GOLD-MARKET
+import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // GOLD-MARKET: a gold sale moves a realm record's gold
 import { CHAR_ID_RE } from './service.js';
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
@@ -931,11 +932,12 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
   let moved = null;
   const prep = await prepareRealmRecord(ctx, me, side.at, (save) => {
     if (goodRefusal(Array.isArray(save.items) ? save.items[pick] : null)) return 'market-not-good';
+    if (!lawfulItem(save.items[pick])) return 'market-not-good';   // INT1: and a piece the item law can stand behind
     const out = takeTradeGoods(save, { items: [item], gold: 0 }, [pick]);
     if (!out) return 'market-good-gone';
     moved = out[0];
     return null;
-  });
+  }, { outbound: true });   // INT3: a listing hands the piece to the market's buyers
   if (prep.error) return prep;
   const id = mintId(rand);
   const nonce = mintId(rand);
@@ -1154,7 +1156,7 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
   const from = Number(l.region);
   const here = from === region;
   const delivered = l.kind === 'piece' || l.kind === 'item' || here ? 1 : 0;   // MARKET-ANY: a pack's piece's delivery written at once
-  const prep = await prepareRealmRecord(ctx, me, at, (save) => (payFromSave(save, total + courier, region) ? null : 'realm-gold'));
+  const prep = await prepareRealmRecord(ctx, me, at, (save) => (payFromSave(save, total + courier, region) ? null : 'realm-gold'), { outbound: true });   // INT3: a purchase pays the seller
   if (prep.error) return prep;
   const nonce = mintId(rand);
   const day = utcDay(nowS);

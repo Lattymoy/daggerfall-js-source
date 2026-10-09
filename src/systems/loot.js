@@ -566,6 +566,13 @@ function clampLootValue(v, depth) {
  *  below covers every declared field's kind, not the arrays alone. */
 export const LOOT_ARRAY_FIELDS = Object.freeze(itemFieldsOfKind('array'));
 
+/** INT1 (the INTEGRITY arc - bible/06-Systems/Integrity-Arc.md): THE ITEM LAW, registered by its home
+ *  (systems/itemLaw.js setItemLaw at its import) - the findings on a record, empty for one an honest client could have
+ *  minted. A registration, not an import: the law reads the loot graph whole (the records, the spoils, the Broker), and
+ *  this module sits under it. Until a host imports the law, the wire checks the shapes alone, as it always did. */
+let _itemLaw = null;
+export function setItemLaw(fn) { _itemLaw = typeof fn === 'function' ? fn : null; }
+
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted. */
 export function validLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
@@ -584,6 +591,10 @@ export function validLootItem(v) {
   if (!validImprint(out)) return null;   // LOOT10: an imprint only as the Reforge makes one
   if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one
   if (!validSocket(out)) return null;   // LOOT20: a socket only as the pass and the Reforge make one
+  // INT1: and the item law - its fields agree with each other as a producer mints them (a tier's lines its tier's, a
+  // record's its record's, a sigil its band's, the maker's rows within the item's power). The receiver's own marks are
+  // stripped below, never judged
+  if (_itemLaw && _itemLaw(out, { receiver: true }).length) return null;
   // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port
