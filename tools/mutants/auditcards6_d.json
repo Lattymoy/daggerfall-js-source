@@ -112,8 +112,8 @@
   {
     "name": "AC6-D7-route-card",
     "file": "server-account/src/index.js",
-    "old": "...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? 400, origin);",
-    "new": "}, CARDS_STATUS[r.error] ?? 400, origin);",
+    "old": "...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);",
+    "new": "}, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);",
     "tests": [
       "test/auditcards6_d.test.js"
     ],

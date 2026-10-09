@@ -291,7 +291,7 @@ import { isLefayTown, lefaySpotOf, carveLefay } from '../world/lefayMonument.js'
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/profItems.js';   // PROF1: a Stores material as DFU's own item
-import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands
+import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
 import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
 import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
@@ -572,7 +572,7 @@ import { createNavalHost, hullBoxOf as navalHullBoxOf, NAVAL_SAVE_VENDOR, NAVAL_
 import { draftOf as navalDraftOf } from '../systems/naval/shipLife.js';   // AUDIT GN2-PF6: a hull's draft, hull 2's off her keel as she stands
 import { createNavalFlames } from './navalFlames.js';   // NAV-B: a burning ship's deck fires
 import { NavalRenderer } from '../render/navalRender.js';   // NAV-B: the smoke, the spray, the balls in flight and the aim
-import { drawNavalHud, navalTouchBrace, navalPadPrompts, drawNavalTags, drawCrewBars, CREW_BAR_RANGE, drawCrewLines, CREW_SAY_RANGE } from '../ui/navalHud.js';   // AUDIT NAV1 (#14): and the ships' tags - SHIPMATES: and the crew's bars - LIVING CREW: and their lines
+import { drawNavalHud, navalTouchBrace, navalPadPrompts, drawNavalTags, drawCrewBars, CREW_BAR_RANGE, crewBarPoint, drawCrewLines, CREW_SAY_RANGE } from '../ui/navalHud.js';   // AUDIT NAV1 (#14): and the ships' tags - SHIPMATES: and the crew's bars (CEIL-GHOST: where they stand) - LIVING CREW: and their lines
 import { createNavalCrew, CREW_RANGE, CREW_KEEP } from './navalCrew.js';   // LIVING CREW: the crews on the decks near the eye
 import { asleepHour } from '../systems/naval/shipWatch.js';   // SHIP-WATCH: the crews' sleeping hours
 import { crewRoster, crewCount } from '../systems/naval/crewLife.js';
@@ -769,6 +769,7 @@ import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerRelationTe
 import { openPeers } from '../player/socialPick.js';   // CONCEAL-MATE: who a concealed player stays open to - their party
 import { allyCastSpell, allyCastable, strangerCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine, createGiftLineGate } from '../systems/allyCast.js';
 import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effects on the party pose   // ALLY-CAST: a beneficial spell at a party mate; SPELL-GIFT: and the stranger's list
+import { stampItemIds, tradeHeldNotice } from '../systems/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { checkpointAllowed, checkpointDue, checkpointedTradePack, createSaveSoon } from '../systems/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack, tradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
@@ -788,7 +789,7 @@ import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMas
 import { takeWildDrop, takeWildGold, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
 import { createWildFight } from '../net/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
-import { markRemains, remainsMarkTick, remainsGone } from '../systems/wildRemainsWaypoint.js';
+import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot.js';
@@ -9469,7 +9470,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!isShipmate(f) || !feet || !f.entity) continue;
         const d = Math.hypot(feet[0] - eye[0], feet[1] - eye[1], feet[2] - eye[2]);
         if (d > CREW_BAR_RANGE) continue;
-        const head = [feet[0], feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.3, feet[2]];
+        const head = crewBarPoint(feet, f.ai.height ?? CAPSULE_HEIGHT, player.collider);   // CEIL-GHOST: under the ceiling
         const at = projectToScreen(head, w, h, proj, view, rect);
         if (!at.front || at.x < -40 || at.x > w + 40 || at.y < -20 || at.y > h + 20) continue;
         let key = _crewKeys.get(f);
@@ -11040,6 +11041,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         inTown: () => _storesReached(),
         room: (k) => bagRoomFor(playerEntity, k),
         carriedHeld: (k) => bagHeldOf(playerEntity, k),
+        heldKeys: () => bagHeldKeysOf(playerEntity),   // UNCOUNTED: what is held that the Stores will not take, named
         bag: () => ({ has: hasBag(playerEntity.items), kg: bagWeight(playerEntity), max: BAG_KG_LIMIT, count: playerEntity.bagItems?.length ?? 0 }),
         // AUDIT2 BAG1 H1/U2: the bag emptied into the pack, from the Stores page - anywhere, on either skin
         emptyBag: () => { const r = emptyBagIntoPack(playerEntity); if (r.moved > 0) saveSoon.changed(); return r; },
@@ -11248,7 +11250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // at a time, and the book one ask an id
           if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }
           const out = smeltRecipe(r.data.recipe)?.out ?? recipe;
-          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) || r.data.count;
+          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) + (Number(r.data.loose) || 0) || r.data.count;   // AUDIT BAG-CRAFT A1: its loose products too
           const id = String(r.data.recipe);
           const verb = bench ? 'Sawed' : id.startsWith('burn:') ? 'Burnt' : id.startsWith('cure:') ? 'Cured' : id.startsWith('weave:') ? 'Wove'
             : id.startsWith('cut:') ? 'Cut' : id.startsWith('mix:') ? 'Mixed' : alch ? 'Transmuted into' : 'Smelted';   // PROF7: the loom's; PROF11: the mason's; PROF12: the Transmuter's
@@ -17095,6 +17097,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.() || !(playerEntity.health > 0)) return false;
     // AUDIT REALM2 M5: the composer's own answer - a save it refused (the court, the Ocean Holes descent) is no checkpoint,
     // and a trade's hold (realmTradeEscrow's `=== false`) must not begin over the older record the service holds
+    stampItemIds(playerEntity);   // INT4: every valuable piece in the character's own lists carries its id into the realm's save
     const opts = sink ? { quiet: true, sink } : { quiet: true };   // AUDIT PRE-MERGE 1003 O10: a caller's sink, to hear the put's answer
     return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
   }
@@ -20250,7 +20253,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (room !== online.room) return;
       wildRemains.setRoom(room);
       wildRemains.onWord(w);
-      if (w?.k === 'gone') remainsGone(w.r);   // WILD-WAYPOINT: all taken, or let go - the flag goes with them
+      if (w?.k === 'gone') { remainsGone(w.r); forgetMine(w.r); }   // WILD-WAYPOINT: all taken, or let go - the flag goes with them; WILD-KEEP: and the kept record
     };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
@@ -22011,6 +22014,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _wildOffer = null;   // { worn: [items], killerName } - my body's worn pieces, offered to my killer
   let _wildGhost = false;  // my socket stays in the street's cell while my body lies (my killer's pick reaches me)
   let _wildMine = null;    // my remains: { r, room, p, until } - for the world map's mark
+  // WILD-KEEP (FIELD BUGS 2026-10-09c): kept on the device for the character that fell, and read back once - a game that
+  // crashed or closed inside the remains' ten minutes knows them again (systems/wildRemainsWaypoint.js)
+  const wildWho = () => (realmSession?.id != null ? `realm:${realmSession.id}` : playerEntity?.name ? `name:${playerEntity.name}` : null);
+  let _wildMineRead = false;
   const wildMint = () => { let x = ''; while (x.length < 10) x += Math.random().toString(36).slice(2); return x.slice(0, 10).padEnd(10, '0'); };
   /** THE ZONE'S DEATH CHECKPOINT. A dead character is never the realm's save (realmCheckpoint), and a death in the zone
    *  takes things out of the pack that the room then holds for anyone - so a game closed on the death screen must not
@@ -22054,6 +22061,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const it of lost.slice(sent)) { if (isGoldPieces(it)) addGoldPieces(playerEntity, it.stackCount ?? 1); else addItem(playerEntity.items, it); }
       if (sent < lost.length) wildDeathCheckpoint();
       if (sent) _wildMine = { r, room: online.room, p, until: Date.now() + WILD_REMAINS_MS, dungeon: (modes?.mode === 'dungeon') ? (_wdunInside?.h ?? wdKey()) : null };   // PVPDUNGEONS: a death in a hall locks it for the hour, my remains my way back in, and the crows circle it for everyone   // PVPDUNGEONS: a death underground locks the hall for the hour; my pile's life is the key back in
+      if (sent) keepMine(_wildMine, wildWho());   // WILD-KEEP: on the device, for a game that does not live to the pick
       if (sent) {   // WILD-WAYPOINT: a followed flag where they lie - the street's point, or a building's or a dungeon's door
         const at = isCellRoom(online.room) ? nativeToMapPoint(p[0], p[2]) : ((px) => (px ? { mx: px.x + 0.5, my: px.y + 0.5 } : null))(playerTravelPixel());
         if (at) markRemains({ mx: at.mx, my: at.my, until: _wildMine.until, r });
@@ -22176,7 +22184,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     wildRemains.setPool(wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null));
     wildRemains.tick();
     setLootMarksLive(wildRemains.hasMine());   // my remains' red line stands with the rarity row off too
-    if (_wildMine && Date.now() > _wildMine.until) _wildMine = null;
+    if (!_wildMineRead) { _wildMineRead = true; _wildMine ??= keptMine(Date.now(), wildWho()); }   // WILD-KEEP: back from a crash or a close
+    if (_wildMine && Date.now() > _wildMine.until) { _wildMine = null; keepMine(null); }
     remainsMarkTick(Date.now());   // WILD-WAYPOINT: the flag goes with its remains' time
   };
   // WILD3: THE STRANGERS - every other player in the zone with me, outside my party and my guild, within WILD_STRANGER_M
@@ -22681,6 +22690,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
   _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils
+  // INT3: the judge's hold, said to the player each time a landed checkpoint moves it (systems/realmSaves.js)
+  if (realmSession) realmSession.onTradeHeld = (prev, now, why) => { const t = tradeHeldNotice(prev, now, why); if (t) townTalk.say(t); };
   _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } };
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word

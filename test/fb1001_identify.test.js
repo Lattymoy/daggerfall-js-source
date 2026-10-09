@@ -154,7 +154,9 @@ test('TRADE-KNOWN through the realm: the same round trip between two realm tabs,
   const ents = { A: hero('Masta_Fu', [magicSword(), rareSword()]), B: hero('Ondolemar', []) };
   const read = ents.A.items.map(names);
   const minted = ents.A.items.map((it) => JSON.parse(JSON.stringify(it)));
-  const snap = (e) => JSON.stringify({ name: e.name, items: e.items, goldPieces: e.goldPieces });
+  // PIN MOVED (INT2, 2026-10-09): the realm judges every checkpoint, and a save with no level is a character the game
+  // never wrote (a breach, the trade frozen) - the record carries the level every real save does
+  const snap = (e) => JSON.stringify({ name: e.name, level: 1, items: e.items, goldPieces: e.goldPieces });
   let clock = 0;
   const lost = [];
   const tabs = {};

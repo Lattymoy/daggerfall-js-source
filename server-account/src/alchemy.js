@@ -19,7 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { mintId, overRate } from './accounts.js';
 import {
-  asks, shut, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor,
+  asks, shut, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor, workableSql, workStatements, workHeld,
 } from './professions.js';
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice moved below professions.js and marks.js
 import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE, trackOf } from '../../src/net/professionLaw.js';
@@ -90,14 +90,14 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
   if (rank < potion.rank) return { error: 'prof-rank' };
   const cap = craftXpCap('alchemy', ranks);
   const steps = await seatStepsFor(db, player.id, character, seat, 'alchemy', nowS);
-  // THE UNBRUISED HERBS (4.3): each herb's own units this brew spends (bought ones go first), at most what was picked
-  // unbruised
+  // THE UNBRUISED HERBS (4.3): each herb's own units this brew spends (bought ones go first - AUDIT BAG-CRAFT A1: and loose
+  // ones before them, never picked by this character), at most what was picked unbruised
   let unbruised = 0;
   const reckoned = [];
   for (const inp of inputs) {
     if (!HERB_RE.test(inp.key)) continue;
     const st = await storeOf(db, player.id, character, inp.key);
-    const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought));
+    const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought - (st.loose ?? 0)));
     const row = await db.prepare('SELECT qty FROM prof_unbruised WHERE player = ?1 AND char_id = ?2 AND material = ?3').bind(player.id, character, inp.key).first();
     const u = Math.min(ownSpent, Number(row?.qty ?? 0));
     if (u > 0) { unbruised += u; reckoned.push({ key: inp.key, n: u }); }
@@ -115,7 +115,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
   const held = [];
   inputs.forEach((inp, i) => {
     binds.push(inp.key, inp.n);
-    held.push(`${spendableSql('?1', '?2', `?${14 + 2 * i}`)} >= ?${15 + 2 * i}`);   // GOLD-MARKET: never gold's units
+    held.push(`${workableSql('?1', '?2', `?${14 + 2 * i}`)} >= ?${15 + 2 * i}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too
   });
   const decided = 'EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)';
   await db.batch([
@@ -133,7 +133,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
       WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)
       .bind(player.id, character, u.key, u.n, rid, nonce)),
     // the cauldron out of the Stores, each bought first
-    ...inputs.flatMap((inp) => spendStatements(db, {
+    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought
       player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],
     })),
     // the XP the decision credited, under the crafter's limit
@@ -147,7 +147,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
   if (made) return brewAnswer(db, player, made, nowS, { repeat: true });
   for (const inp of inputs) {
     const st = await storeOf(db, player.id, character, inp.key);
-    if (st.own + st.bought < inp.n) return { error: st.own + st.bought + (st.gold ?? 0) >= inp.n ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET
+    if (workHeld(st) < inp.n) return { error: workHeld(st) + (st.gold ?? 0) >= inp.n ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET
   }
   return { error: 'stores-short' };
 }
@@ -217,7 +217,7 @@ export async function disenchantPiece(ctx, player, env, { character, provenance,
     const items = Array.isArray(save.items) ? save.items : [];
     const at = items.findIndex((rec) => rec?.provenance === provenance);
     return at >= 0 && tradeableRecord(items[at]) && takeTradeGoods(save, { items: [items[at]], gold: 0 }, [at]) ? null : 'prof-piece-gone';
-  }) : null;
+  }, { outbound: true }) : null;   // INT3: the Essence it yields goes to the Stores, and the market sells it
   if (prep?.error) return prep;
   const nonce = mintId(rand);
   const decided = 'EXISTS (SELECT 1 FROM prof_disenchants WHERE player = ?1 AND rid = ?2 AND n = ?3)';

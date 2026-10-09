@@ -65,7 +65,7 @@
   {
     "name": "AUDIT-REALM2-S3-a-landed-save-dropped",
     "file": "server-account/src/realm.js",
-    "old": "  if (row && (row.obj === key || row.prev === key)) return true;\n",
+    "old": "  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true;   // INT6: the clean one kept, too\n",
     "new": "",
     "tests": [
       "test/auditrealm2_service.test.js"

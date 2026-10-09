@@ -59,7 +59,7 @@ export async function stakeCards(ctx, player, env, { character, realm = null, re
   // section 24: a top-up's stake is a seat's addition - from HOLDEM_TOPUP_MIN_BB (the relay keeps the seat within the most)
   if (!Number.isSafeInteger(amount) || amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || amount > HOLDEM_STAKE_MAX_BB * bb) return { error: 'bad-buy-in' };
   const id = stakeIdOf(rand);
-  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, amount, region) ? null : 'realm-gold'));
+  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, amount, region) ? null : 'realm-gold'), { outbound: true });   // INT3: a stake can be won by another player
   if (prep.error) return prep;
   try {
     await db.batch([

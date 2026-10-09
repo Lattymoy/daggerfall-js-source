@@ -88,6 +88,16 @@ export function heldOf(entity, key) {
   return n;
 }
 
+/** UNCOUNTED (FIELD BUGS 2026-10-09c, "Some ingredients won't let you store them"): every material the pack, the bag
+ *  and the wagon hold an item of - counted by the service or not - so the Stores page can name what it will not take. */
+export function heldKeysOf(entity) {
+  const keys = new Set();
+  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {
+    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }
+  }
+  return [...keys];
+}
+
 /** One unit's weight, in kg, as the pack weighs it. */
 export function unitKgOf(key) {
   const it = mintMaterialItem(key);

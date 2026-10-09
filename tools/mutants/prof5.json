@@ -583,7 +583,7 @@
   {
     "name": "PROF5-svc-owner-kept",
     "file": "server-account/src/market.js",
-    "old": "    db.prepare(`UPDATE products SET owner = ?1, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)",
+    "old": "    db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)",
     "new": "    db.prepare(`UPDATE products SET listed = 0 WHERE ?1 IS NOT NULL AND provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)",
     "tests": [
       "test/prof5_service.test.js",

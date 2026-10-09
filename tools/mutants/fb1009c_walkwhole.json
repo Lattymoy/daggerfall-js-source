@@ -1,0 +1,51 @@
+[
+  {
+    "name": "WALK-WHOLE-the-cut-unasked",
+    "file": "src/world/placedCardTable.js",
+    "old": "      if (!cutsWalk(i, k, w)) return spot;\n",
+    "new": "      return spot;\n",
+    "tests": [
+      "test/fb1009c_walkwhole.test.js",
+      "test/taverntable.test.js"
+    ]
+  },
+  {
+    "name": "WALK-WHOLE-no-table-when-every-spot-cuts",
+    "file": "src/world/placedCardTable.js",
+    "old": "      fallback ??= spot;\n",
+    "new": "",
+    "tests": [
+      "test/fb1009c_walkwhole.test.js"
+    ]
+  },
+  {
+    "name": "WALK-WHOLE-no-lane",
+    "file": "src/world/placedCardTable.js",
+    "old": "export const PLACE_LANE_CELLS = 1;",
+    "new": "export const PLACE_LANE_CELLS = 0;",
+    "tests": [
+      "test/fb1009c_walkwhole.test.js",
+      "test/taverntable.test.js"
+    ]
+  },
+  {
+    "name": "WALK-WHOLE-every-spot-cuts",
+    "file": "src/world/placedCardTable.js",
+    "old": "    return q.length < order.length - taken;",
+    "new": "    return q.length <= order.length - taken;",
+    "tests": [
+      "test/fb1009c_walkwhole.test.js",
+      "test/taverntable.test.js"
+    ]
+  },
+  {
+    "name": "WALK-WHOLE-the-lane-z-unasked",
+    "file": "src/world/placedCardTable.js",
+    "old": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk + PLACE_LANE_CELLS;",
+    "new": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk;",
+    "tests": [
+      "test/fb1009c_walkwhole.test.js",
+      "test/taverntable.test.js"
+    ]
+  }
+]

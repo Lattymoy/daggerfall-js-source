@@ -1126,8 +1126,8 @@
   {
     "name": "AUDIT-SERPENT-D-route-status-flattened",
     "file": "server-account/src/index.js",
-    "old": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);\n        const key = r.renown?.rose",
-    "new": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);\n        const key = r.renown?.rose",
+    "old": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);\n",
+    "new": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);\n",
     "tests": [
       "test/serpent1_law.test.js",
       "test/serpent1_relay.test.js",

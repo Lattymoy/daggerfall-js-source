@@ -224,7 +224,8 @@ test('REALM P2.2: a record that moves under the batch rolls the guild\'s write b
 
 // ---- the client ------------------------------------------------------------------------------------------------------
 
-/** A Guild book over a real session: a plain entity's purse, its checkpoint its JSON. */
+/** A Guild book over a real session: a plain entity's purse, its checkpoint its JSON. INT2 (PIN MOVED): each entity carries
+ *  its level, as every save does - the judge holds the trade of a checkpoint that is no character (judge.js). */
 async function book(s, handle, entity) {
   const P = await s.player(handle, JSON.parse(JSON.stringify(entity)));
   P.session = createRealmSession({ io: P.io, id: P.char, lease: P.lease, seq: 1 });
@@ -246,7 +247,7 @@ async function book(s, handle, entity) {
 
 test('REALM P2.2 end to end: the Guild book founds, deposits and withdraws for a realm character - the purse and the record move alike, each act one sequence on, and a refusal gives the gold back', async () => {
   const s = await stand();
-  const entity = { name: 'Aldric', goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 3_000 }] };
+  const entity = { name: 'Aldric', level: 1, goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 3_000 }] };
   const P = await book(s, 'Aldric', entity);
   const found = await P.book.found('The Iron Oath', 'IRON');
   assert.equal(found.ok, true, JSON.stringify(found));
@@ -276,7 +277,7 @@ test('REALM P2.2 end to end: the Guild book founds, deposits and withdraws for a
 
 test('REALM P2.2: an answer that was lost is asked again - the record one ahead is the act, landed, never paid twice; still lost, the session ends with the gold where it is', async () => {
   const s = await stand();
-  const entity = { name: 'Aldric', goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 0 }] };
+  const entity = { name: 'Aldric', level: 1, goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 0 }] };
   const P = await book(s, 'Aldric', entity);
   assert.equal((await P.book.found('The Iron Oath', 'IRON')).ok, true);
   P.door.loseNext = '/v1/guilds/deposit';   // the deposit lands; its answer never comes back
@@ -285,7 +286,7 @@ test('REALM P2.2: an answer that was lost is asked again - the record one ahead 
   assert.deepEqual([entity.goldPieces, P.book.guild.treasury, (await s.record(P)).save.goldPieces], [600, 400, 600], 'paid once, held once');
   // no answer at all: the session ends, the purse as the act left it
   const lost = [];
-  const Q = await book(s, 'Bran', { name: 'Bran', goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 0 }] });
+  const Q = await book(s, 'Bran', { name: 'Bran', level: 1, goldPieces: 11_000, items: [], bankAccounts: [{ accountGold: 0 }, { accountGold: 0 }] });
   Q.session = createRealmSession({ io: Q.io, id: Q.char, lease: Q.lease, seq: 1, onLost: (why) => lost.push(why) });
   Q.book.realm = { act: (o) => realmGoldAct({ session: Q.session, checkpoint: () => Q.session.checkpoint(JSON.stringify(Q.entity)), wait: () => Promise.resolve(), ...o }) };
   Q.door.before = async (url) => { if (url.endsWith('/v1/guilds/found')) throw new TypeError('network'); };
