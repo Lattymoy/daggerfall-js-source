@@ -163,9 +163,9 @@
   },
   {
     "name": "AUDIT-HAUL-CARDS-C4-veil-stones-panel",
-    "file": "src/ui/pickupFeed.js",
-    "old": "const veilOf = (th) => (th.ink && luminance(th.panel) > PICKUP_VEIL_LIGHT ? th.ink : th.panel);",
-    "new": "const veilOf = (th) => th.panel;",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "export const hudVeil = (th) => (th.ink && luminance(th.panel) > HUD_VEIL_LIGHT ? th.ink : th.panel);",
+    "new": "export const hudVeil = (th) => th.panel;",
     "tests": [
       "test/haulcards.test.js"
     ]

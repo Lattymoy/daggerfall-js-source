@@ -38,6 +38,15 @@ export const HOLDEM_BBS = Object.freeze([2, 10, 50]);
 /** The tables one room keeps, and a seat's name's longest. */
 export const HOLDEM_TABLES_MAX = 16;
 export const HOLDEM_NAME_MAX = 40;
+/** TAVERN-TABLES (2026-10-09, bible/11-Multiplayer/Tavern-Cards.md section 30; the owner, told a tavern's one table
+ *  locked out whoever its first sitter was not: "Two tables per tavern"): THE GOLD TABLE IS AN INDEX. A tavern stands
+ *  two card tables (scenes/interiorContext.js) - the first, nearest the entrance, plays for chips and seats everyone; the
+ *  second, at this index, plays for gold and seats only a realm character's stake. The relay holds every sit to it, so
+ *  no first sitter decides what a table plays for (CARDS6 let him, and one guest's chips, or one idle realm character's
+ *  stake, shut the other kind out of the room's only table). */
+export const HOLDEM_GOLD_TABLE = 1;
+/** TAVERN-TABLES: whether the room's table at `index` plays for gold. */
+export const holdemGoldTable = (index) => index === HOLDEM_GOLD_TABLE;
 
 /** A seat's chips and hand in the room's frame: what anyone at the table may see. */
 const seatView = (s) => (s ? { id: s.id, name: s.name, stack: s.stack, ...(s.leaving ? { leaving: true } : {}) } : null);

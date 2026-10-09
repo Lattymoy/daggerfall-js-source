@@ -144,7 +144,12 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?(), stickRuns?(), aimHold?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?(), stickRuns?(), aimHold?(), cardTable?() }
+ *   - cardTable: CARDS-TOUCH (2026-10-09, bible/11-Multiplayer/Tavern-Cards.md section 31) - true while the player sits
+ *     at a card table: the finger on the view is the table's (scenes/worldModes.js cardPointerListen reads the hand, the
+ *     chips and the cloth), so the layer's look, swing and tap stand down - a tap was the activate press, and seated
+ *     the press stands him up (folded out of turn, cashed out), from a tap on his own cards. The stick still walks him
+ *     off the seat; the panel's Stand up stands him.
  *   - stickRuns: AUDIT PRE-MERGE 0928 U3 - false stands the stick's 80%-throw Run down (the boat's helm); absent, it runs.
  *   - aimHold: NAV-H - true while the attack is a held aim (a helm with guns): the swipe presses it once and the
  *     finger's drag under it is a look - the guns are laid by the view; the lift fires them. Absent, the drag swings.
@@ -462,7 +467,7 @@ export function attachTouch(canvas, hooks = {}) {
     const now = e.timeStamp ?? performance.now();
     const dt = gyroT ? (now - gyroT) / 1000 : 0;
     gyroT = now;
-    if (!(dt > 0) || dt > GYRO_MAX_DT || hooks.paused?.()) return;
+    if (!(dt > 0) || dt > GYRO_MAX_DT || hooks.paused?.() || hooks.cardTable?.()) return;   // CARDS-TOUCH: nor the gyro's turn of the seated head
     const d = gyroLookDelta(e.rotationRate, globalThis.screen?.orientation?.type ?? 'landscape-primary', dt, lookScale(), getPref('touchGyroSensitivity'));
     if (d.dx || d.dy) hooks.look?.(d.dx, d.dy);
   };
@@ -550,7 +555,9 @@ export function attachTouch(canvas, hooks = {}) {
   const lookNorm = () => lookNormalisation(canvas.getBoundingClientRect().height, getPref('touchLookSensitivity'));
   function route(events) {
     const paused = !!hooks.paused?.();
+    const table = !!hooks.cardTable?.();   // CARDS-TOUCH: the finger is the table's - a held swing let go, nothing else said
     for (const ev of events) {
+      if (table) { if (ev.type === 'swipe' && swiping) { swiping = false; hooks.attack?.(0, 0, false); } continue; }
       if (ev.type === 'look') {
         if (!paused) hooks.look?.(ev.dx * TOUCH_LOOK_GAIN * lookNorm(), ev.dy * TOUCH_LOOK_GAIN * lookNorm());   // dropped, never accumulated
       } else if (ev.type === 'swipe') {
@@ -635,7 +642,7 @@ export function attachTouch(canvas, hooks = {}) {
           // beside a door, a chest or a townsperson opened it - the exit
           // door being the biggest target in any building. The hosts
           // stop after the lock pick when the flag rides the tap.
-          hooks.tap?.(stickOrigin[0], stickOrigin[1], { lockOnly: true });
+          if (!hooks.cardTable?.()) hooks.tap?.(stickOrigin[0], stickOrigin[1], { lockOnly: true });   // CARDS-TOUCH: no lock pick from the seat
         }
       } else if (t.identifier === lookId) {
         lookId = null;

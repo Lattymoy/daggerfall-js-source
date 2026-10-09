@@ -503,7 +503,18 @@ export function createWorldModes(host) {
     const t = interiorCtx?.tables?.[i];
     return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];   // the room never moves: probed once a visit (AUDIT CARDS B6: round the table's own box, turned by its matrix)
   };
+  /** TAVERN-TABLES (section 30): the room's table at `i` plays for gold - online, the relay's own index for it
+   *  (net/holdemTable.js HOLDEM_GOLD_TABLE, the gold-felted table scenes/interiorContext.js stands second). */
+  const cardTableGold = (i) => !!interiorCtx?.tables?.[i]?.gold;
+  /** TAVERN-TABLES: why this player may not sit at the gold table (a key of CARD_GOLD_BARRED), or null - online it seats
+   *  a realm character's stake, at a relay that deals, and nobody else; offline it is a table like the other. */
+  const cardGoldBarred = (i) => (!cardTableGold(i) || !isOnlinePage() ? null : !host.cardStakes?.goldOk?.() ? 'realm' : !host.cardOnline?.ok?.() ? 'relay' : null);
+  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold - only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold, and the relay is not dealing right now - the green table plays for chips.' });
   function sitAtCardTable(i) {
+    // TAVERN-TABLES: told before he sits - the relay refuses a sit at the gold table with no stake, and the refusal
+    // stood him up (the owner's report: one table, and "it doesnt let him use gold tables")
+    const barred = cardGoldBarred(i);
+    if (barred) { say(CARD_GOLD_BARRED[barred]); return; }
     const seats = cardSeatsOf(i);
     const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));   // AUDIT CARDS B3: another player's seat is theirs
     if (k < 0) { say('Every seat at this table is taken.'); return; }
@@ -564,7 +575,7 @@ export function createWorldModes(host) {
     if (cardGame) closeCardGame();
     const stakes = stakesFor(interiorBuilding?.quality ?? 10);
     // CARDS6: online, a realm character plays for gold at the relay's table - its stake held by the service (net/cardStakes.js)
-    const goldOnline = !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();
+    const goldOnline = cardTableGold(cardSeat?.table ?? -1) && !!host.cardOnline?.ok?.() && !!host.cardStakes?.goldOk?.();   // TAVERN-TABLES: at the gold table alone - a realm character plays for chips at the other
     const friendly = !goldOnline && (!!host.realmAct || isOnlinePage());
     const buyIn = buyInRange(goldOnline ? host.cardStakes.purse() ?? 0 : friendly ? FRIENDLY_CHIPS_BB * stakes.bb : goldAmount(playerEntity), stakes);
     const game = { hud: null, releaseCursor: holdCursor(), stakes, friendly, buyIn, names: tavernRegulars(Math.max(1, Math.min(5, seatCount - 1))), regulars: null, barks: new Map(), key: cardTableKey(), day: cardDay(), session: null, remote: null, log: [], phase: 'buyin', why: null, scene: null, draw: createCardTableDraw(renderer), paintedAt: 0 };   // CARDS3: the draw makes nothing until the first card
@@ -601,11 +612,14 @@ export function createWorldModes(host) {
     if (g.staking) return;
     g.staking = true;
     g.why = null;
+    g.refused = null;
     paintCardGame();
     const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: cardSeat.table, bb: g.stakes.bb, amount, place: cardPlaceName() });
     g.staking = false;
     if (g !== cardGame || !cardSeat) return;
-    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    // CARDS-SAID (Tavern-Cards section 31): and on the panel - said alone, the line was under the panel (a phone's covers
+    // the screen's middle), and the panel came back as it was: "Deal me in" pressed, and nothing happened
+    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }
     g.stakeWord = r.stake;
     g.stakeId = r.id;
     closeCardWatch(cardSeat.table);
@@ -661,7 +675,7 @@ export function createWorldModes(host) {
     if (!g) return;
     const table = g.remote ?? g.session;
     g.paintedAt = performance.now();
-    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
+    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why, refused: g.refused ?? null,
       online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length && !g.goldOnline } : null,
       gold: !!g.goldOnline, staking: !!g.staking, topUp: cardTopUpAmount(g) }));   // CARDS6; section 24: the top-up
   }
@@ -12735,6 +12749,9 @@ export function createWorldModes(host) {
     attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
     /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
     decorFlying: () => decorTool.flying(),
+    /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
+     *  swing and tap down (ui/touch.js `cardTable`): the table's own listeners read the finger. */
+    cardSeated: () => mode === 'interior' && !!cardSeat,
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

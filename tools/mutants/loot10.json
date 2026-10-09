@@ -47,8 +47,8 @@
   {
     "name": "LOOT10-quiet-ignored",
     "file": "src/systems/lootCodex.js",
-    "old": "  if (!quiet) {\n",
-    "new": "  if (true) {\n",
+    "old": "  if (!quiet && !presentCodexFind(item, key.kind)) {\n",
+    "new": "  if (true && !presentCodexFind(item, key.kind)) {\n",
     "tests": [
       "test/loot10_codex.test.js"
     ]

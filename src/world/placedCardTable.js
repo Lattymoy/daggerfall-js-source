@@ -27,6 +27,10 @@
 import { SEAT_OUT } from '../player/seatPose.js';
 import { trs, transformPoint } from './mat4.js';
 
+/** TAVERN-TABLES (2026-10-09, bible/11-Multiplayer/Tavern-Cards.md section 30): the card tables a tavern stands, each
+ *  found by this walk with the ones before it stood - the chips table, then the gold one (net/holdemTable.js
+ *  HOLDEM_GOLD_TABLE is its index; a pin holds the two alike). */
+export const TAVERN_CARD_TABLES = 2;
 /** The walk's cell (metres). */
 export const PLACE_CELL = 0.5;
 /** The grid's x and z off Daggerfall's 1/40 m lattice: an eighth and a sixteenth of a unit (metres). */
@@ -53,11 +57,13 @@ export const PLACE_AVOID_DY = 2.5;
 /**
  * Where a table of `box` (its model's own box, `{min, max}`) stands, in the room's own frame: `{ x, y, z, yawDeg }` the
  * model's translation (its lowest point on the floor under it) and its turn about the vertical (0, or 90 when only
- * across does it fit), `{ cx, cz }` its footprint's middle - or null when the room has no such floor. `start` is the
+ * across does it fit), `{ cx, cz }` its footprint's middle, `{ hx, hz }` its ring's half-extents along the room's x and z
+ * (the table's, turned, and PLACE_RING_M round it) - or null when the room has no such floor. `start` is the
  * entrance ([x, y, z], an enter marker), `probe.floor(x, y, z)` the floor's height straight down from a point (null for
  * none within reach), `probe.open(x, y, z, r)` whether nothing of the room is within `r` of a point. `avoid` is
  * `[x, y, z, r]` the table and its ring keep `r` clear of (doors, people, flats, markers) on the entrance's storey
- * (PLACE_AVOID_DY).
+ * (PLACE_AVOID_DY) - or `[x, y, z, rx, rz]`, clear of a box of those half-extents (TAVERN-TABLES: a table already
+ * stood, and its ring - the second keeps its own ring off the first's).
  * @param {{min: readonly number[], max: readonly number[]}} box
  * @param {number[]} start
  * @param {{floor: (x: number, y: number, z: number) => number|null, open: (x: number, y: number, z: number, r: number) => boolean}} probe
@@ -133,10 +139,10 @@ export function placedTableSpot(box, start, probe, avoid = []) {
         if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < 0) ok = false;
       }
       if (!ok) continue;
-      if (near.some(([ax, , az, r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + r)) continue;
+      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;
       let fy = -Infinity;   // the highest floor under its top
       for (let dk = -w.tk; dk <= w.tk; dk++) for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);
-      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz };
+      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };
     }
   }
   return null;

@@ -12,7 +12,7 @@ way (8, 9).
 | 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE) |
 | 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | the yard measured a house as the box round its models; Hammerfell's houses are L-shaped or stand an outside stair, and their doors open onto open ground inside that box | fixed (HOME-FOOT) |
 | 7 | `TypeError: Cannot read properties of undefined (reading 'velocity')` at `poseAhead`, on a ship's deck (Cruor) | a peer's word dropped a boat between two frames; the peek read the place it no longer names | fixed (PEEK-WORD) |
-| 8 | "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me" - "i relogged and im still invisible" (maya) | not a bug to find a way into: TAMRIEL2 streams the land past the Bay, and the wire still held the Bay - a pose past 1024 pixels refused and the socket closed on it, a cell west or north of the Bay no cell any halo reached | fixed (TV-BEYOND, world180 - the relay first) |
+| 8 | "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me" - "i relogged and im still invisible" (maya) | not a bug to find a way into: TAMRIEL2 streams the land past the Bay, and the wire still held the Bay - a pose past 1024 pixels refused and the socket closed on it, a cell west or north of the Bay no cell any halo reached | fixed (TV-BEYOND, world181 - the relay first) |
 | 9 | `CRASH (2) RangeError: invalid array length` up through `onPick`, a click on the Overworld in the wilds past the Alik'r (maya) | the route planner's box was clamped to the map: two ends past one edge clamped it inside out | fixed (TV-BEYOND) |
 
 ## SNOWLESS1: snow off means the snow too (1)
@@ -170,7 +170,7 @@ bound, because the relay knows no picture), `POSE_BOUND` from it, `worldPixelOk`
 the halo crosses the edge both ways; the traveller's mark is floored past the corner and its 256ths stay 0..255; a
 party pose's pixel, its trip (`tv`), its walk (`tw`) and its feet (`wx`/`wz`), a duel's ring and a park's anchor are
 taken either side of the corner. The widest hub attachment, the world's widest party pose, still fits its 2048 bytes.
-RELAY_VERSION world180 (`test/relayversion.test.js` row): **deploy the relay before the clients** - a new client
+RELAY_VERSION world181 (`test/relayversion.test.js` row; world180 on the branch, renumbered past main's TAVERN-TABLES world180 at its merge): **deploy the relay before the clients** - a new client
 against the old relay is no worse than today (refused as before).
 
 Pins: `test/fb1009_beyond.test.js` (8) - the field's crash on four edges and the half-off route, the ground past the
@@ -179,4 +179,4 @@ both ways, the frame's corners at three fits as poses the relay takes, the cells
 marks and the party past the Bay; `tools/mutants/fb1009_beyond.json` (28, all dead). PIN MOVED (TV-BEYOND), each to
 the world's edge from the Bay's: `duel_wire`, `hcc_park`, `partytravel` (and its widest attachment), `soc1_hub`,
 `tv3_travellers`, `tv8_party_walk`, `world6b`, `world6biiib`; the host's `tvRouteGround` text in `tv2_click_to_move`
-and `ow_wod`; the version pins to world180.
+and `ow_wod`; the version pins to world181.
