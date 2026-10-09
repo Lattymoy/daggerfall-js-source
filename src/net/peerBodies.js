@@ -81,6 +81,9 @@ import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, 
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
 export const BODIES_MAX = 8;
+/** MWNPC4: THE PAGE'S ONE BUILD QUEUE - every body lane a host stands (the peers, the family, the card table, the NPCs)
+ *  passes it as `gate`, so the lanes' builds run one after another as one lane's always did. */
+export const BODY_BUILD_GATE = { chain: Promise.resolve() };
 /** A body that failed to build is not tried again before this. */
 export const BODY_RETRY_MS = 30000;
 /** A peer gone from the drawable set keeps its body this long before it is released. */
@@ -315,8 +318,10 @@ export class PeerBodies {
    * @param {{max?: number, range?: number, skinBudget?: number, spareMax?: number}} [p.limits] MWNPC3: this instance's own
    *   caps - the most bodies, the range they stand to, the skins a frame, the spares kept. Every one defaults to the
    *   module's constant, so the peers, the family and the card table read what they read; the NPC lane sets its own.
+   * @param {{chain: Promise<any>}|null} [p.gate] MWNPC4: the build queue, SHARED - BODY_BUILD_GATE, which every body lane
+   *   the hosts stand passes, so one body builds at a time on the page however many lanes ask; none, the instance's own.
    */
-  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null }) {
+  constructor({ renderer, enabled = () => true, createRig = createFpArm, buildOpts = peerBuildOpts, now = () => Date.now(), generation = () => 0, warn = (m) => console.warn(m), collider = () => null, limits = null, gate = null }) {
     this.renderer = renderer;
     this._max = limits?.max ?? BODIES_MAX;   // MWNPC3: the instance's caps (limits)
     this._range = limits?.range ?? BODY_RANGE;
@@ -336,6 +341,7 @@ export class PeerBodies {
     this._formWait = new Map();   // WEREWOLF1 (AUDIT E3): peer id -> the time its next body may be built, after a form flipped back too soon
     this._flipped = new Set();    // and the peers whose last body went for a change of form (their next is a form's body)
     this._queue = Promise.resolve();
+    this._gate = gate;   // MWNPC4: the page's one build queue (BODY_BUILD_GATE), or null - this instance's own
     this._phase = 0;   // PEER-CADENCE: each new body takes the next phase, so bodies on the same cadence pose on different frames
     this._frame = 0;   // AUDIT PEER-CADENCE F1: the frame the cadence counts on - the MODULE's, not each body's (see _place)
     this._cam = null;   // INVIS-LOOK: the camera the body pass drew with this frame - the late pass draws the concealed with it
@@ -408,7 +414,7 @@ export class PeerBodies {
     // the sweep first (the cap counts what stands, not what is leaving)
     for (const [id, b] of this._bodies) {
       if (live.has(id)) { b.goneAt = null; continue; }
-      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; b.posed = false; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses
+      if (b.goneAt == null) { b.goneAt = now; b.hit = null; b.dead = null; b.swing = null; b.pending = null; b.posed = false; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses
       else if (now - b.goneAt > BODY_LINGER_MS) this._release(id);
     }
     // the peers with a body: their feet, pace and camera - and then (WB9h) their steps, the skins on the budget
@@ -436,7 +442,8 @@ export class PeerBodies {
       this._place(b, peer, toScene, dt, near);
       if (b.state === 'ok' && !b.far && dt > 0) { b.peer = peer; due.push(b); } else {
         b.posed = false; b.stale = false; b.owed = false;   // AUDIT PEER-CADENCE F2: far (or a frozen frame) - whatever skin stands is stale by the time it is stepped again
-        if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
+        if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }
+        if (b.hit != null) { b.hit = peer.shown.ht | 0; if ((peer.shown.dd | 0) !== b.dead) b.dead = null; }   // MWNPC4: and the reactions - a recoil out of sight is not played, a death out of sight is a corpse on waking   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
       }
     }
     this._stepDue(dt);
@@ -488,7 +495,14 @@ export class PeerBodies {
       this._wantSince.delete(peer.id);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
-      if (!spare) this._queue = this._queue.then(() => this._build(b, look, shown, glyphs)).catch(() => null);
+      if (!spare) {
+        const build = () => this._build(b, look, shown, glyphs);
+        // MWNPC4: through the page's gate when the host gave one - a peer's body, the family's and an NPC's wait their turn
+        // on ONE queue, so two lanes never build at once (a build's synchronous spans - the bind, the skin transfer -
+        // were one lane's stutter at a time; two lanes doubled it)
+        if (this._gate) this._queue = this._gate.chain = this._gate.chain.then(build).catch(() => null);
+        else this._queue = this._queue.then(build).catch(() => null);
+      }
       else {
         // WB9h: a spare stands at once, its skin the last wearer's - stale, so it is posed for its new peer on its first
         // frame when seen, and otherwise the moment it is (as any body out of the view)
@@ -629,6 +643,8 @@ export class PeerBodies {
    *  and the bow's hold - a swing that arrives with wd 2 is the draw (attack with hold), and release() waits while
    *  wd stays 2, exactly as weaponRig withholds it while the machine sits in StrikeUp. */
   _arm(b, shown, look = null) {
+    // MWNPC4: a dead body takes no weapon, no spell and no swing - its counts follow, so nothing is replayed if it stands
+    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; return; }
     const drawn = !!shown.wd;
     b.rig.setSheathed?.(!drawn);
     // DISC12 (Discord: "Weapons when swapped into left hand dont work showing fists"): THE HAND IN USE. The body was
@@ -678,6 +694,21 @@ export class PeerBodies {
       if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
     }
     if (shown.wd !== 2) { b.rig.release?.(); b.held = false; }
+  }
+
+  /** MWNPC4: THE REACTIONS, off the two pose fields an NPC's carries (characters/npcBodies.js npcShown) and the wire's
+   *  peers never send: `ht`, a hit count - a new count is a recoil (the rig's `hurt`, its roll the count) - and `dd`, the
+   *  death: 0 standing, else the death's roll + 1 (`die`). Latched the first time a body meets them, as the swing count
+   *  is: a body that first meets an actor already dead stands in the death's last frame (the reference's startpoint, a
+   *  corpse it loads), and one handed to a living actor - a spare, a body back from its linger - is brought back
+   *  (`revive`, nothing on a living rig). A dead actor recoils from nothing. True while the actor is dead. */
+  _react(b, shown) {
+    const ht = shown.ht | 0, dd = shown.dd | 0;
+    if (b.dead == null) { b.dead = dd; if (dd) b.rig.die?.(dd - 1, { startPoint: 1 }); else b.rig.revive?.(); }
+    else if (dd !== b.dead) { b.dead = dd; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }
+    if (b.hit == null || dd) b.hit = ht;
+    else if (ht !== b.hit) { b.hit = ht; b.rig.hurt?.(ht); }
+    return dd > 0;
   }
 
   /** A body that failed - refused, or threw - is released and its look waited out, the reason kept and said once. */

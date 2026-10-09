@@ -245,7 +245,8 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   assert.match(fp, /if \(unreadyAfterCast\) \{ unreadyAfterCast = false; spellReady = false; refreshWeaponGroup\(\); resetIdle\(\); resetMovement\(\); \}/, 'and the stance drops there');
   const pb = rd('src/net/peerBodies.js');
   assert.doesNotMatch(pb, /a peer's drawn bow shows no arrow/, 'D7: the build doc');
-  assert.match(pb, /if \(b\.goneAt == null\) \{ b\.goneAt = now; b\.swing = null; b\.pending = null; b\.posed = false; \}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');
+  // PIN MOVED (MWNPC4): the reactions (the hit count, the death) re-latch with the swing
+  assert.match(pb, /if \(b\.goneAt == null\) \{ b\.goneAt = now; b\.hit = null; b\.dead = null; b\.swing = null; b\.pending = null; b\.posed = false; \}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');
   assert.match(pb, /\} else \{\s*b\.posed = false;[^\n]*\n\s*if \(b\.swing != null\) \{ b\.swing = peer\.shown\.an \| 0; b\.cast = peer\.shown\.cn \| 0; b\.pending = null; \}/, 'C7: out of range the counts follow (AUDIT PEER-CADENCE F2: and the skin is forgotten)');
   const wire = rd('src/net/wire.js');
   assert.match(wire, /A pose is \{x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar\}/, 'D11 (SPELLFX1: plus ce and ar)');

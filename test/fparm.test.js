@@ -620,7 +620,7 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| jumpState \|\| idleState\) && renderer\);/,   // MW-D39: the jump slot counts here too
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| jumpState \|\| idleState \|\| hitState \|\| deathState\) && renderer\);/,   // MW-D39: the jump slot counts here too; PIN MOVED (MWNPC4): and the recoil and the death
     'ready() is update()\'s own requirements - no mesh term, no camera term (MW-D26 widened the clip term)');
 });
 

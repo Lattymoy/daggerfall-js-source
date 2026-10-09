@@ -81,7 +81,9 @@ Each line is a slice's acceptance, not an aspiration:
    regulars and NPCs draw from one pool: a global cap, nearest first, party
    and talking partner ahead of strangers, the pose budget and the distance
    cadence PEER-CADENCE/WB9h proved, the view cull, and a range past which the
-   classic sprite stands.
+   classic sprite stands. AMENDED BY MWNPC4 (section 9): one BUILD queue for
+   every lane, and caps per lane that SUM - not one pool - so a townsperson
+   never takes a player's body; the frame's bound is the sum, stated there.
 5. MEASURED. A probe drives a town's walkers, a watch and a dungeon's foes
    through the real lane and reports skins, uploads, offscreen binds and
    builds per frame (counts, as WB9h's - the fixtures understate retail
@@ -96,7 +98,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC1 GPU SKIN | the third-person body's skin in the vertex shader: static stream, per-pose palette, face normals from the triangle's own derivatives, boxes off the palette (rule 42), the CPU path kept for the first-person arm and as the fallback | renderer + fpArm: every third-person body (player, peers, family, regulars) |
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
-| MWNPC4 THE ACTOR RIG | an actor's clips off its own machine: MobileUnit's idle/move/attack/ranged/spell/hurt/death, facing off `ai.yaw` / `facingYaw`, the Morrowind group ladders the player's rig already climbs | all four |
+| MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
@@ -319,4 +321,93 @@ its GL upload never made - the arm's mesh is minted by a first-person draw),
 and a build's remaining work - binding, skin transfer, the face match - is
 still one task between its awaits; a build gate across every lane and a
 cap across every instance are the NPC lane's to bring (MWNPC4), where the
-crowd that needs them first stands.
+crowd that needs them first stands. (MWNPC4 brought the gate; the cap
+stays per lane, by design - section 9.)
+
+## 9. MWNPC4 - THE NPC LANE, AND WHAT AN NPC'S BODY DOES THAT A PEER'S NEVER DID (SHIPPED 2026-10-09)
+
+A peer's body plays what the wire says a player did: walk, run, swing,
+cast, draw a bow. An NPC is also HIT, and DIES, and the body must show both
+the way Morrowind shows them; and the NPCs need a lane of their own.
+
+- THE RECOIL (combat/fpArm.js `hurt(roll)`). OpenMW's
+  refreshHitRecoilAnims, the `recovery` arm: "hit" + chooseRandomGroup -
+  the groups `hit1`, `hit2`, ... counted while the body's sources carry
+  each, stopping at the first one missing - played start to stop, once, at
+  Priority_Hit on BlendMask_All. A recoil still playing takes no other (the
+  reference returns while `isPlaying(mCurrentHit)`); the body that carries
+  none plays none. The roll is the caller's - the reference rolls its world
+  PRNG; here the population's own count, so every machine plays the same
+  recoil and Daggerfall's stream is never drawn.
+- THE DEATH (`die(roll, { startPoint })`). playRandomDeath/playDeath:
+  "death" + chooseRandomGroup at Priority_Death on BlendMask_All,
+  autodisable false (held at its stop), loops 0; movement, weapon, hit,
+  idle and jump reset, and none refreshed again ("For dead actors,
+  refreshCurrentAnims is no longer called"). `startPoint` 1 stands a body
+  that meets an actor already dead in its last frame - the reference's own
+  startpoint for a corpse it loads. The dead take no swing, no cast, no
+  recoil; `revive()` hands a body back to a living actor.
+- THE LADDER. Both play on BlendMask_All, so they join the winner ladder
+  exactly, with no per-bone vector: death, the weapon action, the recoil,
+  the movement, the jump, the idle (character.hpp's Priority enum). The
+  death also takes the torch's left arm (Priority_Death over
+  Priority_Torch). An action under the death - a sheathe the rig is handed
+  dead - runs and never shows, as playDeath's own note says of the reset
+  animations.
+- OFF THE POSE (net/peerBodies.js `_react`). Two fields only an NPC's pose
+  carries: `ht`, a hit count (a new count is a recoil, the count its roll)
+  and `dd`, the death (0 standing, else its roll + 1). Latched the first
+  time a body meets them, as the swing count is: the count a body is born
+  with is no recoil; a body meeting the dead stands the corpse; a dead
+  body's weapon, spell and swing doors are not opened, its counts followed
+  so standing again replays nothing; out of sight (the linger, the far
+  cadence) the reactions re-latch - a death there is a corpse on the way
+  back. A wire peer's pose carries neither: it is never hit nor killed by
+  it.
+- THE LANE (`characters/npcBodies.js`). `createNpcBodies` wraps one
+  PeerBodies under the tier's caps (`NPC_BODY_TIERS`: Off none; Near 12
+  bodies within 30 m, 4 skins a frame, 4 spares; All 24 within 60 m, 8, 8).
+  A population `stand`s each actor between `begin` and `end` - its id
+  scoped `npc:<lane>:<id>`, never a peer's or a family member's - and its
+  host asks `has(lane, id)` before drawing its own billboard, which is the
+  fallback for every actor the lane does not stand (past the cap or range,
+  still building, refused): the lane draws no doll. `npcShown` maps an
+  actor's state onto the pose `_arm` plays. A tier change stands a new lane;
+  an unknown tier stands under the default (Near).
+- ONE BUILD QUEUE (`BODY_BUILD_GATE`). Every PeerBodies a host stands - the
+  peers', the family's (and the card table's, through makeFamilyBodies),
+  the NPCs' - passes the page's one gate, so the lanes' builds run one after
+  another as one lane's always did. An instance given none keeps its own
+  (the tests').
+- THE BOUND, per lane and summed (law 4 as amended). The peers stand
+  BODIES_MAX (8) within BODY_RANGE with SKIN_BUDGET (4) skins a frame; the
+  NPCs their tier's. At Near, a frame skins at most 8 bodies (4 + 4), each a
+  palette upload (MWNPC1), and draws every seen one in the one bind
+  (MWNPC2); at All, 12. A crowd of NPCs never takes a peer's body.
+
+PROVEN. `test/mwnpc4_npclane.test.js` (5), on a fixture rig whose clip file
+is MW-CAST1's with the fists' group and the reaction groups appended (two
+recoils, a gap, two deaths): the recoil's pick by roll and its count to
+the first gap, a negative roll wrapped, played once over the idle and let
+go, none taken while one plays, none on a body without the groups; the
+death's pick, its win, its hold at the stop, the idle never back while
+dead, no recoil, swing or cast, an unequip under it unseen, the corpse at
+its stop at once, revival to the idle, a body with no death still dead;
+PeerBodies' reactions off the pose (a new count, the death, the corpse, the
+revival, the dead's doors shut and counts followed, the linger re-latched,
+a wire peer untouched); the lane's tiers, ids, offer rule, cap and
+teardown; and the gate - two lanes' builds in turn, two ungated side by
+side, and every PeerBodies the source stands passing it.
+`tools/mutants/mwnpc4.json`: 38 mutants, 38 dead. Pins moved: MWBODY1's
+host pin (the peers' lane passes the gate), AUDIT WORLD C7 (the linger
+re-latches the reactions with the swing), fparm's ready() (the recoil and
+the death count as a clip); the MWA4 data-gate mutant re-aimed by content.
+
+THE FOUR HOSTS (rule 17e). None is wired in this slice - the lane is the
+door, and no population stands at it yet: scenes/exterior.js,
+scenes/world.js, scenes/worldModes.js and scenes/dungeonContext.js are
+FLAGGED, each wired with the first population it hosts (MWNPC5's foes:
+dungeonContext.js, world.js's exteriorFoes, worldModes.js's interior foes,
+exterior.js). world.js's two existing lanes (the peers', the family's) take
+the gate now. The Features row (`mwNpcBodies`: Off / Near / All, law 6)
+lands with that wiring, when the switch has something to switch.

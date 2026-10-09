@@ -2937,6 +2937,19 @@ export function createFpArm() {
   // BlendMask_All: Priority_Torch on the LEFT ARM (character.cpp's
   // `mAnimation->play("torch", Priority_Torch, BlendMask_LeftArm, ...)`),
   // so the right arm keeps swinging while the left holds the light up.
+  // MWNPC4 (bible/04-Characters/Morrowind-NPCs.md section 9): THE REACTIONS - the hit recoil and the death
+  // (character.cpp refreshHitRecoilAnims, playRandomDeath/playDeath). Both play on BlendMask_All
+  // (`playBlendedAnimation(mCurrentHit, priority, MWRender::BlendMask_All, ...)`, and playDeath's own), so they join the
+  // winner ladder EXACTLY - the "third animation" the two-slot note above foresaw needs no per-bone vector, because
+  // neither has a mask of its own: Priority_Death over everything, Priority_Hit between the weapon and the movement
+  // (character.hpp's enum - Movement < Hit < Weapon < Block < Knockdown < Torch < Storm < Death). An NPC's body takes
+  // them (net/peerBodies.js `_arm`, the pose's `ht` and `dd`); the player's own never does.
+  let hitState = null;
+  let hitSource = null;
+  let deathState = null;
+  let deathSource = null;
+  let posedGroup = null;        // MWNPC4: the frame's winner, by name - on the card
+  let dead = false;              // MWNPC4: died - the reference stops refreshing a dead actor's states (character.cpp:"For dead actors, refreshCurrentAnims is no longer called")
   let torchLit = false;
   let torchState = null;
   let torchSource = null;
@@ -3127,7 +3140,7 @@ export function createFpArm() {
    * These are exactly update()'s own requirements: a camera is a DRAW
    * term, and posing without one is harmless work, not a wrong picture.
    */
-  const ready = () => !!(built && built.ok && (actionState || movementState || jumpState || idleState) && renderer);
+  const ready = () => !!(built && built.ok && (actionState || movementState || jumpState || idleState || hitState || deathState) && renderer);
 
   function releaseGpu(m) {
     releaseCastFx((c) => c.mesh === m);   // MW-SPELLFX1: the glow on this mesh lets go of its own textures first
@@ -3423,6 +3436,20 @@ export function createFpArm() {
     return memo.get(composed.group);
   }
 
+  /** MWNPC4: chooseRandomGroup (character.cpp): the groups `<prefix>1`, `<prefix>2`, ... counted while the body's
+   *  sources carry each, one of them picked - by `roll`, where the reference rolls its world PRNG (a roll the caller
+   *  keeps, so the same blow plays the same recoil on every machine, and no random stream of the port's is drawn).
+   *  Null when the body carries none - the reference's roll then names a group that is not there,
+   *  and plays nothing. */
+  function chooseRandomGroup(prefix, roll) {
+    const r = rig();
+    if (!r || !r.sources) return null;
+    let n = 0;
+    while (anySourceHasGroup(r.sources, `${prefix}${n + 1}`)) n++;
+    if (!n) return null;
+    return `${prefix}${1 + ((((roll | 0) % n) + n) % n)}`;
+  }
+
   /** The source currently posing the arm - the one that won the clip
    *  being drawn, because its tracks are the ones the pose reads. */
   let poseSource = null;
@@ -3463,7 +3490,7 @@ export function createFpArm() {
    * anything else being torn down.
    */
   function refreshIdle(force = false) {
-    if (!built || !built.ok) return;
+    if (!built || !built.ok || dead) return;   // MWNPC4: a dead actor's states are no longer refreshed
     const type = animWeaponType(built.mwType, sheathed, spellReady);
     // MW-D52: the idle STATE picks the base - "idlesneak" while sneaking
     // on the ground where a source carries it, else the plain idle with
@@ -3683,7 +3710,7 @@ export function createFpArm() {
    * (character.cpp:2296 - it runs only inside `if (!mInJump)`).
    */
   function refreshJump(mv) {
-    if (!built || !built.ok) return false;
+    if (!built || !built.ok || dead) return false;   // MWNPC4: nor its jump
     const derived = jumpAnimState({
       grounded: mv ? mv.grounded !== false : true,
       swimming: !!(mv && mv.swimming),
@@ -3730,7 +3757,7 @@ export function createFpArm() {
   }
 
   function refreshMovement(cam, dt, inJump = false) {
-    if (!built || !built.ok) return;
+    if (!built || !built.ok || dead) return;   // MWNPC4: nor its movement
     const yaw = cam ? (cam.yaw || 0) : 0;
     let yawRate = 0;
     if (lastYaw != null && dt > 0) {
@@ -4537,7 +4564,7 @@ export function createFpArm() {
      * held at max attack".
      */
     attack(strike, { hold = false, blow = null } = {}) {
-      if (!built || !built.ok || sheathed) return null;
+      if (!built || !built.ok || sheathed || dead) return null;   // MWNPC4: the dead swing nothing
       // MW-PACE1: A BLOW IN THE FOLLOW-THROUGH IS CUT FOR THE NEXT. The machine starts a strike only from Idle, so
       // a strike arriving here is a blow it has already finished; refusing it (the reference's gate, which knows no
       // second clock) drew one blow in two at a high Speed, the second landing on an arm at rest. The wind-up and the
@@ -4849,6 +4876,48 @@ export function createFpArm() {
       return true;
     },
 
+    /** MWNPC4: A HIT RECOIL (character.cpp refreshHitRecoilAnims, the `recovery` arm): "hit" + one of the body's hitN
+     *  (chooseRandomGroup, by `roll`), played start to stop, once, at Priority_Hit - under a weapon action, over the
+     *  movement and the idle. A body that carries none plays none (mCurrentHit cleared); the dead recoil from nothing;
+     *  and a recoil still playing takes no other (refreshHitRecoilAnims returns while `isPlaying(mCurrentHit)`). */
+    hurt(roll = 0) {
+      if (!built || !built.ok || dead || hitState) return false;
+      const g = chooseRandomGroup('hit', roll);
+      const pick = g ? pickAnimSource(rig().sources, g, resetClip, {}) : null;
+      if (!pick) return false;
+      hitState = pick.state; hitSource = pick.source;
+      return true;
+    },
+
+    /** MWNPC4: THE DEATH (playRandomDeath, playDeath): one of the body's deathN by `roll`, played once at
+     *  Priority_Death and held at its last frame; every other state reset (movement, weapon, hit, idle, jump) and no
+     *  longer refreshed. `startPoint` 1 stands a body already dead in its last frame - the reference's own startpoint,
+     *  which a loaded game hands a corpse. A body that carries no death stops where it stood. */
+    die(roll = 0, { startPoint = 0 } = {}) {
+      if (!built || !built.ok) return false;
+      const g = chooseRandomGroup('death', roll);
+      const pick = g ? pickAnimSource(rig().sources, g, resetClip, { startPoint, loopCount: 0 }) : null;   // playDeath's loops: 0
+      dead = true;
+      actionState = null; actionSource = null; holdWindUp = false; attackType = null; blowPlan = null;
+      upper = sheathed ? UPPER_BODY.None : UPPER_BODY.WeaponEquipped;
+      movementState = null; movementSource = null; movementGroup = null;
+      jumpState = null; jumpSource = null; jumpKind = null;
+      hitState = null; hitSource = null;
+      idleState = null; idleSource = null; idleGroup = null;
+      deathState = pick ? pick.state : null; deathSource = pick ? pick.source : null;
+      return !!pick;
+    },
+
+    /** MWNPC4: back from the dead - a body handed to a living actor (a spare, a pooled walker re-rolled in place). */
+    revive() {
+      if (!dead && !deathState) return;
+      dead = false; deathState = null; deathSource = null; hitState = null; hitSource = null;
+      refreshIdle(true);
+    },
+
+    /** MWNPC4: has this body died? */
+    isDead: () => dead,
+
     /** MW-D39: THE SPELL GOES. The key pair is THE SPELL'S RANGE, not a
      *  single "cast": character.cpp:1618-1636 sets mAttackType from the
      *  first effect's range - self / touch / target - and plays
@@ -4865,6 +4934,7 @@ export function createFpArm() {
      *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
      *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
     castSpell(rangeType = 2, rate = 1) {
+      if (dead) return false;   // MWNPC4: the dead cast nothing
       // WEREWOLF1 (AUDIT E6): nor casts one - the turn back is cast in beast form, and on the wolf it latched a spell
       // stance the next frame's readySpell(false) tore down again
       if (!built || !built.ok || built.werewolf) return false;
@@ -5004,6 +5074,10 @@ export function createFpArm() {
         advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
         stepUpper();
       }
+      // MWNPC4: the recoil plays once and lets go (refreshHitRecoilAnims - the first of refreshCurrentAnims' refreshes:
+      // `!isPlaying(mCurrentHit)` clears the hit state); the death plays once and HOLDS its last frame - playDeath's autodisable is false
+      if (hitState) { advanceClip(hitState, (hitSource || rig()).keys, dt, null); if (!hitState.playing) { hitState = null; hitSource = null; } }
+      if (deathState) advanceClip(deathState, (deathSource || rig()).keys, dt, null);
       // MW-D39: jump refreshes BEFORE movement, the reference's own
       // order (refreshCurrentAnims, character.cpp:841-844: hit recoil,
       // jump, movement, idle last), and its inJump is what gates the
@@ -5022,7 +5096,7 @@ export function createFpArm() {
       refreshTorch();
       if (torchState) advanceClip(torchState, (torchSource || rig()).keys, dt, null);
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
-      if (!actionState && !movementState && !jumpState && !idleState) return;
+      if (!actionState && !movementState && !jumpState && !idleState && !hitState && !deathState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
       // priority takes every bone for as long as it is playing.
@@ -5032,12 +5106,13 @@ export function createFpArm() {
       // BlendMask_All everywhere. The jump wins the air because the
       // movement slot empties there, not by outranking it. The
       // per-bone-group vector is the recorded gap.
-      const state = actionState || movementState || jumpState || idleState;
+      const state = deathState || actionState || hitState || movementState || jumpState || idleState;   // MWNPC4: death over all, the recoil under the weapon
+      posedGroup = state.group;
       // MW-D14: and the TRACKS come from the same file as the clip. A
       // female actor can win her idle from xbase_anim_female.1st.kf and
       // her swing from the base xbase_anim.1st.kf, and posing one with
       // the other's tracks is a bind pose with no error.
-      poseSource = actionState ? actionSource : (movementState ? movementSource : (jumpState ? jumpSource : idleSource));
+      poseSource = deathState ? deathSource : actionState ? actionSource : hitState ? hitSource : (movementState ? movementSource : (jumpState ? jumpSource : idleSource));
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
@@ -5053,7 +5128,7 @@ export function createFpArm() {
         if (!t || !t.ok) return;
         // MW-D51: the torch overlay on the body's own LeftArm mask.
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
-        const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
+        const tOverlay = torchState && torchSource && !deathState && t.leftArm && t.leftArm.size;   // MWNPC4: the death takes the left arm too (Priority_Death over Priority_Torch)
         if (tOverlay) overlayClock = torchState.time;
         // HT-WAIST: the lantern at the waist swings on the frame's motion before the body is posed around it.
         if (hipVisible()) stepHipSwing(cam, dt);
@@ -5094,7 +5169,7 @@ export function createFpArm() {
       // clock. The arm's LeftArm set is rule 25's walk on THIS
       // skeleton; a rig without "Bip01 L Clavicle" overlays nothing.
       const fBase = poseSource ? poseSource.trackMap : built.tracks;
-      const fOverlay = torchState && torchSource && built.leftArm && built.leftArm.size;
+      const fOverlay = torchState && torchSource && !deathState && built.leftArm && built.leftArm.size;   // MWNPC4: and here
       if (fOverlay) overlayClock = torchState.time;
       let fTracks = fOverlay ? overlayFor(fBase, built.leftArm) : fBase;
       let fSampler = fOverlay ? overlaySample : sampleTrack;
@@ -5732,6 +5807,11 @@ export function createFpArm() {
         // clips and a machine between them. A frozen arm now has a name.
         idleGroup,
         weaponGroup,
+        // MWNPC4: the reactions - the recoil playing, the death (held at its stop), and the frame's winner
+        hit: hitState ? { group: hitState.group, time: hitState.time } : null,
+        death: deathState ? { group: deathState.group, time: deathState.time, stop: deathState.stopTime } : null,
+        dead,
+        posedGroup,
         upper,
         upperName: UPPER_BODY_NAME[upper],
         aimFactor,
