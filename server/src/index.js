@@ -209,8 +209,10 @@ import { IDX_TRUST_MS, ATTACH_LAZY_MS, PARTIES_MAX, HUB_KEEP_MAX, ACCT_SEEN_WRIT
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
 import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, GATE_COLLAPSE_MS, isGateDay } from '../../src/net/gateLaw.js';
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
-import { isSiegeRoom, newFighter, armsOk, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
+import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
+import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duelRef.js';   // INT8: the duel refereed
+import { mintDuelReceipt } from '../../src/net/duelReceipt.js';   // INT8: a duel won, signed
 import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gateReceipt.js';
 // SERPENT1 (2026-10-04, Mac: "a new world event that requires players with a ship to meet up and take on a large scale
@@ -1981,17 +1983,30 @@ export class Room {
       // service by that stamp, so whose win it was is never a client's own word. The relay reads none of the rest
       // (wire.js validDuelData checked the shape and bounds; the DEFENDER resolves every blow against its own sheet).
       // A frame at my own id is junk; a peer that is gone is not (a leave races a frame, and the duel times out on it).
+      // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): AND THE RELAY REFEREES IT (net/duelRef.js). The handshake still
+      // rides between the two, noted as it passes; a `start` is routed only where a bout is set on it (both fighters
+      // whole at the referee's vitality, the `dref` word to each); every strike and spell is the referee's, routed to
+      // nobody; a fighter's own end of its bout is its loss once the count has run - and a bout won names its winner in
+      // the relay's signed receipt (net/duelReceipt.js `d1`), which the account service counts.
       const now = Date.now();
       a = this._meterDuel(ws, a, now); if (!a) return;
       if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
       const to = m.data.to;
       if (to === a.id) { this._junk(ws); return; }
+      await this._duelBeat(now);   // INT8: a bout its fighter left or outran, ended before this frame is read
+      const k = m.data.k;
+      if (k === 'strike' || k === 'spell') { await this._duelBlow(a, m.data, now); return; }   // INT8: the referee's, routed to nobody
+      if ((k === 'end' || k === 'cancel') && await this._duelForfeit(a, m.data, now)) return;   // INT8: a fighter's own end of its bout
       const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
       if (!target) return;
-      const [tws] = target;
+      const [tws, tb] = target;
       // the funnel onto the destination, per sender - the cast's shape on slots of its own at the duel's rate
       if (!this._senderFunnel(tws, a.id, now, 'duin', DUEL_HZ_MAX)) return;
+      if (k === 'ask' || k === 'yes') duelNote(this._duels(), k, a.sub, tb.sub, m.data.s, now);   // INT8: noted as it passes
+      const bout = k === 'start' ? this._duelOpen(ws, a, tb, m.data, now) : null;
+      if (k === 'start' && !bout) return;   // INT8: a start the referee sets no bout on goes nowhere (its challenger heard `no`)
       this._send(tws, JSON.stringify({ t: 'duel', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));
+      if (bout) this._duelSay(bout, (x) => ({ t: 'dref', k: 'bout', s: bout.s, op: x === bout.a ? bout.b.id : bout.a.id, ms: ROYAL_RING.countdownMs, h: duelVitals(bout) }));
       return;
     }
     if (m.t === 'wed') {
@@ -2505,6 +2520,9 @@ export class Room {
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       if (posed) this._metrics.c.poses++;   // SCALE2b: a pose taken - the one a room fans
+      // INT8: a duel's fighter's place is the referee's (a run it allows; the ring's edge), and every pose a room with a
+      // bout takes beats the bouts - a fighter gone or out ends its bout on the next frame anyone sends
+      if (posed && this._duelRef?.bouts.size) { duelPose(this._duelRef, a.sub, m.p, now); await this._duelBeat(now); }
       // AUDIT-SEATS T2 (Seats-Arc 6.6: "no body drawn to fighters, no collider, excluded from every banner count, a free
       // camera over the town"): A SPECTATOR IS NO BODY - in a battle room a socket that is no fighter (a spectator's pass,
       // or a fighter's before its `in`) keeps its camera on its own attachment and is drawn to nobody: the fan below said
@@ -4100,6 +4118,69 @@ export class Room {
       await this._siegeArm(c.sn === 'royal' ? royalNextBeat(this._siege.battle, now) : now + SIEGE_TICK_MS);   // CROWN1 part two: a tourney with no bout on wakes at its week's end
     }
     return { side: c.sd };
+  }
+  // ───────────────────────────── INT8: THE DUEL REFEREED (net/duelRef.js) ─────────────────────────────
+  /** The room's duels - in its memory alone (duelRef.js: a room that restarts mid-bout ends it as a cancel). */
+  _duels() { return (this._duelRef ??= newDuelRef()); }
+  /** A word to a bout's two fighters, each at its newest socket here - `word(side)` the frame for that side. */
+  _duelSay(bout, word) {
+    for (const x of [bout.a, bout.b]) {
+      const sk = this._siegeSocketOf(x.sub);
+      if (sk) this._send(sk[0], JSON.stringify(typeof word === 'function' ? word(x) : word));
+    }
+  }
+  /** A START: the bout set on it (duelRef.js duelOpen), or its challenger told `no` and null. */
+  _duelOpen(ws, a, tb, d, now) {
+    const bytes = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(bytes);
+    const n = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const r = duelOpen(this._duels(), { a: { sub: a.sub, id: a.id, pose: a.pose, lv: a.lv }, b: { sub: tb.sub, id: tb.id, pose: tb.pose, lv: tb.lv }, s: d.s, c: d.c, n }, now);
+    if (r.no) { this._send(ws, JSON.stringify({ t: 'dref', k: 'no', s: d.s, why: r.no })); return null; }
+    return r.bout;
+  }
+  /** A STRIKE OR A SPELL of a fighter's: judged (duelRef.js duelBlow - the weapon its look holds, the arms its token
+   *  signs), the vitality left said to both, a fall the bout's end. Outside a bout, nothing. */
+  async _duelBlow(a, d, now) {
+    const st = this._duelRef;
+    const bout = st ? duelBoutOf(st, a.sub) : null;
+    if (!bout) return;
+    let look = null;
+    if (d.k === 'strike') {
+      look = this._looks.get(a.id) ?? null;
+      if (!look) { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
+    }
+    const r = d.k === 'spell' ? SIEGE_HIT.Spell : d.by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee;
+    const held = d.k === 'strike' ? siegeHeld(look, d.w ? d.w.t : -1, d.w ? d.w.m : 0) : null;
+    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null }, now);
+    if (!res.ok || !res.dealt) return;
+    this._duelSay(bout, { t: 'dref', k: 'hp', s: bout.s, by: a.id, to: d.to, d: res.dealt, r, h: duelVitals(bout) });
+    if (res.fell) await this._duelClose(duelEnd(st, bout, a.sub, 'fell'), now);
+  }
+  /** A fighter's own `end` or `cancel` naming its bout: the referee's (duelRef.js duelForfeit). False for any other - a
+   *  handshake's cancel, routed as it always was. */
+  async _duelForfeit(a, d, now) {
+    const bout = this._duelRef ? duelBoutOf(this._duelRef, a.sub) : null;
+    if (!bout || bout.s !== d.s) return false;
+    const end = duelForfeit(this._duelRef, a.sub, d.why, now);
+    if (end) await this._duelClose(end, now, bout);
+    return true;
+  }
+  /** The room's bouts beaten (duelRef.js duelStep): the clock's draw, a walkover, a ring left. */
+  async _duelBeat(now) {
+    if (!this._duelRef?.bouts.size) return;
+    const bouts = new Map(this._duelRef.bouts);
+    for (const end of duelStep(this._duelRef, (sub) => !!this._siegeSocketOf(sub), now)) await this._duelClose(end, now, bouts.get(end.s));
+  }
+  /** A BOUT ENDED: said to both its fighters - its winner's id ('' for none), why, and for a bout won the relay's signed
+   *  receipt (net/duelReceipt.js `d1`; a room that cannot sign hands an unsigned one, which the service declines). */
+  async _duelClose(end, now, bout = null) {
+    let rc = null;
+    if (end.w != null) {
+      try { rc = await mintDuelReceipt({ f: end.f, w: end.w, n: end.n }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[duel] receipt failed', e?.message ?? e); }
+    }
+    const word = { t: 'dref', k: 'end', s: end.s, w: end.w == null ? '' : end.ids[end.w], why: end.why, ...(rc ? { rc } : {}) };
+    const sides = bout ?? { a: { sub: end.f[0] }, b: { sub: end.f[1] } };
+    this._duelSay(sides, word);
   }
   /** A siege frame: `in` makes the account a fighter at its token's Renown and answers every fighter's vitality (SEAT2a:
    *  a sided fighter at its camp; a spectator the field alone; after the end, its receipt); a blow and a cast are judged

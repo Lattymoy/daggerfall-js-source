@@ -161,7 +161,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate,
   accountWardrobe, equipTitle, equipAura, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
-  duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
+  duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
@@ -875,12 +875,19 @@ const service = {
       }
 
       if (path === '/v1/duel/loss' && request.method === 'POST') {
-        // DUEL1: THE LOSER'S OWN REPORT. The caller is the loser - the
-        // session says so, never the body - and `winner` is the account
-        // the relay stamped on the winner's frames. accounts.js
-        // `reportDuelLoss` holds the bounds inside its one INSERT.
-        const r = await reportDuelLoss(ctx, who.player, body.winner);
-        return r.error ? no(r.error, r.error === 'no-player' ? 404 : 400, origin) : json(r, 200, origin);
+        // DUEL1's LOSER'S OWN REPORT - INT8: RETIRED. A duel's result is the relay's signed receipt now (below); a loss a
+        // client reports counts for nothing, and is told so.
+        return no('retired', 410, origin);
+      }
+
+      if (path === '/v1/duel/claim' && request.method === 'POST') {
+        // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): A DUEL'S RESULT, THE RELAY'S - either fighter carries the receipt
+        // the referee handed it (src/net/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
+        // and accounts.js `claimDuel` counts it once (its bout's id) inside its bounds. No public half here yet: 503, and
+        // the client keeps the receipt for its day.
+        const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);   // AUDIT WB A5's law: which rung refused it
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/duel/record' && request.method === 'POST') {

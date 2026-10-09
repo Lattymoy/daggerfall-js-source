@@ -42,8 +42,8 @@ function solo({ can = null } = {}) {
     ringFor: () => [100000, 10, 200000],
     reaches: (id) => st.reaches.has(id),
     myPos: () => [100000, 10, 200000], peerPos: () => [100000 + 4 * NATIVES_PER_M, 10, 200000],
-    onPrompt: () => { st.prompts++; }, onStart: () => {}, onBlow: () => ({ hit: true, dmg: 1 }), onResult: () => {},
-    onEnd: (duel, end) => { st.ends.push(end); }, onHeal: () => {}, vitals: () => [80, 80], rand: () => 0.5,
+    onPrompt: () => { st.prompts++; }, onStart: () => {},
+    onEnd: (duel, end) => { st.ends.push(end); }, onHeal: () => {}, rand: () => 0.5,
   });
   const to = (peer) => sent.filter((d) => d.to === peer);
   /** into a live duel with peer-oppo, past the count */
@@ -87,24 +87,18 @@ test('AUDIT DUEL1 A3 + A5 + B5 + D5 the duel law: a stranger\'s frames at a duel
   assert.equal(r.st.prompts, 1, 'no second prompt over my game');
   assert.equal(r.m.asks().length, 0);
   assert.deepEqual(r.to('peer-zzzz').at(-1), { k: 'no', to: 'peer-zzzz', s: 'zzzz7001' });
-  // B5 - I fell; their fall lands in my heal's hold: a draw, said
-  r = solo();
-  const s2 = r.fight();
-  assert.equal(r.m.fell(), true);
-  assert.equal(r.st.ends.at(-1).lost, true);
-  r.m.onFrame('peer-oppo', { k: 'end', to: 'peer-meee', s: s2, why: 'fell' }, 'acct-oppo');
-  assert.equal(r.m.duel.end.draw, true, 'both fell: a draw');
-  assert.match(r.said.at(-1), /OPPO fell too - the duel is a draw\./);
-  const n = r.said.length;
-  r.m.onFrame('peer-oppo', { k: 'end', to: 'peer-meee', s: s2, why: 'fell' }, 'acct-oppo');
-  assert.equal(r.said.length, n, 'said once');
-  // ...and only for a loser: a winner who hears the loser's end again says nothing new
+  // B5 - PIN MOVED (INT8, bible/06-Systems/Integrity-Arc.md lane 2): a double knockout was two falls, each its own
+  // client's, said a draw when the second landed in the first's hold. The referee takes one blow at a time
+  // (net/duelRef.js) - two cannot both fall - and a peer's own word of a fall names nobody: the duel is off, no winner
   r = solo();
   const s3 = r.fight();
   r.m.onFrame('peer-oppo', { k: 'end', to: 'peer-meee', s: s3, why: 'fell' }, 'acct-oppo');
-  assert.equal(r.st.ends.at(-1).won, true);
-  r.m.onFrame('peer-oppo', { k: 'end', to: 'peer-meee', s: s3, why: 'fell' }, 'acct-oppo');
-  assert.equal(r.m.duel.end.draw, undefined);
+  assert.deepEqual(r.st.ends.at(-1), { why: 'cancelled', won: false, lost: false, by: 'them' }, 'a peer\'s word of its own fall wins me nothing');
+  // the referee's word names the winner (duel_session pins its ends)
+  r = solo();
+  const s4 = r.fight();
+  r.m.onRef({ k: 'end', s: s4, w: 'peer-meee', why: 'fell' });
+  assert.deepEqual(r.st.ends.at(-1), { why: 'fell', won: true, lost: false, by: 'them' });
   // D5 - a peer I can no longer reach takes their ask with them, at the next tick
   r = solo();
   r.m.onFrame('peer-zzzz', { k: 'ask', to: 'peer-meee', s: 'zzzz8000' }, 'acct-zzzz');
@@ -145,7 +139,8 @@ test('AUDIT DUEL1 A4 + B1 + B3 a duel\'s drain leaves the LIVE stat at 1 over an
   assert.deepEqual(seen, [true, false], 'the duel\'s instant fatigue damage reaches the sink marked; an ordinary one does not');
   assert.match(rd('src/systems/effects.js'), /if \(n > 0 && sinks\.drainFatigue\) sinks\.drainFatigue\(n \* FATIGUE_MULTIPLIER, a\);/, 'each round hands its entry, as its health rounds do');
   assert.match(rd('src/scenes/shared.js'), /drainFatigue: \(n, a = null\) => \{\n\s+if \(a\?\.bundleDuel\) n = Math\.min\(n, Math\.max\(0, \(entity\.fatigue \?\? 0\) - 1\)\);/, 'the shared ticker leaves 1');
-  assert.match(rd('src/scenes/world.js'), /drainFatigue: \(n, a = null\) => drainExteriorFatigue\(_duelScope \|\| a\?\.bundleDuel \? Math\.min\(n, Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - 1\)\) : n\),/, 'and so does the world host\'s own spell sink');
+  // PIN MOVED (INT8): the world host's sink floored under `_duelScope` too - a duel's spell lands on no save now
+  assert.match(rd('src/scenes/world.js'), /drainFatigue: \(n, a = null\) => drainExteriorFatigue\(a\?\.bundleDuel \? Math\.min\(n, Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - 1\)\) : n\),/, 'and so does the world host\'s own spell sink');
 });
 
 test('AUDIT DUEL1 A2 + B6 + D4 the blow: a result wears my weapon by at most what the weapon could honestly deal; a swing reached me if it reached where I stood in the last DUEL_TRAIL_MS; a swing\'s claim may stand DUEL_MELEE_POS_SLACK_M from where it is seen, a spell\'s the wider slack; the motor clamps with the one tested clamp (mutants: the wear uncapped; the cap below an honest blow; the trail unread; the melee slack the spell\'s; the motor\'s own copy)', () => {
@@ -185,20 +180,16 @@ test('AUDIT DUEL1 B2 + B4 + C1 + D2 + D5 the hosts by source: a swing bashes no 
   assert.match(sv, /entity\.activeEffects = \(snap\.activeEffects \?\? \[\]\)\.filter\(\(a\) => !a\.heldItem && !a\.bundleDuel\)/, 'B4: not restored from an older save');
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(online && isCellRoom\(online\.room\) && \(duelMgr\.live\?\.s \?\? null\) !== _duelRingSaid\) _foesFullAt = -Infinity;/, 'C1');
-  // D2: THE FULL HEAL, Mac's "both are fully healed on duel end"
-  const heal = /const duelHeal = \(\) => \{([\s\S]*?)\n {2}\};/.exec(w)?.[1] ?? '';
-  assert.match(heal, /playerEntity\.activeEffects = playerEntity\.activeEffects\.filter\(\(a\) => !a\?\.bundleDuel\);/, 'the opponent\'s spells go');
-  assert.match(heal, /playerEntity\.health = playerEntity\.maxHealth;/);
-  assert.match(heal, /playerEntity\.fatigue = maxFatigue\(playerEntity\);/);
-  assert.match(heal, /playerEntity\.magicka = playerEntity\.maxMagicka \?\? playerEntity\.magicka;/);
-  assert.match(heal, /townTalk\.say\('You are fully healed\.'\);/);
-  assert.match(heal, /if \(playerEntity\.health > 0 && !modes\?\.deathUp\?\.\(\)\)/, 'the dead are not raised by a duel');
-  assert.match(w, /onHeal: \(\) => duelHeal\(\),/, 'the law\'s heal is this heal');
+  // D2: PIN MOVED (INT8): THE FULL HEAL - Mac's "both are fully healed on duel end" - stood because a duel's blows
+  // landed on the save's health; the referee's vitality is a duel's now (net/duelRef.js), the save's health is never
+  // touched, and a heal at the end would be a free one for a duel yielded at once. No heal.
+  assert.equal(/const duelHeal = /.test(w), false, 'no heal: a duel never touched the save');
+  assert.equal(/onHeal: \(\) => duelHeal\(\)/.test(w), false);
   // D5: the page's end
   const bu = w.indexOf('  const exitAutosave = () => {');   // FIELD BUGS 29h (BOOT-HIDE): named, registered with the checkpoint's doors
   const leave = w.indexOf('try { duelLeaveNow(); }', bu);
   const save = w.indexOf('for (const saveName of exitAutosaveNames(', bu);
-  assert.ok(bu > 0 && leave > bu && save > leave, 'the duel ends and heals BEFORE the exit autosave');
+  assert.ok(bu > 0 && leave > bu && save > leave, 'the duel ends BEFORE the exit autosave');
   assert.ok(w.includes("\n  addEventListener('beforeunload', exitAutosave);\n"), 'and it is the page\'s end');
-  assert.match(w, /const duelLeaveNow = \(\) => \{\n\s+const had = !!duelMgr\.duel;\n\s+duelMgr\.reset\(\);\n\s+if \(had\) duelHeal\(\);\n\s+\};/);
+  assert.match(w, /const duelLeaveNow = \(\) => \{ duelMgr\.reset\(\); \};/, 'INT8: the duel ends, nothing healed');
 });

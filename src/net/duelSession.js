@@ -19,20 +19,21 @@
 // foes frame (`ringRecord`), so onlookers see it too. Nothing in the relay enforces the ring: each side enforces it for
 // itself, and a side whose opponent stands far outside it calls the duel off (a teleport, a crafted client).
 //
-// THE BLOWS. After a DUEL_COUNTDOWN_MS count, my blows at my opponent leave as `strike` and `spell` frames (numbered, so
-// each lands once) and THE DEFENDER RESOLVES THEM - the game's one formula against their own armour, on their own
-// machine - and answers with a `result`. Only the live opponent's blows are taken, only while the duel is live, at most
-// DUEL_BLOWS_PER_S a second; everything else is dropped unread.
+// THE BLOWS. After a DUEL_COUNTDOWN_MS count, my blows at my opponent leave as `strike` and `spell` frames (numbered),
+// each carrying the damage MY game rolled - and INT8 (bible/06-Systems/Integrity-Arc.md lane 2): THE RELAY REFEREES THEM
+// (net/duelRef.js). It holds both fighters' vitality (the Royal Tourney's: 300 + 2 x Renown), clips each blow to the
+// weapon my look holds and the arms my token signs, and says the vitality left to both of us (`dref` `hp`); a blow is
+// routed to nobody, and neither save's health is touched. DUEL1 had the DEFENDER resolve every blow on its own machine,
+// and a defender that never took one never fell.
 //
-// THE END. The side whose health a duel blow takes to the floor stops at 1 (characters/playerEntity.js `spare`) and says
-// `end fell`; a side that gives up says `end yield`. Either names its SENDER the loser, and the loser's own signed-in
-// client reports the loss to the account service naming the winner's account as the relay stamped it (net/duelRecord.js)
-// - so nobody credits themselves a win. Anything else that ends a duel (a player leaving, dying to something else,
-// the clock, a cancel) records nothing. Whatever ended a duel that STARTED, both sides are healed in full after
-// DUEL_HEAL_HOLD_MS (the loser is seen to stand at 1 health first), and the opponent's spells on each are stripped.
+// THE END IS THE REFEREE'S (`dref` `end`): a fall (its vitality at none), a yield, a fighter out of the ring, gone from
+// the room, or ending the duel itself (gone indoors, fallen to something else) - each the SENDER's loss once the count has
+// run; the clock's end a draw. A bout won names its winner in the relay's signed receipt, handed to both fighters
+// (`onReceipt` - net/duelReceipt.js `d1`); either carries it to the account service, which counts it once. Nobody's own
+// word on a duel is counted. After DUEL_HEAL_HOLD_MS the ended duel is let go (DUEL1's heal retired with the blow on
+// the save: a duel never touches its health now).
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
-import { tokenGate } from './wire.js';
 
 /** The ring's radius, metres. Both duellists stand within DUEL_RANGE_M of each other at the start, so each is within
  *  half that of the centre - well inside. */
@@ -55,9 +56,6 @@ export const DUEL_OUT_SLACK_M = 4;
 export const DUEL_OUT_MS = 2000;
 /** The loser stands at 1 health this long before both sides are healed, ms. */
 export const DUEL_HEAL_HOLD_MS = 2000;
-/** The most blows (strikes and spells together) a defender takes from its opponent a second - an honest duellist lands
- *  a swing or two, a shaft and a spell. */
-export const DUEL_BLOWS_PER_S = 5;
 /** How long a frame of the handshake or the end may wait for the socket before it is dropped, ms. */
 export const DUEL_OUTBOX_TTL_MS = 6000;
 /** After I decline a player's challenge, or it lapses on me, their next one is answered no, unsaid and unprompted, for
@@ -102,6 +100,26 @@ export function clampToRing(pos, centre, radius = DUEL_RADIUS_M, bodyR = 0) {
  *  their native distance over 40 - the one conversion this law needs, kept here beside the ring. */
 export const NATIVES_PER_M = 40;
 export const worldGroundMetres = (a, b) => groundDistance(a, b) / NATIVES_PER_M;
+
+/** INT8: how far past the referee's own windows a duel with no word of its lets go here, ms. */
+export const DUEL_REF_LATE_MS = 10_000;
+/** INT8: the referee's words this law says. */
+export const DUEL_REF_TEXT = Object.freeze({
+  refused: 'The duel could not be refereed - it is off.',
+  old: 'The server cannot referee a duel yet.',
+});
+/** INT8: a duel I lost, and why - the referee's word (a fall, a yield, my leaving it). */
+export function duelLostText(why, name = 'They') {
+  if (why === 'yield') return `You yield - ${name} wins the duel.`;
+  if (why === 'fell') return `You have fallen - ${name} wins the duel.`;
+  return `You left the duel - ${name} wins it.`;
+}
+/** INT8: a duel I won, and why. */
+export function duelWonText(why, name = 'They') {
+  if (why === 'fell') return `${name} has fallen - you won the duel!`;
+  if (why === 'yield') return `${name} yields - you won the duel!`;
+  return `${name} left the duel - you won!`;
+}
 
 /** The words for why a duel (or an ask for one) ended, from the wire's DUEL_WHY codes. */
 export function duelWhyText(why, name = 'They') {
@@ -149,12 +167,10 @@ export function validRingRecord(r) {
  *   peerPos(peer)     -> the peer's feet in the world frame, or null
  *   onPrompt(peer)    -> an ask came in: put up the prompt (and onChange for the rows)
  *   onStart(duel)     -> the duel is live: the ring, the wall, the count
- *   onBlow(d, duel)   -> the opponent's blow, already checked: resolve it on MY sheet and answer { hit, dmg } - and
- *                        call `fell()` when it took me to the floor
- *   onResult(d, duel) -> the answer to one of my blows
+ *   onHp(g, duel)     -> INT8: the referee's word that a blow landed (`dref` `hp`: who on whom, dealt, both left)
  *   onEnd(duel, end)  -> the duel is over: `end` = { why, won, lost, by }; the ring comes down
- *   onHeal(duel)      -> DUEL_HEAL_HOLD_MS later: heal me in full and strip the opponent's spells
- *   vitals()          -> [health, maxHealth] for a result
+ *   onReceipt(rc)     -> INT8: the referee's signed receipt for a bout won - carried to the account service
+ *   onHeal(duel)      -> DUEL_HEAL_HOLD_MS later: the ended duel let go
  */
 /**
  * @param {object} o
@@ -171,17 +187,16 @@ export function validRingRecord(r) {
  * @param {(peer: string) => ArrayLike<number>|null} [o.peerPos]
  * @param {(peer: string) => void} [o.onPrompt]
  * @param {(duel: any) => void} [o.onStart]
- * @param {(d: any, duel: any) => ({ hit: boolean, dmg: number } | null)} [o.onBlow]
- * @param {(d: any, duel: any) => void} [o.onResult]
+ * @param {(g: any, duel: any) => void} [o.onHp]
  * @param {(duel: any, end: { why: string, won: boolean, lost: boolean, by: string }) => void} [o.onEnd]
+ * @param {(rc: string) => void} [o.onReceipt]
  * @param {(duel: any) => void} [o.onHeal]
- * @param {() => number[]} [o.vitals]
  * @param {() => number} [o.rand]
  */
 export function createDuelManager({
   send, now = () => Date.now(), say = () => {}, peerName = () => null, selfId = () => '', near = () => true, can = () => null,
   ringFor = () => null, reaches = () => true, myPos = () => null, peerPos = () => null, onPrompt = () => {}, onStart = () => {},
-  onBlow = () => null, onResult = () => {}, onEnd = () => {}, onHeal = () => {}, vitals = () => [1, 1], rand = Math.random,
+  onHp = () => {}, onEnd = () => {}, onReceipt = () => {}, onHeal = () => {}, rand = Math.random,
 }) {
   /** @type {{ peer: string, s: string, at: number } | null} */
   let outgoing = null;                 // my ask
@@ -227,7 +242,7 @@ export function createDuelManager({
     incoming.clear();
     if (outgoing && outgoing.peer !== peer) once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' });
     outgoing = null; waiting = null; starting = null;
-    duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, seen: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, blows: null, fightSaid: false };
+    duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, fightSaid: false, h: null };   // INT8: `h` the referee's vitality, both fighters'
     say(`The duel with ${nameOf(peer)} begins - fight in ${DUEL_COUNTDOWN_MS / 1000} seconds!`);
     onStart(duel);
     mgr.onChange?.();
@@ -254,8 +269,8 @@ export function createDuelManager({
     if (!d) return;
     d.phase = 'over'; d.overAt = now();
     d.end = { why, won, lost, by };
-    const line = text ?? (lost ? (why === 'yield' ? `You yield - ${nameOf(d.peer)} wins the duel.` : `You have fallen - ${nameOf(d.peer)} wins the duel.`)
-      : won ? duelWhyText(why, nameOf(d.peer))
+    const line = text ?? (lost ? duelLostText(why, nameOf(d.peer))
+      : won ? duelWonText(why, nameOf(d.peer))
         : by === 'me' ? duelWhyText(why, 'You') : duelWhyText(why, nameOf(d.peer)));
     say(line);
     onEnd(d, d.end);
@@ -329,14 +344,6 @@ export function createDuelManager({
       finish('yield', { lost: true });
       return { ok: true };
     },
-    /** The host's word that a duel blow took my health to the floor (1): I lost. */
-    fell() {
-      const d = liveDuel();
-      if (!d) return false;
-      post({ k: 'end', to: d.peer, s: d.s, why: 'fell' });
-      finish('fell', { lost: true });
-      return true;
-    },
     /** One of MY blows reached my opponent: out as a numbered strike or spell (`kind`), `body` what it carries. The
      *  blow's number when it left (its result names it), 0 when it did not - a blow during the count, outside a live
      *  duel, or refused by the socket is nothing. */
@@ -408,46 +415,43 @@ export function createDuelManager({
           return;
         }
         case 'end': {
+          // INT8: a bout's end is the referee's (`dref` - onRef); a peer's `end` reaches me only where the relay held no
+          // bout for it (a start it never set), and calls the duel off, naming nobody
           const dl = liveDuel();
-          // AUDIT DUEL1 B5: THE DOUBLE KNOCKOUT. My own fall ended my duel as lost; their fall, in the same exchange,
-          // lands in the heal's hold. Both fell: a draw - said here, and the account service counts neither loss
-          // (server-account/src/accounts.js DUEL_MUTUAL_S)
-          if (!dl && duel && duel.phase === 'over' && duel.peer === from && duel.s === d.s && duel.end?.lost && !duel.end.draw
-            && (d.why === 'fell' || d.why === 'yield')) {
-            duel.end.draw = true;
-            say(`${nameOf(from)} fell too - the duel is a draw.`);
-            mgr.onChange?.();
-            return;
-          }
           if (!dl || dl.peer !== from || dl.s !== d.s) return;
           if (sub && !dl.sub) dl.sub = sub;
-          const theyLost = d.why === 'fell' || d.why === 'yield';
-          finish(d.why, { won: theyLost, by: 'them' });
+          finish(d.why === 'yield' || d.why === 'fell' ? 'cancelled' : d.why, { by: 'them' });
           return;
         }
-        case 'strike': case 'spell': {
-          const dl = liveDuel();
-          // only my live opponent's, this duel's, past the count, each number once, inside the budget - the rest unread
-          if (!dl || dl.peer !== from || dl.s !== d.s || counting(dl) || !(d.n > dl.seen)) return;
-          const g = tokenGate(dl.blows, now(), DUEL_BLOWS_PER_S);
-          dl.blows = g.bucket;
-          if (!g.pass) return;
-          dl.seen = d.n;
-          if (sub && !dl.sub) dl.sub = sub;
-          let r = null;
-          try { r = onBlow(d, dl); } catch { r = null; }
-          if (!r) return;   // the host could not place the blow (out of reach): no answer is owed for nothing
-          const [hp, hm] = vitals();
-          once({ k: 'result', to: from, s: dl.s, n: d.n, hit: r.hit ? 1 : 0, dmg: Math.max(0, Math.trunc(r.dmg || 0)), h: [Math.max(0, Math.trunc(hp)), Math.max(1, Math.trunc(hm))] });
-          return;
-        }
-        case 'result': {
-          const dl = duel;   // a result may land in the heal's hold: the blow was struck in the duel
-          if (!dl || dl.peer !== from || dl.s !== d.s || !(d.n <= dl.n)) return;
-          try { onResult(d, dl); } catch { /* the HUD is not the duel's problem */ }
-          return;
-        }
-        default:
+        default:   // INT8: a strike, a spell or a result is the referee's - the relay routes none, and none is read here
+      }
+    },
+    /**
+     * INT8: THE REFEREE'S WORD on my duel (net/wire.js validDuelRefOut): `no` - the start set no bout, the duel is off;
+     * `bout` - set, both whole; `hp` - a blow landed (the host's onHp: the bars, the sound, the wear); `end` - the bout is
+     * over, its winner and why (my record is the receipt's, handed to onReceipt, never my own word).
+     */
+    onRef(g) {
+      if (!g || typeof g.k !== 'string') return;
+      if (g.k === 'no') {
+        if (starting?.s === g.s) { starting = null; mgr.onChange?.(); }
+        const d = liveDuel();
+        if (d && d.s === g.s) finish(g.why, { text: DUEL_REF_TEXT.refused });
+        return;
+      }
+      if (g.k === 'bout' || g.k === 'hp') {
+        if (!duel || duel.s !== g.s) return;
+        duel.h = g.h;
+        if (g.k === 'hp') { try { onHp(g, duel); } catch { /* the HUD is not the duel's problem */ } }
+        mgr.onChange?.();
+        return;
+      }
+      if (g.k === 'end') {
+        if (g.rc) { try { onReceipt(g.rc); } catch { /* the carrier keeps what it can */ } }
+        const d = liveDuel();
+        if (!d || d.s !== g.s) return;   // ended here already (my own word, as it left)
+        const won = g.w !== '' && g.w === selfId(), lost = g.w !== '' && g.w !== selfId();
+        finish(g.why, { won, lost, by: lost ? 'me' : 'them' });
       }
     },
     /** The host's frame: lapses, retries, and every rule that ends a live duel. */
@@ -484,21 +488,25 @@ export function createDuelManager({
       const d = liveDuel();
       if (!d) return;
       if (!d.fightSaid && !counting(d)) { d.fightSaid = true; say('Fight!'); }   // the count is over: blows count from here
-      // I cannot fight on (I went indoors, or fell to something else): the duel is off, and nothing is recorded
+      // I cannot fight on (I went indoors, or fell to something else): my word to the referee - INT8: my loss once the
+      // count has run, the duel called off before it
       const no = can();
-      if (no === 'dead' || no === 'outdoors') { post({ k: 'end', to: d.peer, s: d.s, why: no === 'dead' ? 'dead' : 'left' }); finish(no === 'dead' ? 'dead' : 'left'); return; }
-      if (t - d.startedAt > DUEL_MAX_MS) { post({ k: 'end', to: d.peer, s: d.s, why: 'draw' }); finish('draw'); return; }
+      if (no === 'dead' || no === 'outdoors') { const why = no === 'dead' ? 'dead' : 'left'; post({ k: 'end', to: d.peer, s: d.s, why }); finish(why, { lost: !counting(d) }); return; }
       // my body far past the edge: the clamp never lets a body walk there, so I was carried off (a travel, a teleport)
       const me = myPos();
-      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left'); return; }
+      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }
+      // INT8: the clock, my opponent gone and my opponent out of the ring are the REFEREE'S to end (`dref` `end`). Only
+      // where no word of its comes - a relay that restarted, and with it the bout - does the duel let go here, well
+      // past every one of the referee's own windows, naming nobody
+      if (t - d.startedAt > DUEL_MAX_MS + DUEL_COUNTDOWN_MS + DUEL_REF_LATE_MS) { finish('draw'); return; }
       if (!reaches(d.peer)) {
         d.goneSince ??= t;
-        if (t - d.goneSince > DUEL_GONE_MS) { finish('left', { by: 'them' }); return; }
+        if (t - d.goneSince > DUEL_GONE_MS + DUEL_REF_LATE_MS) { finish('cancelled', { by: 'them' }); return; }
       } else d.goneSince = null;
       const them = peerPos(d.peer);
       if (them && worldGroundMetres(them, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) {
         d.outSince ??= t;
-        if (t - d.outSince > DUEL_OUT_MS) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { by: 'them' }); return; }
+        if (t - d.outSince > DUEL_OUT_MS + DUEL_REF_LATE_MS) { finish('cancelled', { by: 'them' }); return; }
       } else d.outSince = null;
     },
     /** A peer left the room (no socket of mine reports them any more): their asks go; a live duel waits DUEL_GONE_MS. */

@@ -1103,22 +1103,24 @@ export function accountPlayBeat({ fetch, storage }) {
   };
 }
 
-/** DUEL1: the LOSER's own report of a duel - `winner` the account the
- *  relay stamped on the winner's frames. `{ recorded, wins, losses }`. */
-export const reportDuelLoss = (io, winner) => call(io, '/v1/duel/loss', { winner });
+/** INT8: a duel's result, the relay's signed receipt (net/duelReceipt.js
+ *  `d1`) carried by either of its fighters - `{ recorded, wins, losses }`
+ *  (or `{ recorded: false, why }`). DUEL1's loser's own report retired. */
+export const claimDuelReceipt = (io, receipt) => call(io, '/v1/duel/claim', { receipt });
 /** DUEL1: any account's duelling record, `{ id, wins, losses }`. */
 export const readDuelRecord = (io, id) => call(io, '/v1/duel/record', { id });
 
 /**
  * DUEL1: THE DUELLING RECORD'S TWO CALLS, bound to this device's stored
  * session (read at each call, as the beat reads it). With no session
- * there is no account to lose with or to ask as: `{ ok: false, error:
- * 'no-session' }`, never a knock.
+ * there is no account to claim with or to ask as: `{ ok: false, error:
+ * 'no-session' }`, never a knock. INT8: a bout's receipt claimed, never
+ * a loss reported.
  */
 export function accountDuels({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
-    lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
+    claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
   };
 }

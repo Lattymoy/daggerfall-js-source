@@ -656,7 +656,7 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
-import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
@@ -969,12 +969,12 @@ import { hallStepsFor, harbourPortFor, coastalAt } from '../net/fortLaw.js';   /
 import { isWaterPixel } from '../ui/overworldModel.js';   // SEAT2b part two: a coast is the sea beside the town (the port's one water law)
 import { createSiegeNpcs } from './siegeNpcs.js';   // SEAT2b part two (c): the Barracks' guards and a revolt's rising, drawn
 import { createSiegeSession, isBattleLeaveCommand, BATTLE_NONE_TEXT } from '../net/siegeSession.js';   // SEAT2a part four: a siege as this client fights it   // AUDIT-SEATS C1: the chat's `/leave`
-import { SIEGE_UNITS_PER_M, SIEGE_REACH, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM } from '../net/siegeRef.js';   // SEAT2b part two (b): a swing at the Gatehouse or the Ram
+import { SIEGE_UNITS_PER_M, SIEGE_REACH, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, SIEGE_HIT as DUEL_REF_KIND } from '../net/siegeRef.js';   // SEAT2b part two (b): a swing at the Gatehouse or the Ram; INT8: a referee's word's kind
 import { createSiegeClaims } from '../net/siegeClaims.js';   // SEAT2a part four: its receipts carried to the service
 import { createSiegeHud } from '../ui/siegeHud.js';   // SEAT2a part four: the bar, the sides, the result card
 import { siegeFieldOf, siegeFieldWire, buildingKeysOfType, royalRingWire, castleEntranceOf } from '../systems/siegeField.js';   // SEAT2a part four: the battlefield the town's records give   // CROWN1 part two: and a crown's ring
 import { createRoyalSession } from '../net/royalSession.js';   // CROWN1 part two: a Royal Tourney as this client fights it
-import { createRoyalClaims } from '../net/siegeClaims.js';   // CROWN1 part two: its bouts' receipts carried to the service
+import { createRoyalClaims, createDuelClaims } from '../net/siegeClaims.js';   // CROWN1 part two: its bouts' receipts carried to the service; INT8: a duel's
 import { createSiegeHerald } from '../net/siegeHerald.js';   // AUDIT-SEATS G1: the battles announced in the server's voice
 import { siegeBlowKind, siegeCastClamp, siegeSpellNumbers, siegeSpellBarred, SIEGE_SPELL_BARRED_TEXT, SIEGE_DISMOUNT_TEXT } from '../combat/siegeCombat.js';   // AUDIT-SEATS G5: a battle's shafts, spells and saddle
 
@@ -11316,13 +11316,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // target and healed nobody - found while wiring reflection, which
   // needs the caster's sinks for the same reason.
   const playerSpellSinks = {
-    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, _duelScope ? { spare: duelSpare } : undefined); },   // DUEL1: a duel opponent's spell, landing now (duelBlowIn), stops at 1 health
+    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },   // INT8: a duel opponent's spell lands on the referee's bar, never here
     heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
     drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
     restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
     // AUDIT DUEL1 B3: a duel opponent's fatigue damage (landing now, or a round of theirs) leaves 1 - at 0 the exhaustion
     // collapse (onExhaustedExterior) can kill a swimmer or a player a foe can see, through no duel's floor
-    drainFatigue: (n, a = null) => drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
+    drainFatigue: (n, a = null) => drainExteriorFatigue(a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
     restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
     say: (l) => townTalk.say(l),
   };
@@ -20245,6 +20245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
+    online.onDuelRef = (g) => { duelMgr.onRef(g); };   // INT8: the referee's word on my bout
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a blow, a fallen's offer, a pick or a gift at me - the zone's law decides (net/wildFight.js)
     // WILD1: my room's word on its remains (net/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
@@ -21042,8 +21043,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** AUDIT DUEL1 B6: my own feet (world frame) over the last DUEL_TRAIL_MS of a live duel, oldest first - a swing reached
    *  me if it reached where I was when its striker saw me (duelCombat.js duelBlowPlausible). */
   const _duelTrail = [];
-  let _duelScope = false;   // the opponent's spell is landing: its instant damage stops at the duel's floor (playerSpellSinks)
-  const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what its result is about
+  const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
+  let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
   let _duelWall = null;     // { c (world), alpha, live } - my own ring, drawn from the duel's start to its fade
   const duelMgr = createDuelManager({
@@ -21064,14 +21065,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       profileWin?.hide();
       _duelWall = { c: d.c, s: d.s, alpha: 0, live: true };
       _duelFoe = { entity: { name: peerName(d.peer) ?? 'Your opponent', health: 1, maxHealth: 1 }, dead: false, duel: true };   // AUDIT TELL U7: `duel` - no foe's wind-up takes the bar from it (ui/hudFoeTarget.js markFoeThreat)
+      duelHudSay(d);   // INT8: the referee's vitality, mine and theirs
       _duelSent.clear();
       audio.playOneShot(SOUND.Parry6, 1);   // the blades cross: the count begins
     },
-    onBlow: (d, duel) => duelBlowIn(d, duel),
-    onResult: (d) => duelResultIn(d),
+    onHp: (g) => duelHpIn(g),   // INT8: the referee's word that a blow landed
     onEnd: (duel, end) => duelEnded(duel, end),
-    onHeal: () => duelHeal(),
-    vitals: () => [playerEntity.health, playerEntity.maxHealth],
+    onReceipt: (rc) => { if (duelClaims.keep(rc)) duelClaims.offer({ force: true }); },   // INT8: a bout won, the relay's receipt - either fighter's to carry
   });
   duelMgr.onChange = () => { duelPrompt?.render(); repaintDuelProfile(); };
 
@@ -21166,53 +21166,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
     if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
   };
-  registerDuelFell(() => duelMgr.fell());   // characters/playerEntity.js duelSpare: every duel-sourced blow's floor says it here
-  /** THE DEFENDER: my opponent's blow, checked by the law (theirs, this duel's, past the count, once, in budget), placed
-   *  (combat/duelCombat.js duelBlowPlausible - a blow from where they are not seen lands nothing) and resolved on MY
-   *  sheet, landed through the one door with the duel's floor. `{ hit, dmg }`, or null for a blow that could not be. */
-  const duelBlowIn = (d, duel) => {
-    if (playerEntity.health <= 0 || modes?.deathUp?.() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
-    if (!duelBlowPlausible(d, [..._duelTrail.map((e) => e.p), campToWire(player.feetAt())], duelWorldOf(duel.peer), DUEL_RADIUS_M)) return null;
-    const who = peerName(duel.peer) ?? 'Your opponent';
-    if (d.k === 'spell') {
-      const spell = duelSpellFromWire(d.spell);
-      if (!spell) return null;
-      townTalk.say(`${who} casts ${spell.name || 'a spell'} on you.`);
-      const before = playerEntity.health;
-      _duelScope = true;
-      try { magic.applySpellToPlayer(spell, d.level, null, { duelCast: true }); } finally { _duelScope = false; }
-      const dmg = Math.max(0, Math.trunc(before - playerEntity.health));
-      if (dmg > 0) { flashPlayerDamage(dmg); playPlayerVoice(audio, playerPainVoice(playerEntity, dmg)); }
-      surfacePlayer();
-      return { hit: true, dmg };
-    }
-    tallySkill(playerEntity, SKILLS.Dodging, 1);   // the defender's own tally, once a blow, as a foe's blow tallies it
-    const from = campToScene(d.p);
-    const r = resolveDuelStrike(d, playerEntity, { backFacing: isBackFacing(cam.yaw, player.feetAt(), from) });
-    if (r.dmg > 0) {
-      hurtPlayer(playerEntity, r.dmg, { spare: duelSpare });
-      audio.playOneShot(hitSoundFor(d.w ? { templateIndex: d.w.t } : null), PLAYER_HIT_VOLUME);
-      flashPlayerDamage(r.dmg);
-      playPlayerVoice(audio, playerPainVoice(playerEntity, r.dmg));
-      surfacePlayer();
-    }
-    return r;
+  /** INT8: THE DUEL'S HUD - the referee's vitality (net/duelRef.js: the Royal Tourney's, never my save's health), mine
+   *  over theirs, drawn on the battles' readout (ui/siegeHud.js) for the duel's life; its Leave is my yield. */
+  let _duelHud = null;
+  const duelHudSay = (d) => {
+    if (!d) { _duelHud?.hide(); return; }
+    _duelHud ??= createSiegeHud(document, { onLeave: () => duelMgr.yieldDuel() });
+    const me = online?.id ?? '', h = d.h ?? [];
+    const mine = h.find((x) => x[0] === me), theirs = h.find((x) => x[0] !== me);
+    const name = peerName(d.peer) ?? 'your opponent';
+    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: mine ? [`Your vitality: ${mine[1]} / ${mine[2]}`] : [], works: '', arms: null, card: null });
   };
-  /** THE ATTACKER: my blow out - my sheet and my weapon (never a number: the defender resolves it). The swing is theirs
-   *  when it left; its result comes back as `duelResultIn`. */
+  /** THE ATTACKER: my blow out - INT8: rolled on my own sheet against a body of my own sheet (a siege's way: the
+   *  target's armour is not mine to read), the number sent for the RELAY to referee (net/duelRef.js clips it to the
+   *  weapon my look holds and the arms my token signs). A swing that rolled nothing is a miss, said here; the referee's
+   *  word on one that landed comes back as `duelHpIn`. */
   const duelStrikeOut = (by, weapon, swing, drawMs = 0, to = null) => {
     if (!duelMgr.fighting) return siegeStrikeOut(to, by, weapon, swing, drawMs);   // AUDIT-SEATS G5: outside a duel, my shaft on a battle's foe (`to`)
-    const w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), a: duelAttackerOf(playerEntity, weapon), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) });
-    if (n) { _duelSent.set(n, { kind: 'strike', weapon }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
+    const a = duelAttackerOf(playerEntity, weapon), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
+    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at }, duelStub(a).stub);
+    if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); return true; }
+    const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });
+    if (n) { _duelSent.set(n, { kind: 'strike', weapon }); _duelLastWeapon = weapon ?? null; if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
     return !!n;
   };
-  /** My spell reached my opponent (the cast engine's duel marks, scenes/hostMagic.js): its harmful families out. */
+  /** My spell reached my opponent (the cast engine's duel marks, scenes/hostMagic.js): INT8 - its harm counted on a
+   *  stand-in of my own sheet (combat/siegeCombat.js siegeSpellNumbers, a siege's way), to the referee as a cast. */
   const duelSpellOut = (peerId, sp) => {
     if (!duelMgr.fighting) return siegeSpellOut(peerId, sp);   // AUDIT-SEATS G5: outside a duel, my spell on a siege's foe
-    const spell = duelSpellOf(sp);
-    if (!spell || peerId !== duelMgr.opponent) return false;
-    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), level: Math.max(1, Math.min(30, Math.trunc(playerEntity.level || 1))), spell });
+    if (peerId !== duelMgr.opponent) return false;
+    const { harm } = siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStub(duelAttackerOf(playerEntity)).stub, playerEntity);
+    if (!(harm > 0)) return false;
+    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
     if (n) { _duelSent.set(n, { kind: 'spell', weapon: null }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
     return !!n;
   };
@@ -21356,60 +21342,60 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     _watchedFrom = null;
   };
-  /** The defender's answer to one of my blows: the HUD's number (HN1's seam), my opponent's health on the target bar,
-   *  and for a strike that landed the sound, the blood and my weapon's wear (FormulaHelper's DamageEquipment attacker
-   *  half, which ran on the defender's machine against a stub and so never reached my own blade). */
-  const duelResultIn = (d) => {
-    const sent = _duelSent.get(d.n) ?? null;
-    _duelSent.delete(d.n);
-    reportPlayerAttack({ hit: d.hit === 1, damage: d.dmg, critical: false, backstab: false, ineffective: false });
-    if (_duelFoe) { _duelFoe.entity.health = d.h[0]; _duelFoe.entity.maxHealth = d.h[1]; markFoeStruck(_duelFoe); }
-    const b = duelBody(duelMgr.duel?.peer);
-    if (d.dmg > 0 && sent?.kind === 'strike') {
-      if (b) {
-        audio.play3d(hitSoundFor(sent.weapon ?? null), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(d.dmg, { maxHealth: d.h[1] }, { fromPlayer: true, weapon: sent.weapon ?? null }));
+  /** INT8: THE REFEREE'S WORD THAT A BLOW LANDED (`dref` `hp`) - the bout's vitality on the HUD and my opponent's on the
+   *  target bar; a blow of mine: the HUD's number (HN1's seam), and for a strike the sound, the blood and my weapon's wear
+   *  (FormulaHelper's DamageEquipment attacker half, on what the referee let land, never past what this weapon could
+   *  deal); a blow on me: its flash, its sound and my voice - my save's health untouched (a duel is the referee's bar). */
+  const duelHpIn = (g) => {
+    const d = duelMgr.duel;
+    if (!d) return;
+    duelHudSay(d);
+    const theirs = (g.h ?? []).find((x) => x[0] === d.peer);
+    if (_duelFoe && theirs) { _duelFoe.entity.health = theirs[1]; _duelFoe.entity.maxHealth = theirs[2]; }
+    const mine = g.by === (online?.id ?? '');
+    if (mine) {
+      if (_duelFoe) markFoeStruck(_duelFoe);
+      reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
+      const b = duelBody(d.peer);
+      if (g.r !== DUEL_REF_KIND.Spell && b) {
+        audio.play3d(hitSoundFor(_duelLastWeapon), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _duelLastWeapon }));
       }
-      if (sent.weapon) {
-        let amount = Math.trunc((10 * duelWearDamage(d.dmg, sent.weapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: the defender's damage, never past what this weapon could deal
+      if (g.r !== DUEL_REF_KIND.Spell && _duelLastWeapon) {
+        let amount = Math.trunc((10 * duelWearDamage(g.d, _duelLastWeapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: never past what this weapon could deal
         if (amount === 0 && Math.random() < 0.2) amount = 1;
-        if (amount > 0) lowerCondition(sent.weapon, dfuBlowWear(amount), playerEntity, (l) => townTalk.say(l));   // BALANCE1: a duel's blow wears on the port's scale too; WEAR-TWICE: twice DFU's, WEAR-ONE: DFU's again
+        if (amount > 0) lowerCondition(_duelLastWeapon, dfuBlowWear(amount), playerEntity, (l) => townTalk.say(l));   // BALANCE1: a duel's blow wears on the port's scale too; WEAR-TWICE: twice DFU's, WEAR-ONE: DFU's again
       }
+      return;
+    }
+    if (g.to === (online?.id ?? '') && g.d > 0) {
+      if (g.r !== DUEL_REF_KIND.Spell) audio.playOneShot(hitSoundFor(null), PLAYER_HIT_VOLUME);
+      flashPlayerDamage(g.d);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, g.d));
     }
   };
-  /** The duel is over here. The ring comes down (the wall fades), the target bar goes, and MY LOSS - mine alone: nobody
-   *  credits themselves a win - goes to the account service naming the winner by the account the relay stamped on
-   *  their frames. Then the Inspect card, if it stands for either of us, reads the new record. */
-  const duelEnded = (duel, end) => {
+  /** The duel is over here. The ring comes down (the wall fades), the target bar and the HUD go, and the Inspect card, if it
+   *  stands for either of us, reads the record again - INT8: the record is the relay's receipt (onReceipt), never a loss of
+   *  mine reported. */
+  const duelEnded = (duel) => {
     if (_duelWall) _duelWall.live = false;
     if (_duelFoe) { _duelFoe.dead = true; _duelFoe = null; }
-    if (end.lost && duel.sub) {
-      duelAccount.lost(duel.sub).then((r) => {
-        if (r?.ok && r.data?.recorded === false) { const line = duelUncountedText(r.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
-        duelRecords.forget(duel.sub); repaintDuelProfile();
-      }).catch(() => {});
-    } else if (end.won && duel.sub) duelRecords.forget(duel.sub);
+    duelHudSay(null);
+    if (duel.sub) duelRecords.forget(duel.sub);
+    repaintDuelProfile();
   };
-  /** DUEL_HEAL_HOLD_MS after the end: "both are fully healed on duel end" - health, fatigue and magicka in full, and the
-   *  opponent's spells on me stripped (a duel's poison does not outlive the duel). A player who fell to something else in
-   *  the meantime is not raised by it. */
+  /** INT8: A BOUT'S RECEIPTS, carried to the account service (net/siegeClaims.js createDuelClaims): kept on the device
+   *  until the service settles each - either fighter's to carry, counted once. */
+  const duelClaims = createDuelClaims({
+    claim: (r) => duelAccount.claim(r), me: () => _seatDoor?.me() ?? null, storage: appStorage(), nowMs: () => Date.now(),
+    onClaimed: (a) => {
+      if (a?.ok && a.data?.recorded === false) { const line = duelUncountedText(a.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
+      repaintDuelProfile();
+    },
+  });
   /** AUDIT DUEL1 D5: the player is leaving the game - every duel state ends here (duelSession.js reset: a live duel as
-   *  `left`, my asks taken back, the asks at me refused), and a duel in play or in its hold heals at once. */
-  const duelLeaveNow = () => {
-    const had = !!duelMgr.duel;
-    duelMgr.reset();
-    if (had) duelHeal();
-  };
-  const duelHeal = () => {
-    if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);
-    if (playerEntity.health > 0 && !modes?.deathUp?.()) {
-      playerEntity.health = playerEntity.maxHealth;
-      playerEntity.fatigue = maxFatigue(playerEntity);
-      playerEntity.magicka = playerEntity.maxMagicka ?? playerEntity.magicka;
-      townTalk.say('You are fully healed.');
-    }
-    surfacePlayer();
-  };
+   *  `left`, my asks taken back, the asks at me refused). INT8: no heal - a duel never touched the save's health. */
+  const duelLeaveNow = () => { duelMgr.reset(); };
   // FIELD BUGS 29h (BOOT-HIDE; the Discord's "CRASH (2) ReferenceError: Cannot access 'be' before initialization", from
   // the document's hide event): THE CHECKPOINT'S DOORS - the ones the PAGE opens (the unload, a tab or window put
   // away) and the two the game hands on (a change saved soon, the title exit). Each runs the exit autosave or the
@@ -24020,6 +24006,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the ring) - and the prompt's countdown. Runs before the death return, so a dead duellist's duel ends. */
   const duelFrame = () => {
     duelMgr.tick();
+    if (duelClaims.due()) duelClaims.offer();   // INT8: a bout's receipt the service has not settled yet, offered again on its wait
     const setsWere = setsDueling();
     setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last

@@ -167,9 +167,11 @@ export const ROUTES = new Set([
   // SERVER-POST: the developers' pieces to one registered account - the box a GET, the three that change something POSTs,
   // each naming the piece in its body; a claim names the realm character it goes into and where its record stands.
   '/v1/post/box', '/v1/post/read', '/v1/post/claim', '/v1/post/delete',
-  // DUEL1: the duelling record - the loser's own report, and any
-  // account's two counts for the Inspect card. Both behind a session.
-  '/v1/duel/loss', '/v1/duel/record',
+  // DUEL1: the duelling record - the loser's own report (INT8: retired,
+  // answered `retired`), and any account's two counts for the Inspect
+  // card; INT8: a duel's result, the relay's receipt claimed. All behind
+  // a session.
+  '/v1/duel/loss', '/v1/duel/record', '/v1/duel/claim',
   // RENOWN1: Renown - what one of the caller's characters earned
   // online (the account's for a day under RENOWN-ACCOUNT; the
   // character's again since RENOWN-CHAR). Behind a session; the level
