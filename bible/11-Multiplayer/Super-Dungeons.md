@@ -211,7 +211,9 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
 both the Rift and the Return read), on a floor the collider finds, the same on every client - an interior block's
 first (SD-REACH: never a block's start markers, its maker's data set down anywhere, nor a border cap's, which ring the
 layout and so held the farthest point - the Rift stood in pockets no walk reaches); every enemy marker with none there,
-and the start markers only with no enemy marker at all.
+and the start markers only with no enemy marker at all. The Rift, the Return and the landing back from the Hour are
+stood as the level is built, every door shut and every platform home, before a save or the room can open one - a door
+open when they were stood moved all three, a client apart (AUDIT SD IV S1).
 
 - **The Rift** - the large otherworldly portal: a ring of brass light up to 7 m across - as large as its hall allows,
   never under 2.6 m (`world/sdDungeon.js` `sdRiftFit`) - turning slowly about a black-gold membrane, its sound a bell

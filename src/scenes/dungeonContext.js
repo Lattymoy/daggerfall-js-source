@@ -10002,8 +10002,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sdHall) sdHallFrame(dt, playerFeet);
       if (sdRemnant) sdRemnantFrame(dt, playerFeet);
     },
-    /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
-     *  has not stood it yet); null in any other dungeon. */
+    /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood with the level, AUDIT
+     *  SD IV S1; stood now if it was not); null in any other dungeon. */
     sdRiftLanding() {
       if (!_superTier || !sdEnd) return null;
       if (!_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
@@ -10298,5 +10298,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       hudText.dispose(); placeHold?.release();   // FIELD BUGS 2026-10-04d PLACE-LRU: LAST, its own GL objects gone - its blocks, flats and foes' frames are kept a couple of dungeons' worth, then freed unless another place holds them
     },
   }; placeHold?.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: built - the keep of this dungeon's last visit goes
+  // AUDIT SD IV (S1): the end stood as the level is built - every door shut, every platform home - before a save's state
+  // or the room's (applyWorld, a peer's act) can open one: where the Rift, the Return and the landing back stand is the
+  // layout's alone, the same on every client, whatever window held the first frame back
+  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }

@@ -16,5 +16,14 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-S1-the-stand-left-to-the-first-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n  return api;",
+    "new": "  return api;",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]
