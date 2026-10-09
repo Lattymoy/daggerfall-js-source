@@ -137,7 +137,7 @@ test('SD11d THE KILL READ WHOLE (L6 F2): the fall, the collapse\'s first readout
 });
 
 test('SD11d THE HOSTS SAY THROUGH THE VOICE, from the world host\'s own text: its one voice on the label\'s door at each line\'s length; the readouts a readout, the floor\'s words a note, the fight\'s a turn with its thread; the Hall\'s and the Rift\'s through the mode machine\'s door; a frame of the voice each frame of the arc; what waits let go as the Hour is left, once (mutants: the readouts a turn; the voice unframed; the leave never letting go; the hall around it)', () => {
-  assert.match(W, /const sdVoice = createSdVoice\(\{ show: \(t, secs\) => setMidScreenText\(t, secs\), now: \(\) => performance\.now\(\) \}\);/);
+  assert.match(W, /const sdVoice = createSdVoice\(\{ show: \(t, secs\) => setMidScreenText\(t, secs\), now: \(\) => performance\.now\(\), covered: sdVoiceCovered \}\);/);   // PIN MOVED (AUDIT SD IV T3): covered while a window is up over the label (sd26_text)
   assert.match(W, /const sdSay = \(t, rank = SD_VOICE_RANK\.turn, key = null\) => \{ sdVoice\.say\(t, rank, key\); return true; \};/);
   assert.match(W, /warn: \(text\) => sdSay\(text, SD_VOICE_RANK\.readout\),/, 'the collapse\'s and the fade\'s readouts');
   assert.match(W, /const sdSpoilsBurst = sdFightLink \? createSdSpoils\(\{[\s\S]{0,700}?say: \(t\) => sdSay\(t, SD_VOICE_RANK\.note\),/, 'the floor\'s word');

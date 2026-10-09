@@ -22540,8 +22540,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** AUDIT SD II (L6 F2, F3, F13; SD11d): THE HOUR'S VOICE (scenes/sdVoice.js) - every line the arc says over the
    *  screen, each standing for its length and none cut by a less urgent one: the fight's turns, then the floor's words,
    *  then the readouts. `sdNearArena` - (L6 F15) the fight's lines are said to whoever stands near its arena (the Steps
-   *  heard the Dragon Break and the End, which never touch them). */
-  const sdVoice = createSdVoice({ show: (t, secs) => setMidScreenText(t, secs), now: () => performance.now() });
+   *  heard the Dragon Break and the End, which never touch them). AUDIT SD IV (T3): covered while a window is up over
+   *  the label - hud.js ticks DFU's label only with no window up (the dungeon slot's), and a window that stops the
+   *  game draws no HUD at all; the voice ran on under it, the lines it passed written over the hidden one. */
+  const sdVoiceCovered = () => !!modes?.dungeonCtx?.overlayWindow?.() || !!modes?.dungeonCtx?.uiOverlayActive;
+  const sdVoice = createSdVoice({ show: (t, secs) => setMidScreenText(t, secs), now: () => performance.now(), covered: sdVoiceCovered });
   const sdSay = (t, rank = SD_VOICE_RANK.turn, key = null) => { sdVoice.say(t, rank, key); return true; };
   const sdNearArena = () => {
     if (modes?.sdRealmSlot?.() == null) return false;

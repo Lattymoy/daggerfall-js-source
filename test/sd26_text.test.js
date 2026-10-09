@@ -17,6 +17,9 @@ import { SD_SPOILS_TEXT } from '../src/systems/sdSpoils.js';
 import { SD_HOME_TEXT } from '../src/scenes/sdEnd.js';
 import { SD_REM_SINK_MS } from '../src/scenes/sdRemnant.js';
 import { SD_RECEIPT_WAIT_MS } from '../src/scenes/sdSpoils.js';
+import { SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
+import { courtSaySeconds } from '../src/scenes/gateCourt.js';
+import { MidScreenText } from '../src/ui/midScreenText.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -121,4 +124,63 @@ test('SD26 THE KILL READ WHOLE, THE WAY HOME WITH IT (T2): L6 F2 read the fall, 
   t = 200; y.say('A turn.');
   for (t = 300; t < 20_000; t += 16) y.frame();
   assert.deepEqual(o, ['First note.', 'A turn.', 'First note.', 'Second note.']);
+});
+
+/** The voice into DFU's own label, ticked as hud.js ticks it - only with no window up - and what the player reads. */
+function labelled() {
+  let t = 0, cover = false;
+  const label = new MidScreenText(), sets = [];
+  const read = [];   // each line written: [text, ms it stood in sight]
+  const v = createSdVoice({ show: (text, secs) => { sets.push({ text, t, cover }); read.push([text, 0]); label.set(text, secs); }, now: () => t, covered: () => cover });
+  const step = (ms = 16) => {
+    t += ms;
+    if (!cover) label.tick(ms / 1000);
+    v.frame();
+    if (!cover && label.text) read.at(-1)[1] += ms;
+  };
+  return { v, sets, read, step, to: (ms) => { while (t < ms) step(); }, cover: (c) => { cover = c; }, at: () => t, label };
+}
+
+test('SD26 THE HOUR\'S VOICE STANDS STILL UNDER A WINDOW (T3): DFU\'s label is ticked only with no window up (hud.js) and not drawn at all under one that stops the game - and the voice ran on, on the page\'s clock: each line taken as read as its seconds passed, the next written over the hidden one, so at the kill with the pack open the player met only "The way home stands open.", and a 0:30 readout said under a window stood after it with fifteen seconds left. Covered (world.js sdVoiceCovered: the dungeon slot\'s window), nothing is written; the line standing and the turns\' and notes\' waits stand still with the label; a readout whose moment passes under it is let go; a turn said under it cuts what stood (mutants: the window unread; the standing line\'s clock run on; the turns\' waits aged; a readout kept past its moment; the turn under it queued; a line written under it)', () => {
+  const fell = SD_BLOWS_TEXT.fell, readout = sdCollapseLine(SD_COLLAPSE_MS, { hour: true, first: true });
+  // the kill, the pack opened 0.3 s in and closed at 20 s
+  const a = labelled();
+  a.v.say(fell);
+  a.to(152); a.v.say(readout, SD_VOICE_RANK.readout);
+  a.to(300); a.cover(true);
+  a.to(1208); a.v.say(SD_SPOILS_TEXT.spilled, SD_VOICE_RANK.note);
+  a.to(4000); a.v.say(SD_HOME_TEXT.rises);
+  a.to(20_000);
+  assert.deepEqual(a.sets.filter((x) => x.cover), [], 'nothing written under the window');
+  a.cover(false); a.to(40_000);
+  const secs = (text) => courtSaySeconds(text) * 1000;
+  assert.deepEqual(a.read.map((r) => r[0]), [fell, SD_HOME_TEXT.rises, SD_SPOILS_TEXT.spilled], 'what the player read: the fall, then the way home, then the floor\'s word - the readout\'s moment passed under the window');
+  for (const [text, ms] of a.read) assert.ok(ms >= secs(text) - 40, `"${text}" stood its ${secs(text)} ms in sight (${ms})`);
+  // a readout said under a window, closed 15 s on: never shown with its stale count
+  const b = labelled();
+  b.cover(true); b.step();
+  b.v.say('The Hour collapses in 0:30.', SD_VOICE_RANK.readout);
+  b.to(15_000); b.cover(false); b.to(30_000);
+  assert.deepEqual(b.read, [], 'its moment passed: let go');
+  assert.deepEqual(b.sets, []);
+  // a turn said under a long window: still read after it (its wait stood still)
+  const c = labelled();
+  c.cover(true); c.step();
+  c.v.say(SD_HOME_TEXT.rises);
+  c.to(SD_VOICE_WAIT_MS[SD_VOICE_RANK.turn] * 2); c.cover(false); c.to(SD_VOICE_WAIT_MS[SD_VOICE_RANK.turn] * 2 + 3000);
+  assert.deepEqual(c.read.map((r) => r[0]), [SD_HOME_TEXT.rises]);
+  // a readout standing as the window came up, a turn said under it: on its closing the turn, the readout after it whole
+  const d = labelled();
+  d.v.say(readout, SD_VOICE_RANK.readout); d.step(); d.to(500);
+  d.cover(true); d.to(1000); d.v.say(SD_BEAT_TEXT.moment.main); d.to(3000);
+  d.cover(false); d.to(20_000);
+  assert.deepEqual(d.read.map((r) => r[0]), [readout, SD_BEAT_TEXT.moment.main, readout]);
+  assert.ok(d.read[2][1] >= secs(readout) - 40, 'the readout read whole after');
+  // the host's cover, from its own text: the dungeon slot's window, or a window that stops the game
+  const line = W.match(/\n {2}const sdVoiceCovered = [^\n]*\n/)[0];
+  const coveredBy = (ctx) => new Function('modes', `${line}return sdVoiceCovered();`)({ dungeonCtx: ctx });
+  assert.equal(coveredBy({ overlayWindow: () => null, uiOverlayActive: false }), false, 'no window: the voice speaks');
+  assert.equal(coveredBy({ overlayWindow: () => ({}), uiOverlayActive: false }), true, 'a window up');
+  assert.equal(coveredBy({ overlayWindow: () => null, uiOverlayActive: true }), true, 'the game stopped');
+  assert.equal(new Function('modes', `${line}return sdVoiceCovered();`)(undefined), false, 'before the mode machine stands');
 });
