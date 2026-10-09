@@ -11,8 +11,8 @@ import { sdBarNear, remnantBarModel, SD_BAR_CSS } from '../src/ui/sdRemnantBar.j
 import { SD_ARENA } from '../src/net/sdBrain.js';
 import { createSdVoice, SD_VOICE_RANK, SD_VOICE_READ_MS, SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
 import { SD_BLOWS_TEXT } from '../src/scenes/sdRemnantBlows.js';
-import { sdCollapseLine } from '../src/scenes/sdHost.js';
-import { SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
+import { sdCollapseLine, createSdHost } from '../src/scenes/sdHost.js';
+import { SD_COLLAPSE_MS, sdFirst, sdRise, sdFind, SD_LIFETIME_MS } from '../src/net/sdLaw.js';
 import { SD_SPOILS_TEXT } from '../src/systems/sdSpoils.js';
 import { SD_HOME_TEXT } from '../src/scenes/sdEnd.js';
 import { SD_REM_SINK_MS } from '../src/scenes/sdRemnant.js';
@@ -25,6 +25,11 @@ import { DAMAGE_CHART_CSS } from '../src/ui/gateDamageChart.js';
 import { drawGateBossBar, destroyGateBossBar, BOSS_BAR_CSS } from '../src/ui/gateBossBar.js';
 import { ONLINE_DRESS_CSS } from '../src/ui/enhancedPlusStyle.js';
 import { SD_BLOWS, SD_BODY } from '../src/net/sdRemnant.js';
+import { sdMarksLine, sdHourLine, SD_HOUR_LEFT_MS } from '../src/systems/sdOmen.js';
+import { sdCities, sdTemplates } from '../src/systems/sdSite.js';
+import { scanGatePixels } from '../src/systems/gateSite.js';
+import { LOCATION_TYPES, CLIMATES } from '../src/formats/mapsFile.js';
+import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -256,4 +261,42 @@ test('SD26 THE REMNANT\'S BAR IN ITS OWN COLOURS (T6): SD20e T3 took Dagon\'s re
   // its last minute: brass
   assert.match(BOSS_BAR_CSS, /\n\.wb-boss-bar\.brass \.wb-boss-wrath\.near \{[^}]*animation-name: wb-brass-near;[^}]*\}/);
   assert.match(BOSS_BAR_CSS, /\n\.wb-boss-wrath\.near \{[^}]*animation: wb-wrath-near /, 'the gate\'s own still red');
+});
+
+// ── the host's chat (sd19_presence's small world: Copperham and The Old Maze) ─────────────────────────────────────
+const place = (region, index, px, py, type, { name, w = 1, h = 1, buildings = 0, blocks = 0 } = {}) => ({
+  name, regionIndex: region, locationIndex: index, hasDungeon: blocks > 0,
+  mapTableData: { mapId: py * 1000 + px, locationType: type, longitude: 0, latitude: 0 },
+  exterior: { exteriorData: { width: w, height: h, locationId: py * 1000 + px }, buildingCount: buildings },
+  ...(blocks ? { dungeon: { blocks: Array.from({ length: blocks }, (_, i) => ({ blockName: `${i % 3 ? 'N' : 'B'}0000${i}.RDB`, x: i, z: 0, isStartingBlock: !i })), recordElement: { header: { locationId: py * 1000 + px } } } } : {}),
+});
+function smallWorld(places) {
+  const regions = [0, 1].map(() => ({ mapTable: [], mapNames: [] }));
+  for (const p of places) { regions[p.regionIndex].mapTable[p.locationIndex] = { mapId: p.mapTableData.mapId, locationType: p.mapTableData.locationType }; regions[p.regionIndex].mapNames[p.locationIndex] = p.name; }
+  return { regionCount: 2, getRegion: (r) => regions[r], getClimateIndex: (x) => (x < 100 ? CLIMATES.Ocean : 231), getPoliticIndex: (x) => (x < 100 ? 0 : 128 + (x < 500 ? 0 : 1)), getRegionIndexAt: (x) => (x < 500 ? 0 : 1) };
+}
+
+test('SD26 A HOLLOW FOUND IN ITS LAST HOUR IS FOUND BEFORE IT FADES (T7): the host\'s frame said SD19\'s last-hour line before the finds it owed (heard() only queues a find; the frame says it) - a Hollow found with forty minutes left was "will fade within the hour" in chat before anyone heard it was found. The find, then its marks, then its last hour, on one frame (mutants: the hour before the find)', () => {
+  const M = 60_000;
+  const CITY = place(0, 0, 300, 200, LOCATION_TYPES.TownCity, { name: 'Copperham', w: 3, h: 3, buildings: 80 });
+  const LAB = place(0, 1, 450, 400, LOCATION_TYPES.DungeonLabyrinth, { name: 'The Old Maze', blocks: 14 });
+  const SCAN = scanGatePixels(smallWorld([CITY, LAB]), { heightAt: () => 90 });
+  const s = { clock: T0, lines: [] };
+  const host = createSdHost({
+    now: () => s.clock, scan: () => SCAN, warmScan() {}, cities: (r) => sdCities([CITY], r, { regionNameOf: () => 'Nowhere' }),
+    templates: () => sdTemplates([LAB], isMainStoryDungeon), where: () => ({ regionIndex: 0, regionName: 'Alik\'r Desert' }),
+    stand() {}, unstand() {}, inside: () => false, door: () => null, feet: () => null, sendFound: () => true,
+    say: (text) => s.lines.push(text), regionName: () => 'Alik\'r Desert',
+  });
+  const risen = sdRise(sdFirst(T0 - SD_LIFETIME_MS - 20 * M), T0 - SD_LIFETIME_MS + 40 * M, 0);   // rose 47 h 20 m ago
+  host.heard({ k: 'ev', ...risen }); host.frame();
+  assert.deepEqual(s.lines, [], 'only risen: no news');
+  s.clock += 1000;
+  const found = sdFind(risen, s.clock, 'Mara');
+  assert.ok(found.until - s.clock < SD_HOUR_LEFT_MS, 'found in its last hour');
+  host.heard({ k: 'ev', ...found }); host.frame();
+  const name = host.hollow().loc.name;
+  assert.equal(s.lines.length, 3);
+  assert.match(s.lines[0], /^Mara has found an Abyss Dungeon near Copperham/, 'the find first');
+  assert.deepEqual(s.lines.slice(1), [sdMarksLine({ name, s: found.s }), sdHourLine({ name, near: 'Copperham' })], 'then its marks, then its last hour');
 });

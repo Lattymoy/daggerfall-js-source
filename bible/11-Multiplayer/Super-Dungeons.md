@@ -2609,7 +2609,8 @@ countdown is a fire's; a Hollow's door's is drawn only where no gate asks. Indoo
 - **The words** (`scenes/sdHost.js`): the find is followed by its marks (`sdMarksLine` - its Ending, its signature and
 both omens); a found Hollow's last hour (`SD_HOUR_LEFT_MS`) is said to the realm once a slot (`sdHourLine`), near its
 city once its place is known, by the region's name if the world offers no Hollow - never while it is only risen (a
-find, not news).
+find, not news), and never before the find it follows (AUDIT SD IV, SD26 T7: the frame said it before the finds it
+owed, and a Hollow found in its last hour faded in chat before it was found).
 - **The next one's rise** (`systems/eventTimers.js`): once a Hollow is gone - beaten, collapsed or faded unfound - the
 Timers count the next slot's not-before (`rec.next`), never where; the row goes once it may rise.
 

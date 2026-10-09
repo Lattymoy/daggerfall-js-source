@@ -201,12 +201,13 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
         if (sendFound({ s: stood.s, px, py }, worldRoom(px, py))) { foundSentAt = t; foundSentS = stood.s; }
       }
     }
+    // AUDIT SD IV (T7): the find owed first - a Hollow found in its last hour faded in chat before it was found
+    sayOwed(t);
     // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
     if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
       const hh = hollowOf(rec);
       if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }
     }
-    sayOwed(t);
   }
 
   return {
