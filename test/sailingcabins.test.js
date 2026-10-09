@@ -238,6 +238,7 @@ test('worldModes exit caches the cabin, tears down the room, and lands at deck h
     interiorTorches: { destroyAll: noop }, interiorDecor: { destroyAll: noop }, _decorVisit: 0, decorTool: { close: noop },
     questBridge: null, npcSession: null, unleveledLootExteriorTransition: noop, console: { log: noop, error: assert.fail },
     standFromCardTable: noop,   // CARDS4: the door cashes the card table out
+    peopleBodies: { destroy: noop },   // PIN MOVED (MWNPC8a): the room's people's Morrowind bodies leave with it
   };
   const exit = new Function(...Object.keys(scope), `return (${functionSource('exitInteriorNow')});`)(...Object.values(scope));
   assert.equal(exit(), true);

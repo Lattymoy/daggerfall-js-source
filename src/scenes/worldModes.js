@@ -121,6 +121,7 @@ import { WEAPON_REACH, weaponPoseOf, applyWeaponPose as setWeaponPose } from '..
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
 import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon, aimedBlowInfo, playerBlowFrame } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
+import { createPopulationLane } from '../characters/npcBodies.js'; import { personLook, personActor } from '../characters/peopleBodies.js';   // MWNPC8a: the building's standing people in Morrowind bodies
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';
@@ -1665,6 +1666,16 @@ export function createWorldModes(host) {
    * building is invalidated by leaving.
    */
   let interiorFoes = null;
+  // MWNPC8a (bible/04-Characters/Morrowind-NPCs.md section 13): THE BUILDING'S STANDING PEOPLE IN THEIR BODIES - on the
+  // 'people' lane under the switch's tier; a person's look read once (their StaticNPC data and their faction's row),
+  // never while the faction table is still loading; let go with the room
+  const peopleBodies = createPopulationLane({ laneName: 'people', renderer });
+  const standingLook = (pn) => {
+    if (pn._mwLook !== undefined) return pn._mwLook;
+    const dict = townTalk?.factionDict ?? null;
+    if (!dict) return null;
+    return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);
+  };
   /**
    * IF: CreateFoeSpawner's punishment wave - the summoning window's
    * refusal (DaggerfallDaedraSummonedWindow.cs:125) and the coven
@@ -8341,6 +8352,7 @@ export function createWorldModes(host) {
     cacheInteriorScene();
     host.onInteriorLeave?.();   // WORLD6a: the room's memory goes out while the building still stands
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
+    peopleBodies.destroy();   // MWNPC8a: the room's people's bodies with it
     interiorCtx.destroy();
     _intShared = null;
     interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
@@ -10282,6 +10294,15 @@ export function createWorldModes(host) {
     if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);   // CARDS3: the cards and chips on the cloth - CARDS3b: the player's own two held before the eye
     for (const w of cardWatches.values()) if (w.remote.state) w.draw.draw(w.scene.poses(performance.now() / 1000, w.remote.view()));   // CARDS5: and the tables this player watches
     interiorCtx.flatAnims.tick(dt);   // FA1
+    // MWNPC8a: the standing people offered their bodies, before the room's billboards draw (cast-only where one stands)
+    const _peopleOn = peopleBodies.frame();
+    for (const pn of interiorCtx.people) {
+      if (!pn.standBatch) continue;
+      const look = _peopleOn ? standingLook(pn) : null;
+      if (look) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);
+      else pn.standBatch.castOnly = false;
+    }
+    peopleBodies.draw(canvas, proj, view, mwv.eye, dt);
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
     // feeds it, ticks it and clears it on the way out - and never drew
@@ -12627,6 +12648,7 @@ export function createWorldModes(host) {
         // than replacing, so a suspended rest under a message box is a
         // real thing to drop. The clear() below carries the dispose.
         teardownQuestFlats();
+        peopleBodies.destroy();   // MWNPC8a
         interiorCtx.destroy();
         interiorFoes?.destroy?.();
         interiorFoes = null;

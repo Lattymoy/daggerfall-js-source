@@ -1,0 +1,218 @@
+[
+ {
+  "name": "MWNPC8a-vampire-bodied",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.type === FACTION_TYPES.VampireClan || f.ggroup === GUILD_GROUPS.Vampires || f.sgroup === SOCIAL_GROUPS.SupernaturalBeings) return 'none';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-temple-unrobed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.type === FACTION_TYPES.Temple || f.ggroup === GUILD_GROUPS.HolyOrder) return 'priest';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-mage-unrobed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.ggroup === GUILD_GROUPS.MagesGuild || f.type === FACTION_TYPES.MagicUser) return 'mage';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-knight-unarmoured",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.ggroup === GUILD_GROUPS.FightersGuild || f.type === FACTION_TYPES.KnightlyGuard) return 'steel';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-noble-common",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.sgroup === SOCIAL_GROUPS.Nobility || f.type === FACTION_TYPES.Courts) return 'noble';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-merchant-common",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.sgroup === SOCIAL_GROUPS.Merchants) return 'merchant';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-thief-common",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.sgroup === SOCIAL_GROUPS.Underworld || f.type === FACTION_TYPES.Thieves) return 'underworld';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-scholar-common",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.sgroup === SOCIAL_GROUPS.Scholars) return 'scholar';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-child-bodied",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (!data || isChildNPCData(data)) return (pn._mwLook = null);",
+  "new": "  if (!data) return (pn._mwLook = null);",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-raceless-bodied",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (kind === 'none' || !race) return (pn._mwLook = null);",
+  "new": "  if (kind === 'none') return (pn._mwLook = null);",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-gender-ignored",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  const female = data.gender === GENDERS.Female;",
+  "new": "  const female = false;",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-look-not-kept",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (pn._mwLook !== undefined) return pn._mwLook;\n  if (!data",
+  "new": "  if (!data",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-steel-unworn",
+  "file": "src/characters/peopleBodies.js",
+  "old": "    for (const [slot, piece] of STEEL) items.push(",
+  "new": "    for (const [slot, piece] of []) items.push(",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-shoes-over-boots",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (kind !== 'steel') items.push({ templateIndex: outfit[2]",
+  "new": "  if (true) items.push({ templateIndex: outfit[2]",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-common-one-outfit",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  } else if (kind === 'common') outfit = FOLK_OUTFITS[gender][mix(seed ^ 0x0f) % 4];",
+  "new": "  } else if (kind === 'common') outfit = FOLK_OUTFITS[gender][0];",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-dyes-ignore-kind",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  const dyes = kind === 'common' || kind === 'steel' ? COMMON_DYES : PEOPLE_WARDROBE[kind].dyes;",
+  "new": "  const dyes = COMMON_DYES;",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-turn-snaps",
+  "file": "src/characters/peopleBodies.js",
+  "old": "    pn._mwYaw = wrap(pn._mwYaw + (Math.abs(d) <= step ? d : Math.sign(d) * step));",
+  "new": "    pn._mwYaw = wrap(pn._mwYaw + d);",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-turn-long-way",
+  "file": "src/characters/peopleBodies.js",
+  "old": "    const d = wrap(want - pn._mwYaw), step",
+  "new": "    const d = (want - pn._mwYaw), step",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-turn-overshoots",
+  "file": "src/characters/peopleBodies.js",
+  "old": "(Math.abs(d) <= step ? d : Math.sign(d) * step)",
+  "new": "(Math.sign(d) * step)",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-first-frame-turns",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (pn._mwYaw == null) pn._mwYaw = want;",
+  "new": "  if (pn._mwYaw == null) pn._mwYaw = 0;",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-host-before-table",
+  "file": "src/scenes/worldModes.js",
+  "old": "    if (!dict) return null;\n    return personLook(",
+  "new": "    return personLook(",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-host-unoffered",
+  "file": "src/scenes/worldModes.js",
+  "old": "      if (look) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);",
+  "new": "      if (false) peopleBodies.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], mwv.eye, dt), pn.standBatch);",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-host-undrawn",
+  "file": "src/scenes/worldModes.js",
+  "old": "    peopleBodies.draw(canvas, proj, view, mwv.eye, dt);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8a-host-kept-past-room",
+  "file": "src/scenes/worldModes.js",
+  "old": "    peopleBodies.destroy();   // MWNPC8a: the room's people's bodies with it\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8_people.test.js"
+  ]
+ }
+]

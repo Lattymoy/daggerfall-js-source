@@ -102,7 +102,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
-| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
+| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13: the buildings' people) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
 
@@ -702,4 +702,51 @@ NOT HERE: the living residents indoors (worldModes.js's buildings) and
 the street's standing people are MWNPC8's; a walker struck or slain in the
 street keeps the classic billboard's answer (the walkers have none of
 their own to give).
+
+## 13. MWNPC8 - THE STANDING PEOPLE
+
+### 13a. The buildings' people (SHIPPED 2026-10-09)
+
+- A STANDING PERSON, READ (`characters/peopleBodies.js`). A building's
+  person is a StaticNPC: staticNpcData gives their race (off their
+  faction, else the region's) and gender (their record's flag 32); their
+  faction's FACTION.TXT row says who they are, and the body WEARS it
+  (`wardrobeOf`): a temple's or holy order's priest in priest's robes; a
+  mage in robes; a knightly order's, a fighters' guild's or a knightly
+  guard's person in steel; a noble or a court's in a formal tunic and
+  breeches or a blouse and a long skirt; a merchant in a tunic and
+  breeches; the underworld and the thieves in dark plain clothes; a
+  scholar in plain robes; everyone else in the street's own outfits
+  (MWNPC7's FOLK_OUTFITS) - each kind in its own dyes, off the person's
+  name seed. A CHILD (by texture or the children's faction) and a VAMPIRE
+  (a vampire clan, the vampires' guild group, the supernatural social
+  group) keep their sprites, and so does a race the data cannot name. The
+  look is read once - a standing person is one build - and never before
+  the faction table has loaded (the host asks again).
+- THE TURN. Daggerfall's billboard always faced the player; the body
+  turns to face them at a person's pace (PERSON_TURN_RATE, 3 rad/s, the
+  short way round), facing them from the first frame. Idle, never armed.
+- THE HOST (worldModes.js's buildings, the 'people' lane under the
+  switch's tier): every stood person with a billboard offered before the
+  room's billboards draw - their billboard cast-only where the body
+  stands - the rest drawn as ever; the lane let go at both of the room's
+  teardowns.
+- Show Nudity (NUDE-FLATS): a Morrowind body is always clothed, so the
+  law holds whatever the flat would have drawn.
+
+PROVEN. `test/mwnpc8_people.test.js` (4): every faction's wardrobe and
+the vampire first; the look (race, gender, the faction's garments and
+dyes, the knight's steel and no shoes beside his boots, the street's
+outfits varied for the rest; a child by texture or faction, a vampire, a
+nameless race keeping their sprite; read once, a sprite once a sprite for
+good); the turn (facing the player at once, then at its pace without
+overshooting, the short way across the seam), one actor a person; and the
+building by source. `tools/mutants/mwnpc8a.json`: 24 mutants, 24 dead. Pins moved: the
+sailing cabin's exit runs `exitInteriorNow` over a scope of its free names,
+which now includes `peopleBodies`; the person block sits above BLOOD1's
+marks, which draw directly under the room's billboards.
+
+THE FOUR HOSTS for the standing people: worldModes.js (buildings) WIRED;
+the street's standing people (world.js, exterior.js) and the dungeons'
+and the quests' (dungeonContext.js) are 8b's.
 
