@@ -40,6 +40,11 @@
 //                    (from the Threshold's rim out over the void, the far islands in the haze); ?touch=on its phones'
 //                    tier (one spire a root, no far islands, two gears, still chains); ?law the realm's colliders too
 //                    (world/sdRealm.js realmColliderTris - the floors, pillars and lamp posts): no root, tooth or chain in them
+//   SD-LOOK S7, the arena's pillars (render/sdPillarPass.js, scenes/sdArenaWatch.js): views pillar (a capital from under
+//                    it), capitals (the far two from the near rim), arena-far; the dials' hands watch the made fight's
+//                    Remnant (or, with no ?fight, where it waits), the Echoes in ?fight=break, the way home in ?fight=fell;
+//                    ?fight=reset&rt=<s> the lamps' and lanterns' dimming; ?fight=end the dials red; the bodies' marks on
+//                    the floor always; ?law the pillars' squares as wire too
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -52,6 +57,10 @@ import { SD_HOUR_GRADE } from '../world/sdLook.js';
 import { SdVeilRenderer, SD_VEIL_MODE } from '../render/sdVeil.js';
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';
+import { SdPillarPassRenderer } from '../render/sdPillarPass.js';   // SD-LOOK S7: the pillars' dials, their watching hands, the lanterns
+import { sdPillarLookAt, sdPillarLook, sdArenaMarksAt, sdLampDimInto } from '../scenes/sdArenaWatch.js';
+import { GateTelegraphRenderer } from '../render/gateTelegraph.js';
+import { SD_ARENA_CENTRE, SD_TELEGRAPH_FLOOR } from '../scenes/sdRemnantBlows.js';
 import { SD_BLOWS, SD_REM_START, SD_ECHO_SPOTS } from '../net/sdRemnant.js';
 import { SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
@@ -113,6 +122,10 @@ const VIEWS = {
   works: { at: [0, 1.7, 80], yaw: 0, pitch: -60 },
   hang: { at: [-30, -4, 18], yaw: 50, pitch: 4 },
   'hang-far': { at: [-6, 1.7, 3], yaw: -110, pitch: -12 },
+  // SD-LOOK S7: a pillar's capital from the floor below it, the far pillars' from the arena's near rim, the arena from its far side
+  pillar: { at: [-1, 1.7, SD_ARENA.z - 19], yaw: -52, pitch: 30 },
+  capitals: { at: [0, 6, SD_ARENA.z - 22], yaw: 0, pitch: 8 },
+  'arena-far': { at: [0, 4.5, SD_ARENA.z + SD_ARENA.r - 3], yaw: 180, pitch: -6 },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }
@@ -196,7 +209,8 @@ hall.stand({ dynamicDraws, collider: null });
   }
 })();
 /** ?law: the hall's solids (the collider's, world/sdHall.js hallSolidTris) and (SD-LOOK S11) the realm's - its floors,
- *  pillars and lamp posts (world/sdRealm.js realmColliderTris) - as one mesh, drawn as wire over the frame. */
+ *  pillars and lamp posts (world/sdRealm.js realmColliderTris; SD-LOOK S7: no pillar's dress past its square) - as one
+ *  mesh, drawn as wire over the frame. */
 const lawMesh = params.has('law') ? (() => {
   const hallTris = hallSolidTris(), realmTris = realmColliderTris(), tris = new Float32Array(hallTris.length + realmTris.length);
   tris.set(hallTris); tris.set(realmTris, hallTris.length);
@@ -216,6 +230,7 @@ const remnant = createSdRemnant({ renderer, link: () => labLink, ending: sdMarks
 remnant.stand({ dynamicDraws });
 const arenaGlow = new SdArenaGlowRenderer(gl);
 const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords(), HELD = [SD_HOLD_WALL];
+const pillarPass = new SdPillarPassRenderer(gl), _pillarLook = sdPillarLook(), _labDim = new Float64Array(1), telegraph = new GateTelegraphRenderer(gl);   // SD-LOOK S7
 const ARENA_MODEL = (() => { const m = identity(), c = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock, now: () => clock * 1000 });   // the lab's clock: a still frame holds the way home's rise
 wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow') });
@@ -431,7 +446,7 @@ function frame(now) {
     renderer.setMoonlight(rl.key);
     applyFog(renderer, dungeonFog(lane, SD_REALM_FOG));
     if (!params.has('nograde')) renderer.setSceneGrade(SD_HOUR_GRADE);   // SD-LOOK: the dungeon arm's own (?nograde: the lane's defaults, for a before)
-    const hour = realmLightsWith(EMPTY_LIT, [...remnant.lights(), ...hall.lights()], cam.pos);   // SD-LOOK: its heart's light first; S10: the gem's
+    const hour = realmLightsWith(EMPTY_LIT, [...remnant.lights(), ...hall.lights()], cam.pos, sdLampDimInto(labFight() ?? SD_FIGHT_EMPTY, clock * 1000, _labDim));   // SD-LOOK: its heart's light first; S10: the gem's; S7: the Reset's dimming
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);
     if (!$('still').checked && !params.has('t')) hallMs += dt * 1000;   // the hall's own clock runs with the lab's
@@ -453,6 +468,10 @@ function frame(now) {
     if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
     if (halo.draw(proj, view, [...wayBack.halos(), ...hall.halos()], courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();   // S10: and the hall's
     if (arenaGlow.draw(proj, view, ARENA_MODEL, sdArenaGlowAt(labFight(), clock * 1000, _glowMemo), courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
+    // SD-LOOK S7: the pillars' dials watching the Remnant, their lanterns, the Reset's dimming; the bodies' marks on the floor
+    const labS = labFight() ?? SD_FIGHT_EMPTY;
+    if (pillarPass.draw(proj, view, sdPillarLookAt(labS, clock * 1000, _pillarLook, _glowMemo), courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
+    for (const m of sdArenaMarksAt(labS, clock * 1000)) { telegraph.draw(m, proj, view, cam.pos, clock, courtFogNow(), SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR); if (telegraph.drawn > 0) renderer.markForeignPass(); }
     if (stompWall.draw(_walls, sdStompWalls(labFight(), clock * 1000, _walls), proj, view, courtFogNow())) renderer.markForeignPass();
     if (params.get('fight') === 'held' && stompWall.draw(HELD, 1, proj, view, courtFogNow())) renderer.markForeignPass();
     if (params.get('fight') === 'fell' && stompWall.draw([Object.assign(sdHomeBeacon((Number(params.get('age') ?? 3) - 1.5) * 1000, {}, 2.3 * 1.5), { x: 0, z: -8 })], 1, proj, view, courtFogNow())) renderer.markForeignPass();   // its beacon

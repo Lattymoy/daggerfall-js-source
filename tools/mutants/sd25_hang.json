@@ -254,8 +254,8 @@
   {
     "name": "SD25-HANG-the-art-not-carried",
     "file": "src/world/sdRealmArt.js",
-    "old": "[31, realmCobbleArt()], [32, realmEdgeArt()], ...hangArt(),",
-    "new": "[31, realmCobbleArt()], [32, realmEdgeArt()],",
+    "old": "[31, realmCobbleArt()], [32, realmEdgeArt()], [56, realmPillarArt()], ...hangArt(),",
+    "new": "[31, realmCobbleArt()], [32, realmEdgeArt()], [56, realmPillarArt()],",
     "tests": [
       "test/sd25_hang.test.js"
     ]

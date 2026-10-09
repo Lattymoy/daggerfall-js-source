@@ -23,6 +23,7 @@
 import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_PILLAR_H, realmToDungeon } from '../net/sdBrain.js';
 import { faces } from './gateModel.js';
 import { SD_HALL_GLOW_RECORD } from './sdHallArt.js';   // AUDIT SD II (L2 F14): the lamps' heads wear the hands' brass glow
+import { pillarVisual } from './sdPillarModel.js';   // SD-LOOK S7: the pillars dressed, inside their squares
 
 /** The realm's own textures (`realmArt`), a pseudo-archive beside the court's. */
 export const SD_REALM_ARCHIVE = 38151;
@@ -33,6 +34,7 @@ export const SD_REALM_DIAL_RECORD = 3;    // the Hour-dial: the Orrery's floor, 
 export const SD_REALM_ARENA_RECORD = 4;   // the Last Moment's floor: SD-LOOK - dark bronze plates laid in rings
 export const SD_REALM_COBBLE_RECORD = 31; // SD-LOOK: the Threshold - the Bay's own street the Hollow swallowed
 export const SD_REALM_EDGE_RECORD = 32;   // SD-LOOK: the gold line along every edge a body could fall from
+export const SD_REALM_PILLAR_RECORD = 56; // SD-LOOK S7: the arena's pillars' basalt, ashlar in courses (world/sdPillarModel.js)
 /** The made block's name and index, and the made location's id (the court's are 'GATECOURT.RDB', 900000, 0x7ffff000). */
 export const SD_REALM_BLOCK = 'SDHOUR.RDB';
 export const SD_REALM_BLOCK_INDEX = 900200;
@@ -357,7 +359,7 @@ export function buildRealmModel() {
   dialInlay(f);   // SD-LOOK: its hours, its ring and its six segments laid in brass, crisp at every distance
   // the Last Moment: the arena, and its four pillars on the diagonals
   realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { bands: SD_ARENA_BANDS });   // SD-LOOK: a face, in rings
-  for (let k = 0; k < 4; k++) pillarQuads(k).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? PILLAR_SIDE_UV : PILLAR_TOP_UV)));
+  for (let k = 0; k < 4; k++) pillarVisual(f, k, PILLAR_RECORDS);   // SD-LOOK S7: clock-towers of basalt and brass inside the law's squares (pillarQuads - the collider's)
   // AUDIT SD II (L2 F14): THE LAMPS the Hour's lights hang from - a brass post, its head alight round the light (the
   // hands' own brass glow), a brass cap; the lights were pools from nowhere 2.4 m over the rims
   for (const p of realmLampFeet()) {
@@ -367,7 +369,7 @@ export function buildRealmModel() {
   }
   return packRealmFaces(f);
 }
-const PILLAR_SIDE_UV = [[0, 0], [0, SD_PILLAR_H / 3], [1, SD_PILLAR_H / 3], [1, 0]];
+const PILLAR_RECORDS = Object.freeze({ stone: SD_REALM_PILLAR_RECORD, brass: SD_REALM_BRASS_RECORD });
 const PILLAR_TOP_UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
 const LAMP_SIDE_UV = [[0, 0], [0, SD_LAMP_H / 3], [0.1, SD_LAMP_H / 3], [0.1, 0]];
 /** AUDIT SD II (L2 F14): a lamp's box about its foot `p` (the realm's frame) - `w` either way across, from y0 to y1 - its
@@ -387,8 +389,8 @@ function lampBoxQuads(p, w, y0, y1, under = false) {
   return out;
 }
 /** THE ARENA'S PILLAR `k` - on the diagonals, SD_PILLAR_R out, a square SD_PILLAR_W across and SD_PILLAR_H tall: its four
- *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out) - one geometry for its draw and
- *  (SD8c) its collider. */
+ *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out) - (SD8c) its collider, and the
+ *  square every face of its dress stands inside (SD-LOOK S7: world/sdPillarModel.js pillarVisual - it was its draw too). */
 function pillarQuads(k) {
   const a = Math.PI / 4 + (k * Math.PI) / 2;
   const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;
@@ -570,8 +572,14 @@ const _hourLit = { cap: 0, data: new Float32Array(0), colors: new Float32Array(0
  *  stands outside each one's reach - every flash went first, and a busy moment put out the lamps nearest the player. */
 export const SD_LIGHTS_CAP = 16;
 const _litKey = new Float64Array(64), _litIdx = new Int32Array(64);
-export function realmLightsWith(lit, extra, eye) {
-  const n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
+/** SD-LOOK S7: whether a lamp (the light list's shape, the dungeon's frame) is one of the arena's - inside its disc. */
+const ARENA_X = SD_REALM_ORIGIN[0] + SD_ARENA.x, ARENA_Z = SD_REALM_ORIGIN[2] + SD_ARENA.z;
+export const arenaLamp = (l) => (l.x - ARENA_X) * (l.x - ARENA_X) + (l.z - ARENA_Z) * (l.z - ARENA_Z) < SD_ARENA.r * SD_ARENA.r;
+/** SD-LOOK S7: realmLightsWith's `dim` - a kept array whose first is the arena's lamps' share of their light
+ *  (scenes/sdArenaWatch.js sdLampDimInto - the Reset's dimming; none, whole): its lamps alone, never the arm's own lights,
+ *  the Hour's (`extra`) or the other stages' lamps. */
+export function realmLightsWith(lit, extra, eye, dim = null) {
+  const dk = dim ? dim[0] : 1, n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
   if (m > H.cap) {
     H.cap = Math.max(m, H.cap * 2, 32);
     H.data = new Float32Array(H.cap * 4); H.colors = new Float32Array(H.cap * 3); H.carried = new Uint8Array(H.cap);
@@ -595,7 +603,8 @@ export function realmLightsWith(lit, extra, eye) {
     const q = sorted ? _litIdx[i - n] : i - n;
     const l = q < extra.length ? extra[q] : lamps[q - extra.length];
     H.data[i * 4] = l.x; H.data[i * 4 + 1] = l.y; H.data[i * 4 + 2] = l.z; H.data[i * 4 + 3] = l.range;
-    H.colors[i * 3] = l.color[0]; H.colors[i * 3 + 1] = l.color[1]; H.colors[i * 3 + 2] = l.color[2];
+    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1;   // SD-LOOK S7: the Reset's dimming, the arena's lamps alone
+    H.colors[i * 3] = l.color[0] * k; H.colors[i * 3 + 1] = l.color[1] * k; H.colors[i * 3 + 2] = l.color[2] * k;
   }
   let v = H.views.get(m);
   if (!v) {

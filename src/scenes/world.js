@@ -320,6 +320,8 @@ import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD
 import { SdSkyRenderer, SD_SKY_STEPS } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';   // SD-LOOK S7: the arena's floor reads the clock, and the sky's word for the fight
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';   // SD-LOOK S7: the Stomp's wall, the hold's curtain
+import { SdPillarPassRenderer } from '../render/sdPillarPass.js';   // SD-LOOK S7: the pillars' dials, their watching hands, their lanterns
+import { sdPillarLook, sdPillarLookAt, sdArenaMarksAt, sdLampDimInto } from './sdArenaWatch.js';   // SD-LOOK S7: the arena watches the Remnant - its hands, its mark, the Reset's dimming
 import { SdRiftRenderer } from '../render/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -23493,6 +23495,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     me: () => (online ? online.name ?? null : null),   // my row of the chart
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
     save: (e, el) => { const w = GATE_SAVES[el]; return w ? savingThrow(w[0], w[1], e) : 100; },   // SD18b: the throw against its Ending's element (the gate's)
+    bodyMarks: () => sdArenaMarksAt(sdFightLink.state(), sdFightLink.now()),   // SD-LOOK S7: each standing body's mark under its blows (WBX4's)
   }) : null;
   /** SD14a (Super-Dungeons.md section 10): ITS VOICE (scenes/sdRemnantVoice.js) - its body and its Echoes heard, off the
    *  fight this page holds: strides, growls, grunts, its wake and its turns, the stun, the release of each blow, a Volley
@@ -23504,8 +23507,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the clock's blows (render/sdArenaGlow.js), the Stomp's walls and, while it holds me, the hold's curtain
    *  (render/sdStompWall.js) - built once, lazily (a failure costs the reads, never the game), off the fight this page
    *  holds; and the sky's word for the same fight (`uClock`). Nothing made a frame. SD-LOOK S9: and the Steps' read - their
-   *  ghosts where a Beat plate or my Crumble pin will return (scenes/sdSteps.js drawPass, the dungeon host's door). */
-  let _sdGlowPass = null, _sdWallPass = null, _sdReadsBroken = false;
+   *  ghosts where a Beat plate or my Crumble pin will return (scenes/sdSteps.js drawPass, the dungeon host's door).
+   *  SD-LOOK S7: and the pillars' watch - their dials' hands on the Remnant, their lanterns, the Reset's dimming
+   *  (render/sdPillarPass.js, scenes/sdArenaWatch.js). */
+  let _sdGlowPass = null, _sdWallPass = null, _sdPillarPass = null, _sdReadsBroken = false;
+  const _sdPillarLook = sdPillarLook(), _sdLampDim = new Float64Array(1);
   const _sdGlowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity }, _sdWalls = sdStompWallRecords(), SD_HELD_WALLS = Object.freeze([SD_HOLD_WALL]);
   const _sdSkyClock = new Float32Array(4);
   const _sdBeacon = [{ x: 0, z: 0, r: 0, k: 0, h: 0, color: null, beacon: true }];   // SD-LOOK S6: the way home's beacon, kept
@@ -23514,10 +23520,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const ghosts = !!modes?.dungeonCtx?.sdStepsDraw?.(proj, view, fog);   // SD-LOOK S9: the Steps' ghosts, the fight or none
     if (!sdFightLink || _sdReadsBroken || modes?.sdRealmSlot?.() == null) return ghosts;
     if (!_sdGlowPass) {
-      try { _sdGlowPass = new SdArenaGlowRenderer(renderer.gl); _sdWallPass = new SdStompWallRenderer(renderer.gl); } catch (e) { _sdReadsBroken = true; console.warn('[sd] the arena\'s reads would not build', e?.message ?? e); return ghosts; }
+      try { _sdGlowPass = new SdArenaGlowRenderer(renderer.gl); _sdWallPass = new SdStompWallRenderer(renderer.gl); _sdPillarPass = new SdPillarPassRenderer(renderer.gl); } catch (e) { _sdReadsBroken = true; console.warn('[sd] the arena\'s reads would not build', e?.message ?? e); return ghosts; }
     }
     const s = sdFightLink.state(), t = sdFightLink.now();
     let drew = _sdGlowPass.draw(proj, view, _sdArenaModel, sdArenaGlowAt(s, t, _sdGlowMemo), fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic);
+    if (_sdPillarPass.draw(proj, view, sdPillarLookAt(s, t, _sdPillarLook, _sdGlowMemo), fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, renderer.lightingLane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) drew = true;   // SD-LOOK S7: the pillars' watch
     const n = sdStompWalls(s, t, _sdWalls);
     if (n > 0 && _sdWallPass.draw(_sdWalls, n, proj, view, fog)) drew = true;
     if (sdArenaHeld() && _sdWallPass.draw(SD_HELD_WALLS, 1, proj, view, fog)) drew = true;
@@ -27166,6 +27173,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     spoilName: (key) => floorPool()?.nameOf(key) ?? null,
     spoilContents: (key) => floorPool()?.contentsOf(key) ?? null,
     takeSpoil: (key) => !!floorPool()?.pick(key),
+    sdLampDim: () => (sdFightLink ? sdLampDimInto(sdFightLink.state(), sdFightLink.now(), _sdLampDim) : null),   // SD-LOOK S7: the Reset's dimming of the arena's lamps (worldModes.js realmLightsWith), kept
     sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
       const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : NO_SD_LIGHTS;
       const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);   // SD18b: the Ending's stone in the hall

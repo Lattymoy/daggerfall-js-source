@@ -8,7 +8,8 @@
 //     lands (sdTelegraphShapes - the gate's telegraph pass over the arena, render/gateTelegraph.js): the Stomp's disc and
 //     then its ring rolling out; the Hour-Hand's half-circle as it gathers with its beam standing where it begins, then
 //     the beam sweeping; the Gear Volley's marks; the Hour's own over the whole floor; the Volley's brass burning where
-//     it fell.
+//     it fell. SD-LOOK S7: and under them, always, each standing body's mark - a ring and a chevron where it faces (the
+//     host's `bodyMarks`, scenes/sdArenaWatch.js).
 //   HEARD: each blow's wind-up at its word and its landing (DAGGER.SND's own, pitched for a colossus of brass).
 //   JUDGED HERE, on my own feet (net/sdStrike.js sdBlowVerdict): each part of each blow once, a share of my own health
 //     and its base; the Stomp's ring on the ground alone; the Hand outrun or shaded by a pillar; the burning brass a bite
@@ -192,9 +193,10 @@ export function sdBlowsInFlight(s) {
  * dungeon context's door, `say` a line, `me()` my name on the relay (my row of the chart), `hudHidden()` the HUD's hide.
  * @param {{ gl?: any, audio?: any, link: any, feet?: () => (number[]|null), grounded?: () => boolean, player?: () => any,
  *   strike?: (dmg: number, how: any) => void, say?: (t: string, everyone?: boolean, key?: string) => void, me?: () => (string|null), hudHidden?: () => boolean,
- *   save?: (e: any, el: string) => number }} deps - SD18b: `save(entity, el)` the share (0-100) a strike in element `el` lands
+ *   save?: (e: any, el: string) => number, bodyMarks?: () => readonly any[] }} deps - SD18b: `save(entity, el)` the share (0-100) a strike in element
+ *   `el` lands; SD-LOOK S7: `bodyMarks()` the bodies' marks this frame (scenes/sdArenaWatch.js sdArenaMarksAt), laid under its blows
  */
-export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100 }) {
+export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100, bodyMarks = () => NONE }) {
   let pass = null, passTried = false;
   let feetOver = false;   // AUDIT SD III (F8): my feet on or over a pillar's top this frame
   /** each blow by its number: what of it has been judged, whether it is done, heard and said */
@@ -375,12 +377,15 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     warm() {
       if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[sd] the telegraph would not build', e?.message ?? e); pass = null; } }
     },
-    /** The telegraphs over the arena's floor, in the dungeon arm's world pass. Answers whether any drew. */
+    /** The telegraphs over the arena's floor, in the dungeon arm's world pass - SD-LOOK S7: the bodies' marks first, under
+     *  them (the court's WBX4 mark, whether or not a blow is in flight). Answers whether any drew. */
     drawPass(proj, view, eye, seconds, fog = null) {
-      if (!shapes.length) return false;
+      const under = bodyMarks();
+      if (!shapes.length && !under.length) return false;
       if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[sd] the telegraph would not build', e?.message ?? e); pass = null; } }
       if (!pass) return false;
       let drew = false;
+      for (let i = 0; i < under.length; i++) { pass.draw(under[i], proj, view, eye, seconds, fog, SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR); drew = drew || pass.drawn > 0; }
       for (const sh of shapes) { pass.draw(sh, proj, view, eye, seconds, fog, SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR); drew = drew || pass.drawn > 0; }
       return drew;
     },
