@@ -175,6 +175,7 @@ import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice, lotHasBoat, lotAllBoats, CREDIT_BOAT_ALONE } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
+import { chapterRollWindow } from '../ui/chapterRoll.js';   // CHAP5a: the hall's roll, the shelf's first book
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
@@ -3041,6 +3042,10 @@ export function createWorldModes(host) {
    *  ten draws, minted lazily per shelf - the same lazy-per-activation
    *  idiom the shop shelves stock by - and a pick opens the reader on
    *  the id (BookShelf_OnItemPicked, :91-96). */
+  /** CHAP5a (Chapters-Arc 9: "the hall's roll: the seats' holders, named on a board inside each hall" - a DFU hall has
+   *  no board; its shelf is its reading): online, the hall's chapter's roll, off the chapter sheet (the host's) - its
+   *  title and lines, or null offline, for a chapter the sheet does not name, a hidden guild's, no guild. */
+  const chapterRollOf = (/** @type {any} */ guild) => (guild ? host.chapterRoll?.(guild.factionId) ?? null : null);
   function openBookshelf(shelf, b) {
     const dict = townTalk?.factionDict ?? null;
     const bf = b.factionId ? (dict?.get(b.factionId) ?? null) : null;
@@ -3052,19 +3057,22 @@ export function createWorldModes(host) {
     const membership = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;
     const access = bookshelfAccess({ buildingType: b.buildingType, guild, membership });
     if (!access.allowed) {
-      interiorOverlay = new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly)
+      const roll = chapterRollOf(guild);   // CHAP5a: refused the shelf, a stranger to the guild reads its roll alone
+      interiorOverlay = roll ? chapterRollWindow(roll) : new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly)
       return;
     }
+    const roll = chapterRollOf(guild);   // CHAP5a: the shelf's first book
     shelf.books ??= populateBookshelf();
     if (!listPickerArtLoaded()) return;   // no art, no window (the U8 idiom)
     let picker = null;
     picker = new ListPickerWindow({
-      items: bookshelfTitles(shelf.books),
+      items: roll ? [roll.title, ...bookshelfTitles(shelf.books)] : bookshelfTitles(shelf.books),
       onPick: (i) => {
         // PopWindow then OpenBook + the reader push (:93-95): the
         // picker yields, the reader arrives on the fetch.
         if (interiorOverlay === picker) interiorOverlay = null;
-        _openBookById({ message: shelf.books[i] });
+        if (roll && i === 0) { interiorOverlay = chapterRollWindow(roll); return; }   // CHAP5a
+        _openBookById({ message: shelf.books[roll ? i - 1 : i] });
       },
       onCancel: () => { if (interiorOverlay === picker) interiorOverlay = null; },
     });

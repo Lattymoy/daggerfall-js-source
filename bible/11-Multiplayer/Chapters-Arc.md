@@ -18,8 +18,9 @@ rank stopped at 7 - sections 3.5 and 6, its record at the foot); CHAP4b BUILT (2
 held at 7 online, a seat's rank at its chapter's halls, the seats said - the same sections, its record at the foot);
 CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behind `CHAPTER_TITLES`, the relay's
 `world179` first - section 6, its record at the foot); CHAP4d BUILT (2026-10-09, Mac: "Continue"; the Master's Focus on
-its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot); CHAP5 (the
-living world reads the sheet) is next. Merged with main
+its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot). CHAP5a BUILT
+(2026-10-09, the same word; the sheet carries the seats' holders, and each hall's shelf names them - sections 5.3 and 9,
+its record at the foot); CHAP5b (the hall's people and the chapters' lines) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08): the arc's migrations are `0093_npc_roll`
 to `0098_npc_seats` and its service `acct97` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -531,7 +532,9 @@ writs ("The Fighters Guild here is Thriving (Strength 74)", `chapterLineOf`), a 
 BUILT (CHAP3c): the playing tab holds the sheet (`src/net/chapterSheet.js` createChapterSheet over `accountRoll.list`),
 read at a town's entry and again once ten minutes old (`SHEET_KEPT_MS`, the seats' list's beat), one read at a time, a
 refusal that is the account's stopping it for the page - and forgetting what it held, so every hall is DFU's own again
-(AUDIT CHAP3 C2); its readers ask it synchronously and are answered as it last stood.
+(AUDIT CHAP3 C2); its readers ask it synchronously and are answered as it last stood. BUILT (CHAP5a): each chapter's
+`seats` - `[{ seat, name }]`, its Master first, then its officers by their tenure, each by the name its character carries
+now - and the tab keeps them as the roll reads them (`chapterOf`). Its Season's event and standing are CHAP6's.
 
 ## 6. The seats - ranks 8 and 9 (CHAP4)
 
@@ -694,7 +697,14 @@ classic skin, the row off, the service unreachable - the living world is exactly
 - **Their words**: `systems/livingWorld/lines.js` gains the chapter's lines, keyed by the event and its standing ("They say
   the Wayrest Mages are split over who leads them"); the rumour mill (`systems/rumorMill.js`) carries the Season's
   chapter news.
-- **The hall's roll**: the seats' holders, named on a board inside each hall.
+- **The hall's roll**: the seats' holders, named on a board inside each hall. BUILT (CHAP5a), NARROWED: a DFU guild hall
+  has no board, and placing one in DFU's own block geometry is a decor change of its own; its BOOKSHELF is the hall's
+  reading (DFU's `DaggerfallBookshelf`, as the palace's shelf is the Hall of Records), so the roll is the shelf's first
+  book - "The Roll of the Fighters Guild, Anticlere": the chapter's state (the board's line), "Master of the chapter:
+  Alda.", "Its officers: Bryn, Cael and Dara." (or the seats empty), worded without gender (`npcChapterLaw.js`
+  chapterRollTitle, chapterRollLines; `ui/chapterRoll.js`). The roll is public, so a stranger to the guild, refused DFU's
+  shelf, reads the roll alone. A temple's shelf carries its chapter's roll too. Online only, off the sheet the tab holds
+  (5.3): offline, for a hidden guild, a chapter the sheet does not name, the shelf is DFU's.
 - **What does not change**: a resident's regard. Being a chapter's Master may warm a member of that hall to you, on your
   own machine, as any `relations.js` event does; it never gates anything the service keeps (law 6).
 
@@ -743,7 +753,7 @@ DECIDED.
   chapter's event, event_state JSON and doctrine (CHAP6).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
-  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `standings` (a chapter's Merit) still drawn; the hall writs
+  CHAP2 E1, a developer's); `list` BUILT (CHAP3b, the sheet; CHAP5a its seats' holders); `focus` and `history` BUILT (CHAP4d, a Master's Focus and a region's Chronicle); `standings` (a chapter's Merit) still drawn; the hall writs
   ride the board's own writ endpoints, and (CHAP3a) a member's own writ and the account's Merit lines ride its list.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
@@ -778,7 +788,8 @@ DECIDED.
    BUILT (2026-10-08): the book held at 7 online, a seat's rank at its chapter's halls, the seats said (3.5, 6). CHAP4c
    BUILT (2026-10-08): the seats' titles on the token, behind `CHAPTER_TITLES` (6). CHAP4d BUILT (2026-10-09): the
    Master's Focus on the hall writs, the Chronicle read in the Hall of Records (6).
-5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
+5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll. CHAP5a BUILT (2026-10-09): the
+   sheet's seats, the hall's roll on its shelf (5.3, 9).
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
@@ -794,12 +805,14 @@ host online runs in - the interiors and the dungeons are that same page and that
   book as it always did, and online the reputation it reads is the Roll's. CHAP3c BUILT: the hall's chapter's band
   on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline). CHAP4b
   BUILT: the hall's services read the book seated (the host's `chapterSeatRank`), its review the host's ceiling
-  (`rollRankCeiling`, 7 while the Roll holds).
+  (`rollRankCeiling`, 7 while the Roll holds). CHAP5a BUILT: the hall's shelf - its chapter's roll first (the host's
+  `chapterRoll`), and alone for a stranger the shelf refuses.
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5). CHAP3c BUILT: the sheet the playing tab holds (`net/chapterSheet.js`), asked at a town's entry and handed to
   the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
   rank where the character stands (`seatRankHere` - the hall's and the paid teleport's). CHAP4d BUILT: the board's Focus
-  door (`setFocus`) and the palace's Hall of Records reading its region's chapters' Chronicle.
+  door (`setFocus`) and the palace's Hall of Records reading its region's chapters' Chronicle. CHAP5a BUILT: the hall's
+  roll off the sheet the tab holds (`chapterRoll`, the politic region, as `chapterStrength`).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll and no sheet: flagged by name, DFU's guilds and DFU's
   prices as today.
 - `scenes/dungeonContext.js` - no hall, so no sheet; the receipts a dungeon's foes give are the relay's already: none.
@@ -1198,3 +1211,21 @@ The fourth slice's last; section 6 carries the law and what building it narrowed
   dead. Pins moved: CHAP3b's board line (a block now), SEASON1's and HERALDRY-SHOWN's Hall read and window; eight
   mutants re-aimed by content (AUDIT CHAP2's post count and top slot, CHAP2's own dice, CHAP3b's switch and board line,
   RECORDS' empty book and read, HERALDRY-SHOWN's Roll unpassed).
+
+## CHAP5a - the hall's roll, as built (2026-10-09, Mac: "Continue")
+
+The fifth slice's first; sections 5.3 and 9 carry the law and what building it narrowed (BUILT, CHAP5a).
+
+- **The service.** `server-account/src/npcChapters.js` chapterSheet: each chapter's `seats`, `[{ seat, name }]`, off
+  `npc_chapter_seats` and the characters' names now - its Master first, then its officers by `since`. No migration;
+  still `acct97`.
+- **The law.** `src/net/npcChapterLaw.js`: `chapterRollSeatsOf` (the seats as the roll reads them: the Master's first,
+  at most the chapter's seats, a name at the realm's cap), `chapterRollTitle`, `chapterRollLines`.
+- **The client.** `src/net/chapterSheet.js`: the seats kept, `chapterOf(faction, region)` a copy; `src/ui/chapterRoll.js`:
+  the roll as a book (the Hall of Records' face); `src/scenes/worldModes.js` openBookshelf: the roll the shelf's first
+  book, and alone for a stranger the shelf refuses; `src/scenes/world.js`: the host's `chapterRoll`.
+- **Pins.** `test/chap5a_roll.test.js`, 6 tests: the seats as the roll reads them (the order, the caps, the guards); the
+  roll's words (the title's guards, each line, the list); the book; the sheet the tab holds (the seats kept, a copy,
+  forgotten at a stop); the service's seats (its Master first, its officers by tenure, named as now, never a hidden
+  guild's, another region's its own); the wiring. `tools/mutants/chap5a.json`: 35 mutants, all dead. Pins moved: CHAP3b's
+  sheet (its seats), BS1's shelf (the books after the roll, the refusal); CHAP3c's sheet-key mutant re-aimed by content.

@@ -680,7 +680,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
@@ -27382,6 +27382,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // CHAP4b: the rank the playing character's seat gives it at a hall of this guild here (the politic region, as the
     // sheet's); and the highest rank DFU's review gives while the Roll holds - 8 and 9 are seats (Chapters-Arc 3.5)
     chapterSeatRank: (faction) => seatRankHere(faction),
+    // CHAP5a (Chapters-Arc 9): the hall's roll - its chapter here (the politic region, as the sheet's), its title and
+    // lines off the sheet; null offline, for a chapter the sheet does not name, for a hidden guild
+    chapterRoll: (faction) => {
+      const px = playerTravelPixel();
+      const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+      const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
+      const title = c ? chapterRollTitle(faction, region) : null;
+      return title ? { title, lines: chapterRollLines(faction, c) } : null;
+    },
     rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)

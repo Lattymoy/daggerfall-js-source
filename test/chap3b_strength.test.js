@@ -220,14 +220,14 @@ test('CHAP3b the sheet: every chapter confirmed now, its Strength and band, afte
   const r = await s.call('/v1/chapters/list', {}, s.who.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual(r.body, { week: week + 1, chapters: [
-    { f: 40, region: 17, strength: 47, band: 'steady' },
-    { f: 41, region: 21, strength: 60, band: 'steady' }, { f: 368, region: 21, strength: 47, band: 'steady' },
-  ] });
+    { f: 40, region: 17, strength: 47, band: 'steady', seats: [] },
+    { f: 41, region: 21, strength: 60, band: 'steady', seats: [] }, { f: 368, region: 21, strength: 47, band: 'steady', seats: [] },
+  ] });   // PIN MOVED (CHAP5a): and each chapter's seats' holders - none here
   s.raw.prepare('UPDATE npc_chapters SET strength = 91 WHERE faction = 41').run();
   s.raw.prepare('DELETE FROM npc_chapters WHERE faction = 368').run();   // a chapter no Turning has settled yet
   assert.deepEqual((await s.call('/v1/chapters/list', {}, s.who.secret)).body.chapters.slice(1), [
-    { f: 41, region: 21, strength: 91, band: 'ascendant' }, { f: 368, region: 21, strength: 50, band: 'steady' },
-  ]);
+    { f: 41, region: 21, strength: 91, band: 'ascendant', seats: [] }, { f: 368, region: 21, strength: 50, band: 'steady', seats: [] },
+  ]);   // PIN MOVED (CHAP5a): the seats
   assert.deepEqual(await chapterSheet({ db: s.env.DB, nowS: _now }, { id: s.who.id }, { CHAPTERS_OPEN: 'off' }), { error: 'chapters-closed' }, 'the module\'s own door');
   const shut = await stand({ open: 'dev' });
   const r2 = await shut.call('/v1/chapters/list', {}, shut.who.secret);

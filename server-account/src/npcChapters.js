@@ -256,11 +256,22 @@ export async function chapterSheet({ db, nowS }, player, env) {
   const chapters = (await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));
   const { results = [] } = await db.prepare('SELECT faction, region, strength FROM npc_chapters').all();
   const held = new Map(results.map((/** @type {any} */ r) => [`${r.faction}|${r.region}`, Number(r.strength)]));
+  // CHAP5a (Chapters-Arc 5.3, 9): and each chapter's seats' holders, by the names their characters carry now - the
+  // Master's first, then its officers by their tenure (the hall's roll); a hidden guild's chapters are not on the sheet
+  const { results: seatRows = [] } = await db.prepare(`SELECT s.faction, s.region, s.seat, c.name FROM npc_chapter_seats s
+    JOIN realm_characters c ON c.id = s.char_id ORDER BY s.seat = 'master' DESC, s.since, s.char_id`).all();
+  /** @type {Map<string, { seat: string, name: string }[]>} */
+  const seats = new Map();
+  for (const r of seatRows) {
+    const k = `${r.faction}|${r.region}`;
+    if (!seats.has(k)) seats.set(k, []);
+    seats.get(k)?.push({ seat: String(r.seat), name: String(r.name) });
+  }
   return {
     week: meritWeekOf(nowS),
     chapters: chapters.map((c) => {
       const strength = held.get(`${c.faction}|${c.region}`) ?? STRENGTH_START;
-      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band };
+      return { f: c.faction, region: c.region, strength, band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [] };
     }),
   };
 }

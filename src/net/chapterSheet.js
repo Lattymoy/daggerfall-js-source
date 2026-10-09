@@ -13,7 +13,12 @@
 // service again in the background; one read at a time; a refusal that is
 // the account's (the Chapters shut to it) stops the asking for the page.
 // Online only: offline there is no sheet, and every hall is DFU's.
+//
+// CHAP5a (2026-10-09, Mac: "Continue"; Chapters-Arc 9): and each chapter's seats' holders, kept as the roll reads them
+// (npcChapterLaw.js chapterRollSeatsOf) - `chapterOf(faction, region)` the hall's roll's read.
 // ═══════════════════════════════════════════════════════════════════
+
+import { chapterRollSeatsOf } from './npcChapterLaw.js';   // CHAP5a: the seats as the roll reads them
 
 /** How long a read of the sheet stands before the next is asked (the seats' list's own beat). */
 export const SHEET_KEPT_MS = 10 * 60_000;
@@ -22,11 +27,11 @@ export const SHEET_STOPS = Object.freeze(['chapters-closed', 'no-session', 'auth
 
 /**
  * THE SHEET. `refresh()` asks the service where the last read is stale (answers whether it asked); `strengthOf(faction,
- * region)` the chapter's Strength as last read, or null.
+ * region)` the chapter's Strength as last read, or null; `chapterOf(faction, region)` its `{ strength, seats }` (CHAP5a).
  * @param {{ door: { list: () => Promise<any> }, nowMs?: () => number }} o
  */
 export function createChapterSheet({ door, nowMs = () => Date.now() }) {
-  /** @type {Map<string, number>} */
+  /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[] }>} */
   let strengths = new Map();
   let readAt = -Infinity;
   let busy = false;
@@ -37,9 +42,9 @@ export function createChapterSheet({ door, nowMs = () => Date.now() }) {
     readAt = nowMs();
     Promise.resolve().then(() => door.list()).then((r) => {
       if (r?.ok && Array.isArray(r.data?.chapters)) {
-        /** @type {Map<string, number>} */
+        /** @type {Map<string, { strength: number, seats: { seat: string, name: string }[] }>} */
         const next = new Map();
-        for (const c of r.data.chapters) if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set(`${c.f}|${c.region}`, c.strength);
+        for (const c of r.data.chapters) if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats) });
         strengths = next;
       } else if (SHEET_STOPS.includes(r?.error)) {
         // AUDIT CHAP3 C2: and what it held forgotten - the Chapters shut to the account, every hall is DFU's own again
@@ -55,7 +60,13 @@ export function createChapterSheet({ door, nowMs = () => Date.now() }) {
     strengthOf(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
       refresh();
       const s = strengths.get(`${faction}|${region}`);
-      return s === undefined ? null : s;
+      return s === undefined ? null : s.strength;
+    },
+    /** CHAP5a: the chapter as the sheet last said it - `{ strength, seats }`, a copy - or null; asked as strengthOf is. */
+    chapterOf(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
+      refresh();
+      const s = strengths.get(`${faction}|${region}`);
+      return s === undefined ? null : { strength: s.strength, seats: s.seats.map((x) => ({ ...x })) };
     },
     get stopped() { return stopped; },
   };

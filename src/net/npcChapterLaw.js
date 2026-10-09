@@ -892,3 +892,36 @@ export function chapterChronicleLine(/** @type {any} */ row, /** @type {number |
   const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';
   return `${Number.isSafeInteger(row?.week) ? `${chronicleWhen(row.week, zero)}, ` : ''}${who} ${did}.`;
 }
+
+// ─── CHAP5a: THE HALL'S ROLL (Chapters-Arc 9) ───────────────────────
+// The seats' holders named inside each hall of the chapter, off the chapter sheet (5.3): the hall's own bookshelf's first
+// book, which a stranger to the guild may read too. Worded without gender; never a hidden guild's (the sheet names none).
+
+/** The most of a name the roll writes - the realm's own cap (server-account/src/realm.js REALM_NAME_MAX). */
+export const CHAPTER_ROLL_NAME_MAX = 32;
+/** A sheet's seats as the roll reads them, `[{ seat, name }]`: the Master's first, then the officers, each a known seat
+ *  with a name - never more than the chapter has seats; anything else dropped. */
+export function chapterRollSeatsOf(/** @type {unknown} */ seats) {
+  if (!Array.isArray(seats)) return [];
+  const ok = seats.filter((s) => typeof s?.name === 'string' && s.name.trim())   // a seat of no known kind is neither list's
+    .map((s) => ({ seat: String(s.seat), name: String(s.name).trim().slice(0, CHAPTER_ROLL_NAME_MAX) }));
+  return [...ok.filter((s) => s.seat === 'master').slice(0, CHAPTER_SEATS.master), ...ok.filter((s) => s.seat === 'officer').slice(0, CHAPTER_SEATS.officer)];
+}
+/** The roll's title: "The Roll of the Fighters Guild, Anticlere" - null for a hidden guild, no guild, no region. */
+export function chapterRollTitle(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
+  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;
+  return `The Roll of the ${hallPosterName(/** @type {number} */ (faction))}, ${REGION_NAMES[/** @type {number} */ (region)]}`;
+}
+const namesListed = (/** @type {string[]} */ n) => (n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`);
+/** The roll's lines: the chapter's state (the board's chapterLineOf), its Master, its officers - or the seats empty.
+ *  `chapter` `{ strength, seats }` as the sheet holds it. */
+export function chapterRollLines(/** @type {unknown} */ faction, /** @type {any} */ chapter) {
+  const seats = chapterRollSeatsOf(chapter?.seats);
+  const master = seats.find((s) => s.seat === 'master');
+  const officers = seats.filter((s) => s.seat === 'officer').map((s) => s.name);
+  return [
+    ...(Number.isFinite(chapter?.strength) ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`] : []),
+    master ? `Master of the chapter: ${master.name}.` : 'The Master\'s seat stands empty.',
+    officers.length ? `${officers.length > 1 ? 'Its officers' : 'Its officer'}: ${namesListed(officers)}.` : 'No officer\'s seat is held.',
+  ];
+}
