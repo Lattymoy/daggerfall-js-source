@@ -12,7 +12,7 @@
 //   ?lane=off        the classic set (no enhanced lighting)      ?nopanel the panel hidden (probes)
 //   ?x=&y=&z=&yaw=&pitch=   an exact eye (the dungeon's frame, metres; degrees)
 //   ?rx=&ry=&rz=     an exact eye in the realm's frame
-//   ?fight=pulse&pt=<s since its landing> | reset&rt=<s of 8> | end | break | live&ft=<share>   the fight's clock as
+//   ?fight=stomp&st=<s since its landing> | pulse&pt=<s since its landing> | reset&rt=<s of 8> | end | break | live&ft=<share>   the fight's clock as
 //                    the arena's floor and the sky read it (render/sdArenaGlow.js), from a made fight state
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
@@ -27,6 +27,7 @@ import { SdMotesRenderer } from '../render/sdMotes.js';
 import { SD_HOUR_GRADE } from '../world/sdLook.js';
 import { SdVeilRenderer, SD_VEIL_MODE } from '../render/sdVeil.js';
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';
+import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords } from '../render/sdStompWall.js';
 import { SD_BLOWS } from '../net/sdRemnant.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
 import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
@@ -115,6 +116,7 @@ const remnant = createSdRemnant({ renderer, link: () => null, ending: sdMarksOf(
 remnant.stand({ dynamicDraws });
 const WAY_BACK_HOLLOW = { floor: riftCentreY(SD_WAY_BACK_SIZE) };
 const arenaGlow = new SdArenaGlowRenderer(gl);
+const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords();
 const ARENA_MODEL = (() => { const m = identity(), c = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock });
 wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws });
@@ -201,7 +203,8 @@ function labFight() {
   const f = params.get('fight'), t = clock * 1000, op = t - 300_000, ends = op + 900_000;
   if (!f) return null;
   const s = { fi: 1, op, ends, ph: 1, rem: { atk: null }, ec: [], clk: null, su: -Infinity, fell: null, lost: null };
-  if (f === 'pulse') s.clk = { a: SD_BLOWS.pulse.id, at: t - Number(params.get('pt') ?? 0.2) * 1000, i: 7 };
+  if (f === 'stomp') s.rem.atk = { a: SD_BLOWS.stomp.id, at: t - Number(params.get('st') ?? 0.3) * 1000, x: 0, z: 0, i: 6 };
+  else if (f === 'pulse') s.clk = { a: SD_BLOWS.pulse.id, at: t - Number(params.get('pt') ?? 0.2) * 1000, i: 7 };
   else if (f === 'reset') s.rem.atk = { a: SD_BLOWS.reset.id, at: t - Number(params.get('rt') ?? 4) * 1000 + SD_BLOWS.reset.windup, i: 8 };
   else if (f === 'end') s.clk = { a: SD_BLOWS.end.id, at: t + 1000, i: 9 };
   else if (f === 'break') s.ec = [{ h: 100 }, { h: 100 }];
@@ -317,6 +320,7 @@ function frame(now) {
     if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
     if (halo.draw(proj, view, wayBack.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
     if (arenaGlow.draw(proj, view, ARENA_MODEL, sdArenaGlowAt(labFight(), clock * 1000, _glowMemo), courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
+    if (stompWall.draw(_walls, sdStompWalls(labFight(), clock * 1000, _walls), proj, view, courtFogNow())) renderer.markForeignPass();
     if (motes.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3] ?? h)) renderer.markForeignPass();
   }
   renderer.resolveFrame();

@@ -513,5 +513,32 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-a-fallen-Echo-wall",
+    "file": "src/render/sdStompWall.js",
+    "old": "if (ec[i].h > 0 && rolling(ec[i].atk, t, out[n])) n++;",
+    "new": "if (rolling(ec[i].atk, t, out[n])) n++;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-wall-never-fading",
+    "file": "src/render/sdStompWall.js",
+    "old": "w.k = u > 0.8 ? Math.max(0, (1 - u) / 0.2) : 1;",
+    "new": "w.k = 1;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-wall-lip-dropped",
+    "file": "src/render/sdStompWall.js",
+    "old": "  if (v > 0.86) k = 1.25;\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

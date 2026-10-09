@@ -595,3 +595,28 @@ test('SD-LOOK THE RIM\'S NUMERALS COUNT THE RESET (S7, the shader): I lights fir
   assert.ok(flood(10) > 0.5, 'inside the front: flooded');
   assert.ok(flood(4) < 0.3, 'past the front: dark still (the core\'s faint green)');
 });
+
+import { SD_STOMP_WALL, SD_STOMP_WALL_FS, sdStompWalls, sdStompWallRecords, sdStompWallVertices } from '../src/render/sdStompWall.js';
+import { stompRingAt } from '../src/net/sdRemnant.js';
+
+test('SD-LOOK THE STOMP\'S RING STANDS AS A WALL (S7): while a Stomp rolls - the Remnant\'s and each living Echo\'s - a wall stands at the very front the law strikes (stompRingAt), fading over its roll\'s last fifth; none before it lands or after; a fallen Echo stands none; banded light rising to a bright lip; the strip closed all round (mutants: a fallen Echo\'s wall; never fading; the lip dropped)', () => {
+  const t = 3_000_000, S = SD_BLOWS.stomp, out = sdStompWallRecords();
+  const atk = { a: S.id, at: t, x: 2, z: -3, i: 1 };
+  const s = fightAt(t, { rem: { atk }, ec: [{ h: 0, atk: { ...atk, i: 2 } }, { h: 5, atk: { ...atk, x: -4, i: 3 } }] });
+  assert.equal(sdStompWalls(s, t - 1, out), 0, 'not before it lands');
+  assert.equal(sdStompWalls(s, t + 400, out), 2, 'the Remnant\'s and the living Echo\'s');
+  assert.deepEqual([out[0].x, out[0].z, out[0].r, out[0].k], [2, -3, stompRingAt(atk, t + 400), 1]);
+  assert.equal(out[1].x, -4, 'the living Echo\'s, never the fallen one\'s');
+  sdStompWalls(s, t + S.active * 0.9, out);
+  assert.ok(Math.abs(out[0].k - 0.5) < 1e-9, 'fading over its last fifth');
+  assert.equal(sdStompWalls(s, t + S.active + 1, out), 0, 'rolled out');
+  assert.equal(sdStompWalls(fightAt(t, { rem: { atk }, fell: { at: t } }), t + 400, out), 0, 'fallen: none');
+  const f = glslFunctions(SD_STOMP_WALL_FS, { uColor: [1, 1, 1], uK: 1, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 0, 0], vWorld: [0, 0, 0], o: [0, 0, 0, 0] });
+  const at = (v) => { f.globals.vP = [0.3, v]; f.main(); return f.globals.o[0]; };
+  const body = [0.05, 0.3, 0.6, 0.8].map(at);
+  assert.ok(body.every((k) => Math.abs(k * 4 - Math.round(k * 4)) < 1e-9), `banded: ${body}`);
+  assert.ok(body[3] >= body[0] && at(0.95) > 1, 'rising to its bright lip, over the body\'s brightest');
+  const v = sdStompWallVertices();
+  assert.equal(v.length, SD_STOMP_WALL.segs * 12);
+  assert.ok(v.includes(0) && v.includes(1), 'all round');
+});
