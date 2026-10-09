@@ -239,6 +239,41 @@ session is refused (403, no actions: write); an edit to the description
 is the door. `test/rel7_renotes.test.js` (3), `tools/mutants/rel7.json`
 (15, all dead).
 
+**REL8 (2026-10-09, Mac: "Let's officially start numbering updates
+beginning with 0.0.1"): EVERY MERGE TO MAIN IS A NUMBERED UPDATE.** The
+player's number is MAJOR.MINOR.PATCH, and it is not the installer's.
+MAJOR.MINOR is the line, `scripts/updateLine.mjs` (`0.0`), written by
+hand; PATCH is derived by `scripts/updateNumber.mjs`: the commit on main's
+first-parent history whose diff last changed the line (`git log -G`, a
+merge read against its first parent) is the line's update 1, and each
+first-parent commit after it the next. So the merge that brought the line
+is Update 0.0.1 whatever merged before it, each merge after is the next
+(one merge, one update, however many commits it carries; a commit pushed
+to main is one too, as it is a release, REL3), nothing is bumped by hand
+and no two branches conflict on it; a new line (`0.1`, `1.0`) is a change
+to that one declaration, and the merge carrying it is its `.1` - an edit
+to the file's comments moves nothing. It cannot be REL3's version: the
+updater compares installer versions and never takes a lower one
+(`allowDowngrade: false`), and every installed app is past 0.1.7000 - so
+the installers keep `app-v0.1.<count>` and the update rides beside it. A
+clone with no history cannot count it and says so (null - CI's depth-1
+checkout would count from its cut): the site's production checkout is
+full-depth (`deploy.yml`), and the release derives it once, in the
+`version` job, digits only, and TELLS every leg (`DFO_UPDATE`) and the
+publish job. Where it shows: `scripts/buildTag.mjs` stamps it beside the
+commit (`src/buildTag.js` UPDATE, committed null); the pause window's
+version line leads with it and keeps the commit for a report
+(`Daggerfall Online 0.0.1 (<sha>)`, the commit alone where a build cannot
+know it - Port-Ledger A's version-line row); the About pane has its row;
+the release is named `Update 0.0.1` (its tag the installer's, which the
+updater compares); the launcher's news reads the name back
+(`launcherState.cjs` updateOfName - any other name is no update) and
+heads that release's notes with it. Not moved: the launcher's own update
+prompts ("Restart to Update (v0.1.7190)") and the site's new-build notice
+still name the installer's version and the commit. `test/rel8_updates.test.js`
+(7, over git histories the test makes - this checkout is shallow, as CI's
+are), `tools/mutants/rel8.json` (21: 19 dead, 2 equivalent as recorded).
+
 
 `.github/workflows/release-desktop.yml` cuts a release through any
 of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch

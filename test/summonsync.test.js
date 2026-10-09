@@ -44,6 +44,9 @@ const scoped = (state) => new Proxy(state, {
   set: (t, k, v) => { t[k] = v; return true; },
 });
 const mount = (body, state) => new Function('__s', `with (__s) { ${body} }`)(scoped(state));
+/** DESYNC-ZERO: the room's reader-side allowance for one owner's loose stands (dungeonContext.js LOOSE_PUPPETS_MAX) - a
+ *  Greater Giant's call of ten stands whole; CELL_LOOSE_PUPPETS (the wire's, four) is its floor. */
+const LOOSE_PUPPETS_MAX = 24;
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 const QUEST = 'M0B00Y16';
@@ -74,7 +77,7 @@ function side(self, { layout = [], own = [], authority = true } = {}) {
     opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: layout.length, foes, _authority: authority, _ctxDead: false, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownGen: 0, _ownPups: new Map(), _ownPending: new Map(), _ownOwners: new Map(), _ownPendLoose: new Set(), _ownAdopted: new Map(), _ownKept: new Map(),
-    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
+    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, LOOSE_PUPPETS_MAX, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
     validFoeRecord, validQuestTags, validLooseSeqs, companionNames, questMarkerYields, GENDER_BIT: ['male', 'female'],   // PIN MOVED (AUDIT WK-U3, 2026-10-01): the own lane reads companions' names beside their places
     _sharedFoe: () => false, fightN: () => 1, canStandFoe: () => true,
     applyFoeRecord: (f, r) => { if (r.f) f.ai.feet = [...r.f]; if (Number.isFinite(r.h)) f.entity.health = r.h; if (r.d === 1) f.dead = true; f._pup = { feet: [...(r.f ?? f.ai.feet)], yaw: r.y ?? 0 }; },
@@ -149,14 +152,15 @@ test('SUMMON-SYNC: my loose stands past the run ride the own lane named in `lf` 
 });
 
 test('SUMMON-SYNC: anyone in the room stands my loose stands - a stranger to my party too - CELL_LOOSE_PUPPETS an owner, a quest\'s allowance apart; the party\'s quest stays the party\'s; a number named nowhere, or junk in `lf`, stands nothing; a full frame takes down what it no longer lists', async () => {
-  const six = Array.from({ length: 6 }, (_, k) => loose({ ai: { feet: [k, 0, 1], yaw: 0, moving: false, target: null } }));
+  const six = Array.from({ length: LOOSE_PUPPETS_MAX + 2 }, (_, k) => loose({ ai: { feet: [k, 0, 1], yaw: 0, moving: false, target: null } }));
   const vamp = questFoe('_vampire_');
   const owner = side('aaa-0001', { own: [...six, vamp] });
   const frame = owner.ownFrame(true);
   const bob = side('bob-0005');   // no party of the owner's
   assert.equal(bob.applyOwnFrame('aaa-0001', frame), true);
   await tick();
-  assert.equal(bob.built.length, CELL_LOOSE_PUPPETS, `four of the six - the cell's allowance (${CELL_LOOSE_PUPPETS})`);
+  assert.equal(bob.built.length, LOOSE_PUPPETS_MAX, `the room's allowance (${LOOSE_PUPPETS_MAX}) of ${six.length}`);
+  assert.ok(LOOSE_PUPPETS_MAX >= CELL_LOOSE_PUPPETS && LOOSE_PUPPETS_MAX >= 10, 'DESYNC-ZERO: a Greater Giant\'s call of ten stands whole');
   const pups = [...bob.state._ownPups.values()];
   assert.ok(pups.every((p) => p._pupLoose === true && p._pupQuest === null && p._ownFrom === 'aaa-0001'), 'loose puppets, the owner\'s');
   assert.ok(!pups.some((p) => p._ownI === vamp._ownSeq), 'and never the party\'s quest foe');
@@ -166,7 +170,7 @@ test('SUMMON-SYNC: anyone in the room stands my loose stands - a stranger to my 
   assert.equal(amy.built.length, 1, 'the quest foe stands');
   amy.applyOwnFrame('aaa-0001', frame);
   await tick();
-  assert.equal(amy.built.length, CELL_LOOSE_PUPPETS + 1, 'and the loose four beside it - each kind its own allowance, a standing quest foe no loose stand\'s');
+  assert.equal(amy.built.length, LOOSE_PUPPETS_MAX + 1, 'and the loose four beside it - each kind its own allowance, a standing quest foe no loose stand\'s');
   // a record named BOTH a party's quest foe and a loose stand is the quest's - a stranger stands nothing of it
   const dual = side('bob-0005');
   dual.applyOwnFrame('aaa-0001', { ...owner.ownFrame(true), lf: [vamp._ownSeq] });

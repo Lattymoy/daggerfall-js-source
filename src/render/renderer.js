@@ -1228,9 +1228,14 @@ const NO_LPT_LOCS = Object.freeze({ uMesh: null, uMeshScale: null, uMeshColor: n
 export const LPT_SUN_FULL = 0.25;
 
 export function textureParams(gl, opts = {}) {
-  return opts.smooth
-    ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
-    : { wrap: gl.REPEAT, filter: gl.NEAREST };
+  if (opts.smooth) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR };
+  // HAND-SEAM (2026-10-09, the owner: "the spellcasting still has the lines"): a classic sprite drawn as ONE screen quad
+  // that never tiles - the casting hands - stays pixel-exact (NEAREST) but does not wrap. Under REPEAT the column of
+  // fragments on the quad's u=1 edge (the left hand's inner edge, and the mirrored right hand's) sampled a hair past 1
+  // on some GPUs (ANGLE/D3D's interpolation, a large magnified quad) and wrapped onto the art's FIRST column - the glow
+  // strokes at the hands' outer edge - drawing a thin dotted line up the middle of the screen beside each hand.
+  if (opts.clamp) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.NEAREST };
+  return { wrap: gl.REPEAT, filter: gl.NEAREST };
 }
 
 /**
@@ -4189,7 +4194,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}${opts.clamp && !opts.smooth ? '#clamp' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
     this._uploadSink?.(false, key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a hit is asked for too - the place asking holds it
     if (this.textures.has(key)) {
       // WD3 (AUDIT WD3 T3): a stand-in's clear placeholder (no picture at the time - a fetch that failed, a gate shut) is

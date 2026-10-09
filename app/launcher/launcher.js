@@ -46,7 +46,7 @@
   function notesBlock(note) {
     const box = el('article', 'release');
     const head = el('div', 'head');
-    head.append(el('span', 'ver', `v${note.version}`));
+    head.append(el('span', 'ver', note.update ? `Update ${note.update}` : `v${note.version}`));   // REL8: the player's update number, where the release names one
     if (note.date) head.append(el('span', 'date', note.date));
     if (Object.hasOwn(BADGE, note.badge)) head.append(el('span', `badge ${note.badge}`, BADGE[note.badge]));
     box.append(head);

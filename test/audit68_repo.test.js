@@ -39,7 +39,8 @@ test('AUDIT 68 X2-release-tag-commit: a new release tag is cut at the built comm
   const wf = read('.github/workflows/release-desktop.yml');
   // REL4: the one step that attaches anything is the publish job's draft
   const attach = wf.slice(wf.indexOf('- name: Stage the release as a draft, every file attached'), wf.indexOf('- name: Publish it whole'));
-  assert.match(attach, /\n {10}tag_name: \$\{\{ needs\.version\.outputs\.tag \}\}\n {10}name: \$\{\{ needs\.version\.outputs\.tag \}\}\n {10}target_commitish: \$\{\{ github\.sha \}\}\n/,
+  // PIN MOVED (REL8): the release is named for the player's update (comments between) - the tag and the commit as ever
+  assert.match(attach, /\n {10}tag_name: \$\{\{ needs\.version\.outputs\.tag \}\}\n(?: {10}#[^\n]*\n)* {10}name: \$\{\{ needs\.version\.outputs\.update != '' && format\('Update \{0\}', needs\.version\.outputs\.update\) \|\| needs\.version\.outputs\.tag \}\}\n {10}target_commitish: \$\{\{ github\.sha \}\}\n/,
     'without target_commitish GitHub cuts the tag at main\'s head at upload time');
   const uses = wf.split('\n').filter((l) => l.includes('${{ inputs.release_tag }}'));
   assert.ok(uses.length > 0, 'the input is still read');

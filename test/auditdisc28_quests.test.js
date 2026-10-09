@@ -31,7 +31,7 @@ import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { OnlineSession } from '../src/net/online.js';
 import { CHAT_WORLD_ROOM } from '../src/net/wire.js';
 import { createExteriorFoes, QUEST_PUPPETS_MAX } from '../src/scenes/exteriorFoes.js';
-import { questShareTag, sharedQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe } from '../src/scenes/questFoeHost.js';
+import { questShareTag, sharedQuestFoe, questPrivateTag, partyQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe } from '../src/scenes/questFoeHost.js';
 import { ExteriorAutomapWindow, stampResidenceQuestNames } from '../src/ui/exteriorAutomapWindow.js';
 import { buildingSummaries } from '../src/world/buildingSummaries.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
@@ -380,10 +380,10 @@ const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => (
 const settle = async () => { for (let k = 0; k < 5; k++) await new Promise((r) => setTimeout(r, 0)); };
 const pe = () => ({ level: 1, reflexes: 2, health: 50, maxHealth: 50, skills: new Array(40).fill(20), skillUses: new Array(40).fill(0), items: [], activeEffects: [], stats: { strength: 50, agility: 50, luck: 50, speed: 50, endurance: 50 }, armorValues: new Array(7).fill(60) });
 const PARTY = ['host-0001', 'amy-0003', 'cat-0004', 'aaa-0002', 'host-0005', 'zzz-0009'];
-const makeSeam = new Function('d', `const { questShareTag, questBridge, social, sharedQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe, online, player, peersNear } = d;\n${lift(W, '  const questShareSeam = {')}\nreturn questShareSeam;`);
+const makeSeam = new Function('d', `const { questShareTag, questPrivateTag, partyQuestFoe, questBridge, social, sharedQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe, online, player, peersNear } = d;\n${lift(W, '  const questShareSeam = {')}\nreturn questShareSeam;`);
 /** world.js's questShareSeam over `self`'s real machine - every other seat a party peer; `feet` where I stand and `near`
  *  the peers around me (the orphan law's view). */
-const hostSeam = (self, m, { feet = [0, 0, 0], near = [] } = {}) => makeSeam({ questShareTag, questBridge: { machine: m }, social: { party: {}, isPartyPeer: (id) => PARTY.includes(id) && id !== self },
+const hostSeam = (self, m, { feet = [0, 0, 0], near = [] } = {}) => makeSeam({ questShareTag, questPrivateTag, partyQuestFoe, questBridge: { machine: m }, social: { party: {}, isPartyPeer: (id) => PARTY.includes(id) && id !== self },
   sharedQuestFoe, questBehaviourFor, adoptsOrphanQuestFoe, online: { id: self }, player: { feetAt: () => feet }, peersNear: () => near });
 function pool(self, seam, { clock = { t: 0 }, staleMs = 0 } = {}) {
   const p = createExteriorFoes({
@@ -413,7 +413,7 @@ test('AUDIT DISC28 QS-J: a quest foe handed to a party member with no linked cop
   f.questBehaviour = { questUID: q.uid, targetSymbol: foeSym, bindHost() {}, start() {}, update() {} };
   for (const x of [amy, cat]) quiet(() => x.applyFoes('host-0001', host.foesFrame(true)));
   await settle();
-  assert.equal(cat.foes.filter((x) => x.puppet === 'host-0001').length, 0, 'DISC28-J stands: no puppet for a copy with no link');
+  assert.equal(cat.foes.filter((x) => x.puppet === 'host-0001').length, 1, 'DESYNC-ZERO (was DISC28-J): a copy with no link stands it too - every player in the room sees the foe the room fights');
   const handed = host.handOverFrame(() => 'cat-0004');   // world.js heirOf: the nearest party peer
   quiet(() => { amy.applyFoes('host-0001', handed); cat.applyFoes('host-0001', handed); });
   await settle();
@@ -426,7 +426,7 @@ test('AUDIT DISC28 QS-J: a quest foe handed to a party member with no linked cop
   await settle();
   assert.equal(amy.foes.filter((x) => x.puppet === 'cat-0004' && !x.dead).length, 1, 'it rides to the linked member as the quest\'s');
   assert.equal(cat.applyHit('amy-0003', { i: took.seq, dmg: 5, kind: 'melee' }), true, 'a party member\'s blow lands on it');
-  assert.equal(cat.applyHit('bob-0009', { i: took.seq, dmg: 5, kind: 'melee' }), false, 'a stranger\'s does not');
+  assert.equal(cat.applyHit('bob-0009', { i: took.seq, dmg: 5, kind: 'melee' }), true, 'DESYNC-ZERO: a stranger\'s lands too - the foe is the room\'s, the credit stays the party\'s');
 });
 
 /** The Exterminator (vendored A0C00Y07) taken by a sharer, linked to `linked` by a real share (`link` links another);
@@ -458,7 +458,7 @@ test('AUDIT DISC28 QS-J: the orphan law\'s pick with no linked copy takes the or
   const zzz = pool('zzz-0009', hostSeam('zzz-0009', Zed, { feet: HERE, near: around('zzz-0009') }));
   for (const x of [aaa, zzz]) quiet(() => x.applyFoes('host-0005', host.foesFrame(true)));
   await settle();
-  assert.equal(aaa.foes.length, 0, 'DISC28-J stands: the unlinked member stands nothing - no puppet, nothing drawn or struck');
+  assert.equal(aaa.foes.filter((x) => x.puppet === 'host-0005').length, 1, 'DESYNC-ZERO (was DISC28-J): the unlinked member stands it too');
   assert.equal(zzz.foes.filter((x) => x.puppet === 'host-0005').length, 1, 'the linked member stands it');
   quiet(() => { aaa.pruneOwners(new Set()); zzz.pruneOwners(new Set()); });   // the owner gone without a word: the law names the lowest id near it
   await settle();
@@ -479,12 +479,12 @@ test('AUDIT DISC28 QS-J: a kept record goes as a stood one goes - a full frame t
     const { host } = await questOwner(owner, q, foeSym);
     const seam = hostSeam(self, m, { feet: HERE, near });
     const died = [], die = seam.onPuppetDied;
-    seam.onPuppetDied = (t) => { died.push(t); return die(t); };
+    seam.onPuppetDied = (t, ...a) => { if (partyQuestFoe(m, t)) died.push(t); return die(t, ...a); };   // DESYNC-ZERO: it stands now and may fall here - a copy with no such quest counts nothing off it
     const me = pool(self, seam, { clock, staleMs: 6000 });
     const fr = host.foesFrame(true);
     quiet(() => me.applyFoes(owner, fr));
     await settle();
-    assert.equal(me.foes.length, 0, 'kept, never stood - nothing drawn, nothing struck');
+    assert.equal(me.foes.filter((x) => x.puppet === owner && !x.dead).length, owner === 'host-0005' ? 1 : 1, 'DESYNC-ZERO: stood - every player sees it');
     await drop(me, fr, clock);
     quiet(() => me.pruneOwners(new Set(), clock.t));
     await settle();
@@ -501,7 +501,7 @@ test('AUDIT DISC28 QS-J: a kept record goes as a stood one goes - a full frame t
   assert.equal((await kept((me, fr) => word(me, fr, { full: 0, f: [{ ...fr.f[0], e: 'zzz-0009' }] }))).length, 0, 'a handover naming another heir - that one takes it');
   assert.equal((await kept((me, fr, clock) => { clock.t = 7000; quiet(() => me.pruneOwners(new Set(['host-0005']), clock.t)); })).length, 0, 'an owner gone quiet (the stale sweep keeps nothing, adopts nothing)');
   assert.equal((await kept((me, fr) => { me.clearPuppets(); word(me, fr, { full: 0, f: [], qf: [] }); })).length, 0, 'a room change - the owner heard again in the new room, naming nothing');
-  assert.equal((await kept(() => {}, { owner: 'bob-0007' })).length, 0, 'a stranger\'s');
+  assert.equal((await kept(() => {}, { owner: 'bob-0007' })).length, 1, 'DESYNC-ZERO: a stranger\'s too - it stood here, and the room keeps it when its owner goes (it credits no kill: no copy holds it)');
   assert.equal((await kept(() => {}, { self: 'zzz-0009' })).length, 0, 'a member the law did not name');
   // a copy linked since stands it - the law takes that one, and that one alone
   const Aaa = machine(town());
@@ -515,27 +515,29 @@ test('AUDIT DISC28 QS-J: a kept record goes as a stood one goes - a full frame t
     const fr = host.foesFrame(true);
     const f = Array.from({ length: QUEST_PUPPETS_MAX + 2 }, (_, k) => ({ ...fr.f[0], i: 100 + k }));
     quiet(() => me.applyFoes('host-0005', { ...fr, f, qf: f.map((r) => [r.i, ...fr.qf[0].slice(1)]) }));
+    await settle();   // DESYNC-ZERO: stood, as every copy stands them
+    assert.equal(me.foes.filter((x) => x.puppet && !x.dead).length, QUEST_PUPPETS_MAX, 'stood under the quest allowance');
     quiet(() => me.pruneOwners(new Set()));
     await settle();
     assert.equal(me.foes.filter((x) => !x.dead).length, QUEST_PUPPETS_MAX, 'bounded as a stood copy is');
   }
-  // its owner back under the same id, streaming it alive: a build still out ends on arrival; a taken one is theirs again
+  // its owner back under the same id, streaming it alive: DESYNC-ZERO - it stands here as its puppet, never twice
   {
     const { host } = await questOwner('host-0005', q, foeSym);
     const me = pool('aaa-0002', hostSeam('aaa-0002', machine(town()), { feet: HERE, near: [] }));
     quiet(() => me.applyFoes('host-0005', host.foesFrame(true)));
     await settle();
-    quiet(() => { me.pruneOwners(new Set()); me.applyFoes('host-0005', host.foesFrame(true)); });   // the build out, and its owner back
+    quiet(() => { me.pruneOwners(new Set()); me.applyFoes('host-0005', host.foesFrame(true)); });   // gone, and its owner back
     await settle();
-    assert.equal(me.foes.filter((x) => !x.dead).length, 0, 'a build its owner\'s return overtook ends on arrival');
+    assert.equal(me.foes.filter((x) => !x.dead).length, 1, 'one foe here, not a second');
     quiet(() => me.pruneOwners(new Set()));
     await settle();
     const took = me.foes.find((x) => !x.puppet && !x.dead);
-    assert.ok(took, 'the record, kept again, is the law\'s when its owner goes again');
+    assert.ok(took, 'the law\'s pick takes it when its owner goes again');
     quiet(() => me.applyFoes('host-0005', host.foesFrame(true)));
     await settle();
     assert.equal(took.dead && took._gone, true, 'theirs again (AUDIT pre-merge D2) - mine let go, no death, no body');
-    assert.equal(me.foes.filter((x) => !x.dead).length, 0, 'and not stood by a copy with no link');
+    assert.equal(me.foes.filter((x) => !x.dead).length, 1, 'and stood once, as its owner\'s');
   }
 });
 

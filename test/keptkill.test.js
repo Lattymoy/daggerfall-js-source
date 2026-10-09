@@ -78,7 +78,7 @@ function side(self, { own = [], linked = true } = {}) {
     opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: 0, foes, _authority: true, _encId: undefined, _ctxDead: false, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownGen: 0, _ownPups: new Map(), _ownPending: new Map(), _ownOwners: new Map(), _ownPendLoose: new Set(), _ownAdopted: new Map(), _ownKept: new Map(),
-    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
+    FOE_HEALTH_MAX, FOE_LEVEL_MAX, CELL_FRAME_RECORDS_MAX, QUEST_PUPPETS_MAX, CELL_LOOSE_PUPPETS, LOOSE_PUPPETS_MAX: 24, HIT_DMG_MAX: 10000, FOES_FRAME_MAX,
     validFoeRecord, validQuestTags, validLooseSeqs, companionNames, questMarkerYields, GENDER_BIT: ['male', 'female'],   // PIN MOVED (AUDIT WK-U3, 2026-10-01): the own lane reads companions' names beside their places
     _sharedFoe: () => false, fightN: () => 1, canStandFoe: () => true,
     applyFoeRecord: (f, r) => { if (r.f) f.ai.feet = [...r.f]; if (Number.isFinite(r.h)) f.entity.health = r.h; if (r.d === 1) f.dead = true; f._pup = { feet: [...(r.f ?? f.ai.feet)], yaw: r.y ?? 0 }; },
@@ -252,18 +252,17 @@ test('KEPT-KILL: the ping - Runaway Pet\'s `killed 1 _tiger_` fires on the owner
   solo.scheduleQuest(CORPUS.__KK, 0, { rolls: () => 0 });
   solo.tick();
   const rows = [{ q: '__KK', s: 'tiger', i: 3 }];
-  for (const [m, n] of [[A, 1], [R, 1], [solo, 0]]) {
+  for (const [m, n] of [[A, 1], [R, 1], [solo, 1]]) {   // DESYNC-ZERO: every holder of the quest in the party counts it
     const L = new KeptKillLedger();
     assert.equal(creditKeptKills(m, L, 'acct-heir', rows, 0), n);
     assert.equal(creditKeptKills(m, L, 'acct-heir', rows, 1000), 0, 'the pose repeats its rows: once');
     m.tick(); m.tick();
   }
-  for (const m of [A, R]) {
+  for (const m of [A, R, solo]) {
     assert.equal(tigerOf(m).killCount, 1, 'the kill');
     assert.equal(tigerOf(m).injuredTrigger, true, 'a kill is a blow landed');
     assert.equal(triggered(m), true, '`killed 1 _tiger_` - "Oops. You killed the tiger."');
   }
-  assert.equal(tigerOf(solo).killCount, 0, 'an unlinked copy: DISC28-J\'s law');
   // a witness counted the fall by sight first: the word that follows counts nothing
   const B = machine();
   B.scheduleQuest(CORPUS.__KK, 0, { rolls: () => 0 }); B.tick(); B.markQuestShared('__KK');
@@ -274,11 +273,11 @@ test('KEPT-KILL: the ping - Runaway Pet\'s `killed 1 _tiger_` fires on the owner
 
 test('KEPT-KILL by source: both pools say a kept foe\'s fall each frame by the behaviour\'s test, a puppet\'s death names its owner and number, and the world host carries the pose both ways', () => {
   // the dungeon: the frame's behaviour loop, and the record door's death
-  assert.match(D, /for \(const f of foes\) \{ f\.questBehaviour\?\.update\(\); if \(f\._keptTag\) keptKillTick\(f\); \}/, 'the dungeon frame asks every kept foe');
+  assert.match(D, /for \(const f of foes\) \{ f\.questBehaviour\?\.update\(\); if \(f\._keptTag \|\| \(f\.questBehaviour && f\._ownFrom == null\)\) keptKillTick\(f\); \}/, 'the dungeon frame asks every kept foe - DESYNC-ZERO: and every quest foe of mine');
   assert.match(D, /if \(f\._pupQuest && !wasDead && f\.dead\) share\?\.onPuppetDied\?\.\(f\._pupQuest, f\._ownFrom, f\._ownI\);/, 'the dungeon witness names whose and which');
   // the open air and the buildings: the same, in the pool's own words
-  assert.match(X, /f\.questBehaviour\?\.update\(\);\n\s+if \(f\._keptTag\) keptKillTick\(f\);[^\n]*\n\s+if \(f\.dead\) continue;/, 'before the dead skip, as the behaviour runs');
-  assert.match(X, /function keptKillTick\(f\) \{\n\s+if \(!f\._keptTag \|\| f\._keptSaid \|\| f\.puppet \|\| !\(f\.entity\?\.health <= 0\)\) return false;\n\s+f\._keptSaid = true;\n\s+_questShare\?\.onKeptDied\?\.\(f\._keptTag, f\.seq\);/, 'once, at zero, with its number on my stream');
+  assert.match(X, /f\.questBehaviour\?\.update\(\);\n\s+if \(f\._keptTag \|\| f\.questBehaviour\) keptKillTick\(f\);[^\n]*\n\s+if \(f\.dead\) continue;/, 'before the dead skip, as the behaviour runs');
+  assert.match(X, /function keptKillTick\(f\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const tag = f\._keptTag \?\? \(isPrivateQuestFoe\(f\) \? _qTag\(f\) : null\);\n\s+if \(!tag \|\| f\._keptSaid \|\| f\.puppet \|\| !\(f\.entity\?\.health <= 0\)\) return false;\n\s+f\._keptSaid = true;\n\s+_questShare\?\.onKeptDied\?\.\(\{ q: tag\.q, s: tag\.s \}, f\.seq\);/, 'once, at zero, with its number on my stream');
   assert.match(X, /if \(f\._pupQuest\) _questShare\?\.onPuppetDied\?\.\(f\._pupQuest, f\.puppet, f\.seq\);/, 'the open-air witness names whose and which');
   // the world host: the heir's pose, the members' count, and the witness through the same ledger
   assert.match(W, /onKeptDied: \(tag, i\) => \{ keptKills\.said\(tag, i, Date\.now\(\)\); \}/, 'said into the ledger');

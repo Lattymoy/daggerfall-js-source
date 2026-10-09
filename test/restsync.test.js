@@ -43,6 +43,8 @@ const scoped = (state) => new Proxy(state, {
   set: (t, k, v) => { t[k] = v; return true; },
 });
 const mount = (body, state) => new Function('__s', `with (__s) { ${body} }`)(scoped(state));
+/** DESYNC-ZERO: the host's layout count and the surplus puppets ride the same frame door. */
+const surplusSrc = () => ['FOE_SEQ_MAX_SURPLUS', '_surplus', '_surplusPending', '_hiddenFrom', '_layoutMismatchSaid'].map(declSrc).join('\n') + '\n' + ['sayLayoutMismatch', 'hideBeyondHostLayout', 'surplusRecord', 'dropSurplus', 'clearSurplus'].map(fnSrc).join('\n');
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 const CONSTS = ['REST_ASK_WAIT_MS', 'REST_ASK_GAP_MS', 'REST_ASK_BAND_MAX', 'SHARED_FOES_MAX', 'HIT_POS_MAX', 'HIT_DMG_MAX', 'q2', 'q3'];
@@ -169,6 +171,7 @@ function side({ authority, layout = [], shared = [], over = {} }) {
     ${fnSrc('foesFrame')}
     ${fnSrc('roomRecord')}
     ${fnSrc('applyFoesFrame')}
+    ${surplusSrc()}
     ${fnSrc('applySharedRecords')}
     ${fnSrc('standSharedPuppet')}
     ${fnSrc('dropSharedFoe')}
@@ -352,7 +355,7 @@ test('REST-SYNC: the encounter is weighed by who fights it and hands over with t
     attack: { machine: { state: 'Swing', acc: 3 }, firedRanged: true, swingSeq: 4 }, mobile: { doMeleeDamage: true, shootArrow: true },
   });
   const s = { _authority: false, _foesSeqIn: 5, _foesFrom: 'old', foes: [layout0, own, enc, ally], _layoutFoes: 1, _sharedById: new Map([[3, enc], [9, ally]]), ownRides: () => false };   // PSCALE-OWN / SUMMON-SYNC: nothing of mine on the own lane here
-  const d = mount(`${declSrc('isRoomFoe')}\n${fnSrc('_sharedFoe')}\n${fnSrc('setAuthority')}\nreturn { _sharedFoe, setAuthority };`, s);
+  const d = mount(`${declSrc('isRoomFoe')}\n${fnSrc('_sharedFoe')}\n${fnSrc('setAuthority')}\n${surplusSrc()}\nreturn { _sharedFoe, setAuthority };`, s);
   assert.equal(d._sharedFoe(enc), true, 'the room\'s encounter is weighed by its fighters');
   assert.equal(d._sharedFoe(layout0), true);
   assert.equal(d._sharedFoe(own), false, 'my own foe past the run is not');

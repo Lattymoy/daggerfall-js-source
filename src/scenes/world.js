@@ -23,7 +23,7 @@ import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { openWodWorld, wodOn, wodLightColors } from '../world/worldOfDaggerfall.js';   // WOD2: World of Daggerfall's loader, one per page
-import { wodLightPosition, wodLightProperties, isWodShrub, WOD_ROCK_SITES } from '../world/wodLocationObjects.js'; import { wodRockUvs } from '../world/wodRockUv.js';   // WOD2: the mod's own AddLight; WOD-BUSH: its shrub, stood on the ground (ROCK-SUNK: never a rock field's boulder); FB1001-WODROCK: a stretched rock piece's faces at its pebble's texel density (on this line, so no cite below it moves)
+import { wodLightPosition, wodLightProperties, isWodShrub, WOD_ROCK_SITES, rockSeatDrop } from '../world/wodLocationObjects.js'; import { wodRockUvs } from '../world/wodRockUv.js';   // WOD2: the mod's own AddLight; WOD-BUSH: its shrub, stood on the ground (ROCK-SUNK: never a rock field's boulder); FB1001-WODROCK: a stretched rock piece's faces at its pebble's texel density (on this line, so no cite below it moves)
 import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wodSpawner.js';   // WOD3: LocationEnemySpawner
 import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's marker, shared online
 import { alignBillboardToGround, alignControllerToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop; CSA-D: BoardBoat's AlignControllerToGround
@@ -238,7 +238,7 @@ import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flo
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
-import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour, heldSpots, holdSpotWhile, questBoxHoldsFoes, questShareTag, sharedQuestFoe, partnerStandsQuestFoes, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour, heldSpots, holdSpotWhile, questBoxHoldsFoes, questShareTag, partnerStandsQuestFoes, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills, questPrivateTag, partyQuestFoe } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { markFoeReach } from '../systems/foeReach.js';   // WATER-FOES: a foe in the water reaches no one aboard
 import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile, foeAlerted } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
@@ -778,7 +778,8 @@ import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wildZone.j
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { takeWildDrop, takeWildGold, wornOffer, wildRecord, wildChunks, wildSpawnSpot } from '../systems/wildDeath.js';
 import { createWildFight } from '../net/wildFight.js';
-import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wildRemains.js';
+import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { markRemains, remainsMarkTick, remainsGone } from '../systems/wildRemainsWaypoint.js';
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot.js';
@@ -5493,6 +5494,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           const dy = lowestGroundUnder(samples, box) - box[1];
           m.matrix[13] += dy; box[1] += dy; box[4] += dy;
         }
+        // ROCK-SEAT (world/wodLocationObjects.js rockSeatDrop): a rock field's piece hanging over ground that falls away
+        // under it is lowered into the ground - its open underside never stands in the air; one in the ground stays put
+        // - and only a piece SET into it (its foot under the ground at its middle): one the mod rests on another's crown keeps its height
+        if (rockPick(m.pick) && box[1] < surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, (box[0] + box[3]) / 2)), Math.max(0, Math.min(TERRAIN_SIZE, (box[2] + box[5]) / 2)))) { const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }
         // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): a piece whose own
         // mesh box reaches a road - here or in the pixel it spills into - is not stood: no mesh, no collider. The rock
         // fields and mountains lose the pieces over the road and keep the rest; a whole site was asked at its pick.
@@ -19954,24 +19959,33 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  sees on a partner's foe. */
   const keptKills = new KeptKillLedger();   // KEPT-KILL: the kills of foes I kept on a partner's word, and the kills my copies counted
   const questShareSeam = {
-    tagOf: (f) => questShareTag(questBridge?.machine, f, !!social?.party),
+    // DESYNC-ZERO (2026-10-09, the owner: "monster desyncs should never happen in dungeons and outside"): a private
+    // quest's foe rides too, tagged `pv` (questPrivateTag) - everyone in the place sees the one foe its owner fights
+    tagOf: (f) => questShareTag(questBridge?.machine, f, !!social?.party) ?? questPrivateTag(questBridge?.machine, f),
     // DISC28-J (Discord: Atronach Hunting's kill "not credited"): a party peer's quest foe stands here only for MY LINKED
     // copy of its quest - the copy its death credits (onPuppetDied, below). Two members who each took the quest (a
     // share refused as 'active'), or a copy whose link a reload dropped, stood the partner's foe beside their own, and
     // killing it counted for nothing; unlinked, each copy fights its own.
-    accepts: (from, tag) => !!social?.isPartyPeer(from) && !!sharedQuestFoe(questBridge?.machine, tag),
+    // DESYNC-ZERO: every quest foe stands for EVERYONE in the place - a stranger beside a party saw it swing at the air.
+    // Who COUNTS its kill is onPuppetDied's law (its owner's party), never who sees it.
+    accepts: () => true,
     // AUDIT DISC28 QS-J: THE PARTY ALONE - two laws that are not DISC28-J's. A foe a member HANDS me as its heir (the
     // owner's heirOf names the nearest party peer, whatever that peer's copy) is taken on membership, the pre-J law:
     // unlinked, it is kept on the partner's word (`_keptTag`) and rides to the party as the quest's. And a party
     // member's blow lands on such a kept foe. Both read accepts after DISC28-J, which a copy with no link never passes -
     // the heir refused the foe its owner had already let go, and it was gone for everyone.
     partyPeer: (id) => !!social?.isPartyPeer(id),
-    peerMayHit: (peerId, f) => !!social?.isPartyPeer(peerId) && f.entity?.team !== 'PlayerAlly' && !!questShareTag(questBridge?.machine, f, !!social?.party),
-    onPuppetHurt: (tag) => sharedQuestFoe(questBridge?.machine, tag)?.setInjured?.(),
+    // DESYNC-ZERO: and anyone's blow on it lands (a blow on a foe everyone sees went nowhere); my quest counts the kill -
+    // the foe dies here, on my machine. A quest's own ally (PlayerAlly) still takes no peer's blow.
+    peerMayHit: (peerId, f) => f.entity?.team !== 'PlayerAlly',
+    // DESYNC-ZERO: the injury and the kill count on my copy for a PARTY member's foe alone - my linked copy, or any copy
+    // of the same quest I hold (partyQuestFoe)
+    onPuppetHurt: (tag, from) => { if (from == null || social?.isPartyPeer(from)) partyQuestFoe(questBridge?.machine, tag)?.setInjured?.(); },
     // KEPT-KILL: a partner's foe I saw fall counts once - its holder's pose may say the same kill (a foe it kept on its
     // partner's word), and whichever of the two lands first is the one that counts (keptKills.credit)
     onPuppetDied: (tag, from, i) => {
-      const foe = sharedQuestFoe(questBridge?.machine, tag);
+      if (from != null && !social?.isPartyPeer(from)) return;   // DESYNC-ZERO: a stranger's quest foe counts for nobody here
+      const foe = partyQuestFoe(questBridge?.machine, tag);
       if (!foe) return;
       const owner = from != null ? (social?.accountOfPeer?.(from) ?? null) : null;
       if (owner && Number.isInteger(i) && !keptKills.credit(owner, tag.q, tag.s, i, Date.now())) return;
@@ -20167,7 +20181,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a blow, a fallen's offer, a pick or a gift at me - the zone's law decides (net/wildFight.js)
-    online.onWildRoom = (w, room) => { if (room === online.room) wildRemains.onWord(w); };   // WILD1: my room's word on its remains (net/wildRemains.js)
+    // WILD1: my room's word on its remains (net/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
+    // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
+    // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
+    online.onWildRoom = (w, room) => {
+      if (room !== online.room) return;
+      wildRemains.setRoom(room);
+      wildRemains.onWord(w);
+      if (w?.k === 'gone') remainsGone(w.r);   // WILD-WAYPOINT: all taken, or let go - the flag goes with them
+    };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
@@ -21965,6 +21987,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const it of lost.slice(sent)) { if (isGoldPieces(it)) addGoldPieces(playerEntity, it.stackCount ?? 1); else addItem(playerEntity.items, it); }
       if (sent < lost.length) wildDeathCheckpoint();
       if (sent) _wildMine = { r, room: online.room, p, until: Date.now() + WILD_REMAINS_MS, dungeon: (modes?.mode === 'dungeon') ? (_wdunInside?.h ?? wdKey()) : null };   // PVPDUNGEONS: a death in a hall locks it for the hour, my remains my way back in, and the crows circle it for everyone   // PVPDUNGEONS: a death underground locks the hall for the hour; my pile's life is the key back in
+      if (sent) {   // WILD-WAYPOINT: a followed flag where they lie - the street's point, or a building's or a dungeon's door
+        const at = isCellRoom(online.room) ? nativeToMapPoint(p[0], p[2]) : ((px) => (px ? { mx: px.x + 0.5, my: px.y + 0.5 } : null))(playerTravelPixel());
+        if (at) markRemains({ mx: at.mx, my: at.my, until: _wildMine.until, r });
+      }
     }
     // HALL-CROWS (the owner: "i dont see the crows circleling around the dungeon where i died on the zone map"): a death in
     // a hall always locks it and sets the crows over it - whether or not the pack had anything to drop
@@ -22084,6 +22110,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     wildRemains.tick();
     setLootMarksLive(wildRemains.hasMine());   // my remains' red line stands with the rarity row off too
     if (_wildMine && Date.now() > _wildMine.until) _wildMine = null;
+    remainsMarkTick(Date.now());   // WILD-WAYPOINT: the flag goes with its remains' time
   };
   // WILD3: THE STRANGERS - every other player in the zone with me, outside my party and my guild, within WILD_STRANGER_M
   // (their bodies as the room draws them): enemies to the Overworld (marked in red, "Stranger"), to the journey's pace
@@ -28231,7 +28258,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };
   };
-  const tvWater = (px, py) => px < 0 || py < 0 || px >= 1000 || py >= 500 || woods.getHeightMapValue(px, py) <= WATER_BYTE;
+  // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
+  // bytes where TAMRIEL2 streams the land beyond the Bay - `woods` is its composed reader then, the sea past the frame
+  const tvWater = (px, py) => (!woods.isTamrielGround && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;
   /** `roads` (TO-ROADS x OW-PATH): by the roads whatever the Path switch says - the map's first-person pick (tvMapForcesRoads). */
@@ -28307,7 +28336,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     (_tvRouteGround ??= routeGround(
       (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),
       (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },   // inside the zone: flat dry ground, water still water
-      WATER_BYTE)).setRocks(tvWodRocks());
+      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it
     return _tvRouteGround;
   };
   /** OW-ROADSIDE (2026-09-28, Mac: routes "appear traveling alongside" the road): a route whose first step is a road's (or

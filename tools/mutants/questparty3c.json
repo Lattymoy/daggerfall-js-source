@@ -25,15 +25,15 @@
   {
     "name": "QP3C-marker-unflagged",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const fl = (f._questMarker ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0);",
-    "new": "const fl = (!f.dead && questTouched(f) ? 2 : 0);",
+    "old": "const fl = (f._questMarker && !qt.pv ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0) | (qt.pv ? 4 : 0);",
+    "new": "const fl = (!f.dead && questTouched(f) ? 2 : 0) | (qt.pv ? 4 : 0);",
     "tests": ["test/questparty3c.test.js"]
   },
   {
     "name": "QP3C-touch-unflagged",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const fl = (f._questMarker ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0);",
-    "new": "const fl = (f._questMarker ? 1 : 0);",
+    "old": "const fl = (f._questMarker && !qt.pv ? 1 : 0) | (!f.dead && questTouched(f) ? 2 : 0) | (qt.pv ? 4 : 0);",
+    "new": "const fl = (f._questMarker && !qt.pv ? 1 : 0) | (qt.pv ? 4 : 0);",
     "tests": ["test/questparty3c.test.js"]
   },
   {
@@ -95,7 +95,7 @@
   {
     "name": "QP3C-no-injury",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest); }",
+    "old": "if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest, f._ownFrom); }",
     "new": "void h0;",
     "tests": ["test/questparty3c.test.js"]
   },

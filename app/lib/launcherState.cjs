@@ -375,19 +375,29 @@ const isPlaceholder = (t) => /^fixes and improvements\.?$/i.test(String(t).trim(
  * The news, from the releases API's list: every published app-v release,
  * newest first, as { version, date, text } - the text its patch notes.
  * What the shell keeps in news.json and shows while the next list is
- * asked for.
+ * asked for. REL8: and `update`, the player's update number, where the
+ * release's name says one (`Update 0.0.1` - release-desktop.yml names it
+ * so); the installer's version stays what is compared.
  *
- * @param {Array<{ tag_name?: string, body?: string, published_at?: string, draft?: boolean, prerelease?: boolean }>} releases
- * @returns {Array<{ version: string, date: string, text: string }>}
+ * @param {Array<{ tag_name?: string, name?: string, body?: string, published_at?: string, draft?: boolean, prerelease?: boolean }>} releases
+ * @returns {Array<{ version: string, date: string, text: string, update?: string }>}
  */
 function newsFrom(releases) {
   if (!Array.isArray(releases)) return [];
   return releases
     .filter((r) => r && !r.draft && !r.prerelease)
-    .map((r) => ({ v: parseReleaseTag(r.tag_name), date: typeof r.published_at === 'string' ? r.published_at : '', text: playerNotes(r.body) }))
+    .map((r) => ({ v: parseReleaseTag(r.tag_name), date: typeof r.published_at === 'string' ? r.published_at : '', text: playerNotes(r.body), update: updateOfName(r.name) }))
     .filter((r) => r.v)
     .sort((a, b) => cmpV(b.v, a.v))
-    .map((r) => ({ version: r.v.join('.'), date: r.date, text: r.text }));
+    .map((r) => ({ version: r.v.join('.'), date: r.date, text: r.text, ...(r.update ? { update: r.update } : {}) }));
+}
+
+/** REL8: a release's name that is a player's update - `Update 0.0.1` - and its number; anything else names none. */
+const UPDATE_NAME_RE = /^Update (\d+\.\d+\.\d+)$/;
+/** REL8: an update number as news.json keeps one. */
+const UPDATE_NUMBER_RE = /^\d+\.\d+\.\d+$/;
+function updateOfName(name) {
+  return UPDATE_NAME_RE.exec(String(name ?? '').trim())?.[1] ?? null;
 }
 
 /** news.json as it was written - or as a hand, a crash or an older build
@@ -396,7 +406,7 @@ function cachedNews(json) {
   const items = Array.isArray(json?.items) ? json.items : [];
   return items
     .filter((n) => n && parseVersion(n.version) && typeof n.text === 'string')
-    .map((n) => ({ version: String(n.version).trim(), date: typeof n.date === 'string' ? n.date : '', text: n.text }))
+    .map((n) => ({ version: String(n.version).trim(), date: typeof n.date === 'string' ? n.date : '', text: n.text, ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }))
     .sort((a, b) => cmpV(parseVersion(b.version), parseVersion(a.version)));
 }
 
@@ -427,7 +437,7 @@ function newsView(s) {
   const items = s.news.items
     .map((n) => ({ n, v: parseVersion(n?.version) }))
     .filter((x) => x.v)
-    .map(({ n, v }) => ({ version: v.join('.'), date: dateLabel(n.date), text: String(n.text ?? ''), badge: badge(v) }));
+    .map(({ n, v }) => ({ version: v.join('.'), date: dateLabel(n.date), text: String(n.text ?? ''), badge: badge(v), ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }));
   const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));
   const list = (said.length ? said : items.slice(0, 1)).slice(0, NEWS_MAX);
   return { items: list, note: list.length ? '' : NEWS_NOTE[s.news.status] ?? '' };
@@ -621,4 +631,5 @@ module.exports = {
   CHECK_TIMEOUT_MS, RECHECK_MS, NEWS_MAX, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS,
   PICK_DEADLINE_MS, SOURCE_LABEL, PLAY_SWITCH, installAttemptFor, directPlay,
   initialState, reduce, nextStep, viewOf, canPlay, justUpdated, dateLabel, playerNotes, newsFrom, cachedNews, notArena2Detail,
+  UPDATE_NAME_RE, updateOfName,
 };

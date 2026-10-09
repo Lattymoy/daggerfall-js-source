@@ -93,6 +93,7 @@ jobs:
     outputs:
       tag: ${{ steps.reltag.outputs.tag }}
       version: ${{ steps.reltag.outputs.version }}
+      update: ${{ steps.reltag.outputs.update }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -116,8 +117,16 @@ jobs:
             exit 1
           fi
           VERSION="${TAG#app-v}"
+          # REL8: the player's update number - derived here, where the history is whole, and read by every job below
+          # (the legs' clones are depth 1); digits only, or none
+          UPDATE=$(node scripts/updateNumber.mjs)
+          if [ -n "$UPDATE" ] && ! [[ "$UPDATE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::the update number must be <major>.<minor>.<patch>, digits only"
+            exit 1
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "update=$UPDATE" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"
 
   gate:
@@ -158,6 +167,8 @@ jobs:
         run: npm ci
 
       - name: Build the site
+        env:
+          DFO_UPDATE: ${{ needs.version.outputs.update }}   # REL8: the version job's number, stamped into the game this leg packs
         run: npm run build
 
       - name: Install shell dependencies
@@ -314,7 +325,9 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
-          name: ${{ needs.version.outputs.tag }}
+          # REL8: the release is the player's update by name (the launcher's news reads it); the tag keeps the
+          # installer's number, which the updater compares
+          name: ${{ needs.version.outputs.update != '' && format('Update {0}', needs.version.outputs.update) || needs.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
           draft: true
           body_path: release-notes.md
