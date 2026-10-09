@@ -1,0 +1,506 @@
+[
+  {
+    "name": "INTA-the-holder-charged",
+    "file": "server-account/src/ledger.js",
+    "old": "    steps.push(...copyRows(db, keys, claimant, nowS), ...chargeSteps(db, claimant, keys, nowS));",
+    "new": "    steps.push(...copyRows(db, keys, claimant, nowS), ...chargeSteps(db, char, keys, nowS));",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-print-unread",
+    "file": "server-account/src/ledger.js",
+    "old": "    if (r && r.fp !== fp) { forged.push(key); continue; }   // another piece's key: no claim to that piece\n",
+    "new": "",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-no-grace",
+    "file": "server-account/src/ledger.js",
+    "old": "nowS - r.claim_at >= DUPE_GRACE_S) proven.set",
+    "new": "nowS - r.claim_at >= 0) proven.set",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-new-unbounded",
+    "file": "server-account/src/ledger.js",
+    "old": "    if (!r) { if (fresh.length < LEDGER_NEW_MAX) fresh.push([key, fp]); continue; }",
+    "new": "    if (!r) { fresh.push([key, fp]); continue; }",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-one-a-statement",
+    "file": "server-account/src/ledger.js",
+    "old": "export const UPSERT_ROWS = 48;",
+    "new": "export const UPSERT_ROWS = 1;",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-held-still-rewritten",
+    "file": "server-account/src/ledger.js",
+    "old": "    if (r.char_id === char && r.state === 'held') {\n      // mine:",
+    "new": "    if (r.char_id === char && r.state === 'held') {\n      claim.push(key);\n      // mine:",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-unread",
+    "file": "server-account/src/ledger.js",
+    "old": "      const theirs = keys.filter((k) => owners.get(k) === claimant);",
+    "new": "      const theirs = keys.filter(() => false);",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-escrow-forgotten",
+    "file": "server-account/src/ledger.js",
+    "old": "  const left = escrow\n",
+    "new": "  const left = false\n",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-delivery-unledgered",
+    "file": "server-account/src/ledger.js",
+    "old": "    ...insertSteps(db, at, came, `ON CONFLICT (uid) DO UPDATE",
+    "new": "    ...insertSteps(db, at, [], `ON CONFLICT (uid) DO UPDATE",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-claim-moves",
+    "file": "server-account/src/ledger.js",
+    "old": "    if (rows.length) return 'piece-claimed';\n",
+    "new": "",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-dead-hold",
+    "file": "server-account/src/ledger.js",
+    "old": "    db.prepare(\"DELETE FROM item_uids WHERE char_id = ?1 AND state = 'held'\").bind(char),\n",
+    "new": "",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-copy-taken-up",
+    "file": "server-account/src/ledger.js",
+    "old": "WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND EXISTS (SELECT 1 FROM item_dupes d WHERE d.uid = item_uids.uid)`),\n    ...overKeys(db, keys, [char], (m) => `DELETE",
+    "new": "WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND 0`),\n    ...overKeys(db, keys, [char], (m) => `DELETE",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-law-over-copies",
+    "file": "server-account/src/verdict.js",
+    "old": "  if (prev === 'dupe' || (fresh > 0 && dupes >= DUPES_FOR_HOLD)) return 'dupe';\n  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';",
+    "new": "  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';\n  if (prev === 'dupe' || (fresh > 0 && dupes >= DUPES_FOR_HOLD)) return 'dupe';",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-strike-a-checkpoint",
+    "file": "server-account/src/verdict.js",
+    "old": "  const rising = lawHolds > 0 && (row.law_sig == null || row.law_sig === row.law_excused);",
+    "new": "  const rising = lawHolds > 0;",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-finding-every-time",
+    "file": "server-account/src/verdict.js",
+    "old": "  if (law > 0 && sig !== row.law_sig) finding('law'",
+    "new": "  if (law > 0 && sig !== null) finding('law'",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-excuse-unread",
+    "file": "server-account/src/verdict.js",
+    "old": "  const lawHolds = law > 0 && sig !== row.law_excused ? law : 0;",
+    "new": "  const lawHolds = law;",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-rev-unguarded",
+    "file": "server-account/src/verdict.js",
+    "old": "    + ' WHERE id = ?1 AND judge_rev = ?16',",
+    "new": "    + ' WHERE id = ?1 AND ?16 IS NOT NULL',",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-grant-lost",
+    "file": "server-account/src/verdict.js",
+    "old": "THEN ?9 ELSE ?9 + (allowance - ?8) END,'",
+    "new": "THEN ?9 ELSE ?9 + 0 * (allowance - ?8) END,'",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-level-untrusted",
+    "file": "server-account/src/verdict.js",
+    "old": "  const now = Math.min(lv, Math.max(seen, reach));",
+    "new": "  const now = lv;",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-a-find",
+    "file": "server-account/src/verdict.js",
+    "old": "  const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0) - arrivedWorth;",
+    "new": "  const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0);",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-twice",
+    "file": "server-account/src/verdict.js",
+    "old": "    after.push(db.prepare(`UPDATE products SET credited = 1 WHERE owner",
+    "new": "    after.push(db.prepare(`UPDATE products SET credited = 0 WHERE owner",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-why-unsaid",
+    "file": "server-account/src/realm.js",
+    "old": "  return { ok: true, seq, tradeHeld: stood.held ?? null, ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}) };",
+    "new": "  return { ok: true, seq, tradeHeld: stood.held ?? null };",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-grant-clamped",
+    "file": "server-account/src/budget.js",
+    "old": "  const filled = start >= band.cap ? start : Math.min(band.cap, start + fill);",
+    "new": "  const filled = Math.min(band.cap, start + fill);",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-measure-debt",
+    "file": "server-account/src/budget.js",
+    "old": "  return { allowance: enforce ? left : Math.max(0, left), over: left < 0 ? -left : 0 };",
+    "new": "  return { allowance: left, over: left < 0 ? -left : 0 };",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-claimed-level-paid",
+    "file": "server-account/src/budget.js",
+    "old": "MAX(1, COALESCE(level_seen, 1))'",
+    "new": "MAX(1, COALESCE(1000, level_seen, 1))'",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-cutover-unread",
+    "file": "server-account/src/realm.js",
+    "old": "    return { wealth: wealthOf(stored), level };",
+    "new": "    return { wealth: null, level };",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-measure-moved-charged",
+    "file": "server-account/src/realm.js",
+    "old": "  const baseline = row.wealth == null || row.wealth_v !== WEALTH_VERSION ? await baselineOf(bucket, row, save) : null;",
+    "new": "  const baseline = row.wealth == null ? await baselineOf(bucket, row, save) : null;",
+    "tests": [
+      "test/int5_budget.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-loan-uncapped",
+    "file": "server-account/src/judge.js",
+    "old": "  const w = Math.trunc(purse + banks - Math.min(owed, realmLoanOwedMax(Number(level))) + deeds + goods);",
+    "new": "  const w = Math.trunc(purse + banks - owed + deeds + goods);",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-pile-a-find",
+    "file": "server-account/src/judge.js",
+    "old": "  for (const list of [...possessedItemLists(save), ...groundItemLists(save)]) {",
+    "new": "  for (const list of possessedItemLists(save)) {",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-upgraded",
+    "file": "server-account/src/judge.js",
+    "old": "      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)));",
+    "new": "      && true;",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-remade",
+    "file": "server-account/src/judge.js",
+    "old": "      && (piece.m == null || row.material == null || Number(row.material) === piece.m)",
+    "new": "      && true",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-gold-unread",
+    "file": "server-account/src/judge.js",
+    "old": "  if (!goldWord(save?.goldPieces)) out.push({ code: 'gold' });\n",
+    "new": "",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-infinite-gold",
+    "file": "server-account/src/judge.js",
+    "old": "const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);",
+    "new": "const goldOf = (/** @type {unknown} */ v) => Math.max(0, Number(v) || 0);",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-craft-listed-held",
+    "file": "server-account/src/market.js",
+    "old": "  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character lists nothing - its craft, its Stores\n  if (held) return held;\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-auction-held",
+    "file": "server-account/src/market.js",
+    "old": "  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing\n  if (held) return held;\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-fill-held",
+    "file": "server-account/src/market.js",
+    "old": "  if (frozen) return frozen;\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-old-stock-sold",
+    "file": "server-account/src/market.js",
+    "old": "  if (l.kind === 'item' && !lawfulItem(goodOf(l.item))) return { error: 'market-not-good' };\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-classic-sold",
+    "file": "server-account/src/realm.js",
+    "old": "  if (outbound && classicCount(save) < classicBefore) return { error: 'piece-legacy' };\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-rollback-past-a-sale",
+    "file": "server-account/src/review.js",
+    "old": "    if (row.svc_seq != null && row.svc_seq > (row.clean_seq ?? 0)) return { error: 'service-moved' };\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-dead-rolled-back",
+    "file": "server-account/src/review.js",
+    "old": "    if (row.dead_at != null) return { error: 'dead' };\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-clean-left-behind",
+    "file": "server-account/src/realm.js",
+    "old": "  const clean = row.clean_obj != null && row.clean_obj === row.obj;",
+    "new": "  const clean = false && row.clean_obj === row.obj;",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-rollback-sized-wrong",
+    "file": "server-account/src/review.js",
+    "old": "    ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save),",
+    "new": "    ).bind(0, wealthOf(save),",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-excuse-unwritten",
+    "file": "server-account/src/review.js",
+    "old": "held = NULL, held_at = NULL, strikes = 0, review = NULL, law_excused = law_sig, allowance = NULL",
+    "new": "held = NULL, held_at = NULL, strikes = 0, review = NULL, allowance = NULL",
+    "tests": [
+      "test/int2_judge.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-chest-lost",
+    "file": "src/systems/loot.js",
+    "old": "    if (!lawRefuses(it)) out.push(it);\n",
+    "new": "    if (lawRefuses(it)) return null;\n    out.push(it);\n",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-magic-anything",
+    "file": "src/systems/itemLaw.js",
+    "old": "  return live.length === 1 && REGULAR_MAGIC_TYPES.includes(live[0].type) ? [] : ['enchantments'];",
+    "new": "  return [];",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-artifact-anywhere",
+    "file": "src/systems/itemLaw.js",
+    "old": "  if (item.templateIndex !== GROUP_TEMPLATE_INDICES[ITEM_GROUP_NAME_BY_CLASS[rec.group]]?.[rec.index]) return ['artifact'];\n",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-artifact-any-power",
+    "file": "src/systems/itemLaw.js",
+    "old": "  return withinKinds(found, rec.types) ? [] : ['artifact'];",
+    "new": "  return [];",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-a-soul-in-any-artifact",
+    "file": "src/systems/itemLaw.js",
+    "old": "(item.artifact === true && isInt(item.artifactIndexBitfield) && item.artifactIndexBitfield >> 1 === AZURAS_STAR)",
+    "new": "item.artifact === true",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-no-person-in-a-gem",
+    "file": "src/systems/itemLaw.js",
+    "old": "|| (/** @type {number} */ (v) >= HUMAN_SOUL_FIRST && /** @type {number} */ (v) <= HUMAN_SOUL_LAST)",
+    "new": "|| false",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-lifted-rare",
+    "file": "src/systems/itemLaw.js",
+    "old": "    const extra = tier === 'rare' ? 1 : 0;",
+    "new": "    const extra = tier === 'rare' && isCursed(item) ? 1 : 0;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-lifted-legendary",
+    "file": "src/systems/itemLaw.js",
+    "old": "    if (item.exalted !== true && AFFIX_KINDS[a?.id]?.proc) out.push(isCursed(item) ? 'curse' : 'affixes');",
+    "new": "    if (item.exalted !== true && !isCursed(item)) out.push('affixes');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-worth-unfloored",
+    "file": "src/systems/itemLaw.js",
+    "old": "  return Math.max(Math.min(value, worthCeiling(item)), floor) * stack;",
+    "new": "  return Math.min(value, worthCeiling(item)) * stack;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-null-row",
+    "file": "src/systems/itemLaw.js",
+    "old": "    if (!e || typeof e !== 'object') return [...out, 'enchantments'];   // AUDIT INT: a null row threw, and the checkpoint with it\n",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-piece-unnamed",
+    "file": "src/systems/itemIds.js",
+    "old": "  if (typeof name === 'string' && name) return tradeHeldLawNotice(name);\n",
+    "new": "",
+    "tests": [
+      "test/int4_itemids.test.js"
+    ]
+  },
+  {
+    "name": "INTA-the-boat-in-the-worker",
+    "file": "src/systems/comeSailAwayItems.js",
+    "old": "import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayHulls.js';",
+    "new": "import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayBoat.js';",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ]
+  },
+  {
+    "name": "INTA-old-stock-vaulted",
+    "file": "server-account/src/guildVault.js",
+    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' };   // one no honest client mints goes to no member: it waits for staff\n",
+    "new": "",
+    "tests": [
+      "test/int6_review.test.js"
+    ]
+  }
+]

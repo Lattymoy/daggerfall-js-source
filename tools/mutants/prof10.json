@@ -819,8 +819,8 @@
   {
     "name": "PROF10-maker-reads-the-template",
     "file": "src/systems/enchanting.js",
-    "old": "const basePower = craftedJewelPoints(item) ?? templateByIndex(",
-    "new": "const basePower = templateByIndex(",
+    "old": "const basePower = craftedJewelPoints(item) ?? lookup(",
+    "new": "const basePower = lookup(",
     "tests": [
       "test/prof10_client.test.js"
     ]

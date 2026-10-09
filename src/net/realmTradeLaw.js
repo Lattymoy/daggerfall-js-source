@@ -232,6 +232,11 @@ export function realmTradeRefusalText(/** @type {string} */ why) {
     case 'goods': return 'The realm could not find the goods offered - nothing was traded.';
     case 'moved': return 'A character moved on before the trade was settled - nothing was traded.';
     case 'offline': return 'The realm could not be reached - nothing was traded.';
+    case 'trade-held': return 'The realm is reviewing a character in this trade, and its trading is frozen - nothing was traded.';   // INT3
+    case 'piece-dupe': return 'Copies of a piece in this trade were found in the realm - nothing was traded.';   // INT4
+    case 'piece-claimed': return 'Another character shows a piece in this trade too, and the realm is still settling whose it is - nothing was traded.';   // INT4 (its audit)
+    case 'piece-legacy': return 'A piece in this trade came into the realm from a classic save, and the realm does not trade it - nothing was traded.';   // INT1 (its audit)
+    case 'record-unjudged': return 'The realm has not read a character\'s latest save yet - nothing was traded. Try again in a moment.';   // INT3 (its audit)
     default: return 'The realm refused the trade - nothing was traded.';
   }
 }

@@ -38,8 +38,8 @@
   {
     "name": "AC4-A4-why-unsaid",
     "file": "server-account/src/index.js",
-    "old": "if ('error' in r) return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? 400, origin);",
-    "new": "if ('error' in r) return json({ error: r.error, ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? 400, origin);",
+    "old": "if ('error' in r) return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);   // INT3: a held stake's own",
+    "new": "if ('error' in r) return json({ error: r.error, ...(typeof r.card === 'string' ? { card: r.card } : {}) }, CARDS_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);   // INT3: a held stake's own",
     "tests": [
       "test/auditcards4_client.test.js",
       "test/auditcards4_pins.test.js",
