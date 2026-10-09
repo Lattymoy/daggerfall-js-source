@@ -21,7 +21,7 @@ import { scanGatePixels } from '../src/systems/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../src/formats/mapsFile.js';
 import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdFoundLine, SD_COLLAPSE_MS, SD_CAST_OUT_LINE, SD_NO_CLOSED, isSdRoom, sdRoomKey } from '../src/net/sdLaw.js';
-import { sdRiftWord, sdReturnStands, sdRiftCount, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../src/world/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSpoilsPool, spoilsStore, spoilsLevel, SPOILS_SPENT_RESEND_MS, SPOILS_SPENT_MAX, SPOILS_KEYS } from '../src/scenes/spoilsPool.js';
 import { createSdClaims, SD_CLAIMS_MAX, SD_CLAIMS_ALL_MAX } from '../src/net/sdClaims.js';
@@ -265,9 +265,10 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, modes, playerEntity: { health: 10 },
+    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },
     INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
+    sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -360,7 +361,7 @@ test('SD11c THE WAY BACK STANDS ME PAST THE RETURN (L6 F18): one back from the H
   // boxed in: its foot
   assert.deepEqual(sdLandingPlace({ at: [1, 0, 1], size: 2.6 }, [1.6, 0, 1], hall({ x1: 2, z1: 2 })), [1.6, 0, 1]);
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt \}\);/);
+  assert.match(D, /_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt, dynamicDraws, probe \}\);/);
   assert.match(D, /return _sdLanding \? \[_sdLanding\[0\], _sdLanding\[1\], _sdLanding\[2\]\] : null;/, 'the way back reads the landing');
 });
 
@@ -573,7 +574,7 @@ function fightHost() {
     sdSpoilsBurst: { leave: () => log.push('floor.leave'), frame: () => log.push('floor.frame') }, saveSoon: { changed: () => log.push('save') },
     sdBlows: { leave: () => log.push('blows.leave'), frame: () => log.push('blows.frame') },
     sdRemVoice: { leave: () => log.push('voice.leave'), frame: () => log.push('voice.frame') },   // SD14a (PIN MOVED): its voice beside its blows
-    sdFx: { leave: () => log.push('fx.leave'), frame: () => log.push('fx.frame') },   // SD16 (PIN MOVED): its sparks beside its voice
+    sdFx: { leave: () => log.push('fx.leave'), frame: () => log.push('fx.frame'), away() {} },   // SD16 (PIN MOVED): its sparks beside its voice; AUDIT SD V (L5, PIN MOVED): told every frame out of the Hour
     sdDungeonToRealm: () => [0, 0, 0], player: { pos: [0, 0, 0] }, sdBarNear: () => false, remnantBarModel: () => null,
     drawGateBossBar: () => log.push('bar'), gamePaused: () => false, townTalk: {},
     // SD15 (PIN MOVED): the arena read beside the bar - nothing to read in an empty fight
@@ -621,7 +622,7 @@ test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO T
   const go = w.indexOf('Promise.resolve().then(async () => {', at);
   const out = w.indexOf('if (mode !== \'exterior\') modes?.forceExitToExterior();', go);
   assert.ok(at > 0 && go > at && out > go, 'read before the exit');
-  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\('brass'\); kind = 'hour'; \}\s*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
+  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\('hourCast'\); kind = 'hour'; \}[^\n]*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
   assert.equal(respawnFlavorText('hour', () => 0), SD_REALM_TEXT.died, 'the Hour\'s own kind of waking');
   assert.equal(respawnFlavorText('hour', () => 0.999), SD_REALM_TEXT.died);
   // the Hour's pool's voice, from its own text

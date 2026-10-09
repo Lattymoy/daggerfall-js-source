@@ -29,8 +29,8 @@
   {
     "name": "SD18C-the-heart-green",
     "file": "src/world/sdRemnantModel.js",
-    "old": "  shard(f, heartRecordOf(ending), 0, 0, B.heartY - B.heartR, B.heartY, B.heartY + B.heartR, B.heartR);",
-    "new": "  shard(f, SD_REMNANT_HEART_RECORD, 0, 0, B.heartY - B.heartR, B.heartY, B.heartY + B.heartR, B.heartR);",
+    "old": "  lathe(f, heartRecordOf(ending), 0, 0, [[0, H - R],",
+    "new": "  lathe(f, SD_REMNANT_HEART_RECORD, 0, 0, [[0, H - R],",
     "tests": [
       "test/sd18c_endings.test.js"
     ]

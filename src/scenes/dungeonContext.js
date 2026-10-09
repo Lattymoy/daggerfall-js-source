@@ -73,7 +73,7 @@ import { registerPreventRestCondition, unregisterPreventRestCondition } from '..
 import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
 import { addCorpseFood } from '../systems/survival/loot.js';   // CORPSE-FOOD: a joiner's copy of a body rolls its own food
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
-import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook, staffFly } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook, staffFly, levitateWarded } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb, peacefulFoePass, doorDistanceOf } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
@@ -251,10 +251,11 @@ import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair l
 import { createSdEnd, SD_HOME_TEXT } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return; SD10: the Hour's way home
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
 import { createSdSteps } from './sdSteps.js';   // SD7b: the Unmoored Steps in the Shattered Hour
+import { createSdHang } from './sdHang.js';   // SD-LOOK S11: what hangs under the Hour's islands, the far islands, the Works
 import { createSdRemnant } from './sdRemnant.js';   // SD8c: the Brass Remnant in the Shattered Hour
 import { sdMarksOf } from '../net/sdMarks.js';   // SD18c: its Hollow's Ending - the light it burns with
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
-import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
+import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_THRESHOLD_RIM } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
 import { realmToDungeon } from '../net/sdBrain.js';   // SD5a: the realm's frame
 import { dungeonTier } from '../systems/dungeonTier.js';   // SD4a: the location's tier, the one law (TIER1)
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
@@ -1826,13 +1827,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // where its word admits) and the Return (to the way in, until the boss falls), stood the first frame I stand here at
   // the end the lair's law finds (world/dungeonEnd.js), as wide as its hall lets them (world/sdDungeon.js) - the same on
   // every client. Pressed, or walked into (scenes/sdEnd.js).
-  const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep(), riftCount: () => sdEndWord()?.count ?? null })   // AUDIT SD II (L6 F5): its plaque counts its Hour
-    : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.(), onReturn: () => opts.sdWayHome?.(), retTitle: SD_HOME_TEXT.title, retTo: SD_HOME_TEXT.to }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back; SD10: and its way home, the Return's light where the Remnant fell
+  const sdEndClock = () => opts.sdClock?.() ?? performance.now() / 1000;   // SD-LOOK: the realm's anchored seconds - every screen's gear ticks together
+  const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep(), riftCount: () => sdEndWord()?.count ?? null, look: () => (opts.superRiftLook ? opts.superRiftLook(dfLocation?.sdSlot) : sdEndWord()?.look) ?? null, clock: sdEndClock })   // AUDIT SD II (L6 F5): its plaque counts its Hour; SD-LOOK: and its state is its look
+    : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.(), onReturn: () => opts.sdWayHome?.(), retTitle: SD_HOME_TEXT.title, retTo: SD_HOME_TEXT.to, clock: sdEndClock }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back; SD10: and its way home, the Return's light where the Remnant fell
   // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/sdHall.js) - its stones,
   // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm
   // judges it), the realm's word on the hall read from it every frame
-  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); } }) : null;   // AUDIT SD II (SD11d): through the Hour's voice
+  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, clock: sdEndClock, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); } }) : null;   // AUDIT SD II (SD11d): through the Hour's voice; SD-LOOK S10: its orrery's decor on the realm's anchored seconds
   let _sdHallStood = false;
+  /** SD-LOOK S10: the end's halos and lights with the Orrery's after them (its gem, a settling bezel), in kept lists - the
+   *  hosts already draw and light the end's (world.js drawSdRift, the mode machine's light list), so the hall rides there. */
+  const _sdEndHalos = [], _sdEndLights = [];
+  const sdEndWith = (a, b, into) => {
+    if (!b?.length) return a;
+    into.length = 0;
+    for (let k = 0; k < a.length; k++) into.push(a[k]);
+    for (let k = 0; k < b.length; k++) into.push(b[k]);
+    return into;
+  };
   /** One frame of the hall: stood once I stand here, then the realm's word heard and the hands turned. */
   function sdHallFrame(dt, playerFeet) {
     if (playerFeet && !_sdHallStood) { _sdHallStood = true; sdHall.stand({ dynamicDraws, collider }); }
@@ -1841,7 +1853,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS in the Shattered Hour (scenes/sdSteps.js) - the course's steps,
   // stood the first frame the outer host asks, each moved on the realm's clock (the outer host's) and ridden BEFORE the
   // motor: the outer host asks every frame, beside the action movers' ride, and stands a body the void took back
-  const sdSteps = _sdRealm ? createSdSteps({ renderer, audio }) : null;
+  const sdSteps = _sdRealm ? createSdSteps({ ending: sdMarksOf(dfLocation.sdRealm)[0], renderer, audio }) : null;   // SD-LOOK S9: its Hollow's Ending on the vane
   let _sdStepsStood = false;
   /** One frame of the Steps, before the motor: the landing of a cast-back, or null. */
   function sdStepsRide(dt, body, live) {
@@ -1855,6 +1867,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // three seams below (gateBossBody, gateHostBodies, gateCrystalBodies) - my blows on it out to the realm, not the court
   const sdRemnant = _sdRealm ? createSdRemnant({ renderer, link: () => opts.sdFight?.() ?? null, sendIn: () => !!opts.sdFightIn?.(), sendBlow: (k, f) => !!opts.sdBlow?.(k, f), alive: () => playerEntity.health > 0, ending: sdMarksOf(dfLocation.sdRealm)[0] }) : null;
   let _sdRemnantStood = false;
+  // SD-LOOK S11 (Super-Dungeons-Look.md section 6): THE HANG in the Shattered Hour (scenes/sdHang.js) - the islands' strata
+  // spires, gear rims and chains, the far islands, the Works - stood the first frame the Hour is posed, swung and turned
+  // on the realm's anchored seconds; all noShadow, none of it law
+  const sdHang = _sdRealm ? createSdHang({ renderer, clock: sdEndClock }) : null;
   /** One frame of the arena: stood once I stand here, then my `in` and the bodies. */
   function sdRemnantFrame(dt, playerFeet) {
     if (playerFeet && !_sdRemnantStood) { _sdRemnantStood = true; sdRemnant.stand({ dynamicDraws }); }
@@ -1870,8 +1886,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  beside it - every ray this dungeon's own collider. */
   function standSdEnd() {
     if (!sdEnd || !collider) return;
-    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }   // SD5a: the way back, at the Threshold's back
-    const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks));
+    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: true, probe: SD_THRESHOLD_RIM }); return; }   // AUDIT SD V (R2): its floor light's edge the Threshold's rim, never the void past it   // SD5a: the way back, at the Threshold's back - SD-LOOK S6: the Hollow behind it
+    const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks, (m) => floorLanding(collider, [m.x, m.y + 0.2, m.z])[1]));   // AUDIT SD IV (F38): out of the water where any is
     if (!end) return;
     const probe = {
       floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
@@ -1880,7 +1896,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const rift = sdRiftPlace(floorLanding(collider, [end.x, end.y + 0.2, end.z]), probe);
     _sdRetAt = sdReturnPlace(rift, probe);
     _sdLanding = sdLandingPlace(rift, _sdRetAt, probe);
-    sdEnd.stand({ rift, retAt: _sdRetAt });
+    sdEnd.stand({ rift, retAt: _sdRetAt, dynamicDraws, probe });   // SD-LOOK: its meshes among the level's dynamic draws; the collider's rays for its floor light's edge and its reveal
   }
   /** Into the Rift: its own word first (the outer host's, off the hub's record) - through to the Shattered Hour where it
    *  admits and the realm's door takes me (SD5), else its refusal said. */
@@ -1905,10 +1921,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function sdEndFrame(playerFeet) {
     if (playerFeet && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
     const t = performance.now();
-    if (_sdRealm) { const home = opts.sdHomeAt?.() ?? null; if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity); else if (!home && sdEnd.ret) sdEnd.returnOut(); }
-    else if (sdEnd.ret && t >= _sdEndCheckAt) { _sdEndCheckAt = t + 1000; const w = sdEndWord(); if (w && !w.returns) sdEnd.returnOut(); }
-    sdEnd.frame(playerFeet ?? null);
+    if (_sdRealm) { const home = opts.sdHomeAt?.() ?? null; if (home && !sdEnd.hasRet) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws }); else if (!home && sdEnd.hasRet) sdEnd.returnOut(); }   // AUDIT SD V (P1): asked as a yes or no - `ret` hands a copy
+    else if (sdEnd.hasRet && t >= _sdEndCheckAt) { _sdEndCheckAt = t + 1000; const w = sdEndWord(); if (w && !w.returns) sdEnd.returnOut(); }
+    if (playerFeet) { _sdEye[0] = playerFeet[0]; _sdEye[1] = playerFeet[1] + 1.6; _sdEye[2] = playerFeet[2]; }   // SD-LOOK: the eye the reveal asks from
+    sdEnd.frame(playerFeet ?? null, playerFeet ? _sdEye : null);
   }
+  const _sdEye = [0, 0, 0];
   const fateSay = (ev) => { if (ev) revenantSay(ev, (l) => hudText.add(l)); };
   /** It yields: held at 1, kneeling, its plea said. */
   function yieldDungeonFoe(f) {
@@ -9120,7 +9138,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     underwaterFogSettings,
     // P11: the motor-mode effect consumers (Levitate 14,255; the S8
     // waterWalking flag lands its swimmer).
-    playerLevitating: () => hasActiveEffect(playerEntity, 'levitate') || staffFly(),   // STAFF1: /fly
+    playerLevitating: () => hasActiveEffect(playerEntity, 'levitate') && !levitateWarded() || staffFly(),   // STAFF1: /fly; AUDIT SD V (L1): the ward holds here too - the Hour is drawn by this arm, and SD7b's ward reached the street's flags alone, so a Levitate lifted a body over the Steps
     playerWaterWalking: () => isEntityWaterWalking(playerEntity),   // CSA-I: IsWaterWalking, either effect
     drainPlayerFatigue: (n) => drainFatigue(n),   // CSA-J (the audit): PlayerEntity.DecreaseFatigue underground - the dungeon's own collapse
     playerParalyzed: () => entityIsParalyzed(playerEntity),   // S19 gates + the S22 FreeAction fold
@@ -10074,6 +10092,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     /** SD4b: a press on a Super dungeon's Rift or Return - the press ladder's `sdrift:` / `sdreturn:` arm (worldModes.js). */
     sdPress(key) { return !!sdEnd?.press(key) || !!sdHall?.press(key); },   // SD6c: and the Orrery's hall
+    // SD-LOOK: the Rift's and the Return's picture for the hosts' pass (render/sdRiftPass.js, render/sdHalo.js) and their
+    // lights for the light list - undefined where no Super dungeon's end stands here
+    sdEndLook: sdEnd ? (eye, sky, hour) => sdEnd.look(eye, sky, hour) : undefined,
+    sdEndHalos: sdEnd ? () => sdEndWith(sdEnd.halos(), sdHall?.halos(), _sdEndHalos) : undefined,   // SD-LOOK S10: and the Orrery's
+    sdEndLights: sdEnd ? () => sdEndWith(sdEnd.lights(), sdHall?.lights(), _sdEndLights) : undefined,
+    sdEndPulse: sdEnd ? (kind) => sdEnd.pulse(kind) : undefined,
+    sdHallBridgeLaid: sdHall ? () => sdHall.bridgeLaid : undefined,   // AUDIT SD V (L2): the edge opens onto the bridge as it stands drawn   // SD-LOOK S6: what the end sees happen - the way back's exhale as one arrives
+    sdRemnantLights: sdRemnant ? () => sdRemnant.lights() : undefined,   // SD-LOOK S8: the hearts' lights, for the Hour's channel (the world host's sdRealmLights)
+    sdStepsDraw: sdSteps ? (proj, view, fog) => sdSteps.drawPass(proj, view, fog) : undefined,   // SD-LOOK S9: the Steps' ghosts, for the world host's Hour pass
     /** SD7b: the Unmoored Steps' frame, BEFORE the motor (the mode machine's, beside the movers' ride): the steps moved and
      *  `body` carried; while `live`, the breath, the touch and the void - the landing of a cast-back, or null. */
     sdStepsRide(dt, body, live = true) { return sdStepsRide(dt, body, live); },
@@ -10084,9 +10111,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     sdPose(dt, playerFeet) {
       if (sdHall) sdHallFrame(dt, playerFeet);
       if (sdRemnant) sdRemnantFrame(dt, playerFeet);
+      if (sdHang) { sdHang.stand({ dynamicDraws }); sdHang.frame(); }   // SD-LOOK S11: stood once, then its chains and gears
     },
-    /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
-     *  has not stood it yet); null in any other dungeon. */
+    /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood with the level, AUDIT
+     *  SD IV S1; stood now if it was not); null in any other dungeon. */
     sdRiftLanding() {
       if (!_superTier || !sdEnd) return null;
       if (!_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
@@ -10356,6 +10384,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       sdHall?.clear();   // SD6c: the hall's meshes
       sdSteps?.clear();   // SD7b: the Steps' meshes
       sdRemnant?.clear();   // SD8c: the Remnant's
+      sdHang?.clear();   // SD-LOOK S11: the hang's
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player
@@ -10381,5 +10410,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       hudText.dispose(); placeHold?.release();   // FIELD BUGS 2026-10-04d PLACE-LRU: LAST, its own GL objects gone - its blocks, flats and foes' frames are kept a couple of dungeons' worth, then freed unless another place holds them
     },
   }; placeHold?.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: built - the keep of this dungeon's last visit goes
+  // AUDIT SD IV (S1): the end stood as the level is built - every door shut, every platform home - before a save's state
+  // or the room's (applyWorld, a peer's act) can open one: where the Rift, the Return and the landing back stand is the
+  // layout's alone, the same on every client, whatever window held the first frame back
+  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }

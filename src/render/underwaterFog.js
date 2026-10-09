@@ -56,9 +56,12 @@ export const DUNGEON_FOG = Object.freeze({
 });
 
 /** The port's one fog door takes five positional arguments and a
- *  Float32Array colour; this puts a settings record through it. */
-export function applyFog(renderer, s) {
-  renderer.setFog(s.mode, s.density, s.start, s.end, new Float32Array(s.color));
+ *  Float32Array colour; this puts a settings record through it.
+ *  AUDIT SD IV (R5): `into` a Float32Array the caller keeps for its
+ *  colour - a frame's fog, made nothing (the renderer holds the
+ *  colour it is handed, so it is the caller's alone). */
+export function applyFog(renderer, s, into = null) {
+  renderer.setFog(s.mode, s.density, s.start, s.end, into ? (into.set(s.color), into) : new Float32Array(s.color));
 }
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);

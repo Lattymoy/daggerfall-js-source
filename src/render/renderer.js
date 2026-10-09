@@ -1395,6 +1395,7 @@ export class Renderer {
     this._shadowPass = null; // ...built once and kept across swaps, like the lane's programs
     this._air = null;        // EL3: the AirPass while a lane that asks for it is installed AND the page's door is open
     this._airPass = null;
+    this._sceneGrade = null;   // SD-LOOK: the frame's grade, taken by its resolve (setSceneGrade)
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     // RETRO1: DFU's retro mode (render/retroPass.js, systems/retroMode.js). The source is a function answering the
@@ -2701,6 +2702,10 @@ export class Renderer {
    *  that opened its own beginFrame and draws no screen quad after it (the
    *  enhanced travel map's relief). A no-op with nothing owed. */
   resolveFrame() { this._compositeAir(); }
+  /** SD-LOOK (2026-10-08): THE SCENE'S GRADE for this frame - `{ adaptKey, adaptMax, bloom, vignette, contrast }` (render/
+   *  airPass.js setGrade); its resolve takes it, and a frame that does not call this gets the lane's defaults. Nothing on
+   *  the classic set: there is no resolve to grade - its contrast is the art's own. */
+  setSceneGrade(g) { this._sceneGrade = g ?? null; }
 
   /** GRASS-LIT: the ambient occlusion's depth taken NOW - the streaming host calls this just before the grass draws,
    *  so the AO reads the world without the field in it (AirPass.snapshotAoDepth says why). Changes the bound
@@ -2726,6 +2731,7 @@ export class Renderer {
     // only needs the baseline when it actually resolves.
     this._close2D();
     this._underWater = undefined;   // AUDIT WATER-NEXT G14: resolved - the frame's copy is no copy of what is drawn next
+    this._air.setGrade?.(this._sceneGrade); this._sceneGrade = null;   // SD-LOOK: the frame's grade, or the lane's defaults back
     const sc = this._scissor;   // AUDIT RETRO1 F3: a screen scissor live at the first quad is not the passes' - lifted for them and the present, and put back
     if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)

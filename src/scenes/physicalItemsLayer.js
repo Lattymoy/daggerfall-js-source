@@ -51,7 +51,7 @@ import { racialSuppressInventory } from '../systems/lycanthropy.js';
 import { silverFindAt } from '../systems/silverFinds.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
 
-/** The pseudo-archive the pictures go up under: past the large boat's 38151. */
+/** The pseudo-archive the pictures go up under: past the Hour's 38151 (the large boat's is 38171). */
 export const PI_ICON_ARCHIVE = 38161;
 /** A proxy's key on the ray - the pool's own vocabulary, so every host's ladder (the reach, the name, the plaque) reads it
  *  as the one-item pile it is. */

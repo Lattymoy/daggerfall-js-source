@@ -72,8 +72,8 @@ test('TERMS1: the words are held to a hash - editing a document means deciding w
   // this reddens: if the change is material, move the Last Updated date
   // and its version in src/net/legalLaw.js; either way, re-hash.
   const HASH = {
-    terms: 'a803124cece3dec7c5d3b2c0fabab50ecf7836d17767696aff0ef2dafae58b96',
-    privacy: '4ce263a32e1bdafc738dd46ea2c2669b317f87fa6b3acd537411c08e643b71d8',
+    terms: '35891b92a16330f33a5afb5244edde14e486efe3c46ab125aa92cc28b9048333',
+    privacy: '0da7783fdaadbf718b0163c35de4542e51546f3e270f0770c7253d7782965c0e',
   };
   for (const [name, d] of Object.entries(DOCS)) {
     const words = wordsOf(read(d.file));

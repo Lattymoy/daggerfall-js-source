@@ -191,17 +191,8 @@
   {
     "name": "SD14a-a-late-blow-released",
     "file": "src/scenes/sdRemnantVoice.js",
-    "old": "          m = { released: t >= a.at - SD_RELEASE_MS, landed: t >= a.at, stung: false };",
-    "new": "          m = { released: false, landed: t >= a.at, stung: false };",
-    "tests": [
-      "test/sd14a_voice.test.js"
-    ]
-  },
-  {
-    "name": "SD14a-no-quake",
-    "file": "src/scenes/sdRemnantVoice.js",
-    "old": "if (b === SD_BODY.remnant && (A === SD_BLOWS.stomp || A === SD_BLOWS.end) && t - a.at < 400) play(SD_VOICE_CUES.quake, rem(0.5));",
-    "new": "void 0;",
+    "old": "          m = { released: t >= a.at - SD_RELEASE_MS, stung: false };",
+    "new": "          m = { released: false, stung: false };",
     "tests": [
       "test/sd14a_voice.test.js"
     ]

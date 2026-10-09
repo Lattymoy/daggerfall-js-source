@@ -166,7 +166,7 @@
   {
     "name": "WB6b-an-event-unheld",
     "file": "src/scenes/deadlandsAir.js",
-    "old": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: true }",
+    "old": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: AIR_FAR }",
     "new": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: false }",
     "tests": [
       "test/wb6b_deadlands_life.test.js"

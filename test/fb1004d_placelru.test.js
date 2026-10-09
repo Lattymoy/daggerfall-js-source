@@ -387,7 +387,7 @@ test('PLACE-LRU THE FOUR HOSTS: the world host holds each pixel and lets it go; 
   // scenes/dungeonContext.js - wired: settled when built, released last in destroy()
   const D = rd('src/scenes/dungeonContext.js');
   assert.match(D, /const \{ renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette, placeHold = null \} = deps;/);
-  assert.match(D, /hudText\.dispose\(\); placeHold\?\.release\(\);[^\n]*\n\s*\},\n\s*\}; placeHold\?\.settle\(\);[^\n]*\n\s*return api;\n\}/);
+  assert.match(D, /hudText\.dispose\(\); placeHold\?\.release\(\);[^\n]*\n\s*\},\n\s*\}; placeHold\?\.settle\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n|\s*if \(sdEnd && !_sdEndAsked\)[^\n]*\n)*\s*return api;\n\}/);   // AUDIT SD IV (S1, PIN MOVED): the end stood as the level is built, after the hold settles
   // scenes/interiorContext.js (worldModes' building): released LAST (the behaviour is driven above)
   assert.match(rd('src/scenes/interiorContext.js'), /_raceMeshes\?\.clear\?\.\(\); placeHold\?\.release\(\);[^\n]*\n\s*\},\n\s*\};\n\}/);
   // scenes/exterior.js - the fixed city is ONE place it never leaves: its doors stay pinned; its buildings and dungeons

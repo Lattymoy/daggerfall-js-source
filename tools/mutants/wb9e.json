@@ -29,8 +29,8 @@
   {
     "name": "WB9e-a-spark-falling-through-the-floor",
     "file": "src/render/gateFx.js",
-    "old": "Math.max(floorRel + 0.05, up * t - 0.5 * FX_GRAVITY * t * t)",
-    "new": "up * t - 0.5 * FX_GRAVITY * t * t",
+    "old": "  let y = Math.max(rest, up * t - g * t * t);",
+    "new": "  let y = up * t - g * t * t;",
     "tests": [
       "test/wb9e_gate_blows.test.js"
     ]

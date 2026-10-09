@@ -2821,7 +2821,7 @@ would stand). The mod's own SpawnBoat walks each by name.
   stay, the forestay set up on the bowsprit short of its end so the topmast stay comes down over it, the gaff topsail's
   luff clear of the masthead's cap, plan 5's large gaff with no peak halyard - a square topsail braced round sweeps any
   line from the topmast to its peak).
-- **Their pictures** (`world/carrackArt.js`, archive 38141; `world/largeBoatArt.js`, 38151): painted at load from
+- **Their pictures** (`world/carrackArt.js`, archive 38141; `world/largeBoatArt.js`, 38171 - it was 38151, the Shattered Hour's, AUDIT SD IV): painted at load from
   numbers alone, each 64 x 64, the galleon's numbers for every picture the fleet shares and each ship's livery her own,
   cut into slices by height; the carrack's stern windows glow by night through the pool's emission mask
   (`scenes/comeSailAwayPool.js PORT_ART`).

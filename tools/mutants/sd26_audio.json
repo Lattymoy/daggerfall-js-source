@@ -1,0 +1,146 @@
+[
+  {
+    "name": "SD26-A1-a-grunt-outside-time",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (outside) k.hurtHp = hp;\n      else if (k.hurtHp - hp",
+    "new": "      if (false) k.hurtHp = hp;\n      else if (k.hurtHp - hp",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A1-the-count-banked",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      if (outside) k.hurtHp = hp;\n",
+    "new": "      if (outside) void 0;\n",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-the-standing-heard",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    if (away || !heartsOf || heartsOf.fi !== s.fi",
+    "new": "    if (!heartsOf || heartsOf.fi !== s.fi",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-the-stun-heard",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (heartsOf && !X && s.fi === heartsOf.fi && !away) {",
+    "new": "if (heartsOf && !X && s.fi === heartsOf.fi) {",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-the-rise-heard-late",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "if (!away && t - called <= SD_HEART_LATE_MS)",
+    "new": "if (t - called <= SD_HEART_LATE_MS)",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A2-every-hitch-silent",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS));",
+    "new": "hearts(s, t, t - t0 > 500);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A3-the-clunk-by-id",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'gear') audio.playOneShot(SD_HALL_SOUNDS.clunk, 1);",
+    "new": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A3-the-toll-by-id",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'hour') audio.playOneShot(SD_HALL_SOUNDS.toll, 1);",
+    "new": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A4-the-quake-back",
+    "file": "src/scenes/sdRemnantVoice.js",
+    "old": "      k.t = t;\n    },\n    /** Out of the Hour",
+    "new": "      for (const [b, a] of blowsOf(s)) if (b === SD_BODY.remnant && a.a === SD_BLOWS.stomp.id && t >= a.at && t - a.at < 17) play({ clip: BODY_FALL, pitch: 0.3, volume: 1.8, reach: 70 }, rem(0.5));\n      k.t = t;\n    },\n    /** Out of the Hour",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-hours-events-kept",
+    "file": "src/scenes/sdAir.js",
+    "old": "        engine.fadeFar?.(SD_AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-courts-events-kept",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "        engine.fadeFar?.(AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-nothing-faded",
+    "file": "src/systems/audio.js",
+    "old": "        f.gain.gain.linearRampToValueAtTime(0, t + seconds);\n        f.src.stop(t + seconds + 0.05);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-thunder-faded",
+    "file": "src/systems/audio.js",
+    "old": "      if (f.tag !== tag) { far[n++] = f; continue; }",
+    "new": "      if (f.tag !== tag && f.tag) { far[n++] = f; continue; }",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-faded-held",
+    "file": "src/systems/audio.js",
+    "old": "      if (f.tag !== tag) { far[n++] = f; continue; }",
+    "new": "      far[n++] = f; if (f.tag !== tag) continue;",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-hours-events-unnamed",
+    "file": "src/scenes/sdAir.js",
+    "old": "pitch: e.pitch, far: SD_AIR_FAR });",
+    "new": "pitch: e.pitch, far: true });",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-courts-events-unnamed",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "pitch: e.pitch, far: AIR_FAR });",
+    "new": "pitch: e.pitch, far: true });",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  }
+]

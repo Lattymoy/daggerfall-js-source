@@ -15,7 +15,7 @@ import {
   SD_REM_STATES, SD_RIG_PARTS, SD_RIG_JOINTS, SD_REM_HAND, SD_WAKE_MS, SD_SLIP_EVERY_MS, SD_GEAR_ARC_M, SD_BEAM_FLOOR_Y, SD_BEAM_DROP_M, SD_BEAM_FADE_MS, LEAN, TWIST, NOD,
 } from '../src/scenes/sdRemnantRig.js';
 import { buildRemnantParts, buildRemnantModel, buildGearModel, SD_REMNANT_PARTS, SD_REMNANT_BODY, SD_GEAR, remnantMatrix } from '../src/world/sdRemnantModel.js';
-import { createSdRemnant, SD_GEAR_DRAWS } from '../src/scenes/sdRemnant.js';
+import { createSdRemnant, SD_GEAR_DRAWS, SD_DECOR_DRAWS } from '../src/scenes/sdRemnant.js';
 import { SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_HEARTS, SD_PILLARS, SD_BREAK_MS, windupFor, behindPillar } from '../src/net/sdRemnant.js';
 import { SD_STRIDE_M, SD_ECHO_STRIDE_M, SD_RELEASE_MS, SD_SLIP_FRAC } from '../src/scenes/sdRemnantVoice.js';
 import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
@@ -229,14 +229,14 @@ test('SD17 THE SCENE AND THE WORLD: the parts stood after the Hearts and turned 
   const draws = [];
   set.stand({ dynamicDraws: draws });
   const H = 3 + SD_HEARTS[1], P = SD_RIG_PARTS.length;
-  assert.equal(draws.length, H + 3 * P + SD_GEAR_DRAWS);
+  assert.equal(draws.length, H + 3 * P + SD_GEAR_DRAWS + SD_DECOR_DRAWS.length);   // PIN MOVED (SD-LOOK S8): the decor after the gears
   assert.equal(SD_GEAR_DRAWS, SD_BLOWS.volley.max * 3);
-  assert.equal(made.length, 3 * 7 + 2, 'seven parts a body, the Heart, the gear');
+  assert.equal(made.length, 3 * 7 + 2 + 3 + 3, 'seven parts a body, the Heart, the gear - SD-LOOK S8: a back-dial a body, its hand, the rib lamps, the heart torn out');
   set.frame(1 / 60, null);
   const remParts = draws.slice(H, H + P);
   const want = rigMatrices(draws[0].object.matrix, remnantRig(S, -1, t));
   assert.ok(remParts.every((d, i) => !d.hidden && nearV([...d.object.matrix], [...want[i]], 1e-6)), 'turned on its own matrix');
-  assert.ok(draws.slice(H + P).every((d) => d.hidden), 'no Echo\'s parts, no gear');
+  assert.ok(draws.slice(H + P, H + 3 * P + SD_GEAR_DRAWS).every((d) => d.hidden), 'no Echo\'s parts, no gear');   // PIN MOVED (SD-LOOK S8): its own decor stands with it
   // outside time: hidden with it; the Echoes' parts stand
   S = fight({ ph: 2, ec: [0, 1].map((e) => ({ h: 100, m: 100, up: T0 - 1, dn: 0, x: e ? 6 : -6, z: 0, yw: 0, mv: null, atk: null })) });
   set.frame(1 / 60, null);
@@ -247,7 +247,7 @@ test('SD17 THE SCENE AND THE WORLD: the parts stood after the Hearts and turned 
   S = fight({ rem: { x: 0, z: 0, yw: 0, mv: null, atk: blow(SD_BLOWS.volley, T0 + vw, { tg: [[3, 3], [4, -2], [-6, 1]] }) } });
   t = T0 + vw - gearFlightOf(vw) / 2;
   set.frame(1 / 60, null);
-  const gears = draws.slice(H + 3 * P);
+  const gears = draws.slice(H + 3 * P, H + 3 * P + SD_GEAR_DRAWS);   // PIN MOVED (SD-LOOK S8): the decor after them
   assert.deepEqual(gears.map((d) => !d.hidden), gears.map((d, i) => i < 3), 'three in flight');
   const g = sdGearsAt(S, t)[1], m = gears[1].object.matrix;
   assert.ok(nearV([m[12], m[13], m[14]], realmToDungeon(SD_ARENA.x + g.x, g.y, SD_ARENA.z + g.z), 1e-3), 'where the law flies it');
@@ -266,6 +266,6 @@ test('SD17 THE SCENE AND THE WORLD: the parts stood after the Hearts and turned 
   // the world
   // AUDIT SD III (V5, PIN MOVED): into a list the world keeps - a frame of a sweep made 3.4 KB
   assert.match(W, /import \{ sdBeamDraws, sdKeptList \} from '\.\/sdRemnantRig\.js';[^\n]*\n[^\n]*\nconst _sdBeamDraws = sdKeptList\(\), NO_SD_BEAMS = Object\.freeze\(\[\]\);/);
-  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\), _sdBeamDraws\) : NO_SD_BEAMS; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);
+  assert.match(W, /const beams = sdFightLink \? sdBeamDraws\(sdFightLink\.state\(\), sdFightLink\.now\(\), _sdBeamDraws\) : NO_SD_BEAMS; const beam = beams\.length > 0 && !!sdBeamPassOf\(\)\?\.draw\(beams, proj, view, eye, t, fog\); const reads = drawSdArenaReads\(proj, view, fog\); if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam \|\| reads\) renderer\.markForeignPass\(\);/);   // SD-LOOK S7/S8 (PIN MOVED): the arena's reads in the same pass, the sky told the fight, the hearts' lights first
   assert.match(W, /_sdBeamPass = new SdBeamRenderer\(renderer\.gl\);/);
 });

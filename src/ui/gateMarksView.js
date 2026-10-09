@@ -170,6 +170,10 @@ export const MARKS_CARD_CSS = `
 .wb-marks-card.sd-brass .wb-marks-title { color: #e8c060; }
 .wb-marks-card.sd-brass .wb-marks-sub { color: #fff1cf; }
 .wb-marks-card.sd-brass .wb-marks-tip { color: #e6d2a6; }
+/* AUDIT SD IV (T4): THE MESSAGE LINE OVER THE CARD - the card's corner reaches the line's band on a phone and on a
+   laptop with the party up, and the word said as it begins (the Hour's and the court's "Your companions cannot follow")
+   stood under it unread, wherever the player had moved the line: while the card stands, the line stands over it */
+body:has(.wb-marks-card:not([style*="display: none"])) .hudmid { z-index: 32; }
 /* WB13c: beside the party's frames where the screen holds both, never over them */
 @media (min-width: 900px) {
   body:has(.dfparty:not([style*="display: none"])) .wb-marks-card { right: 220px; }

@@ -137,8 +137,8 @@
   {
     "name": "SD8C-a-refusal-for-good-lapsing",
     "file": "src/net/sdFightLink.js",
-    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;",
-    "new": "      if (refused && refused.fi === state.fi && refused.lost === state.lost) return false;",
+    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;",
+    "new": "      if (refused && refused.fi === state.fi && refused.lost === state.lost && !silent) return false;",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "SD8C-a-refusal-never-lapsing",
     "file": "src/net/sdFightLink.js",
-    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;",
+    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;",
     "new": "      if (refused) return false;",
     "tests": [
       "test/sd8c_remnant_page.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "SD8C-in-after-the-fall",
     "file": "src/net/sdFightLink.js",
-    "old": "      if (state.fi > 0 && !state.lost && (state.fell || state.ended || mine === state.fi)) return false;",
-    "new": "      if (state.fi > 0 && !state.lost && mine === state.fi) return false;",
+    "old": "      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;",
+    "new": "      if (state.fi > 0 && !state.lost && mine === state.fi && !silent) return false;",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

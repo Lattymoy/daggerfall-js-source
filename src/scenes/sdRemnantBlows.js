@@ -8,7 +8,8 @@
 //     lands (sdTelegraphShapes - the gate's telegraph pass over the arena, render/gateTelegraph.js): the Stomp's disc and
 //     then its ring rolling out; the Hour-Hand's half-circle as it gathers with its beam standing where it begins, then
 //     the beam sweeping; the Gear Volley's marks; the Hour's own over the whole floor; the Volley's brass burning where
-//     it fell.
+//     it fell. SD-LOOK S7: and under them, always, each standing body's mark - a ring and a chevron where it faces (the
+//     host's `bodyMarks`, scenes/sdArenaWatch.js).
 //   HEARD: each blow's wind-up at its word and its landing (DAGGER.SND's own, pitched for a colossus of brass).
 //   JUDGED HERE, on my own feet (net/sdStrike.js sdBlowVerdict): each part of each blow once, a share of my own health
 //     and its base; the Stomp's ring on the ground alone; the Hand outrun or shaded by a pillar; the burning brass a bite
@@ -27,6 +28,7 @@ import { sdBlowVerdict, sdVolleyPools, sdPoolUnder } from '../net/sdStrike.js';
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_STYLE, TELEGRAPH_POOL, TELEGRAPH_FLASH_MS, TELEGRAPH_POINTS_MAX } from '../render/gateTelegraph.js';
 import { damageChartModel, drawGateDamageChart, DAMAGE_CHART_DELAY_MS, DAMAGE_CHART_MS } from '../ui/gateDamageChart.js';
 import { BODY_FALL, BURNING, THUNDER_ROLL, SWING_LOW, CRYSTAL_CLIPS, BOSS_CUES } from '../world/gateBoss.js';
+import { SD_VOICE_AWAY_MS } from './sdRemnantVoice.js';
 
 /** Each blow's colour on the floor (linear rgb) - the brass's for its own, the Mantella's green for the Hour's, red for
  *  the End. */
@@ -191,9 +193,10 @@ export function sdBlowsInFlight(s) {
  * dungeon context's door, `say` a line, `me()` my name on the relay (my row of the chart), `hudHidden()` the HUD's hide.
  * @param {{ gl?: any, audio?: any, link: any, feet?: () => (number[]|null), grounded?: () => boolean, player?: () => any,
  *   strike?: (dmg: number, how: any) => void, say?: (t: string, everyone?: boolean, key?: string) => void, me?: () => (string|null), hudHidden?: () => boolean,
- *   save?: (e: any, el: string) => number }} deps - SD18b: `save(entity, el)` the share (0-100) a strike in element `el` lands
+ *   save?: (e: any, el: string) => number, bodyMarks?: () => readonly any[] }} deps - SD18b: `save(entity, el)` the share (0-100) a strike in element
+ *   `el` lands; SD-LOOK S7: `bodyMarks()` the bodies' marks this frame (scenes/sdArenaWatch.js sdArenaMarksAt), laid under its blows
  */
-export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100 }) {
+export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100, bodyMarks = () => NONE }) {
   let pass = null, passTried = false;
   let feetOver = false;   // AUDIT SD III (F8): my feet on or over a pillar's top this frame
   /** each blow by its number: what of it has been judged, whether it is done, heard and said */
@@ -254,6 +257,24 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     m.done = v.done;
     for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);
   }
+  /** AUDIT SD IV (5): THE WHOLE ARENA'S BLOWS OWED (net/sdFightLink.js `owed` - kept only while the realm counts me in
+   *  their fight) - each one landed judged once, however late, though the state let it go before a frame of mine saw it
+   *  land (a hidden tab draws none), then paid. One still winding up waits: the loop below judges it in flight. */
+  function owedBlows(s, t, t0) {
+    const list = link.owed?.() ?? NONE;   // a link that keeps no such list owes nothing
+    if (!list.length) return;
+    const f = feet(), e = player();
+    if (!f || !e) return;
+    let at = null;
+    for (let k = 0; k < list.length; k++) {
+      const o = list[k];
+      if (!(e.health > 0)) return;
+      if (t < o.atk.at) continue;
+      if (!at) { const r = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(r[0], r[2]); }
+      blow(s, o.b, o.atk, t, t0, at);
+      if (marks.get(o.atk.i)?.done) link.paid(o.atk.i);
+    }
+  }
   /** THE BURNING BRASS - a bite each POOL_TICK_MS I stand in it, the first a tick after I stepped in (the gate's law: a
    *  step out shorter than a tick keeps the count it had). */
   function burn(t, at, alive) {
@@ -275,7 +296,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
    *  (its shatter, and the ring after it). They rose, took blows and broke in silence. */
   let heartsOf = null;
   const broke = (p) => { play(BOSS_CUES.crystalBreak, p); play(BOSS_CUES.crystalRing, p); };
-  function hearts(s, t) {
+  function hearts(s, t, away) {
     const X = s.cx;
     if (!X || s.fell || s.lost) {
       // the LAST Heart breaks in the stun's own word: the realm fans its `cxb` and the stun together, and the stun takes
@@ -283,7 +304,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       // this screen looked shatters nothing late). AUDIT SD III (A12): a Reset that LANDED breaks no Heart, and takes the
       // ones left standing back - seen to burst in its light as they go (SD20c, V10), and heard so: the crystal's low
       // ring alone, never its shatter, as its landing is heard live (they went in silence)
-      if (heartsOf && !X && s.fi === heartsOf.fi) {
+      if (heartsOf && !X && s.fi === heartsOf.fi && !away) {
         const stunned = s.stunAt >= heartsOf.called, broken = stunned && s.su > t;
         const taken = !stunned && t - (heartsOf.called + SD_BLOWS.reset.windup) < SD_HEART_LATE_MS;
         for (let k = 0; k < heartsOf.h.length; k++) if (heartsOf.h[k] > 0) { if (broken) broke(heartsOf.p[k]); else if (taken) play(BOSS_CUES.crystalRing, heartsOf.p[k]); }
@@ -291,10 +312,12 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       heartsOf = null;
       return;
     }
-    if (!heartsOf || heartsOf.fi !== s.fi || heartsOf.i !== X.i) {
+    // AUDIT SD IV (A2): A6's law reaches the Hearts - unheard SD_VOICE_AWAY_MS (a tab put away), they are taken again as
+    // they stand, in silence: every Heart broken while the page was away shattered and rang at once on its first frame
+    if (away || !heartsOf || heartsOf.fi !== s.fi || heartsOf.i !== X.i) {
       const called = s.rem?.atk?.a === SD_BLOWS.reset.id ? s.rem.atk.at - SD_BLOWS.reset.windup : -Infinity;
       heartsOf = { fi: s.fi, i: X.i, h: X.c.map((q) => q[2]), p: X.c.map((q) => realmToDungeon(SD_ARENA.x + q[0], 1.2, SD_ARENA.z + q[1])), called };
-      if (t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);
+      if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);
       return;
     }
     for (let k = 0; k < X.c.length; k++) {
@@ -327,7 +350,8 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       if (s.fi !== marksFi) { marksFi = s.fi; marks.clear(); pools = []; inFire = false; }   // AUDIT SD: a fight lost and a fresh one begun - the last one's numbers are not this one's
       const t0 = prevT ?? t;
       prevT = t;
-      hearts(s, t);   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
+      hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS));   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
+      owedBlows(s, t, t0);   // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same
       // AUDIT SD II (L2 F9): no blow in flight and no brass burning - nothing to judge or show, and nothing made for it
       if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
@@ -353,12 +377,15 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     warm() {
       if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[sd] the telegraph would not build', e?.message ?? e); pass = null; } }
     },
-    /** The telegraphs over the arena's floor, in the dungeon arm's world pass. Answers whether any drew. */
+    /** The telegraphs over the arena's floor, in the dungeon arm's world pass - SD-LOOK S7: the bodies' marks first, under
+     *  them (the court's WBX4 mark, whether or not a blow is in flight). Answers whether any drew. */
     drawPass(proj, view, eye, seconds, fog = null) {
-      if (!shapes.length) return false;
+      const under = bodyMarks();
+      if (!shapes.length && !under.length) return false;
       if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[sd] the telegraph would not build', e?.message ?? e); pass = null; } }
       if (!pass) return false;
       let drew = false;
+      for (let i = 0; i < under.length; i++) { pass.draw(under[i], proj, view, eye, seconds, fog, SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR); drew = drew || pass.drawn > 0; }
       for (const sh of shapes) { pass.draw(sh, proj, view, eye, seconds, fog, SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR); drew = drew || pass.drawn > 0; }
       return drew;
     },

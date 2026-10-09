@@ -27,7 +27,9 @@ import { arenaToDungeon } from '../src/scenes/sdRemnant.js';
 import { createSdBeats, sdGroundModel, sdWakeText, SD_BEAT_TEXT } from '../src/scenes/sdArenaRead.js';
 import { remnantBarModel } from '../src/ui/sdRemnantBar.js';
 import { createSdHall } from '../src/scenes/sdHall.js';
-import { buildFrayModel, SD_FRAY_RING, stonePoint } from '../src/world/sdHall.js';
+import { stonePoint } from '../src/world/sdHall.js';
+import { SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
+import { SD_REALM_BRASS_RECORD } from '../src/world/sdRealm.js';
 import { TELEGRAPH_STYLE, TELEGRAPH_EDGE_DAGON } from '../src/render/gateTelegraph.js';
 
 const T0 = 1_800_000_000_000;
@@ -167,22 +169,22 @@ test('SD18b THE HALL: the Ending\'s own stone lit in its light, breathing on the
   assert.ok(L1.color[0] !== L0.color[0], 'breathing');
   assert.equal(sdEndingStoneLight(null, 0), null);
   assert.match(W, /const stone = sdEndingStoneLight\(modes\?\.sdRealmSlot\?\.\(\) \?\? null, deadlandsSeconds\(\), _sdStoneLight\);/);   // AUDIT SD III (V5, PIN MOVED): into its kept light
-  // the fray's arc by the Hollow's own snap
+  // the fray by the Hollow's own snap - PIN MOVED (SD-LOOK S10): its TABS, one up a turn, as many round the rim as its snap
+  // has turns (the arc's steps scaled to them were the old reading)
   const fraySlot = [...Array(216).keys()].map((x) => x + 1).find((sl) => sdMarksOf(sl).includes('fraying'));
   const plainSlot = [...Array(216).keys()].map((x) => x + 1).find((sl) => !sdMarksOf(sl).includes('fraying'));
   assert.equal(orreryOf(fraySlot).fray, 36);
-  const arcOf = (s, f) => {
+  const tabsOf = (s, f) => {
     const made = [];
     const renderer = { createMesh: (m) => { made.push(m); return { id: made.length }; }, destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {}, createBillboardBatch: () => ({}), destroyBillboardBatch() {} };
     const hall = createSdHall({ renderer, s, now: () => 10_000 });
     hall.stand({ dynamicDraws: [], collider: null });
     hall.frame(1 / 60, null, { k: 'pz', s, st: [0, 0, 0, 0, 0, 0], f, lit: 0, ok: false });
-    const frays = made.filter((m) => m && m.positions && m.positions.length === (buildFrayModel(SD_FRAY_RING.steps)?.positions.length ?? -1) / SD_FRAY_RING.steps * Math.round((f * SD_FRAY_RING.steps) / orreryOf(s).fray));
-    return frays.length;
+    const fray = made.filter((m) => m?.subMeshes?.some((sm) => sm.textureRecord === SD_HALL_GLOW_RECORD.fray)).at(-1);
+    const tris = (rec) => fray.subMeshes.filter((sm) => sm.textureRecord === rec).reduce((n, sm) => n + sm.primitiveCount, 0);
+    return [tris(SD_HALL_GLOW_RECORD.fray) / 10, (tris(SD_HALL_GLOW_RECORD.fray) + tris(SD_REALM_BRASS_RECORD)) / 10];   // a tab's five faces, two triangles each: [up, all]
   };
-  assert.equal(arcOf(fraySlot, 18), 1, 'eighteen of thirty-six: half the arc');
-  assert.equal(arcOf(plainSlot, 24), 1, 'twenty-four of forty-eight: half the arc');
-  const half = buildFrayModel(SD_FRAY_RING.steps / 2).positions.length;
-  assert.equal(half * 2, buildFrayModel(SD_FRAY_RING.steps).positions.length);
+  assert.deepEqual(tabsOf(fraySlot, 18), [18, 36], 'eighteen of thirty-six tabs up');
+  assert.deepEqual(tabsOf(plainSlot, 24), [24, 48], 'twenty-four of forty-eight');
   assert.equal(SD_FRAY_MAX, 48);
 });

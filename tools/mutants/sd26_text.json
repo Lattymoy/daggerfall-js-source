@@ -1,0 +1,321 @@
+[
+  {
+    "name": "SD26-T1-the-turns-to-the-whole-hour",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell') ? titleCardModel(beat, now) : null;",
+    "new": "card = beat ? titleCardModel(beat, now) : null;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-last-minute-withheld",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell')",
+    "new": "card = beat && (near || beat.kind === 'fell')",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-fall-withheld",
+    "file": "src/scenes/world.js",
+    "old": "card = beat && (near || beat.kind === 'last' || beat.kind === 'fell')",
+    "new": "card = beat && (near || beat.kind === 'last')",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T1-the-beats-framed-near-alone",
+    "file": "src/scenes/world.js",
+    "old": "      const beat = sdBeats.frame(s, now);",
+    "new": "      const beat = near ? sdBeats.frame(s, now) : null;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-a-cut-line-lost",
+    "file": "src/scenes/sdVoice.js",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-cut-behind-its-rank",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    while (i < waiting.length && waiting[i].rank < w.rank) i++;",
+    "new": "    while (i < waiting.length && waiting[i].rank <= w.rank) i++;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-a-line-nearly-read-again",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some",
+    "new": "    if (waiting.some",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-threads-word-back",
+    "file": "src/scenes/sdVoice.js",
+    "old": "if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
+    "new": "if (standing && r < standing.rank) back(standing, t);",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T2-the-wait-not-begun-anew",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    waiting.splice(i, 0, { text: w.text, rank: w.rank, at: t, key: w.key });",
+    "new": "    waiting.splice(i, 0, { text: w.text, rank: w.rank, at: t - 4000, key: w.key });",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-window-unread",
+    "file": "src/scenes/sdVoice.js",
+    "old": "    if (covered()) { coveredAt ??= t; return; }",
+    "new": "    if (false) { coveredAt ??= t; return; }",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-standing-clock-run-on",
+    "file": "src/scenes/sdVoice.js",
+    "old": "      if (standing) standing.until += t - coveredAt;\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-turns-waits-aged",
+    "file": "src/scenes/sdVoice.js",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-a-readout-kept-past-its-moment",
+    "file": "src/scenes/sdVoice.js",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at +=",
+    "new": "      for (const w of waiting) if (true) w.at +=",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-turn-under-it-queued",
+    "file": "src/scenes/sdVoice.js",
+    "old": "      if (standing && waiting.length && waiting[0].rank < standing.rank) { back(standing, t); standing = null; }",
+    "new": "      void 0;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-a-line-written-under-it",
+    "file": "src/scenes/sdVoice.js",
+    "old": "      if (coveredAt === null && (!standing ||",
+    "new": "      if ((!standing ||",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-host-uncovered",
+    "file": "src/scenes/world.js",
+    "old": "now: () => performance.now(), covered: sdVoiceCovered });",
+    "new": "now: () => performance.now() });",
+    "tests": [
+      "test/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-slots-window-unread",
+    "file": "src/scenes/world.js",
+    "old": "const sdVoiceCovered = () => !!modes?.dungeonCtx?.overlayWindow?.() || ",
+    "new": "const sdVoiceCovered = () => ",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T3-the-stopped-game-unread",
+    "file": "src/scenes/world.js",
+    "old": " || !!modes?.dungeonCtx?.uiOverlayActive;",
+    "new": ";",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T4-the-line-under-the-card",
+    "file": "src/ui/gateMarksView.js",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T4-the-line-under-the-chart",
+    "file": "src/ui/gateDamageChart.js",
+    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T4-the-line-between",
+    "file": "src/ui/gateMarksView.js",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }",
+    "new": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 30; }",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T5-the-half-screen-squeeze",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "new": "  max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T5-the-cap-unscaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px;",
+    "new": "  width: max-content; max-width: min(680px, 86vw); font-size: 15px;",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T5-the-prisons-cap-scaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hudmid.hudprison { transform: translateX(-50%); max-width: min(680px, 86vw); font-size:",
+    "new": ".hudmid.hudprison { transform: translateX(-50%); font-size:",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-hour-on-dagons-plate",
+    "file": "src/ui/gateBossBar.js",
+    "old": "background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": "background: rgba(60,42,8,0.9); }",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-call-in-the-gates-cream",
+    "file": "src/ui/gateBossBar.js",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; ",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { ",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-omens-the-gates-orange",
+    "file": "src/ui/gateBossBar.js",
+    "old": "m.color : theme === 'brass' ? '#e8c060' : '#ffb27a';",
+    "new": "m.color : '#ffb27a';",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-look-unread-by-the-row",
+    "file": "src/ui/gateBossBar.js",
+    "old": "if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
+    "new": "if (marksKey !== shown.marks) {",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T6-the-last-minute-the-gates-red",
+    "file": "src/ui/gateBossBar.js",
+    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T7-the-hour-before-the-find",
+    "file": "src/scenes/sdHost.js",
+    "old": "    sayOwed(t);\n    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }\n    }\n",
+    "new": "    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }\n    }\n    sayOwed(t);\n",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T8-the-turn-offered-after-the-concord",
+    "file": "src/scenes/sdHall.js",
+    "old": "ok ? SD_HALL_TEXT.held : st[2] === 'f'",
+    "new": "st[2] === 'f'",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T9-the-marks-line-dashed",
+    "file": "src/systems/sdOmen.js",
+    "old": "${E.stone}, its ${E.sig.replace(/^The /, '')}, under",
+    "new": "${E.stone} - ${sdNameIn(E.sig)} - under",
+    "tests": [
+      "test/sd26_text.test.js",
+      "test/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T9-the-lion-tip-dashed",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  daggerfall: 'Its Stomp\\'s ring reaches the rim. Jump it.',",
+    "new": "  daggerfall: 'Jump its Stomp\\'s ring - it reaches the rim.',",
+    "tests": [
+      "test/sd26_text.test.js",
+      "test/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T9-the-ship-tip-dashed",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  wayrest: 'Its Hand reaches three quarters round. Keep a pillar near.',",
+    "new": "  wayrest: 'Its Hand reaches three quarters round - keep a pillar near.',",
+    "tests": [
+      "test/sd26_text.test.js",
+      "test/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T9-the-quickened-tip-x-not-y",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  quickened: 'Move at the word, before the fill.',",
+    "new": "  quickened: 'Move at the word, not the fill.',",
+    "tests": [
+      "test/sd26_text.test.js",
+      "test/sd11d_words.test.js"
+    ]
+  }
+]

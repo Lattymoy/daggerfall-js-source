@@ -18,7 +18,7 @@ import {
   FLASH_SLOT_S, FLASH_SLOTS, FLASH_S, FLASH_DIST, FLASH_LIGHT, COURT_KEY_LIGHT, COURT_TRILIGHT, SIGIL_TOWER, DEAD_LIFE_VS, SEA_FADE,
 } from '../src/render/deadlands.js';
 import {
-  deadlandsAirEvents, airSourceAt, airWindGain, createDeadlandsAir, AIR_WIND, AIR_SEA, AIR_BRAZIER, AIR_BACKLOG_S,
+  deadlandsAirEvents, airSourceAt, airWindGain, createDeadlandsAir, AIR_FAR, AIR_WIND, AIR_SEA, AIR_BRAZIER, AIR_BACKLOG_S,
   ROAR_SLOT_S, PLOP_SLOT_S, THUNDER_CRACK_NEAR_M, CLIP_ROAR,
 } from '../src/scenes/deadlandsAir.js';
 import { SPEED_OF_SOUND, THUNDER_SOURCE_M } from '../src/systems/distantStorms.js';
@@ -299,7 +299,7 @@ test('WB6b the air\'s driver: the beds set every frame (the wind breathing on th
     assert.equal(c[1], want[i].clip);
     assert.deepEqual(c[2], airSourceAt(ear, want[i].az, want[i].lift));
     assert.equal(c[3], want[i].volume);
-    assert.deepEqual(c[4], { refDistance: THUNDER_SOURCE_M, pitch: want[i].pitch, far: true }, 'its offset from the ear held while it sounds');
+    assert.deepEqual(c[4], { refDistance: THUNDER_SOURCE_M, pitch: want[i].pitch, far: AIR_FAR }, 'its offset from the ear held while it sounds');   // PIN MOVED (AUDIT SD IV A5): far under the court's name, which its stop lets go
   });
   // a tab put away: the gap plays nothing of what it passed
   log.length = 0;
