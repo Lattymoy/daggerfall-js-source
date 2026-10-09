@@ -65,8 +65,8 @@
   {
     "name": "LW3-range-floor",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin);",
-    "new": "    .filter((t) => t.mapId !== home.mapId);",
+    "old": "    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)\n    .filter((t) => roadBound(res.job, home, t));",
+    "new": "    .filter((t) => t.mapId !== home.mapId)\n    .filter((t) => roadBound(res.job, home, t));",
     "tests": [
       "test/lw3_roads.test.js"
     ]

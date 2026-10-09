@@ -47,8 +47,8 @@
   {
     "name": "LW-DRY-ground-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    const way = wayOf(plan, world.dryAt);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);",
-    "new": "    const way = wayOf(plan);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);",
+    "old": "    const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);   // LW9: the inns on its road\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);",
+    "new": "    const way = innsAlong(wayOf(plan), plan, world, home, to);   // LW9: the inns on its road\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);",
     "tests": [
       "test/lwdry_ground.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-DRY-dive-ground-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    const way = wayOf(plan, world.dryAt);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);",
-    "new": "    const way = wayOf(plan);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);",
+    "old": "    const way = wayOf(plan, world.dryAt);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);\n    const walk = Math.max(0, way.len - trim0 - trim1) / pace;\n    const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;",
+    "new": "    const way = wayOf(plan);\n    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);\n    const walk = Math.max(0, way.len - trim0 - trim1) / pace;\n    const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;",
     "tests": [
       "test/lwdry_ground.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW-DRY-night-unsounded",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    let at = sAt(fall), camp = dryStop(way, at, dir, lo, hi);",
-    "new": "    let at = sAt(fall), camp = at;",
+    "old": "    let at = sAt(fall), camp = nightStop(way, at, dir, lo, hi);   // LW9: an inn ahead, else dry ground",
+    "new": "    let at = sAt(fall), camp = at;   // LW9: an inn ahead, else dry ground",
     "tests": [
       "test/lwdry_ground.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "LW-DRY-walk-on-jump",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    return { ...placed(phase, there), camp: reached };   // walking on to the night's camp, or at it",
-    "new": "    return { ...placed(phase, camp), camp: true };   // walking on to the night's camp, or at it",
+    "old": "    return { ...placed(phase, there), camp: reached, ...(inn ? { inn: inn.town } : {}) };   // walking on to the night's camp, or at it",
+    "new": "    return { ...placed(phase, camp), camp: true, ...(inn ? { inn: inn.town } : {}) };   // walking on to the night's camp, or at it",
     "tests": [
       "test/lwdry_ground.test.js"
     ]

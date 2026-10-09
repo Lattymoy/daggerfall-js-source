@@ -50,8 +50,10 @@ export const FIGHT_NEAR_M = 30;
  *   fighting: () => boolean,
  *   say?: (text: string) => void,
  *   door?: any,
+ *   wanted?: (res: any, trip: any) => (string | null),
  * }} deps - `ready()` whether a body can be stood now (on foot in the open world, nothing loading); `slay`/`died` the
- *   host's hand turns; `fighting()` whether a foe is on the player near; `door` the roads' handle each body carries
+ *   host's hand turns; `fighting()` whether a foe is on the player near; `door` the roads' handle each body carries; LW9
+ *   `wanted(res, trip)` - a patrol's knight before a player wanted in its region: its halt, said as it draws (null: no)
  */
 export function createRoadStands(deps) {
   /** @type {Map<string, { res: any, trip: any, kind: 'foe'|'friend', at: { x: number, z: number }, rec: any, calm: number, failed: boolean }>} */
@@ -67,7 +69,7 @@ export function createRoadStands(deps) {
   }
 
   /** Stand a member: a foe (they draw on the player) or a friend (at the player's side), where they walked. */
-  function stand(c, kind) {
+  function stand(c, kind, halt = null) {
     /** @type {{ res: any, trip: any, kind: 'foe'|'friend', at: { x: number, z: number }, rec: any, calm: number, failed: boolean }} */
     const s = { res: c.res, trip: c.trip, kind, at: { x: c.x, z: c.z }, rec: null, calm: 0, failed: false };
     stands.set(c.res.id, s);
@@ -87,7 +89,7 @@ export function createRoadStands(deps) {
       })
       .catch(fail);
     const first = firstNameOf(c.res.name);
-    deps.say?.(kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);
+    deps.say?.(halt ? `${first}: "${halt}"` : kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);
   }
 
   return {
@@ -110,7 +112,8 @@ export function createRoadStands(deps) {
           if (deps.deadAt?.(c.res, t)) continue;   // AUDIT-B4: one a hand took - the roads' parties, read once a second, still walked them
           const distM = Math.hypot(c.x - here.x, c.z - here.z) / NATIVE_PER_M;
           const standing = rel.standing(c.res.id, day);
-          if (standing === 'hostile' && distM <= DRAW_M) stand(c, 'foe');
+          const halt = distM <= DRAW_M ? deps.wanted?.(c.res, c.trip) ?? null : null;   // LW9: the law beyond the walls
+          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);
           else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');
         }
       }

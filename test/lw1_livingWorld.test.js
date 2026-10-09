@@ -58,7 +58,8 @@ test('LW1 census: a resident is a DFU townsperson drawn once - the climate\'s pe
   const roster = travellerRoster(town);
   assert.deepEqual(roster.map((r) => `${r.id}:${r.job}`), ['L777.t0:merchant', 'L777.t1:merchant', 'L777.t2:merchant', 'L777.t3:mercenary', 'L777.t4:mercenary',
     'L777.t5:adventurer', 'L777.t6:adventurer', 'L777.t7:sailor', 'L777.t8:sailor', 'L777.t9:sailor', 'L777.t10:pilgrim', 'L777.t11:pilgrim', 'L777.t12:courier',
-    'L777.t13:pedlar', 'L777.t14:pedlar', 'L777.t15:pedlar']);
+    'L777.t13:pedlar', 'L777.t14:pedlar', 'L777.t15:pedlar',
+    'L777.t16:pedlar', 'L777.t17:pedlar', 'L777.t18:pilgrim', 'L777.t19:courier']);   // LW9: PIN MOVED - more of the road's own, appended (census.js moreCounts)
   assert.deepEqual(travellerRoster(town).map((r) => r.name), roster.map((r) => r.name), 'the same people for every reader');
   assert.notDeepEqual(travellerRoster({ ...town, mapId: 778 }).map((r) => r.name), roster.map((r) => r.name), 'another town, other people');
   for (const r of roster) {

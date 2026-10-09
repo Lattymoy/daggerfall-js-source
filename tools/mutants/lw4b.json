@@ -209,8 +209,8 @@
   {
     "name": "LW4b-roads-fights-kept",
     "file": "src/scenes/livingRoads.js",
-    "old": "    clear() { deps.sprites.clear(); deps.fights?.clear();",
-    "new": "    clear() { deps.sprites.clear();",
+    "old": "    clear() { deps.sprites.clear(); deps.teams?.clear(); deps.fights?.clear();",
+    "new": "    clear() { deps.sprites.clear(); deps.teams?.clear();",
     "tests": [
       "test/lw4b_roadFights.test.js"
     ]

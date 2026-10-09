@@ -114,185 +114,192 @@ Taken at the design. Each is Mac's to overrule.
     non-empty: the MARK, TALE and HAND style, never a new TURN_KINDS entry, whose always-written set is pinned. A new
     name is unique across the arrays (`turn()` tries tales, then hands, then turns and marks).
 
-## 2. LW9 - the road's traffic
+## 2. LW9 - the road's traffic (BUILT 2026-10-09)
 
 Mac: "More Travellers between roads".
 
-### 2.1 Who travels
+### 2.1 Who travels (`census.js`)
 
-The census's roster gains five jobs, appended (decision 9). Each needs its row in `travellerCounts`, `mintResident`'s
-class arm, TRIP_PACE, CYCLE_DAYS, TRIP_CHANCE, TRIP_RANGE_PX, STAY_DAYS, `ownTrip`'s destination law, `lives.js
-HAZARD`, `livingRoads.js partyLabel`, `dayPlan.js` (the day at home) and `lines.js` (their words).
+The census's roster grows in two appended ranks, after TRAVELLER_JOBS' own (decision 9). Every id of today's roster on a
+town stands unchanged, and `lw9_traffic.test.js` pins it against the same town read with no kind.
 
-| Job | Who (off the MAPS row) | Cycle | Where | With | Hazard |
-|---|---|---|---|---|---|
-| `carter` (a farmer to market) | Each farm (type 3): 1. Each village (2) and hamlet (1): 1 + blocks/4, to 3. | 7 days, on the market town's MARKET DAY (a day of the week drawn from its map id's seed) | The nearest town of 4 blocks or more within MARKET_REACH_PX (4) that keeps a General Store. In at dawn; keeps a stall at one of its market spots (LW-STIR's stall: its cries and its haggles) until 15:00; home by dusk. | A pack horse (LW10) | 0.003 |
-| `hunter` | Each hamlet, village and farm: 1 | 4 days | THE WILD: a point on dry, open ground 1-3 px off the town (LW-DRY's test). Out at first light, one night's camp, home the next evening. | Alone | 0.01 |
-| `patrol` | A town with a knightly order's hall (`guildVariants.js ORDERS`, the hall's factionId through `places.js` factions), or the region's seat (the palace): 2 + blocks/16 knights, to 4. Class Knight. | 6 days | A LOOP of three towns of the region within PATROL_PX (12), a night at each one's tavern as a visitor. | Each other, as one party | 0.008 |
-| `noble` (a procession) | A palace town: 1, the court's first slot | 20 days | Another palace town within 18 px | 2-3 of the town's sellswords under contract (`formCaravans`' contract law) and a baggage wagon (LW10) | 0.004 |
-| `minstrel` | Towns of 9 blocks or more: 1, class Bard | 4 days | A town with a tavern within 8 px. Plays its common room through the evening (LW8: a performer's place at the room's middle; a small voice, MINSTREL_SONGS), lodged there. | Alone | 0.006 |
+1. **THE NEW TRAFFIC, `ROAD_JOBS`** (`roadCounts`, off the MAPS row's kind and size):
 
-The roster's own counts grow too, by the measure of 2.6 (proposed):
-- Pedlars from every location of 1 block (today a farm's pedlar is its only traffic).
-- Merchants from 2 blocks.
-- Adventurers raised for the companies (LW13): `1 + blocks/6` from 4 blocks, to 9.
+   | Job | Who | Class | Cycle | Where | Hazard |
+   |---|---|---|---|---|---|
+   | `carter` (a farmer to market) | a farm (type 3) 1; a hamlet (1) or village (2) 1 + blocks/4, to 3 | none | 7 days | the nearest town within 1-4 px keeping a market (a city or a village of MARKET_BLOCKS, 4), on its MARKET DAY (`trips.js marketDay`: one in seven, by its map id) - in by MARKET_IN_H (noon), at a stall till MARKET_OUT_H (13:30), home by nightfall | 0.003 |
+   | `hunter` | a hamlet, village or farm: 1 | an Archer or a Ranger | 4 days | THE WILD (2.2) | 0.01 |
+   | `patrol` | a city of CITY_COURT_BLOCKS (16): 2 + blocks/32, to 4 | Knight, level 6-14 | 6 days | a ROUND to a town of its own region within 3-12 px, and back | 0.008 |
+   | `noble` | a city of 16 blocks: 1 | none | 20 days | another court (a city of 16 blocks) within 6-18 px | 0.004 |
+   | `retainer` | a city of 16 blocks: 2 | a Knight, Warrior or Archer | the noble's | with their noble | 0.008 |
+   | `minstrel` | a city of 9 blocks: 1 | Bard | 4 days | a town of 4 blocks within 3-8 px - plays its tavern of an evening, lodged there | 0.006 |
+
+   Their tables stand beside the first's (`trips.js` ROAD_PACE, ROAD_CYCLE_DAYS, ROAD_TRIP_CHANCE, ROAD_RANGE_PX,
+   ROAD_STAY_DAYS; `lives.js` ROAD_HAZARD, `hazardOf`), so the first's tables, which are pinned whole, stay as they were.
+2. **MORE OF THE ROAD'S OWN, `MORE_JOBS`** (`moreCounts`, after ROAD_JOBS): a pedlar more for every six blocks from two
+   (to four), a pilgrim more from four blocks, a courier more from nine. Never a merchant: the sellswords are dealt to
+   the merchants by their count (`formCaravans`' contract), so one more merchant would move every sellsword's contract.
+   Nor a sellsword.
+
+**THE ONE A TRAVELLER RIDES WITH** (`trips.js leaderOf`). A sellsword rides with its contract merchant, as before. A
+patrol rides as one behind its first. A retainer is dealt to the nobles in slot order, as the sellswords are to the
+merchants. Their places live by their leader's cycle (`placeCycle`), they set out when their leader does (`setsOut`),
+and `formCaravans` makes the round and the procession whole: every place of it, held that cycle.
+
+**AT HOME AND AWAY** (`dayPlan.js`).
+- At home: a carter and a hunter work the fields as a farmer does; a patrol's knight and a retainer keep a sellsword's
+  day; a noble keeps a courtier's; a minstrel plays their own town's tavern of an evening.
+- Away: a carter come to market goes straight to a stall as they come in, until they go (MARKET_STALL_H, 8 to 13:30,
+  their window cutting it). A minstrel come to play takes the tavern they lodge at from MINSTREL_PLAY_H (18:30 to 23:00).
+- In the room: a minstrel standing at no table's talk sings over it (`lines.js minstrelLine`: a song every
+  MINSTREL_EVERY_MIN of the clock, up MINSTREL_UP_MIN of it, by their seed).
 
 ### 2.2 The wild, and the inn on the road
 
-- **A HUNTER'S WAY IS NOT A ROAD.** `trips.js wayOf` lays a planned route's pixels. A wild trip's way is a straight
-  line from the town's exit that faces the point to the point itself:
-  - sampled every DRY_STEP_N and bent round water by the test LW-DRY reads (`nativeDry`);
-  - its kinds `open` throughout, so its trouble is open country's (GROUND_RISK 1.4);
-  - the one kind of traffic seen off the roads.
-- **THE INN ON THE ROAD.** A party whose day's walk ends within INN_REACH_PX (1) of a roadside tavern lodges there
-  instead of camping. A roadside tavern is location type 6, already a living town with its own staff.
-  - It walks on or back to the tavern, whichever its walk reaches before WALK_TO_H, and is out again at WALK_FROM_H.
-  - The tavern's `visitorsOf` reads the party as visitors (LW-LODGE: a room, supper and breakfast in the common
-    room), so the road's taverns fill at night with the road's people, in the rooms LW8 already stands.
-  - A trouble that would have fallen on that night's camp (CAMP_SHARE) cannot fall at an inn. It falls on the next
-    leg instead.
+- **THE WILD** (`trips.js wildTrip`).
+  - A hunter's point is the first of WILD_TRIES seeded tries 1-3 px off their town that stands on dry ground, off every
+    town's pixel, with the line to it dry where it is sounded (four points).
+  - Their way is that straight line, `open` throughout, so its trouble is open country's.
+  - The trip's `to` is no town (`mapId` -1, "the wild"), and `trip.wild` is the point.
+  - Out at first light; then the hunt's camp at the point (`partyAt`: out, camped, there) until the next morning, and
+    home within the cycle.
+- **THE INN ON THE ROAD** (`trips.js innsAlong`, `nightStop`, `innAhead`, `innGuestsOf`).
+  - A roadside tavern (location type INN_TYPE, 6) within INN_REACH_PX (1) of one of a route's pixels, other than its two
+    ends, is an inn on that way (`way.inns`, read once as the way is made).
+  - At nightfall a party walks on to an inn within INN_AHEAD_N (a map pixel) ahead of it, and lodges there (`partyAt`'s
+    `inn`). Otherwise it camps on dry ground, as LW-DRY has it.
+  - The inn's GUESTS on a living day are the parties of the towns within reach lodged there the night before (out of a
+    morning) or that night: in from the minute they lodged (sounded on from nightfall a quarter hour at a time), out at
+    first light. The host hands them to the tavern's town as its visitors (world.js `livingTripsOf`), so LW-LODGE's
+    rooms take them.
+  - A night lodged at an inn meets no trouble at a camp (`trouble.js`): CAMP_SHARE's camp trouble falls on that day's
+    walk instead.
 
-### 2.3 Parties meet on the road
+### 2.3 Parties meet on the road (`livingRoads.js`)
 
-- **PASSING.** Two parties on the same way, in either direction, within PASS_M (25 m) of each other at the same minute
-  exchange a word in passing and walk on. (`ways.js` lays each pair of towns once, so the two parties' positions
-  along the way compare directly.)
-  - The words are ROAD_PASS_SCRIPTS: the road ahead and the weather, and the trouble behind them when either party's
-    trip carries news of one ("Orcs at the ford - keep your eyes open").
-  - It is LW-STIR's incident shape, on the road. Pure: both timelines are read off the same memo, and a pair is dealt
-    once, the lower trip id first.
-- **CAMPS SHARED.** Two camps on the same night within CAMP_SHARE_M (60 m) of each other are drawn as one ring round
-  one fire, at the earlier party's spot. It is a drawing law only: no timeline moves.
-- **A FIRE AT EVERY CAMP.** A camp's fire uses the camps' own look (TEXTURE.210 record 1, as in `scenes/camps.js`),
-  drawn while the camp stands, with the camps' own light inside the lights' budget.
+- **PASSING** (`passingPairs`). Two parties walking within PASS_N (25 m) of each other at the same minute pass with a
+  word each: the first's line, then the second's, a line a beat. The words are ROAD_PASS_SCRIPTS, or ROAD_PASS_WARNINGS
+  where either party has met trouble behind it, with its foe named. A pair is dealt once, the lower trip id first.
+- **CAMPS SHARED** (`campGroups`). The night's camps within CAMP_SHARE_N (60 m) of one another are one camp: the
+  earliest party's place, every one of them a place in its ring in order, the ring grown CAMP_RING_STEP_N for each of
+  its people past four. It is a drawing's law only: no timeline moves.
+- **A FIRE AT EVERY CAMP**: the camps' own flame (`survival/camp.js FIRE_FLAT`, TEXTURE.210 record 1) at a camp's
+  middle, one to a shared camp, none on the march and none at a halt. It has no light of its own: the roads' bodies are
+  billboards and carry none.
+- **LODGED IS INDOORS**: a party at an inn draws no body on the road and wears no Overworld mark.
 
 ### 2.4 The patrol keeps the road
 
-- **COVER.** A patrol walks its loop. For PATROL_COVER_DAYS (2) after it walks a leg, trouble on that leg is cut to
-  PATROL_RISK (0.5) of its RISK_PER_DAY. `trouble.js` reads this off the region's patrols. It stays pure: a region has
-  few patrol towns, and their trips are memoised like any others.
-- **A WANTED PLAYER MEETS THE LAW ON THE ROAD.** The player crosses a patrol's path within HALT_M (30 m) while known as
-  a criminal in the patrol's region (`standing.js knownCriminal`: legal standing under KNOWN_CRIMINAL_BELOW).
-  - The patrol calls "Halt!" as the watch does, at HALT-ONE's cadence.
-  - The arrest is DFU's own (`scenes/arrestFlow.js`), before the region's court.
-  - Refused, the patrol draws on the player (LW7b's stand, as the pool's foes).
-- **A PLAYER IN GOOD STANDING** is greeted by their standing (WATCH-KNOWS' bands, `lines.js watchBand`).
+- **COVER** (`trips.js patrolCover`, `trouble.js`). A trip from or to a town a patrol's round went from or to, while
+  the round walked or within PATROL_COVER_DAYS (2) before the trip set out, meets trouble PATROL_RISK (0.5) times as
+  often. The cover is read off the patrols' own trips alone (`memoTrip`, never their trouble), so no trip's trouble ever
+  asks its own. The host's trouble world reads it (`livingTroubleWorld.covered`).
+- **THE LAW BEYOND THE WALLS** (`roadStands.js` `wanted`). A patrol's knight within DRAW_M (45 m) of a player the round's
+  region knows for a criminal (`standing.js knownCriminal`) draws on them, whatever their regard, with the law's word
+  (`lines.js PATROL_HALT_LINES`). Built as the draw, not as DFU's arrest: the arrest flow (`scenes/arrestFlow.js`) is
+  begun by the town watch's guards and ends by placing the prisoner at a location's entrance, and on the road no
+  location stands. An arrest on the road is left for a later slice (section 11).
 
 ### 2.5 What the player sees
 
-- The roads' layer draws the new kinds as it draws any party (`travellerSprites.js`): a patrol and a minstrel in their
-  class's sprite, a carter and a hunter in their own outfits.
-- The Overworld marks gain their words (`partyLabel`): "Farmer to Ripmarket's market", "Hunter", "Patrol of the Order
-  of the Rose", "Lady Ysolde's procession to Wayrest", "Minstrel".
-- Talk: each answers as any road traveller does (the talk ray, regard and refusals). A patrol's knights greet in the
-  watch's words. A minstrel's song in the room is a small voice.
+- The roads' layer draws the new kinds as it draws any party: a patrol, a retainer and a minstrel in their class's
+  sprite; a carter and a noble in their own outfit; a hunter in their class's.
+- The Overworld marks gain their words (`partyLabel`): "Farmer to Ripmarket's market", "Hunter in the wild",
+  "Patrol to Wayrest", "Procession to Sentinel", "Minstrel to Anticlere".
 
-### 2.6 The measure, taken before anything is tuned
+### 2.6 The measure
 
-`tools/livingPerfProbe.mjs` gains THE TRAFFIC. It reads:
-- the parties within 1, 3 and 6 px of a road pixel at 08:00, 12:00 and 18:00, averaged over a region's road pixels;
-- how often a walker on a main road between two cities meets a party, in real minutes.
+`tools/livingPerfProbe.mjs` THE TRAFFIC: on the synthetic map, mixed as the game's is (some of its places farms,
+villages, hamlets and roadside taverns), the parties about four points at 08:00, 12:00 and 18:00 over fourteen days.
 
-It runs on the synthetic map always, and on the game's own (the Daggerfall, Wayrest and Sentinel regions) where
-ARENA2_PATH names the data.
+| | before LW9 | with LW9 |
+|---|---|---|
+| parties within 1 px | 0.49 | 0.71 (x1.45) |
+| parties within 3 px | 1.73 | 2.65 (x1.53) |
+| the roads' layer, any frame | 1.81 ms worst | 0.90-2.83 ms worst (budget 6) |
 
-Targets (proposed, Mac's to set):
-- a main road between two cities meets a party at least every 4 real minutes by day on foot;
-- a village's road meets one at least every 10 real minutes;
-- the roads' frame still costs 6 ms or less.
+The synthetic map's towns stand five pixels apart, so its carters find no market within their four pixels and none are
+counted. The game's farms stand by their towns, so carters will add more. The real-map targets (2.6 of the design: a
+main road meeting a party every four real minutes by day) are measured where ARENA2_PATH names the data; the container
+has none.
 
 ### 2.7 The four hosts, and the pins
 
-- `scenes/world.js`: WIRED (the roads' layer, the trouble world's patrols, the arrest seam).
-- `scenes/worldModes.js`: WIRED through the host. LW8's existing seam reads the minstrel's room and the inn's lodgers.
+- `scenes/world.js`: WIRED (the trouble world's cover, the inn's guests among a roadside tavern's visitors, the stands'
+  halt by the region's law).
+- `scenes/worldModes.js`: WIRED through the host (the minstrel's room and the inn's lodgers stand by LW8's own seam;
+  `livingIndoors.js` sings the song).
 - `scenes/exterior.js`: FLAGGED, as LW2 has it.
 - `scenes/dungeonContext.js`: no roads.
 
-Pins:
-- the old roster's ids unchanged;
-- each new job's count, cycle and destination law;
-- the wild way on dry ground;
-- the inn's lodging, and a camp's trouble moved to the next leg;
-- passing pairs dealt once, and alike for both parties;
-- the patrol's cover on trouble;
-- the halt, by standing;
-- the traffic measure on the synthetic map;
-- mutants over each law.
+Pins: `test/lw9_traffic.test.js` (12). PIN MOVED: `lw1_livingWorld` (the roster's ids, more of the road's own appended),
+`lw3_roads` (the first's tables pinned alone), `lwperf_cost` (the day's trips' reference reads the new chances).
+Mutants: `tools/mutants/lw9.json` (37); twelve records the slice's edits moved were re-aimed by content (`lw3`, `lw4`,
+`lw6b`, `lw7b`, `lwdry`).
 
-## 3. LW10 - the wagon train
+## 3. LW10 - the wagon train (BUILT 2026-10-09)
 
 Mac: "actual caravans utilizing horses and wagons".
 
-### 3.1 Who has what (pure, the trip's)
+### 3.1 Who has what (`systems/livingWorld/wagons.js teamOf`, pure, the trip's)
 
-- A merchant's caravan has one wagon, or two when the merchant's town is 36 blocks or more.
-- A pedlar and a carter each lead a pack horse: the horse alone, in its still and walk views. ARENA2 has no pack
+- A merchant's caravan draws one wagon, or two when its town is a great house's (GREAT_HOUSE_BLOCKS, 36).
+- A noble's procession (LW9) draws its baggage wagon.
+- A pedlar's or a carter's own trip leads a pack horse: the horse alone, in its still and walk views. ARENA2 has no pack
   model the tree knows of.
-- A noble's procession has its baggage wagon.
-- A courier rides, IF the riding peer's mounted sprites (`net/peerRiders.js`, Eye of the Beholder's art) can wear a
-  resident's look. Otherwise couriers stay on foot. To be checked at the build (section 11, call 5).
+- Nobody else has a team. Couriers stay on foot: the riding peer's mounted sprites (`net/peerRiders.js`) are a player's
+  Eye of the Beholder look, not a resident's (section 11, call 5).
 
-### 3.2 Where it is (`systems/livingWorld/wagons.js`, pure)
+### 3.2 Where it is (`wagons.js`, pure)
 
-- **`trainOf(trip, at)`** gives the train's places in file: the van (sellswords), the merchant AT THE HORSE'S HEAD
-  leading it, the horse, the wagon on its shafts behind it, then the rear (the remaining sellswords and the joiners).
-  - Each place is a distance back along the way from the party's `s`.
-  - Walkers keep FILE_GAP_N between them.
-  - The horse stands HITCHED_HORSE_LOCAL_Z (3.1 m, the mod's own) before the wagon's axle.
-  - It replaces `partyPlaces`' file for a party with a wagon. Its ring at camp is `partyPlaces`' own.
-- **`wagonPose(trip, at)`** gives:
-  - **the horse's point and yaw** on the way;
-  - **the axle**, HITCHED_HORSE_LOCAL_Z back ALONG THE WAY. The way is a road's centre line, so the trailer law
-    reduces to the way's own curve, except where the way bends sharper than WAGON_BEND, where `hitchAxle` from the
-    way's previous point lays it;
-  - **the wheel angle**, `horseCartLaw.js wheelRotationDegrees(s, wheelRadius)` off the distance walked, so every
-    reader's wheels stand at the same spoke;
-  - **the cargo tier** (`cargoPiecesShown`): FULL (90) on the way out; on the way home 50 (it sold) or 75 (it bought)
-    by the trip's seed; 25 if robbed (LW12).
-- **AT CAMP** the wagon is parked at the ring's edge facing the fire, its horse unhitched beside it and still (the idle
-  frames). **IN A FIGHT** the wagon stops where it was and the horse stands.
-- Pure, and pinned as `partyPlaces` is.
+- **THE TRAIN IN FILE** (`trainOf`), every place a distance along the way from the party's own `s` (the way is the
+  road's centre line, so a trailer's law reduces to the way's own curve):
+  - the VAN, the first half of the armed, before the leader, a walker's gap (WALK_GAP_N) apart;
+  - the leader at the party's own place, at the head of the first horse, LEAD_N (1 m) before it;
+  - each wagon's axle HITCH_N behind its horse: HITCHED_HORSE_LOCAL_Z, 3.1 m, the mod's own parked-team distance;
+  - a second team WAGON_TAIL_N (2.75 m) behind the first wagon's axle; a pack horse a walker's gap on;
+  - the rest behind, in order.
 
-### 3.3 Drawn (`scenes/livingRoads.js`, sharing the HCC pool's pieces)
+  All walk by day. At a halt (a fight, its wounds bound) the train stands where it was. The way out and the way home
+  read the way in opposite directions, so the train faces home on the way back.
+- **AT CAMP** (`campTeam`): each wagon CAMP_PARK_N (3 m) beyond the camp's ring, facing its fire, its horse unhitched
+  CAMP_HORSE_SIDE_N to its side; a pack horse by itself. The ring is the shared camp's (LW9) where there is one.
+- **THE WHEELS** (`wheelAngleAt`): Horse Cart and Cargo's turn by travel (`horseCartLaw.js wheelRotationDegrees`) off
+  the distance the axle has walked along its way, wrapped. Every reader's wheels stand at the same spoke.
+- **THE CARGO** (`cargoOf`, the tiers CARGO_DEFINITIONS shows): full (90) on the way out; home, sold (50) or bought
+  (75) by the trip's seed; a quarter (25) once robbed (LW11's `robbed`, the character's own).
 
-- **THE MESHES ARE THE POOL'S.** `hcc.presentation.wagonParts()` gives the parts. The cargo comes through
-  `getGpuMesh`, cached and pinned. The drawing moves out of `horseCartPool.js`'s private `drawWagon` to an exported
-  home that both call (decision 4).
-- **WHERE IT DRAWS.** In the world mesh pass beside `hcc.draw`, exterior only:
-  - the WAGONS_DRAWN (6) nearest wagons within ROADS_PLAY_M;
-  - each matrix `mat4FromQuatPos` off `tvSceneOf`, plus the ground's tilt from two probes along the axle;
-  - under the Overworld, grown with `tvOwnGrow` within the bands' far edge and casting no shadow, as the cart's own
-    trailing wagon is (WAGON-HITCH).
-- **THE HORSES** are the pool's billboards: `createBillboardBatch('hcc', ...)`, the view from
-  `horseViewFor(calculateHorseOrientation(...))`, the frames from `stepHorseWalk` at the party's speed, pushed into
-  `livePersonBatches`. Each batch belongs to the layer and is destroyed when it leaves the list and at `clear()`
-  (EVERY ALLOCATION HAS AN OWNER). The horse art is loaded once (`horseArt.ensureStationary` / `ensureWalk`) whatever
-  HCC's switch says.
-- **COLLISION.** A STANDING wagon (camped, halted, fighting) stands its box on the host's collider (`usableBounds`, the
-  parked team's law), taken off when it moves or leaves the list. A moving wagon claims nothing, as a walker claims no
-  tile.
-- **AN ACTIVATION TARGET.** The plaque names it ("Ada Lark's wagon, bound for Wayrest"). Its rows are LW11's.
-- **THE OVERWORLD.** The `wayfarer caravan` mark's square becomes the wagon's glyph (`travelViewHud.js`).
+### 3.3 Drawn (`world/roadTeams.js`, `scenes/livingRoads.js`, `scenes/horseCartPool.js`)
+
+- **ONE MEMBER, ONE EXPORT.** The pool's own wagon draw and horse pose are handed out through its `presentation`
+  (`drawWagon`, `poseHorse`) beside its `wagonParts` and `horseArt`. The living world's teams draw with them, and the
+  pool's switch governs only the player's own cart: the pieces are built whatever it says (decision 4).
+- **THE ROADS' LAYER** lays each team with its train: a party with a team walks in the train's places, not in plain
+  file; its horses and wagons are handed to the teams with their scene feet and, for a wagon, the ground WAGON_FRONT_N
+  (1.5 m) before its axle, for its tilt. A lodged party (LW9) shows none.
+- **THE TEAMS** (`createRoadTeams`):
+  - Each horse is its own billboard batch, posed by the pool and stepped by `stepHorseWalk` at its party's pace;
+    destroyed as it leaves the list.
+  - The nearest WAGONS_DRAWN (6) wagons are drawn in the world mesh pass beside the cart's own (`hcc.draw`), a
+    NORMAL_GROUND_OFFSET above the ground and tilted to it; grown under the Overworld with the bands.
+  - A STANDING wagon (camped, halted) stands its box on the host's collider (`usableBounds` of the model's bounds, the
+    pool's `boxTriangles`) in a bucket of its own (`wagonBucket`), taken down when it moves or leaves; a moving wagon
+    claims nothing.
+  - `clear()` destroys every batch and takes down every box, with the roads' own clear.
+- **THE OVERWORLD**: a caravan's mark is its wagon - the bed and two wheels under it (`ui/travelViewHud.js`).
 
 ### 3.4 The four hosts, the measure, the pins
 
-- `scenes/world.js`: WIRED.
+- `scenes/world.js`: WIRED (the teams made with the roads' layer off the pool's presentation and the host's collider;
+  drawn in the world mesh pass).
 - `scenes/worldModes.js` and `scenes/dungeonContext.js`: no roads, so no wagon.
-- `scenes/exterior.js`: FLAGGED.
+- `scenes/exterior.js`: FLAGGED, as LW2 has it.
 
-Measure: the draw calls and the frame of WAGONS_DRAWN wagons, on the probe's stub renderer and in a browser
-(`tools/travelViewPerf.mjs`). The roads' layer still costs 6 ms or less.
+Measure: the roads' layer with the teams laid stays inside its 6 ms on the probe (THE TRAFFIC). The draw itself is the
+pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A real-GPU frame is measured in a browser
+(`tools/travelViewPerf.mjs`); the container has none.
 
-Pins:
-- the train's order and distances;
-- the axle 3.1 m behind, on a straight and on a bend;
-- the wheel's angle from `s`;
-- the tier law;
-- the park at camp;
-- the collider only while standing;
-- the batches freed on leave and at clear;
-- drawn with HCC switched off;
-- the shared draw's one home.
+Pins: `test/lw10_wagons.test.js` (7). Mutants: `tools/mutants/lw10.json` (21).
 
 ## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort
 
@@ -762,3 +769,5 @@ Overall improvement: what happens in one town is heard in the next.
 4. The escort's pay: gold (the client's word, as a counter's gold is) is proposed. Marks (the service's) is the
    alternative.
 5. Couriers on horseback (3.1), if the rider art serves.
+6. LW9: an arrest on the road - a patrol that halts a wanted player taking them to the nearest town's court, rather
+   than drawing on them (2.4).

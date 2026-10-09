@@ -422,6 +422,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "knownCriminal(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - a patrol's halt of a wanted player on the road (LW9)"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),",
    "clock": "event",
    "why": "a banishment's term - no first offence warned to a banished one (WATCH-KNOWS)"

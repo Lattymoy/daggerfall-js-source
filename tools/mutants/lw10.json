@@ -1,0 +1,191 @@
+[
+  {
+    "name": "LW10-great-house",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "export const GREAT_HOUSE_BLOCKS = 36;",
+    "new": "export const GREAT_HOUSE_BLOCKS = 40;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-noble-wagon",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  if (trip.kind === 'noble') return { wagons: 1, packs: 0 };",
+    "new": "  if (trip.kind === 'noble') return { wagons: 0, packs: 0 };",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-pack",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  if (trip.kind === 'pedlar' || trip.kind === 'carter') return { wagons: 0, packs: 1 };",
+    "new": "  if (trip.kind === 'pedlar') return { wagons: 0, packs: 1 };",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-robbed",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  if (trip.robbed && t >= trip.robbed.t) return CARGO_ROBBED;",
+    "new": "  if (trip.robbed) return CARGO_ROBBED;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-full-out",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  if (t < trip.backT0) return CARGO_FULL;",
+    "new": "  if (t <= trip.backT0) return CARGO_FULL;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-sold-seed",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  return lwSeed(textSeed(trip.id), 0x63617267) % 2 ? CARGO_SOLD : CARGO_BOUGHT;   // 'carg'",
+    "new": "  return CARGO_SOLD;   // 'carg'",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-van-half",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  const van = armed.slice(0, Math.ceil(armed.length / 2));",
+    "new": "  const van = armed.slice(0, 0);",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-hitch",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "      const axle = s - dir * HITCH_N;",
+    "new": "      const axle = s - dir * HITCH_N * 2;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-tail",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "      s = axle - dir * WAGON_TAIL_N;",
+    "new": "      s = axle;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-dir",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  const dir = back ? -1 : 1;   // the way it walks, along the way's own s",
+    "new": "  const dir = 1;   // the way it walks, along the way's own s",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-moving",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "  const moving = !at.halt && !at.camp;",
+    "new": "  const moving = true;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-park",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "    const d = r + CAMP_PARK_N;",
+    "new": "    const d = r;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-face",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "    const face = Math.atan2(cx - x, cz - z);   // to the fire",
+    "new": "    const face = Math.atan2(x - cx, z - cz);   // to the fire",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-wheel-metres",
+    "file": "src/systems/livingWorld/wagons.js",
+    "old": "export const wheelAngleAt = (s, wheelRadius) => wrapWheelAngle(wheelRotationDegrees(s / NATIVE_PER_M, wheelRadius));",
+    "new": "export const wheelAngleAt = (s, wheelRadius) => wrapWheelAngle(wheelRotationDegrees(s, wheelRadius));",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-cap",
+    "file": "src/world/roadTeams.js",
+    "old": "export const WAGONS_DRAWN = 6;",
+    "new": "export const WAGONS_DRAWN = 8;",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-box-standing",
+    "file": "src/world/roadTeams.js",
+    "old": "      if (!w.moving && ground && grow <= 1 && parts) {",
+    "new": "      if (ground && grow <= 1 && parts) {",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-box-down",
+    "file": "src/world/roadTeams.js",
+    "old": "    for (const key of [...boxes.keys()]) if (!stand.has(key)) takeDown(key);",
+    "new": "    // (boxes kept)",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-horse-free",
+    "file": "src/world/roadTeams.js",
+    "old": "    for (const key of [...horses.keys()]) if (!seen.has(key)) dropHorse(key);",
+    "new": "    // (horses kept)",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-ground-offset",
+    "file": "src/world/roadTeams.js",
+    "old": "      const position = [w.feet[0], w.feet[1] + NORMAL_GROUND_OFFSET, w.feet[2]];",
+    "new": "      const position = [w.feet[0], w.feet[1], w.feet[2]];",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-clear-teams",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    clear() { deps.sprites.clear(); deps.teams?.clear();",
+    "new": "    clear() { deps.sprites.clear();",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  },
+  {
+    "name": "LW10-roads-train",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (hasTeam && !at.camp) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/lw10_wagons.test.js"
+    ]
+  }
+]

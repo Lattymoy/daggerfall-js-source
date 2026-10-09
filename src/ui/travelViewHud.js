@@ -1149,7 +1149,10 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       g.lineWidth = 1.5; g.strokeStyle = C.brass; g.stroke();
     } else if (look === 'wayfarer') {   // LW3: a party on the road - a pack's square, a caravan's the larger
       const r = /\bcaravan\b/.test(m.kind ?? '') ? 5 : 3.5;
-      g.beginPath(); g.rect(x - r, y - r, r * 2, r * 2); g.fill(); g.stroke();
+      if (/\bcaravan\b/.test(m.kind ?? '')) {   // LW10: a caravan's mark its wagon - the bed and two wheels under it
+        g.beginPath(); g.rect(x - r - 1, y - r + 1, r * 2 + 2, r * 1.4); g.fill(); g.stroke();
+        for (const wx of [x - r * 0.55, x + r * 0.55]) { g.beginPath(); g.arc(wx, y + r * 0.6, r * 0.42, 0, Math.PI * 2); g.fill(); g.stroke(); }
+      } else { g.beginPath(); g.rect(x - r, y - r, r * 2, r * 2); g.fill(); g.stroke(); }
     } else {
       const r = look === 'dest' || /\bcrowd\b/.test(m.kind ?? '') ? 7 : look === 'place' || look === 'far' ? 4 : 5;   // OW-CROWD: a crowd's dot the larger
       g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();

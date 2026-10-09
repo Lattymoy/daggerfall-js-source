@@ -1,0 +1,335 @@
+[
+  {
+    "name": "LW9-carter-farm",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    carter: town.type === FARM ? 1 : rural ? clamp(1 + Math.floor(b / 4), 1, 3) : 0,",
+    "new": "    carter: town.type === FARM ? 2 : rural ? clamp(1 + Math.floor(b / 4), 1, 3) : 0,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-carter-village",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    carter: town.type === FARM ? 1 : rural ? clamp(1 + Math.floor(b / 4), 1, 3) : 0,",
+    "new": "    carter: town.type === FARM ? 1 : rural ? clamp(1 + Math.floor(b / 4), 1, 4) : 0,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-hunter-rural",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    hunter: rural ? 1 : 0,",
+    "new": "    hunter: 1,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-patrol-count",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    patrol: court ? clamp(2 + Math.floor(b / 32), 2, 4) : 0,",
+    "new": "    patrol: court ? clamp(2 + Math.floor(b / 16), 2, 4) : 0,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-court-blocks",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const CITY_COURT_BLOCKS = 16;",
+    "new": "export const CITY_COURT_BLOCKS = 9;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-minstrel-blocks",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    minstrel: town.type === CITY && b >= 9 ? 1 : 0,",
+    "new": "    minstrel: town.type === CITY && b >= 16 ? 1 : 0,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-more-pedlar",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    pedlar: b >= 2 ? Math.max(1, Math.min(4, Math.floor(b / 6))) : 0,",
+    "new": "    pedlar: b >= 2 ? Math.max(1, Math.min(6, Math.floor(b / 6))) : 0,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-more-courier",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    courier: b >= 9 ? 1 : 0,\n  };",
+    "new": "    courier: b >= 4 ? 1 : 0,\n  };",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-patrol-knight",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  else if (job === 'patrol') { cls = MOBILE_TYPES.Knight; level = rollInt(rng, 6, 14); }",
+    "new": "  else if (job === 'patrol') { cls = MOBILE_TYPES.Warrior; level = rollInt(rng, 6, 14); }",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-hazard-hunter",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.01,",
+    "new": "export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.001,",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-patrol-leader",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return first && first.slot !== res.slot ? first : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-retainer-deal",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return nobles.length && i >= 0 ? nobles[i % nobles.length] : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-patrol-region",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (job === 'patrol') return home.region == null || t.region === home.region;",
+    "new": "  if (job === 'patrol') return true;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-noble-court",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (job === 'noble') return t.type === 0 && (t.blocks | 0) >= CITY_COURT_BLOCKS;",
+    "new": "  if (job === 'noble') return true;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-market-day",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    for (let d = start; d < start + len; d++) if (marketDay(to, d)) { day = d; break; }",
+    "new": "    for (let d = start; d < start + len; d++) { day = d; break; }",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-market-in",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (outT1 > day * DAY_MIN + MARKET_IN_H * 60) continue;   // too far to be in for the market",
+    "new": "    if (outT1 > day * DAY_MIN + 24 * 60) continue;   // too far to be in for the market",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-market-kind",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    .filter((t) => t.mapId !== home.mapId && (t.blocks | 0) >= MARKET_BLOCKS && (t.type == null || t.type === 0 || t.type === 2))",
+    "new": "    .filter((t) => t.mapId !== home.mapId)",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-wild-town",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (world.townsNear(ppx, ppy, 0).length) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-wild-dry",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    for (let j = 1; dry && j <= 4; j++) dry = !world.dryAt || world.dryAt(hx + ((wx - hx) * j) / 4, hz + ((wz - hz) * j) / 4);",
+    "new": "    for (let j = 1; dry && j <= 0; j++) dry = !world.dryAt || world.dryAt(hx + ((wx - hx) * j) / 4, hz + ((wz - hz) * j) / 4);",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-wild-camp",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (t < trip.backT0) return trip.wild ? { ...placed('out', way.len - trim1), camp: true } : { phase: 'stay' };",
+    "new": "  if (t < trip.backT0) return { phase: 'stay' };",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-ahead",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (ahead < 0 || ahead > INN_AHEAD_N || inn.s < lo || inn.s > hi) continue;",
+    "new": "    if (ahead > INN_AHEAD_N || inn.s < lo || inn.s > hi) continue;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-reach",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const INN_REACH_PX = 1;",
+    "new": "export const INN_REACH_PX = 2;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-lodged",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const inn = reached ? way.inns?.find((i) => i.s === camp) ?? null : null;   // LW9: lodged at the inn on the road",
+    "new": "    const inn = null;   // LW9: lodged at the inn on the road",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-out",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "        const outT = (Math.floor(night / DAY_MIN) + 1) * DAY_MIN + WALK_FROM_H * 60;",
+    "new": "        const outT = (Math.floor(night / DAY_MIN) + 1) * DAY_MIN + 6 * 60;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-camp-trouble",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  if (camp && innAhead(trip.way, s, leg === 'out' ? 1 : -1, trip.trim0, trip.way.len - trip.trim1)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-cover-risk",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "(world.covered?.(trip) ? PATROL_RISK : 1);",
+    "new": "(world.covered?.(trip) ? 1 : 1);",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-cover-ends",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      if (pt && pt.outT0 < hi && pt.backT1 > lo && (ends.has(pt.from.mapId) || ends.has(pt.to.mapId))) return true;",
+    "new": "      if (pt && pt.outT0 < hi && pt.backT1 > lo) return true;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-cover-window",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const lo = trip.outT0 - PATROL_COVER_DAYS * DAY_MIN, hi = trip.backT1;",
+    "new": "  const lo = trip.outT0 - 30 * DAY_MIN, hi = trip.backT1;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-camp-share",
+    "file": "src/scenes/livingRoads.js",
+    "old": "export const CAMP_SHARE_N = 2400;",
+    "new": "export const CAMP_SHARE_N = 1000;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-camp-ring-grow",
+    "file": "src/scenes/livingRoads.js",
+    "old": "    const r = CAMP_RING_N + Math.max(0, ring.n - 4) * CAMP_RING_STEP_N;",
+    "new": "    const r = CAMP_RING_N;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-fire",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (at.camp && !at.halt && !fight && (!ring || ring.first)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-pass-reach",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      if (Math.hypot(a.at.x - b.at.x, a.at.z - b.at.z) > PASS_N) continue;",
+    "new": "      if (Math.hypot(a.at.x - b.at.x, a.at.z - b.at.z) > PASS_N * 6) continue;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-pass-warning",
+    "file": "src/scenes/livingRoads.js",
+    "old": "      const warned = [a, b].find((p) => p.trip.enc && p.trip.enc.t1 <= t && p.trip.enc.foes?.length);",
+    "new": "      const warned = [a, b].find((p) => p.trip.enc && p.trip.enc.foes?.length);",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-halt",
+    "file": "src/scenes/roadStands.js",
+    "old": "          const halt = distM <= DRAW_M ? deps.wanted?.(c.res, c.trip) ?? null : null;   // LW9: the law beyond the walls",
+    "new": "          const halt = null;   // LW9: the law beyond the walls",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-carter-stall",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;",
+    "new": "  const job = visitor ? (res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-song-up",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "export const MINSTREL_UP_MIN = 1.5;",
+    "new": "export const MINSTREL_UP_MIN = 4;",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  },
+  {
+    "name": "LW9-inn-lodged-hidden",
+    "file": "src/scenes/livingRoads.js",
+    "old": "        if (at.inn) continue;   // LW9: lodged at the inn on the road - indoors, the inn's own guests",
+    "new": "        // (lodged: drawn)",
+    "tests": [
+      "test/lw9_traffic.test.js"
+    ]
+  }
+]

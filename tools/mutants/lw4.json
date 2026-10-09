@@ -344,8 +344,8 @@
   {
     "name": "LW4-sword-own-cycle",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  const m = res.job === 'mercenary' ? contractOf(res, roster) : null;",
-    "new": "  const m = null;",
+    "old": "  const m = leaderOf(res, roster);   // LW9: a patrol's and a retainer's too",
+    "new": "  const m = null;   // LW9: a patrol's and a retainer's too",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LW4-sword-sets-out-alone",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (res.job === 'mercenary') {\n    const m = contractOf(res, world.rosterOf(town));",
-    "new": "  if (false) {\n    const m = contractOf(res, world.rosterOf(town));",
+    "old": "  if (res.job === 'mercenary' || leaderOf(res, world.rosterOf(town))) {   // LW9: a patrol's and a retainer's ride with their leader",
+    "new": "  if (false) {   // LW9: a patrol's and a retainer's ride with their leader",
     "tests": [
       "test/lw4_trouble.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "LW4-turns-unsaved",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      return { v: 1, people, ...t };",
-    "new": "      return { v: 1, people };",
+    "old": "      return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
+    "new": "      return { v: 1, people, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
     "tests": [
       "test/lw4_trouble.test.js"
     ]

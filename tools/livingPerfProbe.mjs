@@ -25,13 +25,14 @@ import { readFileSync } from 'node:fs';
 import { synthTown } from '../test/lwTown.mjs';
 import { livingMap } from '../test/lwRoads.mjs';
 import { LivingTown, ARRIVAL_SHOW_S } from '../src/systems/livingWorld/livingTown.js';
+import { travellerCounts } from '../src/systems/livingWorld/census.js';
 import { TownPopulation } from '../src/systems/townPopulation.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { MobilePerson, PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { planRoute } from '../src/systems/travelRoute.js';
-import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, partiesNear } from '../src/systems/livingWorld/trips.js';
+import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, NATIVE_PIXEL, partiesNear } from '../src/systems/livingWorld/trips.js';
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
 import { createLivingIndoors } from '../src/scenes/livingIndoors.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -181,6 +182,44 @@ console.log('THE ROADS');
   const dv = [], fl = [];
   for (let i = 0; i < 20; i++) { let a = now(); diversAt(dungeon, t0 + i, map.world, o); dv.push(now() - a); a = now(); fallenIn(dungeon, t0 + i, map.world, o); fl.push(now() - a); }
   console.log(`  the deep's readers, once a second below: the divers ${ms(stats(dv).mean)}, the fallen ${ms(stats(fl).mean)}`);
+}
+
+console.log('THE TRAFFIC (LW9: the parties on the road about a point - the first roster\'s and the new traffic\'s)');
+{
+  // the synthetic map mixed as the game's is: some of its places farms (type 3, a block), villages and hamlets (types 2
+  // and 1, four to eight blocks) and roadside taverns (type 6, a block) - set before anything reads a roster
+  const map = livingMap({ dives: true });
+  map.towns.forEach((t, i) => {
+    const r = (Math.imul(t.mapId, 2654435761) >>> 0) % 10;
+    if (r < 2) { t.type = 3; t.blocks = 1; } else if (r < 4) { t.type = 2; t.blocks = 4 + (r % 5); } else if (r < 5) { t.type = 1; t.blocks = 2; } else if (r < 6 && i % 2) { t.type = 6; t.blocks = 1; }
+  });
+  const o = { mpm: CALENDAR_MPM, memo: new Map() };
+  // a party the roster before LW9 sent: its leader one of the first roster's slots (travellerCounts')
+  const before = (trip) => trip.leader.slot < Object.values(travellerCounts(trip.from)).reduce((a, b) => a + b, 0);
+  const at = (rPx) => {
+    let all = 0, old = 0, n = 0;
+    const kinds = {};
+    for (let day = 300; day < 314; day++) for (const h of [8, 12, 18]) for (const [px, py] of [[115, 115], [120, 120], [125, 125], [130, 115]]) {
+      const got = partiesNear(px, py, day * DAY_MIN + h * 60, map.world, o, rPx).parties;
+      all += got.length; n++;
+      for (const p of got) { if (before(p.trip)) old++; kinds[p.trip.kind] = (kinds[p.trip.kind] ?? 0) + 1; }
+    }
+    return { all: all / n, old: old / n, kinds };
+  };
+  for (const r of [1, 3]) {
+    const a = at(r);
+    console.log(`  within ${r} px, by day: ${a.old.toFixed(2)} parties before LW9, ${a.all.toFixed(2)} with the new traffic (x${(a.all / Math.max(1e-9, a.old)).toFixed(2)}) - ${Object.entries(a.kinds).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+  }
+  const t0 = 300 * DAY_MIN + 600;
+  const here = { x: (120 + 0.5) * NATIVE_PIXEL, z: (499 - 120 + 0.5) * NATIVE_PIXEL };
+  const clock = { t: t0 };
+  const sprites = { sync() {}, batches: () => [], persons: () => [], bodyOf: () => null, clear() {} };
+  const layer = createLivingRoads({ world: map.world, mpm: CALENDAR_MPM, clock: () => clock.t, baseRate: () => RATE, sceneOf: (x, z) => [x / NATIVE_PER_M, 0, z / NATIVE_PER_M], here: () => here, sprites, relations: () => createRelations(), memo: o.memo });
+  const eye = [here.x / NATIVE_PER_M, 1.6, here.z / NATIVE_PER_M], frames = [];
+  for (let i = 0; i < 1800; i++) { clock.t += RATE / 30; const a = now(); layer.frame(1 / 30, eye); layer.speech(eye); frames.push(now() - a); }
+  const f = stats(frames.slice(1));
+  console.log(`  the roads' layer with the new traffic (${layer.parties().length} parties): the way in ${ms(frames[0])}, then mean ${ms(f.mean)} p99 ${ms(f.p99)} max ${ms(f.max)}`);
+  check(f.max <= 6, `the roads' layer with the new traffic, any frame <= 6 ms (${ms(f.max)})`);
 }
 
 console.log('THE ROOM');

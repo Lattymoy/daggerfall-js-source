@@ -20,7 +20,7 @@
 // where it stood, and never comes to the town it set out for.
 import { lwRng, textSeed } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
-import { WALK_TO_H, whenWalked, wayAt, dryStop, partyAt, NATIVE_PIXEL } from './trips.js';
+import { WALK_TO_H, whenWalked, wayAt, dryStop, partyAt, NATIVE_PIXEL, innAhead, PATROL_RISK } from './trips.js';
 
 /** A day's walking's chance of trouble, on middling ground. */
 export const RISK_PER_DAY = 0.09;
@@ -47,8 +47,9 @@ export const foeStrength = (level) => 1 + 0.6 * Math.max(1, level);
  * @typedef {{ climateAt: (px: number, py: number) => number,
  *   foesOf: (q: { climateIndex: number, dungeonType?: number, minute: number, level: number, size: number, rolls: () => number }) => (number[] | null),
  *   foeLevel?: (type: number, level: number) => number, dies?: (res: any, trip: any) => boolean, diced?: (res: any, trip: any) => boolean,
- *   turnOf?: (encId: string) => ('won'|'lost'|null) }} TroubleWorld - `turnOf` the character's own turn of an encounter
- *   (relations.js turns: a fight the player won for the party, or lost with it)
+ *   turnOf?: (encId: string) => ('won'|'lost'|null), covered?: (trip: any) => boolean }} TroubleWorld - `turnOf` the
+ *   character's own turn of an encounter (relations.js turns: a fight the player won for the party, or lost with it); LW9
+ *   `covered` whether a patrol keeps the trip's road (trips.js patrolCover)
  */
 
 /**
@@ -74,7 +75,7 @@ export function troubleOf(trip, world) {
   const rng = lwRng(textSeed(trip.id), TROU);
   const kinds = trip.way.kinds ?? [];
   const ground = kinds.length ? kinds.reduce((a, k) => a + (GROUND_RISK[/** @type {keyof typeof GROUND_RISK} */ (k)] ?? 1), 0) / kinds.length : 1;
-  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground);
+  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground) * (world.covered?.(trip) ? PATROL_RISK : 1);   // LW9: a patrol keeps the road
   const u = rng();
   if (!fated.length && !dead.length && u >= risk) return null;
   const leg = rng() < (fated.length ? 0.7 : 0.5) ? 'out' : 'back';
@@ -82,12 +83,18 @@ export function troubleOf(trip, world) {
   // where: a seeded stretch of the walk, or the camp of a leg's first night
   let wm = (0.15 + 0.7 * rng()) * walkMin;
   let t0 = whenWalked(legStart, wm), camp = false;
+  const walkWm = wm, walkT0 = t0;   // LW9: the walk's own, should the night's camp be an inn
   // a leg its first day's light does not finish camps that night: now and then the trouble finds the camp, at eleven
   const firstLight = whenWalked(legStart, 0);
   const dayEnd = Math.floor(firstLight / DAY_MIN) * DAY_MIN + WALK_TO_H * 60;
   const firstDay = Math.max(0, dayEnd - firstLight);
   if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin) { wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }
   let s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  // LW9: THE INN ON THE ROAD - a night lodged at one meets no trouble at a camp: the trouble falls on the walk
+  if (camp && innAhead(trip.way, s, leg === 'out' ? 1 : -1, trip.trim0, trip.way.len - trip.trim1)) {
+    wm = walkWm; t0 = walkT0; camp = false;
+    s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  }
   if (trip.way.dry) {
     // LW-DRY: met on dry ground - a party on a wet stretch then (a ford by day, its walk on to the night's camp) is met at
     // the first dry ground on from it, as it comes to it (trips.js partyAt: the ground between its day's walk and where

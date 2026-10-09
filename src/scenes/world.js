@@ -130,12 +130,16 @@ import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's wor
 import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
 import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
 import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on the road near the player
+import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
 import { createRoadStands, FIGHT_NEAR_M } from './roadStands.js';   // LW7b: the armed beyond the walls - a hostile drawing, a friend at the player's side
 import { createDungeonDivers } from './dungeonDivers.js';   // LW6: the divers met in the dungeon
 import { createDeepRemains } from './deepRemains.js';   // LW6b: the fallen of a dive, found in its dungeon
 import { watchStep } from './livingWatch.js';   // LW-FIX2: a struck watchman's guard followed to his end
 import { fallenIn } from '../systems/livingWorld/trips.js';   // LW6b: ...the deep's word of them
+import { innGuestsOf, patrolCover, INN_TYPE } from '../systems/livingWorld/trips.js';   // LW9: the inn's guests, the patrol's cover
+import { PATROL_HALT_LINES } from '../systems/livingWorld/lines.js';   // LW9: the law beyond the walls
+import { lwSeed } from '../systems/livingWorld/seed.js';   // LW9: the halt's word, the hour's
 import { enemyLootTableKey } from '../systems/loot.js';   // LW6b: ...what they carried, their class's table
 import { goldStack } from '../systems/inventory.js';   // LW6b: ...and their purse
 import { mintKeepsake } from '../systems/livingWorld/keepsake.js'; import { lwRng, textSeed } from '../systems/livingWorld/seed.js';   // LW6c: ...and their keepsake, carried home; AUDIT-C5: their goods their key's own (on this line, so no cite below it moves)
@@ -2870,6 +2874,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7: one a hand took first the road's trouble never takes
     diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
     turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
+    covered: (trip) => patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }),   // LW9: a patrol keeps the road
   };
   livingTripWorld.holderOf = (res, k) => livingPlaceOf(res, k).holder;
   livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;   // AUDIT-B1: the dice's - a trip a spare re-rolled was gone from the road
@@ -2892,8 +2897,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const o = { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo };
     const noon = day * 1440 + 240 + 720;
     const trips = townTrips(town, noon, livingTripWorld, o);
-    const visitors = tripVisitorsOf(town, day, livingTripWorld, o);
-    if (trips === undefined || visitors === undefined) return undefined;
+    const roadVisitors = tripVisitorsOf(town, day, livingTripWorld, o);
+    const guests = town.type === INN_TYPE ? innGuestsOf(town, day, livingTripWorld, o) : [];   // LW9: the inn on the road's guests
+    if (trips === undefined || roadVisitors === undefined || guests === undefined) return undefined;
+    const visitors = roadVisitors.concat(guests.filter((g) => !roadVisitors.some((v) => v.res.id === g.res.id)));
     // LW4: who holds each traveller's place today (a holder the road takes with no road to meet it on is gone abroad,
     // the whole cycle), and each one's away windows by their own id
     const roster = livingTripWorld.rosterOf(town);
@@ -3163,6 +3170,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
     here: () => (playerSpawned ? state.worldCoords(walkMode ? player.pos : cam.pos) : null),
     sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingRoadsDoor }),
+    teams: createRoadTeams({ renderer, presentation: () => hcc.presentation, collider: () => collider }),   // LW10: the wagon trains, with Horse Cart and Cargo's own pieces
     memo: _livingTripMemo, relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
     foeName: livingFoeWord,   // LW4: what besets a party, on its mark
     slay: livingSlay,   // LW7: a traveller struck down - the hand's turn
@@ -3198,6 +3206,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       fighting: () => hccThreats().some((q) => Math.hypot(q[0] - player.pos[0], q[2] - player.pos[2]) <= FIGHT_NEAR_M),
       say: (text) => townTalk.say(text),
       door: _livingRoadsDoor,
+      // LW9: a patrol's knight before a player its region knows for a criminal draws on them, with the law's word
+      wanted: (res, trip) => (res.job === 'patrol' && trip?.from?.region != null && knownCriminal(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })
+        ? PATROL_HALT_LINES[lwSeed(textSeed(res.id)) % PATROL_HALT_LINES.length] : null),
     }),
   }));
   /** LW3: the bodies on the road as the street's talk targets, beside the town's (`_livePersons`) - for the talk ray and
@@ -32047,6 +32058,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
+    if (livingRoads && livingWorldOn() && _mode() === 'exterior') livingRoads.drawTeams(renderer);   // LW10: the living world's wagons, beside the cart's own
     if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame
     else if (_tvDngModel.size) dropTvDungeonModels();   // TV-BURST: the view down, its models let go (kept warm on their shelf)
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead

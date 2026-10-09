@@ -791,6 +791,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // LEGACY-HOME: one of the player's own line (Project Legacy's family in the world, systems/legacy/household.js) is
     // met before the words - Play as them, the town's own conversation (`talk`, below), or goodbye: the host's window
     if (livingTalk?.kin?.(target.person, () => converse(target))) return;
+    // LW11: one of the road's people who keeps a counter or offers the road (a caravan's merchant, a pedlar, a carter) asks
+    // what the player wants before the words - Trade, Hire on, Talk, Goodbye: the host's window
+    if (livingTalk?.offers?.(target.person, () => converse(target))) return;
     converse(target);
   }
 

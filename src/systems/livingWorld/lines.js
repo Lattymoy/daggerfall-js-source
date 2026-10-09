@@ -293,6 +293,41 @@ export const CAMP_TALKS = Object.freeze([
   S('My grandmother said the dead walk on nights like this.', 'Your grandmother said a lot of things.'),
   S('Get some sleep. Long road tomorrow.', 'Every road is a long road.'),
 ]);
+/** LW9: two parties passing on the road - a word from each (the first the one who speaks first): the road's own talk, or,
+ *  where either has met trouble behind it ({foe}), its warning. */
+export const ROAD_PASS_SCRIPTS = Object.freeze([
+  S('Road\'s clear behind us.', 'And ahead of us. Safe travels.'),
+  S('Far to go?', 'Far enough. Yourselves?'),
+  S('Weather\'s turning, friend.', 'We\'ll make the next town before it does.'),
+  S('Gods keep you.', 'And you.'),
+  S('Mind the bridge, the planks are rotten.', 'Thanks for the word.'),
+  S('Is the inn still open past the ford?', 'It was last week.'),
+]);
+export const ROAD_PASS_WARNINGS = Object.freeze([
+  S('Watch yourselves - {foe} back the way we came.', 'We\'ll keep our eyes open.'),
+  S('{foe} on the road behind us. We lost time to them.', 'Then we\'ll go careful.'),
+]);
+/** LW9: a minstrel playing a tavern's common room - the song's line over them. */
+export const MINSTREL_SONGS = Object.freeze([
+  '♪ The Lusty Argonian Maid, she sang it to the moon... ♪', '♪ Oh the road to {place} is long and the ale is thin... ♪',
+  '♪ Fair Wayrest, fair Wayrest, where the river runs to sea... ♪', '♪ The knight of the Dragon rode out in the rain... ♪',
+  '♪ Sing of the Iliac, the bay and the gold... ♪', '♪ Ten septims for a song, and a song for a kiss... ♪',
+]);
+/** LW9: a minstrel plays a song every MINSTREL_EVERY_MIN of the clock, its line up MINSTREL_UP_MIN of it. */
+export const MINSTREL_EVERY_MIN = 4;
+export const MINSTREL_UP_MIN = 1.5;
+/** LW9: the minstrel's song at minute `t`, or null between songs - their seed's, the same for every reader.
+ *  @param {{ id: string }} res @param {number} t @param {Record<string, any>} [ctx] */
+export function minstrelLine(res, t, ctx = {}) {
+  const k = Math.floor(t / MINSTREL_EVERY_MIN);
+  if (t - k * MINSTREL_EVERY_MIN >= MINSTREL_UP_MIN) return null;
+  let h = 2166136261;
+  for (const c of `${res.id}:${k}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return fillLine(MINSTREL_SONGS[h % MINSTREL_SONGS.length], ctx);
+}
+/** LW9: what a patrol says drawing on a player wanted in its region. */
+export const PATROL_HALT_LINES = Object.freeze(['Halt! You are wanted in these lands!', 'In the name of the law - stand and yield!', 'There\'s a price on your head. Draw!']);
+
 /** LW3: what a traveller says to the player met on the road, by their regard. */
 export const ROAD_GREETINGS = Object.freeze({
   friend: Object.freeze(['{player}! Well met on the road.', 'Safe travels, {player}.', 'Good to see a friendly face out here, {player}.']),

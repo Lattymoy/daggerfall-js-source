@@ -3364,7 +3364,7 @@ export function createWorldModes(host) {
    *  its counter (ui/tradeDoor.js - a transformed lycanthrope). The door
    *  has already said the line; the popup reads this as a dispatch. */
   const DOOR_REFUSED = Object.freeze({ refusedByDoor: true });
-  function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}) {
+  function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}, road = null) {
     // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
     // BOTH branches - FormulaHelper.cs:1993 (selling) and :1999 (buying)
     // take `player.Stats.LivePersonality` (DaggerfallStats.cs:55 ->
@@ -3475,6 +3475,19 @@ export function createWorldModes(host) {
         const g = guildFactionId != null ? guildOfFaction(guildFactionId, resolveVariantGuild(dict), dict) : null;
         return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;
       },
+      // LW11 (bible/06-Systems/Living-World-II.md): A CARAVAN'S COUNTER ON THE ROAD - the counter's own above, the road's
+      // after it: a sale past its purse refused (the goods back in the pack - the window moved them out at the click), a
+      // deal done its record kept, and a hand caught in its goods the road's (no watch: a report, never the town's crime)
+      ...(road ? {
+        commit: (m, staged, price, proceeds) => {
+          if (road.allow?.(m, staged, price) === false) { if (m === 'Sell' || m === 'SellMagic') (playerEntity.items ??= []).push(...staged); return false; }
+          const r = commitTrade(shelf, m, staged, price, proceeds, identifySpell);
+          road.done?.(m, staged, price);
+          return r;
+        },
+        crimeTheft: () => road.caught?.(),
+        spawnCityGuards: () => {},
+      } : {}),
     });
   }
 
@@ -3657,6 +3670,7 @@ export function createWorldModes(host) {
   function shopAdjustment(b, mode) {
     const adj = regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0);
     const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : 1;
+    if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f * (1 - b.roadDiscount));   // LW11: a friend's counter on the road
     return f === 1 ? adj : Math.round(adj * f);
   }
   function buyPrice(it) {
@@ -12202,6 +12216,17 @@ export function createWorldModes(host) {
   registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });
   return {
     get mode() { return mode; },
+    /**
+     * LW11 (bible/06-Systems/Living-World-II.md): A CARAVAN'S COUNTER ON THE ROAD - the trade window on a shelf of the
+     * road's (its `b` the counter's kind, quality, name and region), mounted where the player stands (outdoors the talk's
+     * overlay, never the interior's slot); `allow`/`done`/`caught` the counter's record and the road's crime. Answers
+     * whether it opened (the classic skin's art may still be loading).
+     * @param {{ shelf: { items: any[] }, b: any, allow?: Function, done?: Function, caught?: Function }} o @param {'Buy'|'Sell'} [tradeMode]
+     */
+    openRoadTrade(o, tradeMode = 'Buy') {
+      ensureShopFont();
+      return !!mountServiceWindow(openTradeWindow(o.shelf, o.b, tradeMode, {}, o));
+    },
     get sailingCabin() { return mode === 'interior' ? interiorCabin : null; },
     get cabinOwner() { return mode === 'interior' ? privateVisitOwner : null; },
     // WD3 (AUDIT WD3 R7): the room's layouts of the homes' towns have landed - a home's room the player stands in, its

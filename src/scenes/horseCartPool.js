@@ -699,7 +699,9 @@ export function createHorseCartPool({
     },
     get enabled() { return enabled; },
     get runtime() { return runtime; },
-    presentation: { wagonParts, horseArt, onChanged: () => onChanged?.() },
+    // LW10 (bible/06-Systems/Living-World-II.md): the living world's teams draw with the pool's own pieces - its wagon's
+    // draw and its horse's pose, one home for both (ONE MEMBER, ONE EXPORT; world/roadTeams.js)
+    presentation: { wagonParts, horseArt, onChanged: () => onChanged?.(), drawWagon, poseHorse: poseHorseBatch },
     phys,
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord,

@@ -358,6 +358,10 @@ export const isLodger = (res, places, home) => !!home && home.building != null &
  *  go up to their room from the evening's supper there. */
 export const LODGE_BREAKFAST_MIN = Object.freeze([15, 45]);
 export const LODGE_UP_MIN = Object.freeze([20, 60]);
+/** LW9: a carter's stall at a market (hours: from the morning - from their coming in, at once - to the afternoon), and a
+ *  minstrel's evening playing a tavern (hours). */
+export const MARKET_STALL_H = Object.freeze([8, 13.5]);
+export const MINSTREL_PLAY_H = Object.freeze([18.5, 23]);
 
 /** LW-ERRANDS: the shop an errand of `job` takes one into, of `shops` (the shops nearest home, the nearest first): of a
  *  kind ERRAND_NEEDS gives the trade and the town keeps, ERRAND_NEED_SHARE of the time, by weight, the nearer of its two
@@ -458,7 +462,8 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     if (rng() < ERRAND_SHOP_SHARE && fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), from, rollInt(rng, 15, 35));   // LW-ERRANDS: into a shop, of their need
     else I('market', fav.market, from, rollInt(rng, 20, 40));
   };
-  const job = visitor ? 'visitor' : res.job;
+  // LW9: a carter come to market keeps a stall; a minstrel come to play keeps the tavern's evening - their own visits
+  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : 'visitor') : res.job;
   const lodger = isLodger(res, places, home);
   switch (job) {
     case 'keeper': case 'smith': case 'clerk': case 'scholar': case 'helper': case 'guildsman': {
@@ -510,6 +515,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       evening();
       break;
     }
+    case 'carter': case 'hunter':   // LW9: a farm's and a village's own, at home
     case 'farmer': {
       I('fields', exitNearest(places, home.cell), h(6), 660, h(17));
       evening(h(18));
@@ -540,6 +546,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       I('work', work ?? home, h(11), 600, bed);
       break;
     }
+    case 'noble':   // LW9: a court's own, at home
     case 'courtier': {
       if (rng() < 0.35) I('social', places.square, h(15), rollInt(rng, 30, 60));
       if (fav.guild && guildDay(res, day)) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120));   // LW-ERRANDS: their order's hall
@@ -576,6 +583,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       I('tavern', fav.tavern, h(19), rollInt(rng, 120, 200));
       break;
     }
+    case 'patrol': case 'retainer':   // LW9: a knight of the patrol, a noble's retainer, at home
     case 'mercenary': {
       I('social', places.square ?? fav.social[0] ?? null, h(10), rollInt(rng, 60, 120));
       I('tavern', fav.tavern, h(13), 60);
@@ -598,6 +606,19 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       if (res.social > 0.5) stroll(h(12.5));
       if (res.social > 0.4) I('social', fav.social[0] ?? null, h(15), rollInt(rng, 30, 60));
       I('temple', fav.temple, h(17), 45);
+      break;
+    }
+    case 'carter-visit': {
+      // LW9: THE CARTER AT MARKET - straight to a stall at the market as they come in, till the afternoon (their window cuts it)
+      I('stall', places.square ?? fav.market, h(MARKET_STALL_H[0]), (MARKET_STALL_H[1] - MARKET_STALL_H[0]) * 60, h(MARKET_STALL_H[1]), Infinity);
+      break;
+    }
+    case 'minstrel': case 'minstrel-visit': {
+      // LW9: THE MINSTREL plays a tavern's common room of an evening (lodged at it, away from home; at home, their own
+      // town's), a turn about the market first
+      I('market', fav.market, h(11), rollInt(rng, 30, 60));
+      const room = job === 'minstrel-visit' && lodger ? home : fav.tavern;
+      I('tavern', room, h(MINSTREL_PLAY_H[0]), (MINSTREL_PLAY_H[1] - MINSTREL_PLAY_H[0]) * 60, lodger && job === 'minstrel-visit' ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);
       break;
     }
     case 'visitor': {
