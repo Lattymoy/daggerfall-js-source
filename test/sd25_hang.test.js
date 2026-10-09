@@ -210,7 +210,8 @@ test('SD-LOOK S11 THE WORKS: four gears 40-80 m across, their faces 240-280 m do
     const tris = trisOf(buildWorksGear(g));
     assert.ok(tris.every((t) => t.rec === SD_WORKS_RECORD));
     const tipped = tris.filter((t) => t.uv.some(([, v]) => v < SD_WORKS_FACE_V - 1e-6));
-    assert.equal(tipped.length, g.teeth * 2, 'one tip a tooth, two triangles each');
+    assert.equal(tipped.length, g.teeth * 4, 'a tooth\'s tip and the outer of its face, two triangles each');
+    assert.equal(tipped.filter((t) => t.P.every((p) => near(p[1], t.P[0][1], 1e-3))).length, g.teeth * 2, 'its face\'s glint seen from above');
     assert.ok(tipped.every((t) => t.uv.every(([, v]) => v >= SD_WORKS_TIP_V[0] - 1e-6 && v <= SD_WORKS_TIP_V[1] + 1e-6)), 'inside the band');
     assert.ok(tris.every((t) => t.uv.every(([u, v]) => u >= -1e-6 && u <= 1 + 1e-6 && v >= -1e-6 && v <= 1 + 1e-6)), 'one picture over the gear, never wrapped onto the band');
   }

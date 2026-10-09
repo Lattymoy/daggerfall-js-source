@@ -35,8 +35,8 @@
 //                    lamps | fell&age=<s> the heart torn out, the dial rolling | break[&down=0|1&et=<s into the window>] the
 //                    Echoes, the living one's dial on its partner's window; views remnant, remnant-back, remnant-side
 //   SD-LOOK S11, the hang and the Works (scenes/sdHang.js): ?view=works (from a Drift step, pitch -60: the Works against
-//                    the nadir's glow) | hang (under the Orrery's rim, its strata spires, gear rims and chains) | hang-far
-//                    (from the arena's rim back along the course, the far islands in the haze); ?touch=on its phones'
+//                    the nadir's glow) | hang (from under the walk: the Orrery's strata spires, gear rims and chains) | hang-far
+//                    (from the Threshold's rim out over the void, the far islands in the haze); ?touch=on its phones'
 //                    tier (one spire a root, no far islands, two gears, still chains); ?law the realm's colliders too
 //                    (world/sdRealm.js realmColliderTris - the floors, pillars and lamp posts): no root, tooth or chain in them
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
@@ -107,10 +107,11 @@ const VIEWS = {
   remnant: { at: [0, 4.2, SD_ARENA.z + SD_REM_START[1] - 13], yaw: 0, pitch: 6 },
   'remnant-back': { at: [0, 6, SD_ARENA.z + SD_REM_START[1] + 11], yaw: 180, pitch: 2 },
   'remnant-side': { at: [-12, 4.5, SD_ARENA.z + SD_REM_START[1] - 4], yaw: 70, pitch: 4 },
-  // SD-LOOK S11: the Works from a Drift step looking down; the Orrery's underside from beside the walk; the course back
+  // SD-LOOK S11: the Works from a Drift step looking down; the Orrery's underside from under the walk; the far islands
+  // from the Threshold's rim
   works: { at: [0, 1.7, 80], yaw: 0, pitch: -60 },
   hang: { at: [-30, -4, 18], yaw: 50, pitch: 4 },
-  'hang-far': { at: [0, 6, SD_ARENA.z - SD_ARENA.r + 2], yaw: 160, pitch: -6 },
+  'hang-far': { at: [-6, 1.7, 3], yaw: -110, pitch: -12 },
 };
 const viewSel = $('view');
 for (const k of Object.keys(VIEWS)) { const o = document.createElement('option'); o.value = o.textContent = k; viewSel.append(o); }

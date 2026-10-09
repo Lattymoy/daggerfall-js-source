@@ -34,10 +34,10 @@ export const worksPitchR = (teeth) => (SD_WORKS_PITCH * teeth) / (2 * Math.PI);
 /** A gear's shape: its tips `out` modules past the pitch circle, its roots `in` short of it (a module is the pitch over
  *  pi); the rim's band `rim` of its radius deep inside the roots; `h` thick (metres); a hub `hub` of its radius standing
  *  `hubProud` over the rim; `spokes` bars `spokeW` of its radius wide; a tooth `tipW` of its pitch across at the tip and
- *  `rootW` at the root. */
-/** @typedef {{ out: number, in: number, rim: number, h: number, hub: number, hubProud: number, spokes: number, spokeW: number, tipW: number, rootW: number }} GearShape */
+ *  `rootW` at the root, the outer `glint` of its face (a share of its height) on the tip band with its tip. */
+/** @typedef {{ out: number, in: number, rim: number, h: number, hub: number, hubProud: number, spokes: number, spokeW: number, tipW: number, rootW: number, glint: number }} GearShape */
 /** @type {Readonly<GearShape>} */
-export const SD_WORKS_TOOTH = Object.freeze({ out: 1.1, in: 1.3, rim: 0.16, h: 3.2, hub: 0.17, hubProud: 0.3, spokes: 6, spokeW: 0.07, tipW: 0.3, rootW: 0.52 });
+export const SD_WORKS_TOOTH = Object.freeze({ out: 1.1, in: 1.3, rim: 0.16, h: 3.2, hub: 0.17, hubProud: 0.3, spokes: 6, spokeW: 0.07, tipW: 0.3, rootW: 0.52, glint: 0.3 });
 /**
  * THE TRAIN: four gears in the realm's frame - `teeth`, its axle (x, z), its top face's height `y`. Laid by `layTrain`: 0
  * drives 1 on the lower layer (their pitch circles touching at `bearing` degrees from +x toward +z); 2 rides 1's axle on
@@ -115,7 +115,10 @@ export function layGear(f, rec, { r, teeth, at, phase = 0, shape = SD_WORKS_TOOT
     const inRim = P((ri + rr) / 2, c, 0), inTooth = P((rr + rt) / 2, c, 0);
     for (const { y, from } of sides) {
       away(P(ri, a0, y), P(ri, a1, y), P(rr, a1, y), P(rr, a0, y), uv(ri, a0), uv(ri, a1), uv(rr, a1), uv(rr, a0), from);   // the rim's band
-      away(P(rr, q0, y), P(rr, q1, y), P(rt, t1, y), P(rt, t0, y), uv(rr, q0), uv(rr, q1), uv(rt, t1), uv(rt, t0), from);   // the tooth's face
+      // the tooth's face, its outer SD_WORKS_TOOTH.glint rubbed bright on the tip band - the glint seen from above
+      const g = 1 - S.glint, rg = rr + (rt - rr) * g, g0 = q0 + (t0 - q0) * g, g1 = q1 + (t1 - q1) * g;
+      away(P(rr, q0, y), P(rr, q1, y), P(rg, g1, y), P(rg, g0, y), uv(rr, q0), uv(rr, q1), uv(rg, g1), uv(rg, g0), from);
+      away(P(rg, g0, y), P(rg, g1, y), P(rt, t1, y), P(rt, t0, y), [0, tipV[0]], [1, tipV[0]], [1, tipV[1]], [0, tipV[1]], from);
     }
     away(P(rt, t0, bot), P(rt, t1, bot), P(rt, t1, top), P(rt, t0, top), [0, tipV[0]], [1, tipV[0]], [1, tipV[1]], [0, tipV[1]], inTooth);   // its tip: the glint
     away(P(rr, q0, bot), P(rt, t0, bot), P(rt, t0, top), P(rr, q0, top), [0, 0.2], [0.1, 0.2], [0.1, 0.3], [0, 0.3], inTooth);   // its flanks
