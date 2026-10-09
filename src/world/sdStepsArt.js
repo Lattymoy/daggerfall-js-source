@@ -279,8 +279,11 @@ export function partsArt(lit = true, seed = 0x5d94) {
   fill(albedo, P.rim, (s, t, x, y) => step(Br, t < 0.3 ? 5 : 3));
   fill(albedo, P.stone, (s, t, x, y) => (Math.floor(t * 8) !== Math.floor((t - 1 / 32) * 8) ? step(Ba, 0) : ramp(Ba, 0.35 + 0.3 * g(x, y), x, y)));
   fill(albedo, P.rune, (s, t, x, y) => ramp(Ba, 0.3 + 0.25 * g(x, y), x, y));
-  // the rune: the Hour's hand in its ring - a ring, and a spade hand pointing up from its hub
-  const rune = (s, t) => { const r = Math.hypot(s - 0.5, (t - 0.55) * 0.5); return (r > 0.32 && r < 0.42) || (Math.abs(s - 0.5) < 0.08 && t > 0.5 && t < 0.66) || (Math.abs(s - 0.5) < 0.2 - (t - 0.66) * 1.6 && t >= 0.66 && t < 0.76); };
+  // the rune: the Hour's hand, a spade upright (in metres of the shaft's face - 0.27 across, 0.85 up - so it stands true)
+  const rune = (s, t) => {
+    const x = Math.abs((s - 0.5) * 0.27), y = (t - 0.55) * 0.85;
+    return (x < 0.022 && y > -0.14 && y < 0.05) || (y >= 0.03 && y < 0.14 && x < 0.065 * (1 - (y - 0.03) / 0.11));
+  };
   fill(albedo, P.rune, (s, t) => (rune(s, t) ? step(Br, lit ? 5 : 2) : null));
   fill(emission, P.rune, (s, t) => (rune(s, t) && lit ? scale(GOLD, SD_STEPS_GLOW.rune) : BLACK));
   fill(albedo, P.cap, (s, t, x, y) => ramp(Br, 0.5 + 0.3 * (1 - t), x, y));
