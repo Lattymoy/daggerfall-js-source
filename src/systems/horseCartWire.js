@@ -35,10 +35,16 @@ import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
 import { wagonKindCode, wagonKindOfCode } from './wagonKinds.js';
 import { validPassengers, validPeerId, MAX_SEATS } from './wagonSeats.js';
 import { wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from './wagonLooks.js';
+import { caravanEntryCode, caravanEntryOfCode, caravanGuildTag, CARAVAN_GUILD_CODE } from './caravanVisit.js';
 
 // WAGONS2 (2026-10-09): AND ITS PAINT. A wagon's paint (systems/wagonLooks.js - its outside, and a caravan's inside)
 // is one number, `wl`, beside `wk` at the record's top (absent: the wagon as built - every word before WAGONS2), folded
 // into `w` as `look`; an older reader drops it and draws the wagon as built.
+
+// WAGONS2-VISIT (2026-10-09): AND WHO MAY ENTER IT. A caravan's door is its owner's to open (systems/caravanVisit.js):
+// `we`, the entry's code (1 the owner's party, 2 anyone, 3 the owner's guild; absent, the owner alone - every word before
+// it), and with the guild's `wg`, the owner's guild tag - beside `wk` at the record's top, folded into `w` as `entry` and
+// `guild`; an older reader drops both, and to it every caravan is its owner's alone.
 
 // WAGONS1: AND WHO RIDES IN IT (systems/wagonSeats.js's word). An owner's word says who sits in which seat of their
 // wagon's back (`ps`, `[[peer, seat], ...]`), who they turned away this moment (`pn`, peer ids - the rider's client says
@@ -60,7 +66,7 @@ const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_B
  * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
  * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
  * name }` in scene units; `toWire` converts a scene point to the wire frame.
- * @returns {{ w?: number[], h?: number[], n?: string, wk?: number, wh?: number, wl?: number, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
+ * @returns {{ w?: number[], h?: number[], n?: string, wk?: number, wh?: number, wl?: number, we?: number, wg?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
  */
 export function hccWireRecord(view, toWire = (p) => p) {
   if (!view) return null;
@@ -74,6 +80,8 @@ export function hccWireRecord(view, toWire = (p) => p) {
     if (w.hitched && (w.kind | 0) === HCC_WIRE_KIND.Deployed) out.wh = 1;
     const wl = wagonLookCode(w.look);   // WAGONS2: its paint
     if (wl) out.wl = wl;
+    const we = caravanEntryCode(w.entry);   // WAGONS2-VISIT: who may enter it, and with the guild's, the guild's tag
+    if (we) { out.we = we; const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null; if (wg) out.wg = wg; }
     const ps = validPassengers(w.passengers);   // WAGONS1
     if (ps?.length) out.ps = ps;
   }
@@ -110,6 +118,7 @@ export function validHccRecord(raw) {
     if (!(len > 0.5 && len < 2)) return null;
     if (!TIERS.has(w[8])) return null;
     out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfCode(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody
+    out.w.entry = caravanEntryOfCode(raw.we); out.w.guild = out.w.entry === 'guild' ? caravanGuildTag(raw.wg) : null;   // WAGONS2-VISIT: who may enter it - the owner alone for anything the law does not know
   }
   // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
   if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < GO_PIXEL_MAX && raw.go[1] >= 0 && raw.go[1] < GO_PIXEL_MAX && raw.go[2] >= 0) out.go = [...raw.go];
@@ -135,7 +144,7 @@ export function validHccRecord(raw) {
 /** A change key, so a frame carries the record only when the word moved (the full frame always does). */
 export function hccRecordKey(rec) {
   if (!rec) return '';
-  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0]);
+  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.we ?? 0, rec.wg ?? '']);
 }
 
 /** The snap-or-ease a reader shows between two words: a step past `snap` metres is a teleport (the owner

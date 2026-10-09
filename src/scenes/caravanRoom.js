@@ -73,14 +73,30 @@ export function caravanRoomEntry(saved, fromNative, { look = null, renderer = nu
   return { hit, entries: [hit], building, room };
 }
 
+/** THE DESCRIPTOR A CARAVAN STANDING `at` IS ENTERED BY ({ position, rotation, step, yaw } - its pose, the ground behind
+ *  its door and the way out, scene frame; `toNative` the host's scene-to-world law): the one law mine and another's
+ *  (WAGONS2-VISIT) are entered by, or null. */
+export const caravanDescriptorAt = (at, toNative) => readCaravanRoom({ v: 2, kind: 'caravan', origin: toNative(at.position), turn: caravanTurnOf(at.rotation), step: toNative(at.step), yaw: at.yaw });
+
 /**
  * The world host's caravan door: `deps` = { available() (the interior host can take a room now), mode(), busy(),
  * say(text), toNative(p), fromNative(p), parked() -> { position, rotation, step, yaw } | null (my caravan standing,
- * from the cart's presentation - its pose, the ground behind its door and the way out), enterInterior(room) ->
+ * from the cart's presentation - its pose, the ground behind its door and the way out), enterInterior(room, visit?) ->
  * Promise<boolean>, look() and paint(part, i) (WAGONS2: my caravan's paint, and painting it), log }.
  */
 export function createCaravanAccess(deps) {
   let entering = false;
+  /** Through the interior host's door: `at` the caravan standing, `visit` another's (WAGONS2-VISIT) or null - mine. */
+  async function go(at, visit) {
+    const room = caravanDescriptorAt(at, deps.toNative);
+    if (!room) return false;
+    entering = true;
+    try {
+      const entered = !!(await (visit ? deps.enterInterior(room, visit) : deps.enterInterior(room)));
+      if (!entered) deps.say(CARAVAN_TEXT.unavailable);
+      return entered;
+    } catch (e) { deps.log?.(e); deps.say(CARAVAN_TEXT.unavailable); return false; } finally { entering = false; }
+  }
   return {
     fromNative: deps.fromNative,
     /** WAGONS2: the paint my caravan's room wears. */
@@ -93,14 +109,16 @@ export function createCaravanAccess(deps) {
       if (entering || deps.mode() !== 'exterior' || deps.busy()) return false;
       const at = deps.parked();
       if (!at || !deps.available()) { deps.say(at ? CARAVAN_TEXT.unavailable : CARAVAN_TEXT.notHere); return false; }
-      const room = readCaravanRoom({ v: 2, kind: 'caravan', origin: deps.toNative(at.position), turn: caravanTurnOf(at.rotation), step: deps.toNative(at.step), yaw: at.yaw });
-      if (!room) return false;
-      entering = true;
-      try {
-        const entered = !!(await deps.enterInterior(room));
-        if (!entered) deps.say(CARAVAN_TEXT.unavailable);
-        return entered;
-      } catch (e) { deps.log?.(e); deps.say(CARAVAN_TEXT.unavailable); return false; } finally { entering = false; }
+      return go(at, null);
+    },
+    /** WAGONS2-VISIT: INTO ANOTHER PLAYER'S PARKED CARAVAN - `t` the cart's pool's visitTarget (its pose, the ground behind
+     *  its door and the way out, its owner key `k`, its owner, its inside's paint, where its record stands) and `room` its
+     *  relay room: the same room at that caravan's pose, by the same door law, a visit (scenes/worldModes.js
+     *  enterCaravanRoom's `visit`). */
+    async visit(t, room) {
+      if (entering || deps.mode() !== 'exterior' || deps.busy() || !t || typeof room !== 'string' || !room || typeof t.owner !== 'string' || !t.owner) return false;
+      if (!deps.available()) { deps.say(CARAVAN_TEXT.unavailable); return false; }
+      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null });
     },
     /** Where the room's door lets the player out: the ground behind the caravan's rear door (`ground` stands a point
      *  on what is there now, as a door's landing is - scenes/worldModes.js stands a private room's landing as given),

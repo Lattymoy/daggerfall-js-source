@@ -750,6 +750,11 @@ import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY:
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySupportsCage } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
+import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
+import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
+import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
+import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
+import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
@@ -7612,6 +7617,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
+    wagonEntry: () => caravanEntryWord(),   // WAGONS2-VISIT: who may enter my caravan, on its word
+    caravanEntry: { row: () => caravanEntryRow(), turn: () => caravanEntryTurn() },   // WAGONS2-VISIT: my caravan's "Who may enter"
+    visit: { may: (t) => caravanVisitMay(t), enter: (t) => caravanVisitEnter(t) },   // WAGONS2-VISIT: another's caravan, open to me
     peerAnchor: (id) => { const sh = _peerMapPoses.get(id); return sh && (sh.rd | 0) === 2 ? onlineToScene(sh) : null; },   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run); WAGON-HITCH: where another player's cart rider stands as drawn this frame (`rd` 2, the cart - the pose peerRiders stands them on, boat-adjusted; the online frame fills the map before the pool steps), so their trailing wagon hangs from the rider seen here rather than easing apart from it
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
@@ -8086,8 +8094,38 @@ export async function bootWorld(canvas, renderer, params, status) {
     toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
     ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
-    enterInterior: (room) => modes?.enterCaravanRoom(room), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),
+    enterInterior: (room, visit = null) => modes?.enterCaravanRoom(room, null, visit), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),   // WAGONS2-VISIT: and another's, a visit
   });
+  // ═══ WAGONS2-VISIT (2026-10-09, Mac: "People should be able to use the interior just like houses, like crafting and
+  // such"; who comes in, "Like an online home") - A CARAVAN'S DOOR ONLINE (systems/caravanVisit.js) ═══════════════════
+  /** Who may enter my caravan, as its word says it (`we`), with my guild's tag when it is my guild's (`wg`) - null
+   *  offline (the room is then the save's alone) or with no caravan driven. */
+  const caravanEntryWord = () => {
+    if (!onlineOn || activeWagonKind(playerEntity.items ?? []) !== 'caravan') return null;
+    const entry = caravanEntryOf(activeWagonItem(playerEntity.items ?? []));
+    return { entry, guild: entry === 'guild' ? myGuildTag() : null };
+  };
+  /** My parked caravan's row: "Who may enter: Only me" (a home's own words, systems/onlineHomes.js HOME_ENTRY_WORDS). */
+  const caravanEntryRow = () => { const w = caravanEntryWord(); return w ? CARAVAN_VISIT_TEXT.entryRow(HOME_ENTRY_WORDS[w.entry]) : null; };
+  /** Its press: who may enter moved on, round as a home's door turns (homeNextEntry) - kept on the caravan, said on its
+   *  word at once - and said. */
+  const caravanEntryTurn = () => {
+    const w = caravanEntryWord();
+    const next = w ? setDrivenCaravanEntry(playerEntity.items ?? [], homeNextEntry(w.entry)) : null;
+    if (!next) return null;
+    _hccDirty = true;
+    return CARAVAN_VISIT_TEXT.entryLine(HOME_ENTRY_WORDS[next]);
+  };
+  /** Whether another's parked caravan opens to me: online at a relay that keeps caravans' rooms, outdoors, its owner's
+   *  word read as a home's door reads it - my party's handles (the relay's), my guild's tag. */
+  const caravanVisitMay = (t) => !!online?.caravanOk && online.status === 'open' && (modes?.mode ?? 'exterior') === 'exterior'
+    && caravanMayEnter(t, { partyNames: (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0), guild: myGuildTag() });
+  /** Its press: into it, through the same door as my own (scenes/caravanRoom.js visit) - its room the record's key. */
+  const caravanVisitEnter = (t) => {
+    const room = caravanRoomOf(t?.k);
+    if (!room || !caravanVisitMay(t)) { townTalk.say(CARAVAN_VISIT_TEXT.shut(t?.owner || 'another player')); return false; }
+    return caravanRooms.visit(t, room);
+  };
   /** BOAT-MENU: a boat of mine's boxes and its rows (systems/csaBoatMenu.js) - what the plaque lists and the picker. */
   const _csaBoxes = new WeakMap();   // BOAT-MENU: boat -> { root, variant, boxes } - the walk once per hull and style, not each frame the plaque asks
   // CABIN-TITLES: and the Fleet's book - HOLDINGS took a ship's deed out of the pack into it, so a ship laid up there
@@ -19599,6 +19637,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!via) return;
     _parkSent = { key, word, via, c }; _parkSentAt = now; _parkRoom = online.room; _parkWelcomes = online.welcomes;
   };
+  // WAGONS2-VISIT: WHAT I HAVE PLACED IN MY CARAVAN, SAID TO ITS ROOM (net/wire.js validCaravanData) - while I stand in it
+  // online: the interior host's document of its pieces (unturned - systems/caravanVisit.js caravanDecorDoc) on every
+  // welcome of the room, and again when it changed, read at most once in CARAVAN_DECOR_MIN_MS. The relay keeps the last
+  // for my visitors, whether I am there or not.
+  const CARAVAN_DECOR_MIN_MS = 1500;
+  let _cvSent = null, _cvWelcomes = -1, _cvRoom = null, _cvReadAt = -Infinity;
+  const caravanDecorTick = (now) => {
+    if (!online || online.status !== 'open' || !online.caravanOk || !caravanKeyOf(online.room)) return;
+    const fresh = online.welcomes !== _cvWelcomes || online.room !== _cvRoom;
+    if (!fresh && now - _cvReadAt < CARAVAN_DECOR_MIN_MS) return;
+    _cvReadAt = now;
+    const d = modes?.myCaravanDecor?.() ?? null;   // null unless I stand in my own caravan
+    const c = characterIdOf(playerEntity);
+    if (!d || !c) return;
+    const key = JSON.stringify(d);
+    if (!fresh && key === _cvSent) return;
+    if (!online.sendCaravan({ c, d })) return;
+    _cvSent = key; _cvWelcomes = online.welcomes; _cvRoom = online.room;
+  };
   const foesStream = (now) => {
     if (!online || online.status !== 'open') return false;
     // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
@@ -19775,6 +19832,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const staffGlyphs = () => _staffGlyphs;
   let _privateSource = null, _privatePrefix = null;
   function privateRoomHere(identity) {
+    if (modes?.caravanRoom) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
     // Old relays accept arbitrary room names without this room's owner gate.
     // Never advertise personal presence through one of those relays.
     if (!chatLinks.get('world')?.staffTeleportOk || !social?.acct || !realmSession?.id) return null;
@@ -19788,6 +19846,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (identity?.boatUid) return privateBoatRoom(_privatePrefix, identity.boatUid);
     return privateInteriorRoom(_privatePrefix, _questLoc()?.mapTableData?.mapId, identity?.buildingKey);
+  }
+  // WAGONS2-VISIT: THE CARAVAN'S ROOM ON THE RELAY (net/privateInterior.js caravanRoomOf) - `caravan:<k>`, `k` its owner's
+  // park key (net/wire.js parkKeyOf: the account the token verified and the character - the key the cell's record of the
+  // parked caravan carries). Mine is worked out once an account and character (the digest is async: no room until it
+  // lands); a visit's is the one its record named (the identity's `privateRoom`). An older relay keeps no caravan's room,
+  // and is asked for none. WAGONS2's caravan room had none at all in the wilderness (no town's map id) and a town
+  // building's (`owned:...:<map>.<key>`) in a town - its party lost it either way, and no visitor could find it.
+  let _caravanKeyFor = null, _caravanKey = null;
+  function myCaravanRoom() {
+    const c = characterIdOf(playerEntity);
+    if (!social?.acct || !c) return null;
+    const source = `${social.acct}\n${c}`;
+    if (_caravanKeyFor !== source) {
+      _caravanKeyFor = source; _caravanKey = null;
+      parkKeyOf(social.acct, c).then((k) => { if (_caravanKeyFor === source) _caravanKey = k; }).catch(() => { if (_caravanKeyFor === source) _caravanKeyFor = null; });
+    }
+    return caravanRoomOf(_caravanKey);
+  }
+  function caravanRoomHere(identity) {
+    if (!online?.caravanOk) return null;
+    return caravanKeyOf(identity?.privateRoom) ? identity.privateRoom : myCaravanRoom();
   }
   /** STAFF-TP: x/z are native world coordinates outdoors/in buildings;
    * dungeon/court positions are local to that exact instance. y never grounds. */
@@ -20112,6 +20191,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     behaviourFor: (tag) => questBehaviourFor(questBridge?.machine, tag),
     adoptsOrphan: (from, f) => !!social?.party && adoptsOrphanQuestFoe({ myId: online?.id ?? null, myFeet: player.feetAt(), foeFeet: f.ai?.feet, partyPeers: (peersNear() ?? []).filter((p) => p.id !== from && social.isPartyPeer(p.id)) }),
   };
+  // WAGONS2-VISIT: the caravan I visit stands while its cell says so (net/caravanVisitLink.js) - moved on or gone, I am
+  // stood outside behind its door and told; painted again, its room wears it
+  const caravanVisitLink = createCaravanVisitLink({
+    onGone: () => modes?.leaveCaravanVisit?.(CARAVAN_VISIT_TEXT.gone) ?? true,
+    onLook: (look) => { modes?.repaintCaravanVisit?.(look); },
+  });
   const cabinLink = createSailingCabinLink({
     frame: () => {
       const frame = exteriorFoes.emptyFoesFrame();
@@ -20233,6 +20318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnPortals((from, r) => { const p = online?.peers?.get(from); portalGates.applyOwner(from, r, p?.shown ? onlineToScene(p.shown) : null); });   // PORTAL1: a peer's portal - believed only near the peer's own feet (AUDIT PORTAL1 O1), kept to its own time
     exteriorFoes.setOnDuel((from, r, at) => { const rec = r === null ? null : validRingRecord(r); if (rec) _duelRings.set(from, { rec, at }); else _duelRings.delete(from); }, () => _duelRings.clear());   // DUEL1: a peer's ring, for the wall
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
+    online.onCaravan = (room, doc) => modes?.applyCaravanDecor?.(room, doc);   // WAGONS2-VISIT: what the caravan I visit holds, from its room
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
     online.onPeerDeath = (peer, pose, room) => {
@@ -20407,6 +20493,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peerRiders?.destroy();   // RIDE
       peerWalkers?.destroy();   // DISC23-B
     });
+    globalThis.addEventListener?.('pagehide', () => caravanVisitLink.close());   // WAGONS2-VISIT: and the visited caravan's listener goes with the page
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
   // the ability to add more tabs at a later time"): one channel session
@@ -26786,6 +26873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONESEAT H3: offline now - the sigil in hand drinks nothing and a weapon won here is won offline (SIGIL1), and
     // the Renown layer is off, as it is for every offline character (RENOWN1); Play online here puts both back
     setSigilOnline(false); setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);   // SET3 (main's, at the merge): the sets sleep with the sigils - their stat tiers folded out now, as a Renown rise folds them in
+    caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
@@ -26991,6 +27079,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
+    if (!modes?.caravanVisit) caravanVisitLink.close();   // WAGONS2-VISIT: no visit, no listener - closed before my primary joins the cell it heard (never replaced by my own id)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
@@ -27043,6 +27132,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     hccParkTick(now);   // HCC-PARK: my parked team's word to the cell it stands in, when it changed
     overworldLedgerFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them
+    caravanDecorTick(now);   // WAGONS2-VISIT: what I placed in my caravan, to its room, when it changed
+    caravanVisitLink.tick(key ? online : null, modes?.caravanVisit ?? null);   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it (after my primary's own join and tick)
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }   // CSA-J: a peer's boats go as their team does - the same memoised list, the same liveness

@@ -489,7 +489,7 @@ function seatHost({ publishThrows = false, duelThrows = false, court = null } = 
   });
   const rooms = { world: SOCIAL_ROOM, region: 'chat:region.3', trade: null };   // a tab whose room waits for the region
   const deps = {
-    staffTeleportClient: { cancel() {} }, cabinLink: { close() {} },
+    staffTeleportClient: { cancel() {} }, cabinLink: { close() {} }, caravanVisitLink: { close: () => log.push('caravan listener closed') },   // WAGONS2-VISIT: the visited caravan's listener
     online: session('presence', 'dungeon:m123'), chatLinks: new Map(Object.keys(rooms).map((k) => [k, session(k, rooms[k])])),
     chatLog: { tab: (id) => ({ room: rooms[id] ?? null }) }, SOCIAL_ROOM,
     seatLock: { release: () => log.push('lock released'), claim: () => log.push('lock claimed') },
@@ -541,6 +541,7 @@ test('AUDIT ONESEAT H2/H3/H5/H6/T1, the host run: the seat lost is left ONCE - m
       'puppets gone', 'own puppets gone',
       'camps kept for 0', 'kept teams for 0 rooms',   // H5
       'renown layer null', 'set tiers folded',   // H3 - and the sets sleep with the sigils (main's SET3, at the merge)
+      'caravan listener closed',   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it, goes with the seat
       'lock released',
     ]);
     assert.equal(sigilOnline(), false, 'H3: the sigils sleep - a weapon won here is won offline');
