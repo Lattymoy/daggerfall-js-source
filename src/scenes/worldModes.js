@@ -10343,6 +10343,7 @@ export function createWorldModes(host) {
       // (EnemyBasics.cs), so a watchman chasing the player through a
       // shop opens the inner door exactly as a dungeon guard does.
       if (!overlayHeld) openInteriorDoors(interiorGuards.guards);
+      interiorGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC6: the watch in its bodies - before its billboards draw
       if (_guardBatches.length) renderer.drawBillboards(_guardBatches, camRight, UP_Y);
     }
     // TACT3 (bible/12-Enhanced-AI/Tactics-Arc.md; Mac's call: the classic lane too): the watch called in and the
@@ -10369,6 +10370,7 @@ export function createWorldModes(host) {
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
+    interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
     host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });   // LOOT11: the lines of light over a building's finds - additive, after the veiled bodies
     // C9: the interior FP weapon - gesture/swing/sounds through the
     // rig; the strike frame runs the WeaponEnvDamage ray against the

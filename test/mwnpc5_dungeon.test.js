@@ -147,7 +147,7 @@ test('MWNPC5b-e THE FOE HOSTS, ENUMERATED: every module that dresses a foe\'s bi
   const HOSTS = {
     'src/scenes/dungeonContext.js': 'wired',   // MWNPC5b: both dungeon hosts' one frame function
     'src/scenes/exteriorFoes.js': 'wired',     // MWNPC5c: the encounter pool - world.js's exterior, worldModes.js's interiors, exterior.js (mwnpc5_pool.test.js)
-    'src/scenes/cityGuards.js': 'MWNPC6',      // the watch
+    'src/scenes/cityGuards.js': 'wired',       // MWNPC6: the watch, on a lane of its own (mwnpc6_watch.test.js)
   };
   const found = [];
   const walk = (dir) => {
@@ -160,7 +160,7 @@ test('MWNPC5b-e THE FOE HOSTS, ENUMERATED: every module that dresses a foe\'s bi
   walk('src');
   assert.deepEqual(found.sort(), Object.keys(HOSTS).sort(), 'a new foe host is named here, wired or flagged');
   for (const [p, state] of Object.entries(HOSTS)) {
-    const wired = rd(p).includes("stand('foe', foeActor(f)");
+    const wired = /\.stand\('(?:foe|watch)', foeActor\(/.test(rd(p));
     assert.equal(wired, state === 'wired', `${p}: ${state}`);
   }
 });

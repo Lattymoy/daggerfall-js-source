@@ -34,6 +34,13 @@ export const NPC_BODY_TIERS = Object.freeze({
   near: Object.freeze({ max: 12, range: 30, skinBudget: 4, spareMax: 4 }),
   all: Object.freeze({ max: 24, range: 60, skinBudget: 8, spareMax: 8 }),
 });
+/** MWNPC6: THE WATCH'S OWN LANE, under the same tier - a third of the foes' bodies and half their skins (a street's
+ *  watch is a handful; the bound stays the sum the section states). */
+export const WATCH_BODY_TIERS = Object.freeze({
+  off: null,
+  near: Object.freeze({ max: 4, range: 30, skinBudget: 2, spareMax: 2 }),
+  all: Object.freeze({ max: 8, range: 60, skinBudget: 4, spareMax: 4 }),
+});
 /** The tier a player who never chose stands under. */
 export const NPC_BODIES_DEFAULT = 'near';
 
@@ -153,6 +160,6 @@ export function npcBodiesOn() {
 }
 
 /** MWNPC5b: a host's lane - the gate, the data generation and the tier read as every host reads them. */
-export function createHostNpcBodies({ renderer, collider = () => null }) {
-  return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider });
+export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {   // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
+  return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers });
 }

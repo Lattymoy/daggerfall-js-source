@@ -1,0 +1,164 @@
+[
+ {
+  "name": "MWNPC6-tiers-foes-caps",
+  "file": "src/scenes/cityGuards.js",
+  "old": "tiers: WATCH_BODY_TIERS }))) : null;",
+  "new": "tiers: undefined }))) : null;",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-watch-near-as-foes",
+  "file": "src/characters/npcBodies.js",
+  "old": "  near: Object.freeze({ max: 4, range: 30, skinBudget: 2, spareMax: 2 }),\n  all: Object.freeze({ max: 8,",
+  "new": "  near: Object.freeze({ max: 12, range: 30, skinBudget: 2, spareMax: 2 }),\n  all: Object.freeze({ max: 8,",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-seed-no-id",
+  "file": "src/characters/foeBodies.js",
+  "old": "  else h = mix(h ^ ((f.seq ?? f.id ?? 0) | 0));",
+  "new": "  else h = mix(h ^ ((f.seq ?? 0) | 0));",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-actor-id-ignored",
+  "file": "src/characters/foeBodies.js",
+  "old": "    id,\n",
+  "new": "    id: foeId(f),\n",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-live-unoffered",
+  "file": "src/scenes/cityGuards.js",
+  "old": "      if (npcLane && isClassFoe(g)) { npcLane.stand('watch', foeActor(g, g.id), g.batch.conceal ?? null, g.batch.hitFlash || 0, foeFx(g)); _npcStood.push(g); }",
+  "new": "      if (npcLane && isClassFoe(g)) _npcStood.push(g);",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-dead-unoffered",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    if (npcLane) for (const g of guards) if (g.dead && g.corpse && isClassFoe(g) && g.ai) {",
+  "new": "    if (false) for (const g of guards) if (g.dead && g.corpse && isClassFoe(g) && g.ai) {",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-dead-by-wire-number",
+  "file": "src/scenes/cityGuards.js",
+  "old": "npcLane.stand('watch', foeActor(g, g.id), null, 0, foeFx(g, g.corpseMarker?.batch));",
+  "new": "npcLane.stand('watch', foeActor(g), null, 0, foeFx(g, g.corpseMarker?.batch));",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-castonly-unmarked",
+  "file": "src/scenes/cityGuards.js",
+  "old": "if (b) b.castOnly = lane.has('watch', g.id); }",
+  "new": "if (b) b.castOnly = false; }",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-unsynced",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    _npcOffered = false;\n    lane.end(dt, eye);\n    for (const g of _npcStood)",
+  "new": "    _npcOffered = false;\n    for (const g of _npcStood)",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-resyncs",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    if (!lane || !_npcOffered) return;\n    _npcOffered = false;\n    lane.end(dt, eye);\n    for (const g of _npcStood)",
+  "new": "    if (!lane) return;\n    _npcOffered = false;\n    lane.end(dt, eye);\n    for (const g of _npcStood)",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-undrawn",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }\n  }\n  /** MWNPC6",
+  "new": "    try { /* none */ } finally { renderer.flushCharacterSpriteBatch?.(); }\n  }\n  /** MWNPC6",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-veiled-undrawn",
+  "file": "src/scenes/cityGuards.js",
+  "old": "  function drawVeiledBodies() { _npcLane?.drawVeiled(); }",
+  "new": "  function drawVeiledBodies() {}",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-kept-off",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }\n    _npcStood.length = 0;\n    npcLane?.begin();\n    _npcOffered = !!npcLane;\n    for (const g of guards) {",
+  "new": "    _npcStood.length = 0;\n    npcLane?.begin();\n    _npcOffered = !!npcLane;\n    for (const g of guards) {",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-outlives-clearlive",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    _npcLane?.destroy(); _npcLane = null;   // MWNPC6: the bodies with them",
+  "new": "    // MWNPC6: the bodies with them",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-origin-left",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    _npcLane?.offsetAll(offset);   // MWNPC6",
+  "new": "    // MWNPC6",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-host-world",
+  "file": "src/scenes/world.js",
+  "old": "    cityGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-host-modes",
+  "file": "src/scenes/worldModes.js",
+  "old": "      interiorGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC6-host-exterior",
+  "file": "src/scenes/exterior.js",
+  "old": "      cityGuards.drawBodies(canvas, proj, view, eye, foeDt);",
+  "new": "",
+  "tests": [
+   "test/mwnpc6_watch.test.js"
+  ]
+ }
+]

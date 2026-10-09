@@ -100,7 +100,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
-| MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
+| MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
@@ -384,6 +384,8 @@ the way Morrowind shows them; and the NPCs need a lane of their own.
   NPCs their tier's. At Near, a frame skins at most 8 bodies (4 + 4), each a
   palette upload (MWNPC1), and draws every seen one in the one bind
   (MWNPC2); at All, 12. A crowd of NPCs never takes a peer's body.
+  (AMENDED BY MWNPC6, section 11: the watch's lane adds 2 skins at Near and
+  4 at All - 10 and 16 a frame on a street with all three.)
 
 PROVEN. `test/mwnpc4_npclane.test.js` (5), on a fixture rig whose clip file
 is MW-CAST1's with the fists' group and the reaction groups appended (two
@@ -574,7 +576,8 @@ origin (`offsetAll`) and leaves with the pool (`destroy`). Each host calls
 `drawBodies` after `batches()` and before those billboards draw (the world
 host just before its person billboards, with the body pass's eye,
 `mwv.eye` - DISC19-F's order of the pools, the leash and the town watch
-untouched; the interior beside its foe billboards; exterior.js its own),
+untouched, and DW-F's column flags kept directly above the draw (MWNPC6
+caught the line 5c had put between them); the interior beside its foe billboards; exterior.js its own),
 and `drawVeiledBodies` after the peers' (the building's, after INVIS-LOOK's
 last opaque draw).
 
@@ -598,4 +601,46 @@ THE FOUR HOSTS (rule 17e): ALL WIRED. scenes/dungeonContext.js (10b);
 scenes/world.js, scenes/worldModes.js (interiors) and scenes/exterior.js
 through the pool. The watch (scenes/cityGuards.js) is a population of its
 own, MWNPC6's.
+
+## 11. MWNPC6 - THE WATCH IN ITS BODIES (SHIPPED 2026-10-09)
+
+The city watch (`scenes/cityGuards.js`, Knight_CityWatch - a class foe)
+is the encounter pool's law (section 10c) on a pool of its own: `update()`
+builds the frame's draw list after every watchman has acted
+(WATCH-SWING's order) and offers each live one there, dressed as his
+billboard, and each dead one from the kill until his corpse is collected;
+`drawBodies(canvas, proj, view, eye, dt)` syncs, marks the cast-only
+(the corpse's flat for the dead) and draws; `drawVeiledBodies()`; the lane
+follows the origin and goes with `clearLive` (an interior's watch is torn
+down there).
+
+- ITS OWN LANE AND CAPS. The watch stands on the `'watch'` lane under
+  `WATCH_BODY_TIERS` - the same switch's tiers (Off / Near / All), a third
+  of the foes' bodies (4 and 8) and half their skins (2 and 4), the same
+  reach - so a street's handful never crowds out the foes it is fighting,
+  and the bound stays stated: at Near a street skins at most 10 bodies a
+  frame (the peers' 4, the foes' 4, the watch's 2), at All 16.
+- HIS POOL'S ID. A watchman's wire number (`seq`) is minted the first
+  time he rides the cell's stream - late, and a body that changed hands
+  when it came would rebuild. He is offered by his pool `id`
+  (`foeActor(g, g.id)`), and his seed - he has no layout point - is the
+  first of his wire number or his id it meets, kept for his life.
+- THE HOSTS. world.js draws the watch's bodies beside the foes', before
+  the street's person billboards; worldModes.js's buildings before the
+  watch's billboards; exterior.js before its person billboards; the veiled
+  beside the foes'. The dungeon stands no watch (named in the slices
+  table).
+
+PROVEN. `test/mwnpc6_watch.test.js` (3): the caps against the foes' (a
+third, a half, the same reach, the one switch); two watchmen two people,
+the actor by the population's id, a wire number arriving later changing
+nobody; the real pool with a recording lane - a dead watchman offered
+dead on the watch's lane by his pool id, the corpse flat cast-only after
+the sync, nothing synced twice, the veiled, the origin, let go when
+unwanted, gone with clearLive; and the live offer and the three hosts by
+source. The foe-host enumeration (MWNPC5b-e) names the watch WIRED.
+`tools/mutants/mwnpc6.json`: 18 mutants, 18 dead. The live drive needs a
+real motor and ARENA2's CLASS18.CFG to stand a watchman, so the live offer
+is pinned by source (as section 10b's dungeon is) beside the encounter
+pool's behavioural proof of the same lines.
 

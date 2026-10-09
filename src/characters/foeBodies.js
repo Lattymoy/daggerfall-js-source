@@ -36,13 +36,13 @@ function mix(h) {
 }
 /** The foe's seed: its species and where its layout stood it (`marker`, the dungeon's; the encounter's spawn point
  *  otherwise) - facts every machine in the room shares, so a foe is the same person on each. A foe with neither takes
- *  its own sequence number. */
+ *  its own sequence number (a watchman his pool's id). */
 export function foeSeed(f) {
   if (f._mwSeed != null) return f._mwSeed;
   const at = f.marker ?? f.spawnAt ?? null;
   let h = mix((f.mobileType | 0) + 0x9e3779b9);
   if (at) for (const v of [at[0], at[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));
-  else h = mix(h ^ ((f.seq ?? 0) | 0));
+  else h = mix(h ^ ((f.seq ?? f.id ?? 0) | 0));   // MWNPC6: a watchman has no layout point and rides the wire late - his own number
   return (f._mwSeed = h);
 }
 const pick = (list, h) => list[h % list.length];
@@ -103,11 +103,11 @@ export const foeId = (f) => f.seq ?? (f._mwId ??= ++_ids);
  *   - THE DEATH: dead, the death's roll + 1 off its seed.
  * @param {any} f
  */
-export function foeActor(f) {
+export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's own (the watch's pool id - its wire number comes late)
   if (f._hfAt != null && f._hfAt !== f._mwHitAt) { f._mwHitAt = f._hfAt; f._mwHits = ((f._mwHits | 0) + 1) & 0xffff; }
   const swings = (f._atkA | 0) >> 1;
   return {
-    id: foeId(f),
+    id,
     look: foeLook(f),
     feet: f.ai.feet,
     yaw: f.ai.yaw,
