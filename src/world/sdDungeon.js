@@ -269,14 +269,27 @@ export function sdReturnPlace(rift, probe) {
 /** AUDIT SD II (L6 F18): WHERE ONE BACK FROM THE HOUR IS STOOD - past the Return, never on its foot (one step off it and
  *  back carried them straight to the way in): SD_LANDING_PAST_M on along the line from the Rift's foot through the
  *  Return's, else on the first bearing from the Return that leads away from the Rift with a clear line and the Return's
- *  own floor, else the Return's foot. */
+ *  own floor, else - AUDIT SD IV (F35) - the first spot on the Return's floor clear of both portals' reach by
+ *  SD_LANDING_CLEAR_M (SD_LANDING_PAST_M from it on each bearing, then just past its reach): a Return stood on a corner's
+ *  diagonal had no bearing that led away, and the way back stood on its foot in plain rooms; else, boxed in, the
+ *  Return's foot. */
 export const SD_LANDING_PAST_M = 1.5;
+/** AUDIT SD IV (F35): how far outside either portal's reach the landing stands (m) - more than a body's breadth
+ *  (player/motor.js CAPSULE_RADIUS). */
+export const SD_LANDING_CLEAR_M = 0.4;
 export function sdLandingPlace(rift, ret, probe) {
   const dx = ret[0] - rift.at[0], dz = ret[2] - rift.at[2], len = Math.hypot(dx, dz);
   if (len > 1e-6) { const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe); if (at) return at; }
   for (const dir of BEARINGS) {
     const at = besideOn(ret, dir, SD_LANDING_PAST_M, probe);
     if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;
+  }
+  const riftClear = Math.min(SD_RIFT_REACH_M, rift.size / 4) + SD_LANDING_CLEAR_M;
+  for (const r of [SD_LANDING_PAST_M, SD_RETURN_REACH_M + SD_LANDING_CLEAR_M]) {
+    for (const dir of BEARINGS) {
+      const at = besideOn(ret, dir, r, probe);
+      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;
+    }
   }
   return [ret[0], ret[1], ret[2]];
 }

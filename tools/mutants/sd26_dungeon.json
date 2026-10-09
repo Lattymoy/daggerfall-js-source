@@ -79,5 +79,41 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F35-the-foot-kept",
+    "file": "src/world/sdDungeon.js",
+    "old": "  const riftClear = Math.min(SD_RIFT_REACH_M, rift.size / 4) + SD_LANDING_CLEAR_M;",
+    "new": "  const riftClear = Infinity;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F35-inside-the-rifts-reach",
+    "file": "src/world/sdDungeon.js",
+    "old": "  const riftClear = Math.min(SD_RIFT_REACH_M, rift.size / 4) + SD_LANDING_CLEAR_M;",
+    "new": "  const riftClear = 0;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F35-no-margin",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_LANDING_CLEAR_M = 0.4;",
+    "new": "export const SD_LANDING_CLEAR_M = 0;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F35-the-near-ring-unasked",
+    "file": "src/world/sdDungeon.js",
+    "old": "  for (const r of [SD_LANDING_PAST_M, SD_RETURN_REACH_M + SD_LANDING_CLEAR_M]) {",
+    "new": "  for (const r of [SD_LANDING_PAST_M]) {",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

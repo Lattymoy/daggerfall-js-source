@@ -10,7 +10,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SD_NO_MARK, sdRiftPlace, sdReturnPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
+  SD_NO_MARK, sdRiftPlace, sdReturnPlace, sdLandingPlace, SD_RETURN_GAP_M, SD_RIFT_MIN_M, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_STEP_M,
+  SD_LANDING_PAST_M, SD_LANDING_CLEAR_M,
 } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
@@ -187,4 +188,37 @@ test('SD26 THE RETURN NEVER STANDS ON THE RIFT\'S FOOT WHILE A LOWER FLOOR IS NE
   assert.ok(close(t3[0], s3) && t3[1] === 0 && close(t3[2], s3), `north-east, on its floor: ${JSON.stringify(t3)}`);
   // boxed in: its foot, as ever (test/sd4b_rift.test.js)
   assert.deepEqual(sdReturnPlace({ at: [1, 0, 1], size: 2.6 }, probeHall({ x1: 2, z1: 2 })), [1, 0, 1]);
+});
+
+test('SD26 THE WAY BACK STANDS CLEAR OF BOTH PORTALS (AUDIT SD IV F35): a Return stood on a corner\'s diagonal had no bearing that led away from the Rift, and the way back from the Hour stood the player on its foot in plain rooms (a 6 x 6 m room with the end at its middle) - one step off it and back carried them to the way in, L6 F18 again. Now the first spot on the Return\'s floor clear of both portals\' reach by SD_LANDING_CLEAR_M, SD_LANDING_PAST_M from it on each bearing, then just past its reach; over every room 3 to 12 m and every end in it, never inside either; boxed in, still its foot; and a walk out and back from it carries no one (mutants: the foot kept; inside the Rift\'s reach; the near ring unasked)', () => {
+  const six = probeHall({ x1: 6, z1: 6, h: 5 });
+  const rift = sdRiftPlace([3, 0, 3], six), ret = sdReturnPlace(rift, six), land = sdLandingPlace(rift, ret, six);
+  assert.ok(close(ret[0], 3 + (rift.size / 2 + SD_RETURN_GAP_M) * Math.SQRT1_2) && close(ret[2], ret[0]), `its corner's diagonal: ${JSON.stringify(ret)}`);
+  assert.ok(close(land[0], ret[0] - SD_LANDING_PAST_M) && land[1] === 0 && close(land[2], ret[2]), `west of it, clear of both: ${JSON.stringify(land)}`);
+  assert.equal(SD_LANDING_CLEAR_M, 0.4);
+  // every room 3 to 12 m, every end a metre apart in it: never in either's reach and its margin
+  let n = 0;
+  for (let W = 3; W <= 12; W++) for (let D = 3; D <= 12; D++) {
+    const p = probeHall({ x1: W, z1: D, h: 5 });
+    for (let x = 0.5; x < W; x += 1) for (let z = 0.5; z < D; z += 1) {
+      const r = sdRiftPlace([x, 0, z], p), t = sdReturnPlace(r, p), l = sdLandingPlace(r, t, p);
+      assert.ok(apart(l, t) >= SD_RETURN_REACH_M + SD_LANDING_CLEAR_M - 1e-9 && apart(l, r.at) >= Math.min(SD_RIFT_REACH_M, r.size / 4) + SD_LANDING_CLEAR_M - 1e-9, `${W}x${D} at ${x},${z}: ${JSON.stringify([r.at, t, l])}`);
+      n++;
+    }
+  }
+  assert.ok(n > 3000);
+  // a Return in a 3 x 2 m alcove: nothing a metre and a half off it - just past its reach, the first bearing (east)
+  const alcove = probeHall({ x0: 9.5, x1: 12.5, z0: 9, z1: 11, h: 5 });
+  const lp = sdLandingPlace({ at: [11, 0, 30], size: 2.6 }, [11, 0, 10], alcove);
+  assert.ok(close(lp[0], 11 + SD_RETURN_REACH_M + SD_LANDING_CLEAR_M) && close(lp[2], 10), `the near ring: ${JSON.stringify(lp)}`);
+  // boxed in: its foot (test/sd11c_page.test.js)
+  assert.deepEqual(sdLandingPlace({ at: [1, 0, 1], size: 2.6 }, [1.6, 0, 1], probeHall({ x1: 2, z1: 2 })), [1.6, 0, 1]);
+  // the real end: stood on the landing, a metre out and back - nothing taken
+  const got = [];
+  let clock = 1000;
+  const end = createSdEnd({ renderer: quietRenderer(), audio: null, now: () => clock, onRift: () => got.push('rift'), onReturn: () => got.push('return') });
+  end.stand({ rift, retAt: ret });
+  end.frame(null);
+  for (const dx of [0, -0.25, -0.5, -0.75, -1, -0.75, -0.5, -0.25, 0, 0.25]) { clock += 16; end.frame([land[0] + dx, 0, land[2]]); }
+  assert.deepEqual(got, [], 'neither carried me');
 });

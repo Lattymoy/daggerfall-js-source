@@ -170,8 +170,8 @@
   {
     "name": "SD11c-L6F18-boxed-in-nowhere",
     "file": "src/world/sdDungeon.js",
-    "old": "    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;\n  }\n  return [ret[0], ret[1], ret[2]];",
-    "new": "    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;\n  }\n  return null;",
+    "old": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return [ret[0], ret[1], ret[2]];",
+    "new": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return null;",
     "tests": [
       "test/sd11c_page.test.js"
     ]

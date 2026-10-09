@@ -230,7 +230,9 @@ open when they were stood moved all three, a client apart (AUDIT SD IV S1).
   banner says it (SD20e T6) - *Collapses in 2:31* in its collapse (SD11f: a Hollow unbeaten closed on everyone in it with no count anywhere inside).
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
-  out with it. Every way out of the Hollow or its Hour lands before the Hollow's door - and, its door gone (the Hollow
+  out with it. One back from the Hour is stood past the Return, clear of both portals' reach by more than a body
+  (`world/sdDungeon.js` `sdLandingPlace`, SD_LANDING_CLEAR_M - AUDIT SD IV F35: a Return on a corner's diagonal had no
+  bearing that led away from the Rift, and the way back stood them on its foot, one step from the way in). Every way out of the Hollow or its Hour lands before the Hollow's door - and, its door gone (the Hollow
   taken down at its end), where the player stood outside as they went in, never the Hour's own frame read in the
   street's (SD-LAND). The door is read in the street's own frame: the world host's door list keeps each door in its
   pixel's, and read raw it stood the player the streamer's vertical shift over the Hollow, in the sky (SD-SKY).
