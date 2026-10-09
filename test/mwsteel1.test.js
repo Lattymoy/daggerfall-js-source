@@ -115,7 +115,7 @@ test('MW-STEEL1: Steel alone wears the plate - the seven classic pieces; Silver 
   assert.deepEqual(SET.map((p) => ownArmorModelFor(p)?.id), ['daggerfall_steel_cuirass', 'daggerfall_steel_gauntlets', 'daggerfall_steel_greaves',
     'daggerfall_steel_left_pauldron', 'daggerfall_steel_right_pauldron', 'daggerfall_steel_helm', 'daggerfall_steel_boots']);
   for (const [name, m] of Object.entries(ARMOR_MATERIAL)) {
-    if (m === STEEL) continue;
+    if (m === STEEL || m === ARMOR_MATERIAL.Ebony) continue;   // MW-EBONY1: Ebony wears Mac's ebony plate (mwebony1.test.js)
     for (const t of Object.values(CLASSIC_ARMOR_TEMPLATE)) assert.equal(ownArmorModelFor({ templateIndex: t, material: m }), null, `${name} ${t} keeps its retail record`);
   }
   for (let t = 515; t <= 526; t++) if (t !== RRI_JERKIN_TEMPLATE) assert.equal(ownArmorModelFor({ templateIndex: t, material: STEEL }), null, `template ${t} in Steel keeps retail's`);
@@ -123,7 +123,7 @@ test('MW-STEEL1: Steel alone wears the plate - the seven classic pieces; Silver 
   const R = (id) => ({ id, model: `m/${id}.nif`, parts: [] });
   assert.equal(mwArmorRecords([R('steel_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Silver).records[0].id, 'steel_cuirass', 'Silver still finds retail\'s steel');
   // the census and the report say the port's own
-  const own = itemMapCoverage().filter((c) => c.kind === 'own' && c.via === 'armor');
+  const own = itemMapCoverage().filter((c) => c.kind === 'own' && c.via === 'armor' && c.material === 'Steel');   // MW-EBONY1: Ebony's rows are mwebony1's
   assert.deepEqual(own.map((c) => `${c.material} ${c.item}`), ['Steel Cuirass', 'Steel Gauntlets', 'Steel Greaves', 'Steel Left_Pauldron', 'Steel Right_Pauldron', 'Steel Helm', 'Steel Boots']);
   assert.equal(own.find((c) => c.item === 'Helm').model, 'steel_plate_helm_closed.nif + steel_plate_helm_open.nif', 'the helm names both its styles');
   const report = mwItemReport([R('steel_helmet')]).filter((r) => r.item.startsWith('Steel '));

@@ -402,7 +402,10 @@ test('SERPENT1 books: a serpent is worth RENOWN_SERPENT_QUESTS quests at the top
   assert.deepEqual(await claimSerpent(ctx, { id: g, handle: null }, { receipt: rg, character: CH, cid: CID }, pubKey), { recorded: false, why: 'guest', slain: 0, spoils: true });
   assert.equal((await claimSerpent(ctx, { id: g, handle: null }, { receipt: rg, character: CH, cid: CID2 }, pubKey)).spoils, false, 'once');
   assert.deepEqual(await claimSerpent(ctx, m, { receipt: rg, character: CH }, pubKey), { error: 'not-yours' });
-  assert.equal((await claimSerpent(ctx, m, { receipt: r.slice(0, -3) + 'AAA', character: CH }, pubKey)).error, 'receipt');
+  // a signature character changed well inside it - its last three can already be 'AAA' (the top of Ed25519's S is
+  // under 0x10), about one key in a thousand (cards10_relay.test.js's receipt, the same)
+  const cut = r.length - 10;
+  assert.equal((await claimSerpent(ctx, m, { receipt: r.slice(0, cut) + (r[cut] === 'A' ? 'B' : 'A') + r.slice(cut + 1), character: CH }, pubKey)).error, 'receipt');
   assert.deepEqual(await claimSerpent(ctx, m, { receipt: await serpentFor(m.id, priv, DAY + 4), character: '' }, pubKey), { error: 'renown-character' });
   assert.deepEqual(await claimSerpent(ctx, m, { receipt: r, character: CH }, null), { error: 'no-gate-key' });
 });

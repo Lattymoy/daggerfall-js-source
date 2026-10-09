@@ -2565,6 +2565,9 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // camera node's translation without re-posing the skeleton.
   assembly.mats = mats;
   assembly.time = time;
+  // AUDIT MW-CLOAK: what the assembly's owner places after every piece is posed - the stowed gear that goes with the
+  // cloak (formats/mwCloakFit.js followCloak), which reads the cloak where this pose just put it
+  if (assembly.afterPose) assembly.afterPose(assembly);
   assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;   // PR-BOW1b: and each piece's own box, in the same walk
   return assembly;
 }

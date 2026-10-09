@@ -14,7 +14,7 @@ import {
   VEIN_TABLES, DUNGEON_VEINS, dungeonVeinTable, regionSignature, drawFromTable, vein, veins, boulder, boulders, dungeonVein,
   dungeonVeins, dungeonVeinCount, DUNGEON_VEINS_MAX, dveinKey, parseNodeKey, dungeonOk, DUNGEON_ID_MAX, VEIN_GEMS, gemOf,
   DUNGEON_GEM, VEIN_YIELD, BOULDER_YIELD, veinYield, boulderYield, material, regionWritTable, courtWrits, nodeCount, veinGem,
-  MARCH_REGIONS, NODE_TIER_WEIGHTS,
+  MARCH_REGIONS, NODE_TIER_WEIGHTS, UNCONFIRMED_VEIN_TIER,
 } from '../src/net/nodeLaw.js';
 import { CLIMATES, REGION_NAMES } from '../src/formats/mapsTables.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
@@ -89,7 +89,7 @@ test('PROF2 law: the act - 4 / 5 / 7 strikes by tier, the glint 1.2 s (2 s at Ma
   assert.equal(pickAxeBand({ intelligence: 39, agility: 40 }), actBand(39), 'C#\'s integer average: 79 / 2 is 39');
 });
 
-test('PROF2 law: the veins\' tables are PROF0 4.1\'s; a vein\'s tier is drawn over its table\'s tiers by the nodes\' weights, held to 2 unconfirmed', () => {
+test('PROF2 law: the veins\' tables are PROF0 4.1\'s; a vein\'s tier is drawn over its table\'s tiers by the nodes\' weights, held to UNCONFIRMED_VEIN_TIER (3) unconfirmed', () => {
   const keys = (c) => [...VEIN_TABLES[c]];
   assert.deepEqual(keys(C.Woodlands), ['metal:iron', 'metal:copper', 'metal:tin', 'metal:lodestone']);
   assert.deepEqual(keys(C.MountainWoods), ['metal:iron', 'metal:copper', 'metal:silver', 'metal:lead']);
@@ -109,13 +109,14 @@ test('PROF2 law: the veins\' tables are PROF0 4.1\'s; a vein\'s tier is drawn ov
   assert.equal(drawFromTable(VEIN_TABLES[C.Mountain], 0.999, 0.999).tier, 5, 'the Mountain\'s highest');
   assert.equal(drawFromTable(VEIN_TABLES[C.Mountain], 0.999, 0.999, 2).tier, 1, 'held to 2: the Mountain has only Iron there');
   assert.deepEqual(NODE_TIER_WEIGHTS, [40, 25, 15, 10, 6, 4]);
-  // over many days, an unconfirmed Mountain pixel yields Iron alone; a confirmed one reaches tiers 3-5
+  // over many days, an unconfirmed Mountain pixel yields Iron and Silver - PIN MOVED (UNWITNESSED-ORE, FIELD BUGS
+  // 2026-10-09e: it yielded Iron alone, and the field read it as a bug); a confirmed one reaches tiers 3-5
   const seen = new Set(), seenC = new Set();
   for (let d = 0; d < 200; d++) {
     for (const v of veins({ x: 400, y: 150, day: DAY + d, climate: C.Mountain, region: 60, confirmed: false })) seen.add(v.material);
     for (const v of veins({ x: 400, y: 150, day: DAY + d, climate: C.Mountain, region: 7, confirmed: true })) seenC.add(v.tier);
   }
-  assert.deepEqual([...seen], ['metal:iron']);
+  assert.deepEqual([...seen].sort(), ['metal:iron', 'metal:silver']);
   assert.ok(seenC.has(3) && seenC.has(4) && seenC.has(5), 'Silver, Gold, Platinum and Mithril come to the confirmed');
   assert.equal(veins({ x: 400, y: 150, day: DAY, climate: C.Mountain, region: 7 }).length, nodeCount(C.Mountain, 'vein'));
   assert.ok(vein({ x: 400, y: 150, day: DAY, slot: 11, climate: C.Mountain }), 'PIN MOVED (MORE-NODES): the Mountain\'s twelve');
@@ -135,7 +136,7 @@ test('PROF2 law: the signatures by kingdom (PROF0 4.7) - on a confirmed pixel, D
   assert.deepEqual(at(17, true).filter((v) => v.signature).map((v) => v.material), ['ore:moonstone', 'ore:moonstone']);
   assert.deepEqual(at(23, true, C.Mountain).map((v) => v.signature), [...Array(12).fill(false), true]);
   assert.equal(at(23, true, C.Mountain)[12].material, 'ore:mithril');
-  assert.ok(at(17, false).every((v) => !v.signature && v.tier <= 2), 'unconfirmed: the ordinary veins alone');
+  assert.ok(at(17, false).every((v) => !v.signature && v.tier <= UNCONFIRMED_VEIN_TIER), 'unconfirmed: the ordinary veins alone');
   assert.equal(at(17, false).length, 4);
   const swamp = veins({ x: 300, y: 200, day: DAY, climate: C.Swamp, region: 17, confirmed: true });
   assert.deepEqual(swamp.map((v) => v.signature), [false, false, true, true], 'a Swamp pixel\'s two veins kept (MORE-NODES), and the two Moonstones');
@@ -235,10 +236,10 @@ test('PROF2 law: smelting (PROF0 4.1) - two of a raw metal an ingot, Steel and B
   assert.equal(craftXpCap('jewelcrafting', { smithing: 70, provisioning: 60 }), xpForRank(100), 'a discipline is its craft\'s track: Smithing\'s own rank is Jewelcrafting\'s');   // PIN MOVED (CRAFT3): the profession asked maps through trackOf
 });
 
-test('PROF2 law: the Court writs ask metal and stone too - the ground\'s veins (tiers 1-2 unconfirmed), its region\'s signature on a confirmed pixel, Rough Stone where boulders stand; never an ingot, Cut Stone or a gem', () => {
+test('PROF2 law: the Court writs ask metal and stone too - the ground\'s veins (tiers 1-3 unconfirmed, UNWITNESSED-ORE), its region\'s signature on a confirmed pixel, Rough Stone where boulders stand; never an ingot, Cut Stone or a gem', () => {
   const un = regionWritTable(23, [{ climate: C.Mountain, confirmed: false }], SEASONS.Summer).map((m) => m.material);
   assert.ok(un.includes('metal:iron') && un.includes('stone:rough'));
-  assert.ok(!un.includes('metal:silver') && !un.includes('ore:mithril'), 'unconfirmed: tiers 1-2 only');
+  assert.ok(un.includes('metal:silver') && !un.includes('metal:gold') && !un.includes('ore:mithril'), 'unconfirmed: tiers 1-3 only - the Silver the vein stands (UNWITNESSED-ORE)');
   const conf = regionWritTable(23, [{ climate: C.Mountain, confirmed: true }], SEASONS.Summer);
   const keys = conf.map((m) => m.material);
   assert.ok(['metal:silver', 'metal:gold', 'metal:platinum', 'ore:mithril'].every((k) => keys.includes(k)));

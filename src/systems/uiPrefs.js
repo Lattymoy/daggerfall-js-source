@@ -35,6 +35,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // to scale - so it belongs in the port's own prefs, beside the other
   // things only this port has.
   hudScale: 1,
+  // MAP-SCALE (FIELD BUGS 2026-10-09e, "Desktop client in-game map icons and text too small on high resolutions"): the
+  // held map's interface scale - 'auto' (the screen's height over 1080) or a number (ui/mapScale.js).
+  mapScale: 'auto',
+  // EVERY-STANDING (FIELD BUGS 2026-10-09e, "Could we have a setting to see our reputation with every guild/kingdoms?"):
+  // the character sheet's Standing page lists every organization's standing, not only the player's memberships
+  // (systems/factionStanding.js).
+  standingAll: false,
   // HUD-MOVE (2026-10-01, Mac: "make chat, hp mana stamina bar segment and all the element moveable and add a reset UI
   // and lock UI in the settings (lock should be on by default)"): the Enhanced Plus HUD's own layout. `hudLocked` is the
   // lock (on: nothing moves, the HUD is pointer-transparent as ever); `hudLayout` is { id: { x, y } }, each piece's

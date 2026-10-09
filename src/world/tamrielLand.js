@@ -94,16 +94,35 @@ export function coastDistanceAt(px, py) {
   return (d[y0 * w + x0] * (1 - fx) + d[y0 * w + x1] * fx) * (1 - fy) + (d[y1 * w + x0] * (1 - fx) + d[y1 * w + x1] * fx) * fy;
 }
 
+/** TAMRIEL4: the fit's scales, Bay pixels a picture pixel - every quarter from 15 to 21 (TAMRIEL3's twelve, 16 to 21,
+ *  left the seam's own best, 15.5, outside them). */
+export const FIT_PPUS = Object.freeze(Array.from({ length: 25 }, (_, i) => 15 + i / 4));
+/** TAMRIEL4: how much the agreement INSIDE the Bay weighs beside the agreement along its EDGE. */
+export const FIT_AREA_WEIGHT = 0.25;
+
 /**
  * THE FIT: where the Bay stands on the picture. The Bay's land (bayLand(x, y), Bay pixels, the one water law) is
- * laid on the picture's grid at each candidate scale (`ppus`, Bay pixels a picture pixel) and offset (picture pixels,
- * `span` each way round `around`), and the pair with the greatest FRACTION of cells agreeing wins (a count would favour the smallest scale). Answers { ox, oy, ppu, score, cells }
- * with ox, oy in PICTURE units (the frame takes them times ppu). Deterministic; ~40M compares at the defaults.
+ * laid on the picture's grid at each candidate scale (`ppus`, Bay pixels a picture pixel) as cells, four samples a cell
+ * and the majority, and at each offset (picture pixels, `span` each way round `around`).
+ *
+ * TAMRIEL4 - THE SEAM FIRST. TAMRIEL3 scored the cells INSIDE the Bay alone, and the picture's own Bay is a cruder,
+ * more diagonal inlet than WOODS.WLD's: its best inside (77% of the cells) left High Rock's and Hammerfell's painted
+ * west coasts 100-200 Bay pixels past the data's, and the coast the player followed out of the Bay ran off the edge of
+ * the data into nothing (516 edge pixels of 3,000 disagreeing). But inside the Bay the picture is never drawn - the
+ * data is - so what the fit owes the map is the JOIN: the Bay's edge cells against the picture's pixels just beyond
+ * them, the fraction agreeing, with the inside's fraction beside it at FIT_AREA_WEIGHT (a fraction, not a count: a
+ * smaller scale lays more cells). On the freeware data the Bay stands at (38, 57) x15.5: 190 of its 192 edge cells
+ * agree (231 edge pixels, 139 of them where the painting's Hammerfell reaches past the west edge), 75% inside. A
+ * candidate keeps a pixel of picture round it, or it is skipped.
+ *
+ * Answers { ox, oy, ppu, score, cells, seam, edge } - ox, oy in PICTURE units (the frame takes them times ppu); `score`
+ * of `cells` agreeing inside, `seam` of `edge` along it - or null. Deterministic; ~0.4 s at the defaults.
  * @param {{ bayLand: (x: number, y: number) => boolean, trace: TamrielTrace, around?: {ox: number, oy: number},
- *   span?: number, ppus?: number[] }} o
+ *   span?: number, ppus?: readonly number[] }} o
  */
-export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, span = 24, ppus = [16, 16.5, 17, 17.5, 18, 18.5, 18.75, 19, 19.5, 20, 20.5, 21] }) {
-  let best = null;
+export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, span = 24, ppus = FIT_PPUS }) {
+  let best = null, bestValue = -Infinity;
+  const { w, land } = trace;
   for (const ppu of ppus) {
     const cols = Math.floor(BAY_W / ppu), rows = Math.floor(BAY_H / ppu);
     const mask = new Uint8Array(cols * rows);
@@ -115,17 +134,28 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
         mask[j * cols + i] = n >= 2 ? 1 : 0;
       }
     }
+    const edge = 2 * (cols + rows);
     for (let oy = around.oy - span; oy <= around.oy + span; oy++) {
-      if (oy < 0 || oy + rows > trace.h) continue;
+      if (oy < 1 || oy + rows + 1 > trace.h) continue;
       for (let ox = around.ox - span; ox <= around.ox + span; ox++) {
-        if (ox < 0 || ox + cols > trace.w) continue;
+        if (ox < 1 || ox + cols + 1 > w) continue;
         let score = 0;
         for (let j = 0; j < rows; j++) {
-          const row = (oy + j) * trace.w + ox, mrow = j * cols;
-          for (let i = 0; i < cols; i++) if (mask[mrow + i] === trace.land[row + i]) score++;
+          const row = (oy + j) * w + ox, mrow = j * cols;
+          for (let i = 0; i < cols; i++) if (mask[mrow + i] === land[row + i]) score++;
         }
-        // the FRACTION agreeing, not the count: a smaller scale lays more cells and would win on count alone
-        if (!best || score * best.cells > best.score * cols * rows) best = { ox, oy, ppu, score, cells: cols * rows };
+        // the seam: each edge cell against the picture's pixel beyond it
+        let seam = 0;
+        for (let i = 0; i < cols; i++) {
+          if (mask[i] === land[(oy - 1) * w + ox + i]) seam++;
+          if (mask[(rows - 1) * cols + i] === land[(oy + rows) * w + ox + i]) seam++;
+        }
+        for (let j = 0; j < rows; j++) {
+          if (mask[j * cols] === land[(oy + j) * w + ox - 1]) seam++;
+          if (mask[j * cols + cols - 1] === land[(oy + j) * w + ox + cols]) seam++;
+        }
+        const value = seam / edge + (FIT_AREA_WEIGHT * score) / (cols * rows);
+        if (value > bestValue) { bestValue = value; best = { ox, oy, ppu, score, cells: cols * rows, seam, edge }; }
       }
     }
   }

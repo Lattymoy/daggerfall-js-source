@@ -23,7 +23,7 @@ Every finding was re-read here before a line moved. Each fix carries an `AUDIT C
 `test/audit_chap4.test.js` (28), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
 older records the fixes moved were re-aimed by content and run again, all dead; two were retired with the carry they
 mutated (CHAP4a's `CHAP4A-CARRY`, `CHAP4A-SCORE-CARRY` - E1); AUDIT CHAP3's `A3-S2-OFF`, recorded equivalent, dies now
-(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND; `acct100` and `world183` past CARDS9 and CARDS10 - AUDIT CHAP5 R9; `acct102` past INT1-INT6 and BAG-CRAFT): none of the arc has shipped, so migrations `0096`, `0100` and
+(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND; `acct100` and `world183` past CARDS9 and CARDS10 - AUDIT CHAP5 R9; `acct103` past INT1-INT6, BAG-CRAFT and UNWITNESSED-ORE): none of the arc has shipped, so migrations `0096`, `0100` and
 `0101` (`0098`, `0102` and `0103` today) grew in place; nothing here changes what the relay reads.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:

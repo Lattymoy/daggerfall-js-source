@@ -274,7 +274,7 @@ test('MAP-KEY: the key holds none of the sheet\'s keys or presses - M and Escape
   assert.match(css, /\.hmkey \{ position: absolute; left: 0; bottom: calc\(100% \+ 4px\);/);
   assert.match(css, /\.hmkey \{[^}]*pointer-events: auto; \}/);
   assert.match(css, /\.hmkeyflt \{ pointer-events: auto;/);
-  assert.match(css, /@media \(max-width: 860px\) \{\s*\n\s*\.hmkey \{ max-width: calc\(100vw - 24px\); \}[\s\S]*?\.hmroot\.hmcardup \.hmkey \{ display: none; \}\s*\n\}/,
+  assert.match(css, /@media \(max-width: 860px\) \{\s*\n\s*\.hmkey \{ max-width: calc\(100vw \/ var\(--hm-ui, 1\) - 24px\); \}[\s\S]*?\.hmroot\.hmcardup \.hmkey \{ display: none; \}\s*\n\}/,
     'on a narrow screen the key steps aside for the card');
 });
 

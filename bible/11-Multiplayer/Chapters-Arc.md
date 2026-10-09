@@ -37,7 +37,7 @@ the chapter's halls, the members' Thriving prices - section 8, its record at the
 CHAP5 (2026-10-09, Mac: "I think we do a deep comprehensive audit across everything") read all of it again through six
 lenses and fixed what they found (`01-Overview/Audit-Chapters-5.md`, its record at the foot). Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
-(2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09), then past CARDS9 and CARDS10 (2026-10-09; Iliac Hand's season board, its migration `0095_iliac_ladder`, `acct99` and `world182` deployed first), then past INT1-INT6 and BAG-CRAFT (2026-10-09; the Integrity arc's lane 1, `0096_integrity`, `acct100`; the stations' loose units, `0097_loose_origin`, `acct101`): the arc's migrations are `0098_npc_roll` to `0103_npc_seats`, its service `acct102` and its relay `world183` - the records below name each
+(2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09), then past CARDS9 and CARDS10 (2026-10-09; Iliac Hand's season board, its migration `0095_iliac_ladder`, `acct99` and `world182` deployed first), then past INT1-INT6 and BAG-CRAFT (2026-10-09; the Integrity arc's lane 1, `0096_integrity`, `acct100`; the stations' loose units, `0097_loose_origin`, `acct101`), then past UNWITNESSED-ORE (2026-10-09; the unwitnessed veins, `acct102`): the arc's migrations are `0098_npc_roll` to `0103_npc_seats`, its service `acct103` and its relay `world183` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
 "Let's audit everything we have so far before we continue") read all of it through six lenses and fixed what they found
 (`01-Overview/Audit-Chapters-3.md`); the sections below say where it narrowed them.** CHAP0's claims about the code were read off the tree at `9ed5a681`, each slice's off its own
@@ -1484,7 +1484,7 @@ The fourth slice's service half; sections 3.5 and 6 carry the law and what build
 - **The service.** `server-account/src/npcChapters.js`: the Turning's seats (`seatsPlaced`, in settleChapterWeek's
   batch) and a character's (`chapterSeatsOf`, on the Roll's answer - `index.js`); `npcRoll.js`: the recorded rank
   through `rollBookRankOf`; `realm.js`: a deleted character's seats; migration `0103_npc_seats`. Still `acct95` (`acct100`
-  since the merges of main past SCALE4's, TAVERN CARDS', SERVER-POST's, PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  since the merges of main past SCALE4's, TAVERN CARDS', SERVER-POST's, PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **Pins.** `test/chap4a_seats.test.js`, 13 tests: the law against literals (the numbers, the cap, Eligible at each
   edge, the standing, the plan's order, vacancy, ties, carry and limits, the changes); the Turning through the real
   migrations (who is placed and who never - under the line, a second short, an account too new, dead, gone; the window;
@@ -1521,7 +1521,7 @@ The fourth slice's titles; section 6 carries the law and what building it narrow
   (`chapterTitleText`) and the titles a character's seats give it (`chapterTitlesOf`).
 - **The service.** `server-account/src/npcChapters.js` (`chapterTitlesOpenFor`, `chapterTitlesOfAccount`);
   `titles.js` holds them off the row's `chapterTitles`; `index.js` lays them on the wardrobe's and the mint's row and
-  signs one only for its character. `wrangler.toml`: `CHAPTER_TITLES = "off"`. Still `acct96` (`acct100` since the merges of main past TAVERN CARDS', SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  signs one only for its character. `wrangler.toml`: `CHAPTER_TITLES = "off"`. Still `acct96` (`acct100` since the merges of main past TAVERN CARDS', SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **The client.** `src/ui/playerBadge.js`: the words off the claim, the plain words, three colours.
 - **Pins.** `test/chap4c_titles.test.js`, 7 tests: the vocabulary and the claim's law, the relay's stamp and read; the
   key and the words (and none for a hidden guild, no guild, no region); the titles a character's seats give it (the
@@ -1541,7 +1541,7 @@ The fourth slice's last; section 6 carries the law and what building it narrowed
   `masterSeatsIn`, `chapterChronicle` (`CHAPTER_CHRONICLE_ROWS`, 60); `professions.js`: the day's hall writs posted with
   each chapter's Focus, the list's chapter lines carrying it and, for its Master, the families; `index.js`: the two
   routes, 'not-master' a 403. Migration `0102_npc_chapters` grown in place (`focus`, `focus_week` - nothing of it
-  shipped). Still `acct97` (`acct100` since the merges of main past SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  shipped). Still `acct97` (`acct100` since the merges of main past SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **The client.** `src/net/accountClient.js`: the chapters door's `focus` and `history`, the two refusals' words;
   `src/ui/noticeWindow.js`: the Focus under its chapter's line, its Master's choice; `src/ui/hallOfRecords.js`: "The
   Chapters of <Region>" after the seat's own rows (and under the empty seat's word); `src/scenes/world.js`: the board's
@@ -1561,7 +1561,7 @@ The fifth slice's first; sections 5.3 and 9 carry the law and what building it n
 
 - **The service.** `server-account/src/npcChapters.js` chapterSheet: each chapter's `seats`, `[{ seat, name }]`, off
   `npc_chapter_seats` and the characters' names now - its Master first, then its officers by `since`. No migration;
-  still `acct97` (`acct100` since the merges of main past SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  still `acct97` (`acct100` since the merges of main past SERVER-POST's and PERMADEATH-HOUSES' and CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **The law.** `src/net/npcChapterLaw.js`: `chapterRollSeatsOf` (the seats as the roll reads them: the Master's first,
   at most the chapter's seats, a name at the realm's cap), `chapterRollTitle`, `chapterRollLines`.
 - **The client.** `src/net/chapterSheet.js`: the seats kept, `chapterOf(faction, region)` a copy; `src/ui/chapterRoll.js`:
@@ -1634,7 +1634,7 @@ The sixth slice's first; section 7 carries the law and what building it narrowed
   batch, the opening week's reset; `seasonNumberAt`, `regionEvents`; the sheet's `event`, `rival`, `shut`.
   `server-account/src/professions.js`: a shut hall posts no writs nor its members their own; a Crackdown's pay half
   again; the board's chapter lines carry the event. Migrations `0102` (the event columns) and `0103` (the Chronicle's
-  two new kinds, a comment) grown in place - nothing shipped; still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  two new kinds, a comment) grown in place - nothing shipped; still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **Pins.** `test/chap6a_events.test.js`, 16 tests: the events and their numbers; every weight's modifier; the draw
   (its sameness, its spread, a weight of none, its golden rolls); the rivals and the pick; a Decline's week, a
   Rivalry's end, a Crackdown's pay and line; the Season's lines; the draw at a Season's opening with every input
@@ -1658,7 +1658,7 @@ The sixth slice's second; section 7 carries the law and what building it narrowe
   and the board's `sides`, `heir`, `doctrine`, the board's `backed`. `server-account/src/professions.js`: "more writs"
   one hall writ more a day. `index.js` and `service.js`: the route and its refusals (`no-event` and `closed` 409,
   `not-member` 403). Migrations `0102` (`doctrine`, `doctrine_season`) and `0103` (`npc_chapter_backing`) grown in place -
-  nothing shipped; still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's).
+  nothing shipped; still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's).
 - **Pins.** `test/chap6b_backing.test.js`, 11 tests: the doctrines and their roll (golden); the sides; a Schism's winner
   and a Succession's heir; the lines; a backing (one an account a chapter a Season, changed, the alt's the account's,
   through the route); every refusal and its status (the grace before the third Turning settles among them); the
@@ -1724,7 +1724,7 @@ The sixth slice's last; sections 6 and 7 carry the law and what building it narr
   whole (`kept`), last, newest first, once.
 - **The service.** `server-account/src/npcChapters.js` `chapterTitlesOfAccount`: the Ascendancies of the counted Season
   read off `npc_chapters`, the Chronicle's 'season' rows read for good; `index.js`: the mint signs `highmaster` in the
-  Master's place. `titles.js`: the wardrobe's comment. Still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's); `CHAPTER_TITLES` still shipped "off".
+  Master's place. `titles.js`: the wardrobe's comment. Still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's); `CHAPTER_TITLES` still shipped "off".
 - **The client.** `src/ui/playerBadge.js`: the two plain words and colours.
 - **Pins.** `test/chap6e_titles.test.js`, 6 tests: the vocabulary, the claim and the relay's carry; the words (the
   Season's guard, a hidden guild's none, the plain words, the colours); the law (the mark, the order, the kept Seasons'
@@ -1747,7 +1747,7 @@ The seventh slice's first; section 8 carries the law and what building it narrow
   Turning's `patronsDrawn` and `patronStatements` in its one batch, `regionPatrons` (the sheet's and the board's
   `patron`), `guildPatronBids` (the guildmaster's `patronBid`); `professions.js`: the board's lines; `index.js` and
   `service.js`: the route and its refusals; migrations `0102` (`patron`, `patron_season`) and `0103`
-  (`npc_chapter_patron_bids`, the Chronicle's 'patron' kind) grown in place. Still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct102` past INT1-INT6's and BAG-CRAFT's). `src/net/accountClient.js`:
+  (`npc_chapter_patron_bids`, the Chronicle's 'patron' kind) grown in place. Still `acct99` (`acct100` since the merges of main past CARDS9 and CARDS10's, `acct103` past INT1-INT6's, BAG-CRAFT's and UNWITNESSED-ORE's). `src/net/accountClient.js`:
   the three new refusals' words.
 - **Pins.** `test/chap7a_patrons.test.js`, 7 tests: the law (the bounds, the escrow's id, the winner's order, the
   kinds); the words (the patron's fields, the Chronicle's line and its guards); a bid (escrowed, raised by the
