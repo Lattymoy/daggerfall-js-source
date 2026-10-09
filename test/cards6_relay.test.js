@@ -30,7 +30,7 @@ const word = (r, ws, o) => { _tick(300); return r.raw(ws, JSON.stringify({ t: 'h
 const receipts = (ws) => holdem(ws).filter((m) => m.cashout).map((m) => readCardReceipt(m.cashout));
 let n = 0;
 const sid = () => (0xa0000000 + ++n).toString(16).padEnd(20, '0');
-// PIN MOVED (TAVERN-TABLES, world179): a room's gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the gold
+// PIN MOVED (TAVERN-TABLES, world180): a room's gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the gold
 // tables below that stood at table 0 stand there, their orders naming it (`ct: 1`); table 0 is a chips table, and the
 // doors' pin reads what it always said there ('friendly table', the stake back whole) by the index's law now.
 async function order(r, nowS, { s, cj = sid(), cr = ROOM, ct = 0, ca = 500, cb = 10 }) {

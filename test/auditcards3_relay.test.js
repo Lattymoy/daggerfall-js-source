@@ -21,7 +21,7 @@ async function withRoom(key, fn) {
 const holdem = (ws) => ws.sent.filter((m) => m.t === 'holdem');
 const word = (r, ws, o) => r.raw(ws, JSON.stringify({ t: 'holdem', ...o }));
 const sitW = (table, chair, chairs = 2, bb = 10) => ({ op: 'sit', table, chair, chairs, bb });
-// PIN MOVED (TAVERN-TABLES, world179): table 1 is the room's gold table now (net/holdemTable.js HOLDEM_GOLD_TABLE) and
+// PIN MOVED (TAVERN-TABLES, world180): table 1 is the room's gold table now (net/holdemTable.js HOLDEM_GOLD_TABLE) and
 // seats a stake alone - the chips sits below that stood at "another table" stand at table 2, and A4's four at 0, 2, 3, 4.
 const CHIPS = [0, 2, 3, 4];
 

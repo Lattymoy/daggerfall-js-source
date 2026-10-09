@@ -1,0 +1,65 @@
+[
+  {
+    "name": "UO-held-by-the-feet-unasked",
+    "file": "src/player/enterExit.js",
+    "old": "  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid(",
+    "new": "  return false || collider.insideSolid(",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-held-by-the-head-unasked",
+    "file": "src/player/enterExit.js",
+    "old": " || collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]]);",
+    "new": " || false;",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-ring-search-asks-no-solid",
+    "file": "src/player/enterExit.js",
+    "old": "      if (heldInSolid(collider, [px, h, pz])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-torso-unasked",
+    "file": "src/player/enterExit.js",
+    "old": "      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-floor-ignored",
+    "file": "src/player/enterExit.js",
+    "old": "      return [px, h, pz];\n",
+    "new": "      return [px, 0, pz];\n",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-sea-floor-stood-on",
+    "file": "src/player/enterExit.js",
+    "old": "      if (!Number.isFinite(h) || (dry && !dry(h))) continue;\n",
+    "new": "      if (!Number.isFinite(h)) continue;\n",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-landing-unchecked",
+    "file": "src/scenes/world.js",
+    "old": "    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/unstuckout.test.js"
+    ]
+  }
+]

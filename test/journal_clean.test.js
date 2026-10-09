@@ -87,7 +87,8 @@ test('JOURNAL-CLEAN: the rail leaves hidden quests out of `active` and hands the
 
 test('JOURNAL-CLEAN: the bridge walk hands `hidden` beside `active` (rows stay for the lens) and journalClean acts on the notebook', () => {
   const src = read('src/scenes/questBridge.js');
-  assert.match(src, /return \{ active, finished: notebook\?\.getFinishedQuests\(\) \?\? \[\], ended, hidden: notebook\?\.getHiddenQuests\?\.\(\) \?\? \[\] \};/);
+  // PIN MOVED (QUEST-SHELF, 2026-10-08): and the quests set aside, beside them
+  assert.match(src, /return \{ active, finished: notebook\?\.getFinishedQuests\(\) \?\? \[\], ended, hidden: notebook\?\.getHiddenQuests\?\.\(\) \?\? \[\], shelved \};/);
   assert.match(src, /notebook\?\.unhideQuest\?\.\(q\.uid\);/, 'an ended quest (even one that filed nothing) is unhidden by the walk');
   // journalClean driven off the shipped source over a real notebook
   const start = src.indexOf('    journalClean: {');

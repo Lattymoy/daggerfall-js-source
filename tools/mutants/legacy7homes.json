@@ -11,11 +11,12 @@
   {
     "name": "LEGACY7H-unread-drops",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held);",
-    "new": "    return syncHouses(family, p.id, held ?? []);",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
+    "new": "    return syncHouses(family, p.id, held ?? [], p.deedsTaken ?? []);",
     "tests": [
       "test/legacy7_homes.test.js"
-    ]
+    ],
+    "note": "PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "LEGACY7H-registry-silent",

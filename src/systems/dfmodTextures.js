@@ -51,6 +51,7 @@ import { textureEntry, textureKey, setBundleTextures, textureReplacementEnabled,
 import { toColor32 } from '../formats/color32Order.js';   // GROUND1: the terrain's layers are world texels, bottom row first
 import { registerBillboardXml, unregisterBillboardXml } from '../world/billboardXml.js';
 import { getPref, setPref } from './uiPrefs.js';   // VE3: which attached mods are switched off - the port's prefs shelf
+import { setSnowlessGround } from '../world/climateSwaps.js';   // SNOWLESS1: the door's word on a snowless winter set, for the weather and Snowfall
 
 export const DFMOD_PREFIX = 'dfmod/';               // the stored key of a bundle (seasonsIliacBayAssets' DFMOD_KEY_PREFIX)
 export const DFMOD_INDEX_PREFIX = 'dfmod-index/';   // the stored key of its name index
@@ -667,6 +668,15 @@ export function groundSource(archive) {
   }
   return null;
 }
+/** SNOWLESS1: Vanilla Enhanced's Snowless Swamps and Jungles (its Mod.FileName). */
+export const SNOWLESS_FILE_NAME = 'vanilla enhanced - snowless swamps and jungles';
+/** SNOWLESS1: the winter ground `archive` is drawn without snow - the door's own decision for it (groundSource) is
+ *  Snowless Swamps and Jungles' array. False behind a shut gate, with the add-on off, or under a mod loaded after it. */
+export function winterGroundSnowless(archive) {
+  const s = groundSource(archive);
+  return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;
+}
+setSnowlessGround(winterGroundSnowless);   // SNOWLESS1: the weather's ground law and Snowfall read the door through climateSwaps
 /** A mod or a loose pack dresses the archive's ground in some way (its array, or any of its records), behind the gate. */
 export const hasDfmodGround = (archive, recordCount = 56) => !!groundSource(archive) || recordOwners(archive, recordCount).some(Boolean);
 

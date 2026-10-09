@@ -63,7 +63,7 @@
 //                                .UpdateListboxTopic (the instant tail)
 
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
-import { QUEST_MESSAGES } from './quest/quest.js';   // the message-id enum (QuestMachine.cs:260-270)
+import { QUEST_MESSAGES, isShelved } from './quest/quest.js';   // the message-id enum (QuestMachine.cs:260-270); QUEST-SHELF: a quest set aside
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 24: NPCData.context is a NUMBER
 
 /** ListItemType (:128-133). */
@@ -573,6 +573,7 @@ export class TopicTree {
     this.listTopicTellMeAbout.push(newListItem({ questionType: QUESTION_TYPE.News, caption: EN.anyNews }));
     this.listTopicTellMeAbout.push(newListItem({ questionType: QUESTION_TYPE.WhereAmI, caption: EN.whereAmI }));
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (isShelved(this.deps.getQuest?.(questID))) continue;   // QUEST-SHELF: a quest set aside offers no topic (its topics kept whole - hints, discovery - for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         const itemQuestTopic = newListItem({});
         let captionString = '';
@@ -655,6 +656,7 @@ export class TopicTree {
     // the quest-residence General section
     let alreadyCreatedGeneralSubSection = false;
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (isShelved(this.deps.getQuest?.(questID))) continue;   // QUEST-SHELF: a quest set aside offers no topic (its topics kept whole - hints, discovery - for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         if (info.resourceType !== QUEST_INFO_RESOURCE_TYPE.Location) continue;
         const place = info.questResource;
@@ -764,6 +766,7 @@ export class TopicTree {
   assembleTopicListPerson() {
     this.listTopicPerson = [];
     for (const [questID, questInfo] of this.dictQuestInfo) {
+      if (isShelved(this.deps.getQuest?.(questID))) continue;   // QUEST-SHELF: a quest set aside offers no topic (its topics kept whole - hints, discovery - for its reclaim)
       for (const [resourceName, info] of questInfo.resourceInfo) {
         if (info.resourceType !== QUEST_INFO_RESOURCE_TYPE.Person) continue;
         const person = info.questResource;

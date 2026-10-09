@@ -1,0 +1,225 @@
+[
+  {
+    "name": "PERMADEATH-HOUSES-due-to-the-living-holders-too",
+    "file": "src/systems/legacy/household.js",
+    "old": "export const heldByDead = (family, h) => !!personOf(family, h?.by)?.died;",
+    "new": "export const heldByDead = (family, h) => !!personOf(family, h?.by);",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "A living sibling's house handed to whoever is played."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-due-ignores-taken",
+    "file": "src/systems/legacy/household.js",
+    "old": "  return (family.houses ?? []).filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h))).map((h) => ({ ...h }));",
+    "new": "  return (family.houses ?? []).filter((h) => heldByDead(family, h)).map((h) => ({ ...h }));",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "Handed again at every tick - a house sold before the save comes back."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-due-the-dead-carry",
+    "file": "src/systems/legacy/household.js",
+    "old": "  if (!family || !p || !isAlive(p)) return [];\n  const taken",
+    "new": "  if (!family || !p) return [];\n  const taken",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-taken-never-rekeyed",
+    "file": "src/systems/legacy/household.js",
+    "old": "    else if (holds(h)) next.push({ ...h, by: personId, from: h.by });",
+    "new": "    else if (holds(h)) next.push(h);",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "The deed stays the dead's after the save that holds it - the House page names the dead for ever."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-taken-sold-kept",
+    "file": "src/systems/legacy/household.js",
+    "old": "  const took = (h) => taken.includes(houseKeyOf(h)) && heldByDead(family, h);",
+    "new": "  const took = (h) => taken.includes(houseKeyOf(h)) && heldByDead(family, h) && holds(h);",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "Taken and sold before the save: the family lives on in a house nobody holds."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-rewind-drops",
+    "file": "src/systems/legacy/household.js",
+    "old": "      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }",
+    "new": "      else if (false) { const { from, ...row } = h; next.push({ ...row, by: from }); }",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "An older save loaded loses the house for good - the dead's row gone and the save never took it."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-rewind-ignores-taken",
+    "file": "src/systems/legacy/household.js",
+    "old": "      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) {",
+    "new": "      else if (Number.isInteger(h.from)) {",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "A house the heir took and sold, with the save that took it, handed back to the dead and given again."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-layout-dropped",
+    "file": "src/systems/legacy/household.js",
+    "old": "      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}),   // PERMADEATH-HOUSES",
+    "new": "      ...({}),   // PERMADEATH-HOUSES",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-read-drops-from",
+    "file": "src/systems/legacy/family.js",
+    "old": "        ...(Number.isInteger(h.from) ? { from: h.from } : {}) })) : [],",
+    "new": "        })) : [],",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-read-drops-taken",
+    "file": "src/systems/legacy/family.js",
+    "old": "    p.deedsTaken = Array.isArray(raw.deedsTaken) ? [...new Set(raw.deedsTaken.filter((k) => typeof k === 'string' && /^-?\\d+:\\d+$/.test(k)))] : [];",
+    "new": "    p.deedsTaken = [];",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "A reload forgets every deed taken: handed again at every load."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-merge-takes-stores",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  me.deedsTaken = Array.isArray(was?.deedsTaken) ? was.deedsTaken.filter((k) => typeof k === 'string') : [];\n",
+    "new": "",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "The store's word on what was taken: a reload of an older save never hands the house again, and loses it."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-rekey-forgets-from",
+    "file": "src/systems/legacy/store.js",
+    "old": " if (Number.isInteger(h.from)) h.from = to(h.from); }",
+    "new": " }",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-sync-ignores-taken",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
+    "new": "    return syncHouses(family, p.id, held);",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-death-saved-deeds-only",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    syncHousesNow(p);\n    recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });",
+    "new": "    recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "A house bought since the last save dies with its holder, and its gold left the estate."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-never-taken",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    payEstateOf(p);\n    takeDeeds(p);",
+    "new": "    payEstateOf(p);",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-given-not-kept",
+    "file": "src/scenes/legacyHost.js",
+    "old": "        (p.deedsTaken ??= []).push(key);",
+    "new": "        p.deedsTaken ??= [];",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-gone-kept",
+    "file": "src/scenes/legacyHost.js",
+    "old": "        family.houses = (family.houses ?? []).filter((x) => !sameHouse(x, h));",
+    "new": "        family.houses = (family.houses ?? []).slice();",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-waits-said-every-tick",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      } else if (r === 'waits' && !deedsSaid.has(key)) {",
+    "new": "      } else if (r === 'waits') {",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-graft-keeps-corpses",
+    "file": "src/systems/sceneCache.js",
+    "old": "    d.lootContainers = d.lootContainers.filter((c) => c.containerType !== LOOT_CONTAINER_TYPES.CorpseMarker);\n    cache.scenes.set(name, d);",
+    "new": "    cache.scenes.set(name, d);",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-graft-takes-every-prefix",
+    "file": "src/systems/sceneCache.js",
+    "old": "    if (name !== sceneName && !name.startsWith(`${sceneName}|`)) continue;",
+    "new": "    if (!name.startsWith(sceneName)) continue;",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "Another building whose key begins with this one's handed on with it."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-graft-not-permanent",
+    "file": "src/systems/sceneCache.js",
+    "old": "    cache.scenes.set(name, d);\n    cache.permanent.add(name);",
+    "new": "    cache.scenes.set(name, d);",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "The house's things handed on, and thrown away at the world's next move."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-graft-shares",
+    "file": "src/systems/sceneCache.js",
+    "old": "    const d = copySceneEntry(e);\n    d.lootContainers",
+    "new": "    const d = e;\n    d.lootContainers",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-service-living-from",
+    "file": "server-account/src/homes.js",
+    "old": " AND h.dead_at IS NULL AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`)",
+    "new": " AND h.dead_at IS NULL`)",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "A living character's home taken by another of the account's."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-service-retired-leaves",
+    "file": "server-account/src/homes.js",
+    "old": " AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`)",
+    "new": " AND d.dead_at IS NOT NULL`)",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-service-any-line",
+    "file": "server-account/src/homes.js",
+    "old": "  const kin = await db.prepare(`SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player AND d.lineage_id = h.lineage_id",
+    "new": "  const kin = await db.prepare(`SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-service-hall-taken",
+    "file": "server-account/src/homes.js",
+    "old": "  const took = await db.prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND guild_id IS NULL')",
+    "new": "  const took = await db.prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?')",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-service-no-repeat-word",
+    "file": "server-account/src/homes.js",
+    "old": "  return { ok: true, home: homeOf(row), ...(took?.meta?.changes ? {} : { repeat: true }) };",
+    "new": "  return { ok: true, home: homeOf(row) };",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/homes/inherit',\n",
+    "new": "",
+    "tests": ["test/permadeath_houses.test.js"]
+  },
+  {
+    "name": "PERMADEATH-HOUSES-world-one-a-region",
+    "file": "src/scenes/world.js",
+    "old": " && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';\n    allocateHouseToPlayer(",
+    "new": " && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'given';\n    allocateHouseToPlayer(",
+    "tests": ["test/permadeath_houses.test.js"],
+    "note": "By source: the host's own allocation is a page's - driven in the game, not the suite."
+  },
+  {
+    "name": "PERMADEATH-HOUSES-house-page-names-the-dead-as-holder",
+    "file": "src/ui/familyPages.js",
+    "old": "  if (!isAlive(holder)) return `The late ${name}'s deed - it passes to whoever carries the line`;",
+    "new": "  if (!isAlive(holder)) return `${name}'s deed`;",
+    "tests": ["test/permadeath_houses.test.js"]
+  }
+]

@@ -56,8 +56,8 @@
   {
     "name": "SD9C-the-dial-forward",
     "file": "src/render/auraRing.js",
-    "old": "    float d = a - uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
-    "new": "    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "old": "    float d = a ${forward ? '+' : '-'} uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "new": "    float d = a ${forward ? '-' : '+'} uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
     "tests": [
       "test/sd9c_turning.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SD9C-no-light-at-the-feet",
     "file": "src/render/auraRing.js",
-    "old": "  vec3 col = TH_GOLD * exp(-r * r / 0.22) * 0.3 * breath;",
+    "old": "  vec3 col = ${P}_GOLD * exp(-r * r / 0.22) * 0.3 * breath;",
     "new": "  vec3 col = vec3(0.0);",
     "tests": [
       "test/sd9c_turning.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "SD9C-unkindled-lit",
     "file": "src/render/auraRing.js",
-    "old": "  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 turningWall(",
-    "new": "  return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 turningWall(",
+    "old": "  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 ${fn}Wall(",
+    "new": "  return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));\n}\nvec3 ${fn}Wall(",
     "tests": [
       "test/sd9c_turning.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD9C-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": ", turninghour: 'hourbreaker' });",
-    "new": ", turninghour: 'founder' });",
+    "old": ", turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
+    "new": ", turninghour: 'founder', firsthour: 'hoursfirst' });",
     "tests": [
       "test/sd9c_turning.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD9C-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'seraphwings', 'resonance', 'turninghour']);",
-    "new": "'seraphwings', 'resonance']);",
+    "old": "'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
+    "new": "'seraphwings', 'resonance', 'firsthour']);",
     "tests": [
       "test/sd9c_turning.test.js"
     ]

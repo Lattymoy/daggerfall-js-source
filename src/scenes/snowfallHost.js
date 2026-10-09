@@ -21,6 +21,7 @@ import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFi
 import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';
 import { weatherFlags } from '../world/weather.js';   // WeatherManager.IsSnowing, from its one home
 import { APP_ROOT } from '../systems/appRoot.js';
+import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js';   // SNOWLESS1
 
 /** DynamicSnowMod's console command (ConsoleCommandsDatabase.RegisterCommand). */
 export const SNOWFALL_COMMAND = Object.freeze({ name: 'snow_status', description: 'Print Dynamic Snow stamping and mask state.', usage: 'snow_status' });
@@ -83,7 +84,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
   let runtime = null, surface = null, pending = null, failed = false, asked = false, disposed = false;
   let wasInside = null, lastFrame = null, gameSecondsNow = 0, frameNo = 0, nextPrune = 0;
   let roadStatus = 'not sampled';   // AUDIT ENVIRONS S6: BasicRoadsContextCache.Status - the last tile's classification's word
-  let climateNow = -1, desertNow = false;   // the climate's base type, read when the climate index changes
+  let climateNow = -1, desertNow = false, doorNow = -1;   // the climate's base type, read when the climate index changes
   let broken = false;            // AUDIT ENVIRONS I5: a frame threw: the snow stops there (its save kept), the host's frame never with it
   let completePending = false;   // AUDIT ENVIRONS S2: a session begun (a load, a new game, the runtime's first frame): CompleteSession on the next frame's clock
   const promotions = [];         // AUDIT ENVIRONS S5: [tile, replaced, ...] - rebuilds found while the runtime asked for a tile, heard once its frame is done
@@ -111,14 +112,19 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     if (had && had.stamp === stamp) { had.seen = frameNo; return had; }
     const px = ground.mapPixel(p);
     let roadsMade = false, roads = null;
+    const cs = getWorldClimateSettings(ground.climate(p));
+    const winterArchive = winterArchiveOf(cs);
+    // SNOWLESS1: its winter set drawn without snow - no snow lies on it; nor on a desert's ground, which wears no winter set
+    // (climateSwaps.js groundIsSnowy) - the mod's unmasked ground counts as snowed, and laid snow over the desert's edge
+    const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);
     const t = {
       mapX: px.x, mapY: px.y, size, stamp, seen: frameNo, replaced: null,
       tileMap: ground.tileMap(p),
-      winterArchive: winterArchiveOf(getWorldClimateSettings(ground.climate(p))),
+      winterArchive,
       origin: (out) => ground.translation(p, out),
       height: (lx, lz) => ground.height(p, lx, lz),
       normal: (lx, lz, out) => ground.normal(p, lx, lz, out),
-      bare: ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,
+      bare: snowless ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,
       get roads() {   // BasicRoadsContextCache.Get: classified once a tile (TryCreate: a reason, and no roads, where it fails)
         if (!roadsMade) {
           roadsMade = true;
@@ -227,12 +233,22 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     if (wasInside !== null && inside !== wasInside) runtime.worldReset();   // HandleTransitionInterior / Exterior
     wasInside = inside;
     const ci = f.climate ?? 0;
-    if (ci !== climateNow) { climateNow = ci; desertNow = getWorldClimateSettings(ci)?.climateType === 0; }
+    if (ci !== climateNow || dfmodGeneration() !== doorNow) {   // SNOWLESS1: a snowless winter set stands no snow, as the desert
+      climateNow = ci; doorNow = dfmodGeneration();
+      const cs = getWorldClimateSettings(ci);
+      desertNow = cs?.climateType === 0 || winterGroundSnowless(winterArchiveOf(cs));
+    }
     const enabled = s.enabled && snowfallOn();
     bodiesOf(typeof f.corpses === 'function' ? f.corpses() : f.corpses);
     const npcs = f.npcs;
+    // TV-SNOW (FIELD BUGS 2026-10-09, Shabalako: "after traveling for a while I get low framerates"): UNDER THE OVERWORLD
+    // (`overworld`, world.js's travel view) no snow is drawn, so the controller is handed no player - its own law for a
+    // frame with none, the switch's: the tiers stand down, and the snowpack and the refill keep the event clock frame by
+    // frame - and the GPU's share waits for the first frame that draws (below). It sampled, committed and uploaded the
+    // window and the ring round a traveller crossing the land at the journey's x60, for a picture nobody saw.
+    const overworld = !!f.overworld;
     const frame = {
-      now: f.now, inside, enabled, player: enabled ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
+      now: f.now, inside, enabled, player: enabled && !overworld ? f.player ?? null : null,   // the switch off: the surfaces hidden, the snowpack still kept
       rawPlayer: f.player ?? null,   // the motor's, for snow_status
       winter: !!f.winter, desert: desertNow, snowing: weatherFlags(f.weather).snowing, gameSeconds: gameSecondsNow,
       get npcs() { return (typeof npcs === 'function' ? npcs() : npcs) ?? []; },   // asked at the NPC sample's pace (every 0.1 s)
@@ -243,8 +259,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     runtime.frame(frame);
     flushPromotions(f.now);
     // the GPU's share outdoors alone, where the hosts call this before their world frame opens (beginFrame forgets
-    // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door
-    if (!inside) surface?.sync(runtime, f.now);
+    // every shadow of the renderer's an upload could move); indoors nothing is drawn, and the uploads wait for the door -
+    // TV-SNOW: and under the Overworld, for the view to come down (what changed meanwhile stays marked, and goes up then)
+    if (!inside && !overworld) surface?.sync(runtime, f.now);
     if (f.now >= nextPrune) {   // a map pixel left far behind can no longer be replaced: its last tile let go
       nextPrune = f.now + 5;
       const near = new Set(world.terrainsNear(Math.max(4, (world.terrainDistance ?? 3) + 1)).map((t) => `${t.mapX},${t.mapY}`));
@@ -260,7 +277,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     /**
      * The frame. `f` { now (real seconds), inside, player { x, y, z, grounded, swimming, levitating } (scene, feet) or
      * null, weather (the port's word), seconds (the event clock's game seconds - the snow's pace, as the weather's),
-     * winter (the sky's season), climate (the map's climate index at the player), npcs, corpses }.
+     * winter (the sky's season), climate (the map's climate index at the player), overworld (TV-SNOW: the travel view
+     * is up - no snow is drawn: the clocks alone, the GPU's share held), npcs, corpses }.
      */
     frame(f) {
       if (!enhanced || !world || disposed || broken) return;

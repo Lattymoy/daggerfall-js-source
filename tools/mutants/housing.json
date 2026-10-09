@@ -330,7 +330,7 @@
   {
     "name": "HOME-YARD-the-house-let-in",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (yardFootMeets(ground, lot.house, YARD_EDGE_PAD)) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
     "new": "  if (false) return YARD_IN_HOUSE;",
     "tests": [
       "test/homeyard.test.js"
@@ -339,7 +339,7 @@
   {
     "name": "HOME-YARD-another-building-s-ground-let-in",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((others ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_OTHER;",
+    "old": "  if ((others ?? []).some(meets)) return YARD_ON_OTHER;",
     "new": "  if (false) return YARD_ON_OTHER;",
     "tests": [
       "test/homeyard.test.js"

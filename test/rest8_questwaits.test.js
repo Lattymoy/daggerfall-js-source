@@ -209,7 +209,7 @@ test('REST8: the journal walk skips a DELAY online and keeps a DEADLINE\'s "Time
   const src = rd('src/scenes/questBridge.js');
   const body = src.slice(src.indexOf('    questLog() {'), src.indexOf('\n    },', src.indexOf('    questLog() {')) + 6);
   assert.ok(body.includes('if (r.waitsShort) continue;'), 'the slice really is the walk');
-  const questLog = new Function('machine', 'notebook', 'clockCounts', `const o = { ${body} }; return o.questLog();`);
+  const questLog = new Function('machine', 'notebook', 'clockCounts', `const isShelved = (q) => q?.shelvedAt != null; const o = { ${body} }; return o.questLog();`);   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart
   const walk = (online, { deadline = true } = {}) => {
     const now = { s: 1_000_000, raised: 0 };
     const q = parse('S0000500', online, now);

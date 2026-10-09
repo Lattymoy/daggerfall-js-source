@@ -20,7 +20,7 @@ import { sea } from './navalSea.mjs';
 import {
   shipNameVerdict, shipLabel, upgradeCost, refitOf, materialCount, takeMaterials, loanOwed, titleDeed, titleDeedsIn, knowShip, renameShip, addRefit,
   retitle, fleetShip, fleetShips, fleetBook, titleOf, fleetSaveData, restoreFleetSaveData, newFleetSaveData, _resetFleetForTests,
-  settleCredit, creditShip, forgetShip,
+  settleCredit, forgetShip,
   SHIP_NAME_MAX, UPGRADE_LINES, UPGRADE_TIERS, TIER_GOLD, TIER_MATS, HULL_UPGRADE_SCALE, MATERIALS, FLEET_SAVE_VENDOR, FLEET_MAX, SHIP_VALUE_MAX,
 } from '../src/systems/fleet.js';
 import { mintDeed, mintBoatItem, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from '../src/systems/comeSailAwayItems.js';
@@ -41,6 +41,15 @@ const AT = [100, 34, 200], DIR = [0, 0, 1];
 const item = (templateIndex, n = 1) => ({ templateIndex, stackCount: n, UID: Math.floor(Math.random() * 1e9) });
 
 // ── the ledger's law ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+/** SHIP-CREDIT WITHDRAWN (2026-10-08): no purchase stamps the bank's claim any more - a ship bought on credit before
+ *  carries hers in the save, so a claimed ship is made the one way that remains: her record restored with it, beside
+ *  the ledger's others. */
+const claimedShip = ({ uid, hull, value, credit, port = null }) => {
+  restoreFleetSaveData({ v: 1, ships: [...fleetSaveData().ships, { uid, hull, variant: 0, value, name: '', upgrades: {}, credit, port, title: true }] });
+  return fleetShip(uid);
+};
 
 test('FLEET a name: printable ASCII, its runs of spaces closed, trimmed, SHIP_NAME_MAX at most; refused by the name filter every player\'s name passes; empty is her hull\'s again (mutants: the band, the bound, the filter)', () => {
   assert.equal(SHIP_NAME_MAX, 24);
@@ -94,7 +103,7 @@ test('FLEET the materials: what in the world each is - the Wood-Axe\'s Wood Bund
 test('FLEET the bank\'s claim: she is owed for while her region\'s bank is owed anything - borrowing more (its due date later) or the Empire calling the debt in (its due date now) never lifts it; cleared for good once the Fleet sees that bank owed nothing, a later loan there no claim of hers (PIN MOVED, AUDIT HOLDINGS F4: the due date read lifted it with the loan unpaid)', () => {
   _resetFleetForTests();
   const accounts = Array.from({ length: 62 }, () => ({ loanTotal: 0, loanDueDate: 0 }));
-  const rec = titleDeed(mintDeed(2, 0, 1700, 100000), { credit: { region: 17, due: 5000 } });
+  const rec = claimedShip({ uid: 1700, hull: 2, value: 100000, credit: { region: 17, due: 5000 } });
   accounts[17] = { loanTotal: 66000, loanDueDate: 5000 };
   assert.deepEqual(loanOwed(rec, accounts), { region: 17, owed: 66000 });
   accounts[17].loanDueDate = 9000;   // borrowed more: the due date put later
@@ -111,11 +120,11 @@ test('FLEET the bank\'s claim: she is owed for while her region\'s bank is owed 
   assert.equal(loanOwed({ credit: null }, accounts), null);
 });
 
-test('FLEET the book: a deed entered is out of the pack and in the book, her record made (hull, variant, worth off the deed); a claim and a port stamped; never entered twice; titleDeedsIn sweeps a pack; retitle makes a spent title again', () => {
+test('FLEET the book: a deed entered is out of the pack and in the book, her record made (hull, variant, worth off the deed); a port stamped, never a claim (SHIP-CREDIT WITHDRAWN); never entered twice; titleDeedsIn sweeps a pack; retitle makes a spent title again', () => {
   _resetFleetForTests();
   const pack = [item(50), mintDeed(3, 0, 801, 200000), mintDeed(2, 0, 802, 25000)];
   const r = titleDeed(pack[1], { from: pack, credit: { region: 4, due: 77 }, port: { name: 'Sentinel' } });
-  assert.deepEqual({ ...r }, { uid: 801, hull: 3, variant: 0, value: 200000, name: '', upgrades: { hold: 0, rigging: 0, hull: 0, guns: 0 }, credit: { region: 4, due: 77 }, port: { name: 'Sentinel' } });
+  assert.deepEqual({ ...r }, { uid: 801, hull: 3, variant: 0, value: 200000, name: '', upgrades: { hold: 0, rigging: 0, hull: 0, guns: 0 }, credit: null, port: { name: 'Sentinel' } });
   assert.equal(pack.length, 2);
   assert.equal(titleOf(801)?.templateIndex, BOAT_DEED_TEMPLATE);
   titleDeed(titleOf(801));
@@ -133,7 +142,7 @@ test('FLEET the book: a deed entered is out of the pack and in the book, her rec
 
 test('FLEET the save: her record round-trips whole, her title by a flag; an older save has none; a hand-made record put right (an unknown hull dropped, a refused name emptied, a tier past the last the last, a claim with no region dropped) - AUDIT HOLDINGS F7: one record a number (a second title never), a variant her hull has, her worth within bounds, a port\'s name printable, FLEET_MAX at most', () => {
   _resetFleetForTests();
-  titleDeed(mintDeed(4, 0, 901, 37500), { credit: { region: 2, due: 10 }, port: { name: 'Wayrest' } });
+  claimedShip({ uid: 901, hull: 4, value: 37500, credit: { region: 2, due: 10 }, port: { name: 'Wayrest' } });
   knowShip(902, 1, 3, 8000);
   renameShip(901, 'Mara\'s Grace');
   addRefit(901, 'guns'); addRefit(901, 'guns');
@@ -508,7 +517,7 @@ test('FLEET Repair: her hands wherever she lies (the sea fight\'s repairAway); r
 
 test('FLEET Refit: at a port, her loan paid; the shipwright\'s gold from the purse and her materials from the pack and her hold, all or none; her tier added, her state built on her new whole; refused past the last tier, short of gold or of a material (mutants: the loan, the port, the payment)', () => {
   const { s, w, host } = fleetWorld({ gold: 5000 });
-  titleDeed(mintDeed(2, 0, 1, 1), { credit: { region: 1, due: 99 } });
+  claimedShip({ uid: 1, hull: 2, value: 1, credit: { region: 1, due: 99 } });
   w.accounts[1] = { loanTotal: 1234, loanDueDate: 99 };
   assert.equal(host.act(1, 'refit', 'hull').text, "She was bought on the bank's credit: pay Anticlere's 1234 gold first.");
   assert.equal(host.offer(1).why, "She was bought on the bank's credit: pay Anticlere's 1234 gold first.");
@@ -572,7 +581,7 @@ test('FLEET the page: a card a ship - her name, hull, worth, the bank\'s claim, 
   _setHoldingsIconForTests(() => ({ src: 'data:x', w: 30, h: 30 }));
   globalThis.document = undefined;
   const { s, w, host } = fleetWorld();
-  titleDeed(mintDeed(2, 0, 1, 100000), { credit: { region: 0, due: 7 } });
+  claimedShip({ uid: 1, hull: 2, value: 100000, credit: { region: 0, due: 7 } });
   w.accounts[0] = { loanTotal: 5000, loanDueDate: 7 };
   s.pack.push(mintStores(2));
   setHoldingsProvider({ fleet: { model: () => host.model(), offer: (u) => host.offer(u), act: (u, v, a) => host.act(u, v, a) } });
@@ -622,19 +631,18 @@ test('FLEET the page: a card a ship - her name, hull, worth, the bank\'s claim, 
 
 // ── the purchase and the prize ───────────────────────────────────────────────────────────────────────────────────────
 
-test('FLEET a deed bought goes to the book at the counter, never the pack - stamped with the loan that bought her (its region and its due date, read after takeCredit set it) and the port she waits at; a prize\'s title to the book (the world host\'s packDeed), and its words say so', () => {
+test('FLEET a deed bought goes to the book at the counter, never the pack - stamped with the port she waits at (never a claim: SHIP-CREDIT WITHDRAWN); a prize\'s title to the book (the world host\'s packDeed), and its words say so', () => {
   const modes = read('src/scenes/worldModes.js');
   const at = modes.indexOf('// HOLDINGS (bible/03-World/Holdings.md): a ship\'s deed bought goes to the Fleet\'s book');
-  assert.ok(at > modes.indexOf('takeCredit(playerEntity.bankAccounts, credit.region, credit.loan'), 'after the loan is taken (its due date set)');
   assert.ok(at > modes.indexOf('if (!isFurnishing(it)) addItem(playerEntity.items, it);'), 'after the goods are in the pack');
   assert.match(modes, /const town = buildingDirectory\?\.\(\)\?\.locationName \?\? '';/);
-  assert.match(modes, /\.map\(\(it\) => titleDeed\(it, \{ from: playerEntity\.items, port: town \? \{ name: town \} : null, credit: credit \? \{ region: credit\.region, due: playerEntity\.bankAccounts\?\.\[credit\.region\]\?\.loanDueDate \} : null \}\)\)/);
+  assert.match(modes, /\.map\(\(it\) => titleDeed\(it, \{ from: playerEntity\.items, port: town \? \{ name: town \} : null \}\)\)/);
   const world = read('src/scenes/world.js');
   assert.match(world, /packDeed: \(item\) => \{ titleDeed\(item, \{ port: null \}\); return \(\) => fleetBook\(\); \},/);
   // PIN MOVED (AUDIT HOLDINGS Q8): placed anew, her port of before cleared - the docking says hers again
   assert.match(world, /titles: \(\) => fleetBook\(\), retitle: \(boat, parts\) => \{ knowShip\(boat\.uid, boat\.hull, boat\.variant, parts\?\.value\); setShipPort\(boat\.uid, null\); return !!retitle\(boat\.uid\); \} \},/);
-  // AUDIT HOLDINGS F5: parts bought on the bank's credit carry its claim; F8: a failed claim's record forgotten
-  assert.match(modes, /if \(credit\) for \(const it of staged\) if \(it\?\.templateIndex === FLEET_PARTS_TEMPLATE && it\.UID\) creditShip\(it\.UID, Math\.floor\(\(it\.message \| 0\) \/ 10\), \(it\.message \| 0\) % 10, it\.value, \{ region: credit\.region, due: playerEntity\.bankAccounts\?\.\[credit\.region\]\?\.loanDueDate \}\);/);
+  // AUDIT HOLDINGS F8: a failed claim's record forgotten (F5's parts bought on the bank's credit went with SHIP-CREDIT)
+  assert.doesNotMatch(modes, /creditShip/);
   assert.match(world, /forgetDeed: \(item\) => forgetShip\(item\?\.UID\),/);
   assert.match(world, /registerModSaveData\(FLEET_SAVE_VENDOR, fleetSaveSlot\);/);
   assert.ok(world.indexOf('let fleetHost = null;') < world.indexOf('const csaRuntime = csaOn() ? createComeSailAwayRuntime({'), 'declared before the boats read their refits through it');

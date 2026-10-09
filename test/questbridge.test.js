@@ -554,7 +554,8 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   const body = src.slice(src.indexOf('    questLog() {'), src.indexOf('\n    },', src.indexOf('    questLog() {')) + 6);
   assert.ok(body.includes('remainingTimeInSeconds'), 'the slice really is the walk');
   const questLog = new Function('machine', 'notebook', 'clockCounts',   // DEAD-CLOCK: whether a clock's end changes anything
-    `const o = { ${body} }; return o.questLog();`);
+    `const isShelved = (q) => q?.shelvedAt != null;   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart
+    const o = { ${body} }; return o.questLog();`);
 
   const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost], [9, paid], [10, lost]]) };
   const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true);
@@ -575,7 +576,7 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   assert.equal(dead.active[0].clockSeconds, 600, 'clock_b counts for nothing: clock_a\'s ten minutes are the deadline');
 
   // a host whose notebook has not been built yet is not a crash
-  assert.deepEqual(questLog({ quests: new Map() }, null), { active: [], finished: [], ended: [], hidden: [] });
+  assert.deepEqual(questLog({ quests: new Map() }, null), { active: [], finished: [], ended: [], hidden: [], shelved: [] });   // QUEST-SHELF (PIN MOVED): and none set aside
 
   // AND NO HOST WALKS IT ITSELF ANY MORE. Derived: the clock field is
   // the walk's own vocabulary, so a host that spells it has grown a

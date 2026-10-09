@@ -911,11 +911,12 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   "Stand Up" theory. No stake was ever lost: a refused staked sit is handed back whole.
 - **THE GOLD TABLE IS AN INDEX** (`net/holdemTable.js` `HOLDEM_GOLD_TABLE` = 1, `holdemGoldTable`). The room's table at
   that index plays for gold and every other for chips, whoever sits first. THE RELAY HOLDS EVERY SIT TO IT (relay
-  `world179`, `_holdemWord`): a sit with a stake at a chips table is spent and handed back whole ('friendly table'), one
-  with no stake at the gold table refused ('gold table') - the check after the stake is spent, so its refusal hands it
-  back as every refusal there does, and before the table's chairs. A dropped player back in his own leaving chair at the
-  gold table is asked no stake (the law's own return, CARDS6). So no first sitter decides what a table plays for, and an
-  old client (one table, its stake at table 0) is handed its stake back until it reloads.
+  `world180`, world179 on its branch - renumbered past main's HOURS-FIRST, `_holdemWord`): a sit with a stake at a chips
+  table is spent and handed back whole ('friendly table'), one with no stake at the gold table refused ('gold table') -
+  the check after the stake is spent, so its refusal hands it back as every refusal there does, and before the table's
+  chairs. A dropped player back in his own leaving chair at the gold table is asked no stake (the law's own return,
+  CARDS6). So no first sitter decides what a table plays for, and an old client (one table, its stake at table 0) is
+  handed its stake back until it reloads.
 - **TWO TABLES A TAVERN** (`scenes/interiorContext.js`, `world/placedCardTable.js` `TAVERN_CARD_TABLES` = 2). The chips
   table first, found exactly as section 28 finds it (the same walk, the same table, where every tavern's stood); then
   the gold table, found by the same walk with the first already stood - in the collider, so the walk goes round its top
@@ -942,6 +943,6 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   orders naming it, and the ones that stood a second chips table at table 1 stand it at table 2
   (`auditcards3_relay`, `auditcards4_pins`, `auditcards5_gold`, `cards6_relay`, `cards6b_topup`); TAVERN-TABLE's
   build reads two tables (`taverntable`, `cards2_seat`); the host's gold line (`cards4_hud`, `cards6_client`); the
-  relay's version (world179, its law row in `test/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
+  relay's version (world180, its law row in `test/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
   interior records re-aimed by content.
-- **Deploy:** the relay first (world179 - its deploy drops every connected player, as a bump does), then the site.
+- **Deploy:** the relay first (world180 - its deploy drops every connected player, as a bump does), then the site.

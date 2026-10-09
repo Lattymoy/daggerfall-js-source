@@ -129,7 +129,7 @@ test('CARDS6 the cash-out: kept and its stake let go, claimed into the account i
 
 test('CARDS6 the hosts: a realm character online sits at a gold table with the service\'s stake; a cash-out from any socket is kept, acked and claimed; voids said on a visit', () => {
   const wm = read('src/scenes/worldModes.js'), w = read('src/scenes/world.js'), on = read('src/net/online.js');
-  assert.match(wm, /const goldOnline = cardTableGold\(cardSeat\?\.table \?\? -1\) && !!host\.cardOnline\?\.ok\?\.\(\) && !!host\.cardStakes\?\.goldOk\?\.\(\);/);   // PIN MOVED (TAVERN-TABLES, world179): at the gold table alone
+  assert.match(wm, /const goldOnline = cardTableGold\(cardSeat\?\.table \?\? -1\) && !!host\.cardOnline\?\.ok\?\.\(\) && !!host\.cardStakes\?\.goldOk\?\.\(\);/);   // PIN MOVED (TAVERN-TABLES, world180): at the gold table alone
   assert.match(wm, /const r = await host\.cardStakes\.stake\(\{ room: host\.cardOnline\.room\(\), table: cardSeat\.table, bb: g\.stakes\.bb, amount, place: cardPlaceName\(\) \}\);/);   // CARDS6b: where it was staked (PIN MOVED)
   assert.match(wm, /\.\.\.\(g\.stakeWord \? \{ stake: g\.stakeWord \} : \{\}\) \}\);   \/\/ CARDS6/);
   assert.match(wm, /if \(r\.confirmed && g\.stakeId && !g\.stakeSeated\) \{ g\.stakeSeated = true; host\.cardStakes\?\.seated\(g\.stakeId\); \}/);

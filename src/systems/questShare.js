@@ -72,8 +72,9 @@ import { sharedActionMatches, takeLocalActions } from './quest/shareActions.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 import { BUILD_TAG } from '../buildTag.js';   // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
-import { relayQuestOnline } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
+import { relayQuestOnline, relayQuestMovedLayout } from './quest/questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
 import { isOnlinePage } from './onlineLane.js';
+import { isShelved } from './quest/quest.js';   // QUEST-SHELF: a copy set aside
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
  *  QUEST_FRAME_MAX - its own oversized-frame arm, the same scale
@@ -218,6 +219,8 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
+  // QUEST-SHELF (2026-10-08): a copy I set aside takes no partner's share or step - reclaimed, it is as I left it
+  if (isShelved(machine.sharedCandidateNamed?.(questName))) return { ok: false, reason: 'shelved' };
   if (machine.hasActiveQuestNamed(questName)) {
     // QUEST1 LIVE SYNC: a resync of a quest ALREADY kept in sync with the
     // party (shared out earlier, or received before) updates the existing
@@ -269,7 +272,13 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data)));
   // AUDIT SD III (D5): online, the copy's dungeons laid on the world's own sizes, as a load lays a saved quest's
   // (questRepair.js relayQuestOnline) - an older page's copy was laid whole, and pointed into blocks this build has not
-  const relay = (q) => { if (ctx.online ?? isOnlinePage()) relayQuestOnline(q, { carriesQuestItem: ctx.carriesQuestItem ?? null }); };
+  // MEDIUM-DISTINCT's audit: and a copy whose medium dungeon the older page laid with one block twice, laid on this
+  // page's (questRepair.js relayQuestMovedLayout - the load's own pass runs only at a load)
+  const relay = (q) => {
+    const online = ctx.online ?? isOnlinePage();
+    if (online) relayQuestOnline(q, { carriesQuestItem: ctx.carriesQuestItem ?? null });
+    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);
+  };
   if (check.resync) {
     const quest = machine.updateSharedQuest(questName, safe);
     if (quest) { relay(quest); return { ok: true, quest, resync: true }; }
@@ -406,6 +415,7 @@ export const RECEIVER_REFUSAL_TEXT = Object.freeze({
   tooLarge: 'were sent a quest too large to read.',
   mainQuest: 'cannot be given the main quest.',
   restore: 'could not rebuild it in your world.',
+  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',   // QUEST-SHELF's audit: a deliberate share is answered
 });
 
 /** SHARE-MEND: the refusals that say the two copies disagree - most often two BUILDS of the game: before SHARE-COPY

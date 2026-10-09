@@ -292,7 +292,7 @@ test('TAVERN-TABLE by source: the interior context stands the prop after the roo
   assert.ok(doorsAt > 0 && at > doorsAt, 'after the room\'s own models and its closed doors are in the collider');
   const arm = ic.slice(at, ic.indexOf('// People (C1)', at));
   assert.match(arm, /interior\.markers\.find\(\(m\) => m\.type === INTERIOR_MARKER\.ENTER\) \?\? interior\.markers\.find\(\(m\) => m\.type === INTERIOR_MARKER\.REST\)/, 'the record\'s first enter marker - the same for every client');
-  // PIN MOVED (TAVERN-TABLES, world179): the arm stands the room's tables in turn - the chips table, then the gold one
+  // PIN MOVED (TAVERN-TABLES, world180): the arm stands the room's tables in turn - the chips table, then the gold one
   // (test/taverntables.test.js) - each the next placement index past the record's own, its felt its own, the wood once
   assert.match(arm, /const key = `int:\$\{interior\.placements\.length \+ tables\.length\}`;/, 'the next placement index, past the record\'s own');
   for (const step of [
@@ -347,7 +347,7 @@ async function buildRoom(opts) {
 
 test('TAVERN-TABLE the build: asked, the room stands the prop on its floor - its textures uploaded, listed, drawn by its own mesh (never the merge), collided, six seats over its stools, freed with the room; not asked, none', async () => {
   const { ctx, made, freed, uploaded } = await buildRoom({ peopleVisible: true, placeCardTable: true });
-  // PIN MOVED (TAVERN-TABLES, world179): the room stands two - this pin reads the first, the chips table, where it
+  // PIN MOVED (TAVERN-TABLES, world180): the room stands two - this pin reads the first, the chips table, where it
   // always stood; the second, the gold table, is test/taverntables.test.js's
   assert.equal(ctx.tables.length, 2);
   const t = ctx.tables[0];

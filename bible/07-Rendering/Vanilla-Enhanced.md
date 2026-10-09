@@ -131,6 +131,9 @@ Base's arrays decide all eleven archives. Masked Roads' arrays decide over
 the Base's when it is on - but its 403 array is 57 deep and refused, so 403 is
 made of records: its own three road records (46, 47, 55) and the Base's.
 Snowless Swamps' 402/403 decide over both.
+SNOWLESS1 (FIELD BUGS 2026-10-09 #1): the add-on deciding 403 is also the word the enhanced weather and Snowfall ask
+(`systems/dfmodTextures.js` winterGroundSnowless, registered on `world/climateSwaps.js` groundWearsSnow) - before it,
+the ground went green while the snow still fell on it and Snowfall still laid it there.
 Winter Tracks carries neither `103-TexArray` nor `103_0-0` (its records
 start at 10), so TryGetAsset passes it and meets the Base's array: over
 this Base its records are never asked - in DFU as here. Kokey's Temperate

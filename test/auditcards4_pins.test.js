@@ -55,7 +55,7 @@ test('AUDIT CARDS-4 M relay: a void of another room\'s or another account\'s ord
   assert.deepEqual(receipts(b).map((x) => [x.j, x.w]), [[other.cj, 'refused']]);
   const lo = await order(r, nowS(), { s: 'acct-peer-b', ca: 200 });
   await word(r, b, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: lo.stake, ct: 1 });
-  // PIN MOVED (TAVERN-TABLES, world179): a room's one gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the
+  // PIN MOVED (TAVERN-TABLES, world180): a room's one gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the
   // buy-in's two edges sit at it side by side, where they stood at tables 2 and 3 (chips tables now, no stake seated)
   const a = await join(r, 'peer-a');
   const hi = await order(r, nowS(), { s: 'acct-peer-a', ca: 1000, ct: 1 });
