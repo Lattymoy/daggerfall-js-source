@@ -52,7 +52,7 @@ import { SdVeilRenderer, SD_VEIL_MODE } from '../render/sdVeil.js';
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';
 import { SdPillarPassRenderer } from '../render/sdPillarPass.js';   // SD-LOOK S7: the pillars' dials, their watching hands, the lanterns
-import { sdPillarLookAt, sdPillarLook, sdArenaMarksAt, sdLampDimAt } from '../scenes/sdArenaWatch.js';
+import { sdPillarLookAt, sdPillarLook, sdArenaMarksAt, sdLampDimInto } from '../scenes/sdArenaWatch.js';
 import { GateTelegraphRenderer } from '../render/gateTelegraph.js';
 import { SD_ARENA_CENTRE, SD_TELEGRAPH_FLOOR } from '../scenes/sdRemnantBlows.js';
 import { SD_BLOWS, SD_REM_START, SD_ECHO_SPOTS } from '../net/sdRemnant.js';
@@ -215,7 +215,7 @@ const remnant = createSdRemnant({ renderer, link: () => labLink, ending: sdMarks
 remnant.stand({ dynamicDraws });
 const arenaGlow = new SdArenaGlowRenderer(gl);
 const stompWall = new SdStompWallRenderer(gl), _walls = sdStompWallRecords(), HELD = [SD_HOLD_WALL];
-const pillarPass = new SdPillarPassRenderer(gl), _pillarLook = sdPillarLook(), telegraph = new GateTelegraphRenderer(gl);   // SD-LOOK S7
+const pillarPass = new SdPillarPassRenderer(gl), _pillarLook = sdPillarLook(), _labDim = new Float64Array(1), telegraph = new GateTelegraphRenderer(gl);   // SD-LOOK S7
 const ARENA_MODEL = (() => { const m = identity(), c = realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
 const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: () => clock, now: () => clock * 1000 });   // the lab's clock: a still frame holds the way home's rise
 wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow') });
@@ -430,7 +430,7 @@ function frame(now) {
     renderer.setMoonlight(rl.key);
     applyFog(renderer, dungeonFog(lane, SD_REALM_FOG));
     if (!params.has('nograde')) renderer.setSceneGrade(SD_HOUR_GRADE);   // SD-LOOK: the dungeon arm's own (?nograde: the lane's defaults, for a before)
-    const hour = realmLightsWith(EMPTY_LIT, [...remnant.lights(), ...hall.lights()], cam.pos, sdLampDimAt(labFight() ?? SD_FIGHT_EMPTY, clock * 1000));   // SD-LOOK: its heart's light first; S10: the gem's; S7: the Reset's dimming
+    const hour = realmLightsWith(EMPTY_LIT, [...remnant.lights(), ...hall.lights()], cam.pos, sdLampDimInto(labFight() ?? SD_FIGHT_EMPTY, clock * 1000, _labDim));   // SD-LOOK: its heart's light first; S10: the gem's; S7: the Reset's dimming
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);
     if (!$('still').checked && !params.has('t')) hallMs += dt * 1000;   // the hall's own clock runs with the lab's

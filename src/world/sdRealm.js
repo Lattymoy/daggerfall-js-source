@@ -572,10 +572,11 @@ const _litKey = new Float64Array(64), _litIdx = new Int32Array(64);
 /** SD-LOOK S7: whether a lamp (the light list's shape, the dungeon's frame) is one of the arena's - inside its disc. */
 const ARENA_X = SD_REALM_ORIGIN[0] + SD_ARENA.x, ARENA_Z = SD_REALM_ORIGIN[2] + SD_ARENA.z;
 export const arenaLamp = (l) => (l.x - ARENA_X) * (l.x - ARENA_X) + (l.z - ARENA_Z) * (l.z - ARENA_Z) < SD_ARENA.r * SD_ARENA.r;
-/** SD-LOOK S7: realmLightsWith's `dim` - the arena's lamps' share of their light (scenes/sdArenaWatch.js sdLampDimAt - the Reset's
- *  dimming): its lamps alone, never the arm's own lights, the Hour's (`extra`) or the other stages' lamps. */
-export function realmLightsWith(lit, extra, eye, dim = 1) {
-  const n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
+/** SD-LOOK S7: realmLightsWith's `dim` - a kept array whose first is the arena's lamps' share of their light
+ *  (scenes/sdArenaWatch.js sdLampDimInto - the Reset's dimming; none, whole): its lamps alone, never the arm's own lights,
+ *  the Hour's (`extra`) or the other stages' lamps. */
+export function realmLightsWith(lit, extra, eye, dim = null) {
+  const dk = dim ? dim[0] : 1, n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
   if (m > H.cap) {
     H.cap = Math.max(m, H.cap * 2, 32);
     H.data = new Float32Array(H.cap * 4); H.colors = new Float32Array(H.cap * 3); H.carried = new Uint8Array(H.cap);
@@ -599,7 +600,7 @@ export function realmLightsWith(lit, extra, eye, dim = 1) {
     const q = sorted ? _litIdx[i - n] : i - n;
     const l = q < extra.length ? extra[q] : lamps[q - extra.length];
     H.data[i * 4] = l.x; H.data[i * 4 + 1] = l.y; H.data[i * 4 + 2] = l.z; H.data[i * 4 + 3] = l.range;
-    const k = dim < 1 && q >= extra.length && arenaLamp(l) ? dim : 1;   // SD-LOOK S7: the Reset's dimming, the arena's lamps alone
+    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1;   // SD-LOOK S7: the Reset's dimming, the arena's lamps alone
     H.colors[i * 3] = l.color[0] * k; H.colors[i * 3 + 1] = l.color[1] * k; H.colors[i * 3 + 2] = l.color[2] * k;
   }
   let v = H.views.get(m);

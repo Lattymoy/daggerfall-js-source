@@ -321,7 +321,7 @@ import { SdSkyRenderer, SD_SKY_STEPS } from '../render/sdSky.js';   // SD5b: the
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';   // SD-LOOK S7: the arena's floor reads the clock, and the sky's word for the fight
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';   // SD-LOOK S7: the Stomp's wall, the hold's curtain
 import { SdPillarPassRenderer } from '../render/sdPillarPass.js';   // SD-LOOK S7: the pillars' dials, their watching hands, their lanterns
-import { sdPillarLook, sdPillarLookAt, sdArenaMarksAt, sdLampDimAt } from './sdArenaWatch.js';   // SD-LOOK S7: the arena watches the Remnant - its hands, its mark, the Reset's dimming
+import { sdPillarLook, sdPillarLookAt, sdArenaMarksAt, sdLampDimInto } from './sdArenaWatch.js';   // SD-LOOK S7: the arena watches the Remnant - its hands, its mark, the Reset's dimming
 import { SdRiftRenderer } from '../render/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -23511,7 +23511,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  SD-LOOK S7: and the pillars' watch - their dials' hands on the Remnant, their lanterns, the Reset's dimming
    *  (render/sdPillarPass.js, scenes/sdArenaWatch.js). */
   let _sdGlowPass = null, _sdWallPass = null, _sdPillarPass = null, _sdReadsBroken = false;
-  const _sdPillarLook = sdPillarLook();
+  const _sdPillarLook = sdPillarLook(), _sdLampDim = new Float64Array(1);
   const _sdGlowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity }, _sdWalls = sdStompWallRecords(), SD_HELD_WALLS = Object.freeze([SD_HOLD_WALL]);
   const _sdSkyClock = new Float32Array(4);
   const _sdBeacon = [{ x: 0, z: 0, r: 0, k: 0, h: 0, color: null, beacon: true }];   // SD-LOOK S6: the way home's beacon, kept
@@ -27172,7 +27172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     spoilName: (key) => floorPool()?.nameOf(key) ?? null,
     spoilContents: (key) => floorPool()?.contentsOf(key) ?? null,
     takeSpoil: (key) => !!floorPool()?.pick(key),
-    sdLampDim: () => (sdFightLink ? sdLampDimAt(sdFightLink.state(), sdFightLink.now()) : 1),   // SD-LOOK S7: the Reset's dimming of the arena's lamps (worldModes.js realmLightsWith)
+    sdLampDim: () => (sdFightLink ? sdLampDimInto(sdFightLink.state(), sdFightLink.now(), _sdLampDim) : null),   // SD-LOOK S7: the Reset's dimming of the arena's lamps (worldModes.js realmLightsWith), kept
     sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
       const lit = sdSpoilsPool?.lights() ?? NO_SD_LIGHTS, fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : NO_SD_LIGHTS;
       const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);   // SD18b: the Ending's stone in the hall

@@ -13,7 +13,7 @@
 //     too). Its light on its own housing - the hood's underside over it, the cornice's top under it - laid on them here,
 //     posterized in three steps. A light to see, not one that lights the world: the Hour's lamps keep their count
 //     (world/sdRealm.js SD_LAMPS).
-//   THE RESET'S DIMMING - dials and flames together by `dim` (scenes/sdArenaWatch.js sdLampDimAt, the arena's lamps'
+//   THE RESET'S DIMMING - dials and flames together by `dim` (scenes/sdArenaWatch.js sdLampDimInto, the arena's lamps'
 //     own factor), so the Hearts are the brightest things in the world.
 //
 // Premultiplied (the enamel darkens the stone; the light adds), depth-tested and never written, fogged. One static
@@ -178,15 +178,15 @@ export class SdPillarPassRenderer {
     gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 24, 20);
     gl.bindVertexArray(null);
   }
-  /** Draw the dials and the flames as `look` says (`{ hands, dim, end }` - scenes/sdArenaWatch.js's kept record), in
-   *  `fog`, at the pixel law's `steps`, the flames' glow at `gain`. Answers whether it drew. */
+  /** Draw the dials and the flames as `look` says (`{ hands, k: [dim, end] }` - scenes/sdArenaWatch.js's kept record),
+   *  in `fog`, at the pixel law's `steps`, the flames' glow at `gain`. Answers whether it drew. */
   draw(proj, view, look, fog = null, steps = 10, gain = 1) {
     const gl = this.gl, U = this.u;
     gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(this.prog);
     gl.uniformMatrix4fv(U.uView, false, view); gl.uniformMatrix4fv(U.uProj, false, proj);
-    gl.uniform1fv(U.uHands, look.hands); gl.uniform1f(U.uDim, look.dim); gl.uniform1f(U.uEnd, look.end); gl.uniform1f(U.uGain, gain); gl.uniform1f(U.uSteps, steps);
+    gl.uniform1fv(U.uHands, look.hands); gl.uniform1f(U.uDim, look.k[0]); gl.uniform1f(U.uEnd, look.k[1]); gl.uniform1f(U.uGain, gain); gl.uniform1f(U.uSteps, steps);
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0); gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? [0, 1]); gl.uniform3fv(U.uCamPos, fog?.camPos ?? [0, 0, 0]); gl.uniform3fv(U.uFogColor, fog?.color ?? [0, 0, 0]);
     gl.bindVertexArray(this.vao);
