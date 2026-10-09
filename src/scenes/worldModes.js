@@ -10117,9 +10117,9 @@ export function createWorldModes(host) {
       if (isSdRealm(dungeonLoc)) host.drawSdSky?.({ proj, view, eye: mwv.eye });   // SD5b: the Hour's sky - after its islands, before its flats (PERF2's law)
       dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
+      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10: the court's creatures in their bodies (their batches ride extraBillboards)
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
       dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's
-      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10: the court's boss and host in theirs (their batches ride extraBillboards)
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
       if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });

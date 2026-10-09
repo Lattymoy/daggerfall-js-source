@@ -155,8 +155,8 @@
  {
   "name": "MWNPC10a-dungeon-undrawn",
   "file": "src/scenes/worldModes.js",
-  "old": "      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);",
-  "new": "      void 0;",
+  "old": "      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10:",
+  "new": "      void 0;   // MWNPC10:",
   "tests": [
    "test/mwnpc10_gate.test.js"
   ]
