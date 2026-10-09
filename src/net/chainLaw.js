@@ -208,7 +208,7 @@ export function chainWorks(/** @type {ChainWork[]} */ works) {
 
 /** The Stores' room for a material as a book's view holds it (`{ own, bought, gold }`) - STORES_MAX less every origin, as
  *  the service counts it (smeltAtForge's `stores-full`). */
-export const storesRoom = (/** @type {{ own?: number, bought?: number, gold?: number }|null|undefined} */ s) => Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0));
+export const storesRoom = (/** @type {{ own?: number, bought?: number, gold?: number, loose?: number }|null|undefined} */ s) => Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0));   // AUDIT BAG-CRAFT A1: every origin fills the 5,000
 
 /** Whether a craft wants a chain at all: some input not held as it stands. */
 export const chainNeeded = (/** @type {Need[]} */ inputs, /** @type {(key: string) => number} */ held) => (inputs ?? []).some((inp) => (Number(held(inp.key)) || 0) < inp.n);

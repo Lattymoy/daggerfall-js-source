@@ -450,7 +450,7 @@ export const REFUSALS = Object.freeze({
   // GOLD-MARKET: gold is a realm character's, and what gold bought stays gold's (Professions-Arc 10.8)
   'market-gold-realm': 'Gold changes hands on the market only between characters of the online realm.',
   'market-currency': 'That listing is priced in the other currency. Look again.',
-  'market-gold-goods': 'What you bought with gold goes to your pack or back on the market for gold - never for silver, to a station, a craft or a writ.',
+  'market-gold-goods': 'What you bought with gold, or made of goods the counting-house never handed out, goes to your pack or back on the market for gold - never for silver, to a station, a craft or a writ.',   // AUDIT BAG-CRAFT A1: a piece of loose goods is walled to gold
   // AUDIT PROF-541 R2-S3 (Mac: B7's wider wall kept, its word made plain): a piece made of goods a counter sold for silver is silver's
   'market-drakes-goods': 'Goods bought with silver, and pieces made with them, sell only for silver. What you gathered, or made of your own or gold-bought goods, sells for gold.',
   'market-gold-none': 'Your sales hold no gold for you just now.',

@@ -11250,7 +11250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // at a time, and the book one ask an id
           if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }
           const out = smeltRecipe(r.data.recipe)?.out ?? recipe;
-          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) || r.data.count;
+          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) + (Number(r.data.loose) || 0) || r.data.count;   // AUDIT BAG-CRAFT A1: its loose products too
           const id = String(r.data.recipe);
           const verb = bench ? 'Sawed' : id.startsWith('burn:') ? 'Burnt' : id.startsWith('cure:') ? 'Cured' : id.startsWith('weave:') ? 'Wove'
             : id.startsWith('cut:') ? 'Cut' : id.startsWith('mix:') ? 'Mixed' : alch ? 'Transmuted into' : 'Smelted';   // PROF7: the loom's; PROF11: the mason's; PROF12: the Transmuter's

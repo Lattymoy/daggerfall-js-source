@@ -175,7 +175,7 @@
   {
     "name": "BAG1-a-shortfall-moved-in-part",
     "file": "src/net/profBook.js",
-    "old": "      for (const [k, n] of need) if (n - this.storesHeld(k) > this.carriedUsable(k)) return { ok: false, error: 'materials-short', material: k };\n",
+    "old": "      for (const [k, n] of need) if (n - inStores(k) > carriedFor(k)) return { ok: false, error: 'materials-short', material: k };\n",
     "new": "",
     "tests": [
       "test/bag1_client.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "BAG1-a-shortfall-spends-gold",
     "file": "src/net/profBook.js",
-    "old": "const r = await this.deposit(k, q, { order: 'spend' });",
-    "new": "const r = await this.deposit(k, q, { order: 'all' });",
+    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });",
+    "new": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'all' });",
     "tests": [
       "test/bag1_client.test.js"
     ]
@@ -545,7 +545,7 @@
   {
     "name": "AUDIT2-BAG1-K6-a-second-put-in",
     "file": "src/net/profBook.js",
-    "old": "        if (depositsOut().some((d) => d.material === k) && this.storesHeld(k) < need.get(k)) return",
+    "old": "        if (depositsOut().some((d) => d.material === k) && inStores(k) < need.get(k)) return",
     "new": "        if (false) return",
     "tests": [
       "test/bag1_client.test.js"
