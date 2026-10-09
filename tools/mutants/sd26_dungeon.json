@@ -7,5 +7,14 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F3-the-quarter-second-gap",
+    "file": "src/scenes/sdEnd.js",
+    "old": "export const SD_STEP_GAP_MS = 2000;",
+    "new": "export const SD_STEP_GAP_MS = 250;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

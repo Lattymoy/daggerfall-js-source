@@ -990,7 +990,9 @@ Section 6, in the dungeon host.
 - **Pressed, or walked into.** Each stands in the activation ray at a door's reach (`sdrift:0`, `sdreturn:0` - the mode
   machine's press ladder routes them before the action objects) with its words on the plaque (*The Rift - To the
   Shattered Hour*, *The Return - To the way in*). A step into either is asked once - outside, then inside, the Portal
-  Stones' latch - and a jump into it (a door, a teleport) or a gap in the frames is no step.
+  Stones' latch - and a jump into it (a door, a teleport) or a gap in the frames is no step: a host held for seconds
+  (`SD_STEP_GAP_MS`, 2 s), never a slow frame - AUDIT SD IV F3: at 250 ms no walk-in was taken under 4 frames a second,
+  nor across one hitch on the crossing, and the hosts' dt cap keeps a slow frame's feet under the jump's bound.
 - **The Rift's word** (`sdRiftWord`), off the hub's record for the Hollow's slot (the world host's `superRift`, through
   the mode machine): through while the Hollow is found, and after the kill only for one who went in before (the realm's
   room keeps them until it is gone, SD3's `_sdAdmit`); before the find, or with no record heard, *"The Rift will not

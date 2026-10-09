@@ -17,7 +17,7 @@
 //    runs on), its window looking home (the Bay's sky at the world's hour), standing until the boss falls.
 //  - THE STEP: `frame(feet)` hands the host the one the feet stepped INTO this frame - outside, then inside, the Portal
 //    Stones' latch (systems/portalStone.js portalStepIn) - so standing in one asks once; a gap in the frames (feet that
-//    jumped, a frame not ticked) forgets the step.
+//    jumped, a host held for seconds - never a slow frame, AUDIT SD IV F3) forgets the step.
 //  - THE PRESS: `targets()` stands each in the activation ray (`sdrift:0`, `sdreturn:0`), `hoverName(key)` names it on
 //    the plaque, and `press(key)` hands it to the host as a step does.
 //  - SD10 (2026-10-07): THE WAY HOME in the Shattered Hour (section 11's collapse) - the Return stood alone, later, where
@@ -54,8 +54,10 @@ export const SD_HOME_SAY_MS = SD_HOME_RISE_MS + 1000;
 /** The keys the activation ray stands them under. */
 export const SD_RIFT_KEY = 'sdrift:0';
 export const SD_RETURN_KEY = 'sdreturn:0';
-/** A step forgotten across a gap (ms) or a jump (m): a door, a teleport, a frame not ticked. */
-export const SD_STEP_GAP_MS = 250;
+/** A step forgotten across a gap (ms) or a jump (m): a door, a teleport, a host held (a window, a load). AUDIT SD IV
+ *  (F3): never a slow frame - the hosts' dt cap moves the feet a tenth of a second's walk a frame however long it took,
+ *  so the jump alone tells a teleport; at 250 ms no walk-in was taken under 4 frames a second, nor across a hitch. */
+export const SD_STEP_GAP_MS = 2000;
 export const SD_STEP_JUMP_M = 1.5;
 /** AUDIT SD III (A7): how often a Rift standing without its bell asks for it again (ms). */
 export const SD_BELL_ASK_MS = 1000;

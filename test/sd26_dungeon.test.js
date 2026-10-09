@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SD_NO_MARK } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
+import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M } from '../src/scenes/sdEnd.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -43,4 +44,34 @@ test('SD26 NO MARK IN A HOLLOW (AUDIT SD IV F2): a Mark set in an Abyss Dungeon 
   said.length = 0;
   run({ sdRealm: 7 }, { realm: 7 });
   assert.deepEqual(said, [SD_REALM_TEXT.noMark], 'the Hour says its own first');
+});
+
+// ── F3: a slow frame's walk-in ────────────────────────────────────────
+
+/** A renderer that keeps nothing (the end stands its meshes on it). */
+const quietRenderer = () => ({ uploadTexture: () => {}, uploadEmissionTexture: () => {}, createMesh: (m) => ({ m }), destroyMesh: () => {} });
+
+test('SD26 A SLOW FRAME\'S WALK-IN IS TAKEN (AUDIT SD IV F3): walking into the Rift at 3 and 2 frames a second, or across one long hitch on the crossing, hands it over once - a 250 ms gap was "a frame not ticked", so under 4 frames a second no walk-in was ever taken and a hitch on the crossing left the player standing in the ring; a host held for seconds, and a jump, still forget the step (mutants: the quarter-second gap)', () => {
+  const walkIn = (frameMs, { hitch = 0 } = {}) => {
+    let clock = 1000;
+    const got = [];
+    const end = createSdEnd({ renderer: quietRenderer(), audio: null, now: () => clock, onRift: () => got.push('rift') });
+    end.stand({ rift: { at: [0, 0, 0], size: 4 }, retAt: null });
+    // 1.4 m a second, the dt cap's tenth of a second of it a frame at most (scenes/dungeon.js) - from 3 m out, then stood in it
+    const step = 1.4 * Math.min(0.1, frameMs / 1000);
+    for (let z = 3; z > -0.5; z -= step) {
+      const crossing = z > 1 && z - step <= 1;
+      clock += frameMs + (crossing ? hitch : 0);
+      end.frame([0, 0, z - step]);
+    }
+    for (let k = 0; k < 10; k++) { clock += frameMs; end.frame([0, 0, 0]); }
+    return got.length;
+  };
+  assert.equal(walkIn(16), 1, 'sixty frames a second');
+  assert.equal(walkIn(333), 1, 'three');
+  assert.equal(walkIn(500), 1, 'two');
+  assert.equal(walkIn(16, { hitch: 600 }), 1, 'a hitch on the crossing');
+  assert.equal(walkIn(16, { hitch: SD_STEP_GAP_MS + 500 }), 0, 'a host held for seconds forgets it');
+  assert.equal(SD_STEP_GAP_MS, 2000);
+  assert.ok(SD_STEP_JUMP_M > 1.4 * 0.1 * 2, 'a slow frame\'s feet are never a jump');
 });

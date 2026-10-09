@@ -230,10 +230,11 @@ test('SD4b the step: walking INTO either hands it to the host once - standing in
   // a jump into it - a teleport - is no step
   walk([0, 0, 9]);
   assert.equal(walk([0, 0.1, 0]), null, 'a jump of nine metres');
-  // a gap in the frames forgets the step
+  // a gap in the frames forgets the step - PIN MOVED (AUDIT SD IV F3): a host held for seconds, never a slow frame (a
+  // second's gap was "not ticked" here, and below 4 frames a second no walk-in was ever taken - test/sd26_dungeon.test.js)
   walk([0, 0, 2]);
-  clock += 1000;
-  assert.equal(end.frame([0, 0, 1]), null, 'a frame not ticked');
+  clock += 2500;
+  assert.equal(end.frame([0, 0, 1]), null, 'a host held');
   // the Return, from beside it
   walk([6, 0, 1.5]); walk([6, 0, 1.0]);
   assert.equal(walk([6, 0, 0.6]), 'return');
