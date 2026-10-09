@@ -9279,7 +9279,7 @@ does is online's alone. The law is `src/systems/sigil.js`.
   weapon damage - after the strength, the material and the enemy-type term, and before DFU's mod hook, its last line,
   so Roleplay Realism's draw scales a bow's sigil with the rest of the shot). My weapon's per cent of the whole blow at a foe,
   the fraction carried on the weapon (Faint 2.4% on blows of 10 lands a point on the 5th and the 9th). Never a duel's
-  blow (the defender resolves it with a `peer` stub, at a player), never a blow at a player, never a foe's. Offline,
+  blow (INT8: the relay referees it, at a player - `06-Systems/Integrity-Arc.md` 5), never a blow at a player, never a foe's. Offline,
   and online before my Renown is known (`setSigilRenown`, in `renownAdopt`), a sigil is DORMANT and adds nothing.
 - **The words** (`sigilLines`, under the tier and its affixes in `rarityLines` - both skins' tooltips; an
   unidentified weapon shows its sigil at once, since it is the port's mark and not an enchantment): "Sigil (Kindled):

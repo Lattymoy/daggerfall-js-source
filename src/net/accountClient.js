@@ -274,6 +274,12 @@ export const REFUSALS = Object.freeze({
   'no-gate-key': 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.',
   receipt: 'That gate\'s receipt was not signed by the gate, or it has run out.',
   'not-yours': 'That gate\'s receipt names another account.',
+  // INT8: DUEL1's loser's own report, retired - a duel's result is the relay's receipt now
+  retired: 'That is no longer how a duel is recorded - the duel\'s referee records it.',
+  // INT9: a death in the open zone's drop (server-account/src/wild.js) - the fallen's own tab has the first half minute
+  grace: 'The fallen still has a moment to settle their own fall. It is tried again shortly.',
+  nonce: 'That fall could not be read. Try again.',
+  room: 'That fall named no place its remains could lie. Try again.',
   // MARKS1: Marks, the server's currency (server-account/src/marks.js)
   'marks-need-account': 'Silver is kept by registered accounts. Add a username to hold it.',
   'marks-closed': 'The counting-houses are not striking silver yet.',
@@ -410,7 +416,7 @@ export const REFUSALS = Object.freeze({
   'no-writ': 'That writ is no longer posted.',
   'writ-taken': 'Another has already filled that writ.',
   'writ-expired': 'That writ has run out.',
-  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} Court writs today - the most a day allows.`,
+  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} writs today - the most a day allows.`,   // CHAP2a: the Court's and the halls' one allowance
   'prof-spec': 'That specialisation is not one this craft offers.',
   'prof-respec-pending': `A change of specialisation is already on its way (${RESPEC.days} days).`,
   'prof-rate': 'You have done a great deal at your crafts this hour. Try again later.',
@@ -450,7 +456,7 @@ export const REFUSALS = Object.freeze({
   // GOLD-MARKET: gold is a realm character's, and what gold bought stays gold's (Professions-Arc 10.8)
   'market-gold-realm': 'Gold changes hands on the market only between characters of the online realm.',
   'market-currency': 'That listing is priced in the other currency. Look again.',
-  'market-gold-goods': 'What you bought with gold goes to your pack or back on the market for gold - never for silver, to a station, a craft or a writ.',
+  'market-gold-goods': 'What you bought with gold, or made of goods the counting-house never handed out, goes to your pack or back on the market for gold - never for silver, to a station, a craft or a writ.',   // AUDIT BAG-CRAFT A1: a piece of loose goods is walled to gold
   // AUDIT PROF-541 R2-S3 (Mac: B7's wider wall kept, its word made plain): a piece made of goods a counter sold for silver is silver's
   'market-drakes-goods': 'Goods bought with silver, and pieces made with them, sell only for silver. What you gathered, or made of your own or gold-bought goods, sells for gold.',
   'market-gold-none': 'Your sales hold no gold for you just now.',
@@ -517,6 +523,7 @@ export const REFUSALS = Object.freeze({
   'guild-hall': 'Sell the guild\'s hall first.',
   'guild-seat': 'Give up the guild\'s Charters first, at each seat\'s Notice Board.',   // SEAT1c
   'guild-battle': 'The guild is named in a siege or a Tourney this week. It cannot go until the battle is over.',   // SEAT1c
+  'guild-patron': 'The guild has bid for a chapter\'s patronage. It cannot go until the Season opens and the bid is decided.',   // AUDIT CHAP5 E4
   'hall-item': 'A guild hall holds furniture from the catalogue alone - your own things stay yours.',
   'hall-yard': 'A palace\'s grounds cannot be furnished - only its Charter Room.',   // GUILD-YARD: a guild hall's yard is its keepers'; a palace's grounds stand none
   'bad-heraldry': 'Choose arms the law allows - a field and a border of different colours (Ash only as the border), one device that stands out from the field, and a divided field\'s second colour unlike the first and the border.',   // AUDIT2 GUILD2 G5: GUILD2c's divisions and device colour
@@ -614,6 +621,32 @@ export const REFUSALS = Object.freeze({
   // CUSTOMS-PASS: the developer's route (server-account/src/realm.js grantCustomsPass), said by tools/customsPass.mjs - its
   // `not-developer` is MARKS1's one word above (MERGE 2: both sides wrote it; the one refusal says both routes)
   ambiguous: 'More than one account goes by that name - name the account by its id instead.',
+  // CHAP1: the Roll (server-account/src/npcRoll.js) - said only where a player would read one; the tracker keeps
+  // the save's standing quietly while the Roll is shut (net/npcRollTracker.js)
+  'chapters-closed': 'The guilds do not keep your standing on the realm yet.',
+  'roll-seed': 'Your standing with the guilds could not be read. The game may need updating.',
+  'roll-claim': 'Your standing with the guilds could not be sent. The game may need updating.',
+  'roll-unseeded': 'The realm has not read your standing with the guilds yet. It will try again.',
+  'roll-busy': 'Your standing with the guilds was being written. It will try again.',
+  // CHAP2a: a town's guild halls, witnessed (server-account/src/npcHalls.js) - asked quietly, said only if ever shown
+  'halls-need-account': 'Only a registered account can vouch for a town\'s guild halls.',
+  'bad-hall': 'That town\'s guild halls could not be read. The game may need updating.',
+  'halls-rate': 'You have vouched for enough towns this hour.',
+  // AUDIT CHAP2: the claims' hour; a town a developer struck
+  'roll-rate': 'Your standing with the guilds has been sent often this hour. It will be sent again later.',
+  'hall-struck': 'That town\'s guild halls were struck from the record.',
+  // CHAP4d: a chapter's Focus - set by its Master alone, to a family its guild's own
+  'not-master': 'Only the chapter\'s Master sets its Focus.',
+  'no-focus': 'The guild asks for no such thing.',
+  // CHAP6b: a backing in a chapter's Season - its Schism's side, its Succession's candidate
+  'no-event': 'The chapter has nothing this Season to back.',
+  'no-side': 'There is no such side to back.',
+  closed: 'That has already been decided.',
+  'not-member': 'Only an active member of the guild may back its chapter.',
+  // CHAP7a: a guild's bid for a chapter's patronage - for the Season after this one, the guildmaster's, more than it stood at
+  'no-season': 'No Season is counted yet, so there is no patronage to bid for.',
+  'no-chapter': 'There is no chapter there whose patronage a guild may bid for.',
+  'patron-low': 'A bid for a patronage is at least 1,000 silver, and more than your guild bid before.',
   // CARDS6: a gold card table's stake and its cash-out (server-account/src/cards.js)
   'cards-realm': 'Only an online character of the realm can play a card table for gold.',
   'cards-closed': 'The realm is not holding stakes for card tables right now. Try again later.',
@@ -1103,24 +1136,37 @@ export function accountPlayBeat({ fetch, storage }) {
   };
 }
 
-/** DUEL1: the LOSER's own report of a duel - `winner` the account the
- *  relay stamped on the winner's frames. `{ recorded, wins, losses }`. */
-export const reportDuelLoss = (io, winner) => call(io, '/v1/duel/loss', { winner });
+/** INT8: a duel's result, the relay's signed receipt (net/duelReceipt.js
+ *  `d1`) carried by either of its fighters - `{ recorded, wins, losses }`
+ *  (or `{ recorded: false, why }`). DUEL1's loser's own report retired. */
+export const claimDuelReceipt = (io, receipt) => call(io, '/v1/duel/claim', { receipt });
 /** DUEL1: any account's duelling record, `{ id, wins, losses }`. */
 export const readDuelRecord = (io, id) => call(io, '/v1/duel/record', { id });
 
 /**
  * DUEL1: THE DUELLING RECORD'S TWO CALLS, bound to this device's stored
  * session (read at each call, as the beat reads it). With no session
- * there is no account to lose with or to ask as: `{ ok: false, error:
- * 'no-session' }`, never a knock.
+ * there is no account to claim with or to ask as: `{ ok: false, error:
+ * 'no-session' }`, never a knock. INT8: a bout's receipt claimed, never
+ * a loss reported.
  */
 export function accountDuels({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
-    lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
+    claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
   };
+}
+
+/** INT9: A DEATH IN THE OPEN ZONE'S DROP, taken off the realm record by the service (server-account/src/wild.js) - `body`
+ *  `{ receipt, realm, room }` (the fallen's, its record's `at`), `{ receipt, room }` (the killer's, after the grace) or
+ *  `{ n, realm, room }` (a death to a foe: the tab's nonce) - `room` where the remains will lie (AUDIT INT9: the order names
+ *  it). Answers `{ r, order, items, kept, took, gold, wi, burnt?, realm? }`. */
+export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
+/** INT9: the zone's one call, bound to this device's stored session (the duels' way). */
+export function accountWild({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return { fall: async (body) => { const i = io(); return i ? wildFallAsk(i, body) : { ok: false, error: 'no-session' }; } };
 }
 
 /** WB5b: the kill receipt the relay signed for this account, carried to
@@ -1378,6 +1424,35 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
     find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),   // SILVER-FINDS: a loot find the device rolled - AUDIT 625 S4: under the account it was found by
+  };
+}
+
+/**
+ * CHAP1: THE ROLL (server-account/src/npcRoll.js) through the one door - a realm character's standing with Daggerfall's
+ * guilds read (and seeded, the first time), and what moved claimed, each under the playing tab's lease. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most.
+ */
+export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  // AUDIT CHAP C1/T1: no claim as the page goes - the realm session gives its lease up first and the service clears it,
+  // so one never landed; what was not claimed rides the save to the next page (net/npcRollTracker.js)
+  return {
+    read: (character, lease, seed = null) => post('/v1/chapters/roll', { character, lease, ...(seed ? { seed } : {}) }),
+    claim: (character, lease, rid, deltas, members) => post('/v1/chapters/claim', { character, lease, rid, deltas, members }),
+    /** CHAP2a: the town this client stands in, its guild halls read off its own buildings (npcHallBook.js) */
+    witness: (hall) => post('/v1/chapters/witness', { hall }),
+    /** AUDIT CHAP2 E1: a developer's - a region's towns and the audit list, and a false town struck */
+    halls: (region) => post('/v1/chapters/halls', { region }),
+    strike: (key) => post('/v1/chapters/strike', { key }),
+    /** CHAP3b: the chapter sheet - every chapter's Strength and band (the halls' prices read it, CHAP3c) */
+    list: () => post('/v1/chapters/list', {}),
+    /** CHAP4d: a chapter's Master names its Focus this week; and a region's Chronicle of its chapters' seats */
+    focus: (character, faction, region, focus) => post('/v1/chapters/focus', { character, faction, region, focus }),
+    history: (region) => post('/v1/chapters/history', { region }),
+    /** CHAP6b: a member backs a side of its chapter's Schism, or names a candidate of its Succession (CHAP6c's board) */
+    back: (character, faction, region, side) => post('/v1/chapters/back', { character, faction, region, side }),
+    /** CHAP7a: a guild's guildmaster bids its treasury's silver for a chapter's patronage in the Season after (CHAP7b's board) */
+    patron: (character, faction, region, marks, rid) => post('/v1/chapters/patron', { character, faction, region, marks, rid }),
   };
 }
 

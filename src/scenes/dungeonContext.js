@@ -4365,7 +4365,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
     // PVPDUNGEON (the owner: "players should be able to attack each other in dungeons too in the pvp zone"): a fair player of
-    // the zone in reach, in view and in sight takes the swing before any foe does - the defender resolves it (net/wildFight.js)
+    // the zone in reach, in view and in sight takes the swing before any foe does - INT9: the relay referees it (net/wildRef.js)
     if (opts.wildBodies && opts.wildStrike) {
       let best = null, bestD = Infinity;
       for (const b of opts.wildBodies() ?? []) {

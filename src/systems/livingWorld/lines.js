@@ -376,7 +376,7 @@ export function watchBand(rep, known) {
 }
 
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', from: 'the next town' });   // LW-STIR: {hour}, the watch's call
+export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', guild: 'the guild', from: 'the next town' });   // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -512,6 +512,55 @@ export const KIN_NEWS = Object.freeze({
     Object.freeze(['Did you hear? {who} - born to House {house}.', 'The line goes on, then.']),
   ]),
 });
+/** CHAP5b (bible/11-Multiplayer/Chapters-Arc.md 9: "the chapter's lines, keyed by ... its standing"): WHAT THE TOWN SAYS
+ *  OF ITS GUILDS' CHAPTERS - by a chapter's band off the chapter sheet, `{guild}` the chapter's guild ("the Fighters
+ *  Guild"). A Steady chapter is no news. Its Season's event is CHAP6's. AUDIT CHAP4 C4: `{guild}` never a sentence's
+ *  first word (it is filled lower-case) nor its subject (an order's name is plural) - the chapter is. */
+export const CHAPTER_NEWS = Object.freeze({
+  failing: Object.freeze([
+    Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),
+    Object.freeze(['They say the chapter of {guild} here is failing.', 'Someone ought to help them, before it shuts.']),
+  ]),
+  thriving: Object.freeze([
+    Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Somebody is paying them well, then.']),
+    Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),
+  ]),
+  ascendant: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here is the strongest in {region}.', 'I believe it. You should see the hall.']),
+    Object.freeze(['The chapter of {guild} has never stood higher in {town}.', 'Then we are in good hands.']),
+  ]),
+});
+/** CHAP5b: the days a week a chapter's news is told in its town - drawn on the seed, by the town and its guild. */
+export const CHAPTER_NEWS_DAYS = 2;
+/** CHAP6c (Chapters-Arc 9: "keyed by the event and its standing"): WHAT THE TOWN SAYS OF A CHAPTER'S SEASON - by its
+ *  event, and its halls shut; told before its band's news (an event is the Season's story; the band the week's). Calm is
+ *  no news. Worded as CHAPTER_NEWS is: `{guild}` never first, never the subject. */
+export const CHAPTER_EVENT_NEWS = Object.freeze({
+  schism: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here is split over who leads it.', 'Two of them, and neither will give way.']),
+    Object.freeze(['There is a quarrel in the hall of {guild}, they say.', 'Over what it stands for, I hear.']),
+  ]),
+  succession: Object.freeze([
+    Object.freeze(['They say the head of the hall of {guild} is stepping down.', 'And who follows? That is the question.']),
+  ]),
+  crackdown: Object.freeze([
+    Object.freeze(['The watch is after the chapter of {guild} here, they say.', 'Then its members had best keep their heads down.']),
+    Object.freeze(['They say the hall of {guild} is watched day and night.', 'I would not be seen going in.']),
+  ]),
+  rivalry: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here has a rival this Season.', 'One of them will come out of it the poorer.']),
+  ]),
+  decline: Object.freeze([
+    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),
+  ]),
+  ascendancy: Object.freeze([
+    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),
+  ]),
+  shut: Object.freeze([
+    Object.freeze(['They say the halls of {guild} here are shut, by the watch\'s order.', 'For the whole Season, I hear.']),
+  ]),
+});
+
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
 /** LW16: of the news told, the share that is the word carried in from the towns about (a town with none tells its own). */
@@ -536,9 +585,10 @@ export const HEARD_GREETINGS = Object.freeze({
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
  *  the watch another hand killed), a fight the player turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
- *  LEGACY6: or Project Legacy's house's (`kin`).
- *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean }} item */
+ *  LEGACY6: or Project Legacy's house's (`kin`). CHAP5b: or a guild's chapter's (`chapter`).
+ *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean, chapter?: boolean }} item */
 const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]   // LEGACY6: the house's own words
+  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season
   : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']

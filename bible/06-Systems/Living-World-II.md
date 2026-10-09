@@ -655,7 +655,7 @@ errand in `dayPlan.js`.
 - **THE HOURS RECKONED** (`patronHours`): from the one after the listing's last (`market_listings.patron_hour`; none,
   its own first whole hour) to the last whole one, at most PATRON_RECKON_HOURS (48).
 
-### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0097_patrons.sql`)
+### 8.2 The service (`server-account/src/market.js reckonPatrons`, migration `0105_patrons.sql`)
 
 - **THE SALE**, each its own batch: its row (`market_patron_sales`, keyed by the listing - reckoned twice, sold once),
   written only while the listing is open at the same price and the seller's held gold has room (MARKET_GOLD_HELD_MAX:
@@ -701,7 +701,7 @@ errand in `dayPlan.js`.
 
 - `scenes/world.js`: WIRED (the region's traders read, each town's `patronsOf`, the Vendor page's `patronName`).
 - `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/exterior.js`: none.
-- The service: migration `0097_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales`, `realm_faucets`),
+- The service: migration `0105_patrons.sql` (`market_listings.patron_hour`, `market_patron_sales`, `realm_faucets`),
   `market.js` (the reckoning, the reads), `cron.js` (HOUR_JOBS `patrons`), `budget.js` (FAUCET_KINDS,
   `faucetStatement`), `.github/workflows/account-deploy.yml` (the law's file among the paths that deploy the Worker,
   `test/accountdeploy.test.js` ACC1-CI). The account service redeploys on merge.

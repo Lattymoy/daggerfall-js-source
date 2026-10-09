@@ -161,7 +161,7 @@ test('AUDIT-SEATS THE HALL OF RECORDS FROM THE BOARD AND IN THE CASTLES: the Sea
   assert.ok(host.textContent.includes(HALL_OF_RECORDS_SHUT), 'said where it cannot be read');
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /seatRecords: \(st\) => openRecordsFromBoard\(st\),/);
-  assert.match(world, /if \(!r\?\.data\) return false;\n\s+townTalk\.showOverlay\(hallOfRecordsWindow\(st, r\.data\.rows, r\.data\.zero, seatArmsOf\)\);/);
+  assert.match(world, /await hallOfRecordsRead\(st\)[^\n]*\n[^\n]*\n\s+if \(!w\) return false;\n\s+townTalk\.showOverlay\(w\);/);   // PIN MOVED (AUDIT CHAP4 C5): the board opens the palace's own read, its window the Hall's whole book
   assert.match(readFileSync(new URL('../src/ui/noticeWindow.js', import.meta.url), 'utf8'), /\.\.\.\(deps\.seatRecords \? \{ readRecords: deps\.seatRecords \} : \{\}\)/);
   // the castles
   const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');

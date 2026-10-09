@@ -12,7 +12,7 @@ import {
   leavingYaw, arrivingYaw, townTrim, paceScale, NATIVE_PIXEL, NATIVE_PER_M, WALK_FROM_H, WALK_TO_H, CYCLE_DAYS, TRIP_CHANCE,
   TRIP_RANGE_PX, TRIP_PACE, STAY_DAYS, HIRE_MAX, TRIP_REACH_PX, CALENDAR_MPM,
 } from '../src/systems/livingWorld/trips.js';
-import { createWayBook, WAYS_PER_FRAME } from '../src/systems/livingWorld/ways.js';
+import { createWayBook, WAYS_PER_FRAME, WAYS_MS_PER_FRAME } from '../src/systems/livingWorld/ways.js';
 import { travellerRoster, travellerCounts, ROAD_JOBS } from '../src/systems/livingWorld/census.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
@@ -414,9 +414,10 @@ test('LW3 the Overworld knows a party on the road: the `wayfarer` kind is the tr
 
 test('LW3 the ways: the living world\'s own book - a pair of towns asked once, the lower map id first and the other way its reverse; a few new pairs a frame; nothing while the roads are not built; the drawn network, whichever it is, and a new network clears the book (mutants: the direction, the budget, the network)', () => {
   const asked = [];
-  let net = null;
-  const plan = (a, b, o) => { asked.push([a.x, b.x, o.roads, o.flat]); return { pixels: [{ x: a.x, y: a.y }, { x: b.x, y: b.y }], kinds: ['road'] }; };
-  const book = createWayBook({ roads: () => net, ground: () => ({ flat: 'ground' }), plan });
+  let net = null, clock = 0;
+  // PERF-WAYS1 (PIN MOVED): a way taking as long as a frame's asking may (WAYS_MS_PER_FRAME) - LW3's floor alone a frame
+  const plan = (a, b, o) => { clock += WAYS_MS_PER_FRAME; asked.push([a.x, b.x, o.roads, o.flat]); return { pixels: [{ x: a.x, y: a.y }, { x: b.x, y: b.y }], kinds: ['road'] }; };
+  const book = createWayBook({ roads: () => net, ground: () => ({ flat: 'ground' }), plan, now: () => clock });
   const A = { mapId: 5, px: 10, py: 1 }, B = { mapId: 3, px: 20, py: 2 }, C = { mapId: 9, px: 30, py: 3 };
   assert.equal(book.wayOf(A, B), undefined, 'no roads yet: wait');
   net = { roads: 'R1', tracks: 'T1', source: 'generated' };

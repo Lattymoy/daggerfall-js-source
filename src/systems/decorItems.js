@@ -39,15 +39,15 @@ import { isBagItem } from '../net/bagLaw.js';   // AUDIT ONE-BAG 2: the Material
 import { isPackOnly } from './itemBound.js';   // AUDIT 625 W1: nor a pack-only piece (the Wallet)
 import { decorFlatLight } from './decorCatalogue.js';
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
-import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN } from '../net/decorLaw.js';
+import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN, DECOR_OWN_KEPT_BACK } from '../net/decorLaw.js';
 import { PROVENANCE_RE, MASTERWORK, makerMark, markedName } from '../net/recipeLaw.js';   // PROF4: a crafted piece's id and mark
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
 export const DECOR_OWN_NEVER_GROUPS = Object.freeze(new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']));
-/** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
- *  player's own spells - set down in a home, it would be out of reach wherever the player went. */
-export const DECOR_OWN_KEPT_BACK = Object.freeze(new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]));
+// The items kept back by name - INT9: DECOR_OWN_KEPT_BACK's home is net/decorLaw.js (the account Worker reads it: a death in
+// the zone's drop keeps them too - systems/wildDropLaw.js), re-exported here
+export { DECOR_OWN_KEPT_BACK };
 
 /** An item's picture in the world - its own fields first (an artifact's own picture, a potion's own bottle - DFU's
  *  world arm reads the item, which SetItem only seeds from the template), else its template's - as a piece's flat, or

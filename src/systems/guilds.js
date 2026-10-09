@@ -65,6 +65,7 @@ import { SKILLS, permanentSkillValue } from './skills.js';
 import { getReputation, setReputation } from './factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+import { GUILD_FACTION_IDS, RANK_REQ_REPUTATION } from './guildFactions.js';   // CHAP1: the four ids' one home, a leaf the account service reads; AUDIT CHAP D1: and the reputation's rank row
 
 /** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
  *  NAME for a non-member; three subclasses override that with this
@@ -72,8 +73,10 @@ import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYea
  *  KnightlyOrder.cs :126). */
 export const NON_MEMBER_TITLE = 'non-member';
 
-/** Guild.cs :36-38. Ten rows, one per rank. */
-export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
+/** Guild.cs :36-38. Ten rows, one per rank. AUDIT CHAP D1: the reputation's row lives in the leaf guildFactions.js,
+ *  which the account service reaches (the Roll's seed keeps a member's rank, and its record bounds a reported one), and
+ *  is handed on here. */
+export { RANK_REQ_REPUTATION };
 export const RANK_REQ_SKILL_HIGH = Object.freeze([22, 23, 31, 39, 47, 55, 63, 71, 79, 87]);
 export const RANK_REQ_SKILL_LOW = Object.freeze([4, 5, 9, 13, 17, 21, 25, 29, 33, 37]);
 
@@ -116,7 +119,7 @@ export const GUILDS = Object.freeze({
   FightersGuild: {
     name: 'FightersGuild',
     guildGroup: GUILD_GROUPS.FightersGuild,
-    factionId: 41,
+    factionId: GUILD_FACTION_IDS.FightersGuild,
     // FGH2H (2026-09-24, Mac: "change the fighter guild requirements where it
     // allows bare handed"): HandToHand joins DFU's seven (FightersGuild.cs's
     // guildSkills) and Giantish stays - a DEPARTURE, rowed in the Port-Ledger
@@ -133,7 +136,7 @@ export const GUILDS = Object.freeze({
   MagesGuild: {
     name: 'MagesGuild',
     guildGroup: GUILD_GROUPS.MagesGuild,
-    factionId: 40,
+    factionId: GUILD_FACTION_IDS.MagesGuild,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
     rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
@@ -151,7 +154,7 @@ export const GUILDS = Object.freeze({
     name: 'ThievesGuild',
     neverExpels: true,          // AllowGuildExpulsion (ThievesGuild.cs:128-131)
     guildGroup: GUILD_GROUPS.GeneralPopulace,
-    factionId: 42,
+    factionId: GUILD_FACTION_IDS.ThievesGuild,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
@@ -171,7 +174,7 @@ export const GUILDS = Object.freeze({
     name: 'DarkBrotherhood',
     neverExpels: true,          // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
     guildGroup: GUILD_GROUPS.DarkBrotherHood,
-    factionId: 108,
+    factionId: GUILD_FACTION_IDS.DarkBrotherhood,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
@@ -292,7 +295,12 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   const today = daySinceZero(now);
   if (today < m.lastRankChange + DAYS_BETWEEN_RANK_CHANGES) return null;
 
-  const newRank = calculateNewRank(entity, guild, store);
+  // CHAP4b (Chapters-Arc 3.5): online, while the Roll holds, ranks 8 and 9 are seats - the host names the highest rank a
+  // review gives (`ctx.rankCeiling`, null offline). A review never takes past it, and never demotes a rank above it (the
+  // Roll's adoption holds the book at 7 itself, unannounced by DFU's demotion record)
+  const ruled = calculateNewRank(entity, guild, store);
+  const ceiling = ctx?.rankCeiling;
+  const newRank = Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;
   // REP6 (the reputation overhaul, 2026-09-29 - "Guilds: probation below 0, and expulsion only below -10, with a warning
   // first"): DFU expels a member the first review their standing is below zero - one failed quest's -2 from 0 was out
   // ("i got expelled from the mages... it says i dont have reputation"), a timeout's -22 was out with a death squad

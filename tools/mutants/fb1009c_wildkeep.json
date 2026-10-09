@@ -2,8 +2,8 @@
   {
     "name": "WILD-KEEP-never-kept",
     "file": "src/scenes/world.js",
-    "old": "      if (sent) keepMine(_wildMine, wildWho());",
-    "new": "      if (sent) void 0;",
+    "old": "    keepMine(_wildMine, wildWho());",
+    "new": "    void 0;",
     "tests": ["test/fb1009c_wildkeep.test.js"]
   },
   {

@@ -87,7 +87,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct100"
+ACCOUNT_VERSION = "acct105"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -204,6 +204,21 @@ PROFESSIONS_OPEN = "on"
 # Shipped at "dev": the developers witness the seats, see the map's rings and the arrival lines first; opened to
 # everyone by this one line.
 SEATS_OPEN = "on"
+# CHAP1 (bible/11-Multiplayer/Chapters-Arc.md 3): THE ROLL by this switch - "off", "dev" (the DEVELOPER_HANDLES alone)
+# or "on". Shipped at "dev": the developers' realm characters keep their guild standing on the service first; everyone
+# else's stays the save's, as before CHAP1, until this line says "on". CHAP2a: and the halls' witness, a hall writ's
+# listing and its delivery by the same switch; AUDIT CHAP2: the halls' audit list and strike, a developer's (at "dev" or
+# "on" - shut, nobody's). CHAP2b: a receipt's standing; CHAP3a: a member's own writ and its Merit; CHAP3b: the sheet
+# (/v1/chapters/list) and the Turning - AUDIT CHAP3 S2: nothing settles and no hall writ posts while it is "off", and the
+# first week settled "on" after weeks at "dev" starts every chapter's Strength from 50 - all by the same switch.
+CHAPTERS_OPEN = "dev"
+# CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
+# this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
+# world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
+# Master beside the three, AUDIT CHAP5 R1) - a token with a title the relay does not know is refused at the hello, so
+# turning this on before that relay is live keeps every seated player who wears one out of the world. world183 live
+# first, then "on".
+CHAPTER_TITLES = "off"
 # SEASON1 (SEAT0 9.1, 18): the seat week Season 0 - the four-week open beta - begins (townSeatLaw.js seasonOf); 8-week
 # Seasons follow, each ending at its last Turning with its titles and the soft reset, and Season 0's end wipes the seats.
 # Empty: no Season is counted (every once-a-Season rule keeps its 8-week stand-in). Set it, to a week not yet past, when

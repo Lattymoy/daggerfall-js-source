@@ -497,11 +497,12 @@
   {
     "name": "LW15-town-errands",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "watch: this._watchSize, ...this._patronsFor(res, day) });",
-    "new": "watch: this._watchSize });",
+    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
+    "new": "watch: this._watchSize, bandOf: this._bandOf });",
     "tests": [
       "test/lw15_patrons.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge: CHAP5b's bands beside it."
   },
   {
     "name": "LW15-host-online",

@@ -517,7 +517,10 @@ test('AUDIT REALM2 C6: a realm home\'s sale gives the owner\'s own things back t
 test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\'s gate - the last checkpoint is the healed character, never the duel\'s 1 health or the opponent\'s spells, and none out of the seat (mutants: realmCheckpoint straight, no duelLeaveNow)', async () => {
   const run = async ({ seatOut = false } = {}) => {
     const log = [];
-    const playerEntity = { health: 1, maxHealth: 80, fatigue: 3, magicka: 2, maxMagicka: 40, activeEffects: [{ bundleDuel: true, name: 'Opponent\'s Poison' }, { name: 'Mine' }] };
+    // PIN MOVED (INT8, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): a duel is the relay's to referee - its bar
+    // is the referee's vitality, never the save's health, and no opponent's spell lands on my sheet - so the exit has no
+    // duel's damage to heal (duelHeal is gone): the duel ends, and the checkpoint is the character as it stands
+    const playerEntity = { health: 80, maxHealth: 80, fatigue: 3, magicka: 2, maxMagicka: 40, activeEffects: [{ name: 'Mine' }] };
     const duelMgr = { duel: { live: true }, reset() { log.push('duel ended'); this.duel = null; } };
     const state = {
       playerEntity, duelMgr, log, checkpointAllowed, online: {}, playerSpawned: true, seatOut: () => seatOut, performance: { now: () => 1 },
@@ -533,7 +536,6 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     state.setBeforeTitleExit = (f) => { hook = f; };
     mount(`
       let _checkpointAt = -Infinity;
-      ${W.decl('duelHeal')}
       ${W.decl('duelLeaveNow')}
       ${W.decl('onlineCheckpoint')}
       ${W.fn('realmCheckpoint')}
@@ -542,7 +544,7 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     await hook();
     return log;
   };
-  assert.deepEqual(await run(), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'the duel ends and heals, then the checkpoint, then the leave');
+  assert.deepEqual(await run(), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'the duel ends, then the checkpoint, then the leave');
   assert.deepEqual(await run({ seatOut: true }), ['duel ended', 'leave'], 'out of the seat: no checkpoint (P0.5), the leave still goes');
 });
 

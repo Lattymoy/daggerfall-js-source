@@ -9,6 +9,7 @@ import {
   WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS, WDUN_DAY_MS, relaySupportsWdun, RELAY_VERSION, WILD_REMAINS_MS,
 } from '../src/net/wire.js';
 import * as L from '../src/net/wildLaw.js';
+import { mintRemainsOrder, remainsDigest } from '../src/net/identityToken.js';
 import { fakeRooms } from './fakeRoom.mjs';
 
 test('PVPDUNGEONS wire: a hall is a pixel, its room a world room of its own lane; the words in and out are bounded', () => {
@@ -108,16 +109,21 @@ test('PVPDUNGEONS relay: the hub keeps the halls - day, locks, the reset wipes t
     await cell.hello(cc, 'peer-c', ON, { name: 'c', tokenSub: 'acct-c' });
     await cell.hello(cb, 'peer-b', ON, { name: 'b', tokenSub: 'acct-b' });
     const say = (ws, data) => cell.raw(ws, JSON.stringify({ t: 'wild', data }));
-    await say(ca, { k: 'fall', r: 'rrrrrr01', p: [1, 2, 3], items: [item(1), item(2)], last: 1 });
-    await say(cc, { k: 'take', r: 'rrrrrr01', i: 0, n: 1 });
+    // PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): a deposit is kept only on the account
+    // service's order over its records (test/int9_wild_ref.test.js) - the order minted here with the room's own key
+    const R = '0123456789ab', dep = [item(1), item(2)];
+    const o = await mintRemainsOrder({ s: 'acct-a', wr: R, wh: await remainsDigest(dep, { subtle: globalThis.crypto.subtle }), wn: 2, wm: CELL }, (await cell.signer()).privateKey, { subtle: globalThis.crypto.subtle, nowS: Math.floor(clock / 1000) });
+    await say(ca, { k: 'fall', r: R, p: [1, 2, 3], items: dep, last: 1, o });
+    await say(cc, { k: 'take', r: R, i: 0, n: 1 });
     const party = hub.store.get('acct:acct-c')?.party ?? null;
-    if (party) assert.deepEqual(cc.sent.filter((m) => m.t === 'wild' && m.k === 'no').at(-1), { t: 'wild', k: 'no', r: 'rrrrrr01', i: 0 }, 'a party member is told no');
-    await say(cb, { k: 'take', r: 'rrrrrr01', i: 0, n: 1 });
+    if (party) assert.deepEqual(cc.sent.filter((m) => m.t === 'wild' && m.k === 'no').at(-1), { t: 'wild', k: 'no', r: R, i: 0 }, 'a party member is told no');
+    await say(cb, { k: 'take', r: R, i: 0, n: 1 });
     assert.equal(cb.sent.filter((m) => m.t === 'wild' && m.k === 'got').length, 1, 'a stranger takes it');
     assert.ok(party, 'the party stood (the kin rule was exercised)');
     // the kin cache is bounded as the relay's caches are (SCALE2b): the stalest pair goes, never the whole cache
     const relay = readFileSync(new URL('../server/src/index.js', import.meta.url), 'utf8');
     assert.doesNotMatch(relay, /this\._wdunKin\.clear\(\)/, 'never the whole cache at once');
-    assert.match(relay, /this\._wdunKin\.delete\(key\);\s*\n\s*if \(this\._wdunKin\.size >= 512\) this\._wdunKin\.delete\(this\._wdunKin\.keys\(\)\.next\(\)\.value\);\s*\n\s*this\._wdunKin\.set\(key, \{ kin, at: now \}\);/, 'the stalest pair first, and a pair asked again moves to the end');
+    // PIN MOVED (INT9's audit): a hub's silence is kept WDUN_KIN_SILENT_MS alone (its pair is kin meanwhile)
+    assert.match(relay, /this\._wdunKin\.delete\(key\);\s*\n\s*if \(this\._wdunKin\.size >= 512\) this\._wdunKin\.delete\(this\._wdunKin\.keys\(\)\.next\(\)\.value\);\s*\n\s*this\._wdunKin\.set\(key, \{ kin, at: heard \? now : now - 60_000 \+ WDUN_KIN_SILENT_MS \}\);/, 'the stalest pair first, and a pair asked again moves to the end');
   } finally { Date.now = realNow; }
 });

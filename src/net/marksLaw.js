@@ -152,6 +152,9 @@ export const MARKS_KINDS = Object.freeze({
   serpent: 'mint',            // SERPENT-SET: a sea serpent slain - the relay's receipt, counted (under the day's combat cap)
   gather: 'mint',             // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)
   find: 'mint',               // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)
+  'patron-escrow': 'move',    // CHAP7a: a guild's bid for a chapter's patronage, from its treasury, held until the Season it bids for opens
+  patron: 'burn',             // CHAP7a: the winning bid, burnt at the Turning that opens its Season (Chapters-Arc 8, CALL 6)
+  'patron-return': 'move',    // CHAP7a: a losing bid, home to its guild at that Turning - burnt where the guild is gone or full
 });
 
 /** The switch the service's config holds (MARKS_OPEN): off, dev (the developers alone), on. */

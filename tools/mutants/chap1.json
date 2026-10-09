@@ -1,0 +1,267 @@
+[
+  {
+    "name": "CHAP1-DAY-BOUND",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_GAIN_DAY_MAX = 15;",
+    "new": "export const ROLL_GAIN_DAY_MAX = 16;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-ROLLOVER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(row.gainedDay === day ? whole(row.gained) : 0);",
+    "new": "whole(row.gained);",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-LOSS-WHOLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (delta < 0) {",
+    "new": "  if (delta < -1000) {",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: with the net day a loss down the gain path moves the same reputation; it differs only where something is owed, which audit_chap1 D2 pins."
+  },
+  {
+    "name": "CHAP1-CAP-SIDE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "at < ROLL_EPOCH_S) ? ROLL_CUSTOMS_CAP",
+    "new": "at <= ROLL_EPOCH_S) ? ROLL_CUSTOMS_CAP",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-CUSTOMS-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const ROLL_CUSTOMS_CAP = 40;",
+    "new": "export const ROLL_CUSTOMS_CAP = 41;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-ADOPT-SINCE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rollRep(current[f]) - rollRep(base[f]) - whole(sent?.[f])",
+    "new": "rollRep(current[f]) - rollRep(base[f])",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-MEMBERS-BOOKS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const books = both ? [store.mortal, store.vampire] : [store];",
+    "new": "const books = both ? [store.mortal] : [store];",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-MEMBERS-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "ranks.set(f, Math.max(ranks.get(f) ?? 0, Math.min(ROLL_RANK_MAX, rank)));",
+    "new": "ranks.set(f, Math.min(ROLL_RANK_MAX, rank));",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-DELTAS-ZERO",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "(x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX",
+    "new": "(x) => Math.abs(x) <= ROLL_DELTA_MAX",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-RANK-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rank < 0 || rank > ROLL_RANK_MAX)",
+    "new": "rank < 0 || rank > ROLL_RANK_MAX + 1)",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-FOREIGN-ID",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "if (String(n) !== k || !isRollFaction(n)) return false;",
+    "new": "if (String(n) !== k) return false;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-SVC-REPEAT",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  if (taken) return { roll: viewOf(kseq, rows), repeat: true };",
+    "new": "  if (false) return { roll: viewOf(kseq, rows), repeat: true };",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "CHAP1-SVC-GUARD",
+    "file": "server-account/src/npcRoll.js",
+    "old": "const TAGGED_SQL = 'EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ? AND tag = ?)';",
+    "new": "const TAGGED_SQL = '(1 OR ? OR ?)';",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-SVC-BUSY",
+    "file": "server-account/src/npcRoll.js",
+    "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { error: 'roll-busy' };",
+    "new": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { roll: await rollViewOf(db, who.character), credited };",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-SVC-LEASE",
+    "file": "server-account/src/npcRoll.js",
+    "old": "if (row.lease !== lease) return { error: 'lease' };",
+    "new": "if (false) return { error: 'lease' };",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-SVC-SEED-CAP",
+    "file": "server-account/src/npcRoll.js",
+    "old": "const cap = rollSeedCapOf(held);",
+    "new": "const cap = 100;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-SVC-TENURE",
+    "file": "server-account/src/npcRoll.js",
+    "old": "joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,",
+    "new": "joinedAt: member ? nowS : null,",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+  },
+  {
+    "name": "CHAP1-SVC-SECOND-SEED",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  if (head) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
+    "new": "  if (false) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "CHAP1-SVC-LEDGER",
+    "file": "server-account/src/npcRoll.js",
+    "old": "  const record = lines.length ? lines.map(([f, , asked]) => [f, asked, credited[f]]) : [[0, 0, 0]];",
+    "new": "  const record = [[0, 0, 0]];",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js",
+      "test/audit_chap2.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+  },
+  {
+    "name": "CHAP1-SVC-SWITCH-DEV",
+    "file": "server-account/src/npcRoll.js",
+    "old": "return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "return s === 'on' || s === 'dev';",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-TAB-MINUTE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;",
+    "new": "if (false) return null;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ],
+    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote. CHAP2a: re-aimed by content - a refresh is asked inside the minute (AUDIT CHAP2 R13: both kept)."
+  },
+  {
+    "name": "CHAP1-TAB-RESEND",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (pending) return pending;",
+    "new": "if (false) return pending;",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-TAB-STOP",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (ROLL_STOPS.includes(error)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-TAB-SEED",
+    "file": "src/net/npcRollTracker.js",
+    "old": "const r = await io.read(id, ls, { factions: values, members: members() });",
+    "new": "const r = await io.read(id, ls, null);",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  },
+  {
+    "name": "CHAP1-LEAF-ID",
+    "file": "src/systems/guildFactions.js",
+    "old": "Akatosh: 26, Arkay: 21,",
+    "new": "Akatosh: 26, Arkay: 20,",
+    "tests": [
+      "test/chap1_roll.test.js",
+      "test/audit_chap1.test.js"
+    ]
+  }
+]

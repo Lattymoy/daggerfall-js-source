@@ -1,0 +1,51 @@
+[
+  {
+    "name": "EVERY-STANDING-members-listed-twice",
+    "file": "src/systems/factionStanding.js",
+    "old": "      if (!f || member.has(id)) continue;",
+    "new": "      if (!f) continue;",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-the-random-ruler-a-kingdom",
+    "file": "src/systems/factionStanding.js",
+    "old": "filter((f) => f.type === g.type && f.id !== RANDOM_RULER)",
+    "new": "filter((f) => f.type === g.type)",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-kingdoms-unsorted",
+    "file": "src/systems/factionStanding.js",
+    "old": ".sort((a, b) => String(a.name).localeCompare(String(b.name)))",
+    "new": "",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-the-rep-not-read",
+    "file": "src/systems/factionStanding.js",
+    "old": "      rows.push({ factionId: id, name: String(f.name ?? id), rep: getReputation(store, id) });",
+    "new": "      rows.push({ factionId: id, name: String(f.name ?? id), rep: 0 });",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-temples-by-their-house",
+    "file": "src/systems/factionStanding.js",
+    "old": "  Object.freeze({ id: 'temples', title: 'Temples', ids: Object.freeze(Object.values(DIVINES)) }),",
+    "new": "  Object.freeze({ id: 'temples', title: 'Temples', type: FACTION_TYPES.Temple }),",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-the-page-never-asks",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (getPref('standingAll')) statsEveryStanding(detail, playerEntity);   // EVERY-STANDING",
+    "new": "  void statsEveryStanding;",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  },
+  {
+    "name": "EVERY-STANDING-on-by-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  standingAll: false,",
+    "new": "  standingAll: true,",
+    "tests": ["test/fb1009e_everystanding.test.js"]
+  }
+]

@@ -326,7 +326,7 @@ test('LW15 the host\'s seams: the region\'s patrons read online alone, now and t
   assert.match(w, /patronsOf: \(\) => _livingPatrons\.get\(livingTown\.mapId >>> 0\) \?\? null,/);
   assert.match(w, /patronName: \(pt\) => livingPatronName\(pt\),/);
   const lt = readFileSync(new URL('../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');
-  assert.match(lt, /plan = dayPlan\(res, this\.places, day, \{ mpm: this\.o\.mpm, away, watch: this\._watchSize, \.\.\.this\._patronsFor\(res, day\) \}\);/);
+  assert.match(lt, /plan = dayPlan\(res, this\.places, day, \{ mpm: this\.o\.mpm, away, watch: this\._watchSize, bandOf: this\._bandOf, \.\.\.this\._patronsFor\(res, day\) \}\);/);   // PIN MOVED (the merge): CHAP5b's bands beside it
   assert.match(lt, /\(e\.pv \?\? 0\) !== this\._patronV\(\)\)/);
   const m = readFileSync(new URL('../server-account/src/market.js', import.meta.url), 'utf8');
   assert.match(m, /await reckonPatrons\(ctx, \{ maps: \[vend\.map\] \}\)\.catch\(\(\) => null\);/);

@@ -92,11 +92,31 @@ export const CARRIED_ORIGINS = Object.freeze(['own', 'bought', 'gold']);
  *  own, which raise a seat's influence (law 3), go last. A unit the pack no longer holds is gone; which one is unknown,
  *  and the count gives up the least precious. */
 export const CLAMP_ORDER = Object.freeze(['gold', 'bought', 'own']);
-/** THE ORDERS A DEPOSIT MOVES BY. `all` (the Stores page's Put in) every origin, as the count is cut; `spend` (a station's
- *  or a writ's shortfall, put in just before it spends) bought first then own - the order a craft spends the Stores in
- *  (professions.js spendStatements) - and never gold's, which no station may spend (GOLD-MARKET's wall). */
-export const DEPOSIT_ORDERS = Object.freeze({ all: CLAMP_ORDER, spend: Object.freeze(['bought', 'own']) });
+/** THE ORDERS A DEPOSIT MOVES BY. `all` (the Stores page's Put in) every origin, as the count is cut; `spend` (a writ's or
+ *  the market's shortfall, put in just before it spends) bought first then own - the order a craft spends the Stores in
+ *  (professions.js spendStatements) - and never gold's, which no station may spend (GOLD-MARKET's wall). BAG-CRAFT
+ *  (FIELD BUGS 2026-10-09c): `work`, a station's - `spend`'s order for the counted units, then the units the count does
+ *  not hold (`looseOrder`). */
+export const DEPOSIT_ORDERS = Object.freeze({ all: CLAMP_ORDER, spend: Object.freeze(['bought', 'own']), work: Object.freeze(['bought', 'own']) });
 export const depositOrderOk = (o) => typeof o === 'string' && Object.hasOwn(DEPOSIT_ORDERS, o);
+/** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not just
+ *  the store"): whether a deposit by `o` may move units the carried count does not hold - a looted Red Rose, a log
+ *  withdrawn before the bag, a stack traded from a friend - up to what the client says it holds past the count. A
+ *  station's alone (a craft, a brew, a smelt, a temper): a writ, the market and the Stores page's Put in still move only
+ *  what the service handed out. */
+export const looseOrder = (o) => o === 'work';
+/** BAG-CRAFT: the origin the Stores keep a unit the count did not hold under. AUDIT BAG-CRAFT A1: `loose` - its own, not
+ *  bought: as bought it went to a writ, the guild Stores, a Drakes listing or fill, and a withdrawal counted it carried
+ *  (every door law 3 walls), a `work` put-in being no station's act but a request any client may send. A station alone
+ *  spends it (STATION_ORIGINS); everything else reads `own` and `bought` (WRIT_ORIGINS); a withdrawal gives it back to
+ *  the pack uncounted. GOLD-MARKET's wall turned the other way (migration 0097_loose_origin.sql). */
+export const LOOSE_ORIGIN = 'loose';
+/** AUDIT BAG-CRAFT A1: what a writ, the guild Stores and the market's Drakes side spend of the Stores - never gold's
+ *  (GOLD-MARKET), never loose (the stations' wall). */
+export const WRIT_ORIGINS = Object.freeze(['own', 'bought']);
+/** AUDIT BAG-CRAFT A1: what a station spends of the Stores, first to last - the loose units first (they are for nothing
+ *  else), then bought, then own (the order a craft always spent in, so a character's own stay for writs, PROF0 7). */
+export const STATION_ORIGINS = Object.freeze([LOOSE_ORIGIN, 'bought', 'own']);
 
 /** A held count the client says: a whole number from 0 to CARRIED_MAX x 10 (a pack may hold looted pieces of the same
  *  template beside the carried ones - DFU's own Red Rose and a gathered one are one item) - or null. */
@@ -125,6 +145,10 @@ export const carriedSpendable = (c) => (c?.own | 0) + (c?.bought | 0);
 /** THE UNITS OF A MATERIAL A CHARACTER MAY USE ON A STATION FROM WHAT IT CARRIES: the service's count, as far as the
  *  pack and the bag still hold them (`held` the items), never gold's. */
 export const carriedUsable = (c, held) => carriedSpendable(clampCarried(c, held));
+/** BAG-CRAFT: THE UNITS OF A MATERIAL A STATION MAY WORK FROM WHAT THE CHARACTER CARRIES - every unit the bag, the pack
+ *  and the wagon hold (`held`), counted or not, but the gold-bought ones the count still names once cut to them
+ *  (GOLD-MARKET's wall: a unit the pack no longer holds is gone, and gold's go first, CLAMP_ORDER). */
+export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0) - clampCarried(c, held).gold);
 
 /** WHERE A HARVEST'S GOODS WENT, in the words its line ends on (scenes/gatherHost.js storesLine, fishHost.js haulLine) -
  *  the Stores (an older book's harvest), else the bag, the pack or both as the mint put them (net/profBook.js `put`),

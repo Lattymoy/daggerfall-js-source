@@ -164,7 +164,7 @@ console.log('THE ROADS');
     const t0 = now(); planRoute({ x: ax, y: ay }, { x: bx, y: by }, { roads, tracks }); times.push(now() - t0);
   }
   const s = stats(times);
-  console.log(`  the way planner on Hazelnut's roads, one pair 3-18 px: mean ${ms(s.mean)}, max ${ms(s.max)} (two new pairs a frame at most, each once)`);
+  console.log(`  the way planner on Hazelnut's roads, one pair 3-18 px: mean ${ms(s.mean)}, max ${ms(s.max)} (on the roads alone, no ground: the real map's is ways.js's header; a frame asks two at the least, more while its asking is under WAYS_MS_PER_FRAME - each pair once)`);
 }
 {
   const map = livingMap({ dives: true });

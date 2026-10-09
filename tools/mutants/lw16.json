@@ -272,11 +272,12 @@
   {
     "name": "LW16-from-fallback",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "hour: 'The hour', from: 'the next town' });",
-    "new": "hour: 'The hour' });",
+    "old": "guild: 'the guild', from: 'the next town' });",
+    "new": "guild: 'the guild' });",
     "tests": [
       "test/lw16_word.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge: CHAP5b's {guild} beside it."
   },
   {
     "name": "LW16-talk-from",

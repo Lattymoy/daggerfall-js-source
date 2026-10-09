@@ -267,8 +267,8 @@ const identity = (entity, { shopName = null, cityName = null } = {}) => ({
  *  the host's - the clock advance and the fatigue drain belong to its
  *  ticker, not to a window. */
 export function buildTrainingFlow(entity, guild, membership, deps) {
-  const { rows, now, applyTraining, onClose, rolls = Math.random, guildTitle = '', shopName = null, cityName = null } = deps;
-  const offer = trainingOffer(entity, guild, membership, now());
+  const { rows, now, applyTraining, onClose, rolls = Math.random, guildTitle = '', shopName = null, cityName = null, priceFactor = 1 } = deps;
+  const offer = trainingOffer(entity, guild, membership, now(), priceFactor);   // CHAP3c: the hall's chapter's band on the price
   const ctx = { amount: offer.price, gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
   if (offer.kind === 'tooSoon') {
     return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, ctx) }], { onClose });
@@ -279,7 +279,7 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
     buttons: 'YesNo',
     onYes: () => {
       // The gold check happens BEFORE the picker opens (:76-89).
-      if (!canAffordTraining(entity, membership)) {
+      if (!canAffordTraining(entity, membership, priceFactor)) {
         return [{ rows: macroRows(rows, NOT_ENOUGH_GOLD_ID, ctx) }];
       }
       return [{
@@ -311,8 +311,8 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
  *  points)` is the host's clock and skill store, ahead of applyTraining. */
 export function buildRefinedTrainingFlow(entity, guild, membership, deps) {
   const { rows, now, applyTraining, applyIntensive = null, onClose, rolls = Math.random, guildTitle = '', shopName = null, cityName = null,
-    variablePrice = true, intensive = false, level = entity.level ?? 1 } = deps;
-  const offer = trainingOffer(entity, guild, membership, now());
+    variablePrice = true, intensive = false, level = entity.level ?? 1, priceFactor = 1 } = deps;
+  const offer = trainingOffer(entity, guild, membership, now(), priceFactor);   // CHAP3c: the hall's chapter's band on the price
   const baseCtx = { gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
   if (offer.kind === 'tooSoon') {
     return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, { ...baseCtx, amount: offer.price }) }], { onClose });

@@ -1685,6 +1685,11 @@ export class Renderer {
     // account for).
     this._lastProgram = null;
     this._lastVao = null;
+    // PERF-VAO1 (PERF-NEXT item 6): ONE bindVao FOR THE LIFE OF THE RENDERER. _renderPasses minted this closure every
+    // frame and handed it to the shadow and air passes - a new call target at their `f.bindVao(vao)` every frame (in node,
+    // once, V8 deoptimized the shadow replay on it: "wrong call target" - PERF-NEXT 6; no gain measured). The same call,
+    // one identity
+    this._bindVaoFn = (/** @type {WebGLVertexArrayObject|null} */ vao) => this._bindVao(vao);
     // ROAD-E E5: the WORLD PASS's viewport (ViewportChanger.cs:52-67).
     // `_worldViewportPending` is the normalized rect the NEXT
     // beginFrame will take, `_worldViewportPx` the pixel rect it
@@ -2662,7 +2667,7 @@ export class Renderer {
     this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
-    const bindVao = (vao) => this._bindVao(vao);
+    const bindVao = this._bindVaoFn;   // PERF-VAO1: the renderer's one, made with it
     // DISC15: the lo tier runs on a frame whose host asked for it (everyLightCasts). The records it replays are the
     // LAST frame's, so on the first frame through a door they are the street's - no casters of this room: the eight
     // maps drawn from them were the street's walls around the tavern's lamps for a frame, and a lo map of them would

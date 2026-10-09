@@ -972,7 +972,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const { hidden = false } = opts;
   if (typeof document === 'undefined') return;
   if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock); }
-  tickHudLayout(document);   // HUD-MOVE: starts once, then a throttled sweep - the player's layout and the lock
+  tickHudLayout(document);   // HUD-MOVE: starts once - the player's layout and the lock; its sweeps are its own interval's (PERF-HUD1)
   wearUiPillar(document, host);   // RETRO-UI: inside retro mode's pillarbox, as the held map stands (DISC25-B)
   tickFoeTarget(dt);
   // HB1: the hotbar hears every frame, hidden or not - a hidden HUD is

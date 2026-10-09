@@ -38,8 +38,8 @@
  {
   "name": "WEEDS1-the-sun-cascade-stops-passing-its-texel-so-the-saving-never-happens",
   "file": "src/render/shadowPass.js",
-  "old": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k));",
-  "new": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k));",
+  "old": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k), REPLAY_ALL",
+  "new": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), 0, REPLAY_ALL",
   "tests": [
    "test/weeds1_flatcasters.test.js"
   ]

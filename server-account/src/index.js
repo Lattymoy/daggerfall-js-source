@@ -93,7 +93,7 @@
 //   POST /v1/prof/reforge { character, tier, rid }                     -> { ok, tier, essence, seed, track, store } | { repeat, ... }   (CRAFT4: an Enchanter's Reforge for Arcane Essence)
 //   POST /v1/stores/withdraw { character, material, qty, rid }         -> { ok, material, qty, store } | { repeat, ... }
 //        BAG1: { carry: true, held, seen? } counts the units as carried -> { ..., carry, carried }
-//   POST /v1/stores/deposit { character, material, qty, held, order, rid, seen? } -> { ok, material, qty, own, bought, gold, store, carried } | { repeat, ... }   (BAG1: `order` 'all' or 'spend'; a deposit made is answered as made, for good - prof_deposits)
+//   POST /v1/stores/deposit { character, material, qty, held, order, rid, seen? } -> { ok, material, qty, own, bought, gold, loose?, store, carried } | { repeat, ... }   (BAG1: `order` 'all' or 'spend'; a deposit made is answered as made, for good - prof_deposits; BAG-CRAFT: 'work', a station's, moves `loose` units the count does not hold too)
 //   POST /v1/writs/list { character, region }                          -> { region, day, endsAt, writs, today }
 //   POST /v1/writs/deliver { character, id, rid }                      -> { ok, writ, pay, balance, track, store, today, renown, order } | { repeat, ... }
 // RENOWN1, Renown. The caller's own character, by the id its
@@ -104,6 +104,19 @@
 //   POST /v1/auth/token { character? }    -> { ..., level, xp }   (RENOWN4: xp, the track's total)
 //   (REALM-DOOR: the token says whether that character is one of the account's realm characters, `rc`)
 //   (ARENA4b: and, for a realm character, the level on its tile - its summary's - as `cl`, 1..1000)
+// CHAP1, THE ROLL (bible/11-Multiplayer/Chapters-Arc.md 3): a realm character's standing with Daggerfall's own guilds -
+// the twenty-two guild factions' reputation and its memberships - kept here, under the playing tab's lease, while
+// CHAPTERS_OPEN lets the account in (npcRoll.js; the law src/net/npcChapterLaw.js):
+//   POST /v1/chapters/roll { character, lease, seed? } -> { roll, from, seeded? } | { roll: null }   (seeded once from the save - a customs crossing from the epoch capped; what is owed paid)
+//   POST /v1/chapters/claim { character, lease, rid, deltas, members } -> { roll, credited } | { roll, repeat }   (a loss whole, a gain at the day's pace and the rest owed)
+//   POST /v1/chapters/witness { hall: { key, region, factions } } -> { ok, counted, why? }   (CHAP2a: a town's guild halls, witnessed as a seat is)
+//   POST /v1/chapters/halls { region } -> { region, towns: [{ key, state, region, factions, witnesses, audit }], ignored }   (AUDIT CHAP2 E1: a developer's audit list)
+//   POST /v1/chapters/strike { key } -> { ok, key, reports }   (AUDIT CHAP2 E1: a false town struck, a developer's)
+//   POST /v1/chapters/list {} -> { week, chapters: [{ f, region, strength, band, seats: [{ seat, name }] }] }   (CHAP3b: the chapter sheet, the Turnings due settled first; CHAP5a its seats' holders)
+//   POST /v1/chapters/focus { character, faction, region, focus } -> { ok, focus, week } | { error }   (CHAP4d: a Master's Focus)
+//   POST /v1/chapters/history { region } -> { rows: [{ faction, week, kind, data, name }], zero }   (CHAP4d: a region's Chronicle; AUDIT CHAP4 R10)
+//   POST /v1/chapters/back { character, faction, region, side } -> { ok, event, side } | { error }   (CHAP6b: a Schism's side, a Succession's candidate)
+//   POST /v1/chapters/patron { character, faction, region, marks, rid } -> { ok, season, marks, guildMarks } | { error }   (CHAP7a: a guild's bid for a chapter's patronage)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)
@@ -161,10 +174,10 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate,
   accountWardrobe, equipTitle, equipAura, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
-  duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
+  duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -176,6 +189,11 @@ import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
+import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
+import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
+import { creditReceipt } from './npcReceipts.js';   // CHAP2b: a receipt's standing and the chapter's receipt writ
+import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAccount, setChapterFocus, chapterChronicle, backChapter, bidPatron } from './npcChapters.js';   // CHAP3b: the chapter sheet; CHAP4a: a character's seats; CHAP4c: the chapters' titles
+import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
@@ -203,7 +221,10 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
 
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
-const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
+const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player, env);
+/** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). */
+const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => (chapterTitlesOpenFor(player, env)
+  ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
@@ -218,12 +239,13 @@ import { motherlodesRead, strikeMotherlode, isMotherlodeNode } from './motherlod
 import { marketRead, marketList, marketBuy, marketCancel, marketOrder, marketFill, marketUnorder, marketCollect, marketReport, marketRemove, marketAuction, marketBid, marketGoldCollect, marketVendor, marketVendors, marketMyVendors } from './market.js';   // PROF5: the market; PROF5b: its auctions; GOLD-MARKET: gold held collected
 import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
-  realmCharacterHeld, realmLevelOf, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
+  realmCharacterHeld, realmLevelOf, realmArmsOf, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { wildFall } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
@@ -262,6 +284,9 @@ const no = (why, status, origin) => json({ error: why }, status, origin);
  *  hands a realm character's value to another player - its trade held, its record unread since the judge shipped, a
  *  piece the id ledger marked a duplicate - each a conflict with what stands (realm.js holdRefusal, prepareRealmRecord). */
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
+/** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
+ *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400 });
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -295,6 +320,21 @@ const REALM_STATUS = Object.freeze({
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
 const PASS_STATUS = Object.freeze({ 'not-developer': 403, 'no-player': 404, ambiguous: 409 });
+/** CHAP1: the Roll's refusals - a bad shape 400 (the default), the switch shut 403, no such character or none of its
+ *  saves landed 404, a lease another tab took 409 (the tab stops), a Roll not yet read or a race lost 409 (the tab asks
+ *  again - AUDIT CHAP R12: this said the lease was asked again too), a tombstone 410. */
+const ROLL_STATUS = Object.freeze({
+  'chapters-closed': 403, 'no-realm-character': 404, 'no-data': 404, lease: 409, 'roll-unseeded': 409, 'roll-busy': 409, dead: 410,
+  'halls-need-account': 403, 'halls-rate': 429,   // CHAP2a: a hall's witness - a guest's, or past the hour's
+  'roll-rate': 429,   // AUDIT CHAP2 E2: the claims' hour
+  'hall-struck': 409, 'not-developer': 403, 'bad-region': 400,   // AUDIT CHAP2 E1: a struck town; the audit and the strike a developer's
+  'not-master': 403,   // CHAP4d: a Focus set by a character that is not that chapter's Master ('no-focus' and 'body' the shape's 400)
+  'no-event': 409, closed: 409, 'not-member': 403,   // CHAP6b: a backing where the Season holds nothing to back, one decided, or by no member ('no-side' the shape's 400)
+  // CHAP7a: a patron's bid - an account's, a request's id, the Marks switch, its rank, the hour's writes; no Season or chapter to bid on; too
+  // little or no more than it stood at, too little in the treasury ('bad-marks', 'marks-rid', 'guild-character' the shape's 400)
+  'marks-need-account': 403, 'marks-closed': 403, 'guilds-need-account': 403, 'no-guild': 404, 'guild-rank': 403, 'marks-rate': 429,
+  'no-season': 409, 'no-chapter': 404, 'patron-low': 409, 'guild-marks-short': 409,
+});
 /** INT6: the review's refusals - no developer 403, no such character 404, nothing clean to roll back to 409. */
 const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, 'dead': 409 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
@@ -325,6 +365,7 @@ const GUILD_STATUS = Object.freeze({
   'guild-vault-rank': 403, 'guild-vault-limit': 409, 'guild-vault-full': 409, 'guild-vault-empty': 404, 'guild-vault-moved': 409, 'vault-goods': 409, 'guild-vault': 409,
   'realm-only': 400, 'bad-vault-item': 400, 'bad-vault-count': 400, 'bad-vault-slot': 400, 'bad-vault-grant': 400,
   'guild-seat': 409, 'guild-battle': 409,   // SEAT1c: a guild holding a Charter, or named in a battle still to come, does not go
+  'guild-patron': 409,   // AUDIT CHAP5 E4: nor one whose bid for a chapter's patronage stands
   // GUILD1e: the guild's board - the Notice Board's switch, a mute, no such note, the member's notes full, the hour spent
   'board-closed': 403, muted: 403, 'no-note': 404, 'notes-full': 409, 'board-rate': 429, 'board-ops-rate': 429,
   // REALM P2.2: a realm character's record moves with the act - where it stands, and whether it can pay
@@ -402,6 +443,7 @@ const PROF_STATUS = Object.freeze({
   'prof-piece-gone': 409, 'realm-needed': 400, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
   'node-taken': 409, 'writ-taken': 409, 'writ-expired': 409, 'writ-cap': 409, 'marks-full': 409, 'marks-short': 409, 'prof-respec-pending': 409,
   'prof-rate': 429,
+  'chapters-closed': 403,   // AUDIT CHAP2 S3: a hall writ while the Chapters are not this account's - 403, as every door says it
   // PROF6: guild writs, commissions and the guild Stores
   'writs-closed': 403, 'guild-rank': 403, 'guilds-need-account': 403, 'commission-not-yours': 403, 'market-not-yours': 403,
   'no-guild': 404, 'commission-crafter': 404,
@@ -749,15 +791,20 @@ const service = {
         // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - its glyphs on every member of the named character's guild, and a seat
         // title worn only by the guildmaster character this token is minted for, with its claim (`ts`) beside it
         const seats = seatsOpenFor(who.player, env);
-        const worn = seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player;
+        const worn = await withChapterTitles(ctx, seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player, env);   // CHAP4c: and a chapter's
         const zero = seasonZeroOf(env.SEASON_ZERO_WEEK);   // SEASON1: the Season on a title's claim
         const seatBadge = seats && renownCharacterOk(body.character) ? await seatBadgeOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)?.n ?? 0) : null;
         const wornT = titleWorn(worn, env);
         // CROWN1 part two: the champion's is the account's own, kept for good - no guildmaster's; SEASON1: and so are a
         // Season's crowned and keeper (seatRoyal.js keptTitleOf)
         const kept = seats && KEPT_TITLES.includes(wornT) ? await keptTitleOf(ctx.db, who.player.id, wornT, zero) : null;
+        // CHAP4c: a chapter's seat's title worn only by a character of the account that holds it, with its claim - the
+        // named character's own first, else none (a title a character does not hold is not signed for it)
+        const chapterT = CHAPTER_TITLES.includes(wornT) && renownCharacterOk(body.character)
+          ? (await chapterTitlesOfAccount(ctx.db, who.player.id, nowS, zero, body.character)).find((t) => t.title === wornT) ?? null : null;
         const seatT = KEPT_TITLES.includes(wornT) ? (kept ? { t: wornT, ts: kept.ts } : {})
-          : SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {}) : (wornT ? { t: wornT } : {});
+          : SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {})
+            : CHAPTER_TITLES.includes(wornT) ? (chapterT ? { t: chapterT.high ? 'highmaster' : wornT, ts: chapterT.ts } : {}) : (wornT ? { t: wornT } : {});   // CHAP6e: a Master's in an Ascendancy signed its High Master
         // SEASON1 part two (Seats-Arc 9.1): AND A SEASON'S BANNER RIBBON - the named character's, where its guild kept a
         // seat through the Season before and it was a member at that Season's last Turning (seatRibbons.js ribbonOf)
         const rb = seats && renownCharacterOk(body.character) ? await ribbonOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)) : null;
@@ -798,10 +845,13 @@ const service = {
         // The relay refuses a 0 at its door, so online is the realm's at the servers too. Stamped on every mint, a 0
         // included: a token with no `rc` is a service from before this, which the relay still admits.
         const rc = (await realmCharacterHeld(ctx, who.player.id, body.character)) ? 1 : 0;
-        // ARENA4b: AND THAT REALM CHARACTER'S LEVEL, `cl` - the level on its tile (realm.js realmLevelOf: its summary, the
-        // client's checkpoint's word, 1..1000), which the relay reads (a bout's vitality) as it reads `lv`. Absent for any
+        // ARENA4b: AND THAT REALM CHARACTER'S LEVEL, `cl` - the level on its tile (realm.js realmLevelOf: INT7 - the level
+        // its judge trusts, else its summary, 1..1000), which the relay reads (a bout's vitality) as it reads `lv`. Absent for any
         // other character, none named, or a level out of the claim's bounds - a token without it is a token as before.
         const cl = rc ? await realmLevelOf(ctx, who.player.id, body.character) : null;
+        // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
+        // (realm.js realmArmsOf), every referee's clip of a blow between players. Absent before its first judged checkpoint.
+        const wa = rc ? await realmArmsOf(ctx, who.player.id, body.character) : null;
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
@@ -811,7 +861,7 @@ const service = {
         // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
         // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
         // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
-        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
+        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
         // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
         // a house that would take it past either is left unsaid, never the rest
@@ -872,12 +922,30 @@ const service = {
       }
 
       if (path === '/v1/duel/loss' && request.method === 'POST') {
-        // DUEL1: THE LOSER'S OWN REPORT. The caller is the loser - the
-        // session says so, never the body - and `winner` is the account
-        // the relay stamped on the winner's frames. accounts.js
-        // `reportDuelLoss` holds the bounds inside its one INSERT.
-        const r = await reportDuelLoss(ctx, who.player, body.winner);
-        return r.error ? no(r.error, r.error === 'no-player' ? 404 : 400, origin) : json(r, 200, origin);
+        // DUEL1's LOSER'S OWN REPORT - INT8: RETIRED. A duel's result is the relay's signed receipt now (below); a loss a
+        // client reports counts for nothing, and is told so.
+        return no('retired', 410, origin);
+      }
+
+      if (path === '/v1/duel/claim' && request.method === 'POST') {
+        // INT8 (bible/06-Systems/Integrity-Arc.md lane 2): A DUEL'S RESULT, THE RELAY'S - either fighter carries the receipt
+        // the referee handed it (src/net/duelReceipt.js `d1`); the session must be one of its two, never the body's word,
+        // and accounts.js `claimDuel` counts it once (its bout's id) inside its bounds. No public half here yet: 503, and
+        // the client keeps the receipt for its day.
+        const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);   // AUDIT WB A5's law: which rung refused it
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/wild/fall' && request.method === 'POST') {
+        // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
+        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wildReceipt.js `f1`: the fallen's own tab
+        // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
+        // answer's `order` is the service's word on the records, the room's to keep a deposit on.
+        const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved: its tab checkpoints and asks again
+        return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
       if (path === '/v1/duel/record' && request.method === 'POST') {
@@ -921,6 +989,9 @@ const service = {
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite
         // alone is no kill, and is no influence
         if (r.recorded && !r.rite && body.region != null) answer.seat = await creditGate(ctx, who.player, env, { character: body.character ?? null, day: r.day, region: body.region });
+        // CHAP2b (Chapters-Arc 3.3, 4): and the guilds the character is a member of on its Roll that keep a chapter there
+        // remember it (npcReceipts.js - after the kill's row, never instead of it)
+        if (r.recorded && !r.rite && body.region != null) answer.chapters = await creditReceipt(ctx, who.player, env, { character: body.character ?? null, kind: 'gate', id: r.day, region: body.region });
         return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);   // AUDIT WB12d (A2): the rite alone strikes no Drakes, and says none
       }
 
@@ -952,6 +1023,8 @@ const service = {
           if (r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('raid', r.key), r.deedStruck);
           const paid = await contractPaysOf(db, who.player, r.key);
           if (paid.length) answer.contracts = paid;
+          // CHAP2b: the town defended, remembered by the character's guilds that keep a chapter in its region (the key's)
+          answer.chapters = await creditReceipt(ctx, who.player, env, { character: body.character ?? null, kind: 'raid', id: r.key, region: contractRegionOfRaid(r.key) });
         }
         return json({ ...answer, order }, 200, origin);
       }
@@ -1066,6 +1139,38 @@ const service = {
           if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
         }
         return json({ ...r, order }, 200, origin);
+      }
+
+      // ═══ CHAP1: THE ROLL ═════════════════════════════════════════
+      //
+      // A realm character's standing with Daggerfall's own guilds, kept here
+      // (npcRoll.js): read - and seeded, the first time - as the character
+      // comes online, then claimed as it moves. The account is the
+      // session's, the character must be its own and standing, and the
+      // lease the playing tab's. Behind CHAPTERS_OPEN; shut, the save keeps
+      // the standing as it did before CHAP1.
+      if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim' || path === '/v1/chapters/witness'
+        || path === '/v1/chapters/halls' || path === '/v1/chapters/strike' || path === '/v1/chapters/list'
+        || path === '/v1/chapters/focus' || path === '/v1/chapters/history' || path === '/v1/chapters/back' || path === '/v1/chapters/patron') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);
+        // CHAP2a: and a town's guild halls witnessed, as a seat is (npcHalls.js); AUDIT CHAP2 E1: a region's audit list
+        // and a false town struck, a developer's
+        // CHAP3b: and the chapter sheet - every chapter's Strength and band, after the Turnings due (npcChapters.js)
+        // CHAP4d: and a chapter's Master's Focus, and a region's Chronicle of its chapters' seats
+        const r = path === '/v1/chapters/list' ? await chapterSheet(ctx, who.player, env)
+          : path === '/v1/chapters/focus' ? await setChapterFocus(ctx, who.player, env, body)
+          : path === '/v1/chapters/history' ? await chapterChronicle(ctx, who.player, env, body)
+          : path === '/v1/chapters/back' ? await backChapter(ctx, who.player, env, body)   // CHAP6b: a member's backing in its chapter's Season
+          : path === '/v1/chapters/patron' ? await bidPatron(ctx, who.player, env, body)   // CHAP7a: a guild's bid for a chapter's patronage
+          : path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
+          : path === '/v1/chapters/halls' ? await listHalls(ctx, who.player, env, body)
+            : path === '/v1/chapters/strike' ? await strikeHall(ctx, who.player, env, body)
+              : path === '/v1/chapters/roll' ? await readRoll(ctx, who.player, body) : await claimRoll(ctx, who.player, body);
+        if ('error' in r) return no(r.error, /** @type {Record<string, number>} */ (ROLL_STATUS)[r.error] ?? 400, origin);
+        // CHAP4a: the Roll's answer carries the character's seats - ranks 8 and 9 are a seat's, never the book's
+        if ((path === '/v1/chapters/roll' || path === '/v1/chapters/claim') && /** @type {any} */ (r).roll) /** @type {any} */ (r).roll.seats = await chapterSeatsOf(ctx.db, body?.character);
+        return json(r, 200, origin);
       }
 
       // ═══ HOME1: THE ONLINE HOMES ═════════════════════════════════

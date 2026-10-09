@@ -776,7 +776,7 @@
   {
     "name": "PROF4-forge-no-burns",
     "file": "src/ui/profPages.js",
-    "old": "  const burns = BURN_RECIPES.filter((r) => book.held(r.inputs[0].key) > 0);",
+    "old": "  const burns = BURN_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);",
     "new": "  const burns = [];",
     "tests": [
       "test/prof4_client.test.js"
