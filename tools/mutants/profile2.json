@@ -138,7 +138,7 @@
   {
     "name": "P2-session-halos-untold",
     "file": "src/net/online.js",
-    "old": "    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws) socks.push(h.ws);\n",
+    "old": "    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (!this._welcomed.has(h.ws)) return; if (h.lookOk) socks.push(h.ws); }\n",
     "new": "",
     "tests": [
       "test/profile2_pause_profile.test.js"

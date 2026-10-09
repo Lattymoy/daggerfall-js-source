@@ -874,7 +874,7 @@ export class OnlineSession {
     const at = this._who.get(id);
     if (at != null && now - at < WHO_RETRY_MS) return false;
     const ws = room === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(room)?.status === 'open' ? this._halo.get(room).ws : null);
-    if (!ws) return false;
+    if (!ws || !this._welcomed.has(ws)) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO) - not marked, so the next round asks
     const gate = whoGate(this._wbucket, now);
     this._wbucket = gate.bucket;
     if (!gate.pass) return false;
@@ -997,11 +997,13 @@ export class OnlineSession {
    *  'cell' (it went down the cell's own socket), 'room' (the anchor alone, down mine) or false (not sent). */
   sendPark(data, cell = null) {
     if (!this.parkOk || !data || typeof data !== 'object' || typeof data.c !== 'string' || (data.a !== undefined && !Array.isArray(data.a))) return false;
-    const primaryOpen = this.status === 'open' && this._ws;
+    // AUDIT SD IV (0): a welcomed socket alone (SD-HELLO). The word is said again in every room joined (world.js
+    // hccParkTick), so it went on the first frame after the realm's hello - a park before hello, refused for good
+    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);
     const halo = cell && cell !== this.room ? this._halo.get(cell) : null;
     let ws = null, inCell = false;
     if (cell && cell === this.room && primaryOpen) { ws = this._ws; inCell = true; }
-    else if (halo?.status === 'open' && halo.ws) { ws = halo.ws; inCell = true; }
+    else if (halo?.status === 'open' && halo.ws && this._welcomed.has(halo.ws)) { ws = halo.ws; inCell = true; }
     else if (primaryOpen) ws = this._ws;
     if (!ws) return false;
     const gate = parkGate(this._pkbucket, this._now());
@@ -1029,8 +1031,10 @@ export class OnlineSession {
   _flushLook() {
     if (!this._lookDirty) return;
     const socks = [];
-    if (this.lookOk && this.status === 'open' && this._ws) socks.push(this._ws);
-    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws) socks.push(h.ws);
+    // AUDIT SD IV (0): a socket open and not yet welcomed said its hello with the look before this one, and a look down it
+    // now is a look before hello (SD-HELLO) - held, the tick tries again, until every open socket is welcomed
+    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }
+    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (!this._welcomed.has(h.ws)) return; if (h.lookOk) socks.push(h.ws); }
     // nothing open that knows the frame: whatever opens next says hello with this look, so nothing is owed
     if (!socks.length) { this._lookDirty = false; return; }
     const gate = lookGate(this._lkbucket, this._now());
@@ -1159,18 +1163,20 @@ export class OnlineSession {
    *  geography decides - and it decides no RANGE: two players a few metres apart astride a cell edge are in each other's halo
    *  (wire.cellHaloFor, `hit`'s own reasoning), so the frame simply goes down whichever socket reports the other. How near
    *  is near enough to trade is a matter of metres (net/tradeSession.js TRADE_RANGE_M), judged by the host from the two bodies. */
-  _socketFor(id) {
+  _socketFor(id, said = false) {
     if (!id) return null;
     for (const r of [this.room, ...this._halo.keys()]) {
       if (!this._rooms.get(r)?.has(id)) continue;
       const ws = r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null);
-      if (ws) return ws;
+      if (ws && (said || this._welcomed.has(ws))) return ws;   // AUDIT SD IV (0): a frame goes down a WELCOMED socket alone (SD-HELLO) - a blink keeps the roster, and its retry's hello is open before its welcome
     }
     return null;
   }
 
-  /** TRADE1: can a frame reach `id` at all - some open socket of mine reports them (see _socketFor). Not a distance. */
-  reachesPeer(id) { return this._socketFor(id) !== null; }
+  /** TRADE1: can a frame reach `id` at all - some open socket of mine reports them (see _socketFor). Not a distance.
+   *  AUDIT SD IV (0): a socket that has said its hello counts, welcomed or not - AURA-LIVE's replacement waits a hello's
+   *  round trip for its welcome, and a peer no socket reaches ends a live trade, a duel's asks and a proposal. */
+  reachesPeer(id) { return this._socketFor(id, true) !== null; }
 
   /** TRADE1: one trade frame out - to a peer through the socket that reports them (`_socketFor`: my own cell or a halo), through
    *  the wire's own projection first (what the relay's parser would refuse never leaves this machine), TRADE_HZ_MAX a second

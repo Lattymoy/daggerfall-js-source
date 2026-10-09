@@ -1,0 +1,74 @@
+[
+  {
+    "name": "SD26-0-directed-ungated",
+    "file": "src/net/online.js",
+    "old": "      if (ws && (said || this._welcomed.has(ws))) return ws;",
+    "new": "      if (ws) return ws;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-reach-welcomed-only",
+    "file": "src/net/online.js",
+    "old": "  reachesPeer(id) { return this._socketFor(id, true) !== null; }",
+    "new": "  reachesPeer(id) { return this._socketFor(id) !== null; }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-dropped",
+    "file": "src/net/online.js",
+    "old": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }",
+    "new": "    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) { this._lookDirty = false; return; } if (this.lookOk) socks.push(this._ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-look-halo-ungated",
+    "file": "src/net/online.js",
+    "old": "    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (!this._welcomed.has(h.ws)) return; if (h.lookOk) socks.push(h.ws); }",
+    "new": "    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (h.lookOk) socks.push(h.ws); }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-who-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (!ws || !this._welcomed.has(ws)) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO)",
+    "new": "    if (!ws) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-park-ungated",
+    "file": "src/net/online.js",
+    "old": "    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);",
+    "new": "    const primaryOpen = this.status === 'open' && this._ws;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-0-park-halo-ungated",
+    "file": "src/net/online.js",
+    "old": "    else if (halo?.status === 'open' && halo.ws && this._welcomed.has(halo.ws)) { ws = halo.ws; inCell = true; }",
+    "new": "    else if (halo?.status === 'open' && halo.ws) { ws = halo.ws; inCell = true; }",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  }
+]

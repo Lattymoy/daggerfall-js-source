@@ -620,7 +620,14 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 
 SD-HELLO: a page says nothing into `sd:<s>` but its hello (and the runtime's own ping) until the realm welcomes the
 socket. The realm's hello asks the hub (`/internal/sd/live`) before it names the socket, and a Durable Object takes the
-socket's next frame while that fetch is out: a pose read then is a pose before hello, refused for good.
+socket's next frame while that fetch is out: a pose read then is a pose before hello, refused for good. What waits for
+the welcome (`net/online.js` `_welcomed`): `_send` and all it carries, the pose and its halo copies, the last pose, the
+Orrery's turns and the fight's words; and, since AUDIT SD IV (0), the look (`_flushLook` holds it while any open socket
+is unwelcomed, then says the latest), every directed frame (`_socketFor`: trade, cast, card, page, duel, wed -
+`reachesPeer` still counts a socket that has said its hello, so a hello's round trip ends no trade), a `who`, and the
+parked team's word (said in every room joined, so it went on the first frame after every realm hello). Renown and the
+guild's order wait on each socket's own welcome. The lanes of the other rooms (a cell's, a world room's, the hub's, a
+gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`.
 
 ## 15. The four hosts
 
