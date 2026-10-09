@@ -422,7 +422,8 @@ export class PlayerWeapon {
     // StrikeDown (the BowDrawback-off classic instant shot - the
     // machine's StrikeUp draw half is that setting's other arm) and
     // only after the button was RELEASED since the last shot
-    // (lastAttackHand == Hand.None).
+    // (lastAttackHand == Hand.None) - which the drawn bow keeps.
+    // BOW-CLOCK departs for the instant shot below.
     if (this.machine.isBow) {
       const rise = held && !this._bowHeld;
       this._bowHeld = held;
@@ -447,7 +448,13 @@ export class PlayerWeapon {
         if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
         return null;
       }
-      if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = this._bowAnimTimeMs(); return 'StrikeDown'; }   // PCO1: the instant shot has no draw (0 ticks held)
+      // BOW-CLOCK (FIELD BUGS 2026-10-09f, the owner's call on a player's "there is no way to actually just 'hold
+      // attack' and continue to shoot arrows"): THE INSTANT SHOT REPEATS WHILE HELD - a DEPARTURE from DFU's
+      // released-since-the-last-shot gate, for BowDrawback off alone. The machine still decides when: its cooldown
+      // and its Idle refuse every frame until the bow is ready, so a held button looses the moment it is, at DFU's own
+      // rate - and a press made early is not lost for being early. The drawn bow above keeps DFU's gate: it looses on
+      // the button's release, so it cannot repeat on a hold.
+      if (held && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = this._bowAnimTimeMs(); return 'StrikeDown'; }   // PCO1: the instant shot has no draw (0 ticks held)
       return null;
     }
     this._bowHeld = false;

@@ -4515,6 +4515,9 @@ export function createFpArm() {
       // not in the equip section, and why reloadCrossbow stays the
       // only other way in.
       if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
+      // BOW-CLOCK: and a release this draw has not reached is not this draw's. A shot the rig let go on its ceiling
+      // leaves its own release key to land later, unasked - and the next draw's arrow took it and left at the click.
+      if (type === MW_SHOOT_ATTACK) shootReleased = false;
       if (!playAction(k.windUp.start, k.windUp.stop, 0, attackReversed)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
@@ -4866,6 +4869,15 @@ export function createFpArm() {
       if (!shootReleased) return false;
       shootReleased = false;
       return true;
+    },
+
+    /** BOW-CLOCK: the hands cannot begin a draw yet - the weapon still coming up, or the last shot still drawn or
+     *  loosed ("shoot start" through "shoot release"; attack() takes only an idle or following-through arm). The rig
+     *  starts no shot while it answers true, so one click is one draw and one arrow. Every state it names ends as its
+     *  section plays out: a rig that waits on it waits for the arm, never for ever. */
+    shotBusy() {
+      if (!built || !built.ok) return false;
+      return upper === UPPER_BODY.Equipping || upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease;
     },
 
     release() {

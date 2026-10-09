@@ -6330,6 +6330,14 @@ A silent arm - a .kf without the key - falls through a 1.2s ceiling
 rather than swallowing the shot, because the whole classic release is
 seven frames at a 0.0625 tick, about 0.44s, so a real release always
 wins that race.
+BOW-CLOCK (FIELD BUGS 2026-10-09f) found that race lost: a Morrowind
+draw runs at the WEAP record's pace, not the classic release's, and a
+draw past 1.2s let the arrow go mid-draw and left its release key over
+for the next draw, whose arrow then left at the click. The ceiling now
+waits while the arm is still drawing (`fpArm.shotBusy`, to a 4s cap), a
+draw clears a release it has not reached, and no shot STARTS while the
+arm cannot draw it - the machine's cycle had outrun the draw and fired
+two arrows from one (`01-Overview/Field-Bugs-2026-10-09f.md`).
 
 THE NOCK. Rule 24's "shoot attach" still drives the arrow wherever the
 data carries it, but the arrow may no longer DEPEND on that key

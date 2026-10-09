@@ -805,6 +805,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // classic bow release is 7 frames at the machine's 0.0625 tick, so a
   // real release lands near 0.44s and always beats this.
   const HELD_HIT_MAX_S = 1.2;
+  // BOW-CLOCK: the ceiling held while the arm is STILL DRAWING this shot (fpArm.shotBusy). A Morrowind bow's draw can
+  // outlast 1.2s - the arrow left mid-draw and the draw's own release key was left over for the next shot, which then
+  // loosed at its click. Every state shotBusy names ends by itself; this is only the never-traps floor under it.
+  const HELD_HIT_CAP_S = 4;
   let _heldHit = false;
   // MW-D42d: the loose SOUND, held with the loose it belongs to.
   let _heldSound = false;
@@ -1225,6 +1229,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     setMidScreenText(type === WEAPON_TYPES.Bow ? 'You have no arrows.' : 'You have no pellets.');
   }
 
+  /**
+   * BOW-CLOCK (FIELD BUGS 2026-10-09f, "Archery is weird ... and double shot bug"): ONE CLICK, ONE DRAW, ONE ARROW.
+   * Under the Morrowind arm a shot's hit waits for the arm's release key (MW-D42), but the machine's cycle - the instant
+   * shot's four ticks and a Speed-driven cooldown, ~1.2s at Speed 90 - can end while the arm is still drawing the last
+   * one. The next click then started a shot the arm refused to draw (attack() takes only an idle or following-through
+   * arm): its arrow rode the LAST draw's release, or the ceiling, so two arrows left one draw and the next draws loosed
+   * nothing. No ranged shot STARTS while the arm cannot draw it - the drag's door and the touch button's alike. Only
+   * the start waits: a drawn bow's release (StrikeUp -> StrikeDown) is not from Idle and is never held here.
+   */
+  function armCannotDraw() {
+    const m = playerWeapon.machine;
+    return !!m.ranged && m.state === 'Idle' && (fpArm.active() || fpArm.thirdActive()) && fpArm.shotBusy();
+  }
   /** MW-D42's hold, as the function the frame decides first (it used to be the frame's own tail). AUDIT
    *  FIELD-GUN-MW F1 (2026-09-21): the gate is `machine.ranged`, not `isBow` - the Thunderlock is a shooter the arm
    *  animates as a crossbow, and its hit rode straight through the bow-only gate: the orb left at the machine's
@@ -1273,7 +1290,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // than never, and HELD_HIT_MAX_S is generous enough that a real
         // release always wins the race: the whole classic bow release
         // is seven frames at a 0.0625 tick, about 0.44s.
-        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
+        if (fpArm.takeShootRelease() || (_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy()) || _heldHitAge >= HELD_HIT_CAP_S) {
           _heldHit = false;
           // SOUND FIRST, then the hit - the machine's own order across
           // frames 4 and 5, preserved rather than reinvented.
@@ -1393,6 +1410,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** ClickToAttack for the touch button. */
     clickAttack() {
       if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0 || _climbing) return;   // CLIMB4: no swing with the hands on the wall
+      if (armCannotDraw()) return;   // BOW-CLOCK: nor a shot the Morrowind arm cannot draw yet
       const strike = playerWeapon.clickAttack();
       if (strike) fpAttack(strike);
     },
@@ -1551,7 +1569,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _climbLower = climbLowerStep(_climbLower, climbing || (handsLane && climbHands.showing()), dt);
       climbHands.update(dt, handsLane && _climbLower >= CLIMB_HANDS_AFTER ? (camNow?.climb ?? null) : null, camNow ?? {});   // CLIMB-HANDS: the hold, the shimmy, the free climb, the moves and the look off the wall
       const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !spellArmed() && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool();   // AUDIT 29 D2: no swing behind a gathering act's tool
-      const strike = !paralyzed && c && canAttack
+      // BOW-CLOCK: no shot starts the arm cannot draw (armLoosing, above) - gesture() is not asked, so its button
+      // latch keeps the press made while waiting.
+      const armLoosing = armCannotDraw();
+      const strike = !paralyzed && c && canAttack && !armLoosing
         ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
       if (strike) fpAttack(strike, dt);
