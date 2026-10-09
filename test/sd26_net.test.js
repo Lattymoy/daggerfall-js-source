@@ -7,12 +7,15 @@ import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { OnlineSession } from '../src/net/online.js';
-import { RELAY_VERSION, WHO_RETRY_MS, parseClient, validSdOut } from '../src/net/wire.js';
+import { RELAY_VERSION, WHO_RETRY_MS, parseClient, validSdOut, SD_KEY, SOCIAL_ROOM, PIXEL_UNITS, worldRoom, chatRegionRoom } from '../src/net/wire.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
-import { SD_BLOWS, SD_BODY, SD_STUN_MS, newRemnantFight, joinRemnant, stepRemnant, remnantStateOf, applyHeartHit, applyRemnantHit, heartsOpen } from '../src/net/sdRemnant.js';
-import { HIT_KINDS } from '../src/net/gateBrain.js';
+import { fakeRooms } from './fakeRoom.mjs';
+import { SD_BLOWS, SD_BODY, SD_STUN_MS, SD_LOST_MS, SD_POSE_FRESH_MS, newRemnantFight, joinRemnant, stepRemnant, remnantStateOf, applyHeartHit, applyRemnantHit, heartsOpen } from '../src/net/sdRemnant.js';
+import { HIT_KINDS, STATE_SEND_MS } from '../src/net/gateBrain.js';
+import { PIXEL_M } from '../src/net/gateLaw.js';
+import { sdRoomKey } from '../src/net/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
-import { createSdFightLink, SD_OWED_MAX } from '../src/net/sdFightLink.js';
+import { createSdFightLink, SD_OWED_MAX, SD_FIGHT_HEARD_MS, SD_IN_RETRY_MS } from '../src/net/sdFightLink.js';
 import { createSdRemnantBlows, sdBlowsInFlight } from '../src/scenes/sdRemnantBlows.js';
 
 const T0 = 1_800_000_000_000;
@@ -262,4 +265,125 @@ test('AUDIT SD IV (5): THE LINK\'S OWED BLOWS - the whole arena\'s alone, by num
   assert.equal(ids(L)[0], 103, 'the oldest go first');
   L.leave();
   assert.deepEqual(ids(L), []);
+});
+
+// ── AUDIT SD IV (8): a fight lost where no socket of mine heard it ──────────────────────────────────────────────────
+const PX = 300, PY = 200;
+const doorPose = (east = 10) => ({ x: (PX + 0.5) * PIXEL_UNITS + east * (PIXEL_UNITS / PIXEL_M), y: 0, z: (500 - PY - 0.5) * PIXEL_UNITS, yaw: 0, pitch: 0 });
+const inArenaAt = (x = 0, z = -12) => { const [dx, dy, dz] = realmToDungeon(SD_ARENA.x + x, 0, SD_ARENA.z + z); return { x: dx, y: dy, z: dz, yaw: 0, pitch: 0 }; };
+const hush = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
+/** The fake world driven to a FOUND Hollow and its realm standing, past the Orrery (sd20a_fight.test.js's). */
+async function withRealm(fn) {
+  const realNow = Date.now;
+  let clock = T0;
+  Date.now = () => clock;
+  const world = fakeRooms({ now: () => clock });
+  const hub = world.room(SOCIAL_ROOM);
+  try {
+    await hush(async () => {
+      const hws = hub.connect(); await hub.hello(hws, 'peer-h1', null, { name: 'H1', acct: 'acct-h1', asecret: 'secret-of-acct-h1' });
+      const fire = async (room) => { if (room.alarm.at != null && Date.now() >= room.alarm.at) await room.fire(); };
+      await fire(hub);
+      clock = hub.room._sdRec.next;
+      for (const [id, sub] of [['peer-r1', 'acct-r1'], ['peer-r2', 'acct-r2']]) { const r = world.room(chatRegionRoom(17)); const ws = r.connect(); await r.hello(ws, id, null, { kind: 'linked', tokenSub: sub }); }
+      await fire(hub);
+      const rec = hub.store.get(SD_KEY);
+      const cell = world.room(worldRoom(PX, PY));
+      const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
+      await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
+      const realm = world.room(sdRoomKey(rec.s));
+      const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
+      const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
+      const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };
+      await fn({ realm, beat, hello, now: () => clock });
+    });
+  } finally { Date.now = realNow; }
+}
+/** A page in the Hour: its own fight link, fed every fight word a socket of its heard (wire.js validSdOut, as net/online.js
+ *  routes them), and its `in` said when the link says it is due, as scenes/sdRemnant.js says it (from the arena). */
+function hourPage(realm, now) {
+  const link = createSdFightLink({ now });
+  const read = new Map();
+  return {
+    link,
+    hear(ws) {
+      for (const m of ws.sent.slice(read.get(ws) ?? 0)) { const w = m.t === 'sd' ? validSdOut(m) : null; if (w && w.k !== 'pz' && w.k !== 'rcpt' && w.k !== 'ev') link.word(w); }
+      read.set(ws, ws.sent.length);
+    },
+    /** What `ws` said so far never reached the page. */
+    skip(ws) { read.set(ws, ws.sent.length); },
+    async frame(ws) { this.hear(ws); if (link.inDue(now())) { await realm.raw(ws, JSON.stringify({ t: 'sd', k: 'in', lv: 30, bv: 1 })); link.sentIn(now()); } this.hear(ws); },
+  };
+}
+
+test('AUDIT SD IV (8): A COUNTED PAGE BACK FROM A LOST FIGHT IS NOT LEFT IN IT - the realm\'s hello says nothing of a fight lost (stale at the hello, or lost by the beat into a socket that was half-open), so the page stayed counted in a dead fight, its `in` never due, its blows landing on nothing; a fight unheard SD_FIGHT_HEARD_MS makes its `in` due, and the realm answers with a fresh fight that counts it. A living fight\'s silence costs one `in`: the same fight answers (mutants SD26-8-silence-ignored, SD26-8-span)', async () => {
+  assert.equal(SD_FIGHT_HEARD_MS, 3 * STATE_SEND_MS, 'three of a living fight\'s whole states');
+  assert.equal(SD_FIGHT_HEARD_MS, 15_000);
+  for (const how of ['stale at the hello', 'lost into a half-open socket']) {
+    await withRealm(async ({ realm, beat, hello, now }) => {
+      const ann = hourPage(realm, now);
+      let ws = await hello('peer-ann', inArenaAt());
+      for (let k = 0; k < 24; k++) { await realm.pose(ws, inArenaAt()); await ann.frame(ws); await beat(500); }
+      assert.equal(ann.link.state().fi, 1); assert.equal(ann.link.joined(), true, `${how}: counted in fight 1`);
+      if (how === 'stale at the hello') { await realm.drop(ws); await beat(40_000); }
+      else {   // the relay holds the socket; the page hears none of it and poses nothing - its fight lost by emptiness
+        await beat(SD_POSE_FRESH_MS + SD_LOST_MS + 5_000);
+        assert.ok(ws.sent.some((m) => m.t === 'sd' && m.k === 'lost'), 'the loss went down the socket the page lost');
+      }
+      ws = await hello('peer-ann', inArenaAt());
+      ann.hear(ws);
+      assert.ok(realm.room._sdFight.lost, `${how}: the realm's fight is lost`);
+      assert.equal(ann.link.state().lost, 0, `${how}: and the page was never told`);
+      for (let k = 0; k < 8; k++) { await realm.pose(ws, inArenaAt()); await ann.frame(ws); await beat(500); }
+      assert.equal(realm.room._sdFight.fi, 2, `${how}: its \`in\` made a fresh fight`);
+      assert.deepEqual([ann.link.state().fi, ann.link.joined()], [2, true], `${how}: and the page is counted in it`);
+    });
+  }
+  // a living fight the page missed a while of: one `in`, the same fight answers
+  await withRealm(async ({ realm, beat, hello, now }) => {
+    const ann = hourPage(realm, now);
+    const ws = await hello('peer-ann', inArenaAt());
+    for (let k = 0; k < 24; k++) { await realm.pose(ws, inArenaAt()); await ann.frame(ws); await beat(500); }
+    for (let k = 0; k < 16; k++) { await realm.pose(ws, inArenaAt()); await beat(1000); }   // still posing; its fight's words lost on the way
+    ann.skip(ws);
+    assert.equal(ann.link.inDue(now()), true, 'a living fight unheard the span: my `in` is due');
+    await ann.frame(ws);
+    assert.equal(realm.room._sdFight.fi, 1, 'the same fight answers it');
+    assert.deepEqual([ann.link.state().fi, ann.link.joined(), ann.link.inDue(now())], [1, true, false], 'counted in it, and held again');
+  });
+});
+
+test('AUDIT SD IV (8): THE LINK\'S SILENCE - a counted fight heard holds my `in`; unheard SD_FIGHT_HEARD_MS, it does not; an Hour Ended likewise; a fallen fight never (it beats no more); a refusal said in a fight gone silent lapses, one for good never, and one said before any fight was heard stands however long (mutants SD26-8-refusal-holds, SD26-8-silent-before-any-fight, SD26-8-ended-holds, SD26-8-fallen-silent-due)', () => {
+  let clock = T0;
+  const f = newRemnantFight(1, 1, clock, null);
+  joinRemnant(f, 'a', 'A', 20, clock);
+  const L = createSdFightLink({ now: () => clock });
+  L.word(validSdOut({ ...remnantStateOf(f), me: 1 }));
+  L.sentIn(clock);
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'counted, heard: held');
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS), true, 'unheard the span: due');
+  clock += 10_000; L.word(validSdOut({ k: 'hp', h: 1, m: 2 }));
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'any word heard holds it again');
+  // the End: refused to a newcomer, held while it beats, not once silent
+  const E = createSdFightLink({ now: () => clock });
+  E.word(validSdOut({ ...remnantStateOf(f), ended: clock }));
+  assert.equal(E.inDue(clock + SD_IN_RETRY_MS), false, 'an Hour Ended heard: no `in`');
+  assert.equal(E.inDue(clock + SD_FIGHT_HEARD_MS), true, 'gone silent: the next is fresh');
+  // fallen: it beats no more, and its silence is no loss
+  const F = createSdFightLink({ now: () => clock });
+  F.word(validSdOut({ ...remnantStateOf(f), me: 1, fell: { at: clock, top: [], n: 1 } }));
+  assert.equal(F.inDue(clock + 10 * SD_FIGHT_HEARD_MS), false, 'a fallen fight: never');
+  // refusals
+  const R = createSdFightLink({ now: () => clock });
+  R.word(validSdOut({ ...remnantStateOf(f) }));
+  R.word(validSdOut({ k: 'no', m: 'the arena is full' }));
+  assert.equal(R.inDue(clock + SD_IN_RETRY_MS), false, 'refused while the fight stands');
+  assert.equal(R.inDue(clock + SD_FIGHT_HEARD_MS), true, 'the fight gone silent: the refusal lapses');
+  const G = createSdFightLink({ now: () => clock });
+  G.word(validSdOut({ ...remnantStateOf(f) }));
+  G.word(validSdOut({ k: 'no', m: 'the Hour has closed' }));
+  assert.equal(G.inDue(clock + 10 * SD_FIGHT_HEARD_MS), false, 'one for good: never');
+  const N = createSdFightLink({ now: () => clock });
+  N.word(validSdOut({ k: 'no', m: 'the arena is full' }));
+  assert.equal(N.inDue(clock + 10 * SD_FIGHT_HEARD_MS), false, 'refused before any fight was heard: no silence to read - it stands');
 });

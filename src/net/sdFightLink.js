@@ -13,6 +13,7 @@
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, SD_STUN_MS, keepInArena, sdProfileOf } from './sdRemnant.js';
+import { STATE_SEND_MS } from './gateBrain.js';
 
 /**
  * @typedef {{ x: number, z: number, yw: number, mv: {x: number, z: number, tx: number, tz: number, v: number, at: number}|null, atk: any }} SdBody
@@ -37,6 +38,12 @@ export const SD_FIGHT_EMPTY = Object.freeze({
 
 /** How long the page waits for the realm's answer before it says its `in` again (and between two at most). */
 export const SD_IN_RETRY_MS = 2000;
+/** AUDIT SD IV (8): a fight that has said nothing this long has left me behind - three of a living fight's beats, each its
+ *  whole state (STATE_SEND_MS). A loss the realm told no socket of mine (a hello says nothing of a lost fight, and a
+ *  loss fanned into a dead socket is lost with it) left a counted page in a dead fight for good: no `st`, no `lost`, its
+ *  `in` never due. My `in` is due again; the realm answers it with a fresh fight, or a living one's state, nothing
+ *  written. */
+export const SD_FIGHT_HEARD_MS = 3 * STATE_SEND_MS;
 
 /** AUDIT SD II (L6 F7, SD11d): the Reset's Hearts' thread - its call and each Heart broken say it anew (the page's voice,
  *  scenes/sdVoice.js `key`): the newer count takes the older's place, never queued behind it. */
@@ -249,11 +256,13 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
     /**
      * Whether my `in` is due at `t`, standing alive in the arena: not counted in a fight still to fight (none heard, a
      * fight lost, or one that never answered me), no refusal standing against it (one for good; else one said while the
-     * fight stood as it stands - a fresh fight or a loss lapses it), and its last saying SD_IN_RETRY_MS behind.
+     * fight stood as it stands - a fresh fight or a loss lapses it), and its last saying SD_IN_RETRY_MS behind. AUDIT SD
+     * IV (8): a fight unfallen and unheard SD_FIGHT_HEARD_MS holds me no longer, and lapses a refusal said in it.
      */
     inDue(t) {
-      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;
-      if (state.fi > 0 && !state.lost && (state.fell || state.ended || mine === state.fi)) return false;
+      const silent = state.fi > 0 && t - state.heardAt >= SD_FIGHT_HEARD_MS;
+      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;
+      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;
       return t - inAt >= SD_IN_RETRY_MS;
     },
     /** My `in` left the socket at `t`. */

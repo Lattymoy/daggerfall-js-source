@@ -187,5 +187,59 @@
     "tests": [
       "test/sd26_net.test.js"
     ]
+  },
+  {
+    "name": "SD26-8-silence-ignored",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(state.fell || state.ended || mine === state.fi)",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-span",
+    "file": "src/net/sdFightLink.js",
+    "old": "export const SD_FIGHT_HEARD_MS = 3 * STATE_SEND_MS;",
+    "new": "export const SD_FIGHT_HEARD_MS = STATE_SEND_MS;",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-refusal-holds",
+    "file": "src/net/sdFightLink.js",
+    "old": "refused.lost === state.lost && !silent))",
+    "new": "refused.lost === state.lost))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-silent-before-any-fight",
+    "file": "src/net/sdFightLink.js",
+    "old": "const silent = state.fi > 0 && t - state.heardAt",
+    "new": "const silent = t - state.heardAt",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-ended-holds",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(state.fell || state.ended || (mine === state.fi && !silent))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
+  },
+  {
+    "name": "SD26-8-fallen-silent-due",
+    "file": "src/net/sdFightLink.js",
+    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
+    "new": "(((state.ended || mine === state.fi) && !silent))",
+    "tests": [
+      "test/sd26_net.test.js"
+    ]
   }
 ]

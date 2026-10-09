@@ -12,7 +12,7 @@ import {
   newRemnantFight, joinRemnant, stepRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, heartsOpen, remnantStateOf, behindPillar, windupFor,
   SD_ECHO_PAIR_MS,
 } from '../src/net/sdRemnant.js';
-import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
+import { SD_FIGHT_EMPTY, SD_IN_RETRY_MS, SD_FIGHT_HEARD_MS, SD_FIGHT_TEXT, foldSdFight, createSdFightLink, sdBodyAt, sdBlowDone, sdHeartsOf } from '../src/net/sdFightLink.js';
 import { validSdOut, SOCIAL_ROOM, SD_KEY, worldRoom, PIXEL_UNITS, SD_BRAIN_V, SD_NO_WORDS } from '../src/net/wire.js';
 import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_PILLAR_H, realmToDungeon, dungeonToRealm } from '../src/net/sdBrain.js';
 import { dpsRef, HIT_KINDS, PHASE_AT } from '../src/net/gateBrain.js';
@@ -193,7 +193,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   assert.equal(L.joined(), false, 'a whole state fanned to everyone is no answer');
   L.word(st({ me: 1 }));
   assert.equal(L.joined(), true, 'the realm\'s answer: I am in it');
-  assert.equal(L.inDue(clock + 60_000), false, 'and say no more');
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'and say no more');   // PIN MOVED (AUDIT SD IV 8): while the fight is heard - a minute of silence is a fight lost unheard, and the `in` is due again (sd26_net)
   L.word(validSdOut({ k: 'lost', at: clock }));
   assert.equal(L.joined(), false, 'a fight lost');
   assert.equal(L.inDue(clock + 60_000), true, 'the next `in` makes a fresh one');
@@ -208,7 +208,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   L.word(st());
   L.word(validSdOut({ k: 'no', m: SD_NO_WORDS[2] }));
   assert.deepEqual([said.at(-1), refused.at(-1)], [SD_FIGHT_TEXT.no['the arena is full'], 'the arena is full']);
-  assert.equal(L.inDue(clock + 60_000), false, 'the arena full: not into this fight');
+  assert.equal(L.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'the arena full: not into this fight');   // PIN MOVED (AUDIT SD IV 8): while it is heard - a refusal lapses with a fight gone silent
   L.word(validSdOut({ k: 'lost', at: clock }));
   assert.equal(L.inDue(clock + 60_000), true, 'its loss lapses it');
   L.word(validSdOut({ k: 'no', m: SD_NO_WORDS[3] }));
@@ -227,7 +227,7 @@ test('SD8c MY PLACE IN THE FIGHT: my `in` is due standing in the arena until the
   assert.equal(L2.inDue(clock + 60_000), false, 'fallen');
   f.fell = null; f.ended = { at: T0 }; f.fi = 7;
   L2.word(st());
-  assert.equal(L2.inDue(clock + 60_000), false, 'past its Hour');
+  assert.equal(L2.inDue(clock + SD_FIGHT_HEARD_MS - 1), false, 'past its Hour');   // PIN MOVED (AUDIT SD IV 8): while it is heard - an Hour Ended gone silent was lost unheard
   // the turns said once each, live alone
   const words = [];
   const L3 = createSdFightLink({ now: () => clock, say: (t) => words.push(t) });
