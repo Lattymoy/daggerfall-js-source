@@ -23,7 +23,8 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { seededRng } from './wind.js';
 import { spoilsBase } from './gateSpoils.js';
-import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
+import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass } from './lootRarity.js';   // GEM1: the sockets' passes
+import { bossGems } from './gems.js';   // GEM2: the Brass Remnant's gems
 import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
 import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from './loot.js';
@@ -72,7 +73,7 @@ function graded(item, tier, rolls) {
 }
 
 /**
- * THE SPOILS for one fighter: `{ gold, pieces: [{ item, tier }] }` - in the order they leave it: the first piece, the two
+ * THE SPOILS for one fighter: `{ gold, pieces: [{ item, tier }], card, gems }` - in the order they leave it: the first piece, the two
  * Rare-or-better, then (SD9d) a piece of the Brass of Numidium when one drops, then (GILDED1) the Hourlock when it does.
  * The same seed, level and world answer the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the level it fought at
@@ -94,7 +95,12 @@ export function rollSdSpoils(seed, level) {
   // CARDS9 (Tavern-Cards section 32; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
   // BRASS REMNANT'S OWN CARD - one draw more after the Hourlock's, LAST of all; kept beside the pieces
   const card = bossCardRoll('abyss', rolls);
-  return { gold, pieces, card };
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the sockets' passes over the pieces (the Gilded Hourlock never
+  // takes one - socketCap answers none for its rung), then the Remnant's two gems, LAST of all (after the card)
+  socketPass(pieces.map((p) => p.item), rolls);
+  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  const gems = bossGems('abyss', rolls);
+  return { gold, pieces, card, gems };
 }
 
 /** The spoils as the pool throws them (scenes/spoilsPool.js's pieces): each item, then the gold - the gate's own order -
@@ -107,9 +113,12 @@ export function sdSpoilsList(seed, level) {
   const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
   // AUDIT CARDS-6 A8: the card's picture drawn LAST, after the gold's, so the gold pile's is what the seed gave it before
   const card = s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : [];
+  // GEM2: the Remnant's gems, their pictures drawn after the card's (every picture before them the seed's), thrown after it
+  const gems = s.gems.map((g) => ({ kind: 'item', item: g, tier: 'common', record: flat() }));
   return [
     ...pieces,
     ...card,   // CARDS9: the Remnant's card, after the pieces
+    ...gems,   // GEM2: the Remnant's gems, after the card
     gold,
   ];
 }

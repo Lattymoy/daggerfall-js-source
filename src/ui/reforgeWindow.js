@@ -17,8 +17,8 @@
 import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine, honeableLines } from '../systems/lootRarity.js';
 import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
 import { SCRY_FAMILIES, SCRY_FAMILY_WORDS, SCRY_PRICE, familyPlaces, scryRefusal } from '../systems/lootScry.js';   // LOOT19: scrying
-import { foundAmong, hasSocket, socketGem, gemLine, affixLabel, GEM_IDS, GEM_NAMES } from '../systems/lootRarity.js';   // LOOT20: the sockets
-import { gemsHeld, setGemRefusal, unsetGemRefusal, SET_GEM_PRICE } from '../systems/reforge.js';
+import { foundAmong, hasSocket, socketsOf, emptySockets, gemLine, affixLabel, ALL_GEM_IDS, GEM_NAMES, SOCKET_EMPTY } from '../systems/lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
+import { gemsHeld, setGemRefusal, unsetGemRefusal, extractGemRefusal, extractPrice } from '../systems/reforge.js';   // GEM1: and the extraction
 import { codexRows, codexSets, codexCount, codexGilded, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's - GILDED1: and the Gilded rung's rows
 import { gildedById } from '../systems/gilded.js';
 import { setById } from '../systems/sigilSets.js';
@@ -49,12 +49,16 @@ export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salva
 /** The pages the guild's window shows when its host names none - never the temple's (LOOT16); LOOT19: and its scryers'. */
 export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);   // LOOT20: and its sockets
 /** LOOT20 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 12): THE SOCKETS' PAGE - every piece of the pack with
- *  a socket; picked, its card - an empty socket offers each gem the pack holds, a set one its unsetting, asked first. */
-export const SOCKETS_NONE = 'Nothing in your pack carries a socket - a Rare or a Legendary found on a body or in a pile may.';
-export const GEMS_NONE = 'No gem in your pack to set - a Ruby, an Emerald, a Sapphire, a Diamond, Jade, Turquoise, Malachite or Amber.';
+ *  a socket; picked, its card - an empty socket offers each gem the pack holds, a set one its unsetting, asked first.
+ *  GEM1 (bible/06-Systems/Gem-Sockets.md section 3): a row a socket of the piece, and a set one's EXTRACTION beside its
+ *  unsetting - the gem out whole, for gold by its grade; setting is free (the pack's card sets too). */
+export const SOCKETS_NONE = 'Nothing in your pack carries a socket - a weapon, a Rare or a Legendary found on a body or in a pile may.';
+export const GEMS_NONE = 'No gem in your pack to set - a Ruby, an Emerald, a Sapphire, a Diamond, Jade, Turquoise, Malachite or Amber, of any grade.';
 export const GEM_SET = (name, gem) => `Set: the ${GEM_NAMES[gem] ?? 'gem'} in ${name}.`;
 export const UNSET_ASK = (gem) => `Unset the ${GEM_NAMES[gem] ?? 'gem'}? It shatters.`;
 export const GEM_SHATTERED = (name, gem) => `The ${GEM_NAMES[gem] ?? 'gem'} in ${name} shatters; the socket is empty.`;
+export const GEM_EXTRACTED = (name, gem, price) => `Extracted: the ${GEM_NAMES[gem] ?? 'gem'} out of ${name}, whole, for ${price} gold.`;
+export const SOCKETS_NOTE = 'Setting a gem is free - the gem is the price. Unset, it shatters; the guild extracts it whole for gold by its grade.';
 /** LOOT19 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 11): THE SCRYERS' PAGE - a row a family, its dungeon
  *  kinds, the price, and a press that names the nearest of its haunts in the region not yet on the map (systems/
  *  lootScry.js); asked first of the region, so a family with nothing hidden says so before a coin is taken. */
@@ -156,14 +160,16 @@ function injectSkinStyle(doc = document) {
  *   hone?: ((item: any, line: number) => { ok: boolean, reason?: string|null }) | null,
  *   scry?: ((family: string) => { ok: boolean, reason?: string|null, place?: any }) | null,
  *   scryWhere?: (() => any) | null,
- *   setGem?: ((item: any, gem: string) => { ok: boolean, reason?: string|null }) | null,
- *   unsetGem?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
+ *   setGem?: ((item: any, gem: string, at?: number|null) => { ok: boolean, reason?: string|null }) | null,
+ *   unsetGem?: ((item: any, at?: number|null) => { ok: boolean, reason?: string|null }) | null,
+ *   extractGem?: ((item: any, at?: number|null) => { ok: boolean, reason?: string|null, price?: number }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
  *   imprint (systems/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/lootCurse.js
  *   liftCurse). LOOT17: `hone` the host's hone (systems/reforge.js honePiece). LOOT19: `scry` the host's scrying
  *   (systems/lootScry.js scryPlace) and `scryWhere` its region (scenes/world.js). LOOT20: `setGem` and `unsetGem` the
- *   host's (systems/reforge.js setGemPiece, unsetGemPiece).
+ *   host's (systems/reforge.js setGemPiece, unsetGemPiece); GEM1: `extractGem` too (extractGemPiece), and each
+ *   takes the socket's index.
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
 export function mountReforgeWindow(host, deps) {
@@ -179,6 +185,7 @@ export function mountReforgeWindow(host, deps) {
   const titleText = codexOnly ? CODEX_TITLE : liftOnly ? LIFT_TITLE : REFORGE_TITLE;
   let picked = null;
   let asking = null;
+  let askingAt = null;   // GEM1: which of the asked piece's sockets the Shatter press waits on
   /** The last press's word, and whether it was done (a refusal is read in the refusal's colour). */
   let note = null;
   const shell = el('div', 'broker-shell reforge-shell');
@@ -509,7 +516,8 @@ export function mountReforgeWindow(host, deps) {
     card.append(ul, el('p', 'boundline', `An imprint costs ${reforgePriceText(IMPRINT_PRICE)}. ${IMPRINT_ONCE}`));
     body.append(card);
   }
-  /** LOOT20: THE SOCKETS - a row a socketed piece; its card sets a gem the pack holds, or unsets one (asked first). */
+  /** LOOT20: THE SOCKETS - a row a socketed piece; its card sets a gem the pack holds, or unsets one (asked first).
+   *  GEM1: a line a socket, each set one's extraction and its unsetting; the gems offered set in the first empty one. */
   function renderSockets(items, payer, have, picture) {
     const rows = items.filter((it) => hasSocket(it));
     if (!rows.includes(picked)) picked = rows[0] ?? null;
@@ -519,8 +527,9 @@ export function mountReforgeWindow(host, deps) {
       const row = el('li', `broker-offer socket-row${it === picked ? ' on' : ''}`);
       if (r) row.dataset.rarity = r;
       const text = el('div', 'broker-offer-body');
-      const gem = socketGem(it);
-      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', gem ? `${tierLabel(it)} · ${GEM_NAMES[gem]}` : `${tierLabel(it)} · an empty socket`));
+      const sockets = socketsOf(it);
+      const said = sockets.map((v) => (v === SOCKET_EMPTY ? 'empty' : GEM_NAMES[v])).join(', ');
+      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', `${tierLabel(it)} · ${sockets.length === 1 && sockets[0] === SOCKET_EMPTY ? 'an empty socket' : said}`));
       row.append(frameOf(it, picture), text);
       pressable(row, () => { picked = it; dropAsk(); render(); });
       list.append(row);
@@ -533,52 +542,71 @@ export function mountReforgeWindow(host, deps) {
     card.append(el('h3', null, nameOf(it)));
     const ul = el('ul', 'rarity');
     ul.append(el('li', null, tierLabel(it)));
-    const gem = socketGem(it);
-    if (gem) {
+    const fail = (done) => say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+    socketsOf(it).forEach((gem, at) => {
+      if (gem === SOCKET_EMPTY) return;
       const li = el('li', 'socket-gem', `${GEM_NAMES[gem]}: ${affixLabel(/** @type {any} */ (gemLine(it, gem)))}`);
-      const why = unsetGemRefusal(it);
-      const btn = el('button', 'act broker-buy unset-press', why ? reforgeLabel(why, null, have) : asking === it ? 'Shatter it' : 'Unset');
+      li.dataset.socket = String(at);
+      // GEM1: the extraction - the gem whole into the pack, its grade's price
+      const price = extractPrice(it, at) ?? 0;
+      const xwhy = extractGemRefusal(it, payer, at);
+      const x = el('button', 'act broker-buy extract-press', reforgeLabel(xwhy, { shards: 0, gold: price }, have, `Extract · ${price} gold`));
+      x.setAttribute('type', 'button');
+      x.setAttribute('aria-label', xwhy ? `${GEM_NAMES[gem]}: ${REFORGE_REFUSALS[xwhy] ?? ''}` : `Extract the ${GEM_NAMES[gem]} whole for ${price} gold`);
+      if (xwhy) { x.setAttribute('disabled', ''); x.setAttribute('title', REFORGE_REFUSALS[xwhy] ?? ''); }
+      x.onclick = (e) => {
+        e.stopPropagation();
+        if (xwhy) return;
+        asking = null;
+        const done = deps.extractGem?.(it, at) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, GEM_EXTRACTED(nameOf(it), gem, done.price ?? price)); else fail(done);
+        render();
+      };
+      const why = unsetGemRefusal(it, at);
+      const ask = asking === it && askingAt === at;
+      const btn = el('button', 'act broker-buy unset-press', why ? reforgeLabel(why, null, have) : ask ? 'Shatter it' : 'Unset');
       btn.setAttribute('type', 'button');
       btn.setAttribute('aria-label', why ? `${GEM_NAMES[gem]}: ${REFORGE_REFUSALS[why] ?? ''}` : UNSET_ASK(gem));
       if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
       btn.onclick = (e) => {
         e.stopPropagation();
         if (why) return;
-        if (asking !== it) { asking = it; say(false, UNSET_ASK(gem)); render(); return; }
+        if (!ask) { asking = it; askingAt = at; say(false, UNSET_ASK(gem)); render(); return; }
         asking = null;
-        const done = deps.unsetGem?.(it) ?? { ok: false, reason: 'not' };
-        if (done.ok) say(true, GEM_SHATTERED(nameOf(it), gem)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+        const done = deps.unsetGem?.(it, at) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, GEM_SHATTERED(nameOf(it), gem)); else fail(done);
         render();
       };
-      li.append(btn);
+      li.append(x, btn);
       ul.append(li);
-      card.append(ul);
-      body.append(card);
-      return;
+    });
+    const empty = emptySockets(it);
+    if (empty) {
+      ul.append(el('li', null, empty === 1 ? 'Socket: empty' : `Sockets: ${empty} empty`));
+      const held = gemsHeld(items);
+      const kinds = ALL_GEM_IDS.filter((g) => held[g] > 0);
+      if (!kinds.length) ul.append(el('li', null, GEMS_NONE));
+      for (const g of kinds) {
+        const li = el('li', 'socket-choice', `${GEM_NAMES[g]} (${held[g]}) - ${affixLabel(/** @type {any} */ (gemLine(it, g)))}`);
+        li.dataset.gem = g;
+        const why = setGemRefusal(it, g, payer);
+        const btn = el('button', 'act broker-buy set-press', reforgeLabel(why, null, have, 'Set'));
+        btn.setAttribute('type', 'button');
+        btn.setAttribute('aria-label', why ? `${GEM_NAMES[g]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Set the ${GEM_NAMES[g]} in ${nameOf(it)}`);
+        if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          if (why) return;
+          asking = null;
+          const done = deps.setGem?.(it, g) ?? { ok: false, reason: 'not' };
+          if (done.ok) say(true, GEM_SET(nameOf(it), g)); else fail(done);
+          render();
+        };
+        li.append(btn);
+        ul.append(li);
+      }
     }
-    ul.append(el('li', null, 'Socket: empty'));
-    const held = gemsHeld(items);
-    const kinds = GEM_IDS.filter((g) => held[g] > 0);
-    if (!kinds.length) ul.append(el('li', null, GEMS_NONE));
-    for (const g of kinds) {
-      const li = el('li', 'socket-choice', `${GEM_NAMES[g]} (${held[g]}) - ${affixLabel(/** @type {any} */ (gemLine(it, g)))}`);
-      li.dataset.gem = g;
-      const why = setGemRefusal(it, g, payer);
-      const btn = el('button', 'act broker-buy set-press', reforgeLabel(why, { shards: 0, gold: SET_GEM_PRICE }, have, 'Set'));
-      btn.setAttribute('type', 'button');
-      btn.setAttribute('aria-label', why ? `${GEM_NAMES[g]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Set the ${GEM_NAMES[g]} in ${nameOf(it)} for ${SET_GEM_PRICE} gold`);
-      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        if (why) return;
-        const done = deps.setGem?.(it, g) ?? { ok: false, reason: 'not' };
-        if (done.ok) say(true, GEM_SET(nameOf(it), g)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
-        render();
-      };
-      li.append(btn);
-      ul.append(li);
-    }
-    card.append(ul, el('p', 'boundline', `Setting a gem costs ${SET_GEM_PRICE} gold and the gem; unset, it shatters.`));
+    card.append(ul, el('p', 'boundline', SOCKETS_NOTE));
     body.append(card);
   }
   /** LOOT19: THE SCRYERS - a row a family; a press names the nearest of its haunts not yet on the map. */

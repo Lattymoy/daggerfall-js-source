@@ -395,7 +395,7 @@ import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/pas
 import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
-import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/lootRarity.js'; import { reforgePiece, salvagePiece, shardsHeld, honePiece, setGemPiece, unsetGemPiece } from '../systems/reforge.js'; import { buyPortalStone, portalStoneRefusal, shardsKept, PORTAL_TEXT } from '../systems/portalStone.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
+import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/lootRarity.js'; import { reforgePiece, salvagePiece, shardsHeld, honePiece, setGemPiece, unsetGemPiece, extractGemPiece } from '../systems/reforge.js'; import { buyPortalStone, portalStoneRefusal, shardsKept, PORTAL_TEXT } from '../systems/portalStone.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
 import { liftCurse } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
 import { setJunk } from '../systems/itemJunk.js';   // AUDIT LOOT II C5: a sold piece's mark ends at the shelf
 import { scryPlace } from '../systems/lootScry.js';   // LOOT19: the guild's scryers
@@ -5619,7 +5619,8 @@ export function createWorldModes(host) {
       scry: (family) => { const done = scryPlace(playerEntity, family, host.scryWhere?.() ?? null); if (done.ok) surfacePlayer(); return done; },   // LOOT19: the scryers
       scryWhere: () => host.scryWhere?.() ?? null,
       setGem: (item, gem) => setGemPiece(item, gem, playerEntity),   // LOOT20: a gem from the pack in a socket
-      unsetGem: (item) => unsetGemPiece(item, playerEntity),
+      unsetGem: (item, at) => unsetGemPiece(item, playerEntity, at),   // GEM1: a socket of several
+      extractGem: (item, at) => extractGemPiece(item, playerEntity, at),   // GEM1: the guild's extraction, the gem whole
       wearer: playerEntity, nameOf: (item) => itemLongName(item),
     });
     return o ? mountServiceWindow(o) : null;

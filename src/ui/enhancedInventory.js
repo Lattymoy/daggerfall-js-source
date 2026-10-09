@@ -149,6 +149,11 @@ import { overlayAction, eventActions } from './input.js';   // MAC-C: and the RE
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { salvageShards, salvageRefusal, salvagePiece, shardsText } from '../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
+import { gemsHeld, setGemPiece, unsetGemPiece } from '../systems/reforge.js';   // GEM1: a gem set in a socket from the pack, and shattered out of one
+import { ALL_GEM_IDS, SOCKET_EMPTY, emptySockets, gemKindOf } from '../systems/lootRarity.js';   // GEM1: the socket list and the gems
+import { mintGem } from '../systems/gems.js';   // GEM3: a set gem's picture, as its own item draws it
+import { socketWells, socketChooser, markSocketFrame } from './socketWells.js';   // GEM3: the card's wells and the tile's pips
+import { GEM_SET, UNSET_ASK, GEM_SHATTERED, REFORGE_REFUSALS } from './reforgeWindow.js';   // GEM3: the Sockets page's own words
 import { createReforgeOverlay, reforgeDoorOpen, closeReforgeDoor } from './reforgeDoor.js';   // LOOT10: the Codex, from the pack
 import { SOUND } from '../systems/soundClips.js';
 
@@ -628,6 +633,10 @@ let picked = null;      // the selected item object
 let fatePick = null;    // REVENANT-FATE: the fate row picked ('kill' | 'spare'), the second press confirms
 let side = 'local';     // which list `picked` came out of
 let notice = null;
+/** GEM3 (bible/06-Systems/Gem-Sockets.md section 5): the pack's own piece's wells - the empty well whose chooser is open
+ *  and the set well whose Shatter waits (`{ item, at }`), and the gem whose "Set in..." targets are shown. Each is the
+ *  one piece's: a pick of another piece reads none of them. */
+let wellOpen = null, wellAsk = null, gemTargets = null;
 let walletAsked = false;   // WALLET1: the account's silver asked afresh once a mount, as the wallet's sheet first shows
 /** CHAT-POST: what the card says after a post. */
 export const POSTED_TEXT = 'Posted in chat.';
@@ -2478,6 +2487,7 @@ export function markItemFrame(node, item) {
   markSetFrame(node, item);   // SET5: a set piece's rune wears its set's colour (ui/setCard.js)
   if (isLocked(item)) node.dataset.locked = '';   // LOCK1: the padlock in the picture's corner (the sheet's own)
   if (isJunk(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own)
+  markSocketFrame(node, item);   // GEM3: a socket's pip a socket in the top edge; a graded gem's ring (ui/socketWells.js)
   return node;
 }
 
@@ -3000,6 +3010,59 @@ export function itemChatText(item, d = deps) {
   return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\s·]+$/, '')}...`;
 }
 
+/** GEM3 (bible/06-Systems/Gem-Sockets.md section 5): WHO SETS A GEM - the player, as the presses read them (the pack
+ *  and the entity whose fold a worn piece's gem moves). */
+const gemWho = () => (deps.entity && Array.isArray(deps.entity.items) ? deps.entity : { items: deps.items?.() ?? [] });
+/** The pack's loose gems as the chooser lists them - `{ id, count }`, DFU's eight then the graded, the held alone. */
+function heldGems() {
+  const held = gemsHeld(deps.items?.() ?? []);
+  return ALL_GEM_IDS.filter((g) => held[g] > 0).map((id) => ({ id, count: held[id] }));
+}
+/** A gem's picture for a well, as its own item draws it (the card's box for a half panel's picture). */
+function gemPicture(id, ready) {
+  const g = mintGem(id);
+  const pic = g ? linePicture(itemLine(g, deps.entity), { box: SLOT_BOX.wornHalf, onReady: ready }) : null;
+  return pic ? fittedImg(pic) : null;
+}
+/** THE WELLS AND THE CHOOSER for a card, or null for a piece with no socket. `live`: the pack's own piece's detail card,
+ *  whose wells press - an empty one opens the chooser (pressed again, it closes), a set one asks first and its second
+ *  press shatters the gem (systems/reforge.js unsetGemPiece); a gem picked sets in that well (setGemPiece). */
+function socketBlock(item, live, ready) {
+  const name = () => itemLongName(item, { getQuest: deps.getQuest ?? null });
+  const refused = (r) => REFORGE_REFUSALS[r.reason ?? ''] ?? 'That will not set.';
+  const onWell = !live ? null : (at, v) => {
+    if (v === SOCKET_EMPTY) {
+      wellOpen = wellOpen?.item === item && wellOpen.at === at ? null : { item, at };
+      wellAsk = null;
+      render();
+      return;
+    }
+    if (wellAsk?.item !== item || wellAsk.at !== at) { wellAsk = { item, at }; wellOpen = null; notice = UNSET_ASK(v); render(); return; }
+    wellAsk = null;
+    const r = unsetGemPiece(item, gemWho(), at);
+    notice = r.ok ? GEM_SHATTERED(name(), v) : refused(r);
+    refresh();
+    render();
+  };
+  const wells = socketWells(item, {
+    picture: (id) => gemPicture(id, ready), onWell,
+    asking: live && wellAsk?.item === item ? wellAsk.at : null, open: live && wellOpen?.item === item ? wellOpen.at : null,
+  });
+  if (!wells) return null;
+  if (!live || wellOpen?.item !== item) return [wells];
+  const at = wellOpen.at;
+  return [wells, socketChooser(item, heldGems(), (id) => {
+    wellOpen = null;
+    const r = setGemPiece(item, id, gemWho(), at);
+    notice = r.ok ? GEM_SET(name(), id) : refused(r);
+    refresh();
+    render();
+  })];
+}
+/** GEM3: a gem's own card - every piece in the pack with an empty socket it may go in (known, of course: an unknown piece
+ *  is refused its setting), for "Set in...". */
+const gemHomes = () => (deps.items?.() ?? []).filter((it) => emptySockets(it) > 0);
+
 /** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. CARD-FIT: `body` puts its words
  *  in a body of their own (`.card-body`), so the detail column can hang its buttons under it, never inside it. */
 function infoCard(picked, side, ready = render, { body = false } = {}) {
@@ -3017,6 +3080,8 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
     fig.append(fittedImg(big));
     into.append(fig);
   }
+  // GEM3: the piece's sockets as wells under its picture - pressable on the pack's own piece's detail card
+  { const w = socketBlock(picked, side === 'local' && body, ready); if (w) into.append(...w); }
   into.append(el('h3', null, line.name));
   { const r = rarityAttr(picked); if (r) c.dataset.rarity = r; }   // LR1: the card's heading wears the tier too
   const meta = [line.material, line.stack ? `${line.stack} of them` : null].filter(Boolean).join(' · ');
@@ -3170,6 +3235,29 @@ function itemActs(picked, side, { qty = true } = {}) {
   // ghost from the moment it was made. The remote side gets none; take it
   // first, then slot it.
   if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
+  // GEM3 (bible/06-Systems/Gem-Sockets.md section 3): A LOOSE GEM'S "SET IN..." - pressed, the pieces with an empty socket,
+  // a press each that sets the gem in the first empty one (systems/reforge.js setGemPiece); the card stays up
+  if (side === 'local' && gemKindOf(picked) && !picked.questItem && gemHomes().length) {
+    const open = gemTargets === picked;
+    const g = el('button', `act${open ? ' on' : ''}`, 'Set in...');
+    g.onclick = () => { gemTargets = open ? null : picked; render(); };
+    acts.append(g);
+    if (open) {
+      for (const home of gemHomes()) {
+        const t = el('button', 'act gem-home', `Set in ${itemLongName(home, { getQuest: deps.getQuest ?? null })}`);
+        t.onclick = () => {
+          const gem = gemKindOf(picked);
+          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho());
+          gemTargets = null;
+          notice = r.ok ? GEM_SET(itemLongName(home, { getQuest: deps.getQuest ?? null }), /** @type {string} */ (gem)) : (REFORGE_REFUSALS[r.reason ?? ''] ?? 'That will not set.');
+          if (r.ok && !(deps.items?.() ?? []).includes(picked)) picked = null;   // the last of the stack went into the socket
+          refresh();
+          render();
+        };
+        acts.append(t);
+      }
+    }
+  }
   // LOCK1: the lock, on the card and in the right-click menu alike (both are built from this row); the card stays up
   // so the padlock is seen to close
   if (side === 'local') {
@@ -3979,6 +4067,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   tab = PAGE_IDS[0];
   picked = null;
+  wellOpen = null; wellAsk = null; gemTargets = null;   // GEM3: no well open, no Shatter waiting, from a fresh mount
   walletAsked = false;   // WALLET1
   storeFilter = freshStoreFilter();   // WAGON-FILTER
   // PX20b: a LOOT target opens its own frame alone; every other way in
