@@ -28223,7 +28223,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };
   };
-  const tvWater = (px, py) => px < 0 || py < 0 || px >= 1000 || py >= 500 || woods.getHeightMapValue(px, py) <= WATER_BYTE;
+  // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
+  // bytes where TAMRIEL2 streams the land beyond the Bay - `woods` is its composed reader then, the sea past the frame
+  const tvWater = (px, py) => (!woods.isTamrielGround && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;
   /** `roads` (TO-ROADS x OW-PATH): by the roads whatever the Path switch says - the map's first-person pick (tvMapForcesRoads). */
@@ -28299,7 +28301,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     (_tvRouteGround ??= routeGround(
       (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),
       (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },   // inside the zone: flat dry ground, water still water
-      WATER_BYTE)).setRocks(tvWodRocks());
+      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it
     return _tvRouteGround;
   };
   /** OW-ROADSIDE (2026-09-28, Mac: routes "appear traveling alongside" the road): a route whose first step is a road's (or
