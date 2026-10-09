@@ -265,7 +265,7 @@
   },
   {
     "name": "AUDIT-CHAP5-S5-BACKING-IDX",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_backing_season ON npc_chapter_backing (season, region, account);\n",
     "new": "",
     "tests": [
@@ -274,7 +274,7 @@
   },
   {
     "name": "AUDIT-CHAP5-S5-HISTORY-IDX",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_week ON npc_chapter_history (week, kind);\n",
     "new": "",
     "tests": [
@@ -283,7 +283,7 @@
   },
   {
     "name": "AUDIT-CHAP5-S5-HISTORY-ORDER",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "ON npc_chapter_history (week, kind);",
     "new": "ON npc_chapter_history (kind, week);",
     "tests": [
@@ -293,7 +293,7 @@
   },
   {
     "name": "AUDIT-CHAP5-S5-BIDS-IDX",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_patron_bids_guild ON npc_chapter_patron_bids (guild_id, season, state);\n",
     "new": "",
     "tests": [

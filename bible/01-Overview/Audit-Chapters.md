@@ -29,7 +29,7 @@ and differs only where something is owed).
 | D1 | high | The customs cap demoted: a rank-9 Mages Guild member seeded at 40 was put to rank 4 by its next review - the arc promised CHAP1 moves no rank. | A guild the crossing character is a member of keeps what its rank needs (`rollSeedOf`'s `ranks`, `RANK_REQ_REPUTATION` moved into the leaf and handed on by `guilds.js`). |
 | D4 | medium | A fourth quest's +5 was lost outright, and a loss did not give the day's room back - a crime and its penance on one day was refused. | The day counts its NET rise: a loss lowers it. The fourth quest's +5 is owed (D2). |
 
-**The service** (`server-account/src/npcRoll.js`, `server-account/migrations/0096_npc_roll.sql`, `server-account/src/realm.js`)
+**The service** (`server-account/src/npcRoll.js`, `server-account/migrations/0098_npc_roll.sql`, `server-account/src/realm.js`)
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|

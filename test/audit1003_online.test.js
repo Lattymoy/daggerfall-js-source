@@ -571,6 +571,7 @@ test('AUDIT PRE-MERGE 1003 O10 a displaced home\'s move is said read only once t
       realmSession: { lost: null }, realmSaveSink: () => realmSink, QUICK_SAVE_NAME: 'QuickSave', townTalk: { overlay: null }, DeathScreen: class {}, playerEntity: { health: 10 },
       checkpointAllowed: () => answer !== 'refused', online: {}, playerSpawned: true, seatOut: () => false, duelMgr: null, ownWalkWaiting: () => false, performance: { now: () => 0 },
       exitAutosaveNames: () => [], _checkpointAt: -Infinity, worldQuickSave: null,
+      stampItemIds: () => 0,   // INT4 (PIN MOVED): a realm checkpoint stamps the valuable pieces' ids first
       // the standing composer (worldModes quickSaveNow -> worldQuickSave / dungeonContext quickSave): the caller's sink, else the realm's
       modes: { deathUp: () => false, quickSaveNow: (name, opts = {}) => { const into = opts.sink ?? realmSink; into({ n: name }); return true; } },
     };

@@ -8,7 +8,7 @@ while any of them was reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, `npcReceipts.js`, `npcMerit.js`,
   `npcChapters.js` (the Turning, the seats, the Season's draw and end, the backing, the patrons, the titles, the
-  Chronicle), the Chapters' parts of `professions.js` and `guilds.js`, the routes, migrations `0096` to `0101`;
+  Chronicle), the Chapters' parts of `professions.js` and `guilds.js`, the routes, migrations `0096` to `0101` (`0098` to `0103` since the merge of main past INT1-INT6 and BAG-CRAFT);
 - **the economy and its abuse** (E): a modified client, alts and rings, the Season's draw, a Crackdown's writs, the
   Rivalries, the patrons' escrow, a Season's Master;
 - **the client** (C): `src/net/chapterSheet.js`, `chapterEvents.js`, the board's Work tab, the hall's popup and its
@@ -25,7 +25,7 @@ survived the first run - S1's chapter, S3's active membership, T8's confirmed ri
 them). Twenty-two older records the fixes moved were re-aimed by content and six the pins lens found misaimed (T1 to
 T3) re-aimed, all thirty-two run again, all dead; two were retired with the Marks' half again they mutated (CHAP6a's
 `CHAP6A-POST-PAY`, `CHAP6A-MEMBER-PAY` - E1); CHAP6b's `CHAP6B-HEIR-TOP`, recorded equivalent, dies now (T17). The
-service stays `acct100` and the relay `world183`: none of the arc has shipped, so migration `0101` grew in place;
+service stays `acct100` and the relay `world183` (`acct102` since, past INT1-INT6's `acct100` and BAG-CRAFT's `acct101` at the merge of main): none of the arc has shipped, so migration `0101` (today's `0103`) grew in place;
 nothing here changes what the relay reads.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to

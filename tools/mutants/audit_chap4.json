@@ -1,7 +1,7 @@
 [
   {
     "name": "AUDIT-CHAP4-S1-CHAR-IDX",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_char ON npc_chapter_history (char_id, week);\n",
     "new": "",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "AUDIT-CHAP4-S1-REGION-IDX",
-    "file": "server-account/migrations/0101_npc_seats.sql",
+    "file": "server-account/migrations/0103_npc_seats.sql",
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_region ON npc_chapter_history (region, seq);",
     "new": "",
     "tests": [

@@ -1,0 +1,227 @@
+[
+  {
+    "name": "INT1-the-group-unasked",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (typeof item.group !== 'string' || !templateGroups(item.templateIndex).includes(item.group)) out.add('group');",
+    "new": "if (typeof item.group !== 'string') out.add('group');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-material-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (item.group === 'Weapons' && !(isInt(item.material) && item.material >= 0 && item.material <= 9)) out.add('material');",
+    "new": "if (item.group === 'Weapons' && !(isInt(item.material) && item.material >= 0)) out.add('material');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-condition-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (has(item, 'currentCondition') && has(item, 'maxCondition') && item.currentCondition > item.maxCondition) out.add('condition');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-stack-unasked",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (item.stackCount > stackMax(item) || !stacks(item, t)) out.add('stack');",
+    "new": "if (item.stackCount > stackMax(item)) out.add('stack');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-gold-under-the-wire-bound",
+    "file": "src/systems/itemLaw.js",
+    "old": "const stackMax = (/** @type {any} */ item) => (item.group === 'Currency' && item.templateIndex === GOLD_TEMPLATE ? Number.MAX_SAFE_INTEGER : LOOT_STACK_MAX);",
+    "new": "const stackMax = (/** @type {any} */ item) => LOOT_STACK_MAX;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-tierless-line",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (lines.length || TIER_MARKS.some((k) => has(item, k))) out.push('rarity');",
+    "new": "if (TIER_MARKS.some((k) => has(item, k))) out.push('rarity');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-band-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (band && !(a.value >= band[0] && a.value <= band[1])) out.push('affixes');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-kind-twice",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (seen.size !== own.length) out.push('affixes');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-count-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (numbers.length < lo || numbers.length > hi + extra || procs.length > 1) out.push('affixes');",
+    "new": "if (procs.length > 1) out.push('affixes');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-any-record",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (!rec || !legendariesFor(item).some((l) => l.id === rec.id)) return [...out, 'legendary'];",
+    "new": "if (!rec) return [...out, 'legendary'];",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-signature-raised",
+    "file": "src/systems/itemLaw.js",
+    "old": "|| !(a.value >= 1 && a.value <= w.value)) out.push('legendary');",
+    "new": ") out.push('legendary');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-any-sigil-power",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (s.power !== undefined && (kind !== 'weapon' || s.power < sigilFloor(tier, s.party) || s.power > band[1])) return ['sigil'];",
+    "new": "if (s.power !== undefined && kind !== 'weapon') return ['sigil'];",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-common-sigil",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (!band) return ['sigil'];   // a common piece carries none",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-broker-unbound",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');",
+    "new": "if (has(item, 'stonesPaid') && !BROKER_STONES.has(item.stonesPaid)) out.add('bound');",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-found-rows-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (found.length > expected) out.push('enchantments');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-budget-unread",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (cost > itemEnchantmentPower(item, lawTemplate)) return ['enchantments'];",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-weapons-row-anywhere",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.WeaponOnly) && item.group !== 'Weapons') return ['enchantments'];",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-soul-alone",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (!chosen.some((c) => c.key === 'SoulBound' && c.param === p)) return ['enchantments'];",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-artifact-power",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (e.type === T.SpecialArtifactEffect && item.artifact !== true) return [...out, 'artifact'];",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-a-poisoned-cuirass",
+    "file": "src/systems/itemLaw.js",
+    "old": "!(item.group === 'Weapons' && item.poisonType >= LAW_POISON_FIRST",
+    "new": "!(item.poisonType >= LAW_POISON_FIRST",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-skeleton-key",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (item.worldTextureArchive === SKELETON_KEY_TEXTURE.archive && item.worldTextureRecord === SKELETON_KEY_TEXTURE.record && item.artifact !== true) out.add('artifact');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-any-conjured",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (has(item, 'timeForItemToDisappear') && item.timeForItemToDisappear > 0 && !SUMMONED.has(`${item.group}:${item.templateIndex}`)) out.add('summoned');",
+    "new": "",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-wire-unlawed",
+    "file": "src/systems/loot.js",
+    "old": "const lawRefuses = (/** @type {any} */ it) => !!_itemLaw && _itemLaw(it, { receiver: true }).length > 0;",
+    "new": "const lawRefuses = (/** @type {any} */ it) => false && !!it;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-the-worth-uncapped",
+    "file": "src/systems/itemLaw.js",
+    "old": "  return Math.max(Math.min(value, worthCeiling(item)), floor) * stack;",
+    "new": "  return Math.max(value, floor) * stack;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  },
+  {
+    "name": "INT1-an-absent-field-judged",
+    "file": "src/systems/itemLaw.js",
+    "old": "if (!Object.hasOwn(ITEM_FIELDS, k) || item[k] == null) continue;",
+    "new": "if (!Object.hasOwn(ITEM_FIELDS, k)) continue;",
+    "tests": [
+      "test/int1_itemlaw.test.js"
+    ]
+  }
+]

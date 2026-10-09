@@ -461,9 +461,11 @@ test('AUDIT REALM2 C5: a tile\'s class name past Latin-1 rides the checkpoint\'s
   const names = ['Łowca', 'Маг', 'Blade ⚔', 'Mage’s Aide', 'Dragon 🐉', 'Épéiste', 'Spell\\u0041sword "x"'];
   for (const className of names) {
     const made = (await realmCreate(dev.io, 'Nystul')).data;
-    const summary = realmSummaryOf({ level: 3, career: { name: className }, race: 'Breton', gender: 'female', faceIndex: 1 });
+    // INT2 (PIN MOVED): the tile's level the save's own (a birth's, 1 - the judge holds a summary claiming another), and the
+    // answer saying the hold
+    const summary = realmSummaryOf({ level: 1, career: { name: className }, race: 'Breton', gender: 'female', faceIndex: 1 });
     const put = await realmPut(dev.io, made.id, { lease: made.lease, seq: 1, summary }, JSON.stringify(freshSave({ v: 1 })));   // world.js realmBirth's (AUDIT REALM2 S1: a new character's)
-    assert.deepEqual(put, { ok: true, data: { ok: true, seq: 1 } }, `${className}: the birth's put lands`);
+    assert.deepEqual(put, { ok: true, data: { ok: true, seq: 1, tradeHeld: null } }, `${className}: the birth's put lands`);
     const row = (await realmList(dev.io)).characters.find((ch) => ch.id === made.id);
     assert.equal(row.summary.className, className, `${className}: the service reads the name back`);
     const boot = await openRealmBoot({ io: dev.io, id: made.id });
@@ -520,6 +522,7 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     const state = {
       playerEntity, duelMgr, log, checkpointAllowed, online: {}, playerSpawned: true, seatOut: () => seatOut, performance: { now: () => 1 },
       ownWalkWaiting: () => false,   // AUDIT LIVED1b S1: no raise waiting
+      stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
       townTalk: { overlay: null, say: () => {} }, DeathScreen: class {}, QUICK_SAVE_NAME: 'QuickSave', exitAutosaveNames: () => [], worldQuickSave: null,
       modes: { deathUp: () => false, quickSaveNow: () => { log.push({ health: playerEntity.health, effects: playerEntity.activeEffects.map((a) => a.name) }); return true; } },
       maxFatigue: () => 50, surfacePlayer: () => {}, console: { error() {} },
@@ -594,6 +597,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   const realmCheckpoint = mount(`${W.fn('realmCheckpoint')}\nreturn realmCheckpoint;`, {
     realmSession: { lost: null }, townTalk: { overlay: null }, DeathScreen: class {}, playerEntity: { health: 10 }, QUICK_SAVE_NAME: 'QuickSave',
     modes: { deathUp: () => false, quickSaveNow: () => answer }, worldQuickSave: null,
+    stampItemIds: () => 0,   // INT4 (PIN MOVED): a checkpoint stamps the valuable pieces' ids first - a name the fragment now reads
   });
   assert.equal(realmCheckpoint(), false, 'the composer refused: no checkpoint');
   const session = { transact: () => new Promise(() => {}), abandon() {} };

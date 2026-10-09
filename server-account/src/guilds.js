@@ -596,7 +596,7 @@ async function realmTreasury(ctx, player, me, at, kind, gold, region, letter = f
   const { db, bucket, nowS } = ctx;
   const prep = await prepareRealmRecord(ctx, player.id, at, (save) => (kind === 'deposit'
     ? (payFromSave(save, gold, region) ? null : 'realm-gold')
-    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')));
+    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')), { outbound: kind === 'deposit' });   // INT3: a deposit hands the gold to the guild's
   if (prep.error) return prep;
   const move = kind === 'deposit'
     ? db.prepare('UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3').bind(gold, me.guild_id, GUILD_TREASURY_MAX, displayName(player), nowS)

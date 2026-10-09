@@ -13,6 +13,13 @@
 // player walks into, never behind a wall. It stands on the highest floor under its own top (AUDIT TAVERN-TABLE L3: on
 // the entrance's, a table past a doorstep floated by the step).
 //
+// IT NEVER CUTS THE WALK (WALK-WHOLE, FIELD BUGS 2026-10-09c, "Card Table blocking": "it's in 'The Gold Dungeon' in
+// Menakat ... same tavern layout"). Nearest by the walk put it at the mouth of the first open doorway past a room too
+// small for its ring, its stools across the way through - a walk that leaves a cluttered entry room has only the doorway
+// to go by. A spot is passed over when the floor its table and ring cover, taken out of the walk, leaves any walked cell
+// unreachable from the entrance; the first spot that leaves the walk whole stands it, and only a room with no such
+// spot stands it where it stood before (no tavern loses a table it had). The walk's own grid, so every client the same.
+//
 // EVERY CLIENT THE SAME TABLE (AUDIT TAVERN-TABLE M3). The walk's order is fixed and its avoid list is the record's,
 // but its probes run in each client's own world frame - the streamer's compensation shifts a building by however far
 // that player has travelled, and every placement there is rounded to float32 - so a probe exactly on one of its
@@ -41,6 +48,9 @@ export const PLACE_REACH_M = 16;
 export const PLACE_FROM_DOOR_M = 3;
 /** The clear floor round the table's edge: the seat's distance out and a seated body behind it (metres). */
 export const PLACE_RING_M = SEAT_OUT + 0.4;
+/** WALK-WHOLE: the lane, in the walk's cells, the table's ring leaves round it for the walk to go by - a cell, and the
+ *  cell's own clear: half a metre and more between a stool and a wall. */
+export const PLACE_LANE_CELLS = 1;
 /** A body's radius (half a unit off the lattice), and the two heights above the floor it must be clear at (the knees'
  *  and the head's). */
 export const PLACE_BODY_R = 0.2875;
@@ -129,6 +139,37 @@ export function placedTableSpot(box, start, probe, avoid = []) {
   });
   const near = avoid.filter((a) => Math.abs(a[1] - floor0) <= PLACE_AVOID_DY);
   const fromDoor = Math.ceil(PLACE_FROM_DOOR_M / PLACE_CELL);
+  // WALK-WHOLE: whether the table and its ring at cell (i, k), and a lane round them, cut the walk - the walk again from
+  // its first cell with their cells taken out, short of a walked cell outside them
+  const seen = new Int32Array(side * side);
+  let stamp = 0;
+  const cutsWalk = (i, k, w) => {
+    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk + PLACE_LANE_CELLS;
+    const inside = (ci, ck) => Math.abs(ci - i) <= li && Math.abs(ck - k) <= lk;
+    const fi = first % side;
+    if (inside(fi, (first - fi) / side)) return true;
+    let taken = 0;   // the walked cells they take out
+    for (let dk = -lk; dk <= lk; dk++) for (let di = -li; di <= li; di++) {
+      const ci = i + di, ck = k + dk;
+      if (ci >= 0 && ck >= 0 && ci < side && ck < side && dist[ck * side + ci] >= 0) taken++;
+    }
+    stamp++;
+    seen[first] = stamp;
+    const q = [first];
+    for (let h = 0; h < q.length; h++) {
+      const c = q[h], ci = c % side, ck = (c - ci) / side;
+      for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ni = ci + di, nk = ck + dk;
+        if (ni < 0 || nk < 0 || ni >= side || nk >= side) continue;
+        const nc = nk * side + ni;
+        if (dist[nc] < 0 || seen[nc] === stamp || inside(ni, nk)) continue;
+        seen[nc] = stamp;
+        q.push(nc);
+      }
+    }
+    return q.length < order.length - taken;
+  };
+  let fallback = null;
   for (const c of order) {
     if (dist[c] < fromDoor) continue;
     const i = c % side, k = (c - i) / side;
@@ -142,8 +183,10 @@ export function placedTableSpot(box, start, probe, avoid = []) {
       if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;
       let fy = -Infinity;   // the highest floor under its top
       for (let dk = -w.tk; dk <= w.tk; dk++) for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);
-      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };
+      const spot = { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };
+      if (!cutsWalk(i, k, w)) return spot;
+      fallback ??= spot;
     }
   }
-  return null;
+  return fallback;
 }

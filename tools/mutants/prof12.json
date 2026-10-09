@@ -770,7 +770,7 @@
   {
     "name": "PROF12-svc-unbruised-bought",
     "file": "server-account/src/alchemy.js",
-    "old": "const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought));",
+    "old": "const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought - (st.loose ?? 0)));",
     "new": "const ownSpent = inp.n;",
     "tests": [
       "test/prof12_service.test.js"
@@ -848,7 +848,7 @@
   {
     "name": "PROF12-svc-brew-gold",
     "file": "server-account/src/alchemy.js",
-    "old": "    held.push(`${spendableSql('?1', '?2', `?${14 + 2 * i}`)} >= ?${15 + 2 * i}`);   // GOLD-MARKET: never gold's units",
+    "old": "    held.push(`${workableSql('?1', '?2', `?${14 + 2 * i}`)} >= ?${15 + 2 * i}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${14 + 2 * i}), 0) >= ?${15 + 2 * i}`);",
     "tests": [
       "test/prof12_service.test.js"
@@ -857,7 +857,7 @@
   {
     "name": "PROF12-svc-brew-no-spend",
     "file": "server-account/src/alchemy.js",
-    "old": "    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => spendStatements(db, {\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
+    "old": "    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
     "new": "",
     "tests": [
       "test/prof12_service.test.js"
@@ -1538,8 +1538,8 @@
   {
     "name": "PROF12-A1-brew-reckons-after",
     "file": "server-account/src/alchemy.js",
-    "old": "    // the unbruised herbs it reckoned, spent with it - AUDIT PROF12 A1: before the cauldron leaves, so the spends' clamp\n    // (professions.js unbruisedClamp: never more than the own units still held) reads the count already lowered\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => spendStatements(db, {\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
-    "new": "    ...inputs.flatMap((inp) => spendStatements(db, {\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n",
+    "old": "    // the unbruised herbs it reckoned, spent with it - AUDIT PROF12 A1: before the cauldron leaves, so the spends' clamp\n    // (professions.js unbruisedClamp: never more than the own units still held) reads the count already lowered\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
+    "new": "    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n",
     "tests": [
       "test/prof12_service.test.js"
     ]
@@ -1877,8 +1877,8 @@
   {
     "name": "PROF-541-B7-bought",
     "file": "server-account/src/professions.js",
-    "old": "const boughtWith = `CASE WHEN ${boughtAnySql(13)} THEN 'marks' END`;",
-    "new": "const boughtWith = `CASE WHEN ${boughtAnySql(13)} THEN NULL END`;",
+    "old": "const boughtWith = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 'gold' WHEN ${anySql(13, 'bought')} THEN 'marks' END`;",
+    "new": "const boughtWith = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 'gold' WHEN ${anySql(13, 'bought')} THEN NULL END`;",
     "tests": [
       "test/prof12_service.test.js"
     ],
@@ -1993,7 +1993,7 @@
   {
     "name": "PROF541-R2-S5-origin-read-before",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${boughtAnySql(6)} THEN 'bought' ELSE 'own' END, count FROM prof_crafts",
+    "old": "CASE WHEN ${anySql(6, LOOSE_ORIGIN)} THEN '${LOOSE_ORIGIN}' WHEN ${anySql(6, 'bought')} THEN 'bought' ELSE 'own' END, count FROM prof_crafts",
     "new": "${await (async () => { for (const inp of inputs) if ((await storeOf(db, player.id, character, inp.key)).bought > 0) return \"'bought'\"; return \"'own'\"; })()}, count FROM prof_crafts",
     "tests": [
       "test/seat2b_peace_service.test.js"

@@ -9,7 +9,8 @@ none edited the tree while any of them was reading (Home.md, DO NOT FIX WHILE TH
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, the hall parts of `professions.js`, the routes,
   migrations `0088` and `0089` then (AUDIT CHAP4 R15: renumbered at each merge of main since - `0090`/`0091` past
   CRAFT2-CRAFT5, `0091`/`0092` past SD9b, `0092`/`0093` past SCALE4, `0093`/`0094` past TAVERN CARDS, `0095`/`0096` past
-  SERVER-POST and HOURS-FIRST, and now `0096_npc_roll` and `0097_npc_halls` past CARDS10; AUDIT CHAP3 R5 said it
+  SERVER-POST and HOURS-FIRST, `0096`/`0097` past CARDS10, and now `0098_npc_roll` and `0099_npc_halls` past INT1-INT6
+  and BAG-CRAFT; AUDIT CHAP3 R5 said it
   otherwise, AUDIT CHAP5 R8 set it right);
 - **the client** (C): `src/net/npcRollTracker.js`, `npcHallBook.js`, the door, the board, `scenes/world.js`'s wiring;
 - **Daggerfall's law** (D): the leaf, the join, the halls each town keeps, the reveal - against DFU's C#;
@@ -26,7 +27,7 @@ reason; 158 and 8 since AUDIT CHAP4, which killed one). The first run judged a f
 turns for a real round trip, which a loaded runner does not always give - so the pin waits on what the trip moves, and
 every record judged on one failing test was run again: four the pins lens had called equivalent stand so. The arc's older lists hold
 too: `chap1.json` 25, `audit_chap1.json` 49 and `chap2.json` 39, all dead. The service stays `acct94`: none of it has
-shipped, so migration `0089` (today's `0097_npc_halls` - AUDIT CHAP5 R8) grew in place.
+shipped, so migration `0089` (today's `0099_npc_halls` - AUDIT CHAP5 R8) grew in place.
 
 ## Fixed
 
@@ -52,7 +53,7 @@ shipped, so migration `0089` (today's `0097_npc_halls` - AUDIT CHAP5 R8) grew in
 | D3 | low | A crossing member seeded exactly ON its rank's line was demoted at the review after DFU's own 112-day drift (`PlayerEntity.cs:2235-2242`), and looped C2 meanwhile. | `rollRankKeepOf`: its rank's band up to the next line less one, never past 79 (`ROLL_SEAT_LINE` - 1) - no new seat eligibility; a rank 8 or 9 crossing too (E6, decided). |
 | D4 | low | OFFLINE, a DFU 1:1 gap under the arc: the hidden guilds' halls were revealed for the ACTIVE book's membership alone, where DFU restores both books and registers each (`SerializablePlayer.cs:431-432`, `ThievesGuild.cs:253-257`) - a vampire's mortal Thieves Guild membership revealed nothing. | `revealingMemberships`: the active book with the two revealing guilds of the other, in both exterior hosts. |
 
-**The halls and their writs** (`server-account/src/npcHalls.js`, `server-account/src/professions.js`, `src/net/npcHallBook.js`, migration `0089` then, `0097_npc_halls` today)
+**The halls and their writs** (`server-account/src/npcHalls.js`, `server-account/src/professions.js`, `src/net/npcHallBook.js`, migration `0089` then, `0099_npc_halls` today)
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|

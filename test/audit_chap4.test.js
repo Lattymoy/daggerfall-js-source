@@ -452,7 +452,14 @@ test('AUDIT CHAP4 T6, T8: the orders the record states - a tied candidate\'s cha
   // was the lower half the time, and the unsorted list passed then
   const lo = `0${R2.id.slice(1)}`, hi = a.id;
   assert.ok(lo < hi);
+  // PIN MOVED (the merge of main past INT1-INT6): the INTEGRITY arc's tables hold the character by a foreign key with no
+  // ON UPDATE - the rename, a test's own, is made with the keys off and every row that names it carried with it
+  s.raw.exec('PRAGMA foreign_keys = OFF');
+  for (const { name } of s.raw.prepare("SELECT m.name FROM sqlite_master m WHERE m.type = 'table' AND EXISTS (SELECT 1 FROM pragma_foreign_key_list(m.name) f WHERE f.\"table\" = 'realm_characters')").all()) {
+    s.raw.prepare(`UPDATE ${name} SET char_id = ? WHERE char_id = ?`).run(lo, R2.id);
+  }
   s.raw.prepare('UPDATE realm_characters SET id = ? WHERE id = ?').run(lo, R2.id);
+  s.raw.exec('PRAGMA foreign_keys = ON');
   s.raw.prepare('DELETE FROM npc_chapter_seats WHERE account = ?').run(a.who.id);
   for (const [id, f] of [[hi, MAGES], [lo, FIGHTERS]]) s.raw.prepare("INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (?, ?, ?, ?, 'officer', ?, ?, ?)").run(f, ANTICLERE, id, a.who.id, WEEK, WEEK, NOW);
   assert.deepEqual((await chapterTitlesOfAccount(s.env.DB, a.who.id, NOW)).map((x) => x.char), [lo, hi]);

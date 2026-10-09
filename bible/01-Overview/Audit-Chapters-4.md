@@ -8,7 +8,7 @@ reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING):
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, `npcReceipts.js`, `npcMerit.js`,
   `npcChapters.js` (the Turning, the seats, the titles, the Focus, the Chronicle), the Chapters' parts of
-  `professions.js`, the routes, migrations `0096` to `0101`;
+  `professions.js`, the routes, migrations `0096` to `0101` (`0098` to `0103` today);
 - **the economy and its abuse** (E): a modified client, alts and rings, Merit's cap against the seats, the Focus, a
   seat's gifts;
 - **the client** (C): `src/net/npcRollTracker.js`, `chapterSheet.js`, `npcHallBook.js`, the board's Work tab, the hall's
@@ -23,8 +23,8 @@ Every finding was re-read here before a line moved. Each fix carries an `AUDIT C
 `test/audit_chap4.test.js` (28), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
 older records the fixes moved were re-aimed by content and run again, all dead; two were retired with the carry they
 mutated (CHAP4a's `CHAP4A-CARRY`, `CHAP4A-SCORE-CARRY` - E1); AUDIT CHAP3's `A3-S2-OFF`, recorded equivalent, dies now
-(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND; `acct100` and `world183` past CARDS9 and CARDS10 - AUDIT CHAP5 R9): none of the arc has shipped, so migrations `0096`, `0100` and
-`0101` grew in place; nothing here changes what the relay reads.
+(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND; `acct100` and `world183` past CARDS9 and CARDS10 - AUDIT CHAP5 R9; `acct102` past INT1-INT6 and BAG-CRAFT): none of the arc has shipped, so migrations `0096`, `0100` and
+`0101` (`0098`, `0102` and `0103` today) grew in place; nothing here changes what the relay reads.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:
 E1 (a sitting holder's x1.2 made a tie-break), D1 (a dormant membership kept on the Roll, asked by Merit and the seats),

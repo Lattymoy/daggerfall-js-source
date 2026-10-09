@@ -358,6 +358,9 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
   const words = eve.goods.goods().map((g) => [g.item.templateIndex, g.why]);
   assert.deepEqual(words, [[weapon.templateIndex, null], [570, 'bound to you'], [ARROW_TEMPLATE, 'arrows go in a quiver'], [armour.templateIndex, 'locked - unlock it first'],
     [9999, 'not a piece the market knows']]);
+  // INT1 (PIN MOVED): a piece of no template is one no honest client holds - the judge holds the trade of a character whose
+  // checkpoint carries one (server-account/src/judge.js) - so it says its word above and leaves the pack before the act
+  eve.entity.items.splice(4, 1);
   const sword = eve.entity.items[0];
   // FIELD BUGS 2026-10-09b MARK-WIRE: the HUD's watcher marks every weapon in the pack `acquired` its first frame
   // (ACQUIRE1), so the record the checkpoint carries has the mark and the offer (the wire's clamp) does not
@@ -374,8 +377,8 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.deepEqual(await during, { ok: false, error: 'held' }, 'taken inside the realm\'s hold - no checkpoint goes meanwhile');
   assert.ok(eve.session.seq >= seq + 2, 'the save checkpointed before the act, and the record one on by the act');
-  assert.deepEqual(eve.entity.items.map((it) => it.templateIndex), [570, ARROW_TEMPLATE, armour.templateIndex, 9999], 'out of the pack');
-  assert.deepEqual(s.record(eve.who).save.items.map((it) => it.templateIndex), [570, ARROW_TEMPLATE, armour.templateIndex, 9999], 'out of the record, the same');
+  assert.deepEqual(eve.entity.items.map((it) => it.templateIndex), [570, ARROW_TEMPLATE, armour.templateIndex], 'out of the pack');
+  assert.deepEqual(s.record(eve.who).save.items.map((it) => it.templateIndex), [570, ARROW_TEMPLATE, armour.templateIndex], 'out of the record, the same');
   // a refusal - the armour unlocked and offered in Drakes - puts it back
   setLocked(eve.entity.items[2], false);
   const a = eve.goods.good(eve.entity.items[2]);
@@ -432,8 +435,11 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   const theirs = mintPiece({ recipe: 'dagger:iron', quality: 1, seed: 77, maker: 'Mac' }, 'fedcba9876543210');
   const eve = await playing(s, 'Eve', { items: [plain(weapon), sigilStone(), plain(armour), plain(own), plain(theirs)] });
   const mac = await s.registered('Mac');
-  for (const [who, p] of [[eve.who, own.provenance], [mac, theirs.provenance]]) {
-    s.raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'x', 'dagger:iron', 113, 0, 1, 1, 'p1.x', ?)`).run(p, who.id, who.character, _now);
+  // INT2 (PIN MOVED): each row the piece's own template - the judge reads a crafted piece's provenance against the template
+  // the service minted it for (server-account/src/judge.js judgeProducts); PIN MOVED (its audit): and its own quality -
+  // a piece claiming a quality past its row's is no craft
+  for (const [who, piece] of [[eve.who, own], [mac, theirs]]) {
+    s.raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'x', ?, ?, ?, ?, 1, 'p1.x', ?)`).run(piece.provenance, who.id, who.character, piece.recipe, piece.templateIndex, piece.material ?? 0, piece.quality, _now);
   }
   let root = null;
   const said = [];

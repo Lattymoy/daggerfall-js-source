@@ -637,7 +637,7 @@
   },
   {
     "name": "CHAP3A-MIG-KIND",
-    "file": "server-account/migrations/0097_npc_halls.sql",
+    "file": "server-account/migrations/0099_npc_halls.sql",
     "old": "CHECK (kind IN ('court', 'hall', 'member'))",
     "new": "CHECK (kind IN ('court', 'hall'))",
     "tests": [
@@ -646,7 +646,7 @@
   },
   {
     "name": "CHAP3A-MIG-OWNER",
-    "file": "server-account/migrations/0097_npc_halls.sql",
+    "file": "server-account/migrations/0099_npc_halls.sql",
     "old": "UNIQUE (day, region, kind, faction, owner, slot)",
     "new": "UNIQUE (day, region, kind, faction, slot)",
     "tests": [
@@ -655,7 +655,7 @@
   },
   {
     "name": "CHAP3A-MIG-MERIT-UNIQUE",
-    "file": "server-account/migrations/0099_npc_merit.sql",
+    "file": "server-account/migrations/0101_npc_merit.sql",
     "old": "  UNIQUE (char_id, faction, source, ref)\n",
     "new": "  ref2 TEXT\n",
     "tests": [
@@ -664,7 +664,7 @@
   },
   {
     "name": "CHAP3A-MIG-MERIT-KEY",
-    "file": "server-account/migrations/0099_npc_merit.sql",
+    "file": "server-account/migrations/0101_npc_merit.sql",
     "old": "  UNIQUE (char_id, faction, source, ref)",
     "new": "  UNIQUE (faction, source, ref)",
     "tests": [
@@ -673,7 +673,7 @@
   },
   {
     "name": "CHAP3A-MIG-MERIT-SOURCE",
-    "file": "server-account/migrations/0099_npc_merit.sql",
+    "file": "server-account/migrations/0101_npc_merit.sql",
     "old": "CHECK (source IN ('writ', 'gate', 'raid'))",
     "new": "CHECK (source IN ('writ', 'gate'))",
     "tests": [

@@ -410,7 +410,8 @@ test('HOME1 a home\'s room carries no loot: it IS a room (its owner and their gu
   assert.deepEqual(shared.world.loot, [], 'the memory names no cupboard, even one marked seen');
   assert.deepEqual(shared.world.actions.map((a) => a.key), ['door:0'], 'the doors are the room\'s');
   const mine = ctx();
-  const peer = { locationKey: key, stamp: 'other', world: { actions: [{ key: 'door:0', state: 'start', t: 0 }], loot: [{ k: 'container:0', r: [{ name: 'Rags', templateIndex: 2 }], d: 5 }] } };
+  // INT1 (PIN MOVED): the peer's piece in the group its template stands in - the wire's item law takes no piece without one
+  const peer = { locationKey: key, stamp: 'other', world: { actions: [{ key: 'door:0', state: 'start', t: 0 }], loot: [{ k: 'container:0', r: [{ name: 'Rags', group: 'Gems', templateIndex: 2 }], d: 5 }] } };
   assert.equal(applyInteriorShared(mine, peer, { ...mintInteriorShared(key, { home: true }), today: 10 }), true);
   assert.deepEqual(mine.containers[0].items.map((i) => i.name), ['My Sword'], 'a peer\'s word never lands on the owner\'s chest');
   assert.equal(mine.actions.restored.length, 1, 'the doors do');

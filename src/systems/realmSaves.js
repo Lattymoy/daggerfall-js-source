@@ -462,6 +462,22 @@ export function createRealmSession({
     lost = error;
     try { onLost(error); } catch (e) { console.warn('[realm] the lost handler failed', e); }
   };
+  // INT3 (bible/06-Systems/Integrity-Arc.md): THE JUDGE'S HOLD, as the last landed checkpoint said it - null for none,
+  // undefined before any answer said (a service from before the judge says nothing). `session.onTradeHeld(prev, now,
+  // why)` is told each time it moves - `why` the first thing the law found (`{ code, t }`, its template), when the law
+  // holds it (AUDIT INT: an honest player held over a piece was never told which); the answer a checkpoint's callers get
+  // stays `{ ok, seq }`.
+  /** @type {string | null | undefined} */
+  let tradeHeld;
+  const heard = (/** @type {unknown} */ v, /** @type {unknown} */ why = null) => {
+    if (v === undefined) return;
+    const now = typeof v === 'string' ? v : null;
+    if (now === tradeHeld) return;
+    const prev = tradeHeld;
+    tradeHeld = now;
+    const what = why && typeof why === 'object' && Number.isInteger(/** @type {any} */ (why).t) ? { code: String(/** @type {any} */ (why).code ?? ''), t: /** @type {any} */ (why).t } : null;
+    try { session.onTradeHeld?.(prev ?? null, now, what); } catch (e) { console.warn('[realm] the hold handler failed', e); }
+  };
   /** AUDIT REALM2 C4: a save's callers told how the put that carried it went - once. */
   const answer = (/** @type {{ waiters: Array<(r: any) => void> }} */ job, /** @type {any} */ r) => { for (const settle of job.waiters.splice(0)) settle(r); };
   async function drain() {
@@ -481,6 +497,7 @@ export function createRealmSession({
         }
         if (r.ok) {
           unsure = false; current = r.data?.seq ?? current + 1; last = { ok: true, seq: current }; answer(job, last);
+          heard(r.data?.tradeHeld, r.data?.tradeHeldWhy);
           landedKey = idleKeyOf(job.text, job.summary); landedAt = now();   // SCALE2b
           // RESCUE-SAVE: the newest save landed - no copy; or a newer one waits, its copy at the sequence now held
           missed = false;
@@ -518,6 +535,10 @@ export function createRealmSession({
   const session = {
     id,
     get seq() { return current; },
+    /** INT3: the judge's hold the last landed checkpoint said - a reason, null for none, undefined before any said. */
+    get tradeHeld() { return tradeHeld; },
+    /** INT3: told `(prev, now, why)` each time the hold moves - `why` the law's first piece (`{ code, t }`) or null; the host's to set. @type {((prev: string | null, now: string | null, why: { code: string, t: number } | null) => void) | null} */
+    onTradeHeld: null,
     get lost() { return lost; },
     get waiting() { return !!pending; },
     /** CHAP1: the lease this tab plays under - the Roll's acts ride it (net/npcRollTracker.js) - or null once the

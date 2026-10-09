@@ -61,6 +61,7 @@ import { profSwitchOf } from '../../src/net/professionLaw.js';
 import { GUILD_INVITE_TTL_S } from '../../src/net/guildLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
+import { REALM_FINDINGS_KEEP_S, REALM_WEALTH_KEEP_S } from './review.js';   // INT2/INT5: the judge's record's keeping
 
 /** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
@@ -168,6 +169,12 @@ export const HOUR_JOBS = Object.freeze([
   // every read of an invitation asks `at > now - GUILD_INVITE_TTL_S` (guilds.js)
   ['guild-invites', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM guild_invites WHERE rowid IN (SELECT rowid FROM guild_invites WHERE at <= ?1 LIMIT ?2)', ctx.nowS - GUILD_INVITE_TTL_S), SWEEP_ROWS)],
+  // INT2/INT5 (bible/06-Systems/Integrity-Arc.md): the judge's findings past their keeping, and the wealth's hours past the
+  // window staff set the budget's line from
+  ['realm-findings', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM realm_findings WHERE id IN (SELECT id FROM realm_findings WHERE at < ?1 LIMIT ?2)', ctx.nowS - REALM_FINDINGS_KEEP_S), SWEEP_ROWS)],
+  ['realm-wealth-hours', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM realm_wealth_hours WHERE rowid IN (SELECT rowid FROM realm_wealth_hours WHERE hour < ?1 LIMIT ?2)', ctx.nowS - REALM_WEALTH_KEEP_S), SWEEP_ROWS)],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

@@ -966,7 +966,7 @@
   },
   {
     "name": "DW-E3-icon-archive-216",
-    "file": "src/systems/deepWatersFishItems.js",
+    "file": "src/systems/deepWatersFishRows.js",
     "old": "export const fishIconArchive = (templateIndex) => templateIndex;",
     "new": "export const fishIconArchive = (templateIndex) => 216 + 0 * templateIndex;",
     "tests": [
@@ -975,7 +975,7 @@
   },
   {
     "name": "DW-E3-template-remap-dropped",
-    "file": "src/systems/deepWatersFishItems.js",
+    "file": "src/systems/deepWatersFishRows.js",
     "old": "  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,",
     "new": "  ...t,",
     "tests": [
@@ -984,7 +984,7 @@
   },
   {
     "name": "DW-E3-group",
-    "file": "src/systems/deepWatersFishItems.js",
+    "file": "src/systems/deepWatersFishRows.js",
     "old": "export const FISH_GROUP = 'UselessItems2';",
     "new": "export const FISH_GROUP = 'UselessItems1';",
     "tests": [
