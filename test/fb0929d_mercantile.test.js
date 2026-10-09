@@ -22,16 +22,20 @@ test('MERC-RISE: the field\'s counter - a higher Mercantile never sells for less
   // the report's two offers were half of each seller's own ask - the old law, to the gold
   assert.deepEqual([Math.floor(ask(COST, Q, 60, 100) / 2), Math.floor(ask(COST, Q, 90, 100) / 2)], [3499, 2888]);
   assert.ok(sale(COST, Q, 90, 100) >= sale(COST, Q, 60, 100), `${sale(COST, Q, 90, 100)} at 90, ${sale(COST, Q, 60, 100)} at 60`);
-  assert.equal(sale(COST, Q, 60, 100), 2718, 'half of the 5436 this counter asks the best haggler');
+  // PIN MOVED (MERC-SLOPE, FIELD BUGS 2026-10-08, EvoAva: "the same exact prices ... no matter how many mercantile
+  // levels"): the half of the 5436 this counter asks the best haggler is the CEILING, the best haggler's own; under it
+  // each seller stands where their Daggerfall offer stands against the best's, at half its strength
   assert.equal(ask(COST, Q, 100, 100), 5436);
-  // the counter's own figure, whoever sells: half of its least ask, under Daggerfall's offer
-  for (const m of [0, 30, 60, 90, 100]) assert.equal(sale(COST, Q, m, 100), Math.min(sale(COST, Q, m, 100, false), 2718), `Mercantile ${m}`);
+  assert.deepEqual([0, 30, 60, 90, 100].map((m) => sale(COST, Q, m, 100)), [2187, 2344, 2500, 2663, 2718], 'every twenty or thirty Mercantile is felt, the best at the half');
+  // MERC-SLOPE's audit: a cheap lot whose half is one gold is a gold, never nothing - as MERC-RISE paid it
+  assert.deepEqual([6, 8, 10].map((c) => sale(c, 10, 20, 50)), [1, 1, 1]);
+  assert.equal(sale(5, 10, 20, 50), 0, 'a half of nothing stays nothing, as before');
   // through the trade window's own door
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   globalThis.location = { search: '?online' };
   try {
-    assert.equal(getTradePrice('Sell', COST, Q, { mercantile: 90, personality: 100 }), 2718);
-    assert.equal(getTradePrice('Sell', COST, Q, { mercantile: 60, personality: 100 }), 2718);
+    assert.equal(getTradePrice('Sell', COST, Q, { mercantile: 90, personality: 100 }), 2663);
+    assert.equal(getTradePrice('Sell', COST, Q, { mercantile: 60, personality: 100 }), 2500);
   } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;
   }

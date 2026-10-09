@@ -321,7 +321,7 @@ test('TIME3 a party member\'s copy runs on its holder\'s clock: its countdowns m
   assert.equal(got.ownSecondsAt, 3_000_000, 'marked: on this character\'s clock, in whole seconds');
   const old = JSON.parse(keep); delete old.ownSecondsAt; old.resources[0].clock.lastWorldTimeSample = 7000;
   assert.equal(questDataOnThisClock(old, 3_000_000, 7777).resources[0].clock.lastWorldTimeSample, 7000 + 3_000_000 - 7777, 'a sender from before TIME3 stamped the event clock: moved from there');
-  assert.deepEqual(QUEST_OWN_SECOND_KEYS, ['lastWorldTimeSample', 'lastTimePlayed', 'lastSpawnTime', 'guardAnchor', 'questTombstoneTime']);
+  assert.deepEqual(QUEST_OWN_SECOND_KEYS, ['lastWorldTimeSample', 'lastTimePlayed', 'lastSpawnTime', 'guardAnchor', 'questTombstoneTime', 'shelvedAt']);   // QUEST-SHELF (PIN MOVED): the second a quest was set aside, on the same clock
   assert.deepEqual(QUEST_WORLD_SECOND_KEYS, ['questStartTime']);
 });
 

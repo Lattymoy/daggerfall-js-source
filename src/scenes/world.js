@@ -646,7 +646,7 @@ import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopil
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
-import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
@@ -812,6 +812,7 @@ import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime
 import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
+import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
@@ -6267,6 +6268,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // StartGameBehaviour.ApplyStartSettings (:283), never rebuilding a
   // live world mid-session.
   const state = new StreamingWorldState(fogDistance); pipeline.keepPlaces('pixel', (2 * state.terrainDistance + 1) ** 2);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced; FIELD BUGS 2026-10-04d PLACE-LRU: and the pixels gone that are kept warm, one whole view's worth (the player's "minimum set for chunks visible by viewing range" is the view itself, never freed)
+  const _tvSeaT = [0, 0, 0];
+  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel.
+   *  FIELD BUGS 2026-10-08 (UNSTUCK-OUT's audit): declared here, beside `state`, not with the travel view far below - a
+   *  fast-travel landing held in a rock asks it (its open ground is above the sea), and the boot's own load lands before
+   *  that line ran: a const read in its dead zone threw. */
+  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
   const queue = state.init(startPixel.x, startPixel.y);
   if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
   _wodArrival = wodArrivalOf(queue);   // WOD6: the first world is an InitWorld too
@@ -13128,6 +13135,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
       console.warn(`[travel] start marker at ${raw[0].toFixed(1)},${raw[2].toFixed(1)} stands in geometry (floor ${(pos[1] - raw[1]).toFixed(1)} above the flat) - landing at the edge instead`);
     }
+    // UNSTUCK-OUT (FIELD BUGS 2026-10-08, Sahh: "I got stuck inside a mountain during fast travel"): a floor the ray
+    // found INSIDE a rock - a World of Daggerfall mountain's inner face, or under the crown of one standing in the
+    // ground - stands the body where the rock's walls cannot be seen and hold it. The nearest open ground instead.
+    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {
+      const open = openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
+      if (open) {
+        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
+        pos = open;
+      }
+    }
     // Party journeys validate after the pixel builds but BEFORE its terrain
     // landing is committed. A missing hull must not expose the seabed fallback.
     const resolved = resolveArrival ? await resolveArrival(pos) : null;
@@ -18357,6 +18374,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens,
+    questAway: (uid) => isShelved(questBridge?.machine.getQuest(uid)),   // QUEST-SHELF's audit: its rumors told by no one while it is away
     // AUDIT 39 (#109): THE COMMON-RUMOR MACRO PASS, which no host
     // ever supplied - so every regional-conditions rumor the sim
     // files (TEXT.RSC 1400-1483, all of them naming %fx1/%fx2/%fl1/
@@ -18397,7 +18415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // topic tree reads it, and so does the exterior automap's
   // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
   // set.
-  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid);
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned && !isShelved(q)).map((q) => q.uid);   // QUEST-SHELF: a quest set aside is no live one
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
     getAllActiveQuestIds: activeQuestIds,
@@ -20623,6 +20641,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         return;
       }
       if (result.reason === 'finished') return;   // DISC28-I: a partner's finish of a quest I never had - nothing to say
+      // QUEST-SHELF: a copy I set aside - the party's step is not mine while it is away; its audit: a DELIBERATE share is
+      // answered (RECEIVER_REFUSAL_TEXT 'shelved', below), only the background sync is quiet
+      if (result.reason === 'shelved' && quest.data?.sync === 1) return;
       // AUDIT DISC28 QS-3: nor any refusal of a FINAL - a partner's finish is no offer: to a member who ended the copy
       // already (both delivered; a timer that ran out in every world on the same tick), holds one of their own, or never
       // took it, it is news of nothing - and a sync's 'done' is a copy I finished myself. Said, it told a party that had
@@ -20957,8 +20978,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
   // AUDIT LEGACY III W3: and never while lying dead - an Enduring death in the temple, its rise still to come, wed (the
   // duel's own law, duelCan's 'dead'; a wedding has no word of its own for it, so 'busy')
+  // FIELD BUGS 2026-10-08 (Sahh: two Enduring or two Bloodlines characters "cannot seem to marry each other" - the
+  // button grey everywhere): wedRefusal answers NULL when the one played may wed, and `?? 'house'` read that null as
+  // no house - every character refused, at every temple, and every proposal and answer with it. 'house' only for no host.
   const wedCan = () => (playerEntity.health <= 0 || modes?.deathUp?.() ? 'busy'
-    : online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+    : online?.status === 'open' && online.wedOk ? (legacyHost ? legacyHost.wedRefusal() : 'house') : 'busy');
   /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
   let _wedBox = null;
   let _wedBoxPeer = null;
@@ -28069,9 +28093,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters
   // carves under clear water is no floor for a veil, whose foot the surface (no depth written) never cuts
-  const _tvSeaT = [0, 0, 0];
-  /** The sea's surface in the scene (y) - Deep Waters' own, or the ground's clamp at OceanElevation; one for every pixel. */
-  const tvSeaY = () => (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _tvSeaT)[1];
+  // (tvSeaY, the sea's surface, stands beside `state` - FIELD BUGS 2026-10-08 UNSTUCK-OUT's audit: the boot's load reads it)
   const tvGroundAt = (x, z) => {
     const n = state.worldCoords([x, 0, z]);
     const g = tvSceneOf(n.x, n.z)[1];

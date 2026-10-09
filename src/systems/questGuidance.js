@@ -44,7 +44,7 @@ export const townTierOn = () => guidanceTier() !== 'journal';
  *  quest's item, people and foes, and the compass pointed at them. The behaviour's quest, else its resource's. */
 export const questEnded = (b) => {
   const q = b?.targetQuest ?? b?.targetResource?.parentQuest ?? null;
-  return !!q && (q.questComplete === true || q.questTombstoned === true);
+  return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null);   // QUEST-SHELF: and one set aside marks nothing while away
 };
 
 /**

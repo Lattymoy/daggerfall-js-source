@@ -35,6 +35,7 @@ import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { stringHash } from '../../formats/netRuntime.js';   // QUEST-AUDIT II SHARED-SEAT: a shared copy's re-seat, seeded (a leaf)
 import { getSeed, setSeed } from '../../formats/dfRandom.js';   // AUDIT QA2: a shared re-seat's residence name, seeded and the state put back
 import { seededFirst } from '../wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
+import { isMainStoryDungeon } from '../../world/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
 import { boundWorldDataBlocks } from '../../formats/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
@@ -249,6 +250,7 @@ export class Place extends QuestResource {
   /** reseatMovedSite's law, under whichever die it was handed. */
   _reseatMovedSite(world) {
     const sd = this.siteDetails;
+    if (sd?.siteType === SITE_TYPES.Dungeon) return this._reseatStoryDungeon(world);   // KVAR-HOLD
     if (sd?.siteType !== SITE_TYPES.Building) return false;
     const held = sd.unseated ? { ...sd, ...sd.unseated } : sd;   // RESEAT-GAPS: an unseated site is asked by its own record
     if (!(held.buildingKey > 0)) return false;
@@ -284,6 +286,62 @@ export class Place extends QuestResource {
     if (!next) return this._unseat(held);
     this.siteDetails = { ...next, questUID: held.questUID ?? next.questUID, magicNumberIndex: held.magicNumberIndex ?? 0 };
     this._stampSiteLayout();
+    return true;
+  }
+
+  /**
+   * KVAR-HOLD (FIELD BUGS 2026-10-08, Themicles: Lord K'avar Part 1 "assigned K'var's location to Privateers Hold ... I
+   * can now not receive new Fighters Guild quests with this one still stuck"): A RANDOM DUNGEON THE MAIN STORY OWNS,
+   * CHOSEN AGAIN. A save made before _collectDungeonIndicesOfType kept the main story's dungeons out holds a remote
+   * dungeon site in one - its foe on a marker the player cannot reach, and the questor hidden until the quest ends. At
+   * the load's re-seat (machine.js reseatMovedSites) such a site is drawn again in its own region by the place's declared
+   * dungeon type, else any dungeon (_setupRemoteSite's own retry); what the quest stood on its markers is carried to the
+   * new site's (_carryAssignments), and a reveal the quest already made of it is made again, so the map shows where the
+   * quest went. A site the main story's own Place names (`permanent`) is never this: only a remote dungeon. Answers
+   * whether it moved.
+   */
+  _reseatStoryDungeon(world) {
+    const sd = this.siteDetails;
+    // KVAR-HOLD's audit: a `local dungeon` is drawn as a remote one (_setupLocalSite), so it is rescued as one too
+    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;
+    const { p2 } = this.declaredSiteLaw();
+    // KVAR-HOLD's audit: among the few nearest the dungeon it leaves - never this client's own player - so every copy of a
+    // shared quest, under its one die (reseatMovedSite's SHARED-SEAT), draws the same site
+    const row = world.maps.getRegion(sd.regionIndex)?.mapTable?.find?.((t) => t?.mapId === sd.mapId) ?? null;
+    const origin = row ? mapTablePixel(row) : null;
+    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });
+    const next = site ? this._carryAssignments(sd, site) : null;
+    if (!next) return false;
+    this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
+    for (const task of this.parentQuest?.tasks?.values?.() ?? []) {
+      for (const a of task?.actions ?? []) {
+        if (a?.typeName !== 'RevealLocation' || !a.isComplete || a.placeSymbol?.name !== this.symbol?.name) continue;
+        // KVAR-HOLD's audit: the reveal is the map's, best-effort - a name the world will not resolve throws (PlayerGPS's
+        // law), and the site has moved either way; the machine moves its link next (_reseatMovedOf's follow)
+        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }
+      }
+    }
+    return true;
+  }
+  /**
+   * KVAR-HOLD's audit: A DUNGEON SITE FITTED TO THE SIZE ITS LINK BUILDS. A site drawn again is enumerated before its
+   * link stands there, so its dungeon was sized by the settings (no link: dungeonSizeFor's last word) - and once the
+   * link moves, by the quest's own frozen size: a medium build's markers in a whole dungeon, or the other way round.
+   * After the machine moves the link (_reseatMovedOf) the site is enumerated again on the dungeon its world builds now;
+   * where the markers come out otherwise, what stood on them is carried (_carryAssignments). Answers whether it moved.
+   */
+  fitSiteToBuild(world) {
+    const sd = this.siteDetails;
+    if (sd?.siteType !== SITE_TYPES.Dungeon) return false;
+    const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+    const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
+    if (!location?.dungeon?.blocks) return false;
+    const { questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, location);
+    const at = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.dungeonZ},${m?.markerID}`).join(';');
+    if (at(questSpawnMarkers) === at(sd.questSpawnMarkers) && at(questItemMarkers) === at(sd.questItemMarkers)) return false;
+    const next = this._carryAssignments(sd, { ...sd, questSpawnMarkers, questItemMarkers });
+    if (!next) return false;
+    this.siteDetails = { ...next, questUID: sd.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
     return true;
   }
 
@@ -705,22 +763,30 @@ export class Place extends QuestResource {
    *  no quest markers), the assigned-dungeon exclusion, and the
    *  marker requirement. */
   _selectRemoteDungeonSite(world, dungeonTypeIndex) {
-    const regionIndex = world.currentRegionIndex();
+    const site = this._remoteDungeonSite(world, world.currentRegionIndex(), dungeonTypeIndex);
+    if (!site) return false;
+    this.siteDetails = site;
+    return true;
+  }
+  /** SelectRemoteDungeonSite's draw in `regionIndex`: the site details, or null (KVAR-HOLD: the re-seat draws in the
+   *  site's own region, not the player's). */
+  _remoteDungeonSite(world, regionIndex, dungeonTypeIndex, { origin = null } = {}) {
     const regionData = world.maps.getRegion(regionIndex);
-    if (!regionData || regionData.locationCount === 0) return false;
+    if (!regionData || regionData.locationCount === 0) return null;
 
     let foundIndices = this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex);
-    if (!foundIndices.length) return false;
-    const reach = this._questReach(world);   // NEARBY-QUESTS: the dungeons within reach, or the nearest few
+    if (!foundIndices.length) return null;
+    // NEARBY-QUESTS: the dungeons within reach, or the nearest few; KVAR-HOLD's re-seat: the nearest few to `origin`
+    const reach = origin ? { origin, pixels: 0 } : this._questReach(world);
     if (reach) foundIndices = nearbyIndices(regionData, foundIndices, reach.origin, reach.pixels);
     const index = this._range(foundIndices.length);
     const location = world.maps.getLocation(regionIndex, foundIndices[index]);
-    if (!location?.loaded) return false;
+    if (!location?.loaded) return null;
 
     const { questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, location);
-    if (!validateQuestMarkers(questSpawnMarkers, questItemMarkers)) return false;
+    if (!validateQuestMarkers(questSpawnMarkers, questItemMarkers)) return null;
 
-    this.siteDetails = {
+    return {
       questUID: this.parentQuest?.uid ?? 0,
       siteType: SITE_TYPES.Dungeon,
       mapId: location.mapTableData.mapId,
@@ -738,7 +804,6 @@ export class Place extends QuestResource {
       questSpawnMarkers, questItemMarkers,
       selectedMarker: { targetResources: null },
     };
-    return true;
   }
 
   /** SelectRemoteLocationExteriorSite (:940-985): a Town exterior with
@@ -978,6 +1043,12 @@ export class Place extends QuestResource {
     const found = [];
     for (let i = 0; i < regionData.locationCount; i++) {
       if (!this._isDungeonType(regionData.mapTable[i].locationType)) continue;
+      // KVAR-HOLD (FIELD BUGS 2026-10-08; a DEPARTURE, Ledger A): THE MAIN STORY'S DUNGEONS ARE NO RANDOM QUEST'S. DFU's
+      // CollectDungeonIndicesOfType (Place.cs:1346-1380) excludes only a dungeon another Place holds, so once the tutorial
+      // and _BRISIEN let Privateer's Hold go a guild's `remote dungeon2` could land there - Lord K'avar on a marker no
+      // player reaches, his questor hidden, the guild's door shut - and NEARBY-QUESTS' nearest few made it likely beside
+      // the classic start. The main story's own Places name them `permanent` and never pass here.
+      if (isMainStoryDungeon(regionData.mapTable[i].mapId)) continue;
       if (this._isDungeonAssigned(activeQuestSites, parentQuestPlaces, regionData.mapTable[i].mapId)) continue;
       const type = regionData.mapTable[i].dungeonType;
       if (dungeonTypeIndex === -1) {
