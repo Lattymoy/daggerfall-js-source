@@ -295,5 +295,41 @@
     "tests": [
       "test/sd25_remnant.test.js"
     ]
+  },
+  {
+    "name": "SD25-S8-the-gears-whole-at-once",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "g.k = (t - t0) / (go - t0);",
+    "new": "g.k = 1;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-forming-past-their-leaving",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "    if (!(t >= t0 && t < go)) continue;\n    for (let h = 0; h < 2; h++) {",
+    "new": "    if (!(t >= t0 && t < a.at)) continue;\n    for (let h = 0; h < 2; h++) {",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-forming-cold",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "d.texRemap = gatherMap;",
+    "new": "d.texRemap = null;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-each-at-the-other-hand",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "p = SD_REM_HAND[f.h];",
+    "new": "p = SD_REM_HAND[1 - f.h];",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
   }
 ]

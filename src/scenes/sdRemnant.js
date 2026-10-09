@@ -448,7 +448,7 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       for (let g = 0; g < gearDraws.length; g++) {
         const d = gearDraws[g], q = gears[g], f = q ? null : forming[g - gears.length];
         if (!d) continue;
-        if (q) { gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.texRemap = null; d.hidden = false; }   // AUDIT SD III (V12): on edge along its flight
+        if (q) { gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix, q.yaw); d.hidden = false; d.texRemap = null; }   // AUDIT SD III (V12): on edge along its flight
         else if (f && formAt(f)) { gatherGearMatrix(f, d.object.matrix); d.texRemap = gatherMap; d.hidden = false; }   // forming at its drawn hand, hot in the Volley's colour
         else hide(d);
       }
