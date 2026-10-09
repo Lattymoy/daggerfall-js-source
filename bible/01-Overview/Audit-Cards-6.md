@@ -136,4 +136,5 @@ order's expiry, the ranked first deal (`cards10_relay`), the watcher's last boar
 C9, E10); the foe's registration (`cards10_service`, D11); the hooks' header (`audit39_uicore`, E1), the press's pointer and the squeeze's way (`cards3c_gestures`, E2, E22), the hand's fit (`cards3b_hand`, E21), the Hold'em relay's floor (`cards5_relay`, E20). `tools/mutants/auditcards6_a.json` (21), `_b` (24), `_c`
 (81), `_d` (33, one equivalent recorded), `_e` (26), every one dead; the records of `cards10`, `cards9`, `cards2b`,
 `cards8`, `cards6`, `auditcards5`, `auditcards4`, `auditcards3`, `audit625`, `sigil1`, `sd9e`, `stormshed2`, `arena4`, `realm5` and
-`realm6` the fixes moved re-aimed by content and run again.
+`realm6` the fixes moved re-aimed by content and run again. The re-run on the merged tree found one older survivor, AUDIT CARDS-3's `D-host-sit-watch-kept`
+(it survived on 8b603e308 too): a second close of a watch the sit already closed - recorded equivalent, with its why.

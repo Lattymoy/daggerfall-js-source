@@ -911,7 +911,9 @@
       "test/cards5_client.test.js",
       "test/cards5_relay.test.js",
       "test/cardsbay_faces.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "since AUDIT CARDS-4 D4 the sit closes its table's watch itself (sitAtCardTable's closeCardWatch(i), before openCardGame), and no watch opens for the table the player sits at (cardOnlineFrame: AUDIT CARDS-3 B6/D5's `cardSeat && f.table === cardSeat.table` return) - so this second close finds nothing on every road to it, the sit's and Iliac Hand's onHoldem alike. Found by AUDIT CARDS-6's re-run; it survived on 8b603e308 too, before the audit's fixes"
   },
   {
     "name": "D-host-waiting-midhand",
