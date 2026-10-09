@@ -159,6 +159,9 @@ export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;
 /** WILD1: how long a fallen player's room still carries a directed wild frame to them - the zone's body lies two
  *  minutes (systems/wildZone.js WILD_DEATH_HOLD_S), with a margin for the clocks. */
 export const WILD_GHOST_MS = 150_000;
+/** INT9 (AUDIT): how often my word that I stand in the zone is said again on my cell's socket while it stands - a relay
+ *  object that restarted forgot it (and with it every fight there), and the next word makes the fighter again. */
+export const WILD_ZONE_KEEP_MS = 15_000;
 /** RUN-IN-PLACE (2026-10-06, Mac: "theres a lot of player desync online, including players appearing to run in
  *  place"): how long a peer drawn standing still may go on reading as moving. A body walks off its drawn pose's `mv`
  *  (net/peerClimb.js peerMoving, every on-foot renderer and the footsteps), and the play-out (`tick`) stands a peer at
@@ -577,7 +580,8 @@ export class OnlineSession {
     this.onWild = null;           // WILD1: (id, data, sub) => void - a directed wild frame at ME (a blow, a fallen's gear, a pick, a gift), projected by the wire's validWildData; `sub` the sender's account as the RELAY verified it
     this.onWildRoom = null;       // WILD1: (word, room) => void - my own room's word on its remains (validWildOut)
     this._wildBucket = null;      // WILD1: my own wild frames out - wildGate's law
-    this._wildZone = 0;           // INT9: my word on the open zone (1: I stand in it), said on every socket I hold
+    this._wildZone = 0;           // INT9: my word on the open zone (1: I stand in it) - AUDIT INT9: said on my own cell's socket alone (a halo's is 0)
+    this._wildZoneAt = -Infinity; // INT9 (AUDIT): when it was last said there - said again every WILD_ZONE_KEEP_MS while it stands
     this.onWildRef = null;        // INT9: (g, room) => void - the zone referee's word (net/wildRef.js), projected by the wire's validWildRefOut, and the room it came from
     this._inWildBuckets = new Map();   // WILD1: the gate on directed wild frames coming in, per sender (`_directedIn`)
     this._fallenIn = new Map();   // WILD1: id -> { room, at } - where a fallen player's death pose came from: a body in the zone is still answered through that room's socket (its owner stays hello'd until it rises - scenes/world.js, the ghost)
@@ -732,12 +736,19 @@ export class OnlineSession {
       // status is the SOCKET's - open, or still connecting (an 'error' after a relay error frame is a close on its way)
       // AUDIT WB12d (C6): each socket's own relay's word goes with it - the cell crossed into keeps the raid and the rite
       // its welcome said it keeps, and the one stepped down keeps its own (sendRaid/sendRite read the socket's word)
-      const old = { ws: this._ws, status: this.status === 'open' ? 'open' : 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS, since: this._now(), raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk: this.foeInventoryOk };   // SERPENT1: and the serpent's
+      const old = { ws: this._ws, status: this.status === 'open' ? 'open' : 'connecting', retryAt: null, backoff: BACKOFF_MIN_MS, since: this._now(), raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk: this.foeInventoryOk, wildOk: this.wildOk };   // SERPENT1: and the serpent's; INT9 (AUDIT): and the zone's
       this._halo.delete(room);
       this._halo.set(this.room, old);
       this._ws = h.ws; this.status = h.status; this.error = null; this._retryAt = h.retryAt; this._backoff = h.backoff;
       this.raidOk = !!h.raidOk; this.riteOk = !!h.riteOk; this.serpentOk = !!h.serpentOk; this.sdOk = !!h.sdOk;   // SD3: and the find's
       this.foeInventoryOk = !!h.foeInventoryOk;
+      this.wildOk = !!h.wildOk;   // INT9 (AUDIT): the zone's word went with neither socket
+      // INT9 (AUDIT): MY ZONE WORD MOVES WITH MY CELL - the cell stepped down to a halo hears I left it, the one crossed into
+      // that I stand in it (a fighter's bar is its own cell's; the hub carries it across)
+      if (this._wildZone === 1) {
+        if (old.wildOk && old.status === 'open') this._sayZone(old.ws, 0);
+        if (this.wildOk && this.status === 'open' && this._welcomed.has(this._ws)) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }
+      }
       this.room = room;
       this._pose = pose ?? this._pose;
       this._lastSent = null; this._lastSentAt = -Infinity;
@@ -1315,9 +1326,10 @@ export class OnlineSession {
    *  LEFT THE SOCKET; false is refused to the caller, never queued here. */
   sendWild(data, { room = null } = {}) {
     const d = validWildData(data);
-    if (!d || !this.wildOk || d.k === 'zone') return false;   // INT9: the zone word is setWildZone's, on every socket
+    if (!d || !this.wildOk || d.k === 'zone') return false;   // INT9: the zone word is setWildZone's, on my cell's socket
     if (wildDirected(d) && d.to === this.id) return false;
     const halo = !wildDirected(d) && room && room !== this.room ? this._halo.get(room) : null;
+    if (!wildDirected(d) && room && room !== this.room && !halo) return false;   // INT9 (AUDIT): a room I no longer hold - never my own instead
     const ws = wildDirected(d) ? this._wildSocketFor(d.to) : halo ? (halo.status === 'open' && halo.wildOk ? halo.ws : null) : (this.status === 'open' ? this._ws : null);
     if (!ws) return false;
     const gate = wildGate(this._wildBucket, this._now());
@@ -1330,14 +1342,16 @@ export class OnlineSession {
   }
 
   /** INT9: MY WORD ON THE OPEN ZONE (net/wildRef.js - the relay cannot see the map): `z` 1, I stand in it; 0, I have left
-   *  it (or fell, or left the world). Said on every socket I hold whose relay referees the zone - a blow lands only where
-   *  both fighters said so in the room that judges it - and again on each socket welcomed while it stands. */
+   *  it (or fell, or left the world). AUDIT INT9: said on MY OWN CELL'S socket alone - a fighter's bar is the room it
+   *  stands in, carried across by the hub as it crosses (every halo said 1 too, and each held a whole bar of its own) -
+   *  again on its welcome, at each crossing (join), and every WILD_ZONE_KEEP_MS while it stands (a relay object that
+   *  restarted, or the close of a tab's other socket, forgot it). */
   setWildZone(z) {
     const v = z ? 1 : 0;
-    if (v === this._wildZone) return;
+    const now = this._now();
+    if (v === this._wildZone && !(v === 1 && now - this._wildZoneAt >= WILD_ZONE_KEEP_MS)) return;
     this._wildZone = v;
-    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) this._sayZone(this._ws, v);
-    for (const h of this._halo.values()) if (h.status === 'open' && h.wildOk && h.ws && this._welcomed.has(h.ws)) this._sayZone(h.ws, v);
+    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v); this._wildZoneAt = now; }
   }
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
@@ -2462,7 +2476,7 @@ export class OnlineSession {
       if (primary) this.wedOk = relaySupportsWed(relayV);   // LEGACY7 part three
       if (primary) this.wildOk = relaySupportsWildRef(relayV);   // WILD1; INT9: a relay that REFEREES the zone - before it, a blow would be routed for a defender that resolves none now
       else { const h = this._halo.get(room); if (h) h.wildOk = relaySupportsWildRef(relayV); }   // INT9: a halo says for itself
-      if (this._wildZone === 1) { const zw = primary ? this._ws : this._halo.get(room)?.ws; if (zw && (primary ? this.wildOk : this._halo.get(room)?.wildOk)) this._sayZone(zw, 1); }   // INT9: a socket welcomed while I stand in the zone hears so
+      if (this._wildZone === 1 && primary && this.wildOk) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }   // INT9: my cell's socket welcomed while I stand in the zone hears so (AUDIT INT9: a halo never)
       if (primary) { this.wdunOk = relaySupportsWdun(relayV); this.wdunGiantsOk = relaySupportsWdunGiants(relayV); }   // PVPDUNGEONS; ZONE-GIANTS
       if (primary) this.gateOk = relaySupportsGate(relayV);   // WB3
       if (primary) { this.siegeOk = relayFightsBattles(relayV); this.royalOk = relayRunsRoyal(relayV); }   // SEAT2a part four   // CROWN1 part two

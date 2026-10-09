@@ -58,13 +58,9 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose
     if (st.fighters.size >= WILD_REF.fightersMax) for (const [k, v] of st.fighters) if (!v.zone && !v.down) { st.fighters.delete(k); break; }
     if (st.fighters.size >= WILD_REF.fightersMax) return null;
     x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity };
-    if (carry && now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0)) {
-      x.outAt = carry.at;   // it fought elsewhere a moment ago - never away from the zone
-      if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; }
-      else if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
-    }
+    takeCarry(x, carry, now);
     st.fighters.set(sub, x);
-  }
+  } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
   if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
   if (z && !x.zone) {
@@ -74,6 +70,31 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose
   if (!z && x.zone) x.outAt = now;
   x.zone = !!z;
   return x;
+}
+
+/** A fighter takes the vitality it carries from another room (`carry` - wildCarry's word, kept by the hub), unless that word
+ *  is older than the mend (or, for a fall, the rise). */
+function takeCarry(x, carry, now) {
+  if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;
+  x.outAt = carry.at;   // it fought elsewhere a moment ago - never away from the zone
+  if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }
+  if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
+}
+
+/** INT9 (AUDIT): a hub's word on a fighter's carry, checked for the shape wildCarry writes - or null. */
+export function wildCarryOf(v) {
+  if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at };
+}
+
+/** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
+ *  mid-wait signed it never - no drop at all), and read back the first time the restarted room's zone is asked. */
+export const WILD_FALL_PREFIX = 'wildfall:';
+/** A fall read back from storage, checked for the shape wildBlow writes - or null. */
+export function wildFallOf(v) {
+  if (!v || typeof v !== 'object' || typeof v.r !== 'string' || typeof v.fallen !== 'string' || typeof v.killer !== 'string' || !Number.isFinite(v.at)) return null;
+  return { r: v.r, fallen: v.fallen, fallenId: typeof v.fallenId === 'string' ? v.fallenId : '', ci: typeof v.ci === 'string' ? v.ci : '', killer: v.killer, killerId: typeof v.killerId === 'string' ? v.killerId : '', at: v.at,
+    w: Number.isInteger(v.w) ? v.w : -1, wt: Array.isArray(v.wt) && v.wt.length === 2 ? [v.wt[0], v.wt[1]] : null, picked: v.picked === true };
 }
 
 /** A FIGHTER'S SOCKET GONE from the room (no other of its account's left): out of the zone, and its place in a full room

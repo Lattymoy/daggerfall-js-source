@@ -3658,6 +3658,9 @@ export const WDUN_INTERNAL_RESET = '/internal/wdun/reset';
 export const WDUN_INTERNAL_KIN = '/internal/wdun/kin';
 /** The internal door a place room tells the hub a remains is gone (its crows go with it). */
 export const WDUN_INTERNAL_GONE = '/internal/wdun/gone';
+/** INT9 (AUDIT): the internal door a place room keeps a zone fighter's vitality at the hub, and asks it back when the
+ *  fighter stands in its zone (net/wildRef.js wildCarry - a step into another cell was a fresh bar). */
+export const WILD_INTERNAL_VIT = '/internal/wild/vit';
 /** A zone hall's spawn salt - its own lane of map ids (world/spawnedDungeons.js spawnedMapId), never a wandering spawn's. */
 export const WDUN_SALT = 7;
 /** A zone hall's world room, `dungeon:m<mapId>` (wire.js WORLD_ROOM): salt in the high 12 bits, the pixel in the low 20. */
