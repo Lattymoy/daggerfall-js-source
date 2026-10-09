@@ -8844,6 +8844,7 @@ export function createWorldModes(host) {
           sdHomeAt: () => host.sdHomeAt?.() ?? null,   // SD10: where it stands: where the Remnant fell, once its body has sunk
           sdHomeAge: () => host.sdHomeAge?.() ?? null,   // AUDIT SD II (L6 F16): how long ago it began to rise
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
+          post: () => host.post?.() ?? null,   // SERVER-POST: and the mailbox's box
           // CASTLE1: the world host's load, for a save the dungeon's own
           // door finds was taken somewhere else (dungeonContext.js
           // quickLoad). Absent on a host with no such load, and the
@@ -11396,6 +11397,7 @@ export function createWorldModes(host) {
     relock: host.relock,   // MAC1: the resume gesture relocks the pointer (ui/pauseDoor.js)
     loadingPrevented: host.loadingPrevented,   // ONLINE-LOAD1: forwarded from the world host, same as quickLoad above
     timers: host.timers,   // TIMERS1: the hourglass's window, the world host's source
+    post: host.post,   // SERVER-POST: the mailbox's box, the world host's
     playerName: host.playerName,
     playerId: host.playerId,   // AUDIT 27h A3: CHARID1's by-id Save list - the street's bag always carried it, this one never did
     saveAs: host.saveAs,
@@ -12068,6 +12070,14 @@ export function createWorldModes(host) {
     unstuck: () => {
       if (mode === 'dungeon' && dungeonCtx) { pendingDungeonExit = true; return true; }
       if (mode === 'interior' && interiorCtx) { pendingInteriorExit = true; return true; }
+      return false;
+    },
+    // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause has no envelope): A PAUSE PAGE BY NAME wherever the player
+    // stands - `/mail` opens the mailbox in a building's or a dungeon's own pause; false outdoors, where the world host
+    // opens its own (scenes/world.js)
+    openPauseAt: (at) => {
+      if (mode === 'dungeon' && dungeonCtx) { dungeonCtx.togglePause({ at }); return true; }
+      if (mode === 'interior' && interiorCtx) { interiorKeyCtx.togglePause({ at }); return true; }
       return false;
     },
     // ONLINE-AUTOSAVE1: a mode-aware save for callers OUTSIDE any key
