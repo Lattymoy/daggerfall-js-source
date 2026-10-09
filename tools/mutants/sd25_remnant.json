@@ -1,0 +1,299 @@
+[
+  {
+    "name": "SD25-S8-the-blade-heating-from-its-tip",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "const a = (lx + 0.5) / w, from = 1 - SD_BLADE_MID;",
+    "new": "const a = 1 - (lx + 0.5) / w, from = 1 - SD_BLADE_MID;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-mid-lighting-the-whole-region",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "  return feature ? 1 : 0;\n}",
+    "new": "  return 1;\n}",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-a-region-in-another-blows-colour",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "export const SD_TELL_BLOW = Object.freeze({ sole: 'stomp',",
+    "new": "export const SD_TELL_BLOW = Object.freeze({ sole: 'volley',",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-cold-atlas-lit",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "  if (!(heat > 0)) return 0;\n  const feature",
+    "new": "  if (heat < 0) return 0;\n  const feature",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-blade-mapped-tip-to-root",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "[x - 1, B.armBot, -1], [x + 1, L.root, 1], 1)",
+    "new": "[x - 1, L.root, -1], [x + 1, B.armBot, 1], 1)",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-sole-on-the-sabatons-top",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "if (under && a === 4)",
+    "new": "if (under && a === 0)",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-hot-at-nine-tenths",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "export const SD_TELL_HEAT = Object.freeze([0.1, 0.6]);",
+    "new": "export const SD_TELL_HEAT = Object.freeze([0.1, 0.9]);",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-stun-ignored",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "if (A && Number.isFinite(a.at) && !(who < 0 && t < s.su)) {",
+    "new": "if (A && Number.isFinite(a.at)) {",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-fist-lit-past-its-gears-leaving",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "k[T_VOLLEY] = t < t0 || t >= go ? -1 :",
+    "new": "k[T_VOLLEY] = t < t0 || t >= a.at ? -1 :",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-an-echo-on-the-remnants-wind-up",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w, f =",
+    "new": "atkWindup(a, A, s.ph, SD_BODY.remnant), t0 = a.at - w, f =",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-left-leg-remapped",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "if (list[0]) list[0].texRemap = T[tl[T_STOMP]];",
+    "new": "if (list[1]) list[1].texRemap = T[tl[T_STOMP]];",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-torsos-two-tells-one",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "torsoMaps[b][tl[T_PULSE] * 4 + (fellNow ? 3 : tl[T_RESET])]",
+    "new": "torsoMaps[b][tl[T_PULSE] * 4]",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-husk-never-shown",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "(fellNow ? 3 : tl[T_RESET])",
+    "new": "(fellNow ? 0 : tl[T_RESET])",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-hours-mirrored",
+    "file": "src/world/sdRemnantModel.js",
+    "old": "const at = (a, r, z) => [Math.sin(a) * r, D.y + Math.cos(a) * r, z];",
+    "new": "const at = (a, r, z) => [-Math.sin(a) * r, D.y + Math.cos(a) * r, z];",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-hours-inward",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "putTexel(albedo, left + c, H - 6 - cy, step(M, 4))",
+    "new": "putTexel(albedo, left + c, 3 + cy, step(M, 4))",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-tick-forward",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "out[0] = (-TAU / 60) * (tk % 60);",
+    "new": "out[0] = (TAU / 60) * (tk % 60);",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-stuns-hand-forward",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "out[0] = TAU * handToTwelve(s.su - t, SD_STUN_MS);",
+    "new": "out[0] = TAU * (1 - handToTwelve(s.su - t, SD_STUN_MS));",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-windows-metals-crossed",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "out[1] = who === 0 ? 3 : 2;",
+    "new": "out[1] = who === 0 ? 2 : 3;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-marks-window-unread",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "_pairMs = sdProfileOf(s).pairMs;",
+    "new": "_pairMs = SD_ECHO_PAIR_MS;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-spin-up-not-whole-turns",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "out[0] -= TAU * SD_DIAL_TURNS.hand * k * k;",
+    "new": "out[0] -= TAU * SD_DIAL_TURNS.hand * k * k * 0.9;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-matrixs-turn-reversed",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const turn = hand[0], c = Math.cos(-turn), s = Math.sin(-turn),",
+    "new": "const turn = hand[0], c = Math.cos(-turn), s = Math.sin(turn),",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-a-broken-heart-counted",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "if (cx.c[c][2] > 0) n++;",
+    "new": "if (cx.c[c][2] >= 0) n++;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-strip-lit-from-the-top",
+    "file": "src/world/sdRemnantArt.js",
+    "old": "    if (k < n) {",
+    "new": "    if (k >= 8 - n) {",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-count-unread",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "lampDraw.texRemap = lampMaps[sdRibLampsLit(s, t)];",
+    "new": "lampDraw.texRemap = lampMaps[8];",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-dial-sliding",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "const phi = -dx / DIAL.r;",
+    "new": "const phi = 0;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-topple-the-other-way",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "psi = (Math.PI / 2) * q * q * (3 - 2 * q);",
+    "new": "psi = -(Math.PI / 2) * q * q * (3 - 2 * q);",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-heart-never-gone",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "  if (tau >= F.riseS) return null;",
+    "new": "  if (tau >= F.riseS * 9) return null;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-light-left-in-the-fallen-cage",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "        if (b === 0 && s.fell && (!torn || torn.hidden)) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-decor-kept-outside-time",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "const shown = !!torso && !torso.hidden;",
+    "new": "const shown = !!torso;",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-a-dial-casting",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "dialDraws.push(add(make(buildBackDialModel(metal)), true));",
+    "new": "dialDraws.push(add(make(buildBackDialModel(metal)), false));",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-archive-uploaded-as-a-windows",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "renderer.uploadEmissionTexture?.(SD_REMNANT_ARCHIVE, rec, art.emission, { white: true });",
+    "new": "renderer.uploadEmissionTexture?.(SD_REMNANT_ARCHIVE, rec, art.emission, { white: false });",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-tells-scratch-given-up",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "const tl = sdTellsAt(s, who, t, _tells)",
+    "new": "const tl = sdTellsAt(s, who, t)",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S8-the-lights-list-emptied-and-pushed",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      let n = 0;   // SD-LOOK S8",
+    "new": "      let n = 0; litList.length = 0;   // SD-LOOK S8",
+    "tests": [
+      "test/sd25_remnant.test.js"
+    ]
+  }
+]

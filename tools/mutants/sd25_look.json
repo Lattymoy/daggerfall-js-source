@@ -616,8 +616,8 @@
   {
     "name": "SD25-the-beat-never-quickening",
     "file": "src/scenes/sdRemnant.js",
-    "old": "const [h0, h1] = SD_HEART_LIGHT.hz, T =",
-    "new": "const [h0] = SD_HEART_LIGHT.hz, h1 = h0, T =",
+    "old": "const h0 = SD_HEART_LIGHT.hz[0], h1 = SD_HEART_LIGHT.hz[1], T =",
+    "new": "const h0 = SD_HEART_LIGHT.hz[0], h1 = h0, T =",
     "tests": [
       "test/sd25_look.test.js"
     ]

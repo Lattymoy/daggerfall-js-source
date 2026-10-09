@@ -168,7 +168,7 @@ test('SD-LOOK S8 EVERY BLOW TELLS ON THE BODY FIRST (sdTellsAt): heating off, mi
   const ew = windupFor(SD_BLOWS.stomp, 2, SD_BODY.gold);
   assert.ok(ew < SD_BLOWS.stomp.windup);
   const es = fight({ ph: 2, ec: echoes({ atk: blowAt(SD_BLOWS.stomp, at) }) });
-  assert.equal(tells(es, share(SD_BLOWS.stomp, 0.65, ew), 0)[0], 2, 'hot at three fifths of its own wind-up');
+  assert.deepEqual([0.05, 0.55, 0.65].map((k) => tells(es, share(SD_BLOWS.stomp, k, ew), 0)[0]), [0, 1, 2], 'its heats by its own wind-up');
 });
 
 test('SD-LOOK S8 ONLY THE PART THAT TELLS LIGHTS (the scene): each telling part drawn with a remap of its metal\'s cold atlas to its heat - the right leg (the one the Stomp raises), the blade\'s arm, the fist\'s arm, the torso (its ribs by the Pulse, its heart white by the Reset - mid the Reset\'s soul-white, hot the moment\'s white-gold - and the husk once torn out); every other part the dungeon\'s (no remap); an Echo\'s in its own metal (mutants: the left leg remapped; the torso\'s two tells one; the husk never shown)', () => {
