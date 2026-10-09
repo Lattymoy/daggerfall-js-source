@@ -115,8 +115,10 @@ the lists with the lanterns'. SHADOW_TUNING.sunPrepass false is the oracle and t
 **Measured** (Knightstale by day, `INSTR=shadow`, one arm after the other, `tools/frameAb.mjs`): the sun's three
 replays 2.48 -> 1.42 ms a frame by the pass's own timer (2.20 -> 1.48 by sample count), the same 201 draws a frame, and
 their allocations 79 -> 18 KB a frame. Those are the replays' own: the walk they now read their lists from was not
-timed (AUDIT PERF-ON4 S4 - `01-Overview/Audit-Perf-On4.md`, which times it beside them), and the frame's total moved
-within the probe's noise (13.7 -> 13.6).
+timed. AUDIT PERF-ON4 (S4, `01-Overview/Audit-Perf-On4.md`) timed it beside them, in one tree with the switch for the
+off arm: the replays 2.28 -> 1.02 ms and the walk 0.63, the shadow pass 4.70 -> 4.23 by its timer (3.28 -> 2.95 by sample
+count), the replays' and the walk's allocations 78 -> 21 + 11 KB, the same 201 draws - about 0.6 ms a frame saved. The
+frame's total moves within the probe's noise (13.62 -> 13.57).
 
 Pins: `test/perfsun3.test.js` (4) - every draw of every frame against the walk off over random towns (two of three
 crowded past the 64 a list starts with), four suns, steady and cadenced, the camera's scale and the travel view's; the
@@ -142,6 +144,13 @@ It is made once, for the life of the renderer: the same call. No gain measured. 
 `tools/mutants/perfvao1.json` (2, all dead).
 
 ## Measured, and left
+
+- **The gate pass's first use** (AUDIT PERF-ON4's online re-run): an oblivion gate's pass builds its program inside the
+  frame it is first drawn (`gatePool.js ensurePass` -> `GatePassRenderer` -> `glProgram.js buildProgram`) - about four
+  seconds of SwiftShader's in one frame at Knightstale; on a real GPU a driver's compile and link, tens of milliseconds.
+  The spell effects' first use (PERF-NEXT 7) is the same shape; warming it at idle is its own slice.
+- **What a crowd leaves in the page**: 240 DOM nodes more after sixty peers left than before they came (697 against 457;
+  the name layer's tags go with their peers). Not attributed.
 
 - **The realm checkpoint** (PERF-NEXT 14): a new character's save is 103 KB - about a millisecond of passes every two
   minutes. Left: not worth the composers' seam it would move; a long life's save is the case that would.

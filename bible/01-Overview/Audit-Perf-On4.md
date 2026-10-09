@@ -64,11 +64,46 @@ finding is a pin that let a draw-changing regression pass.
 
 ## Re-measured
 
-Measured again here: the planner on the real map's ground (W5) and the world host's bytecode on three trees (R7). The
-two probes' re-runs - PERF-SUN3's walk timed beside its replays (`INSTR=shadow`, the off arm `TUNING='{"sunPrepass":false}'`
-in the same tree) and the online frame settled first, crowds 0, 20, 60 and 0 again, both arms (T3) - run one after the
-other with nothing beside them, and land in the next commit. Until then `07-Rendering/Performance-Online.md`'s probe
-figures stand as first measured, with this page's corrections to what they were said to show.
+Measured again here: the planner on the real map's ground (W5) and the world host's bytecode on three trees (R7), above;
+and the two probes, one run after the other with nothing beside them (Knightstale by day, 480x270, 40 frames a window).
+
+**PERF-SUN3 with its walk** (S4: one tree, `INSTR=shadow`, the off arm `TUNING='{"sunPrepass":false}'`; ms a frame):
+
+| | walk off | walk on |
+|---|---|---|
+| the sun's three replays, by the pass's own timer | 2.28 | 1.02 |
+| the walk (`_sunCandidates`) | - | 0.63 |
+| the shadow pass's render, by its timer | 4.70 | 4.23 |
+| the shadow pass's render, by sample count | 3.28 | 2.95 |
+| the replays and the walk, by sample count | 2.43 | 1.35 + 0.42 |
+| the sun's draws a frame | 201 | 201 |
+| allocated a frame, the replays (and the walk) | 78 KB | 21 KB (+ 11 KB) |
+| the world host's frame | 13.62 | 13.57 |
+
+So the saving is about 0.6 ms a frame here, not the 1.06 the replays alone showed; the frame's total moves within the
+probe's noise.
+
+**The online frame, settled** (T3: the new code only - a re-run of the old was stopped as more than the record needs,
+Mac: "I think thats overkill"; its figures stand as first measured, taken while its ways were still filling). The boot
+was ready at frame 148 with 1,646 ways known (the old code, in the run the container's restart cut short, had 298 at
+frame 157: two a frame); the way book stood at 1,666 by frame 247, and every crowd was measured with the session open and
+exactly its bots drawn.
+
+| crowd, in order | the world host's frame | the Living World | its trips planned again | onlineFrame | inbound messages | allocated a frame |
+|---|---|---|---|---|---|---|
+| 0 | 121.0 (19 without one compile, below) | 0.46 | 0 | 0.8 | - | 2.2 MB |
+| 20 | 26.9 | 0.53 | 0 | 4.5 | 9.7 | 3.4 MB |
+| 60 | 31.0 | 0.45 | 0 | 11.7 | 16.1 | 3.9 MB |
+| 0 again | 15.7 | 0.45 | 0 | 0.6 | - | 2.0 MB |
+
+(ms of this container's CPU a frame; at about two seconds a frame the messages' column is two seconds' worth.) Settled,
+the Living World is under half a millisecond at every crowd and plans no trip again; the frame with nobody there is 15.7
+against 13.6 offline. Seen beside it, and left in `07-Rendering/Performance-Online.md`'s list: the first crowd-0 window
+held a one-off - the gate pass's program compiled inside the frame on its first use (`gatePool.js ensurePass` ->
+`glProgram.js buildProgram`, about four seconds of SwiftShader's); the page kept 240 more DOM nodes after the crowd left
+than before it came (697 against 457 - the name layer removes a tag the frame its peer goes; the rest is not attributed);
+and the last window's extra GL calls (7,715 against 6,603) are a pass that was not running before - framebuffers and
+viewports a face at a time, lanterns lit as the shared clock's sky moved on.
 
 ## Found beside it
 
