@@ -27,9 +27,9 @@ const ordered = (s, needles, what) => {
 test('MWNPC8b-a the dungeon: a person\'s flat out of the shared groups into a batch of its own; drawPeople offers the active people with a look before the host draws the level\'s billboards; the lane leaves with the context', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.ok(d.includes('        if (pn) pn._flatAt = at;\n        else { if (!flatGroups.has(key)) flatGroups.set(key, []); flatGroups.get(key).push(at); }'), 'a person is not grouped');
-  ordered(d, ['for (const [key, centers] of flatGroups) {', 'for (const pn of people) {\n    const at = pn._flatAt;', 'const [archive, record] = drawnFlat(pn.textureArchive, pn.textureRecord);',
+  ordered(d, ['for (const [key, centers] of flatGroups) {', "collider.cover.add('tact1:flats', coverItems);", 'for (const pn of people) {\n    const at = pn._flatAt;', 'const [archive, record] = drawnFlat(pn.textureArchive, pn.textureRecord);',
     'pn.standBatch = renderer.createBillboardBatch(archive, record, billboardSize(t, record), [Object.assign([at[0], at[1] - bornSize.h / 2, at[2]], { noCover: true })]);',
-    'billboardBatches.push(pn.standBatch);', "collider.cover.add('tact1:flats', coverItems);"], 'the person\'s batch, base-centred off the born sprite, drawn as the clothed stand-in, after the groups');
+    'billboardBatches.push(pn.standBatch);'], 'the person\'s batch, base-centred off the born sprite, drawn as the clothed stand-in, after the groups and their cover (a person is none)');
   ordered(d, ['drawPeople(canvas, proj, view, eye, dt) {', 'const read = opts.standingLook ?? null;', 'const on = !!read && _peopleLane.frame();',
     'const look = on && pn.active !== false ? read(pn) : null;', 'if (look) _peopleLane.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], eye, dt), pn.standBatch);',
     'else pn.standBatch.castOnly = false;', '_peopleLane.draw(canvas, proj, view, eye, dt);'], 'drawPeople');

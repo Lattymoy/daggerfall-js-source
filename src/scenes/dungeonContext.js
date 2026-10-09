@@ -3839,8 +3839,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);
     if (isCoverFlat(archive, record, size)) for (const c of based) coverItems.push(coverProxy(c, size));
   }
+  collider.cover.add('tact1:flats', coverItems);
   // MWNPC8b: each person's own batch, minted as a group's is - the pivot base-centred off the BORN sprite, the picture
-  // the clothed stand-in under NUDE-FLATS, animated where its record animates
+  // the clothed stand-in under NUDE-FLATS, animated where its record animates; no cover (AUDIT TACT B3: a person is none)
   for (const pn of people) {
     const at = pn._flatAt;
     if (!at) continue;
@@ -3855,7 +3856,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(pn.standBatch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(pn.standBatch);
   }
-  collider.cover.add('tact1:flats', coverItems);
   // AUDIT 64 F13: the people's ACTIVATION EXTENT, off the same archive
   // the batch above read - `personAabb` wants a base and a swept
   // square, and an RDB flat's stored y is its CENTRE (the batch's own
