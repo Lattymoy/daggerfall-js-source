@@ -84,3 +84,28 @@ test('AUDIT SD IV (S1): THE END IS STOOD WITH THE LEVEL - the Rift, the Return a
   const applies = [...D.matchAll(/(?<!function )\bapplyWorld\(/g)].map((m) => m.index);
   assert.ok(applies.length >= 2 && applies.every((i) => i > api && i < stood), 'a save\'s or the room\'s doors reach it only through the api it hands back');
 });
+
+test('AUDIT SD IV (R1): THE HOUR\'S LIGHT AFTER THE LAST FLAT - its blows, spoils\' lines, motes, sparks and beam (no depth written) drawn in drawFoes\' late slot, after the foes\', the piles\', the portals\' and the missiles\' flats and before the water; the Rift\'s window before them; drawn by the arm itself only when a window skips drawFoes (mutants: drawn before the flats again; the late slot forgets it; none under a window)', () => {
+  const M = read('src/scenes/worldModes.js'), D = read('src/scenes/dungeonContext.js');
+  // the late slot, run from its own text: the veiled peers, then the Hour's light - in the Hour alone
+  const slot = /lateWorldDraw: (\(\) => \{[^\n]*?\}),/.exec(M);
+  assert.ok(slot, 'the dungeon context\'s late slot');
+  for (const on of [true, false]) {
+    const calls = [], late = { on, proj: 'P', view: 'V', eye: 'E' };
+    const host = { drawVeiledPeerBodies: () => calls.push('veiled'), drawSdTelegraph: (a) => calls.push(a === late ? 'hour' : 'other') };
+    new Function('host', '_sdLate', `return ${slot[1]};`)(host, late)();
+    assert.deepEqual(calls, on ? ['veiled', 'hour'] : ['veiled'], on ? 'in the Hour: after the veiled peers, with the frame\'s own record' : 'out of it: nothing');
+  }
+  // the arm: the record filled every frame, after the Rift's window; the Hour's light drawn here only under a window
+  const rift = M.indexOf('if (dungeonCtx.sdEndLook) host.drawSdRift?.(');
+  const kept = M.indexOf('_sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj; _sdLate.view = view; _sdLate.eye = mwv.eye;');
+  const under = M.indexOf('if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);');
+  const overlay = M.indexOf('if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.();');
+  const foes = M.indexOf('dungeonCtx.drawFoes(dt, canvas, proj, view,');
+  assert.ok(rift > 0 && kept > rift && under > kept && overlay > under && foes > overlay, 'kept after the window, drawn under a window before its return, else left to drawFoes');
+  assert.equal((M.match(/host\.drawSdTelegraph\?\.\(/g) ?? []).length, 2, 'two doors, never both in a frame');
+  // drawFoes: the flats, the spells' light, then the late slot, then the water
+  const flats = D.indexOf('renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],');
+  const fx = D.indexOf('magic.drawFx?.();'), hook = D.indexOf('opts.lateWorldDraw?.();'), water = D.indexOf('renderer.drawWater(waterQuads, DUNGEON_WATER_COLOR,');
+  assert.ok(flats > 0 && fx > flats && hook > fx && water > hook, 'after every flat drawFoes draws, before the water');
+});

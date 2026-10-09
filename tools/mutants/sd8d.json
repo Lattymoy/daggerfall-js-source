@@ -281,8 +281,8 @@
   {
     "name": "SD8D-floor-never-drawn",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (isSdRealm(dungeonLoc)) host.drawSdTelegraph?.({ proj, view, eye: mwv.eye });",
-    "new": "      if (false) host.drawSdTelegraph?.({ proj, view, eye: mwv.eye });",
+    "old": "      _sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj;",
+    "new": "      _sdLate.on = false; _sdLate.proj = proj;",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
