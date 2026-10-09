@@ -1824,8 +1824,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/sdHall.js) - its stones,
   // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm
   // judges it), the realm's word on the hall read from it every frame
-  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); } }) : null;   // AUDIT SD II (SD11d): through the Hour's voice
+  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, clock: sdEndClock, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); } }) : null;   // AUDIT SD II (SD11d): through the Hour's voice; SD-LOOK S10: its orrery's decor on the realm's anchored seconds
   let _sdHallStood = false;
+  /** SD-LOOK S10: the end's halos and lights with the Orrery's after them (its gem, a settling bezel), in kept lists - the
+   *  hosts already draw and light the end's (world.js drawSdRift, the mode machine's light list), so the hall rides there. */
+  const _sdEndHalos = [], _sdEndLights = [];
+  const sdEndWith = (a, b, into) => {
+    if (!b?.length) return a;
+    into.length = 0;
+    for (let k = 0; k < a.length; k++) into.push(a[k]);
+    for (let k = 0; k < b.length; k++) into.push(b[k]);
+    return into;
+  };
   /** One frame of the hall: stood once I stand here, then the realm's word heard and the hands turned. */
   function sdHallFrame(dt, playerFeet) {
     if (playerFeet && !_sdHallStood) { _sdHallStood = true; sdHall.stand({ dynamicDraws, collider }); }
@@ -9990,8 +10000,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // SD-LOOK: the Rift's and the Return's picture for the hosts' pass (render/sdRiftPass.js, render/sdHalo.js) and their
     // lights for the light list - undefined where no Super dungeon's end stands here
     sdEndLook: sdEnd ? (eye, sky, hour) => sdEnd.look(eye, sky, hour) : undefined,
-    sdEndHalos: sdEnd ? () => sdEnd.halos() : undefined,
-    sdEndLights: sdEnd ? () => sdEnd.lights() : undefined,
+    sdEndHalos: sdEnd ? () => sdEndWith(sdEnd.halos(), sdHall?.halos(), _sdEndHalos) : undefined,   // SD-LOOK S10: and the Orrery's
+    sdEndLights: sdEnd ? () => sdEndWith(sdEnd.lights(), sdHall?.lights(), _sdEndLights) : undefined,
     sdRemnantLights: sdRemnant ? () => sdRemnant.lights() : undefined,   // SD-LOOK S8: the hearts' lights, for the Hour's channel (the world host's sdRealmLights)
     sdStepsDraw: sdSteps ? (proj, view, fog) => sdSteps.drawPass(proj, view, fog) : undefined,   // SD-LOOK S9: the Steps' ghosts, for the world host's Hour pass
     /** SD7b: the Unmoored Steps' frame, BEFORE the motor (the mode machine's, beside the movers' ride): the steps moved and

@@ -23,6 +23,13 @@
 //                    flying back); ?span=0|1|2 (the waystone my cast-back would take me to); ?rewind=<s since>&on=0|1|2
 //                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js); ?grey the frame in grey (a screenshot's);
 //                    ?touch=on the phone's tier (two chunks a Crumble pin, toothless pendulum gears - ui/touchDevice.js)
+//   ?hours=<six hours, 0-11, by commas>&lit=<n>&fray=<n>   the Orrery's hall as the realm says it (SD-LOOK S10) - the
+//                    stones' hours (the slot's start by default), the dial's count (the hours' own by default) and the fray
+//   ?turn=<stone>&tt=<s since>   a turn of that stone heard: its hand and its gear on the way, its partners', its bezel gold
+//   ?refuse=<stone>   my press on that stone refused by the realm (its word `w`): the bezel's ember
+//   ?snap&sa=<s since>   the Hour snapped back: the tabs blazing, the hands whirling, the rings a turn back
+//   ?concord=<share of the rings' swing, 0-1; 1 the whole sequence done> | ?cs=<s since the word>   the Concord at a moment
+//   ?law             the law's solids as wire over the hall (world/sdHall.js hallSolidTris): no stone's visual past 5 cm
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -37,10 +44,11 @@ import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdA
 import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';
 import { SD_BLOWS } from '../net/sdRemnant.js';
 import { veilAt, VEIL_OPEN_S } from '../render/gateVeil.js';
-import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
+import { buildRealmModel, realmLighting, realmLightsWith, packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_FOG, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE, SD_ARRIVE_Z } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { faces } from '../world/gateModel.js';
-import { createSdHall } from '../scenes/sdHall.js';
+import { createSdHall, sdStoneKey, SD_CONCORD_MS, SD_BRIDGE_LAY_MS } from '../scenes/sdHall.js';
+import { hallSolidTris, stoneFrame, SD_BANNER } from '../world/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
 import { createSdFx } from '../scenes/sdFx.js';
 import { SD_STEPS_COURSE, SD_BEAT_CYCLE } from '../world/sdSteps.js';
@@ -49,7 +57,7 @@ import { createSdEnd, SD_RETURN_KEY } from '../scenes/sdEnd.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
 import { SdRiftRenderer } from '../render/sdRiftPass.js';
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
-import { realmToDungeon, SD_ORRERY, SD_ARENA } from '../net/sdBrain.js';
+import { realmToDungeon, SD_ORRERY, SD_ARENA, SD_STONE_POS, orreryOf, orreryLit, orreryTurn } from '../net/sdBrain.js';
 import { sdMarksOf, SD_ENDINGS } from '../net/sdMarks.js';
 import { DUNGEON_AMBIENT } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
@@ -124,8 +132,53 @@ for (const [rec, art] of realmArt()) { renderer.uploadTexture(SD_REALM_ARCHIVE, 
 const realmMesh = renderer.createMesh(buildRealmModel());
 const dynamicDraws = [];
 const LAB_SLOT = Number(params.get('slot') ?? 1);
-const hall = createSdHall({ renderer, s: LAB_SLOT });
+// SD-LOOK S10: the hall on its own clock (pinned for a still), the realm's words made from the knobs
+const HALL_T0 = 100_000;
+let hallMs = HALL_T0;
+const hall = createSdHall({ renderer, s: LAB_SLOT, now: () => hallMs, clock: () => clock, onTurn: () => true });
 hall.stand({ dynamicDraws, collider: null });
+(function hallKnobs() {
+  const o = orreryOf(LAB_SLOT), st0 = params.has('hours') ? params.get('hours').split(',').map(Number) : [...o.start];
+  const w0 = { k: 'pz', s: LAB_SLOT, st: st0, f: Number(params.get('fray') ?? 0), lit: Number(params.get('lit') ?? orreryLit(o, st0)), ok: false };
+  hall.frame(0, null, w0);
+  const at = (i) => { const { n } = stoneFrame(i), p = SD_STONE_POS[i]; return realmToDungeon(p.x + n[0] * 1.5, 0, p.z + n[2] * 1.5); };
+  if (params.has('turn')) {
+    const i = Number(params.get('turn')), st1 = orreryTurn(o, st0, i, 1), tt = Number(params.get('tt') ?? 0.15);
+    hallMs += 1000;
+    hall.frame(0, null, { ...w0, st: st1, f: w0.f + 1, lit: orreryLit(o, st1), i, a: 1, id: 'lab', q: 1 });
+    hallMs += tt * 1000;
+    hall.frame(tt, null, null);
+  }
+  if (params.has('refuse')) {
+    const i = Number(params.get('refuse'));
+    hallMs += 1000;
+    hall.frame(0, at(i), null);
+    hall.press(sdStoneKey(i, 1));
+    hallMs += 50;
+    hall.frame(0, at(i), { ...w0, w: 1 });
+    hallMs += 200;
+    hall.frame(0, at(i), null);
+  }
+  if (params.has('snap')) {
+    const sa = Number(params.get('sa') ?? 0.3);
+    hallMs += 1000;
+    hall.frame(0, null, { ...w0, st: [...o.start], f: 0, lit: orreryLit(o, o.start), i: 0, a: 1, id: 'lab', q: 2, x: 1 });
+    hallMs += sa * 1000;
+    hall.frame(sa, null, null);
+  }
+  if (params.has('concord') || params.has('cs')) {
+    const k = Number(params.get('concord') ?? 0), ms = params.has('cs') ? Number(params.get('cs')) * 1000 : k >= 1 ? SD_CONCORD_MS.bridgeFrom + SD_BRIDGE_LAY_MS + SD_BANNER.wind * 1000 : k * SD_CONCORD_MS.rings;
+    hallMs += 1000;
+    hall.frame(0, null, { ...w0, st: [...o.truth], f: w0.f + 1, lit: 6, ok: true, i: 0, a: 1, id: 'lab', q: 3 });
+    hallMs += ms;
+    hall.frame(ms / 1000, null, null);
+  }
+})();
+/** ?law: the hall's solids (the collider's, world/sdHall.js hallSolidTris) as one mesh, drawn as wire over the frame. */
+const lawMesh = params.has('law') ? (() => {
+  const tris = hallSolidTris(), n = tris.length / 3;
+  return renderer.createMesh({ positions: tris, normals: new Float32Array(n * 3).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)), uvs: new Float32Array(n * 2), indices: Uint32Array.from({ length: n }, (_, i) => i), subMeshes: [{ textureArchive: SD_REALM_ARCHIVE, textureRecord: SD_REALM_BRASS_RECORD, startIndex: 0, primitiveCount: n / 3 }] });
+})() : null;
 const steps = createSdSteps({ renderer, ending: sdMarksOf(LAB_SLOT)[0] });   // SD-LOOK S9: the Hollow's Ending on the vane
 steps.stand({ dynamicDraws, collider: null });
 /** SD-LOOK S9: the Steps' knobs - every Crumble pin touched ?crumble= ago, the waystone ?span= lit, the rewind on ?on=. */
@@ -325,10 +378,11 @@ function frame(now) {
     renderer.setMoonlight(rl.key);
     applyFog(renderer, dungeonFog(lane, SD_REALM_FOG));
     if (!params.has('nograde')) renderer.setSceneGrade(SD_HOUR_GRADE);   // SD-LOOK: the dungeon arm's own (?nograde: the lane's defaults, for a before)
-    const hour = realmLightsWith(EMPTY_LIT, remnant.lights(), cam.pos);   // SD-LOOK: its heart's light first
+    const hour = realmLightsWith(EMPTY_LIT, [...remnant.lights(), ...hall.lights()], cam.pos);   // SD-LOOK: its heart's light first; S10: the gem's
     renderer.setPointLights(hour.data, null, hour.colors);
     renderer.setClearColor(INTERIOR_CLEAR);
-    hall.frame(dt, null, null);
+    if (!$('still').checked && !params.has('t')) hallMs += dt * 1000;   // the hall's own clock runs with the lab's
+    hall.frame($('still').checked || params.has('t') ? 0 : dt, null, null);
     if (params.has('crumble')) for (const i of CRUMBLES) steps.touch(i, clock - Number(params.get('crumble')));
     if (params.has('span')) steps.standOn(Number(params.get('span')));
     steps.ride(clock, dt, null, true);
@@ -338,11 +392,12 @@ function frame(now) {
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);
     renderer.drawMesh(realmMesh, identity(), null);
     for (const d of dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? null, d.noShadow ? NO_SHADOW : WITH_SHADOW);
+    if (lawMesh) renderer.drawMeshWire(lawMesh, identity(), null);   // ?law: the colliders' own shapes
     sky.paint(clock, courtFogNow(), skyLook(lane), renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]);
     if (sky.draw(proj, view, clock, courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color), labClock())) renderer.markForeignPass();
     const look = wayBack.look(cam.pos, { map: sky.map.texture, seconds: clock, gain: skyGain(renderer._fogColor, SD_REALM_FOG.color), clock: labClock() });
     if (look && riftPass.draw(proj, view, look, courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
-    if (halo.draw(proj, view, wayBack.halos(), courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();
+    if (halo.draw(proj, view, [...wayBack.halos(), ...hall.halos()], courtFogNow(), lane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) renderer.markForeignPass();   // S10: and the hall's
     if (arenaGlow.draw(proj, view, ARENA_MODEL, sdArenaGlowAt(labFight(), clock * 1000, _glowMemo), courtFogNow(), lane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) renderer.markForeignPass();
     if (stompWall.draw(_walls, sdStompWalls(labFight(), clock * 1000, _walls), proj, view, courtFogNow())) renderer.markForeignPass();
     if (params.get('fight') === 'held' && stompWall.draw(HELD, 1, proj, view, courtFogNow())) renderer.markForeignPass();

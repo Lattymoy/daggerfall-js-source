@@ -47,8 +47,8 @@
   {
     "name": "SD6C-the-lit-ring-at-the-wrong-hours",
     "file": "src/world/sdHall.js",
-    "old": "    const mid = deg((2 * k + 1) * 30), half = deg(halfHours * 30);",
-    "new": "    const mid = deg(2 * k * 30), half = deg(halfHours * 30);",
+    "old": "  const mid = deg((2 * k + 1) * 30), half = deg(halfHours * 30);",
+    "new": "  const mid = deg(2 * k * 30), half = deg(halfHours * 30);",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD6C-the-fray-backwards",
     "file": "src/world/sdHall.js",
-    "old": "  for (let k = 0; k < Math.min(fray, steps); k++) arc(f, SD_HALL_GLOW_RECORD.fray, r0, r1, k * step + gap / 2, (k + 1) * step - gap / 2, y, 1);",
-    "new": "  for (let k = 0; k < Math.min(fray, steps); k++) arc(f, SD_HALL_GLOW_RECORD.fray, r0, r1, -(k + 1) * step + gap / 2, -k * step - gap / 2, y, 1);",
+    "old": "export const frayTabBearing = (k, count = SD_FRAY_RING.steps) => ((k + 0.5) / count) * Math.PI * 2;",
+    "new": "export const frayTabBearing = (k, count = SD_FRAY_RING.steps) => -((k + 0.5) / count) * Math.PI * 2;",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD6C-a-stone-wearing-another's-sign",
     "file": "src/world/sdHallArt.js",
-    "old": "  const sign = SD_SIGNS[i], ink = i === 4 ? BONE : BRASS_BRIGHT;",
-    "new": "  const sign = SD_SIGNS[i % 5], ink = i === 4 ? BONE : BRASS_BRIGHT;",
+    "old": "  const sign = SD_SIGNS[i], bone = i === 4, ink = bone ? Pa : Br;",
+    "new": "  const sign = SD_SIGNS[i % 5], bone = i === 4, ink = bone ? Pa : Br;",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD6C-the-dial-without-its-twelfth",
     "file": "src/world/sdHallArt.js",
-    "old": "    if (r > 0.62 && r < 0.82 && tick < 0.045) return",
-    "new": "    if (r > 0.62 && r < 0.82 && tick < 0.045 && Math.round(hour) % 12 !== 0) return",
+    "old": "    if (r > (quarter ? 0.5 : 0.6) && r < 0.84 && off < (quarter ? 0.06 : 0.042))",
+    "new": "    if (r > (quarter ? 0.5 : 0.6) && r < 0.84 && off < (quarter ? 0.06 : 0.042) && Math.round(hour) % 12 !== 0)",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD6C-a-glow-without-its-light",
     "file": "src/world/sdHallArt.js",
-    "old": "export function hallGlowArt(color) {\n  return paintAll(16, () => [[...color], [...color]]);",
-    "new": "export function hallGlowArt(color) {\n  return paintAll(16, () => [[...color], [0, 0, 0]]);",
+    "old": "export function hallGlowArt(color) {\n  return lightArt(16, color);",
+    "new": "export function hallGlowArt(color) {\n  return lightArt(16, color, 0);",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD6C-the-bridge-never-laid",
     "file": "src/scenes/sdHall.js",
-    "old": "      if (bridgeDraw) { layAt = first ? -Infinity : now(); bridgeDraw.object.matrix = first ? identity() : bridgeLayMatrix(0); bridgeDraw.hidden = false; }   // AUDIT SD III (V10): laid, as it is heard\n",
-    "new": "",
+    "old": "      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }",
+    "new": "      else { concordAt = now(); concordDone = true; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }",
     "tests": [
       "test/sd6c_hall.test.js"
     ]

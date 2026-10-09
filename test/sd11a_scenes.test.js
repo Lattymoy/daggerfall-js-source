@@ -26,7 +26,7 @@ import {
   stoneFrame, stonePoint, plaqueFrame, handleBox, handMatrix, beforeStone, buildHallModel, buildHandModel, hallSolidTris,
   SD_STONE_SIZE, SD_DIAL, SD_EMBLEM, SD_HAND, SD_PLAQUE,
 } from '../src/world/sdHall.js';
-import { SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD, SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
+import { SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
 import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 import { createSdSteps, ensureSdStepsArt, sdStepKey, SD_CHECKS_KEY } from '../src/scenes/sdSteps.js';
 import { createSdRemnant, ensureSdRemnantArt } from '../src/scenes/sdRemnant.js';
@@ -71,11 +71,14 @@ function trisOf(model, keep = () => true) {
     for (let k = sm.startIndex; k < sm.startIndex + sm.primitiveCount * 3; k += 3) {
       const P = [0, 1, 2].map((j) => [model.positions[(k + j) * 3], model.positions[(k + j) * 3 + 1], model.positions[(k + j) * 3 + 2]]);
       const U = [0, 1, 2].map((j) => [model.uvs[(k + j) * 2], model.uvs[(k + j) * 2 + 1]]);
-      if (keep(sm.textureRecord, P)) out.push([P, U, sm.textureRecord]);
+      if (keep(sm.textureRecord, P, U)) out.push([P, U, sm.textureRecord]);
     }
   }
   return out;
 }
+/** SD-LOOK S10 (PIN MOVED): a triangle of the hall's atlas whose every uv falls in `cell` - the dials, signs and ledgers
+ *  are its cells, no longer records of their own. */
+const atlasCell = (cell) => (record, P, U) => record === SD_HALL_ATLAS_RECORD && U.every(([u, v]) => u * SD_HALL_ATLAS.size >= cell[0] && u * SD_HALL_ATLAS.size <= cell[0] + cell[2] && v * SD_HALL_ATLAS.size >= cell[1] && v * SD_HALL_ATLAS.size <= cell[1] + cell[3]);
 /** THE GAME'S OWN CAMERA (scenes/worldModes.js, the modal arms' frame): an eye at `eye` looking along `yaw` - its look
  *  (sin yaw, 0, cos yaw), lookAt to eye + look, and world/mat4.js's ONE mirror on its lens. A point to the screen's NDC
  *  (x right, y up), and its right as the game's own camRight (cos yaw, 0, -sin yaw). */
@@ -136,13 +139,15 @@ test('AUDIT SD II L2 F1: THE ORRERY\'S HALL AS THE EYE SEES IT, through the game
     // every face standing before the stone's face, across the eye's look - the dial, the notch, the sign, the cap's and
     // the handles' fronts - looks toward the eye and is drawn
     const foot = realmToDungeon(...stoneFrame(i).at), ahead = (p) => (p[0] - foot[0]) * n[0] + (p[2] - foot[2]) * n[2];
-    const before = trisOf(hall, (record, P) => P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w && ahead(p) > SD_STONE_SIZE.d / 2 + 0.004)).filter(([P]) => { const nn = cross(sub(P[1], P[0]), sub(P[2], P[0])), l = Math.hypot(...nn); return l > 1e-9 && Math.abs(dot(nn, n)) / l > 0.9; });
+    // PIN MOVED (SD-LOOK S10): on the stone, over its plinth - the dial's raised floor before it (the inner ring's bezel)
+    // has its own sides, turned from this eye
+    const before = trisOf(hall, (record, P) => P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w && ahead(p) > SD_STONE_SIZE.d / 2 + 0.004 && p[1] > 0.3)).filter(([P]) => { const nn = cross(sub(P[1], P[0]), sub(P[2], P[0])), l = Math.hypot(...nn); return l > 1e-9 && Math.abs(dot(nn, n)) / l > 0.9; });
     assert.ok(before.length >= 11, `stone ${i}: its faces before it (${before.length})`);
     for (const t of before) assert.ok(dot(cross(sub(t[0][1], t[0][0]), sub(t[0][2], t[0][0])), n) > 0 && onScreen(S, t).area < 0, `stone ${i}: a face of record ${t[2]} toward the eye, drawn`);
     // its dial and its sign: toward the eye, their pictures unmirrored
-    const mine = (rec) => (record, P) => record === rec && P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w);
-    for (const rec of [SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD + i]) {
-      const tris = trisOf(hall, mine(rec));
+    const mine = (cell) => (record, P, U) => atlasCell(cell)(record, P, U) && P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w);
+    for (const [rec, cell] of [['dial', SD_HALL_ATLAS.dial], ['sign', SD_HALL_ATLAS.emblem[i]]]) {   // PIN MOVED (SD-LOOK S10): the atlas's cells
+      const tris = trisOf(hall, mine(cell));
       assert.ok(tris.length >= 2, `record ${rec} on stone ${i}`);
       for (const t of tris) {
         const o = onScreen(S, t);
@@ -155,8 +160,8 @@ test('AUDIT SD II L2 F1: THE ORRERY\'S HALL AS THE EYE SEES IT, through the game
     const { at, n } = plaqueFrame(k);
     const face = realmToDungeon(at[0] + n[0] * 0.09, SD_PLAQUE.post + SD_PLAQUE.h / 2, at[2] + n[2] * 0.09);
     const { S } = gameCamera([face[0] + n[0] * 2.5, face[1], face[2] + n[2] * 2.5], Math.atan2(-n[0], -n[2]));
-    const tris = trisOf(hall, (record) => record === SD_HALL_PLAQUE_RECORD + k);
-    assert.equal(tris.length, 2);
+    const tris = trisOf(hall, atlasCell(SD_HALL_ATLAS.ledger[k]));   // PIN MOVED (SD-LOOK S10): its lectern's open ledger, two pages
+    assert.equal(tris.length, 4);
     for (const t of tris) { const o = onScreen(S, t); assert.ok(o.area < 0 && o.dudx > 0 && o.dvdy > 0, `plaque ${k}: toward the eye, unmirrored`); }
   }
 });
@@ -256,8 +261,8 @@ test('AUDIT SD II L2 F5: EACH STONE\'S SIGN CLEAR OF ITS DIAL - the two a hair b
   assert.ok(SD_EMBLEM.y - SD_EMBLEM.half > SD_DIAL.y + SD_DIAL.r && SD_EMBLEM.y + SD_EMBLEM.half <= SD_STONE_SIZE.h, 'by the numbers');
   for (let i = 0; i < SD_STONE_POS.length; i++) {
     const at = realmToDungeon(SD_STONE_POS[i].x, 0, SD_STONE_POS[i].z);
-    const ys = (rec) => trisOf(hall, (r, P) => r === rec && P.every((p) => Math.hypot(p[0] - at[0], p[2] - at[2]) < SD_STONE_SIZE.w)).flatMap(([P]) => P.map((p) => p[1]));
-    const dial = ys(SD_HALL_FACE_RECORD), sign = ys(SD_HALL_EMBLEM_RECORD + i);
+    const ys = (cell) => trisOf(hall, (r, P, U) => atlasCell(cell)(r, P, U) && P.every((p) => Math.hypot(p[0] - at[0], p[2] - at[2]) < SD_STONE_SIZE.w)).flatMap(([P]) => P.map((p) => p[1]));
+    const dial = ys(SD_HALL_ATLAS.dial), sign = ys(SD_HALL_ATLAS.emblem[i]);   // PIN MOVED (SD-LOOK S10): the atlas's cells
     assert.ok(Math.max(...dial) < Math.min(...sign), `stone ${i}: the drawn dial (to ${Math.max(...dial).toFixed(3)}) under the drawn sign (from ${Math.min(...sign).toFixed(3)})`);
     assert.ok(Math.max(...sign) <= SD_STONE_SIZE.h + 1e-6, 'under the cap');
   }
