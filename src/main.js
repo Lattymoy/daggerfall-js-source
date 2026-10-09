@@ -230,6 +230,15 @@ async function boot() {
     else params.delete('realm');
     if (choice === 'online-new') params.set('realmnew', '1');
     else params.delete('realmnew');
+    // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house answered on the Online page - its member is born online
+    // through the world host's own birth door (`legacyborn`, in the seat the line keeps). The same SET-or-DELETE law.
+    const { takePickedLegacyBirth } = await import('./ui/enhancedMenu.js');
+    const legacyBirth = choice === 'online-new' ? takePickedLegacyBirth() : null;
+    if (legacyBirth) {
+      params.set('legacyborn', String(legacyBirth.personId));
+      params.set('region', legacyBirth.region);
+      params.set('loc', legacyBirth.loc);
+    } else { params.delete('legacyborn'); params.delete('region'); params.delete('loc'); }
     // TR3: the Test Room door - the pane answers 'test:<preset>' and
     // the world host seeds the character and the armory off the same
     // testRoom home the pane showed. The param family follows F12's
