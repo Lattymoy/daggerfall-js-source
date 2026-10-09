@@ -1009,15 +1009,16 @@ The same ask: section 8's last open lines.
 
   | | the room | the cards add |
   |---|---|---|
-  | desktop 1100x640, Hold'em from the seat | 104 ms | 10.7 ms |
-  | desktop, Hold'em from above (no hand held) | 120 ms | 1.8 ms |
-  | desktop, an Iliac cloth | 103 ms | 0.4 ms |
-  | phone 390x844, CPU /4, Hold'em from the seat | 76 ms | 18.9 ms |
-  | phone, Hold'em from above | 85 ms | 3.3 ms |
-  | phone, an Iliac cloth | 76 ms | 1.3 ms |
+  | desktop 1100x640, Hold'em from the seat | 143 ms | 12.4 ms |
+  | desktop, Hold'em from above (no hand held) | 127 ms | 1.3 ms |
+  | desktop, an Iliac cloth | 143 ms | 2.6 ms |
+  | phone 390x844, CPU /4, Hold'em from the seat | 101 ms | 20.5 ms |
+  | phone, Hold'em from above | 99 ms | 5.3 ms |
+  | phone, an Iliac cloth | 102 ms | 0.5 ms |
 
-  The chips cost almost nothing (the seat's cards without them, 8.2 ms desktop and 17.3 ms phone): the cost is the HELD
-  HAND - two plates a few centimetres from the eye cover a large share of the screen, and this GL shades every pixel on
+  Measured on the merged tree (TAVERN-TABLE's table in the room); runs differ by a millisecond or two. The chips cost
+  almost nothing (the seat's cards without them, 11.7 ms desktop and 17.7 ms phone): the cost is the HELD HAND - two
+  plates a few centimetres from the eye cover a large share of the screen, and this GL shades every pixel on
   the CPU. A phone's GPU fills them for far less; the plates and the cloth's own cards are cheap.
 - **Pins:** `test/cards2c_seated_sprite.test.js` 3, `test/cards3c_gestures.test.js` 3; their mutants in
   `tools/mutants/cards10.json` (`CARDS2c-*`, `CARDS3c-*`), all dead.
