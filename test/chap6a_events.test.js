@@ -39,8 +39,8 @@ test('CHAP6a the events: seven, section 7\'s base weights in the table\'s order,
   assert.deepEqual([chapterEventOk('decline'), chapterEventOk('Decline'), chapterEventOk(null), chapterEventName('war')], [true, false, false, null]);
   assert.deepEqual(CHAPTER_EVENT_EFFECTS, {
     schismMasters: 2, schismMoved: 10, successionAscendant: 10, crackdownHidden: 2, crackdownCurfew: 10, crackdownPay: 1.5, crackdownShut: 30,
-    rivalryThriving: 10, rivalrySwing: 10, declineFailing: 15, declineFall: 2, declineMeets: 2, ascendancyAscendant: 15,
-  });
+    rivalryThriving: 10, rivalrySwing: 10, declineFailing: 15, declineFall: 2, declineMeets: 2, ascendancyAscendant: 15, ascendancyPrice: 0.9,
+  });   // PIN MOVED (CHAP6d): an Ascendancy's prices
 });
 
 test('CHAP6a the weights: each modifier of section 7\'s table - two Masters a Schism\'s, Ascendant a Succession\'s and an Ascendancy\'s, the underworld\'s Crackdown twice and a Curfew\'s more, no rival a Calm, a Thriving or Ascendant rival a Rivalry\'s, Failing a Decline\'s (mutants: each)', () => {

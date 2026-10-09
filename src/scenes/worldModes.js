@@ -418,7 +418,7 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac P
 import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
 import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
-import { chapterPriceFactor, chapterShelfQuality, seatedBook } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf; CHAP4b: a seat's rank at its halls
+import { chapterHallFactor, chapterHallShelf, chapterHallShut, CHAPTER_HALL_SHUT_LINE, seatedBook } from '../net/npcChapterLaw.js';   // CHAP3c: a hall's chapter's band on its training, spells and shelf; CHAP4b: a seat's rank at its halls
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -5346,6 +5346,8 @@ export function createWorldModes(host) {
     const dict = townTalk?.factionDict ?? null;
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
+    // CHAP6d (Chapters-Arc 7): online, a hall whose chapter's halls a Crackdown shut serves nothing this Season
+    if (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null)) { townTalk?.say?.(CHAPTER_HALL_SHUT_LINE); return; }
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     // CHAP4b (Chapters-Arc 6): a seat's rank at its own chapter's halls - the hall's services read the book SEATED (the
@@ -5600,9 +5602,10 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     // CHAP3c (Chapters-Arc 5.2): online, this hall's chapter's Strength from the chapter sheet (the host's - none
     // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
-    const chapterStrength = () => host.chapterStrength?.(guild?.factionId ?? null) ?? null;   // AUDIT CHAP3 C6: the host's region, the chapters' own
-    const chapterFactor = () => chapterPriceFactor(chapterStrength());
-    const shelfQuality = () => chapterShelfQuality(b?.quality ?? 0, chapterStrength());
+    // CHAP6d: the whole chapter - its band, and its Season's: an Ascendancy's tenth, the doctrines' tenth and two qualities
+    const chapterHere = () => host.chapterHere?.(guild?.factionId ?? null) ?? null;   // AUDIT CHAP3 C6: the host's region, the chapters' own
+    const chapterFactor = (/** @type {string} */ service) => chapterHallFactor(chapterHere(), service);
+    const shelfQuality = () => chapterHallShelf(b?.quality ?? 0, chapterHere());
     const closeSelf = () => closeSpellWindow(flow);
     const now = () => interiorTicker.ownMinutes;   // already CLASSIC minutes (AUDIT 21 F2); LIVED1: a service's clock (training's cooldown, a blessing) is the character's own
     const godName = guild?.divine ?? '';
@@ -6077,7 +6080,7 @@ export function createWorldModes(host) {
       const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
       if (!sbi) return null;
       let bookWin = null;
-      const bookFactor = chapterFactor();   // AUDIT CHAP3 C1: read once a window - the price shown is the price charged
+      const bookFactor = chapterFactor('spells');   // AUDIT CHAP3 C1: read once a window - the price shown is the price charged
       bookWin = new SpellbookWindow({
         spells: () => (playerEntity.spells ??= []),
         entity: playerEntity,
@@ -6116,7 +6119,7 @@ export function createWorldModes(host) {
         return { rows: [{ text: 'You have no spellbook!', center: true }], closesWindow: true };
       }
       let makerWin = null;
-      const makerFactor = chapterFactor();   // AUDIT CHAP3 C1: read once a window, as training's and the spellbook's
+      const makerFactor = chapterFactor('spells');   // AUDIT CHAP3 C1: read once a window, as training's and the spellbook's
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
         rows,
@@ -6134,7 +6137,7 @@ export function createWorldModes(host) {
       const refined = rrRefinedTrainingOn();
       flow = (refined ? buildRefinedTrainingFlow : buildTrainingFlow)(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
-        priceFactor: chapterFactor(),   // CHAP3c: the hall's chapter's band on the training's price
+        priceFactor: chapterFactor('training'),   // CHAP3c: the hall's chapter's band on the training's price; CHAP6d: and its Season's
         variablePrice: rrSetting('RefinedTraining.variableTrainingPrice') === true, intensive: rrSetting('RefinedTraining.intensiveTraining') === true,
         // TrainSkillIntense (GuildServiceTrainingRR.cs:130-134): four days off the clock and four permanent points, before the fifth session
         applyIntensive: (skill, days, points) => {

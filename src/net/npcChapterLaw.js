@@ -668,8 +668,8 @@ export const chapterPriced = (/** @type {number} */ price, /** @type {number} */
  *  own where no Strength is known (chapterBandOf reads it as Steady, which moves nothing) or the hall has no quality.
  *  AUDIT CHAP3 D2: a band that moves nothing returns the quality untouched (offline is DFU's, whatever a world-data pack
  *  sets - DFU reads a building's quality raw), and a move never takes a hall above 20 below its own quality. */
-export function chapterShelfQuality(/** @type {number} */ quality, /** @type {unknown} */ strength) {
-  const step = chapterBandOf(strength).shelf;
+export function chapterShelfQuality(/** @type {number} */ quality, /** @type {unknown} */ strength, extra = 0) {
+  const step = chapterBandOf(strength).shelf + extra;   // CHAP6d: and a doctrine's `extra` qualities beside the band's
   if (!(quality > 0) || step === 0) return quality;
   return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));
 }
@@ -985,8 +985,8 @@ export const CHAPTER_EVENT_EFFECTS = Object.freeze({
   rivalryThriving: 10, rivalrySwing: 10,
   /** Decline: +15 where Failing; 2 a week unless the week's Merit meets twice the target. */
   declineFailing: 15, declineFall: 2, declineMeets: 2,
-  /** Ascendancy: +15 where Ascendant. */
-  ascendancyAscendant: 15,
+  /** Ascendancy: +15 where Ascendant; its halls' prices a further tenth off (CHAP6d, the client's). */
+  ascendancyAscendant: 15, ascendancyPrice: 0.9,
 });
 
 /** THE RIVALS (section 8, CALL 5 - the port's own table, never FACTION.TXT): each pair is a Rivalry's draw where both
@@ -1166,3 +1166,30 @@ export function chapterSeasonOf(c) {
     heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,
   };
 }
+
+// ─── CHAP6d: THE SEASON ON THE HALLS (Chapters-Arc 7) ───────────────
+// What a chapter's Season does to its halls, online, laid over the band (CHAP3c) as the band is laid over DFU: an
+// Ascendancy's halls a further tenth off their training, a spell bought and a spell made; "cheaper training" a further
+// tenth off the training; "a deeper shelf" two qualities more on the shelf (DFU's stock law reads a hall's quality for the
+// count alone - more items, never better ones). Shut halls serve nothing for the Season. Offline, and for a chapter the
+// sheet does not name, the hall is DFU's own.
+
+/** The services a Season prices: training, and a spell bought or made. */
+export const CHAPTER_HALL_SERVICES = Object.freeze(['training', 'spells']);
+/** A HALL'S PRICE FACTOR for `service` ('training' or 'spells') by its chapter as the sheet says it (`{ strength, event,
+ *  doctrine }` - chapterSheet.js chapterOf's), or 1 for none: its band's (chapterPriceFactor), an Ascendancy's tenth, the
+ *  training's doctrine's tenth. */
+export function chapterHallFactor(/** @type {any} */ chapter, /** @type {string} */ service) {
+  if (!chapter) return 1;
+  const s = chapterSeasonOf(chapter);
+  return chapterPriceFactor(chapter.strength) * (s.event === 'ascendancy' ? CHAPTER_EVENT_EFFECTS.ascendancyPrice : 1)
+    * (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);
+}
+/** A HALL'S SHELF QUALITY by its chapter as the sheet says it: its band's step and "a deeper shelf"'s two
+ *  (chapterShelfQuality's bounds) - DFU's own quality with no chapter. */
+export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (chapter
+  ? chapterShelfQuality(quality, chapter.strength, chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0) : quality);
+/** Whether a hall's chapter's halls are shut this Season (a Crackdown's end) - its services refused. */
+export const chapterHallShut = (/** @type {any} */ chapter) => chapterSeasonOf(chapter).shut;
+/** What a shut hall says. */
+export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watch\'s order.';

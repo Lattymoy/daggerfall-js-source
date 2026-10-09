@@ -333,8 +333,12 @@ export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thrivin
 export function hallGuildDays(places, hall, bandOf) {
   if (!bandOf || hall?.building == null) return GUILD_DAYS;
   const band = bandOf(places.factions?.get(hall.building) ?? 0);
+  if (band === 'shut') return GUILD_DAYS_SHUT;   // CHAP6d: a hall a Crackdown shut keeps no evenings
   return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;
 }
+/** CHAP6d (Chapters-Arc 7, 9: "a chapter whose halls are shut sends nobody - its two `guildsman` idle at home"): the
+ *  evenings a week at a hall shut for the Season. */
+export const GUILD_DAYS_SHUT = 0;
 
 const B = BUILDING_TYPES;
 /**
@@ -480,7 +484,8 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   switch (job) {
     case 'keeper': case 'smith': case 'clerk': case 'scholar': case 'helper': case 'guildsman': {
       if (rng() < 0.25) errand(wake + 30);
-      const at = work ?? home;
+      // CHAP6d (Chapters-Arc 9): a guildsman whose hall a Crackdown shut keeps its working day at home
+      const at = job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : work ?? home;
       I('work', at, h(job === 'smith' ? 7 : 8), 240);
       const lunch = rng();
       if (lunch < 0.3) I('tavern', fav.tavern, h(12), 45);
@@ -596,7 +601,8 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     case 'mercenary': {
       I('social', places.square ?? fav.social[0] ?? null, h(10), rollInt(rng, 60, 120));
       I('tavern', fav.tavern, h(13), 60);
-      I('guild', fav.guild, h(15), rollInt(rng, 60, 120));
+      const stay = rollInt(rng, 60, 120);   // drawn whether or not the hall is open: the day's other draws as ever
+      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay);   // CHAP6d: never a shut hall
       I('tavern', fav.tavern, h(19), rollInt(rng, 120, 240));
       break;
     }
@@ -604,7 +610,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       if (rng() < 0.3) I('temple', fav.temple, h(9), rollInt(rng, 20, 40));
       const outfitters = nearestOf(places, doorKinds(places).outfitters, home);
       if (outfitters.length && rng() < 0.6) I('shop', outfitters[Math.floor(rng() * Math.min(3, outfitters.length))], h(10), rollInt(rng, 30, 60));
-      I('guild', fav.guild, h(11.5), 60);
+      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60);   // CHAP6d: never a shut hall
       I('social', places.square ?? fav.social[0] ?? null, h(14), rollInt(rng, 60, 120));
       I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);   // LW-LODGE: a lodger sups at their own, and goes up before bed
       break;

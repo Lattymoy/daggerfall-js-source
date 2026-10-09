@@ -27575,11 +27575,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
     // CHAP3c: a hall's chapter's Strength, its band on the hall - AUDIT CHAP3 C6: in the region the chapters are keyed by
-    // (the politic map's, as the hall's witness and the board read it), never the location record's
-    chapterStrength: (faction) => {
+    // (the politic map's, as the hall's witness and the board read it), never the location record's. CHAP6d: the whole
+    // chapter (chapterSheet.js chapterOf) - its band and its Season on the hall
+    chapterHere: (faction) => {
       const px = playerTravelPixel();
       const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
-      return Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;
+      return Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;
     },
     // CHAP4b: the rank the playing character's seat gives it at a hall of this guild here (the politic region, as the
     // sheet's); and the highest rank DFU's review gives while the Roll holds - 8 and 9 are seats (Chapters-Arc 3.5)

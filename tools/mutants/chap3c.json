@@ -263,21 +263,23 @@
   {
     "name": "CHAP3C-HOST-STRENGTH",
     "file": "src/scenes/worldModes.js",
-    "old": "host.chapterStrength?.(guild?.factionId ?? null) ?? null;",
-    "new": "host.chapterStrength?.(null) ?? null;",
+    "old": "host.chapterHere?.(guild?.factionId ?? null) ?? null;",
+    "new": "host.chapterHere?.(null) ?? null;",
     "tests": [
       "test/chap3c_halls.test.js",
       "test/audit_chap3.test.js"
-    ]
+    ],
+    "note": "CHAP6d: re-aimed by content (the whole chapter on the hall)."
   },
   {
     "name": "CHAP3C-HOST-TRAINING",
     "file": "src/scenes/worldModes.js",
-    "old": "        priceFactor: chapterFactor(),   // CHAP3c: the hall's chapter's band on the training's price\n",
+    "old": "        priceFactor: chapterFactor('training'),   // CHAP3c: the hall's chapter's band on the training's price; CHAP6d: and its Season's\n",
     "new": "",
     "tests": [
       "test/chap3c_halls.test.js"
-    ]
+    ],
+    "note": "CHAP6d: re-aimed by content (the whole chapter on the hall)."
   },
   {
     "name": "CHAP3C-HOST-SPELLBOOK",
@@ -320,12 +322,13 @@
   {
     "name": "CHAP3C-WORLD-HOOK",
     "file": "src/scenes/world.js",
-    "old": "      return Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;",
-    "new": "      return null;",
+    "old": "      return Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;\n    },\n    // CHAP4b",
+    "new": "      return null;\n    },\n    // CHAP4b",
     "tests": [
       "test/chap3c_halls.test.js",
       "test/audit_chap3.test.js"
-    ]
+    ],
+    "note": "CHAP6d: re-aimed by content (the whole chapter on the hall)."
   },
   {
     "name": "CHAP3C-WORLD-REFRESH",

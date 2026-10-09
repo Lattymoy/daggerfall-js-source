@@ -430,7 +430,7 @@ export class LivingTown {
     if (this._stamp?.t !== t) {
       /** @type {Map<number, string>} */
       const bands = new Map();
-      for (const f of townChapters(this.places)) { const b = this.o.chapterOf?.(f)?.band; if (b) bands.set(f, b); }
+      for (const f of townChapters(this.places)) { const c = this.o.chapterOf?.(f); const b = c?.shut ? 'shut' : c?.band; if (b) bands.set(f, b); }   // CHAP6d: a shut hall's own
       this._stamp = { t, bands, s: [...bands].map(([f, b]) => `${f}:${b}`).join() };
     }
     return this._stamp;

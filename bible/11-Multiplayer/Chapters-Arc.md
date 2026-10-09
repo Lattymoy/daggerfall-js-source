@@ -26,8 +26,9 @@ all of it again through six lenses and fixed what they found (`01-Overview/Audit
 foot); CHAP6a BUILT (2026-10-09, Mac: "continue"; the Season's event drawn, a Decline's weeks, the Season's end - section
 7, its record at the foot); CHAP6b BUILT (2026-10-09, the same word; the Schism's backing and doctrine, the
 Succession's heir, the Master's vote - section 7, its record at the foot); CHAP6c BUILT (2026-10-09, the same word;
-the Season's words and a member's choices on the client - sections 7 and 9, its record at the foot); CHAP6d (the events
-on the halls) and CHAP6e (the titles) are next. Merged with main
+the Season's words and a member's choices on the client - sections 7 and 9, its record at the foot); CHAP6d BUILT
+(2026-10-09, the same word; the Season on the halls - an Ascendancy's prices, the doctrines' training and shelf, the shut
+halls - sections 7 and 9, its record at the foot); CHAP6e (the titles) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09), then past PERMADEATH-HOUSES and TAVERN-TABLES, then past TV-BEYOND (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct99` and its relay `world182` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -725,19 +726,21 @@ BUILT (CHAP6a, 2026-10-09, Mac: "continue"), the roll and the weeks - `src/net/n
   in it); then the halving; then the next Season's draw.
 - **A Crackdown's writs** - the chapter's hall writs and a member's own - pay half again (`crackdownPay`, Marks), inside
   the same three a day (CALL 8: a bounded raise on writs the day already counts, no new faucet). **Shut halls** post
-  neither for the Season; what the client shuts with them (the halls' people, their services) is CHAP6c's.
+  neither for the Season; what the client shuts with them (the halls' people, their services) is CHAP6c's - BUILT
+  (CHAP6d), below.
 - **The Chronicle** writes an 'event' row for each chapter whose event was no Calm, with how it ended ("At the end of
   the Season of Morning Star, the Fighters Guild won its rivalry with the Thieves Guild." - a hidden rival is "its rival
   in the shadows": a public line naming the underworld's chapter would say where it keeps its halls), and a 'season'
   row for each Master placed at or before the Turning that opened the Season and sitting still at its end ("Through the
   Season of Morning Star, Alda held the Master's seat of the Fighters Guild." - never Season 0's, which crowns no one, as
-  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6c's (a relay change).
+  the seats' own); the Hall of Records reads both. The title the 'season' row earns is CHAP6e's (a relay change).
 - **The sheet and the board** carry each chapter's Season's event (`event`), a Rivalry's rival where it is public (a
   hidden rival to its members alone, on the board), and `shut`. The opening week ('on' after 'dev') clears every
   developers' event and shut hall with their Strength.
 - **Still to build**: the Schism's backing, the Succession's heir, the doctrine and the Master's vote (CHAP6b) - BUILT,
   below; every event on the client - the board's and the roll's words, the town's talk, an Ascendancy's prices, the shut
-  halls, the doctrines' training and shelf, the candidates' names, the titles (CHAP6c).
+  halls, the doctrines' training and shelf, the candidates' names, the titles (CHAP6c) - the words and the names BUILT
+  (CHAP6c), the halls (CHAP6d), the titles still to build (CHAP6e).
 
 BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcChapterLaw.js` (`CHAPTER_DOCTRINES`,
 `CHAPTER_DOCTRINE_EFFECTS`, `schismDoctrinesOf`, `chapterBackOk`, `schismWinner`, `successionHeir`,
@@ -758,7 +761,7 @@ BUILT (CHAP6b, 2026-10-09, Mac: "continue"), the members' part - `src/net/npcCha
   Master's backing is the chapter's VOTE (section 6), the backing of the character in the Master's seat as the Season's
   last Turning finds it; a tie with no Master's backing carries neither, and no doctrine follows. The winner's doctrine
   holds the next Season: one hall writ more a day ("more writs", the service's, BUILT); a further tenth off the hall's
-  training and a shelf two qualities deeper (the client's, CHAP6c).
+  training and a shelf two qualities deeper (the client's, BUILT CHAP6d).
 - **The Succession, named at the Season's third Turning** (the one that closes its third week; a service asleep then
   names at the first Turning after): the Master's naming (the backing of the character in its Master's seat then); else
   - NARROWED, section 7 said "with no Master" - the choice of the backer whose account earned the chapter the most Merit
@@ -785,8 +788,30 @@ BUILT (CHAP6c, 2026-10-09, Mac: "continue"), the words and the choices on the cl
   again, and an answer after the board closed is said in the chat. **The hall's roll** says the Season after its seats.
   **The town** talks of a chapter's Season before its band (9).
 - **Still to build**: what the events do to the halls on the client - an Ascendancy's prices, the training's and the
-  shelf's doctrines, the shut halls (CHAP6d); the titles - a Master's "High" in an Ascendancy, the Season's Master's title
-  for good (CHAP6e, a relay change).
+  shelf's doctrines, the shut halls (CHAP6d) - BUILT, below; the titles - a Master's "High" in an Ascendancy, the
+  Season's Master's title for good (CHAP6e, a relay change).
+
+BUILT (CHAP6d, 2026-10-09, Mac: "continue"), the Season on the halls - `src/net/npcChapterLaw.js` (`chapterHallFactor`,
+`chapterHallShelf`, `chapterHallShut`, `CHAPTER_HALL_SHUT_LINE`, `CHAPTER_EVENT_EFFECTS.ascendancyPrice`), the hall's
+services window (`src/scenes/worldModes.js`), the host's `chapterHere` (`src/scenes/world.js`), the living world's
+`hallGuildDays` (`src/systems/livingWorld/dayPlan.js`):
+
+- **The prices**: the band's factor (5.2, CHAP3c), times 0.9 in an Ascendancy - training, a spell bought and a spell
+  made alike, as the table's "the halls' prices" are the band's three - times 0.9 again on TRAINING alone where
+  "cheaper training" holds the Season; rounded once, never under 1, as the band's (`chapterPriced`). An Ascendant
+  chapter in an Ascendancy trains at 0.9 x 0.9 x 0.9 of DFU's price.
+- **The shelf**: the band's step and "a deeper shelf"'s two more, inside the band's own bounds (`chapterShelfQuality`'s
+  `extra`: 1-20, a world-data hall past 20 never lowered) - a Failing hall's four less is two less with it; minted once
+  a day, as the band's (GUILD-SHELF).
+- **The shut halls**: a hall whose chapter's halls a Crackdown shut answers every service of its window - training, the
+  spells, the shelves, repair and the rest alike - with one line, "The hall is shut this Season, by the watch's order.",
+  in the town's talk, before any window opens; its two `guildsman` keep their working day at home, and no resident
+  spends an evening there - nor a sellsword's or an adventurer's daily visit (their day's own draws kept, so the rest of
+  the day stands as it was). NARROWED: the door stays DFU's - its opening hours, its shelf of books and the hall's roll
+  on it (9) - the Crackdown shuts the chapter's work, not the building.
+- **The host** hands the window the hall's whole chapter off the sheet (`chapterHere`, the band's `chapterStrength` it
+  replaced); none known - offline, the classic skin, a hidden guild, a chapter the sheet does not name - every hall is
+  DFU's own, as the band's.
 
 ## 8. Rivals and patrons (CHAP7)
 
@@ -823,7 +848,9 @@ classic skin, the row off, the service unreachable - the living world is exactly
   and a courtier's at its order's alike; a sellsword's and an adventurer's daily hall untouched. The living town reads
   the bands once a clock minute (`LivingTown._chapterRead`, the host's `chapterOf` over the sheet) and makes a day's
   plans again when they move, so a reader whose sheet landed after it entered the town keeps the same hall as one whose
-  sheet was there first. Shut halls wait for the Crackdown that shuts them (7, CHAP6).
+  sheet was there first. Shut halls wait for the Crackdown that shuts them (7, CHAP6). BUILT (CHAP6d): a shut hall
+  keeps no evenings (`GUILD_DAYS_SHUT`, the band `shut` the living town reads off the sheet's `shut`), its `guildsman`
+  idle at home, a sellsword's and an adventurer's daily visit dropped (7).
 - **The Schism's candidates and the Succession's heir** are residents of the hall, drawn from the census by the event's
   roll, and are known to every player by the same name. CHAP6b: the service holds them by index - a Schism's side 0 and
   1, a Succession's candidate 0 to 2 - and the census's names are the client's (CHAP6c). BUILT (CHAP6c): named by the
@@ -942,7 +969,8 @@ DECIDED.
    the Decline's weeks, the Season's end (the Rivalries, the Crackdowns' shut halls, the Chronicle's lines), the events
    on the sheet and the board (7). CHAP6b BUILT (2026-10-09): the Schism's backing and its doctrine, the Succession's
    heir, the Master's vote (7). CHAP6c BUILT (2026-10-09): the Season's words on the board, the roll and in the town,
-   the candidates named, a member's choices on the board (7, 9).
+   the candidates named, a member's choices on the board (7, 9). CHAP6d BUILT (2026-10-09): an Ascendancy's prices, the
+   doctrines' training and shelf, the shut halls and their people (7, 9).
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
 CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
@@ -1044,15 +1072,15 @@ is Mac's to overrule.
 | Holder's Merit | no carry - a sitting holder keeps an EQUAL standing (`chapterSeatPlan`'s first tie-break; AUDIT CHAP4 E1, decided: the x1.2 it carried made a holder at 2000 of the four weeks' 2400 unbeatable) | 6 |
 | Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11; `CHAPTER_EVENTS`, `chapterEventWeights`, drawn on `CHAPTER_EVENT_SALT`) | 7 |
 | Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target (`CHAPTER_EVENT_EFFECTS.declineFall`, `declineMeets`) | 7 |
-| Ascendancy's prices | a further tenth off | 7 |
+| Ascendancy's prices | a further tenth off training, a spell bought and a spell made (`CHAPTER_EVENT_EFFECTS.ascendancyPrice`, `chapterHallFactor`) | 7 |
 | Rivalry's swing | 10 Strength, the loser's whole, the winner's never past 100 (`rivalrySwing`) | 7 |
 | Crackdown's pay | half again, whole (`crackdownPay`) | 7 |
 | Crackdown's shut line | Strength 30 - under it, the halls shut for the next Season (`crackdownShut`) | 7 |
-| The doctrines | training a further tenth off, the shelf two qualities deeper, one hall writ more a day (`CHAPTER_DOCTRINE_EFFECTS`); a Schism two of the three (`schismDoctrinesOf`, `CHAPTER_SCHISM_SALT`) | 7 |
+| The doctrines | training a further tenth off, the shelf two qualities deeper inside the band's bounds, one hall writ more a day (`CHAPTER_DOCTRINE_EFFECTS`, `chapterHallFactor`, `chapterHallShelf`); a Schism two of the three (`schismDoctrinesOf`, `CHAPTER_SCHISM_SALT`) | 7 |
 | A Succession | three candidates, named at the Season's third Turning (`SUCCESSION_CANDIDATES`, `SUCCESSION_TURNING`) | 7 |
 | The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
 | A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
-| The hall's evenings by band | Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
+| The hall's evenings by band | none shut (`GUILD_DAYS_SHUT`, CHAP6d), Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
 | The town's talk of a chapter | on 2 days of the week, its own, three apart (`CHAPTER_NEWS_DAYS`, `src/systems/livingWorld/lines.js`); none Steady | 9 |
 | The seats' beat on the tab | 10 minutes with nothing to claim before the Roll is asked again (`ROLL_SEATS_MS`, AUDIT CHAP4 C1) | 6 |
 
@@ -1510,3 +1538,24 @@ The sixth slice's third; sections 7 and 9 carry the law and what building it nar
   mutants, all dead. Eleven older records re-aimed by content (CHAP3c's, CHAP4d's, CHAP5a's, CHAP5b's, AUDIT CHAP4's),
   all dead; three older pins moved (PIN MOVED: CHAP5a's sheet and roll, CHAP5b's host); CHAP6a's and CHAP6b's boards
   pin the `season` sent.
+
+## CHAP6d - the Season on the halls, as built (2026-10-09, Mac: "continue")
+
+The sixth slice's fourth; sections 7 and 9 carry the law and what building it narrowed (BUILT, CHAP6d).
+
+- **The law.** `src/net/npcChapterLaw.js`: `CHAPTER_EVENT_EFFECTS.ascendancyPrice` (0.9), `CHAPTER_HALL_SERVICES`,
+  `chapterHallFactor` (the band's, an Ascendancy's, "cheaper training"'s on training alone), `chapterHallShelf`
+  (`chapterShelfQuality` gains `extra`, the doctrine's two inside the band's bounds), `chapterHallShut`,
+  `CHAPTER_HALL_SHUT_LINE`.
+- **The hall.** `src/scenes/worldModes.js`: the window reads the hall's whole chapter (`chapterHere`), prices each window
+  by its own service (`chapterFactor`), stocks the three shelves by it (`shelfQuality`), and refuses a shut hall's every
+  service before any window. `src/scenes/world.js`: the host's `chapterHere` (the sheet's chapter of the hall's guild in
+  the player's region) for the band's `chapterStrength`. `src/systems/livingWorld/dayPlan.js`: `GUILD_DAYS_SHUT`, the
+  `shut` band, the `guildsman` at home, a sellsword's and an adventurer's visit gated with their draws kept.
+  `livingTown.js`: `_chapterRead` reads a shut chapter as the band `shut`.
+- **Pins.** `test/chap6d_halls.test.js`, 6 tests: the price factor (none, the band, an Ascendancy on both services, the
+  doctrine on training alone, both, the names it does not know); the shelf (the doctrine's two, the bounds, DFU's own);
+  the shut read and its line; a shut hall's evenings and guildsmen in a synthetic town; the living town's read; the
+  wiring. `tools/mutants/chap6d.json`: 24 mutants, all dead. Three older records re-aimed by content (CHAP3c's host,
+  training and hook), all dead; four older pins moved (PIN MOVED: CHAP3c's host, factor, training and hook; CHAP6a's
+  effects table, the Ascendancy's price).
