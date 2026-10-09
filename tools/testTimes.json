@@ -1519,6 +1519,7 @@
  "test/perfsun_fragment.test.js": 434,
  "test/perftown1.test.js": 446,
  "test/perfurl_doors.test.js": 2243,
+ "test/perfways1.test.js": 8400,
  "test/perlightcolors.test.js": 589,
  "test/ph1_physics.test.js": 12335,
  "test/pickupfeed.test.js": 1298,

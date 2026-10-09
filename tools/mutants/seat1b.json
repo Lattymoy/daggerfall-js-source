@@ -389,8 +389,8 @@
   {
     "name": "SEAT1b-relay-a-channel-ticks",
     "file": "server/src/index.js",
-    "old": "      if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(",
-    "new": "      if (typeof met.sub === 'string' && met.sub) await this._watchTick(",
+    "old": "    if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(",
+    "new": "    if (typeof met.sub === 'string' && met.sub) await this._watchTick(",
     "tests": [
       "test/seat1b_client.test.js"
     ]
