@@ -118,8 +118,8 @@ export const SD_BORDER_BLOCK_RE = /^b/i;
  * somewhere, never none. AUDIT SD IV (F38): OUT OF THE WATER where any is - a candidate whose foot (`floorOf`, the floor
  * the collider finds under it; its own height without one) stands under its block's water (the layout's own level,
  * never a runtime override - every client the same; DFU's no-water 10000 stands 250 m under every floor, as its own
- * UpdateFog reads it) is taken only when none of its kind is dry: a flooded block's
- * marker stood the Rift, the Return and the way back from the Hour at the bottom of the water.
+ * UpdateFog reads it) is taken only when none of its kind is dry: a flooded block's marker stood the Rift, the Return
+ * and the way back from the Hour at the bottom of the water.
  * @param {Array<{ x: number, y: number, z: number, eliteCopy?: boolean }> | null | undefined} enemies
  * @param {Array<{ name?: string, originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }>, waterLevel?: number } }> | null | undefined} blocks
  * @param {((m: { x: number, y: number, z: number }) => number) | null} [floorOf]

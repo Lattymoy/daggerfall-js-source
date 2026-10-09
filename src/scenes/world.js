@@ -23268,10 +23268,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
    *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
-   *  before) and stood before that door (AUDIT SD IV F40), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
-   *  law again (SD3). The Rift's word is asked once more under the veil: the Hour can close while it does. Answers whether
-   *  the step began - AUDIT SD III (H6): null while another step is under way (the way back's landing, still under its
-   *  veil): not refused, not yet. The step refused it in silence, and its walk-in was spent. */
+   *  before) and stood before that door (AUDIT SD IV F40), then the realm built and entered (enterSdRealm) - its room
+   *  the relay's `sd:<s>`, whose hello asks the Rift's law again (SD3). The Rift's word is asked once more under the
+   *  veil: the Hour can close while it does. Answers whether the step began - AUDIT SD III (H6): null while another step
+   *  is under way (the way back's landing, still under its veil): not refused, not yet. The step refused it in silence,
+   *  and its walk-in was spent. */
   function sdEnterRealm(s) {
     const h = sdHost?.hollow();
     if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
