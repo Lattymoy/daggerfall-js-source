@@ -73,6 +73,8 @@ export const SD_BELL_ASK_MS = 1000;
 export const SD_IRIS_EASE_S = 0.6;
 export const SD_RATCHET_S = 0.25;
 export const SD_RATCHET_OVER = 0.08;
+/** SD-LOOK S6: how long the way back's ring takes over its one turn as one arrives (ms). */
+export const SD_EXHALE_MS = 1200;
 export const SD_TOLL_SWELL = 0.15;
 export const SD_TOLL_FADE_S = 1.2;
 export const SD_REFUSE_S = 1;
@@ -245,7 +247,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
         toned: null, studLit: -1, studEmber: -1, remap: undefined,
         n: new Float64Array(9),   // AUDIT SD II (L2 F9): the frame's numbers in place - the gear's turn, the ring's, the iris's last ease, the last toll, the iris's aperture
         radii: new Float32Array(8), tolls: 0, revealAt: -Infinity, revealed: false, revealAskAt: 0,
-        refusedAt: -Infinity, steppedAt: -Infinity, ripple: [0, 0, 0, 9], light: [0, 0, 0],
+        refusedAt: -Infinity, steppedAt: -Infinity, exhaleAt: -Infinity, ring0: 0, ripple: [0, 0, 0, 9], light: [0, 0, 0],
         // SD-LOOK S6 (Super-Dungeons-Look.md section 4): THE WAY BACK, the same astrolabe seen from the Hour's side - its
         // window the Hollow's hall behind it (render/sdRiftPass.js, interior-mapped), its rings turning FORWARD, back into
         // time, its light the moon's (the Hour's one cool light on arrival)
@@ -293,12 +295,13 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
      *  once (the law is never kept waiting on a picture). */
     returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },
     /** SD-LOOK: what the hall sees happen - 'refused' (a press it would not take: the ring jerks back a tooth, the window
-     *  clouds to ember) or 'step' (one went through: the window ripples from its heart). */
-    pulse(kind) {
+     *  clouds to ember), 'step' (one went through: the window ripples from its heart) or 'exhale' (SD-LOOK S6: one arrived
+     *  through the way back - its ring turns once more, SD_EXHALE_MS). `t` when (the lab's; now by default). */
+    pulse(kind, t = now()) {
       if (!rift) return;
-      const t = now();
       if (kind === 'refused') rift.refusedAt = t;
       if (kind === 'step') rift.steppedAt = t;
+      if (kind === 'exhale') rift.exhaleAt = t;
     },
     /** One frame: the parts turned and the light read; the step into either, handed to the host. `eye` (optional) asks
      *  the reveal. */
@@ -429,7 +432,10 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     const tolls = Math.floor(since / period), into = since - tolls * period;
     if (L.tickHz > 0 && tolls !== rift.tolls) { rift.tolls = tolls; rift.n[N_TOLL] = t - into * 1000; }
     const e0 = into / SD_RATCHET_S, e = e0 < 0 ? 0 : e0 > 1 ? 1 : e0, jolt = e < 1 ? 1 - (1 - e) * (1 - e) * (1 + SD_RATCHET_OVER * 6 * e) : 1;
-    rift.n[N_RING] = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6) * rift.turn : rift.n[N_RING];
+    rift.ring0 = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6) * rift.turn : rift.ring0;
+    // SD-LOOK S6: THE EXHALE - one whole turn more as one arrives, eased (forward from the Hour's side: rift.turn)
+    const ex = (t - rift.exhaleAt) / SD_EXHALE_MS, xe = ex > 0 && ex < 1 ? ex * ex * (3 - 2 * ex) : 0;
+    rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;
     if (rift.ring) about(rift.ring.object.matrix, rift.base, rift.n, N_CY, N_RING);
     // THE STUDS: rebuilt only as their count changes (at most every 7.5 s in the collapse) - AUDIT SD II (L2 F9): asked
     // by their two numbers, never a key minted a frame

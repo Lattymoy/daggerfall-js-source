@@ -17,6 +17,7 @@
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
 //   ?plate           the Returns' hand-plates alight, as when the activation ray finds them (SD-LOOK S6)
+//   ?arrive=<s since> the way back's exhale as one arrives: its brass burst and its ring's one turn (SD-LOOK S6)
 //   SD-LOOK S9, the Steps: ?view=pendulums|beat|beat-far|gust|crumble   their cameras; ?beat=<s into the first Beat
 //                    plate's 3.6 s cycle> (the clock put there - the next plate half a beat on); ?crumble=<s since a foot>
 //                    (every Crumble pin touched that long ago: 0-0.7 its crack stages, 0.7-5.1 its chunks falling, 5.1-5.7
@@ -204,6 +205,7 @@ const wayBack = createSdEnd({ renderer, riftTo: 'To the Abyss Dungeon', clock: (
 wayBack.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: !params.has('nohollow') });
 // ?fight=fell&age=<s since it began to rise>: the way home assembling where the Remnant fell (scenes/sdEnd.js standReturn)
 if (params.get('fight') === 'fell') wayBack.standReturn(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z - 8), Number(params.get('age') ?? 3) * 1000, { dynamicDraws });
+if (params.has('arrive')) { const at = (clock - Number(params.get('arrive') || 0)) * 1000; labFx.exhale(at); wayBack.pulse('exhale', at); }   // SD-LOOK S6
 const sky = new SdSkyRenderer(gl);
 const motes = new SdMotesRenderer(gl);
 

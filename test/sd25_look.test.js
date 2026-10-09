@@ -834,3 +834,44 @@ test('SD-LOOK THE HAND-PLATE (S6): a silver plate on the Return\'s sill, the han
   ms += SD_HOME_RISE_MS + 1; e2.frame(null);
   assert.equal(p2.hidden, false);
 });
+
+import { createSdFx, SD_FX_EXHALE, SD_EXHALE_AT } from '../src/scenes/sdFx.js';
+import { SD_EXHALE_MS } from '../src/scenes/sdEnd.js';
+import { realmToDungeon as r2d, SD_ARENA as ARENA } from '../src/net/sdBrain.js';
+import { SD_WAY_BACK_Z as WB_Z } from '../src/world/sdRealm.js';
+test('SD-LOOK THE ARRIVAL EXHALE (S6): my first frame in the Hour on the Threshold breathes brass sparks from the way back\'s face (resting on the Threshold, falling past its rim) and turns its ring once, forward, eased over SD_EXHALE_MS - once an arrival, never while I stay, again after I leave and come back, never for feet first seen elsewhere; the hosts carry it (mutants: never exhaling; every frame; the ring never turning; the hosts unwired)', () => {
+  let t = 10_000, f = null, told = 0;
+  const fx = createSdFx({ link: { state: () => null, now: () => t }, feet: () => f, arrived: () => { told++; } });
+  const exhales = () => fx.bursts(t + 1).filter((b) => b.kind === SD_FX_EXHALE);
+  fx.frame();
+  assert.equal(exhales().length, 0, 'nobody here');
+  f = r2d(0.5, 0, -1); fx.frame();
+  const ex = exhales();
+  assert.equal(ex.length, 1, 'my arrival');
+  assert.equal(told, 1, 'its ring told');
+  const from = r2d(0, SD_EXHALE_AT.up, WB_Z + SD_EXHALE_AT.ahead);
+  assert.ok(ex[0].at.every((v, i) => Math.abs(v - from[i]) < 1e-9) && ex[0].edge[2] > 0, 'from its face, on the Threshold');
+  t += 16; fx.frame(); t += 16; fx.frame();
+  assert.equal(told, 1, 'never while I stay');
+  f = null; t += 16; fx.frame(); f = r2d(0, 0, -2); t += 16; fx.frame();
+  assert.equal(told, 2, 'again after I leave and come back');
+  f = null; fx.frame(); f = r2d(ARENA.x, 0, ARENA.z); t += 16; fx.frame();
+  assert.equal(told, 2, 'never for feet first seen elsewhere');
+  // the ring: one whole turn forward over SD_EXHALE_MS
+  let ms = 50_000;
+  const end = createSdEnd({ renderer: { createMesh: (m) => ({ m }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms, clock: () => ms / 1000 });
+  end.stand({ rift: { at: [0, 0, 0], size: 5 }, retAt: null, dynamicDraws: [], hollow: true });
+  end.frame(null); const a0 = end.parts.ringAngle;
+  end.pulse('exhale'); ms += SD_EXHALE_MS / 2; end.frame(null);
+  const a1 = end.parts.ringAngle;
+  ms += SD_EXHALE_MS; end.frame(null);
+  const a2 = end.parts.ringAngle;
+  // between the frames the tolls may move it by whole hours: the turn read mod an hour
+  const hour = Math.PI / 6, modH = (x) => ((x % hour) + hour) % hour;
+  assert.ok(Math.abs(Math.abs(a1 - a0) - Math.PI) < hour + 1e-6, `half a turn at half its time (${a1 - a0})`);
+  assert.ok(a1 - a0 > 0, 'forward from the Hour\'s side');
+  assert.ok(Math.abs(modH(a2 - a0)) < 1e-6 || Math.abs(modH(a2 - a0) - hour) < 1e-6, 'whole, then as it was');
+  const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8'), D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  assert.match(W, /arrived: \(\) => modes\?\.dungeonCtx\?\.sdEndPulse\?\.\('exhale'\)/);
+  assert.match(D, /sdEndPulse: sdEnd \? \(kind\) => sdEnd\.pulse\(kind\) : undefined/);
+});

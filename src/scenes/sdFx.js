@@ -23,7 +23,8 @@
 // of its own beside the blows' - time runs back inside the Hour). No veil, the words as they were (scenes/world.js
 // sdCastBack). Seen from my own feet: fallen to the void's floor one frame, standing on a checkpoint's landing the next
 // (world/sdSteps.js castBackTo - nothing else moves a body so), so no host is asked.
-import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
+import { SD_ARENA, SD_THRESHOLD, SD_REALM_ORIGIN, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
+import { SD_WAY_BACK_Z } from '../world/sdRealm.js';
 import { SD_CHECKPOINTS, SD_VOID_Y } from '../world/sdSteps.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_ARENA_SLACK, stompFrontAt, handAngleAt, inArena } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
@@ -49,6 +50,13 @@ export const SD_FX_KINDS = Object.freeze({
  *  (m), and how high over my feet its sparks gather (m). */
 export const SD_FX_REWIND = kind(0.75, 0.55, false, [1.4, 7]);
 export const SD_REWIND_SEEN = Object.freeze({ fell: 1.5, landed: 0.6, chest: 1.0, gap: 500 });
+/** SD-LOOK S6: THE EXHALE - the way back's breath as one arrives through it: brass sparks from its face, its light; where
+ *  (the realm's frame: m before its face, m up its ring), and the Threshold's disc its sparks rest on and fall past. */
+export const SD_FX_EXHALE = kind(0.4, 0.55, false, [1.2, 8]);
+export const SD_EXHALE_AT = Object.freeze({ ahead: 0.8, up: 2.2 });
+const EXHALE_FROM = Object.freeze(realmToDungeon(0, SD_EXHALE_AT.up, SD_WAY_BACK_Z + SD_EXHALE_AT.ahead));
+const EXHALE_FLOOR = realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[1];
+const EXHALE_EDGE = Object.freeze([realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[0], realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z)[2], SD_THRESHOLD.r]);
 /** Each checkpoint's island as a burst's floor's edge ([x, z, radius], the dungeon's frame): where the rewind's sparks
  *  rest, and past which they rise from under its rim. */
 const SD_REWIND_EDGES = Object.freeze(SD_CHECKPOINTS.map((C) => { const at = realmToDungeon(C.x, C.y, C.z); return Object.freeze([at[0], at[2], C.r]); }));
@@ -98,13 +106,14 @@ export const SD_HAND_FLASH_OUT = 1.2;
 
 /**
  * The Hour's blows seen on this screen. `link` the fight's (net/sdFightLink.js), `feet()` mine in the dungeon's frame
- * (null out of the Hour), `shake(k)` the camera's door.
- * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void }} deps
+ * (null out of the Hour), `shake(k)` the camera's door, `arrived()` (SD-LOOK S6) told as my feet first stand on the
+ * Threshold - the way back's ring turns once.
+ * @param {{ link: any, feet?: () => (number[] | null), shake?: (k: number) => void, arrived?: () => void }} deps
  */
-export function createSdFx({ link, feet = () => null, shake = () => {} }) {
+export function createSdFx({ link, feet = () => null, shake = () => {}, arrived = () => {} }) {
   /** @type {Array<{ at: number[], at0: number, t: number, kind: any, color: ReadonlyArray<number>, floor: number, edge: ReadonlyArray<number> }>} */
   const bursts = [];
-  let k = null, pass = null, passTried = false, flashAt = -Infinity, wasY = NaN, wasAt = -Infinity;
+  let k = null, pass = null, passTried = false, flashAt = -Infinity, wasY = NaN, wasAt = -Infinity, here = false;
   const live = [];
   /** AUDIT SD III (V5): the lights a frame reads, kept and filled in place - each a pooled `{ x, y, z, range, color }`
    *  (a caller reads them that frame, never later) */
@@ -126,6 +135,8 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
   /** SD-LOOK S9: THE REWIND where my feet (the dungeon's frame) landed on checkpoint `c` at `t` - its sparks gathering over
    *  my feet, resting on its stone and falling past its rim. */
   const rewound = (f, c, t) => { add([f[0], f[1] + SD_REWIND_SEEN.chest, f[2]], t, SD_FX_REWIND, SD_FX_COLOR.gold, f[1]).edge = SD_REWIND_EDGES[c]; };
+  /** SD-LOOK S6: THE EXHALE at `t` - brass sparks from the way back's face, resting on the Threshold and falling past it. */
+  const exhaled = (t) => { add(EXHALE_FROM, t, SD_FX_EXHALE, SD_FX_COLOR.brass, EXHALE_FLOOR).edge = EXHALE_EDGE; };
   /** My feet in the arena's frame, or null. */
   const mine = () => { const f = feet(); if (!f) return null; const r = dungeonToRealm(f[0], f[1], f[2]); return [r[0] - SD_ARENA.x, r[2] - SD_ARENA.z]; };
   // AUDIT SD III (V4): the whole arena's shakes (a reach of nought) are felt in the arena alone - the Hall and the Steps
@@ -196,8 +207,12 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       if (f) {
         const rx = f[0] - SD_REALM_ORIGIN[0], ry = f[1] - SD_REALM_ORIGIN[1], rz = f[2] - SD_REALM_ORIGIN[2], c = t - wasAt < SD_REWIND_SEEN.gap ? sdCastBackSeen(wasY, rx, ry, rz) : -1;   // the frame before, and only just before
         if (c >= 0) rewound(f, c, t);
+        // SD-LOOK S6: my first frame in the Hour, on the Threshold - the way back exhales (once an arrival, never a late
+        // frame: `here` holds until I leave)
+        if (!here && Number.isFinite(t) && Math.hypot(rx - SD_THRESHOLD.x, rz - SD_THRESHOLD.z) < SD_THRESHOLD.r) { exhaled(t); arrived(); }
+        here = true;
         wasY = ry; wasAt = Number.isFinite(t) ? t : -Infinity;
-      } else wasY = NaN;
+      } else { wasY = NaN; here = false; }
       if (!s || !(s.fi > 0) || !Number.isFinite(t)) { k = null; return; }
       if (!k || k.fi !== s.fi) { k = seen(s, t); return; }
       // its fall: the burst out of its chest and the flash, then the column as it sinks, then the way home's light
@@ -291,9 +306,11 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       return pass.bursts > 0;
     },
     /** Out of the Hour: forgotten. */
-    leave() { k = null; bursts.length = 0; flashAt = -Infinity; },
+    leave() { k = null; bursts.length = 0; flashAt = -Infinity; here = false; },
     /** SD-LOOK S9 (the lab, src/tools/abyssLab.js): the rewind on checkpoint `c` at `t` (the fight's clock), my feet on its
      *  landing. */
     rewind(c, t) { const C = SD_CHECKPOINTS[c]; if (C) rewound(realmToDungeon(C.x, C.y, C.z), c, t); },
+    /** SD-LOOK S6 (the lab): the way back's exhale at `t` (the fight's clock), as an arrival breathes it. */
+    exhale(t) { exhaled(t); },
   };
 }

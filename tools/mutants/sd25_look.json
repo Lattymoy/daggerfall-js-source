@@ -256,8 +256,8 @@
   {
     "name": "SD25-the-ring-forward",
     "file": "src/scenes/sdEnd.js",
-    "old": "rift.n[N_RING] = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6)",
-    "new": "rift.n[N_RING] = L.tickHz > 0 ? ((tolls - 1) + jolt) * (Math.PI / 6)",
+    "old": "rift.ring0 = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6)",
+    "new": "rift.ring0 = L.tickHz > 0 ? ((tolls - 1) + jolt) * (Math.PI / 6)",
     "tests": [
       "test/sd25_look.test.js"
     ]
@@ -826,6 +826,60 @@
     "file": "src/world/sdRiftModel.js",
     "old": "(c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
     "new": "1 - (c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-exhale-never",
+    "file": "src/scenes/sdFx.js",
+    "old": "{ exhaled(t); arrived(); }",
+    "new": "{ arrived(); }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-exhale-every-frame",
+    "file": "src/scenes/sdFx.js",
+    "old": "        here = true;\n",
+    "new": "        here = false;\n",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-exhale-ring-still",
+    "file": "src/scenes/sdEnd.js",
+    "old": "rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;",
+    "new": "rift.n[N_RING] = rift.ring0;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-exhale-unheard",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (kind === 'exhale') rift.exhaleAt = t;\n",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-exhale-unwired-world",
+    "file": "src/scenes/world.js",
+    "old": "    arrived: () => modes?.dungeonCtx?.sdEndPulse?.('exhale'),",
+    "new": "",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-exhale-unwired-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    sdEndPulse: sdEnd ? (kind) => sdEnd.pulse(kind) : undefined,",
+    "new": "",
     "tests": [
       "test/sd25_look.test.js"
     ]
