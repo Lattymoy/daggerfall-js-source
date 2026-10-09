@@ -45,9 +45,12 @@ export const SD_ARRIVE_Z = 1;
  *  is the Hollow's own art - scenes/sdEnd.js). */
 export const SD_WAY_BACK_Z = -5;
 export const SD_WAY_BACK_SIZE = 5;
-/** The islands: their discs' sides, how far their roots hang into the void, the rims' brass lip. */
+/** The islands: their discs' sides, how far their roots hang into the void, the rims' brass lip. SD-LOOK S11: the island's
+ *  own lip - its torn edge, SD_LIP down from its floor - the rest of the root the hang's (world/sdIslandModel.js: the
+ *  skirt, the spires, SD_ROOT_DEPTH a main spire at the Threshold's size). */
 export const SD_ISLAND_SIDES = 48;
 export const SD_ROOT_DEPTH = 22;
+export const SD_LIP = 0.5;
 export const SD_RIM_W = 0.35;
 export const SD_RIM_H = 0.12;
 /** The floors' tile, metres. SD-LOOK: two (64 texels - 32 a metre, the Hollow's own density; it was four, 16 a metre). */
@@ -167,12 +170,12 @@ const UP = [0, 1, 0];
 
 /**
  * One island: its floor a disc of `rec` about (cx, cz) radius `r` (`uvOf` its texture's map, the tile by default), its
- * brass lip round the rim, and its root - a cone of dark stone from the rim down SD_ROOT_DEPTH into the void, its point a
- * little off centre so no two hang alike. Its floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
+ * brass lip round the rim, and its torn edge - SD-LOOK S11: SD_LIP of dark stone down from the rim (it was a cone to a
+ * point SD_ROOT_DEPTH down); what hangs under it is the hang's (world/sdIslandModel.js, a noShadow mesh a stage). Its
+ * floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
  */
-export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0, y: y0 = 0, bands = 0 } = {}) {
+export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands = 0 } = {}) {
   const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);
-  const tip = C(lean, -SD_ROOT_DEPTH - r * 0.6, lean * 0.5);
   const E = (rr, a, y) => C(Math.cos(a) * rr, y, Math.sin(a) * rr);
   for (let k = 0; k < SD_ISLAND_SIDES; k++) {
     const a0 = (k / SD_ISLAND_SIDES) * Math.PI * 2, a1 = ((k + 1) / SD_ISLAND_SIDES) * Math.PI * 2;
@@ -191,8 +194,8 @@ export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0, y: y0 
     f.quad(SD_REALM_BRASS_RECORD, C(xi0, SD_RIM_H, zi0), C(xi1, SD_RIM_H, zi1), C(x1, SD_RIM_H, z1), C(x0, SD_RIM_H, z0), [0, 0], [1, 0], [1, 0.2], [0, 0.2]);
     f.quad(SD_REALM_BRASS_RECORD, C(x0, 0, z0), C(x0, SD_RIM_H, z0), C(x1, SD_RIM_H, z1), C(x1, 0, z1), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);
     f.quad(SD_REALM_BRASS_RECORD, C(xi1, 0, zi1), C(xi1, SD_RIM_H, zi1), C(xi0, SD_RIM_H, zi0), C(xi0, 0, zi0), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);
-    // SD-LOOK: the root's uv top (v 0, under the rim) to tip (v 1) - its strip is the cake cut through, lip to haze
-    f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip, [k / 8, 0], [(k + 1) / 8, 0], [(k + 0.5) / 8, 1]);
+    // SD-LOOK S11: the torn edge, facing out - the top rows of the root's strata (the cake's lip); the hang's skirt from its foot
+    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0), C(x1, 0, z1), C(x1, -SD_LIP, z1), [k / 8, 0.02], [k / 8, 0], [(k + 1) / 8, 0], [(k + 1) / 8, 0.02]);
     // SD-LOOK: the edge line along the rim's outer top edge - its top and its outer face
     const re = r - SD_EDGE_LINE, ro = r + 0.004, ye = SD_RIM_H + 0.004, am = (a0 + a1) / 2;
     quadFacing(f, SD_REALM_EDGE_RECORD, E(re, a0, ye), E(re, a1, ye), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], UP);
@@ -308,7 +311,7 @@ const walkXs = (x0, x1) => [x0, x1, ...islandEdgeXs(SD_THRESHOLD.x, SD_THRESHOLD
  */
 export function buildRealmModel() {
   const f = faces();
-  realmIsland(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_COBBLE_RECORD, { lean: 1.5 });   // SD-LOOK: the Bay's street
+  realmIsland(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_COBBLE_RECORD);   // SD-LOOK: the Bay's street
   compassRose(f, SD_THRESHOLD.x, SD_ARRIVE_Z);
   // the walk: a slab of the floor's stone between brass kerbs, from the Threshold's rim to the Orrery's - AUDIT SD II
   // (L2 F4): laid from one island's edge to the other's and over neither (it ran z 7-25, over the dial's own floor at the
@@ -350,10 +353,10 @@ export function buildRealmModel() {
   }
   // the Orrery's hall: its floor the Hour-dial, one face over the whole disc (the dial's art is the disc's)
   const R = SD_ORRERY.r;
-  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { lean: -3, uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
+  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
   dialInlay(f);   // SD-LOOK: its hours, its ring and its six segments laid in brass, crisp at every distance
   // the Last Moment: the arena, and its four pillars on the diagonals
-  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { lean: 4, bands: SD_ARENA_BANDS });   // SD-LOOK: a face, in rings
+  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { bands: SD_ARENA_BANDS });   // SD-LOOK: a face, in rings
   for (let k = 0; k < 4; k++) pillarQuads(k).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? PILLAR_SIDE_UV : PILLAR_TOP_UV)));
   // AUDIT SD II (L2 F14): THE LAMPS the Hour's lights hang from - a brass post, its head alight round the light (the
   // hands' own brass glow), a brass cap; the lights were pools from nowhere 2.4 m over the rims

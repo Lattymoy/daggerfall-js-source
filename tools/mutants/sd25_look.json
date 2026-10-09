@@ -139,8 +139,8 @@
   {
     "name": "SD25-the-arena-a-disc-again",
     "file": "src/world/sdRealm.js",
-    "old": "{ lean: 4, bands: SD_ARENA_BANDS }",
-    "new": "{ lean: 4 }",
+    "old": "{ bands: SD_ARENA_BANDS }",
+    "new": "{}",
     "tests": [
       "test/sd25_look.test.js"
     ]

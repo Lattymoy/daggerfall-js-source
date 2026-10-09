@@ -48,8 +48,8 @@
   {
     "name": "SD7B-a-checkpoint-on-the-floor",
     "file": "src/world/sdStepsModel.js",
-    "old": "SD_REALM_FLOOR_RECORD, { y: c.y, lean: k === 1 ? 1 : -1.5 });",
-    "new": "SD_REALM_FLOOR_RECORD, { lean: k === 1 ? 1 : -1.5 });",
+    "old": "SD_REALM_FLOOR_RECORD, { y: c.y });",
+    "new": "SD_REALM_FLOOR_RECORD, {});",
     "tests": [
       "test/sd7b_steps.test.js"
     ]

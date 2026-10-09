@@ -47,8 +47,8 @@
   {
     "name": "SD5A-no-root",
     "file": "src/world/sdRealm.js",
-    "old": "    f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
-    "new": "    if (false) f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
+    "old": "    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
+    "new": "    if (false) f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
     "tests": [
       "test/sd5a_realm.test.js"
     ]

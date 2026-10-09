@@ -12,11 +12,12 @@ import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_STEPS, SD_ARENA, 
 import {
   sdRealmLocation, isSdRealm, sdRealmBlock, sdRealmBlocks, buildRealmModel, realmFloorTris, realmClamp, realmArena, realmLights, realmLightsNear,
   realmLighting, SD_REALM_ARCHIVE, SD_REALM_BLOCK, SD_REALM_BLOCK_INDEX, SD_REALM_LOCATION_ID, SD_ARRIVE_Z, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE,
-  SD_REALM_TEXT, SD_REALM_FLOORS, SD_REALM_FOG, SD_LAMP_COLOR, SD_LAMP_H, SD_ROOT_DEPTH,
+  SD_REALM_TEXT, SD_REALM_FLOORS, SD_REALM_FOG, SD_LAMP_COLOR, SD_LAMP_H, SD_ROOT_DEPTH, SD_LIP,
   SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_REALM_ARENA_RECORD, SD_REALM_COBBLE_RECORD, SD_REALM_EDGE_RECORD,
   SD_REALM_TRILIGHT, SD_REALM_KEY_LIGHT, SD_DIAL_INLAY,
 } from '../src/world/sdRealm.js';
 import { SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
+import { buildHangModel } from '../src/world/sdIslandModel.js';
 import { realmArt, SD_ART_SIZE, SD_DIAL_SIZE, SD_ROOT_ART_H } from '../src/world/sdRealmArt.js';
 import { gateArenaLocation, isGateArena, GATE_ARENA_LOCATION_ID, GATE_ARENA_BLOCK_INDEX } from '../src/world/gateArena.js';
 import { madeDungeon, dungeonTierLabel } from '../src/world/dungeonLabel.js';
@@ -24,6 +25,8 @@ import { sdRoomKey, SD_NO_CLOSED } from '../src/net/sdLaw.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const close = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
+/** SD-LOOK S11: the Threshold's hang (world/sdIslandModel.js), the realm's frame. */
+const hangVerts = () => { const m = buildHangModel('threshold'), out = []; for (let i = 0; i < m.positions.length; i += 3) out.push(dungeonToRealm(m.positions[i], m.positions[i + 1], m.positions[i + 2])); return out; };
 const HOLLOW = { key: '303,202', px: 303, py: 202, name: 'The Stopped Bell' };
 
 test('SD5a the frame: the Threshold at the made block\'s middle, the walk, the Orrery\'s hall, the Steps\' span and the Last Moment\'s arena laid along +z - the stages of section 7 (mutants: a stage moved)', () => {
@@ -82,7 +85,7 @@ test('SD5a the empty block: its start marker on the Threshold a step ahead of it
   assert.equal(sdRealmBlocks(null).getBlockIndex('X'), -1);
 });
 
-test('SD5a the Hour\'s mesh: its five records and its lamps\' glow, of its own archive, 32-bit indices; the floors\' tops at y 0, the dial over the Orrery\'s hall, the arena\'s plates over the arena, the pillars standing, the roots hanging into the void (mutants: the dial off the hall; no root)', () => {
+test('SD5a the Hour\'s mesh: its five records and its lamps\' glow, of its own archive, 32-bit indices; the floors\' tops at y 0, the dial over the Orrery\'s hall, the arena\'s plates over the arena, the pillars standing, the islands\' lips under their rims and the roots hanging into the void (mutants: the dial off the hall; no lip)', () => {
   const m = buildRealmModel();
   assert.ok(m.indices instanceof Uint32Array, 'the renderer\'s one index type (WBX1)');
   assert.deepEqual(m.subMeshes.map((s) => s.textureRecord), [SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_REALM_ARENA_RECORD, SD_HALL_GLOW_RECORD.brass, SD_REALM_COBBLE_RECORD, SD_REALM_EDGE_RECORD]);   // AUDIT SD II (L2 F14 - PIN MOVED): the lamps' heads wear the hands' brass glow; SD-LOOK (PIN MOVED): the Threshold's cobbles and the gold edge line
@@ -94,7 +97,10 @@ test('SD5a the Hour\'s mesh: its five records and its lamps\' glow, of its own a
   assert.ok(verts(SD_REALM_ARENA_RECORD).every((p) => close(p[1], 0) && Math.hypot(p[0] - SD_ARENA.x, p[2] - SD_ARENA.z) <= SD_ARENA.r + 1e-3), 'the arena\'s');
   const brass = verts(SD_REALM_BRASS_RECORD);
   assert.ok(brass.some((p) => close(p[1], SD_PILLAR_H) && close(Math.hypot(p[0] - SD_ARENA.x, p[2] - SD_ARENA.z), SD_PILLAR_R, 1.2)), 'the pillars\' tops');
-  assert.ok(Math.min(...verts(SD_REALM_ROOT_RECORD).map((p) => p[1])) <= -SD_ROOT_DEPTH, 'the roots hang into the void');
+  // PIN MOVED (SD-LOOK S11): the island keeps its torn lip, SD_LIP of stone under its rim; what hangs under it is the hang's
+  // (world/sdIslandModel.js - a noShadow mesh a stage, its main spire SD_ROOT_DEPTH under the Threshold: test/sd25_hang.test.js)
+  for (const isl of [SD_THRESHOLD, SD_ORRERY, SD_ARENA]) assert.ok(verts(SD_REALM_ROOT_RECORD).filter((p) => close(p[1], -SD_LIP, 1e-4) && close(Math.hypot(p[0] - isl.x, p[2] - isl.z), isl.r, 1e-3)).length >= 48, 'each island\'s lip under its rim, all round');
+  assert.ok(Math.min(...hangVerts().map((p) => p[1])) <= -SD_ROOT_DEPTH, 'the roots hang into the void');
   // the dial's uv: the whole image over the whole hall
   const s = m.subMeshes.find((x) => x.textureRecord === SD_REALM_DIAL_RECORD);
   const uv = [];
@@ -160,9 +166,9 @@ test('SD5a the lamps and the light: the Threshold\'s four and the hall\'s and th
 
 test('SD5a the art: five textures made in code, the same every boot - the floor, brass, the roots, the Hour-dial over the whole hall and the arena\'s cracked brass; brass glows a little of its own (mutants: the dial\'s twelfth unlit)', () => {
   const art = realmArt();
-  assert.deepEqual(art.map(([r]) => r), [0, 1, 2, 3, 4, 31, 32]);   // SD-LOOK (PIN MOVED): the Threshold's cobbles, the edge line's gold
+  assert.deepEqual(art.map(([r]) => r), [0, 1, 2, 3, 4, 31, 32, 80, 81]);   // SD-LOOK (PIN MOVED): the Threshold's cobbles, the edge line's gold; PIN MOVED (SD-LOOK S11): the Works' brass and the chains (world/sdHangArt.js)
   for (const [r, a] of art) {
-    const S = r === 3 ? SD_DIAL_SIZE : r === 32 ? 8 : SD_ART_SIZE, H = r === 2 ? SD_ROOT_ART_H : S;   // SD-LOOK (PIN MOVED): the root a strip, top to tip
+    const S = r === 3 ? SD_DIAL_SIZE : r === 32 ? 8 : r === 81 ? 32 : SD_ART_SIZE, H = r === 2 ? SD_ROOT_ART_H : S;   // SD-LOOK (PIN MOVED): the root a strip, top to tip; S11: the chains' 32
     assert.equal(a.albedo.width, S); assert.equal(a.emission.width, S);
     assert.equal(a.albedo.colors.length, S * H * 4);
   }
