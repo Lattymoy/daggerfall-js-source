@@ -66,10 +66,11 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
  * 'no-gate-key', 'receipt' (with `why`), 'not-yours', 'no-realm-character', 'grace' (the fallen's own tab has the first
  * WILD_FALL_GRACE_S), 'nonce', 'room', the record's own words.
  * @param {any} ctx `{ db, bucket, rand, nowS, subtle }` @param {any} player the session's account
- * @param {any} body @param {{ gateKey: CryptoKey|null, signing: CryptoKey|null }} keys
+ * @param {any} body @param {{ gateKey: CryptoKey|null, signing: CryptoKey|null }} keys @param {boolean} [again] the
+ *   second asking after a batch another asking beat
  * @returns {Promise<any>}
  */
-export async function wildFall(ctx, player, body, { gateKey, signing }) {
+export async function wildFall(ctx, player, body, { gateKey, signing }, again = false) {
   if (!signing) return { error: 'no-signing-key' };
   let fallen = player.id, killer = null, charId = null, r = null, w = -1, wt = null, seize = false;
   if (body?.receipt !== undefined) {
@@ -150,7 +151,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }) {
   try { await ctx.db.batch(steps); } catch (e) {
     await dropIfUnnamed(ctx.db, ctx.bucket, fallen, charId, moved.key);
     const now = await ctx.db.prepare('SELECT 1 AS x FROM wild_falls WHERE r = ?1').bind(r).first();
-    if (now) return wildFall(ctx, player, body, { gateKey, signing });   // another asking landed it first: its answer
+    if (now && !again) return wildFall(ctx, player, body, { gateKey, signing }, true);   // another asking landed it first: its answer (asked once more, never a loop)
     throw e;
   }
   await dropObjects(ctx.bucket, [moved.prev]);   // AUDIT INT9: the save two back, as every act drops it
