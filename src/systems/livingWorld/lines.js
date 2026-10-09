@@ -328,7 +328,7 @@ export function watchBand(rep, known) {
 }
 
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house' });
+export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour' });   // LW-STIR: {hour}, the watch's call
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -545,3 +545,108 @@ export function pickScript(seed, { jobs = [], weather = null, hour = 12, road = 
   const pool = pools[Math.floor(rng() * pools.length)];
   return pool[Math.floor(rng() * pool.length)];
 }
+
+/**
+ * LW-STIR (2026-10-08, bible/06-Systems/Living-World.md "LW-STIR"): THE STREET'S INCIDENTS - scripts of fixed parts
+ * (stir.js): `a` the one who begins it (the watchman stopping a stranger, the one with the grievance, the buyer, the
+ * beggar), `b` the one it is put to, `g` the watch stepping into a quarrel; a line `loud` is shouted (the HUD's shout).
+ * A stranger answers the watch by their humour that day (stir.js humourOf): civil, curt or hostile.
+ */
+const L = (/** @type {'a'|'b'|'g'} */ by, /** @type {string} */ text, loud = false) => Object.freeze({ by, text, loud });
+const X = (/** @type {{ by: 'a'|'b'|'g', text: string, loud: boolean }[]} */ ...lines) => Object.freeze(lines);
+
+/** LW-STIR: the watch stops a stranger - by the stranger's humour. */
+export const CHALLENGE_SCRIPTS = Object.freeze({
+  civil: Object.freeze([
+    X(L('a', 'You there. What\'s your business in {town}?'), L('b', 'Trade, officer. I\'ll be on my way by the week\'s end.'), L('a', 'See that you are. Keep the peace while you\'re here.')),
+    X(L('a', 'Hold a moment, traveller. Where from?'), L('b', '{place}, and glad of walls after the road.'), L('a', 'Well enough. Mind the cutpurses at the market.')),
+    X(L('a', 'New face. Staying long?'), L('b', 'A night or two. The tavern\'s expecting me.'), L('a', 'Then enjoy {town}. Quietly.')),
+    X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}. I\'m no trouble to anyone.'), L('a', 'Nobody ever is. On your way, {b}.')),
+  ]),
+  curt: Object.freeze([
+    X(L('a', 'Hold. What brings you to {town}?'), L('b', 'My own two feet. Is that a crime here?'), L('a', 'Not yet. Mind your tongue and it won\'t be.'), L('b', 'I\'ll mind it.')),
+    X(L('a', 'You. Your business.'), L('b', 'Mine.'), L('a', 'In {town}, it\'s mine too. Out with it.'), L('b', 'Passing through. Satisfied?')),
+    X(L('a', 'Where are you bound, stranger?'), L('b', 'Away from you, if you\'d let me.'), L('a', 'Keep that tone and you\'ll be bound for the cells.')),
+    X(L('a', 'That\'s the third time I\'ve seen you loitering here.'), L('b', 'Is standing still against the law now?'), L('a', 'It is when I say so. Move on.'), L('b', 'Fine. Fine.')),
+  ]),
+  hostile: Object.freeze([
+    X(L('a', 'Halt! State your business in {town}!', true), L('b', 'Take your hands off me, you {town} dog!', true), L('a', 'Say that again and you\'ll say it through bars!', true), L('b', 'Bah. I\'ve seen better watchmen in a pigsty.'), L('a', 'Move along. Now!', true)),
+    X(L('a', 'You there! Stop!', true), L('b', 'Who are you to order me about?', true), L('a', 'The watch of {town}, and you\'d best remember it!', true), L('b', 'I\'ll remember your face, guardsman.'), L('a', 'Good. I\'ll remember yours.')),
+    X(L('a', 'That blade stays sheathed in {town}. Understood?'), L('b', 'Or what? You\'ll run and fetch your captain?', true), L('a', 'I\'ll fetch the stocks, and you\'ll sit in them till the crows have you!', true), L('b', 'Hmph. Have it your way.')),
+    X(L('a', 'There\'s word of a brawler off the {place} road. That you?'), L('b', 'And if it was? You\'ll not lay a hand on me!', true), L('a', 'Try me. One more word.', true), L('b', 'Pah. This whole town stinks.')),
+  ]),
+});
+
+/** LW-STIR: the watch at a gate (`a`) and a stranger come in by it (`b`), by the stranger's humour - the longest
+ *  GATE_LINES (stir.js gateHalt stands them there long enough for it). */
+export const GATE_SCRIPTS = Object.freeze({
+  civil: Object.freeze([
+    X(L('a', 'Halt. What brings you to {town}?'), L('b', 'Trade, officer. I\'ll be gone by the week\'s end.'), L('a', 'Then welcome to {town}. Keep the peace.')),
+    X(L('a', 'Hold there, traveller. From where?'), L('b', '{place}, and a long road it was.'), L('a', 'In you go, then. Mind the cutpurses at the market.')),
+    X(L('a', 'Your business in {town}?'), L('b', 'Passing through, and in want of a bed.'), L('a', 'The tavern will see to that. Go on.')),
+    X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}.'), L('a', 'Pass, {b}. And no trouble.')),
+  ]),
+  curt: Object.freeze([
+    X(L('a', 'Halt. State your business.'), L('b', 'My business is my own.'), L('a', 'Not at this gate it isn\'t.'), L('b', 'Trade. Now let me pass.')),
+    X(L('a', 'Hold. Where are you bound?'), L('b', 'Through this gate, if you\'d stand aside.'), L('a', 'Mind that tongue inside these walls.'), L('b', 'I\'ll mind it.')),
+    X(L('a', 'What\'s in the pack?'), L('b', 'Nothing that concerns you.'), L('a', 'Everything at this gate concerns me. Open it.'), L('b', 'There. Satisfied?')),
+  ]),
+  hostile: Object.freeze([
+    X(L('a', 'Halt! Who goes there?', true), L('b', 'Out of my way, gate-dog!', true), L('a', 'One more word and you\'ll spend the night in a cell!', true), L('b', 'Bah. Keep your stinking town.'), L('a', 'Move along. I\'ll be watching you.')),
+    X(L('a', 'Stop there! Blades stay sheathed in {town}!', true), L('b', 'Touch my blade and lose your hand!', true), L('a', 'Threaten the watch again. I dare you.', true), L('b', '...Fine. It stays sheathed.')),
+    X(L('a', 'Halt! Your business!', true), L('b', 'None of yours, guardsman!', true), L('a', 'At this gate, everything is my business!', true), L('b', 'Pah. Some welcome.')),
+  ]),
+});
+
+/** LW-STIR: two of the town fall out - the grievance's own (`a` the aggrieved). */
+export const QUARREL_SCRIPTS = Object.freeze([
+  X(L('a', 'You still owe me for that cart wheel, {b}.'), L('b', 'It was broken when you lent it, and you know it!', true), L('a', 'Liar! Pay up or I\'ll have it out of your hide!', true), L('b', 'Try it, and see what you get!', true)),
+  X(L('a', 'Your goat was in my garden again.'), L('b', 'My goat goes where it pleases.'), L('a', 'Then it\'ll please me to put it in a stew!', true), L('b', 'Lay a finger on her and you\'ll answer to me!', true)),
+  X(L('a', 'You\'ve moved the boundary stone, {b}. Don\'t deny it.'), L('b', 'That stone\'s stood there since my grandfather\'s day!', true), L('a', 'And your grandfather was a thief too!', true), L('b', 'Say that again!', true)),
+  X(L('a', 'You called me a cheat in front of the whole tavern.'), L('b', 'Because you are one!', true), L('a', 'Take it back, {b}.'), L('b', 'Make me!', true)),
+  X(L('a', 'That\'s my bucket. My mark\'s on the handle.'), L('b', 'Every bucket in {town} has a scratch on the handle!', true), L('a', 'Not my scratch!', true), L('b', 'Take it, then, and choke on it!', true)),
+  X(L('a', 'You sold me a lame horse, {b}.'), L('b', 'It walked well enough when you paid for it.'), L('a', 'It walked to the end of the street and lay down!', true), L('b', 'Then you rode it wrong!', true)),
+]);
+
+/** LW-STIR: the watch, standing by, steps into a quarrel (`g`, loud) - and the one who began it has the last word. */
+export const BREAK_UP_LINES = Object.freeze([
+  X(L('g', 'Break it up, you two! Or I\'ll break it up for you!', true), L('a', '...This isn\'t over.')),
+  X(L('g', 'Enough! Take it home, or take it to the cells!', true), L('a', 'We\'re done here.')),
+  X(L('g', 'That\'s enough! Both of you, move along!', true), L('a', 'Yes, officer.')),
+]);
+
+/** LW-STIR: a buyer at a stall (`a`) and its keeper (`b`). */
+export const HAGGLE_SCRIPTS = Object.freeze([
+  X(L('a', 'How much for the cloth?'), L('b', 'Six septims. Finest in {town}.'), L('a', 'Six! I\'ll give you four.'), L('b', 'Five, and you\'re robbing me blind.')),
+  X(L('a', 'Are these fresh?'), L('b', 'Picked this very morning.'), L('a', 'Which morning?'), L('b', 'Two for the price of one, and not a word more.')),
+  X(L('a', 'Three septims for a pot with a hole in it?'), L('b', 'That\'s no hole. That\'s a spout.'), L('a', 'Two.'), L('b', 'Done, and good riddance.')),
+  X(L('a', 'I\'ll take the lot if you knock off a septim.'), L('b', 'And feed my children on what?'), L('a', 'On the rest of my septims.'), L('b', '...Done.')),
+]);
+
+/** LW-STIR: a beggar (`a`) asks one standing near (`b`). */
+export const PLEA_SCRIPTS = Object.freeze([
+  X(L('a', 'Spare a coin, friend? Just the one?'), L('b', 'Here. Don\'t drink it all at once.')),
+  X(L('a', 'Alms, for an old soldier?'), L('b', 'Which war?'), L('a', 'All of them.')),
+  X(L('a', 'A septim for bread, kind {b}?'), L('b', 'Away with you.')),
+  X(L('a', 'The gods bless you - a coin?'), L('b', 'I\'ve barely enough for myself.'), L('a', 'Then we\'re kin, you and I.')),
+]);
+
+/** LW-STIR: THE STREET'S SMALL VOICES - the night watch calling the hour ({hour}) by the weather, a stall crying its
+ *  wares, a beggar's call, a drinker's song on the way home from the tavern. */
+export const WATCH_HOURS = Object.freeze({ 21: 'Nine o\'clock', 22: 'Ten o\'clock', 23: 'Eleven o\'clock', 0: 'Midnight', 1: 'One o\'clock', 2: 'Two o\'clock', 3: 'Three o\'clock', 4: 'Four o\'clock', 5: 'Five o\'clock' });
+export const WATCH_CALLS = Object.freeze({
+  fair: Object.freeze(['{hour}, and all\'s well!', '{hour}, and all\'s well in {town}!', '{hour}, and a quiet night!']),
+  rain: Object.freeze(['{hour}, and raining!', '{hour}, and a wet night!']),
+  thunder: Object.freeze(['{hour}, and a storm over {town}!', '{hour}, and thunder on the hills!']),
+  snow: Object.freeze(['{hour}, and snowing!', '{hour}, and a cold night!']),
+  fog: Object.freeze(['{hour}, and a fog on the walls!', '{hour}, and fog in the streets!']),
+});
+export const STALL_CRIES = Object.freeze([
+  'Fresh bread! Still warm!', 'Apples! Crisp apples!', 'Fine cloth, straight from {place}!', 'Fish! Fresh this morning!',
+  'Pots mended while you wait!', 'Candles! Tallow and beeswax!', 'Salt! Good salt from the coast!', 'Herbs for what ails you!',
+]);
+export const BEGGAR_CRIES = Object.freeze(['Alms! Alms for the poor!', 'A coin for an old soldier?', 'Spare a septim, good people!', 'The gods love a generous hand!']);
+export const DRINKING_SONGS = Object.freeze([
+  'Oh, the barmaid of {town}, she poured me a pint...', 'Another cup, another cup, the night is young!', 'The road to {place} is long and dry, so fill my cup before I die...',
+  'The miller\'s wife, the miller\'s wife, she\'s fairer than the miller...', 'We\'ll drink till the sun comes up, my lads!',
+]);

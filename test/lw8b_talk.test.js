@@ -71,7 +71,7 @@ const BEAT = Object.freeze({ roundMin: ROUND_S * BASE, lineMin: lineMinutes(BASE
 const CTX = (t) => ({ town: 'Synth', region: 'Daggerfall', weather: null, hour: Math.floor(((t % DAY_MIN) + DAY_MIN) % DAY_MIN / 60), news: null, player: 'Mac' });
 
 /** An indoors layer over a mock town (the LivingTown's talk doors), the mock room and mock sprites. `inside`: [{ res, t0, t1 }]. */
-function talkRig({ inside = [], clock = 100 * DAY_MIN + 1200, type = BUILDING_TYPES.Tavern, greeting = () => null } = {}) {
+function talkRig({ inside = [], clock = 100 * DAY_MIN + 1200, type = BUILDING_TYPES.Tavern, greeting = () => null, origin = () => null } = {}) {
   const r = room();
   const synced = [];
   const sprites = {
@@ -91,7 +91,7 @@ function talkRig({ inside = [], clock = 100 * DAY_MIN + 1200, type = BUILDING_TY
     o: { relations: () => createRelations() },
   };
   const layer = createLivingIndoors({
-    sprites, building: () => ({ key: 7000, town }), collider: () => r.collider, floorAt: r.floorAt, origin: () => null,
+    sprites, building: () => ({ key: 7000, town }), collider: () => r.collider, floorAt: r.floorAt, origin,
     staticFeet: () => [], clock: () => st.clock, ready: () => true,
   });
   return { layer, synced, st };
@@ -196,8 +196,10 @@ test('LW8b the room\'s circles and words: two at a table meet as the street\'s c
 
 test('LW8b the word to the player: one in no circle within GREET_RANGE has the town\'s word (livingTown.js greetingFor) once in GREET_REST_MIN of the clock, standing GREET_S; one in a circle, or further, none (mutants: the circle, the range, the rest, the stand)', () => {
   const T0 = 100 * DAY_MIN + 1200;
-  const rig = talkRig({ inside: [ALL_DAY(RES(1))], clock: T0, greeting: (r) => `Hello from ${r.id}.` });
-  rig.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  // LW-ROOMS: PIN MOVED - the room's whole floor its places, so the player comes in from out of reach of them all (the
+  // room laid out from its way in, as the host's is)
+  const rig = talkRig({ inside: [ALL_DAY(RES(1))], clock: T0, greeting: (r) => `Hello from ${r.id}.`, origin: () => [0, 0, 0] });
+  rig.layer.frame(0.016, [0, 0, 40], 0, [0, 1.6, 40]);
   const at = rig.layer.stood()[0].at;
   const by = [at[0] + GREET_RANGE - 0.2, 0, at[2]];
   rig.st.greets.length = 0;
@@ -215,16 +217,16 @@ test('LW8b the word to the player: one in no circle within GREET_RANGE has the t
   rig.layer.frame(0.016, by, 0, by);
   assert.equal(rig.st.greets.length, 2, 'rested: again');
   // further off: none
-  const far = talkRig({ inside: [ALL_DAY(RES(1))], clock: T0, greeting: () => 'Hi.' });
-  far.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  const far = talkRig({ inside: [ALL_DAY(RES(1))], clock: T0, greeting: () => 'Hi.', origin: () => [0, 0, 0] });
+  far.layer.frame(0.016, [0, 0, 40], 0, [0, 1.6, 40]);
   const fa = far.layer.stood()[0].at;
   far.st.greets.length = 0;
   const off = [fa[0] + GREET_RANGE + 0.2, 0, fa[2]];
   far.layer.frame(0.016, off, 0, off);
   assert.deepEqual(far.st.greets, [], 'out of reach');
   // in a circle: none
-  const two = talkRig({ inside: [ALL_DAY(RES(1)), ALL_DAY(RES(2))], clock: T0, greeting: () => 'Hi.' });
-  two.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+  const two = talkRig({ inside: [ALL_DAY(RES(1)), ALL_DAY(RES(2))], clock: T0, greeting: () => 'Hi.', origin: () => [0, 0, 0] });
+  two.layer.frame(0.016, [0, 0, 40], 0, [0, 1.6, 40]);
   const ta = two.layer.stood()[0].at;
   two.st.greets.length = 0;
   two.layer.frame(0.016, ta, 0, ta);

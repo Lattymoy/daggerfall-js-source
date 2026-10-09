@@ -217,13 +217,18 @@ the world boots, and the Bay's place on that picture is FOUND rather than author
 trace is made on the player's machine from the player's files, as the chargen's map is, and `?tamrieltrace=off` keeps
 the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice).
 
-- **The trace** (`ui/tamrielTrace.js`, `traceTamrielPicture`). A pixel is LAND of a province where the picker names
-  the province and the painting is not sea - the sea read as the chargen reads it (`provinceMap.js seaIndices`: blue
-  by a clear margin on the palette). A province's land keeps only its pieces that touch no edge of the picture (the
-  picker's generous blob over the parchment border is not land - the chargen's own no-edge clause) unless every piece
-  does (a map painted to its frame), and each at least SPECK_PX (12) pixels (a painted word over the sea is not an
-  island). The Imperial Province, which no race claims, is the inland remainder (`provinceMap.js inlandRemainder`).
-  The two files must share a grid, or the trace is null and the authored shape stands.
+- **The trace** (`ui/tamrielTrace.js`, `traceTamrielPicture`). The picker's eight masks are the eight homelands'
+  own shapes to the pixel (the Iliac Bay is the gap between the Breton and the Redguard mask, the Inner Sea the hole in
+  the Dark Elf one), so a pixel is LAND of a province where the picker names the province - each mask's pieces off
+  the picture's edge (unless every piece touches it: a map painted to its frame), each at least SPECK_PX (12) pixels
+  (a painted word over the sea is not an island). The painting, read on ITS palette (MAP.PAL, ImgFile's paletteName
+  for it, the way the sky's is read), is a parchment whose sea is the parchment itself and whose whole coast - the
+  Imperial Province's included - is one thin BLUE line (`provinceMap.js seaIndices` finds its indices). The Imperial
+  Province, which no race claims, is what the masks and that line ENCLOSE (`enclosedRemainder`): the masks and the
+  line, grown a pixel (a hand-drawn line has one-pixel gaps), bar a flood from the picture's edge, and the largest
+  unclaimed region the flood never reached that touches a mask is the ninth province - the line's own pixels never
+  part of it, so a pocket inside a mask (the Inner Sea) and a ring in the sea (the helmet) stay sea. The two files
+  must share a grid, or the trace is null and the authored shape stands.
 - **The land module** (`world/tamrielLand.js`): the trace installed (`setTamrielTrace`), a chamfer 3-4 distance field
   to the nearest sea made at install, a version that moves on every install (the ink's and the held map's static key
   read it), and the two reads everything else asks - `provinceKeyAt` (the trace's by id, the authored rings' else;
@@ -261,17 +266,30 @@ the authored shape (no Features row: a door for a day the trace reads a picture 
   the client, the stream's frame is reset at the new fit, and the console says what was traced and where the Bay
   fitted. A missing file or a trace of nothing leaves the authored shape standing and says so.
 
-Not verified against a real ARENA2 here (none in the tree, by doctrine): the fit's search window and the trace's sea
-reading are the picture's expected shape, and the probe's fourth step is how to see them. What the sheet shows
+**The first sight of a real ARENA2** (the same night, Mac: "Can you show me a png"): the probe's fourth step was run
+on the ARENA2 of the freeware Daggerfall CD (archive.org's image, read into the session and never into the tree - the
+doctrine holds). The law this slice SHIPPED with (#706) read the sea as blue and the Imperial Province as the chargen's
+`inlandRemainder`: on the real picture the sea is parchment, only the coastline is blue, and the first trace was the
+eight masks as islands with 280 pixels of Imperial Province - the deploy showed that for the hour it stood. The law
+above is what the picture says: 26,423 land pixels of 64,000, the Imperial Province 5,549 of them, every province's
+shape the picker's. The fit lands the Bay at picture (45, 56) at 18.5 Bay pixels a picture pixel (the authored
+guess was (46, 52) at 18.75), with 77% of its cells agreeing - the painting's Iliac Bay is a cruder, more diagonal
+inlet than WOODS.WLD's, and the score surface round the best is flat within 4% over ±3 pixels. The seam between the
+Bay's own coast and the traced one disagrees along 516 edge pixels (the authored shape, tuned to the Bay's edges, 265):
+the stitch joins what it can within STITCH_REACH and the rest meets at the Bay's rectangle, as TAMRIEL1 said it would.
+A reading for the chargen (OVH): `provinceMap.js`'s `seaIndices` and `inlandRemainder` read the same blue sea the
+picture has not; its inert ninth is held by INERT_REGION's fallback, not by the remainder. What the sheet shows
 before the trace lands (a few hundred milliseconds after the world mounts) is the authored continent; the static key
 repaints it the moment the trace is in.
 
 ### Pins
 
 `test/tamriel3.test.js` (14): the pieces' connectivity and edge, the race ids; the trace over a synthetic picture
-and picker (a lake the picker claims, the picker's border blob cut, a speck dropped, SPECK_PX kept, the remainder, ink
-over the sea, the shapes refused, a province painted to the frame kept); the preload's file names and the palette
-reader; the distance field's chamfer (the diagonal 4/3 both ways) and install, the version; `provinceKeyAt` and
+and picker drawn by the picture's own law (parchment sea, a blue line round the land, exact masks): the enclosed
+remainder touching two masks, a one-pixel gap in the line closed, the line sea, a pocket in a mask sea, a ring in the
+sea that encloses more than the Imperial Province sea, a mask over the edge cut, a speck dropped and SPECK_PX kept,
+ink over the sea, the lakes, the shapes refused, a province painted to the frame kept; the preload's file names, the
+painting's own palette by source, the chargen's remainder not called, and the palette reader; the distance field's chamfer (the diagonal 4/3 both ways) and install, the version; `provinceKeyAt` and
 `coastDistanceAt` on the trace (the land mask deciding, off the grid not the next row, bilinear) and off it; the fit
 exact over a Bay cut from the fixture (the fraction over the count, the majority under a speckle, candidates off the
 picture skipped), the defaults named; the live frame's every conversion and its defaults; the ground and the raster on
@@ -279,5 +297,5 @@ the trace (the Desert's Hammerfell, the first and last land cell at the live sca
 rings, one border coast to coast, the labels, the points simplified), `placeCity`'s reach to the pixel and nothing
 snapped on the authored shape; the built model on the trace and its rebuild; the client's post (copies, transferred,
 the cache dropped), the worker's arm, the land module pure; the door; the host's seams by source. Mutants
-`tools/mutants/tamriel3.json` (40: 40 dead).
+`tools/mutants/tamriel3.json` (45: 45 dead).
 
