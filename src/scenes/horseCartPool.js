@@ -110,6 +110,9 @@ export const PUPPET_SEAT_RISE = 0.5;
 /** WAGONS2 (AUDIT): how far from a seat a player said to sit in it may stand and be drawn on it (m) - their own pin
  *  and the owner's wagon eased here apart, never a player elsewhere. */
 export const SEAT_GLUE_REACH = 3;
+/** RW1 x WAGONS2: how near the room the player stands in a wagon stands to be that room's caravan (m) - its pose and the
+ *  room's are one point, set as it parked. */
+export const OUTSIDE_SKIP_REACH = 1.5;
 const ZERO3 = Object.freeze([0, 0, 0]);
 const HORSE_LOCAL_BOX = Object.freeze([
   HORSE_BOX_CENTER[0] - HORSE_BOX_SIZE[0] / 2, HORSE_BOX_CENTER[1] - HORSE_BOX_SIZE[1] / 2, HORSE_BOX_CENTER[2] - HORSE_BOX_SIZE[2] / 2,
@@ -583,6 +586,21 @@ export function createHorseCartPool({
       const f = drawnFrameOf(owner, grows);
       if (!f) continue;
       if (drawWagon(r, texRemap, f.at, f.rotation, p.wagon.tier, grownTurn(owner, p.turn ?? { angle: p.wagon.angle }, f.g), f.g, p.wagon.model, f.hitched, p.wagon.look)) n++;
+    }
+    return n;
+  }
+  /** RW1 x WAGONS2: THE WAGONS IN THE STREET A WINDOW LOOKS OUT ON (render/renderer.js outsideViewDraws - the view out's
+   *  pass) - mine and the others', as they stand, ungrown (the view out is an interior's; the Overworld is none), and
+   *  never the one whose room the player stands in (`skipAt`, its pose in this scene - from inside, its own body would
+   *  stand between the pane and the street). */
+  function drawOutside(r = renderer, skipAt = null) {
+    let n = 0;
+    const s = shown();
+    const frames = [['', drawnFrameOf('', {}, s), s?.wagon ?? null, s?.wagon?.turn ?? (s?.wagon ? { angle: s.wagon.angle } : null)]];
+    for (const [owner, p] of _peers) frames.push([owner, drawnFrameOf(owner, {}), p.wagon, p.turn ?? { angle: p.wagon?.angle ?? 0 }]);
+    for (const [, f, w, turn] of frames) {
+      if (!f || !w || (skipAt && Math.hypot(f.at[0] - skipAt[0], f.at[2] - skipAt[2]) < OUTSIDE_SKIP_REACH)) continue;
+      if (drawWagon(r, null, f.at, f.rotation, w.tier, turn, 1, w.model, f.hitched, w.look)) n++;
     }
     return n;
   }
@@ -1086,6 +1104,7 @@ export function createHorseCartPool({
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,
     seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
     visitTarget,   // WAGONS2-VISIT
+    drawOutside,   // RW1 x WAGONS2: the wagons in the street a window looks out on
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,
   };
 }

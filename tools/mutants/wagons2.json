@@ -488,5 +488,26 @@
     "old": "wagonEntry: oneOf(['private', 'party', 'public', 'guild']),",
     "new": "wagonEntry: str(),",
     "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "RW1xWAGONS2-the-rooms-caravan-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "(skipAt && Math.hypot(f.at[0] - skipAt[0], f.at[2] - skipAt[2]) < OUTSIDE_SKIP_REACH)",
+    "new": "false",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "RW1xWAGONS2-the-peers-left-out",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "for (const [owner, p] of _peers) frames.push(",
+    "new": "for (const [owner, p] of []) frames.push(",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "RW1xWAGONS2-the-hook-unwired",
+    "file": "src/scenes/world.js",
+    "old": "hcc.drawOutside(r, room ? caravanRooms.fromNative(room.origin) : null); });",
+    "new": "void r; void room; });",
+    "tests": ["test/wagons2.test.js"]
   }
 ]

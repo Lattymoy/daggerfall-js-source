@@ -265,7 +265,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // rotors; every other placement stands still. Built lazily on the
   // first read, freed by destroy(); drawList stays whole for the automap.
   let staticBatch = null, staticBuilt = false;
-  const staticBuilder = new StaticBatchBuilder();
+  const staticBuilder = new StaticBatchBuilder({ pieces: true });   // RW1: a sphere a model per merged sub-mesh - a window measured on the screen is its own model's, not the room's (render/realWindows.js)
   // ROAD-C c2/S9: THE INTERIOR AUTOMAP'S ROWS, minted at the ONE push
   // site every building entry runs through.
   //

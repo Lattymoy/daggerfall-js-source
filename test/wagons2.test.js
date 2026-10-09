@@ -24,7 +24,7 @@ import { caravanRoomEntry, caravanRoomRecords, caravanRoomPictures, paintCaravan
 import { buildInteriorContext } from '../src/scenes/interiorContext.js';
 import { interiorLightProperties } from '../src/world/interiorLights.js';
 import { billboardSize } from '../src/world/rmbFlats.js';
-import { createHorseCartPool, PUPPET_SEAT_REACH, PUPPET_SEAT_RISE, SEAT_GLUE_REACH } from '../src/scenes/horseCartPool.js';
+import { createHorseCartPool, PUPPET_SEAT_REACH, PUPPET_SEAT_RISE, SEAT_GLUE_REACH, OUTSIDE_SKIP_REACH } from '../src/scenes/horseCartPool.js';
 import { hccWireRecord, validHccRecord, HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { validParkData, PARK_WAGON_LOOK_MAX } from '../src/net/wire.js';
 import { stableProviderFor } from '../src/ui/holdingsPages.js';
@@ -586,4 +586,25 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   assert.ok(itemFindings({ ...caravan, wagonEntry: 'everyone' }).includes('shape'), 'a door the law does not know');
   assert.deepEqual([...ITEM_FIELDS.wagonEntry.values].sort(), [...HOME_ENTRIES].sort(), 'an online home\'s entries');
   assert.ok(itemFindings({ ...caravan, wagonLook: { o: 6 } }).includes('shape'), 'a paint the law does not know');
+});
+
+test('RW1 x WAGONS2 THE STREET THROUGH A WINDOW: the view out\'s pass draws the wagons standing in the street - mine and the others\', ungrown - and never the caravan whose room the player stands in (its body would stand between the pane and the street); the world host hands the pass that hook, the room\'s pose its caravan\'s; the caravan\'s glass is a cutout picture, the hole the view out paints (mutants: the room\'s caravan drawn, the peers left out, the hook unwired)', async () => {
+  const r = fakeRenderer();
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'caravan', bakedWagon: async (k) => bakeOf(k), peerAnchor: () => null });
+  pool.attach(runtimeOf({ deployed: { isGrounded: true, position: [0, 1, 0], rotation: [0, 0, 0, 1], cargoTier: 0 }, moving: null }));
+  pool.partsOf('caravan'); pool.partsOf('openWagon'); await flush();
+  pool.applyOwner('ann', { w: [HCC_WIRE_KIND.Deployed, 30, 1, 30, 0, 0, 0, 1, 0, 0], wk: 1 }, (q) => q, 0);
+  pool.frame(1 / 60, [0, 0, 0]);
+  r.draws.length = 0;
+  const all = pool.drawOutside(r, null);
+  assert.equal(all, 2, 'mine and hers');
+  r.draws.length = 0;
+  assert.equal(pool.drawOutside(r, [0.2, 5, -0.3]), 1, 'standing in my caravan\'s room: hers alone');
+  assert.ok(r.draws.every((d) => Math.hypot(d.m[12] - 30, d.m[14] - 30) < 20), 'nothing of mine drawn');
+  assert.equal(OUTSIDE_SKIP_REACH, 1.5);
+  const w = src('scenes/world.js');
+  assert.match(w, /renderer\.outsideViewDraws\?\.add\(\(\{ renderer: r \}\) => \{ if \(!hccOn\(\)\) return; const room = modes\?\.caravanRoom \?\? null; hcc\.drawOutside\(r, room \? caravanRooms\.fromNative\(room\.origin\) : null\); \}\);/);
+  // the caravan's glass: a cutout picture (render/renderer.js's door for a context's glass)
+  assert.match(src('scenes/caravanRoom.js'), /isGlassRecord\(rec\) \? \{ cutout: true \} : \{ opaque: true \}/);
+  assert.match(src('scenes/horseCartPool.js'), /isGlassRecord\(rec\) \? \{ cutout: true \} : \{ opaque: true \}/);
 });

@@ -367,6 +367,15 @@ keeping, `relaySupportsCaravan` at 183, and the park record's `we`/`wg`.
 time the owner stood in the caravan online. A paint changed inside reaches
 the cell when the owner comes out.
 
+### Windows (RW1)
+
+Mac's item 4 named the new wagon too ("+ the new wagon"). The caravan's
+windows are holes in its pictures, uploaded as cutouts. From inside, the
+view out paints the street behind them, as it does behind a house's glass.
+The street pass draws the wagons standing outside, but never the caravan
+whose room the player stands in. `07-Rendering/Real-Windows.md` has the
+whole law.
+
 ### The room waits for its caravan (audit)
 
 The room is the character's. It is kept for good in the save whether or not

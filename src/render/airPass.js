@@ -100,6 +100,7 @@ import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN 
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { GLASS_INTERIOR } from './realWindows.js';   // RW1: an interior's declared glass, which the emission replay never blooms
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1877,6 +1878,7 @@ export class AirPass {
           const sm = mesh.subMeshes[k];
           const emis = sm._evEmis;
           if (!emis || emis === f.blackTex) continue;   // nothing to bloom: the main pass resolved no mask, or the black one
+          if (sm._evWin === GLASS_INTERIOR) continue;   // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)
           if (!subMeshVisible(planes, r, k)) continue;   // EL5
           if (bound !== P.emitMesh) { bound = P.emitMesh; gl.useProgram(bound.p); gl.uniformMatrix4fv(bound.uProj, false, vp); gl.uniformMatrix4fv(bound.uView, false, this._identityView); gl.uniform1i(bound.uEmissionTex, 1); this._emitDepth(bound, depthOn, T); }
           if (!vaoBound) { gl.uniformMatrix4fv(P.emitMesh.uModel, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }

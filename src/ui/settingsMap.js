@@ -36,7 +36,7 @@ export const CATEGORIES = Object.freeze([
       "Video/FieldOfView", "feat:render-scale", "Video/TargetFrameRate", "Video/VSync", "port:showFps", "Video/Fullscreen",
       "Video/ExclusiveFullscreen", "Video/ResolutionWidth", "Video/ResolutionHeight", "Video/QualityLevel", "Video/RunInBackground"]),
     sec("distance", "View distance & detail", [
-      "feat:land-view-distance", "Experimental/TerrainDistance", "feat:ground-sharpness", "feat:cloud-quality",
+      "feat:land-view-distance", "Experimental/TerrainDistance", "feat:ground-sharpness", "feat:cloud-quality", "feat:real-windows",
       "Experimental/TerrainHeightmapPixelError", "Experimental/AssetCacheThreshold"]),
     sec("light", "Lighting & brightness", [
       "feat:enhanced-lighting", "feat:modded-lighting", "feat:first-person-lighting", "Enhancements/DungeonAmbientLightScale",

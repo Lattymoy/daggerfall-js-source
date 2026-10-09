@@ -1,0 +1,466 @@
+[
+  {
+    "name": "RW1-window-never-cut-indoors",
+    "file": "src/render/realWindows.js",
+    "old": "  if (kind === GLASS_EXTERIOR) return rooms ? WIN_MODE.room : cut ? WIN_MODE.cut : WIN_MODE.plain;",
+    "new": "  if (kind === GLASS_EXTERIOR) return rooms ? WIN_MODE.room : WIN_MODE.plain;",
+    "tests": [
+      "test/windows1_rooms.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-interior-glass-as-room",
+    "file": "src/render/realWindows.js",
+    "old": "  if (kind === GLASS_INTERIOR) return cut ? WIN_MODE.cut : WIN_MODE.glass;",
+    "new": "  if (kind === GLASS_INTERIOR) return cut ? WIN_MODE.cut : WIN_MODE.room;",
+    "tests": [
+      "test/windows1_rooms.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-night-test-loose",
+    "file": "src/render/realWindows.js",
+    "old": "  const night = on && e0 > e2 + 0.05;",
+    "new": "  const night = on && e0 >= e2;",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-lamp-gain-lost",
+    "file": "src/render/realWindows.js",
+    "old": "  const k = night ? ROOM_LAMP_GAIN / peak : 0;",
+    "new": "  const k = night ? 1 : 0;",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-day-share-lost",
+    "file": "src/render/realWindows.js",
+    "old": "    day: [(ambient?.[0] ?? 0) * ROOM_DAY_SHARE,",
+    "new": "    day: [(ambient?.[0] ?? 0),",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-floor-ceiling-swapped",
+    "file": "src/render/realWindows.js",
+    "old": "  const face = t === tz ? 'back' : t === tx ? 'side' : d[1] < 0 ? 'floor' : 'ceiling';",
+    "new": "  const face = t === tz ? 'back' : t === tx ? 'side' : d[1] > 0 ? 'floor' : 'ceiling';",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-depth-unclamped",
+    "file": "src/render/realWindows.js",
+    "old": "  return Math.min(ROOM_DEPTH_MAX, Math.max(ROOM_DEPTH_MIN, ROOM_DEPTH_PER_WIDTH * (ROOM_BOX.x1 - ROOM_BOX.x0) * tileW));",
+    "new": "  return Math.min(ROOM_DEPTH_MAX, ROOM_DEPTH_PER_WIDTH * (ROOM_BOX.x1 - ROOM_BOX.x0) * tileW);",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-box-edge-moved",
+    "file": "src/render/realWindows.js",
+    "old": "export const ROOM_BOX = Object.freeze({ x0: -0.5, x1: 1.5, y0: -0.25, y1: 1.1 });",
+    "new": "export const ROOM_BOX = Object.freeze({ x0: -0.4, x1: 1.5, y0: -0.25, y1: 1.1 });",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-sphere-behind-drawn",
+    "file": "src/render/realWindows.js",
+    "old": "  if (w + sw <= 0) return null;",
+    "new": "  if (w + sw <= -1e9) return null;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-sphere-depth-whole",
+    "file": "src/render/realWindows.js",
+    "old": "  const n = w - sw, f = w + sw;",
+    "new": "  const n = w, f = w;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-margin-lost",
+    "file": "src/render/realWindows.js",
+    "old": "  const x0 = Math.max(-1, rect[0] - margin), y0 = Math.max(-1, rect[1] - margin);",
+    "new": "  const x0 = Math.max(-1, rect[0]), y0 = Math.max(-1, rect[1] - margin);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-crop-offset-lost",
+    "file": "src/render/realWindows.js",
+    "old": "    out[c * 4] = sx * x + tx * w;",
+    "new": "    out[c * 4] = sx * x;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-far-plane-kept",
+    "file": "src/render/realWindows.js",
+    "old": "  out[14] = (2 * VIEW_FAR * VIEW_NEAR) / (VIEW_NEAR - VIEW_FAR);",
+    "new": "  out[14] = proj[14];",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-still-forever",
+    "file": "src/render/realWindows.js",
+    "old": "  return now - state.at >= VIEW_MAX_AGE_MS;",
+    "new": "  return false;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-move-kept",
+    "file": "src/render/realWindows.js",
+    "old": "  for (let i = 0; i < 16; i++) if (Math.abs(state.view[i] - view[i]) > VIEW_MOVE_EPS) return true;",
+    "new": "  for (let i = 0; i < 16; i++) if (Math.abs(state.view[i] - view[i]) > 1) return true;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-rooms-only-street",
+    "file": "src/render/realWindows.js",
+    "old": "  const street = mode === 'full' && typeof scene?.draw === 'function';",
+    "new": "  const street = mode !== 'off' && typeof scene?.draw === 'function';",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-never-released",
+    "file": "src/render/realWindows.js",
+    "old": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { renderer.releaseOutsideView?.(); state.drawn = false; }",
+    "new": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { state.drawn = false; }",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-count-floor-lost",
+    "file": "src/world/interiorGlass.js",
+    "old": "  if (n < GLASS_MIN_TEXELS || n > GLASS_MAX_SHARE * data.length) return null;",
+    "new": "  if (n > GLASS_MAX_SHARE * data.length) return null;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-dungeon-set-taken",
+    "file": "src/world/interiorGlass.js",
+    "old": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && BUILDING_INTERIOR_SETS.has(archive % 100);",
+    "new": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22);",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-skin-gate-lost",
+    "file": "src/render/realWindows.js",
+    "old": "  if (!isEnhanced(search)) return 'off';",
+    "new": "",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-door-ignored",
+    "file": "src/render/realWindows.js",
+    "old": "  const v = door ?? getPref('realWindows');",
+    "new": "  const v = getPref('realWindows');",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-wears-style",
+    "file": "src/render/realWindows.js",
+    "old": "  + '  emission *= step(uWinMode, 1.5);   // RW1: an interior\\'s glass wears no window style';",
+    "new": "  + '  emission *= step(uWinMode, 2.5);   // RW1: an interior\\'s glass wears no window style';",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-cutout-ungated",
+    "file": "src/render/realWindows.js",
+    "old": "export const RW_MAIN_CUTOUT = '  if (uCutout > 0.5 && tex.a < 0.5) discard;",
+    "new": "export const RW_MAIN_CUTOUT = '  if (tex.a < 0.5) discard;",
+    "tests": [
+      "test/windows1_rooms.test.js",
+      "test/incident_dungeon_seams.test.js"
+    ]
+  },
+  {
+    "name": "RW1-rooms-outlive-frame",
+    "file": "src/render/renderer.js",
+    "old": "    rw.rooms = false; rw.watch = false; rw.live = false;",
+    "new": "    rw.watch = false; rw.live = false;",
+    "tests": [
+      "test/windows1_rooms.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-off-asks-rooms",
+    "file": "src/render/renderer.js",
+    "old": "    rw.rooms = !!mode && mode !== 'off';",
+    "new": "    rw.rooms = !!mode;",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-panel-loses-rooms",
+    "file": "src/render/renderer.js",
+    "old": "    if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);   // RW1",
+    "new": "",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-mode-left-on",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._rwModeUp > 0 || this._rwCutUp > 0) this._rwRest();   // RW1: no other draw on the mesh program inherits a window mode or a cutout",
+    "new": "",
+    "tests": [
+      "test/windows1_rooms.test.js",
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-cutout-stamp-lost",
+    "file": "src/render/renderer.js",
+    "old": "          sm._evCut = !!this._cutoutArt?.has(tex);",
+    "new": "          sm._evCut = false;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-cutout-hit-unmarked",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.cutout) this._markCutout(this.textures.get(key));   // RW1: a cutout ask cuts the picture the key already holds, too",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-cut-without-street",
+    "file": "src/render/renderer.js",
+    "old": "    rw.live = street;",
+    "new": "    rw.live = true;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-box-left-on",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._rwClipOn) { this._use(this.program); gl.uniform4f(this.rwLocs.clipMax, 0, 0, 0, 0); this._rwClipOn = false; }   // the box is the pass's alone",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-shadows-kept-recording",
+    "file": "src/render/renderer.js",
+    "old": "      this._air = null; this._shadows = null;",
+    "new": "      this._air = null;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-shadows-not-restored",
+    "file": "src/render/renderer.js",
+    "old": "      this._air = was.air; this._shadows = was.shadows;",
+    "new": "      this._air = was.air;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-skip-ignored",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._rwOutside && this._rwSkips(mesh)) return;   // RW1: the view out leaves out what a context asked it to (outsideViewSkip)",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-hooks-not-run",
+    "file": "src/render/renderer.js",
+    "old": "      for (const f of this.outsideViewDraws) f(info);",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-holes-not-noted",
+    "file": "src/render/renderer.js",
+    "old": "      if (holes) a.holes = true;",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-rect-not-forgotten",
+    "file": "src/render/renderer.js",
+    "old": "    a.n = 0; a.holes = false; a.rect[0] = 1; a.rect[1] = 1; a.rect[2] = -1; a.rect[3] = -1;",
+    "new": "    a.holes = false; a.rect[0] = 1; a.rect[1] = 1; a.rect[2] = -1; a.rect[3] = -1;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-mask-unread",
+    "file": "src/render/renderer.js",
+    "old": "          const glassMask = sm._evEmis === this._blackTex ? this.glassMasks?.get(resolved) : undefined;",
+    "new": "          const glassMask = undefined;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-refusal-lost",
+    "file": "src/render/renderer.js",
+    "old": "    if (this.emissionTextures.has(key)) return null;",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-eviction-leaks",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key",
+    "new": "    if (false) {",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-shadow-cells-for-cut",
+    "file": "src/render/shadowPass.js",
+    "old": "        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures",
+    "new": "        const cells = r.bounded ? mesh.shadowCells : null;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-shadow-casts-holes",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (!cells && sm._evCut && sm._evTex) {",
+    "new": "          if (false) {",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-pieces-off",
+    "file": "src/render/staticBatch.js",
+    "old": "      if (this.pieces) {   // RW1: one sphere a model that went into this sub-mesh",
+    "new": "      if (false) {",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-window-flag-lost",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "{ replacement, window: true });",
+    "new": "{ replacement });",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-world-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass",
+    "new": "    // (unwired)",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-exterior-host-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass",
+    "new": "    // (unwired)",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-interior-unpainted",
+    "file": "src/scenes/worldModes.js",
+    "old": "    renderer.setGlassView(_rwView);   // RW1:",
+    "new": "    // RW1:",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-rings-unbounded",
+    "file": "src/scenes/world.js",
+    "old": "      if (ring > VIEW_RINGS) continue;",
+    "new": "      if (ring > VIEW_RINGS + 9) continue;",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-medium-off-preset",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "'water-quality': 'simple', 'real-windows': 'rooms' }",
+    "new": "'water-quality': 'simple', 'real-windows': 'off' }",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  },
+  {
+    "name": "RW1-glass-blooms",
+    "file": "src/render/airPass.js",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue;",
+    "new": "",
+    "tests": [
+      "test/windows1_view.test.js"
+    ]
+  },
+  {
+    "name": "RW1-ships-rooms-only",
+    "file": "src/systems/features.js",
+    "old": "key: 'realWindows', initial: 'full',",
+    "new": "key: 'realWindows', initial: 'rooms',",
+    "tests": [
+      "test/windows1_rooms.test.js"
+    ]
+  }
+]
