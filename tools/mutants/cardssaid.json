@@ -1,0 +1,7 @@
+[
+  {"name": "CS-said-alone", "file": "src/scenes/worldModes.js", "old": "g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused);", "new": "say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.');", "tests": ["test/cardssaid.test.js"]},
+  {"name": "CS-kept-past-press", "file": "src/scenes/worldModes.js", "old": "    g.why = null;\n    g.refused = null;\n", "new": "    g.why = null;\n", "tests": ["test/cardssaid.test.js"], "equivalent": true, "why": "while the realm is asked the panel says 'The realm is holding your stake...' over any refusal, and every answer either writes its own refusal or leaves the buy-in for the game - so a refusal kept past the press is never shown; cleared all the same, so no later road back to the buy-in can show a stale one"},
+  {"name": "CS-not-painted", "file": "src/scenes/worldModes.js", "old": "why: g.why, refused: g.refused ?? null,", "new": "why: g.why,", "tests": ["test/cardssaid.test.js"]},
+  {"name": "CS-panel-ignores", "file": "src/ui/cardTableHud.js", "old": "staking ? 'The realm is holding your stake...' : refused ?", "new": "staking ? 'The realm is holding your stake...' : false ?", "tests": ["test/cardssaid.test.js"]},
+  {"name": "CS-buyin-dropped", "file": "src/ui/cardTableHud.js", "old": "`${refused}${buyIn ? ` (Buy in for ${buyIn.min}-${buyIn.max} ${unit}.)` : ''}`", "new": "refused", "tests": ["test/cardssaid.test.js"]}
+]
