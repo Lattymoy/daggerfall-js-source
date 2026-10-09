@@ -5,59 +5,93 @@
 // stores (Land view distance: the pref and DFU's TerrainDistance), and
 // the Settings pane draws a moved key NOT AT ALL (FT13).
 //
+// ORG2 (2026-10-09, Mac: "Graphic settings needs its own tab, etc. I really need you to go all in"): the home is the
+// Settings screen's tabs now, so this walks THAT screen - every registry row drawn once across the tabs, each wearing a
+// label; the kind filters; the Graphics tab's quality preset writing the rows through their own doors (Low's view
+// distance lands in both stores) and reading Custom when a row leaves it; the one search finding a row on another tab
+// under its "Tab > Section" head; a moved key drawn by its row alone (FT13); and each tab's rail count the rows it draws.
+//
 // Run against a dev server with NO arena2 on disk:
 //     npx vite --port 5199 &
 //     node tools/featuresProbe.mjs
 import { chromium } from 'playwright';
+import { FEATURES } from '../src/systems/features.js';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
+const SHOTS = process.env.PROBE_SHOTS ?? null;
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = []; page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.px-menu button', { timeout: 15000 });
-await page.locator('.px-menu .door-features').click();
-await page.waitForSelector('#enhanced-menu .chips', { timeout: 10000 });
+if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
+check('ORG2: no Features door - its rows are Settings\' tabs', (await page.locator('.px-menu .door-features').count()) === 0);
+await page.locator('.px-menu .door-settings').click();
+await page.waitForSelector('#enhanced-menu .subbtn', { timeout: 10000 });
 
-const rows = () => page.$$eval('#enhanced-menu .row.feature', (rs) => rs.length);
-const chips = await page.$$eval('#enhanced-menu .chip', (cs) => cs.map((c) => ({ label: c.firstChild.textContent.trim(), n: Number(c.querySelector('.n')?.textContent) })));
-const all = await rows();
-check('the chip row: All then the three kinds, with counts', chips.map((c) => c.label).join('|') === 'All|Enhanced|Mod Authored|DFU Classic', JSON.stringify(chips));
-check('every registry row is drawn, each wearing a label', all === chips[0].n && all >= 21 && (await page.$$eval('#enhanced-menu .row.feature', (rs) => rs.every((r) => r.querySelector('.kind')))), `${all} rows`);
-for (const [cls, i] of [['enhanced', 1], ['mod', 2], ['classic', 3]]) {
-  await page.locator(`#enhanced-menu .chip.${cls}`).click(); await page.waitForTimeout(120);
-  check(`the ${chips[i].label} chip filters to its count`, (await rows()) === chips[i].n, `${await rows()} of ${chips[i].n}`);
+const tabNames = await page.$$eval('#enhanced-menu .subbtn', (bs) => bs.map((b) => b.firstChild.textContent.trim()));
+check('the rail is the nine tabs, Graphics first', tabNames.join('|') === 'Graphics|Gameplay|Combat|World|Interface|Audio|Controls|Accessibility|Mods & files', tabNames.join('|'));
+const pressTab = async (name) => { await page.locator('#enhanced-menu .subbtn').filter({ hasText: new RegExp(`^${name.replace(/[&]/g, '\\$&')}`) }).first().click(); await page.waitForTimeout(150); };
+
+// every registry row, drawn once across the tabs, each wearing a label - and each tab's count is what it draws
+const drawn = new Map();
+for (const name of tabNames) {
+  await pressTab(name);
+  const tab = await page.evaluate(() => {
+    const body = document.querySelector('#enhanced-menu .opt-body');
+    const tiles = [...body.querySelectorAll(':scope > .ft-tile')];
+    const rows = body.querySelectorAll(':scope > .row:not([data-live="0"]):not(.opt-link), :scope > .ft-tile').length;   // the Overhauls door is no option
+    const on = document.querySelector('#enhanced-menu .subbtn.on .count');
+    return { ids: tiles.map((t) => t.dataset.fid), labelled: tiles.every((t) => t.querySelector('.kind')), rows, count: Number(on?.textContent) };
+  });
+  for (const id of tab.ids) drawn.set(id, (drawn.get(id) ?? 0) + 1);
+  check(`${name}: every row wears a label`, tab.labelled);
+  check(`${name}: the rail counts what the tab draws`, tab.count === tab.rows, `${tab.count} on the rail, ${tab.rows} drawn`);
 }
-await page.locator('#enhanced-menu .chip').first().click(); await page.waitForTimeout(120);
-check('a two-label row shows under both of its chips', (await page.$$eval('#enhanced-menu .row.feature', (rs) => rs.filter((r) => r.querySelectorAll('.kind').length === 2).length)) >= 2);
+const missing = FEATURES.filter((f) => !drawn.has(f.id)).map((f) => f.id);
+check('every registry row is drawn on a tab', missing.length === 0, missing.join(', '));
+check('...and only once', [...drawn.values()].every((n) => n === 1));
 
-// a condensed row: ONE press moves BOTH stores (FT2)
-const lv = () => page.locator('#enhanced-menu .row.feature', { hasText: 'Land view distance' });
-const before = await lv().locator('.ctl .act').textContent();
-await lv().locator('.ctl .act').click(); await page.waitForTimeout(120);
-const after = await lv().locator('.ctl .act').textContent();
+// the kind filters: a row the Mods filter shows is a mod's, and a filtered tab says so when it is empty
+await pressTab('World');
+await page.locator('#enhanced-menu .opt-filters .chip.mod').click(); await page.waitForTimeout(150);
+const worldMods = await page.$$eval('#enhanced-menu .opt-body > .ft-tile', (ts) => ts.map((t) => [...t.querySelectorAll('.kind')].map((k) => k.className)));
+check('the Mods filter keeps the mods\' rows alone', worldMods.length > 0 && worldMods.every((ks) => ks.some((c) => /\bmod\b/.test(c))), `${worldMods.length} rows`);
+await page.locator('#enhanced-menu .opt-filters .chip').first().click(); await page.waitForTimeout(150);
+
+// THE PRESET (ORG2): Low writes each row through its own door, so the view distance lands in both stores
+await pressTab('Graphics');
+const preset = () => page.$$eval('#enhanced-menu .opt-preset .ft-segb', (bs) => bs.map((b) => `${b.textContent}${b.getAttribute('aria-pressed') === 'true' || b.getAttribute('aria-current') === 'true' ? '*' : ''}`).join(' '));
+check('a fresh shelf reads High - how the game ships', (await preset()) === 'Low Medium High* Ultra', await preset());
+await page.locator('#enhanced-menu .opt-preset .ft-segb', { hasText: /^Low$/ }).click(); await page.waitForTimeout(150);
 const stores = await page.evaluate(async () => {
   const p = await import('/src/systems/uiPrefs.js'); p._resetForTests();
   const s = await import('/src/systems/settings.js'); s._resetForTests();
-  return { pref: p.getPref('landViewDistance'), ini: s.getInt('Experimental', 'TerrainDistance', 1, 4) };
+  return { view: p.getPref('landViewDistance'), ini: s.getInt('Experimental', 'TerrainDistance', 1, 4), grass: p.getPref('grassDensity'), water: p.getPref('waterQuality') };
 });
-check('a condensed row steps its tier', before !== after, `${before} -> ${after}`);
-check('...and ONE press wrote BOTH stores, DFU\'s capped at 4', stores.pref === 6 && stores.ini === 4, JSON.stringify(stores));
-await lv().locator('.ctl .act').click();   // wraps to 1
-await page.evaluate(async () => { const { landViewWrite } = await import('/src/world/landView.js'); landViewWrite(5); });   // the default back
+check('Low wrote every row it sets, the view distance in BOTH stores', stores.view === 3 && stores.ini === 3 && stores.grass === 0.25 && stores.water === 'simple', JSON.stringify(stores));
+check('...and the bar reads Low', (await preset()) === 'Low* Medium High Ultra', await preset());
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/options-graphics.png` });
+await page.locator('#enhanced-menu .ft-tile', { hasText: 'Water quality' }).locator('.ft-segb', { hasText: /^Full/ }).click(); await page.waitForTimeout(150);
+check('a row moved off the preset reads Custom', /Custom\*/.test(await preset()), await preset());
+await page.locator('#enhanced-menu .opt-preset .ft-segb', { hasText: /^High$/ }).click(); await page.waitForTimeout(150);
+check('High puts them back', (await preset()) === 'Low Medium High* Ultra', await preset());
 
-// FT13: the Settings pane draws NO row for a moved key (FT1 drew a pointer; Mac had it removed), and the rail count agrees
-await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).click(); await page.waitForTimeout(200);
-check('FT12: the settings rail has no Enhanced category', !(await page.$$eval('#enhanced-menu .subbtn', (bs) => bs.map((b) => b.textContent))).some((t) => /^Enhanced/.test(t)));
-await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().click(); await page.waitForTimeout(200);
-const gameRows = await page.$$eval('#enhanced-menu .list .row .row-name', (ns) => ns.map((n) => n.textContent));
-check('FT13: Settings > Game draws no row for Smaller dungeons - not a switch, not a pointer', !gameRows.some((t) => /Smaller dungeons/i.test(t)) && (await page.locator('#enhanced-menu .row.moved').count()) === 0, gameRows.join(', '));
-check('FT13: ...nor for the other moved Game keys', !gameRows.some((t) => /Enemy infighting|Varied dungeon monsters|Torches from items|Choose guild jobs|Dungeon wall style/i.test(t)), gameRows.join(', '));
-const gameCount = Number(await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Game/ }).first().locator('.count').textContent());
-check('FT13: the rail count is what the pane shows', gameCount === (await page.locator('#enhanced-menu .list > .row').count()), `${gameCount} on the rail`);
+// THE SEARCH (ORG2): over every tab, each find under the tab and section it lives in
+await page.locator('#enhanced-menu .opt-search').fill('footsteps'); await page.waitForTimeout(150);
+const found = await page.$$eval('#enhanced-menu .opt-body .sec-head h3', (hs) => hs.map((h) => h.textContent));
+check('the search finds a row on another tab, under its Tab > Section head', found.some((t) => /^Audio › Sounds$/.test(t)), found.join(' | '));
+check('...and the rail lights no tab while it reads them all', (await page.locator('#enhanced-menu .subbtn.on').count()) === 0);
+await page.locator('#enhanced-menu .opt-search').fill(''); await page.waitForTimeout(150);
+
+// FT13: a moved key is drawn by its row alone - Gameplay's Dungeons section carries Smaller dungeons once, as a Features row
+await pressTab('Gameplay');
+const smaller = await page.evaluate(() => [...document.querySelectorAll('#enhanced-menu .opt-body .row-name, #enhanced-menu .opt-body .ft-tile-name')].filter((n) => /Smaller dungeons/i.test(n.textContent)).map((n) => n.className));
+check('FT13: Smaller dungeons is drawn once, by its Features row - not a second switch, not a pointer', smaller.length === 1 && smaller[0] === 'ft-tile-name' && (await page.locator('#enhanced-menu .row.moved').count()) === 0, JSON.stringify(smaller));
+
 // FT12: the outdoors test door is the Test Room's
 await page.locator('#enhanced-menu .railbtn', { hasText: 'Test Room' }).click(); await page.waitForTimeout(200);
 check('FT12: the Test Room carries the outdoors test door', (await page.locator('#enhanced-menu .row-name', { hasText: 'Test the outdoors' }).count()) === 1);

@@ -98,61 +98,60 @@ test('FT0: the filter shows a two-kind row under both kinds, and the counts say 
   assert.deepEqual(featureCounts([]), { all: 0, enhanced: 0, mod: 0, classic: 0 });
 });
 
-test('FT0: Features is on every rail and both dispatch tables, and the pane is the registry over the three builders', () => {
+test('FT0: every feature is reachable from every rail - ORG2: through Settings, whose tabs hold its rows - and the screen is the registry over the three builders', () => {
   const menu = read('src/ui/enhancedMenu.js');
   for (const rail of ['SECTIONS_BOOT', 'SECTIONS_CLASSIC', 'SECTIONS_PAUSE']) {
     const m = new RegExp(`const ${rail} = \\[([^\\]]*)\\]`).exec(menu);
     assert.ok(m, rail);
     const list = m[1].split(',').map((s) => s.trim().replace(/^'|'$/g, ''));
-    assert.ok(list.includes('Features'), `${rail} carries Features`);
-    // FT14: and it stands ALONE - the Mods pane is gone from every rail, its mods being tiles here
+    assert.ok(list.includes('Settings'), `${rail} carries Settings, the door every feature stands behind`);
+    // ORG2 (Mac: "Graphic settings needs its own tab, etc. I really need you to go all in"): Features is no door of its
+    // own - one screen for every option; FT14: and no Mods door either, its mods being rows
+    assert.ok(!list.includes('Features'), `${rail}: no Features door - ORG2 folded it into Settings`);
     assert.ok(!list.includes('Mods'), `${rail}: no Mods door - FT14 folded it into Features`);
   }
-  assert.match(menu, /\['features', 'Features'\],/, 'the pause system rail (SYSTEM_PANES)');
-  assert.equal((menu.match(/features: paneFeatures,/g) ?? []).length, 2, 'both dispatch tables (boot and pause)');
-  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery, featureSections, sectionOfFeature, FEATURE_SECTIONS \} from '\.\.\/systems\/features\.js';/);   // ORG1: and the sections
-  assert.match(menu, /function paneFeatures\(body\) \{[\s\S]*?featureCounts\(FEATURES\)[\s\S]*?chip\(null, 'All', counts\.all\)[\s\S]*?for \(const k of KIND_ORDER\) chips\.append\(chip\(k, KINDS\[k\]\.label, counts\[k\]\)\)/, 'All then the three kind chips, with counts');
-  assert.match(menu, /if \(!FEATURES\.length\) \{\s*body\.append\(empty\('Nothing here yet'/, 'an empty registry says so - the rail-hole law - rather than hiding the section');
-  assert.match(menu, /const rows = filterFeatures\(FEATURES, featureKind\);/);
+  assert.doesNotMatch(menu, /\['features', 'Features'\],/, 'nor in the pause system rail (SYSTEM_PANES)');
+  assert.doesNotMatch(menu, /features: paneFeatures,|function paneFeatures\(/, 'no pane, no dispatch');
+  assert.match(menu, /if \(id === 'features'\) id = 'settings';/, 'a door still named features (a probe, an old link) lands on Settings');
+  assert.match(menu, /import \{ FEATURES, KINDS, KIND_ORDER, featureForControl, resolveControl, modModules, modDials, featureSearchText \} from '\.\.\/systems\/features\.js';/);
+  // the Features home's three kinds are filters over every tab now, after All and Changed
+  assert.match(menu, /const OPT_FILTERS = Object\.freeze\(\[\['all', 'All'\], \['changed', 'Changed'\], \['enhanced', 'Enhanced'\], \['mod', 'Mods'\], \['classic', 'Daggerfall Unity'\]\]\);/);
+  for (const k of KIND_ORDER) assert.match(menu, new RegExp(`\\['${k}', '`), `the ${k} filter`);
+  assert.match(menu, /if \(item\.startsWith\('feat:'\)\) return FEATURES\.find\(\(f\) => f\.id === item\.slice\(5\)\)\?\.kinds \?\? \[\];/, 'a row answers the filter for its own kinds');
+  assert.match(menu, /if \(!sections\.length\) body\.append\(empty\(/, 'a tab the filter empties says so - the rail-hole law - rather than drawing nothing');
   // the three builders: a row is the row its store already draws, dressed
-  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers, \{ home: true, read: c\.read, write: c\.write \}\) : prefRow\(c\.key, f\.title, f\.note, \{ home: true \}\)[\s\S]*?settingRow\(c\.key, \{ compact: true, home: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, MOD_SETTINGS\[c\.vendor\]\.keys\[c\.key\], \{ name: f\.title, note: f\.note, home: true \}\)/);
+  assert.match(menu, /function featureRow\(f\) \{[\s\S]*?c\.tiers \? choiceRow\(c\.key, f\.title, f\.note, c\.tiers, \{ home: true, read: c\.read, write: c\.write \}\) : prefRow\(c\.key, f\.title, f\.note, \{ home: true \}\)[\s\S]*?settingRow\(c\.key, \{ compact: true, home: true \}\)[\s\S]*?modRow\(c\.vendor, c\.key, /);
   assert.match(menu, /main\.prepend\(kindTags\(f\.kinds\)\);/, 'every row wears its labels');
   assert.match(menu, /function kindTags\(kinds\) \{[\s\S]*?for \(const k of KIND_ORDER\) if \(kinds\.includes\(k\)\)/, 'labels in KIND_ORDER, whatever order the row lists them');
   // modRow survives its pane: the tile's DRAWER draws through it, so a curated mod key is not a second copy
   assert.match(menu, /^function modRow\(vendor, key, def, \{ name = null, note = null, home = false \} = \{\}\) \{/m);
   assert.match(menu, /for \(const key of dials\) d\.append\(modRow\(vendor, key, MOD_SETTINGS\[vendor\]\.keys\[key\], \{ home: true \}\)\);/,
     'FT14: the drawer draws the mod\'s curated dials with the row the pane used');
-  assert.match(menu, /let featureKind = null;/, 'the chip is per-mount state like the rest');
+  assert.match(menu, /let optFilter = 'all';/, 'the filter is per-mount state like the rest');
 });
 
 // ── FT14 (2026-09-15, Mac: "get rid of the mod panel and integrate certain
 // feature/mod adjustments into the toggle themselves and move away from the
 // scrolling list format") ──────────────────────────────────────────────
-test('FT14: the panel is tiles grouped by what they change, the control is always a BAR, and the Mods pane is gone', () => {
+test('FT14: the panel is tiles grouped by what they change, the control is always a BAR, and the Mods pane is gone', async () => {
+  const { whereIs } = await import('../src/ui/settingsMap.js');
   const menu = read('src/ui/enhancedMenu.js');
 
   // (1) THE MODS PANE IS GONE - not hidden behind a flag, gone from the file
   assert.doesNotMatch(menu, /function paneMods\b/, 'the pane itself');
   assert.doesNotMatch(menu, /\bmods: paneMods\b/, 'and from both dispatch tables');
-  // what it carried that was never a mod setting has a home, on the features screen
-  assert.match(menu, /function modsFooter\(body\) \{[\s\S]*?packsCard\(\)[\s\S]*?Enhancements\/LypyL_ModSystem/,
-    'the packs door and DFU\'s own mod switches survive the pane');
-  // ORG1: on a page of their own in the groups' rail (All shows it after the tiles), and only where a player looking
-  // for mods would be
-  assert.match(menu, /const withFiles = featureKind == null \|\| featureKind === 'mod';/);
-  assert.match(menu, /if \(withFiles\) \{\n\s*files = el\('section', 'ft-group ft-files'\);[\s\S]*?modsFooter\(files\);/,
-    'drawn on the files page, and only where a player looking for mods would be');
-  // MWA4: the assets card survives it too - at the HEAD of that page, on the same filter
-  assert.match(menu, /files\.append\(head, el\('p', 'ft-groupblurb', FILES_PAGE_BLURB\)\);\n\s*files\.append\(morrowindCard\(\)\);[^\n]*\n\s*modsFooter\(files\);/,
-    'MWA4: the Morrowind assets card heads the files page');
-  assert.doesNotMatch(menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter('))), /morrowindCard\(\)/, 'and is drawn once');
+  // what it carried that was never a mod setting has a home - ORG2: the Mods & files tab, the Morrowind assets card at
+  // the head of its first section (MWA4), the packs after it, DFU's own mod switches as rows of their own
+  const files = whereIs('card:morrowind');
+  assert.equal(files?.tab.id, 'mods');
+  assert.deepEqual(files.section.items, ['card:morrowind', 'card:packs'], 'MWA4: the Morrowind assets card heads the files, the packs door after it');
+  assert.equal(whereIs('Enhancements/LypyL_ModSystem')?.tab.id, 'mods', 'the packs door and DFU\'s own mod switches survive the pane');
+  assert.equal(menu.match(/morrowindCard\(\)/g)?.length, 1, 'and the card is drawn once, by the map');
 
-  // (2) GROUPED BY WHAT THEY CHANGE, filtered by who wrote them
-  assert.match(menu, /const groups = GROUP_ORDER\.filter\(\(g\) => rows\.some\(\(f\) => f\.group === g\)\);/, 'the groups, in their order');
-  assert.match(menu, /for \(const g of groups\) \{\s*\n\s*const items = rows\.filter\(\(f\) => f\.group === g\);/,
-    'the groups are the headings');
-  assert.match(menu, /const grid = el\('div', 'ft-grid'\);\s*\n\s*const tiles = its\.map\(\(f\) => \[f, featureTile\(f\)\]\);\s*\n\s*for \(const \[, t\] of tiles\) grid\.append\(t\);/,
-    'and each section is a grid of tiles (FT18: kept beside their rows, for the search; ORG1: a group is cut into sections)');
+  // (2) GROUPED BY WHAT THEY CHANGE, filtered by who wrote them - ORG2: by the tab and section the map gives each row
+  for (const f of FEATURES) assert.ok(whereIs(`feat:${f.id}`), `${f.id} stands on a tab`);
+  assert.match(menu, /const nodes = s\.items\.flatMap\(\(item\) => itemNodes\(item, \{ \.\.\.ctx, fold \}\)\);/, 'a section draws its items in the map\'s order');
+  assert.match(menu, /if \(item\.startsWith\('feat:'\)\) \{\s*\n\s*const f = FEATURES\.find\(\(x\) => x\.id === item\.slice\(5\)\);\s*\n\s*return f \? \[mark\(featureTile\(f\)\)\] : \[\];/, 'and a Features row as its tile');
 
   // (3) THE CONTROL IS A BAR, for every store, and Off is its first segment
   assert.match(menu, /function tileStates\(f\) \{/, 'one adapter answers the states, whatever store the row lives in');
@@ -164,17 +163,17 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   assert.match(menu, /const vals = ENUM_LAW\[c\.key\]\.values;/, 'a DFU enum is its own values');
   assert.match(menu, /function segBar\(st, label\) \{/, 'one bar builder for all of them');
   // the row's own builder is the fallback, so a control the bar cannot express is not silently dropped
-  assert.match(menu, /if \(st\) t\.append\(segBar\(st, f\.title\)\);\s*\n\s*else t\.append\(featureRow\(f\)\);/,
+  assert.match(menu, /if \(st\) ctl\.append\(segBar\(st, f\.title\)\);\s*\n\s*else ctl\.append\(featureRow\(f\)\);/,
     'a store that cannot answer in segments falls back to its own row rather than vanishing');
 
   // (4) OL1 SURVIVES THE REDESIGN: a forced switch still reads forced and refuses the press
   assert.match(menu, /locked: onlineForcedModSetting\(c\.vendor, c\.key\) !== undefined/, 'a mod\'s Enabled, online');
   assert.match(menu, /if \(st\.locked\) \{\s*\n\s*b\.disabled = true;/, 'and the bar will not take the press');
 
-  // (5) THE RAIL carries the words the tiles no longer do - and is PASSED its element,
-  // because the pane is still detached while paneFeatures builds it
-  assert.match(menu, /function paintRail\(rail = document\.getElementById\('ft-rail'\)\) \{/);
-  assert.match(menu, /paintRail\(rail\);/, 'the first paint is handed the rail it just built');
+  // (5) THE HELP PANE carries the words the rows no longer do: ORG2 - a press on a row's name picks it, and the help pane
+  // reads the picked row (its card), or the tab's card with none
+  assert.match(menu, /main\.onclick = \(\) => \{ pickedFeature = f\.id; pickedKey = null; sheetOpen = true; render\(\); \};/);
+  assert.match(menu, /detail\.append\(confirming \? confirmCard\(\) : \(pickedKey \? helpCard\(pickedKey\) : f \? featureCard\(f\) : categoryCard\(\{ pool, pause \}\)\)\);/);
 
   // (6) the drawer's shape: modules derived, dials curated - and the vendor is the row's OWN
   // or the one it COVERS. AUDIT FT14: reading `c.vendor` alone left Dynamic Skies' five particle
@@ -186,7 +185,7 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   // (7) the classes are NAMESPACED. `.tile` and `.seg` were already the inventory icon and a
   // progress strip; the first cut collided with both and the grid collapsed into a column.
   const css = read('src/ui/enhancedStyle.js');
-  for (const c of ['ft-tile', 'ft-seg', 'ft-segb', 'ft-grid', 'ft-panes', 'ft-rail', 'ft-mchip']) {
+  for (const c of ['ft-tile', 'ft-tile-ctl', 'ft-seg', 'ft-segb', 'ft-card', 'ft-mchip']) {
     assert.ok(css.includes(`.${c} `) || css.includes(`.${c}[`) || css.includes(`.${c}{`) || css.includes(`.${c} {`), `.${c} is styled`);
   }
   assert.match(css, /\.pack-shell \.itemrow \.tile \{/, 'and the inventory tile it must not collide with is still its own thing');
@@ -282,9 +281,15 @@ test('FT15: every note is one or two sentences, and the panel stays under its bu
 // why this pin holds the SCOPE as well as the rules.
 test('FT16: the feature tiles take the shell\'s transparent paint, and only under the shell', () => {
   const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
-  // the tile and the rail lose their painted grounds where the sky is behind them
-  assert.match(css, /\.shell \.ft-tile \{ background: none;/, 'the tile is see-through on the shell');
-  assert.match(css, /\.shell \.ft-rail \{ background: rgba\(10,12,17,0\.55\)/, 'the rail takes a scrim, as .shell .detail does');
+  // ORG2: a tile is a ROW of the one Settings screen now, and stands on the list as a row does - no ground of its own in
+  // either paint: the list's opaque --slate in the pause window, the list's scrim where the sky is behind it
+  const base = css.slice(css.indexOf('\n.ft-tile {'), css.indexOf('}', css.indexOf('\n.ft-tile {')));
+  assert.ok(base.length > 0 && !/background:/.test(base), 'the tile takes the list\'s ground, as a row does');
+  assert.match(css, /\n\.list \{ background: var\(--slate\); overflow: auto; \}/, 'the list is opaque in the pause window');
+  assert.match(css, /\n\.shell \.list \{ background: rgba\(10,12,17,0\.38\); \}/, 'and a scrim on the shell, as .shell .detail is');
+  // ORG2: but on a phone the help pane is a SHEET over the rows, and a see-through sheet let them read through its words
+  const phone = css.slice(css.lastIndexOf('@media (max-width: 860px) {\n  .ft-tile {'));
+  assert.match(phone.slice(0, phone.indexOf('\n}\n')), /\.shell \.detail \{ background: rgb\(10,12,17\); border-left: 0; \}/, 'the phone\'s sheet is opaque');
   // and every 1px iron rule becomes the shell's own 2px brass line.
   //
   // AUDIT FT16 F5: this sliced a fixed 200 characters from the
@@ -294,17 +299,15 @@ test('FT16: the feature tiles take the shell\'s transparent paint, and only unde
   // still had one. That is this repo's own documented failure (a pin
   // matching an identical line in the wrong branch), committed again.
   // The slice ends at the rule's own closing brace now.
-  for (const sel of ['.shell .ft-tile ', '.shell .ft-seg ', '.shell .ft-mchip ', '.shell .ft-rail ']) {
+  for (const sel of ['.shell .ft-tile ', '.shell .ft-seg ', '.shell .ft-mchip ', '.shell .opt-search ', '.shell .opt-tools ', '.shell .sec-head ']) {
     const at = css.indexOf(sel);
     assert.ok(at > 0, `${sel} has a shell rule`);
     const end = css.indexOf('}', at);
     assert.ok(end > at, `${sel}'s rule is closed`);
-    assert.match(css.slice(at, end), /border: 2px solid rgba\(125,116,96/, `${sel} takes the 2px brass line`);
+    assert.match(css.slice(at, end), /border(-bottom)?: 2px solid rgba\(125,116,96/, `${sel} takes the 2px brass line`);
   }
-  // THE SCOPE: the base paint stays --slate, so the pause window is untouched
-  assert.match(css, /\n\.ft-tile \{ position: relative; background: var\(--slate\)/,
-    'the base tile keeps its opaque ground - .px-win has a game behind it');
-  assert.equal(/\n\.ft-tile \{[^}]*background: none/.test(css), false,
+  // THE SCOPE: the transparency is the shell's alone - the pause window's list keeps its opaque ground
+  assert.equal(/\n\.list \{[^}]*background: (none|transparent)/.test(css), false,
     'the transparency must be scoped to .shell, not written into the base');
   // AUDIT FT16 F4: and the TOKEN ROUTE, which the comment above claimed
   // this pin held and it did not. `.ft-tile` takes its ground from
@@ -329,8 +332,8 @@ test('FT16: every control on a tile is a thumb\'s target where there is a thumb'
   const at = css.indexOf('@media (pointer: coarse) {\n  .step { width: 44px; height: 44px; }');
   assert.ok(at > 0, 'the coarse-pointer law is where it was');
   const law = css.slice(at, css.indexOf('\n}', at));
-  for (const sel of ['.ft-segb', '.ft-mchip', '.ft-tile-more', '.ft-search']) {
+  for (const sel of ['.ft-segb', '.ft-mchip', '.ft-tile-more', '.opt-search', '.opt-filters .chip', '.sec-jumpbtn', '.sec-indexbtn']) {
     assert.ok(law.includes(sel), `${sel} is sized by the law, not by its own component block`);
   }
-  assert.match(law, /\.ft-segb, \.ft-mchip, \.ft-tile-more, \.ft-search \{ min-height: 44px; \}/, 'FT18: the search field is a thumb\'s target too');
+  assert.match(law, /\.ft-segb, \.ft-mchip, \.ft-tile-more, \.opt-search, \.opt-filters \.chip, \.sec-jumpbtn, \.sec-indexbtn \{ min-height: 44px; \}/, 'FT18: the search field is a thumb\'s target too (ORG2: the filters, the jumps and the tab card\'s sections)');
 });

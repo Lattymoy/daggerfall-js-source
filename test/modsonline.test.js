@@ -210,7 +210,7 @@ test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing
   assert.match(menu, /const onlineLockNote = \(vendor, key\) => \(ONLINE_GROUND_VENDORS\.includes\(vendor\) \|\| ONLINE_GROUND_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_RULESET_NOTE : ONLINE_WORLD_EVENT_VENDORS\.includes\(vendor\) \? ONLINE_WORLD_EVENT_NOTE : ONLINE_TRAVEL_VENDORS\.includes\(vendor\) \? ONLINE_TRAVEL_NOTE : ONLINE_CARRIAGE_VENDORS\.includes\(vendor\) \? ONLINE_CARRIAGE_NOTE : ONLINE_SHARED_NOTE\);/);
   assert.match(menu, /const ONLINE_CARRIAGE_VENDORS = Object\.freeze\(\['immersive-travel'\]\);/, 'IT1: the carriages wear their own words');
   assert.match(menu, /const ONLINE_WORLD_EVENT_VENDORS = Object\.freeze\(\['world-events-raiding-parties'\]\);/, 'RAID2: the raids wear a world event\'s words');
-  assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says what is true of MODS');
+  assert.match(menu, /if \(tab\.id === 'mods' && isOnlinePage\(\)\) body\.append\(el\('p', 'meta opt-note', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says what is true of MODS (ORG2: the Mods & files tab, over every mod)');
   // The Online pane's own sentence claimed every mod was on for
   // everyone. A player reading that and then toggling one would be
   // reading a lie the port no longer tells.

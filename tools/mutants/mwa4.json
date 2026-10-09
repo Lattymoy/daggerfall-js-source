@@ -46,9 +46,9 @@
   },
   {
     "name": "MWA4-the-card-off-the-head-of-the-files-page",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "    files.append(morrowindCard());   // MWA4: the assets card heads the page\n",
-    "new": "",
+    "file": "src/ui/settingsMap.js",
+    "old": "      \"card:morrowind\", \"card:packs\"]),",
+    "new": "      \"card:packs\"]),",
     "tests": [
       "test/features.test.js"
     ]

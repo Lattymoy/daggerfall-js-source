@@ -311,8 +311,8 @@
   {
     "name": "FT18-the-search-repaints",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  search.oninput = () => { featureQuery = search.value; applyQuery(); };",
-    "new": "  search.oninput = () => { featureQuery = search.value; render(); };",
+    "old": "    paintOptionsBody(body, { pause });\n    // the rail says no tab",
+    "new": "    render();\n    // the rail says no tab",
     "tests": [
       "test/ft18_features.test.js"
     ]
@@ -329,7 +329,7 @@
   {
     "name": "FT18-the-query-outlives-the-visit",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  featureQuery = '';   // FT18: a fresh visit searches nothing\n",
+    "old": "  optQuery = '';   // FT18: a fresh visit searches nothing (ORG2: over every tab)\n",
     "new": "",
     "tests": [
       "test/ft18_features.test.js"
@@ -354,10 +354,10 @@
     ]
   },
   {
-    "name": "FT18-a-hidden-tile-still-shows",
-    "file": "src/ui/enhancedStyle.js",
-    "old": ".ft-tile[hidden], .ft-grid[hidden], .ft-grouphead[hidden], .ft-none[hidden] { display: none; }\n",
-    "new": "",
+    "name": "FT18-an-empty-search-says-nothing",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (!found) body.append(empty('Nothing matches that'",
+    "new": "    if (false) body.append(empty('Nothing matches that'",
     "tests": [
       "test/ft18_features.test.js"
     ]
