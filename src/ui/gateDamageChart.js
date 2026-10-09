@@ -108,6 +108,9 @@ export const DAMAGE_CHART_CSS = `
   width: 540px; max-width: calc(100vw - 32px); padding: 10px 14px 9px; font: 600 13px 'Cormorant', Georgia, serif; letter-spacing: 0.03em;
   color: #f3d9c4; background: linear-gradient(180deg, rgba(34,6,3,0.93), rgba(14,3,2,0.9)); border: 1px solid rgba(255,120,60,0.6);
   box-shadow: 0 0 22px rgba(0,0,0,0.85), inset 0 0 18px rgba(120,20,6,0.45); text-shadow: 0 0 3px #000; font-variant-numeric: lining-nums tabular-nums; }
+/* AUDIT SD IV (T4): the message line over the chart while it stands - the collapse's first readout and the way home's
+   word stood under its corner on a phone and on a laptop, its sixty seconds after the kill (gateMarksView.js's own rule) */
+body:has(.wb-dmg-chart:not([style*="display: none"])) .hudmid { z-index: 32; }
 .wb-dmg-title { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #ff8a4a; text-align: center; }
 .wb-dmg-sub { font-size: 15px; text-align: center; margin: 1px 0 7px; color: #ffe2c8; }
 .wb-dmg-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) 60px 46px 46px 44px 62px 42px; column-gap: 6px; align-items: center;

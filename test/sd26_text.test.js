@@ -20,6 +20,9 @@ import { SD_RECEIPT_WAIT_MS } from '../src/scenes/sdSpoils.js';
 import { SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
 import { courtSaySeconds } from '../src/scenes/gateCourt.js';
 import { MidScreenText } from '../src/ui/midScreenText.js';
+import { ENHANCED_CSS } from '../src/ui/enhancedStyle.js';
+import { MARKS_CARD_CSS } from '../src/ui/gateMarksView.js';
+import { DAMAGE_CHART_CSS } from '../src/ui/gateDamageChart.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -183,4 +186,16 @@ test('SD26 THE HOUR\'S VOICE STANDS STILL UNDER A WINDOW (T3): DFU\'s label is t
   assert.equal(coveredBy({ overlayWindow: () => ({}), uiOverlayActive: false }), true, 'a window up');
   assert.equal(coveredBy({ overlayWindow: () => null, uiOverlayActive: true }), true, 'the game stopped');
   assert.equal(new Function('modes', `${line}return sdVoiceCovered();`)(undefined), false, 'before the mode machine stands');
+});
+
+test('SD26 THE MESSAGE LINE OVER THE CARDS (T4): the marks card as I arrive (gateMarksView.js, z 31) and the kill\'s damage chart (gateDamageChart.js, z 31) stand in a corner that reaches the line\'s band (`.hudmid`, z 4) on a phone held upright, on one held sideways and on a laptop with the party up - and SD-ALONE\'s "Your companions cannot follow you through the Rift.", said as the card begins, stood under it unread, as did the collapse\'s first readout and the way home\'s word under the chart. While either stands the line stands over it, wherever the player moved it; with neither it keeps its place under every window (mutants: the line under the card; the line under the chart; the line between)', () => {
+  const zOf = (css, sel) => Number(new RegExp(`(?:^|\\n)\\${sel} \\{[^}]*?z-index: (\\d+)`).exec(css)?.[1]);
+  const line = zOf(ENHANCED_CSS, '.hudmid'), card = zOf(MARKS_CARD_CSS, '.wb-marks-card'), chart = zOf(DAMAGE_CHART_CSS, '.wb-dmg-chart');
+  assert.ok(line < 5 && card > line && chart > line, `at rest the line is the HUD's (${line}), under the cards (${card}, ${chart}) and every window`);
+  for (const [css, cls, z] of [[MARKS_CARD_CSS, 'wb-marks-card', card], [DAMAGE_CHART_CSS, 'wb-dmg-chart', chart]]) {
+    const up = new RegExp(`body:has\\(\\.${cls}:not\\(\\[style\\*="display: none"\\]\\)\\) \\.hudmid \\{ z-index: (\\d+); \\}`).exec(css);
+    assert.ok(up && Number(up[1]) > z, `.${cls} standing: the line over it (${up?.[1]} over ${z})`);
+  }
+  // the selector's word is the cards' own hide
+  for (const f of ['src/ui/gateMarksView.js', 'src/ui/gateDamageChart.js']) assert.match(read(f), /root\.style\.display = want \? '' : 'none';/, f);
 });

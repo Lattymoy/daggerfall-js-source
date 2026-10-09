@@ -2951,7 +2951,9 @@ court's pattern, never took that rule. Now it has the court's law whole:
 - The Hour says so once as a player steps through with any at their side - *"Your companions cannot follow you through
   the Rift."* (`world/sdRealm.js SD_REALM_TEXT.noCompanions`) - through its own voice, once the step's veil has opened
   (`sdAloneFrame`, in the Hour's frame after the realm's own): never through the door, under the veil or under a
-  window, and owed again the next time through.
+  window, and owed again the next time through. (AUDIT SD IV, SD26 T4: it began with the marks card, whose corner
+  covered the line on a phone and on a laptop with the party up - while the card, or the kill's chart, stands the
+  line stands over it, `ui/gateMarksView.js` and `ui/gateDamageChart.js`, the court's too.)
 
 No relay change (`world/sdRealm.js` is the page's alone) and nothing in the account service.
 

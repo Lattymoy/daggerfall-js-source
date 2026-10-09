@@ -160,5 +160,32 @@
     "tests": [
       "test/sd26_text.test.js"
     ]
+  },
+  {
+    "name": "SD26-T4-the-line-under-the-card",
+    "file": "src/ui/gateMarksView.js",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T4-the-line-under-the-chart",
+    "file": "src/ui/gateDamageChart.js",
+    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
+    "new": "",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
+  },
+  {
+    "name": "SD26-T4-the-line-between",
+    "file": "src/ui/gateMarksView.js",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }",
+    "new": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 30; }",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
   }
 ]
