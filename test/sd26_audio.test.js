@@ -1,6 +1,7 @@
 // AUDIT SD IV, SD26 (2026-10-08, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md "AUDIT SD IV"): THE
 // HOUR HEARD, AUDITED A FOURTH TIME - the audio lens's findings, each reproduced and pinned here: the Remnant's grunt
-// outside time (A1); the Hearts a page away missed (A2); the Brass of Numidium's powers through the index door (A3).
+// outside time (A1); the Hearts a page away missed (A2); the Brass of Numidium's powers through the index door (A3); a
+// Stomp landing as one thud (A4); the Hour's far events let go with it (A5). A6 was the records' drift alone.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

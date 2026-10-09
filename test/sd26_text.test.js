@@ -1,6 +1,9 @@
 // AUDIT SD IV, SD26 (2026-10-08, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md "AUDIT SD IV"): WHAT
 // THE PLAYER READS, AUDITED A FOURTH TIME - the text lens's findings, each reproduced and pinned here: the fight's turns
-// on the card where its bar stands (T1).
+// on the card where its bar stands (T1); the kill read whole, the way home with it - a line cut said again (T2); the
+// voice still under a window (T3); the message line over the gate's cards (T4) and its own width at every HUD scale
+// (T5); the Remnant's bar in the Hour's colours (T6); a Hollow found before its last hour is said (T7); the stone's
+// plaque after the Concord (T8); WB13b's words over the lines since SD11 (T9).
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
