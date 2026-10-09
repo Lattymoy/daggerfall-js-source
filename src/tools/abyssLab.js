@@ -20,7 +20,7 @@
 //                    plate's 3.6 s cycle> (the clock put there - the next plate half a beat on); ?crumble=<s since a foot>
 //                    (every Crumble pin touched that long ago: 0-0.7 its crack stages, 0.7-5.1 its chunks falling, 5.1-5.7
 //                    flying back); ?span=0|1|2 (the waystone my cast-back would take me to); ?rewind=<s since>&on=0|1|2
-//                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js)
+//                    (the cast-back's gold rewind burst on that checkpoint, scenes/sdFx.js); ?grey the frame in grey (a screenshot's)
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -57,6 +57,7 @@ const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
 const $ = (id) => document.getElementById(id);
 if (params.has('nopanel')) $('panel').style.display = 'none';
+if (params.has('grey')) canvas.style.filter = 'grayscale(1)';   // SD-LOOK: the grayscale check - every meaning carried by shape, place and motion, never by hue alone
 canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });   // the probe reads pixels after the frame; the renderer's own getContext returns this one
 const renderer = new Renderer(canvas);
 const gl = renderer.gl;

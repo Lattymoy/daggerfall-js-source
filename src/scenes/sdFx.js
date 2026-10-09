@@ -119,9 +119,8 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
   const where = (x, y, z) => realmToDungeon(SD_ARENA.x + x, y, SD_ARENA.z + z);
   const add = (p, at0, kd, color, floor = SD_FX_FLOOR_Y) => {   // AUDIT SD III (V1): on the arena's floor
     let b = bursts.length < FX_BURSTS_MAX ? null : bursts.reduce((o, q) => (q.at0 < o.at0 ? q : o));
-    if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN, edge: SD_FX_EDGE }; bursts.push(b); }   // AUDIT SD IV (R3): the arena's edge
+    if (!b) { b = { at: [0, 0, 0], at0: 0, t: 0, kind: kd, color, floor: NaN, edge: SD_FX_EDGE }; bursts.push(b); } else b.edge = SD_FX_EDGE;   // AUDIT SD IV (R3): the arena's edge (SD-LOOK S9: a slot a rewind had, given back its arena's - the rewind says its own)
     b.at[0] = p[0]; b.at[1] = p[1]; b.at[2] = p[2]; b.at0 = at0; b.kind = kd; b.color = color; b.floor = floor;
-    b.edge = SD_FX_EDGE;   // SD-LOOK S9: the arena's, unless the caller says (the rewind: its checkpoint's)
     return b;
   };
   /** SD-LOOK S9: THE REWIND where my feet (the dungeon's frame) landed on checkpoint `c` at `t` - its sparks gathering over
