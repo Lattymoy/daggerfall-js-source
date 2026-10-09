@@ -79,7 +79,7 @@ import { collectHearths } from '../systems/survival/hearth.js';   // AUDIT HEART
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
-import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's
+import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords, tickInFlight } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's; AUDIT CARDS-6 B4: a round of damage over time stands nobody up from the cards
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { registerPresenter, hudText } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through
@@ -582,7 +582,7 @@ export function createWorldModes(host) {
     const regs = new Map(seeds.map((r, i) => [names[i], r]));
     iliacGame = openIliacTableGame({
       renderer, entity: playerEntity, say, holdCursor, relock: () => host.relock?.(), rand32: cardRand32, now: () => performance.now(),
-      day: cardDay(), key: cardTableKey(), grade: iliacGrade(quality), friendly: !!host.realmAct || isOnlinePage(),
+      day: cardDay, key: cardTableKey(), grade: iliacGrade(quality), friendly: !!host.realmAct || isOnlinePage(),   // AUDIT CARDS-6 B5: the day's clock, read at the book
       regulars: free.map((chair, i) => (names[i] ? { name: names[i], seed: seeds[i].seed, chair } : null)).filter(Boolean),
       frame: tableFrame(t), mySeatFeet: seats[cardSeat.seat].feet, chairFeet: (k) => seats[k]?.feet ?? seats[cardSeat.seat].feet,
       packPrice: cardPackHere, buyPack: buyCardPackHere,
@@ -856,6 +856,7 @@ export function createWorldModes(host) {
     if (ig?.session && cardSeat) {   // CARDS10: Iliac Hand's regular sits in the chair he plays from
       const seats = cardSeatsOf(cardSeat.table);
       const chair = Number(String(ig.session.seats[1].id).split(':')[1]);
+      if (takenSeats(seats, host.seatedPeers?.() ?? []).includes(chair)) return [];   // AUDIT CARDS-6 B7: a player sat down in his chair - the chair is his (Hold'em's E-N3 below)
       return regularsToStand({ session: ig.session, seats, seatOf: [cardSeat.seat, chair], regulars: iliacGame.regulars ?? new Map(), key: cardTableKey() });
     }
     const g = cardGame;
@@ -1128,7 +1129,11 @@ export function createWorldModes(host) {
   };
   // CARDS2b: a blow, a fall, a spell - anything that costs health - stands you up (one listener, by name: a second
   // host's would replace it, and only a seated player is moved by it)
-  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });
+  // AUDIT CARDS-6 B4: a blow, never a round of damage over time - a poison's minute, a disease's day, a spell's later
+  // rounds, a need's bite, each told from inside the player's own minute pass (systems/worldTick.js tickInFlight). One
+  // point of poison stood the player up and conceded a game for keeps with no press of his; one that kills still stands
+  // him up (the dead do not sit at cards - cardGameFrame)
+  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });
   // AUDIT LIVED1b K1: DFU's popup guard, online (world.js onExhaustedExterior's twin says why)
   let _exhaustedBox = null;
   const exhaustedShowing = () => !!_exhaustedBox && !_exhaustedBox.done && interiorWindows.containsWindow(_exhaustedBox);

@@ -90,7 +90,7 @@ test('CARDS10 a regular\'s play: a commit the rules take, built a play at a time
       reveal(st);
     }
   }
-  assert.equal(ILIAC_THINK_TRIALS, 400);
+  assert.equal(ILIAC_THINK_TRIALS, 64);   // PIN MOVED (AUDIT CARDS-6 B11): 400 could never bind (greedy play tries 85 at most) - 64 can
   assert.ok(boardScore({ over: true, turn: 7, holdings: [{ power: [5, 1] }, { power: [5, 1] }, { power: [0, 9] }] }, 0, ILIAC_TEMPERS.tight) > 4, 'two holdings held weigh most at the end');
   assert.equal(forfeitCard(['rat', 'giant'], () => 0.99), 'giant');
   // the hold, where it bites: a turn-one hand with magicka to spare - a reckless regular lays several, a sly one one
@@ -310,7 +310,7 @@ test('CARDS10 the host\'s half on a fake page: the binder\'s lawful deck and the
   assert.equal(game.g.phase, 'playing');
   assert.equal(game.g.session.forKeeps, true);
   assert.equal(game.g.session.seats[1].temper, iliacTemperOf(5));
-  assert.match(said.at(-1), /^You deal Iliac Hand with Ana, for a card\.$/);
+  assert.match(said.at(-1), /^You deal Iliac Hand with Ana, for a card - your .+ lies on the table\.$/);   // PIN MOVED (AUDIT CARDS-6 B1): the stake is lifted at the deal, and said
   assert.ok(game.playing());
   assert.ok(game.staked(), 'a card in play - the save waits');
   // force the end: a win for the player, for keeps
@@ -329,24 +329,31 @@ test('CARDS10 the host\'s half on a fake page: the binder\'s lawful deck and the
   assert.match(text(game.g.hud.root), /has paid a card tonight/);
   game.close();
   // lost for keeps: the player's card goes; closing mid-game concedes
-  const before = collectionOf(entity.items).get('rat');
+  // PIN MOVED (AUDIT CARDS-6 B1): the card a loss pays is the stake the session drew at the deal and the table lifted out
+  // of the pack then - a forced loss pays that one (a rat forced in its place was a card the table never held)
+  const before = collectionOf(entity.items);
   const g2 = mk();
   g2.press('foe', 1); g2.press('keeps'); g2.press('deal');
-  g2.g.session.prize = { from: 'player', card: 'rat' }; g2.g.session.over = 'lost';
+  const stake = g2.g.session.stake;
+  g2.g.session.prize = { from: 'player', card: stake }; g2.g.session.over = 'lost';
   g2.frame(now += 10);
-  assert.equal(collectionOf(entity.items).get('rat'), before - 1, 'the player\'s card goes');
+  assert.equal(collectionOf(entity.items).get(stake) ?? 0, before.get(stake) - 1, 'the player\'s card goes');
   g2.close();
   // the card lost leaves the starter deck short - no lawful deck until the binder holds thirty again
   const short = mk();
   assert.equal(short.g.setup.deck, null, 'a deck missing a card it names is no deck to deal');
   short.close();
-  entity.items.push(mintIliacCard('rat'));
+  entity.items.push(mintIliacCard(stake));   // PIN MOVED (AUDIT CARDS-6 B1): the card the loss took (the stake, above)
   const g3 = mk();
+  const total = [...collectionOf(entity.items).values()].reduce((a, b) => a + b, 0);   // PIN MOVED (AUDIT CARDS-6 B1): counted before the deal - the stake leaves the pack there
   g3.press('foe', 1); g3.press('keeps'); g3.press('deal');
-  const ratsNow = collectionOf(entity.items).get('rat') ?? 0, total = [...collectionOf(entity.items).values()].reduce((a, b) => a + b, 0);
+  const ratsNow = collectionOf(entity.items).get('rat') ?? 0;
   g3.close();
   assert.equal([...collectionOf(entity.items).values()].reduce((a, b) => a + b, 0), total - 1, 'standing up from a game for keeps concedes a card');
   assert.ok((collectionOf(entity.items).get('rat') ?? 0) <= ratsNow);
+  // PIN MOVED (AUDIT CARDS-6 B1): the card left the pack at the deal, so the count alone no longer sees the concession
+  // settled - the table's word on the card it took does
+  assert.equal(said.at(-1), `Bors takes a card from your deck: ${cardById(g3.g.session.stake).name}.`);
   entity.items.push(mintIliacCard(g3.g.session.prize.card));   // the conceded card back, so the deck deals again
   // a friendly table: the box is shut
   const g4 = mk({ friendly: true });

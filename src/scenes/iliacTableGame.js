@@ -34,7 +34,8 @@ import { RemoteIliacTable } from '../systems/iliacRemoteTable.js';
 import { createIliacTableDraw } from '../render/iliacTableDraw.js';
 import { cardById } from '../net/iliacCards.js';
 
-/** A regular's temper at Iliac Hand by his seed (one regular, one temper - Hold'em's three names). */
+/** A regular's temper at Iliac Hand by his seed - Hold'em's three names (AUDIT CARDS-6 B9: his Hold'em temper is that
+ *  evening's draw, not this). */
 export const iliacTemperOf = (/** @type {number} */ seed) => ILIAC_TEMPER_NAMES[(seed >>> 0) % ILIAC_TEMPER_NAMES.length];
 
 /** A log line for a game event (`names` the two seats', the player's first). */
@@ -84,7 +85,7 @@ export function lastLineOf(/** @type {any} */ last) {
  * The game, opened on the seat. Answers its handle - `press`, `frame`, `draw`, `close` - or null when the page has no
  * panel to show it on.
  * @param {{doc?: any, renderer: any, entity: any, say: (t: string) => void, holdCursor: () => (() => boolean), relock?: () => void,
- *   rand32: () => number, now: () => number, day: number, key: string, grade: number, friendly: boolean,
+ *   rand32: () => number, now: () => number, day: number|(() => number), key: string, grade: number, friendly: boolean,
  *   regulars: {name: string, seed: number, chair: number}[], frame: any, mySeatFeet: number[], chairFeet: (k: number) => number[],
  *   packPrice?: () => number|null, buyPack?: () => {ok: boolean, price: number}, onHoldem: () => void, onStand: () => void,
  *   online?: {send: (w: any) => boolean, myId: () => (string|null), table: number, chairs: number, chair: number, now: () => number,
@@ -93,7 +94,7 @@ export function lastLineOf(/** @type {any} */ last) {
  */
 export function openIliacTableGame(d) {
   const g = {
-    phase: /** @type {'setup'|'playing'|'over'} */ ('setup'), session: null, staged: [], pick: null, log: [], why: null,
+    phase: /** @type {'setup'|'playing'|'over'} */ ('setup'), session: null, escrow: null, staged: [], pick: null, log: [], why: null,   // AUDIT CARDS-6 B1: `escrow` the stake held
     setup: { deck: null, foe: null, forKeeps: false }, landed: new Map(), draw: createIliacTableDraw(d.renderer, { doc: d.doc }),
     hud: null, release: d.holdCursor(), places: null, closed: false,
     // CARDS10: the relay's table - `mode` 'online' while the panel is the room's, 'regulars' once he plays the tavern's own
@@ -102,8 +103,11 @@ export function openIliacTableGame(d) {
   };
   const online = () => g.mode === 'online';
   const mySeat = () => g.remote?.seat() ?? -1;
+  // AUDIT CARDS-6 B5: the game day NOW (the host hands its clock) - read when the book is asked and when it is written,
+  // never the day the panel opened (a game won past midnight, or a rest taken with the panel up, booked the old day)
+  const today = () => (typeof d.day === 'function' ? d.day() : d.day);
   const decks = () => binderDecks(binderOf(d.entity.items)).map((x) => ({ name: x.name, cards: x.cards, word: (() => { const r = deckRefusal(x.cards, d.entity.items); return r ? DECK_REFUSAL_WORDS[r] ?? r : null; })() }));
-  const foes = () => d.regulars.map((r) => ({ ...r, temper: iliacTemperOf(r.seed), paid: forfeitsFor(d.entity.iliacForfeits, d.key, d.day).includes(r.name) }));
+  const foes = () => d.regulars.map((r) => ({ ...r, temper: iliacTemperOf(r.seed), paid: forfeitsFor(d.entity.iliacForfeits, d.key, today()).includes(r.name) }));
   const keepsWhy = () => {
     if (d.friendly) return 'Online, a regulars\' table plays for fun.';
     const f = foes()[g.setup.foe ?? -1];
@@ -136,6 +140,14 @@ export function openIliacTableGame(d) {
       end: s?.over ?? null, prize: s?.prize ?? null, packPrice: d.packPrice?.() ?? null,
     }));
   };
+  /** AUDIT CARDS-6 B1: one card `id` lifted out of the pack - a stack's one minted apart (a split mints a fresh record,
+   *  systems/iliacItems.js), a lone record taken whole - or null when the pack holds none. */
+  const liftCard = (/** @type {any[]} */ items, /** @type {string|null} */ id) => {
+    const at = id ? items.findIndex((x) => isIliacCard(x) && x.card === id) : -1;
+    if (at < 0) return null;
+    if ((items[at].stackCount ?? 1) > 1) { items[at].stackCount -= 1; return mintIliacCard(id); }
+    return items.splice(at, 1)[0];
+  };
   const deal = (now) => {
     const ds = decks(), fs = foes();
     const deck = ds[g.setup.deck ?? -1], foe = fs[g.setup.foe ?? -1];
@@ -147,30 +159,38 @@ export function openIliacTableGame(d) {
       rand32: d.rand32, now, forKeeps,
     });
     if (g.session.over === 'refused') { g.why = 'The table could not deal that deck.'; g.session = null; paint(); return; }
+    // AUDIT CARDS-6 B1: THE STAKE HELD - the player's card for keeps, drawn at the deal, lifted out of his pack now and
+    // kept by the table (`g.escrow`): home again on a win or a draw, the regular's on a loss or a concession. The binder's
+    // Drop mid-game emptied the pack, and a loss then cost nothing while the table said it took a card
+    g.escrow = forKeeps ? liftCard(d.entity.items, g.session.stake) : null;
+    if (forKeeps && !g.escrow) { g.why = 'The table could not deal that deck.'; g.session = null; paint(); return; }
     g.places = iliacPlaces(d.frame, d.mySeatFeet, d.chairFeet(foe.chair), 0);
     g.landed.clear();
     g.phase = 'playing';
     g.staged = []; g.pick = null; g.log = []; g.why = null;
-    d.say(forKeeps ? `You deal Iliac Hand with ${foe.name}, for a card.` : `You deal Iliac Hand with ${foe.name}.`);
+    d.say(forKeeps ? `You deal Iliac Hand with ${foe.name}, for a card - your ${cardById(g.escrow.card)?.name ?? 'card'} lies on the table.` : `You deal Iliac Hand with ${foe.name}.`);
     frame(now);
   };
-  /** The game is decided (or conceded): the card that changes hands moved, the book written. */
+  /** The game is decided (or conceded): the card that changes hands moved, the book written. AUDIT CARDS-6 B1: the
+   *  player's stake left his pack at the deal - a win or a draw puts it back, a loss leaves it the regular's (said only
+   *  when it was held: no take is said that did not happen). A load's road settles nothing: the save it loaded was
+   *  written before the deal (it waits while a card is staked), so it holds the stake. */
   const settle = () => {
     const s = g.session;
-    if (!s?.prize || s.settled) return;
+    if (!s?.over || s.settled) return;
     s.settled = true;
     const foe = s.seats[1];
-    if (s.prize.from === 'patron') {
+    const held = g.escrow;
+    g.escrow = null;
+    if (s.prize?.from === 'patron') {
       const c = mintIliacCard(s.prize.card);
       if (c) addItem(d.entity.items, c);
-      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, d.day, foe.name);
+      if (held) addItem(d.entity.items, held);
+      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);
       d.say(`${foe.name} pays you a card: ${cardById(s.prize.card)?.name ?? 'a card'}.`);
-    } else {
-      const items = d.entity.items;
-      const at = items.findIndex((x) => isIliacCard(x) && x.card === s.prize.card);
-      if (at >= 0) { if ((items[at].stackCount ?? 1) > 1) items[at].stackCount -= 1; else items.splice(at, 1); }
-      d.say(`${foe.name} takes a card from your deck: ${cardById(s.prize.card)?.name ?? 'a card'}.`);
-    }
+    } else if (s.prize?.from === 'player') {
+      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);
+    } else if (held) addItem(d.entity.items, held);   // a draw: nobody pays, the stake comes home
   };
   function frame(now) {
     if (g.closed) return;
@@ -347,7 +367,7 @@ export function openIliacTableGame(d) {
     /** Whether a game is under way. */
     playing: () => g.phase === 'playing',
     /** Whether a game for keeps is under way - a card in play: the save waits on it, as on the Hold'em chips. */
-    staked: () => g.phase === 'playing' && !!g.session?.forKeeps,
+    staked: () => !g.closed && g.phase === 'playing' && !!g.session?.forKeeps,   // AUDIT CARDS-6 B13: a closed game stakes nothing
     /** The game closes: one under way conceded (its card settled), the panel, the draw and the cursor let go. Once. */
     close({ concede = true } = {}) {
       if (g.closed) return;

@@ -232,6 +232,7 @@ const CSS = `
 .dfiliac .acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .dfiliac button{background:#3a2c14;color:#f0dfb0;border:1px solid #8a6a2c;border-radius:3px;padding:4px 10px;font:14px Georgia,serif;cursor:pointer}
 .dfiliac button:disabled{opacity:.4;cursor:default}
+.dfiliac:focus{outline:none}.dfiliac [tabindex="0"]:focus-visible,.dfiliac button:focus-visible{outline:2px solid #f0dfb0;outline-offset:1px}
 `;
 
 /** A press on the panel is the panel's - never a swing or a look (the Hold'em panel's own law). */
@@ -254,9 +255,42 @@ export function createIliacTableHud({ onPress, doc = document }) {
   }
   const root = doc.createElement('div');
   root.className = 'dfiliac';
+  root.setAttribute('tabindex', '-1');   // AUDIT CARDS-6 B10: the keyboard's resting place when its control is gone
   swallowPresses(root);
+  // AUDIT CARDS-6 B10: Tab in the panel walks its controls - the browser's walk, never the game's dial (QuickDial took
+  // it, and nothing past the buttons was ever reached)
+  root.addEventListener('keydown', (e) => { if (e.key === 'Tab') e.stopPropagation?.(); });
   doc.body?.append(root);
+  try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }   // AUDIT CARDS-6 B10: the keyboard starts in the panel
   const el = (tag, cls, text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  // AUDIT CARDS-6 B10: THE KEYBOARD PLAYS THE PANEL. A row the mouse presses - a deck, a regular, a box, a card of the
+  // hand, a holding, a staged card - is in the Tab order and takes Enter or Space as its click; a button's own Enter
+  // and Space are the panel's too (never the game's jump or step, which stand the player up). Every control carries a
+  // `data-focus` key, and the panel drawn anew gives the keyboard back to the one it was on (the binder page's way,
+  // ui/cardBinderPage.js) - one gone (a holding no longer a target) hands it to the hand's first card, else to the panel
+  // itself (never to a button a stray Enter would press - Concede among them). Only the buttons were reachable: a
+  // keyboard dealt the defaults and passed.
+  const ACTIVATE = new Set(['Enter', ' ']);
+  const pressable = (n, key, fn) => {
+    n.setAttribute('tabindex', '0');
+    n.setAttribute('role', 'button');
+    n.setAttribute('data-focus', key);
+    n.addEventListener('click', fn);
+    n.addEventListener('keydown', (e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); fn(); });
+  };
+  const focusedKey = () => {
+    const a = doc.activeElement;
+    return a && a !== root && root.contains?.(a) ? a.getAttribute?.('data-focus') ?? null : null;
+  };
+  const refocus = (key) => {
+    if (!key) return;
+    const keyed = [];
+    const walk = (n) => { for (const c of n.children ?? []) { if (c.getAttribute?.('data-focus') && !c.disabled) keyed.push(c); walk(c); } };
+    walk(root);
+    const at = (k) => keyed.find((n) => n.getAttribute('data-focus') === k) ?? null;
+    const n = at(key) ?? keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-')) ?? root;
+    try { n.focus({ preventScroll: true }); } catch { n.focus?.(); }
+  };
   const cache = new Map();
   /** A card's face painted at w x h (twice that, for the screen's density), cached by card and size. */
   const faceOf = (id, w, h) => {
@@ -279,7 +313,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
     if (cv) n.append(cv); else n.append(el('span', '', c.name));
     if (power && c.id && cardById(c.id)?.kind !== 'spell' && cardById(c.id)?.kind !== 'location') n.append(el('span', 'p', String(c.power ?? 0)));
     n.title = c.title ?? '';
-    if (press) n.addEventListener('click', () => onPress(press, value));
+    if (press) pressable(n, `${press}-${value}`, () => onPress(press, value));   // AUDIT CARDS-6 B10
     return n;
   };
   let alive = true, shownKey = null, msgEl = null;
@@ -290,6 +324,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
       const key = JSON.stringify({ ...m, message: null });
       if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }
       shownKey = key;
+      const kept = focusedKey();   // AUDIT CARDS-6 B10: the keyboard's control, found again below
       root.replaceChildren();
       root.append(el('h3', '', m.title));
       if (m.note) root.append(el('div', 'note', m.note));
@@ -299,7 +334,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
         for (const d of m.decks) {
           const l = el('label', '', `${d.chosen ? '◉' : '○'} ${d.name}`);
           if (d.word) l.append(el('span', 'w', ` - ${d.word}`));
-          l.addEventListener('click', () => onPress('deck', d.i));
+          pressable(l, `deck-${d.i}`, () => onPress('deck', d.i));
           decks.append(l);
         }
         root.append(decks);
@@ -308,7 +343,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
           foes.append(el('div', '', 'Play against:'));
           for (const f of m.foes) {
             const l = el('label', '', `${f.chosen ? '◉' : '○'} ${f.name} (${f.temper})${f.paid ? ' - has paid a card tonight' : ''}`);
-            l.addEventListener('click', () => onPress('foe', f.i));
+            pressable(l, `foe-${f.i}`, () => onPress('foe', f.i));
             foes.append(l);
           }
           root.append(foes);
@@ -321,7 +356,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
         if (m.ranked) {
           const k = el('label', '', `${m.ranked.on ? '☑' : '☐'} Ranked - the season's board (your realm character's own cards)`);
           if (!m.ranked.enabled) { k.style && (k.style.opacity = '0.5'); if (m.ranked.why) k.append(el('span', 'w', ` - ${m.ranked.why}`)); }
-          else k.addEventListener('click', () => onPress('ranked'));
+          else pressable(k, 'ranked', () => onPress('ranked'));
           const box = el('div', 'opts');
           box.append(k);
           root.append(box);
@@ -329,7 +364,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
         if (m.keeps) {
           const k = el('label', '', `${m.keeps.on ? '☑' : '☐'} Play for a card (the loser pays one from their deck)`);
           if (!m.keeps.enabled) { k.style && (k.style.opacity = '0.5'); if (m.keeps.why) k.append(el('span', 'w', ` - ${m.keeps.why}`)); }
-          else k.addEventListener('click', () => onPress('keeps'));
+          else pressable(k, 'keeps', () => onPress('keeps'));
           const box = el('div', 'opts');
           box.append(k);
           root.append(box);
@@ -348,7 +383,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
           for (const c of hd.mine) mine.append(card(c));
           for (const c of hd.staged) mine.append(card(c, { cls: 'staged', press: 'unstage', value: c.staged }));
           box.append(theirs, pw, mine);
-          if (hd.target) box.addEventListener('click', () => onPress('hold', hd.h));
+          if (hd.target) pressable(box, `hold-${hd.h}`, () => onPress('hold', hd.h));
           holds.append(box);
         }
         root.append(holds);
@@ -362,11 +397,14 @@ export function createIliacTableHud({ onPress, doc = document }) {
       for (const a of m.actions) {
         const b = el('button', '', a.label);
         b.disabled = !a.enabled;
+        b.setAttribute('data-focus', `act-${a.id}`);   // AUDIT CARDS-6 B10: its key, and its Enter and Space its own
+        b.addEventListener('keydown', (e) => { if (ACTIVATE.has(e.key)) e.stopPropagation?.(); });
         b.addEventListener('click', () => { if (a.enabled) onPress(a.id); });
         acts.append(b);
       }
       root.append(acts);
       if (m.log?.length) root.append(el('div', 'log', m.log.join(' ')));
+      refocus(kept);
     },
     destroy() { if (!alive) return; alive = false; root.remove?.(); },
   };

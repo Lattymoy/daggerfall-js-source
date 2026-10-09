@@ -83,7 +83,7 @@
   {
     "name": "CARDS10-evening-payer",
     "file": "src/systems/iliacTableSession.js",
-    "old": "      const card = forfeitCard(this.seats[from === 'patron' ? 1 : 0].deck, this.unit);",
+    "old": "      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake;",
     "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit);",
     "tests": [
       "test/cards10_table.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "CARDS10-evening-concession",
     "file": "src/systems/iliacTableSession.js",
-    "old": "      if (this.forKeeps) { const card = forfeitCard(this.seats[0].deck, this.unit); this.prize = card ? { from: 'player', card } : null; }\n",
+    "old": "      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null;   // AUDIT CARDS-6 B1: his stake\n",
     "new": "",
     "tests": [
       "test/cards10_table.test.js"
@@ -164,7 +164,7 @@
   {
     "name": "CARDS10-cloth-side",
     "file": "src/world/iliacCloth.js",
-    "old": "  const d1 = d0[0] * d1raw[0] + d0[1] * d1raw[1] > -0.2 ? [-d0[0], -d0[1]] : d1raw;",
+    "old": "  const d1 = [-d0[0], -d0[1]];",
     "new": "  const d1 = d0;",
     "tests": [
       "test/cards10_table.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "CARDS10-host-book",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, d.day, foe.name);",
+    "old": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
     "new": "",
     "tests": [
       "test/cards10_table.test.js"

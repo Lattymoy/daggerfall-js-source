@@ -7,10 +7,14 @@
 // keeps the one that leaves the board best for him, which is how he learns every card's text without a line of it here).
 //
 // HE SEES WHAT A PLAYER SEES. A trial is played on a copy of the state with the other side passing, and judged through
-// `iliacView` as his own seat sees it - never the other's hand, never a face-down card of theirs. The copy draws its
-// next turn's card off his own deck; that card is never judged (the board alone is).
+// `iliacView` as his own seat sees it - never the other's hand, never a face-down card of theirs (AUDIT CARDS-6 B2: not
+// even on the last turn, whose reveal turns them up). The copy draws its next turn's card off his own deck; that card is
+// never judged (the board alone is).
 //
-// THE TEMPERS are Hold'em's three (systems/cardPatrons.js PATRON_TEMPERS - one regular, one temper at both games):
+// THE TEMPERS are Hold'em's three names (systems/cardPatrons.js PATRON_TEMPERS), a regular's his seed's - the same every
+// evening (AUDIT CARDS-6 B9: the names alone are shared - Hold'em's evening draws its regulars' tempers off the table's
+// source and keeps them for the game day, systems/cardTableSession.js seatPatrons, so one regular may be careful at one
+// game and reckless at the other):
 //   tight    a temple-and-knights deck; weighs every holding alike and plays the best line he finds.
 //   loose    beasts, orcs and giants; piles power on and likes a big board more than a close one.
 //   bluffer  the dead and the Daedra; holds his hand back early, likes a veiled holding, and is harder to read.
@@ -50,7 +54,7 @@ export const ILIAC_TEMPERS = Object.freeze({
   loose: Object.freeze({ tags: Object.freeze(['beast', 'orc', 'giant', 'were', 'warrior', 'centaur', 'sea']), spells: Object.freeze(['fireball', 'shock', 'frostbite']), scale: 5, greed: 0.04, hold: 0, veil: 0 }),
   bluffer: Object.freeze({ tags: Object.freeze(['undead', 'vampire', 'daedra', 'thief', 'assassin', 'atronach', 'fey']), spells: Object.freeze(['animate-dead', 'shock', 'recall']), scale: 3, greed: 0.01, hold: 2, veil: 0.35 }),
 });
-/** One regular, one temper at both games: Iliac Hand's tempers are Hold'em's names, pinned equal. */
+/** Iliac Hand's tempers are Hold'em's names, pinned equal - the names, not the draw (AUDIT CARDS-6 B9). */
 export const ILIAC_TEMPER_NAMES = Object.freeze(Object.keys(ILIAC_TEMPERS));
 
 /** A small seeded source (mulberry32) - a regular's deck is his seed's, the same every evening; never the game's dice. */
@@ -73,8 +77,10 @@ export const GRADE_SWAPS = Object.freeze([6, 3, 2]);
 /** MEASURE (CARDS10): each temper's upgrades - his kind's cards that each won over the starter deck's own in the sims
  *  (eighty games each, both seats: Azura 48-28, Mehrunes Dagon 46-33, Daedroth 49-31, the Orc Shaman 46-31, the
  *  Werewolf 45-33, the Daedra Seducer 43-33, the Knight of the Flame 42-35, the Wraith 42-37, King Gothryd 41-36, the
- *  Dragonling 41-34, Hircine 40-37) - his Prince first. A town's regular carries the first two that are not Princes; a
- *  city's, his Prince and all of them. */
+ *  Dragonling 41-34, Hircine 40-37) - his Prince first. A town's regular carries the first two that are not Princes, as
+ *  far as his grade's tiers allow; a city's, his Prince and all of them. AUDIT CARDS-6 B8: a careful one's second is King
+ *  Gothryd, a legendary - past a town's tiers - and no third card of his kind won in the sims, so a careful town regular
+ *  carries the Knight of the Flame alone (a reckless or a sly one, his two). */
 export const TEMPER_UPGRADES = Object.freeze({
   tight: Object.freeze(['azura', 'knight-of-the-flame', 'king-gothryd']),
   loose: Object.freeze(['hircine', 'werewolf', 'orc-shaman', 'dragonling']),
@@ -83,7 +89,8 @@ export const TEMPER_UPGRADES = Object.freeze({
 
 /**
  * A REGULAR'S DECK: thirty ids the rules take (deckValid) - the starter deck, his grade's upgrades (TEMPER_UPGRADES: a
- * town's two, a city's Prince and all) each in place of the starter's card of its cost (a Prince for a four), then
+ * town's first two that are not Princes, as far as its tiers allow - a careful one's one, AUDIT CARDS-6 B8; a city's
+ * Prince and all) each in place of the starter's card of its cost (a Prince for a four), then
  * GRADE_SWAPS of the rest traded for a card of his kind at the same cost (his kind six times as likely, his spells three
  * for a spell); never more of a tier above magic than the grade allows, never an artifact (the Princes' gifts are found,
  * not dealt) or a boss's own. The same seed, temper and grade build the same deck.
@@ -161,6 +168,11 @@ function trial(state, p, plays, T) {
   copy.players[1 - p].plays = null;
   if (commit(copy, p, plays) !== null || commit(copy, 1 - p, []) !== null) return -Infinity;
   reveal(copy);
+  // AUDIT CARDS-6 B2: the last turn's reveal unveils every face-down card, and the trial judged the other side's at
+  // their true power - he saw what he never may. A card of theirs that lay face down stays face down to his eye: worth
+  // nothing, as his view counts it during play
+  const veiled = new Set(state.holdings.flatMap((hd) => hd.sides[1 - p].filter((inst) => inst.down).map((inst) => inst.uid)));
+  for (const hd of copy.holdings) for (const inst of hd.sides[1 - p]) if (veiled.has(inst.uid)) inst.down = true;
   const v = iliacView(copy, p);
   let s = boardScore(v, p, T);
   for (const x of plays) if (T.veil && state.holdings[x.holding] && copy.holdings[x.holding]) s += vetoVeil(state, x.holding) ? T.veil : 0;
@@ -169,8 +181,11 @@ function trial(state, p, plays, T) {
 /** Whether holding `h` lays its cards face down (its own rule). */
 const vetoVeil = (state, h) => !!cardById(state.holdings[h].id)?.fx?.some((f) => f.on === 'ongoing' && f.do === 'veil');
 
-/** MEASURE (CARDS10): the most trials one decision plays - a hand of seven at three holdings is 21 a step. */
-export const ILIAC_THINK_TRIALS = 400;
+/** MEASURE (CARDS10): the most trials one decision plays - a hand of seven at three holdings is 21 a step. AUDIT CARDS-6
+ *  B11: it was 400, and greedy play never tries more than 1 + 21 + 18 + ... + 3 = 85 (the hand's own bound), so it could
+ *  not bind; 64 lies past every decision of 1,800 in real games (the most, 52 trials) and short of that bound - a hand
+ *  of seven cheap cards and magicka to spare, the worst a decision costs the frame, is cut at its fourth play's step. */
+export const ILIAC_THINK_TRIALS = 64;
 
 /**
  * A REGULAR'S PLAYS for this turn, built a play at a time: from no plays, each step tries every single play the rules
@@ -217,6 +232,6 @@ export function patronDeckSound(deck, grade) {
   return Object.entries(by).every(([t, n]) => (caps[t] ?? 0) >= n);
 }
 
-/** Hold'em's tempers and Iliac Hand's are the same three names (one regular, one temper). */
+/** Hold'em's tempers and Iliac Hand's are the same three names. */
 export const TEMPERS_AGREE = TEMPER_NAMES.length === ILIAC_TEMPER_NAMES.length && TEMPER_NAMES.every((n) => ILIAC_TEMPER_NAMES.includes(n));
 export { ILIAC_HOLDINGS };

@@ -13,8 +13,11 @@
 // FOR KEEPS (section 6.3, "A tavern regular who loses to you can pay in a card from his deck"): a game played `forKeeps`
 // stakes a card each side - the winner takes one of the loser's deck (iliacPatrons.js forfeitCard, the table's source):
 // the regular's paid into the player's pack, the player's taken from it. A draw pays nobody. Standing up from a game for
-// keeps concedes it. A regular pays at most one card a game day (`forfeitsFor` / `forfeitsAfter` - the book the save
-// keeps, as the Hold'em regulars' purses are kept), so a tavern is no mint: once he has paid, he plays for fun.
+// keeps concedes it. AUDIT CARDS-6 B1: THE PLAYER'S STAKE IS DRAWN AT THE DEAL (`stake`) and the host lifts it out of
+// his pack then, held by the table till the end - a pack emptied mid-game (the binder's Drop) lost a game for nothing,
+// the take drawn at the end finding no card to take. A regular pays at most one card a game day (`forfeitsFor` /
+// `forfeitsAfter` - the book the save keeps, as the Hold'em regulars' purses are kept), so a tavern is no mint: once he
+// has paid, he plays for fun.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { newGame, commit, reveal, iliacView, legalPlays, playsRefusal, result as gameResult } from '../net/iliacHand.js';
@@ -45,6 +48,8 @@ export class IliacTableSession {
     this.prize = null;                           // { from: 'patron'|'player', card } once a game for keeps is decided
     this.revealAt = null;
     this.thinkAt = now + this._thought();
+    // AUDIT CARDS-6 B1: the player's card staked, drawn now - the one he pays if he loses or concedes (the host holds it)
+    this.stake = this.forKeeps && this.state ? forfeitCard(player.deck, this.unit) : null;
     if (this.state) this._say({ t: 'game', holdings: this.state.holdings.map((h) => h.id), forKeeps: this.forKeeps }, now);
   }
 
@@ -89,7 +94,7 @@ export class IliacTableSession {
     this.over = r.winner === 0 ? 'won' : r.winner === 1 ? 'lost' : 'draw';
     if (this.forKeeps && r.winner !== null) {
       const from = r.winner === 0 ? 'patron' : 'player';
-      const card = forfeitCard(this.seats[from === 'patron' ? 1 : 0].deck, this.unit);
+      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake;   // AUDIT CARDS-6 B1: the player's, his stake
       this.prize = card ? { from, card } : null;
     }
     this._say({ t: 'end', why: this.over, result: r, prize: this.prize }, now);   // the table's word (the rules' own 'over' came before it)
@@ -118,7 +123,7 @@ export class IliacTableSession {
   leave(now) {
     if (!this.over && this.state) {
       this.over = 'left';
-      if (this.forKeeps) { const card = forfeitCard(this.seats[0].deck, this.unit); this.prize = card ? { from: 'player', card } : null; }
+      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null;   // AUDIT CARDS-6 B1: his stake
       this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);
     }
     return this.prize;
@@ -138,7 +143,8 @@ export function forfeitsFor(/** @type {any} */ book, /** @type {string} */ key, 
 export function forfeitsAfter(/** @type {any} */ book, /** @type {string} */ key, /** @type {number} */ day, /** @type {string} */ name) {
   const paid = [...new Set([...forfeitsFor(book, key, day), name])];
   const next = { ...(book && typeof book === 'object' && !Array.isArray(book) ? book : {}), [key]: { day, paid } };
-  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));
+  // AUDIT CARDS-6 B6: a tie in the day puts the tavern just booked first - a full book of the same day dropped it
+  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0));
   return Object.fromEntries(keys.slice(0, FORFEITS_BOOK_MAX).map((k) => [k, next[k]]));
 }
 /** The book as the save keeps it, and back - only well-formed entries, never more than FORFEITS_BOOK_MAX. */

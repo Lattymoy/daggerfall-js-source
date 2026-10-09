@@ -4,9 +4,10 @@
 // how it got there. Section 3, DECIDED: "the physics is the picture, never the rules".
 //
 // THE LAY. The three holdings lie in a row across the table's middle, square to the line between the two players; each
-// player's cards at a holding stand in a column from it toward his own chair, a little apart and each a little higher
-// than the one before (no two plates on one plane). Every card is turned to be read from the chair whose eyes look at it
-// (the viewer's - the cloth is his picture): its top away from him. A face-down card is a back.
+// player's cards at a holding stand in a column from it toward his own side of the row (AUDIT CARDS-6 B3: seat 0's line,
+// for seat 1 turned round - a chair at an angle laid its column over the next holding), a little apart and each a little
+// higher than the one before (no two plates on one plane). Every card is turned to be read from the chair whose eyes look
+// at it (the viewer's - the cloth is his picture): its top away from him. A face-down card is a back.
 //
 // THE THROW. A card that comes onto the cloth (its uid not seen before) is thrown from its owner's edge of the table on
 // an arc to its place over THROW_S, the hand's own pace (cardMotion.js); a card that leaves it is simply gone (to its
@@ -36,10 +37,15 @@ export function iliacPlaces(frame, seat0, seat1, viewer = 0) {
   const toward = (f) => { const dx = f[0] - c[0], dz = f[2] - c[2], n = Math.hypot(dx, dz) || 1; return [dx / n, dz / n]; };
   const d0 = toward(seat0), d1raw = toward(seat1);
   // a second chair beside the first (not across) still lays its side opposite: the row stands square to seat 0's line
-  const d1 = d0[0] * d1raw[0] + d0[1] * d1raw[1] > -0.2 ? [-d0[0], -d0[1]] : d1raw;
+  // AUDIT CARDS-6 B3: and so does one at an angle across it - the regular's side is seat 0's line turned round (his own
+  // direction projected on seat 0's axis). His own line ran along the row when the chairs stood 114 or 132 degrees
+  // apart (a third of the prop's pairings), and his column lay over the next holding's cards
+  const d1 = [-d0[0], -d0[1]];
   const dirs = [d0, d1];
   const across = [-d0[1], d0[0]];
-  const me = dirs[viewer === 1 ? 1 : 0];
+  // AUDIT CARDS-6 B3 (online): every card read from the viewer's OWN chair - seat 1's picture read from his line, never
+  // from the side his column lies on (114 degrees off his chair for a chair beside the first)
+  const me = viewer === 1 ? d1raw : d0;
   const yaw = Math.atan2(-me[0], -me[1]);   // the card's top (+Z) points away from the viewer
   const holding = (h) => [c[0] + across[0] * (h - 1) * ILIAC_HOLD_GAP, top + CARD_T / 2, c[2] + across[1] * (h - 1) * ILIAC_HOLD_GAP];
   const side = (h, p, i) => {
@@ -48,7 +54,9 @@ export function iliacPlaces(frame, seat0, seat1, viewer = 0) {
     return [b[0] + d[0] * out, top + CARD_T / 2 + (i + 1) * ILIAC_SIDE_RISE, b[2] + d[1] * out];
   };
   const reach = Math.max(0.25, (frame.halfShort ?? 0.4) - CARD_L * 0.4);
-  const edge = (p) => [c[0] + dirs[p][0] * reach, top + 0.12, c[2] + dirs[p][1] * reach];
+  // AUDIT CARDS-6 B3: a card is thrown from its owner's OWN edge - his chair's, wherever his column lies
+  const from = [d0, d1raw];
+  const edge = (p) => [c[0] + from[p][0] * reach, top + 0.12, c[2] + from[p][1] * reach];
   return { holding, side, edge, yaw, viewer };
 }
 
