@@ -539,7 +539,7 @@ export function createDecorPanel({
     if (card.dataset.yard !== (view?.yard ? '1' : '0')) card.dataset.yard = view?.yard ? '1' : '0';
     if (view?.yard) {   // HOME-YARD: the catalogue, the yard's pieces, and (HOME-LOOK) the house outside
       tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room')),
-        ...(view.paint ? [chip(view.paint.caravan ? 'Paint' : 'Exterior', mode === 'paint', () => setMode('paint'))] : []));   // WAGONS2: a caravan's painter is its inside's
+        ...(view.paint ? [chip('Exterior', mode === 'paint', () => setMode('paint'))] : []));
       return;
     }
     const n = roomed(view?.placed ?? []).length;
@@ -549,6 +549,7 @@ export function createDecorPanel({
       chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own')),   // DECOR2b: a look is chosen within them
       chip(`Built in (${k})`, mode === 'base', () => setMode('base')),   // BASE-HIDE: the room's own furniture
       ...(view?.rent ? [chip(`Rooms to rent (${(view.rent.rows ?? []).filter((r) => r.offer).length})`, mode === 'rent', () => setMode('rent'))] : []),   // HOME-RENT
+      ...(view?.paint?.caravan ? [chip('Paint', mode === 'paint', () => setMode('paint'))] : []),   // WAGONS2: a caravan's inside, painted
       ...roomChips());   // DECOR-ROOMS
   }
   /** DECOR-ROOMS: THE ROOM TABS - one a room, the chosen one pressed, each saying how many pieces stand in it. Choosing

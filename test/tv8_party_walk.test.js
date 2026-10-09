@@ -106,7 +106,7 @@ test('TV8 host: the leader\'s walk begins with an Overworld journey (a gathered 
   assert.match(w, /const step = memberWalkStep\(\{ tw, mine: _walkMine, gathered, journeying, onWalk, was: _walkWas, free: !!tw && walkFree\(\), now \}\);/);
   assert.match(w, /const onWalk = journeying && sameWalkDest\(tw, walkDestLive\(\), true\);/);
   // AUDIT OW3 P4/P6: FREE - outdoors, alive, no window of any kind, no danger; AUDIT OW4 P5: no arrival in flight
-  assert.match(w, /const walkFree = \(\) => !!travelOptions && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && playerSpawned && playerEntity\.health > 0 && !modes\?\.deathUp\?\.\(\)\n\s*&& !worldMoveBusy\(\) && !townTalk\.overlay && !gamePaused\(\) && !\(modes\?\.modalWindowUp\?\.\(\) \?\? false\) && pointerSurfaces\.size === 0 && !walkDanger\(\)\n(?:\s*\/\/[^\n]*\n)*\s*&& travelViewAllowed\(\)\.ok && !csaAboard\.aboard;/);   // PIN MOVED (AUDIT OW5 P1): the Overworld's own gate and a passenger's refusal
+  assert.match(w, /const walkFree = \(\) => !!travelOptions && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && playerSpawned && playerEntity\.health > 0 && !modes\?\.deathUp\?\.\(\)\n\s*&& !worldMoveBusy\(\) && !townTalk\.overlay && !gamePaused\(\) && !\(modes\?\.modalWindowUp\?\.\(\) \?\? false\) && pointerSurfaces\.size === 0 && !walkDanger\(\)\n\s*&& !wagonRiders\?\.seated\(\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*&& travelViewAllowed\(\)\.ok && !csaAboard\.aboard;/);   // PIN MOVED (AUDIT OW5 P1): the Overworld's own gate and a passenger's refusal
   assert.match(w, /const walkDanger = \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\);/);
   assert.match(w, /onYes: \(\) => walkAnswered\(box, round, true\),\n\s*onNo: \(\) => walkAnswered\(box, round, false\),/);
   // PIN MOVED (AUDIT OW5 P3): a sea spot is walked as the sea (the planner's byte for its pixel)
@@ -388,7 +388,7 @@ const LAW = lift(/\nimport \{ ([^}]*) \} from '\.\.\/systems\/partyWalk\.js';/, 
 const AROUND = ['social', 'socialLink', 'travelOptions', 'modes', 'playerSpawned', 'playerEntity', 'townTalk', 'gamePaused', 'pointerSurfaces',
   'duelEnemyNear', 'areEnemiesNearby', 'exteriorFoePool', 'worldMoveBusy', 'memberPresent', 'distanceToPartyAccount', 'tvPlaceSummary',
   'mapPixelToWorldCoords', 'tvSceneOf', 'travelViewRouteTo', 'travelViewWalkTo', 'YesNoBoxWindow', 'TRAVEL_VIEW_TEXT', 'locationIndex', 'locationWorldRect', 'tvLocationAt',
-  'travelViewAllowed', 'csaAboard', 'tvWater', 'tvSay', 'wildWalkRow'];   // AUDIT OW5 P1: the Overworld's own gate and a passenger's refusal; P3: the planner's sea
+  'travelViewAllowed', 'csaAboard', 'tvWater', 'tvSay', 'wildWalkRow', 'wagonRiders'];   // AUDIT OW5 P1: the Overworld's own gate and a passenger's refusal; P3: the planner's sea; WAGONS2: a rider seated in another's wagon
 const liftedHost = new Function('d', `const { ${[...AROUND, ...LAW].join(', ')} } = d;
 ${HOST_STATE}
 ${HOST_BLOCK}
@@ -422,6 +422,7 @@ function walkHost(world, acct, over = {}) {
     duelEnemyNear: () => false, areEnemiesNearby: () => c.state.enemies, exteriorFoePool: () => [],
     worldMoveBusy: () => c.busy,
     travelViewAllowed: () => ({ ok: c.viewOk ?? true }), csaAboard: { get aboard() { return !!c.aboard; } },   // AUDIT OW5 P1
+    wagonRiders: { seated: () => !!c.seated },   // WAGONS2: seated in the back of another's wagon
     tvWater: (x, y) => !!c.sea?.(x, y),   // AUDIT OW5 P3
     tvSay: (t) => { c.said = [...(c.said ?? []), t]; },   // AUDIT OW5 P5
     wildWalkRow: (x, y) => c.wild?.(x, y) ?? null,   // PARTY-TRUCE: the zone's row, where the client's world says so
@@ -520,16 +521,17 @@ test('AUDIT OW3/OW4 P7: THE PARTY WALKS, RUN ON THE HOST\'S OWN CODE - asked on 
   assert.equal(P.journeying(), false, 'the next set-out does not send an arrived member back out');
 });
 
-test('AUDIT OW5 P1 (run on the host\'s own code): a passenger aboard another\'s boat, and a member the Overworld\'s own gate refuses (the classic skin, underwater), are never asked and never set out - the passenger said Yes and was walked off the deck', () => {
-  const v = walkParty('L', 'P', 'C');
-  const [L, P, C] = v.clients;
+test('AUDIT OW5 P1 (run on the host\'s own code): a passenger aboard another\'s boat, and a member the Overworld\'s own gate refuses (the classic skin, underwater), and WAGONS2\'s rider seated in another\'s wagon, are never asked and never set out - the passenger said Yes and was walked off the deck', () => {
+  const v = walkParty('L', 'P', 'C', 'S');
+  const [L, P, C, S] = v.clients;
   P.aboard = true;   // on the leader's deck (CSA-K)
   C.viewOk = false;   // travelViewAllowed refuses: the classic skin, or under the water
+  S.seated = true;   // WAGONS2: seated in the back of another's wagon - its driver steers
   v.now = 1000; L.routeTo(); v.tick(1100);
   assert.ok(L.lead, 'a walk, both gathered');
-  assert.deepEqual([P.box, C.box], [null, null], 'neither asked');
+  assert.deepEqual([P.box, C.box, S.box], [null, null, null], 'none asked');
   v.tick(1400);
-  assert.deepEqual([P.journeying(), C.journeying()], [false, false], 'nor walked');
+  assert.deepEqual([P.journeying(), C.journeying(), S.journeying()], [false, false, false], 'nor walked');
 });
 
 test('AUDIT OW3 P1/P2/P6/P7, run on the host\'s own code (AUDIT OW4 P7): a journey stopped under a panel left up is a stop; a begin that makes no walk leaves none; nobody is asked with no journeys to walk, underground or dead; the leader\'s pose missing a moment (a reconnect) keeps the walk its grace, then lets it go', () => {

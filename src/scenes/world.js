@@ -14202,9 +14202,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** PARTY-TRAVEL: a pick may carry `besideAt` - a follower's journey to the party leader lands beside them, read once
    *  the core has built the pixel - and `besideText`, the arrival's line when it did. True once the journey arrived;
    *  nothing (falsy) when it never left. */
+  let _goLeadBusy = false;   // WAGONS2 (AUDIT): fastTravelTo is waiting out GO_LEAD_MS for my riders' clients to hear `go`
   async function fastTravelTo(pick, opts, computed) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
+    if (_goLeadBusy) return;   // WAGONS2 (AUDIT): a journey already telling my riders - `_traveling` rises only past the lead, and a second ask in it set out twice
     const wildTrip = wildTravelGate(pick.pixel, computed?.piecesCost ?? 0);   // WILD3: never into or out of the open zone; inside it, the fee and the wait
     if (!wildTrip.ok) { hudFade.clearFade(); return false; }
     // HCC (AUDIT HCC H2): DaggerfallTravelPopUp.OnPreFastTravel [IL_a1d8] - the mod's ONE subscription for a
@@ -14221,7 +14223,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyArrivalPending = partyArrival;
     let hccPostDue = false;
     // WAGONS1: riders in my wagon go where I go - told before I leave the room (their clients set out on the word)
-    if (!partyArrival && wagonRiders?.announce(pick.pixel)) { _hccDirty = true; await new Promise((r) => setTimeout(r, GO_LEAD_MS)); }
+    if (!partyArrival && wagonRiders?.announce(pick.pixel)) { _hccDirty = true; _goLeadBusy = true; try { await new Promise((r) => setTimeout(r, GO_LEAD_MS)); } finally { _goLeadBusy = false; } }
     try {
       hccRuntimeOn()?.handlePreFastTravel();
       hccPostDue = true;   // the Post is owed once the Pre ran
@@ -25935,6 +25937,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  where the feet read mid-move, up to a kilometre from where they land (AUDIT OW3 D2's own law for the find). */
   const walkFree = () => !!travelOptions && (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.()
     && !worldMoveBusy() && !townTalk.overlay && !gamePaused() && !(modes?.modalWindowUp?.() ?? false) && pointerSurfaces.size === 0 && !walkDanger()
+    && !wagonRiders?.seated()   // WAGONS2: nor a rider seated in another's wagon - its driver steers (a party walk's Yes walked a held motor)
     // AUDIT OW5 P1: and only where the Overworld's own doors would let me set out - its gate (the enhanced interface, never
     // underwater: THE OVERHAUL's lane) and a passenger's refusal (travelViewCanGo: the helmsman steers). A passenger said
     // Yes and was walked off the leader's deck toward the first land leg; a classic-skin member was walked a route
@@ -29063,6 +29066,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2
     if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }   // AUDIT DEEP2 B-4: a live duel too (DUEL1: no journey out of a duel)
     if (csaAboard.aboard) { tvSay(TRAVEL_VIEW_TEXT.passenger); return false; }   // OWS2: aboard another's boat, its helmsman steers
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return false; }   // WAGONS2: seated in another's wagon, its driver steers - the Overworld's journeys and its walk carried a held motor
     return true;
   }
   /** OW-PATH: THE TRAVELLER IN A TOWN'S NEIGHBOURHOOD - inside its rect grown by TV_NEAR_REACH: from here every ground

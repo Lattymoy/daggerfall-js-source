@@ -29,6 +29,9 @@ export const GO_LEAD_MS = 1200;
 export const GO_HOLD_MS = 30_000;
 /** How long a rider who followed a journey waits at the far end for the owner's wagon to be heard there (ms). */
 export const ARRIVE_WAIT_MS = 15_000;
+/** How long the owner's wagon may go unheard before a seated rider is stood down (ms) - a word missed, a frame's gap,
+ *  is not the owner gone (WAGONS2 AUDIT: one frame without it stood the rider down). */
+export const RIDE_LOST_GRACE_MS = 2000;
 /** How far beside the wagon a rider stands when they get down (m). */
 export const GET_DOWN_STEP = 1.6;
 /** The plaque rows' ids (the pool hands a press back with one). */
@@ -36,7 +39,7 @@ export const RIDE_ROW = Object.freeze({ ask: 'wagon:ride', down: 'wagon:down' })
 
 export function createWagonRiders(deps) {
   const book = createRideBook();
-  /** @type {{ owner: string, at: number, seat: number|null, go: number|null, wait?: number } | null} */
+  /** @type {{ owner: string, at: number, seat: number|null, go: number|null, wait?: number, lost?: number|null } | null} */
   let ride = null;
   let goSeq = 0, go = null, goAt = 0;   // my journey's word ([x, y, n]) while it is said, and when it was first said
   const declinedUntil = new Map();   // rider -> until (ms): my `pn`
@@ -121,10 +124,12 @@ export function createWagonRiders(deps) {
     if (deps.traveling?.() && ride.go != null) ride.wait = now + ARRIVE_WAIT_MS;   // the far end's wait runs from the arrival
     const r = deps.pool.peerRide(ride.owner);
     if (!r || r.model == null) {
-      if (ride.seat != null) { if (!deps.traveling?.() && !((ride.wait ?? 0) > now)) getDown(RIDE_TEXT.ownerGone); }   // on the road, or waiting at its end for the owner's word
+      ride.lost ??= now;   // WAGONS2 (AUDIT): unheard from here
+      if (ride.seat != null) { if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= RIDE_LOST_GRACE_MS) getDown(RIDE_TEXT.ownerGone); }   // on the road, or waiting at its end for the owner's word - or the word a moment missing
       else if (now - ride.at > RIDE_ASK_TTL_MS) { const o = ride.owner; ride = null; deps.changed?.(); deps.say(RIDE_TEXT.noAnswer(name(o))); }
       return;
     }
+    ride.lost = null;
     const mine = r.passengers.find((e) => e[0] === me());
     if (ride.seat == null) {
       if (r.declined.includes(me())) { const o = ride.owner; ride = null; deps.changed?.(); deps.say(RIDE_TEXT.declined(name(o))); return; }
