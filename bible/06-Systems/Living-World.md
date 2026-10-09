@@ -23,7 +23,10 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
    hour). Every resident, every plan, trip, caravan, camp, encounter and dive is a PURE FUNCTION of the world's own data
    (MAPS, BLOCKS, the roads), a seed and that clock - so every player on a page sees the same baker walk to the same
    oven at the same minute, and not a byte crosses the relay. A rest, a wait, a fast travel or a prison sentence moves
-   the clock and the world with it: the people are where their day has taken them.
+   the clock and the world with it: the people are where their day has taken them. CHAP5b (2026-10-09; Chapters-Arc 9)
+   NARROWS IT BY ONE INPUT: online, the chapter sheet the playing tab holds (`net/chapterSheet.js`, the service's) - a
+   guild's evenings at its hall by its chapter's band, the town's talk of a chapter not Steady - so every player reading
+   one sheet sees one hall; with no sheet (offline, the sheet unread, a chapter it does not name) it is the world above.
 3. **PEOPLE WALK AT THEIR OWN PACE.** On the street a resident walks DFU's 1.3 m/s (`PERSON_MOVE_SPEED`); the clock's
    rate turns it into the clock's minutes (`CLASSIC_MINUTES_PER_SECOND`, twelve a real minute; the sky's
    `skyMinutesPerMsAt`, twenty-four), so a resident beside the player keeps pace with them and every day is lived at

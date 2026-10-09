@@ -83,8 +83,8 @@
   {
     "name": "LW-ERRANDS-days",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  return d === w || d === (w + 3) % 7;",
-    "new": "  return d === w || d === (w + 1) % 7;",
+    "old": "export const GUILD_DAY_OFFSETS = Object.freeze([0, 3, 5]);",
+    "new": "export const GUILD_DAY_OFFSETS = Object.freeze([0, 1, 5]);",
     "tests": [
       "test/lwerrands_town.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "LW-ERRANDS-evening-unkept",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day)) I('guild', fav.guild, h(18), rollInt(rng, 60, 120));\n",
+    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(18), rollInt(rng, 60, 120));   // CHAP5b: its chapter's days\n",
     "new": "",
     "tests": [
       "test/lwerrands_town.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LW-ERRANDS-members-visiting",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day))",
-    "new": "      if (fav.guild && guildDay(res, day))",
+    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))",
+    "new": "      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))",
     "tests": [
       "test/lwerrands_town.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "LW-ERRANDS-courtier-unkept",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (fav.guild && guildDay(res, day)) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120));   // LW-ERRANDS: their order's hall\n",
+    "old": "      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120));   // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days\n",
     "new": "",
     "tests": [
       "test/lwerrands_town.test.js"

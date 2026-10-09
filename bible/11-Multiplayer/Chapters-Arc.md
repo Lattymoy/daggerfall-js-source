@@ -20,7 +20,8 @@ CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behi
 `world179` first - section 6, its record at the foot); CHAP4d BUILT (2026-10-09, Mac: "Continue"; the Master's Focus on
 its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot). CHAP5a BUILT
 (2026-10-09, the same word; the sheet carries the seats' holders, and each hall's shelf names them - sections 5.3 and 9,
-its record at the foot); CHAP5b (the hall's people and the chapters' lines) is next. Merged with main
+its record at the foot). CHAP5b BUILT (2026-10-09, the same word; the hall's people and the town's talk by the band -
+section 9, its record at the foot); CHAP6 (the Seasons' events) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08): the arc's migrations are `0093_npc_roll`
 to `0098_npc_seats` and its service `acct97` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -691,12 +692,22 @@ classic skin, the row off, the service unreachable - the living world is exactly
 - **The hall's people** (AUDIT CHAP R7): the census's two `guildsman` keep the hall by day, and `guildDay` sends a
   resident whose trade or class ties it to the guild there for an evening, two days a week; a Thriving chapter gives
   `guildDay` a third, a Failing one a single day, and a chapter whose halls are shut sends nobody - its two `guildsman`
-  idle at home.
+  idle at home. BUILT (CHAP5b): `guildDay(res, day, days)` keeps the first `days` of the member's own day and three and
+  five after it (`GUILD_DAY_OFFSETS` - the two are today's two, the one the first of them), `days` the hall's chapter's
+  band's (`GUILD_DAYS_BY_BAND`: Failing 1, Steady 2, Thriving and Ascendant 3; `hallGuildDays`), the trades' evenings
+  and a courtier's at its order's alike; a sellsword's and an adventurer's daily hall untouched. The living town reads
+  the bands once a clock minute (`LivingTown._chapterRead`, the host's `chapterOf` over the sheet) and makes a day's
+  plans again when they move, so a reader whose sheet landed after it entered the town keeps the same hall as one whose
+  sheet was there first. Shut halls wait for the Crackdown that shuts them (7, CHAP6).
 - **The Schism's candidates and the Succession's heir** are residents of the hall, drawn from the census by the event's
   roll, and are known to every player by the same name.
 - **Their words**: `systems/livingWorld/lines.js` gains the chapter's lines, keyed by the event and its standing ("They say
   the Wayrest Mages are split over who leads them"); the rumour mill (`systems/rumorMill.js`) carries the Season's
-  chapter news.
+  chapter news. BUILT (CHAP5b), the standing's: `CHAPTER_NEWS` by a chapter's band - Failing, Thriving, Ascendant; a
+  Steady chapter is no news - told as the town's news (`LivingTown.chapterNews`, beside the roads', the deeds' and the
+  house's) on two days of the week, its own drawn on the seed by the town and the guild, for each chapter of the town's
+  guild halls and temples the sheet names; `{guild}` the chapter's guild ("the Fighters Guild"). The event's lines and
+  the rumour mill's Season news are CHAP6's, with the events.
 - **The hall's roll**: the seats' holders, named on a board inside each hall. BUILT (CHAP5a), NARROWED: a DFU guild hall
   has no board, and placing one in DFU's own block geometry is a decor change of its own; its BOOKSHELF is the hall's
   reading (DFU's `DaggerfallBookshelf`, as the palace's shelf is the Hall of Records), so the roll is the shelf's first
@@ -789,7 +800,8 @@ DECIDED.
    BUILT (2026-10-08): the seats' titles on the token, behind `CHAPTER_TITLES` (6). CHAP4d BUILT (2026-10-09): the
    Master's Focus on the hall writs, the Chronicle read in the Hall of Records (6).
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll. CHAP5a BUILT (2026-10-09): the
-   sheet's seats, the hall's roll on its shelf (5.3, 9).
+   sheet's seats, the hall's roll on its shelf (5.3, 9). CHAP5b BUILT (2026-10-09): the hall's evenings and the town's
+   talk by the band (9).
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
 7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
 
@@ -812,7 +824,8 @@ host online runs in - the interiors and the dungeons are that same page and that
   the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
   rank where the character stands (`seatRankHere` - the hall's and the paid teleport's). CHAP4d BUILT: the board's Focus
   door (`setFocus`) and the palace's Hall of Records reading its region's chapters' Chronicle. CHAP5a BUILT: the hall's
-  roll off the sheet the tab holds (`chapterRoll`, the politic region, as `chapterStrength`).
+  roll off the sheet the tab holds (`chapterRoll`, the politic region, as `chapterStrength`). CHAP5b BUILT: the living
+  town's `chapterOf` - a chapter's band and its guild named, off the same sheet in the same region (`livingChapterOf`).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll and no sheet: flagged by name, DFU's guilds and DFU's
   prices as today.
 - `scenes/dungeonContext.js` - no hall, so no sheet; the receipts a dungeon's foes give are the relay's already: none.
@@ -1229,3 +1242,23 @@ The fifth slice's first; sections 5.3 and 9 carry the law and what building it n
   forgotten at a stop); the service's seats (its Master first, its officers by tenure, named as now, never a hidden
   guild's, another region's its own); the wiring. `tools/mutants/chap5a.json`: 35 mutants, all dead. Pins moved: CHAP3b's
   sheet (its seats), BS1's shelf (the books after the roll, the refusal); CHAP3c's sheet-key mutant re-aimed by content.
+
+## CHAP5b - the hall's people and the town's talk, as built (2026-10-09, Mac: "Continue")
+
+The fifth slice's second; section 9 carries the law and what building it narrowed (BUILT, CHAP5b). The living world's
+decision 2 narrows by the one input it names (`06-Systems/Living-World.md`).
+
+- **The law.** `src/systems/livingWorld/dayPlan.js`: `guildDay`'s `days`, `GUILD_DAYS`, `GUILD_DAY_OFFSETS`,
+  `GUILD_DAYS_BY_BAND`, `hallGuildDays`; `dayPlan`'s `bandOf`. `src/systems/livingWorld/lines.js`: `CHAPTER_NEWS`,
+  `CHAPTER_NEWS_DAYS`, the `{guild}` token; `meetups.js` fills it.
+- **The town.** `src/systems/livingWorld/livingTown.js`: `townChapters`, the `chapterOf` option, the bands read once a
+  clock minute and a day's plans stamped with them (`_chapterRead`, `_chapterStamp` - a plan with no stamp is today's),
+  `chapterNews` in the line context.
+- **The host.** `src/scenes/world.js`: `livingChapterOf` (the sheet's Strength in the politic region, banded, its guild
+  named) handed to the living town where there is a sheet.
+- **Pins.** `test/chap5b_people.test.js`, 8 tests: the guild's days by the band (the offsets, the count, the default);
+  a hall's days by its own guild (the guards, the table); the town's evenings, the trades' and the court's, and every
+  plan today's with no sheet; the town's chapters; the living town's plans by the sheet's bands, made again the minute
+  they move - the same day asked again too - as a reader that read them first; the town's talk (not Steady, two days
+  its own, every reader the same, none offline); the words; the wiring. `tools/mutants/chap5b.json`: 38 mutants, all
+  dead. Four LW-ERRANDS mutants re-aimed by content (the days, the trades' and the court's evenings, the members).

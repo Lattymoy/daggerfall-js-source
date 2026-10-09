@@ -680,7 +680,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
@@ -1625,6 +1625,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // CHAP3c (Chapters-Arc 5.2, 5.3): the chapter sheet - every chapter's Strength - held for the halls' prices and shelves
   // (net/chapterSheet.js), asked at a town's entry and again when it grows old. Online only - offline a hall is DFU's.
   const chapterSheet = hallDoor ? createChapterSheet({ door: hallDoor }) : null;
+  /** CHAP5b (Chapters-Arc 9): a guild's chapter where the player stands (the politic region, as the sheet's) as the living
+   *  town reads it - `{ band, name }` - or null (no sheet, a chapter it does not name). */
+  const livingChapterOf = (/** @type {number} */ faction) => {
+    const px = playerTravelPixel();
+    const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
+    const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;
+    return strength == null ? null : { band: chapterBandOf(strength).band, name: `the ${hallPosterName(faction)}` };
+  };
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
   /** SEAT2a part four: the siege this client is in, made with the online session (net/siegeSession.js) - null offline. */
@@ -5420,6 +5428,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
+          // CHAP5b (Chapters-Arc 9): a guild's chapter here off the sheet the tab holds - its band, its guild named - for
+          // its hall's evenings and the town's talk of it; none offline (no sheet: the living world is today's)
+          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction) : undefined,
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
