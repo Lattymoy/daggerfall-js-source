@@ -612,11 +612,14 @@ export function createWorldModes(host) {
     if (g.staking) return;
     g.staking = true;
     g.why = null;
+    g.refused = null;
     paintCardGame();
     const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: cardSeat.table, bb: g.stakes.bb, amount, place: cardPlaceName() });
     g.staking = false;
     if (g !== cardGame || !cardSeat) return;
-    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    // CARDS-SAID (Tavern-Cards section 31): and on the panel - said alone, the line was under the panel (a phone's covers
+    // the screen's middle), and the panel came back as it was: "Deal me in" pressed, and nothing happened
+    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }
     g.stakeWord = r.stake;
     g.stakeId = r.id;
     closeCardWatch(cardSeat.table);
@@ -672,7 +675,7 @@ export function createWorldModes(host) {
     if (!g) return;
     const table = g.remote ?? g.session;
     g.paintedAt = performance.now();
-    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why,
+    g.hud.render(cardHudModel({ phase: g.phase, view: table?.view() ?? null, legal: table?.legal() ?? null, buyIn: g.buyIn, stakes: g.stakes, friendly: g.friendly, log: g.log, why: g.why, refused: g.refused ?? null,
       online: g.remote ? { waiting: g.remote.seated < 2 && !g.remote.state?.hand, clock: Math.ceil(g.remote.clockLeft(g.paintedAt) / 1000), error: g.remote.error, regulars: !!cardSeat?.free.length && !g.goldOnline } : null,
       gold: !!g.goldOnline, staking: !!g.staking, topUp: cardTopUpAmount(g) }));   // CARDS6; section 24: the top-up
   }
@@ -12746,6 +12749,9 @@ export function createWorldModes(host) {
     attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
     /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
     decorFlying: () => decorTool.flying(),
+    /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
+     *  swing and tap down (ui/touch.js `cardTable`): the table's own listeners read the finger. */
+    cardSeated: () => mode === 'interior' && !!cardSeat,
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
