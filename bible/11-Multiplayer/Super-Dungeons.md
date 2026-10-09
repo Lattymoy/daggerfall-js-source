@@ -2303,7 +2303,9 @@ nothing put back but the Rift's bell. `scenes/sdAir.js`, on the Deadlands' model
 Each slot whole over the sky's period (720 s; 59 events in one), seeded and pure, each from a stand-in in its own
 quarter held at its bearing (`airSourceAt`, `far`); a gap longer than `AIR_BACKLOG_S` plays none of what it passed. The
 made two are registered once the archive is read and asked again until then; all four beds let go the frame I leave
-the Hour, one engine's at a time. The world host frames it on the sky's clock (`deadlandsSeconds`) after the ways out
+the Hour, and the events still sounding fade with them (AUDIT SD IV, SD26 A5: a moan or a bell rang on at the ear in
+the street - each is played under the Hour's name and `audio.js` `fadeFar` lets it go; the Deadlands' the same), one
+engine's at a time. The world host frames it on the sky's clock (`deadlandsSeconds`) after the ways out
 have run, beside the Deadlands' own. With the Remnant's voice (SD14a) the arc speaks in 64 cues and four beds.
 
 Pins: `test/sd14b_air.test.js` (5 - the beds; the made sounds; the events; heard from its quarter; the world host);

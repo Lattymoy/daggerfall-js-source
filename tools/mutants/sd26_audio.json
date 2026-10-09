@@ -79,5 +79,68 @@
     "tests": [
       "test/sd26_audio.test.js"
     ]
+  },
+  {
+    "name": "SD26-A5-the-hours-events-kept",
+    "file": "src/scenes/sdAir.js",
+    "old": "        engine.fadeFar?.(SD_AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-courts-events-kept",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "        engine.fadeFar?.(AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-nothing-faded",
+    "file": "src/systems/audio.js",
+    "old": "        f.gain.gain.linearRampToValueAtTime(0, t + seconds);\n        f.src.stop(t + seconds + 0.05);\n",
+    "new": "",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-thunder-faded",
+    "file": "src/systems/audio.js",
+    "old": "      if (f.tag !== tag) { far[n++] = f; continue; }",
+    "new": "      if (f.tag !== tag && f.tag) { far[n++] = f; continue; }",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-faded-held",
+    "file": "src/systems/audio.js",
+    "old": "      if (f.tag !== tag) { far[n++] = f; continue; }",
+    "new": "      far[n++] = f; if (f.tag !== tag) continue;",
+    "tests": [
+      "test/sd26_audio.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-hours-events-unnamed",
+    "file": "src/scenes/sdAir.js",
+    "old": "pitch: e.pitch, far: SD_AIR_FAR });",
+    "new": "pitch: e.pitch, far: true });",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD26-A5-the-courts-events-unnamed",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "pitch: e.pitch, far: AIR_FAR });",
+    "new": "pitch: e.pitch, far: true });",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
   }
 ]

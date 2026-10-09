@@ -13,6 +13,8 @@ import { AudioEngine } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { SPELL_CAST_SOUND } from '../src/systems/enemySpells.js';
 import { SD_HALL_SOUNDS } from '../src/scenes/sdHall.js';
+import { createSdAir, SD_AIR_FAR } from '../src/scenes/sdAir.js';
+import { createDeadlandsAir, AIR_FAR } from '../src/scenes/deadlandsAir.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -130,4 +132,53 @@ test('SD26 A STOMP LANDS AS ONE THUD (A4): on a Stomp\'s landing frame the blows
   const thuds = plays.filter((p) => p.clip === BOSS_CUES.quake.clip && p.t >= lands && p.t < lands + 400);
   assert.equal(thuds.length, 1, `the landing, once: ${JSON.stringify(thuds)}`);
   assert.ok(plays.some((p) => p.clip === BOSS_CUES.quake.clip && p.t < lands), 'its wind-up and release still heard');
+});
+
+/** A context that keeps what it is asked (sd20d's), with an ear. */
+function fakeContext() {
+  const made = { sources: [], gains: [], panners: [] };
+  let now = 0;
+  const param = (v = 0) => ({ value: v, events: [], setValueAtTime(x, t) { this.events.push(['set', x, t]); this.value = x; }, linearRampToValueAtTime(x, t) { this.events.push(['ramp', x, t]); }, cancelScheduledValues(t) { this.events.push(['cancel', t]); } });
+  const node = (o = {}) => ({ connect(n) { return n; }, disconnect() { this.gone = true; }, ...o });
+  const ctx = {
+    state: 'running', destination: node(), listener: { setPosition() {}, setOrientation() {} }, get currentTime() { return now; }, set time(t) { now = t; },
+    createBufferSource() { const s = node({ context: ctx, loop: false, playbackRate: param(1), started: null, stopAt: null, start(w) { this.started = w ?? now; }, stop(w) { this.stopAt = w ?? now; } }); made.sources.push(s); return s; },
+    createGain() { const g = node({ gain: param(1), context: ctx }); made.gains.push(g); return g; },
+    createPanner() { const p = node({ positionX: param(), positionY: param(), positionZ: param() }); made.panners.push(p); return p; },
+    createBuffer(ch, len, rate) { const d = new Float32Array(len); return { numberOfChannels: ch, length: len, sampleRate: rate, duration: len / rate, getChannelData: () => d }; },
+  };
+  return { ctx, made };
+}
+
+test('SD26 THE HOUR\'S FAR EVENTS LET GO WITH IT (A5): the Hour\'s air let its four beds go as it was left, and a moan or a bell already sounding (played `far`, held at its offset from the ear until its clip ran out) rang on at the ear in the street for seconds - the Deadlands\' the same. A far shot played under a place\'s name fades with that place: audio.js fadeFar ramps each still sounding to nothing over the beds\' fade, stops it and lets the ear go of it; the distant storm\'s thunder (no name) is never touched; the Hour\'s and the court\'s stop() fade their own (mutants: the Hour\'s events kept; the court\'s events kept; nothing faded; the thunder faded; the faded still held at the ear)', () => {
+  const { ctx, made } = fakeContext(), e = new AudioEngine();
+  e.ctx = ctx; e.enabled = true;
+  e.registerSamples('moan', new Float32Array(22050 * 3), 22050);
+  e.setListener([0, 0, 0], [0, 0, -1]);
+  const shot = (pos, far, pitch = 1) => { const g = made.gains.length; e.play3d('moan', pos, 1, { refDistance: 13, pitch, far }); return made.gains[g]; };
+  const moanGain = shot([20, 0, 0], 'sdAir', 0.55), thunderGain = shot([0, 0, 20], true);   // a storm's thunder
+  shot([0, 0, -20], 'deadlandsAir');
+  const [moan, thunder, court] = made.sources;
+  ctx.time = 1;
+  e.fadeFar('sdAir');
+  const ramp = moanGain.gain.events.find((v) => v[0] === 'ramp');
+  assert.ok(ramp && ramp[1] === 0 && ramp[2] > 1 && ramp[2] <= 2, `faded to nothing over the beds' fade: ${JSON.stringify(ramp)}`);
+  assert.ok(moan.stopAt >= ramp[2], 'then stopped');
+  assert.equal(thunder.stopAt, null, 'the thunder sounds on'); assert.equal(court.stopAt, null, 'another place\'s too');
+  assert.ok(!thunderGain.gain.events.some((v) => v[0] === 'ramp'));
+  const placed = (src) => made.panners[made.sources.indexOf(src)].positionX.value;
+  const [m0, t0] = [placed(moan), placed(thunder)];
+  e.setListener([5, 0, 5], [0, 0, -1]);
+  assert.equal(placed(moan), m0, 'the faded one let go by the ear'); assert.notEqual(placed(thunder), t0, 'the thunder still held at its bearing');
+  e.fadeFar('deadlandsAir');
+  assert.ok(court.stopAt != null);
+  // the Hour's and the court's stop() fade their own, by name
+  for (const [make, name] of [[createSdAir, SD_AIR_FAR], [createDeadlandsAir, AIR_FAR]]) {
+    const faded = [];
+    const fake = { setBed() {}, setBed3d() {}, play3d() {}, registerSamples: () => true, samplesOf: () => new Float32Array(4000), fadeFar: (tag) => faded.push(tag) };
+    const air = make(fake);
+    air.frame(10, [0, 1, 0]);
+    air.stop();
+    assert.deepEqual(faded, [name], `${name}: its events let go with its beds`);
+  }
 });

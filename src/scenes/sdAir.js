@@ -172,6 +172,8 @@ export function sdAirWindGain(seconds) {
 
 /** The engine whose loops are the Hour's - one at a time (a later boot's silences the old one's, the Deadlands' law). */
 let _heard = null;
+/** AUDIT SD IV (A5): the name the Hour's far events are played under (audio.js fadeFar lets them go with it). */
+export const SD_AIR_FAR = 'sdAir';
 
 /**
  * The Hour's air on the engine: `frame(seconds, ear)` once a frame while I stand in the Hour (`seconds` its clock, `ear`
@@ -214,7 +216,7 @@ export function createSdAir(engine = defaultAudio) {
         }
         on = true;
         if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {
-          for (const e of sdAirEvents(last, seconds)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: true });
+          for (const e of sdAirEvents(last, seconds)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: SD_AIR_FAR });
         }
       } catch { /* a sound is never the fight */ }
       last = seconds;
@@ -229,6 +231,7 @@ export function createSdAir(engine = defaultAudio) {
         engine.setBed(SD_AIR_WORKS.loop, null);
         engine.setBed3d(SD_AIR_HUM.loop, null, null);
         engine.setBed3d(SD_AIR_GEARS.loop, null, null);
+        engine.fadeFar?.(SD_AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them
       } catch { /* nothing left to stop */ }
     },
   };
