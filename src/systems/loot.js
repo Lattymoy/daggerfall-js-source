@@ -42,6 +42,7 @@ import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's Cr
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a pile's gold is not the level's
 import { rriLootMatrix, rriEnemyLootTableKey, conditionBasedPricesOn, randomConditionLootItems } from './rriRealism.js';   // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
 import { RRI_VENDOR } from './rriItems.js';   // FORAGE3: the pile event's first subscriber, named by its mod
+import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';   // MARK-WIRE: the receiver's marks, one list with the realm's trade law
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -595,9 +596,9 @@ export function validLootItem(v) {
   if (out.stackCount !== undefined && (!Number.isInteger(out.stackCount) || out.stackCount < 1 || out.stackCount > LOOT_STACK_MAX)) return null;
   // AUDIT WORLD6b-iii(c) A6/B4: the marks that mean "worn by me" and "bound to my quest" are the RECEIVER's, never a
   // container's word - a wire-borne equipSlot re-linked into the pack's slots on the next load and pushed my own out
-  delete out.equipSlot; delete out.questItem;
   // ACQUIRE1: and "it is mine already" (systems/acquireWatch.js) - a piece another player hands over is new to its taker
-  delete out.acquired;
+  // MARK-WIRE: the one list the realm's trade law reads too (net/realmTradeLaw.js RECEIVER_MARKS)
+  for (const k of RECEIVER_MARKS) delete out[k];
   return out;
 }
 

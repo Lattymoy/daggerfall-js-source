@@ -997,11 +997,15 @@ export class OnlineSession {
    *  'cell' (it went down the cell's own socket), 'room' (the anchor alone, down mine) or false (not sent). */
   sendPark(data, cell = null) {
     if (!this.parkOk || !data || typeof data !== 'object' || typeof data.c !== 'string' || (data.a !== undefined && !Array.isArray(data.a))) return false;
-    const primaryOpen = this.status === 'open' && this._ws;
+    // FIELD BUGS 2026-10-09b PARK-HELLO: a socket says its hello and nothing more until its room welcomes it (SD-HELLO's
+    // law, _send). `parkOk` is the LAST welcome's, so the park went one frame behind every new room's hello - and a room
+    // whose hello awaits (the Shattered Hour's: the hub's word on the Hollow) closed on it ('park before hello'), and the
+    // Rift cast its player out at the Hollow's door
+    const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);
     const halo = cell && cell !== this.room ? this._halo.get(cell) : null;
     let ws = null, inCell = false;
     if (cell && cell === this.room && primaryOpen) { ws = this._ws; inCell = true; }
-    else if (halo?.status === 'open' && halo.ws) { ws = halo.ws; inCell = true; }
+    else if (halo?.status === 'open' && halo.ws && this._welcomed.has(halo.ws)) { ws = halo.ws; inCell = true; }
     else if (primaryOpen) ws = this._ws;
     if (!ws) return false;
     const gate = parkGate(this._pkbucket, this._now());
@@ -1029,10 +1033,13 @@ export class OnlineSession {
   _flushLook() {
     if (!this._lookDirty) return;
     const socks = [];
-    if (this.lookOk && this.status === 'open' && this._ws) socks.push(this._ws);
-    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws) socks.push(h.ws);
+    // PARK-HELLO: never ahead of a welcome - a socket whose hello is still out is waited for (the tick tries again)
+    let waiting = false;
+    const welcomed = (ws) => (this._welcomed.has(ws) ? true : (waiting = true, false));
+    if (this.lookOk && this.status === 'open' && this._ws && welcomed(this._ws)) socks.push(this._ws);
+    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws && welcomed(h.ws)) socks.push(h.ws);
     // nothing open that knows the frame: whatever opens next says hello with this look, so nothing is owed
-    if (!socks.length) { this._lookDirty = false; return; }
+    if (!socks.length) { if (!waiting) this._lookDirty = false; return; }
     const gate = lookGate(this._lkbucket, this._now());
     if (!gate.pass) return;   // held: the tick tries again
     this._lkbucket = gate.bucket;

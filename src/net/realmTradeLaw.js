@@ -54,9 +54,16 @@ export const GOLD_PIECES_TEMPLATE = 276;
  *  LETTER_OF_CREDIT_TEMPLATE, pinned equal). Its price is no mere price: two letters differ in nothing else. The wire
  *  keeps it exactly (systems/loot.js validLootItem floors a value at the row's base price, and a letter's is 0). */
 export const VALUE_IS_IDENTITY_TEMPLATES = Object.freeze([275]);
+/** The marks that are the RECEIVER's - "worn by me", "bound to my quest", "it is mine already" (ACQUIRE1,
+ *  systems/acquireWatch.js) - never part of what an item IS, and never carried to its next owner. ONE list: the wire's
+ *  clamp (systems/loot.js validLootItem), a wild death's record (systems/wildDeath.js wildRecord) and this law all
+ *  read it. FIELD BUGS 2026-10-09b MARK-WIRE: ACQUIRE1 added `acquired` to the first two and not here, so every
+ *  marked piece - a weapon, armour, clothing, jewellery - carried it on its record and not on its offer, and the
+ *  market, a stall and a realm trade all refused it ("The realm does not hold that piece where your pack had it"). */
+export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired']);
 /** The fields that are never part of what an item IS: its count and its price (the offer's own, which the wire floors),
- *  and the marks that are the RECEIVER's (systems/loot.js validLootItem strips them). */
-export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', 'equipSlot', 'questItem']);
+ *  and the RECEIVER's marks. */
+export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS]);
 /** AUDIT REALM2 S4: the most a record a trade moves may be, in JSON characters - the JSON routes' own body (service.js
  *  MAX_BODY_BYTES). A piece the port mints is a few hundred; one with every string at the wire's 128 and ten
  *  enchantments, fifteen hundred. A price is volatile, so without it a million-character one rode along unseen. */
@@ -175,7 +182,7 @@ export function takeTradeGoods(save, side, pick) {
   const moved = picks.map(({ at, n }) => {
     const rec = JSON.parse(JSON.stringify(items[at]));
     if (items[at].stackCount !== undefined || n > 1) rec.stackCount = n;
-    delete rec.equipSlot; delete rec.questItem;
+    for (const k of RECEIVER_MARKS) delete rec[k];
     return rec;
   });
   const lit = items[save.lightSourceIndex];
