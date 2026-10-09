@@ -85,7 +85,7 @@ test('WEEDS1: the lantern replays are untouched, and that is the point of passin
   assert.match(sp, /const minFlatH = texel > 0 \? Math\.max\(SHADOW_FLAT_MIN_HEIGHT, texel \* SHADOW_FLAT_MIN_TEXELS\) : SHADOW_FLAT_MIN_HEIGHT;/,
     'no texel means the floor, unchanged');
   assert.match(sp, /this\.replay\(f, this\.faceVP\[face\], pos, false, 0, 0, REPLAY_ALL, selfNear, cand\)/, 'and the point replay passes none (a zero)');   // DISC29-E: the self card's word is its own rank; PERF-SHADOW1: the lantern's candidates after it
-  // the sun cascades pass their own (PERF-SUN1 - PIN MOVED: and the cascade's own list from the shared walk after them)
+  // the sun cascades pass their own (PERF-SUN3 - PIN MOVED: and the cascade's own list from the shared walk after them)
   assert.match(sp, /this\.replay\(f, this\.sunVP\[c\], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS \* sunTexelWorld\(c, k\), sunTexelWorld\(c, k\), REPLAY_ALL, true, sunCand \? sunCand\[c\] : null\)/);
   // a lantern's texel really is far finer than a far cascade's, which is
   // what makes treating them differently right rather than convenient

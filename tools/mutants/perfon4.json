@@ -4,20 +4,96 @@
     "file": "src/systems/buildBreather.js",
     "old": "export const BUILD_SLICE_FLOOR_MS = 3;",
     "new": "export const BUILD_SLICE_FLOOR_MS = 3.0;",
-    "tests": ["test/perfon4_probes.test.js"]
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ]
   },
   {
     "name": "PERF-ON4-the-online-lane-needle-moved",
     "file": "src/systems/onlineLane.js",
     "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
     "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly', 'shot',",
-    "tests": ["test/perfon4_probes.test.js"]
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ]
   },
   {
     "name": "PERF-ON4-the-plugin-passing-a-missed-needle",
     "file": "tools/frameProbe.mjs",
-    "old": "      if (!a.includes(needle)) throw new Error(`${name}: ${row.file} needle missed: ${needle.slice(0, 80)}`);",
-    "new": "",
-    "tests": ["test/perfon4_probes.test.js"]
+    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "new": "      if (n > 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ]
+  },
+  {
+    "name": "PERF-ON4-the-plugin-passing-a-doubled-needle",
+    "file": "tools/frameProbe.mjs",
+    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "new": "      if (n < 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F7"
+  },
+  {
+    "name": "PERF-ON4-a-path-matched-by-containing",
+    "file": "tools/frameProbe.mjs",
+    "old": "    const row = table.find((t) => p.endsWith(`/${t.file}`));",
+    "new": "    const row = table.find((t) => p.includes(t.file));",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: it survived"
+  },
+  {
+    "name": "PERF-ON4-the-edit-keeping-shot-refused",
+    "file": "tools/onlineFrameProbe.mjs",
+    "old": "'export const ONLINE_REFUSED_FLAGS = Object.freeze([']] },",
+    "new": "'export const ONLINE_REFUSED_FLAGS = Object.freeze([\\'shot\\', ']] },",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: it survived"
+  },
+  {
+    "name": "PERF-ON4-the-base-taking-another-host",
+    "file": "tools/onlineFrameProbe.mjs",
+    "old": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.1:\\\\d+)$/.test(v)\"]] },",
+    "new": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.\\\\d:\\\\d+)$/.test(v)\"]] },",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: it survived"
+  },
+  {
+    "name": "PERF-ON4-the-frame-probe-skipping-its-own-edits",
+    "file": "tools/frameProbe.mjs",
+    "old": "    const edited = editsPlugin('probe-transforms', FRAME_PROBE_EDITS).transform(code, id);",
+    "new": "    const edited = null;",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: it survived"
+  },
+  {
+    "name": "PERF-ON4-the-online-server-without-its-edits",
+    "file": "tools/onlineFrameProbe.mjs",
+    "old": "export const probePlugins = () => [probeTransforms(), editsPlugin('online-probe-transforms', ONLINE_PROBE_EDITS)];",
+    "new": "export const probePlugins = () => [probeTransforms()];",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: it survived (as the createServer list)"
+  },
+  {
+    "name": "PERF-ON4-the-hook-without-the-way-book",
+    "file": "tools/onlineFrameProbe.mjs",
+    "old": "status: online ? online.status : null, ways: livingWays.size, frame:",
+    "new": "status: online ? online.status : null, frame:",
+    "tests": [
+      "test/perfon4_probes.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 F4: the hook losing a field survived"
   }
 ]

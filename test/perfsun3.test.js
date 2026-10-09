@@ -1,5 +1,5 @@
-// PERF-SUN1 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
-// online"): THE SUN'S CASCADES SHARE ONE WALK (bible/07-Rendering/Performance-Online.md PERF-SUN1; PERF-NEXT item 1).
+// PERF-SUN3 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
+// online"): THE SUN'S CASCADES SHARE ONE WALK (bible/07-Rendering/Performance-Online.md PERF-SUN3; PERF-NEXT item 1).
 // Every cascade's replay walked every record and every flat of the frame; now one walk finds the far cascade's, and each
 // nearer cascade's list is found from the next one out's (shadowPass.js _sunCandidates). These pins hold the cascades to
 // the draws they made - every draw of every frame, its program, VAO, framebuffer, count and offset, in order, against
@@ -12,13 +12,15 @@ import assert from 'node:assert/strict';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import { SHADOW_TUNING, SHADOW_CASCADES, sunCascadeMatrices, sunAnchorFor, sunTexelWorld, SHADOW_SUN_DEPTH } from '../src/render/shadowPass.js';
-import { spherePlanes, sphereInPlanes } from '../src/render/bounds.js';
+import { spherePlanes, sphereInPlanes, recordVisible, batchVisible } from '../src/render/bounds.js';
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const RIGHT = new Float32Array([1, 0, 0]), UP = new Float32Array([0, 1, 0]);
 /** Four suns: the afternoon's, a low evening's, noon's, and one along z (sunCascadeMatrices' basis takes Y for up). */
 const SUNS = [[0.45, 0.8, 0.35], [0.95, 0.15, 0.1], [0.05, 0.99, 0.05], [0.2, 0.3, 0.93]].map((d) => new Float32Array(d));
 const LAST = SHADOW_CASCADES.length - 1;
+/** AUDIT PERF-ON4 (sun lens, 3): the tuning as shipped, read before any pin sets it - every frame below puts it back. */
+const SHIPPED = { ...SHADOW_TUNING };
 
 /** perfshadow1.test.js's recording GL: every draw with the program, VAO and framebuffer it was made in. */
 function recordingGl() {
@@ -57,9 +59,11 @@ const viewAt = (e) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -e[0
  * cascade, across its edge and past the far one (to 2,000 units); walkers; a gib; a flat placed by a NaN; meshes with
  * sub-spheres near and far, one unbounded and one placed by a NaN; terrain near and far. `frame()` runs one frame -
  * the eye walking, under `sun`, about `focus` when one is given (the travel view: its cascades four times as wide) -
- * and answers its shadow draws and the pass's counts.
+ * and answers its shadow draws and the pass's counts. `crowd` records more stand about the eye, a mesh or a flat each
+ * (AUDIT PERF-ON4, sun lens 1): past the 64 a cascade's list starts with, so its growth is walked - a real town grows
+ * them on its first frame, and the town above holds about seventeen records.
  */
-function town(seed, { sun, steady, prepass, focus = false }) {
+function town(seed, { sun, steady, prepass, focus = false, crowd = 0 }) {
   const rand = rng(seed);
   const g = recordingGl();
   const r = new Renderer(g.canvas);
@@ -104,6 +108,12 @@ function town(seed, { sun, steady, prepass, focus = false }) {
   const nanAt = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, NaN, 0, 900, 1]);   // a mesh placed by a NaN, 900 off on z: its spheres cull nothing
   const tile = (x, z, s) => r.createTerrainSurface(new Float32Array([x, 0, z, x + s, 0, z, x + s, 0, z + s, x, 0, z + s, x + s / 2, 1, z + s / 2]), new Float32Array(15), new Uint32Array([0, 1, 4, 1, 2, 4, 2, 3, 4]));
   const tiles = [tile(-3, -3, 6.4), tile(30, 20, 6.4), tile(200, -150, 6.4), tile(1500, 900, 6.4)];
+  const crowdMeshes = [], crowdFlats = [];
+  for (let k = 0; k < crowd; k++) {
+    const off = [(rand() * 2 - 1) * 5, rand() * 2, (rand() * 2 - 1) * 5];
+    if (k % 2) crowdMeshes.push({ vao: { id: `vao-c${k}` }, buffers: [], off, bounds: new Float32Array(4), subMeshes: [{ textureArchive: 300, textureRecord: 0, startIndex: 0, primitiveCount: 2, _bounds: new Float32Array(4) }] });
+    else { const b = r.createBillboardBatch(504, 1 + (k % 3), { w: 0.4, h: 0.5 + rand() * 2 }, [[0, 0, 0]]); b.off = off; crowdFlats.push(b); }
+  }
   const wind = [9 * (rand() * 2 - 1), 9 * (rand() * 2 - 1), 3.7, 1];
   let t = 0;
   const frame = () => {
@@ -114,6 +124,8 @@ function town(seed, { sun, steady, prepass, focus = false }) {
       gib.origin = [3 + t * 0.3, 1, -2];
       const eye = [t * 7.3, 1.6, -t * 4.1];   // walking: the anchor moves on as the eye leaves its hold
       if (focus) r.setFocus([eye[0] + 20, eye[1], eye[2] - 10], true);
+      for (const m of crowdMeshes) { const c = [eye[0] + m.off[0], m.off[1], eye[2] + m.off[2], 0.6]; m.bounds.set(c); m.subMeshes[0]._bounds.set(c); }
+      for (const b of crowdFlats) b.origin = [eye[0] + b.off[0], b.off[1], eye[2] + b.off[2]];
       g.draws.length = 0;
       r.beginFrame(I, viewAt(eye), sun, WORLD_FRAME);
       const shadow = g.draws.slice();
@@ -123,20 +135,23 @@ function town(seed, { sun, steady, prepass, focus = false }) {
       r.drawMesh(loose, I, null); r.drawMesh(meshes[1], nanAt, null);
       for (const s of tiles) r.drawTerrain(s, I, {}, {}, 6.4);
       r.drawBillboards(batches, RIGHT, UP);
+      for (const m of crowdMeshes) r.drawMesh(m, I, null);
+      for (const b of crowdFlats) r.drawBillboards([b], RIGHT, UP);
       r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
       return { shadow, st };
-    } finally { SHADOW_TUNING.override = false; SHADOW_TUNING.sunPrepass = undefined; }
+    } finally { SHADOW_TUNING.override = SHIPPED.override; SHADOW_TUNING.sunPrepass = SHIPPED.sunPrepass; }
   };
   return { r, frame, batches };
 }
 
-test('PERF-SUN1: the sun\'s cascades draw EXACTLY what they drew - every draw of every frame (program, VAO, framebuffer, count, offset), its order included, over random towns spread from the eye to past the far cascade (woods, single flats, walkers, a gib, a flat placed by a NaN, meshes with sub-spheres near and far, an unbounded mesh, one placed by a NaN, terrain), under four suns, steady and cadenced, about the camera and about a travel view\'s focus, the eye walking - against the same pass with the walk off (mutants: the far cascade\'s list found by the near planes; a nearer list found by the nearest planes; an unbounded record left out; a record\'s flats cut at its first one out; a cascade walking another one\'s list, or the far one the next one in\'s; the switch ignored; discard leaving the lists full)', () => {
-  let compared = 0, sunDraws = 0;
+test('PERF-SUN3: the sun\'s cascades draw EXACTLY what they drew - every draw of every frame (program, VAO, framebuffer, count, offset), its order included, over random towns spread from the eye to past the far cascade (woods, single flats, walkers, a gib, a flat placed by a NaN, meshes with sub-spheres near and far, an unbounded mesh, one placed by a NaN, terrain), under four suns, steady and cadenced, about the camera and about a travel view\'s focus, the eye walking - against the same pass with the walk off (mutants: the far cascade\'s list found by the near planes; a nearer list found by the nearest planes; an unbounded record left out; a record\'s flats cut at its first one out; a cascade walking another one\'s list, or the far one the next one in\'s; the switch ignored; discard leaving the lists full; AUDIT PERF-ON4: a grown list losing what it held, a list that never grows)', () => {
+  let compared = 0, sunDraws = 0, grown = 0;
   for (const seed of [31, 32, 33]) {
     for (const sun of SUNS) {
       for (const steady of [true, false]) {
         for (const focus of [false, true]) {
-          const a = town(seed, { sun, steady, prepass: true, focus }), b = town(seed, { sun, steady, prepass: false, focus });
+          const crowd = seed === 31 ? 0 : 70;   // two towns of three with every cascade's list past its first 64
+          const a = town(seed, { sun, steady, prepass: true, focus, crowd }), b = town(seed, { sun, steady, prepass: false, focus, crowd });
           for (let f = 0; f < 5; f++) {
             const x = a.frame(), y = b.frame();
             const at = `seed ${seed}, sun [${[...sun]}], ${steady ? 'steady' : 'cadenced'}, ${focus ? 'focus' : 'camera'}, frame ${f}`;
@@ -147,14 +162,16 @@ test('PERF-SUN1: the sun\'s cascades draw EXACTLY what they drew - every draw of
             // AUDIT 637 B4's law for the cascades' lists: the frame's passes over, discard() has emptied them - none holds a batch past it
             assert.ok(a.r.shadows._sunCands.every((c) => c.n === 0 && c.bb.every((l) => !l || l.length === 0)), `${at}: no list holds a flat past the frame`);
           }
+          if (crowd) { grown++; assert.ok(a.r.shadows._sunCands.every((c) => c.rec.length > 64), `every cascade's list grew past 64 (${a.r.shadows._sunCands.map((c) => c.rec.length)})`); }
         }
       }
     }
   }
   assert.ok(compared > 10000 && sunDraws > 5000, `the comparison drew something (${compared} draws, ${sunDraws} in the cascades)`);
+  assert.ok(grown >= 16, `the lists grew in the crowded towns (${grown})`);
 });
 
-test('PERF-SUN1: THE CASCADES NEST - a sphere any cascade\'s float32 planes take, the next one out\'s take too: at every side of every cascade (the sphere just inside it), by the eye and thirty to a hundred and twenty kilometres out, under four suns, at the camera\'s scale and the travel view\'s; and a sphere NaN or infinite on an axis taken by a cascade is taken by the next - the premise the nearer lists are found from the next one out\'s on', () => {
+test('PERF-SUN3: THE CASCADES NEST - a sphere any cascade\'s float32 planes take, the next one out\'s take too: at every side of every cascade (the sphere just inside it), by the eye and thirty to a hundred and twenty kilometres out, under four suns, at the camera\'s scale and the travel view\'s; and a sphere NaN or infinite on an axis taken by a cascade is taken by the next - the premise the nearer lists are found from the next one out\'s on', () => {
   const vps = SHADOW_CASCADES.map(() => new Float32Array(16)), planes = SHADOW_CASCADES.map(() => new Float32Array(24));
   const rand = rng(7);
   let taken = 0;
@@ -190,7 +207,7 @@ test('PERF-SUN1: THE CASCADES NEST - a sphere any cascade\'s float32 planes take
   assert.ok(taken > 10000, `the cascades took spheres at their edges (${taken})`);
 });
 
-test('PERF-SUN1: a flat past the far cascade is asked by NO cascade\'s replay - a wood 2,000 units out is looked at once by the walk, where each of the three cascades looked at it before; a flat inside the near cascade is still asked by all three (mutants: the cascades walking every flat again; no list at all)', () => {
+test('PERF-SUN3: a flat past the far cascade is asked by NO cascade\'s replay - a wood 2,000 units out is looked at once by the walk, where each of the three cascades looked at it before; a flat inside the near cascade is still asked by all three (mutants: the cascades walking every flat again; no list at all; AUDIT PERF-ON4: the walk shipped off)', () => {
   const run = (prepass) => {
     const { r, frame, batches } = town(41, { sun: SUNS[0], steady: true, prepass });
     const watch = (b) => {
@@ -212,10 +229,62 @@ test('PERF-SUN1: a flat past the far cascade is asked by NO cascade\'s replay - 
     }
     return { far: farW.count(), near: nearW.count(), cascades };
   };
-  const base = run(false), now = run(true);
+  // AUDIT PERF-ON4 (sun lens, 3): the walk is what ships - the arm measured is the default, read before any pin set it
+  assert.equal(SHIPPED.sunPrepass, true, 'SHADOW_TUNING.sunPrepass ships on');
+  const base = run(false), now = run(SHIPPED.sunPrepass);
   assert.equal(now.cascades, base.cascades, 'the same cascades drawn');
   assert.ok(base.cascades >= 3 * 3, `the cascades were drawn (${base.cascades})`);
   assert.ok(base.far >= base.cascades - 3, `the base asked the far wood in every cascade's replay (${base.far} over ${base.cascades} cascades)`);
   assert.equal(now.far, 0, `now no cascade's replay asks it (${now.far})`);
   assert.equal(now.near, base.near, `the flat at the eye's foot is asked by every cascade still (${now.near}, the base ${base.near})`);
+});
+
+test('PERF-SUN3 (AUDIT PERF-ON4, sun lens 1-2): EACH CASCADE\'S LIST IS EXACTLY WHAT ITS OWN SPHERE TEST TAKES - every record (in the records\' order) and every flat of it that recordVisible and batchVisible take on that cascade\'s planes, asked of the whole frame, and nothing else - over random towns crowded past the 64 a list starts with, four suns, steady and cadenced, the camera\'s scale and the travel view\'s (mutants: a nearer list found by the far planes; a solid put on a list untested, far or nearer; a nearer flat put on untested; a grown list losing what it held; a list that never grows)', () => {
+  let lists = 0, entries = 0;
+  for (const seed of [51, 52]) {
+    for (const sun of SUNS) {
+      for (const steady of [true, false]) {
+        for (const focus of [false, true]) {
+          const { r, frame } = town(seed, { sun, steady, prepass: true, focus, crowd: 90 });
+          const sp = r.shadows, walk = sp._sunCandidates.bind(sp);
+          let seen = null;
+          sp._sunCandidates = (vps) => {
+            const out = walk(vps);
+            // the oracle: the whole frame's records asked by each cascade's own planes, as its replay asks them
+            const planes = new Float32Array(24);
+            seen = out.map((L, c) => {
+              spherePlanes(vps[c], planes);
+              const want = [];
+              for (let i = 0; i < sp.count; i++) {
+                const rec = sp.records[i];
+                if (rec.kind !== 2) { if (recordVisible(planes, rec)) want.push([i, null]); continue; }   // 2: a billboard record (shadowPass.js REC_BB)
+                const bb = rec.batches.filter((b) => b && batchVisible(planes, b));
+                if (bb.length) want.push([i, bb]);
+              }
+              const got = Array.from({ length: L.n }, (_, t) => [L.rec[t], sp.records[L.rec[t]].kind === 2 ? L.bb[t].slice() : null]);
+              return { c, want, got };
+            });
+            return out;
+          };
+          for (let f = 0; f < 4; f++) {
+            seen = null;
+            frame();
+            if (f === 0) continue;   // a frame's shadows are cast from the records the frame before drew
+            assert.ok(seen, 'the walk ran');
+            for (const { c, want, got } of seen) {
+              const at = `seed ${seed}, sun [${[...sun]}], ${steady ? 'steady' : 'cadenced'}, ${focus ? 'focus' : 'camera'}, frame ${f}, cascade ${c}`;
+              assert.equal(got.length, want.length, `${at}: as many records`);
+              for (let t = 0; t < want.length; t++) {
+                assert.equal(got[t][0], want[t][0], `${at}: entry ${t} the record the cascade takes`);
+                if (want[t][1]) { assert.equal(got[t][1].length, want[t][1].length, `${at}: entry ${t} its flats`); assert.ok(got[t][1].every((b, u) => b === want[t][1][u]), `${at}: entry ${t} the very flats, in order`); }
+              }
+              lists++; entries += want.length;
+            }
+          }
+          assert.ok(sp._sunCands.every((c) => c.rec.length > 64), 'the lists grew');
+        }
+      }
+    }
+  }
+  assert.ok(lists >= 3 * 16 * 3 && entries > lists * 40, `lists compared (${lists}, ${entries} entries)`);
 });

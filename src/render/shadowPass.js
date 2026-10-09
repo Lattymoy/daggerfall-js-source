@@ -320,7 +320,7 @@ export const SHADOW_SWAY_EVERY = 4;
 export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true, sunPrepass: true };
 // PERF-SHADOW1: `facePrepass` false walks every lantern face and dynamic scan over every record, as before the pre-pass
 // (_casterCandidates) - the pins' oracle and an A/B's off arm (console: window.__DF_SHADOW_TUNING.facePrepass = false).
-// PERF-SUN1: `sunPrepass` false walks every sun cascade over every record, as before its own pre-pass (_sunCandidates) -
+// PERF-SUN3: `sunPrepass` false walks every sun cascade over every record, as before its own pre-pass (_sunCandidates) -
 // the same oracle and off arm for the sun (window.__DF_SHADOW_TUNING.sunPrepass = false).
 // AUDIT 637 B8: declared here, where the console finds it.
 /** STEADY-BALANCE (2026-10-04, Discord: "shadows too dark and too light where they should be normal ... light of candles too
@@ -1047,7 +1047,7 @@ export class ShadowPass {
     this._candOpen = new Int32Array(SHADOW_POINT_CASTERS);
     this._candQuads = new Uint8Array(SHADOW_POINT_CASTERS);
     this._candWalked = false;   // AUDIT 637 B3: this frame's walk made (render clears it; _candFor makes it on the first ask)
-    // PERF-SUN1: each sun cascade's candidates this frame (_sunCandidates) - the lanterns' shape - with the planes they
+    // PERF-SUN3: each sun cascade's candidates this frame (_sunCandidates) - the lanterns' shape - with the planes they
     // were found by, one set a cascade
     this._sunCands = SHADOW_CASCADES.map(() => ({ n: 0, hw: 0, rec: new Int32Array(64), bb: [] }));
     this._sunCandPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));
@@ -1451,7 +1451,7 @@ export class ShadowPass {
     // AUDIT 637 B4: and the lanterns' candidate lists, as far as they were ever filled - a list holds batches, and one
     // kept past the frame kept a destroyed batch's placement grid (or a dungeon's, into the daylight) with it
     for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }
-    for (const c of this._sunCands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }   // PERF-SUN1: the cascades' too
+    for (const c of this._sunCands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }   // PERF-SUN3: the cascades' too
   }
 
 
@@ -1501,7 +1501,7 @@ export class ShadowPass {
       const rl = Math.hypot(ld[2], ld[0]) || 1;
       this._right[0] = ld[2] / rl; this._right[1] = 0; this._right[2] = -ld[0] / rl;
       const last = SHADOW_CASCADES.length - 1;
-      const sunCand = SHADOW_TUNING.sunPrepass !== false ? this._sunCandidates(this._sunVPNew) : null;   // PERF-SUN1
+      const sunCand = SHADOW_TUNING.sunPrepass !== false ? this._sunCandidates(this._sunVPNew) : null;   // PERF-SUN3
       for (let c = 0; c < SHADOW_CASCADES.length; c++) {
         // EL8: the far cascade every other frame (its map keeps its matrix until it is drawn again); a cascade never drawn is drawn now
         if (c === last && this._sunDrawn[c] && !SHADOW_TUNING.steady && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;
@@ -1997,19 +1997,20 @@ export class ShadowPass {
   }
 
   /**
-   * PERF-SUN1 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
+   * PERF-SUN3 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
    * online"): THE SUN'S CASCADES SHARE ONE WALK - PERF-SHADOW1's half for the sun (PERF-NEXT item 1). Every cascade's
    * replay walked every record and every flat of the frame, three walks of the whole list, to draw what stood within
    * 12, 48 and 240 units of the eye: the frame's records are what the view DREW, out to the draw distance.
    *
    * The cascades are one view and one depth (sunCascadeMatrices: the same eye, light and up, an orthographic box each,
    * SHADOW_SUN_DEPTH either side of the eye along the light), nested by radius - so their planes are the same planes
-   * but for the four at the sides, each cascade's standing inside the next one's by the difference of their radii (36
-   * units at the least, 144 at the travel view's scale). ONE walk tests every record and flat against the FAR cascade
-   * by the very test its replay asks (recordVisible, batchVisible, on the planes spherePlanes makes of the same
-   * matrix); each nearer cascade's list is then found from the next one out's, by its own planes. A sphere outside a
-   * cascade is outside every cascade within it - the depth planes are one plane, the sides are tens of units in, and
-   * float32 rounds a plane by thousandths - so each list holds exactly what its cascade's sphere test takes. The
+   * but for the four at the sides, each cascade's standing inside the next one's by the difference of their radii less
+   * each box's own texel snap (about 36 units, 144 at the travel view's scale). ONE walk tests every record and flat
+   * against the FAR cascade by the very test its replay asks (recordVisible, batchVisible, on the planes spherePlanes
+   * makes of the same matrix); each nearer cascade's list is then found from the next one out's, by its own planes. A
+   * sphere outside a cascade is outside every cascade within it - the depth planes are one plane, the sides are tens of
+   * units in, and float32 rounds a plane by far less at the game's coordinates (a ten-thousandth by the floating
+   * origin, under a hundredth 120 km out) - so each list holds exactly what its cascade's sphere test takes. The
    * replay walks its list in the records' own order and still asks every question it asked (the planes again, F5's
    * radius, WEEDS1's height, the placements), so a cascade draws exactly what it drew.
    *

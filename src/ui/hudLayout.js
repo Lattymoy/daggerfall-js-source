@@ -629,7 +629,8 @@ function onKey(e) {
   setHudLocked(!hudLocked());
 }
 
-/** Start once (the enhanced HUD's first frame, the Overworld's first open); afterwards a cheap, throttled sweep. */
+/** Start once (the enhanced HUD's first frame, the Overworld's first open): the first sweep at once, every one after it
+ *  the interval's (SWEEP_MS). The tick sweeps on its own clock only on a page the start set no interval for (PERF-HUD1). */
 export function tickHudLayout(doc = globalThis.document, now = (globalThis.performance?.now?.() ?? Date.now())) {
   if (!doc?.body) return;
   if (!started) {
@@ -663,7 +664,7 @@ export function tickHudLayout(doc = globalThis.document, now = (globalThis.perfo
     return;
   }
   // PERF-HUD1 (PERF-NEXT item 5): ONE CLOCK. This tick swept on its own clock beside the interval's - about eight sweeps
-  // of ~31 querySelectorAll a second where four were meant (the real game's profile: the HUD's sweeps 1.4 ms a second of
+  // of 34 querySelectorAll a second where four were meant (the real game's profile: the HUD's sweeps 1.4 ms a second of
   // this container's CPU). The interval is the clock where it runs; the tick sweeps only where none does (a page
   // without events - a test's stub document - whose start returned above before an interval was set).
   if (!timer && now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }

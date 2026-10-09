@@ -6,9 +6,16 @@
 // online pays, through the frame probe's own three windows (tools/frameProbe.mjs measure): the census of every WebGL
 // call, the CPU profile by sample count, and the sampled heap.
 //
-//   ARENA2_PATH=/path/to/arena2 node tools/onlineFrameProbe.mjs            crowds of 0, 20 and 60
-//   PEERS=0,40 CHAT=1 ...                                                   the crowds; CHAT=1 opens the chat's World tab
-//   TREE / TAG / OUT / FRAMES / W / H / PORT / JSFLAGS                      as tools/frameProbe.mjs
+//   ARENA2_PATH=/path/to/arena2 node tools/onlineFrameProbe.mjs            crowds of 0, 20, 60 and 0 again
+//   PEERS=0,40 CHAT=1 ...                                                   the crowds, in order (a smaller one after a
+//                                                                           larger sends the extra bots away); CHAT=1 opens
+//                                                                           the chat's World tab
+//   TREE / TAG / OUT / FRAMES / W / H / PORT / JSFLAGS                      as tools/frameProbe.mjs - but TREE= swaps the
+//                                                                           PAGE alone: the relay, the account service and
+//                                                                           the bots' client are this tree's (an A/B of a
+//                                                                           client change, never of a relay or wire one)
+//   WAYS_FRAMES=1500                                                        the most frames the settle waits on the Living
+//                                                                           World's way book (below)
 //   SVC_PORT=8870                                                           the account service (the relay on the next port)
 //   SAVE=<file>                                                             the first save's text: read when the file is there,
 //                                                                           written when it is not (a rerun skips the offline boot)
@@ -20,16 +27,22 @@
 // joined in the player's cell and stood round the pose the relay hears from the player (within 4-28 m, seven in ten
 // walking a small ring), settled, and measured. Every wait is frame-synced on the shot-mode `__frame` counter.
 //
+// AUDIT PERF-ON4 F2/F3: THE SETTLE. Before the first crowd the page settles as the frame probe's scenes do (the grass,
+// tools/frameProbe.mjs settle) AND until the Living World's way book stops growing (WAYS_FRAMES at most) - a probe that
+// measured fifty frames after the boot measured the ways' filling, and crowd size with time since the boot. A crowd is
+// measured when the session is open and draws every bot; one that does not is measured, said, and fails the run. The
+// default's last crowd is 0 again: the drift between the first and the last is the run's own noise floor.
+//
 // Three probe-only transforms beside the frame probe's own, the tree untouched: the account base may be the local service
 // (net/accountClient.js serviceBase answers an https base alone); `?shot` survives the online boot (REALM P0.1 refuses
 // it there - systems/onlineLane.js ONLINE_REFUSED_FLAGS - because it installs the probe seams, which are the instrument
 // here: `__frame`, `__shotReady`); and the composer's hook (`__probeSaveText`, with `__onlinePeers`, the peers the
-// session draws). `?tod` is still refused online, so the sky is the shared clock's: an A/B's two arms stand at
+// session draws, its status and the way book's size - `__probeOnline`). `?tod` is still refused online, so the sky is the shared clock's: an A/B's two arms stand at
 // different hours, and an online A/B is read by its counts and its own functions, not by the frame's total.
 //
 // WHAT IT IS NOT. The services, the fleet and SwiftShader share this machine; the milliseconds are relative, an A/B's
 // arms are run one after the other (TREE=), and nothing else runs while they do - tools/frameProbe.mjs's rule. Not in
-// the suite (a toolchain and minutes, tools/loadHarness.mjs's reason); its record is Performance-Next.md's PERF-ON4.
+// the suite (a toolchain and minutes, tools/loadHarness.mjs's reason); its record is Performance-Online.md (PERF-ON4).
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -37,26 +50,35 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { probeTransforms, editsPlugin, waitFrames, measure, measured, summaryLine, CENSUS, SWIFTSHADER_ARGS } from './frameProbe.mjs';
+import { probeTransforms, editsPlugin, waitFrames, settle, measure, measured, summaryLine, CENSUS, SWIFTSHADER_ARGS } from './frameProbe.mjs';
 import { isMain } from './lib/isMain.mjs';
 import { standServices, stopAll, makeBot, setUp, localFetch, localWebSocket, relayTally, botStorage, LOAD_SERVICE } from './loadHarness.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import { SESSION_KEY, SERVICE_KEY } from '../src/net/accountClient.js';
 import { realmIo, realmCreate, createRealmSession } from '../src/systems/realmSaves.js';
-import { worldRoom, CHAT_WORLD_ROOM } from '../src/net/wire.js';
+import { worldRoom, CHAT_WORLD_ROOM, PIXEL_UNITS } from '../src/net/wire.js';
+import { PIXEL_M } from '../src/net/gateLaw.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
 
 const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5241);
 const SVC_PORT = Number(process.env.SVC_PORT || 8870);
 const W = Number(process.env.W || 480), H = Number(process.env.H || 270);
-const PEERS = (process.env.PEERS || '0,20,60').split(',').map(Number);
 const CHAT = process.env.CHAT === '1';
-/** World units a metre (DFU's MeshReader.GlobalScale, 0.025). */
-const UNITS_M = 40;
+const WAYS_FRAMES = Number(process.env.WAYS_FRAMES || 1500);
+/** World units a metre (a map pixel's units over its metres: 40, DFU's MeshReader.GlobalScale's 0.025). */
+const UNITS_M = PIXEL_UNITS / PIXEL_M;
 const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
-
-if (!PEERS.every((n) => Number.isSafeInteger(n) && n >= 0)) throw new Error(`PEERS is a list of crowd sizes, not ${process.env.PEERS}`);
+/** The crowds, in the order measured (read by main, never at import - AUDIT PERF-ON4 F6). */
+export function crowdsOf(env = process.env.PEERS) {
+  const peers = (env || '0,20,60,0').split(',').map(Number);
+  if (!peers.length || !peers.every((n) => Number.isSafeInteger(n) && n >= 0)) throw new Error(`PEERS is a list of crowd sizes, not ${env}`);
+  const seen = new Map();
+  return peers.map((n) => { const k = seen.get(n) ?? 0; seen.set(n, k + 1); return { crowd: n, name: `online${n}${k ? String.fromCharCode(97 + k) : ''}${CHAT ? 'chat' : ''}` }; });
+}
+/** The run's state directory - its signing pair among it until the account service answers - for the signal's cleanup too. */
+let stateDir = null;
+const dropState = () => { if (stateDir) { try { rmSync(stateDir, { recursive: true, force: true }); } catch { /* gone */ } stateDir = null; } };
 
 /** The edits this probe makes beside the frame probe's (FRAME_PROBE_EDITS' shape: each needle asserted, and held to the
  *  tree by test/perfon4_probes.test.js). */
@@ -69,8 +91,11 @@ export const ONLINE_PROBE_EDITS = Object.freeze([
   // the composer's hook, and the peers the session draws
   { file: 'src/scenes/world.js', edits: [['    window.__quickSave = (name) => modes.quickSaveNow(name);', `    window.__quickSave = (name) => modes.quickSaveNow(name);
     window.__probeSaveText = () => { let t = null; modes.quickSaveNow('probe', { quiet: true, sink: (s) => { t = JSON.stringify(s); } }); return t; };
-    window.__onlinePeers = () => (online ? online.drawable().length : null);`]] },
+    window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size, frame: window.__frame | 0 });`]] },
 ]);
+
+/** The page's server's transforms: the frame probe's and this probe's own (exported for test/perfon4_probes.test.js). */
+export const probePlugins = () => [probeTransforms(), editsPlugin('online-probe-transforms', ONLINE_PROBE_EDITS)];
 
 /** The bots' knobs, as tools/loadHarness.mjs makeBot reads them: guests (no registration), seven in ten walking. */
 const BOT_O = Object.freeze({ cells: 1, edge: 0, movers: 0.7, fighters: 0, registered: 0, setup: 8 });
@@ -86,12 +111,16 @@ function botPose(bot, at, t) {
 }
 
 async function main() {
-  const state = mkdtempSync(join(tmpdir(), 'online-frame-probe-'));
+  const CROWDS = crowdsOf();
+  const state = stateDir = mkdtempSync(join(tmpdir(), 'online-frame-probe-'));
   const restore = { warn: console.warn, info: console.info };
   let server = null, browser = null, ticker = null;
   const bots = [];
   const failed = [];
   try {
+    // the page's server first: a port already held says so before the services take minutes to stand (AUDIT PERF-ON4 F11)
+    server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: probePlugins(), server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+    await server.listen();
     const svc = await standServices({ port: SVC_PORT }, state);
     const runTag = Math.random().toString(36).slice(2, 6);
     const io0 = { fetch: localFetch({ port: svc.accountPort, ip: '10.9.9.9' }), base: LOAD_SERVICE };
@@ -103,9 +132,6 @@ async function main() {
     if (!made?.secret) throw new Error(`no guest for the player (${JSON.stringify(made)})`);
     const playerStorage = botStorage({ [SESSION_KEY]: JSON.stringify({ secret: made.secret, id: made.id, name: made.name }), [SERVICE_KEY]: LOAD_SERVICE });
     const pio = realmIo({ fetch: io0.fetch, storage: playerStorage });
-
-    server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: [probeTransforms(), editsPlugin('online-probe-transforms', ONLINE_PROBE_EDITS)], server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
-    await server.listen();
     browser = await chromium.launch({ args: SWIFTSHADER_ARGS });
 
     let saveText = process.env.SAVE && existsSync(process.env.SAVE) ? readFileSync(process.env.SAVE, 'utf8') : null;
@@ -136,7 +162,9 @@ async function main() {
     }, { sk: SESSION_KEY, sv: SERVICE_KEY, sess: JSON.stringify({ secret: made.secret, id: made.id, name: made.name }), base: `http://127.0.0.1:${svc.accountPort}` });
     await ctx.addInitScript(CENSUS);
     const page = await ctx.newPage();
-    const errors = [];
+    // AUDIT PERF-ON4 F8: a page's errors are the window's they fell in - the boot's apart, each crowd's its own
+    const bootErrors = [];
+    let errors = bootErrors;
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => { if (/\[(realm|online|account|chat)\]/.test(m.text())) console.log(`   page ${m.type()}: ${m.text().slice(0, 240)}`); });
     page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|ERR_CERT|WebSocket/.test(m.text())) errors.push(m.text().slice(0, 300)); });
@@ -151,14 +179,25 @@ async function main() {
       console.log(`   booting (${(i + 1) * 30}s): ${JSON.stringify(at)}`);
     }
     const bootS = (Date.now() - t0) / 1000;
-    console.log(`   ready after ${bootS.toFixed(0)}s`);
+    const probe = () => page.evaluate(() => (window.__probeOnline ? window.__probeOnline() : null)).catch((e) => ({ error: e.message }));
+    console.log(`   ready after ${bootS.toFixed(0)}s: ${JSON.stringify(await probe())}`);
+    if (bootErrors.length) { console.log(`   the boot's errors: ${bootErrors.slice(0, 5).join(' | ')}`); failed.push(`the boot (${bootErrors[0]})`); }
     const [px, py] = (await page.evaluate(() => window.__currentPixel())).split(',').map(Number);
     const cell = worldRoom(px, py);
-    await waitFrames(page, 20);
+    // AUDIT PERF-ON4 F3: settled before the first crowd - the grass, then the way book standing still over 30 frames
+    await settle(page);
+    let ways = -1, still = 0, waysFrames = 0;
+    for (; waysFrames < WAYS_FRAMES && still < 3; waysFrames += 10) {
+      await waitFrames(page, 10);
+      const w = (await probe())?.ways ?? -2;
+      if (w === ways) still++; else still = 0;
+      ways = w;
+    }
+    console.log(`   settled: ${JSON.stringify(await probe())}${still < 3 ? ` - the way book still growing after ${WAYS_FRAMES} frames` : ''}`);
     if (CHAT) await page.keyboard.press('Enter').catch(() => {});
 
     // the fleet: set up all at once (guests, realm characters), joined crowd by crowd
-    const most = Math.max(...PEERS);
+    const most = Math.max(...CROWDS.map((c) => c.crowd));
     const fleetCtx = { svc: { accountPort: svc.accountPort }, runTag, account: { byRoute: new Map(), at: [] } };
     for (let n = 0; n < most; n++) bots.push(makeBot(n, BOT_O, fleetCtx));
     console.log(`== setting up ${most} bots`);
@@ -178,6 +217,7 @@ async function main() {
       bot.presence = presence;
       bot.sessions = [presence, hub];
     };
+    const sendAway = (bot) => { for (const s of bot.sessions ?? []) { try { s.leave(); } catch { /* gone */ } } bot.presence = null; bot.sessions = null; };
     console.warn = () => {}; console.info = () => {};   // the sessions' own chatter, not the run's
     ticker = setInterval(() => {
       const t = (Date.now() - tStart) / 1000;
@@ -190,7 +230,8 @@ async function main() {
     ticker.unref?.();
 
     let joined = 0;
-    for (const crowd of [...PEERS].sort((a, b) => a - b)) {
+    for (const { crowd, name } of CROWDS) {
+      while (joined > crowd) sendAway(bots[--joined]);   // a smaller crowd after a larger: the last in leave first
       while (joined < crowd) {
         connect(bots[joined]);
         joined += 1;
@@ -205,37 +246,43 @@ async function main() {
         }
         await sleep(200);   // a ramp: the relay's hello door is per room
       }
-      // settled: every bot welcomed and heard, and the page's frames past the arrivals
+      // AUDIT PERF-ON4 F2: settled when the session is open and draws exactly the crowd (a peer that left is undrawn by
+      // the silence law, PEER_TIMEOUT_MS on) - and a crowd that never got there is measured, said, and fails the run
+      let o = null;
       for (let i = 0; i < 300; i++) {
-        const drawn = await page.evaluate(() => (window.__onlinePeers ? window.__onlinePeers() : null)).catch(() => null);
-        if (drawn == null || drawn >= crowd) break;
+        o = await probe();
+        if (o?.status === 'open' && o.peers === crowd) break;
         await sleep(500);
       }
       await waitFrames(page, 30);
       console.warn = restore.warn; console.info = restore.info;
-      const name = `online${crowd}${CHAT ? 'chat' : ''}`;
+      errors = [];
       // the census wraps the page's WebGL and DOM doors, and measure() takes the wrappers off after its window: put them
       // on again for each crowd (the last crowd's off first, so nothing is wrapped twice)
       await page.evaluate(`window.__censusOff?.(); ${CENSUS}`);
-      const r = await measure(ctx, page, { name, url, bootS, errors, extra: () => page.evaluate(() => ({ peers: window.__onlinePeers?.() ?? null })) });
-      console.log(`== ${name}: ${summaryLine(r)}`);
+      const r = await measure(ctx, page, { name, url, bootS, errors, extra: () => probe() });
+      const ready = o?.status === 'open' && o.peers === crowd;
+      console.log(`== ${name}: ${summaryLine(r)}, peers ${r.extra?.peers ?? '?'} of ${crowd} (${r.extra?.status ?? '?'}), ways ${r.extra?.ways ?? '?'}`);
       if (!measured(r)) failed.push(`${name} (${r.errors[0] ?? 'an empty window'})`);
+      if (!ready) failed.push(`${name} (${o?.peers ?? 'no'} peers of ${crowd} drawn, the session ${o?.status ?? o?.error ?? 'unread'})`);
       console.warn = () => {}; console.info = () => {};
     }
     await ctx.close();
   } finally {
+    // AUDIT PERF-ON4 F9: every step runs whatever the one before it threw
     console.warn = restore.warn; console.info = restore.info;
     if (ticker) clearInterval(ticker);
     for (const b of bots) for (const s of b.sessions ?? []) { try { s.leave(); } catch { /* gone */ } }
-    await browser?.close();
-    await server?.close();
-    stopAll();
-    rmSync(state, { recursive: true, force: true });
+    try { await browser?.close(); } catch { /* gone */ }
+    try { await server?.close(); } catch { /* gone */ }
+    try { stopAll(); } finally { dropState(); }
   }
   if (failed.length) throw new Error(`onlineFrameProbe: no measurement for ${failed.join('; ')}`);
 }
 
 if (isMain(import.meta.url)) {
-  for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { stopAll(); process.exit(130); });   // never an orphaned workerd holding the ports
-  main().then(() => process.exit(0), (e) => { console.error(`\nthe online probe failed: ${e?.stack ?? e}`); stopAll(); process.exit(1); });
+  // never an orphaned workerd holding the ports, and never the run's state left behind - its signing pair among it until
+  // the account service answers (AUDIT PERF-ON4 F1: tools/loadHarness.mjs's onSignal, AUDIT SCALE C11's)
+  for (const [sig, code] of [['SIGINT', 130], ['SIGTERM', 143]]) process.on(sig, () => { try { stopAll(); } finally { dropState(); process.exit(code); } });
+  main().then(() => process.exit(0), (e) => { console.error(`\nthe online probe failed: ${e?.stack ?? e}`); try { stopAll(); } finally { dropState(); process.exit(1); } });
 }

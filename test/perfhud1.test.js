@@ -1,6 +1,6 @@
 // PERF-HUD1 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
 // online"; PERF-NEXT item 5, bible/07-Rendering/Performance-Online.md): THE MOVABLE HUD SWEEPS ON ONE CLOCK. Its sweep
-// (ui/hudLayout.js sweepHudLayout - about thirty querySelectorAll over the page) ran on a 250 ms interval AND from the
+// (ui/hudLayout.js sweepHudLayout - 34 querySelectorAll over the page) ran on a 250 ms interval AND from the
 // HUD's frame tick, each on its own clock: about eight sweeps a second where four were meant. The interval is the clock
 // where it runs; the tick starts it, sweeps once at the start, and sweeps on its own clock only where no interval runs (a
 // page without events). Driven over a fake page and a captured interval - never on a clock.
@@ -35,19 +35,25 @@ function withPage(events, fn) {
   }
 }
 
-/** A second of a 60 fps HUD: a tick a frame, the interval firing at its own beat between them; answers the sweeps. */
+/** A second of a 60 fps HUD: a tick a frame, the interval firing at its own beat between them; answers the times (ms,
+ *  rounded) of the sweeps, each the tick's (t) or the interval's (i) - AUDIT PERF-ON4 (record lens 8): when, not only how
+ *  many. */
 function aSecond(doc, ticks) {
   const one = (() => { const a = doc.asks; sweepHudLayout(doc); const n = doc.asks - a; doc.asks = a; return n; })();
   assert.ok(one > 10, `a sweep asks the page for its pieces (${one} asks)`);
   doc.asks = 0;
+  const at = [];
+  const seen = (who, t) => { while (doc.asks >= one) { doc.asks -= one; at.push(`${who}${Math.round(t)}`); } };
   let fired = 0;
   for (let i = 0; i <= 60; i++) {
     const t = (i * 1000) / 60;
     tickHudLayout(doc, t);
+    seen('t', t);
     const every = ticks[0]?.ms;
-    while (every && (fired + 1) * every <= t) { fired++; ticks[0].f(); }
+    while (every && (fired + 1) * every <= t) { fired++; ticks[0].f(); seen('i', fired * every); }
   }
-  return doc.asks / one;
+  assert.equal(doc.asks, 0, 'every ask a whole sweep');
+  return at;
 }
 
 test('PERF-HUD1: a page with events sweeps on ONE clock - the interval\'s, four times a second at SWEEP_MS, and the tick\'s once at the start: five sweeps in a second at 60 fps, where the tick swept beside the interval on its own clock and made nine (mutants: the tick sweeping on its clock beside the interval; no first sweep at the start)', () => {
@@ -55,14 +61,16 @@ test('PERF-HUD1: a page with events sweeps on ONE clock - the interval\'s, four 
     const sweeps = aSecond(doc, ticks);
     assert.equal(ticks.length, 1, 'one interval');
     assert.equal(ticks[0].ms, 250, 'at SWEEP_MS');
-    assert.equal(sweeps, 1 + 4, `the start's sweep and the interval's four (${sweeps})`);
+    assert.deepEqual(sweeps, ['t0', 'i250', 'i500', 'i750', 'i1000'], 'the start\'s sweep and the interval\'s four');
   });
 });
 
-test('PERF-HUD1: a page without events (no interval can be set) is swept by the tick on its own clock, at the second tick and every SWEEP_MS after - as before (mutant: the tick never sweeping)', () => {
-  withPage(false, (doc, ticks) => {
-    const sweeps = aSecond(doc, ticks);
-    assert.equal(ticks.length, 0, 'no interval');
-    assert.equal(sweeps, 4, `the tick's sweeps at 17, 267, 517 and 767 ms (${sweeps})`);
-  });
+test('PERF-HUD1: a page without events (a test\'s stub: the start sets no interval) is swept by the tick on its own clock, at the second tick and every SWEEP_MS after - as before - and a page started after another starts its clock afresh (mutants: the tick never sweeping; the tests\' reset keeping the last page\'s clock)', () => {
+  for (let run = 0; run < 2; run++) {
+    withPage(false, (doc, ticks) => {
+      const sweeps = aSecond(doc, ticks);
+      assert.equal(ticks.length, 0, 'no interval');
+      assert.deepEqual(sweeps, ['t17', 't267', 't533', 't783'], `run ${run}: the tick's sweeps at 17, 267, 533 and 783 ms - the first frame SWEEP_MS on from the last (516.7 - 266.7 rounds under 250)`);
+    });
+  }
 });

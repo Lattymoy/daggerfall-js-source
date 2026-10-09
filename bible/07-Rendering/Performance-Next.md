@@ -185,9 +185,9 @@ Each with what was measured, the lever, and whether it moves what a player sees 
 container's CPU, or node/Chromium micro-benchmarks over the real modules where named.
 
 **The client's CPU (measured here).**
-1. **The sun's three cascades walk the frame each** - 1.8 ms a frame by day at Knightstale, three walks of every
+1. ~~**The sun's three cascades walk the frame each** - 1.8 ms a frame by day at Knightstale, three walks of every
    record and flat. One shared walk (each flat's sphere once, tested against the three volumes) is the cascades' half
-   of PERF-SHADOW1. Nothing a player sees. SHIPPED 2026-10-09: PERF-SUN1 (`Performance-Online.md`).
+   of PERF-SHADOW1. Nothing a player sees.~~ SHIPPED 2026-10-09: PERF-SUN3 (`Performance-Online.md`).
 2. **Input polls allocate** - `ui/input.js` actionDown walks the binding Maps with destructured entries for every
    action asked, every frame: ~80 KB of garbage a frame (night, Knightstale). An action -> codes index rebuilt on a
    rebind would end it, but codeDown carries DFU's modifier-assignment order (InputManager :1695-1711): its own slice,
@@ -199,12 +199,12 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
    here) and on every `isEnhanced()` (the skin's door). The one in-page writer of the URL is publishBootParams, so a
    cache it invalidates would end the reads - but that overturns PERF-URL's "not a latch" rule, so it is Mac's call (For
    Mac; AUDIT 637 D15e: this line said the arc's).
-5. **The movable HUD sweeps twice as often as it means to** - a 250 ms interval AND the HUD's frame tick, each on its
-   own clock: ~8 sweeps a second of ~31 `querySelectorAll`. Small (~0.1 ms a sweep on a desktop core); one clock.
-   SHIPPED 2026-10-09: PERF-HUD1 (`Performance-Online.md`).
-6. **A per-frame closure as a call target** - `renderer._renderPasses` mints `bindVao` every frame and hands it to the
+5. ~~**The movable HUD sweeps twice as often as it means to** - a 250 ms interval AND the HUD's frame tick, each on its
+   own clock: ~8 sweeps a second of ~31 `querySelectorAll`. Small (~0.1 ms a sweep on a desktop core); one clock.~~
+   SHIPPED 2026-10-09: PERF-HUD1 (`Performance-Online.md`; 34 asks a sweep on that tree).
+6. ~~**A per-frame closure as a call target** - `renderer._renderPasses` mints `bindVao` every frame and hands it to the
    shadow and air passes; V8 deoptimized the shadow replay once on it in node ("wrong call target"). A bound method
-   kept on the renderer is the same call. SHIPPED 2026-10-09: PERF-VAO1 (`Performance-Online.md`).
+   kept on the renderer is the same call.~~ SHIPPED 2026-10-09: PERF-VAO1 (`Performance-Online.md`; no gain measured).
 
 7. **The spell effects' first use, per engine** (IMPACTFX; `01-Overview/Field-Bugs-2026-10-06b.md`) - the light's pass
    is compiled inside the frame of the first landing an engine draws (6.8 ms on SwiftShader), not warmed at idle as the
@@ -255,8 +255,9 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
     `__streamIdle()` there.
 
 **V8.**
-22. **The world host's `frame` over the ceiling** (99,547 bytes of bytecode; 105,613 on 2026-10-09 - `Performance-Online.md`; 61,440 is the line) never leaves the
-    interpreter. Moving its largest blocks into functions of their own brings it under; unmeasured in the real game, and
+22. **The world host's `frame` over the ceiling** (99,547 bytes of bytecode in Chromium; by node 22's V8 compiled eagerly,
+    `--no-lazy --print-bytecode`, 100,806 at this pass's merge and 105,613 on 2026-10-09 - `Performance-Online.md`;
+    61,440 is the line) never leaves the interpreter. Moving its largest blocks into functions of their own brings it under; unmeasured in the real game, and
     it moves every cite into world.js below the first block - its own pull request, if its A/B shows a gain.
 
 ## For Mac

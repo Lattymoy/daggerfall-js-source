@@ -11,19 +11,20 @@
 // when Basic Roads is on, the port's own generated one when it is off). A different network is a different road: the
 // book is cleared when the network it planned on changes, and the host's trips with it (`generation`).
 //
-// A FEW A FRAME. The planner is the host's heaviest pure call (a long way is tens of milliseconds), so a frame asks at
-// most WAYS_PER_FRAME new pairs (`frame()` renews it) and a pair not yet asked answers undefined - the trips wait on it.
-//
-// PERF-WAYS1 (2026-10-09, Mac: "I want to continue working to increase performance across the board, especially for
-// online"; bible/07-Rendering/Performance-Online.md): AND MORE WHILE THE FRAME'S ASKING IS CHEAP. Measured in the real
-// game online (tools/onlineFrameProbe.mjs, Knightstale), the waiting was the dear part, not the asking: while ANY way a
-// town's trips need is unasked, every reader (the town's people, the roads' layer, the deep) plans every trip of every
-// town near again each frame and answers undefined - 14-17 ms of a 37 ms frame on this container, and 3.5 MB of it
-// allocated, frame after frame, for as long as the ways took to fill at two a frame (a region's towns ask hundreds of
-// pairs: minutes at SwiftShader's half a frame a second, seconds at 60). The planner itself is a tenth of a millisecond a
-// pair on the road network (tools/livingPerfProbe.mjs: mean 0.10 ms, the longest 2.27). So the two stay the floor, and
-// past them a frame asks on while its asking has taken under WAYS_MS_PER_FRAME: the same pairs, planned by the same
-// planner on the same network - every way the one it was - known in a tenth of the frames.
+// A FEW A FRAME (LW3), AND MORE WHILE THE ASKING IS CHEAP (PERF-WAYS1, 2026-10-09, Mac: "I want to continue working to
+// increase performance across the board, especially for online"; bible/07-Rendering/Performance-Online.md). A pair not
+// yet asked answers undefined and the trips wait on it; `frame()` renews the asking: WAYS_PER_FRAME new pairs at the
+// least, then more while the frame's asking has taken under WAYS_MS_PER_FRAME, and never past WAYS_MAX_PER_FRAME (a
+// coarse clock can read a pair as nothing). The waiting was the dear part, not the asking: measured in the real game
+// online (tools/onlineFrameProbe.mjs, Knightstale), while any way a town's trips need is unasked every reader (the
+// town's people, the roads' layer, the deep) plans every trip of every town near again each frame and answers undefined
+// - 16.8 ms of a 36.5 ms frame on the probe's container, and 3.5 MB of it allocated - for as long as the ways took at
+// two a frame. On the real map's ground a pair is 0.16 ms on Hazelnut's roads and 0.22 on the generated network on
+// average (p99 0.8 and 1.1; AUDIT PERF-ON4: 20,000 of the 231,819 town pairs within 18 pixels), one pair in a thousand
+// on the roads and three on the generated network take over 2 ms (the dearest 18), and the network's first unroutable
+// pair about 180 (its land pieces folded, once) - so a frame's asking can run past the time by one pair, as LW3's two
+// could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
+// was - known in a tenth of the frames.
 import { planRoute } from '../travelRoute.js';
 
 /** New pairs asked a frame - at the least (LW3). */

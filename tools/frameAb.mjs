@@ -28,6 +28,7 @@ const rows = [
   ['  replay', /^replay src\/render\/shadowPass\.js/],
   ['  _dynamicNear', /^_dynamicNear /],
   ['  _casterCandidates', /^_casterCandidates /],
+  ['  _sunCandidates', /^_sunCandidates /],   // AUDIT PERF-ON4 (sun lens 4): the sun's walk, outside its replays
   ['  _candidateQuads', /^_candidateQuads /],
   ['drawBillboards', /^drawBillboards /],
   ['garbage collector', /^\(garbage collector\)/],

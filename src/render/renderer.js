@@ -1686,8 +1686,9 @@ export class Renderer {
     this._lastProgram = null;
     this._lastVao = null;
     // PERF-VAO1 (PERF-NEXT item 6): ONE bindVao FOR THE LIFE OF THE RENDERER. _renderPasses minted this closure every
-    // frame and handed it to the shadow and air passes - a new call target at their `f.bindVao(vao)` every frame (V8
-    // deoptimized the shadow replay on it: "wrong call target"). The same call, one identity
+    // frame and handed it to the shadow and air passes - a new call target at their `f.bindVao(vao)` every frame (in node,
+    // once, V8 deoptimized the shadow replay on it: "wrong call target" - PERF-NEXT 6; no gain measured). The same call,
+    // one identity
     this._bindVaoFn = (/** @type {WebGLVertexArrayObject|null} */ vao) => this._bindVao(vao);
     // ROAD-E E5: the WORLD PASS's viewport (ViewportChanger.cs:52-67).
     // `_worldViewportPending` is the normalized rect the NEXT
