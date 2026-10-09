@@ -217,7 +217,8 @@ test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a roa
   assert.match(w, /const src = wod \? wod\.mountainPixels\(\) : null;/);
   assert.match(w, /if \(src === _tvRocksFrom && net === _tvRocksRoads && wm === _tvRocksMask && _tvRocks\) return _tvRocks;/, 'kept for the list, the roads and the zone it was read with');
   assert.match(w, /const onRoad = \(i\) => \(\(net\?\.roads\?\.\[i\] \?\? 0\) \| \(net\?\.tracks\?\.\[i\] \?\? 0\)\);\n\s*if \(src\) for \(let i = 0; i < n; i\+\+\) if \(src\[i\] && !onRoad\(i\)\) out\[i\] = 1;/, 'a path\'s pixel is no massif');
-  assert.match(w, /WATER_BYTE\)\)\.setRocks\(tvWodRocks\(\)\);\n\s*return _tvRouteGround;\n {2}\};/);
+  // PIN MOVED (TV-BEYOND): the ground past the Bay handed in before the massifs (routeGround's `beyond`)
+  assert.match(w, /WATER_BYTE, 1000, 500, \(x, y\) => !tvWater\(x, y\)\)\)\.setRocks\(tvWodRocks\(\)\);[^\n]*\n\s*return _tvRouteGround;\n {2}\};/);
   assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/);
 });
 

@@ -137,7 +137,7 @@ import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/g
 // law - every host already reads this same module), so no host seam
 // is needed and no host can drift.
 import { worldMinutes, skyMinutes, trustedWorldMinutes, worldSpanRealWords } from '../systems/worldTick.js';
-import { BUILD_TAG } from '../buildTag.js';
+import { BUILD_TAG, UPDATE } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
 import { drawPixelGround } from './pixelGround.js';
@@ -3412,6 +3412,7 @@ function paneAbout(body) {
   c.append(el('h3', null, 'Daggerfall Online'));   // the public name (BR1, BR4); project-dagger is the repo
   c.append(el('p', 'meta', 'An open-source reimplementation of The Elder Scrolls II: Daggerfall.'));
   c.append(stats([
+    ['Update', UPDATE ?? 'a development build'],   // REL8: the player's update number (scripts/updateNumber.mjs)
     ['Build', BUILD_TAG],
     ['Interface', currentOption(OVERHAUL_PANELS.find((p) => p.id === 'ui'))?.name ?? SKIN_NAMES[uiSkin()]],   // PLUS1; MENU-TOGGLE: the UI Overhaul worn, by its card's name (GrimoireUI is the classic skin with a pack)
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],

@@ -67,6 +67,9 @@ jobs:
         with:
           ref: ${{ needs.main.outputs.sha }}
           path: production
+          # REL8: the whole history - the build stamps the player's update number (scripts/updateNumber.mjs), counted
+          # along main's first parents from the merge that set the line; a depth-1 clone cannot count it
+          fetch-depth: 0
 
       # AUDIT PRE-MERGE 0929 T2: the account service this build's forms
       # ask, and the version it must serve before they may (the deploy

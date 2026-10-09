@@ -164,8 +164,8 @@
   {
     "name": "PT-wire-destination-past-map",
     "file": "src/net/wire.js",
-    "old": "Number.isInteger(tv.x) && tv.x >= 0 && tv.x < MAP_PIXELS_X",
-    "new": "Number.isInteger(tv.x) && tv.x >= 0",
+    "old": "if (tv && worldPixelOk(tv.x) && worldPixelOk(tv.y)",
+    "new": "if (tv && Number.isInteger(tv.x) && worldPixelOk(tv.y)",
     "tests": [
       "test/partytravel.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PT-wire-feet-unbounded",
     "file": "src/net/wire.js",
-    "old": "&& p.wz >= 0 && p.wz < MAP_PIXELS_Y * PIXEL_UNITS && Math.abs(p.wy) <= POSE_Y_BOUND) {",
-    "new": "&& p.wz >= 0) {",
+    "old": "&& Math.abs(p.wz) <= POSE_BOUND && Math.abs(p.wy) <= POSE_Y_BOUND) {",
+    "new": "&& true) {",
     "tests": [
       "test/partytravel.test.js"
     ]

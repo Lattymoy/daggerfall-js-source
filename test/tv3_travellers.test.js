@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import {
   validTravellerMark, validTravellerFrame, parseClient, relaySupportsTravellers, isRegionRoom, travHubGate, travRoomGate,
   TRAV_KEYS, TRAV_MODES, TRAV_SEND_MIN_MS, TRAV_KEEPALIVE_MS, TRAV_STALE_MS, TRAV_HUB_MIN_MS, TRAV_ROOM_HZ_MAX, TRAV_WELCOME_MAX,
-  TRAVELLER_RELAY_MIN, RELAY_VERSION, chatRegionRoom, CHAT_WORLD_ROOM, DROP_STRIKES_MAX,
+  TRAVELLER_RELAY_MIN, RELAY_VERSION, chatRegionRoom, CHAT_WORLD_ROOM, DROP_STRIKES_MAX, WORLD_PIXEL_BOUND,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
@@ -45,7 +45,7 @@ test('TV3 wire: a mark is seven keys and no eighth, each in its range - refused 
   assert.deepEqual(validTravellerMark({ ...MARK, tv: undefined }), { ...MARK, tv: 0 });
   assert.deepEqual(TRAV_MODES, ['foot', 'horse', 'cart', 'ship']);
   for (const [why, p] of [
-    ['an eighth key', { ...MARK, name: 'Lord Nobody' }], ['off the map east', { ...MARK, px: 1000 }], ['off the map south', { ...MARK, py: 500 }],
+    ['an eighth key', { ...MARK, name: 'Lord Nobody' }], ['off the world east', { ...MARK, px: WORLD_PIXEL_BOUND }], ['off the world north', { ...MARK, py: -WORLD_PIXEL_BOUND }],   // PIN MOVED (TV-BEYOND): off the MAP is the land past the Bay
     ['a byte past 255', { ...MARK, fx: 256 }], ['a negative', { ...MARK, fy: -1 }], ['a fraction', { ...MARK, h: 1.5 }],
     ['a fifth way', { ...MARK, m: 4 }], ['a journey that is not 0 or 1', { ...MARK, tv: 2 }], ['a string number', { ...MARK, px: '207' }],
     ['an array', [1, 2, 3]], ['nothing', null],

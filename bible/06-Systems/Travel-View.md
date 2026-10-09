@@ -2022,3 +2022,13 @@ stayed on the GPU for the session. They go through the place's own hold now (`re
 the hold's `uploadRecord`), and are freed with it - proved on the real pipeline and renderer over a counting GL in
 `test/fb1009_travelperf.test.js` (with `tools/mutants/fb1009_travelperf.json`); `owdungeons.test.js`'s draw pin and
 four of its records re-aimed by content, each still dead.
+
+**TV-BEYOND (FIELD BUGS 2026-10-09 #9, maya: "CRASH (2) RangeError: invalid array length" from a click on the Overworld
+past the Alik'r).** The planner's search box was clamped to the map, and TAMRIEL2 streams the land past it: two ends
+past one edge turned the box inside out and its typed arrays threw; one end past it began the route on the box's far
+side. The box's bounds are the map and the two ends now (`systems/travelRoute.js` `planRoute`); `routeGround` asks the
+host's `beyond` for the ground past its table (kept a pixel at a time, `BEYOND_CACHE_MAX`) where it called it all the
+sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte. The host hands it
+`tvWater`'s own answer, which is the ground's where TAMRIEL2 composed the reader and the sea off the map where it did
+not (`scenes/world.js`). The record, and the wire's half: `01-Overview/Field-Bugs-2026-10-09.md` TV-BEYOND;
+`test/fb1009_beyond.test.js`, `tools/mutants/fb1009_beyond.json`.
