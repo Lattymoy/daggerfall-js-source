@@ -79,6 +79,7 @@ export function partyLabel(trip, home = '', beset = '') {
   const bound = ROAD_LABELS[trip.kind]?.(n) ?? (trip.kind === 'merchant' ? 'Caravan' : trip.kind === 'pilgrim' ? (n > 1 ? 'Pilgrims' : 'Pilgrim')
     : trip.kind === 'courier' ? 'Courier' : trip.kind === 'adventurer' ? (n > 1 ? 'Adventurers' : 'Adventurer') : (n > 1 ? 'Travellers' : 'Pedlar'));
   if (beset) return `${bound} beset by ${beset}`;
+  if (trip.robbed) return to ? `${bound} to ${to} (robbed)` : `${bound} (robbed)`;   // LW11: the character's own robbery
   if (trip.wild) return `${bound} in the wild`;   // LW9: no town
   if (trip.market && to) return `${bound} to ${to}'s market`;
   return to ? `${bound} to ${to}` : (home ? `${bound} of ${home}` : bound);
@@ -493,7 +494,7 @@ export function createLivingRoads(deps) {
       if (!members.length) continue;   // LW7: nobody left of it on the road
       const foes = at.fight ? p.trip.enc?.foes ?? [] : [];
       const beset = foes.length ? (deps.foeName?.(foes[0], foes.length) ?? 'foes') : '';   // LW4: what besets it, while it does
-      out.push({ key: `party:${p.trip.id}`, at: deps.sceneOf(/** @type {number} */ (at.x), /** @type {number} */ (at.z)), label: partyLabel(members === p.trip.party ? p.trip : { ...p.trip, party: members }, '', beset),
+      out.push({ key: `party:${p.trip.id}`, at: deps.sceneOf(/** @type {number} */ (at.x), /** @type {number} */ (at.z)), label: partyLabel({ ...p.trip, party: members, robbed: deps.robbed?.(p.trip.id) != null }, '', beset),
         kind: `${p.trip.kind === 'merchant' ? 'wayfarer caravan' : 'wayfarer'}${beset ? ' fight' : ''}`, trip: p.trip });
     }
     return out;

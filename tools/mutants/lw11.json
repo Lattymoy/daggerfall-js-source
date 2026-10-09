@@ -1,0 +1,542 @@
+[
+  {
+    "name": "LW11-counter-pedlar",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "pedlar: BUILDING_TYPES.PawnShop });",
+    "new": "pedlar: BUILDING_TYPES.GeneralStore });",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-counter-carter",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "carter: BUILDING_TYPES.GeneralStore, pedlar",
+    "new": "pedlar",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-quality",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "6 + Math.floor((trip.from?.blocks | 0) / 4)",
+    "new": "6 + Math.floor((trip.from?.blocks | 0) / 5)",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-quality-cap",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "Math.min(20, 6 +",
+    "new": "Math.min(19, 6 +",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-purse",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "export const PURSE_PER_QUALITY = 300;",
+    "new": "export const PURSE_PER_QUALITY = 250;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-purse-floor",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "PURSE_PER_QUALITY * Math.max(1, quality)",
+    "new": "PURSE_PER_QUALITY * quality",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-keeper-leader",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "if (!counterOf(trip) || res?.id !== trip.leader?.id) return false;",
+    "new": "if (!counterOf(trip)) return false;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-keeper-phase",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
+    "new": "if (at.phase === 'home' || at.fight) return false;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-keeper-home",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
+    "new": "if (at.phase !== 'out' || at.fight) return false;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-keeper-standing",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "  return membersAt(trip, t).some((m) => m.id === res.id);",
+    "new": "  return true;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-report-cut",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "(t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
+    "new": "(t <= trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-report-turned",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "(t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1)",
+    "new": "(t < trip.outT1 ? trip.outT1 : trip.backT1)",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-yield-armed",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "  if (!armed.length) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-yield-leader",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);",
+    "new": "return !standing.some((m) => m.cls != null);",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-yield-word",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "const standing = membersAt(trip, t).filter((m) => !down(m));",
+    "new": "const standing = membersAt(trip, t);",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-offer-window",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1",
+    "new": "t >= trip.outT0 && t < trip.outT1",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-offer-in",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1",
+    "new": "t >= trip.outT0 - ESCORT_OFFER_MIN && t <= trip.outT1",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-offer-turned",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "trip?.kind === 'merchant' && !trip.turned && !trip.sea",
+    "new": "trip?.kind === 'merchant' && !trip.sea",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-offer-kind",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "return trip?.kind === 'merchant' &&",
+    "new": "return !!trip &&",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-pay-days",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
+    "new": "const days = Math.max(1, Math.round(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-pay-level",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "export const ESCORT_GOLD_LEVEL = 15;",
+    "new": "export const ESCORT_GOLD_LEVEL = 10;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-pay-fight",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "+ ESCORT_FIGHT * Math.max(0, foes | 0);",
+    "new": ";",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-pay-trim",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "trip.way.len - trip.trim0 - trip.trim1",
+    "new": "trip.way.len",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-keep-m",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "export const ESCORT_KEEP_M = 300;",
+    "new": "export const ESCORT_KEEP_M = 200;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-lost-min",
+    "file": "src/systems/livingWorld/caravanDoor.js",
+    "old": "export const ESCORT_LOST_MIN = 60;",
+    "new": "export const ESCORT_LOST_MIN = 90;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wares-max",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const WARES_MAX = 40;",
+    "new": "export const WARES_MAX = 400;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-reports-max",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const REPORTS_MAX = 40;",
+    "new": "export const REPORTS_MAX = 400;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-road-addonly",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
+    "new": "return { v: 1, people, ...t, road: roadOut };",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-road-read",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "if (Array.isArray(road.escort)) {",
+    "new": "if (Array.isArray(road.escort) && false) {",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-gone-sorted",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "[id, [...w.gone].sort((a, b) => a - b), w.coin, w.robbed]",
+    "new": "[id, [...w.gone], w.coin, w.robbed]",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-reset",
+    "file": "src/scenes/caravanHost.js",
+    "old": "    if (r !== known) { known = r; shelves.clear(); yielded.clear(); lostSince = null; }\n",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-purse",
+    "file": "src/scenes/caravanHost.js",
+    "old": "(rel()?.wares?.(trip.id)?.coin ?? 0) + price > counter.purse",
+    "new": "price > counter.purse",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-coin",
+    "file": "src/scenes/caravanHost.js",
+    "old": "done: (mode, staged, price) => keep(trip, mode === 'Sell' || mode === 'SellMagic' ? price : 0),",
+    "new": "done: (mode, staged, price) => keep(trip, 0),",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-friend",
+    "file": "src/scenes/caravanHost.js",
+    "old": "roadDiscount: friend ? FRIEND_DISCOUNT : 0",
+    "new": "roadDiscount: 0",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-caught-regard",
+    "file": "src/scenes/caravanHost.js",
+    "old": "for (const m of membersAt(trip, deps.clock())) rel()?.note?.(m.id, 'crime', day);",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-witness-dead",
+    "file": "src/scenes/caravanHost.js",
+    "old": "const witnesses = membersAt(trip, t).filter((m) => !deps.deadAt(m, t)).map((m) => m.id);",
+    "new": "const witnesses = membersAt(trip, t).map((m) => m.id);",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-charge-void",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      if (alive) deps.charge(rep.region, rep.crime);",
+    "new": "      deps.charge(rep.region, rep.crime);",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-charge-when",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      if (t < rep.at) continue;",
+    "new": "      if (t < rep.at - 1e9) continue;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-yield-once",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (yielded.has(trip.id) || !counterOf(trip) || r.wares?.(trip.id)?.robbed != null) continue;",
+    "new": "if (!counterOf(trip)) continue;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-robbed-t",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        keep(trip, 0, t);\n",
+    "new": "        keep(trip, 0);\n",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-take-purse",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (left > 0) { s.items.push(deps.goldItem(left)); keep(trip, left); }",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-keeper-only",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      if (keepsCounter(trip, res, t)) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-hire-once",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (!contract && escortOffer(trip, t))",
+    "new": "if (escortOffer(trip, t))",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-travel-online",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (contract?.trip === trip.id && !deps.online() && deps.travelWith",
+    "new": "if (contract?.trip === trip.id && deps.travelWith",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-fights",
+    "file": "src/scenes/caravanHost.js",
+    "old": "const gold = c.pay + ESCORT_FIGHT * (r.escort()?.fights ?? 0);",
+    "new": "const gold = c.pay;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-fights-won",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (trip.enc && r.turns?.().won?.has(trip.enc.id) && !c.fights)",
+    "new": "if (trip.enc && !c.fights)",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-thanks",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        for (const m of membersAt(trip, t)) r.note(m.id, 'helped', deps.day(t));\n",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-lost",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      if (t - lostSince > ESCORT_LOST_MIN) {",
+    "new": "      if (t - lostSince >= ESCORT_LOST_MIN) {",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-near",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      if (!far) { lostSince = null; return; }",
+    "new": "      if (!far) return;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-fell",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (leader && deps.deadAt(leader, t)) { deps.say(CARAVAN_LINES.fell(name)); r.setEscort(null); return; }",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-host-gone-step",
+    "file": "src/scenes/caravanHost.js",
+    "old": "if (gone.length !== (w?.gone?.size ?? 0) || gone.some((i) => !w?.gone?.has(i))) r.setWares",
+    "new": "if (false) r.setWares",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-discount",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f * (1 - b.roadDiscount));",
+    "new": "if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f);",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-refuse",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (m === 'Sell' || m === 'SellMagic') (playerEntity.items ??= []).push(...staged); return false; }",
+    "new": "return false; }",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-guards",
+    "file": "src/scenes/worldModes.js",
+    "old": "        crimeTheft: () => road.caught?.(),\n        spawnCityGuards: () => {},\n",
+    "new": "        crimeTheft: () => road.caught?.(),\n",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-door",
+    "file": "src/scenes/townTalk.js",
+    "old": "if (livingTalk?.offers?.(target.person, () => converse(target))) return;",
+    "new": "livingTalk?.offers?.(target.person, () => converse(target));",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-step",
+    "file": "src/scenes/world.js",
+    "old": "if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; caravanHostOf().step(); }",
+    "new": "if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; }",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-caught",
+    "file": "src/scenes/world.js",
+    "old": "caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }",
+    "new": "caravanHostOf().caught(p.living.res, skyMinutes()); }",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-wire-robbed",
+    "file": "src/scenes/livingRoads.js",
+    "old": "const trip = deps.robbed?.(p.trip.id) != null ? { ...p.trip, robbed: { t: /** @type {number} */ (deps.robbed(p.trip.id)) } } : p.trip;",
+    "new": "const trip = p.trip;",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-robbed-label",
+    "file": "src/scenes/livingRoads.js",
+    "old": "  if (trip.robbed) return to ? `${bound} to ${to} (robbed)` : `${bound} (robbed)`;",
+    "new": "",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW11-robbed-mark",
+    "file": "src/scenes/livingRoads.js",
+    "old": "robbed: deps.robbed?.(p.trip.id) != null }, '', beset),",
+    "new": "robbed: false }, '', beset),",
+    "tests": [
+      "test/lw11_caravan.test.js"
+    ]
+  }
+]

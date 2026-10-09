@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: DESIGNED, nothing built.** Eight slices, LW9 to LW16, each its own pull request in the order of decision 2.
+**Status: LW9, LW10 and LW11 BUILT 2026-10-09; LW12-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -301,117 +301,103 @@ pool's: at most WAGONS_DRAWN wagons of five meshes and their cargo a frame. A re
 
 Pins: `test/lw10_wagons.test.js` (7). Mutants: `tools/mutants/lw10.json` (21).
 
-## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort
+## 4. LW11 - the caravan's door: trade, theft, the hold-up, the escort (BUILT 2026-10-09)
 
-Mac: "caravans ... that can be assaulted, protected or traded with".
+Mac: "caravans ... that can be assaulted, protected or traded with". The law is `src/systems/livingWorld/caravanDoor.js`
+(pure: the trip and the clock in); the host is `src/scenes/caravanHost.js` over the character's road records
+(`relations.js` `wares`, `reports`, `escort`).
 
-### 4.1 The door
+### 4.1 The door (`caravanHost.js offers`, the talk's `livingTalk.offers`)
 
-- **TALKING TO A CARAVAN'S MERCHANT** (or a pedlar, or a carter at their stall) opens a choice before the
-  conversation: Trade, Hire on (only before the caravan sets out, and only for a merchant), Talk, Goodbye.
-  - It is a new `livingTalk` door, `offers(person, talk)`, at the place of the LEGACY `kin` door, which is the
-    precedent: `legacyMeetKin` shows its own acts before `converse`.
-  - Drawn with `talkWindow.js ChoiceWindow` (in the enhanced Plus style).
-  - An enemy refuses first, as today (`refuses`).
-- **THE PLAQUE.** On the enhanced World Tooltips plaque, a living person's namer gains rows (Trade, Talk, Steal, plus
-  Hire on where it applies).
-  - Today the `mobileNpc:<i>` namer returns only a title, and its press (`townTalk.tryActivate`) ignores the plaque.
-  - The press passes `plaqueActionFor` into `tryActivate`, as HCC's verbs do. Where no plaque stands (the classic
-    skin, touch), the ChoiceWindow decides.
-- **THE WAGON'S PLAQUE.** Trade (opens the merchant's door), Steal (4.3), Info.
+- **WHO ASKS FIRST.** A party's LEADER who keeps a counter or offers the road asks what the player wants before the
+  words, in a `talkWindow.js ChoiceWindow`. The door stands in `townTalk.js` after the LEGACY `kin` door, its precedent.
+  An enemy still refuses first (`refuses`).
+- **THE CHOICES**, each only where it applies:
+  - `B - buy` and `S - sell`: the counter, while its keeper is on the road (4.2).
+  - `T - take`: the counter of a party the character robbed (4.4), in place of buy and sell.
+  - `H - hire on (<pay> gold)`: a merchant's road, offered while no contract stands (4.5).
+  - `R - travel on with them`: the escort's own caravan, offline only (4.5).
+  - `A - talk` (the conversation, behind the choice) and `Esc - goodbye`.
+- **NOT BUILT: THE PLAQUE ROWS.** The design gave the enhanced World Tooltips plaque Trade/Talk/Steal rows, and the
+  wagon a plaque of its own. The ChoiceWindow decides on every skin instead (section 11, call 7).
 
-### 4.2 Trade
+### 4.2 The counter
 
-- **THE STOCK** is the merchant's counter: `shopStock.js stockShopShelf({ buildingType, quality }, playerEntity, {
-  rolls })`.
-  - `buildingType` is a General Store for a merchant and a carter, and a Pawn Shop for a pedlar.
-  - `quality` is CARAVAN_QUALITY: the home town's size, 6 + blocks/4, from 1 to 20 (proposed).
-  - `rolls` are seeded by the trip (`lwRng(trip id, 'ware')`), so the stock is the same all trip.
-  - It reads the player's level and sex as every counter does, so each character sees their own fair stock.
-    Buying is the character's own.
-- **WHAT WAS BOUGHT STAYS GONE**, the guild shelves' `dayShelf` law kept per trip. The character's WARES record holds
-  the trip's id, the taken indices and the coin the merchant spent. It is a new add-only record in `LivingWorld`
-  (decision 10), keeping the WARES_MAX (40) newest trips.
-- **SELLING TO THE CARAVAN.** The merchant buys what its counter type buys (`shopBuysItem`), up to its PURSE for the
-  trip: CARAVAN_PURSE, 300 x quality (proposed), the only bound on a merchant's coin. Past it: "I've no more coin
-  this trip."
-- **PRICES** are the counter's own: `calculateCost`, `calculateTradePrice` and the region's adjustment at the party's
-  pixel (`regionPriceAdjustment` with the pixel's region; online `worldRegionPrice`).
-  - A merchant who counts the player a friend takes FRIEND_DISCOUNT (10%) off, by `shopAdjustment`'s seat-discount
-    shape.
-  - Online the sale is capped by MERC-RISE's ONLINE_SALE_SHARE, as at any counter.
-- **THE WINDOW.** `worldModes.js openTradeWindow` is exported through the interior host's API (it is private today).
-  The road's call mounts it through `mountServiceWindow`, so that outdoors it lands on `townTalk.showOverlay` and
-  never on `interiorOverlay` (drawn indoors only).
-  - The building record is the caravan's: `{ buildingType, quality, regionIndex: the pixel's, name: "Ada Lark's
-    caravan" }`.
-  - The steal hooks are the road's own (4.3), never `crimeTheft` and the city watch.
-  - The classic skin waits on `tradeDoorReady` as every counter does.
-- **ONLINE**: the counter is the character's own, as every shop's is. Pieces bought are minted the way a shop mints
-  them, so the item law (INT) judges them as any counter's.
+- **WHO KEEPS ONE** (`counterOf`, `keepsCounter`): a caravan's merchant and a carter a general store's, a pedlar a
+  pawnbroker's (`COUNTERS`); nobody else. Only the trip's leader keeps it, standing, out or home, never in a fight -
+  never at home, never in the town it went to.
+- **ITS QUALITY** is CARAVAN_QUALITY: 6 and one each four blocks of its home town, 1 to 20. **ITS PURSE** for the
+  trip is PURSE_PER_QUALITY (300) a quality (`purseOf`): what it pays out for what the player sells it, all trip. Past
+  it: "I've no more coin this trip." - the sale refused, the goods back in the pack.
+- **ITS STOCK** is the shops' own roll (`shopStock.js stockShopShelf`) at that kind and quality, its rolls seeded by
+  the trip (`lwRng(trip id, 'ware')`): the same all trip. Each ware carries its place in the first roll (`WARE_KEY`).
+- **WHAT LEFT THE SHELF STAYS GONE.** Bought, stolen unseen or taken, the character's WARES record keeps the places
+  gone and the coin paid out, by trip (WARES_MAX, 40, newest kept). The next session's shelf is the roll less those.
+  A load or a new game (another character's records) forgets the session's shelves.
+- **THE WINDOW** is the shops' own (`worldModes.js openTradeWindow`), through the interior host's API (`openRoadTrade`)
+  and `mountServiceWindow`: outdoors on the talk's overlay, never `interiorOverlay`. Its building is the counter's
+  (kind, quality, name - "Ada Lark's caravan" - and the region at the party's place). Prices are the counter's own,
+  with the region's adjustment.
+  - A friend's counter takes FRIEND_DISCOUNT (10%) off what the player buys (`shopAdjustment`'s `roadDiscount`).
+  - The window's own steal, caught, is the road's crime (4.3), never the watch: no city guard is called.
 
-### 4.3 Theft
+### 4.3 The deeds, reported (Living World II decision 5)
 
-The three ways to rob a caravan, each the character's deed:
+- **EACH DEED IS A REPORT**, carried by the party's members still standing:
+  - a hand caught in the counter's goods: Theft, and the `crime` regard of every member;
+  - a hand caught in a traveller's purse (today's pickpocket on the road): Pickpocketing. The road's door clears the
+    town's crime flag the pickpocket sets, because the report is the road's charge;
+  - a traveller struck down (LW7's `livingStrikeRoad`, a stood armed one, a fight the player started): Murder, naming
+    them;
+  - a hold-up (4.4): Theft.
+- **WHERE IT LANDS** (`reportAt`): the minute the party next reaches a town - the one it set out for on the way out,
+  home on the way back or once it has turned. The region is the one the road runs through at the deed.
+- **CHARGED, OR VOID.** Once a second the host reads the reports whose minute has come: charged (`lowerRepForCrime`
+  in the region, and `tallyCrimeGuildRequirements` as every crime is) if a witness lives at that minute, dropped if
+  none does. A load past the minute charges it at the first step. The REPORTS record is add-only (REPORTS_MAX, 40).
+- **NOT BUILT: STEALING FROM THE WAGON** (its cargo as a loot list, each piece on `shopliftAttempt`, NIGHT_STEAL at
+  night) and the Assault report. The counter's own steal stands for the first (the shops' shoplift law). The road has
+  no blow short of a striking down (LW7), so there is no assault to report. The wagon's steal is section 11, call 7.
 
-| Deed | How | If seen | The crime (decision 5) |
-|---|---|---|---|
-| **Pickpocket** a member | Today's arm (`talk.js pickpocket` with the person as target) | The party turns on the player (`crime` regard for each member). Its armed draw if the regard falls to hostile (LW7b). | Pickpocketing (12), reported when a witness reaches a town |
-| **Steal from the wagon** | The wagon's Steal row opens its CARGO as a loot list (`makeInventoryWindow({ loot })`), minted from the trip's seed (`loot.js generateItems` on the merchant's tables, by tier) and kept per character with the WARES record. Each piece taken rolls `theft.js shopliftAttempt` on `calculateShopliftingChance(pickpocket, quality, load)`. At night only the sellsword on watch is awake (one of them, by the night's seed), so the chance gains NIGHT_STEAL (20). | As a caught pickpocket | Theft (13) |
-| **The hold-up** | Every armed member struck down (`livingStrikeRoad`, or LW7b's stood foes, or a fight the player starts) | The merchant and the unarmed YIELD ("Take it! Take what you want!"): they drop their purse and the cargo opens freely. The wagon is a container for REMAINS_MIN, then the party walks home ROBBED (LW12's end, without a band). | Murder (5) for each slain, Assault (4) for a blow, Theft (13) for the cargo - each reported when a survivor reaches a town |
+### 4.4 The hold-up (`yields`)
 
-- **THE REPORT** is a pending record in `LivingWorld`, an add-only REPORTS list: `[crime, region, minute it lands,
-  who it names]`.
-  - At its minute the host charges it: `lowerRepForCrime(playerEntity, region, crime)`.
-  - A load past the minute charges it on the load.
-  - The character killing the last witness first voids it.
-  - Each is also tallied for the guilds (`crimeGuilds.js tallyCrimeGuildRequirements`), as every theft is.
-- **THE ROAD PICKPOCKET'S FLAG.** A caught roadside pickpocket no longer leaves `crimeCommitted` set: the road's door
-  clears it, because the report is the road's charge.
-- **THE NEWS.** The caravan's home town and destination tell it: "Ada Lark's caravan was robbed on the Wayrest road",
-  naming the player when it was seen (`ROBBED_NEWS`). The robbed caravan's Overworld mark reads "Caravan (robbed)".
+- A party that had armed, none of them standing - its own fallen, or one the host knows a hand took - and its leader
+  standing YIELDS, once: "Take it! Take what you want - just let us be!"
+- The robbery is the character's: its minute in the WARES record, the cargo a quarter from then (LW10's
+  `cargoOf`), a Theft reported, the Overworld's mark "Caravan to Wayrest (robbed)" (`partyLabel`).
+- Its counter is then `T - take`: its goods and what is left of its purse lie open in a loot window (the chest's).
 
-### 4.4 The escort (protect)
+### 4.5 The escort (`escortOffer`, `escortPay`)
 
-- **HIRE ON.** Before a merchant's trip sets out, the merchant offers the player the road. It is offered on the
-  evening before at their home's tavern or market spot, or on the morning at the gate.
-  - The pay (proposed): ESCORT_GOLD_DAY, 60 + 15 x the player's level, for each day of the walk; and ESCORT_FIGHT,
-    100 a foe, for each fight won. Both are paid at the destination.
-  - The contract is a record in `LivingWorld`, one at a time: the trip's id, the minute taken, the pay owed, the
-    fights won.
-- **THE TERMS.** The player keeps within ESCORT_KEEP_M (300 m) of the party. Left behind for more than ESCORT_LOST_MIN
-  (60 minutes of the clock), the contract is broken: no pay, and a blunt regard (`insulted`) from the merchant.
-- **THE ROAD.** The trip's trouble is stood live as LW4b stands it. The player is near by contract, so every fight the
-  trip carries is the player's to turn, and the end is what happens. A fight won counts toward ESCORT_FIGHT.
-- **OFFLINE**: "Travel with the caravan" (the escort's choice at each morning's setting out) moves the clock as a
-  journey does, the caravan with it, the player stood beside the merchant. It stops:
-  - at the night's camp or inn (where a rest prompts);
-  - at the trouble's halt, a minute before the fight;
-  - at the destination.
+- **HIRE ON.** A merchant's caravan offers the road from ESCORT_OFFER_MIN (18 hours) before it sets out until it is
+  in; never a caravan turned home, never by sea. One contract at a time (the ESCORT record).
+- **THE PAY**: each day of the walk out (WALK_FROM_H to WALK_TO_H, a part a whole) at ESCORT_GOLD_DAY (60) and
+  ESCORT_GOLD_LEVEL (15) a level of the player's, and ESCORT_FIGHT (100) a foe of the trip's fight, if the player won
+  it (the character's `won` turn). Paid at the town it was bound for, with `helped` regard from every member.
+- **THE TERMS.** Within ESCORT_KEEP_M (300 m) of the party is near. Further than that for more than ESCORT_LOST_MIN
+  (60 minutes of the clock) at a stretch breaks it: no pay, an `insulted` regard from the merchant. The leader fallen
+  ends it ("did not live to pay you"); the caravan turned back ends it unpaid.
+- **OFFLINE, TRAVEL ON WITH THEM** (`R`): the one clock moved as a journey moves it (`advanceOwnMinutes`), the player
+  set down beside the party at its next stop - a minute before its trouble, the night's dusk, or the town. Online
+  there is no such choice (decision 6): the world's clock is everyone's.
+- **NOT BUILT: THE NEWS** of a caravan robbed or escorted whole (`ROBBED_NEWS`, `ESCORT_NEWS`). It is LW16's, where
+  the word travels.
 
-  Online there is no such choice (decision 6).
-- **PAID.** At the destination, gold to the purse (the client's word, as a counter's gold is - inside the item law and
-  the budget), and `helped` regard from every member. A caravan escorted whole is its town's news (`ESCORT_NEWS`).
+### 4.6 The four hosts, the measure, the pins
 
-### 4.5 The four hosts, and the pins
+- `scenes/world.js`: WIRED (the door, the counter's stock and window, the loot, the reports' charge, the road's slay
+  and caught hand, the step once a second wherever the living world runs, the offline travel).
+- `scenes/worldModes.js`: WIRED through its API (`openRoadTrade`; the counter's discount and refusal in its trade
+  window).
+- `scenes/dungeonContext.js`: none (no road). `scenes/exterior.js`: FLAGGED, as LW2 has it.
 
-- `scenes/world.js`: WIRED (the doors, the plaque rows, the trade's mount, the reports' charge, the escort's travel).
-- `scenes/worldModes.js`: WIRED through its API (the trade window exported).
-- `scenes/exterior.js`: FLAGGED.
-- `scenes/dungeonContext.js`: none.
+Measure: the step reads the roads' parties already read (a few a second), the character's reports (40 at most) and one
+contract. Nothing per frame.
 
-Pins:
-- the stock seeded per trip;
-- bought stays gone;
-- the purse;
-- the friend's discount;
-- the window outdoors on the talk overlay, never `interiorOverlay`;
-- each theft's chance and seen;
-- the night watch;
-- the yield;
-- the report charged at its minute, voided by the last witness's death, charged on a load past it;
-- the flag cleared;
-- the escort's pay, broken by distance, and its offline travel stopping at the trouble.
+Moved pins: `lw3_roads` (the caught hand's door), `lw7_deeds` (the road's slay), `lw7b_beyond` and `lwfix4_turns`
+(the stands' slay) - each now through the LW11 wrapper, which calls the old.
+
+Pins: `test/lw11_caravan.test.js` (14). Mutants: `tools/mutants/lw11.json` (60).
 
 ## 5. LW12 - the outlaws
 
@@ -758,7 +744,7 @@ Overall improvement: what happens in one town is heard in the next.
    with its name. That is a change to the relay's law and its version.
 5. LW0's model says "hours inside room to room". It was never built until LW14.
 6. A roadside pickpocket caught still sets `crimeCommitted` (`talk.js pickpocket` sets it when given no target). LW11
-   clears it at the road's door.
+   clears it at the road's door (DONE, LW11: `livingRoadCaught`).
 
 ## 11. Mac's calls (open)
 
@@ -771,3 +757,6 @@ Overall improvement: what happens in one town is heard in the next.
 5. Couriers on horseback (3.1), if the rider art serves.
 6. LW9: an arrest on the road - a patrol that halts a wanted player taking them to the nearest town's court, rather
    than drawing on them (2.4).
+7. LW11: the plaque rows (Trade, Talk, Steal, Hire on on the World Tooltips plaque) and stealing from the wagon (its
+   cargo a loot list on `shopliftAttempt`, NIGHT_STEAL by night) were designed and not built: the ChoiceWindow and
+   the counter's own steal stand in (4.1, 4.3). Build them, or keep the door as it is?

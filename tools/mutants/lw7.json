@@ -889,7 +889,7 @@
   {
     "name": "LW7-host-road-slay",
     "file": "src/scenes/world.js",
-    "old": "    slay: livingSlay,   // LW7: a traveller struck down",
+    "old": "    slay: livingRoadSlay,   // LW7: a traveller struck down",
     "new": "    slay: null,   // LW7: a traveller struck down",
     "tests": [
       "test/lw7_deeds.test.js"

@@ -131,6 +131,9 @@ import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWo
 import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
 import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
+import { createCaravanHost } from './caravanHost.js';   // LW11: the caravan's door
+import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
+import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
 import { createRoadStands, FIGHT_NEAR_M } from './roadStands.js';   // LW7b: the armed beyond the walls - a hostile drawing, a friend at the player's side
 import { createDungeonDivers } from './dungeonDivers.js';   // LW6: the divers met in the dungeon
@@ -3161,10 +3164,68 @@ export async function bootWorld(canvas, renderer, params, status) {
     return { archive: flat.archive, record: flat.record, frameCount: Math.max(1, tex.getFrameCount(flat.record)) };
   };
   // the person's town on the road: the roads' layer answers a refusal and notes a word (townTalk's `livingTalk` door)
-  const _livingRoadsDoor = { refuses: (p) => livingRoads?.refuses(p) ?? null, talked: (p) => livingRoads?.talked(p) ?? null, caught: (p) => livingRoads?.caught(p) ?? null, roadside: true };
+  const _livingRoadsDoor = { refuses: (p) => livingRoads?.refuses(p) ?? null, talked: (p) => livingRoads?.talked(p) ?? null, caught: (p) => livingRoadCaught(p), roadside: true };
   _livingRoadsDoor.toned = (p, tone) => livingRoads?.toned(p, tone) ?? null;   // LW7: a word's tone on the road too
   /** @type {ReturnType<typeof createLivingRoads> | null} */
   let livingRoads = null;
+  // LW11 (bible/06-Systems/Living-World-II.md): THE CARAVAN'S DOOR - the counter, the deeds and their reports, the hold-up
+  // and the escort (scenes/caravanHost.js), on this host's windows, its clock and its character's records
+  const livingTripO = () => ({ mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo });
+  /** A traveller's roster entry by id (`L<map>.t<slot>`, a newcomer's with its `~<gen>`). */
+  const livingTravellerOf = (id) => {
+    const m = /^L(\d+)\.t\d+/.exec(String(id ?? ''));
+    const town = m ? livingTownOfId(Number(m[1]) >>> 0) : null;
+    return town ? livingTripWorld.rosterOf(town).find((r) => r.id === id) ?? null : null;
+  };
+  /** The trip a traveller leads at minute `t` (on the road, or about to set out): their town's trips of the day. */
+  const livingTripLedBy = (res, t) => {
+    const town = res ? livingTownOfId(res.town) : null;
+    return town ? (tripsOfTown(town, t, livingTripWorld, livingTripO()) ?? []).find((tr) => tr.leader?.id === res.id && t < tr.backT1) ?? null : null;
+  };
+  let _caravanHost = null, _caravanT = 0;
+  const caravanHostOf = () => (_caravanHost ??= createCaravanHost({
+    relations: () => livingRelations, clock: () => skyMinutes(), day: (t) => Math.floor((t - 240) / 1440), roads: () => livingRoads,
+    findTrip: livingTripLedBy,
+    tripById: (id, t) => { const lead = livingTravellerOf(String(id).replace(/:-?\d+$/, '')); const town = lead ? livingTownOfId(lead.town) : null; return town ? (tripsOfTown(town, t, livingTripWorld, livingTripO()) ?? []).find((tr) => tr.id === id) ?? null : null; },
+    resOf: livingTravellerOf,
+    stock: (counter, trip) => stockShopShelf({ buildingType: counter.buildingType, quality: counter.quality }, playerEntity, { rolls: lwRng(textSeed(trip.id), 0x77617265) }),   // 'ware': the same roll all trip
+    openTrade: (o) => !!modes?.openRoadTrade?.(o, o.mode ?? 'Buy'),
+    openLoot: ({ items }) => {
+      if (!inventoryDoorReady()) { townTalk.say('Inventory is still loading. Please try again.'); return false; }
+      const w = makeInventoryWindow({ loot: { items: () => items, containerImage: () => CONTAINER_IMAGES.Chest, playerOwned: false } });
+      if (!w) return false;
+      townTalk.showOverlay(w);
+      return true;
+    },
+    choose: (lines, options) => townTalk.showOverlay(new ChoiceWindow({ lines, options })),
+    say: (text) => townTalk.say(text),
+    regionAt: (x, z) => maps.getRegionIndexAt(Math.floor(x / 32768), 499 - Math.floor(z / 32768)),
+    charge: (region, crime) => { lowerRepForCrime(playerEntity, region, crime); tallyCrimeGuildRequirements(playerEntity, false, 1); },
+    deadAt: livingDeadAt,
+    here: () => (playerSpawned ? state.worldCoords(walkMode ? player.pos : cam.pos) : null),
+    level: () => playerEntity.level ?? 1,
+    pay: (gold) => addGoldPieces(playerEntity, gold),
+    goldItem: (n) => goldStack(n),
+    online: () => params.has('online'),
+    // offline the escort travels on with the caravan to its next stop: the one clock moved as a journey moves it, the
+    // player set down beside the party (online the world's clock is everyone's - LIVED1)
+    travelWith: (trip, until) => {
+      if (params.has('online')) return false;
+      advanceOwnMinutes(Math.max(0, until - skyMinutes()));
+      const at = livingPartyAt(trip, until);
+      if (at.x != null) ohTeleportToWorld(/** @type {number} */ (at.x) + 120, /** @type {number} */ (at.z));
+      return true;
+    },
+  }));
+  /** LW7/LW11: a traveller struck down - the hand's turn, and the road's report of it. */
+  const livingRoadSlay = (res, t, seen) => { livingSlay(res, t, seen); caravanHostOf().slain(res, t); };
+  /** LW3/LW11: a hand caught in a traveller's purse - their regard, and the road's report; no watch, so no town's crime
+   *  (talk.js pickpocket sets one whenever it is handed no target: the road's door clears it) */
+  const livingRoadCaught = (p) => {
+    const id = livingRoads?.caught(p) ?? null;
+    if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }
+    return id;
+  };
   const livingRoadsOf = () => (livingRoads ??= createLivingRoads({
     world: livingTripWorld, mpm: PERSON_MOVE_SPEED / livingBaseRate(), clock: skyMinutes, baseRate: livingBaseRate,
     sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
@@ -3173,7 +3234,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     teams: createRoadTeams({ renderer, presentation: () => hcc.presentation, collider: () => collider }),   // LW10: the wagon trains, with Horse Cart and Cargo's own pieces
     memo: _livingTripMemo, relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
     foeName: livingFoeWord,   // LW4: what besets a party, on its mark
-    slay: livingSlay,   // LW7: a traveller struck down - the hand's turn
+    slay: livingRoadSlay,   // LW7: a traveller struck down - the hand's turn; LW11: and the road's report of it
+    robbed: (tripId) => caravanHostOf().robbed(tripId),   // LW11: a caravan this character robbed carries a quarter
     // LW4b: THE FIGHT STOOD - a beset party near the player on foot, its foes the encounter pool's own and its armed the
     // player's allies, when this player stands it (the camps' election, by the players' own feet)
     fights: createRoadFights({
@@ -3201,7 +3263,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ready: () => !!walkMode && !!playerSpawned && !_loading && !modes?.transitioning && _mode() === 'exterior' && !playerAfloat(),
       sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
       relations: () => livingRelations,
-      slay: livingSlay, died: livingDied,
+      slay: livingRoadSlay, died: livingDied,
       deadAt: livingDeadAt,   // AUDIT-B4: one a hand took is never stood again (the roads' parties are read once a second)
       fighting: () => hccThreats().some((q) => Math.hypot(q[0] - player.pos[0], q[2] - player.pos[2]) <= FIGHT_NEAR_M),
       say: (text) => townTalk.say(text),
@@ -6909,7 +6971,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LW2: the living world's two doors - an enemy's refusal, and a word noted in the resident's regard (the body's
     // own town answers both: systems/livingWorld/livingTown.js)
     livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
-      kin: (person, talk) => legacyMeetKin(person, talk) },   // LEGACY-HOME: one of the player's line, met
+      kin: (person, talk) => legacyMeetKin(person, talk),   // LEGACY-HOME: one of the player's line, met
+      offers: (person, talk) => (livingWorldOn() ? caravanHostOf().offers(person, talk) : false) },   // LW11: a caravan's merchant, a pedlar, a carter asks first
     legacyTopics: (person) => legacyTopicRows(person),   // LEGACY5: courting, the proposal, the wedding, the family
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
@@ -32058,9 +32121,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
-    if (livingRoads && livingWorldOn() && _mode() === 'exterior') livingRoads.drawTeams(renderer);   // LW10: the living world's wagons, beside the cart's own
     if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame
     else if (_tvDngModel.size) dropTvDungeonModels();   // TV-BURST: the view down, its models let go (kept warm on their shelf)
+    if (livingRoads && livingWorldOn() && _mode() === 'exterior') livingRoads.drawTeams(renderer);   // LW10: the living world's wagons, in the cart's own pass
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
@@ -32515,6 +32578,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
     } else if (livingRoads) livingRoads.clear();
+    if (livingWorldOn() && (_caravanT -= dt) <= 0) { _caravanT = 1; caravanHostOf().step(); }   // LW11: the hold-ups, the reports carried in, the escort - anywhere (a report lands, an escort ends, indoors too)
     if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon

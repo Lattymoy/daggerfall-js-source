@@ -497,8 +497,8 @@
   {
     "name": "LW7b-host-died-unwired",
     "file": "src/scenes/world.js",
-    "old": "      slay: livingSlay, died: livingDied,",
-    "new": "      slay: livingSlay, died: () => {},",
+    "old": "      slay: livingRoadSlay, died: livingDied,",
+    "new": "      slay: livingRoadSlay, died: () => {},",
     "tests": [
       "test/lw7b_beyond.test.js"
     ]

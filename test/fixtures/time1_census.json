@@ -1010,6 +1010,24 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "relations: () => livingRelations, clock: () => skyMinutes(), day: (t) => Math.floor((t - 240) / 1440), roads: () => livingRoads,",
+   "clock": "sky",
+   "why": "LW11: the caravan's door - its counter's keeper, a report's landing minute and the escort on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "advanceOwnMinutes(Math.max(0, until - skyMinutes()));",
+   "clock": "sky",
+   "why": "LW11: offline, the escort travels on with the caravan to its next stop - the one clock moved as a journey moves it"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "if (p?.living?.res) { caravanHostOf().caught(p.living.res, skyMinutes()); setCrimeCommitted(playerEntity, CRIMES.None); }",
+   "clock": "sky",
+   "why": "LW11: a hand caught on the road - its report carried on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"

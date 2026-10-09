@@ -454,7 +454,9 @@ test('LW3 the streaming host: the trips\' world is the game\'s own populated row
   assert.match(w, /for \(const m of livingRoads\.marks\(\)\) if \(markShown\(\{ kind: m\.kind \}\)\) marks\.push\(/);
   const tt = rd('src/scenes/townTalk.js');
   assert.match(tt, /if \(!r\.success\) \{ livingTalk\?\.caught\?\.\(target\.person\); if \(!target\.person\?\.living\?\.town\?\.roadside\) onCrime\?\.\(\); \}/);
-  assert.match(w, /caught: \(p\) => livingRoads\?\.caught\(p\) \?\? null, roadside: true \};/);
+  // PIN MOVED (LW11): the road's caught hand goes through the caravan's door too (its report), the roads' layer first
+  assert.match(w, /caught: \(p\) => livingRoadCaught\(p\), roadside: true \};/);
+  assert.match(w, /const livingRoadCaught = \(p\) => \{\n\s*const id = livingRoads\?\.caught\(p\) \?\? null;/);
   assert.equal(travellerCounts({ mapId: 1, blocks: 1 }).pedlar, 1, 'every town its pedlar');
   assert.deepEqual({ ...TRIP_PACE }, { merchant: 0.85, mercenary: 0.85, adventurer: 1.05, courier: 1.3, pilgrim: 0.9, sailor: 1, pedlar: 0.95 });
 });
