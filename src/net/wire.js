@@ -3545,29 +3545,33 @@ export function validWedData(d) {
 // THE OPEN ZONE'S FRAMES. One frame type, `{t:'wild', data}`, from a hello'd socket in a PLACE room (a cell or a world
 // room - streamsFoes), in two families:
 //
-// DIRECTED - the duel's routing (`to` names one socket in the room; the relay stamps the sender's id and its verified
-// account `sub` on it and reads nothing else). The zone has no handshake: two players in it may strike each other, and
-// THE DEFENDER RESOLVES EVERY BLOW, as a duel's defender does (net/wildFight.js):
-//   strike / spell / result   the duel's three blow frames, field for field (validDuelData projects them)
-//   worn                      the fallen to their killer: the worn pieces their body offers (`s` the death's id)
-//   pick                      the killer's choice of ONE of them, by its place in that list
-//   gave                      the fallen's answer: the piece itself (`it`), or nothing - a second pick, a gone list
-// The fallen GIVE: the killer's game holds nothing until the piece arrives, so a pick can fail toward loss, never
-// toward a copy (TRADE1's duplication law).
+// DIRECTED - `to` names one socket in the room (the relay stamps the sender's id and its verified account `sub`):
+//   strike / spell   the duel's blow frames, field for field (validDuelData projects them) - INT9 (bible/06-Systems/
+//                    Integrity-Arc.md lane 2): THE RELAY REFEREES THEM (net/wildRef.js) and routes them to nobody; WILD1
+//                    had the defender resolve every blow on its own machine, and a defender that never took one never fell
+//   worn             the fallen to their killer: the worn pieces their body offers (`s` the death's id) - shown, never
+//                    believed: the account service reads the fallen's own record for the piece the killer picks
+// INT9's `result` (the defender's answer) and `gave` (the fallen's gift) retired with the defender's word.
 //
-// ROOM - kept by the relay, the room's REMAINS: what a body in the zone dropped (its bag and its cart, never its worn
-// gear nor its kept consumables), lying WILD_REMAINS_MS where it fell for anyone to take, its owner first among them
-// (net/wildLaw.js keeps the relay's ledger):
-//   fall   the fallen's deposit, WILD_ITEMS_MAX records a frame, `last` on the final one - the remains' id is the
-//          fallen's own mint (`r`), its place a point in the room's own frame
+// ROOM - kept by the relay:
+//   zone   my word that I stand in the zone (`z` 1) or have left it (`z` 0) - the referee's fights are between two that
+//          both said so (INT9: the relay cannot see the map)
+//   pick   the killer's choice of ONE worn piece of a fall of its own (`r` the remains' id, `w` its place in the offer) -
+//          the relay waits on it before it signs the fall (net/wildReceipt.js `f1`)
+//   fall   a deposit, WILD_ITEMS_MAX records a frame, `last` on the final one - INT9: every chunk carries the account
+//          service's `remains` order (`o` - net/identityToken.js): its id is the order's, its records digest to the
+//          order's, or the room keeps none of it (net/wildLaw.js)
 //   take   one record off a remains, or `n` of its stack - THE RELAY DECIDES: the first take of a record wins it, and
 //          the record itself comes back to its taker alone (`got`); everyone in the room hears what left (`rm`)
 // Items are checked for SHAPE only (plain objects, bounded) - the relay cannot import the game's item law; every
 // receiver projects each through systems/loot.js validLootList before a field is read (the trade's own law).
-/** Every kind a wild frame may carry. */
-export const WILD_KINDS = Object.freeze(['strike', 'spell', 'result', 'worn', 'pick', 'gave', 'fall', 'take']);
-/** The kinds routed to one socket (`to`); the rest are the room's. */
-export const WILD_DIRECTED = Object.freeze(['strike', 'spell', 'result', 'worn', 'pick', 'gave']);
+// The referee's own word is the `wref` frame (validWildRefOut, below), never a wild frame: the relay routes none a
+// client sends.
+/** Every kind a wild frame may carry. INT9: `result` and `gave` retired; `zone` its own word. */
+export const WILD_KINDS = Object.freeze(['strike', 'spell', 'worn', 'pick', 'zone', 'fall', 'take']);
+/** The kinds that name one socket (`to`); the rest are the room's. INT9: a strike and a spell name their target and are
+ *  the referee's, routed to nobody; `worn` alone is routed. */
+export const WILD_DIRECTED = Object.freeze(['strike', 'spell', 'worn']);
 /** What the room says back: a remains' records (`ri`, a chunk), a record taken (`rm`), a take won (`got`) or lost
  *  (`no`), a remains gone (`gone`). */
 export const WILD_OUT_KINDS = Object.freeze(['ri', 'rm', 'got', 'no', 'gone']);
@@ -3685,33 +3689,32 @@ export function validWildData(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
   if (typeof d.k !== 'string' || !WILD_KINDS.includes(d.k)) return null;
   let out = null;
-  if (d.k === 'strike' || d.k === 'spell' || d.k === 'result') {
+  if (d.k === 'strike' || d.k === 'spell') {
     // the duel's blow, field for field - projected by its own law under a sid no duel mints, the sid then dropped
     const b = validDuelData({ ...d, s: WILD_BLOW_SID });
     if (!b) return null;
     out = { ...b };
     delete out.s;
-  } else if (WILD_DIRECTED.includes(d.k)) {
+  } else if (d.k === 'worn') {
     const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
     const s = typeof d.s === 'string' && WILD_ID_RE.test(d.s) ? d.s : null;
-    if (!to || !s) return null;
-    out = { to, k: d.k, s };
-    if (d.k === 'worn') { const it = wildItems(d.items, 0); if (!it) return null; out.items = it; }
-    else {
-      if (!intIn(d.i, 0, WILD_ITEMS_MAX - 1)) return null;
-      out.i = d.i;
-      if (d.k === 'gave' && d.it !== undefined) {
-        if (!d.it || typeof d.it !== 'object' || Array.isArray(d.it)) return null;
-        out.it = d.it;
-      }
-    }
+    const it = wildItems(d.items, 0);
+    if (!to || !s || !it) return null;
+    out = { to, k: 'worn', s, items: it };
+  } else if (d.k === 'zone') {
+    if (d.z !== 0 && d.z !== 1) return null;
+    out = { k: 'zone', z: d.z };   // INT9: my word on the zone
   } else {
     const r = typeof d.r === 'string' && WILD_ID_RE.test(d.r) ? d.r : null;
     if (!r) return null;
-    if (d.k === 'fall') {
+    if (d.k === 'pick') {
+      if (!intIn(d.w, -1, WILD_ITEMS_MAX - 1)) return null;
+      out = { k: 'pick', r, w: d.w };   // INT9: the killer's choice, the relay's to sign
+    } else if (d.k === 'fall') {
       const p = wildPoint(d.p), items = wildItems(d.items);
       if (!p || !items || (d.last !== 0 && d.last !== 1)) return null;
-      out = { k: 'fall', r, p, items, last: d.last };
+      if (typeof d.o !== 'string' || !d.o.length || d.o.length > WILD_ORDER_MAX) return null;   // INT9: the service's order, on every chunk
+      out = { k: 'fall', r, p, items, last: d.last, o: d.o };
     } else {
       if (!intIn(d.i, 0, WILD_REMAINS_ITEMS_MAX - 1) || !intIn(d.n, 1, WILD_STACK_MAX)) return null;
       out = { k: 'take', r, i: d.i, n: d.n };
@@ -3719,6 +3722,32 @@ export function validWildData(d) {
   }
   if (JSON.stringify(out).length > WILD_DATA_MAX) return null;
   return out;
+}
+/** INT9: the longest `remains` order a deposit carries (net/identityToken.js TOKEN_MAX_CHARS, pinned equal). */
+export const WILD_ORDER_MAX = 1024;
+/** INT9: the relay that first REFEREES the zone (net/wildRef.js) - a client meeting an older one fights nobody there. */
+export const WILD_REF_RELAY_MIN = 183;
+export const relaySupportsWildRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_REF_RELAY_MIN; };
+/** INT9: the zone referee's word kinds (`{t:'wref', k, ...}`, the relay's alone). */
+export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc']);
+/**
+ * INT9: THE ZONE REFEREE'S WORD, PROJECTED - the relay's `{t:'wref', ...}`, or null:
+ *   hp    { by, to, d, r, h }   a blow or a cast landed: who on whom, what it dealt, its kind, both fighters' vitality
+ *   fell  { id, by, r }         a fighter fell - `by` its killer, `r` the remains' id the fall will be signed under
+ *   rc    { r, rc }             the fall signed (net/wildReceipt.js `f1`): to its fallen and its killer
+ */
+export function validWildRefOut(m) {
+  if (!m || typeof m !== 'object' || m.t !== 'wref' || typeof m.k !== 'string' || !WILD_REF_KINDS.includes(m.k)) return null;
+  const idOk = (x) => typeof x === 'string' && ID_RE.test(x);
+  if (m.k === 'hp') {
+    const h = duelRefVitals(m.h);
+    if (!idOk(m.by) || !idOk(m.to) || !intIn(m.d, 0, CARD_VITAL_MAX) || !intIn(m.r, 0, 2) || !h) return null;
+    return { k: 'hp', by: m.by, to: m.to, d: m.d, r: m.r, h };
+  }
+  const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
+  if (!r) return null;
+  if (m.k === 'fell') return idOk(m.id) && idOk(m.by) ? { k: 'fell', id: m.id, by: m.by, r } : null;
+  return typeof m.rc === 'string' && m.rc.length && m.rc.length <= DUEL_REF_RECEIPT_MAX ? { k: 'rc', r, rc: m.rc } : null;
 }
 /** Is this projected frame one the relay routes to a socket (true), or the room's own (false)? */
 export const wildDirected = (d) => !!d && WILD_DIRECTED.includes(d.k);
@@ -3743,7 +3772,9 @@ export function validWildOut(m) {
       for (const it of m.items) if (it !== null && (!it || typeof it !== 'object' || Array.isArray(it))) return null;
       const os = typeof m.os === 'string' && m.os.length <= 64 ? m.os : null;
       const oid = typeof m.oid === 'string' && ID_RE.test(m.oid) ? m.oid : null;
-      return { k: 'ri', r, p, nm: typeof m.nm === 'string' ? sanitizeName(m.nm) : '', os, oid, ttl: m.ttl, off: m.off, items: m.items, end: m.end };
+      // INT9: and the killer whose worn piece is one of its records (`wk`, `wi`) - theirs alone to take
+      const killer = typeof m.wk === 'string' && m.wk.length <= 64 && intIn(m.wi, 0, WILD_REMAINS_ITEMS_MAX - 1) ? { wk: m.wk, wi: m.wi } : {};
+      return { k: 'ri', r, p, nm: typeof m.nm === 'string' ? sanitizeName(m.nm) : '', os, oid, ttl: m.ttl, off: m.off, items: m.items, end: m.end, ...killer };
     }
     case 'rm': return intIn(m.i, 0, WILD_REMAINS_ITEMS_MAX - 1) && intIn(m.n, 1, WILD_STACK_MAX) ? { k: 'rm', r, i: m.i, n: m.n } : null;
     case 'got': return intIn(m.i, 0, WILD_REMAINS_ITEMS_MAX - 1) && m.it && typeof m.it === 'object' && !Array.isArray(m.it) ? { k: 'got', r, i: m.i, it: m.it } : null;

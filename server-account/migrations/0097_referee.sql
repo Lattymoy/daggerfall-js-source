@@ -1,6 +1,6 @@
 -- INT7-INT10 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md; Mac: "I want to do everything
 -- and do it properly"): PVP REFEREED EVERYWHERE - the arms the judge signs (INT7), a duel's result the relay signs
--- (INT8).
+-- (INT8), a death in the open zone's drop taken off the record (INT9).
 --
 -- INT7, THE ARMS: what the most a realm character can strike with is, off its judged pack, for the identity token to
 -- carry (net/identityToken.js `wa`) and every referee to clip a blow between players to.
@@ -22,3 +22,25 @@ ALTER TABLE realm_characters ADD COLUMN arms_bow INTEGER;
 --   rk  the receipt's bout id (twelve hex, the relay's); NULL for every row before INT8 (DUEL1's loser's reports)
 ALTER TABLE duel_results ADD COLUMN rk TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_duel_rk ON duel_results (rk) WHERE rk IS NOT NULL;
+
+-- INT9, A DEATH IN THE OPEN ZONE (server-account/src/wild.js wildFall): its drop taken off the fallen's record once, by its
+-- remains' id - the relay's (a fall it signed, net/wildReceipt.js `f1`) or the service's (a death to a foe). A second
+-- asking is answered these records with a fresh order. Swept WILD_FALLS_KEEP_S after `at` (server-account/src/cron.js).
+--   r        the remains' id (twelve hex: the relay's, or a digest of the character and its tab's nonce - a foe's)
+--   char_id  the fallen's realm character        player  its account        killer  the killer's account (NULL: a foe)
+--   at       when the drop was taken, epoch s     items   the records taken (JSON, the wire's - net/wildLaw.js)
+--   kept     the ledger keys the record kept back (JSON - a copy, another's piece, a claim waiting)
+--   burnt    1 where the judge held the record (lane 1's freeze): the drop taken, none of it given to the room
+--   wi       0 where the first record is the killer's worn piece, else -1
+CREATE TABLE IF NOT EXISTS wild_falls (
+  r TEXT PRIMARY KEY,
+  char_id TEXT NOT NULL,
+  player TEXT NOT NULL,
+  killer TEXT,
+  at INTEGER NOT NULL,
+  items TEXT NOT NULL,
+  kept TEXT NOT NULL DEFAULT '[]',
+  burnt INTEGER NOT NULL DEFAULT 0,
+  wi INTEGER NOT NULL DEFAULT -1
+);
+CREATE INDEX IF NOT EXISTS idx_wild_falls_at ON wild_falls (at);

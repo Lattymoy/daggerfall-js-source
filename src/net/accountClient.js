@@ -274,6 +274,11 @@ export const REFUSALS = Object.freeze({
   'no-gate-key': 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.',
   receipt: 'That gate\'s receipt was not signed by the gate, or it has run out.',
   'not-yours': 'That gate\'s receipt names another account.',
+  // INT8: DUEL1's loser's own report, retired - a duel's result is the relay's receipt now
+  retired: 'That is no longer how a duel is recorded - the duel\'s referee records it.',
+  // INT9: a death in the open zone's drop (server-account/src/wild.js) - the fallen's own tab has the first half minute
+  grace: 'The fallen still has a moment to settle their own fall. It is tried again shortly.',
+  nonce: 'That fall could not be read. Try again.',
   // MARKS1: Marks, the server's currency (server-account/src/marks.js)
   'marks-need-account': 'Silver is kept by registered accounts. Add a username to hold it.',
   'marks-closed': 'The counting-houses are not striking silver yet.',
@@ -1123,6 +1128,16 @@ export function accountDuels({ fetch, storage }) {
     claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
   };
+}
+
+/** INT9: A DEATH IN THE OPEN ZONE'S DROP, taken off the realm record by the service (server-account/src/wild.js) - `body`
+ *  `{ receipt, realm }` (the fallen's, its record's `at`), `{ receipt }` (the killer's, after the grace) or `{ n, realm }`
+ *  (a death to a foe: the tab's nonce). Answers `{ r, order, items, kept, burnt?, realm? }`. */
+export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
+/** INT9: the zone's one call, bound to this device's stored session (the duels' way). */
+export function accountWild({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return { fall: async (body) => { const i = io(); return i ? wildFallAsk(i, body) : { ok: false, error: 'no-session' }; } };
 }
 
 /** WB5b: the kill receipt the relay signed for this account, carried to

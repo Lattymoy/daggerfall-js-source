@@ -452,6 +452,7 @@ export const WILD_TEXT = Object.freeze({
   taken: 'Someone took that first.',
   gone: 'The body gives nothing up.',
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
+  chosen: (name, item) => `You choose ${item} from ${name || 'the body'} - it comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it

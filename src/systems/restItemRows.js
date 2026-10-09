@@ -9,6 +9,9 @@ import { ICON_TWIGS } from '../net/professionLaw.js';
 
 /** The block (Rest-Arc.md section 6: 1700-1709, the last three spare). */
 export const REST_ITEM = Object.freeze({ Bedroll: 1700, EmberJar: 1701, Firewood: 1702, Tonic: 1703, Candle: 1704, Salts: 1705, Draught: 1706 });
+/** A rest item (REST6): one of the seven templates - INT9: its home here, so the account Worker reads it (a death in the
+ *  zone's drop keeps it - systems/wildDropLaw.js); systems/restItems.js re-exports it. */
+export const isRestItem = (item) => !!item && Object.values(REST_ITEM).includes(item.templateIndex);
 export const REST_ITEM_GROUP = 'UselessItems2';
 export const BEDROLL_NIGHTS = 10;
 export const CANDLE_USES = 3;

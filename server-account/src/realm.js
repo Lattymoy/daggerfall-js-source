@@ -638,11 +638,11 @@ export function realmAtOf(/** @type {any} */ v) {
  * @param {any} ctx @param {string} playerId @param {{ id: string, lease: string, seq: number }} at
  * @param {(save: any) => string | null} change @param {{ outbound?: boolean }} [opts]
  */
-export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false } = {}) {
+export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false } = {}) {
   if (!bucket) return { error: 'no-storage' };
   const row = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
-  if (row.lease !== at.lease) return { error: 'lease' };
+  if (!seize && row.lease !== at.lease) return { error: 'lease' };   // INT9: a seizure names no tab's lease (seizeRealmRecord)
   if (row.seq !== at.seq || !row.obj) return { error: 'seq', seq: row.seq };
   if (outbound) {
     const held = holdRefusal(row);
@@ -676,15 +676,33 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   // back in the pack, and stood listed too); `svc_seq` says a service move came after one that did not follow
   const clean = row.clean_obj != null && row.clean_obj === row.obj;
   const moves = ledgerMoves(db, { player: playerId, char: at.id, seq: at.seq + 1, nowS }, piecesBefore, piecesAfter, { escrow });
+  // INT9: a seizure clears the lease (whatever tab held the character plays a record that moved under it) and is guarded on
+  // the sequence it read alone
   const steps = [
-    db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}
-      WHERE id = ?6 AND player = ?7 AND lease = ?8 AND seq = ?9`)
+    db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
+      WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8' : 'lease = ?8'} AND seq = ?9`)
       .bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),
     mustChange(db),
     ...moves.left,
     ...moves.entered,
   ];
   return { steps, key, prev: row.prev === row.clean_obj ? null : row.prev, seq: at.seq + 1 };
+}
+
+/**
+ * INT9: A REALM CHARACTER'S RECORD SEIZED - changed by the service on another player's word the relay signed (a death in
+ * the zone, its killer carrying the fall's receipt after the fallen's own tab let WILD_FALL_GRACE_S go by:
+ * server-account/src/wild.js), so with no tab's `at`: the record read where it stands, `change(save)` applied, written one
+ * sequence on, and THE LEASE CLEARED - whatever tab held the character plays a record that moved under it, and its next
+ * join reads the new one (the staff rollback's way, review.js). Answers prepareRealmRecord's `{ steps, key, prev, seq }`,
+ * guarded on the sequence it read, or `{ error }`.
+ * @param {any} ctx @param {string} playerId @param {string} charId
+ * @param {(save: any) => string | null} change @param {{ escrow?: boolean }} [opts]
+ */
+export async function seizeRealmRecord(ctx, playerId, charId, change, { escrow = true } = {}) {
+  const row = await ctx.db.prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(charId, playerId).first();
+  if (!row) return { error: 'no-realm-character' };
+  return prepareRealmRecord(ctx, playerId, { id: charId, lease: row.lease ?? '', seq: row.seq }, change, { escrow, seize: true });
 }
 
 /** AUDIT REALM2 S3: AFTER A BATCH THAT THREW, the object it wrote goes only if the row names it nowhere (`obj` or

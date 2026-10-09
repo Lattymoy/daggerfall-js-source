@@ -558,7 +558,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck']);   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains']);   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -593,6 +593,10 @@ export function orderValid(c) {
   // CARDS10: a deck order carries its digest and no other kind's fields; no other kind carries a digest
   if (c.o !== 'deck' && c.dh !== undefined) return false;
   if (c.o === 'deck' && (typeof c.dh !== 'string' || !DECK_DIGEST_RE.test(c.dh) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege || !noStake)) return false;
+  // INT9: a remains order carries its own fields and no other kind's; no other kind carries a remains'
+  const noRemains = REMAINS_FIELDS.every((f) => c[f] === undefined);
+  if (c.o !== 'remains' && !noRemains) return false;
+  if (c.o === 'remains' && (!remainsOrderValid(c) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -641,6 +645,43 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
   try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
   if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
+}
+
+/* ═══ INT9: THE REMAINS ORDER (bible/06-Systems/Integrity-Arc.md lane 2) ════════════════════════════════════════════
+ *
+ * A death in the open zone drops what the ACCOUNT SERVICE took off the fallen character's judged record
+ * (server-account/src/wild.js), never what the fallen's own game hands over. The relay has no door to the service, so the
+ * service hands the depositor ITS WORD on the drop, an order the room checks with the key it already holds:
+ * `{o:'remains', s, wr, wh, wn, wk?, wi?, i, e}` - account `s`'s fall left remains `wr` holding `wn` records whose list
+ * (JSON, as the service answered it) digests to `wh` (hex SHA-256); `wk` the killer whose worn piece is the list's record
+ * `wi`, theirs alone to take. The room keeps a deposit only whose records digest to `wh` (net/wildLaw.js), and opens it
+ * to takes only then.
+ */
+/** A remains order's fields - no other order kind carries one. */
+export const REMAINS_FIELDS = Object.freeze(['wr', 'wh', 'wn', 'wk', 'wi']);
+/** A remains' id (the relay's twelve hex, or the service's for a death no receipt names), and the most records a
+ *  remains holds (net/wire.js WILD_REMAINS_ITEMS_MAX, pinned equal). */
+export const REMAINS_ID_RE = /^[0-9a-f]{12}$/;
+export const REMAINS_RECORDS_MAX = 96;
+/** Whether a claim set's remains fields are a remains'. */
+export function remainsOrderValid(c) {
+  if (typeof c.wr !== 'string' || !REMAINS_ID_RE.test(c.wr) || typeof c.wh !== 'string' || !DECK_DIGEST_RE.test(c.wh)) return false;
+  if (!Number.isSafeInteger(c.wn) || c.wn < 0 || c.wn > REMAINS_RECORDS_MAX) return false;
+  if (c.wk === undefined && c.wi === undefined) return true;
+  return typeof c.wk === 'string' && ID_RE.test(c.wk) && c.wk !== c.s && Number.isSafeInteger(c.wi) && c.wi >= 0 && c.wi < c.wn;
+}
+/** INT9: MINT A REMAINS ORDER - the service's word that account `s`'s fall left remains `wr` of `wn` records digesting to
+ *  `wh` (`wk`, `wi`: the killer's worn piece, theirs alone). */
+export async function mintRemainsOrder({ s, wr, wh, wn, wk = undefined, wi = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintRemainsOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'remains', s, wr, wh, wn, ...(wk !== undefined ? { wk, wi } : {}), i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintRemainsOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+/** INT9: a remains' records' digest - hex SHA-256 of their JSON, as the service answers them and the room keeps them. */
+export async function remainsDigest(/** @type {any[]} */ records, { subtle }) {
+  const d = new Uint8Array(await subtle.digest('SHA-256', enc.encode(JSON.stringify(records))));
+  return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /* ═══ CARDS10: THE DECK ORDER (bible/11-Multiplayer/Tavern-Cards.md section 33) ═════════════════════════════════════

@@ -16,6 +16,14 @@
 //
 // PURE: nothing here touches a socket or storage. The relay (server/src/index.js `_wild*`) reads and writes; this is
 // the law both its arms and the pins read. It imports wire.js alone (already in the bundle).
+//
+// INT9 (2026-10-09, the INTEGRITY arc's lane 2 - bible/06-Systems/Integrity-Arc.md): AND WHAT A REMAINS HOLDS IS THE
+// ACCOUNT SERVICE'S WORD. The fallen's own game handed its records over, so a crafted one deposited whatever it liked
+// for its friends to take. Now the service takes the drop off the fallen's judged record (server-account/src/wild.js)
+// and signs it - a `remains` order (net/identityToken.js): the remains' id, how many records and their digest, and the
+// killer whose worn piece one of them is. A deposit carries the order; the room keeps the records, and opens the remains
+// to takes only when they digest to the order's (`ok`); the killer's piece is the killer's alone. The service fits the
+// drop to the room's own bounds first (remainsFit - the same law foldFall keeps), so an honest deposit always digests.
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REMAINS_MS, WILD_ROOM_REMAINS_MAX, sanitizeName, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS } from './wire.js';
 
@@ -25,9 +33,26 @@ export const WILD_REMAINS_BYTES_MAX = 100 * 1024;
 export const WILD_REMAINS_PREFIX = 'wild:';
 export const wildRemainsKey = (r) => `${WILD_REMAINS_PREFIX}${r}`;
 
-/** A new remains - nothing in it yet; its first `fall` fills it. */
-export function newRemains({ r, os = null, oid = null, nm = '', p, now, gi = null }) {
-  return { r, gi: typeof gi === 'string' && gi ? gi : null, os: typeof os === 'string' && os ? os : null, oid: typeof oid === 'string' && oid ? oid : null, nm: sanitizeName(nm ?? ''), p: [p[0], p[1], p[2]], at: now, open: true, items: [] };
+/** A new remains - nothing in it yet; its first `fall` fills it. INT9: `wh`, `wn` the order's digest and count (the room
+ *  opens it to takes only when its records match), `wk`, `wi` the killer and its piece's place (theirs alone). */
+export function newRemains({ r, os = null, oid = null, nm = '', p, now, gi = null, wh = null, wn = 0, wk = null, wi = -1 }) {
+  return { r, gi: typeof gi === 'string' && gi ? gi : null, os: typeof os === 'string' && os ? os : null, oid: typeof oid === 'string' && oid ? oid : null, nm: sanitizeName(nm ?? ''), p: [p[0], p[1], p[2]], at: now, open: true, items: [],
+    wh: typeof wh === 'string' ? wh : null, wn: Number.isSafeInteger(wn) ? wn : 0, wk: typeof wk === 'string' && wk ? wk : null, wi: Number.isSafeInteger(wi) ? wi : -1, ok: false };
+}
+/** INT9: THE DROP FITTED TO A REMAINS - the records the room keeps of a list, in order: WILD_REMAINS_ITEMS_MAX of them
+ *  and WILD_REMAINS_BYTES_MAX of their JSON, as foldFall keeps them (the rest is let go - "the fallen already let it go").
+ *  The account service fits its drop with it before it signs, so every honest deposit is kept whole and digests. */
+export function remainsFit(items) {
+  const out = [];
+  let bytes = 2;   // JSON.stringify([]).length
+  for (const it of Array.isArray(items) ? items : []) {
+    if (out.length >= WILD_REMAINS_ITEMS_MAX) break;
+    const size = JSON.stringify(it).length + 1;
+    if (bytes + size > WILD_REMAINS_BYTES_MAX) break;
+    bytes += size;
+    out.push(it);
+  }
+  return out;
 }
 
 /** Is it still lying here at `now`? */
@@ -64,7 +89,9 @@ export function foldFall(rec, { oid, items, last }) {
  * A take: `n` of record `i`, the whole record when `n` reaches its stack. Answers the record as its taker gets it (the
  * stored one whole, or a copy at the count taken) and how many left - or null when there is nothing there to take.
  */
-export function takeFrom(rec, i, n) {
+export function takeFrom(rec, i, n, sub = null) {
+  if (!rec?.ok) return null;   // INT9: a remains whose records the order never vouched for is nobody's
+  if (i === rec.wi && rec.wk && sub !== rec.wk) return null;   // INT9: the killer's worn piece is the killer's alone
   const it = rec?.items?.[i];
   if (!it) return null;
   const stack = Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1;
@@ -76,8 +103,8 @@ export function takeFrom(rec, i, n) {
 /** The room's remains as `ri` words for a socket that just said hello (or for a new chunk): WILD_ITEMS_MAX a word, the
  *  last one `end`. A remains with nothing left says nothing. */
 export function remainsWords(rec, now) {
-  if (!remainsLive(rec, now) || remainsEmpty(rec)) return [];
-  const head = { t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now) };
+  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return [];   // INT9: a remains the order never vouched for is said to nobody
+  const head = { t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now), ...(rec.wk ? { wk: rec.wk, wi: rec.wi } : {}) };
   const out = [];
   const total = rec.items.length;
   if (!total) return [{ ...head, off: 0, items: [], end: rec.open ? 0 : 1 }];
@@ -99,7 +126,8 @@ export function remainsEvict(map) {
 /** A remains read back from storage, checked for the shape this file writes - or null. */
 export function remainsOf(v) {
   if (!v || typeof v !== 'object' || typeof v.r !== 'string' || !Array.isArray(v.items) || !Array.isArray(v.p) || v.p.length !== 3 || !Number.isFinite(v.at)) return null;
-  return { r: v.r, os: typeof v.os === 'string' ? v.os : null, oid: typeof v.oid === 'string' ? v.oid : null, nm: typeof v.nm === 'string' ? v.nm : '', p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0], at: v.at, open: v.open === true, items: v.items.map((it) => (it && typeof it === 'object' ? it : null)) };
+  return { r: v.r, os: typeof v.os === 'string' ? v.os : null, oid: typeof v.oid === 'string' ? v.oid : null, nm: typeof v.nm === 'string' ? v.nm : '', p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0], at: v.at, open: v.open === true, items: v.items.map((it) => (it && typeof it === 'object' ? it : null)),
+    wh: typeof v.wh === 'string' ? v.wh : null, wn: Number.isSafeInteger(v.wn) ? v.wn : 0, wk: typeof v.wk === 'string' ? v.wk : null, wi: Number.isSafeInteger(v.wi) ? v.wi : -1, ok: v.ok === true };   // INT9
 }
 
 

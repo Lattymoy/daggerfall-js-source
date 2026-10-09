@@ -20,93 +20,11 @@
 //     rules let go (`wornOffer`) - the fallen's own game gives it (net/wildFight.js).
 // The purse is the death penalty's (systems/deathPenalty.js) and unchanged.
 // ═══════════════════════════════════════════════════════════════════
-import { isPotion, isLightSource, TEMPLATES } from './useItem.js';
-import { isSurvivalItem } from './survival/items.js';
-import { isFood, isWaterskin } from './survival/food.js';
-import { isRestItem } from './restItems.js';
-import { isAmmunition } from './itemTemplates.js';
-import { BANDAGE_TEMPLATE } from './rriRealism.js';
-import { tradeRefusal } from './tradePack.js';
-import { isEquipped } from './equip.js';
-import { DECOR_OWN_KEPT_BACK } from './decorItems.js';
 import { WILD_ITEMS_MAX } from '../net/wire.js';
-import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';
-import { goldStack } from './inventory.js';
-import { isWalletItem, walletHolds } from './walletItem.js';   // KEEP-WALLET
 
-/** The groups no death in the zone ever drops: a vehicle, a deed, a quest's own item. */
-export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));
-
-/** "except campfires, torches, potions etc" - is this a consumable the fallen keep? */
-export function keptOnWildDeath(item) {
-  if (!item) return true;
-  return isPotion(item) || isLightSource(item) || isSurvivalItem(item) || isFood(item) || isWaterskin(item)
-    || isRestItem(item) || isAmmunition(item) || (item.group === 'UselessItems2' && item.templateIndex === BANDAGE_TEMPLATE);
-}
-
-/** May this piece leave its owner at a death in the zone at all? Worn or not - the trade's own refusals over a copy
- *  that is not worn (its `isEquipped` arm is the only one that asks where the piece is), and the kept-back list. */
-export function wildCanLose(item) {
-  if (!item || keptOnWildDeath(item)) return false;
-  // LETTERS-DROP (the owner: "letter of credits should be dropped"): a letter of credit is the one piece of the wallet's
-  // that a death in the zone takes, as a coin of the purse is - the Embers and the Shards stay
-  if (item.group === 'MiscItems' && item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem) return tradeRefusal({ ...item, equipSlot: undefined }) === null;
-  if (WILD_NEVER_GROUPS.has(item.group) || DECOR_OWN_KEPT_BACK.has(item.templateIndex) || item.templateIndex === TEMPLATES.Spellbook) return false;
-  // KEEP-WALLET (2026-10-09, the owner: "the wallet shouldnt drop in the zone"): the wallet is an organizer - its pieces
-  // lie in the pack itself; the Deadlands Embers and the Welkynd Shards stay with the fallen, as the wallet does (bound
-  // already) - the letters of credit drop (LETTERS-DROP, above)
-  if (isWalletItem(item) || walletHolds(item)) return false;
-  return tradeRefusal({ ...item, equipSlot: undefined }) === null;
-}
-
-/**
- * THE DROP: what a death in the zone takes out of the bag (`items`, never a worn piece) and the cart (`wagon`) -
- * REMOVED from both lists, in their order, and handed back to be deposited. Pure over the two arrays it is given.
- */
-export function takeWildDrop(items, wagon = null) {
-  const lift = (list, worn) => {
-    const out = [];
-    if (!Array.isArray(list)) return out;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const it = list[i];
-      if ((worn && isEquipped(it)) || !wildCanLose(it)) continue;
-      list.splice(i, 1);
-      out.unshift(it);
-    }
-    return out;
-  };
-  return [...lift(items, true), ...lift(wagon, false)];
-}
-
-/** WILD GOLD: a death in the zone drops this share of the gold carried (no usual death penalty) into the remains. */
-export const WILD_GOLD_LOSS = 0.5;
-
-/** Take WILD_GOLD_LOSS of the purse (`entity.goldPieces`) AND of the cart's gold stack (the `Currency` item in
- *  `entity.wagonItems`), in place; answers the gold as ONE pile record (purse + cart share), or null. */
-export function takeWildGold(entity) {
-  let take = 0;
-  const have = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
-  const purse = Math.floor(have * WILD_GOLD_LOSS);
-  if (purse >= 1) { entity.goldPieces = have - purse; take += purse; }
-  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
-  if (cart) {
-    const n = Math.max(0, Math.floor(cart.stackCount ?? 1));
-    const share = Math.floor(n * WILD_GOLD_LOSS);
-    if (share >= 1) { cart.stackCount = n - share; take += share; }
-  }
-  return take >= 1 ? goldStack(take) : null;
-}
-
-/** THE KILLER'S CHOICE: the worn pieces a body offers - worn, and a death may let them go - at most WILD_ITEMS_MAX. */
-export const wornOffer = (items) => (Array.isArray(items) ? items.filter((it) => it && isEquipped(it) && wildCanLose(it)).slice(0, WILD_ITEMS_MAX) : []);
-
-/** A record for the wire: a plain-data copy with the RECEIVER's marks off (its slot, its quest - loot.js's own clamp
- *  strips them too; never sent is better than stripped). */
-export function wildRecord(item) {
-  const copy = JSON.parse(JSON.stringify(item));
-  for (const k of RECEIVER_MARKS) delete copy[k];   // ACQUIRE1's `acquired` among them; MARK-WIRE: one list (net/realmTradeLaw.js)
-  return copy;
-}
+// THE LAW - INT9: its home is systems/wildDropLaw.js (a leaf the account Worker bundles: the service takes a death's drop
+// off the record), re-exported here
+export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath } from './wildDropLaw.js';
 
 /** A list cut into the wire's chunks. */
 export function wildChunks(list, size = WILD_ITEMS_MAX) {

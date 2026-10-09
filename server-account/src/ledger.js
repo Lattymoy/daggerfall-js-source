@@ -261,6 +261,21 @@ export async function piecesRefusal(db, char, keys) {
   return null;
 }
 
+/** INT9: WHICH OF `keys` MAY NOT LEAVE `char`'s record - piecesRefusal's own law, key by key: a copy, another's piece, a
+ *  claim that is not this record's own waiting. A death in the zone drops every other piece (server-account/src/wild.js),
+ *  never refused whole on one. Answers a Set. */
+export async function piecesBarred(db, char, keys) {
+  const out = new Set();
+  for (const part of chunks(keys, UID_CHUNK)) {
+    const m = marks(part.length, 2);
+    const copies = await db.prepare(`SELECT uid FROM item_dupes WHERE char_id = ?1 AND uid IN (${m})`).bind(char, ...part).all();
+    for (const x of copies?.results ?? []) out.add(/** @type {any} */ (x).uid);
+    const r = await db.prepare(`SELECT uid, char_id, state, claim_char FROM item_uids WHERE uid IN (${m}) AND (char_id != ?1 OR state != 'held' OR claim_char IS NOT NULL)`).bind(char, ...part).all();
+    for (const x of /** @type {any[]} */ (r?.results ?? [])) out.add(x.uid);
+  }
+  return out;
+}
+
 /**
  * A CHARACTER GONE (dead, retired, deleted - legacy.js, realm.js deleteRealm): its claims withdrawn, and what it held let
  * go - an heir, a looter or a friend takes it up next. `deleted`: its copies' record goes too.

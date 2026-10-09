@@ -224,6 +224,7 @@ import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { wildFall } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
@@ -262,6 +263,9 @@ const no = (why, status, origin) => json({ error: why }, status, origin);
  *  hands a realm character's value to another player - its trade held, its record unread since the judge shipped, a
  *  piece the id ledger marked a duplicate - each a conflict with what stands (realm.js holdRefusal, prepareRealmRecord). */
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
+/** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
+ *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400 });
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -888,6 +892,17 @@ const service = {
         const r = await claimDuel(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);   // AUDIT WB A5's law: which rung refused it
         return json(r, 200, origin);
+      }
+
+      if (path === '/v1/wild/fall' && request.method === 'POST') {
+        // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
+        // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wildReceipt.js `f1`: the fallen's own tab
+        // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
+        // answer's `order` is the service's word on the records, the room's to keep a deposit on.
+        const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved: its tab checkpoints and asks again
+        return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
       if (path === '/v1/duel/record' && request.method === 'POST') {

@@ -166,7 +166,10 @@ test('AUDIT DUEL1 A2 + B6 + D4 the blow: a result wears my weapon by at most wha
   assert.equal(duelBlowPlausible(bolt, at(10), at(DUEL_MELEE_POS_SLACK_M + 0.5), 12), true, 'a spell keeps the wider slack');
   assert.ok(DUEL_TRAIL_MS >= 300 && DUEL_TRAIL_MS <= 1000);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /_duelTrail\.push\(\{ t: tNow, p: campToWire\(player\.feetAt\(\)\) \}\);\n\s+while \(_duelTrail\.length && tNow - _duelTrail\[0\]\.t > DUEL_TRAIL_MS\) _duelTrail\.shift\(\);/, 'the host keeps the trail while a duel is live');
+  // PIN MOVED (INT8/INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): no defender resolves a blow any more - a
+  // duel's and the open zone's are the relay's to referee, its reach from the places it believes (net/siegeRef.js
+  // refereeStep) - so the host keeps no trail to place a blow against
+  assert.equal(w.includes('_duelTrail'), false, 'no trail: the referee places every blow');
   // D4
   assert.match(rd('src/player/motor.js'), /const to = clampToRing\(this\.pos, c, a\.radius, CAPSULE_RADIUS\);/, 'the motor clamps with clampToRing');
   assert.deepEqual(clampToRing([20, 5, 0], [0, 0, 0], 12, 0.5), [11.5, 0], 'the tested clamp: the height untouched, the feet at the radius less the capsule');

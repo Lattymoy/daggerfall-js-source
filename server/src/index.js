@@ -181,7 +181,7 @@
 import { routeStaffTeleport } from './staffTeleport.js';
 import { privateInteriorOf, privateInteriorAdmits } from '../../src/net/privateInterior.js';
 import { isStaff } from '../../src/net/staffCommands.js';
-import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
+import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest, remainsDigest } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
@@ -212,6 +212,8 @@ import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '.
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duelRef.js';   // INT8: the duel refereed
+import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, WILD_REF } from '../../src/net/wildRef.js';   // INT9: the open zone refereed
+import { mintWildReceipt } from '../../src/net/wildReceipt.js';   // INT9: a fall, signed
 import { mintDuelReceipt } from '../../src/net/duelReceipt.js';   // INT8: a duel won, signed
 import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gateReceipt.js';
@@ -278,7 +280,7 @@ import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemS
 // WILD1 (2026-10-07, the owner: "Wrothgarian mountains need to be turned into a open pvp zone"): ONE FILE JOINS THE
 // BUNDLE - net/wildLaw.js (a place room's REMAINS: what a body in the open zone dropped, kept here so the room alone
 // decides who takes each record - it imports wire.js alone). bible/11-Multiplayer/Wild-Zone.md.
-import { newRemains, foldFall, takeFrom, remainsWords, remainsLive, remainsTtl, remainsEmpty, remainsEvict, remainsOf, wildRemainsKey, WILD_REMAINS_PREFIX } from '../../src/net/wildLaw.js';
+import { newRemains, foldFall, takeFrom, remainsWords, remainsLive, remainsEmpty, remainsEvict, remainsOf, wildRemainsKey, WILD_REMAINS_PREFIX } from '../../src/net/wildLaw.js';
 import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_INTERNAL_RESET, WDUN_INTERNAL_KIN, WDUN_INTERNAL_GONE, wdunRoomKey, wdunHall, WILD_REMAINS_MS as WDUN_PILE_MS } from './relay.js';
 import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants } from '../../src/net/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
@@ -2045,14 +2047,22 @@ export class Room {
     }
     if (m.t === 'wild') {
       // WILD1: THE OPEN ZONE'S FRAME, from a hello'd socket in a PLACE room (a cell or a world room - a channel, the hub,
-      // an arena or a gate is nowhere a body falls), on its own bucket. DIRECTED (a blow, a fallen's gear, a pick, the
-      // gift): the duel arm's routing - to the socket `to` names in this room alone, the sender's id AND its verified
-      // account stamped on it, the rest unread (wire.js validWildData checked the shape; the DEFENDER resolves every
-      // blow, the FALLEN gives every piece). THE ROOM'S (a deposit, a take): this object keeps the remains and judges
-      // each take (net/wildLaw.js) - the first take of a record wins it.
+      // an arena or a gate is nowhere a body falls), on its own bucket. DIRECTED (a fallen's gear): the duel arm's routing -
+      // to the socket `to` names in this room alone, the sender's id AND its verified account stamped on it, the rest
+      // unread (wire.js validWildData checked the shape). THE ROOM'S (a deposit, a take): this object keeps the remains
+      // and judges each take (net/wildLaw.js) - the first take of a record wins it.
+      // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): AND THE RELAY REFEREES THE ZONE (net/wildRef.js) - a socket's word
+      // that it stands in it (`zone`), every strike and spell between two that both said so (routed to nobody), the fall
+      // the referee's word, the killer's pick awaited and the fall signed (net/wildReceipt.js `f1`); a deposit kept only
+      // on the account service's order (net/wildLaw.js). Only the fallen's offer of its worn gear is routed.
       const now = Date.now();
       if (!this._spend(ws, now, wildGate, 'wildBucket', 'wildDrops', 'too many wild frames')) return;
       if (!streamsFoes(a.key)) { this._junk(ws); return; }
+      await this._wildBeat(now);
+      const k = m.data.k;
+      if (k === 'strike' || k === 'spell') { if (m.data.to === a.id) { this._junk(ws); return; } await this._wildBlow(a, m.data, now); return; }
+      if (k === 'zone') { this._wildZoneWord(a, m.data.z, now); return; }
+      if (k === 'pick') { await this._wildPickWord(a, m.data, now); return; }
       if (wildDirected(m.data)) {
         const to = m.data.to;
         if (to === a.id) { this._junk(ws); return; }
@@ -2523,6 +2533,7 @@ export class Room {
       // INT8: a duel's fighter's place is the referee's (a run it allows; the ring's edge), and every pose a room with a
       // bout takes beats the bouts - a fighter gone or out ends its bout on the next frame anyone sends
       if (posed && this._duelRef?.bouts.size) { duelPose(this._duelRef, a.sub, m.p, now); await this._duelBeat(now); }
+      if (posed && this._wildRef?.fighters.has(a.sub)) { wildPose(this._wildRef, a.sub, m.p, now); await this._wildBeat(now); }   // INT9: the zone's believed place, and a fall waiting on a pick
       // AUDIT-SEATS T2 (Seats-Arc 6.6: "no body drawn to fighters, no collider, excluded from every banner count, a free
       // camera over the town"): A SPECTATOR IS NO BODY - in a battle room a socket that is no fighter (a spectator's pass,
       // or a fighter's before its `in`) keeps its camera on its own attachment and is drawn to nobody: the fan below said
@@ -4241,7 +4252,10 @@ export class Room {
     if (b && (!by.side || !to.side)) return;
     const heal = m.k === 'cast' && m.h === 1;
     if (by.side && b?.kind !== 'royal' && (heal ? to.side !== by.side : to.side === by.side)) return;   // SEAT2a: the sides are kept
-    if (b?.kind === 'royal' && (heal || !royalMayStrike(b, a.sub, target.sub, now))) return;   // CROWN1 part two: the bout's two alone, no heal between them
+    // CROWN1 part two: the bout's two alone; INT10 (bible/06-Systems/Integrity-Arc.md lane 2): AND BLOWS ALONE - a Royal
+    // Tourney's bout takes no cast (the client sends none: world.js siegeSpellMarks), and a crafted client's damaging one
+    // was refereed as a siege's; a heal between them never was
+    if (b?.kind === 'royal' && (m.k === 'cast' || !royalMayStrike(b, a.sub, target.sub, now))) return;
     // the striker's look - the paperdoll every other player draws - names the weapon it holds (a woken object reads it)
     let look = this._looks.get(a.id) ?? null;
     if (!look && m.k === 'blow') { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
@@ -6431,17 +6445,29 @@ export class Room {
     const map = await this._wildRemains(now);
     for (const rec of [...map.values()]) if (!remainsLive(rec, now)) await this._wildDrop(map, rec.r);
     if (d.k === 'fall') {
+      // INT9: THE ACCOUNT SERVICE'S ORDER on every chunk - its remains' id this one's, signed by the service's key; the
+      // remains' owner is the order's account (the fallen), whoever carries it (the fallen, or its killer after the grace)
+      const o = this._verifyKey ? await verifyOrder(d.o, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'remains' }) : { ok: false };
+      if (!o.ok || o.claims.wr !== d.r) { this._junk(ws); return; }
+      const c = o.claims;
       let rec = map.get(d.r);
+      if (rec?.ok) return;   // INT9: vouched for already - a second carrier's deposit (the fallen's tab and its killer's seizure, one fall) is nothing
       if (!rec) {
         const old = remainsEvict(map);
         if (old) await this._wildDrop(map, old);
-        rec = newRemains({ r: d.r, os: a.sub ?? null, oid: a.id, nm: a.name ?? '', p: d.p, now, gi: a.gi ?? null });   // PVPDUNGEONS: the fallen's guild, so no guildmate takes from it
+        rec = newRemains({ r: d.r, os: c.s, oid: a.id, nm: a.sub === c.s ? (a.name ?? '') : '', p: d.p, now, gi: a.sub === c.s ? a.gi ?? null : null, wh: c.wh, wn: c.wn, wk: c.wk ?? null, wi: c.wi ?? -1 });   // PVPDUNGEONS: the fallen's guild, so no guildmate takes from it
         map.set(rec.r, rec);
       }
+      if (rec.wh !== c.wh) { this._junk(ws); return; }
       const kept = foldFall(rec, { oid: a.id, items: d.items, last: d.last });
       if (!kept) { this._junk(ws); return; }
+      if (!rec.open) {
+        // INT9: the last chunk - its records the order's, digest for digest, or the room keeps none of it
+        rec.ok = rec.items.length === rec.wn && (await remainsDigest(rec.items, { subtle: crypto.subtle })) === rec.wh;
+        if (!rec.ok) { map.delete(rec.r); await this.state.storage.delete(wildRemainsKey(rec.r)); this._junk(ws); return; }
+      }
       await this.state.storage.put(wildRemainsKey(rec.r), rec);
-      this._wildFan({ t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now), off: kept.off, items: kept.items, end: rec.open ? 0 : 1 });
+      if (rec.ok) for (const w of remainsWords(rec, now)) this._wildFan(w);   // INT9: said once it is vouched for, whole
       return;
     }
     const rec = map.get(d.r);
@@ -6451,13 +6477,79 @@ export class Room {
       this._send(ws, JSON.stringify({ t: 'wild', k: 'no', r: d.r, i: d.i }));
       return;
     }
-    const got = rec ? takeFrom(rec, d.i, d.n) : null;
+    const got = rec ? takeFrom(rec, d.i, d.n, a.sub ?? null) : null;   // INT9: a vouched-for remains alone, the killer's piece the killer's
     if (!got) { this._send(ws, JSON.stringify({ t: 'wild', k: 'no', r: d.r, i: d.i })); return; }
     if (remainsEmpty(rec)) { map.delete(rec.r); await this.state.storage.delete(wildRemainsKey(rec.r)); this._wdunTellGone(rec.os); }
     else await this.state.storage.put(wildRemainsKey(rec.r), rec);
     this._send(ws, JSON.stringify({ t: 'wild', k: 'got', r: d.r, i: d.i, it: got.it }));
     this._wildFan({ t: 'wild', k: 'rm', r: d.r, i: d.i, n: got.n });
     if (!map.has(d.r)) this._wildFan({ t: 'wild', k: 'gone', r: d.r });
+  }
+
+  // ───────────────────────────── INT9: THE OPEN ZONE REFEREED (net/wildRef.js) ─────────────────────────────
+  /** The room's zone - in its memory alone (wildRef.js). */
+  _wild() { return (this._wildRef ??= newWildRef()); }
+  /** A socket's word that it stands in the zone or has left it - and a fall signed while it was away, said again. */
+  _wildZoneWord(a, z, now) {
+    if (!a.sub) return;
+    wildZone(this._wild(), a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '' }, z === 1, a.pose, now);
+    const owed = this._wildOwed?.get(a.sub), sk = this._siegeSocketOf(a.sub);
+    if (owed && sk) { for (const w of owed) this._send(sk[0], JSON.stringify(w)); this._wildOwed.delete(a.sub); }
+  }
+  /** A STRIKE OR A SPELL in the zone: judged (wildRef.js wildBlow - both said they stand in it, never kin: the hub's party
+   *  and its truce, nor a duel's two), the vitality left said to both, a fall said to the room. */
+  async _wildBlow(a, d, now) {
+    const st = this._wildRef;
+    if (!st || !a.sub) return;
+    const target = [...this._all()].find(([, b]) => b.id === d.to) ?? null;
+    const tb = target?.[1];
+    if (!tb?.sub || !st.fighters.has(a.sub) || !st.fighters.has(tb.sub)) return;
+    const duel = this._duelRef ? duelBoutOf(this._duelRef, a.sub) : null;
+    const kin = (duel && (duel.a.sub === tb.sub || duel.b.sub === tb.sub)) || await this._wdunKinOf(a.sub, tb.sub, now);
+    let look = null;
+    if (d.k === 'strike') {
+      look = this._looks.get(a.id) ?? null;
+      if (!look) { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
+    }
+    const r = d.k === 'spell' ? SIEGE_HIT.Spell : d.by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee;
+    const held = d.k === 'strike' ? siegeHeld(look, d.w ? d.w.t : -1, d.w ? d.w.m : 0) : null;
+    const bytes = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(bytes);
+    const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid }, now);
+    if (!res.ok || !res.dealt) return;
+    const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
+    this._send(target[0], word);
+    const mine = this._siegeSocketOf(a.sub);
+    if (mine) this._send(mine[0], word);
+    if (res.fell) this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
+  }
+  /** THE KILLER'S PICK of a fall of its own: the fall signed with it. */
+  async _wildPickWord(a, d, now) {
+    const fall = this._wildRef && a.sub ? wildPick(this._wildRef, a.sub, d.r, d.w, now) : null;
+    if (fall) await this._wildSign(fall, now);
+  }
+  /** The zone's beat on the frames the room takes (wildRef.js wildStep): a fall whose killer never picked, signed
+   *  without a piece. */
+  async _wildBeat(now) {
+    if (!this._wildRef?.falls.size) return;
+    for (const fall of wildStep(this._wildRef, now)) await this._wildSign(fall, now);
+  }
+  /** A FALL SIGNED (net/wildReceipt.js `f1`) and handed to its fallen and its killer - kept for one of them that is away
+   *  until its next word on the zone. */
+  async _wildSign(fall, now) {
+    let rc = null;
+    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
+    wildSigned(this._wildRef, fall.r);
+    if (!rc) return;
+    const word = { t: 'wref', k: 'rc', r: fall.r, rc };
+    for (const sub of [fall.fallen, fall.killer]) {
+      const sk = this._siegeSocketOf(sub);
+      if (sk) { this._send(sk[0], JSON.stringify(word)); continue; }
+      this._wildOwed ??= new Map();
+      if (this._wildOwed.size >= 256) this._wildOwed.delete(this._wildOwed.keys().next().value);
+      this._wildOwed.set(sub, [...(this._wildOwed.get(sub) ?? []).slice(-3), word]);
+    }
   }
 
   // ───────────────────────────── PVPDUNGEONS: THE ZONE'S HALLS (the hub) ─────────────────────────────
@@ -6536,7 +6628,12 @@ export class Room {
     const a = typeof body?.a === 'string' ? body.a : null, b = typeof body?.b === 'string' ? body.b : null;
     if (!a || !b || a.length > 128 || b.length > 128) return json({ error: 'bad kin' }, 400);
     const [ra, rb] = [await this._acct(a), await this._acct(b)];
-    return json({ kin: !!(ra?.party && rb?.party && ra.party === rb.party) });
+    // INT9: AND UNDER THE PARTY'S TRUCE - a party one of them left (or both) inside the truce (net/wildRef.js WILD_REF.truceMs), shared with the
+    // other's party now or the one it left
+    const now = Date.now();
+    const parties = (r) => [r?.party, r?.partyWas && now - r.partyWas.at < WILD_REF.truceMs ? r.partyWas.id : null].filter(Boolean);
+    const pa = parties(ra), pb = parties(rb);
+    return json({ kin: pa.some((x) => pb.includes(x)) });
   }
   /** A place room's question to the hub, kept a minute per pair (a fat remains is many takes). */
   async _wdunKinOf(taker, owner, now) {
@@ -6659,9 +6756,17 @@ export class Room {
     return rec;
   }
   _keepRec(id, rec) { this._recs.set(id, rec); }   // SCALE2b: bounded, the oldest first - never cleared whole
-  async _putAcct(id, rec) { this._keepRec(id, rec); await this.state.storage.put(acctKey(id), rec); }
+  /** INT9 (PARTY-TRUCE at the relay): a record whose party changed keeps the one it left and when (`partyWas`), so the
+   *  zone's referee holds the truce (WILD_REF.truceMs) - the client's own law (systems/wildZone.js createPartyTruce),
+   *  never a crafted client's choice. Every write of a record passes here. */
+  _truced(id, rec) {
+    const had = this._recs.get(id);
+    if (!rec || !had?.party || had.party === rec.party) return rec;
+    return { ...rec, partyWas: { id: had.party, at: Date.now() } };
+  }
+  async _putAcct(id, rec) { rec = this._truced(id, rec); this._keepRec(id, rec); await this.state.storage.put(acctKey(id), rec); }
   /** Several records written as one batch (a friendship is two records at once, or none). */
-  async _putAccts(recs) { const puts = {}; for (const [id, rec] of Object.entries(recs)) { this._keepRec(id, rec); puts[acctKey(id)] = rec; } await this.state.storage.put(puts); }
+  async _putAccts(recs) { const puts = {}; for (const [id, r] of Object.entries(recs)) { const rec = this._truced(id, r); this._keepRec(id, rec); puts[acctKey(id)] = rec; } await this.state.storage.put(puts); }
   /** Several accounts' records at once - the instance's copies, and the rest in the runtime's batches (128 keys at most,
    *  SLAM5's wall); a missing record is kept as a miss, so a friend list naming a swept account reads storage once. */
   async _accts(ids) {

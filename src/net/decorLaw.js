@@ -26,6 +26,12 @@
 // the gold it cost (half of which comes back when it is removed).
 // ═══════════════════════════════════════════════════════════════════
 import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted piece's id and mark, one home
+import { TEMPLATES } from '../systems/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
+
+/** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
+ *  player's own spells - set down in a home, it would be out of reach wherever the player went (DECOR2a; INT9: its home
+ *  here, since a death in the zone's drop keeps them too, on the account Worker - systems/decorItems.js re-exports it). */
+export const DECOR_OWN_KEPT_BACK = Object.freeze(new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]));
 
 /** How many pieces one home holds - a room full of furniture, not a frame-rate. */
 export const DECOR_CAP = 200;
