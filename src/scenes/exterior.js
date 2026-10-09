@@ -77,6 +77,7 @@ import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58 (f2/hosts): the session's ONE enchant ctx - this host mounted none
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
+import { realWindowsMode, VIEW_CLIP_PAD } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
@@ -4134,6 +4135,42 @@ export async function bootExterior(canvas, renderer, params, status) {
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
   if (_questStartPending) questInitAtGameStart();   // chargen got here first
 
+  // RW1 (render/realWindows.js): THE STREET THROUGH A BUILDING'S GLASS - world.js's twin over this host's one town: its
+  // models, its ground and its flats culled to the glass's own frustum, the clock's light over the street the last
+  // frame kept, and the building the player stands in left out by its box (the model the door's matrix stands).
+  let _rwClipDoor = null, _rwClip = null;
+  const outsideViewClip = (doorMatrix) => {
+    if (doorMatrix === _rwClipDoor) return _rwClip;
+    _rwClipDoor = doorMatrix; _rwClip = null;
+    if (!doorMatrix) return null;
+    let best = -1;
+    for (const d of drawList) {
+      const m = d.matrix, b = d.box;
+      if (!m || !b || Math.abs(m[12] - doorMatrix[12]) > 0.01 || Math.abs(m[13] - doorMatrix[13]) > 0.01 || Math.abs(m[14] - doorMatrix[14]) > 0.01) continue;
+      const vol = (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]);
+      if (vol <= best) continue;
+      best = vol;
+      _rwClip = [b[0] - VIEW_CLIP_PAD, b[1] - VIEW_CLIP_PAD, b[2] - VIEW_CLIP_PAD, b[3] + VIEW_CLIP_PAD, b[4] + VIEW_CLIP_PAD, b[5] + VIEW_CLIP_PAD];
+    }
+    return _rwClip;
+  };
+  const outsideView = (doorMatrix) => ({
+    clip: outsideViewClip(doorMatrix),
+    setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
+      const clockMinute = minuteNow();
+      r.setLighting(exteriorAmbient(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), 1), sunScale(clockMinute), SUN_RIG_COLOR);
+      r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
+      if (!lightsOnAt(clockMinute)) r.setPointLights(new Float32Array(0), CITY_LIGHT_COLOR_F32);
+      return sunDirection(clockMinute);
+    },
+    draw: ({ renderer: r, planes }) => {
+      for (const d of drawList) if (d.mesh && d.matrix && !(d.box && aabbOutside(planes, d.box))) r.drawMesh(d.mesh, d.matrix, d.texRemap ?? texRemap);
+      r.drawTerrain(groundSurface, identityMatrix, r.tileArrays.get(groundArchive), tilemapTex, 6.4);
+      const flats = billboardBatches.filter((b) => !(b._box && aabbOutside(planes, b._box)));
+      if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+    },
+  });
+
   // P7: the exterior scene hosts the same mode machine as ?world -
   // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
   // door drops into the location's crawl, exits land verbatim.
@@ -4147,6 +4184,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   var modes = createWorldModes({
     climbFeel,   // AUDIT CLIMB-ARC F11 (THE FOUR HOSTS RULE): the interiors and dungeons of ?exterior take the climb's camera as the world host's do
     shakeCamera: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: the stagger's kick indoors and underground (and an execution's), as the world host gives its modes
+    outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     // DISC29-F: TransportManager.HandleTransition's dismount at a door (TR5) reaches the mount through this seam, as
     // the world host's does - without it the fixed city walked a rider into a building still on horseback
     setTransportMode: (mode) => mountRig.setMode(mode),
@@ -5649,6 +5687,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     hcc.draw(renderer, texRemap);   // HCC: the wagon and its cargo
     try { lefay.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: stood, its flowers in flight and laid
     lefay.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass, asked after its beginFrame (world.js's twin); and the street kept for a building's view out
     // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque
     // mesh - the buildings, the mills, the rig, the arrows - below, just
     // before the sky. See world.js's note at its ground queue.

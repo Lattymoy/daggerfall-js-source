@@ -135,6 +135,15 @@ const INTERIOR_SETS = new Set([
   SET.Interior_TavernInt, SET.Interior_TempleInt, SET.Interior_VillageInt,
   SET.Interior_Sewer,
 ]);
+/** RW1 (render/realWindows.js): the Interior_* sets a BUILDING is laid out from - the nine a house, a shop, a tavern,
+ *  a temple, a guild hall, a manor, a farm or a castle wears inside (DFLocation.ClimateTextureSet's own values,
+ *  read through the same SET table). Not the crypts, the dungeons, the mines, the caves, the sewers, the paintings or
+ *  the marble floors: a window to the street stands in none of those. */
+export const BUILDING_INTERIOR_SETS = Object.freeze(new Set([
+  SET.Interior_CastleInt, SET.Interior_CityInt, SET.Interior_FarmInt, SET.Interior_MagesGuildInt,
+  SET.Interior_ManorInt, SET.Interior_MerchantHomesInt, SET.Interior_TavernInt, SET.Interior_TempleInt,
+  SET.Interior_VillageInt,
+]));
 const NATURE_WINTER_SETS = new Set([
   SET.Nature_TemperateWoodland, SET.Nature_WoodlandHills,
   SET.Nature_HauntedWoodlands, SET.Nature_Mountains,

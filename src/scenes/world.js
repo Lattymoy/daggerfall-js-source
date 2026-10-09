@@ -76,6 +76,7 @@ import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the be
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
+import { realWindowsMode, VIEW_RINGS, VIEW_CLIP_PAD } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -27196,6 +27197,70 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (covered) { sayNetStatus(null); return; }
     sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)
   };
+  // RW1 (render/realWindows.js): THE STREET THROUGH A BUILDING'S GLASS - what the interior's view out draws (the mode
+  // machine asks, renderer.outsideViewFrame runs it): the clock's light over the exterior the last street frame kept,
+  // and the pixels' merged statics, odd models, ground and flats out to VIEW_RINGS, culled to the glass's own frustum.
+  // The building the player stands in is left out by its box (`clip`: the model the door's matrix stands, every door
+  // of a building carrying the building's own matrix) - from inside, its shell would stand between the pane and the street.
+  let _rwClipDoor = null, _rwClip = null;
+  const outsideViewClip = (doorMatrix) => {
+    if (doorMatrix === _rwClipDoor) return _rwClip;
+    _rwClipDoor = doorMatrix; _rwClip = null;
+    if (!doorMatrix) return null;
+    let best = -1;
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      for (const m of p.models) {
+        const l = m.local, b = m._box;
+        if (!l || !b || Math.abs(l[12] + t[0] - doorMatrix[12]) > 0.01 || Math.abs(l[13] + t[1] - doorMatrix[13]) > 0.01 || Math.abs(l[14] + t[2] - doorMatrix[14]) > 0.01) continue;
+        const vol = (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]);
+        if (vol <= best) continue;
+        best = vol;
+        _rwClip = [b[0] + t[0] - VIEW_CLIP_PAD, b[1] + t[1] - VIEW_CLIP_PAD, b[2] + t[2] - VIEW_CLIP_PAD, b[3] + t[0] + VIEW_CLIP_PAD, b[4] + t[1] + VIEW_CLIP_PAD, b[5] + t[2] + VIEW_CLIP_PAD];
+      }
+    }
+    return _rwClip;
+  };
+  const drawOutsideStreet = (r, planes) => {
+    const ground = [], flats = [];
+    for (const p of built.values()) {
+      const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      if (ring > VIEW_RINGS) continue;
+      const t = state.pixelTranslation(p.px, p.py, p._t || (p._t = [0, 0, 0]));
+      let pixelMatrix = p._pixelMatrix;
+      if (!pixelMatrix) pixelMatrix = p._pixelMatrix = identity();
+      if (pixelMatrix[12] !== t[0] || pixelMatrix[13] !== t[1] || pixelMatrix[14] !== t[2]) {
+        pixelMatrix[12] = t[0]; pixelMatrix[13] = t[1]; pixelMatrix[14] = t[2];
+        p._worldGen = (p._worldGen | 0) + 1;
+      }
+      if (p._box && aabbOutside(planes, p._box, t[0], t[1], t[2])) continue;
+      if (p.staticBatch) r.drawMesh(p.staticBatch, pixelMatrix, null);
+      for (const m of p.models) {
+        if (m._batched || aabbOutside(planes, m._box, t[0], t[1], t[2])) continue;
+        if (m._worldGen !== p._worldGen || !m._world) { m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16)); m._worldGen = p._worldGen | 0; }
+        r.drawMesh(m.gpu, m._world, m.texRemap ?? p.texRemap);
+      }
+      if (!p.deepWaters?.hide) ground.push(p);
+      for (const fb of p.batches) {
+        if (aabbOutside(planes, fb._box, t[0], t[1], t[2]) || !farFlatVisibleAt(ring, fb.farH ?? fb.size?.h ?? 0, fb.frame != null)) continue;
+        fb.origin = t;
+        flats.push(fb);
+      }
+    }
+    for (const cell of ground) r.drawTerrain(cell.dwTerrain ?? cell.terrain, cell._pixelMatrix, r.tileArrays.get(cell.groundArchive), cell.tilemapTex, 6.4, !!cell._dwBytes, ecoDraw(cell));
+    if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
+  };
+  const outsideView = (doorMatrix) => ({
+    clip: outsideViewClip(doorMatrix),
+    setup: (r) => {   // the clock's light: an hour spent indoors is an hour later outside
+      const clockMinute = minuteNow();
+      r.setLighting(exteriorAmbient(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), 1), sunScale(clockMinute), SUN_RIG_COLOR);
+      r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
+      if (!lightsOnAt(clockMinute)) r.setPointLights(new Float32Array(0), CITY_LIGHT_COLOR_F32);
+      return sunDirection(clockMinute);
+    },
+    draw: ({ renderer: r, planes }) => drawOutsideStreet(r, planes),
+  });
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -27203,6 +27268,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
     cardStakes,   // CARDS6: a realm character's stakes at a relay's gold table (null off the realm)
@@ -32061,6 +32127,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
+    renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass - a frame's, asked after its beginFrame; and the street as it stands, kept for a building's view out
     // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
     // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
     // and dividing all four coefficients by a positive length cannot

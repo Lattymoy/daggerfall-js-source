@@ -417,6 +417,7 @@ import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../character
 import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js';   // ROAD-D D10: GetPortraitIndexFromStaticNPCBillboard
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { realWindowsMode, createViewOut, viewOutFrame } from '../render/realWindows.js';   // RW1: the view out through a building's glass
 import { raiseContainerLootSpawned } from '../systems/containerLoot.js';   // FORAGE3: PlayerActivate.OnLootSpawned, one home - RRI2's shelf subscribers first (bandage stacks, store-quality wear, the alchemist's potions), then Foraging's
 import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon; RR2: the refined training window's switches
 import { rrVariantPerson } from '../systems/rrVariants.js';   // RR2: the variant keepers and residents
@@ -1699,6 +1700,7 @@ export function createWorldModes(host) {
   // building brings its own).
   const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider, effects: interiorHitEffects });   // FIELD-GUN14: the orb's flat rides the host's own one-shot pool, which this frame already draws
   let _arrowsCtx = null;
+  const viewOut = createViewOut();   // RW1: this host's view out through a building's glass (render/realWindows.js)
   let interiorCtx = null;
   // WORLD6a (Mac: "Lets tackle #1 next"): THE BUILDING IS A WORLD ROOM. The live wiring the pure half
   // (world/interiorShared.js) is handed: this interior's key (the relay room's own spelling), the context's stamp
@@ -10267,6 +10269,11 @@ export function createWorldModes(host) {
     renderer.setMoonlight(null);
     renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
+    // RW1 (render/realWindows.js): THE VIEW OUT - the street through this building's glass, drawn by the exterior host
+    // (host.outsideView: its lights, its pixels, this building left out) into a target of its own, before this frame's
+    // lamps and its beginFrame; a bracket, so the room's light just set is put back as it was; cropped to the glass the
+    // last frame met, kept while the camera is still
+    const _rwView = viewOutFrame(viewOut, { renderer, mode: realWindowsMode(), proj, view, now: performance.now(), scene: host.outsideView?.(exteriorDoor?.matrix ?? null) ?? null });
     // AUDIT 26 F001: DaggerfallInterior lays out EVERY interior mesh
     // with WindowStyle.Disabled - individual models (:473), the
     // combined static batch (:517) and action doors (:1270) - and
@@ -10308,6 +10315,7 @@ export function createWorldModes(host) {
     renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
+    renderer.setGlassView(_rwView);   // RW1: the street (or the sky) behind the glass, its texels cut to it - and this frame's glass measured for the next
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
     host.drawCardRegulars?.({ proj, view, eye: mwv.eye });   // CARDS4b: the card table's regulars, in their chairs

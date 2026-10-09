@@ -1931,7 +1931,7 @@ function graphicsPresetRow() {
   row.dataset.opt = 'graphicsPreset';
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', 'Quality preset'));
-  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness and water.'));
+  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness, water and windows.'));   // RW1: and the real windows
   row.append(main);
   const ctl = el('div', 'ctl');
   const seg = el('div', 'ft-seg');

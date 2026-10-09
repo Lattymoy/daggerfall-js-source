@@ -18,6 +18,8 @@ import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's sha
 // then. The imports hoist and the leaves have no imports of their own, so
 // this is already guaranteed - the lines stand where they read as the rule.
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
+import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
 import { CLIP_SENTINEL } from '../world/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
 
 const VS = `#version 300 es
@@ -98,9 +100,11 @@ uniform vec4 uAutomapWaterColor;    // _WaterColor: UnderwaterFog.waterMapColor,
 ${CLOUD_SHADOW_GLSL}
 ${BAYER_GLSL}
 ${DISSOLVE_GLSL}
+${realWindowsGlsl('c')}
 out vec4 outColor;
 ${FOG_GLSL}
 void main() {
+${RW_MAIN_DERIVS}
   int amMode = int(uAutomapMode + 0.5);
   // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY). c2/S6: the
   // above-slice pass INVERTS it - DFU's second pass keeps exactly the
@@ -114,6 +118,7 @@ void main() {
   // INCIDENT 2026-09-04: no alpha clip here - DaggerfallDefault.shader is
   // RenderType Opaque with no clip(); the mortar runs of a wall texture
   // are palette index 0 and were being discarded as cutouts.
+${RW_MAIN_CUTOUT}
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   diff *= cloudShadowAt(vWorldPos);   // VC4: the cloud's shadow on the sun term
@@ -128,6 +133,7 @@ void main() {
   // ours: a window mask can be brighter than the glass texel under it,
   // and a negative albedo has no honest meaning here.
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+${RW_MAIN_GLASS}
   vec3 albedo = max(tex.rgb - emission, vec3(0.0));
   vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;   // BA1: Trilight
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
@@ -150,6 +156,7 @@ void main() {
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+${RW_MAIN_ROOM}
   // The emission (window style from getWindowColors32, or an auto-emissive
   // record's own albedo at Color.white) goes back on top of the lighting
   // its subtraction above paid for - o.Emission = emission.
@@ -1195,6 +1202,8 @@ export const FLAT_LIGHT_FLOOR = 0.25;
 
 export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
 export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
+/** RW1: the view out's clear - nothing at all, so the background paints its sky wherever the street drew nothing. */
+export const VIEW_OUT_CLEAR = Object.freeze([0, 0, 0, 0]);
 
 /** AUDIT 65 RS-3: the texture unit the cloud-shadow map is RESERVED on
  *  (_uploadCloudShadow). It used to be 7, which is also where the
@@ -1454,6 +1463,20 @@ export class Renderer {
     // already reads its mask untinted, which IS white; the mesh path
     // multiplies by uEmissionColor, so it needs the distinction.
     this.emissionWhite = new Set();
+    // RW1 (render/realWindows.js): THE REAL WINDOWS' STATE. Which emission maps are DFU's window masks (the rooms'
+    // glass - uploadEmissionTexture { window: true }), an interior's declared glass (uploadGlassMask), the cutout
+    // pictures (uploadTexture { cutout: true }), the frame's switches (`_rw`: rooms asked, glass watched, the view out
+    // live, its rectangle in window pixels), the glass the watched frame met (`_rwAcc`), and the hooks a context hangs
+    // on the view out: draws the street pass also makes (`outsideViewDraws`), meshes it leaves out (`outsideViewSkip`).
+    this.windowMasks = new Set();
+    this.glassMasks = new Map();
+    this._cutoutArt = new WeakSet();
+    this._rw = { rooms: false, watch: false, live: false, rect: new Float32Array(4), rectGen: 0 };
+    this._rwAcc = { n: 0, holes: false, rect: [1, 1, -1, -1] };
+    this.outsideViewDraws = new Set();
+    this.outsideViewSkip = new Set();
+    this._rwExterior = null; this._rwTarget = null; this._rwOutside = null; this._rwBg = null; this._rwEmptyVao = null;   // made on the first ask
+    this._rwPv = null; this._rwQ = null; this._rwClipOn = false; this._rwViewDraws = 0;
     // The value last uploaded to the solid program's uEmissionColor
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
@@ -2035,6 +2058,13 @@ export class Renderer {
     this.uIndirectColor = gl.getUniformLocation(this.program, 'uIndirectColor');
     this._solidFog = this._fogLocs(this.program);
     this.uDissolveCut = gl.getUniformLocation(this.program, 'uDissolveCut');   // SHIP-FADE: the installed mesh program's dissolve
+    this.rwLocs = {   // RW1: the real windows' uniforms on the installed mesh program - and what this program holds of them is not known yet
+      mode: gl.getUniformLocation(this.program, 'uWinMode'), cut: gl.getUniformLocation(this.program, 'uCutout'),
+      rect: gl.getUniformLocation(this.program, 'uGlassRect'), lamp: gl.getUniformLocation(this.program, 'uRoomLamp'),
+      day: gl.getUniformLocation(this.program, 'uRoomDay'),
+      clipMin: gl.getUniformLocation(this.program, 'uViewClipMin'), clipMax: gl.getUniformLocation(this.program, 'uViewClipMax'),
+    };
+    this._rwModeUp = -1; this._rwCutUp = -1; this._rwRectUp = -1; this._rwLightE = null; this._rwLightA = null;
     // Character program (C4b): rig vertex-color path, same scene
     // lighting/fog model as the mesh program.
     this.charProgram = set.char;
@@ -4202,6 +4232,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // that quietly ignores an argument is a trap, not a cache.
     const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}${opts.clamp && !opts.smooth ? '#clamp' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
     this._uploadSink?.(false, key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a hit is asked for too - the place asking holds it
+    if (opts.cutout) this._markCutout(this.textures.get(key));   // RW1: a cutout ask cuts the picture the key already holds, too
     if (this.textures.has(key)) {
       // WD3 (AUDIT WD3 T3): a stand-in's clear placeholder (no picture at the time - a fetch that failed, a gate shut) is
       // never the key's for good: a real picture asked under it later takes its place
@@ -4250,6 +4281,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.textures.set(key, tex);
     if (opts.placeholder) (this._placeholders ??= new Set()).add(key);
     if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
+    if (opts.cutout) this._markCutout(tex);   // RW1: { cutout: true } - the texture's own treatment in every solid pass (a texel under half alpha is a hole)
     const base = `${archive}_${record}`;
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
@@ -4257,6 +4289,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     (this._texBaseOf ??= new Map()).set(key, base);   // FIELD BUGS 2026-10-04d PLACE-LRU (a bare prototype's too, as _placeholders)
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
+  }
+
+  /** RW1: A CUTOUT PICTURE - `uploadTexture(archive, record, color32, { cutout: true })`. The property rides the
+   *  texture (OVH2's `_alphaArt` shape), so every solid draw of it - drawMesh, a static batch's sub-mesh, the shadow
+   *  casters - discards the texels whose alpha is under a half; every other picture keeps INCIDENT 2026-09-04's law
+   *  (the mesh shader clips nothing). A hole in a room's wall shows what is behind it: in an interior with the view out
+   *  live, the street. The sub-meshes stamped before the mark look again. */
+  _markCutout(tex) {
+    if (!tex || this._cutoutArt?.has(tex)) return;
+    (this._cutoutArt ??= new WeakSet()).add(tex);
+    this._texGen++;
   }
 
   /** FIELD BUGS 2026-10-04d PLACE-LRU: LET GO OF ONE CACHE KEY - exactly that key, never a variant beside it
@@ -4280,10 +4323,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** FIELD BUGS 2026-10-04d PLACE-LRU: the same, for an emission map (keyed "archive_record" alone). */
   evictEmissionTexture(key) {
+    if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key
+      const glass = this.glassMasks.get(key);
+      this.glassMasks.delete(key);
+      if (glass) this.gl.deleteTexture(glass);
+      if (this._tex1Bound === glass) this._tex1Bound = null;
+      this._texGen++;
+      return true;
+    }
     const tex = this.emissionTextures.get(key);
     if (tex === undefined) return false;
     this.emissionTextures.delete(key);
     this.emissionWhite.delete(key);
+    this.windowMasks?.delete(key);   // RW1
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex1Bound === tex) this._tex1Bound = null;
     this._texGen++;
@@ -4546,6 +4598,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
+    this._rwFrame();   // RW1: the rooms and the glass are a frame's - an exterior host asks for rooms after this (setWindowRooms), an interior for its glass (setGlassView)
   }
 
   /**
@@ -4635,6 +4688,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // mid-frame would hand the host a full canvas it never asked
       // for.
       worldViewportPx: this._worldViewportPx,
+      realWindows: this._rw ? { rooms: this._rw.rooms, watch: this._rw.watch, live: this._rw.live } : null,   // RW1: the frame's rooms and glass - the panel's beginFrame drops them, the world frame gets them back
       rect,
     };
     this.setScreenOffset(0, 0);
@@ -4719,6 +4773,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.CULL_FACE);
     this.clearScreenScissor();
     this._worldViewportPx = s.worldViewportPx;   // E5: back to the host's world rect (null = full canvas)
+    if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);   // RW1
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     if (this._worldViewportPx) this._restoreWorldViewport();
     this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
@@ -4732,6 +4787,335 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   panelFrame({ proj, view, lightDir, rect, clear = PANEL_CLEAR_RGBA, setup = null }, body) {
     this.beginPanelFrame(proj, view, lightDir, rect, clear, setup);
     try { return body(); } finally { this.endPanelFrame(); }
+  }
+
+  // ===== RW1: THE REAL WINDOWS (render/realWindows.js carries the law; this is its GL) =====
+
+  /** RW1: the frame's rooms and glass dropped - beginFrame's last line. */
+  _rwFrame() {
+    const rw = this._rw;
+    if (!rw) return;
+    rw.rooms = false; rw.watch = false; rw.live = false;
+  }
+
+  /** RW1: AN EXTERIOR FRAME ASKS FOR ITS ROOMS, after its beginFrame (the rooms are a frame's - an interior, a dungeon,
+   *  a panel or a map never asks, so never draws one). `mode` is realWindowsMode()'s answer; 'off' asks none. The
+   *  exterior's light, fog, lanterns and window style as they stand are kept for a building's view out. */
+  setWindowRooms(mode) {
+    const rw = this._rw;
+    if (!rw) return;
+    rw.rooms = !!mode && mode !== 'off';
+    this._rwKeepExterior();
+  }
+
+  /** RW1: the exterior as the last exterior frame lit it - copied into buffers kept for the purpose (no allocation a
+   *  frame), read by the view out's pass. */
+  _rwKeepExterior() {
+    const k = (this._rwExterior ??= {
+      ambient: new Float32Array(3), sunColor: new Float32Array(3), lightDir: new Float32Array([0, 1, 0]), moonDir: new Float32Array(3),
+      moonColor: new Float32Array(3), fogColor: new Float32Array(3), emission: new Float32Array(3), pointColor: new Float32Array(3),
+      points: new Float32Array(4 * 64), colors: new Float32Array(3 * 64), n: 0, hasColors: false, tri: null,
+      sunScale: 0, moonScale: 0, fogMode: 0, fogDensity: 0, fogStart: 0, fogEnd: 0, taken: false,
+    });
+    const c3 = (dst, src) => { if (src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; } };
+    c3(k.ambient, this._ambient); c3(k.sunColor, this._sunColor); c3(k.lightDir, this._lightDir);
+    k.sunScale = this._sunScale; k.moonScale = this._moonScale; c3(k.moonDir, this._moonDir); c3(k.moonColor, this._moonColor);
+    k.tri = this._ambientTri;   // replaced on every set, never written in place (setAmbientTrilight copies)
+    k.fogMode = this._fogMode; k.fogDensity = this._fogDensity; k.fogStart = this._fogRange[0]; k.fogEnd = this._fogRange[1];
+    c3(k.fogColor, this._fogColor); c3(k.emission, this._windowEmission); c3(k.pointColor, this._pointColor);
+    const p = this._pointLights, n = Math.min(p?.length ?? 0, k.points.length);
+    if (n) k.points.set(p.subarray ? p.subarray(0, n) : p.slice(0, n));
+    k.n = n;
+    const cols = this._pointColors, cn = Math.min(cols?.length ?? 0, k.colors.length, (n / 4) * 3);
+    k.hasColors = !!cols && cn > 0;
+    if (k.hasColors) k.colors.set(cols.subarray ? cols.subarray(0, cn) : cols.slice(0, cn));
+    k.taken = true;
+  }
+
+  /** RW1: THE VIEW OUT'S TARGET - a colour texture and a depth renderbuffer, sized by the bucket and kept; the
+   *  framebuffer is attached on the draw path (the upload law: creation binds no framebuffer). */
+  _rwEnsureTarget(w, h) {
+    let t = this._rwTarget;
+    if (t && t.allocW === w && t.allocH === h) return t;
+    if (t) this.releaseOutsideView();
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    this._bindTex0(tex);   // PERF-TEX3: unit 0 through its helper, the shadow kept true
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this._bindTex0(null);   // the target is never left on a unit: its pass draws into it
+    const rb = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    t = this._rwTarget = { fbo: gl.createFramebuffer(), tex, rb, allocW: w, allocH: h, w, h, attached: false, proj: new Float32Array(16), pv: new Float32Array(16), planes: new Float32Array(24), fog: null };
+    return t;
+  }
+
+  /** RW1: the view out's target let go (EVERY ALLOCATION HAS AN OWNER - realWindows.js viewOutFrame frees it once no
+   *  glass has wanted it for VIEW_RELEASE_MS). */
+  releaseOutsideView() {
+    const t = this._rwTarget;
+    if (!t) return;
+    this._rwTarget = null;
+    const gl = this.gl;
+    gl.deleteFramebuffer(t.fbo); gl.deleteTexture(t.tex); gl.deleteRenderbuffer(t.rb);
+  }
+
+  /**
+   * RW1: THE VIEW OUT, DRAWN - the street from the interior's own camera, cropped to the glass's rectangle `rect`
+   * (NDC: the rectangle becomes the pass's whole clip space, so a small pane is a small pass), into the view out's
+   * target at VIEW_SCALE of the world's pixels. Runs BEFORE the interior frame's beginFrame, as a bracket the panel's
+   * shape: what it sets it puts back in a `finally`. The lane is suspended (a picture through glass is drawn on the
+   * classic set - no shadow maps, no light grid, no air pass), the shadow pass records nothing, and the lane's frame
+   * image is left alone. The light is the exterior's as its last frame kept it (setWindowRooms), with
+   * `scene.setup(renderer)` over it before the frame begins (a host's clock); `scene.draw(info)` is the exterior
+   * host's street, then every `outsideViewDraws` hook. The neighbours' windows show their rooms. Answers whether a
+   * picture was made.
+   * @param {number[]} rect @param {Float32Array} proj @param {Float32Array} view
+   * @param {{ setup?: (r: Renderer) => (ArrayLike<number> | void), clip?: ArrayLike<number> | null, draw: (info: { renderer: Renderer, proj: Float32Array, view: Float32Array, pv: Float32Array, planes: Float32Array, eye: number[] }) => void }} scene
+   */
+  outsideViewFrame(rect, proj, view, scene) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    if (this._rwOutside || this._panelSaved || !this._rw || typeof scene?.draw !== 'function') return false;
+    // AUDIT RETRO1 B2's order: a world image still owed is shown before a framebuffer of this pass's own is bound
+    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }
+    const gl = this.gl;
+    const size = viewTargetSize(rect, this.canvas.width, this.canvas.height);
+    const t = this._rwEnsureTarget(size.allocW, size.allocH);
+    t.w = size.w; t.h = size.h;
+    const cropProj = cropProjection(proj, rect, t.proj);
+    const was = this._rwOutside = {
+      lane: this._lane, air: this._air, shadows: this._shadows, frameFbo: this._frameFbo, frameTarget: frameTarget(),
+      ambient: this._ambient, ambientTri: this._ambientTri, sunScale: this._sunScale, sunColor: this._sunColor, clockLit: this._clockLit,
+      moonScale: this._moonScale, moonDir: [...this._moonDir], moonColor: [...this._moonColor],
+      fogMode: this._fogMode, fogDensity: this._fogDensity, fogRange: [this._fogRange[0], this._fogRange[1]], fogColor: this._fogColor,
+      windowEmission: this._windowEmission, pointLights: this._pointLights, pointCarried: this._pointCarried, pointColor: this._pointColor, pointColors: this._pointColors,
+      indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]], indirectColor: this._indirectColor,
+      clearColor: [this._clearColor[0], this._clearColor[1], this._clearColor[2], this._clearColor[3]],
+      proj: this._proj, view: this._view, lightDir: this._lightDir, camPos: [this._camPos[0], this._camPos[1], this._camPos[2]],
+      worldViewportPx: this._worldViewportPx, rw: { rooms: this._rw.rooms, watch: this._rw.watch, live: this._rw.live },
+    };
+    let drew = false;
+    try {
+      if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }
+      this._air = null; this._shadows = null;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, t.fbo);
+      if (!t.attached) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t.tex, 0);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, t.rb);
+        t.attached = true;
+      }
+      this._frameFbo = t.fbo; setFrameTarget(t.fbo);
+      const k = this._rwExterior;
+      if (k?.taken) {
+        this.setLighting(new Float32Array(k.ambient), k.sunScale, new Float32Array(k.sunColor), k.tri);
+        this.setMoonlight(k.moonScale ? { scale: k.moonScale, dir: k.moonDir, color: k.moonColor } : null);
+        this.setFog(FOG_MODE_NAMES[k.fogMode] ?? 'off', k.fogDensity, k.fogStart, k.fogEnd, new Float32Array(k.fogColor));
+        this.setWindowEmission(new Float32Array(k.emission));
+        this.setPointLights(k.points.slice(0, k.n), new Float32Array(k.pointColor), k.hasColors ? k.colors.slice(0, (k.n / 4) * 3) : null);
+      }
+      this.setIndirectLight([0, 0, 0], 0, new Float32Array(3));   // the player's indirect light is indoors with the player
+      const sunDir = scene.setup?.(this);   // the host's light over the kept one - and the sun's direction, when it says
+      if (!k?.taken) {   // no street frame kept yet (a save loaded indoors): the classic haze, as bright as the host's sun says
+        const day = Math.min(1, Math.max(0, this._sunScale / 0.6)), f = 0.1 + 0.9 * day;
+        this.setFog('linear', 0, 0, 2400, new Float32Array([SKY_CLEAR[0] * f, SKY_CLEAR[1] * f, SKY_CLEAR[2] * f]));
+      }
+      t.fog = Float32Array.from(this._fogColor);   // the background's sky stands under the same air
+      this.setClearColor(VIEW_OUT_CLEAR);   // nothing drawn is the sky: the background paints it
+      this.beginFrame(cropProj, view, sunDir ?? (k?.taken ? k.lightDir : this._lightDir));
+      gl.viewport(0, 0, t.w, t.h);
+      this._worldViewportPx = [0, 0, t.w, t.h];   // a pass that restores "the world's" viewport restores this one
+      this._rw.rooms = true;   // the neighbours' windows show their rooms
+      const box = scene.clip ?? null;   // the building the player stands in: its shell would stand between the glass and the street
+      if (box && this.rwLocs?.clipMax) {
+        gl.uniform4f(this.rwLocs.clipMin, box[0], box[1], box[2], 0);
+        gl.uniform4f(this.rwLocs.clipMax, box[3], box[4], box[5], 1);
+        this._rwClipOn = true;
+      }
+      mat4Multiply(cropProj, view, t.pv);
+      spherePlanes(t.pv, t.planes);
+      const info = { renderer: this, proj: cropProj, view, pv: t.pv, planes: t.planes, eye: [this._camPos[0], this._camPos[1], this._camPos[2]] };
+      scene.draw(info);
+      for (const f of this.outsideViewDraws) f(info);
+      this._rwViewDraws = this.stats.draws;
+      drew = true;
+    } catch (e) {
+      console.warn('[real windows] the view out could not be drawn', e?.message ?? e);
+    } finally {
+      if (this._rwClipOn) { this._use(this.program); gl.uniform4f(this.rwLocs.clipMax, 0, 0, 0, 0); this._rwClipOn = false; }   // the box is the pass's alone
+      this._worldViewportPx = was.worldViewportPx;
+      this._frameFbo = was.frameFbo; setFrameTarget(was.frameTarget);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, was.frameTarget ?? null);
+      this._air = was.air; this._shadows = was.shadows;
+      if (was.lane) { this._lane = was.lane; this._installWorldSet(this._laneSet); }
+      this.setFog(FOG_MODE_NAMES[was.fogMode] ?? 'off', was.fogDensity, was.fogRange[0], was.fogRange[1], was.fogColor);
+      this.setLighting(was.ambient, was.sunScale, was.sunColor);
+      this.setAmbientTrilight(was.ambientTri);
+      this._clockLit = was.clockLit;
+      this.setMoonlight(was.moonScale ? { scale: was.moonScale, dir: was.moonDir, color: was.moonColor } : null);
+      this._moonDir[0] = was.moonDir[0]; this._moonDir[1] = was.moonDir[1]; this._moonDir[2] = was.moonDir[2];
+      this._moonColor[0] = was.moonColor[0]; this._moonColor[1] = was.moonColor[1]; this._moonColor[2] = was.moonColor[2];
+      this.setWindowEmission(was.windowEmission);
+      this.setPointLights(was.pointLights, was.pointColor, was.pointColors);
+      this._pointCarried = was.pointCarried ?? null;
+      this.setIndirectLight([was.indirect[0], was.indirect[1], was.indirect[2]], was.indirect[3], was.indirectColor);
+      this.setClearColor(was.clearColor);
+      this._proj = was.proj; this._view = was.view; this._lightDir = was.lightDir;
+      this._camPos[0] = was.camPos[0]; this._camPos[1] = was.camPos[1]; this._camPos[2] = was.camPos[2];
+      Object.assign(this._rw, was.rw);
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      if (this._worldViewportPx) this._restoreWorldViewport();
+      this.markForeignPass();
+      this._rwOutside = null;
+    }
+    return drew;
+  }
+
+  /** RW1: is a drawMesh inside the view out's pass, and is this mesh one a context asked it to leave out (the
+   *  building or the wagon the player stands in - `outsideViewSkip`)? */
+  _rwSkips(mesh) { return !!this._rwOutside && !!this.outsideViewSkip?.has(mesh); }
+
+  /**
+   * RW1: THE INTERIOR FRAME'S GLASS, after its beginFrame. Arms the watch (this frame's glass and cutout holes are
+   * measured, for the next frame's view out - takeGlassRect) and, given what realWindows.js viewOutFrame answered,
+   * paints the background inside the glass's rectangle - the street (`view`) or the sky alone - and, with the street
+   * in it, cuts the glass texels inside that rectangle. Null paints nothing and cuts nothing: the room as it was.
+   * @param {{ rect: number[], view: boolean } | null} vo
+   */
+  setGlassView(vo) {
+    const rw = this._rw;
+    if (!rw) return;
+    rw.watch = true;
+    rw.live = false;
+    this._rwPv = mat4Multiply(this._proj, this._view, this._rwPv ?? new Float32Array(16));
+    if (!vo?.rect) return;
+    this._close2D();   // PERF-2D: the baseline back before the background draws
+    const gl = this.gl;
+    const vp = this._worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight];
+    rw.rect[0] = vp[0] + (vo.rect[0] + 1) / 2 * vp[2]; rw.rect[1] = vp[1] + (vo.rect[1] + 1) / 2 * vp[3];
+    rw.rect[2] = vp[0] + (vo.rect[2] + 1) / 2 * vp[2]; rw.rect[3] = vp[1] + (vo.rect[3] + 1) / 2 * vp[3];
+    rw.rectGen++;
+    const t = this._rwTarget;
+    const street = !!vo.view && !!t;
+    const P = (this._rwBg ??= this._rwBgProgram());
+    this._use(P.p);
+    gl.uniform4f(P.rect, vo.rect[0], vo.rect[1], vo.rect[2], vo.rect[3]);
+    const rays = viewRays(this._proj, this._view);
+    gl.uniform3fv(P.rayX, rays.x); gl.uniform3fv(P.rayY, rays.y); gl.uniform3fv(P.rayZ, rays.z);
+    const sky = viewSkyFrom((street ? t.fog : null) ?? (this._rwExterior?.taken ? this._rwExterior.fogColor : null));
+    gl.uniform3fv(P.zenith, sky.zenith); gl.uniform3fv(P.horizon, sky.horizon);
+    gl.uniform1f(P.has, street ? 1 : 0);
+    gl.uniform2f(P.scale, street ? t.w / t.allocW : 1, street ? t.h / t.allocH : 1);
+    gl.uniform1i(P.view, 0);
+    this._bindTex0(street ? t.tex : null);   // PERF-TEX3: unit 0 through its helper
+    this._bindVao(this._rwEmptyVao ??= gl.createVertexArray());
+    gl.disable(gl.DEPTH_TEST);   // the background: no depth of its own - the room draws over it
+    gl.disable(gl.CULL_FACE);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.stats.draws++;
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._bindTex0(null);   // the view out is never left on a unit: its next pass draws into it
+    this._bindVao(null);
+    rw.live = street;
+  }
+
+  /** RW1: the background's program, built on the first interior that wants it. */
+  _rwBgProgram() {
+    const p = this._buildProgram(VIEW_BG_VS, VIEW_BG_FS), gl = this.gl;
+    const u = (n) => gl.getUniformLocation(p, n);
+    return { p, rect: u('uRect'), view: u('uView'), scale: u('uViewScale'), has: u('uHasView'), rayX: u('uRayX'), rayY: u('uRayY'), rayZ: u('uRayZ'), zenith: u('uZenith'), horizon: u('uHorizon') };
+  }
+
+  /** RW1: the rectangle (NDC) the last watched frame's glass and cutout holes covered, and whether any of it was a
+   *  hole - then forgotten. Null when it met none. */
+  takeGlassRect() {
+    const a = this._rwAcc;
+    if (!a || !a.n) { if (a) a.holes = false; return null; }
+    const out = { rect: [a.rect[0], a.rect[1], a.rect[2], a.rect[3]], holes: a.holes };
+    a.n = 0; a.holes = false; a.rect[0] = 1; a.rect[1] = 1; a.rect[2] = -1; a.rect[3] = -1;
+    return out;
+  }
+
+  /** RW1: one sub-mesh's window mode and its picture's cutout, sent only when they change (two uniforms, shadowed per
+   *  installed program), and - in a watched frame - its glass measured. */
+  _rwSubMesh(sm, modelMatrix) {
+    const L = this.rwLocs;
+    if (!L) return;
+    const gl = this.gl, rw = this._rw;
+    const kind = sm._evWin ?? GLASS_NONE, cut = sm._evCut ? 1 : 0;
+    const mode = rw && kind !== GLASS_NONE ? winModeFor(kind, rw.rooms, rw.live) : 0;
+    if (mode === 1) this._rwRoomLight();
+    else if (mode === 3 && this._rwRectUp !== rw.rectGen) { gl.uniform4fv(L.rect, rw.rect); this._rwRectUp = rw.rectGen; }
+    if (mode !== this._rwModeUp) { gl.uniform1f(L.mode, mode); this._rwModeUp = mode; }
+    if (cut !== this._rwCutUp) { gl.uniform1f(L.cut, cut); this._rwCutUp = cut; }
+    if (rw?.watch && (kind !== GLASS_NONE || cut)) this._rwWatch(sm, modelMatrix, !!cut);
+  }
+
+  /** RW1: the rooms' light for this frame's window style and ambient (realWindows.js roomLightFor), sent once per
+   *  change on the installed program. */
+  _rwRoomLight() {
+    const e = this._windowEmission, a = this._ambient;
+    if (this._rwLightE === e && this._rwLightA === a) return;
+    this._rwLightE = e; this._rwLightA = a;
+    const l = roomLightFor(e, a), L = this.rwLocs, gl = this.gl;
+    const lamp = this._c3(l.lamp, this._decA);
+    gl.uniform4f(L.lamp, lamp[0], lamp[1], lamp[2], l.night);
+    gl.uniform3fv(L.day, this._c3(l.day, this._decB));
+  }
+
+  /** RW1: a glass or cutout sub-mesh in a watched frame - its spheres (a static batch's pieces, one a model, or the
+   *  sub-mesh's own) through the frame's view-projection, into the rectangle the next view out is cropped to. */
+  _rwWatch(sm, m, holes) {
+    const a = this._rwAcc, pv = this._rwPv;
+    if (!a || !pv) return;
+    const s = sm.pieces ?? sm._bounds;
+    const sc = Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));
+    const q = (this._rwQ ??= [0, 0, 0, 0]);
+    for (let i = 0; i + 3 < (s ? s.length : 4); i += 4) {
+      let r;
+      if (s) {
+        const x = s[i], y = s[i + 1], z = s[i + 2];
+        r = sphereNdcRect(pv, m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14], s[i + 3] * sc, q);
+      } else { q[0] = -1; q[1] = -1; q[2] = 1; q[3] = 1; r = q; }   // no bounds: all of the screen
+      if (!r) continue;
+      if (r[0] < a.rect[0]) a.rect[0] = r[0]; if (r[1] < a.rect[1]) a.rect[1] = r[1];
+      if (r[2] > a.rect[2]) a.rect[2] = r[2]; if (r[3] > a.rect[3]) a.rect[3] = r[3];
+      a.n++;
+      if (holes) a.holes = true;
+    }
+  }
+
+  /** RW1: AN INTERIOR'S GLASS, DECLARED - the one door for a room that is not ARENA2's own (the caravan's, a mod's)
+   *  and for the data pipeline's detected glass (realWindows.js interiorGlassMask). `color32` is a mask in the
+   *  emission maps' shape: white texels are glass. It rides the emission unit where the record has no emission map
+   *  of its own and is never an emission (the glass wears no window style); in an interior frame with the view out
+   *  live, its texels are cut to the street. A record that already has an emission map (a window of DFU's table) is
+   *  glass already - nothing is declared, and null answers. Freed by evictEmissionTexture, under the same `e:` key. */
+  uploadGlassMask(archive, record, color32, opts = {}) {
+    const key = `${archive}_${record}`;
+    if (this.glassMasks.has(key)) { this._uploadSink?.(true, key); return this.glassMasks.get(key); }
+    if (this.emissionTextures.has(key)) return null;
+    const tex = this.uploadEmissionTexture(archive, record, color32, { replacement: !!opts.replacement });   // the one mask door: its chain, its sampling, its sink
+    this.emissionTextures.delete(key);
+    this.emissionWhite.delete(key);
+    this.windowMasks.delete(key);
+    this.glassMasks.set(key, tex);
+    this._texGen++;   // EV2: a sub-mesh stamped before the declaration looks again
+    return tex;
+  }
+
+  /** RW1: back to the end of a mesh's sub-meshes - the window mode and the cutout off again, so no other pass that
+   *  draws on the mesh program inherits either. */
+  _rwRest() {
+    const L = this.rwLocs;
+    if (!L) return;
+    if (this._rwModeUp !== 0) { this.gl.uniform1f(L.mode, 0); this._rwModeUp = 0; }
+    if (this._rwCutUp !== 0) { this.gl.uniform1f(L.cut, 0); this._rwCutUp = 0; }
   }
 
   /** Active window style emission (windowEmissionRGB output). */
@@ -5163,6 +5547,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const key = `${archive}_${record}`;
     this._uploadSink?.(true, key);   // FIELD BUGS 2026-10-04d PLACE-LRU: hit or miss, as uploadTexture's
     if (opts.white) this.emissionWhite.add(key);
+    if (opts.window) (this.windowMasks ??= new Set()).add(key);   // RW1: DFU's window mask - the rooms' glass outdoors, the street's indoors
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -6763,6 +7148,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  noShadow are off). */
   drawMesh(mesh, modelMatrix, texRemap = null, { noShadow = false } = {}) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    if (this._rwOutside && this._rwSkips(mesh)) return;   // RW1: the view out leaves out what a context asked it to (outsideViewSkip)
     this._drawMeshBundle(mesh, modelMatrix, texRemap, false, noShadow);
   }
 
@@ -6833,6 +7219,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
           sm._evTex = tex;
           sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;
           sm._evEmisWhite = this.emissionWhite.has(resolved);
+          // RW1: what the sub-mesh's glass is - DFU's window mask (the rooms' outdoors, the street's indoors), or an
+          // interior's declared glass on the emission unit where no emission map is - and whether its picture is a cutout
+          const glassMask = sm._evEmis === this._blackTex ? this.glassMasks?.get(resolved) : undefined;
+          if (glassMask) sm._evEmis = glassMask;
+          sm._evWin = glassMask ? GLASS_INTERIOR : this.windowMasks?.has(resolved) ? GLASS_EXTERIOR : GLASS_NONE;
+          sm._evCut = !!this._cutoutArt?.has(tex);
+          if (sm._evCut) mesh._evAnyCut = true;   // the shadow replay draws this mesh's sub-meshes one by one, the cut ones cut
           sm._evGen = this._texGen;
           sm._evRemap = texRemap;
         }
@@ -6845,6 +7238,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         gl.uniform3fv(this.uEmissionColor, this._c3(emisColor));   // EL1
         this._emissionColorUp = emisColor;
       }
+      if (sm._evWin || sm._evCut || this._rwModeUp !== 0 || this._rwCutUp !== 0) this._rwSubMesh(sm, modelMatrix);   // RW1: the window mode and the cutout, sent when they change
       this._bindEmission(sm._evEmis);   // PERF-TEX: skipped when it is already the one on the unit, which it usually is
       this._bindTex0(tex);   // PERF-TEX3: a bundle whose sub-meshes repeat an archive re-bound the same texture every time
       if (wire) {
@@ -6856,6 +7250,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this.stats.draws++;
       }
     }
+    if (this._rwModeUp > 0 || this._rwCutUp > 0) this._rwRest();   // RW1: no other draw on the mesh program inherits a window mode or a cutout
     // EV6: no trailing unbind - the sorted drawLists mean the next
     // drawMesh is very often the SAME mesh, and the shadow then skips
     // the whole bind. Everything that binds a VAO or an element buffer
