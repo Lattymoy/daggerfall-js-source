@@ -1486,10 +1486,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (readClassicLocation, past the world-data door) - a town pack resizes a row's block grid (Beautiful Villages 3,240 of
   // its 7,317, Beautiful Cities 120 of 410), and a client whose pack failed to load stood other wild ground round 3,360
   // towns, up to 120 m off. The pack's own rect is still levelled by DFU's blend in its own pixel. Only a replaced row is
-  // read again (none with no pack; with both, about 3,400 rows, 75 ms).
+  // read again (none with no pack; with both, about 3,400 rows, 75 ms). AUDIT SD IV (S2): read once, for the landforms and
+  // the Hollow's cities and templates below alike.
+  const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);
+  let _classicRows = landform || params.has('online') ? _hubRows.map(classicRow).filter(Boolean) : null;
   if (landform) {
-    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);
-    _landformSites = landformSites(_hubRows.map(classicRow).filter(Boolean).map((loc) => { const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude); return { px: p.x, py: p.y, loc }; }));
+    _landformSites = landformSites(_classicRows.map((loc) => { const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude); return { px: p.x, py: p.y, loc }; }));
     _landformClimates = landformClimates((x, y) => maps.getClimateIndex(x, y));   // LANDFORM6: after the boot's coastal dilation (above), as every pixel streams them
     terrainGen.setLandformTables({ sites: _landformSites, climates: _landformClimates });
   }
@@ -1513,9 +1515,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // this is its one fix.)
   // SD2b: THE HOLLOW'S CITIES AND TEMPLATES (systems/sdSite.js), over the SAME rows - the game's own, so every client finds the
   // same city and clones the same deep place - kept here, before the rows go: the populated places alone, and the dungeons
-  // a Hollow may clone. Online alone.
-  const _sdCityRows = params.has('online') ? _hubRows.filter((loc) => !!hubClaim(loc, maps.getRegionName(loc.regionIndex))) : [];
-  const _sdTemplateRows = params.has('online') ? sdTemplates(_hubRows, isMainStoryDungeon) : [];
+  // a Hollow may clone. Online alone. AUDIT SD IV (S2): each AS MAPS.BSA HOLDS IT (classicRow, above) - a town pack rewrites
+  // the very fields a city's claim ranks by (its block grid, its buildings), and a client whose pack failed to load ranked
+  // a region's cities apart: its Hollow stood by another city, on another pixel, in another room.
+  const _sdCityRows = params.has('online') ? _classicRows.filter((loc) => !!hubClaim(loc, maps.getRegionName(loc.regionIndex))) : [];
+  const _sdTemplateRows = params.has('online') ? sdTemplates(_classicRows, isMainStoryDungeon) : [];
+  _classicRows = null;   // read, let go
   // HUB1: every region's main city, one answer on every client (systems/regionHubs.js) - read online alone
   const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the

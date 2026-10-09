@@ -169,5 +169,23 @@
     "tests": [
       "test/sd26_render.test.js"
     ]
+  },
+  {
+    "name": "SD26-S2-the-cities-over-the-served-rows",
+    "file": "src/scenes/world.js",
+    "old": "  const _sdCityRows = params.has('online') ? _classicRows.filter(",
+    "new": "  const _sdCityRows = params.has('online') ? _hubRows.filter(",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
+  },
+  {
+    "name": "SD26-S2-the-templates-over-them",
+    "file": "src/scenes/world.js",
+    "old": "sdTemplates(_classicRows, isMainStoryDungeon)",
+    "new": "sdTemplates(_hubRows, isMainStoryDungeon)",
+    "tests": [
+      "test/sd26_render.test.js"
+    ]
   }
 ]

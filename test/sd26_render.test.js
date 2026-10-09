@@ -27,6 +27,9 @@ import { SD_BLOWS, SD_BODY, SD_REM } from '../src/net/sdRemnant.js';
 import { buildRealmModel, realmLampFeet, SD_LAMP_H, SD_LAMP_HEAD, SD_REALM_BRASS_RECORD } from '../src/world/sdRealm.js';
 import { buildHallModel, stoneFrame, SD_STONE_SIZE } from '../src/world/sdHall.js';
 import { SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
+import { sdCities, sdTemplates } from '../src/systems/sdSite.js';
+import { hubClaim } from '../src/systems/regionHubs.js';
+import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
@@ -267,4 +270,25 @@ test('AUDIT SD IV (R5): THE ARM\'S HOUR FOG AND TRILIGHT MAKE NOTHING, on both l
       assert.ok(m.lines < 2, `lane ${lane}: the Hour's lines made ${m.lines.toFixed(2)} bytes a frame (the control ${m.control.toFixed(2)})`);
     }
   });
+});
+
+test('AUDIT SD IV (S2): THE HOLLOW\'S CITIES AND TEMPLATES ARE MAPS.BSA\'S - the host\'s own lines, run over a pack that rewrites a city\'s grid and a keep\'s: the cities rank and the templates stand as the classic rows have them, whether the pack loaded or not; read over the served rows, a client with the pack and one without ranked them apart (mutants: the cities over the served rows; the templates over them)', () => {
+  const W = read('src/scenes/world.js');
+  const grab = (head) => { const i = W.indexOf(head); assert.ok(i > 0, head); return W.slice(i, W.indexOf('\n', i)); };
+  const host = new Function('maps', 'params', 'landform', '_hubRows', 'hubClaim', 'sdTemplates', 'isMainStoryDungeon',
+    `${['  const classicRow = (row) =>', '  let _classicRows = ', '  const _sdCityRows = ', '  const _sdTemplateRows = ', '  _classicRows = null;'].map(grab).join('\n')}\nreturn { _sdCityRows, _sdTemplateRows };`);
+  const city = (l, name, w, h, b) => ({ regionIndex: 1, locationIndex: l, name, mapTableData: { locationType: LOCATION_TYPES.TownCity, mapId: 100 + l }, exterior: { exteriorData: { width: w, height: h }, buildingCount: b } });
+  const keep = (w) => ({ regionIndex: 1, locationIndex: 9, name: 'Castle Hollowmere', hasDungeon: true, dungeon: { blocks: new Array(14).fill({}) }, mapTableData: { locationType: LOCATION_TYPES.DungeonKeep, mapId: 109 }, exterior: { exteriorData: { width: w, height: w } } });
+  const classic = [city(0, 'Mesajer', 5, 5, 60), city(1, 'Berbemijet', 4, 4, 50), keep(1)];
+  const packed = [classic[0], city(1, 'Berbemijet', 6, 6, 80), keep(8)];   // the pack's rows: the second city wider, the keep's grid grown
+  const names = (rows) => sdCities(rows, 1, { regionNameOf: () => 'Ilessan Hills' }).map((l) => l.name);
+  assert.deepEqual(names(classic), ['Mesajer', 'Berbemijet'], 'MAPS.BSA\'s order');
+  assert.deepEqual(names(packed), ['Berbemijet', 'Mesajer'], 'the pack\'s rows rank them apart');
+  assert.equal(sdTemplates(packed).length, 0, 'and its keep\'s grid is too wide to clone');
+  for (const loaded of [true, false]) {
+    const maps = { locationReplaced: (r, l) => loaded && l > 0, readClassicLocation: (r, l) => classic[l === 9 ? 2 : l], getRegionName: () => 'Ilessan Hills' };
+    const out = host(maps, new URLSearchParams('online'), false, loaded ? packed : classic, hubClaim, sdTemplates, () => false);
+    assert.deepEqual(names(out._sdCityRows), ['Mesajer', 'Berbemijet'], `the pack ${loaded ? 'loaded' : 'failed'}: MAPS.BSA's order`);
+    assert.deepEqual(out._sdTemplateRows.map((l) => l.name), ['Castle Hollowmere'], `the pack ${loaded ? 'loaded' : 'failed'}: the keep MAPS.BSA holds`);
+  }
 });

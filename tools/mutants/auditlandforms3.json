@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-B1-packed-rows",
     "file": "src/scenes/world.js",
-    "old": "    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);",
-    "new": "    const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? row : row);",
+    "old": "  const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row);",
+    "new": "  const classicRow = (row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? row : row);",
     "tests": [
       "test/auditlandforms3.test.js",
       "test/landform45.test.js"

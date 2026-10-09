@@ -133,7 +133,9 @@ The census is taken ONCE per rise, never on a timer (RELAY-H1: objects are bille
 about its limit, as the rite is: a region is the one a client says it stands in.
 
 **The city (client, every client the same).** `systems/sdSite.js`, over the game's own MAPS.BSA rows (a mod's addition
-is not on every client - HUB1's rule):
+is not on every client - HUB1's rule), each as MAPS.BSA holds it - a town pack's row read again past the world-data door
+(LANDFORMS III B1's `classicRow`; a pack rewrites the very grid and buildings a city ranks by, and a client whose pack
+failed to load stood its Hollow by another city - AUDIT SD IV S2), and the templates read the same way:
 
 1. The candidates are the populated places of region `r`, ranked as its hub is chosen (`systems/regionHubs.js`
    `hubClaim`): a city over a hamlet over a village, then the one named for its region, then its RMB blocks, then its
