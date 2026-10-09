@@ -539,7 +539,7 @@ export function createDecorPanel({
     if (card.dataset.yard !== (view?.yard ? '1' : '0')) card.dataset.yard = view?.yard ? '1' : '0';
     if (view?.yard) {   // HOME-YARD: the catalogue, the yard's pieces, and (HOME-LOOK) the house outside
       tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room')),
-        ...(view.paint ? [chip('Exterior', mode === 'paint', () => setMode('paint'))] : []));
+        ...(view.paint ? [chip(view.paint.caravan ? 'Paint' : 'Exterior', mode === 'paint', () => setMode('paint'))] : []));   // WAGONS2: a caravan's painter is its inside's
       return;
     }
     const n = roomed(view?.placed ?? []).length;
@@ -646,7 +646,33 @@ export function createDecorPanel({
    *  its swatch in the preview; the look painted only when it differs from the house's. */
   /** HOME-LOOK (AUDIT): the styles a roof's or a door's family holds in a climate, as the painter's door knows it, or null. */
   function lookRecordsOf(part, climate) { return view?.paint?.records?.(part, climate) ?? null; }
+  /** WAGONS2: one of the caravan's inside parts - its name and its paint now. */
+  function caravanPaintRow(row) {
+    const r = el('div', 'dfdecor-row');
+    r.setAttribute('role', 'option');
+    r.dataset.key = row.part;
+    r.setAttribute('aria-selected', row.part === paintPart ? 'true' : 'false');
+    const main = el('span', '');
+    main.append(el('div', 'dfdecor-row-name', row.name), el('div', 'dfdecor-row-sub', row.choices[row.current] ?? ''));
+    r.append(el('span', 'dfdecor-thumb', row.name.slice(0, 2)), main, el('span', 'dfdecor-row-price', 'Free'));
+    r.addEventListener('click', () => { paintPart = row.part; redraw(); });
+    return r;
+  }
+  /** WAGONS2: the chosen part's paints, a chip each - pressed, painted at once (free, any time - Mac's answer). */
+  function paintCaravanSide() {
+    const row = view.paint.caravan.find((x) => x.part === paintPart) ?? null;
+    pickName.textContent = row ? row.name : 'Choose a part of your caravan';
+    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling - each can wear another paint.';
+    pickPrice.textContent = 'Free';
+    paintClimates.replaceChildren();
+    paintKinds.replaceChildren(...(row ? row.choices.map((name, i) => chip(name, i === row.current, () => onPaint('caravan', { part: row.part, i }))) : []));
+    paintBtns.hidden = true;   // nothing to try on and paint: a chip pressed is painted
+    previewImg.removeAttribute?.('src');
+    pickWhy.textContent = '';
+  }
   function paintPaintSide() {
+    if (view?.paint?.caravan) { paintCaravanSide(); return; }   // WAGONS2
+    paintBtns.hidden = false;
     const part = paintPart;
     const choice = part ? paintLook?.[part] ?? null : null;
     pickName.textContent = part ? HOME_LOOK_PART_NAMES[part] : 'Choose a part of your house';
@@ -770,6 +796,13 @@ export function createDecorPanel({
     waiting.clear();
     if (mode === 'rent' && !view.rent) { mode = 'catalogue'; card.dataset.mode = mode; }   // HOME-RENT: no rooms door here any more
     if (mode === 'paint' && !view.paint) { mode = 'catalogue'; card.dataset.mode = mode; }   // HOME-LOOK: no painter here any more
+    if (mode === 'paint' && view.paint.caravan) {   // WAGONS2: the caravan's inside - a row a part, its paints chosen at once
+      if (!view.paint.caravan.some((r) => r.part === paintPart)) paintPart = view.paint.caravan[0]?.part ?? null;
+      list.replaceChildren(...view.paint.caravan.map(caravanPaintRow));
+      listSig = signature();
+      paintSide();
+      return;
+    }
     if (mode === 'paint') {   // HOME-LOOK: a row a part
       paintLook ??= { ...(view.paint.current ?? {}) };
       list.replaceChildren(...HOME_LOOK_PARTS.map(paintRow));
@@ -818,6 +851,7 @@ export function createDecorPanel({
     (view?.base ?? []).map((it) => `${it.key}:${it.name}:${it.hidden ? 1 : 0}:${it.holds ? 1 : 0}:${it.room ?? ''}`).join(','),   // BASE-HIDE
     (view?.rooms ?? []).map((r) => `${r.id}:${r.name}`).join(','), view?.roomId ?? '', view?.doorways ?? '',
     view?.yard ? 'y' : '', view?.paint ? homeLookSig(view.paint.current) : '-',   // HOME-YARD; HOME-LOOK
+    (view?.paint?.caravan ?? []).map((r) => `${r.part}:${r.current}`).join(','),   // WAGONS2: the caravan's inside, painted
     paintPart === 'roof' || paintPart === 'door' ? String(lookRecordsOf(paintPart, (paintLook?.[paintPart] ?? decorLookStart(paintPart)).climate)) : '',   // HOME-LOOK (AUDIT): a family's count answered
     view?.rent ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}` : ''].join('|');   // HOME-RENT (RENT-FRESH, RENT-ORPHANS: read, and still finding - each changes what the view says)   // DECOR-ROOMS: the tabs, and the one chosen; HOME-DOORS: the doorways free
 

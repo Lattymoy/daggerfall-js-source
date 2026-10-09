@@ -1716,7 +1716,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // HOLDINGS (bible/03-World/Holdings.md): world.js's twin - the Stable page over this host's pair; no Fleet (this host
   // stands no Come Sail Away)
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []), wagonKind: () => activeWagonKind(playerEntity.items ?? []) }),   // WAGONS1: the Stable names the wagon driven
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasHorse(playerEntity.items ?? []), hasCart: () => hasCart(playerEntity.items ?? []), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [] }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it
     fleet: null,
   });
   /** AUDIT HCC H1: LateUpdate once a frame in every mode, before the world pass draws the wagon (world.js's twin). */

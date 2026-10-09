@@ -34,7 +34,8 @@ import { pointsOf } from './shipKit.js';
 import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
 import { NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon41214.js';
-import { WAGON_KINDS, activeWagonKind } from '../systems/wagonKinds.js';
+import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagonKinds.js';
+import { wagonLookOf } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
 
 /** Where each wagon's bake is (fetched at the load, as the ships' are - systems/comeSailAwayModels.js). */
 export const WAGON_MODEL_URLS = Object.freeze({
@@ -283,6 +284,7 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
   const loads = new Map();
   return {
     wagonKind: () => activeWagonKind(items()) ?? 'cart',
+    wagonLook: () => wagonLookOf(activeWagonItem(items())),   // WAGONS2: the driven wagon's paint
     bakedWagon: (kind) => {
       if (!loads.has(kind)) loads.set(kind, Promise.resolve(fetchFn(WAGON_MODEL_URLS[kind])).then((r) => { if (!r?.ok) throw new Error(`HTTP ${r?.status}`); return r.json(); }));
       return loads.get(kind);

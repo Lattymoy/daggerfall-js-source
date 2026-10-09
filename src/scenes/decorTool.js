@@ -356,6 +356,7 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  *                      with `yard` is a home's yard (scenes/homeYards.js): no doors, nothing held, no light of a piece's
  *                      own (YARD-LIGHT: its TEXTURE.210 flats light as the town's - homeYards.js yardLampOf)
  *   look()           - HOME-LOOK: the painter's door for the house outside - `{ current, season, preview(look), commit(look) }`
+ *                      WAGONS2: or a caravan's inside - `{ caravan: [{ part, name, choices, current }], set(part, i) -> said | null }`
  *                      - or null
  *   flatAs(flat)     - DECOR-OUTDOOR: the picture a flat is here, [archive, record] - a yard's nature in its season
  *                      (scenes/homeYards.js); none, the flat itself
@@ -715,6 +716,14 @@ export function createDecorTool(deps) {
   async function paintAct(what, look) {
     const door = deps.look?.() ?? null;
     if (!door) return false;
+    // WAGONS2: A CARAVAN'S INSIDE - a part's paint chosen is painted at once (free, any time), the room wearing it the
+    // next frame; nothing is tried on or put away
+    if (door.caravan) {
+      if (what !== 'caravan') return false;
+      const said = door.set?.(look?.part, look?.i);
+      if (said) deps.say?.(said);
+      return !!said;
+    }
     if (what === 'preview') { door.preview(look ?? null); return true; }
     if (what === 'reset') { door.preview(undefined); return true; }
     if (what !== 'commit') return false;

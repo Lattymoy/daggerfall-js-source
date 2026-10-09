@@ -13,9 +13,8 @@ import {
 import { createWagonRiders, RIDE_ROW, GO_HOLD_MS, ARRIVE_WAIT_MS } from '../src/scenes/wagonRiders.js';
 import { createCrewAshore } from '../src/scenes/crewAshore.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
-import { readCaravanRoom, isCaravanRoom, CARAVAN_BLOCK, CARAVAN_SCENE_NAME, CARAVAN_BUILDING_KEY, CARAVAN_TEXT } from '../src/systems/caravanRoom.js';
+import { readCaravanRoom, isCaravanRoom, CARAVAN_BLOCK, CARAVAN_SCENE_NAME, CARAVAN_BUILDING_KEY, CARAVAN_TEXT, CARAVAN_ROOM_MODEL_ID } from '../src/systems/caravanRoom.js';
 import { caravanRoomEntry, createCaravanAccess } from '../src/scenes/caravanRoom.js';
-import { WA_SHIP_BLOCKS } from '../src/systems/warmAshesShips.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
 test('WAGONS1 THE WORDS: a rider asks (`{ a }`) or sits (`{ s: [owner, seat] }`), an owner lists who sits where - one rider a seat, one seat a rider, at most four - anything else refused (mutants: a seat past four, a rider twice)', () => {
@@ -185,30 +184,36 @@ test('WAGONS1 THE COMPANIONS\' SEAT: a seated companion\'s motor takes no step -
   }, 0));
 });
 
-test('WAGONS1 THE CARAVAN\'S ROOM: the small ship\'s cabin borrowed (Warm Ashes\' SHIPAA00), its door a logical anchor at the caravan, the room the player\'s own (a ship\'s type, the caravan\'s key and name, one scene a character); entered from my parked caravan, out behind its rear door on the ground (mutants: another block, the door\'s landing unground)', async () => {
-  assert.equal(CARAVAN_BLOCK, WA_SHIP_BLOCKS[0]);
+test('WAGONS1 THE CARAVAN\'S ROOM, WAGONS2\'S OWN: the caravan\'s room is its own block and model (no ARENA2 block read), its door the caravan\'s frame at its pose and turned with it, the room the player\'s own (a ship\'s type, the caravan\'s key and name, one scene a character); entered from my parked caravan, out behind its rear door on the ground (mutants: another block, the door\'s landing unground)', async () => {
+  assert.equal(CARAVAN_BLOCK, 'CARAVAN [WAGONS2]');
   assert.equal(CARAVAN_SCENE_NAME, 'Caravan [WAGONS1]');
-  const room = readCaravanRoom({ v: 1, kind: 'caravan', origin: [1, 2, 3], step: [4, 5, 6], yaw: 2 });
-  assert.deepEqual(room, { v: 1, kind: 'caravan', origin: [1, 2, 3], step: [4, 5, 6], yaw: 2 });
-  for (const bad of [null, { ...room, v: 2 }, { ...room, kind: 'ship' }, { ...room, step: [1, 2] }, { ...room, yaw: NaN }]) assert.equal(readCaravanRoom(bad), null);
+  const room = readCaravanRoom({ v: 2, kind: 'caravan', origin: [1, 2, 3], turn: 90, step: [4, 5, 6], yaw: 2 });
+  assert.deepEqual(room, { v: 2, kind: 'caravan', origin: [1, 2, 3], turn: 90, step: [4, 5, 6], yaw: 2 });
+  assert.deepEqual(readCaravanRoom({ v: 1, kind: 'caravan', origin: [1, 2, 3], step: [4, 5, 6], yaw: 2 }), { ...room, turn: 0 }, 'a WAGONS1 descriptor reads unturned');
+  for (const bad of [null, { ...room, v: 3 }, { ...room, kind: 'ship' }, { ...room, step: [1, 2] }, { ...room, yaw: NaN }, { ...room, turn: Infinity }]) assert.equal(readCaravanRoom(bad), null);
   assert.ok(isCaravanRoom(room)); assert.ok(!isCaravanRoom({ uid: 3, hull: 2 }));
-  const blocks = { getBlockByName: (n) => (n === CARAVAN_BLOCK ? { index: 77, rmbBlock: { subRecords: [{ interior: {} }] } } : null) };
-  const e = caravanRoomEntry(blocks, room, (p) => [p[0] + 1, p[1], p[2]]);
+  const e = caravanRoomEntry(room, (p) => [p[0] + 1, p[1], p[2]]);
   assert.equal(e.hit.sailingCabin, e.room, 'the private room\'s one slot');
+  assert.equal(e.hit.dfBlock.name, CARAVAN_BLOCK);
+  assert.deepEqual(e.hit.dfBlock.rmbBlock.subRecords[0].interior.block3dObjectRecords.map((o) => o.modelIdNum), [CARAVAN_ROOM_MODEL_ID]);
+  assert.ok(e.hit.roomModels.get(CARAVAN_ROOM_MODEL_ID)?.positions?.length, 'its model served beside the pipeline\'s');
   assert.deepEqual([e.building.buildingType, e.building.buildingKey, e.building.name], [BUILDING_TYPES.Ship, CARAVAN_BUILDING_KEY, 'Caravan']);
   assert.deepEqual([...e.hit.door.matrix.slice(12, 15)], [2, 2, 3]);
-  assert.equal(caravanRoomEntry({ getBlockByName: () => null }, room, (p) => p), null, 'no room in this data: no door');
-  // the access: entered from the parked caravan, out on the ground behind it
+  const z = [e.hit.door.matrix[8], e.hit.door.matrix[9], e.hit.door.matrix[10]];
+  assert.ok(Math.abs(z[0] - 1) < 1e-6 && Math.abs(z[2]) < 1e-6, 'turned 90 degrees, the room\'s +z is the world\'s +x - the caravan\'s heading');
+  assert.equal(caravanRoomEntry({ ...room, v: 9 }, (p) => p), null, 'no room for a bad descriptor');
+  // the access: entered from the parked caravan, turned as it stands, out on the ground behind it
   const said = [];
   let entered = null;
+  const quarter = [0, Math.SQRT1_2, 0, Math.SQRT1_2];   // a quarter turn about up: pulled toward +x
   const access = createCaravanAccess({
     available: () => true, mode: () => 'exterior', busy: () => false, say: (l) => said.push(l), ownsCaravan: () => true,
-    parked: () => ({ position: [10, 1, 10], rotation: [0, 0, 0, 1], step: [10, 0, 8], yaw: Math.PI }),
+    parked: () => ({ position: [10, 1, 10], rotation: quarter, step: [10, 0, 8], yaw: Math.PI }),
     toNative: (p) => p.map((v) => v * 2), fromNative: (p) => p.map((v) => v / 2), ground: (p) => [p[0], 0.25, p[2]],
     enterInterior: async (r) => { entered = r; return true; },
   });
   assert.equal(await access.enter(), true);
-  assert.deepEqual(entered, { v: 1, kind: 'caravan', origin: [20, 2, 20], step: [20, 0, 16], yaw: Math.PI });
+  assert.deepEqual({ ...entered, turn: Math.round(entered.turn) }, { v: 2, kind: 'caravan', origin: [20, 2, 20], turn: 90, step: [20, 0, 16], yaw: Math.PI });
   assert.deepEqual(access.returnToWagon(entered), { position: [10, 0.25, 8], yaw: Math.PI });
   assert.ok(access.canRestore(entered));
   const none = createCaravanAccess({ available: () => true, mode: () => 'exterior', busy: () => false, say: (l) => said.push(l), parked: () => null, toNative: (p) => p, fromNative: (p) => p, enterInterior: async () => true });

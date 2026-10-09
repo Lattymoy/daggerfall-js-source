@@ -51,7 +51,9 @@ import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND 
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons
-import { wagonArt, WAGON_ARCHIVE } from '../world/wagonArt.js';
+import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, lookRecord } from '../world/wagonArt.js';
+import { caravanRoomModel } from '../world/caravanRoomModel.js';   // WAGONS2: the caravan's room, seen through its windows
+import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
 import { validWagonKind, wagonHitchOf, WAGON_KINDS } from '../systems/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 
@@ -160,6 +162,7 @@ export function createHorseCartPool({
   toWire = (/** @type {number[]} */ p) => p, log = console,
   peerAnchor = (/** @type {string} */ _id) => /** @type {number[] | null} */ (null),
   wagonKind = () => 'cart', bakedWagon = /** @type {((kind: string) => Promise<any>) | null} */ (null),
+  wagonLook = /** @type {() => any} */ (() => null),
   enterCaravan = /** @type {(() => any) | null} */ (null),
   riders = /** @type {any} */ (null),
 } = {}) {
@@ -215,8 +218,41 @@ export function createHorseCartPool({
   function ensureWagonArt() {
     if (_wagonArtUp || !renderer?.uploadTexture) return;
     _wagonArtUp = true;
-    for (const [rec, pic] of wagonArt()) renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(pic), { opaque: true });   // a model's picture is opaque (dataPipeline.js uploadRecord's)
+    for (const [rec, pic] of wagonArt()) uploadWagonPicture(rec, pic);
   }
+  /** One of the wagons' pictures: opaque as a model's is (dataPipeline.js uploadRecord's), but a CUT-OUT where it holds
+   *  glass (WAGONS2: the caravan's windows, outside and in - world/wagonArt.js isGlassRecord). */
+  function uploadWagonPicture(rec, pic) {
+    renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(pic), isGlassRecord(rec) ? { cutout: true } : { opaque: true });
+  }
+  // ── WAGONS2: a paint's pictures, painted and uploaded the first time a wagon wears it, and the remap it is drawn by
+  const _lookUp = new Set();   // `${list}:${i}` painted and uploaded
+  const _remaps = new Map();   // `${kind}:${code}` -> the body's remap; `room:${code}` -> the room's
+  function ensureLook(list, i, names) {
+    if (!(i > 0) || !renderer?.uploadTexture || _lookUp.has(`${list}:${i}`)) return;
+    _lookUp.add(`${list}:${i}`);
+    for (const [rec, pic] of wagonLookArt(list, i, names[i])) uploadWagonPicture(rec, pic);
+  }
+  /** The remap a wagon of `kind` wearing `look` is drawn by: each built record its paint repaints, to the paint's
+   *  (null for the wagon as built - its own pictures, no remap). `room` the caravan's inside's instead of its outside's. */
+  function lookRemap(kind, look, room = false) {
+    const l = readWagonLook(look), k = validWagonKind(kind) ?? 'cart';
+    const lists = room ? CARAVAN_INSIDE_PARTS.map((part) => [part, l[part[0]], CARAVAN_INSIDE_LOOKS[part]]) : [[k, l.o, WAGON_OUTSIDE_LOOKS[k]]];
+    if (lists.every(([, i]) => !i)) return null;
+    const key = room ? `room:${l.w}.${l.f}.${l.c}` : `${k}:${l.o}`;
+    let map = _remaps.get(key);
+    if (!map) {
+      map = new Map();
+      for (const [list, i, names] of lists) {
+        ensureLook(list, i, names);
+        for (const rec of LOOK_RECORDS[list]) if (i) map.set(`${WAGON_ARCHIVE}_${rec}`, `${WAGON_ARCHIVE}_${lookRecord(rec, i)}`);
+      }
+      _remaps.set(key, map);
+    }
+    return map;
+  }
+  let _roomGpu;   // WAGONS2: the caravan's room (world/caravanRoomModel.js), built once on the built pictures
+  const roomGpu = () => (_roomGpu === undefined ? (_roomGpu = renderer?.createMesh ? renderer.createMesh(caravanRoomModel()) : null) : _roomGpu);
   function loadBaked(kind) {
     const e = { parts: null, loading: null, failed: null };
     _baked.set(kind, e);
@@ -247,6 +283,8 @@ export function createHorseCartPool({
     return _parts;
   }
   const myKind = () => validWagonKind(wagonKind?.()) ?? 'cart';
+  /** WAGONS2: my driven wagon's paint (systems/wagonLooks.js), checked. */
+  const myLook = () => readWagonLook(wagonLook?.());
   /** How far ahead of a wagon's rear axle its horse stands: the kind's own when Mac's wagon is drawn, the mod's 3.1
    *  for the classic one (HITCHED_HORSE_LOCAL_Z). */
   function hitchOf(kind = myKind()) {
@@ -314,8 +352,11 @@ export function createHorseCartPool({
   };
   /** One wagon - mine or a peer's - in the host's world pass. `scale` is WAGON-HITCH x OW-BIG's grown draw (1 off it);
    *  a grown wagon casts no shadow (AUDIT WAGON-HITCH B2 - OW-BIG's law for every grown figure). WAGONS1: `kind` the
-   *  wagon's (its parts), `hitched` whether a horse is in its shafts (the cart borne level). */
-  function drawWagon(r, texRemap, position, rotation, tier, angle, scale = 1, kind = myKind(), hitched = false) {
+   *  wagon's (its parts), `hitched` whether a horse is in its shafts (the cart borne level). WAGONS2: `look` its paint
+   *  (systems/wagonLooks.js - a look or its wire code), its body and wheels drawn on the paint's pictures; and a
+   *  caravan's room inside its body, seen through its windows (world/caravanRoomModel.js - casting no shadow: the body
+   *  casts the caravan's). */
+  function drawWagon(r, texRemap, position, rotation, tier, angle, scale = 1, kind = myKind(), hitched = false, look = null) {
     const parts = partsOf(kind);
     if (!parts?.gpu?.body || !r?.drawMesh) return false;
     const grown = scale > 1;
@@ -325,8 +366,11 @@ export function createHorseCartPool({
     if (g.wheels) {
       const pitch = hitched ? parts.hitchPitch ?? 0 : 0;
       const body = pitchedMatrix(m, parts, pitch);
-      r.drawMesh(g.body, body, texRemap, o);
-      for (const w of g.wheels) if (w.gpu) r.drawMesh(w.gpu, wheelMatrix(m, w.pivot, angle), texRemap, o);
+      const l = typeof look === 'number' ? wagonLookOfCode(look) : readWagonLook(look);
+      const paint = lookRemap(kind, l) ?? texRemap;
+      r.drawMesh(g.body, body, paint, o);
+      if (parts.kind === 'caravan') { const room = roomGpu(); if (room) r.drawMesh(room, body, lookRemap(kind, l, true) ?? texRemap, NO_SHADOW); }
+      for (const w of g.wheels) if (w.gpu) r.drawMesh(w.gpu, wheelMatrix(m, w.pivot, angle), paint, o);
       for (const def of parts.cargo) if (tier >= def.threshold) { const gpu = _cargo.get(def.modelId); if (gpu) r.drawMesh(gpu, cargoMatrix(body, def), texRemap, o); }
       return true;
     }
@@ -355,6 +399,7 @@ export function createHorseCartPool({
     if (v.deployed?.isGrounded) wagon = { kind: HCC_WIRE_KIND.Deployed, position: v.deployed.position, rotation: v.deployed.rotation, tier: v.deployed.cargoTier, angle: 0, hitched: v.state?.HorseMode === HORSE_MODE.HitchedToWagon };
     else if (v.moving?.pose?.active) wagon = { kind: v.teamFollowing ? HCC_WIRE_KIND.Following : HCC_WIRE_KIND.Trailing, position: v.moving.pose.position, rotation: v.moving.pose.rotation, tier: v.moving.cargoTier, angle: v.moving.wheel?.angle ?? 0, hitch: v.moving.pose.hitch ?? null, axle: v.moving.pose.axle ?? null, hitched: true };   // WAGON-HITCH: the point it hangs from and where its wheels stand (the draw's grow; the wire carries neither)
     if (wagon) { wagon.model = myKind(); wagon.passengers = riders?.passengers?.() ?? []; }   // WAGONS1: which of the three it is (the draw's parts, the wire's `wk`), and who rides in its back
+    if (wagon) wagon.look = myLook();   // WAGONS2: its paint (the wire's `wl`)
     const h = v.horse;
     const horse = h?.isInteractive ? { position: h.position, forward: h.forward, frame: h.walk?.animationFrame ?? 0, walking: !!h.walk?.walking } : null;
     return { wagon, horse, name: v.state?.HorseName ?? '', interaction: !!v.moving?.interaction, deployed: !!v.deployed?.isGrounded, go: riders?.go?.() ?? null, declined: riders?.declined?.() ?? [] };   // WAGONS1: a journey my riders go on, who I turned away
@@ -466,12 +511,12 @@ export function createHorseCartPool({
       // AUDIT WAGON-HITCH A1 x B: grown from where its wheels stand (the drawn position leans downhill on a slope, and
       // grown that lean is g times as long)
       const at = g > 1 && s.wagon.axle ? grownHitchedPosition(s.wagon.axle, s.wagon.hitch, g, groundYAt, s.wagon.axle[1]) : grownHitchedPosition(s.wagon.position, s.wagon.hitch, g, groundYAt);
-      if (drawWagon(r, texRemap, at, s.wagon.rotation, s.wagon.tier, grownAngle('', s.wagon.angle, g), g, s.wagon.model, s.wagon.hitched)) n++;
+      if (drawWagon(r, texRemap, at, s.wagon.rotation, s.wagon.tier, grownAngle('', s.wagon.angle, g), g, s.wagon.model, s.wagon.hitched, s.wagon.look)) n++;
     } else _grownWheels.delete('');
     for (const [owner, p] of _peers) {
       if (!p.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) continue;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
       const g = p.hitch && grow ? grow(p.hitch) : 1;
-      if (drawWagon(r, texRemap, grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), p.shownRotation ?? p.wagon.rotation, p.wagon.tier, grownAngle(owner, p.wagon.angle, g), g, p.wagon.model, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched)) n++;
+      if (drawWagon(r, texRemap, grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), p.shownRotation ?? p.wagon.rotation, p.wagon.tier, grownAngle(owner, p.wagon.angle, g), g, p.wagon.model, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched, p.wagon.look)) n++;
     }
     return n;
   }
@@ -823,10 +868,10 @@ export function createHorseCartPool({
     if (!a.every(Number.isFinite)) return null;
     const rec = hccWireRecord(shown(), toWire);
     const r = {};
-    if (wagonParked && rec?.w?.[0] === HCC_WIRE_KIND.Deployed) { r.w = [...rec.w]; r.w[9] = 0; if (rec.wk) r.wk = rec.wk; if (rec.wh) r.wh = rec.wh; }   // WAGONS1: which wagon, its horse in its shafts
+    if (wagonParked && rec?.w?.[0] === HCC_WIRE_KIND.Deployed) { r.w = [...rec.w]; r.w[9] = 0; if (rec.wk) r.wk = rec.wk; if (rec.wh) r.wh = rec.wh; if (rec.wl) r.wl = rec.wl; }   // WAGONS1: which wagon, its horse in its shafts; WAGONS2: its paint
     const near = (x, z) => Math.abs(x - a[0]) <= PARK_REACH && Math.abs(z - a[1]) <= PARK_REACH;
     if (horseParked && rec?.h && !v.horseFollowing && !v.teamFollowing && near(rec.h[0], rec.h[2])) { r.h = [...rec.h]; r.h[5] = 0; if (rec.n) r.n = rec.n; }
-    if (r.w && !near(r.w[1], r.w[3])) { delete r.w; delete r.wk; delete r.wh; }
+    if (r.w && !near(r.w[1], r.w[3])) { delete r.w; delete r.wk; delete r.wh; delete r.wl; }
     return r.w || r.h ? { a, r } : { a };
   }
 

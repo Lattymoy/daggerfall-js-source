@@ -179,7 +179,7 @@ function fakeRuntime(view) {
 const loader = async (kind) => bakeOf(kind);
 const deployed = (pos = [10, 1, 10]) => ({ isGrounded: true, position: pos, rotation: [0, 0, 0, 1], cargoTier: 90 });
 
-test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and every wheel, the wagons\' fifteen pictures uploaded once and opaque; the horse hitched its own length ahead; a bake that will not load gives the classic wagon its place (mutants: the kind unread, the hitch the mod\'s for every kind, no fall back)', async () => {
+test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and every wheel (WAGONS2: and the caravan\'s room inside its body), the wagons\' twenty pictures uploaded once and opaque (WAGONS2: the four with glass cut-outs); the horse hitched its own length ahead; a bake that will not load gives the classic wagon its place (mutants: the kind unread, the hitch the mod\'s for every kind, no fall back)', async () => {
   let kind = 'caravan';
   const r = fakeRenderer();
   const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => kind, bakedWagon: loader });
@@ -188,11 +188,11 @@ test('WAGONS1 THE POOL: the wagon drawn is the kind driven - its statics and eve
   await flush();
   const parts = pool.partsOf('caravan');
   assert.ok(parts?.gpu?.body && parts.gpu.wheels.length === 4);
-  assert.equal([...r.textures.keys()].filter((k) => k.startsWith(`${WAGON_ARCHIVE}_`)).length, 15);
-  assert.ok([...r.textures.values()].every((t) => t.o?.opaque));
+  assert.equal([...r.textures.keys()].filter((k) => k.startsWith(`${WAGON_ARCHIVE}_`)).length, 20);
+  assert.deepEqual([...r.textures.entries()].filter(([, t]) => !t.o?.opaque).map(([k, t]) => [k, !!t.o?.cutout]), [11, 12, 15, 16].map((rec) => [`${WAGON_ARCHIVE}_${rec}`, true]), 'the glass is cut out (WAGONS2), every other picture opaque');
   r.draws.length = 0;
   assert.equal(pool.draw(r), 1);
-  assert.equal(r.draws.length, 5, 'the caravan: its body and four wheels, no cargo');
+  assert.equal(r.draws.length, 6, 'the caravan: its body, its room and four wheels, no cargo');
   assert.deepEqual(WAGON_KIND_ORDER.map((k) => pool.hitchOf(k)), [3.8, 7.1, 7.7]);
   assert.equal(pool.presentation.hitchOf(), 7.7, 'the runtime\'s hitch is the driven wagon\'s');
   // a peer's word naming the open wagon is drawn as one

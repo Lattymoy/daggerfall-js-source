@@ -240,6 +240,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   await Promise.all([...ids].map(collect));
 
   const interior = layoutInterior(dfBlock, blockIndex, recordIndex, (id) => pending.get(id));
+  // WAGONS2: a flat HUNG from a ceiling (the caravan's lantern - systems/caravanRoom.js caravanRoomBlock): its y is the
+  // ceiling it hangs from, and the flat (drawn about its middle) stands half its own height below it
+  for (const f of interior.flats) if (f.hang) { const t = await getTexture(f.archive); if (t && f.record < t.recordCount) f.y -= billboardSize(t, f.record).h / 2; }
   await Promise.all(interior.actionDoors.map((d) => collect(d.modelIdNum)));
 
   // Climate swap table over the interior's submeshes, pruned like the

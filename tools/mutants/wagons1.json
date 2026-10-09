@@ -296,8 +296,8 @@
   {
     "name": "WAGONS1-another-block",
     "file": "src/systems/caravanRoom.js",
-    "old": "export const CARAVAN_BLOCK = WA_SHIP_BLOCKS[0];",
-    "new": "export const CARAVAN_BLOCK = WA_SHIP_BLOCKS[1];",
+    "old": "export const CARAVAN_BLOCK = 'CARAVAN [WAGONS2]';",
+    "new": "export const CARAVAN_BLOCK = 'SHIPAA00.RMB';",
     "tests": ["test/wagons1_seats.test.js"]
   },
   {

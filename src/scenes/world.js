@@ -627,6 +627,7 @@ import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: C
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
 import { planTake, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate
 import { wagonKgFor, activeWagonItem, activeWagonKind, WAGON_KINDS } from '../systems/wagonKinds.js';   // WAGONS1: HCC's ItemHelper.WagonKgLimit, the driven wagon's
+import { wagonLookOf, paintDrivenWagon } from '../systems/wagonLooks.js';   // WAGONS2: the driven wagon's paint
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -8080,6 +8081,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const caravanRooms = createCaravanAccess({
     available: () => !!modes && hccOn(), mode: () => modes?.mode ?? 'exterior', busy: () => worldMoveBusy(),
     parked: () => hcc.parkedDoor(), ownsCaravan: () => activeWagonKind(playerEntity.items ?? []) === 'caravan',
+    look: () => wagonLookOf(activeWagonItem(playerEntity.items ?? [])),   // WAGONS2: the room in my caravan's paint
+    paint: (part, i) => { const r = paintDrivenWagon(playerEntity.items ?? [], part, i); if (r.ok) _hccDirty = true; return r; },   // WAGONS2: its inside painted from the decorator
     toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
     ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
@@ -9424,7 +9427,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     changed: () => surfacePlayer(),
   }) : null;
   setHoldingsProvider({
-    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []) }),   // WAGONS1: the Stable names the wagon driven
+    ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; } }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it
     fleet: fleetHost ? { model: () => fleetHost.model(), offer: (uid) => fleetHost.offer(uid), act: (uid, verb, arg) => fleetHost.act(uid, verb, arg) } : null,
   });
   /** The sea emptied: a transition, a teleport, the arc switched off - its window with it. */

@@ -64,8 +64,9 @@ import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js'; 
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';
 import { sailingCabinEntry } from './sailingCabin.js';
 import { cabinSceneName, readSailingCabin } from '../systems/sailingCabin.js';
-import { caravanRoomEntry } from './caravanRoom.js';   // WAGONS1: the caravan's room, on the cabin's door
-import { CARAVAN_SCENE_NAME, CARAVAN_TEXT, readCaravanRoom, isCaravanRoom } from '../systems/caravanRoom.js';
+import { caravanRoomEntry, serveRoomModels, paintCaravanRoom } from './caravanRoom.js';   // WAGONS1: the caravan's room, on the cabin's door - WAGONS2: its own model
+import { CARAVAN_SCENE_NAME, CARAVAN_TEXT, readCaravanRoom, isCaravanRoom, turnCaravanScene } from '../systems/caravanRoom.js';
+import { caravanPaintRows } from '../systems/wagonLooks.js';   // WAGONS2: the caravan's inside, painted from the decorator
 import { INTERIOR_SHELL_BUCKET } from './decorBase.js';   // HOME-DOORS: a doorway is an opening in the shell's walls   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
@@ -1573,6 +1574,7 @@ export function createWorldModes(host) {
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
     canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
     room: () => decorRoomHere(), scanDeps: () => decorScanDepsHere(),
+    look: () => caravanPaintDoor(),   // WAGONS2: the decorator's painter, in my caravan's room
     base: () => interiorCtx?.base ?? null,   // BASE-HIDE: the room's own furniture, piece by piece
     getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dye, dyeTarget }),
     mwPicture: decorMwPicture,   // MW-MOUNT: the ghost hangs as the room will
@@ -4422,7 +4424,8 @@ export function createWorldModes(host) {
     if (privateVisitRoom) return;   // a staff visit must never overwrite their own ship/house cache
     const name = currentInteriorScene();
     if (!name) return;
-    const state = currentSceneState();
+    let state = currentSceneState();
+    if (isCaravanRoom(interiorCabin)) state = turnCaravanScene(state, interiorCabin.turn);   // WAGONS2: the caravan's room keeps its things unturned - parked another way round, they stand where they stood in it
     // WD3: the layout of the town this building stood in when the visit began (AUDIT WD3 R4: a pin landing mid-visit
     // moves the town, not this room), where the host can place the town (systems/layoutPins.js)
     if (_visitLayout !== null) stampLayout(state, _visitLayout);
@@ -4444,13 +4447,18 @@ export function createWorldModes(host) {
   function restoreInteriorScene() {
     _keptHidden = [];   // BASE-HIDE: this visit's
     _sceneHeldForLayout = null;
-    const townKey = layoutLocationKeyOfMapId(questSceneCtx?.()?.mapId ?? 0);
+    // WAGONS2 (AUDIT): a PRIVATE ROOM THAT TRAVELS - a ship's cabin, a caravan - is no town's: its room is the same in
+    // every layout, so the town it stands in this visit neither stamps its scene nor holds it back (a ship furnished in
+    // one town and boarded in a town laid out by another mod kept her own decor from her)
+    const townKey = interiorCabin ? null : layoutLocationKeyOfMapId(questSceneCtx?.()?.mapId ?? 0);
     _visitLayout = visitLayoutNow();   // AUDIT WD3 R4: the layout this visit stands in
+    if (interiorCabin) _visitLayout = null;   // WAGONS2 (AUDIT): ...and a travelling room stands in none
     if (privateVisitRoom) return;   // do not load the visitor's own belongings into someone else's room
     const name = currentInteriorScene();
     if (!name || !interiorCtx) return;
     let data = restoreCachedScene(sceneCache(), name);
     if (!data) return;
+    if (isCaravanRoom(interiorCabin)) data = turnCaravanScene(data, -interiorCabin.turn);   // WAGONS2: the save's, unturned, turned with the caravan as it stands
     // WD3: A SCENE CACHED IN ANOTHER LAYOUT OF THIS TOWN was another building's - its shelves, chests and floor are
     // never laid into this one. An ordinary scene goes (the world moving on would take it anyway); a permanent one (a
     // house, a rented room) is kept, unrestored, for the layout it belongs to - which a save's pins hold its town in -
@@ -4541,6 +4549,16 @@ export function createWorldModes(host) {
     if (!b) return false;
     if (b.buildingType === BUILDING_TYPES.Ship) return ownsShip(playerEntity);
     return isHouseOwned(playerEntity.houses ?? [], b.regionIndex ?? 0, b.buildingKey ?? 0);
+  }
+  /** WAGONS2: THE CARAVAN'S INSIDE, TO PAINT - the decorator's painter in my own caravan's room (never on a visit):
+   *  its parts and their paints; a part painted at once, the room wearing it the next frame (scenes/caravanRoom.js
+   *  paintCaravanRoom) and the wagon's word carrying it. Null in any other room. */
+  function caravanPaintDoor() {
+    if (!isCaravanRoom(interiorCabin) || privateVisitRoom || !host.caravanRoom?.paint) return null;
+    return {
+      caravan: caravanPaintRows(host.caravanRoom.look?.() ?? null),
+      set: (part, i) => { const r = host.caravanRoom.paint(part, i); if (r?.ok) paintCaravanRoom(renderer, host.caravanRoom.look?.() ?? null); return r?.text ?? null; },
+    };
   }
   /** DECOR1c: A PLACED PIECE PRESSED. A storage piece opens for its owner - what it holds is the owner's save's, as a
    *  house container's is, never restocked and never a theft - and is shut to anyone else, as HOME1's cupboards are.
@@ -7796,7 +7814,7 @@ export function createWorldModes(host) {
   /** WAGONS1: into the caravan's room (`room` its descriptor - systems/caravanRoom.js), through the cabin's own door. */
   async function enterCaravanRoom(room, pos = null) {
     if (mode !== 'exterior' || !host.caravanRoom) return false;
-    const entry = caravanRoomEntry(blocks, room, host.caravanRoom.fromNative);
+    const entry = caravanRoomEntry(room, host.caravanRoom.fromNative, { look: host.caravanRoom.look?.() ?? null, renderer });   // WAGONS2: the caravan's own room, in its paint
     if (!entry) return false;
     return enterInteriorCore(entry.hit, entry.entries, { building: entry.building, pos });
   }
@@ -7942,7 +7960,7 @@ export function createWorldModes(host) {
       // (verbatim ownerPosition + buildingMatrix) - context coordinates
       // come back world-frame, landings run in one frame, and the walk
       // through the door is coordinate-seamless.
-      const buildingHold = placeHoldOf('interior', `${hit.dfBlock?.name ?? ''}:${hit.recordIndex}`); const ctx = await buildInteriorContext(   // FIELD BUGS 2026-10-04d PLACE-LRU: the building is a place
+      const buildingHold = placeHoldOf('interior', `${hit.dfBlock?.name ?? ''}:${hit.recordIndex}`); serveRoomModels(buildingHold, hit.roomModels, renderer, cpuModels); const ctx = await buildInteriorContext(   // FIELD BUGS 2026-10-04d PLACE-LRU: the building is a place
         { renderer, getGpuMesh: buildingHold.getGpuMesh, cpuModels, getTexture, uploadRecord: buildingHold.uploadRecord, uploadRecordFrame: buildingHold.uploadRecordFrame, palette, getMachineryParts, placeHold: buildingHold },
         // DaggerfallInterior.IsBadInteriorModel (:530-548) keys the
         // 31000-overlap repair on EntryDoor.blockIndex, which
