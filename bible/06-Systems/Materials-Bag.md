@@ -94,6 +94,17 @@ in** - every counted unit the bag and the pack hold, in one press, whatever the 
 went in and names each material refused (its Stores full) and goes on past it; the counting-house's silence ends it.
 Put in and Put everything in stop at the Stores' own room (5,000 a material, every origin), and a full material is said,
 never asked; why Take out or Put in is shut is drawn under the bar, not only on a title (the second audit's U1, U14).
+**What is held and never counted is named** (UNCOUNTED, FIELD BUGS 2026-10-09c, "Some ingredients won't let you store
+them": Troll's Blood and Orc's Blood from a dungeon, and a friend's traded units): the page built its rows from the
+counted materials alone, so a pack full of looted blood showed nothing and said nothing. Every material the pack, the
+bag and the wagon hold an item of (`systems/materialsBag.js` heldKeysOf, the host's `heldKeys`) has its card now, its
+units past the count "N unstorable", and the picked bar says why in the player's words: looted, bought at a shop or
+given by another player, a material stays an item in the pack; only what was gathered or taken out of the Stores goes
+back in; a Mages Guild's potion maker uses it as it is. Law 3 is unchanged (section 5): Put in and Put everything in
+move only the count. A realm trade moves save records and no count - so the receiver's units are held and never
+counted, by the same law; letting the count travel with a trade is the owner's call. Pinned by
+`test/fb1009c_uncounted.test.js`; `tools/mutants/fb1009c_uncounted.json` (7, all dead; `bag1.json`'s B6 and
+`goldmarket.json`'s stores-total records re-aimed by content).
 **Empty your bag into your pack** stands on the page, in a town or out of one, whenever the bag's list holds anything:
 every piece, as much of each as the pack's weight takes, what no Put in takes first (a full pack never leaves the jam
 behind).

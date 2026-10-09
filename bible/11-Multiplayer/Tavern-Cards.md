@@ -832,6 +832,18 @@ A new property specifficaly used for the card table"**.
   EVERY CLIENT THE SAME TABLE: the grid stands an eighth and a sixteenth of a unit off Daggerfall's 1/40 m lattice and
   every threshold half a unit off it, so no probe meets a tie a client's own float32 world frame could break either way
   (AUDIT TAVERN-TABLE, section 29: on the lattice, two clients could stand it 6 m apart).
+  AND NEVER ACROSS THE WAY (WALK-WHOLE, FIELD BUGS 2026-10-09c, "Card Table blocking": "it's in 'The Gold Dungeon' in
+  Menakat ... same tavern layout" - the table and its stools across the doorway between a tavern's two rooms). Past an
+  entry room too small for the ring, the nearest cell was the mouth of the doorway the walk left it by. A spot is passed
+  over now when its table and ring and a lane round them (`PLACE_LANE_CELLS`, one cell), taken out of the walk, leave a
+  walked cell outside them unreachable from the entrance - the walk again on its own grid, so every client the same
+  table; the first spot that leaves the walk whole stands it, and a room with no such spot stands it where it stood (no
+  tavern loses its table). The gold table's walk already goes round the first (it is in the collider). Pinned by
+  `test/fb1009c_walkwhole.test.js` (the real prop, a 10 cm flood of the player's capsule round it); the doorway's, the
+  narrow hall's, the corridor's and the lattice room's spots in `test/taverntable.test.js` moved with it;
+  `tools/mutants/fb1009c_walkwhole.json` (5, all dead; `taverntable.json`'s TT-walk-order re-aimed by content). Not
+  verified in Menakat: no ARENA2 here - a table moved in an old layout moves for every client at once, a peer on an
+  older build sees it where it stood.
 - **The table in the room** (`scenes/interiorContext.js`, `opts.placeCardTable`). Stood after the room's own models and
   its closed doors, so the walk sees the whole room. It is one of the room's models - drawn by its own mesh, never the
   static merge (AUDIT TAVERN-TABLE H1, section 29), in the collider and on the automap (its key the next placement

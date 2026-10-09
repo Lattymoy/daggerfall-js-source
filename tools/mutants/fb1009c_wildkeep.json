@@ -1,0 +1,51 @@
+[
+  {
+    "name": "WILD-KEEP-never-kept",
+    "file": "src/scenes/world.js",
+    "old": "      if (sent) keepMine(_wildMine, wildWho());",
+    "new": "      if (sent) void 0;",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-never-read-back",
+    "file": "src/scenes/world.js",
+    "old": "_wildMine ??= keptMine(Date.now(), wildWho()); }",
+    "new": "void keptMine; }",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-any-character",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "  if (!v || v.who !== who || typeof v.r !== 'string'",
+    "new": "  if (!v || typeof v.r !== 'string'",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-past-its-end",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "!Number.isFinite(v.until) || !(v.until > now)) return null;",
+    "new": "!Number.isFinite(v.until)) return null;",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-gone-forgets-any",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "  if (v?.r === r) keepMine(null);",
+    "new": "  keepMine(null);",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-the-hall-dropped",
+    "file": "src/systems/wildRemainsWaypoint.js",
+    "old": "dungeon: typeof v.dungeon === 'string' ? v.dungeon : null };",
+    "new": "dungeon: null };",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  },
+  {
+    "name": "WILD-KEEP-gone-keeps-the-record",
+    "file": "src/scenes/world.js",
+    "old": "{ remainsGone(w.r); forgetMine(w.r); }",
+    "new": "{ remainsGone(w.r); }",
+    "tests": ["test/fb1009c_wildkeep.test.js"]
+  }
+]

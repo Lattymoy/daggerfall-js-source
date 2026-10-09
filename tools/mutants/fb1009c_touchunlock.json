@@ -1,0 +1,38 @@
+[
+  {
+    "name": "TOUCH-UNLOCK-the-finger-unread",
+    "file": "src/player/pointerLock.js",
+    "old": "      if (held || quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "new": "      if (held || quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "tests": [
+      "test/fb1009c_touchunlock.test.js"
+    ]
+  },
+  {
+    "name": "TOUCH-UNLOCK-no-touch-heard",
+    "file": "src/player/pointerLock.js",
+    "old": "    for (const t of TOUCH_TYPES) document.addEventListener?.(t, onTouch, { capture: true, passive: true });\n",
+    "new": "",
+    "tests": [
+      "test/fb1009c_touchunlock.test.js"
+    ]
+  },
+  {
+    "name": "TOUCH-UNLOCK-the-finger-forever",
+    "file": "src/player/pointerLock.js",
+    "old": "  const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;",
+    "new": "  const fingered = () => lastTouch > -Infinity;",
+    "tests": [
+      "test/fb1009c_touchunlock.test.js"
+    ]
+  },
+  {
+    "name": "TOUCH-UNLOCK-listeners-left-behind",
+    "file": "src/player/pointerLock.js",
+    "old": "      for (const t of TOUCH_TYPES) document.removeEventListener?.(t, onTouch, true);\n",
+    "new": "",
+    "tests": [
+      "test/fb1009c_touchunlock.test.js"
+    ]
+  }
+]
