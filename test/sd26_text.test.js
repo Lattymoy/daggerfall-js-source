@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { createSdBeats, SD_BEAT_TEXT, SD_BEAT_LAST_MS } from '../src/scenes/sdArenaRead.js';
 import { titleCardModel } from '../src/ui/gateTitleCard.js';
 import { sdBarNear, remnantBarModel, SD_BAR_CSS } from '../src/ui/sdRemnantBar.js';
-import { SD_ARENA } from '../src/net/sdBrain.js';
+import { SD_ARENA, orreryOf } from '../src/net/sdBrain.js';
 import { createSdVoice, SD_VOICE_RANK, SD_VOICE_READ_MS, SD_VOICE_WAIT_MS } from '../src/scenes/sdVoice.js';
 import { SD_BLOWS_TEXT } from '../src/scenes/sdRemnantBlows.js';
 import { sdCollapseLine, createSdHost } from '../src/scenes/sdHost.js';
@@ -30,6 +30,7 @@ import { sdCities, sdTemplates } from '../src/systems/sdSite.js';
 import { scanGatePixels } from '../src/systems/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../src/formats/mapsFile.js';
 import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
+import { createSdHall, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -299,4 +300,26 @@ test('SD26 A HOLLOW FOUND IN ITS LAST HOUR IS FOUND BEFORE IT FADES (T7): the ho
   assert.equal(s.lines.length, 3);
   assert.match(s.lines[0], /^Mara has found an Abyss Dungeon near Copperham/, 'the find first');
   assert.deepEqual(s.lines.slice(1), [sdMarksLine({ name, s: found.s }), sdHourLine({ name, near: 'Copperham' })], 'then its marks, then its last hour');
+});
+
+test('SD26 THE STONE\'S PLAQUE NEVER OFFERS A TURN THE CONCORD REFUSES (T8): once the Concord holds a press on a handle only says "The Concord holds. The stones will not turn again." - and every handle\'s plaque still read "Turn it forward" / "Turn it back" (Online-Arc A5: the plaque never promises what the click would not do). Before it, the handle\'s way; after it, its hour still and that the Concord holds - a word that arrives with it already held the same (mutants: the turn offered after the Concord)', () => {
+  const said = [], o = orreryOf(7);
+  const hall = createSdHall({ s: 7, say: (t) => said.push(t), now: () => 0 });
+  hall.frame(0.016, null, { s: 7, st: [...o.start], lit: 0, f: 0 });
+  assert.deepEqual(hall.hoverName('sdstone:0:f').subs, [SD_HALL_TEXT.hour(o.start[0]), SD_HALL_TEXT.forward]);
+  assert.equal(hall.hoverName('sdstone:3:b').subs[1], SD_HALL_TEXT.back);
+  const truth = o.start.map((h, i) => (h + i) % 12);
+  hall.frame(0.016, null, { s: 7, st: truth, lit: 6, f: 0, ok: true });
+  assert.ok(hall.concord);
+  for (const k of ['sdstone:0:f', 'sdstone:0:b', 'sdstone:5:f']) {
+    const i = Number(k.split(':')[1]);
+    assert.deepEqual(hall.hoverName(k).subs, [SD_HALL_TEXT.hour(truth[i]), SD_HALL_TEXT.held], `${k}: its hour, and that the Concord holds`);
+  }
+  assert.equal(hall.press('sdstone:0:f'), true);
+  assert.equal(said.at(-1), SD_HALL_TEXT.still, 'the press says why');
+  assert.ok(SD_HALL_TEXT.still.startsWith(SD_HALL_TEXT.held), 'the plaque\'s row the press\'s own first words');
+  // a hall first heard with the Concord held: the same
+  const late = createSdHall({ s: 7, now: () => 0 });
+  late.frame(0.016, null, { s: 7, st: truth, lit: 6, f: 0, ok: true });
+  assert.equal(late.hoverName('sdstone:2:b').subs[1], SD_HALL_TEXT.held);
 });

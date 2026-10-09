@@ -268,5 +268,14 @@
     "tests": [
       "test/sd26_text.test.js"
     ]
+  },
+  {
+    "name": "SD26-T8-the-turn-offered-after-the-concord",
+    "file": "src/scenes/sdHall.js",
+    "old": "ok ? SD_HALL_TEXT.held : st[2] === 'f'",
+    "new": "st[2] === 'f'",
+    "tests": [
+      "test/sd26_text.test.js"
+    ]
   }
 ]

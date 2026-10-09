@@ -1246,8 +1246,9 @@ Rift. The realm judges every turn (SD6b); this shows what the realm says.
   Concord's chime and its line.
 - **Pressed**: a handle turns its stone from within reach (the realm's own law, `stoneInReach` - else *"Stand closer to
   the stone."*) and from before its face (`beforeStone` - else *"Stand before the stone's face."*), never inside its
-  gear's settling, never after the Concord. Its plaque names the stone, its sign, its hour and the handle's way. A
-  Ledger plaque's riddle shows on the plaque as the ray finds it, and is said when pressed.
+  gear's settling, never after the Concord. Its plaque names the stone, its sign, its hour and the handle's way - after
+  the Concord, *"The Concord holds."* (AUDIT SD IV, SD26 T8: it offered the turn the press refused). A Ledger plaque's
+  riddle shows on the plaque as the ray finds it, and is said when pressed.
 - **The lash** (the world host, `sdHallHeard`): a word that says the Hour snapped back lashes me if I stand in the hall -
   a quarter of my health, no shield taking it (`hurtPlayer`'s `bypassShield`) - and *"The Hour snaps back."* is said to
   everyone in the realm.

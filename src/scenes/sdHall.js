@@ -14,7 +14,7 @@
 //   PRESSED (targets/hoverName/press): a stone's right handle turns it forward, its left back - from within reach of it
 //     (net/sdBrain.js stoneInReach, the realm's own law, else "Stand closer") and before its face (AUDIT SD II), never
 //     inside its gear's settling, never after the Concord; the plaque names the stone, its sign, its hour and the way the
-//     handle turns it. A Ledger plaque's riddle shows on its plaque as the ray finds it, and is said when it is pressed.
+//     handle turns it - after the Concord, that it holds (AUDIT SD IV, T8: it offered the turn the press refused). A Ledger plaque's riddle shows on its plaque as the ray finds it, and is said when it is pressed.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { orreryOf, SD_STONES, SD_STONE_SETTLE_MS, SD_FRAY_MAX, stoneInReach, dungeonToRealm, realmToDungeon, sdHour, sdHourWord } from '../net/sdBrain.js';
@@ -31,6 +31,7 @@ export const SD_HALL_TEXT = Object.freeze({
   closer: 'Stand closer to the stone.',
   front: 'Stand before the stone\'s face.',
   still: 'The Concord holds. The stones will not turn again.',
+  held: 'The Concord holds.',   // AUDIT SD IV (T8): a handle's plaque once it holds - it offered a turn the press refused
   snap: 'The Hour snaps back.',
   concord: 'The Concord! A bridge of light opens.',   // AUDIT SD II (L6 F21): WB13b's - the event and what it opens ("The endings stand as one" commented)
   plaque: (k) => `Ledger Plaque ${['I', 'II', 'III', 'IV', 'V', 'VI'][k]}`,
@@ -191,7 +192,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     hoverName(key) {
       if (!o || typeof key !== 'string') return null;
       const st = /^sdstone:([0-5]):([fb])$/.exec(key);
-      if (st) { const i = Number(st[1]), stone = SD_STONES[i]; return { title: `${stone.name.charAt(0).toUpperCase()}${stone.name.slice(1)} - ${stone.sign}`, subs: [SD_HALL_TEXT.hour(want[i]), st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back] }; }
+      if (st) { const i = Number(st[1]), stone = SD_STONES[i]; return { title: `${stone.name.charAt(0).toUpperCase()}${stone.name.slice(1)} - ${stone.sign}`, subs: [SD_HALL_TEXT.hour(want[i]), ok ? SD_HALL_TEXT.held : st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back] }; }
       const pl = /^sdplaque:([0-5])$/.exec(key);
       if (pl) { const k = Number(pl[1]); return { title: SD_HALL_TEXT.plaque(k), subs: [o.riddles[k].text] }; }
       return null;
