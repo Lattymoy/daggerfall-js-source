@@ -178,5 +178,50 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F37-the-ground-unasked",
+    "file": "src/systems/sdSite.js",
+    "old": "      if (!ground(id % W, Math.floor(id / W))) continue;\n",
+    "new": "",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F37-the-first-dry-pixel",
+    "file": "src/systems/sdSite.js",
+    "old": "      const id = pixels[(roll + j) % pixels.length];",
+    "new": "      const id = pixels[j];",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F37-a-wet-city-ends-it",
+    "file": "src/systems/sdSite.js",
+    "old": "cityRegion: city.regionIndex, region: rec.r };\n    }\n  }",
+    "new": "cityRegion: city.regionIndex, region: rec.r };\n    }\n    return null;\n  }",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F37-the-hosts-ground-unhanded",
+    "file": "src/scenes/sdHost.js",
+    "old": "findSdSite(r, sc, cities(r.r), ground)",
+    "new": "findSdSite(r, sc, cities(r.r))",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F37-the-worlds-ground-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    ground: (px, py) => _spawnGround(px, py),",
+    "new": "",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

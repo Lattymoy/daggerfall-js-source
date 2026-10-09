@@ -145,7 +145,11 @@ failed to load stood its Hollow by another city - AUDIT SD IV S2), and the templ
 2. Around the chosen city, the site is a pixel the gate's own scan calls suitable (`systems/gateSite.js`: land, no
    location on it or its eight neighbours, not a spawned dungeon's pixel) whose nearest fast-travel town is that city -
    two to four pixels out (`GATE_TOWN_MIN_PX`..`GATE_TOWN_MAX_PX`). The slot's hash picks among the pixels that pass;
-   with none, the next city down the ranking is tried.
+   with none, the next city down the ranking is tried. ON DRY GROUND (AUDIT SD IV F37): the scan's one land test is the
+   pixel's own height byte over the sea's, and a coast's low first land stood the Hollow on a square of sand - so the
+   site is the spawns' own (`world/spawnedDungeons.js` `createSpawnGround`, SPAWN-SHORE: the plateau the build flattens
+   it to above the beach band), from the slot's pick on through the city's pixels to the first dry one (the pick's own
+   where it is dry); a city with none passes to the next.
 
 The relay never knows the pixel - it has no map data - and needs not: everything that must be judged is judged by pose
 against the slot's law (section 4) or in the realm's own frame (sections 8-10).
@@ -757,7 +761,8 @@ claim - `systems/regionHubs.js` exports its `outranks` for it - or the Bay's fir
 a city named for its region before a larger one), `findSdSite` (a pixel the GATE's own scan calls suitable -
 `systems/gateSite.js scanGatePixels`, so the Hollow inherits every one of its tests: land, no location on it or its
 neighbours, no spawned dungeon rolled there, a province's - whose nearest fast-travel town is the city, two to four
-pixels out, by the slot's roll; a city with none passes to the next), `sdTemplates`/`pickSdTemplate` (a labyrinth or a
+pixels out, by the slot's roll; a city with none passes to the next - and, AUDIT SD IV F37, on dry ground, which the
+gate's scan never asks: the spawns' own test, section 3), `sdTemplates`/`pickSdTemplate` (a labyrinth or a
 keep of twelve blocks or more with a spawn's clearance), and `sdHollowLocation` (the template cloned on the site under
 the slot's OWN map id - `sdSalt`, 2049..4095, never `WORLD_SALT` - so a later Hollow on the same pixel is another
 dungeon with another room and another memory; named; `superTier`; a spawned dungeon's machinery). The design's

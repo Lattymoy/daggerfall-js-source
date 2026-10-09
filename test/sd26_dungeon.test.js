@@ -17,6 +17,11 @@ import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
 import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
 import { riftCentreY } from '../src/world/sdRiftModel.js';
 import { pickActivatableHit, RAY_DISTANCE } from '../src/player/activate.js';
+import { sdCities, findSdSite } from '../src/systems/sdSite.js';
+import { scanGatePixels } from '../src/systems/gateSite.js';
+import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { createSpawnGround } from '../src/world/spawnedDungeons.js';
+import { sdRoll } from '../src/net/sdLaw.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -272,4 +277,60 @@ test('SD26 THE RING IS SIZED BY THE DISC IT IS (AUDIT SD IV F36): the hall\'s me
   assert.ok(sdRiftSweep([15, 0, 15], 7, [1, 0, 0], column) < 7, 'the same column in its plane');
   // the same answer every time
   assert.deepEqual(sdRiftPlace([15, 0, 15], bay), r1);
+});
+
+// ── F37: a Hollow on dry ground ───────────────────────────────────────
+
+const T = LOCATION_TYPES;
+const place = (region, index, px, py, type, { name = `P${region}.${index}`, w = 1, h = 1, buildings = 0 } = {}) => ({
+  name, regionIndex: region, locationIndex: index, hasDungeon: false,
+  mapTableData: { mapId: py * 1000 + px, locationType: type, longitude: 0, latitude: 0 },
+  exterior: { exteriorData: { width: w, height: h, locationId: py * 1000 + px }, buildingCount: buildings },
+});
+function mapsOf(places) {
+  const regions = [0, 1].map(() => ({ mapTable: [], mapNames: [] }));
+  for (const p of places) { regions[p.regionIndex].mapTable[p.locationIndex] = { mapId: p.mapTableData.mapId, locationType: p.mapTableData.locationType }; regions[p.regionIndex].mapNames[p.locationIndex] = p.name; }
+  return { regionCount: 2, getRegion: (r) => regions[r], getClimateIndex: () => 231, getPoliticIndex: (x) => 128 + (x < 500 ? 0 : 1), getRegionIndexAt: (x) => (x < 500 ? 0 : 1) };
+}
+/** A WoodsFile's surface over a byte a pixel (test/spawnshore.test.js's), its large map flat. */
+const woodsOf = (byteAt, large = 0) => ({
+  getHeightMapValue: byteAt,
+  getHeightMapValuesRange1Dim(x0, y0, dim) { const dst = new Uint8Array(dim * dim); for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) dst[x + y * dim] = byteAt(x0 + x, y0 + y); return dst; },
+  getLargeHeightMapValuesRange: (x, y, dim) => new Uint8Array(dim * 3 * dim * 3).fill(large),
+});
+
+test('SD26 A HOLLOW STANDS ON DRY GROUND (AUDIT SD IV F37): every spawned dungeon stands only where the plateau the build flattens it to is above the beach band (SPAWN-SHORE) - the Hollow\'s site was the gate scan\'s, whose one land test is the pixel\'s own byte over the sea\'s, so a coast\'s low first land stood it on a square of sand. Now from the slot\'s roll on through its city\'s pixels to the first dry one (the roll\'s own where it is dry, as before), and a city with none passes to the next; the world host hands it the spawns\' own test (mutants: the ground unasked; the first dry pixel, not the roll\'s; a wet city ends it; the world\'s ground not handed)', () => {
+  // a coast west of the city: sea under x 297, a beach (byte 5 - 40 m, under the 41.5 m dry line) to x 300, land past it
+  const byte = (x) => (x < 297 ? 0 : x <= 300 ? 5 : 20);
+  const woods = woodsOf((x) => byte(x));
+  const ground = createSpawnGround(woods);
+  const city = place(0, 0, 300, 200, T.TownCity, { w: 3, h: 3, buildings: 80 });
+  const scan = scanGatePixels(mapsOf([city]), { heightAt: (x) => byte(x) });
+  const cities = sdCities([city], 0, { regionNameOf: () => 'Nowhere' });
+  let wetBefore = 0, moved = 0;
+  for (let s = 1; s <= 60; s++) {
+    const rec = { s, r: 0 };
+    const was = findSdSite(rec, scan, cities), now = findSdSite(rec, scan, cities, ground);
+    assert.ok(now && ground(now.px, now.py), `slot ${s}: dry (${now?.px},${now?.py})`);
+    if (!ground(was.px, was.py)) { wetBefore += 1; if (was.px !== now.px || was.py !== now.py) moved += 1; } else assert.deepEqual(now, was, `slot ${s}: the roll's own, dry`);
+    assert.deepEqual(findSdSite(rec, scan, cities, ground), now, 'the same for every client');
+  }
+  assert.ok(wetBefore > 3 && moved === wetBefore, `the beach's slots moved (${wetBefore})`);
+  // from the roll on: the next dry pixel in the list after it
+  const byTown = [...scan.byRegion.values()].flatMap((l) => Array.from(l)).filter((p) => scan.towns[scan.townAt[p]]?.px === 300).sort((a, b) => a - b);
+  const rec = Array.from({ length: 60 }, (_, i) => ({ s: i + 1, r: 0 })).find((r) => { const w = findSdSite(r, scan, cities); return !ground(w.px, w.py); });
+  const roll = sdRoll(rec.s, 4) % byTown.length;
+  const next = Array.from({ length: byTown.length }, (_, j) => byTown[(roll + j) % byTown.length]).find((p) => ground(p % 1000, Math.floor(p / 1000)));
+  const site = findSdSite(rec, scan, cities, ground);
+  assert.equal(site.py * 1000 + site.px, next);
+  // a city all beach passes to the next
+  const second = place(0, 1, 400, 300, T.TownCity, { w: 2, h: 2 });
+  const two = sdCities([city, second], 0, { regionNameOf: () => 'Nowhere' });
+  const scan2 = scanGatePixels(mapsOf([city, second]), { heightAt: (x) => byte(x) });
+  const allWet = (px) => px > 350;
+  assert.equal(findSdSite({ s: 3, r: 0 }, scan2, two, allWet).city, second, 'the next city');
+  assert.equal(findSdSite({ s: 3, r: 0 }, scan2, [city], () => false), null, 'none dry: no site');
+  // the world host hands the spawns' own test through
+  assert.match(W, /\n {4}ground: \(px, py\) => _spawnGround\(px, py\),/);
+  assert.match(read('src/scenes/sdHost.js'), /findSdSite\(r, sc, cities\(r\.r\), ground\)/);
 });

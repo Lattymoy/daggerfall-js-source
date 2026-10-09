@@ -23092,6 +23092,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now() + _sharedOffsetMs,
     scan: () => gateScanOf(),
     warmScan: () => warmGateScan(),
+    ground: (px, py) => _spawnGround(px, py),   // AUDIT SD IV (F37): a Hollow on dry ground, as every spawn (SPAWN-SHORE)
     cities: (r) => sdCities(_sdCityRows, r, { regionNameOf: (i) => maps.getRegionName(i) }),
     templates: () => _sdTemplateRows,
     where: (px, py) => { const regionIndex = maps.getRegionIndexAt(px, py); return { regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }; },
