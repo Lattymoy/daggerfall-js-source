@@ -60,7 +60,7 @@ export const VALUE_IS_IDENTITY_TEMPLATES = Object.freeze([275]);
  *  read it. FIELD BUGS 2026-10-09b MARK-WIRE: ACQUIRE1 added `acquired` to the first two and not here, so every
  *  marked piece - a weapon, armour, clothing, jewellery - carried it on its record and not on its offer, and the
  *  market, a stall and a realm trade all refused it ("The realm does not hold that piece where your pack had it"). */
-export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired']);
+export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry']);   // WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone
 /** The fields that are never part of what an item IS: its count and its price (the offer's own, which the wire floors),
  *  and the RECEIVER's marks. */
 export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS]);

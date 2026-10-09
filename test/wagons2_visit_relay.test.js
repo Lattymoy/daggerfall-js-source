@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRoom } from './fakeRoom.mjs';
-import { parseClient, parkKeyOf, validCaravanData, relaySupportsCaravan, CARAVAN_DECOR_KEY, CARAVAN_RELAY_MIN, PARK_TTL_MS, RELAY_VERSION } from '../src/net/wire.js';
+import { parseClient, parkKeyOf, validCaravanData, relaySupportsCaravan, CARAVAN_DECOR_KEY, CARAVAN_RELAY_MIN, PARK_TTL_MS, RELAY_VERSION, CARAVAN_DOC_MIN_MS, ACT_SENDER_BYTES_PER_S, PARK_REFRESH_MS } from '../src/net/wire.js';
 import { caravanRoomOf, privateInteriorPrefix, privateInteriorRoom } from '../src/net/privateInterior.js';
 import { OnlineSession } from '../src/net/online.js';
 
@@ -142,4 +142,38 @@ test('WAGONS2-VISIT THE SESSION: my document goes down my primary socket only we
   assert.equal(s.sendCaravan({ c: CA, d: DOC }), false, 'no caravan\'s room, no word');
   sockets[1].receive({ t: 'caravan', data: DOC });
   assert.equal(heard.length, 1);
+});
+
+test('WAGONS2-VISIT (AUDIT) THE DOCUMENT METERED: one a second from a socket at most - a sooner one dropped, neither stored nor told; an unchanged one neither stored again nor fanned until its lease wants renewing; a changed one fanned and its fan charged to the sender\'s own act bytes - a sender deep in debt tells nobody, its document still kept (mutants: no interval, the unchanged fanned, the fan uncharged)', async () => {
+  const { r, join } = await caravanRoom();
+  const ann = await join('ann1');
+  const bob = await join('bob1');
+  const raw = (ws, data) => { r.room._meterOf(ws).abucket = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'caravan', data })); };
+  const later = () => { r.room._meterOf(ann).cvAt -= CARAVAN_DOC_MIN_MS; };
+  const DOC2 = { v: 1, p: [] }, DOC3 = { v: 1, p: [{ ...DOC.p[0], id: 'p3' }] };
+  await raw(ann, { c: CA, d: DOC });
+  await raw(ann, { c: CA, d: DOC2 });   // within the second
+  assert.deepEqual(r.store.get(CARAVAN_DECOR_KEY).d, DOC, 'the sooner one dropped');
+  assert.equal(framesOf(bob, 'caravan').length, 1);
+  later();
+  const at = r.store.get(CARAVAN_DECOR_KEY).at - 5000;
+  r.store.set(CARAVAN_DECOR_KEY, { at, d: DOC });
+  await raw(ann, { c: CA, d: DOC });   // unchanged
+  assert.equal(framesOf(bob, 'caravan').length, 1, 'unchanged: told nobody');
+  assert.equal(r.store.get(CARAVAN_DECOR_KEY).at, at, 'nor stored again');
+  later();
+  r.room._cvAt -= PARK_REFRESH_MS;   // its lease wants renewing
+  await raw(ann, { c: CA, d: DOC });   // unchanged still
+  assert.ok(r.store.get(CARAVAN_DECOR_KEY).at > at, 'renewed: stored again');
+  assert.equal(framesOf(bob, 'caravan').length, 1, 'and told nobody');
+  later();
+  await raw(ann, { c: CA, d: DOC2 });
+  assert.equal(framesOf(bob, 'caravan').length, 2, 'changed: told');
+  assert.ok(r.room._meterOf(ann).abytes?.bytes < ACT_SENDER_BYTES_PER_S, 'its fan charged to the sender');
+  later();
+  r.room._meterOf(ann).abytes = { bytes: -1e9, at: Date.now() };   // deep in debt
+  await raw(ann, { c: CA, d: DOC3 });
+  assert.deepEqual(r.store.get(CARAVAN_DECOR_KEY).d, DOC3, 'kept for its visitors');
+  assert.equal(framesOf(bob, 'caravan').length, 2, 'but fanned to nobody');
+  assert.equal(CARAVAN_DOC_MIN_MS, 1000);
 });

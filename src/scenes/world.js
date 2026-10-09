@@ -756,6 +756,7 @@ import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WA
 import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
 import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
 import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
+import { RECEIVER_MARKS } from '../net/realmTradeLaw.js';   // WAGONS2-VISIT (AUDIT): the last owner's marks, never carried to the next
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
@@ -8124,8 +8125,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** Whether another's parked caravan opens to me: online at a relay that keeps caravans' rooms, outdoors, its owner's
    *  word read as a home's door reads it - my party's handles (the relay's), my guild's tag. */
-  const caravanVisitMay = (t) => !!online?.caravanOk && online.status === 'open' && (modes?.mode ?? 'exterior') === 'exterior'
-    && caravanMayEnter(t, { partyNames: (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0), guild: myGuildTag() });
+  const caravanDoorOpen = (t) => caravanMayEnter(t, { partyNames: (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0), guild: myGuildTag() });
+  const caravanVisitMay = (t) => !!online?.caravanOk && online.status === 'open' && (modes?.mode ?? 'exterior') === 'exterior' && caravanDoorOpen(t)
+    && !wagonRiders?.seated();   // WAGONS2-VISIT (AUDIT): never from a seat in another's wagon (its row offered, its press said nothing)
   /** Its press: into it, through the same door as my own (scenes/caravanRoom.js visit) - its room the record's key. */
   const caravanVisitEnter = (t) => {
     const room = caravanRoomOf(t?.k);
@@ -19846,7 +19848,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const staffGlyphs = () => _staffGlyphs;
   let _privateSource = null, _privatePrefix = null;
   function privateRoomHere(identity) {
-    if (modes?.caravanRoom) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
+    if (modes?.caravanRoom) {
+      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
+      if (caravanKeyOf(identity?.privateRoom)) return null;   // a visit at an older relay keeps no caravan's room (none is entered there)
+    }   // WAGONS2-VISIT (AUDIT): and my own caravan at an older relay - the owned room, as before it (it left me in none)
     // Old relays accept arbitrary room names without this room's owner gate.
     // Never advertise personal presence through one of those relays.
     if (!chatLinks.get('world')?.staffTeleportOk || !social?.acct || !realmSession?.id) return null;
@@ -20208,7 +20213,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WAGONS2-VISIT: the caravan I visit stands while its cell says so (net/caravanVisitLink.js) - moved on or gone, I am
   // stood outside behind its door and told; painted again, its room wears it
   const caravanVisitLink = createCaravanVisitLink({
-    onGone: () => modes?.leaveCaravanVisit?.(CARAVAN_VISIT_TEXT.gone) ?? true,
+    onGone: (why) => modes?.leaveCaravanVisit?.(why === 'shut' ? CARAVAN_VISIT_TEXT.closed(modes?.caravanVisit?.cabinOwner || 'Its owner') : CARAVAN_VISIT_TEXT.gone) ?? true,
+    may: (w, visit) => caravanDoorOpen({ owner: visit.owner, entry: w.entry ?? 'private', guild: w.guild ?? null }),   // WAGONS2-VISIT (AUDIT): its door as its record says it now
     onLook: (look) => { modes?.repaintCaravanVisit?.(look); },
   });
   const cabinLink = createSailingCabinLink({
@@ -20962,7 +20968,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       door: accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
       // GUILD2b (bible/11-Multiplayer/Guild-Overhaul.md): the pack a vault's piece leaves and arrives in - the item made
       // whole as the save's loader makes one (setItemFields), added as DFU's AddItem adds; the one checkpoint asked
-      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); },
+      pack: { items: () => (playerEntity.items ??= []), add: (rec) => { const it = { ...rec }; for (const k of RECEIVER_MARKS) delete it[k]; addItem((playerEntity.items ??= []), setItemFields(it), 'back'); }, changed: () => { saveSoon.changed(); },   // WAGONS2-VISIT (AUDIT): a piece from the vault comes without the last owner's marks (a caravan's door among them)
         reach: () => _storesReached(), refuses: (it) => packTradeRefusal(it, playerEntity) },   // GUILD2b: the vault is reached in a town, as the Stores are (BAG1); WAGONS2 (AUDIT): what the pack keeps - the loaded wagon
       marks: marksBook,   // MARKS1: the guild's Marks treasury moves through the account's Marks
       // PROF6: the guild Stores and the Officers' writ budget, through the writs' book, while the professions are this

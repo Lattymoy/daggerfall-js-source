@@ -29,6 +29,8 @@ import { createCaravanAccess, caravanDescriptorAt, caravanTurnOf } from '../src/
 import { createCaravanVisitLink, caravanStands, CARAVAN_STANDS_NATIVES } from '../src/net/caravanVisitLink.js';
 import { readCaravanRoom, isCaravanRoom, turnCaravanScene, CARAVAN_TEXT } from '../src/systems/caravanRoom.js';
 import { worldCoordToMapPixel } from '../src/world/streamingWorld.js';
+import { validLootItem } from '../src/systems/loot.js';
+import { RECEIVER_MARKS } from '../src/net/realmTradeLaw.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(read(`src/assets/wagons/${kind}.json`));
@@ -179,9 +181,9 @@ const CW = (x = 4000, z = 8000) => [2, x, 1, z, ...QUARTER, 50, 0];
 
 test('WAGONS2-VISIT THE POOL: another\'s parked caravan the cell keeps a record of lists "Step inside" where the host\'s law opens it (and only there); its target names the record\'s key, the relay\'s owner name, who may enter, its paint, where its record stands and its door as drawn here (the one door law, turned with it); its press, within the mod\'s reach, goes to the host; a caravan seen only on its owner\'s live word names no room (mutants: the row on every caravan, the reach unread, a caravan with no record opening)', async () => {
   const may = []; const entered = [];
-  let open = true;
+  let open = true, stale = null;
   const pool = createHorseCartPool({ renderer: fakeRenderer(), meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'cart', bakedWagon: async (k) => bakeOf(k),
-    peerName: () => null, visit: { may: (t) => { may.push(t); return open; }, enter: (t) => { entered.push(t); } } });
+    peerName: () => stale, visit: { may: (t) => { may.push(t); return open; }, enter: (t) => { entered.push(t); } } });
   pool.attach(runtimeOf());
   const k = 'a'.repeat(24);
   pool.applyKept('world:1,1', { k, id: 'ann1', name: 'Ann', r: { w: CW(), wk: 2, wl: 7, we: 2 } }, (p) => p, 0);
@@ -219,6 +221,10 @@ test('WAGONS2-VISIT THE POOL: another\'s parked caravan the cell keeps a record 
   // session has no name for them)
   pool.applyKept('world:1,1', { k: 'b'.repeat(24), id: 'bob1', name: 'bob-stamp', r: { w: CW(6000, 8000), wk: 2, we: 2 } }, (p) => p, 0);
   assert.deepEqual([pool.visitTarget('bob1').k, pool.visitTarget('bob1').owner], ['b'.repeat(24), 'bob-stamp']);
+  assert.equal(pool.visitTarget('bob1').cell, 'world:1,1', 'WAGONS2-VISIT (AUDIT): the cell that keeps its record');
+  stale = 'Squatter';   // the peer id the record names, someone else's after a drain
+  assert.equal(pool.visitTarget('bob1').owner, 'bob-stamp', 'WAGONS2-VISIT (AUDIT): the relay\'s stamp on the record, never a stale id\'s name');
+  stale = null;
   // an open wagon is no caravan
   pool.applyKept('world:1,1', { k: 'c'.repeat(24), id: 'cat1', name: 'Cat', r: { w: CW(9000, 8000), wk: 1, we: 2 } }, (p) => p, 0);
   pool.frame(0.016, [0, 0, 0]);
@@ -263,7 +269,7 @@ test('WAGONS2-VISIT THE DOOR: another\'s caravan is entered by the ONE descripto
   const [room, visit] = calls[0];
   assert.deepEqual(room, caravanDescriptorAt(t, (p) => p.map((v) => v * 2)), 'the one law');
   assert.deepEqual({ ...room, turn: Math.round(room.turn) }, { v: 2, kind: 'caravan', origin: [20, 2, 20], turn: 90, step: [16, 0, 20], yaw: -Math.PI / 2 });
-  assert.deepEqual(visit, { privateRoom: `caravan:${'a'.repeat(24)}`, cabinOwner: 'Ann', look: t.look, k: t.k, at: [20, 2, 20] });
+  assert.deepEqual(visit, { privateRoom: `caravan:${'a'.repeat(24)}`, cabinOwner: 'Ann', look: t.look, k: t.k, at: [20, 2, 20], cell: null });
   assert.deepEqual(access.returnToWagon(room), { position: [8, 0, 10], yaw: -Math.PI / 2 }, 'out behind its door');
   for (const [tt, r] of [[{ ...t, owner: '' }, 'caravan:x'], [t, ''], [null, 'caravan:x']]) assert.equal(await access.visit(tt, r), false);
   busy = true; assert.equal(await access.visit(t, 'caravan:x'), false); busy = false;
@@ -413,8 +419,11 @@ test('WAGONS2-VISIT THE VISITOR\'S DOOR, ON THE WORLD HOST: another\'s caravan o
     online: { caravanOk: true, status: 'open' }, modes: { mode: 'exterior' }, caravanMayEnter, myGuildTag: () => 'ABC',
     social: { others: () => [{ name: 'Mac' }, { name: null }] }, caravanRoomOf, townTalk: { say: (l) => said.push(l) }, CARAVAN_VISIT_TEXT,
     caravanRooms: { visit: async (t, room) => { visits.push([t.owner, room]); return true; } },
+    wagonRiders: { seated: () => seated },   // WAGONS2-VISIT (AUDIT): never from a seat in another's wagon
   };
-  const { may, enter } = new Function(...Object.keys(scope), `const caravanVisitMay = ${lift('src/scenes/world.js', 'caravanVisitMay')};
+  let seated = false;
+  const { may, enter } = new Function(...Object.keys(scope), `const caravanDoorOpen = ${lift('src/scenes/world.js', 'caravanDoorOpen')};
+    const caravanVisitMay = ${lift('src/scenes/world.js', 'caravanVisitMay')};
     return { may: caravanVisitMay, enter: ${lift('src/scenes/world.js', 'caravanVisitEnter')} };`)(...Object.values(scope));
   const t = (owner, entry, guild = null) => ({ k: 'a'.repeat(24), owner, entry, guild });
   assert.equal(may(t('mac', 'party')), true, 'my party holds its owner');
@@ -423,6 +432,7 @@ test('WAGONS2-VISIT THE VISITOR\'S DOOR, ON THE WORLD HOST: another\'s caravan o
   assert.equal(may(t('Zed', 'private')), false);
   scope.modes.mode = 'interior'; assert.equal(may(t('Zed', 'public')), false, 'indoors no caravan is stepped into'); scope.modes.mode = 'exterior';
   scope.online.caravanOk = false; assert.equal(may(t('Zed', 'public')), false, 'an older relay keeps no caravan\'s room'); scope.online.caravanOk = true;
+  seated = true; assert.equal(may(t('Zed', 'public')), false, 'WAGONS2-VISIT (AUDIT): from a seat in another\'s wagon, no visit'); seated = false;
   assert.equal(await enter(t('Zed', 'private')), false);
   assert.deepEqual(said, ["This is Zed's caravan. Its door is shut."]);
   assert.equal(await enter(t('Zed', 'public')), true);
@@ -518,7 +528,7 @@ test('WAGONS2-VISIT THE FOUR HOSTS: world.js wired - the pool\'s three, the cara
   assert.match(w, /caravanEntry: \{ row: \(\) => caravanEntryRow\(\), turn: \(\) => caravanEntryTurn\(\) \},/);
   assert.match(w, /visit: \{ may: \(t\) => caravanVisitMay\(t\), enter: \(t\) => caravanVisitEnter\(t\) \},/);
   assert.match(w, /enterInterior: \(room, visit = null\) => modes\?\.enterCaravanRoom\(room, null, visit\),/);
-  assert.match(w, /if \(modes\?\.caravanRoom\) return caravanRoomHere\(identity\);/);
+  assert.match(w, /if \(modes\?\.caravanRoom\) \{\n\s+if \(online\?\.caravanOk\) return caravanRoomHere\(identity\);[^\n]*\n\s+if \(caravanKeyOf\(identity\?\.privateRoom\)\) return null;/);
   assert.match(w, /online\.onCaravan = \(room, doc\) => modes\?\.applyCaravanDecor\?\.\(room, doc\);/);
   assert.match(w, /overworldLedgerFrame\(now\);[^\n]*\n\s+caravanDecorTick\(now\);[^\n]*\n\s+caravanVisitLink\.tick\(key \? online : null, modes\?\.caravanVisit \?\? null\);/, 'every frame, after my primary\'s own join and tick');
   assert.match(w, /if \(!modes\?\.caravanVisit\) caravanVisitLink\.close\(\);[^\n]*\n\s+if \(!key\) \{ if \(online\.room\) online\.leave\(\); \}/, 'no visit: closed before my primary joins the cell it heard');
@@ -527,3 +537,30 @@ test('WAGONS2-VISIT THE FOUR HOSTS: world.js wired - the pool\'s three, the cara
   assert.equal((w.match(/caravanVisitLink\.close\(\)/g) ?? []).length, 3, 'the frame, the seat lost, the page\'s going');
   for (const host of ['exterior', 'dungeonContext']) assert.doesNotMatch(read(`src/scenes/${host}.js`), /caravanVisit|caravanRoom|CARAVAN_VISIT/, `${host}.js names no visit`);
 });
+
+test('WAGONS2-VISIT (AUDIT) THE VISIT\'S EDGES: the listener hears the cell that keeps the record (its pose may stand past an edge); a door set against me while I stand inside stands me out, told why; a caravan changing hands opens to its new owner alone - who may enter is never carried (the wire\'s clamp and the vault\'s receipt); my own caravan at an older relay keeps the owned room it had (mutants: the pose\'s cell, the shut door unheard, the door carried, the owned room lost)', async () => {
+  const { Session, sessions } = fakeSessions();
+  const gone = [];
+  let open = true;
+  const link = createCaravanVisitLink({ onGone: (why) => { gone.push(why); return true; }, may: (w, visit) => open && visit.owner === 'Ann' && w.entry === 'public', Session });
+  const main = { room: `caravan:${'a'.repeat(24)}`, inRoom: () => false, url: 'wss://relay.test/', id: 'vis-0001', secret: 's', name: 'Vis', look: null, mintToken: null, terminal: false };
+  const v = { privateRoom: main.room, cabinOwner: 'Ann', k: 'a'.repeat(24), at: AT, look: null, cell: 'world:7,7' };
+  link.tick(main, v);
+  assert.deepEqual(sessions[0].joins, [['world:7,7', null]], 'the record\'s own cell');
+  const s0 = sessions[0];
+  s0.onPark('world:7,7', { k: v.k, r: recAt(AT[0], AT[2], { we: 2 }) });   // public (HOME_ENTRIES' third)
+  link.tick(main, v);
+  assert.deepEqual(gone, [], 'open: I stay');
+  s0.onPark('world:7,7', { k: v.k, r: recAt(AT[0], AT[2]) });   // private now
+  link.tick(main, v);
+  assert.deepEqual(gone, ['shut'], 'shut on me: out, told why');
+  // who may enter is the owner's word, never carried
+  const caravan = { ...newWagonItem('caravan'), wagonEntry: 'public' };
+  assert.equal(validLootItem(caravan).wagonEntry, undefined, 'the wire\'s clamp leaves it behind');
+  assert.ok(RECEIVER_MARKS.includes('wagonEntry'));
+  assert.match(read('src/scenes/world.js'), /add: \(rec\) => \{ const it = \{ \.\.\.rec \}; for \(const k of RECEIVER_MARKS\) delete it\[k\]; addItem\(/, 'the vault\'s receipt too');
+  // my own caravan at an older relay: the owned room it had
+  const old = worldRoomRig({ caravanOk: false, quest: { mapTableData: { mapId: 77 } } });
+  assert.match(await settle(() => old.privateRoomHere({ private: true, buildingKey: 9 })), /^owned:[0-9a-f]{32}\.[0-9a-f]{16}:77\.9$/);
+});
+

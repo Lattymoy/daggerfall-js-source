@@ -363,9 +363,30 @@ outside." A repaint reaches the room live.
 **The relay** (world183, re-hashed in place): the `caravan` frame and its
 keeping, `relaySupportsCaravan` at 183, and the park record's `we`/`wg`.
 
-**Known limit.** Visitors see the pieces as the owner placed them the last
+**Known limits.** Visitors see the pieces as the owner placed them the last
 time the owner stood in the caravan online. A paint changed inside reaches
-the cell when the owner comes out.
+the cell when the owner comes out. The stations a visitor may use are the
+ones the owner's document lists, as the door is the owner's client's to keep
+- a modified owner client could list a station it does not have.
+
+**The visits' audit.**
+
+- The relay meters the `caravan` frame: one document a second from a socket
+  (CARAVAN_DOC_MIN_MS), an unchanged one neither stored again nor fanned
+  until its lease wants renewing, the fan charged to the sender's own act
+  bytes. world183 re-hashed in place.
+- The listener hears the cell that keeps the record (the record's own room),
+  not the cell the drawn pose names.
+- A door set against a visitor while they stand inside stands them out,
+  told why ("<owner> has shut the caravan's door. You step outside.").
+- Who may enter is never carried to a new owner: `wagonEntry` is one of the
+  receiver's marks the wire's clamp leaves behind
+  (`src/net/realmTradeLaw.js` RECEIVER_MARKS), and the vault's receipt drops
+  them too. A bought caravan opens to its owner alone.
+- The owner's name is the relay's stamp on the record, never a stale peer
+  id's.
+- A rider seated in another's wagon is offered no visit.
+- At an older relay, my own caravan keeps the owned room it had before.
 
 ### Windows (RW1)
 

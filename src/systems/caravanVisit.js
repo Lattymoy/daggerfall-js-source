@@ -73,6 +73,7 @@ export const CARAVAN_VISIT_TEXT = Object.freeze({
   entryLine: (words) => `Who may enter your caravan: ${words}.`,
   shut: (owner) => `This is ${owner}'s caravan. Its door is shut.`,
   gone: 'The caravan has moved on. You step outside.',
+  closed: (owner) => `${owner} has shut the caravan's door. You step outside.`,   // WAGONS2-VISIT (AUDIT): the door set against me while I stood in it
 });
 
 /** The document's shape version, and its byte bound - the small frame's cap less room for the frame around it. */

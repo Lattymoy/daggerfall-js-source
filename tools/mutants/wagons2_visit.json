@@ -155,8 +155,8 @@
   {
     "name": "WAGONS2-VISIT-never-forgotten",
     "file": "server/src/index.js",
-    "old": "if (Date.now() >= due) await this.state.storage.delete(CARAVAN_DECOR_KEY);",
-    "new": "if (false) await this.state.storage.delete(CARAVAN_DECOR_KEY);",
+    "old": "if (Date.now() >= due) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
+    "new": "if (false) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
     "tests": [
       "test/wagons2_visit_relay.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WAGONS2-VISIT-null-forgets-nothing",
     "file": "server/src/index.js",
-    "old": "if (m.data.d === null) await this.state.storage.delete(CARAVAN_DECOR_KEY);",
-    "new": "if (false) await this.state.storage.delete(CARAVAN_DECOR_KEY);",
+    "old": "if (m.data.d === null) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
+    "new": "if (false) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }",
     "tests": [
       "test/wagons2_visit_relay.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "WAGONS2-VISIT-a-visit-entered-as-my-own-room",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null });",
+    "old": "      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null, cell: typeof t.cell === 'string' ? t.cell : null });",
     "new": "      return go(t, null);",
     "tests": [
       "test/wagons2_visit.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "WAGONS2-VISIT-gone-said-in-the-callback",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (!caravanStands(raw, visit.at)) { gone = true; due = true; return; }",
-    "new": "if (!caravanStands(raw, visit.at)) { gone = true; onGone?.(); return; }",
+    "old": "if (!caravanStands(raw, visit.at)) { gone = true; due = true; why = 'gone'; return; }",
+    "new": "if (!caravanStands(raw, visit.at)) { gone = true; onGone?.('gone'); return; }",
     "tests": [
       "test/wagons2_visit.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "WAGONS2-VISIT-the-hosts-no-forgotten",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (due) { due = false; if (onGone?.() === false) due = true; }",
-    "new": "if (due) { due = false; onGone?.(); }",
+    "old": "if (due) { due = false; if (onGone?.(why) === false) due = true; }",
+    "new": "if (due) { due = false; onGone?.(why); }",
     "tests": [
       "test/wagons2_visit.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "WAGONS2-VISIT-the-caravan-keyed-as-a-town-building",
     "file": "src/scenes/world.js",
-    "old": "    if (modes?.caravanRoom) return caravanRoomHere(identity);",
-    "new": "    if (false) return caravanRoomHere(identity);",
+    "old": "      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
+    "new": "      if (false) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
     "tests": [
       "test/wagons2_visit.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "WAGONS2-VISIT-the-door-open-to-whom-its-owner-shut",
     "file": "src/scenes/world.js",
-    "old": "    && caravanMayEnter(t, { partyNames:",
-    "new": "    && !!t || caravanMayEnter(t, { partyNames:",
+    "old": "const caravanDoorOpen = (t) => caravanMayEnter(t, { partyNames:",
+    "new": "const caravanDoorOpen = (t) => !!t || caravanMayEnter(t, { partyNames:",
     "tests": [
       "test/wagons2_visit.test.js"
     ]
@@ -527,6 +527,114 @@
     "file": "src/scenes/world.js",
     "old": "    online.onCaravan = (room, doc) => modes?.applyCaravanDecor?.(room, doc);",
     "new": "    online.onCaravan = null;",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-no-interval",
+    "file": "server/src/index.js",
+    "old": "if (now - (meters.cvAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-unchanged-stored-again",
+    "file": "server/src/index.js",
+    "old": "if (!changed && now - (this._cvAt ?? 0) < PARK_REFRESH_MS) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-unchanged-fanned",
+    "file": "server/src/index.js",
+    "old": "        if (!changed) return;\n",
+    "new": "        void changed;\n",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-fan-uncharged",
+    "file": "server/src/index.js",
+    "old": "      if (!fan.pass) return;\n      for (const [other] of listeners) this._send(other, out);",
+    "new": "      void fan;\n      for (const [other] of listeners) this._send(other, out);",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-poses-cell",
+    "file": "src/net/caravanVisitLink.js",
+    "old": "(typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2])",
+    "new": "cellRoomOfWire(v.at[0], v.at[2])",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-shut-door-unheard",
+    "file": "src/net/caravanVisitLink.js",
+    "old": "if (may && w && !may(w, visit)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-door-carried",
+    "file": "src/net/realmTradeLaw.js",
+    "old": "'acquired', 'wagonEntry']);",
+    "new": "'acquired']);",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-vaults-door-carried",
+    "file": "src/scenes/world.js",
+    "old": "const it = { ...rec }; for (const k of RECEIVER_MARKS) delete it[k];",
+    "new": "const it = { ...rec };",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-owned-room-lost",
+    "file": "src/scenes/world.js",
+    "old": "      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
+    "new": "      return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-a-visit-from-a-seat",
+    "file": "src/scenes/world.js",
+    "old": "&& caravanDoorOpen(t)\n    && !wagonRiders?.seated();",
+    "new": "&& caravanDoorOpen(t)\n    ;",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-the-records-cell-dropped",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "cell: kept.room ?? null };",
+    "new": "cell: null };",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-AUDIT-a-stale-ids-name",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const name = kept.name || peerName(p.ownerId ?? owner) || p.ownerName || null;",
+    "new": "const name = peerName(p.ownerId ?? owner) || kept.name || p.ownerName || null;",
     "tests": [
       "test/wagons2_visit.test.js"
     ]

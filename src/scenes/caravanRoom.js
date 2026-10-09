@@ -129,7 +129,7 @@ export function createCaravanAccess(deps) {
     async visit(t, room) {
       if (entering || deps.mode() !== 'exterior' || deps.busy() || !t || typeof room !== 'string' || !room || typeof t.owner !== 'string' || !t.owner) return false;
       if (!deps.available()) { deps.say(CARAVAN_TEXT.unavailable); return false; }
-      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null });
+      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null, cell: typeof t.cell === 'string' ? t.cell : null });
     },
     /** Where the room's door lets the player out: the ground behind the caravan's rear door (`ground` stands a point
      *  on what is there now, as a door's landing is - scenes/worldModes.js stands a private room's landing as given),

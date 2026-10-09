@@ -866,8 +866,10 @@ export function createHorseCartPool({
     if (!kept) return null;
     const door = caravanDoorAt(w.model, p.shownWagon, p.shownRotation ?? w.rotation);
     if (!door) return null;
-    const name = peerName(p.ownerId ?? owner) ?? (kept.name || p.ownerName || null);
-    return { ...door, k: kept.k, owner: name, entry: w.entry ?? 'private', guild: w.guild ?? null, look: w.look ?? null, at: [...p.wire.w.position] };
+    // WAGONS2-VISIT (AUDIT): its owner the name the relay stamped on its record first - a kept record's peer id may be
+    // anyone's after a drain; and the cell that keeps the record its listener's (the drawn pose can stand past an edge)
+    const name = kept.name || peerName(p.ownerId ?? owner) || p.ownerName || null;
+    return { ...door, k: kept.k, owner: name, entry: w.entry ?? 'private', guild: w.guild ?? null, look: w.look ?? null, at: [...p.wire.w.position], cell: kept.room ?? null };
   }
 
   // ── the floating origin

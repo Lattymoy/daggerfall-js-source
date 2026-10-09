@@ -26,17 +26,21 @@ export function caravanStands(raw, at) {
     && Math.abs(w.position[0] - at[0]) <= CARAVAN_STANDS_NATIVES && Math.abs(w.position[2] - at[2]) <= CARAVAN_STANDS_NATIVES;
 }
 
-/** `onGone()` the caravan moved on or went; `onLook(look)` its owner painted it again. */
-export function createCaravanVisitLink({ onGone, onLook = null, Session = OnlineSession }) {
-  let link = null, source = null, visit = null, cell = null, gone = false, due = false, lookKey = null;
+/** `onGone(why)` the caravan moved on or went ('gone') or its door shut on me ('shut'); `onLook(look)` its owner painted
+ *  it again; `may(w, visit)` (WAGONS2-VISIT AUDIT) whether its door, as its record's word says it now (`w` the record's
+ *  wagon - its `entry` and `guild`), still opens to me. */
+export function createCaravanVisitLink({ onGone, onLook = null, may = null, Session = OnlineSession }) {
+  let link = null, source = null, visit = null, cell = null, gone = false, due = false, lookKey = null, why = 'gone';
   function close() {
-    link?.leave(); link = null; source = null; visit = null; cell = null; gone = false; due = false; lookKey = null;
+    link?.leave(); link = null; source = null; visit = null; cell = null; gone = false; due = false; lookKey = null; why = 'gone';
   }
   /** A word about the caravan's record (null: none). */
   function judge(raw) {
     if (gone || !visit) return;
-    if (!caravanStands(raw, visit.at)) { gone = true; due = true; return; }
-    const look = validHccRecord(raw)?.w?.look ?? null;
+    if (!caravanStands(raw, visit.at)) { gone = true; due = true; why = 'gone'; return; }
+    const w = validHccRecord(raw)?.w ?? null;
+    if (may && w && !may(w, visit)) { gone = true; due = true; why = 'shut'; return; }   // WAGONS2-VISIT (AUDIT): its door shut on me while I stood in it - out, as a moved caravan's visitor is
+    const look = w?.look ?? null;
     const key = JSON.stringify(look);
     if (key !== lookKey) { lookKey = key; onLook?.(look); }
   }
@@ -46,19 +50,19 @@ export function createCaravanVisitLink({ onGone, onLook = null, Session = Online
      *  its owner key `k`, where its record stood `at`, its paint `look`) or null. */
     tick(main, v) {
       if (!main || !v || main.terminal || typeof v.k !== 'string' || !Array.isArray(v.at)) { close(); return; }
-      const room = cellRoomOfWire(v.at[0], v.at[2]);
+      const room = (typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2]);   // WAGONS2-VISIT (AUDIT): the cell that keeps its record (where it was read), else the one its pose names
       // the handoff: never beside my own primary (stepping out joins that very cell)
       if (!room || main.room === room || main.inRoom?.(room)) { close(); return; }
       if (source !== main || visit?.k !== v.k || visit?.room !== v.privateRoom) {
         close();
-        source = main; cell = room; visit = { k: v.k, at: [...v.at], room: v.privateRoom }; lookKey = JSON.stringify(v.look ?? null);
+        source = main; cell = room; visit = { k: v.k, at: [...v.at], room: v.privateRoom, owner: v.cabinOwner ?? null }; lookKey = JSON.stringify(v.look ?? null);
         link = new Session({ url: main.url, id: main.id, secret: main.secret, name: main.name, look: main.look, mintToken: main.mintToken, presence: false });
         link.onParks = (r, list) => { if (r === cell) judge((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)?.r ?? null); };
         link.onPark = (r, e) => { if (r === cell && e?.k === visit?.k) judge(e.r ?? null); };
       }
       if (link.room !== cell) link.join(cell, null);
       link.tick();
-      if (due) { due = false; if (onGone?.() === false) due = true; }
+      if (due) { due = false; if (onGone?.(why) === false) due = true; }
     },
   };
 }
