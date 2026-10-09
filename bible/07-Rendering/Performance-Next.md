@@ -233,7 +233,8 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
 15. **`_message` under the ceiling and the pose arm tightened** - 108.5 -> 39.3 us a moving pose at 200 in one pixel,
     measured on a prototype in this pass's scratch, no behaviour change. Not committed: its own pull request, in an
     announced window. BUILT 2026-10-09 as PERF-RELAY1 (`11-Multiplayer/Scale-Arc.md`; relay world183 on its own branch,
-    NOT YET DEPLOYED): the arm a method of its own and the index walked in place - the arm itself left as it was.
+    NOT YET DEPLOYED): the arm a method of its own, the index walked in place and the sender's pixel derived once a fan
+    (`net/wire.js inRangeOf`) - two of the arm's lines changed, the rest as it was.
 16. **The foes lane** fan-bounded, and no full frame with no foes - tiering far listeners as poses are tiered changes
     what they see: a design call.
 17. **Slimmer poses** - quantised, defaults omitted, -35% bytes measured; binary later. SCALE5.

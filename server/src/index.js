@@ -1437,7 +1437,8 @@ export class Room {
    * `_message`, and `_message` is past V8's ceiling for an optimized function (--max-optimized-bytecode-size): it runs
    * in the interpreter and the baseline compiler for the life of the object, and so did the room's hottest path - every
    * pose of every player, fanned to everyone in range. Here, under the ceiling, it is optimized like any small method;
-   * the arm's every line is the arm's, in its order, and `_message` hands it the frame as the arm took it.
+   * the arm's every line is the arm's, in its order, but the fan's walk and its range test (below), and `_message`
+   * hands it the frame as the arm took it.
    * @param {any} ws @param {any} a  the socket's attachment as `_message` read it @param {any} m  the parsed frame
    */
   async _poseFrame(ws, a, m) {
