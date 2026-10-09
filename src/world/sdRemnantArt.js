@@ -139,8 +139,8 @@ export function tellLit(key, heat, lx, ly, w = SD_TELL_REGION[key][2], h = SD_TE
  *  linear): the metal everywhere, each region's tread, knuckles, fuller or core cut in a shade darker; a lit texel heats
  *  toward its blow's colour and gives its light (SD_TELL_GLOW), its core the hottest; every texel quantized into the
  *  metal's own colours and the heats' steps. Off, it is the metal its neighbours wear and its own low light. */
-export function remnantTellArt(metal, heat, colors) {
-  const S = SD_TELL_ART_SIZE, base = metalBase(metal), albedo = kitImage(S), emission = kitImage(S);
+export function remnantTellArt(metal, heat, colors, base = metalBase(metal)) {
+  const S = SD_TELL_ART_SIZE, albedo = kitImage(S), emission = kitImage(S);
   const palette = metal === 'brass' ? paletteOf(SD_RAMP.brass, SD_RAMP.verdigris) : [], seen = new Set();
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const c = texelAt(base.albedo, x, y), k = (c[0] << 16) | (c[1] << 8) | c[2];
@@ -233,7 +233,7 @@ export function remnantLampArt(n) {
 export function remnantLookArt(colors) {
   /** @type {Array<[number, { albedo: RemnantImg, emission: RemnantImg }]>} */
   const out = [];
-  for (const metal of /** @type {const} */ (['brass', 'gold', 'silver'])) SD_REMNANT_TELL_RECORD[metal].forEach((rec, heat) => out.push([rec, remnantTellArt(metal, heat, colors)]));
+  for (const metal of /** @type {const} */ (['brass', 'gold', 'silver'])) { const base = metalBase(metal); SD_REMNANT_TELL_RECORD[metal].forEach((rec, heat) => out.push([rec, remnantTellArt(metal, heat, colors, base)])); }   // its metal painted once
   out.push([SD_REMNANT_WHITE_RECORD[0], endingLightArt(colors.reset)], [SD_REMNANT_WHITE_RECORD[1], endingLightArt(SD_LIGHT.moment)], [SD_REMNANT_HUSK_RECORD, remnantHuskArt()]);
   for (const metal of /** @type {const} */ (['brass', 'gold', 'silver'])) out.push([SD_REMNANT_DIAL_RECORD[metal], remnantDialArt(metal)]);
   for (const [look, rec] of Object.entries(SD_REMNANT_HAND_RECORD)) out.push([rec, remnantHandArt(look)]);
