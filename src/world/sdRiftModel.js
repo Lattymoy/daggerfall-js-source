@@ -247,7 +247,24 @@ export function buildRiftStatic(size, floor = null) {
  *  -z, its foot the origin. Two jambs, the pointed arch in eight segments a side, a sill; its window is the pass's. */
 export const SD_RETURN_ARCH = Object.freeze({ jamb: 0.16, depth: 0.22, segs: 8, spring: 0.62 });
 export function buildReturnModel(w, h) {
-  const f = faces(), A = SD_RETURN_ARCH, hw = w / 2, spring = h * A.spring, d = A.depth, rec = SD_RIFT_RECORD.lit;
+  const f = faces();
+  emitReturn(w, h, () => f);
+  return packRealmFaces(f);
+}
+/** SD-LOOK S6 (Super-Dungeons-Look.md section 4): THE RETURN IN ITS PARTS, for the way home's assembly - the two jambs
+ *  (up to the springing; the sill with the left), the two halves of the lancet (springing to apex), and the keystone's clock: every
+ *  face of buildReturnModel's, once. Answers `{ jambL, jambR, archL, archR, key }`, each a mesh in the Return's frame. */
+export const SD_RETURN_PARTS = Object.freeze(['jambL', 'jambR', 'archL', 'archR', 'key']);
+export function buildReturnParts(w, h) {
+  const fs = Object.fromEntries(SD_RETURN_PARTS.map((n) => [n, faces()]));
+  emitReturn(w, h, (n) => fs[n]);
+  return Object.fromEntries(SD_RETURN_PARTS.map((n) => [n, packRealmFaces(fs[n])]));
+}
+/** Where each half of the lancet turns as it swings in (the Return's frame): its springing, at the opening's outer edge. */
+export const returnSpringAt = (w, h) => [w / 2, h * SD_RETURN_ARCH.spring];
+function emitReturn(w, h, into) {
+  const A = SD_RETURN_ARCH, hw = w / 2, spring = h * A.spring, d = A.depth, rec = SD_RIFT_RECORD.lit;
+  let f = into('key');
   // the opening's edge: up the left jamb, over the lancet, down the right - (x, y) points
   const inner = [], outer = [];
   const lancet = (hwx, top) => {
@@ -264,8 +281,10 @@ export function buildReturnModel(w, h) {
   const inPts = lancet(hw - A.jamb, h - A.jamb * 1.2), outPts = lancet(hw, h);
   inner.push([-(hw - A.jamb), 0], ...inPts, [hw - A.jamb, 0]);
   outer.push([-hw, 0], ...outPts, [hw, 0]);
+  const last = inner.length - 2;
   for (let j = 0; j + 1 < inner.length; j++) {
     const a = inner[j], b = inner[j + 1], c = outer[j + 1], e = outer[j];
+    f = into(j === 0 ? 'jambL' : j === last ? 'jambR' : j <= A.segs ? 'archL' : 'archR');
     const band = j % 3 === 0 ? 'silver' : 'pale', s0 = j / (inner.length - 1), s1 = (j + 1) / (inner.length - 1);
     for (const [z, want] of [[-d, FRONT], [d, BACK]]) quad(f, rec, [a[0], a[1], z], [b[0], b[1], z], [c[0], c[1], z], [e[0], e[1], z], cell(band, s0, 0), cell(band, s1, 0), cell(band, s1, 1), cell(band, s0, 1), want);
     // the reveal, inside the opening, and the outer face
@@ -274,17 +293,18 @@ export function buildReturnModel(w, h) {
     const no = [c[1] - e[1], -(c[0] - e[0]), 0];
     quad(f, rec, [e[0], e[1], -d], [c[0], c[1], -d], [c[0], c[1], d], [e[0], e[1], d], cell('pale', s0, 0), cell('pale', s1, 0), cell('pale', s1, 0.4), cell('pale', s0, 0.4), no);
   }
-  // the sill
+  // the sill, risen with the jambs
+  f = into('jambL');
   const sh = 0.08;
   quad(f, rec, [-hw - 0.05, sh, -d - 0.05], [hw + 0.05, sh, -d - 0.05], [hw + 0.05, sh, d + 0.05], [-hw - 0.05, sh, d + 0.05], cell('pale', 0, 0), cell('pale', 1, 0), cell('pale', 1, 0.3), cell('pale', 0, 0.3), [0, 1, 0]);
   quad(f, rec, [-hw - 0.05, 0, -d - 0.05], [hw + 0.05, 0, -d - 0.05], [hw + 0.05, sh, -d - 0.05], [-hw - 0.05, sh, -d - 0.05], cell('pale', 0, 0), cell('pale', 1, 0), cell('pale', 1, 0.2), cell('pale', 0, 0.2), FRONT);
   // the keystone's clock: a silver disc on the front, over the apex
+  f = into('key');
   const kc = [0, h - A.jamb * 0.2, -d - 0.012], kr = 0.13;
   for (let j = 0; j < 12; j++) {
     const a0 = (j / 12) * Math.PI * 2, a1 = ((j + 1) / 12) * Math.PI * 2;
     tri(f, rec, kc, [kc[0] + Math.sin(a0) * kr, kc[1] + Math.cos(a0) * kr, kc[2]], [kc[0] + Math.sin(a1) * kr, kc[1] + Math.cos(a1) * kr, kc[2]], cell('dial', 0.5, 0.5), cell('dial', 0.5 + 0.5 * Math.sin(a0), 0.5 + 0.5 * Math.cos(a0)), cell('dial', 0.5 + 0.5 * Math.sin(a1), 0.5 + 0.5 * Math.cos(a1)), FRONT);
   }
-  return packRealmFaces(f);
 }
 /** The keystone clock's hand, about the dial's centre (its own origin): a sliver of silver pointing up. */
 export function buildReturnHand() {

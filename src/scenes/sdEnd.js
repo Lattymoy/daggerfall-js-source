@@ -31,7 +31,7 @@
 import { SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT, inSdPortal, SD_RIFT_OPEN_LOOK } from '../world/sdDungeon.js';
 import { startRiftBell, tollRiftBell, RIFT_BELL_SECONDS } from '../systems/sdRiftSound.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
-import { buildRiftStatic, buildRiftGear, buildHourRing, buildRiftStuds, irisModel, irisPositions, buildRiftShard, buildReturnModel, buildReturnHand, returnDialAt, riftCentreY, SD_RIFT_PARTS, SD_RIFT_STUDS, SD_RETURN_ARCH } from '../world/sdRiftModel.js';
+import { buildRiftStatic, buildRiftGear, buildHourRing, buildRiftStuds, irisModel, irisPositions, buildRiftShard, buildReturnModel, buildReturnHand, buildReturnParts, returnSpringAt, SD_RETURN_PARTS, returnDialAt, riftCentreY, SD_RIFT_PARTS, SD_RIFT_STUDS, SD_RETURN_ARCH } from '../world/sdRiftModel.js';
 import { sdRiftArt, SD_RIFT_RECORD } from '../world/sdRiftArt.js';
 import { SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_COBBLE_RECORD, SD_REALM_EDGE_RECORD } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
@@ -51,6 +51,12 @@ export const SD_HOME_TEXT = Object.freeze({
  *  comes later finds it standing, in silence). */
 export const SD_HOME_RISE_MS = 1500;
 export const SD_HOME_SAY_MS = SD_HOME_RISE_MS + 1000;
+/** SD-LOOK S6 (Super-Dungeons-Look.md section 4): THE WAY HOME ASSEMBLING - its size in the Hour over the Hollow's Return's
+ *  (it reads across the arena), and its parts' turns through its rise, as shares of SD_HOME_RISE_MS: the jambs rising out
+ *  of the floor, the lancet's halves swinging in from `swing` radians about their springings and locking, the keystone's
+ *  clock dropping `drop` metres into place. */
+export const SD_HOME_SCALE = 1.5;
+export const SD_HOME_ASSEMBLY = Object.freeze({ jambs: Object.freeze([0, 0.45]), arches: Object.freeze([0.3, 0.75]), key: Object.freeze([0.65, 0.95]), swing: 1.2, drop: 1.2 });
 /** The keys the activation ray stands them under. */
 export const SD_RIFT_KEY = 'sdrift:0';
 export const SD_RETURN_KEY = 'sdreturn:0';
@@ -75,8 +81,8 @@ export const SD_REVEAL_ASK_MS = 250;
 export const SD_REVEAL_M = 30;
 export const SD_REVEAL_S = 0.6;
 /** SD-LOOK: the Rift's light - before its face (a share of its size), its reach (its size's times, never past a
- *  hall), the Return's (moon) and its reach. */
-export const SD_RIFT_LIGHT = Object.freeze({ ahead: 0.55, reach: 3, maxReach: 21, gain: 0.8, ret: 0.6, retReach: 4.5 });
+ *  hall), the Return's (moon) and its reach, and the Return's while it assembles (SD-LOOK S6: the column's). */
+export const SD_RIFT_LIGHT = Object.freeze({ ahead: 0.55, reach: 3, maxReach: 21, gain: 0.8, ret: 0.6, retReach: 4.5, column: 1.4 });
 
 /** AUDIT SD II (L2 F9): where the Rift's frame keeps its numbers (`rift.n`). */
 const N_GEAR = 0, N_RING = 1, N_IRIS_T = 2, N_TOLL = 3, N_IRIS = 4, N_CY = 5, N_A = 6, N_B = 7, N_R = 8;
@@ -176,7 +182,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   const retarget = () => {
     const out = [];
     if (rift) out.push(riftPress(rift));
-    if (ret) out.push({ key: SD_RETURN_KEY, aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
+    if (ret) out.push({ key: SD_RETURN_KEY, aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // SD-LOOK S6: pressed where it stands, at its size
     _targets = out.length ? Object.freeze(out) : NONE;
   };
   /** A mesh stood among the draws: { gpu, object: { matrix }, noShadow, texRemap } - kept to take back. */
@@ -196,9 +202,11 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   };
 
   /** The Return's arch and hand stood at `at`, turned by `yaw`. */
-  const standRet = (at, yaw) => {
+  const standRet = (at, yaw, scale = 1, parts = false) => {
     const w = SD_RETURN_SIZE.w, h = SD_RETURN_SIZE.h;
-    const r = { at: [...at], yaw, arch: standMesh(buildReturnModel(w, h), false), hand: standMesh(buildReturnHand(), true), base: new Float32Array(16), window: new Float32Array(16), n: new Float64Array([0, yaw, 0]), outAt: -Infinity };
+    // SD-LOOK S6: the way home stands in its parts while it assembles (each turning, so none casts), the whole after
+    const pm = parts ? buildReturnParts(w, h) : null;
+    const r = { at: [...at], yaw, scale, parts: pm ? SD_RETURN_PARTS.map((n) => standMesh(pm[n], true)) : null, arch: standMesh(buildReturnModel(w, h), false), hand: standMesh(buildReturnHand(), true), base: new Float32Array(16), window: new Float32Array(16), n: new Float64Array([0, yaw, 0]), outAt: -Infinity };
     setT(_t, at[0], at[1], at[2]); multiply(_t, setRy(_r, yaw), r.base);
     return r;
   };
@@ -265,11 +273,13 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     /** SD10: the Return stood alone, after the stand (the Hour's way home, where the Remnant fell) - once while it stands.
      *  AUDIT SD II (L6 F9, F16): pressed alone; `age` how long ago it began to rise (ms - the fight's clock's, a page that
      *  comes later finds it risen), tolled while it rises. */
-    standReturn(at, age = Infinity, { dynamicDraws = null, yaw = 0 } = {}) {
+    standReturn(at, age = Infinity, { dynamicDraws = null, yaw = 0, scale = undefined } = {}) {
       if (ret || !at) return false;
       draws = dynamicDraws ?? draws ?? [];
       const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;
-      ret = { ...standRet(at, yaw), risesAt: now() - ago, pressed: true, up: false };
+      // SD-LOOK S6: in the Hour (its way back stood `hollow`) the way home at its own size, across the arena - in its
+      // parts while it has yet to stand whole (a page that comes later finds it whole: no parts)
+      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };
       wasRet = null;
       retarget();
       if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);
@@ -278,7 +288,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     },
     /** The Return goes out (the boss fell) - for good: it never stands again in this dungeon. Its press target drops at
      *  once (the law is never kept waiting on a picture). */
-    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); ret = null; wasRet = null; retarget(); },
+    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },
     /** SD-LOOK: what the hall sees happen - 'refused' (a press it would not take: the ring jerks back a tooth, the window
      *  clouds to ember) or 'step' (one went through: the window ripples from its heart). */
     pulse(kind) {
@@ -357,9 +367,9 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       const t = now();
       if (rift) {
         const L = look() ?? SD_RIFT_OPEN_LOOK, k = lightNow(L, t) * Math.max(0.25, L.aperture);
-        if (k > 0.01) { const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold; _core.at = [rift.at[0], rift.at[1] + rift.cy, rift.at[2]]; _core.size = rift.size * 0.32; _core.color = [c[0] * 0.55 * k, c[1] * 0.55 * k, c[2] * 0.55 * k]; _halos.push(_core); }
+        if (k > 0.01) { const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : SD_LIGHT.gold; put3(_core.at, rift.at[0], rift.at[1] + rift.cy, rift.at[2]); _core.size = rift.size * 0.32; tint(_core.color, c, 0.55 * k); _halos.push(_core); }
       }
-      if (ret && ret.up !== false) { const d = RETURN_DIAL, b = ret.base; _key.at = [b[12] + b[8] * d[2], b[13] + d[1], b[14] + b[10] * d[2]]; _key.size = 0.35; _key.color = SD_LIGHT.moon.map((v) => v * 0.35); _halos.push(_key); }
+      if (ret && ret.up !== false) { const d = RETURN_DIAL, b = ret.base; put3(_key.at, b[12] + b[8] * d[2], b[13] + d[1], b[14] + b[10] * d[2]); _key.size = 0.35; tint(_key.color, SD_LIGHT.moon, 0.35); _halos.push(_key); }
       return _halos;
     },
     /** SD-LOOK: the lights they cast - the Rift's before its face in its state's colour, the Return's moon. */
@@ -371,16 +381,17 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
         if (k > 0.01) {
           const c = L.tone === 'red' ? SD_LIGHT.red : L.tone === 'ember' ? SD_LIGHT.ember : rift.hollow ? SD_LIGHT.moon : SD_LIGHT.gold, b = rift.base, a = -SD_RIFT_LIGHT.ahead * rift.size;
           _rl.x = b[12] + b[8] * a; _rl.y = rift.at[1] + rift.cy; _rl.z = b[14] + b[10] * a;
-          _rl.range = Math.min(SD_RIFT_LIGHT.maxReach, SD_RIFT_LIGHT.reach * rift.size); const g = k * SD_RIFT_LIGHT.gain; _rl.color = [c[0] * g, c[1] * g, c[2] * g];
+          _rl.range = Math.min(SD_RIFT_LIGHT.maxReach, SD_RIFT_LIGHT.reach * rift.size); tint(_rl.color, c, k * SD_RIFT_LIGHT.gain);
           _lights.push(_rl);
         }
       }
-      if (ret && ret.up !== false) { const b = ret.base; _ml.x = b[12] - b[8] * 0.6; _ml.y = ret.at[1] + 1.4; _ml.z = b[14] - b[10] * 0.6; _ml.range = SD_RIFT_LIGHT.retReach; _ml.color = SD_LIGHT.moon.map((v) => v * SD_RIFT_LIGHT.ret); _lights.push(_ml); }
+      // the Return's moon; SD-LOOK S6: while it assembles, the column's - brighter, about its middle, so its parts read
+      if (ret) { const b = ret.base, up = ret.up !== false; _ml.x = b[12] - b[8] * 0.6; _ml.y = ret.at[1] + 1.4 * ret.scale; _ml.z = b[14] - b[10] * 0.6; _ml.range = SD_RIFT_LIGHT.retReach * (up ? 1 : ret.scale); tint(_ml.color, SD_LIGHT.moon, up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column); _lights.push(_ml); }
       return _lights;
     },
     /** Where they stand (tests, the host's own questions). */
     get rift() { return rift ? { at: [...rift.at], size: rift.size, face: [...rift.face] } : null; },
-    get ret() { return ret ? { at: [...ret.at], foot: ret.base[13] } : null; },   // SD-LOOK: `foot` - as far as it has risen
+    get ret() { return ret ? { at: [...ret.at], foot: ret.base[13] + (ret.lift ?? 0) * ret.scale } : null; },   // SD-LOOK: `foot` - as far as it has risen (S6: its jambs', while it assembles)
     /** SD-LOOK: the parts as drawn (tests and the lab): the draws this end stood, its iris's aperture, its hour-ring's turn. */
     get parts() { return rift ? { draws: [...mine], aperture: rift.n[N_IRIS], ringAngle: rift.n[N_RING], gearAngle: rift.n[N_GEAR], studs: rift.studKey } : { draws: [...mine] }; },
     /** Gone with the dungeon: the meshes freed and taken out of the draws, the bell stopped - at once, mid-animation too. */
@@ -462,12 +473,17 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   function frameRet(t) {
     // AUDIT SD II (L6 F16): the way home's foot as far as it has risen (rise's sum, inline)
     const k0 = ret.pressed ? (t - ret.risesAt) / SD_HOME_RISE_MS : 1, k = k0 < 0 ? 0 : k0 > 1 ? 1 : k0, n = ret.n;
-    n[0] = -SD_RETURN_SIZE.h * (1 - k);
+    // SD-LOOK S6: the way home assembles in place (its parts' own turns below); one stood whole (the Hollow's, or a
+    // page that comes later) has already risen - its foot on the floor (n[0] stays 0)
     ret.up = k >= 1;
     standAtN(ret.base, ret.at, n, 0, 1);
-    if (ret.arch) ret.arch.object.matrix.set(ret.base);
+    const sc = ret.scale;
+    if (sc !== 1) { ret.base[0] *= sc; ret.base[2] *= sc; ret.base[5] = sc; ret.base[8] *= sc; ret.base[10] *= sc; }
+    if (ret.arch) { ret.arch.object.matrix.set(ret.base); ret.arch.hidden = !!ret.parts && k < 1; }
+    if (ret.parts) assemble(k);
     // the keystone's hand: a tick FORWARD each second - here, time runs on
     if (ret.hand) {
+      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1];   // SD-LOOK S6: with its clock, once it lands
       multiply(ret.base, RETURN_DIAL_T, ret.hand.object.matrix);
       const hs = t / 1000, hi = Math.floor(hs), he = Math.min(1, (hs - hi) / SD_TICK_EASE_S);   // the escapement, inline
       n[2] = (hi + he * he * (3 - 2 * he)) * (Math.PI * 2) / 60;
@@ -475,14 +491,44 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     }
     multiply(ret.base, RETURN_WINDOW_T, ret.window);
   }
+  /** SD-LOOK S6: THE WAY HOME'S PARTS at share `k` of its rise - the jambs up out of the floor, the lancet's halves
+   *  swung in about their springings, the keystone's clock dropped into place; all of them hidden once it stands whole. */
+  function assemble(k) {
+    const A = SD_HOME_ASSEMBLY, sx = RETURN_SPRING[0], sy = RETURN_SPRING[1], done = k >= 1;
+    ret.lift = done ? 0 : -SD_RETURN_SIZE.h * 0.7 * (1 - stage(k, A.jambs));   // the jambs' (its foot, as far as it has risen)
+    for (let i = 0; i < ret.parts.length; i++) {
+      const d = ret.parts[i];
+      if (!d) continue;
+      d.hidden = done;
+      if (done) continue;
+      // its turn about (px, py) in the arch's plane by `a`, lifted `lift` - the local matrix, by hand
+      let px = 0, py = 0, a = 0, lift = 0;
+      if (i < 2) lift = ret.lift;
+      else if (i < 4) { px = i === 2 ? -sx : sx; py = sy; a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches)); }
+      else lift = A.drop * (1 - stage(k, A.key));
+      const c = Math.cos(a), s = Math.sin(a);
+      _asm.fill(0); _asm[0] = c; _asm[1] = s; _asm[4] = -s; _asm[5] = c; _asm[10] = 1; _asm[15] = 1;
+      _asm[12] = px - c * px + s * py; _asm[13] = py + lift - s * px - c * py;
+      multiply(ret.base, _asm, d.object.matrix);
+    }
+  }
   return api;
 }
 
+/** SD-LOOK: a kept vector's three values, and a kept colour as `c` times `g` (the lights' and halos' - nothing made). */
+const put3 = (o, x, y, z) => { o[0] = x; o[1] = y; o[2] = z; };
+const tint = (o, c, g) => { o[0] = c[0] * g; o[1] = c[1] * g; o[2] = c[2] * g; };
+/** SD-LOOK S6: the way home's parts' local turn, made once (the frame's - nothing made). */
+const _asm = new Float32Array(16);
+/** A share `k` of the rise through the window [a, b], eased (smoothstep). */
+const stage = (k, w) => { const u = (k - w[0]) / (w[1] - w[0]), c = u < 0 ? 0 : u > 1 ? 1 : u; return c * c * (3 - 2 * c); };
 /** SD-LOOK: the keystone's dial on the Return (its own frame). */
 const RETURN_DIAL = Object.freeze(returnDialAt(SD_RETURN_SIZE.h));
 /** ...and the steps up to it and to the window's middle, made once. */
 const RETURN_DIAL_T = setT(new Float32Array(16), RETURN_DIAL[0], RETURN_DIAL[1], RETURN_DIAL[2]);
 const RETURN_WINDOW_T = setT(new Float32Array(16), 0, SD_RETURN_SIZE.h / 2 - 0.02, 0);
+/** SD-LOOK S6: where the lancet's halves turn (world/sdRiftModel.js returnSpringAt). */
+const RETURN_SPRING = Object.freeze(returnSpringAt(SD_RETURN_SIZE.w, SD_RETURN_SIZE.h));
 /** SD-LOOK: the Return's opening for its window (render/sdRiftPass.js archFan) - the arch's inner edge about the
  *  opening's middle, and the opening's half-size. */
 const RETURN_HALF = Object.freeze([SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h / 2]);

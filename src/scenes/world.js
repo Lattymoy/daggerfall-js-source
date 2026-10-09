@@ -318,7 +318,7 @@ import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js'
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer, SD_SKY_STEPS } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SdArenaGlowRenderer, sdArenaGlowAt, sdHourClockOf } from '../render/sdArenaGlow.js';   // SD-LOOK S7: the arena's floor reads the clock, and the sky's word for the fight
-import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL } from '../render/sdStompWall.js';   // SD-LOOK S7: the Stomp's wall, the hold's curtain
+import { SdStompWallRenderer, sdStompWalls, sdStompWallRecords, SD_HOLD_WALL, sdHomeBeacon } from '../render/sdStompWall.js';   // SD-LOOK S7: the Stomp's wall, the hold's curtain
 import { SdRiftRenderer } from '../render/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -327,8 +327,8 @@ import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // S
 import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
-import { SD_HOME_TEXT, SD_HOME_SAY_MS } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY, SD_NO_MARK } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { SD_HOME_TEXT, SD_HOME_SAY_MS, SD_HOME_RISE_MS, SD_HOME_SCALE } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY, SD_NO_MARK, SD_RETURN_SIZE } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -23496,6 +23496,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _sdGlowPass = null, _sdWallPass = null, _sdReadsBroken = false;
   const _sdGlowMemo = { flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity }, _sdWalls = sdStompWallRecords(), SD_HELD_WALLS = Object.freeze([SD_HOLD_WALL]);
   const _sdSkyClock = new Float32Array(4);
+  const _sdBeacon = [{ x: 0, z: 0, r: 0, k: 0, h: 0, color: null, beacon: true }];   // SD-LOOK S6: the way home's beacon, kept
   const _sdArenaModel = (() => { const m = identity(), c = sdRealmToDungeon(SD_ARENA.x, 0, SD_ARENA.z); m[12] = c[0]; m[13] = c[1]; m[14] = c[2]; return m; })();
   function drawSdArenaReads(proj, view, fog) {
     if (!sdFightLink || _sdReadsBroken || modes?.sdRealmSlot?.() == null) return false;
@@ -23507,6 +23508,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     const n = sdStompWalls(s, t, _sdWalls);
     if (n > 0 && _sdWallPass.draw(_sdWalls, n, proj, view, fog)) drew = true;
     if (sdArenaHeld() && _sdWallPass.draw(SD_HELD_WALLS, 1, proj, view, fog)) drew = true;
+    // SD-LOOK S6: the column the way home assembles in, then its beacon over it, tall at first, then settled (in the
+    // arena's frame, as the walls are)
+    const home = s.fell ? sdHomeAt() : null;
+    if (home) {
+      const b = sdHomeBeacon(sdHomeAge() - SD_HOME_RISE_MS, _sdBeacon[0], SD_RETURN_SIZE.h * SD_HOME_SCALE);
+      b.x = home[0] - _sdArenaModel[12]; b.z = home[2] - _sdArenaModel[14];
+      if (_sdWallPass.draw(_sdBeacon, 1, proj, view, fog)) drew = true;
+    }
     return drew;
   }
   /** The sky's word for the fight this page holds (render/sdSky.js uClock), or none. */

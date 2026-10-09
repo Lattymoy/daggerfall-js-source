@@ -667,5 +667,113 @@
     "tests": [
       "test/sd9e_spoils.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-way-home-a-part-left-out",
+    "file": "src/world/sdRiftModel.js",
+    "old": "  emitReturn(w, h, (n) => fs[n]);",
+    "new": "  emitReturn(w, h, (n) => (n === 'key' ? faces() : fs[n]));",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-way-home-halves-never-swinging",
+    "file": "src/scenes/sdEnd.js",
+    "old": "a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches)); }",
+    "new": "a = 0; }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-way-home-keystone-never-dropping",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      else lift = A.drop * (1 - stage(k, A.key));",
+    "new": "      else lift = 0;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-way-home-hand-before-its-clock",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1];",
+    "new": "      ret.hand.hidden = false;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-way-home-at-the-hollows-size",
+    "file": "src/scenes/sdEnd.js",
+    "old": "scale ?? (rift?.hollow ? SD_HOME_SCALE : 1)",
+    "new": "scale ?? 1",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-way-home-pressed-at-the-old-size",
+    "file": "src/scenes/sdEnd.js",
+    "old": "(SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale)",
+    "new": "SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h)",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-beacon-never-settling",
+    "file": "src/render/sdStompWall.js",
+    "old": "out.h = B.tall + (B.low - B.tall) * e;",
+    "new": "out.h = B.tall;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-beacon-across-its-window",
+    "file": "src/render/sdStompWall.js",
+    "old": "out.y0 = foot; out.h",
+    "new": "out.y0 = 0; out.h",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-beacon-from-the-floor",
+    "file": "src/scenes/world.js",
+    "old": "_sdBeacon[0], SD_RETURN_SIZE.h * SD_HOME_SCALE)",
+    "new": "_sdBeacon[0])",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-way-home-no-column",
+    "file": "src/render/sdStompWall.js",
+    "old": "  if (age < 0) {\n",
+    "new": "  if (age < -Infinity) {\n",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-way-home-column-unlit",
+    "file": "src/scenes/sdEnd.js",
+    "old": "up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column",
+    "new": "SD_RIFT_LIGHT.ret",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-way-home-jambs-never-rising",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (i < 2) lift = ret.lift;",
+    "new": "      if (i < 2) lift = 0;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

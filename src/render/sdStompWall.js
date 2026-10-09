@@ -9,6 +9,12 @@
 // THE HOLD (section 9) is the same wall in gold, SD_HOLD_CURTAIN.h tall, at the arena's rim: while a player joined to a
 // living fight stands in it (net/sdBrain.js arenaHolds), "you are held here" is seen, not found by walking into it.
 //
+// THE WAY HOME'S BEACON (section 4) is the same strip as a narrow column of silver light over the Return where the
+// Remnant fell (`beacon` - its light falling off up it): SD_HOME_BEACON.tall for its first seconds, seen from anywhere in
+// the arena and from the Steps, then settled to SD_HOME_BEACON.low while it stands (`sdHomeBeacon`). While the Return
+// assembles it is the column of pale light it assembles in (SD_HOME_BEACON.column - wide, from the floor), closing to
+// the beacon over its top as the keystone locks.
+//
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
@@ -20,6 +26,23 @@ import { SD_ARENA, realmToDungeon } from '../net/sdBrain.js';
 export const SD_STOMP_WALL = Object.freeze({ h: 0.6, segs: 64, max: 3, color: Object.freeze([1.0, 0.7, 0.26]) });
 /** The hold's curtain: its height, its light, its gold - at the arena's rim, a hair outside it. */
 export const SD_HOLD_CURTAIN = Object.freeze({ h: 1.1, k: 0.75, out: 0.15, color: Object.freeze([1.0, 0.78, 0.4]) });
+/** The way home's beacon: its reach up at first and once settled (m), how long it stands tall and how long it settles
+ *  (ms, from the way home standing whole), its radius, its light and its silver; and the column the way home assembles
+ *  in - its radius (about the 1.5x arch, 1.95 m wide), its light, and how long before the arch stands whole it closes to
+ *  the beacon (ms). */
+export const SD_HOME_BEACON = Object.freeze({ tall: 40, low: 6, holdMs: 10000, settleMs: 2000, r: 0.32, k: 0.55, color: Object.freeze([0.8, 0.86, 1.0]), column: Object.freeze({ r: 1.3, k: 0.3, closeMs: 400 }) });
+/** The beacon over the way home `age` ms after it stood whole, into `out` (a wall record, `beacon` set): from `foot`
+ *  metres up (the arch's top - it stands over it, never across its window), tall, then settling to low. Before it
+ *  stands whole (`age` < 0 - its rise) the column it assembles in, from the floor, closing to the beacon. Pure. */
+export function sdHomeBeacon(age, out, foot = 0) {
+  const B = SD_HOME_BEACON, C = B.column, u = Math.max(0, Math.min(1, (age - B.holdMs) / B.settleMs)), e = u * u * (3 - 2 * u);
+  out.y0 = foot; out.h = B.tall + (B.low - B.tall) * e; out.r = B.r; out.k = B.k; out.color = B.color; out.beacon = true;
+  if (age < 0) {
+    const v = Math.max(0, Math.min(1, (age + C.closeMs) / C.closeMs)), c = v * v * (3 - 2 * v);
+    out.y0 = foot * c; out.r = C.r + (B.r - C.r) * c; out.k = C.k + (B.k - C.k) * c;
+  }
+  return out;
+}
 /** The hold's curtain as a wall record (sdStompWalls's shape): about the arena's heart. */
 export const SD_HOLD_WALL = Object.freeze({ x: 0, z: 0, r: SD_ARENA.r + SD_HOLD_CURTAIN.out, k: SD_HOLD_CURTAIN.k, h: SD_HOLD_CURTAIN.h, color: SD_HOLD_CURTAIN.color });
 
@@ -70,6 +93,7 @@ export const SD_STOMP_WALL_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 uniform vec3 uColor;
 uniform float uK;
+uniform int uBeacon;   // 1: the way home's beacon - its light falling off up it
 uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
@@ -81,6 +105,8 @@ void main() {
   // banded, rising to its lip: four steps of light up it, the top a bright brass edge
   float k = floor((0.45 + 0.6 * v) * 4.0) / 4.0;
   if (v > 0.86) k = 1.25;
+  // the beacon: brightest at its foot, falling off up it in the same four steps
+  if (uBeacon == 1) k = v < 0.03 ? 1.25 : floor((1.0 - v) * (1.0 - v) * 4.0 + 0.5) / 4.0;
   o = vec4(uColor * k * uK * fogFactorAt(vWorld), 1.0);
 }`;
 
@@ -100,7 +126,7 @@ export class SdStompWallRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, SD_STOMP_WALL_VS, SD_STOMP_WALL_FS, 'sd stomp wall');
     this.u = {};
-    for (const n of ['uVP', 'uC', 'uR', 'uH', 'uColor', 'uK', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uC', 'uR', 'uH', 'uColor', 'uK', 'uBeacon', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = sdStompWallVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -133,9 +159,9 @@ export class SdStompWallRenderer {
     for (let i = 0; i < n && i < walls.length; i++) {
       const w = walls[i];
       if (!(w.k > 0.001) || !(w.r > 0)) continue;
-      gl.uniform3f(U.uC, o[0] + w.x, o[1] + 0.02, o[2] + w.z);
+      gl.uniform3f(U.uC, o[0] + w.x, o[1] + 0.02 + (w.y0 ?? 0), o[2] + w.z);
       gl.uniform1f(U.uR, w.r); gl.uniform1f(U.uK, w.k);
-      gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h); gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);
+      gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h); gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color); gl.uniform1i(U.uBeacon, w.beacon ? 1 : 0);
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

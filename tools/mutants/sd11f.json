@@ -20,8 +20,8 @@
   {
     "name": "SD11f-never-risen",
     "file": "src/scenes/sdEnd.js",
-    "old": "    n[0] = -SD_RETURN_SIZE.h * (1 - k);",
-    "new": "    n[0] = 0;",
+    "old": "    ret.lift = done ? 0 : -SD_RETURN_SIZE.h * 0.7 * (1 - stage(k, A.jambs));",
+    "new": "    ret.lift = 0;",
     "tests": [
       "test/sd11f_scenes.test.js"
     ]

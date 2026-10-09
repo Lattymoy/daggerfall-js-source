@@ -101,8 +101,8 @@
   {
     "name": "SD10-carried-off-where-it-rises",
     "file": "src/scenes/sdEnd.js",
-    "old": "      ret = { ...standRet(at, yaw), risesAt: now() - ago, pressed: true, up: false };\n      wasRet = null;\n",
-    "new": "      ret = { ...standRet(at, yaw), risesAt: now() - ago, pressed: true, up: false };\n",
+    "old": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n      wasRet = null;\n",
+    "new": "      ret = { ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS), risesAt: now() - ago, pressed: true, up: false, lift: 0 };\n",
     "tests": [
       "test/sd10_collapse.test.js"
     ],

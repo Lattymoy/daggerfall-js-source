@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { createSdEnd, SD_HOME_TEXT, SD_HOME_RISE_MS, SD_HOME_SAY_MS, SD_RETURN_KEY, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
+import { createSdEnd, SD_HOME_TEXT, SD_HOME_RISE_MS, SD_HOME_SAY_MS, SD_HOME_ASSEMBLY, SD_RETURN_KEY, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
 import { tollRiftBell, SD_HOME_TOLL, RIFT_BELL_KEY, RIFT_BELL_RECORDS } from '../src/systems/sdRiftSound.js';
 import { sdRiftCount, SD_RETURN_SIZE, SD_END_TEXT } from '../src/world/sdDungeon.js';   // AUDIT SD III (T6, PIN MOVED): no long count of its own - the Timers' words
 import { sdRise, sdFirst, sdFind, sdFell, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
@@ -72,10 +72,11 @@ test('SD11f THE WAY HOME RISES, TOLLED (L6 F16): it stands up out of the floor o
   const tolls = () => audio.log.filter((x) => x[0] === 'toll');
   assert.equal(tolls().length, 0, 'the Rift loops; nothing tolled yet');
   e.standReturn([10, 2, 20], 0);
-  // SD-LOOK (PIN MOVED): its foot as its arch is stood, a mesh now (it was a billboard's origin)
-  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h)) < 1e-6, 'under the floor as it begins');
-  clock += SD_HOME_RISE_MS / 2; e.frame(null);
-  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h / 2)) < 1e-6, `halfway at half its time (${e.ret.foot})`);
+  // SD-LOOK (PIN MOVED): its foot as its arch is stood, a mesh now (it was a billboard's origin). PIN MOVED (SD-LOOK
+  // S6): it assembles - its foot its jambs', rising out of the floor through their share of the rise (SD_HOME_ASSEMBLY)
+  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h * 0.7)) < 1e-6, 'under the floor as it begins');
+  clock += (SD_HOME_RISE_MS * SD_HOME_ASSEMBLY.jambs[1]) / 2; e.frame(null);
+  assert.ok(Math.abs(e.ret.foot - (2 - SD_RETURN_SIZE.h * 0.35)) < 1e-6, `halfway at half their time (${e.ret.foot})`);
   clock += SD_HOME_RISE_MS; e.frame(null);
   assert.equal(e.ret.foot, 2, 'risen: its foot on the floor');
   clock += 5000; e.frame(null);

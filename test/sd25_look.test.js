@@ -714,3 +714,74 @@ test('SD-LOOK THE HEART IS THE FIGHT\'S METRONOME (S8): its light in its Ending\
   assert.ok(Math.max(...rem.lights()[0].color) > rest * 1.8, 'flaring as the Pulse winds up');
   assert.equal(rem.lights(), rem.lights(), 'one kept list');
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S6 - THE WAY HOME: assembling, at its size, its beacon.
+// ---------------------------------------------------------------------------------------------------------------------
+import { buildReturnParts, buildReturnModel, SD_RETURN_PARTS, returnSpringAt } from '../src/world/sdRiftModel.js';
+import { SD_HOME_SCALE, SD_HOME_ASSEMBLY, SD_HOME_RISE_MS, SD_RIFT_LIGHT } from '../src/scenes/sdEnd.js';
+import { SD_RETURN_SIZE } from '../src/world/sdDungeon.js';
+import { sdHomeBeacon, SD_HOME_BEACON } from '../src/render/sdStompWall.js';
+
+test('SD-LOOK THE WAY HOME ASSEMBLES (S6): the Return in five parts - every face of the whole, once - its jambs rising out of the floor, the lancet\'s halves swinging in about their springings, its keystone\'s clock dropping last; whole once it stands (the parts gone, the whole drawn); in the Hour at half again its size and pressed where it stands at that size; the Hollow\'s Return as ever (mutants: a part left out of the whole; the halves never swinging; the keystone never dropping; the way home at the Hollow\'s size; the press box at the old size)', () => {
+  const w = SD_RETURN_SIZE.w, h = SD_RETURN_SIZE.h, parts = buildReturnParts(w, h), whole = buildReturnModel(w, h);
+  assert.equal(SD_RETURN_PARTS.reduce((n, k) => n + parts[k].positions.length, 0), whole.positions.length, 'every face, once');
+  const ys = (m) => Array.from({ length: m.positions.length / 3 }, (_, i) => m.positions[i * 3 + 1]);
+  const spring = returnSpringAt(w, h)[1];
+  assert.ok(ys(parts.jambR).every((y) => y <= spring + 1e-6) && ys(parts.archR).every((y) => y >= spring - 1e-6), 'the jambs to the springing, the halves above');
+  let ms = 100_000;
+  const draws = [];
+  const end = createSdEnd({ renderer: { createMesh: (m) => ({ m }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms });
+  end.stand({ rift: { at: [0, 0, 0], size: 5 }, retAt: null, dynamicDraws: draws, hollow: true });
+  const riftDraws = draws.length;
+  end.standReturn([10, 0, 0], 0, { dynamicDraws: draws });
+  const press = end.targets().find((x) => x.key === 'sdreturn:0');
+  assert.ok(Math.abs(press.aabb.max[1] - press.aabb.min[1] - h * SD_HOME_SCALE) < 1e-6, 'pressed where it stands, at its size');
+  // its draws, as it stood them: its parts (SD_RETURN_PARTS' order), the whole, the keystone's hand
+  const mine = draws.slice(riftDraws), pieces = mine.slice(0, SD_RETURN_PARTS.length), archDraw = mine[SD_RETURN_PARTS.length];
+  SD_RETURN_PARTS.forEach((k, i) => assert.equal(pieces[i].gpu.m.positions.length, parts[k].positions.length, k));
+  assert.equal(archDraw.gpu.m.positions.length, whole.positions.length);
+  end.frame(null);
+  assert.equal(archDraw.hidden, true, 'not whole while it assembles');
+  assert.ok(pieces.every((d) => d.hidden === false), 'its parts drawn');
+  const at = (d, p) => [0, 1, 2].map((k) => d.object.matrix[k] * p[0] + d.object.matrix[4 + k] * p[1] + d.object.matrix[8 + k] * p[2] + d.object.matrix[12 + k]);
+  assert.ok(at(pieces[0], [0, 0, 0])[1] < -1, 'the jambs under the floor at first');
+  assert.ok(at(pieces[4], [0, h, 0])[1] > h * SD_HOME_SCALE + 1, 'the keystone high');
+  assert.equal(mine[SD_RETURN_PARTS.length + 1].hidden, true, 'its hand with its clock, once it lands');
+  const lit = () => end.lights().at(-1);
+  assert.ok(Math.abs(lit().color[2] - SD_LIGHT.moon[2] * SD_RIFT_LIGHT.column) < 1e-9 && SD_RIFT_LIGHT.column > SD_RIFT_LIGHT.ret, 'lit by its column while it assembles');
+  const tipL = at(pieces[2], [0, h, 0]);
+  ms += SD_HOME_RISE_MS * SD_HOME_ASSEMBLY.arches[1] + 1;
+  end.frame(null);
+  const tipL2 = at(pieces[2], [0, h, 0]);
+  assert.ok(Math.hypot(tipL[0] - tipL2[0], tipL[1] - tipL2[1]) > 0.5, 'the left half swung in');
+  assert.ok(Math.abs(at(pieces[0], [0, 0, 0])[1]) < 1e-6, 'the jambs up');
+  ms += SD_HOME_RISE_MS;
+  end.frame(null);
+  assert.equal(archDraw.hidden, false, 'whole');
+  assert.ok(pieces.every((d) => d.hidden === true), 'its parts gone');
+  assert.equal(mine[SD_RETURN_PARTS.length + 1].hidden, false, 'its hand');
+  assert.ok(Math.abs(lit().color[2] - SD_LIGHT.moon[2] * SD_RIFT_LIGHT.ret) < 1e-9, 'then its moon');
+  assert.ok(Math.abs(at(archDraw, [0, h, 0])[1] - h * SD_HOME_SCALE) < 1e-6, 'at half again its size');
+  // the Hollow's Return: no parts, its own size
+  const e2draws = [];
+  const e2 = createSdEnd({ renderer: { createMesh: (m) => ({ m }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms });
+  e2.stand({ rift: { at: [0, 0, 0], size: 5 }, retAt: [10, 0, 0], dynamicDraws: e2draws });
+  const p2 = e2.targets().find((x) => x.key === 'sdreturn:0');
+  assert.ok(Math.abs(p2.aabb.max[1] - p2.aabb.min[1] - h) < 1e-6);
+});
+
+test('SD-LOOK THE WAY HOME\'S BEACON (S6): while the way home assembles, the column of pale light it assembles in (about the arch, from the floor, lit), closing to a narrow silver column over the arch - from its top, never across its window - tall for its first ten seconds, then settled low; drawn in the Hour\'s pass while the way home stands (mutants: never settling; across its window; no column; the column unlit)', () => {
+  const b = sdHomeBeacon(1000, {}, 3.45);
+  assert.deepEqual([b.h, b.y0, b.beacon], [SD_HOME_BEACON.tall, 3.45, true]);
+  assert.equal(sdHomeBeacon(SD_HOME_BEACON.holdMs + SD_HOME_BEACON.settleMs, {}).h, SD_HOME_BEACON.low);
+  // while it assembles: the column it assembles in - about the arch, from the floor - closing to the beacon as it locks
+  const col = sdHomeBeacon(-1000, {}, 3.45);
+  assert.deepEqual([col.y0, col.r, col.k], [0, SD_HOME_BEACON.column.r, SD_HOME_BEACON.column.k]);
+  assert.ok(col.r > (SD_RETURN_SIZE.w * SD_HOME_SCALE) / 2, 'about the arch');
+  const closing = sdHomeBeacon(-SD_HOME_BEACON.column.closeMs / 2, {}, 3.45);
+  assert.ok(closing.r < col.r && closing.r > SD_HOME_BEACON.r && closing.y0 > 0 && closing.y0 < 3.45, 'closing');
+  assert.ok(SD_HOME_BEACON.r < 0.5, 'narrow');
+  const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(W, /sdHomeBeacon\(sdHomeAge\(\) - SD_HOME_RISE_MS, _sdBeacon\[0\], SD_RETURN_SIZE\.h \* SD_HOME_SCALE\)/, 'over the way home, from its top');
+});
