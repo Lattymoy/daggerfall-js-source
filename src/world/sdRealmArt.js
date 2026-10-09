@@ -201,10 +201,28 @@ export function realmEdgeArt() {
   return { albedo, emission };
 }
 
+/** SD-LOOK S7: the arena's pillars' basalt (world/sdPillarModel.js) - ashlar a metre long in courses half a metre high
+ *  (32 texels a metre, a tile two), each block bevelled from the top-left and quiet in its face, its joints dark. Matte:
+ *  no light of its own. */
+export function realmPillarArt(seed = 0x5d56) {
+  const S = SD_ART_SIZE, albedo = image(), emission = black(), r = rng(seed);
+  const tone = noiseField(seed + 1, 4), fine = noiseField(seed + 2, 16);
+  const W = 32, H = 16, J = 2;   // a block's length and course, its joint
+  const shade = Array.from({ length: 16 }, () => 0.22 + 0.3 * r());
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const row = Math.floor(y / H), xs = x + (row % 2) * (W / 2), bx = ((xs % W) + W) % W, by = y % H, k = row * 2 + Math.floor((((xs % S) + S) % S) / W);
+    if (bx < J || by < J) { putTexel(albedo, x, y, step(B, 0)); continue; }
+    putTexel(albedo, x, y, ramp(B, shade[k % 16] + 0.16 * (tone(x, y) - 0.5) + 0.06 * (fine(x, y) - 0.5), x, y));
+  }
+  for (let row = 0; row < S / H; row++) for (let c = 0; c < 3; c++) bevel(albedo, c * W - (row % 2) * (W / 2) + J, row * H + J, W - J, H - J, step(B, 3), step(B, 1));
+  quantize(albedo, paletteOf(B));
+  return { albedo, emission };
+}
+
 /** Every texture the realm wears, by record: `[record, { albedo, emission }]` (records as world/sdRealm.js names them -
- *  SD-LOOK's two after the Remnant's, 31 and 32). */
+ *  SD-LOOK's two after the Remnant's, 31 and 32; S7's pillar stone, 56). */
 /** @returns {Array<[number, { albedo: import('./sdPixelKit.js').Img, emission: import('./sdPixelKit.js').Img }]>} */
 export const realmArt = () => [
   [0, realmFloorArt()], [1, realmBrassArt()], [2, realmRootArt()], [3, realmDialArt()], [4, realmArenaArt()],
-  [31, realmCobbleArt()], [32, realmEdgeArt()],
+  [31, realmCobbleArt()], [32, realmEdgeArt()], [56, realmPillarArt()],
 ];
