@@ -304,6 +304,7 @@ let postView = null;
 let postWatch = null;
 let postAnchor = null;
 let postFocusBack = false;   // a closed window hands the focus back to the envelope, as the hourglass's does
+let postKeep = {};   // AUDIT SERVER-POST: what the window shows (the piece open, the line said) - a rebuild of the face keeps it
 const stopPost = () => { postView?.stop(); postView = null; postWatch?.(); postWatch = null; postAnchor?.(); postAnchor = null; };
 /** SERVER-POST (Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
  *  notifications whenever players have a message"): THE ENVELOPE on the pause face - online, where the host hands its box
@@ -3537,6 +3538,7 @@ function renderHome() {
       acct.append(accountWindow());
       home.append(acct);
       closeOnOutsideTap(home, '.px-acctwin', () => { accountOpen = false; render(); });
+      for (const n of [stage, mark, envelope]) n?.setAttribute?.('inert', '');   // AUDIT SERVER-POST: the face under the account window out of reach, as under the timers'
     }
     else if (timersOpen && hooks.timers?.()) {
       const tstage = el('div', 'px-stage px-timersstage');
@@ -3553,10 +3555,10 @@ function renderHome() {
     else if (postOpen && hooks.post?.()) {
       // SERVER-POST: the mailbox's window, on the hourglass's own stage (centred, its own padding - enhancedStyle.js)
       const pstage = el('div', 'px-stage px-timersstage px-poststage');
-      postView = postWindow(document, { box: () => hooks.post?.() ?? null, onClose: () => { postOpen = false; postFocusBack = true; render(); } });
+      postView = postWindow(document, { box: () => hooks.post?.() ?? null, keep: postKeep, onClose: () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); } });
       pstage.append(postView.root);
       home.append(pstage);
-      closeOnOutsideTap(home, '.px-postwin', () => { postOpen = false; postFocusBack = true; render(); });
+      closeOnOutsideTap(home, '.px-postwin', () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); });
       for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope]) n?.setAttribute?.('inert', '');
     }
     // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
@@ -4873,7 +4875,7 @@ function onKey(e) {
   // rather than walk the screen out from under it.
   const back = accountOpen ? () => { accountOpen = false; render(); }
     : timersOpen && timersView ? () => { timersOpen = false; timersFocusBack = true; render(); }   // TIMERS1: the window first, ahead of the pause face's resume (AUDIT UI-11: a window that is drawn)
-    : postOpen && postView ? () => { postOpen = false; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
+    : postOpen && postView ? () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
     : confirming ? () => { confirming = null; render(); }
@@ -4949,6 +4951,7 @@ export function mountEnhancedMenu(host, {
   timersFocusBack = false;
   postOpen = false;   // SERVER-POST: and the mailbox's
   postFocusBack = false;
+  postKeep = {};
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED
@@ -5024,6 +5027,7 @@ export function mountEnhancedMenu(host, {
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
+  else if (at === 'mailbox') postOpen = true;   // SERVER-POST: the mailbox's door (/mail, either skin) - the pause face with its window open
   else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
   _eff = null;
   render();
@@ -5061,8 +5065,8 @@ export function mountEnhancedMenu(host, {
       if (textKeyCapture) { globalThis.removeEventListener('keydown', textKeyCapture, true); textKeyCapture = null; }   // DISC28-A
       if (questTimer) { clearInterval(questTimer); questTimer = null; }
       stopTimers();   // TIMERS1
-      stopPost();   // SERVER-POST
       releaseShotsPane();   // LOAD1: the gallery's pictures and its listener
+      stopPost();   // SERVER-POST: and the mailbox's ticks
       // FIX-F: and the rebind pane's own capture listener, which is on
       // the DOCUMENT and would outlive this screen exactly as the one
       // above would.

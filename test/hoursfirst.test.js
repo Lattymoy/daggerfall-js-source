@@ -20,7 +20,7 @@ import {
 import { readAura } from '../src/net/wire.js';
 import {
   AURA_LOOK, auraLookOf, AURA_GROUND_R, AURA_FS, TURNING_R, TURNING_TOOTH_M, TURNING_RIM_M, TURNING_H, TURNING_DIAL_R,
-  TURNING_MARK_M, TURNING_RGB, FIRST_RGB, FIRST_BLAZE, turningDialAngle, firstDialAngle,
+  TURNING_MARK_M, TURNING_RGB, FIRST_RGB, FIRST_BLAZE, FIRST_SHADE, FIRST_RAY, turningDialAngle, firstDialAngle,
 } from '../src/render/auraRing.js';
 import { glslFunctions } from './glsl.mjs';
 
@@ -47,7 +47,10 @@ test('HOURS-FIRST the vocabulary: the title and the aura join the closed lists l
   assert.notDeepEqual(HOUR_DAWN, HOUR_GOLD);
   assert.equal(AURA_PAINT.firsthour, 'hoursfirst');
   assert.ok(badgeCss().includes(`.card button.acttitle.actaura.aura-firsthour { color: ${cssRgba(TITLE_RGBA.hoursfirst)}; }`), 'its button in Hour\'s First\'s rose gold');
-  assert.ok(/^[a-z]+$/.test('hoursfirst') && 'firsthour'.length <= 'oblivionward'.length, 'CSS-safe ids, no longer than the longest aura the token was sized for');
+  // CSS-safe ids, each no longer than the longest of its list the token was sized for (test/auditlegacy3.test.js)
+  assert.match(TITLES.at(-1), /^[a-z]+$/);
+  assert.match(AURAS.at(-1), /^[a-z]+$/);
+  assert.ok(TITLES.at(-1).length <= Math.max(...TITLES.slice(0, -1).map((t) => t.length)) && AURAS.at(-1).length <= Math.max(...AURAS.slice(0, -1).map((a) => a.length)));
 });
 
 test('HOURS-FIRST held by name: a handle in HOURS_FIRST_HANDLES holds the title and the aura, in any case; a guest - no handle - never; off the list, neither, on the next read; worn only while held; signed into the token and kept by the wire (mutants: the list not case-folded; a guest by its generated name; the aura without the title\'s list)', async () => {
@@ -98,12 +101,18 @@ const at = (aura, kind, vP, { t = 30.5, px = 0.001 } = {}) => {
 const lum = (c) => c[0] + c[1] + c[2];
 const polar = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
 
-test('HOURS-FIRST THE FIRST HOUR, the shader RUN: its own kind, The Turning Hour\'s wheel at its measures; cast in the dawn\'s rose gold where the Remnant\'s is brass; its dial turning FORWARD where the Remnant\'s turns back; the Hour\'s own mark ablaze, the Remnant\'s no brighter than its others (mutants: the dial turning back; the blaze dropped; the Remnant\'s colours)', () => {
+test('HOURS-FIRST THE FIRST HOUR, the shader RUN: its own kind, The Turning Hour\'s wheel at its measures; cast in the dawn\'s rose gold where the Remnant\'s is brass; its dial turning FORWARD where the Remnant\'s turns back; the Hour\'s own mark ablaze, the Remnant\'s no brighter than its others; the first light\'s rays out to the marks, none on the Remnant\'s; a palette with no white to wash out (mutants: the dial turning back; the blaze dropped; the Remnant\'s colours; the rays dropped)', () => {
   const L = AURA_LOOK.firsthour, T = AURA_LOOK.turninghour;
   assert.deepEqual([L.kind, L.ringR, L.flameH, L.glyphs, !!L.shade, L.mesh ?? null], [7, T.ringR, T.flameH, 0, false, null], 'its own kind, the wheel\'s measures');
   assert.equal(auraLookOf('firsthour'), L);
   assert.equal(new Set(Object.values(AURA_LOOK).map((l) => l.kind)).size, AURAS.length, 'a kind each');
-  assert.deepEqual([FIRST_RGB.brass, FIRST_RGB.gold, FIRST_RGB.light], [HOUR_DAWN.slice(0, 3), HOUR_PEARL.slice(0, 3), HOUR_SUN.slice(0, 3)]);
+  // the title's colours one step deeper, at FIRST_SHADE - the rose gold, the rose gold into the pearl, the pearl: no white in
+  // the light the pass adds (AUDIT HOURS-FIRST: at full strength it washed out to white over a lit floor)
+  const sh = (c) => c.slice(0, 3).map((x) => Math.round(x * FIRST_SHADE * 1000) / 1000);
+  const mid = [0, 1, 2].map((i) => (HOUR_DAWN[i] + HOUR_PEARL[i]) / 2);
+  assert.deepEqual([FIRST_RGB.brass, FIRST_RGB.gold, FIRST_RGB.light], [sh(HOUR_DAWN), sh(mid), sh(HOUR_PEARL)]);
+  assert.ok(FIRST_SHADE > 0.5 && FIRST_SHADE < 1, 'deeper, not dark');
+  assert.ok(Math.max(...FIRST_RGB.light) < 0.8, 'no near-white in the added light');
   assert.match(AURA_FS, /if \(uAura == 7\) \{ vec3 c = uKind == 0 \? firstGround\(vP\) : firstWall\(vP\);/);
   assert.match(AURA_FS, /if \(uAura == 6\) \{ vec3 c = uKind == 0 \? turningGround\(vP\) : turningWall\(vP\);/, 'the Remnant\'s as it was');
 
@@ -132,6 +141,18 @@ test('HOURS-FIRST THE FIRST HOUR, the shader RUN: its own kind, The Turning Hour
   assert.ok(own7 > other7 * 1.5, `ablaze (${own7.toFixed(3)} vs an ordinary mark's ${other7.toFixed(3)})`);
   assert.ok(Math.abs(own6 - other6) < 0.05, `the Remnant's own mark as bright as its others (${own6.toFixed(3)} vs ${other6.toFixed(3)})`);
   assert.ok(FIRST_BLAZE > 1, 'brighter than the line');
+
+  // THE FIRST LIGHT: a ray of dawn out to each hour's mark, between the wheel's teeth and the dial, turning on with it -
+  // and none on the Remnant's
+  const rayR = (TURNING_R + TURNING_TOOTH_M + TURNING_DIAL_R - TURNING_MARK_M * 2) / 2;
+  for (const tt of [12.25, 37.5]) {
+    const onRay = lum(at(7, 0, polar(rayR, firstDialAngle(tt) + 2 * hour), { t: tt })), between = lum(at(7, 0, polar(rayR, firstDialAngle(tt) + 2.5 * hour), { t: tt }));
+    assert.ok(onRay > between + 0.15, `a ray along an hour's mark at ${tt} (${onRay.toFixed(3)} vs ${between.toFixed(3)} between)`);
+    const r6on = lum(at(6, 0, polar(rayR, turningDialAngle(tt) + 2 * hour), { t: tt })), r6off = lum(at(6, 0, polar(rayR, turningDialAngle(tt) + 2.5 * hour), { t: tt }));
+    assert.ok(Math.abs(r6on - r6off) < 0.05, `none on the Remnant's at ${tt}`);
+  }
+  assert.ok(FIRST_RAY > 0);
+  assert.doesNotMatch(AURA_FS.slice(AURA_FS.indexOf('vec3 firstGround'), AURA_FS.indexOf('vec3 firstWall')), /turning BACK|it turns back/, 'its own words in its own code');
 
   // THE WALL: lit as The Turning Hour's is, in the dawn
   const wallF = at(7, 1, [0.37, 0.02]), wallT = at(6, 1, [0.37, 0.02]);

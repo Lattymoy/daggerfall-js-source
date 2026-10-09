@@ -12,8 +12,8 @@
   {
     "name": "SERVERPOST-a-waiting-gift-thrown-away",
     "file": "server-account/src/post.js",
-    "old": " AND (item IS NULL OR claimed_at IS NOT NULL)",
-    "new": "",
+    "old": "  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' };",
+    "new": "  if (false) return { error: 'post-unclaimed' };",
     "tests": [
       "test/serverpost_service.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "SERVERPOST-throw-away-beside-a-waiting-gift",
     "file": "src/ui/enhancedPost.js",
-    "old": "    if (!head.item || head.claimed) foot.append(button('pm-throw',",
-    "new": "    foot.append(button('pm-throw',",
+    "old": "    if (!head.item || head.claimed) foot.append(keyed(button('pm-throw',",
+    "new": "    foot.append(keyed(button('pm-throw',",
     "tests": [
       "test/serverpost_client.test.js"
     ],
@@ -209,5 +209,125 @@
       "test/serverpost_send.test.js"
     ],
     "note": "The dry run would send."
+  },
+  {
+    "name": "SERVERPOST-the-box-newest-first-alone",
+    "file": "server-account/src/post.js",
+    "old": "ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?",
+    "new": "ORDER BY sent_at DESC, id DESC LIMIT ?",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: fifty newer pieces would push a gift still waiting out of the box - unseen, unclaimable and never thrown away."
+  },
+  {
+    "name": "SERVERPOST-anothers-piece-thrown-away",
+    "file": "server-account/src/post.js",
+    "old": "WHERE id = ? AND to_id = ?').bind(id, reader.id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
+    "new": "WHERE id = ?').bind(id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: another's piece read to decide its bin - the answer telling a stranger the id holds a gift still waiting."
+  },
+  {
+    "name": "SERVERPOST-the-dropped-batch-a-refusal",
+    "file": "server-account/src/index.js",
+    "old": "'realm-needed': 409, server: 503 });",
+    "new": "'realm-needed': 409 });",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: D1 dropping the claim's batch would answer 400, the player's own fault, never the service's to ask again."
+  },
+  {
+    "name": "SERVERPOST-the-table-unbounded",
+    "file": "server-account/migrations/0093_server_post.sql",
+    "old": "  body       TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 1200),",
+    "new": "  body       TEXT NOT NULL,",
+    "tests": [
+      "test/serverpost_service.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: a hand-written send (the table is the operator's, never a route's) could put a book in a box the window shows whole."
+  },
+  {
+    "name": "SERVERPOST-a-stale-look-taken",
+    "file": "src/net/serverPost.js",
+    "old": "    if (r?.ok && this._lookActs !== this._acts) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: a look that set out before a claim would land after it - the claimed gift 'Waiting' again, Claim offered on a piece already in the pack."
+  },
+  {
+    "name": "SERVERPOST-a-lost-answer-said-as-the-connection",
+    "file": "src/net/serverPost.js",
+    "old": "      if (r?.unknown) return { ok: false, error: 'unknown' };",
+    "new": "",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: a claim the realm never answered would say 'offline' - the player asked to try again a claim that may have landed."
+  },
+  {
+    "name": "SERVERPOST-the-second-press-sent",
+    "file": "src/ui/enhancedPost.js",
+    "old": "    if (!b || b.busy) return;",
+    "new": "    if (!b) return;",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: a double press on Claim would send a second claim and say the box was busy over the first's answer."
+  },
+  {
+    "name": "SERVERPOST-the-place-forgotten",
+    "file": "src/ui/enhancedPost.js",
+    "old": "  let openId = typeof keep.openId === 'string' ? keep.openId : null;",
+    "new": "  let openId = null;",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: anything that renders the pause face (a quest's clock, the cloud's answer) would close the piece being read."
+  },
+  {
+    "name": "SERVERPOST-the-line-wiped-on-reopen",
+    "file": "src/ui/enhancedPost.js",
+    "old": "    if (!again) tell('');",
+    "new": "    tell('');",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: a render just after a claim would wipe 'The Hourlock is in your pack.' before it was read."
+  },
+  {
+    "name": "SERVERPOST-the-focus-dropped",
+    "file": "src/ui/enhancedPost.js",
+    "old": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said\n    focusTo = 'back';",
+    "new": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: opening a piece would leave the keyboard's focus on a row no longer drawn."
+  },
+  {
+    "name": "SERVERPOST-the-classic-skin-without-a-way-in",
+    "file": "src/ui/pauseDoor.js",
+    "old": "  if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);",
+    "new": "",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: /mail on the classic skin would open a pause with no envelope in it."
+  },
+  {
+    "name": "SERVERPOST-mail-outdoors-only",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'dungeon' && dungeonCtx) { dungeonCtx.togglePause({ at }); return true; }",
+    "new": "",
+    "tests": [
+      "test/serverpost_client.test.js"
+    ],
+    "note": "AUDIT SERVER-POST: /mail underground would open the overworld's pause over the dungeon."
   }
 ]

@@ -62,8 +62,8 @@
   {
     "name": "HOURSFIRST-the-dial-turning-back",
     "file": "src/render/auraRing.js",
-    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE })",
-    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: false, blaze: FIRST_BLAZE })",
+    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
+    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: false, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
     "tests": [
       "test/hoursfirst.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HOURSFIRST-the-blaze-dropped",
     "file": "src/render/auraRing.js",
-    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE })",
-    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: 0 })",
+    "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
+    "new": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: 0, rays: FIRST_RAY })",
     "tests": [
       "test/hoursfirst.test.js"
     ],
@@ -99,5 +99,15 @@
       "test/serverpost_send.test.js"
     ],
     "note": "One of the first clear left out of the title, the aura and the gun."
+  },
+  {
+    "name": "HOURSFIRST-the-rays-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "{ forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
+    "new": "{ forward: true, blaze: FIRST_BLAZE })",
+    "tests": [
+      "test/hoursfirst.test.js"
+    ],
+    "note": "AUDIT HOURS-FIRST: the First Hour would be the Remnant's wheel in another colour, turned the other way - the first light's rays are what make it a different version."
   }
 ]

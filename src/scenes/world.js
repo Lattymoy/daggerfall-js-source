@@ -20356,6 +20356,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (RF-per-request: interiors and dungeons only - houses, shops,
       // temples, windmills and the like, same as any building door).
       onSend: (tabId, text) => {
+        // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause window has no envelope, and the notice sent its players to
+        // one): `/mail` - the mailbox, on either skin and wherever the player stands (the enhanced pause face with its window
+        // open: ui/pauseDoor.js's door, worldModes.js openPauseAt indoors and underground). Local, never sent.
+        if (/^\/mail(box)?$/i.test(text.trim())) {
+          if (!postSource()) { chatLog.push(tabId, { text: 'The mailbox is online - it opens once you are connected and signed in.', system: true }); return true; }
+          if (!modes?.openPauseAt?.('mailbox')) hudCtx.togglePause({ at: 'mailbox' });
+          return true;
+        }
         if (/^\/unstuck(\s+cancel)?$/i.test(text.trim())) {
           // PVPUNSTUCK: outside the zone at once (30 min cooldown); in the zone after a five-minute wait with a bar that can
           // be cancelled (a second /unstuck or "/unstuck cancel" cancels too), and a 60 minute cooldown - overworld and dungeons

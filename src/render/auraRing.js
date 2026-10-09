@@ -430,11 +430,22 @@ export const TURNING_RGB = Object.freeze({ brass: Object.freeze(HOUR_BRASS.slice
 /** HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura"): THE FIRST HOUR - Hour's First's own, The
  *  Turning Hour's wheel and dial (every measure and rate above) cast again in the first dawn's colours (ui/playerBadge.js
  *  HOUR_DAWN, HOUR_PEARL, HOUR_SUN: rose gold where the brass was, pearl where the gold was, the dawn's white where the
- *  light was), and two things the Remnant's has not: its dial turns FORWARD - the Hour's hands, that ran back, set going
- *  again by the first to break it - and the Hour's own mark is ablaze. Its own kind (7), the pass's eighth look. */
-export const FIRST_RGB = Object.freeze({ brass: Object.freeze(HOUR_DAWN.slice(0, 3)), gold: Object.freeze(HOUR_PEARL.slice(0, 3)), light: Object.freeze(HOUR_SUN.slice(0, 3)) });
+ *  light was), and three things the Remnant's has not: its dial turns FORWARD - the Hour's hands, that ran back, set
+ *  going again by the first to break it - the Hour's own mark is ablaze, and THE FIRST LIGHT: a ray of dawn from the
+ *  wheel out to each hour's mark, turning on with the dial. Its own kind (7), the pass's eighth look.
+ *  AUDIT SERVER-POST/HOURS-FIRST: drawn at FIRST_SHADE of the title's colours - the pass adds its light, and at their full
+ *  strength the pearl and the dawn's white washed out to white over a lit floor (5,071 pixels clipped where the Turning
+ *  Hour clipped 97), the rose gold gone pale peach and the blazing mark lost among the rest. */
+export const FIRST_SHADE = 0.72;
+const shaded = (/** @type {readonly number[]} */ c) => Object.freeze(c.slice(0, 3).map((x) => Math.round(x * FIRST_SHADE * 1000) / 1000));
+/** One step deeper than the title's three: the rose gold, the rose gold into the pearl, the pearl - no dawn's white in the
+ *  light the pass adds, so it holds its colour over a lit floor (the title keeps the white; it is drawn, not added). */
+const between = (/** @type {readonly number[]} */ a, /** @type {readonly number[]} */ b) => [0, 1, 2].map((i) => (a[i] + b[i]) / 2);
+export const FIRST_RGB = Object.freeze({ brass: shaded(HOUR_DAWN), gold: shaded(between(HOUR_DAWN, HOUR_PEARL)), light: shaded(HOUR_PEARL) });
 /** HOURS-FIRST: how much brighter the Hour's own mark burns on The First Hour's dial, over the line it stands on. */
-export const FIRST_BLAZE = 1.4;
+export const FIRST_BLAZE = 1.8;
+/** HOURS-FIRST: THE FIRST LIGHT's strength - a ray to each of the dial's TURNING_MARKS, between the wheel's teeth and the dial. */
+export const FIRST_RAY = 0.55;
 /** HOURS-FIRST: The First Hour's dial at `t`: FORWARD - clockwise as the eye sees the ground, the angle falling
  *  (turningDialAngle's mirror). Pure. */
 export const firstDialAngle = (t) => -turningDialAngle(t);
@@ -752,8 +763,9 @@ float turningTooth(float w, float r, float px) {
 `;
 /** SD9c: THE WHEEL'S LOOK in a palette (`rgb`: brass, gold, light) - its ground and its wall, `fn`Ground and `fn`Wall, the
  *  palette's constants `P`_BRASS, `P`_GOLD and `P`_LIGHT. HOURS-FIRST: cast twice - The Turning Hour's, its dial turning
- *  back; The First Hour's (`forward`, its dial turning on, and `blaze`, the Hour's own mark that much brighter). */
-const turningLook = (fn, P, rgb, { forward = false, blaze = 0 } = {}) => `
+ *  back; The First Hour's (`forward`, its dial turning on; `blaze`, the Hour's own mark that much brighter; `rays`, the
+ *  first light's strength). */
+const turningLook = (fn, P, rgb, { forward = false, blaze = 0, rays = 0 } = {}) => `
 const vec3 ${P}_BRASS = ${v3(rgb.brass)};
 const vec3 ${P}_GOLD = ${v3(rgb.gold)};
 const vec3 ${P}_LIGHT = ${v3(rgb.light)};
@@ -776,15 +788,17 @@ vec3 ${fn}Ground(vec2 p) {
     // its gleam - a light that does not turn, the teeth catching it as they pass under it
     float gleam = pow(max(0.5 + 0.5 * cos(a - 0.6), 0.0), 6.0);   // AUDIT SD II (L2 F12): never a pow of a negative (a cos a hair under -1)
     col += brass * (${P}_BRASS * 0.8 + ${P}_LIGHT * 0.45 * gleam);
-    // THE DIAL outside it, turning BACK: a line of gold and the Hour's twelve marks, the Hour's own the longer
-    float d = a ${forward ? '+' : '-'} uTime * TAU ${hzGlsl(TURNING_HZ.dial)};   // the dial's own angle (turningDialAngle: it turns back - AUDIT SD II, L2 F13: as the eye sees it)
+    // THE DIAL outside it, turning ${forward ? 'ON' : 'BACK'}: a line of gold and the Hour's twelve marks, the Hour's own the longer
+    float d = a ${forward ? '+' : '-'} uTime * TAU ${hzGlsl(TURNING_HZ.dial)};   // the dial's own angle ${forward ? '(firstDialAngle: it turns on - clockwise as the eye sees it)' : '(turningDialAngle: it turns back - AUDIT SD II, L2 F13: as the eye sees it)'}
     float hr = fract(d / TAU * ${TURNING_MARKS.toFixed(1)} + 0.5) - 0.5;   // across the nearest hour's mark, in hours
     float first = 1.0 - step(0.5, mod(floor(fract(d / TAU) * ${TURNING_MARKS.toFixed(1)} + 0.5), ${TURNING_MARKS.toFixed(1)}));   // the Hour's own
     float markLen = ${TURNING_MARK_M.toFixed(3)} * (1.0 + first);
     float mark = clamp((0.009 - abs(hr) * TAU * r / ${TURNING_MARKS.toFixed(1)}) / px + 0.5, 0.0, 1.0) * turnBand(r, ${TURNING_DIAL_R.toFixed(3)} - markLen, ${TURNING_DIAL_R.toFixed(3)}, px);
     float line = turnBand(r, ${(TURNING_DIAL_R - 0.006).toFixed(3)}, ${(TURNING_DIAL_R + 0.006).toFixed(3)}, px);
     col += ${P}_GOLD * max(mark, line * 0.7) * (0.75 + 0.25 * breath);
-${blaze ? `    col += ${P}_LIGHT * first * mark * ${blaze.toFixed(2)} * breath;   // HOURS-FIRST: the Hour's own mark ablaze\n` : ''}  }
+${blaze ? `    col += ${P}_LIGHT * first * mark * ${blaze.toFixed(2)} * breath;   // HOURS-FIRST: the Hour's own mark ablaze\n` : ''}${rays ? `    // HOURS-FIRST: THE FIRST LIGHT - a ray of dawn from the wheel's teeth out to each hour's mark, turning on with the dial
+    float ray = pow(max(cos(d * ${TURNING_MARKS.toFixed(1)}), 0.0), 40.0) * turnBand(r, ${(TURNING_R + TURNING_TOOTH_M + 0.04).toFixed(3)}, ${(TURNING_DIAL_R - 0.03).toFixed(3)}, 0.05);
+    col += ${P}_LIGHT * ray * ${rays.toFixed(2)} * breath;\n` : ''}  }
   return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
 }
 vec3 ${fn}Wall(vec2 q) {
@@ -809,7 +823,7 @@ vec3 ${fn}Wall(vec2 q) {
   return clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0) * col;
 }
 `;
-const TURNING_GLSL = TURNING_HELPERS + turningLook('turning', 'TH', TURNING_RGB) + turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE });
+const TURNING_GLSL = TURNING_HELPERS + turningLook('turning', 'TH', TURNING_RGB) + turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY });
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
  *  GLYPH_PATH's shapes), each quadratic cut into `steps` chords and each figure closed, as [ax, ay, bx, by] in the
  *  glyph's own 16-unit box, y down; no edge of no length; any other command refused. Pure. */

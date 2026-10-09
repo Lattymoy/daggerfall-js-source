@@ -50,9 +50,11 @@ on:
 permissions:
   contents: read
 
-# Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+# One send at a time. AUDIT SERVER-POST: ITS OWN GROUP, never the deploy's - a group keeps ONE pending run, and a send
+# dispatched while a deploy waited behind another would have cancelled that deploy. Beside a migration it is harmless: it
+# only inserts into server_post, and before 0093 lays the table it fails with nothing written.
 concurrency:
-  group: account-deploy
+  group: server-post
   cancel-in-progress: false
 
 jobs:
@@ -94,6 +96,7 @@ jobs:
           set -euo pipefail
           node tools/sendServerPost.mjs --names "$HANDLES" > "$RUNNER_TEMP/names.txt"
           node tools/sendServerPost.mjs --look "$HANDLES" "$BATCH" > "$RUNNER_TEMP/look.sql"
+          node tools/sendServerPost.mjs --words "$SUBJECT" "$MESSAGE" > "$RUNNER_TEMP/words.json"
           node tools/sendServerPost.mjs --sql "$HANDLES" "$BATCH" "$ITEM" "$SUBJECT" "$MESSAGE" > "$RUNNER_TEMP/send.sql"
 
       # The deploy's own resolution (account-deploy.yml), read-only: this job never creates a database.
@@ -126,8 +129,10 @@ jobs:
             echo "::error::no registered account is named $(echo "$missing" | jq -r 'join(", ")') - nothing was sent"
             exit 1
           fi
-          echo "$rows" | jq -r --arg batch "$BATCH" --arg item "$ITEM" --arg subject "$SUBJECT" '"**\($subject)** (\($batch)), holding: \($item)", "",
-            "| player | already sent |", "|---|---|", (.[] | "| \(.handle) | \(if .sent > 0 then "yes" else "" end) |"), ""' >> "$GITHUB_STEP_SUMMARY"
+          # AUDIT SERVER-POST: the words as they will be sent (checked and trimmed by the tool, \n a line), in a block of their
+          # own; a handle's `|` escaped, so it cannot break its row
+          jq -r --arg batch "$BATCH" --arg item "$ITEM" '"Send **\($batch)**, holding: \($item)", "", "Subject: \(.subject)", "", "````text", .body, "````", ""' "$RUNNER_TEMP/words.json" >> "$GITHUB_STEP_SUMMARY"
+          echo "$rows" | jq -r '"| player | already sent |", "|---|---|", (.[] | "| \(.handle | gsub("[|]"; "\\|")) | \(if .sent > 0 then "yes" else "" end) |"), ""' >> "$GITHUB_STEP_SUMMARY"
           if [ "$APPLY" != "true" ]; then
             { echo "**A dry run: nothing was sent.** Run again with apply on to send it."; } >> "$GITHUB_STEP_SUMMARY"
           fi

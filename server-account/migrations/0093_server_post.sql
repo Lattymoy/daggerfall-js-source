@@ -18,8 +18,9 @@
 --   batch       the operator's name for the send ('hours-first-hourlock') - ONE piece a batch an account, so the
 --               workflow run twice sends once (INSERT OR IGNORE over the unique index below)
 --   sender      who it is from, as the box shows it ('The Developers')
---   subject, body  its words (src/net/postLaw.js bounds them)
---   item        an item record as the game keeps one (JSON), or NULL for a message alone
+--   subject, body  its words (src/net/postLaw.js bounds them, and so does the table - a row the client could not read
+--                  is never written, by the workflow or by hand)
+--   item        an item record as the game keeps one (JSON - the table refuses any other), or NULL for a message alone
 --   sent_at, read_at   when it was sent, and first opened (NULL: unread - the mailbox's count)
 --   claimed_at, claimed_by  when its item was taken, and into which realm character; NULL: not yet
 CREATE TABLE IF NOT EXISTS server_post (
@@ -27,9 +28,9 @@ CREATE TABLE IF NOT EXISTS server_post (
   to_id      TEXT NOT NULL,
   batch      TEXT NOT NULL,
   sender     TEXT NOT NULL,
-  subject    TEXT NOT NULL,
-  body       TEXT NOT NULL,
-  item       TEXT,
+  subject    TEXT NOT NULL CHECK (length(subject) BETWEEN 1 AND 80),
+  body       TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 1200),
+  item       TEXT CHECK (item IS NULL OR json_valid(item)),
   sent_at    INTEGER NOT NULL,
   read_at    INTEGER,
   claimed_at INTEGER,

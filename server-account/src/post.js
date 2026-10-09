@@ -36,10 +36,15 @@ import { realmActFirst, prepareRealmRecord, mustChange, dropObjects, dropIfUnnam
 import { giveTradeGoods } from '../../src/net/realmTradeLaw.js';
 import { POST_ID_RE, POST_BOX_MAX, postItemHead } from '../../src/net/postLaw.js';
 
-/** The record a row holds, or null - a row the operator wrote is JSON, and one that is not is no item. */
-const recordOf = (/** @type {any} */ row) => {
+/** The record a row holds, or null. AUDIT SERVER-POST: ONE ANSWER to "does this piece hold an item" for the box, the
+ *  claim and the throw - a record the box can name (postItemHead) - so no row can be listed as words alone and refused as
+ *  holding a gift, or claimed where the box shows nothing to claim. A row the operator wrote is such a record; any other
+ *  is no item. */
+export const recordOf = (/** @type {any} */ row) => {
   if (typeof row?.item !== 'string') return null;
-  try { const r = JSON.parse(row.item); return r && typeof r === 'object' && !Array.isArray(r) ? r : null; } catch { return null; }
+  let r = null;
+  try { r = JSON.parse(row.item); } catch { return null; }
+  return r && typeof r === 'object' && !Array.isArray(r) && postItemHead(r) ? r : null;
 };
 
 /** A row's head as the box lists it. */
@@ -52,13 +57,15 @@ const headOf = (/** @type {any} */ row) => {
 };
 
 /**
- * A READER'S BOX, newest first: every piece's head (from whom, about what, when, whether opened, what it holds and
+ * A READER'S BOX, what waits first (a gift unclaimed, then the unread), then newest first: every piece's head (from whom, about what, when, whether opened, what it holds and
  * whether that was taken), the count unopened and the count holding an item not yet taken - never a body (`readPost`).
  * @param {{ db: any }} ctx @param {any} reader the session's player row
  */
 export async function postBoxOf({ db }, reader) {
+  // AUDIT SERVER-POST: WHAT WAITS FIRST - a gift not yet claimed, then the unread, then the rest newest first: the box
+  // lists POST_BOX_MAX, and a gift behind fifty newer pieces had been neither shown nor counted
   const { results = [] } = await db.prepare(`SELECT id, sender, subject, item, sent_at, read_at, claimed_at FROM server_post
-    WHERE to_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`).bind(reader.id, POST_BOX_MAX).all();
+    WHERE to_id = ? ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?`).bind(reader.id, POST_BOX_MAX).all();
   const post = results.map(headOf);
   return {
     post,
@@ -133,8 +140,10 @@ export async function claimPost(ctx, reader, { id, character, realm = null } = {
  */
 export async function deletePost({ db }, reader, id) {
   if (typeof id !== 'string' || !POST_ID_RE.test(id)) return { error: 'no-post' };
-  const r = await db.prepare('DELETE FROM server_post WHERE id = ? AND to_id = ? AND (item IS NULL OR claimed_at IS NOT NULL)').bind(id, reader.id).run();
-  if (r?.meta?.changes) return { ok: true, id };
-  const row = await db.prepare('SELECT id FROM server_post WHERE id = ? AND to_id = ?').bind(id, reader.id).first();
-  return { error: row ? 'post-unclaimed' : 'no-post' };
+  const row = await db.prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ? AND to_id = ?').bind(id, reader.id).first();
+  if (!row) return { error: 'no-post' };
+  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' };   // the one answer the box and the claim give
+  // and as it was read: a claim that lands between the read and this leaves it claimed - never a gift thrown away unclaimed
+  const r = await db.prepare('DELETE FROM server_post WHERE id = ? AND to_id = ? AND claimed_at IS ? AND item IS ?').bind(id, reader.id, row.claimed_at, row.item).run();
+  return r?.meta?.changes ? { ok: true, id } : { error: 'no-post' };
 }

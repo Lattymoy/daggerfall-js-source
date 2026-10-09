@@ -12099,6 +12099,14 @@ export function createWorldModes(host) {
       if (mode === 'interior' && interiorCtx) { pendingInteriorExit = true; return true; }
       return false;
     },
+    // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause has no envelope): A PAUSE PAGE BY NAME wherever the player
+    // stands - `/mail` opens the mailbox in a building's or a dungeon's own pause; false outdoors, where the world host
+    // opens its own (scenes/world.js)
+    openPauseAt: (at) => {
+      if (mode === 'dungeon' && dungeonCtx) { dungeonCtx.togglePause({ at }); return true; }
+      if (mode === 'interior' && interiorCtx) { interiorKeyCtx.togglePause({ at }); return true; }
+      return false;
+    },
     // ONLINE-AUTOSAVE1: a mode-aware save for callers OUTSIDE any key
     // route (world.js's own beforeunload hook) that need "whatever F9
     // would do right now" without knowing which of the three save

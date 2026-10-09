@@ -166,3 +166,48 @@ test('SERVER-POST the functions ask again, and the heartbeat carries the box: a 
   assert.deepEqual((await svc.call('/v1/heartbeat', { post: true }, g.secret)).body.post, { error: 'post-needs-account' });
   assert.deepEqual(Object.keys((await svc.call('/v1/heartbeat', { mail: true }, ann.secret)).body), ['mail'], 'not asked, not answered');
 });
+
+// ── AUDIT SERVER-POST ─────────────────────────────────────────────────
+
+test('AUDIT SERVER-POST the box and the table hold: a gift still waiting is listed however many newer pieces stand before it - the box is the newest fifty, gifts waiting first; the table refuses a piece out of the post\'s bounds; a record that names nothing is no item - unclaimable, and thrown away; another\'s piece is never thrown away; a batch D1 dropped answers 503, the service\'s failure, and the piece still waits (mutants: the box newest-first alone; the table unbounded; another\'s piece thrown away; the dropped batch a refusal)', async () => {
+  const svc = await standService();
+  const ann = await svc.registered('Ann'), bob = await svc.registered('Bob');
+  const gift = send(svc.env, ann, { batch: 'old-gift', item: mintHourlock(), at: T0 - 10_000 });
+  for (let i = 0; i < POST_BOX_MAX + 5; i++) send(svc.env, ann, { batch: `words-${i}`, at: T0 + i });
+  let b = (await box(svc, ann)).body;
+  assert.equal(b.post.length, POST_BOX_MAX, 'the newest fifty');
+  assert.equal(b.post[0].id, gift, 'the gift waiting first, never pushed out by words');
+  assert.equal(b.post[1].sentAt, T0 + POST_BOX_MAX + 4, 'then the unread, newest first');
+
+  // THE TABLE'S BOUNDS - a hand-written statement out of them writes nothing
+  const raw = (subject, body, item) => () => svc.env.DB._raw.prepare('INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run('b'.repeat(24), ann.id, 'bounds', POST_SENDER, subject, body, item, T0);
+  assert.throws(raw('', 'x', null), /CHECK/, 'a subject');
+  assert.throws(raw('x'.repeat(81), 'x', null), /CHECK/, 'within 80');
+  assert.throws(raw('x', '', null), /CHECK/, 'a body');
+  assert.throws(raw('x', 'x'.repeat(1201), null), /CHECK/, 'within 1200');
+  assert.throws(raw('x', 'x', '{not json'), /CHECK/, 'an item is a record');
+
+  // A RECORD THAT NAMES NOTHING is no item: not claimable, not held back from the bin
+  const R = await seatRealm(svc.env, ann.secret, 'Ann');
+  const nameless = send(svc.env, ann, { batch: 'nameless', item: { group: 'Weapons' }, at: T0 + 999 });
+  b = (await box(svc, ann)).body;
+  assert.equal(b.post.find((p) => p.id === nameless)?.item, null, 'no item in the box');
+  assert.deepEqual(await svc.call('/v1/post/claim', { id: nameless, character: R.id, realm: R.at() }, ann.secret), { status: 409, body: { error: 'post-no-item' } });
+  assert.deepEqual(await svc.call('/v1/post/delete', { id: nameless }, ann.secret), { status: 200, body: { ok: true, id: nameless } });
+
+  // ANOTHER'S PIECE is never thrown away
+  const words = b.post.find((p) => !p.item && p.id !== nameless).id;
+  assert.deepEqual(await svc.call('/v1/post/delete', { id: words }, bob.secret), { status: 404, body: { error: 'no-post' } });
+  assert.deepEqual(await svc.call('/v1/post/delete', { id: gift }, bob.secret), { status: 404, body: { error: 'no-post' } });
+  assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM server_post WHERE id IN (?, ?)').get(words, gift).n, 2, 'both still Ann\'s');
+
+  // A BATCH D1 DROPPED, through the route: 503 - asked again, never "claimed"
+  const batch = svc.env.DB.batch;
+  svc.env.DB.batch = async () => { throw new Error('D1 down'); };
+  try {
+    assert.deepEqual(await svc.call('/v1/post/claim', { id: gift, character: R.id, realm: R.at() }, ann.secret), { status: 503, body: { error: 'server' } });
+  } finally { svc.env.DB.batch = batch; }
+  assert.equal(svc.env.DB._raw.prepare('SELECT claimed_at FROM server_post WHERE id = ?').get(gift).claimed_at, null, 'still waiting');
+  assert.equal((await svc.call('/v1/post/claim', { id: gift, character: R.id, realm: R.at() }, ann.secret)).status, 200, 'and claimed when asked again');
+});

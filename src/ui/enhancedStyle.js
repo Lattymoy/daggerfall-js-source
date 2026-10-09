@@ -41,7 +41,6 @@ import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's que
 import { paceControlsCss } from './travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from './sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
-import { RARITIES } from '../systems/lootRarity.js';   // SERVER-POST: an item's name in the mailbox in its rarity's own colour
 import { SUPPORT_MARKS_CSS } from './supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
 /**
@@ -2575,7 +2574,9 @@ ${SUPPORT_MARKS_CSS}
 .px-postwin .pm-list { display: flex; flex-direction: column; }
 .px-postwin .pm-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 10px; text-align: left; cursor: pointer;
   background: none; border: 0; border-bottom: 1px solid rgba(125,116,96,0.25); color: inherit; font: inherit; }
-.px-postwin .pm-row:hover, .px-postwin .pm-row:focus-visible { background: rgba(192,138,62,0.1); outline: none; }
+.px-postwin .pm-row:hover { background: rgba(192,138,62,0.1); }
+.px-postwin .pm-row:focus-visible { background: rgba(192,138,62,0.14); outline: 2px solid #f3cf86; outline-offset: -2px; }   /* AUDIT SERVER-POST: the focus seen, not a tint alone */
+.px-postwin .pm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .px-postwin .pm-dot { flex: 0 0 8px; width: 8px; height: 8px; background: transparent; }
 .px-postwin .pm-row.unread .pm-dot, .px-postwin .pm-row.gift .pm-dot { background: #f3cf86; box-shadow: 0 0 6px rgba(243,207,134,0.6); }
 .px-postwin .pm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -2591,12 +2592,20 @@ ${SUPPORT_MARKS_CSS}
   border: 1px solid rgba(192,138,62,0.55); background: rgba(192,138,62,0.08); }
 .px-postwin .pm-itemname { font-size: 16px; letter-spacing: 0.04em; }
 .px-postwin .pm-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
-${Object.entries(RARITIES).map(([k, r]) => `.px-postwin .rar-${k} { color: ${r.colour}; }`).join('\n')}
+.px-postwin [data-rarity="magic"] { color: #6f9ee8; } .px-postwin [data-rarity="rare"] { color: #e4c34f; } .px-postwin [data-rarity="legendary"] { color: #e07a2e; }
+.px-postwin [data-rarity="aetheric"] { color: #bfe8ff; } .px-postwin [data-rarity="artifact"] { color: #b57bee; } .px-postwin [data-rarity="gilded"] { color: #ffcf4d; }
+/* AUDIT SERVER-POST: the tiers above are LR1's own hexes (systems/lootRarity.js RARITIES, pinned against it - a stylesheet
+   never imports the loot ladder, which reaches the whole combat graph); on Stone's light panel the three darkest read
+   3.0-3.3:1 and are lifted past 4.5:1 there alone. */
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="magic"] { color: #b4cdf7; }
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="legendary"] { color: #f7b27a; }
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="artifact"] { color: #dcbaf9; }
 :root[data-plus-theme="stone"] .px-postwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
 @media (max-width: 560px) {
   .px-win.px-postwin .px-body { padding: 16px 14px 18px; }
   .px-postwin .pm-item { flex-direction: column; align-items: stretch; }
 }
+@media (max-height: 560px) { .px-win.px-postwin { max-height: calc(100dvh - 20px); } }   /* AUDIT SERVER-POST: a short screen's window, as the timers' */
 .px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption

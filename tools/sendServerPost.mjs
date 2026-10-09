@@ -10,6 +10,7 @@
 //
 //   node tools/sendServerPost.mjs --names <handles>                                        the names, one a line
 //   node tools/sendServerPost.mjs --look <handles> <batch>                                 the dry run's statement
+//   node tools/sendServerPost.mjs --words <subject> <message>                              the words as they will be sent
 //   node tools/sendServerPost.mjs --sql <handles> <batch> <item> <subject> <message>       the send's statement
 //
 // `handles` is comma-separated, as the config's lists are; `item` is one of POST_ITEMS - an item is MINTED here by the
@@ -17,9 +18,11 @@
 // takes `\n` for a line break. Every word reaches the statement through sqlText, quotes doubled.
 //
 // HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them ... each the gilded gun"): the post's
-// first use - HOURS_FIRST, the thirteen of the first clear (server-account/wrangler.toml HOURS_FIRST_HANDLES), each
-// sent the Hourlock. That send is migration 0094 (`--migration hours-first` prints it), so it lands with the deploy that
-// ships the mailbox; test/serverpost_send.test.js holds the migration to this file's statement.
+// first use - HOURS_FIRST, the thirteen of the first clear, each sent the Hourlock. That send is migration 0094
+// (`--migration hours-first` prints it), so it lands with the deploy that ships the mailbox. AUDIT SERVER-POST: ITS NAMES
+// AND ITS RECORD ARE FROZEN HERE, never read off the config's list or the game's mint: an applied migration never runs
+// again, so a fourteenth name added to HOURS_FIRST_HANDLES (the title's list) is sent the gun by the workflow - this
+// send's name, `hours-first-hourlock`, once an account - never by an edit of 0094.
 
 import { readFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
@@ -35,9 +38,10 @@ export const POST_ITEMS = Object.freeze({
 /** How many accounts one send may name. */
 export const POST_RECIPIENTS_MAX = 200;
 
-/** HOURS-FIRST: the first send - its name, what it holds and its words. */
+/** HOURS-FIRST: the first send - its name, to whom, what it holds and its words, as migration 0094 sent them. */
 export const HOURS_FIRST = Object.freeze({
   batch: 'hours-first-hourlock',
+  handles: 'aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDeeJew,mayaamano,Nirnroot,ofrizz,rosalina,ShikiX3,Temegast,Terra',
   item: 'hourlock',
   subject: "Hour's First",
   body: [
@@ -50,6 +54,11 @@ export const HOURS_FIRST = Object.freeze({
     `- ${POST_SENDER}`,
   ].join('\n'),
 });
+
+/** HOURS-FIRST: the Hourlock's record as 0094 sent it - `mintHourlock()` that day, frozen (a Gilded piece is a static roll:
+ *  test/serverpost_send.test.js holds the two equal, and a change to the mint would make every unclaimed gift a forgery
+ *  the client refuses - systems/gilded.js validGildedMarks). */
+export const HOURS_FIRST_RECORD = "{\"group\":\"Weapons\",\"templateIndex\":560,\"material\":4,\"flags\":0,\"variant\":0,\"message\":0,\"stackCount\":1,\"name\":\"The Hourlock\",\"value\":39740,\"maxCondition\":4800,\"currentCondition\":4800,\"rarity\":\"gilded\",\"gilded\":\"the-hourlock\",\"affixes\":[{\"id\":\"damage\",\"value\":40},{\"id\":\"stat\",\"param\":\"agility\",\"value\":15},{\"id\":\"skill\",\"param\":33,\"value\":30},{\"id\":\"elemental\",\"param\":\"shock\",\"value\":10}],\"isIdentified\":true}";
 
 /** A word as an SQL string, its quotes doubled - nothing in it can end the string. */
 export const sqlText = (/** @type {string} */ s) => `'${String(s).replaceAll("'", "''")}'`;
@@ -101,28 +110,31 @@ export function lookSql(handles, batch) {
  * (a migration's copy leaves it off).
  * @param {{ handles: string, batch: string, item: string, subject: string, body: string }} o
  */
-export function sendSql({ handles, batch, item, subject, body }, { returning = true } = {}) {
-  const names = postHandles(handles), b = postBatch(batch), words = postWords({ subject, body }), rec = postItem(item);
+export function sendSql({ handles, batch, item, subject, body, record = null }, { returning = true } = {}) {
+  const names = postHandles(handles), b = postBatch(batch), words = postWords({ subject, body });
+  const rec = record ?? postItem(item);   // a frozen record (HOURS_FIRST_RECORD), or the item's name minted now
   return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
 SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(POST_SENDER)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${rec ? sqlText(rec) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)
 FROM players p WHERE p.handle IS NOT NULL AND p.handle_lc IN (${inList(names)})${returning ? '\nRETURNING id, to_id' : ''};`;
 }
 
-/** HOURS-FIRST: the thirteen, off the config's own list. */
+/** HOURS-FIRST: the title's list, off the config (the first send's names are its own, frozen above - this is for the pin
+ *  that every one of them holds the title). */
 export function hoursFirstHandles(toml = readFileSync(new URL('../server-account/wrangler.toml', import.meta.url), 'utf8')) {
   const m = /^HOURS_FIRST_HANDLES = "([^"]*)"$/m.exec(toml);
   if (!m) throw new Error('server-account/wrangler.toml holds no HOURS_FIRST_HANDLES');
   return m[1];
 }
-/** HOURS-FIRST: the first send's statement, as migration 0094 holds it. */
-export const hoursFirstSql = (toml) => sendSql({ ...HOURS_FIRST, handles: hoursFirstHandles(toml) }, { returning: false });
+/** HOURS-FIRST: the first send's statement, as migration 0094 holds it - its own names and record, frozen. */
+export const hoursFirstSql = () => sendSql({ ...HOURS_FIRST, record: HOURS_FIRST_RECORD }, { returning: false });
 
 function main(argv) {
   if (argv[0] === '--names' && argv.length === 2) return void process.stdout.write(`${postHandles(argv[1]).join('\n')}\n`);
   if (argv[0] === '--look' && argv.length === 3) return void process.stdout.write(`${lookSql(argv[1], argv[2])}\n`);
+  if (argv[0] === '--words' && argv.length === 3) return void process.stdout.write(`${JSON.stringify(postWords({ subject: argv[1], body: argv[2] }))}\n`);   // AUDIT SERVER-POST: the dry run shows what will be sent
   if (argv[0] === '--sql' && argv.length === 6) return void process.stdout.write(`${sendSql({ handles: argv[1], batch: argv[2], item: argv[3], subject: argv[4], body: argv[5] })}\n`);
   if (argv[0] === '--migration' && argv[1] === 'hours-first' && argv.length === 2) return void process.stdout.write(`${hoursFirstSql()}\n`);
-  throw new Error('usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first');
+  throw new Error('usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --words <subject> <message> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first');
 }
 
 if (isMain(import.meta.url)) {
