@@ -291,7 +291,7 @@
   {
     "name": "LOOT9-exalted-every-line",
     "file": "src/systems/lootRarity.js",
-    "old": "&& item.exalted === true && list.length) lines = [list.length - 1];",
+    "old": "&& item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];",
     "new": "&& item.exalted === true && list.length) lines = list.map((_, i) => i);",
     "tests": [
       "test/loot9_reforge.test.js"

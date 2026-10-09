@@ -1541,8 +1541,8 @@ export const GEM_NAMES = Object.freeze(Object.fromEntries(ALL_GEM_IDS.map((id) =
 export const SOCKET_VALUES = Object.freeze([SOCKET_EMPTY, ...ALL_GEM_IDS]);
 /** GEM2: EVERY GEM'S LINE AT EVERY GRADE, by the piece's kind - a weapon's blow, every other piece's wearer - each of a
  *  kind the port already reads: the line's kind, its param, and its value chipped / flawed / plain / flawless / perfect.
- *  The plain column is LOOT20's table, unchanged; a Perfect weapon line stands at the top of its kind's Rare band, the
- *  most a kind reads on one piece (gemPieceCap). */
+ *  The plain column is LOOT20's table, unchanged; a Perfect weapon line never stands past the top of its kind's Rare
+ *  band, the most a kind reads on one piece (gemPieceCap) - fire's, frost's and the leech's stand at it. */
 const graded = (id, param, values) => Object.freeze({ id, param, values: Object.freeze(values) });
 export const GEM_GRADE_LINES = Object.freeze({
   ruby: Object.freeze({ weapon: graded('elemental', 'fire', [1, 2, 3, 4, 6]), other: graded('resist', 'fire', [4, 7, 10, 15, 20]) }),

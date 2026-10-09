@@ -1,0 +1,589 @@
+[
+  {
+    "name": "GEM1-a-short-blade-two",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (weaponSkillUsed(t) === SKILLS.ShortBlade) return WEAPON_SOCKETS.short;",
+    "new": "  if (weaponSkillUsed(t) === SKILLS.ShortBlade) return WEAPON_SOCKETS.one;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-thunderlock-one-handed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return WEAPON_HANDS[t] === 'Both' || t === THUNDERLOCK_TEMPLATE ? WEAPON_SOCKETS.two : WEAPON_SOCKETS.one;",
+    "new": "  return WEAPON_HANDS[t] === 'Both' ? WEAPON_SOCKETS.two : WEAPON_SOCKETS.one;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-hands-read-backwards",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return WEAPON_HANDS[t] === 'Both' || t === THUNDERLOCK_TEMPLATE ? WEAPON_SOCKETS.two : WEAPON_SOCKETS.one;",
+    "new": "  return WEAPON_HANDS[t] === 'Either' || t === THUNDERLOCK_TEMPLATE ? WEAPON_SOCKETS.two : WEAPON_SOCKETS.one;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-armour-two",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (item.group !== 'Weapons') return 1;",
+    "new": "  if (item.group !== 'Weapons') return 2;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-an-arrow-socketed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (isAmmunition(item)) return 0;\n  const t = item.templateIndex;",
+    "new": "  const t = item.templateIndex;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-four-on-a-two-hander",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const WEAPON_SOCKETS = Object.freeze({ short: 1, one: 2, two: 3 });",
+    "new": "export const WEAPON_SOCKETS = Object.freeze({ short: 1, one: 2, two: 4 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-a-magic-weapon-its-size",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return item?.rarity === 'magic' && item.group === 'Weapons' ? Math.min(1, max) : 0;",
+    "new": "  return item?.rarity === 'magic' && item.group === 'Weapons' ? max : 0;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-a-magic-armour-socketed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return item?.rarity === 'magic' && item.group === 'Weapons' ? Math.min(1, max) : 0;",
+    "new": "  return item?.rarity === 'magic' ? Math.min(1, max) : 0;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-string-unread",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return SOCKET_VALUES.includes(item?.socket) ? [item.socket] : [];",
+    "new": "  return [];",
+    "tests": [
+      "test/gem1_sockets.test.js",
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-string-kept",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.sockets = list;\n  delete item.socket;\n",
+    "new": "  item.sockets = list;\n",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-magic-twice",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const WEAPON_SOCKET_PER_MILLE = Object.freeze({ magic: 120, rare: 250, legendary: 400 });",
+    "new": "export const WEAPON_SOCKET_PER_MILLE = Object.freeze({ magic: 240, rare: 250, legendary: 400 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-rare-more-twice",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const MORE_SOCKET_PER_MILLE = Object.freeze({ rare: 300, legendary: 450 });",
+    "new": "export const MORE_SOCKET_PER_MILLE = Object.freeze({ rare: 600, legendary: 450 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-past-its-size",
+    "file": "src/systems/lootRarity.js",
+    "old": "    while (list.length < cap && more > 0 && rolls() * 1000 < more)",
+    "new": "    while (list.length <= cap && more > 0 && rolls() * 1000 < more)",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-none-costs-a-draw",
+    "file": "src/systems/lootRarity.js",
+    "old": "      if (!(first > 0) || !(rolls() * 1000 < first)) continue;",
+    "new": "      if (!(rolls() * 1000 < first)) continue;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-pass-ignores-the-switch",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const given = [];\n  if (!lootRarityOn()) return given;\n  for (const it of pieces ?? []) {\n    const cap",
+    "new": "  const given = [];\n  for (const it of pieces ?? []) {\n    const cap",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-set-in-the-first-well-whatever",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const i = at == null ? list.indexOf(SOCKET_EMPTY) : at;\n  if (list[i] !== SOCKET_EMPTY",
+    "new": "  const i = list.indexOf(SOCKET_EMPTY);\n  if (list[i] !== SOCKET_EMPTY",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-gems-reversed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.affixes = [...own, ...socketGems(item).map((g) => gemLine(item, g))];",
+    "new": "  item.affixes = [...own, ...socketGems(item).map((g) => gemLine(item, g)).reverse()];",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-wire-both-shapes",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (item.socket != null && item.sockets != null) return false;\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js",
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-wire-out-of-order",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const a = gems[i];",
+    "new": "    const a = gems[gems.length - 1 - i];",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-wire-an-empty-list-refused",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!list.length) return gems.length === 0;   // an empty list is no socket\n",
+    "new": "  if (!list.length) return false;\n",
+    "tests": [
+      "test/auditworld4.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-many-empty-unsaid",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return n === 1 ? 'Socket: empty' : n > 1 ? `Sockets: ${n} empty` : null;",
+    "new": "  return n === 1 ? 'Socket: empty' : null;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-a-legendary-line",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const gemPieceCap = (id) => AFFIX_RANGES[id]?.rare[1] ?? 0;",
+    "new": "export const gemPieceCap = (id) => AFFIX_RANGES[id]?.legendary[1] ?? 0;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-never-held",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const value = Math.min(a.value, Math.max(0, gemPieceCap(a.id) - (used.get(key) ?? 0)));",
+    "new": "    const value = a.value;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-a-kind-not-a-param",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const key = `${a.id}:${a.param ?? ''}`;\n    const value",
+    "new": "    const key = a.id;\n    const value",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-the-fold-unheld",
+    "file": "src/systems/lootRarity.js",
+    "old": "    for (const a of readLines(it)) {   // GEM1: a piece's gems as law 6 holds them",
+    "new": "    for (const a of it.affixes) {",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-the-damage-unheld",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const pct = readLines(weapon).reduce(",
+    "new": "  const pct = weapon.affixes.reduce(",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-the-blow-unheld",
+    "file": "src/systems/lootPowers.js",
+    "old": "  return readLines(item).filter((a) => a?.id === id && validAffix(a));",
+    "new": "  return item.affixes.filter((a) => a?.id === id && validAffix(a));",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-the-compare-unheld",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const mine = readLines(item).filter(validAffix);",
+    "new": "  const mine = (Array.isArray(item.affixes) ? item.affixes : []).filter(validAffix);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-law6-unsaid",
+    "file": "src/systems/lootRarity.js",
+    "old": "  { const c = gemCapLine(item); if (c) out.push(c); }   // GEM1: and law 6, when it holds the gems\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-door-no-weapon-sockets",
+    "file": "src/systems/lootRarity.js",
+    "old": "  weaponSocketPass(minted, rolls);   // GEM1: the weapons' own sockets, after every draw before them (law 9)\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-kit-no-weapon-sockets",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-door-no-gem",
+    "file": "src/systems/lootRarity.js",
+    "old": "  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-gem-before-the-sockets",
+    "file": "src/systems/lootRarity.js",
+    "old": "  weaponSocketPass(minted, rolls);   // GEM1: the weapons' own sockets, after every draw before them (law 9)\n  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)\n",
+    "new": "  items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)\n  weaponSocketPass(minted, rolls);   // GEM1: the weapons' own sockets, after every draw before them (law 9)\n",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-graded-row-no-gem",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return at < 0 ? null : ALL_GEM_IDS[GEM_IDS.length + at];",
+    "new": "  return null;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-perfect-leech-past-the-cap",
+    "file": "src/systems/lootRarity.js",
+    "old": "graded('leech', null, [1, 2, 3, 5, 7])",
+    "new": "graded('leech', null, [1, 2, 3, 5, 8])",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-amber-luck-a-stat",
+    "file": "src/systems/lootRarity.js",
+    "old": "other: graded('stat', 'luck', [1, 2, 3, 4, 6])",
+    "new": "other: graded('stat', 'luck', [1, 2, 4, 6, 8])",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-perfect-thrice",
+    "file": "src/systems/gems.js",
+    "old": "export const GEM_GRADE_PRICE = Object.freeze({ chipped: 0.25, flawed: 0.5, plain: 1, flawless: 2, perfect: 4 });",
+    "new": "export const GEM_GRADE_PRICE = Object.freeze({ chipped: 0.25, flawed: 0.5, plain: 1, flawless: 2, perfect: 3 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-no-ingredient",
+    "file": "src/systems/gems.js",
+    "old": "    isIngredient: true,\n",
+    "new": "    isIngredient: false,\n",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-wrong-art",
+    "file": "src/systems/gems.js",
+    "old": "    worldTextureRecord: dfu.worldTextureRecord,\n",
+    "new": "    worldTextureRecord: k,\n",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-find-forty",
+    "file": "src/systems/gems.js",
+    "old": "export const GEM_FIND = Object.freeze({ base: 30, perTier: 5, cap: 150 });",
+    "new": "export const GEM_FIND = Object.freeze({ base: 40, perTier: 5, cap: 150 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-boss-no-more",
+    "file": "src/systems/gems.js",
+    "old": "  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);\n  return Math.max(0, Math.min(GEM_FIND.cap,",
+    "new": "  const mult = SOURCE_MULT[kind] ?? 1;\n  return Math.max(0, Math.min(GEM_FIND.cap,",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-luck-ignored",
+    "file": "src/systems/gems.js",
+    "old": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)));",
+    "new": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult));",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-boss-no-deeper",
+    "file": "src/systems/gems.js",
+    "old": "export const GEM_BOSS_TIERS = 4;",
+    "new": "export const GEM_BOSS_TIERS = 0;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-band-a-tier-late",
+    "file": "src/systems/gems.js",
+    "old": "  for (const b of GEM_GRADE_BANDS) if (t >= b.tier) band = b;",
+    "new": "  for (const b of GEM_GRADE_BANDS) if (t > b.tier) band = b;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-one-kind",
+    "file": "src/systems/gems.js",
+    "old": "  const kind = GEM_IDS[Math.min(GEM_IDS.length - 1, Math.floor(rolls() * GEM_IDS.length))];",
+    "new": "  const kind = GEM_IDS[0];",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-find-unregistered",
+    "file": "src/systems/gems.js",
+    "old": "registerGemFind(rollGemFind);\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-remnant-one",
+    "file": "src/systems/gems.js",
+    "old": "export const BOSS_GEMS = Object.freeze({ gate: 1, serpent: 1, abyss: 2 });",
+    "new": "export const BOSS_GEMS = Object.freeze({ gate: 1, serpent: 1, abyss: 1 });",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-boss-a-rat-s-grade",
+    "file": "src/systems/gems.js",
+    "old": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem(BOSS_GEM_SOURCE, rolls);",
+    "new": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem({ tier: 0 }, rolls);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-warden-no-gem",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  const gems = bossGems('gate', rolls);",
+    "new": "  const gems = [];",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-warden-no-sockets",
+    "file": "src/systems/gateSpoils.js",
+    "old": "  socketPass(pieces.map((p) => p.item), rolls);\n  weaponSocketPass(pieces.map((p) => p.item), rolls);\n  const gems = bossGems('gate', rolls);",
+    "new": "  const gems = bossGems('gate', rolls);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-a-stander-a-gem",
+    "file": "src/systems/serpentSpoils.js",
+    "old": "  const gems = dealt ? bossGems('serpent', rolls) : [];",
+    "new": "  const gems = bossGems('serpent', rolls);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-floor-no-gem",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    ...gems,   // GEM2: the Warden's gem, after the card\n",
+    "new": "",
+    "tests": [
+      "test/wb5_gate_spoils.test.js"
+    ]
+  },
+  {
+    "name": "GEM2-the-law-no-graded-row",
+    "file": "src/systems/itemLaw.js",
+    "old": "  Gems: Object.freeze([570, 571, ...GEM_GRADE_TEMPLATES]),",
+    "new": "  Gems: Object.freeze([570, 571]),",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-extract-cheap",
+    "file": "src/systems/reforge.js",
+    "old": "export const EXTRACT_PRICE = Object.freeze({ chipped: 50, flawed: 100, plain: 200, flawless: 400, perfect: 800 });",
+    "new": "export const EXTRACT_PRICE = Object.freeze({ chipped: 50, flawed: 100, plain: 100, flawless: 400, perfect: 800 });",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-extract-unpaid-check",
+    "file": "src/systems/reforge.js",
+    "old": "  return unsetGemRefusal(item, at) ?? (totalGoldAmount(player) < (extractPrice(item, at) ?? 0) ? 'gold' : null);",
+    "new": "  return unsetGemRefusal(item, at) ?? null;",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-extract-shatters",
+    "file": "src/systems/reforge.js",
+    "old": "  addItem(player.items, /** @type {any} */ (mintGem(gem)));\n",
+    "new": "",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-extract-free",
+    "file": "src/systems/reforge.js",
+    "old": "  deductGold(player, price);\n  addItem(player.items",
+    "new": "  addItem(player.items",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-a-worn-piece-unfolded",
+    "file": "src/systems/reforge.js",
+    "old": "const refold = (item, player) => { if (isEquipped(item)) notifyEquipChange(player); };",
+    "new": "const refold = () => {};",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM1-the-page-extract-shatters",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "        const done = deps.extractGem?.(it, at) ?? { ok: false, reason: 'not' };",
+    "new": "        const done = deps.unsetGem?.(it, at) ?? { ok: false, reason: 'not' };",
+    "tests": [
+      "test/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-no-pips",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  markSocketFrame(node, item);   // GEM3: a socket's pip a socket in the top edge; a graded gem's ring (ui/socketWells.js)\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-the-wells-dead",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  { const w = socketBlock(picked, side === 'local' && body, ready); if (w) into.append(...w); }",
+    "new": "  { const w = socketBlock(picked, false, ready); if (w) into.append(...w); }",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-shattered-unasked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (wellAsk?.item !== item || wellAsk.at !== at) { wellAsk = { item, at }; wellOpen = null; notice = UNSET_ASK(v); render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-the-wells-ignore-the-switch",
+    "file": "src/ui/socketWells.js",
+    "old": "  if (!lootRarityOn()) return null;\n  const list = socketsOf(item);\n  if (!list.length) return null;",
+    "new": "  const list = socketsOf(item);\n  if (!list.length) return null;",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-every-pip-empty",
+    "file": "src/ui/socketWells.js",
+    "old": "    const i = el('i', v === SOCKET_EMPTY ? null : 'set');",
+    "new": "    const i = el('i', null);",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  },
+  {
+    "name": "GEM3-the-gem-goes-nowhere",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "          const r = setGemPiece(home, /** @type {string} */ (gem), gemWho());",
+    "new": "          const r = { ok: false, reason: 'not' };",
+    "tests": [
+      "test/gem1_sockets.test.js"
+    ]
+  }
+]

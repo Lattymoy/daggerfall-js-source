@@ -31,7 +31,7 @@ import { computeEntityMods } from '../src/systems/entityMods.js';
 import { validLootItem } from '../src/systems/loot.js';
 import { rollCorpseKit } from '../src/systems/foeLootCap.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
-import { mountReforgeWindow, SOCKETS_NONE, GEMS_NONE, GEM_SET, UNSET_ASK, GEM_SHATTERED } from '../src/ui/reforgeWindow.js';
+import { mountReforgeWindow, SOCKETS_NONE, GEMS_NONE, GEM_SET, UNSET_ASK, GEM_SHATTERED, GEM_EXTRACTED } from '../src/ui/reforgeWindow.js';
 import { withDom } from './invdrag.mjs';
 import { rollGemFind } from '../src/systems/gems.js';   // GEM2: the gem find, held off and put back
 
@@ -295,6 +295,7 @@ test('LOOT20: the Sockets page - a row a socketed piece; an empty one offers eac
       reforge: () => ({ ok: false }), salvage: () => ({ ok: false }),
       setGem: (it, g) => { calls.push(['set', g]); return RF.setGemPiece(it, g, me); },
       unsetGem: (it, at) => { calls.push(['unset']); return RF.unsetGemPiece(it, me, at); },
+      extractGem: (it, at) => { calls.push(['extract']); return RF.extractGemPiece(it, me, at); },
     });
     try {
       const shell = one(host, 'reforge-shell');
@@ -314,6 +315,14 @@ test('LOOT20: the Sockets page - a row a socketed piece; an empty one offers eac
       assert.deepEqual(calls.at(-1), ['unset']);
       assert.equal(one(shell, 'broker-note').textContent, GEM_SHATTERED(piece.name, 'diamond'));
       assert.deepEqual(choices().map((c) => c.dataset.gem), ['ruby'], 'empty again - the diamond gone for good');
+      // GEM1: the extraction - the ruby set and taken out whole, for its grade's price
+      one(choices()[0], 'set-press').onclick({ stopPropagation() {} });
+      const extract = one(one(shell, 'socket-card'), 'extract-press');
+      assert.equal(extract.textContent, 'Extract · 200 gold');
+      extract.onclick({ stopPropagation() {} });
+      assert.deepEqual([calls.at(-1), me.goldPieces, LR.socketsOf(piece)], [['extract'], 300, [LR.SOCKET_EMPTY]]);
+      assert.equal(one(shell, 'broker-note').textContent, GEM_EXTRACTED(piece.name, 'ruby', 200));
+      assert.deepEqual(choices().map((c) => c.dataset.gem), ['ruby'], 'the ruby back in the pack');
       me.items = [piece];
       view.repaint();
       assert.ok(textOf(one(shell, 'socket-card')).includes(GEMS_NONE));

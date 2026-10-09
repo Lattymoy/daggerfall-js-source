@@ -93,8 +93,9 @@ alone, worn as a crystal - and its line is its grade's:
 | Turquoise | +1 / 2 / 4 / 6 / 8 Agility | +1 / 2 / 4 / 6 / 8 Personality |
 | Malachite | +1 / 2 / 4 / 6 / 8 Strength | +1 / 2 / 4 / 6 / 8 Endurance |
 
-The plain column is LOOT20's table, unchanged. A Perfect weapon line sits at the top of its kind's Rare band, so one
-Perfect gem is the most a kind can read on a piece (law 6), and a three-socket blade is three kinds.
+The plain column is LOOT20's table, unchanged. A Perfect weapon line never stands past the top of its kind's Rare band
+(fire's, frost's and the leech's stand at it), so one Perfect Ruby is the most fire a piece can read (law 6), and a
+three-socket blade wants three kinds.
 
 **In the world** (`rollGemFind`): every door the ladder rolls at (a corpse, a dungeon's pile, a tavern's or a guild's
 marker) has a chance at one graded gem, after the weapons' socket pass - 30 in a thousand, 5 more a tier of the source,
