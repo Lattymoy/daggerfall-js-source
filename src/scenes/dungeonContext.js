@@ -288,7 +288,8 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
-import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';   // ENHANCED AI 3b: the Enhanced tab's switch
+import { isClassFoe, foeActor, foeFx, foeId } from '../characters/foeBodies.js';
+import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice
 import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
 import { FOE_LEVEL_MAX, CELL_LOOSE_PUPPETS, sharedClassicMinutes, hitClassField, hitClassOf } from '../net/wire.js';   // TELL8: a blow's class on a hit   // SEARCH1: a room's search stamp, read as the world minute it was searched at   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level; SUMMON-SYNC: an owner's loose stands a reader stands, the cell's allowance
@@ -896,10 +897,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // cannot be moved on its own, and this is the one flat in the
       // block that has to move.
       if (!(f.action && MOVE_ACTION_FLAGS.has(f.action.actionFlag))) {
-        if (!flatGroups.has(key)) flatGroups.set(key, []);
         const at = [f.x + b.originX, f.y, f.z + b.originZ];
         if (pn) at.noCover = true;   // AUDIT TACT B3: a person is no cover (the world's people never are)
-        flatGroups.get(key).push(at);
+        // MWNPC8b: a person's flat stands ALONE - a batch of their own (minted below, as the groups are), so their
+        // Morrowind body can take their place and their billboard cast alone; every other flat groups as it did
+        if (pn) pn._flatAt = at;
+        else { if (!flatGroups.has(key)) flatGroups.set(key, []); flatGroups.get(key).push(at); }
       }
       // A2 ambient sources: burning torches (RDBLayout.IsTorchFlat,
       // 210/{0,1,6,16..20}) loop within 5; animal flats (201) bark on
@@ -2154,6 +2157,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the lane has synced
   let _npcLane = null;
   const _npcStood = [];
+  const _peopleLane = createPopulationLane({ laneName: 'people', renderer });   // MWNPC8b: the dungeon's standing people (drawPeople)
   let _ctxDead = false;
   function pushDungeonWindow(win) {
     if (!win) return false;
@@ -3834,6 +3838,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     if (isCoverFlat(archive, record, size)) for (const c of based) coverItems.push(coverProxy(c, size));
+  }
+  // MWNPC8b: each person's own batch, minted as a group's is - the pivot base-centred off the BORN sprite, the picture
+  // the clothed stand-in under NUDE-FLATS, animated where its record animates
+  for (const pn of people) {
+    const at = pn._flatAt;
+    if (!at) continue;
+    const bornT = await getTexture(pn.textureArchive);
+    if (!bornT || pn.textureRecord >= bornT.recordCount) continue;
+    const bornSize = billboardSize(bornT, pn.textureRecord);
+    const [archive, record] = drawnFlat(pn.textureArchive, pn.textureRecord);
+    const t = archive === pn.textureArchive ? bornT : await getTexture(archive);
+    if (!t || record >= t.recordCount) continue;
+    uploadRecord(archive, record);
+    pn.standBatch = renderer.createBillboardBatch(archive, record, billboardSize(t, record), [Object.assign([at[0], at[1] - bornSize.h / 2, at[2]], { noCover: true })]);
+    armFlatAnim(pn.standBatch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(pn.standBatch);
   }
   collider.cover.add('tact1:flats', coverItems);
   // AUDIT 64 F13: the people's ACTIVATION EXTENT, off the same archive
@@ -10005,6 +10025,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
      *  RAY's filtered view and cannot serve either. */
     people,
+    /** MWNPC8b (bible/04-Characters/Morrowind-NPCs.md section 13b): THE DUNGEON'S STANDING PEOPLE IN THEIR BODIES - a host
+     *  that reads a person's look (`opts.standingLook`, worldModes.js's - the building's own reading) calls this BEFORE it
+     *  draws billboardBatches: each active person with a look offered (their own batch cast-only where the body stands),
+     *  the rest drawn as ever. A host that reads none (dungeon.js) leaves every person their billboard. */
+    drawPeople(canvas, proj, view, eye, dt) {
+      const read = opts.standingLook ?? null;
+      const on = !!read && _peopleLane.frame();
+      for (const pn of people) {
+        if (!pn.standBatch) continue;
+        const look = on && pn.active !== false ? read(pn) : null;
+        if (look) _peopleLane.offer(personActor(pn, look, pn._mwFeet ??= [pn.x, pn.y, pn.z], eye, dt), pn.standBatch);
+        else pn.standBatch.castOnly = false;
+      }
+      _peopleLane.draw(canvas, proj, view, eye, dt);
+    },
     /** AUDIT DELVE E6: a foe's quest behaviour - its own, or a puppet's (a shared quest's foe a party mate's client owns:
      *  `_pupQuest`, the share's word for the quest) as the share binds it (the same read adoptOwn makes). */
     questFoeBehaviour(f) {
@@ -10316,6 +10351,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();
       _npcLane?.destroy(); _npcLane = null;   // MWNPC5b: the foes' bodies leave with the context
+      _peopleLane.destroy();   // MWNPC8b: and the people's
       // AUDIT 59 F2: the nav worker leaves with the context. Every
       // dungeon entry made a new NavClient (one worker) and nothing
       // terminated it, so each visit left a live worker behind once

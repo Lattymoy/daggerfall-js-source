@@ -788,7 +788,8 @@ import { setHudZone } from '../ui/enhancedHud.js';
 import { setZoneEntity } from '../ui/hudActiveSpells.js';   // WILD1: the classic row's zone glyph
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
 import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';
-import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';   // MWNPC7: the street's walkers in Morrowind bodies   // LEGACY7 part four: the line drawn in its own body, as an online peer is
+import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';
+import { personLook, personActor } from '../characters/peopleBodies.js'; import { staticNpcData } from '../characters/staticNpc.js';   // MWNPC8b: the street's standing people   // MWNPC7: the street's walkers in Morrowind bodies   // LEGACY7 part four: the line drawn in its own body, as an online peer is
 import { houseLine } from '../net/houseLaw.js'; import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt; LEGACY-NAME: a seat's house said once
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -3062,6 +3063,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // population offered as the street walks it, on the 'folk' lane under the switch's tier (the line's own members keep
   // the family's bodies, above)
   const folkStreet = createPopulationLane({ laneName: 'folk', renderer, collider: () => collider });
+  // MWNPC8b (section 13b): AND THE STREET'S STANDING PEOPLE - each StaticNPC flat its own batch (standPixelNpcs), offered
+  // from the near rings as the pixels are walked, read as the buildings' are (their data, their faction's row)
+  const streetPeople = createPopulationLane({ laneName: 'people', renderer, collider: () => collider });
+  const streetLook = (pn) => {
+    if (pn._mwLook !== undefined) return pn._mwLook;
+    const dict = _questStore()?.dict ?? null;
+    if (!dict) return null;   // never before the faction table: asked again
+    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null);
+  };
   /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/cardRegulars.js) - stood by the interior host each frame on layers of
    *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
   let cardRegularBodies = null, _cardBarks = [];
@@ -6072,23 +6082,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.destroyBatch(b);
     }
     entry.npcBatches = [];
-    const npcGroups = new Map();
+    // MWNPC8b (bible/04-Characters/Morrowind-NPCs.md section 13b): ONE BATCH A PERSON - it was one per archive/record
+    // over the active NPCs; a person's own lets their Morrowind body take their place and their billboard cast alone.
+    // The pixel's list, its cull and its teardown carry them as they carried the groups.
     for (const pn of entry.npcs) {
+      pn.standBatch = null;
       if (!pn.active) continue;
-      const k = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // NUDE-FLATS: the picture the build chose
-      if (!npcGroups.has(k)) npcGroups.set(k, []);
-      npcGroups.get(k).push([pn.x, pn.y, pn.z]);
-    }
-    for (const [k, centers] of npcGroups) {
-      const [archive, record] = k.split('_').map(Number);
+      const archive = pn.drawArchive ?? pn.textureArchive, record = pn.drawRecord ?? pn.textureRecord;   // NUDE-FLATS: the picture the build chose
       const t = await getTexture(archive);
       if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // AUDIT (49faf853) B2: torn down during the await - a batch made now would be nobody's
       if (!t || record >= t.recordCount) continue;
       (entry.placeHold ?? pipeline).uploadRecord(archive, record);   // FIELD BUGS 2026-10-04d PLACE-LRU: the street's people are the pixel's to hold
       const size = billboardSize(t, record);
+      const centers = [[pn.x, pn.y, pn.z]];
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       armFlatAnim(batch, t, archive, record, entry.flatAnims, (entry.placeHold ?? pipeline).uploadRecordFrame);
+      pn.standBatch = batch;
       entry.npcBatches.push(batch);
       entry.batches.push(batch);
     }
@@ -30420,6 +30430,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       raidingPartiesFrame(gamePaused() ? 0 : dt);   // RAID1: indoors too - the day's roll, the region's news, a raid running out; nothing is stood (FindCurrentRaid wants the street)
       if (_bandChase.size) bandDrop();   // AUDIT OW4 B5: a door ends every chase, spent - the band frame never runs indoors, and a chase froze there to take up again on the way out
       folkStreet.destroy();   // MWNPC7: indoors, the walkers' bodies let go with the street they walked
+      streetPeople.destroy();   // MWNPC8b: and the standing people's
       heatHaze.suppress();   // HAZE1: inside is no exterior - the strength is 0 at once (HeatHazeMod.Update), and eases up again outside
       { const _wfPx = playerTravelPixel(); windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx, feet: player.pos, height: player.height }); }   // WINDFALL1: WindMod.Update indoors - the gust eases out, the sources fade, the leaves stop (AUDIT ENVIRONS W1: on the game's seconds)
       { const _snPx = playerTravelPixel(); _snowPixels.clear(); snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: maps.getClimateIndex(_snPx.x, _snPx.y), corpses: snowBodies }); }   // SNOWFALL1: DynamicSnowController.Update indoors - the surfaces hidden, the snowpack and the refill kept by the event clock
@@ -31348,6 +31359,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
       familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
       folkStreet.offsetAll(r.offset);   // MWNPC7: and the walkers'
+      streetPeople.offsetAll(r.offset);   // MWNPC8b: and the standing people's
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
@@ -31905,6 +31917,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // test before its shader runs. The order is the pixel's grid
     // distance from the player's own pixel - a hundred-odd integers,
     // sorted into a scratch array kept across frames, no allocation.
+    const _peopleOn = streetPeople.frame();   // MWNPC8b
     _pixelOrder.length = 0;
     for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
     _pixelOrder.sort((a, b) => a._dist2 - b._dist2);
@@ -32015,6 +32028,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
       // AUDIT REACH: a pixel neither seen nor reached has nothing to walk (the first cut asked the far-flat rule, an
       // object a batch, of every batch of every streamed pixel); the rule runs after the cull again, for the batches it can keep
+      if (p.npcs) for (const pn of p.npcs) {   // MWNPC8b: the street's standing people offered their bodies - the near rings' alone
+        if (!pn.standBatch) continue;
+        const look = _peopleOn && ring <= 1 ? streetLook(pn) : null;
+        if (!look) { pn.standBatch.castOnly = false; continue; }
+        const f = pn._mwFeet ??= [0, 0, 0];
+        f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];
+        streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);
+      }
       if (pixelVisible || pixelCasts) for (const b of p.batches) {
         const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
         if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
@@ -32023,6 +32044,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
+    streetPeople.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC8b: the standing people's bodies - before the flats draw
     // SNOWFALL1 (AUDIT ENVIRONS G7): THE SNOW BEFORE THE GROUND UNDER IT - GROUND-LAST's own law a layer up: an opaque
     // surface over the ground (SNOW_LAYER keeps it over whichever is drawn first), so a ground fragment under the snow
     // fails the depth test before its shader runs, and the picture is the same. By the ground's own program, the

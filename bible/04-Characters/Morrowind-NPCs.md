@@ -102,7 +102,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); 5b SHIPPED (section 10b): the dungeon's foes, the cast-only billboard, the Features row; 5c SHIPPED (section 10c): the encounter pool - the exterior, the interiors, exterior.js; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
-| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13: the buildings' people) | all four |
+| MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's - exterior.js and the quest stands are 8c's) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
 
@@ -749,4 +749,64 @@ marks, which draw directly under the room's billboards.
 THE FOUR HOSTS for the standing people: worldModes.js (buildings) WIRED;
 the street's standing people (world.js, exterior.js) and the dungeons'
 and the quests' (dungeonContext.js) are 8b's.
+
+### 13b. The dungeons' and the street's people (SHIPPED 2026-10-09)
+
+- ONE BATCH A PERSON. Both hosts drew their StaticNPC flats in shared
+  batches - the dungeon with the level's flats (one per archive/record,
+  dungeonContext.js `flatGroups`), the street one per sprite over a
+  pixel's active people (world.js standPixelNpcs) - and `castOnly` is a
+  batch's, so one body could not take one person's place. Each person's
+  flat is now a batch of its own (`pn.standBatch`), minted exactly as the
+  group's was: the dungeon's base-centred off the BORN sprite and drawn as
+  the clothed stand-in under NUDE-FLATS, animated where the record
+  animates; the street's on the pixel's hold, in its cull box, in its
+  list and teardown as the groups were. Every other flat groups as before.
+  The cost: a batch a standing person - a dungeon holds a few dozen, a
+  near street fewer - one more draw each, inside the same billboard pass.
+- THE DUNGEON (dungeonContext.js `drawPeople`, called by worldModes.js
+  before the level's billboards draw): every active person with a look
+  offered on the context's own 'people' lane - read by worldModes.js's
+  `standingLook`, the buildings' reading (their StaticNPC data and their
+  faction's row; never before the faction table) - their billboard
+  cast-only where the body stands, the rest drawn as ever; the lane leaves
+  with the context. A host that passes no reading (dungeon.js) leaves
+  every person their billboard. The feet are the person's base (`pn.y`,
+  converted from the RDB centre by the activation-extent pass before any
+  offer).
+- THE STREET (world.js, the 'people' lane): the near rings' people (ring
+  1 - the pixel the player stands in and the eight round it) offered as
+  the pixels are walked, at their scene feet (the pixel's translation
+  added); every other ring's person keeps their billboard. Read by their
+  StaticNPC data with the region's race and the quest store's faction
+  table; asked again until the table has loaded. Drawn before the flats;
+  let go indoors with the walkers; moved with the origin.
+- A FLAT WITH A FACTION IS NOT ALWAYS A PERSON DRAWN: an editor marker
+  (archive 199) DFU hands its StaticNPC hookup but never renders stands
+  no body (`personLook`), whichever host offers it. Nor does anyone not
+  mortal (`wardrobeOf` 'none', beside the vampires): a Daedra or a god by
+  faction type, Oblivion's or the Fey's by guild group - a prince's sprite
+  is no person in clothes. A coven's witch is mortal and is dressed.
+- The bound is the lane's: the 'people' lanes take NPC_BODY_TIERS, and
+  only one of the three ever runs a frame (the building, the dungeon or
+  the street - the scene is one of them).
+
+PROVEN. `test/mwnpc8b_streetdungeon.test.js` (4): the dungeon by source
+(a person out of the groups, their batch base-centred off the born sprite
+and drawn as the stand-in, after the groups; drawPeople's offer, reset
+and draw; the lane's teardown; the world's dungeon passing the reading and
+drawing the people before the level's billboards), the street by source
+(a batch a person after the away arm and the quest pass, no group left;
+the reading not before the table; the near rings offered in the walk at
+scene feet; drawn before the flats; indoors and the origin), and THE
+STANDING-PEOPLE HOSTS ENUMERATED - every scene that stands StaticNPC
+billboards named, wired or flagged; and an editor marker and the
+immortals standing no body. `tools/mutants/mwnpc8b.json`: 24 mutants, 24
+dead.
+
+NOT HERE (MWNPC8c): exterior.js's standalone location still batches its
+people with its scenery (flagged in the enumeration); the quest-placed
+stands (worldModes.js `standQuestFlatIn` - Azura summoned, a questor at a
+marker) are a batch each already but are read off a marker and a faction
+id, not an RDB record, and keep their billboards.
 

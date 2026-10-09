@@ -1,0 +1,218 @@
+[
+ {
+  "name": "MWNPC8b-dungeon-person-grouped",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "        if (pn) pn._flatAt = at;\n",
+  "new": "        if (pn && false) pn._flatAt = at;\n",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-batch-undrawn",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    billboardBatches.push(pn.standBatch);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-born-pivot-lost",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "[Object.assign([at[0], at[1] - bornSize.h / 2, at[2]], { noCover: true })]",
+  "new": "[Object.assign([at[0], at[1], at[2]], { noCover: true })]",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-inactive-offered",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "on && pn.active !== false ? read(pn) : null",
+  "new": "on ? read(pn) : null",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-cast-only-stale",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "        else pn.standBatch.castOnly = false;\n      }\n      _peopleLane.draw",
+  "new": "      }\n      _peopleLane.draw",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-bodies-undrawn",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      _peopleLane.draw(canvas, proj, view, eye, dt);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-lane-kept",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      _peopleLane.destroy();   // MWNPC8b: and the people's\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-unread",
+  "file": "src/scenes/worldModes.js",
+  "old": "          standingLook,   // MWNPC8b: the dungeon's people read for their bodies as the building's are (dungeonContext.js drawPeople)\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-dungeon-host-undrawn",
+  "file": "src/scenes/worldModes.js",
+  "old": "      dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt);   // MWNPC8b: the people in their bodies - before the level's billboards draw\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-batch-unowned",
+  "file": "src/scenes/world.js",
+  "old": "      pn.standBatch = batch;\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-stale-batch",
+  "file": "src/scenes/world.js",
+  "old": "      pn.standBatch = null;\n      if (!pn.active) continue;\n",
+  "new": "      if (!pn.active) continue;\n",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-before-table",
+  "file": "src/scenes/world.js",
+  "old": "    if (!dict) return null;   // never before the faction table: asked again\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-every-ring",
+  "file": "src/scenes/world.js",
+  "old": "_peopleOn && ring <= 1 ? streetLook(pn) : null",
+  "new": "_peopleOn ? streetLook(pn) : null",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-cast-only-stale",
+  "file": "src/scenes/world.js",
+  "old": "        if (!look) { pn.standBatch.castOnly = false; continue; }\n",
+  "new": "        if (!look) continue;\n",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-local-feet",
+  "file": "src/scenes/world.js",
+  "old": "        f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];\n",
+  "new": "        f[0] = pn.x; f[1] = pn.y; f[2] = pn.z;\n",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-bodies-undrawn",
+  "file": "src/scenes/world.js",
+  "old": "    streetPeople.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);   // MWNPC8b: the standing people's bodies - before the flats draw\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-kept-indoors",
+  "file": "src/scenes/world.js",
+  "old": "      streetPeople.destroy();   // MWNPC8b: and the standing people's\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-street-origin-left",
+  "file": "src/scenes/world.js",
+  "old": "      streetPeople.offsetAll(r.offset);   // MWNPC8b: and the standing people's\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-marker-bodied",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (data.billboardArchiveIndex === EDITOR_FLATS_ARCHIVE) return (pn._mwLook = null);\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-immortal-dressed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "  if (f.type === FACTION_TYPES.Daedra || f.type === FACTION_TYPES.God || f.ggroup === GUILD_GROUPS.Oblivion || f.ggroup === GUILD_GROUPS.TheFey) return 'none';\n",
+  "new": "",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-daedra-dressed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "f.type === FACTION_TYPES.Daedra || f.type === FACTION_TYPES.God",
+  "new": "f.type === FACTION_TYPES.God",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-god-dressed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "|| f.type === FACTION_TYPES.God ||",
+  "new": "||",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-oblivion-dressed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "|| f.ggroup === GUILD_GROUPS.Oblivion ||",
+  "new": "||",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC8b-fey-dressed",
+  "file": "src/characters/peopleBodies.js",
+  "old": "|| f.ggroup === GUILD_GROUPS.TheFey) return",
+  "new": "|| false) return",
+  "tests": [
+   "test/mwnpc8b_streetdungeon.test.js"
+  ]
+ }
+]

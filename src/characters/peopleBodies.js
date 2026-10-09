@@ -15,6 +15,7 @@ import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFi
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { FOLK_OUTFITS } from './folkBodies.js';
+import { EDITOR_FLATS_ARCHIVE } from '../world/rmbFlats.js';
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
 
@@ -40,10 +41,13 @@ function mix(h) {
 }
 
 /** What a faction makes a person wear: 'priest', 'mage', 'steel', 'noble', 'merchant', 'underworld', 'scholar', or
- *  'common' (the street's outfits); 'none' for a vampire - who keeps their sprite. @param {any} f the FACTION.TXT row */
+ *  'common' (the street's outfits); 'none' for a vampire, a Daedra, a god, Oblivion's or the Fey's - who keep their
+ *  sprites. @param {any} f the FACTION.TXT row */
 export function wardrobeOf(f) {
   if (!f) return 'common';
   if (f.type === FACTION_TYPES.VampireClan || f.ggroup === GUILD_GROUPS.Vampires || f.sgroup === SOCIAL_GROUPS.SupernaturalBeings) return 'none';
+  // MWNPC8b: nor anyone not mortal - a Daedra, a god, Oblivion's or the Fey's: their sprite is no person in clothes
+  if (f.type === FACTION_TYPES.Daedra || f.type === FACTION_TYPES.God || f.ggroup === GUILD_GROUPS.Oblivion || f.ggroup === GUILD_GROUPS.TheFey) return 'none';
   if (f.type === FACTION_TYPES.Temple || f.ggroup === GUILD_GROUPS.HolyOrder) return 'priest';
   if (f.ggroup === GUILD_GROUPS.MagesGuild || f.type === FACTION_TYPES.MagicUser) return 'mage';
   if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.ggroup === GUILD_GROUPS.FightersGuild || f.type === FACTION_TYPES.KnightlyGuard) return 'steel';
@@ -55,7 +59,8 @@ export function wardrobeOf(f) {
 }
 
 /**
- * The person's look, or null when they keep their sprite (a child, a vampire, a race the data cannot name). `data` is
+ * The person's look, or null when they keep their sprite (a child, a vampire, a race the data cannot name) or have
+ * none to keep (an editor marker). `data` is
  * staticNpcData's record; `faction` its faction's FACTION.TXT row. Kept on the person: a standing person is one build
  * for as long as they stand.
  * @param {any} pn @param {any} data @param {any} faction
@@ -63,6 +68,8 @@ export function wardrobeOf(f) {
 export function personLook(pn, data, faction) {
   if (pn._mwLook !== undefined) return pn._mwLook;
   if (!data || isChildNPCData(data)) return (pn._mwLook = null);
+  // MWNPC8b: an EDITOR flat (a marker DFU never renders, whatever faction it carries) is no one to stand a body for
+  if (data.billboardArchiveIndex === EDITOR_FLATS_ARCHIVE) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
   const race = RACE_NAME[data.race];
   if (kind === 'none' || !race) return (pn._mwLook = null);
