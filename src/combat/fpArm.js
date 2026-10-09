@@ -2211,10 +2211,11 @@ export async function buildFpArm({
     const missing = [];
     // The fp skin wears the same shadows: a right gauntlet hides the
     // right 1st-person hand exactly as it hides the right skin hand on
-    // the body.
+    // the body. MW-FIT1: less what a part the fp does not draw would
+    // hide - a pauldron's upper arm stays the skin's here.
     const fpRows = shadowSkinRows(
       wanted.filter((w) => w.path).map((w) => ({ slot: w.slot, bones: PART_BONES[w.slot] ?? [], path: w.path })),
-      worn.shadows);
+      worn.fpShadows ?? worn.shadows);
     for (const w of wanted) {
       if (!w.path) { missing.push(`${w.slot}: no record for this actor`); continue; }
     }

@@ -22,7 +22,7 @@ import { readFbx } from '../tools/fbxRead.mjs';
 import { meshModelNames } from '../tools/fbxStrip.mjs';
 import { earClip, earClipRepeated } from '../tools/fbxMesh.mjs';
 import { smoothstep } from '../tools/skinWeights.mjs';
-import { HELM_LIFT, PLATE_RIG, RETAIL_SKELETON, bakeObject } from '../tools/bakeSteelPlate.mjs';
+import { PLATE_RIG, RETAIL_SKELETON, bakeObject } from '../tools/bakeSteelPlate.mjs';
 import { SOURCE, TEXTURES, PIECES, EBONY_RIG, MIDDLE_SLACK, bakeEbonyPlate, dropAcross, meshFile, pieceMeshes, textureFile, textureName } from '../tools/bakeEbonyPlate.mjs';
 import { retailSkeleton } from './fixtures/mw/retailRig.mjs';
 
@@ -59,7 +59,7 @@ test('MW-EBONY1: every mesh and painting re-made from the committed export, its 
   for (const path of ownArmorModelPaths()) assert.ok(existsSync(new URL(`../src/assets/mw/${path}`, import.meta.url)), `${path} ships`);
 });
 
-test('MW-EBONY1: every piece is its object in the scene\'s placement, the helm raised HELM_LIFT; each NIF a skinned shape named for its slot over its own side\'s bones, weights summing to one; the tassets hang over the thighs', () => {
+test('MW-EBONY1: every piece is its object in the scene\'s placement, the helm too (MW-FIT1: closed, it hides the head and is not lifted); each NIF a skinned shape named for its slot over its own side\'s bones, weights summing to one; the tassets hang over the thighs', () => {
   const slotOf = { cuirass: 'cuirass', skirt: 'skirt', pauldron_right: 'right pauldron', pauldron_left: 'left pauldron', gauntlet_right: 'right hand', gauntlet_left: 'left hand',
     greave_right: 'right upper leg', greave_left: 'left upper leg', boot_right: 'right foot', boot_left: 'left foot', helm: 'hair' };
   assert.deepEqual(Object.keys(EBONY_RIG), PIECES.map((p) => p.id));
@@ -84,7 +84,7 @@ test('MW-EBONY1: every piece is its object in the scene\'s placement, the helm r
       for (let v = 0; v < sum.length; v++) assert.ok(Math.abs(sum[v] - 1) < 1e-5, `${p.id} vertex ${v} weighs ${sum[v]}`);
     });
   }
-  assert.deepEqual(PIECES.filter((p) => p.lift).map((p) => [p.id, p.lift]), [['helm', HELM_LIFT]]);
+  assert.deepEqual(PIECES.filter((p) => p.lift).map((p) => [p.id, p.lift]), [], 'nothing lifted - MW-FIT1: the helm hides the head and stands where Mac fitted it');
   // AUDIT MW-EBONY: the left boot's object carries a seven-triangle island of the right boot's, across the middle -
   // dropped; what is left mirrors the right boot but for three corners at its own inner edge
   const [left] = pieceMeshes(tree, PIECES.find((p) => p.id === 'boot_left'));
@@ -129,8 +129,12 @@ test('MW-EBONY1: Ebony alone wears it - the seven classic pieces into the slots 
     ['right upper leg', 'ebony_plate_greave_right.nif'], ['left upper leg', 'ebony_plate_greave_left.nif'],
     ['right pauldron', 'ebony_plate_pauldron_right.nif'], ['left pauldron', 'ebony_plate_pauldron_left.nif'],
   ]);
-  assert.deepEqual(worn.shadows, ['hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
-    'foot:right', 'foot:left', 'ankle:right', 'ankle:left', 'knee:right', 'knee:left', 'upperleg:right', 'upperleg:left']);
+  // MW-FIT1: the closed helm hides the head and each pauldron its upper arm - in the third person; the first person
+  // draws neither, so they hide nothing from it
+  assert.deepEqual(worn.shadows, ['head', 'hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
+    'upperarm:right', 'upperarm:left', 'foot:right', 'foot:left', 'ankle:right', 'ankle:left', 'knee:right', 'knee:left', 'upperleg:right', 'upperleg:left']);
+  assert.deepEqual(worn.fpShadows, ['hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
+    'foot:right', 'foot:left', 'upperleg:right', 'upperleg:left']);
   assert.ok(worn.adds.every((a) => !a.skinFrom && !a.fitTo), 'shipped skinned - no runtime fit');
   const own = itemMapCoverage().filter((c) => c.kind === 'own' && c.via === 'armor' && c.material === 'Ebony');
   assert.deepEqual(own.map((c) => c.item), ['Cuirass', 'Gauntlets', 'Greaves', 'Left_Pauldron', 'Right_Pauldron', 'Helm', 'Boots']);
