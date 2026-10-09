@@ -12,8 +12,9 @@
 //             item (systems/iliacItems.js CARD_PACK_TEMPLATE); its Use opens it into the pack. Sold at the tavern's
 //             counter and at its card table, at the counter's price (shopStock.js calculateTradePrice - the tavern's
 //             quality, the buyer's Mercantile and Personality). "No paid packs": its price is gold earned in the game.
-//   QUESTS    "A guild's quest can pay a card of that guild" - a guild quest done pays one of its guild's cards one time in
-//             GUILD_CARD_PER_MILLE, rising with the player's rank in it (GUILD_CARDS).
+//   QUESTS    "A guild's quest can pay a card of that guild" - a guild quest done pays one of its guild's cards
+//             GUILD_CARD_PER_MILLE times in a thousand, whatever the rank; the card is the best the player's rank in it
+//             reaches (GUILD_CARDS). (AUDIT CARDS-6 A12: this line said the chance rose with the rank; it never did.)
 //   BOSSES    "the Oblivion Gate's boss and the Sea Serpent can drop their own, at the aetheric tier" - and the Abyss
 //             Dungeon's Brass Remnant (Mac, the same ask). Each boss's hoard draws once for its card, LAST, after every
 //             draw the hoard took before (the seed's earlier rolls are what they were): BOSS_CARD_PER_MILLE.
@@ -25,7 +26,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { ILIAC_CARDS, cardById } from '../net/iliacCards.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { DIVINES, ORDERS } from './guildVariants.js';
+import { getDivine, getOrder } from './guildVariants.js';   // AUDIT CARDS-6 A4: a temple's hall by Temple.GetDivine's own walk
 import { mintIliacCard, mintCardPack, isCardPack, CARD_PACK_TEMPLATE, iliacCardName } from './iliacItems.js';
 import { registerItemUseHandler } from './itemTemplates.js';
 import { addItem } from './inventory.js';
@@ -43,7 +44,9 @@ import { BOSS_CARD_IDS } from './bossCards.js';
 
 const M = MOBILE_TYPES;
 /** Each foe's own card, by its mobile type: a creature its own, a calling the guild card it wears. A foe the first set
- *  has no card for (a bear, a spider, a mummy, the Frost and Fire Daedra, the watch) drops none. */
+ *  has no card for drops none: the Grizzly Bear, the Sabertooth Tiger, the Spider, the Slaughterfish, the Mummy, the
+ *  Frost and Fire Daedra, and the Bard, the Acrobat, the Monk, the Archer, the Ranger and the watch (AUDIT CARDS-6 A12:
+ *  this list named six of the thirteen). */
 export const FOE_CARDS = Object.freeze({
   [M.Rat]: 'rat', [M.Imp]: 'imp', [M.Spriggan]: 'spriggan', [M.GiantBat]: 'giant-bat', [M.Orc]: 'orc', [M.Centaur]: 'centaur',
   [M.Werewolf]: 'werewolf', [M.Nymph]: 'nymph', [M.OrcSergeant]: 'orc-sergeant', [M.Harpy]: 'harpy', [M.Wereboar]: 'wereboar',
@@ -73,6 +76,9 @@ const titled = (/** @type {any} */ e) => !!(e?.eliteFoe || e?.champion || e?.pro
  * @param {any} entity @param {() => number} rolls
  */
 export function foeCardRoll(entity, rolls) {
+  // AUDIT CARDS-6 A10, RECORDED: nothing writes `worldBoss` on an entity today - the Gate's Warden, the Sea Serpent and
+  // the Brass Remnant are the relay's and never pass a death door (their spoils are their hoards'), so that half of the
+  // guard answers for a boss that ever does, and costs nothing until then
   if (!entity || entity.revenant || entity.worldBoss) return null;
   const id = FOE_CARDS[entity.mobileType];
   const card = id ? cardById(id) : null;
@@ -106,24 +112,30 @@ export const GUILD_CARDS = Object.freeze({
   'Order:Dragon': [[0, 'knight-of-the-dragon']], 'Order:Wheel': [[0, 'knight-of-the-wheel']], 'Order:Horn': [[0, 'host-of-the-horn']],
   'Order:Rose': [[0, 'knight-of-the-rose']], 'Order:Flame': [[0, 'knight-of-the-flame']],
 });
-/** The guild a quest's faction id names (the quest machine's `factionId` - the guild's, a temple's divine, an order's). */
-export function guildNameOfFaction(/** @type {number} */ factionId) {
+/** The guild a quest's faction id names (the quest machine's `factionId` - the guild's, a temple's hall, an order's).
+ *  AUDIT CARDS-6 A4: A TEMPLE'S HALL BY ITS OWN WALK. A temple's quest carries its hall's faction (quest/offerFlow.js
+ *  _getFactionIdForGuild: the building's, for the HolyOrder), and a hall's may be its TEMPLAR ORDER's - the Order of the
+ *  Hour, under Akatosh - which Temple.GetDivine walks up to its divine (guildVariants.js getDivine, with the faction
+ *  table `factionDict`); the divines' own ids alone were matched, so such a hall's quests paid no card. The orders are
+ *  KnightlyOrder.GetOrder's, looked up as DFU looks them up. */
+export function guildNameOfFaction(/** @type {number} */ factionId, /** @type {any} */ factionDict = null) {
   const fixed = { 40: 'MagesGuild', 41: 'FightersGuild', 42: 'ThievesGuild', 108: 'DarkBrotherhood' }[factionId];
   if (fixed) return fixed;
-  const divine = Object.entries(DIVINES).find(([, id]) => id === factionId)?.[0];
+  const divine = getDivine(factionDict, factionId);
   if (divine) return `Temple:${divine}`;
-  const order = Object.entries(ORDERS).find(([, id]) => id === factionId)?.[0];
+  const order = getOrder(factionId);
   return order ? `Order:${order}` : null;
 }
 /** MEASURE (CARDS9): a guild quest done pays a card one time in three. */
 export const GUILD_CARD_PER_MILLE = 334;
 /**
  * A guild quest's card: ONE draw for whether it pays, the best of its guild's cards the quester's `rank` reaches - an id,
- * or null (no guild, a guild with no card, the draw missed).
- * @param {number} factionId @param {number} rank @param {() => number} rolls
+ * or null (no guild, a guild with no card, the draw missed). `factionDict` the faction table a temple's hall walks
+ * (AUDIT CARDS-6 A4, guildNameOfFaction).
+ * @param {number} factionId @param {number} rank @param {() => number} rolls @param {any} [factionDict]
  */
-export function guildCardRoll(factionId, rank, rolls) {
-  const ladder = GUILD_CARDS[guildNameOfFaction(factionId) ?? ''];
+export function guildCardRoll(factionId, rank, rolls, factionDict = null) {
+  const ladder = GUILD_CARDS[guildNameOfFaction(factionId, factionDict) ?? ''];
   if (!ladder) return null;
   if (!(rolls() * 1000 < GUILD_CARD_PER_MILLE)) return null;
   const r = Number.isInteger(rank) ? rank : 0;

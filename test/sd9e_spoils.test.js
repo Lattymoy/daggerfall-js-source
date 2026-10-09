@@ -102,7 +102,10 @@ test('SD9e THE LIST: the pieces as the pool throws them - each item with its tie
     if (s.card) assert.equal(list.at(-2).item.card, 'brass-remnant');
     assert.deepEqual(list.at(-1), { kind: 'gold', gold: s.gold, tier: 'common', record: list.at(-1).record });
     const look = seededRng(((seed >>> 0) ^ 0x5eed) >>> 0);
-    for (const p of list) assert.equal(p.record, RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)]);
+    // PIN MOVED (AUDIT CARDS-6 A8): the look-stream draws the pieces', then the gold's, then the card's LAST - the gold
+    // pile's picture what the seed gave it before CARDS9 (test/auditcards6_a.test.js holds every hoard to it)
+    const drawn = [...list.filter((p) => p.item?.templateIndex !== 581), ...list.filter((p) => p.item?.templateIndex === 581)];
+    for (const p of drawn) assert.equal(p.record, RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)]);
     for (const p of list.slice(0, -1)) assert.ok(validLootItem(JSON.parse(JSON.stringify(p.item))), `seed ${seed}: ${p.item.name} off the wire`);
   }
 });

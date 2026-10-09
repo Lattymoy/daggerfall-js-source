@@ -103,9 +103,13 @@ export function sdSpoilsList(seed, level) {
   const look = seededRng(((seed >>> 0) ^ 0x5eed) >>> 0);
   const flat = () => RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)];
   const s = rollSdSpoils(seed, level);
+  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));
+  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
+  // AUDIT CARDS-6 A8: the card's picture drawn LAST, after the gold's, so the gold pile's is what the seed gave it before
+  const card = s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : [];
   return [
-    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),
-    ...(s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : []),   // CARDS9: the Remnant's card, after the pieces
-    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },
+    ...pieces,
+    ...card,   // CARDS9: the Remnant's card, after the pieces
+    gold,
   ];
 }

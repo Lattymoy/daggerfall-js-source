@@ -56,7 +56,7 @@ function joiner() {
   `;
   // CORPSE-FOOD (2026-09-23): the stream's first word of a death rolls this joiner's copy of the body its food - stood
   // down here, where the seat is the subject (survtiers3.test.js mounts that arm)
-  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));
+  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, dropFoeCard: () => null, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));   // PIN MOVED (AUDIT CARDS-6 A3): the copy door's card stood down too
 
   const applyDungeonFoesLine = mustMatch(M, /applyDungeonFoes\(id, data[^)]*\) \{[^\n]*\},/, 'worldModes.applyDungeonFoes');
   const setDungeonAuthorityLine = mustMatch(M, /setDungeonAuthority\(on\) \{[^\n]*\},/, 'worldModes.setDungeonAuthority');

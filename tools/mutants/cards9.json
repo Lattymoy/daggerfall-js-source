@@ -164,8 +164,8 @@
   {
     "name": "CARDS9-guild-once",
     "file": "src/scenes/world.js",
-    "old": "    if (!key || cardQuestPaid.has(key)) return;",
-    "new": "    if (!key) return;",
+    "old": "    if (!quest || cardQuestPaid.has(key)) return;",
+    "new": "    if (!quest) return;",
     "tests": [
       "test/cards9_sources.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "CARDS9-customs-order",
     "file": "src/systems/realmCustoms.js",
-    "old": "  held.sort((a, b) => cardWorth(b.rec.card) - cardWorth(a.rec.card));",
-    "new": "  held.sort((a, b) => cardWorth(a.rec.card) - cardWorth(b.rec.card));",
+    "old": "  held.sort((a, b) => unit(b.rec) - unit(a.rec));",
+    "new": "  held.sort((a, b) => unit(a.rec) - unit(b.rec));",
     "tests": [
       "test/cards9_sources.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "CARDS9-service-birth",
     "file": "server-account/src/realm.js",
-    "old": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH ? null",
-    "new": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX ? null",
+    "old": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0 ? null",
+    "new": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardPacksOf(save) === 0 ? null",
     "tests": [
       "test/cards9_sources.test.js"
     ]

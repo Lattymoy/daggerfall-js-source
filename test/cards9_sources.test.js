@@ -191,8 +191,10 @@ test('CARDS9 the guilds: a guild quest done pays one of its guild\'s cards one t
   assert.equal(guildCardRoll(ORDERS.Owl, 9, () => 0), null, 'an order with no card');
   assert.equal(guildCardRoll(108, 6, () => 0), 'dark-brotherhood-assassin');
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(!q\?\.questSuccess \|\| !\(q\.factionId > 0\)\) return;\s*const key = String\(q\.uid \?\? q\.questName \?\? ''\);\s*if \(!key \|\| cardQuestPaid\.has\(key\)\) return;\s*cardQuestPaid\.add\(key\);/);
-  assert.match(w, /const rank = Object\.values\(activeMemberships\(playerEntity\)\)\.find\(\(m\) => m\?\.guild === name\)\?\.rank \?\? 0;\s*const id = guildCardRoll\(q\.factionId, rank, Math\.random\);/);
+  // PIN MOVED (AUDIT CARDS-6): the once is the character's (its id beside the quest's), and a temple's hall walks the
+  // faction table to its divine (A4) - test/auditcards6_a.test.js runs the block itself
+  assert.match(w, /if \(!q\?\.questSuccess \|\| !\(q\.factionId > 0\)\) return;\s*const quest = String\(q\.uid \?\? q\.questName \?\? ''\);\s*const key = `\$\{playerEntity\.characterId \?\? ''\}\|\$\{quest\}`;\s*if \(!quest \|\| cardQuestPaid\.has\(key\)\) return;\s*cardQuestPaid\.add\(key\);/);
+  assert.match(w, /const rank = Object\.values\(activeMemberships\(playerEntity\)\)\.find\(\(m\) => m\?\.guild === name\)\?\.rank \?\? 0;\s*const id = guildCardRoll\(q\.factionId, rank, Math\.random, dict\);/);
   assert.match(w, /renownQuestEnded\?\.\(q\);[^\n]*\n\s*cardQuestEnded\(q\);/, 'beside the Renown payout, in the quest machine\'s one end hook');
 });
 

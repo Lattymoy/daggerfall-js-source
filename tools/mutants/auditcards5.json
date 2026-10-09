@@ -1353,8 +1353,8 @@
   {
     "name": "AC5-C-M42",
     "file": "src/systems/inventory.js",
-    "old": "  if (typeof stack.card === 'string') picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
-    "new": "  if (typeof stack.card === 'string' && numberToPick > 1) picked.card = stack.card;   // CARDS8: the card split off is the card it was\n",
+    "old": "  if (typeof stack.card === 'string') {   // CARDS8: the card split off is the card it was\n",
+    "new": "  if (typeof stack.card === 'string' && numberToPick > 1) {   // CARDS8: the card split off is the card it was\n",
     "tests": [
       "test/auditcards5_items.test.js",
       "test/cards8_binder.test.js",
@@ -3697,8 +3697,8 @@
   {
     "name": "AC5-C-M29",
     "file": "src/systems/itemInfo.js",
-    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item)) record = survivalInfoTokens(item);",
-    "new": "if (isPortalStone(item) || isWalletItem(item)) record = survivalInfoTokens(item);",
+    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item)) record = survivalInfoTokens(item);",
+    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/auditcards5_items.test.js",
       "test/cards8_binder.test.js",
@@ -3716,8 +3716,8 @@
   {
     "name": "AC5-C-M30",
     "file": "src/systems/itemInfo.js",
-    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item);   // CARDS8",
-    "new": "isPortalStone(item) || isWalletItem(item);   // CARDS8",
+    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item);   // AUDIT CARDS-6 A5",
+    "new": "isPortalStone(item) || isWalletItem(item) || isCardPack(item);   // AUDIT CARDS-6 A5",
     "tests": [
       "test/auditcards5_items.test.js",
       "test/cards8_binder.test.js",

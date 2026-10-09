@@ -18760,15 +18760,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // a guild quest done pays one of its guild's cards one time in three - the best its quester's rank in that guild
   // reaches (systems/cardSources.js guildCardRoll) - once a quest, however its end is heard again. Offline and online
   // alike: a card is an item, and the realm bounds what crosses (net/cardWorthLaw.js customs).
+  // AUDIT CARDS-6 (the lane's latent): THE ONCE IS A CHARACTER'S. The set lives as long as the host, and an offline load
+  // restores another character in place (save.js restorePlayer) with its quests at their own saved uids - so the bare uid
+  // a first character was paid for stopped a second's restored quest of the same uid from paying. Keyed by the
+  // character's id with the quest's. AUDIT CARDS-6 A4: and a temple's hall walked to its divine (the faction table).
   const cardQuestPaid = new Set();
   const cardQuestEnded = (q) => {
     if (!q?.questSuccess || !(q.factionId > 0)) return;
-    const key = String(q.uid ?? q.questName ?? '');
-    if (!key || cardQuestPaid.has(key)) return;
+    const quest = String(q.uid ?? q.questName ?? '');
+    const key = `${playerEntity.characterId ?? ''}|${quest}`;
+    if (!quest || cardQuestPaid.has(key)) return;
     cardQuestPaid.add(key);
-    const name = guildNameOfFaction(q.factionId);
+    const dict = townTalk.factionDict ?? null;
+    const name = guildNameOfFaction(q.factionId, dict);
     const rank = Object.values(activeMemberships(playerEntity)).find((m) => m?.guild === name)?.rank ?? 0;
-    const id = guildCardRoll(q.factionId, rank, Math.random);
+    const id = guildCardRoll(q.factionId, rank, Math.random, dict);
     const card = id ? mintIliacCard(id) : null;
     if (!card) return;
     addItem(playerEntity.items, card);

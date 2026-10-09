@@ -19,14 +19,15 @@ import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseH
 import { validBinderDeck, BINDER_DECK_NAME_MAX } from './itemFields.js';
 import { addItem } from './inventory.js';
 import { cardById, STARTER_DECK } from '../net/iliacCards.js';
-import { ILIAC_CARD_TEMPLATE, cardWorth } from '../net/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE, cardWorth } from '../net/cardWorthLaw.js';   // CARDS9: the card's worth, one home with the service; AUDIT CARDS-6 A1: and the pack's number
 
 /** The card's and the binder's templates - the port's own, beside the Wallet's 580 and below the professions' 600.
  *  CARDS9: the card's number is the law's (net/cardWorthLaw.js - the account service reads it there). */
 export { ILIAC_CARD_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
 export const CARD_BINDER_TEMPLATE = 582;
-/** CARDS9 (section 32): the tavern's sealed pack of cards (systems/cardSources.js opens it). */
-export const CARD_PACK_TEMPLATE = 583;
+/** CARDS9 (section 32): the tavern's sealed pack of cards (systems/cardSources.js opens it). AUDIT CARDS-6 A1: its number
+ *  is the law's too (net/cardWorthLaw.js - the cards' customs counts a pack, and the account service reads it there). */
+export { CARD_PACK_TEMPLATE };   // the law's own, handed on (one declaration - audit24's ratchet)
 const GROUP = 'UselessItems2';
 /** The rows. Rarity 20: no shelf and no loot table rolls either. The card wears DFU's Parchment picture (TEXTURE.209
  *  record 8), the binder its Spellbook's (record 4) - the item's own picture; the card's face is painted in code
