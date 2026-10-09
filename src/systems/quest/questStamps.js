@@ -14,7 +14,7 @@
 
 /** TIME3: the stamps on the CHARACTER's clock, in classic seconds (quest/clock.js, the saveShape of quest/actions.js's
  *  PlaySound, CreateFoe and DailyFrom, quest/quest.js). Zero is each one's "never" and stays zero. */
-export const QUEST_OWN_SECOND_KEYS = Object.freeze(['lastWorldTimeSample', 'lastTimePlayed', 'lastSpawnTime', 'guardAnchor', 'questTombstoneTime']);
+export const QUEST_OWN_SECOND_KEYS = Object.freeze(['lastWorldTimeSample', 'lastTimePlayed', 'lastSpawnTime', 'guardAnchor', 'questTombstoneTime', 'shelvedAt']);   // QUEST-SHELF: the second a quest was set aside, on the same clock
 /** TIME3: ...and on the EVENT clock: a quest's start - with each logged step's `time` (activeLogMessages, too common
  *  a name to walk the tree by), the journal's dates (%qdt). */
 export const QUEST_WORLD_SECOND_KEYS = Object.freeze(['questStartTime']);

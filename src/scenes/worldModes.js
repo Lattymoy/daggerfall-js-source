@@ -172,7 +172,7 @@ import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldT
 import { LOCATION_TYPES, REGION_NAMES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
-import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice, lotHasBoat, lotAllBoats, CREDIT_BOAT_ALONE } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT, tradeCost, getTradePrice } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
@@ -307,8 +307,8 @@ import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
-import { titleDeed, shipLabel, creditShip, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE as FLEET_PARTS_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book; AUDIT HOLDINGS F5: bought parts' claim
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion, creditDecision, takeCredit, empireRefusalLines } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
+import { titleDeed, shipLabel, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 // HOME1: the online homes - the door's one answer, the offer, the owner's menu, and an owned home's own scene
 import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
@@ -3315,10 +3315,6 @@ export function createWorldModes(host) {
         carriedWeightKg: carriedWeight(playerEntity),
         maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
-      // SHIP-CREDIT (Mac: "Buy on credit"): a boat the purse falls short of - the bank of the shop's region lends the
-      // rest under DFU's loan law (banking.js creditDecision); a lot with no boat is offered none, and one with other
-      // goods beside the boat is refused (the bank lends on the boat, never the basket)
-      credit: (staged, price) => (!lotHasBoat(staged) ? null : lotAllBoats(staged) ? shopCredit(b, price) : { kind: 'refuse', result: CREDIT_BOAT_ALONE }),
       commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
       // AUDIT 63 F48: DoSteal's five effects (DaggerfallTradeWindow.cs
       // :913-928). The same four sinks the private-property theft
@@ -3346,34 +3342,12 @@ export function createWorldModes(host) {
     });
   }
 
-  /** SHIP-CREDIT: the bank's region a shop answers to - its building's, as the bank's own counter reads it. */
-  const shopRegion = (b) => b?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0;
-  /** SHIP-CREDIT: a boat's purchase of `price` on the bank's credit (banking.js creditDecision) at this shop - its
-   *  region's bank, the decision carrying the region it was asked of; online the Empire's own words for a refusal
-   *  another branch made. */
-  const shopCredit = (b, price) => creditAt(shopRegion(b), price);
-  function creditAt(region, price) {
-    const regions = playerEntity.bankAccounts?.length || BANK_REGION_COUNT;
-    playerEntity.bankAccounts ??= createBankAccounts(regions);
-    const c = { ...creditDecision(playerEntity.bankAccounts, region, { price, purse: totalGoldAmount(playerEntity), level: playerEntity.level ?? 1 }), region };
-    if (c.kind === 'refuse' && c.empireRegion != null) c.lines = empireRefusalLines(c, (i) => REGION_NAMES[i] ?? '');   // the bank's own naming (bankWindow.js)
-    return c;
-  }
   /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092), host side.
    *  One Mercantile tally per CONCLUDED DEAL, not per item - DFU
    *  raises OnTrade once and tallies once, however many goods moved. */
   function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {
     if (mode === 'Buy') {
-      // SHIP-CREDIT: on the bank's credit the purse pays its share and the loan the rest - asked again at the Yes of the
-      // region the offer named, and a credit the bank no longer gives (or another than offered, or on more than boats)
-      // buys nothing
-      const credit = proceeds?.kind === 'credit' ? creditAt(proceeds.region, price) : null;
-      if (proceeds?.kind === 'credit' && (!lotAllBoats(staged) || credit?.kind !== 'credit' || credit.loan !== proceeds.loan)) return false;
-      deductGold(playerEntity, credit ? credit.pay : price);
-      if (credit) {
-        takeCredit(playerEntity.bankAccounts, credit.region, credit.loan, { nowMinutes: Math.floor(ownMinutes()) });
-        hudText(`The bank lends you ${credit.loan} gold. You owe ${credit.owed} within a year.`);
-      }
+      deductGold(playerEntity, price);
       for (const it of staged) {
         const i = shelf.items.indexOf(it);
         if (i >= 0) shelf.items.splice(i, 1);
@@ -3382,13 +3356,12 @@ export function createWorldModes(host) {
       decorDeliver(staged.filter(isFurnishing));   // DECOR2b: the furnisher delivers
       restockEndless(shelf.items, staged);   // ENDLESS-STOCK: a Materials Bag or a Campfire bought is back on the shelf - neither sells out
       // HOLDINGS (bible/03-World/Holdings.md): a ship's deed bought goes to the Fleet's book, never the pack - she waits at this
-      // town's port, and on the bank's credit the loan that bought her is stamped on her (none refitted while it stands)
-      const town = buildingDirectory?.()?.locationName ?? '';   // the town the counter stands in, as the bank's region is read (shopRegion)
+      // town's port
+      const town = buildingDirectory?.()?.locationName ?? '';   // the town the counter stands in
       const titled = staged.filter((it) => it?.templateIndex === FLEET_DEED_TEMPLATE)
-        .map((it) => titleDeed(it, { from: playerEntity.items, port: town ? { name: town } : null, credit: credit ? { region: credit.region, due: playerEntity.bankAccounts?.[credit.region]?.loanDueDate } : null }))
+        .map((it) => titleDeed(it, { from: playerEntity.items, port: town ? { name: town } : null }))
         .filter(Boolean);
       if (titled.length) hudText(`${titled.length === 1 ? `${shipLabel(titled[0])} waits` : `${titled.length} ships wait`} for you at ${town || 'this port'}. See Holdings > Fleet in the pause menu.`);
-      if (credit) for (const it of staged) if (it?.templateIndex === FLEET_PARTS_TEMPLATE && it.UID) creditShip(it.UID, Math.floor((it.message | 0) / 10), (it.message | 0) % 10, it.value, { region: credit.region, due: playerEntity.bankAccounts?.[credit.region]?.loanDueDate });   // AUDIT HOLDINGS F5: a boat bought as parts on the bank's credit carries its claim
     } else if (mode === 'Sell' || mode === 'SellMagic') {
       // The proceeds were weighed before they were paid: a purse that
       // would push the player past MaxEncumbrance becomes a letter of
@@ -8871,6 +8844,7 @@ export function createWorldModes(host) {
           sdHomeAt: () => host.sdHomeAt?.() ?? null,   // SD10: where it stands: where the Remnant fell, once its body has sunk
           sdHomeAge: () => host.sdHomeAge?.() ?? null,   // AUDIT SD II (L6 F16): how long ago it began to rise
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
+          post: () => host.post?.() ?? null,   // SERVER-POST: and the mailbox's box
           // CASTLE1: the world host's load, for a save the dungeon's own
           // door finds was taken somewhere else (dungeonContext.js
           // quickLoad). Absent on a host with no such load, and the
@@ -11423,6 +11397,7 @@ export function createWorldModes(host) {
     relock: host.relock,   // MAC1: the resume gesture relocks the pointer (ui/pauseDoor.js)
     loadingPrevented: host.loadingPrevented,   // ONLINE-LOAD1: forwarded from the world host, same as quickLoad above
     timers: host.timers,   // TIMERS1: the hourglass's window, the world host's source
+    post: host.post,   // SERVER-POST: the mailbox's box, the world host's
     playerName: host.playerName,
     playerId: host.playerId,   // AUDIT 27h A3: CHARID1's by-id Save list - the street's bag always carried it, this one never did
     saveAs: host.saveAs,
@@ -12095,6 +12070,14 @@ export function createWorldModes(host) {
     unstuck: () => {
       if (mode === 'dungeon' && dungeonCtx) { pendingDungeonExit = true; return true; }
       if (mode === 'interior' && interiorCtx) { pendingInteriorExit = true; return true; }
+      return false;
+    },
+    // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause has no envelope): A PAUSE PAGE BY NAME wherever the player
+    // stands - `/mail` opens the mailbox in a building's or a dungeon's own pause; false outdoors, where the world host
+    // opens its own (scenes/world.js)
+    openPauseAt: (at) => {
+      if (mode === 'dungeon' && dungeonCtx) { dungeonCtx.togglePause({ at }); return true; }
+      if (mode === 'interior' && interiorCtx) { interiorKeyCtx.togglePause({ at }); return true; }
       return false;
     },
     // ONLINE-AUTOSAVE1: a mode-aware save for callers OUTSIDE any key

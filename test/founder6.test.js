@@ -43,7 +43,7 @@ test('FOUNDER6 worn by default: a founder who never chose a title (NULL) wears F
 
 // ── THE NAMES ───────────────────────────────────────────────────────
 
-test('FOUNDER6 the names: FOUNDER_HANDLES in wrangler.toml names spragual and SylviaBun - each holds Founder however late its rows say it played; the version moved to acct97 (mutant: the list emptied)', () => {
+test('FOUNDER6 the names: FOUNDER_HANDLES in wrangler.toml names spragual and SylviaBun - each holds Founder however late its rows say it played; the version moved to acct98 (acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge; mutant: the list emptied)', () => {
   const toml = src('server-account/wrangler.toml');
   const line = toml.match(/^FOUNDER_HANDLES = "([^"]*)"$/m);
   assert.ok(line, 'one FOUNDER_HANDLES line');
@@ -52,8 +52,8 @@ test('FOUNDER6 the names: FOUNDER_HANDLES in wrangler.toml names spragual and Sy
     assert.equal(isNamedFounder({ handle }, env), true, `${handle} named`);
     assert.equal(titleWorn({ handle, created_at: FOUNDER_UNTIL + 9 * DAY, registered_at: FOUNDER_UNTIL + 9 * DAY, title: null }, env), 'founder', `${handle} wears it by default`);
   }
-  assert.match(toml, /^ACCOUNT_VERSION = "acct97"$/m);
-  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct97';/);
+  assert.match(toml, /^ACCOUNT_VERSION = "acct98"$/m);
+  assert.match(src('server-account/src/service.js'), /export const ACCOUNT_VERSION = 'acct98';/);
 });
 
 // ── THE SERVICE, end to end ─────────────────────────────────────────

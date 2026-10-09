@@ -44,6 +44,8 @@
 // is NOT in the save shape, so a restrained foe re-applies restraint
 // after load.
 
+import { isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
+
 export class QuestResourceBehaviour {
   constructor(machine, host = null) {
     this.machine = machine;
@@ -64,6 +66,7 @@ export class QuestResourceBehaviour {
     this.targetQuest = null;
     this.targetResource = null;
     this.enemy = null;               // enemyEntityBehaviour - cached for Foe targets
+    this.individualHome = false;     // QUEST-SHELF (its audit): a named NPC's own home copy (machine.setupIndividualStaticNPC)
     // AUDIT 63 F2: Unity's `Destroy(component)` stops the component
     // dead - it never Updates again and never receives activation.
     // The port's behaviour object survives its own destroy event
@@ -125,6 +128,15 @@ export class QuestResourceBehaviour {
     // Foe while the `killed N _x_` trigger read the new one, so the last kill never fired its task - no popup, no
     // log. A target the quest no longer holds is let go and resolved again, the enemy re-read with it.
     this.relinkToLiveQuest();
+    // QUEST-SHELF (2026-10-08): a quest set aside stands none of its people or things in a scene - put out of sight here,
+    // each frame, and shown again by its first tick once reclaimed (QuestResource.tick: not hidden, active) - but its
+    // questor stands (the guild's own NPC - their door is open now), and its foes stand and still count their deaths (a
+    // foe put away would leave its wave's `killed` unreachable once reclaimed). Its audit: nor is a named NPC's HOME copy
+    // put away - the block bound it to the quest's Person (setupIndividualStaticNPC), and the quest let them go home.
+    if (isShelved(this.targetQuest) && !this.enemy) {
+      if (!this.individualHome) this.setGameObjectActive(!!this.targetResource?.isQuestor);
+      return;
+    }
     // Ensure target resource has this behaviour assigned - coupling
     // is otherwise lost when reloading a game
     if (this.targetResource != null) {
@@ -186,8 +198,10 @@ export class QuestResourceBehaviour {
    *  (the follow-up-quest bootstrap door, C#'s own shape). */
   doClick() {
     if (this.isComponentDestroyed) return false;   // AUDIT 63 F2: PlayerActivate.cs:1523-1528's GetComponent<QuestResourceBehaviour>() misses after Destroy, and the activation falls through to talk/guild routing
+    // QUEST-SHELF: a quest set aside takes no click - it falls through to talk/guild routing; its audit: a named NPC's
+    // click still reaches every RUNNING quest that holds them (the broadcast below)
     let foundInActiveQuest = false;
-    if (this.targetResource != null) {
+    if (this.targetResource != null && !isShelved(this.targetQuest)) {
       this.targetResource.setPlayerClicked();
       if (this.targetResource.isItem) this._transferWorldItemToPlayer();
       foundInActiveQuest = true;
@@ -320,7 +334,7 @@ export class QuestResourceBehaviour {
   _clickAllIndividualNPCs(factionID) {
     let matched = false;
     for (const quest of this.machine.quests.values()) {
-      if (quest.questComplete || quest.questTombstoned) continue;
+      if (quest.questComplete || quest.questTombstoned || isShelved(quest)) continue;   // QUEST-SHELF
       for (const resource of quest.resources.values()) {
         if (!resource.isPerson) continue;
         if (resource.isIndividualNPC && resource.factionData?.id === factionID) {

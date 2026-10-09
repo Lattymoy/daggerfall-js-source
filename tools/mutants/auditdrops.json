@@ -65,8 +65,8 @@
   {
     "name": "AD-A1-main-quest-received",
     "file": "src/systems/questShare.js",
-    "old": "  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };\n  if (machine.hasActiveQuestNamed(questName)) {",
-    "new": "  if (machine.hasActiveQuestNamed(questName)) {",
+    "old": "  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };\n  // QUEST-SHELF",
+    "new": "  // QUEST-SHELF",
     "tests": [
       "test/auditdrops.test.js"
     ]

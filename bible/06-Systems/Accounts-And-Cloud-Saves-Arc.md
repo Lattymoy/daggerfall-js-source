@@ -3911,6 +3911,95 @@ names are this service's: one `sd_kills` row a (slot, account) the kill's receip
 - Pins: `test/sdclears.test.js` (3). One drives the service's own claim end to end and reads the names back; another
   runs the workflow's own steps in bash over D1's answer. `tools/mutants/sdclears.json` has 9 mutants, all dead.
 
+## SERVER-POST — the server's post, a mailbox beside the hourglass (2026-10-08, acct97)
+
+Mac: "Let's develop an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
+notifications whenever players have a message. First use is to utilize it for players being granted items."
+
+A piece of the server's post is the developers' to ONE registered account: a subject, a body, and at most one item. It
+is not a letter (MAIL1, 0007): a letter is a player's and carries words alone; nothing a player can do writes a piece -
+the operator's workflow is its only sender.
+
+- **The table** (0093, `server_post`): one row a piece - `to_id` (CASCADE with the account), `batch` (the operator's name
+  for the send; UNIQUE with `to_id`, so a send run twice sends once), `sender`, `subject`, `body`, `item` (the record as
+  the game keeps one, JSON, or NULL), `sent_at`, `read_at`, `claimed_at`, `claimed_by`. The table holds the post's
+  bounds itself (CHECKs: a subject of 1 to 80, a body of 1 to 1,200, an item that is JSON) - its writer is a statement
+  typed by hand.
+- **The law** (`src/net/postLaw.js`, read by both ends and the tool): the id's shape, a send's name, the bounds (80 and
+  1,200 characters), the sender's name (*The Developers*), the box's 50, and a head as the box lists it - an item's name
+  and rarity, never its record.
+- **The routes** (`server-account/src/post.js`, behind a session, a registered account's alone - `post-needs-account`,
+  403, as the letters' wall): `GET /v1/post/box` (the newest fifty heads, a gift still waiting first and the unread
+  next - fifty newer pieces never push a waiting gift out of sight; the counts unread and unclaimed), `POST
+  /v1/post/read` (the whole piece, and its first opening stamped), `POST /v1/post/claim` and `POST /v1/post/delete`. Every
+  read, claim and throw names the piece AND its reader in one statement: `no-post` for another's id and for none.
+- **The claim is the guild vault's take.** `{ id, character, realm }` - a realm character's record asked where it stands
+  FIRST (`realmActFirst`), the item written into the record one sequence on (`prepareRealmRecord`, `giveTradeGoods`) and
+  the piece stamped claimed in the same batch, guarded (`claimed_at IS NULL`, `mustChange`). A second claim is
+  `post-claimed`; an offline character's is `realm-only`; a batch D1 dropped with the piece still waiting is `server`
+  (503 - the service's failure, never "claimed"), which the client asks again. A record that names nothing is no item:
+  `post-no-item`, and it may be thrown away. The client puts the answer's record in its pack through the wire's clamp
+  (`validLootItem`), as the vault's take does; an answer it cannot hold ends the session (`abandon`), and a join reads
+  the record, which holds it.
+- **A gift is never thrown away unclaimed** (`post-unclaimed`), nor anybody's piece but the reader's (`no-post`); a
+  claimed piece or a message alone may go - deleted as it was read, so a claim that lands between leaves it claimed.
+- **The heartbeat carries it** (`post`, SCALE4c's fourth part): the box is looked at on the letterbox's clock
+  (`POST_POLL_MS`, three minutes) while the online lane runs.
+- **The mailbox** (`src/net/serverPost.js` PostBox, `src/ui/enhancedPost.js`): an envelope left of the hourglass on the
+  pause face - online, where the host hands its box (`hooks.post`, every host forwarding it as TIMERS1's source) - with
+  a count while anything waits (a piece unread, or an item not yet claimed, each once), kept live off the box's version.
+  It opens a window on the hourglass's stage: the pieces newest first, unread and waiting gifts marked, an item named in
+  its rarity's colour; a piece opened, its words and a Claim. The notification is the count, and a line on the world tab
+  when a look finds post (`postNoticeText` - the letterbox's own manner): *"Post from The Developers: "Hour's First" - The
+  Hourlock is waiting for you. Open the mailbox beside the hourglass in the pause menu, or type /mail."* **`/mail`**
+  (and `/mailbox`) opens it on either skin and wherever the player stands - the enhanced pause face with its window open
+  (`ui/pauseDoor.js`'s door; `worldModes.js` `openPauseAt` indoors and underground), since the classic pause window has
+  no envelope. A look that set out before a claim or an open of this sitting is never taken (the gift never "Waiting"
+  again); a claim the realm never answered says so (`unknown`), never "offline"; one claim a press. The window keeps
+  its place (the piece open, the line said, the focus) across a render of the pause face (`postKeep`); the face under
+  the account window is inert, and Tab never lands on what is inert.
+- **The operator's send** (`.github/workflows/server-post.yml`, `tools/sendServerPost.mjs`): Actions, then "Server post",
+  then Run workflow with the names (comma-separated usernames), the send's name, the item (a choice of the tool's names -
+  `none` or `hourlock`; an item is minted by the game's own code, never typed), the subject and the words (`\n` a line).
+  Apply off, the default, is a dry run: the summary names the accounts found and whether each already holds this send,
+  and a name that finds no registered account fails the run. Apply on writes one piece to each, once a send an account.
+  The dry run's summary shows the words as they will be sent (`--words`, in a block of their own; a `|` in a name
+  escaped). The inputs reach the scripts as environment; the run has its OWN queue (`server-post` - a concurrency group
+  keeps one pending run, so a send sharing the deploy's would cancel a deploy waiting behind another); it creates,
+  migrates and deploys nothing.
+- Pins: `test/serverpost_service.test.js` (5), `test/serverpost_client.test.js` (8), `test/serverpost_send.test.js`
+  (4). `tools/mutants/serverpost.json` has 33 mutants, all dead.
+
+## HOURS-FIRST — the first clear's title, aura and gun (2026-10-08, acct97, world179)
+
+Mac, of the thirteen the first clear's claims named (SD-CLEARS, above): "for all the accounts here I want to grant them a
+unique different version of the aura, a title named Hour's First, and each the gilded gun".
+
+- **By name, in config** (`server-account/wrangler.toml` `HOURS_FIRST_HANDLES`, the developers' law - FOUNDER5's): the
+  thirteen - aether, ArtemisGodfrey, CycleD0se, Duck, Kobakk, MackyWackyDeeJew, mayaamano, Nirnroot, ofrizz, rosalina,
+  ShikiX3, Temegast and Terra. `titles.js` `isHoursFirst` (a handle, case aside; a guest never) grants the title
+  **Hour's First** (`hoursfirst`) and its aura **The First Hour** (`firsthour`) while listed. No glyph (a TIER_LISTS
+  entry would owe one).
+- **The title** is drawn in the first dawn's colours (`ui/playerBadge.js` `HOUR_DAWN`, `HOUR_PEARL`, `HOUR_SUN`): rose gold
+  into pearl into the dawn's white, edged in black; its one colour the rose gold (#e68d71), no other title's.
+- **The aura** is The Turning Hour's wheel cast again (`render/auraRing.js` `turningLook`, its own kind, 7): the same
+  wheel, dial and measures in the dawn's colours (`FIRST_RGB`), its dial turning FORWARD where the Remnant's turns back
+  (`firstDialAngle` - the Hour's hands set going again by the first to break it), the Hour's own mark ablaze
+  (`FIRST_BLAZE`), and the first light's rays out to the marks (`FIRST_RAY`) - the Remnant's wheel has none. Its palette
+  is shaded a step deeper (`FIRST_SHADE`) so the dawn's pale end never washes out on a lit floor.
+- **The gun** is the post's first send: migration 0094 writes each of the thirteen one piece holding the Hourlock (the
+  gilded gun, `src/systems/gilded.js` `mintHourlock`, as its drop mints it) - the tool's own statement
+  (`node tools/sendServerPost.mjs --migration hours-first`), once a send an account. It lands with the deploy that ships
+  the mailbox; each claims it into the online character they are playing. Its names and its record are FROZEN in the
+  tool (`HOURS_FIRST`, `HOURS_FIRST_RECORD`; the test holds the record to the mint's own and every name to the title's
+  list) - an applied migration never runs again. A name added to `HOURS_FIRST_HANDLES` later is sent the gun by the
+  workflow, send name `hours-first-hourlock`, item `hourlock`: once an account. After the deploy, a dry run of that send
+  over the thirteen should read "already sent: yes" for each.
+- **The relay first**: the token's vocabulary (`identityToken.js` TITLES, AURAS) is in the relay's bundle, so world179
+  deploys before acct97 mints either (a relay without them refuses the token).
+- Pins: `test/hoursfirst.test.js` (4), and the first send in `test/serverpost_send.test.js`. `tools/mutants/hoursfirst.json`
+  has 11 mutants, all dead.
+
 
 ## RAID4 — the towns defended (2026-09-28, acct17)
 
@@ -4637,7 +4726,7 @@ linking characters at every save; every account), Mac chose "Time zone + name li
   linked to a later row). `tools/mutants/founder5.json` (14: 12 dead, 2 equivalent as recorded). The pins of the old instant moved
   (founder2, founder3, founder4, titlen, acc3titles; founder2.json's two records and titlen.json's TR-founder-cutoff-moved-forward re-aimed by content).
 
-## FOUNDER6 — Founder worn by default, and the two reporters named (2026-10-09, acct97)
+## FOUNDER6 — Founder worn by default, and the two reporters named (2026-10-09, acct98)
 
 Mac: "Everytime I try to grant the founder title to people they dont recieve it", with two account cards from the
 bug-reports channel, spragual's and SylviaBun's, each reading "Registered Sep 24, 2026".
@@ -4656,7 +4745,8 @@ bug-reports channel, spragual's and SylviaBun's, each reading "Registered Sep 24
   a founder who takes it off stays bare. A founder who took it off BEFORE this deploy stored NULL, which reads as
   never chosen: Founder is back on them once, and one press takes it off for good.
 - **The names** (`wrangler.toml` FOUNDER_HANDLES): spragual and SylviaBun, so no date can leave either out.
-- `ACCOUNT_VERSION` acct97 in both the Worker and `wrangler.toml`; no migration, no relay or client change (the
+- `ACCOUNT_VERSION` acct98 (acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge) in both
+  the Worker and `wrangler.toml`; no migration, no relay or client change (the
   client's wardrobe already shows the worn title pressed, and a press on it sends none). The version's pins moved.
 - Pins: `test/founder6.test.js` (3) - worn by default and taken off (the rule), the names and the version (the
   config), and the real Worker (a founder first seen on the evening of the 24th signs Founder without a press, signs
