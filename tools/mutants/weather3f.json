@@ -1,6 +1,6 @@
 [
  {"name": "WEATHER3f-ground-skips-thunder", "file": "src/systems/weatherSim.js",
-  "old": "    if (word !== 'rain' && word !== 'thunder') return word;", "new": "    if (word !== 'rain') return word;", "tests": ["test/weather3f_audit.test.js"]},
+  "old": "    if (word !== 'rain' && word !== 'thunder' && word !== 'snow') return word;", "new": "    if (word !== 'rain' && word !== 'snow') return word;", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-squall-strikes", "file": "src/systems/distantStorms.js",
   "old": "        if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;", "new": "", "tests": ["test/weather3f_audit.test.js", "test/disc20.test.js"]},
  {"name": "WEATHER3f-memo-wiped-whole", "file": "src/systems/weatherMap.js",

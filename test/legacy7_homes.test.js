@@ -90,5 +90,6 @@ test('LEGACY7 part five the world host reads this realm character\'s homes - nam
   assert.match(w, /location: _townOfMapId\.get\(h\.mapId >>> 0\)\?\.name \?\? '',/);
   assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);
   assert.match(w, /if \(legacyRealmLine\) legacyOnlineHomesRead\(\);/);
-  assert.match(rd('src/scenes/legacyHost.js'), /const held = deps\.heldHouses\?\.\(\) \?\? null;\n\s*if \(held == null\) return false;\n\s*return syncHouses\(family, p\.id, held\);/);
+  // PIN MOVED (PERMADEATH-HOUSES): the dead's deeds the save took up ride the sync (household.js syncHouses' `taken`)
+  assert.match(rd('src/scenes/legacyHost.js'), /const held = deps\.heldHouses\?\.\(\) \?\? null;\n\s*if \(held == null\) return false;\n\s*return syncHouses\(family, p\.id, held, p\.deedsTaken \?\? \[\]\);/);
 });

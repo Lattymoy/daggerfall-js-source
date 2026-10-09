@@ -123,12 +123,12 @@
   {
     "name": "AUDIT-LEGACY-B4-online-bloodline-falls",
     "file": "src/scenes/legacyHost.js",
-    "old": "      d.cause = 'years';\n    }\n    recordDeath(",
-    "new": "      d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    recordDeath(",
+    "old": "      d.cause = 'years';\n    }\n    // PERMADEATH-HOUSES",
+    "new": "      d.cause = 'years';\n    } else if (deps.online()) {\n      outcome = { kind: 'none' };\n      return outcome;\n    }\n    // PERMADEATH-HOUSES",
     "tests": [
       "test/auditlegacy.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the law inverted: online a Bloodline death falls (the realm's tombstone) - the mutant puts the room's death back. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
   {
     "name": "AUDIT-LEGACY-B4-online-succession",
