@@ -23,8 +23,9 @@ import { WIND_PARTS, windRead, windWrite, quickSlotsRead, quickSlotsWrite, BLOOD
 import { OUTDOORS_TIERS } from '../src/world/outdoors.js';
 import { getPref, setPref, _resetForTests as resetPrefs } from '../src/systems/uiPrefs.js';
 import { _resetForTests as resetSettings } from '../src/systems/settings.js';
-import { _resetModSettings } from '../src/systems/modSettings.js';
-import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK } from '../src/ui/enhancedMenu.js';
+import { _resetModSettings, MOD_SETTINGS, modSetting, setModSetting } from '../src/systems/modSettings.js';
+import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK, defaultSegment, featuresDefaults, DEFAULTS_ASK } from '../src/ui/enhancedMenu.js';
+import { modModules } from '../src/systems/features.js';
 import { renderScaleSetting, _resetRenderScaleDoor } from '../src/systems/renderScale.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -216,6 +217,60 @@ test('FT18: online, All off leaves the room\'s rows as the room has them (mutant
     assert.ok(!Object.hasOwn(getPref(FEATURES_RESTORE_PREF) ?? {}, 'loot-rarity'), 'and not kept - nothing to restore');
     assert.match(ALL_OFF_ASK, /online the rows the room decides stay on/);
   } finally { delete globalThis.location; fresh(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): Defaults puts every tile, its drawer and a mod\'s modules back to how the game ships them - where All off then Restore only brings back the player\'s own (mutant: a tile, a part or a module left, or the keep kept)', () => {
+  fresh();
+  globalThis.location = { search: '' };
+  try {
+    const stock = Object.fromEntries(FEATURES.filter((f) => tileStates(f)).map((f) => [f.id, label(f.id)]));
+    for (const f of FEATURES) {   // a fresh shelf stands at every tile's default segment
+      const st = tileStates(f);
+      if (st && defaultSegment(f, st) >= 0) assert.equal(defaultSegment(f, st), st.at, `${f.id}'s default is the segment a fresh shelf reads`);
+    }
+    // the issue's player: they tinkered, then pressed All off and Restore - and got their own tinkering back
+    tileStates(row('blood')).set(3);
+    tileStates(row('quick-slots')).set(1);   // the Diamond - the Hotbar is how it ships
+    tileStates(row('dungeon-wall-style')).set(3);
+    tileStates(row('cloud-quality')).set(2);
+    setPref('grassStyle', 'smooth');
+    const vendor = FEATURES.map((f) => resolveControl(f)).find((c) => c?.store === 'mods' && modModules(c.vendor).some((k) => typeof MOD_SETTINGS[c.vendor].keys[k].default === 'boolean'))?.vendor;
+    assert.ok(vendor, 'a mod tile with a switchable module');
+    const mod = modModules(vendor).find((k) => typeof MOD_SETTINGS[vendor].keys[k].default === 'boolean');
+    setModSetting(vendor, mod, !MOD_SETTINGS[vendor].keys[mod].default);
+    featuresAllOff();
+    featuresRestore();
+    assert.equal(label('blood'), 'Heavy', 'Restore is the player\'s own, not the game\'s');
+
+    const n = featuresDefaults();
+    assert.ok(n >= 6, `it moved ${n}`);
+    for (const [id, l] of Object.entries(stock)) assert.equal(label(id), l, `${id} is back to how it ships`);
+    assert.equal(getPref('grassStyle'), 'meadow', 'a drawer\'s choice too');
+    assert.equal(modSetting(vendor, mod), MOD_SETTINGS[vendor].keys[mod].default, 'and a mod\'s module');
+    featuresAllOff();
+    featuresDefaults();
+    assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the All off keep is spent - there is nothing to go back to');
+    assert.equal(featuresDefaults(), 0, 'a second press moves nothing');
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
+});
+
+test('FEATURES-DEFAULTS (issue #399): online the room\'s rows stay as the room has them; the button sits beside All off and asks first (mutant: the lock ignored, or the confirm skipped)', () => {
+  fresh();
+  try {
+    globalThis.location = { search: '' };
+    tileStates(row('enhanced-ai')).set(1);   // the player's own, offline - it ships Off
+    globalThis.location = { search: '?online=1' };
+    const st = tileStates(row('enhanced-ai'));
+    assert.ok(st.locked && defaultSegment(row('enhanced-ai'), st) === 0, 'the room forces it On online, where it ships Off');
+    featuresDefaults();
+    assert.equal(label('enhanced-ai'), 'On', 'forced on online');
+    globalThis.location = { search: '' };
+    assert.equal(label('enhanced-ai'), 'On', 'and its shelf untouched - offline it is still the player\'s own, not the Off it ships');
+  } finally { delete globalThis.location; fresh(); }
+  assert.match(DEFAULTS_ASK, /Online, the rows the room decides stay as they are\./);
+  const menu = read('src/ui/enhancedMenu.js');
+  const pane = menu.slice(menu.indexOf('function paneFeatures(body) {'), menu.indexOf('\n}', menu.indexOf('function paneFeatures(body) {')));
+  assert.match(pane, /\{ label: 'Defaults', onClick: \(\) => ask\('Restore Defaults', DEFAULTS_ASK, 'Defaults', \(\) => \{ featuresDefaults\(\); \}\) \}/, 'Defaults is asked first');
 });
 
 test('FT18: the outdoors bar is a switch - its Off says Off - so its tile reads off and takes the Off fill (mutant: the long label back)', () => {

@@ -1117,3 +1117,24 @@ fact it held: `features` (the ceiling), `ft1`, `ft2`, `ft4`, `ft5`, `ft6`,
 `auditworld6bii`, `chatroster_namefilter`, `disc25d_guild_share`,
 `modsonline`, `onlinelane`, `raid2_raidsOnline`, `realm0`,
 `tv3_travellers`, `world6`, `world6b`.
+
+## FEATURES-DEFAULTS - BACK TO HOW IT SHIPS (2026-10-09, issue #399)
+
+Issue #399 (megaboyx90): "if you've tinkered with the settings, it remains that way, and clicking 'all off' before
+clicking 'restore' just puts it back to the post-modified feature settings ... An option to put them back as stock
+values would be nice." FT18's pair is a round trip by design - Restore returns what All off moved, the player's own -
+so nothing on the home ever reached the game's own values again.
+
+**Defaults**, the third button beside All off and Restore (`ui/enhancedMenu.js` `featuresDefaults`, asked first with
+`DEFAULTS_ASK` - there is no keep to undo it):
+
+- every tile to the segment it ships at (`defaultSegment`): a prefs row's `default` (a lane's, in its tiers'
+  vocabulary) else its `initial` else the shelf's `PREF_DEFAULTS`; a settings row's `defaultOf` (the port's default
+  over DFU's - `systems/settings.js`, now exported for it); a mod's shipped `Enabled`;
+- its drawer with it: a condensed row's parts to `PREF_DEFAULTS`, a mod's modules and curated dials to their
+  declared defaults;
+- online, a tile or key the room decides is not touched - its shelf keeps the player's own for offline;
+- All off's keep is spent.
+
+Pins: `test/ft18_features.test.js` (2, FEATURES-DEFAULTS) - the issue's own path (tinker, All off, Restore, then
+Defaults), a fresh shelf reading every tile's default segment, the online lock read back offline, the confirm.

@@ -106,7 +106,7 @@ import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW } from '../ui/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
-  effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
+  effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS, defaultOf,
 } from '../systems/settings.js';
 import { mostRecentRestorable, restorableSaves, firstRestorable, deleteSave, QUICK_SAVE_NAME, loadSlot, saveSlot } from '../systems/saveSlots.js';
 import { offlineCopyOf, onlineCopyOf } from '../systems/offlineCopy.js';   // AUDIT LIVED1 E/G: the doors between the lanes
@@ -121,7 +121,7 @@ import { mintCharacterId } from '../systems/characterId.js';   // REALM P1.4: a 
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../systems/saveTransfer.js';   // SP1: saves move between the website and the app
 import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
-import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../systems/uiPrefs.js';
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from './touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { GATE_CROWD_TIERS } from '../net/gateCrowd.js';   // GATE-CROWD: how many other players a gate's court draws
@@ -2980,6 +2980,55 @@ export function featuresRestore(list = FEATURES) {
   return n;
 }
 
+// ── FEATURES-DEFAULTS (issue #399: "An option to put them back as stock values") ──
+// All off keeps what you had and Restore brings it back - so a player who had changed things never got the game's own
+// values again. Defaults sets every tile to the value the game ships it at (the row's own default, the port's settings
+// default over DFU's, a mod's shipped switch), and its drawer with it: a condensed row's parts and a mod's modules and
+// dials. A row or key the online room decides is left as the room has it. Asked first: there is no keep to Restore.
+export const DEFAULTS_ASK = 'Every mod and enhancement goes back to how the game ships it: each tile, the switches and '
+  + 'choices in its drawer, and a mod\u2019s modules and dials. Online, the rows the room decides stay as they are.';
+/** The segment a tile ships at, or -1 when its default is not one of its segments. */
+export function defaultSegment(f, st) {
+  const c = resolveControl(f);
+  let i = -1;
+  if (c.store === 'prefs') {
+    const d = c.default ?? c.initial ?? PREF_DEFAULTS[c.key];
+    i = c.tiers ? c.tiers.findIndex(([v]) => String(v) === String(d)) : (d ? 1 : 0);
+  } else if (c.store === 'settings') {
+    const [sec, k] = c.key.split('/');
+    const d = defaultOf(sec, k);
+    i = widgetFor(c.key) === 'switch' ? (d === 'True' ? 1 : 0) : parseInt(d, 10);
+  } else {
+    const d = MOD_SETTINGS[c.vendor]?.keys?.[c.key]?.default;
+    i = d === true || d === 'True' ? 1 : 0;
+  }
+  return Number.isInteger(i) && i >= 0 && i < st.labels.length ? i : -1;
+}
+/** Defaults. Returns how many tiles, parts and mod keys it moved; the All off keep is spent. */
+export function featuresDefaults(list = FEATURES) {
+  let n = 0;
+  for (const f of list) {
+    const st = tileStates(f);
+    if (st && !st.locked) {
+      const to = defaultSegment(f, st);
+      if (to >= 0 && to !== st.at) { st.set(to); n++; }
+    }
+    const c = resolveControl(f);
+    for (const pt of c?.parts ?? []) {   // the drawer's parts write their pref straight, as the drawer does
+      if (onlineForcedPref(pt.key) !== undefined || !Object.hasOwn(PREF_DEFAULTS, pt.key)) continue;
+      if (String(getPref(pt.key)) !== String(PREF_DEFAULTS[pt.key])) { setPref(pt.key, PREF_DEFAULTS[pt.key]); n++; }
+    }
+    const vendor = c?.store === 'mods' ? c.vendor : (Array.isArray(c?.also) ? c.also.find((a) => a.store === 'mods')?.vendor : null) ?? null;
+    for (const key of vendor ? [...modModules(vendor), ...modDials(vendor)] : []) {
+      const def = MOD_SETTINGS[vendor].keys[key];
+      if (onlineModSetting(vendor, key) !== undefined || JSON.stringify(modSetting(vendor, key)) === JSON.stringify(def.default)) continue;   // a tuple dial is a frozen pair
+      setModSetting(vendor, key, def.default); n++;
+    }
+  }
+  setPref(FEATURES_RESTORE_PREF, null);   // nothing for Restore to go back to
+  return n;
+}
+
 /** FT14: what a mod's tile opens - its modules as chips, its curated
  *  dials as the same `modRow` the Mods pane drew. The keys NOT here
  *  keep the values the mod ships (features.js MOD_CURATED says why). */
@@ -3087,6 +3136,7 @@ function paneFeatures(body) {
   tools.append(acts([
     { label: 'All off', onClick: () => ask('Turn Everything Off', ALL_OFF_ASK, 'All off', () => { featuresAllOff(); }) },
     ...(kept && typeof kept === 'object' ? [{ label: 'Restore', onClick: () => { featuresRestore(); render(); } }] : []),
+    { label: 'Defaults', onClick: () => ask('Restore Defaults', DEFAULTS_ASK, 'Defaults', () => { featuresDefaults(); }) },   // FEATURES-DEFAULTS (issue #399)
   ]));
   body.append(tools);
   if (!FEATURES.length) {
