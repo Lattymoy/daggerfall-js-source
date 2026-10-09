@@ -263,7 +263,7 @@
   {
     "name": "SD25-S9-the-fin-plain",
     "file": "src/world/sdStepsModel.js",
-    "old": "const fr = i >= 0 ? SD_HALL_EMBLEM_RECORD + i : rec,",
+    "old": "const fr = E ? SD_HALL_ATLAS_RECORD : rec,",
     "new": "const fr = rec,",
     "tests": [
       "test/sd25_steps.test.js"

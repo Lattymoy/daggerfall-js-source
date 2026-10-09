@@ -29,7 +29,7 @@
 import { realmToDungeon } from '../net/sdBrain.js';
 import { faces } from './gateModel.js';
 import { realmIsland, packRealmFaces, SD_REALM_FLOOR_RECORD, SD_ISLAND_SIDES } from './sdRealm.js';
-import { SD_HALL_GLOW_RECORD, SD_HALL_EMBLEM_RECORD } from './sdHallArt.js';
+import { SD_HALL_GLOW_RECORD, SD_HALL_ATLAS_RECORD, SD_HALL_ATLAS, atlasUv } from './sdHallArt.js';
 import { SD_STEPS_RECORD, SD_STEPS_ATLAS, SD_RISER_ATLAS, SD_PARTS_ATLAS, SD_STEP_BEVEL, SD_STEP_LINE, SD_CRUMBLE_CRACKS } from './sdStepsArt.js';
 import { BAYER4 } from './sdPixelKit.js';
 import { SD_STEP_THICK, SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE, SD_RISER_H, SD_CHECKPOINTS, SD_COURSE_END, SD_GUST_EVERY, SD_GUST_WARN, SD_GUST_FOR, gustAt } from './sdSteps.js';
@@ -303,7 +303,7 @@ export function vaneYawInto(io) {
 export const vaneYawAt = (t) => { const io = new Float64Array(2); io[0] = t; vaneYawInto(io); return io[1]; };
 
 /** THE VANE, its own frame (its post's foot the origin, the arrow along +z at its top): a brass post, the arrow's shaft and
- *  head, and its fin wearing the Hollow's Ending's sign (world/sdHallArt.js's emblem - `ending` an id of net/sdMarks.js
+ *  head, and its fin wearing the Hollow's Ending's sign (world/sdHallArt.js's hall atlas, its emblem cell (S10) - `ending` an id of net/sdMarks.js
  *  SD_ENDINGS; none: plain brass) - every flat part both ways. */
 export function buildVaneModel(ending = null) {
   const f = faces(), V = SD_VANE, rec = SD_STEPS_RECORD.parts, P = SD_PARTS_ATLAS, i = SD_ENDINGS.findIndex((E) => E.id === ending);
@@ -313,7 +313,8 @@ export function buildVaneModel(ending = null) {
   f.tri(rec, lo, hi, tip, [q[0], q[1]], [q[0], q[3]], [q[2], q[1]]); f.tri(rec, tip, hi, lo, [q[2], q[1]], [q[0], q[3]], [q[0], q[1]]);   // the head, both ways
   const zf = -V.arm, zb = -V.arm + V.fin, yl = y - V.fin * 0.45, yh = y + V.fin * 0.55;
   // its fin: the sign the right way round from either side (facing +z, +x is on the right - the camera's one mirror)
-  const fr = i >= 0 ? SD_HALL_EMBLEM_RECORD + i : rec, u0 = i >= 0 ? 0 : q[0], u1 = i >= 0 ? 1 : q[2], v0 = i >= 0 ? 0 : q[1], v1 = i >= 0 ? 1 : q[3];
+  const E = i >= 0 ? SD_HALL_ATLAS.emblem[i] : null, a = E ? atlasUv(E, 0, 0) : null, b = E ? atlasUv(E, 1, 1) : null;
+  const fr = E ? SD_HALL_ATLAS_RECORD : rec, u0 = E ? a[0] : q[0], u1 = E ? b[0] : q[2], v0 = E ? a[1] : q[1], v1 = E ? b[1] : q[3];
   f.quad(fr, [0, yl, zf], [0, yl, zb], [0, yh, zb], [0, yh, zf], [u1, v0], [u0, v0], [u0, v1], [u1, v1]);   // seen from -x
   f.quad(fr, [0, yh, zf], [0, yh, zb], [0, yl, zb], [0, yl, zf], [u0, v1], [u1, v1], [u1, v0], [u0, v0]);   // seen from +x
   return packRealmFaces(f);

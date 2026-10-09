@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { glslFunctions } from './glsl.mjs';
 import { realmToDungeon, SD_REALM_ORIGIN } from '../src/net/sdBrain.js';
 import { SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
-import { SD_HALL_EMBLEM_RECORD } from '../src/world/sdHallArt.js';
+import { SD_HALL_ATLAS_RECORD, SD_HALL_ATLAS } from '../src/world/sdHallArt.js';
 import { SD_ENDINGS } from '../src/net/sdMarks.js';
 import { SD_RAMP } from '../src/world/sdLook.js';
 import { offPalette, paletteOf } from '../src/world/sdPixelKit.js';
@@ -347,15 +347,21 @@ test('S9 THE WAYSTONES AND THE VANE: the waystone of the span I last stood in li
     assert.ok(near(vaneYawAt(gust + 0.9), push * Math.PI / 2, 1e-9), 'held through it');
     assert.ok(Math.abs(vaneYawAt(gust + 1 + SD_VANE.back * 0.5)) < Math.PI / 2 && Math.abs(vaneYawAt(gust + 1 + SD_VANE.back * 0.5)) > 0, 'swinging back');
     // its matrix: the arrow (+z of its own frame) pointing the push's way in the world
-    const vane = r.draws.find((d) => d.gpu?.m?.subMeshes?.some((q) => q.textureRecord === SD_HALL_EMBLEM_RECORD + 1));
+    const vane = r.draws.find((d) => d.gpu?.m?.subMeshes?.some((q) => q.textureRecord === SD_HALL_ATLAS_RECORD));   // its fin the hall atlas's (S10)
     r.steps.ride(gust - 0.1, 1 / 60, null);
     const M = vane.object.matrix;
     assert.ok(near(M[8], push, 1e-6) && near(M[10], 0, 1e-6), `gust ${n}: its arrow toward ${push > 0 ? '+x' : '-x'}`);
     const at = realmToDungeon(...SD_VANE.at);
     assert.ok(near(M[12], at[0], 1e-3) && near(M[14], at[2], 1e-3));
   }
-  assert.ok(buildVaneModel('sentinel').subMeshes.some((q) => q.textureRecord === SD_HALL_EMBLEM_RECORD + SD_ENDINGS.findIndex((E) => E.id === 'sentinel')), 'its fin the Ending\'s sign');
-  assert.ok(!buildVaneModel(null).subMeshes.some((q) => q.textureRecord >= SD_HALL_EMBLEM_RECORD && q.textureRecord < SD_HALL_EMBLEM_RECORD + 6), 'none: plain brass');
+  // its fin the Ending's sign: the hall atlas's emblem cell (S10 - the hall's emblems one atlas now), its uv inside that cell
+  const vm = buildVaneModel('sentinel'), sm = vm.subMeshes.find((q) => q.textureRecord === SD_HALL_ATLAS_RECORD), Ec = SD_HALL_ATLAS.emblem[SD_ENDINGS.findIndex((E) => E.id === 'sentinel')], S = SD_HALL_ATLAS.size;
+  assert.ok(sm, 'its fin the Ending\'s sign');
+  for (let k = sm.startIndex; k < sm.startIndex + sm.primitiveCount * 3; k++) {
+    const u = vm.uvs[vm.indices[k] * 2] * S, v = vm.uvs[vm.indices[k] * 2 + 1] * S;
+    assert.ok(u >= Ec[0] && u <= Ec[0] + Ec[2] && v >= Ec[1] && v <= Ec[1] + Ec[3], 'inside its emblem\'s cell');
+  }
+  assert.ok(!buildVaneModel(null).subMeshes.some((q) => q.textureRecord === SD_HALL_ATLAS_RECORD), 'none: plain brass');
   const C = SD_CHECKPOINTS[2];
   assert.ok(Math.hypot(SD_VANE.at[0] - C.x, SD_VANE.at[2] - C.z) < C.r && SD_VANE.at[1] === C.y, 'on C');
   // its clack, once a gust, with the wind
