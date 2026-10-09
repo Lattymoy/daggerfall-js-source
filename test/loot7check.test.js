@@ -231,6 +231,7 @@ function joiner(self) {
   const state = {
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
     renownFoeDied: () => {}, reportPlayerKill: () => {}, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
+    dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },
   };

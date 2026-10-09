@@ -20,6 +20,12 @@ import { nearestFreeSeat, takenSeats } from '../src/world/cardTables.js';
 import { HAND_NAMES } from '../src/net/cardLaw.js';
 import { regularsToStand, regularBark, BARK_MS } from '../src/world/cardRegulars.js';
 import { RemoteCardTable } from '../src/systems/cardRemoteTable.js';
+import { isCardPack } from '../src/systems/iliacItems.js';
+import { cardPackPrice, buyCardPack } from '../src/systems/cardSources.js';   // CARDS9: the house's packs at the table
+import { openIliacTableGame } from '../src/scenes/iliacTableGame.js';   // CARDS10: the other game at the table
+import { iliacGrade } from '../src/systems/iliacPatrons.js';
+import { skillValue, SKILLS } from '../src/systems/skills.js';
+import { liveStat } from '../src/systems/statMods.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WM = read('src/scenes/worldModes.js');
@@ -61,10 +67,12 @@ function host({ gold = 5000, online = false, realmAct = null, seats = 4, peers =
     mwViewFirstPerson: () => said.push('<head>'), homeTownOf: (b) => b?.townMapId || 0,
     worldMinutes: () => clock.minutes, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
+    // PIN MOVED (CARDS9/10): the block prices a pack at the table and opens Iliac Hand on the seat - their names, real
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat,
   };
   const state = { interiorCtx: { tables: [{ aabb: {} }], collider: null }, interiorBuilding: building };
   const api = new Function('S', ...Object.keys(scope), `let interiorCtx = S.interiorCtx, interiorBuilding = S.interiorBuilding;\n${BLOCK}\n
-    return { sitAtCardTable, standFromCardTable, cardGameFrame, closeCardGame, cardRegularsNow, get cardGame() { return cardGame; }, get cardSeat() { return cardSeat; } };`)(state, ...Object.values(scope));
+    return { sitAtCardTable, standFromCardTable, cardGameFrame, closeCardGame, cardRegularsNow, get cardGame() { return cardGame; }, get cardSeat() { return cardSeat; }, get iliacGame() { return iliacGame; } };`)(state, ...Object.values(scope));
   const panel = () => doc.body.children.filter((n) => n.className === 'dfcards' && !n.removed).at(-1);
   const walk = (n, f, out = []) => { if (!n) return out; if (f(n)) out.push(n); for (const c of n.children ?? []) walk(c, f, out); return out; };
   const button = (label) => walk(panel(), (n) => n.tag === 'button' && n.textContent.startsWith(label))[0];
@@ -134,7 +142,8 @@ test('AUDIT CARDS-2 H1: a load\'s road pays nothing - the chips belonged to the 
   assert.match(WM, /cardTableLive: \(\) => !!cardGame\?\.session && !cardGame\.friendly,/);
   const W = read('src/scenes/world.js');
   assert.match(body(W, 'worldQuickSave'), /if \(modes\?\.cardTableLive\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save with chips on the table\.'\); return false; \}/);
-  assert.match(W, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\) \|\| !!modes\?\.cardTableLive\?\.\(\),/);
+  // PIN MOVED (CARDS10): the pause's Save also waits on a card staked at Iliac Hand
+  assert.match(W, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\) \|\| !!modes\?\.cardTableLive\?\.\(\) \|\| !!modes\?\.iliacStaked\?\.\(\),/);
 });
 
 test('AUDIT CARDS-2 M2: a purse that shrank since the seat is asked again - never emptied by a press it cannot pay', () => {
@@ -349,4 +358,33 @@ test('AUDIT CARDS-2 the panel in play and between hands: the buttons the law all
   const css = read('src/ui/cardTableHud.js');
   assert.match(css, /box-sizing:border-box;min-width:min\(520px,calc\(100vw - 32px\)\);max-width:min\(760px,calc\(100vw - 32px\)\)/);
   assert.match(css, /import \{ BUY_IN_MIN_BB, BUY_IN_START_BB \} from '\.\.\/systems\/cardTableSession\.js';/);
+});
+
+test('CARDS9/10 the house at its card table: a pack bought from the purse at the table\'s price, refused when the purse is short; "Play Iliac Hand" closes Hold\'em and opens the other game on the seat, a regular for every free chair; standing up closes it (mutants: the pack press; the iliac press)', () => {
+  const h = host({ gold: 500 });
+  h.api.sitAtCardTable(0);
+  const price = cardPackPrice(10, { mercantile: skillValue(h.playerEntity, SKILLS.Mercantile), personality: 50 });
+  assert.ok(h.button(`Buy a card pack (${price} gold)`), 'the house\'s price on the button');
+  h.press('Buy a card pack');
+  assert.equal(h.playerEntity.goldPieces, 500 - price, 'paid from the purse');
+  assert.equal(h.playerEntity.items.filter(isCardPack).length, 1, 'the pack in the pack');
+  assert.match(h.said.at(-1), new RegExp(`^You buy a pack of Iliac Hand cards for ${price} gold\\.`));
+  const poor = host({ gold: 1 });
+  poor.api.sitAtCardTable(0);
+  poor.press('Buy a card pack');
+  assert.equal(poor.playerEntity.goldPieces, 1, 'nothing taken');
+  assert.equal(poor.playerEntity.items.length, 0);
+  assert.match(poor.said.at(-1), /your purse is short\.$/);
+  poor.api.standFromCardTable();
+  // the other game
+  h.press('Play Iliac Hand');
+  assert.equal(h.api.cardGame, null, 'the Hold\'em panel gone');
+  assert.ok(h.api.iliacGame, 'Iliac Hand on the seat');
+  assert.equal(h.api.iliacGame.g.setup.foe, 0, 'a regular chosen');
+  assert.equal(h.doc.body.children.filter((n) => n.className === 'dfiliac' && !n.removed).length, 1);
+  assert.equal(h.api.iliacGame.g.release ? cursorHeld() : false, true, 'the panel holds the cursor');
+  h.api.standFromCardTable();
+  assert.equal(h.api.iliacGame, null, 'every road off the seat closes it');
+  assert.equal(h.doc.body.children.filter((n) => n.className === 'dfiliac' && !n.removed).length, 0);
+  assert.equal(cursorHeld(), false);
 });

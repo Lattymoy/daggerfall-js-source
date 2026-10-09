@@ -401,8 +401,8 @@
   {
     "name": "SIGIL1-dungeon-joiner-count-unread",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); capFoeLoot(f.entity); }",
-    "new": "stampWonWeapons(f.entity.items, 1); capFoeLoot(f.entity); }",
+    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "SIGIL1-dungeon-arrival-unwired",
     "file": "src/scenes/dungeonContext.js",
-    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); capFoeLoot(f.entity); }",
-    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); capFoeLoot(f.entity); }",
+    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
     "tests": [
       "test/sigil1.test.js"
     ]

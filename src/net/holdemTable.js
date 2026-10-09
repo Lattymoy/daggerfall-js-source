@@ -175,26 +175,39 @@ function deal(t, now, rand32) {
 }
 
 /**
+ * AUDIT CARDS-6 C2 (Iliac's iliacSitRefusal's twin): why `sit` would refuse this sit, or null when it would seat him
+ * (his own chair taken back included) - pure, nothing moved, so the relay asks it BEFORE it spends the room's sit budget:
+ * a socket sending sits refused 'taken' four a second kept every card table in the room 'busy' (AUDIT CARDS-3 A4's order).
+ * @param {any} t @param {{id: string, chair: number, stake?: {j: string, sub: string, amount: number}|null}} p
+ */
+export function sitRefusal(t, { id, chair, stake = null }) {
+  if (!Number.isInteger(chair) || chair < 0 || chair >= t.chairs) return 'no such chair';
+  const mine = chairOf(t, id);
+  if (mine >= 0 && t.seats[mine].leaving) return t.seats[mine].cashed ? 'cashed out' : null;   // CARDS6: his stack went home in a receipt - the chair is not his to play again
+  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none
+  if (t.seats[chair]) return 'taken';
+  if (mine >= 0) return 'seated';
+  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';
+  return null;
+}
+
+/**
  * A player sits in `chair` with the friendly chips - CARDS6: or, at a gold table, with his stake (`{j, sub, amount}`,
  * the service's order the relay checked). Answers the messages, or an error word.
  * @param {any} t @param {{id: string, name: string, chair: number, now: number, stake?: {j: string, sub: string, amount: number}|null}} p
  */
 export function sit(t, { id, name, chair, now, stake = null }) {
-  if (!Number.isInteger(chair) || chair < 0 || chair >= t.chairs) return 'no such chair';
+  const no = sitRefusal(t, { id, chair, stake });
+  if (no) return no;
   // AUDIT CARDS-3 E-N1: a player whose socket dropped mid-hand is folded and marked leaving - back in the room, his sit
   // keeps his own chair (whichever he names): he plays the next hand, never 'taken' by his own ghost until this one ends.
   // CARDS6: at a gold table with the stake his seat already holds (the relay asks no stake of him again)
   const mine = chairOf(t, id);
   if (mine >= 0 && t.seats[mine].leaving) {
-    if (t.seats[mine].cashed) return 'cashed out';   // CARDS6: his stack went home in a receipt - the chair is not his to play again
     delete t.seats[mine].leaving;
     if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);
     return [room(t, [{ t: 'sit', seat: mine, name: t.seats[mine].name, at: now }])];
   }
-  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none
-  if (t.seats[chair]) return 'taken';
-  if (chairOf(t, id) >= 0) return 'seated';
-  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';
   t.seats[chair] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), stack: stake ? stake.amount : HOLDEM_CHIPS_BB * t.bb, ...(stake ? { stake: stake.j, sub: stake.sub } : {}) };
   if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);
   return [room(t, [{ t: 'sit', seat: chair, name: t.seats[chair].name, at: now }])];

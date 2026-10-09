@@ -281,7 +281,7 @@
   {
     "name": "SB-host-hit-sits-on",
     "file": "src/scenes/worldModes.js",
-    "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });",
+    "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });",
     "new": "",
     "tests": [
       "test/cards2b_seated.test.js"

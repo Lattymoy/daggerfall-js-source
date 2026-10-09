@@ -117,15 +117,6 @@
     ]
   },
   {
-    "name": "WB3b-the-membrane-dark",
-    "file": "src/world/gateArt.js",
-    "old": "    put(albedo, x, y, col); put(emission, x, y, col);\n  }\n  return { albedo, emission };\n}\n\n/** Every texture the court wear",
-    "new": "    put(albedo, x, y, col); put(emission, x, y, [0, 0, 0]);\n  }\n  return { albedo, emission };\n}\n\n/** Every texture the court wear",
-    "tests": [
-      "test/wb3b_gate_arena.test.js"
-    ]
-  },
-  {
     "name": "WB3b-a-word-before-the-state-starts-a-fight",
     "file": "src/net/gateLink.js",
     "old": "  if (s.day === null) return s;   // nothing but a whole state starts a fight",
@@ -310,24 +301,6 @@
     "file": "src/world/gateArena.js",
     "old": "  if (lit.data.carried) carried.set(lit.data.carried.subarray(0, n));",
     "new": "  if (false) carried.set(lit.data.carried.subarray(0, n));",
-    "tests": [
-      "test/wb3b_gate_arena.test.js"
-    ]
-  },
-  {
-    "name": "WB3b-the-way-home-faces-out",
-    "file": "src/world/gateArena.js",
-    "old": "    normal: { x: 0, y: 0, z: -1 },",
-    "new": "    normal: { x: 0, y: 0, z: 1 },",
-    "tests": [
-      "test/wb3b_gate_arena.test.js"
-    ]
-  },
-  {
-    "name": "WB3b-the-way-home-no-exit-door",
-    "file": "src/scenes/worldModes.js",
-    "old": "    ctx.exitDoors.push(courtExitDoor());",
-    "new": "    [courtExitDoor()];",
     "tests": [
       "test/wb3b_gate_arena.test.js"
     ]

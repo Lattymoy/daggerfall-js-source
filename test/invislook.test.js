@@ -74,7 +74,7 @@ test('INVIS-LOOK executed: the doll and the body - a concealed peer\'s doll carr
   // the class sprite takes the same two lines as the doll (its path builds off the enemy art, so it is read by source)
   const src = rd('src/net/remotePlayers.js');
   assert.equal((src.match(/entry\.batch\.conceal = veil;/g) ?? []).length, 2, 'the doll and the class sprite');
-  assert.equal((src.match(/if \(!veil\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g|entry\.height) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld
+  assert.equal((src.match(/if \(!veil\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g - sink|entry\.height - sink) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld; PIN MOVED (CARDS2c): a seated sprite's sink taken off it
   assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, eye, veil\); continue; \}/);
 });
 

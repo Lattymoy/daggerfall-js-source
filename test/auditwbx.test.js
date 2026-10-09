@@ -284,13 +284,14 @@ test('AUDIT WBX F5 a Soul Trap reaches him at range and bursting, not by touch a
 
 // ═══ W: THE GATE IN THE WORLD, AND ITS MUSIC ═════════════════════════════════════════════════════════════════════════
 
-test('AUDIT WBX W1/W6 a player standing in a horn\'s root the moment the stone comes up whole is set down before the gate, not sealed in it - the threshold, the plinth\'s open flags and the ground about it are left alone; the fire\'s box is made when the gate\'s place moves, not every frame the hover asks (mutants: the roots\' check removed; the box made every frame; the box left where the gate stood)', async () => {
-  const { createGatePool, inGateRoot, ROOT_TRAP } = await import('../src/scenes/gatePool.js');
+test('AUDIT WBX W1/W6 a player standing in the stone the moment it comes up whole is set down before the gate, not sealed in it - GATE-FBX: in a foot, under its overhang, high in a pillar or in the lintel; the threshold, its free edge, the ground before a foot and about the gate, and the opening over a head are left alone; the fire\'s box is made when the gate\'s place moves, not every frame the hover asks (mutants: the roots\' check removed; the box made every frame; the box left where the gate stood)', async () => {
+  const { createGatePool, inGateRoot } = await import('../src/scenes/gatePool.js');
   const { gateTimes: times } = await import('../src/net/gateLaw.js');
   const place = { origin: [100, 5, 200], yaw: 0.7 };
   const at = (lx, ly, lz) => { const c = Math.cos(place.yaw), s = Math.sin(place.yaw); return [place.origin[0] + c * lx + s * lz, place.origin[1] + ly, place.origin[2] - s * lx + c * lz]; };
-  assert.ok(inGateRoot(place, at(ROOT_TRAP.x, 0, 0)) && inGateRoot(place, at(-ROOT_TRAP.x, 0.3, 0)) && inGateRoot(place, at(-3.6, 0, -1)), 'in a root');
-  for (const p of [at(0, 0, 0), at(0, 0, 12), at(-7.9, 0, 0), at(0, 0, -5), at(ROOT_TRAP.x, 12, 0)]) assert.equal(inGateRoot(place, p), false, 'the threshold, the ground about, and over the horns are free');
+  const FOOT = 2.3;   // GATE-FBX: in a foot's sole at the ground (its inner edge 1.47 m out, its outer 3.03)
+  for (const p of [at(FOOT, 0, 0), at(-FOOT, 0.3, 0), at(-4.6, 0, 0), at(4.6, 5, 0), at(-4.7, 10, 0.5), at(0, 14.5, 0)]) assert.ok(inGateRoot(place, p), `sealed at ${p}`);   // a foot; its overhang over a head; a pillar's body high up (a hillside, a levitation); the lintel
+  for (const p of [at(0, 0, 0), at(0, 0, 12), at(-7.9, 0, 0), at(0, 0, -5), at(1.0, 0, 0), at(-1.1, 0, 0.3), at(FOOT, 0, 1.6), at(0, 6, 0)]) assert.equal(inGateRoot(place, p), false, `free at ${p}`);   // the threshold, its free edge, before a foot, about the gate, the opening
   // the pool: the first frame the stone stands whole under a player in a root lands them before the gate
   const T = times(2000);
   let now = T.riseAt + 5000;
@@ -303,7 +304,7 @@ test('AUDIT WBX W1/W6 a player standing in a horn\'s root the moment the stone c
   pool.frame(0.016);
   const yaw = (await import('../src/net/gateLaw.js')).gateYaw(2000);
   const c = Math.cos(yaw), s = Math.sin(yaw);
-  feetAt = [c * ROOT_TRAP.x, 0.5, -s * ROOT_TRAP.x];
+  feetAt = [c * FOOT, 0.5, -s * FOOT];
   now = T.riseAt + 20_001;
   pool.frame(0.016);
   assert.deepEqual(landed, [2000], 'set down before the gate as the stone stands');

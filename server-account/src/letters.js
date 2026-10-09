@@ -40,6 +40,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { mintId, accountKind, displayName, isMuted, overRate } from './accounts.js';
 import { titleWorn, glyphsShown } from './titles.js';
+import { withIliacHonours, withIliacHonoursAll } from './iliac.js';   // CARDS10: and Iliac Hand's season #1's title
 import { withArenaHonours, withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: the arena's honours on a sender's badge
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import {
@@ -96,7 +97,7 @@ export async function inboxOf({ db, nowS }, reader, env) {
   if (senders.length) {
     const { results: found = [] } = await db.prepare(`SELECT * FROM players WHERE id IN (${senders.map(() => '?').join(', ')})`)
       .bind(...senders).all();
-    for (const p of await withArenaHonoursAll({ db }, found, nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
+    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
   }
   const letters = results.map((l) => ({
     id: l.id, from: l.from_name, ...badgeOf(rows.get(l.from_id), env, nowS),
@@ -116,7 +117,7 @@ export async function readLetter({ db, nowS }, reader, env, id) {
     .bind(id, reader.id).first();
   if (!l) return { error: 'no-letter' };
   if (l.read_at == null) await db.prepare('UPDATE letters SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();
-  const row = await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);   // AUDIT PRE-MERGE 1003 S8
+  const row = await withIliacHonours({ db }, await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS), nowS);   // AUDIT PRE-MERGE 1003 S8; CARDS10: and Iliac Hand's
   return {
     letter: {
       id: l.id, from: l.from_name, ...badgeOf(row, env, nowS), subject: l.subject, body: l.body,

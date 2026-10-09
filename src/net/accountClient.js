@@ -61,6 +61,7 @@ import { SERPENT_EMBERS } from './serpentHoardLaw.js';   // AUDIT 625 P4: the em
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
 import { VENDOR_REFUSAL_WORDS } from './vendorLaw.js';   // HOME-VENDOR: a trader's refusals
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
+import { cardById } from './iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
@@ -581,6 +582,10 @@ export const REFUSALS = Object.freeze({
   // AUDIT REALM2 S1: a first save the realm reads - a new character's, or customs' own
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
+  'customs-cards': 'That character carries more cards than customs lets in. Bring it online again.',   // CARDS9: the cards' customs
+  'ranked-needs-account': 'Ranked games need a registered account.',   // CARDS10: a ranked seat's deck order (server-account/src/iliac.js)
+  'bad-deck': 'The table will not take that deck.',
+  'deck-short': 'Your realm character does not hold every card of that deck.',
   // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
   dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
   'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',
@@ -680,7 +685,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // The service says `{ error: '<word>' }`. A proxy, a 502 or an
     // HTML error page says nothing we can read, and `server` is the
     // honest answer for that rather than a guess at which word it meant.
-    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(Number.isSafeInteger(data?.at) ? { at: data.at } : {}), status: res.status };   // AUDIT WB A5: and the rung, where the service names one; REALM P2.2: and a realm record's sequence; AUDIT2 GUILD2 S7: and when a refused act may come again
+    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(Number.isSafeInteger(data?.at) ? { at: data.at } : {}), ...(typeof data?.card === 'string' ? { card: data.card } : {}), status: res.status };   // AUDIT WB A5: and the rung, where the service names one; REALM P2.2: and a realm record's sequence; AUDIT2 GUILD2 S7: and when a refused act may come again; AUDIT CARDS-6 D7: and the card a short deck lacks
   }
   // MARKET-AUDIT (P1): every JSON route answers a body, so a 2xx whose body never came (the door's wait ended mid-body, a
   // dropped connection) is no word on the act - `offline`, as a request that never left: an act is kept and asked again
@@ -1509,6 +1514,44 @@ export function accountCards({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     stake: (req) => post('/v1/cards/stake', req),
     cashout: (req) => post('/v1/cards/cashout', req),
   };
+}
+
+/** CARDS10: ILIAC HAND'S DOOR (server-account/src/iliac.js) - a ranked seat's deck vouched for (`deck`: `{ character,
+ *  realm, deck }` - the service's order the relay seats it ranked on), a ranked game's receipt the relay signed, carried
+ *  here by an account it names (`claim`), and the season board (`board`). Every answer is `call`'s shape. */
+export function accountIliac({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    deck: (req) => post('/v1/cards/deck', req),
+    claim: (receipt) => post('/v1/iliac/claim', { receipt }),
+    board: () => post('/v1/iliac/board', {}),
+    me: () => storedSession(storage)?.id ?? null,
+    guest: () => storedSession(storage)?.kind === 'guest',   // AUDIT CARDS-6 E14: a guest's account plays no ranked game (iliac.js deckOrderOf)
+  };
+}
+
+/** AUDIT CARDS-6 D8/E14: ILIAC HAND'S REFUSALS, IN ITS OWN WORDS. The deck order's and the claim's words are shared with
+ *  other doors - the gold tables' (`cards-realm`, `cards-closed`), a backup's (`no-data`), the gate's (`receipt`,
+ *  `not-yours`) - whose sentences in REFUSALS name a card table for gold, its stakes, a backup and a gate's receipt; and
+ *  the vouch said "The realm could not vouch for that deck." over every one of them, a guest's and the service's without
+ *  its key alike. A word not here is REFUSALS' own (iliacRefusalText). */
+export const ILIAC_REFUSALS = Object.freeze({
+  'ranked-needs-account': REFUSALS['ranked-needs-account'],
+  'cards-realm': 'Ranked games are a realm character\'s - its cards are the ones the realm keeps.',
+  'cards-closed': 'The realm is not vouching for decks right now. Try again later.',
+  'bad-deck': REFUSALS['bad-deck'],
+  'deck-short': REFUSALS['deck-short'],
+  'no-data': 'The realm could not read this character\'s record. Save, then try again.',
+  receipt: 'That game\'s result was not signed by the table, or it has run out.',
+  'not-yours': 'That game\'s result names another account.',
+  offline: 'The realm is not answering - try again.',
+  busy: 'The realm is settling something else - try again in a moment.',
+});
+/** The sentence for an Iliac Hand refusal - `deck-short` with the card it lacks, by name (D7: the service names it). */
+export function iliacRefusalText(error, card = null) {
+  const said = ILIAC_REFUSALS[error] ?? accountRefusalText(error);
+  if (error !== 'deck-short' || typeof card !== 'string' || !card) return said;
+  return `${said.replace(/\.$/, '')} (${cardById(card)?.name ?? card}).`;
 }
 
 /** PROF6: the writs' door beside the Court's (server-account/src/writs.js) - a guild writ posted, supplied, withdrawn,
