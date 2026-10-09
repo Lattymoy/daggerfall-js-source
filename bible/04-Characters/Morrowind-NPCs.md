@@ -104,7 +104,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
 | MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body; 9b SHIPPED, section 14b: the rig, the match, the hosts) | dungeonContext.js, world.js, worldModes.js, exterior.js |
-| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise) | their hosts |
+| MWNPC10 THE REST | crews, road parties, siege, gate court, the broker (10a SHIPPED, section 15a: the gate court; the broker keeps her guise. 10b SHIPPED, section 15b: the siege and the crews) | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -1046,3 +1046,42 @@ reaching drawThird on a lane of stub rigs; and by source the dungeon
 pass's order and the broker's guise. `tools/mutants/mwnpc10a.json`: 18
 mutants, 18 dead. Two mutant records re-aimed by content (OW-PEERS'
 grow, INVISLOOK's camera record).
+
+### 15b. The siege's fighters and the ships' crews (SHIPPED 2026-10-09)
+
+- THE LOOK WITH NO ENTITY (`characters/foeBodies.js` rosterLook). A
+  roster's person has no equip table to read, so its class dresses it: a
+  race of the Bay's and a face off a seed, the clothes a foe wears under
+  its armour in their dyes (`clothesUnder`, foeLook's own, which now calls
+  it), and steel - cuirass, greaves, boots, pauldrons, gauntlets - for the
+  knight, the warrior, the spellsword and the watch, the watch helmed as
+  the street's guard is. A creature mobile is its creature
+  (creatureBodies.js; none where there is no match). Kept on the record
+  while its mobile, gender and seed hold (three compares, no key built a
+  frame) - one build for its life.
+- THE SIEGE (`scenes/siegeNpcs.js` drawBodies, a 'siege' lane). Each
+  shown fighter its look off a seed of its id (FNV-1a, taken once when it
+  is first stood - two guards are two people), on its billboard's feet,
+  walking as its act walks, a swing each new relay attack (`atk` 0 is
+  none), a recoil each new hurt, down dead; the captain a fifth again a
+  man, as his sprite is (the lane's per-actor `scale`). The world draws
+  them beside the street's people, before the flats their batches ride;
+  the origin's move carries them; leave lets the lane go.
+- THE CREWS (`scenes/navalCrew.js` drawBodies, a 'crew' lane). Each hand
+  on her deck his class's look off her seed and his place in her roster,
+  at his sprite's feet and his world facing (kept off the frame's
+  heading), each swing at his work begun one blow, concealed with her
+  owner (drawn veiled after the opaque world, beside the watch's); a hand
+  turned in below her deck is kept and not drawn. The world draws them
+  with the foes and the watch, before the person billboards; clear lets
+  the lane go.
+
+PROVEN. `test/mwnpc10b_rosters.test.js` (4): rosterLook's steel, helm,
+clothes, creature, miss and keep; the real siege driver over a recording
+lane - the guard helmed, two guards two looks, walking, the captain's
+scale, the feet his billboard's, a swing and a recoil, down dead, the
+origin, leaving; the real crew host - a hand's look, feet, facing,
+conceal and blows, the hand below not offered, clear; the world's draw
+points by source. `tools/mutants/mwnpc10b.json`: 25 mutants, 25 dead. One
+MWNPC5b record re-aimed by content (foeLook's worn items now pass
+through `clothesUnder`), one rewritten (MWNPC5b-face-one).

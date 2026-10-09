@@ -19,6 +19,7 @@ import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // HALT-ONE:
 import { stateAnims, HURT_ANIMS, HURT_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED } from '../characters/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { bossFrame } from '../world/gateBoss.js';
+import { createPopulationLane } from '../characters/npcBodies.js'; import { rosterLook } from '../characters/foeBodies.js'; import { rosterActor } from '../characters/rosterBodies.js';   // MWNPC10: the siege's fighters in their Morrowind bodies
 
 /** Who each kind is: its mobile (its sprite and its sounds - enemyBasics.js), its name, how much taller it is drawn. The
  *  rebels take three faces by their number, so an uprising is no row of twins. */
@@ -69,11 +70,15 @@ export function siegeNpcAct(n, now, look) {
 /**
  * @param {{ renderer?: any, getTexture?: ((archive: number) => Promise<any>)|null,
  *   uploadRecordFrame?: ((archive: number, record: number, frame: number) => void)|null, audio?: any,
- *   cam?: () => number[]|null, toScene?: (x: number, z: number) => number[]|null }} deps
+ *   cam?: () => number[]|null, toScene?: (x: number, z: number) => number[]|null,
+ *   wantBodies?: () => boolean, makeBodies?: (() => any)|null }} deps
  *   `toScene(x, z)` a point of the room's units as this scene's feet (its ground found), or null.
  */
-export function createSiegeNpcs({ renderer = null, getTexture = null, uploadRecordFrame = null, audio = null, cam = () => null, toScene = () => null } = {}) {
+export function createSiegeNpcs({ renderer = null, getTexture = null, uploadRecordFrame = null, audio = null, cam = () => null, toScene = () => null, wantBodies = undefined, makeBodies = null } = {}) {   // MWNPC10: the body lane's seams
+  const bodiesLane = createPopulationLane({ laneName: 'siege', renderer, ...(wantBodies ? { want: wantBodies } : {}), make: makeBodies });   // MWNPC10 (section 15b)
   const bodies = new Map(), textures = new Map();
+  /** MWNPC10: a body's look seed off its id (FNV-1a), once when it is first stood - never a frame. */
+  const idSeed = (id) => [...String(id)].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 0x01000193) >>> 0, 0x811c9dc5);
   const _targets = [], _batches = [], _live = new Set();
   function texture(mobile) {
     const archive = ENEMY_BASICS[mobile]?.maleTexture;
@@ -94,6 +99,7 @@ export function createSiegeNpcs({ renderer = null, getTexture = null, uploadReco
   }
   function destroyBatch(b) { if (b?.batch) { renderer?.destroyBillboardBatch?.(b.batch); b.batch = null; } }
   function draw(b, act, feet, yaw) {
+    b.act = act.act;   // MWNPC10: what its body plays
     const T = texture(b.look.mobile);
     if (!T || !renderer?.createBillboardBatch || act.act === 'gone') { b.shown = false; return; }
     const fr = bossFrame(/** @type {any} */ (act), yaw, feet, cam() ?? feet, (rec) => T.tex.getFrameCount?.(rec) ?? 1);
@@ -116,7 +122,7 @@ export function createSiegeNpcs({ renderer = null, getTexture = null, uploadReco
       for (const n of npcs ?? []) {
         _live.add(n.id);
         let b = bodies.get(n.id);
-        if (!b || b.kind !== n.kind) { destroyBatch(b); b = { kind: n.kind, look: siegeNpcLook(n), batch: null, shown: false, atk: n.atk, hurtAt: n.hurtAt, down: n.down, yaw: 0 }; bodies.set(n.id, b); }
+        if (!b || b.kind !== n.kind) { destroyBatch(b); b = { id: n.id, seed: idSeed(n.id), kind: n.kind, look: siegeNpcLook(n), batch: null, shown: false, atk: n.atk, hurtAt: n.hurtAt, down: n.down, yaw: 0 }; bodies.set(n.id, b); }
         const [x, z] = siegeNpcShown(n, now);
         const feet = toScene(x, z);
         if (!feet) { b.shown = false; continue; }
@@ -144,8 +150,26 @@ export function createSiegeNpcs({ renderer = null, getTexture = null, uploadReco
     body: (id) => _targets.find((t) => t.id === id) ?? null,
     /** Their bodies for the town's billboard pass. */
     batches: () => _batches,
+    /**
+     * MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15b): THEIR MORROWIND BODIES, before the town's billboard pass
+     * draws theirs - each shown one its look (the watch in its steel, a rebel in its class's, the captain a fifth again a
+     * man as his sprite is), walking as it walks, its blow a swing at the relay's each new attack, hurt a recoil, down dead.
+     */
+    drawBodies(canvas, proj, view, eye, dt) {
+      bodiesLane.frame();
+      for (const b of bodies.values()) {
+        if (!b.shown || !b.batch) continue;
+        const look = rosterLook(b, { mobileType: b.look.mobile, gender: 'male', seed: b.seed });
+        if (!look) continue;
+        bodiesLane.offer(rosterActor(b, { id: b.id, look, feet: b.batch.origin, yaw: b.yaw, moving: b.act === 'walk', swingKey: b.down || !(b.atk > 0) ? null : b.atk, hitKey: b.down ? null : b.hurtAt,   // `atk` 0 is no attack
+          dead: b.down ? 1 + (b.seed % 3) : 0, scale: b.look.scale }), b.batch);
+      }
+      bodiesLane.draw(canvas, proj, view, eye, dt);
+    },
+    /** MWNPC10: the floating origin moved - the bodies' feet follow it. */
+    offsetBodies(o) { bodiesLane.offsetAll(o); },
     /** Out of the battle: every body put away (the textures are kept). */
-    leave() { clear(); },
+    leave() { clear(); bodiesLane.destroy(); },   // MWNPC10: and their Morrowind bodies
     /** What the driver holds, for the tests. */
     state: () => ({ bodies: [...bodies.keys()], shown: _batches.length, targets: _targets.length }),
   };

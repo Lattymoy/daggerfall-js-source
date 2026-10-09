@@ -74,8 +74,8 @@
  {
   "name": "MWNPC5b-worn-dropped",
   "file": "src/characters/foeBodies.js",
-  "old": "  const items = [...worn];",
-  "new": "  const items = [];",
+  "old": "items: clothesUnder([...worn], FOE_WARDROBE[gender], h) });",
+  "new": "items: clothesUnder([], FOE_WARDROBE[gender], h) });",
   "tests": [
    "test/mwnpc5_foes.test.js"
   ]
@@ -101,8 +101,8 @@
  {
   "name": "MWNPC5b-face-one",
   "file": "src/characters/foeBodies.js",
-  "old": "faceIndex: mix(h ^ 0xfa) % 10,",
-  "new": "faceIndex: 0,",
+  "old": "faceIndex: mix(h ^ 0xfa) % 10 };",
+  "new": "faceIndex: 0 };",
   "tests": [
    "test/mwnpc5_foes.test.js"
   ]

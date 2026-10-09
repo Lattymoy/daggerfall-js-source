@@ -10,6 +10,7 @@
 import { composeLook } from '../net/remotePlayers.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
+import { ARMOR_ENUM } from '../combat/enemyEquipment.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured by their class
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -48,6 +49,24 @@ export function foeSeed(f) {
 }
 const pick = (list, h) => list[h % list.length];
 
+/** MWNPC10: the person a seed draws - a race of the Bay's by its weight and a face - one home for the foe's look and
+ *  the roster's (rosterLook). */
+function bayPerson(h) {
+  let r = mix(h ^ 0x51ed27) % RACE_TOTAL, race = FOE_RACES[0][0];
+  for (const [name, w] of FOE_RACES) { if (r < w) { race = name; break; } r -= w; }
+  return { race, faceIndex: mix(h ^ 0xfa) % 10 };
+}
+/** MWNPC10: the clothes under what `items` already holds - a shirt, legs and shoes for each slot nothing fills, dyed
+ *  off the seed (the reference's slot law: the armour shows, the clothes are under it). */
+function clothesUnder(items, W, h) {
+  const has = new Set(items.map((it) => it.equipSlot));
+  const dye = (k) => pick(FOE_DYES, mix(h ^ k));
+  if (!has.has(EQUIP_SLOTS.ChestClothes)) items.push({ templateIndex: pick(W.shirts, mix(h ^ 0xc1)), group: W.group, equipSlot: EQUIP_SLOTS.ChestClothes, dye: dye(0xd1) });
+  if (!has.has(EQUIP_SLOTS.LegsClothes)) items.push({ templateIndex: pick(W.legs, mix(h ^ 0xc2)), group: W.group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: dye(0xd2) });
+  if (!has.has(EQUIP_SLOTS.Feet)) items.push({ templateIndex: pick(W.feet, mix(h ^ 0xc3)), group: W.group, equipSlot: EQUIP_SLOTS.Feet, dye: dye(0xd3) });
+  return items;
+}
+
 /** Is this foe one a Morrowind body stands for? A CLASS foe (Daggerfall's people - the mobiles past 127) - the
  *  creatures are MWNPC9's, with their own skeletons. */
 export const isClassFoe = (f) => !!f?.entity?.isClass;
@@ -74,18 +93,10 @@ export function foeLook(f) {
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey) return f._mwLook;
   const h = foeSeed(f);
-  let r = mix(h ^ 0x51ed27) % RACE_TOTAL, race = FOE_RACES[0][0];
-  for (const [name, w] of FOE_RACES) { if (r < w) { race = name; break; } r -= w; }
+  const { race, faceIndex } = bayPerson(h);
   const gender = f.gender === 'female' ? 'female' : 'male';
-  const W = FOE_WARDROBE[gender];
-  const has = new Set(worn.map((it) => it.equipSlot));
-  const items = [...worn];
-  const dye = (k) => pick(FOE_DYES, mix(h ^ k));
-  if (!has.has(EQUIP_SLOTS.ChestClothes)) items.push({ templateIndex: pick(W.shirts, mix(h ^ 0xc1)), group: W.group, equipSlot: EQUIP_SLOTS.ChestClothes, dye: dye(0xd1) });
-  if (!has.has(EQUIP_SLOTS.LegsClothes)) items.push({ templateIndex: pick(W.legs, mix(h ^ 0xc2)), group: W.group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: dye(0xd2) });
-  if (!has.has(EQUIP_SLOTS.Feet)) items.push({ templateIndex: pick(W.feet, mix(h ^ 0xc3)), group: W.group, equipSlot: EQUIP_SLOTS.Feet, dye: dye(0xd3) });
   f._mwLookKey = wornKey;
-  return (f._mwLook = { race, gender, faceIndex: mix(h ^ 0xfa) % 10, items });
+  return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h) });
 }
 
 /** The foe's id among the lane's: its host's sequence number where it keeps one (exteriorFoes' `seq`), else one minted
@@ -124,6 +135,35 @@ export function foeActor(f, id = foeId(f)) {   // MWNPC6: `id` a population's ow
     hits: f._mwHits | 0,
     dead: f.dead ? 1 + (mix(foeSeed(f) ^ 0xdead) % 5) : 0,
   };
+}
+
+/** MWNPC10: the classes that go in steel when no equip table says what they wear - the knight, the warrior, the
+ *  spellsword, the watch (the watch helmed, as the street's guard is). */
+/** @type {Set<number>} */
+const STEEL_CLASSES = new Set([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Spellsword, MOBILE_TYPES.Knight_CityWatch]);
+const STEEL_PLATE = Object.freeze([['ChestArmor', 'Cuirass'], ['LegsArmor', 'Greaves'], ['Feet', 'Boots'], ['LeftArm', 'Left_Pauldron'], ['RightArm', 'Right_Pauldron'], ['Gloves', 'Gauntlets']]);
+
+/**
+ * MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15b): THE LOOK OF ONE A ROSTER DRIVES - a siege's fighter, a
+ * ship's hand - with no entity to read. A creature mobile is its creature (creatureBodies.js; null where there is no
+ * match); a class mobile a person: a race of the Bay's and a face off `seed`, its gender, the clothes a foe wears under
+ * its armour in their dyes, and steel for the classes that go in it (the watch helmed). Kept on `rec` while the mobile,
+ * gender and seed hold - one build for its life.
+ * @param {any} rec @param {{ mobileType: number, gender?: string, seed?: number }} o
+ */
+export function rosterLook(rec, { mobileType, gender = 'male', seed = 0 }) {
+  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed) return rec._mwRosterLook;   // no key built a frame
+  rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed;
+  if (!(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
+  const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
+  const { race, faceIndex } = bayPerson(h);
+  const g = gender === 'female' ? 'female' : 'male';
+  const items = [];
+  if (STEEL_CLASSES.has(mobileType)) {
+    for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: 1 });   // steel
+    if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: 1 });
+  }
+  return (rec._mwRosterLook = { race, gender: g, faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h) });
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js
