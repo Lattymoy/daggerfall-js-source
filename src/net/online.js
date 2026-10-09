@@ -1322,6 +1322,9 @@ export class OnlineSession {
     return h?.status === 'open' ? h.ws : null;
   }
 
+  /** HALO-REMAINS: every room this session holds a socket in now - my own and each halo's (connecting too). */
+  heldRooms() { return this.room ? [this.room, ...this._halo.keys()] : []; }
+
   /** WILD1: one wild frame out - a DIRECTED one (a blow, a fallen's gear) to the player it names through the socket that
    *  reports them (`_wildSocketFor`), or the ROOM's (a deposit, a take; INT9: a pick) on my own room's socket - or on
    *  `room`'s, a halo I hold (INT9: a fall's pick and its deposit go to the room that refereed it) - through the wire's own
@@ -2634,11 +2637,15 @@ export class OnlineSession {
     } else if (m.t === 'wild') {
       // WILD1: a DIRECTED wild frame the relay routed to me (it carries the sender's `id` and the frame's `data`) - the
       // duel's law: on any socket I hold, never my own back, gated coming in per sender, projected by the wire,
-      // addressed to ME. Or my OWN ROOM's word on its remains (`k`), projected by the wire's own law - a halo's remains
-      // are its own room's, said again when I stand in it.
+      // addressed to ME. Or a ROOM's word on its remains (`k`), projected by the wire's own law - my own room's or, since
+      // HALO-REMAINS, a halo's, with the room that said it.
       if (m.data !== undefined) {
         this._directedIn(m, now, 'wild', this._inWildBuckets, wildInGate, WILD_IN_HZ_MAX, (d) => { const v = validWildData(d); return v && wildDirected(v) ? v : null; }, (id, d) => this.onWild?.(id, d, subOf(m)));
-      } else if (primary) {
+      } else {
+        // HALO-REMAINS (2026-10-09, the owner: "i died in the pvp zone again and still my pile isnt there"): a HALO's
+        // room word too, with its room. The relay says a room's remains at a socket's hello alone, and walking back to
+        // them a player hello's their cell AS A HALO first (from the cell beside it) - the words were dropped here, and
+        // the crossing PROMOTES that socket without a new hello, so they were never said again: the pile never stood
         const o = validWildOut(m);
         if (o) this._deliver('wild', () => this.onWildRoom?.(o, room));
       }
