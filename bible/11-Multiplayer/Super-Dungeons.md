@@ -693,6 +693,7 @@ gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`
 | SD25 (SD-LOOK) | the look rebuilt, the lore kept (`Super-Dungeons-Look.md`): the flash law, the grade and the floors, the painted sky, the Rift and the Return, the Hour's own veil, the way back's window, the arena's reads, the Brass Remnant's body, the Unmoored Steps, the Orrery of Endings, the hang and the Works |
 | SD26 | AUDIT SD IV |
 | SD27 | AUDIT SD V (cut short) |
+| SD-HERALD | the Abyss Dungeon on Discord: its rise, find, fall and fade posted to the world events' channel |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -3234,3 +3235,65 @@ THE FOUR HOSTS: `scenes/world.js` WIRED (the ward, the Concord's edge, the exhal
 the sky's look kept); `scenes/worldModes.js` WIRED (unchanged: it reads `dungeonCtx.playerLevitating`);
 `scenes/dungeonContext.js` WIRED (the ward, the way back's probe, the bridge's word, the look door);
 `scenes/exterior.js` FLAGGED - offline, no Hour.
+
+### SD-HERALD - shipped 2026-10-09 (the Abyss Dungeon on Discord)
+
+The owner, 2026-10-09: *"We need to add discord integration to abyss dungeons"*. The Oblivion Gate has had a Discord
+herald since DISCORD-GATES (`World-Bosses.md`, the herald) and the sea serpent since SERPENT2 (`Sea-Serpent.md` section
+14). The Abyss Dungeon now has its own, on the same channel through the same webhook (`GATE_DISCORD_WEBHOOK`, a Worker
+secret): `net/sdHerald.js`, posted by the hub off its one alarm.
+
+**Four posts**, one for each of a Hollow's moments, read off the director's own record (section 2) - the herald keeps
+nothing of its own but what it has posted:
+
+| moment | posted | pings | says |
+|---|---|---|---|
+| the rise | on the alarm that raised it; late while the record still says `risen` | the role | *"**A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it - the first to stand at its door finds it. Unfound, it fades in 2 days."* |
+| the find | the moment the hub believes it; while it is `found` and its time has not run | the role | *"**Mara has found an Abyss Dungeon in the Daggerfall region!** The Stopped Bell is on every map now. Fight through it to the Rift at its end: the Shattered Hour waits beyond, one life each to break it before it fades in 2 days."* |
+| the fall | the moment the realm's tell reaches the hub; until fifteen minutes past the collapse | nobody | *"**Ann and 3 others broke the Hour** in the Stopped Bell in the Daggerfall region. The Brass Remnant has fallen, and the Abyss Dungeon collapses. The next may rise in 2 hours."* |
+| the fade | on the alarm that says a FOUND Hollow gone unbroken; fifteen minutes on | nobody | *"**The Hour closes over the Stopped Bell in the Daggerfall region, unbroken.** The next Abyss Dungeon may rise in 2 hours."* |
+
+The times are Discord's stamps (`<t:...:R>`), drawn in each reader's own clock.
+
+- **Never where it rises.** The rise is a find (section 4: no map mark, no compass mark), and the Timers count the
+  next one's rise, never its place - so the rise's post names neither its region nor its name.
+- **Where it was found: its region, never its city.** The relay holds no map. The record's own region (`r`, the
+  census's) is named from MapsFile's table (`formats/mapsTables.js` `REGION_NAMES` - the name every client's line falls
+  back to), in the chat's own sentence with no city (`sdFoundLine`, `sdWhere`: *in the Daggerfall region*, or *near
+  the Iliac Bay* for the Bay's great cities). The city is every client's own (`systems/sdSite.js`); naming it would
+  need the players' vote the gate and the serpent hold (`foldGateSite`), a new word on the wire, and nothing else here
+  does.
+- **Its name, where it needs no city.** Six of the eight names stand alone; *The Last Bell of <city>* and *The Hollow
+  Under <city>* are said as *an Abyss Dungeon* (`sdHeraldName` asks `sdNameOf` itself, so the two never part).
+- **Each moment once a slot, while it is still so** (`sdHeraldDue`). State `sdherald` in the hub's storage - the last
+  slot whose rise, find and end went or were let go. A moment no longer so is let go unposted: a rise once the Hollow
+  is found, a find once it fell or faded, a fall or a fade past HERALD_FELL_KEEP_MS. A Hollow never found fades
+  unposted - news to nobody, as in the chat (`scenes/sdHost.js`).
+- **On the hub's alarm, after the director's beat** (`_sdHeraldBeat`), so a rise and a fade are posted by the alarm
+  that made them. A find and a fall reach the hub through its internal doors, which arm the alarm now
+  (`_sdHeraldArm`), as does the hub's first hello when a post is owed. One poster: the alarm alone writes `sdherald`.
+  A post Discord does not take is posted again HERALD_RETRY_MS on; one it refuses for good (a 4xx but 429) is given
+  up, as the gate's is.
+- **The door**: the gate's (`_heraldOf`, `_heraldSend`). The rise and the find ping `SD_DISCORD_ROLE` when the
+  operator names one (a var in `server/wrangler.toml`, empty by default), else the gate's role - the serpent's law
+  (`serpentHeraldRole`). That role is the only mention Discord may make; a finder's and a fighter's names are held to
+  letters, digits, spaces and a little punctuation (`heraldName`). No webhook, no herald: nothing posted, nothing kept.
+
+**The relay: `world186`** (`world185` on its branch, renumbered past main's INT7-INT10 `world185` at the merge; NOT YET DEPLOYED - a deploy drops every player once). `net/sdHerald.js` and
+`formats/mapsTables.js` join the bundle (the herald after `sdLaw.js`; the table a verbatim leaf that imports nothing).
+No frame changes shape, no client changes, and nothing else in the order moves.
+
+Said so, not changed: a fall told after the hub already posted the fade (its tells retried past SD_FADE_GRACE_MS -
+AUDIT SD II, L3 F4) moves the record to `fell`, but the herald has posted that slot's end, so the channel keeps the
+fade. The grace exists so that this is rare; posting a correction would need a fifth post for one race.
+
+Pins: `test/sdherald.test.js` (10 - the names, each post, what is owed through a Hollow's life, the hub over the real
+Room with Discord stubbed, no webhook, the door and the order by source); `tools/mutants/sdherald.json` (34, all dead).
+PIN MOVED: RELAY_VERSION's pin in 37 files, disc7's list of versions, soc1.json's S38-version-not-bumped (world186),
+relayversion's bundle graph, and `test/sd3_relay.test.js`'s pin on the hub's alarm (the herald after the director's
+beat); two records re-aimed by content - `discordgates.json`'s door (the door holds `sdRole` too) and `serpent2.json`'s
+beat off the alarm (the alarm line ends with this herald's beat) - both lists and `sd3.json` run again, all dead.
+
+THE FOUR HOSTS: none wired - the herald is the relay's alone. `scenes/world.js`, `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` are untouched (the chat's lines at a find, a fall and a fade are
+`scenes/sdHost.js`'s, unchanged).
