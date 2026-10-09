@@ -24,7 +24,7 @@ import {
 } from '../src/world/sdStepsArt.js';
 import {
   SD_STEP_KINDS, SD_PENDULUM, SD_BEAT_DISSOLVE, SD_RACK, SD_VANE, SD_WAYSTONES, stepBox, stepTris, buildStepModel, buildBeatDissolve, buildPendulum,
-  pendulumAngle, buildCrumbleChunks, buildVaneModel, vaneYawAt, stepEdges,
+  pendulumAngle, buildCrumbleChunks, buildVaneModel, vaneYawAt, stepEdges, buildWaystoneModel, SD_WAYSTONE,
 } from '../src/world/sdStepsModel.js';
 import { createSdSteps, sdStepKey, SD_STEPS_SOUNDS, SD_BEAT_FRAME_S, SD_BEAT_IN_S, SD_CHUNK, SD_CRUMBLE_SEEN, SD_BEAT_BLINK_HZ } from '../src/scenes/sdSteps.js';
 import { SD_GHOST, SD_GHOST_STEPS, SD_STEPS_PASS_VS, SD_STEPS_PASS_FS, sdGhostVertices } from '../src/render/sdStepsPass.js';
@@ -154,6 +154,20 @@ test('S9 THE BEAT ON THE PAGE: its frame its time in its solid (the draw\'s rema
     if (warned < 0) lastKeep = Infinity;
   }
   assert.equal(falters, 1, 'one falter a warning');
+  // THE FLASH PROBE (the spec's lab check, in numbers): a plate's light - its record's whole emission, times the share of
+  // its cells kept, or its ghost's - sampled at 60 Hz for 4 s turns from rising to falling at most three times a second
+  const light = new Map(stepsArt().map(([rec, a]) => { let n = 0; for (let k = 0; k < a.emission.colors.length; k += 4) n += a.emission.colors[k] + a.emission.colors[k + 1] + a.emission.colors[k + 2]; return [rec, n]; }));
+  const fullCells = buildBeatDissolve(16).indices.length;
+  let prev = null, dir = 0, turns = 0;
+  for (let k = 0; k < 240; k++) {
+    const t = T0 + 7 + k / 60;
+    r.steps.ride(t, 1 / 60, null);
+    const st = r.steps.steps[s.i], gs = r.steps.ghosts.state;
+    const v = st.solid ? (light.get(recOf(st.remap, SD_STEPS_RECORD.beat[0])) / light.get(SD_STEPS_RECORD.beat[0])) * (st.gpu === solidMesh ? 1 : st.gpu.m.indices.length / fullCells) : gs[g * 4] * gs[g * 4 + 2] * 0.1;
+    if (prev != null && Math.abs(v - prev) > 1e-9) { const d = Math.sign(v - prev); if (dir && d !== dir) turns++; dir = d; }
+    prev = v;
+  }
+  assert.ok(turns / 4 <= TELEGRAPH_THROB_MAX_HZ, `${turns} turns in 4 s`);
 });
 
 test('S9 THE DISSOLVE IS AN ORDERED DITHER OF THE PLATE\'S OWN CELLS: each stage keeps its share of every 16 (about three texels a cell), each a stage\'s cells among the next fuller stage\'s - a screen-door, never a shuffle - all inside the plate\'s box (mutants: the dither\'s order turned; a stage keeping all)', () => {
@@ -303,6 +317,17 @@ test('S9 THE WAYSTONES AND THE VANE: the waystone of the span I last stood in li
     assert.deepEqual(litOf(), want, `span ${span}`);
   }
   assert.deepEqual([...stones[1].texRemap.values()], [key(SD_STEPS_RECORD.partsDark)]);
+  // its rune drawn upright: up its shaft the picture's rows climb (row 0 its foot - the hand points up)
+  const ws = buildWaystoneModel(), y0 = SD_WAYSTONE.baseH, y1 = SD_WAYSTONE.baseH + SD_WAYSTONE.h;
+  let climbs = 0;
+  for (let k = 0; k < ws.positions.length / 3; k += 3) {
+    const tri = [0, 1, 2].map((j) => ({ y: ws.positions[(k + j) * 3 + 1], v: ws.uvs[(k + j) * 2 + 1] }));
+    if (!tri.every((q) => q.y >= y0 - 1e-6 && q.y <= y1 + 1e-6) || tri.every((q) => near(q.y, tri[0].y))) continue;
+    const lo = tri.reduce((a, q) => (q.y < a.y ? q : a)), hi = tri.reduce((a, q) => (q.y > a.y ? q : a));
+    assert.ok(hi.v > lo.v, 'the rune\'s rows climb its shaft');
+    climbs++;
+  }
+  assert.ok(climbs >= 8, 'every face of its shaft');
   // the vane
   for (let n = 0; n < 4; n++) {
     const gust = T0 + n * SD_GUST_EVERY, push = Math.sign(gustAt(gust + 0.1).push);

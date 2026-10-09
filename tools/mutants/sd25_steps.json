@@ -360,6 +360,24 @@
     ]
   },
   {
+    "name": "SD25-S9-the-falter-a-flicker",
+    "file": "src/scenes/sdSteps.js",
+    "old": "export const SD_BEAT_BLINK_HZ = 2.5;",
+    "new": "export const SD_BEAT_BLINK_HZ = 20;",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S9-the-rune-upside-down",
+    "file": "src/world/sdStepsModel.js",
+    "old": "[c[0], c[3]], [c[2], c[3]], [c[2], c[1]], [c[0], c[1]]);   // its rune drawn y up",
+    "new": "[c[0], c[1]], [c[2], c[1]], [c[2], c[3]], [c[0], c[3]]);   // its rune drawn y up",
+    "tests": [
+      "test/sd25_steps.test.js"
+    ]
+  },
+  {
     "name": "SD25-S9-the-ghosts-never-drawn",
     "file": "src/scenes/world.js",
     "old": "const ghosts = !!modes?.dungeonCtx?.sdStepsDraw?.(proj, view, fog);",

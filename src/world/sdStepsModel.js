@@ -270,7 +270,7 @@ export function buildWaystoneModel() {
   const f = faces(), W = SD_WAYSTONE, rec = SD_STEPS_RECORD.parts, P = SD_PARTS_ATLAS;
   const box = (hw0, hw1, y0, y1, cell, ends) => {
     const c = cellUv(P, cell), r0 = [[-hw0, y0, -hw0], [hw0, y0, -hw0], [hw0, y0, hw0], [-hw0, y0, hw0]], r1 = [[-hw1, y1, -hw1], [hw1, y1, -hw1], [hw1, y1, hw1], [-hw1, y1, hw1]];
-    for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0]]) f.quad(rec, r1[i], r1[j], r0[j], r0[i], [c[0], c[1]], [c[2], c[1]], [c[2], c[3]], [c[0], c[3]]);
+    for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0]]) f.quad(rec, r1[i], r1[j], r0[j], r0[i], [c[0], c[3]], [c[2], c[3]], [c[2], c[1]], [c[0], c[1]]);   // its rune drawn y up (row 0 the foot)
     if (ends) f.quad(rec, r1[0], r1[3], r1[2], r1[1], [c[0], c[1]], [c[0], c[3]], [c[2], c[3]], [c[2], c[1]]);
   };
   box(W.base / 2, W.base / 2, 0, W.baseH, P.stone, true);
