@@ -37,8 +37,8 @@
   {
     "name": "WB6c-the-promise-before-the-fire-has-closed",
     "file": "src/ui/gateVeil.js",
-    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; settle(true); }",
-    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; settle(true); }",
+    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
+    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; quarters = 0; cue('shut'); settle(true); }",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {

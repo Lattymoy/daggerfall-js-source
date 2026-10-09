@@ -501,3 +501,97 @@ test('SD-LOOK THE VEIL CLOSES ON THE RIFT (S5): the world host keeps where the R
   assert.match(W, /\}, 'hourBack', \{ centre: sdVeilCentre\(\) \}\);/);
   assert.match(W, /gateVeil\?\.flash\('hourHome', \{ centre: sdVeilCentre\(\) \}\);/);
 });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// S7 - THE ARENA'S READS: the floor tells the clock's blows.
+// ---------------------------------------------------------------------------------------------------------------------
+import { SD_FISSURES, SD_FLOOD, SD_ARENA_NUMERALS, SD_ARENA_CELL_M, SD_RESET_EMBER, SD_ARENA_GLOW_FS, sdFissurePaths, sdFissureField, sdArenaGlowAt, sdHourClockOf } from '../src/render/sdArenaGlow.js';
+import { SD_ARENA as SD_ARENA_AT } from '../src/net/sdBrain.js';
+import { SD_BLOWS } from '../src/net/sdRemnant.js';
+import { SD_SKY_MODE as SKY_MODE } from '../src/render/sdSky.js';
+
+const glowMemo = () => ({ flood: -1, floodK: 0, reset: -1, end: 0, pulseAt: -Infinity });
+const fightAt = (t, o = {}) => ({ fi: 1, op: t - 300_000, ends: t + 600_000, ph: 1, rem: { atk: null }, ec: [], clk: null, su: -Infinity, fell: null, lost: null, ...o });
+
+test('SD-LOOK THE ARENA\'S FISSURES (S7): eight runs from the boss to the rim, one each eighth, the same on every page; the field the distance to them - nought on a run, saturated far from every one (mutants: none needed - a pure bake, pinned by value)', () => {
+  const P = sdFissurePaths();
+  assert.deepEqual(P, sdFissurePaths(), 'seeded: every page the same');
+  assert.equal(P.length, SD_FISSURES.n);
+  P.forEach((run, i) => {
+    assert.ok(Math.abs(Math.hypot(...run[0]) - SD_FISSURES.from) < 1e-9 && Math.abs(Math.hypot(...run.at(-1)) - SD_FISSURES.to) < 1e-9, `run ${i} boss to rim`);
+    const a = Math.atan2(run[0][0], run[0][1]), want = ((i + 0.5) / SD_FISSURES.n) * Math.PI * 2;
+    assert.ok(Math.abs(((a - want + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < 0.3, `run ${i} on its eighth`);
+  });
+  const F = sdFissureField(P), N = F.size, R = SD_ARENA_AT.r, texel = ([x, z]) => F.data[Math.floor(((z + R) / (2 * R)) * N) * N + Math.floor(((x + R) / (2 * R)) * N)];
+  assert.ok(texel(P[3][7]) < 40, 'on a run: near nought');
+  for (let i = 0; i < SD_FISSURES.n; i++) {
+    const a = (i / SD_FISSURES.n) * Math.PI * 2;
+    assert.equal(texel([Math.sin(a) * 18, Math.cos(a) * 18]), 255, `between runs ${i - 1} and ${i}: far from both`);
+  }
+});
+
+test('SD-LOOK THE FLOOR TELLS THE CLOCK\'S BLOWS (S7, sdArenaGlowAt): the Pulse floods from its LANDING - the front out to the rim in its 0.4 s, then fading over 1.2 s - and plays out though the clock\'s blow is replaced; the Reset lights the numerals one by one over its wind-up, all twelve as it lands, none once stunned; the End red; a fallen fight tells nothing; the sky reads the same clock (sdHourClockOf) (mutants: the flood never fading; the Pulse not kept; the count one short; the stun ignored; the End unread; the sky\'s Reset at once; no last minute)', () => {
+  const t = 2_000_000, R = SD_ARENA_AT.r, P = SD_BLOWS.pulse, RS = SD_BLOWS.reset;
+  let m = glowMemo();
+  const pulse = { a: P.id, at: t, i: 3 };
+  assert.equal(sdArenaGlowAt(fightAt(t, { clk: pulse }), t - 100, m).flood, -1, 'nothing before it lands');
+  sdArenaGlowAt(fightAt(t, { clk: pulse }), t + 200, m);
+  assert.ok(Math.abs(m.flood - R * 0.5) < 1e-9 && m.floodK === 1, 'halfway out at 0.2 s');
+  sdArenaGlowAt(fightAt(t, { clk: { a: SD_BLOWS.end.id, at: t + 5000, i: 4 } }), t + (SD_FLOOD.front_s + SD_FLOOD.fade_s / 2) * 1000, m);
+  assert.ok(m.flood === R && Math.abs(m.floodK - 0.5) < 1e-9, `the clock's next blow named: the flood still fading (${m.floodK})`);
+  assert.equal(m.end, 1, 'and the End red');
+  sdArenaGlowAt(fightAt(t), t + (SD_FLOOD.front_s + SD_FLOOD.fade_s) * 1000 + 1, m);
+  assert.equal(m.flood, -1, 'over');
+  m = glowMemo();
+  const land = t + RS.windup, reset = { rem: { atk: { a: RS.id, at: land, i: 9 } } };
+  assert.equal(sdArenaGlowAt(fightAt(t, reset), t + 1, m).reset, 1, 'I as it is called');
+  assert.equal(sdArenaGlowAt(fightAt(t, reset), t + 5000, m).reset, 8, 'five seconds in: eight');
+  assert.equal(sdArenaGlowAt(fightAt(t, reset), land, m).reset, 12, 'XII as it lands');
+  assert.equal(sdArenaGlowAt(fightAt(t, { ...reset, su: t + 9000 }), t + 5000, m).reset, -1, 'stunned: no count');
+  assert.equal(sdArenaGlowAt(fightAt(t, { ...reset, fell: { at: t } }), t + 5000, m).reset, -1, 'fallen: nothing');
+  assert.equal(sdArenaGlowAt(fightAt(t, { lost: { at: t } }), t, m).end, 1);
+  // the sky's word
+  const c = new Float32Array(4);
+  assert.deepEqual([...sdHourClockOf(fightAt(t, reset), t + 4000, c)].slice(0, 2), [SKY_MODE.reset, 0.5]);
+  assert.equal(sdHourClockOf(fightAt(t, { clk: { a: SD_BLOWS.end.id, at: t, i: 1 } }), t, c)[0], SKY_MODE.end);
+  assert.equal(sdHourClockOf(fightAt(t, { ec: [{ h: 3 }] }), t, c)[0], SKY_MODE.break);
+  const live = sdHourClockOf(fightAt(t, { op: t - 300_000, ends: t + 30_000 }), t, c);
+  assert.equal(live[0], SKY_MODE.fight); assert.ok(Math.abs(live[1] - 300 / 330) < 1e-6); assert.equal(live[2], 1, 'its last minute');
+  assert.equal(sdHourClockOf(fightAt(t, { fell: { at: t } }), t, c)[0], SKY_MODE.none);
+});
+
+test('SD-LOOK THE RIM\'S NUMERALS COUNT THE RESET (S7, the shader): I lights first and XII last, the last two in ember, the rest in the Reset\'s soul-white; a brass glint at rest; every one red when the Hour ends; the flood lights the fissures inside its front alone (mutants: the count reversed; no ember; the front ignored)', () => {
+  const f = glslFunctions(SD_ARENA_GLOW_FS, { uR: SD_ARENA_AT.r, uFlood: [-1, 0], uReset: -1, uEnd: 0, uSteps: 10, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 0, 0], uFogColor: [0, 0, 0], vP: [0, 0], vWorld: [0, 0, 0], o: [0, 0, 0, 0], texture: () => [1, 0, 0, 0] });
+  const C = SD_ARENA_CELL_M, lit = [];
+  for (let h = 0; h < 12; h++) {
+    const a = (h / 12) * Math.PI * 2, c = [Math.sin(a) * SD_ARENA_NUMERALS.r, Math.cos(a) * SD_ARENA_NUMERALS.r];
+    let found = null;
+    for (let dx = -8; dx <= 8 && !found; dx++) for (let dz = -8; dz <= 8 && !found; dz++) {
+      const p = [(Math.floor(c[0] / C + dx) + 0.5) * C, (Math.floor(c[1] / C + dz) + 0.5) * C];
+      if (f.numeralAt(p, h) > 0.5) found = p;
+    }
+    assert.ok(found, `numeral ${h} drawn`);
+    lit.push(found);
+  }
+  const at = (p, u) => { Object.assign(f.globals, { uReset: -1, uEnd: 0, uFlood: [-1, 0], ...u, vP: p }); f.main(); return f.globals.o; };
+  // which light: the nearest of the four by hue (the pixel law scales a colour whole, keeping its hue)
+  const REF = { soul: [0.6, 1, 0.82], ember: [1, 0.376, 0.157], red: [1, 0.32, 0.26], rest: [0.85, 0.62, 0.27] };
+  const hue = (c) => { const k = Math.max(...c.slice(0, 3)) || 1; return c.slice(0, 3).map((v) => v / k); };
+  const kind = (o) => {
+    if (Math.max(...o.slice(0, 3)) < 0.5) return 'rest';
+    const h = hue(o);
+    return Object.entries(REF).filter(([k]) => k !== 'rest').sort((A, B) => hue(A[1]).reduce((n, v, i) => n + (v - h[i]) ** 2, 0) - hue(B[1]).reduce((n, v, i) => n + (v - h[i]) ** 2, 0))[0][0];
+  };
+  for (let h = 0; h < 12; h++) assert.equal(kind(at(lit[h], {})), 'rest', `numeral ${h} at rest`);
+  const order = (h) => (h === 0 ? 12 : h);
+  for (const n of [1, 8, 12]) for (let h = 0; h < 12; h++) {
+    const want = order(h) > n ? 'rest' : order(h) > 12 - SD_RESET_EMBER ? 'ember' : 'soul';
+    assert.equal(kind(at(lit[h], { uReset: n })), want, `numeral ${h} at ${n} lit`);
+  }
+  for (let h = 0; h < 12; h++) assert.equal(kind(at(lit[h], { uEnd: 1 })), 'red', `numeral ${h} when the Hour ends`);
+  // the flood: on a fissure (the field nought there), inside the front and past it
+  const g = glslFunctions(SD_ARENA_GLOW_FS, { ...f.globals, texture: () => [0, 0, 0, 0] });
+  const flood = (front) => { Object.assign(g.globals, { uReset: -1, uEnd: 0, uFlood: [front, 1], vP: [0, 6] }); g.main(); return g.globals.o[1]; };
+  assert.ok(flood(10) > 0.5, 'inside the front: flooded');
+  assert.ok(flood(4) < 0.3, 'past the front: dark still (the core\'s faint green)');
+});

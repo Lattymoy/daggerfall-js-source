@@ -423,5 +423,95 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-flood-never-fading",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "memo.floodK = age < SD_FLOOD.front_s ? 1 : 1 - (age - SD_FLOOD.front_s) / SD_FLOOD.fade_s;",
+    "new": "memo.floodK = 1;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-Pulse-not-kept",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;",
+    "new": "const age = (t - (clk?.a === PULSE.id ? clk.at : -Infinity)) / 1000;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-count-one-short",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "Math.floor(((t - called) / RESET.windup) * 12) + 1))",
+    "new": "Math.floor(((t - called) / RESET.windup) * 12)))",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-stun-ignored",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active && !(s.su > t)) {",
+    "new": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active) {",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-End-unread",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "if (s.lost || (clk && clk.a === END.id) || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) memo.end = 1;",
+    "new": "if (s.lost) memo.end = 1;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-sky-Reset-at-once",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup)); }",
+    "new": "out[1] = 1; }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-no-last-minute",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "out[2] = s.ends - t <= 60_000 ? 1 : 0; }",
+    "new": "out[2] = 0; }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-count-reversed",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "      int order = h == 0 ? 12 : h;",
+    "new": "      int order = h == 0 ? 1 : 13 - h;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-no-ember",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "g = order > ${12 - SD_RESET_EMBER} ? EMBER : SOUL;",
+    "new": "g = SOUL;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-front-ignored",
+    "file": "src/render/sdArenaGlow.js",
+    "old": "if (uFlood.x >= 0.0 && r <= uFlood.x) {",
+    "new": "if (uFlood.x >= 0.0) {",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]
