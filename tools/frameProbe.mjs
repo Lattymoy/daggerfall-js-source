@@ -10,14 +10,17 @@
 // Every wait is FRAME-SYNCED on the shot-mode `__frame` counter, never a sleep (bible/Home.md: SwiftShader renders the
 // streaming scene at seconds a frame). Two probe-only transforms, the tree untouched: the stream's build slice served at
 // 250 ms and the grass field filled at once, so a scene settles in minutes rather than hours. INSTR=shadow also times
-// the shadow pass's own methods (its replays by kind, the dynamic scan, the signatures, the blits).
+// the shadow pass's own methods (its replays by kind, the dynamic scan, the signatures, the blits, the sun's and the
+// lanterns' candidate walks).
 //
 // Run:  ARENA2_PATH=/path/to/arena2 node tools/frameProbe.mjs knight night dungeon
 //   TREE=<dir>     serve another worktree of this repository (its node_modules linked to this one's) - an A/B's base
 //   TAG=<name>     the run's name in OUT: <scene>.<tag>.json / .cpuprofile / .heapprofile (tools/frameAb.mjs reads them)
 //   OUT=<dir>      where the runs go (default: the OS temp dir's frameProbe/)
-//   FRAMES=40      frames in each window;  W=480 H=270  the viewport;  PORT=5241
+//   FRAMES=60      frames in each window;  W=480 H=270  the viewport;  PORT=5241
 //   JSFLAGS=...    V8 flags for the page (the V8-ceiling A/B lowers the tiering thresholds for both arms)
+//   TUNING={...}   laid over the shadow pass's SHADOW_TUNING (window.__DF_SHADOW_TUNING) once the page is ready, before
+//                  the settle - an A/B of one tree's own switch: TUNING='{"sunPrepass":false}' is PERF-SUN3's off arm
 // AN A/B RUNS ITS ARMS ONE AFTER THE OTHER, AND NOTHING ELSE RUNS WHILE IT DOES: SwiftShader takes three of a four-core
 // machine's cores, so a test run beside a probe slows whichever arm it lands in (AUDIT 637 D3: an A/B the record
 // published from had been run beside a suite). The figures are this machine's CPU and only relative.
@@ -27,15 +30,16 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
 export const FRAME_PROBE_OUT = process.env.OUT || join(tmpdir(), 'frameProbe');
-const OUT = FRAME_PROBE_OUT;
-mkdirSync(OUT, { recursive: true });
+const OUT = FRAME_PROBE_OUT;   // made by the first window written (AUDIT PERF-ON4 F6: an import makes no directory)
 const PORT = Number(process.env.PORT || 5241);
 const FRAMES = Number(process.env.FRAMES || 60);
 const W = Number(process.env.W || 480), H = Number(process.env.H || 270);
 const EXTRA = process.env.EXTRA || '';
+const TUNING = process.env.TUNING ? JSON.parse(process.env.TUNING) : null;
 
 /** The scenes: Knightstale (Wayrest) by day and by night, two more towns, a coast, a dungeon (the classic boot). */
 export const SCENES = {
@@ -47,22 +51,38 @@ export const SCENES = {
   dungeon: '/play/?world&classic&class=1&novideo&shot&play&fps',
 };
 
-const probeTransforms = () => ({
+/** PERF-ON4: the probe-only edits, by file - each [needle, replacement] asserted where it is made (bible/Home.md's
+ *  Process rule), and held to the tree by test/perfon4_probes.test.js, so a needle a change moves fails the suite and
+ *  not the next probe run. The stream's build slice served at 250 ms; the grass field filled at once. */
+export const FRAME_PROBE_EDITS = Object.freeze([
+  { file: 'src/systems/buildBreather.js', edits: [['export const BUILD_SLICE_MS = 6;', 'export const BUILD_SLICE_MS = 250;'], ['export const BUILD_SLICE_FLOOR_MS = 3;', 'export const BUILD_SLICE_FLOOR_MS = 250;']] },
+  { file: 'src/render/labGrass.js', edits: [['range = LAB_GRASS.range, perFrame = 2,', 'range = LAB_GRASS.range, perFrame = 1000,']] },
+]);
+/** A vite plugin making `table`'s edits (FRAME_PROBE_EDITS' shape), each needle asserted. */
+export const editsPlugin = (name, table) => ({
+  name,
+  enforce: 'pre',
+  transform(code, id) {
+    const p = id.split('?')[0];
+    const row = table.find((t) => p.endsWith(`/${t.file}`));
+    if (!row) return null;
+    let a = code;
+    for (const [needle, by] of row.edits) {
+      // AUDIT PERF-ON4 F7: once, exactly - a needle twice (a comment quoting it, a base tree's copy) edits the first alone
+      const n = a.split(needle).length - 1;
+      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);
+      a = a.replace(needle, by);
+    }
+    return a;
+  },
+});
+export const probeTransforms = () => ({
   name: 'probe-transforms',
   enforce: 'pre',
   transform(code, id) {
     const p = id.split('?')[0];
-    if (p.endsWith('/src/systems/buildBreather.js')) {
-      const a = code.replace('export const BUILD_SLICE_MS = 6;', 'export const BUILD_SLICE_MS = 250;')
-        .replace('export const BUILD_SLICE_FLOOR_MS = 3;', 'export const BUILD_SLICE_FLOOR_MS = 250;');
-      if (a === code) throw new Error('probe transform: buildBreather needle missed');
-      return a;
-    }
-    if (p.endsWith('/src/render/labGrass.js')) {
-      const a = code.replace('range = LAB_GRASS.range, perFrame = 2,', 'range = LAB_GRASS.range, perFrame = 1000,');
-      if (a === code) throw new Error('probe transform: labGrass needle missed');
-      return a;
-    }
+    const edited = editsPlugin('probe-transforms', FRAME_PROBE_EDITS).transform(code, id);
+    if (edited != null) return edited;
     if (process.env.INSTR === 'shadow' && p.endsWith('/src/render/shadowPass.js')) {
       return code + `
 ;(() => {
@@ -72,6 +92,7 @@ const probeTransforms = () => ({
   const wrap = (name, kindOf) => { const o = P[name]; P[name] = function (...a) { const t = now(); const r = o.apply(this, a); const e = now() - t; const k = kindOf ? kindOf(a) : name; const s = S.byKind[k] ??= { n: 0, ms: 0, draws: 0 }; s.n++; s.ms += e; if (kindOf && typeof r === 'number') s.draws += r; return r; }; };
   wrap('replay', (a) => (a[2] ? 'pt' : (a[5] > 0 ? 'sun' : 'cam')) + ':' + ['all','static','dyn','lo'][a[6] ?? 0]);
   wrap('_dynamicNear'); wrap('_staticSignatures'); wrap('_blitSlot');
+  wrap('_sunCandidates'); wrap('_casterCandidates');   // AUDIT PERF-ON4 (sun lens 4): the walks the replays now read their lists from, timed beside them
   const r = P.render; P.render = function (f) { const t = now(); r.call(this, f); S.renderMs += now() - t; S.frames++; let nb = 0; for (let i = 0; i < this.count; i++) { const rec = this.records[i]; if (rec.kind === 2) nb += rec.batches?.length ?? 0; } S.records += this.count; S.batches += nb; };
 })();
 `;
@@ -81,7 +102,7 @@ const probeTransforms = () => ({
 });
 
 // Census: wrap every WebGL2 method, URLSearchParams, localStorage reads, createElement.
-const CENSUS = `(() => {
+export const CENSUS = `(() => {
   const C = window.__census = { on: false, counts: new Map(), frames: 0, undo: [] };
   window.__censusOff = () => { for (const f of C.undo.splice(0)) f(); };
   const bump = (k) => { if (C.on) C.counts.set(k, (C.counts.get(k) || 0) + 1); };
@@ -117,13 +138,13 @@ const CENSUS = `(() => {
   C.undo.push(() => { JSON.stringify = js; });
 })();`;
 
-async function waitFrames(page, n, timeout = 900000) {
+export async function waitFrames(page, n, timeout = 900000) {
   const f0 = await page.evaluate(() => window.__frame | 0);
   await page.waitForFunction((t) => (window.__frame | 0) >= t, f0 + n, { timeout, polling: 100 });
   return f0;
 }
 
-function attribute(profile) {
+export function attribute(profile) {
   const byId = new Map(profile.nodes.map((n) => [n.id, n]));
   const parent = new Map();
   for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
@@ -162,7 +183,17 @@ async function runScene(browser, name) {
   await page.waitForFunction(() => window.__shotReady === true || (typeof window.__mode === 'function' && window.__mode() !== 'exterior' && typeof window.__streamIdle === 'function' && window.__streamIdle() && (window.__frame | 0) > 5), null, { timeout: 1200000, polling: 500 });
   const tReady = Date.now();
   console.log(`  [${name}] ready after ${((tReady - t0) / 1000).toFixed(0)}s`);
-  // settle: grass and stream - wait until grass cells stop changing over 10 frames, max 300 frames
+  if (TUNING) console.log(`  [${name}] tuning ${JSON.stringify(await page.evaluate((t) => { const T = window.__DF_SHADOW_TUNING; if (!T) throw new Error('no __DF_SHADOW_TUNING on the page'); Object.assign(T, t); return T; }, TUNING))}`);
+  await settle(page);
+  await waitFrames(page, 10);
+  const r = await measure(ctx, page, { name, url, bootS: (tReady - t0) / 1000, errors });
+  await ctx.close();
+  return r;
+}
+
+/** The settle: grass and stream - until the grass cells stop changing over 10 frames, 300 frames at most. The online
+ *  probe settles its page by it too (AUDIT PERF-ON4 F3). */
+export async function settle(page) {
   let lastCells = -1, stable = 0;
   for (let i = 0; i < 60 && stable < 2; i++) {
     await waitFrames(page, 5);
@@ -170,8 +201,17 @@ async function runScene(browser, name) {
     if (g === lastCells) stable++; else stable = 0;
     lastCells = g;
   }
-  await waitFrames(page, 10);
+}
+
+/** PERF-ON4: the three windows over a page that stands ready - the census, the CPU profile and the heap - written to OUT
+ *  as `<name>[.TAG]`, and answered as the run's record. The online probe (tools/onlineFrameProbe.mjs) measures its page
+ *  through the same door, so its figures and this probe's are read the same way. */
+export async function measure(ctx, page, { name, url, bootS, errors, extra = null }) {
+  mkdirSync(OUT, { recursive: true });
   const cdp = await ctx.newCDPSession(page);
+  try { return await windows(cdp, page, { name, url, bootS, errors, extra }); } finally { await cdp.detach().catch(() => {}); }   // AUDIT PERF-ON4 F11: one session a window set, let go
+}
+async function windows(cdp, page, { name, url, bootS, errors, extra }) {
   // GL census over FRAMES frames
   await page.evaluate(() => { window.__census.counts.clear(); window.__census.on = true; });
   const cf0 = await waitFrames(page, FRAMES);
@@ -206,7 +246,7 @@ async function runScene(browser, name) {
   const walk = (n) => { const cf = n.callFrame; const k = `${cf.functionName || '(anon)'} ${(cf.url || '').replace(/^.*\/src\//, 'src/').replace(/\?.*$/, '')}:${cf.lineNumber + 1}`; heapSelf.set(k, (heapSelf.get(k) || 0) + n.selfSize); for (const c of n.children || []) walk(c); };
   walk(heap.head);
   const res = {
-    name, url, bootS: (tReady - t0) / 1000, shStats, errors: errors.slice(0, 20), stats, grass: grass && { cells: grass.cells, slots: grass.slots, blades: grass.blades }, domNodes: nodes,
+    name, url, bootS, shStats, ...(extra ? { extra: await extra() } : {}), errors: errors.slice(0, 20), stats, grass: grass && { cells: grass.cells, slots: grass.slots, blades: grass.blades }, domNodes: nodes,
     census: { frames: census.frames, perFrame: Object.fromEntries(census.counts.map(([k, v]) => [k, +(v / census.frames).toFixed(2)]).sort((x, y) => y[1] - x[1])) },
     cpu: { frames: pframes, samples: a.total, medianIntervalMs: a.median, msPerFrameBySamples: (a.total * a.median) / pframes,
       self: [...a.self].sort((x, y) => y[1] - x[1]).slice(0, 60).map(([k, v]) => [k, +((v * a.median) / pframes).toFixed(3)]),
@@ -216,25 +256,32 @@ async function runScene(browser, name) {
       top: [...heapSelf].sort((x, y) => y[1] - x[1]).slice(0, 40).map(([k, v]) => [k, Math.round(v / Math.max(1, hframes))]) },
   };
   writeFileSync(`${OUT}/${tag}.json`, JSON.stringify(res, null, 1));
-  await ctx.close();
   return res;
 }
 
-const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: [probeTransforms()], server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
-await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...(process.env.JSFLAGS ? [`--js-flags=${process.env.JSFLAGS}`] : [])] });
-const failed = [];
-try {
+/** One line of a run's record, as both probes print it. */
+export const summaryLine = (r) => `boot ${r.bootS}s, cpu ${r.cpu.msPerFrameBySamples.toFixed(2)} ms/frame (${r.cpu.samples} samples, ${r.cpu.frames} frames), gl calls/frame ${Object.entries(r.census.perFrame).filter(([k]) => k.startsWith('gl.')).reduce((s, [, v]) => s + v, 0).toFixed(0)}, draws ${(r.census.perFrame['gl.drawElements'] || 0) + (r.census.perFrame['gl.drawArrays'] || 0) + (r.census.perFrame['gl.drawArraysInstanced'] || 0) + (r.census.perFrame['gl.drawElementsInstanced'] || 0)}, heap ${r.heap.bytesPerFrame} B/frame, dom ${r.domNodes}, errors ${r.errors.length}`;
+/** A window with no frames or no samples, or a page that threw, is not a measurement. */
+export const measured = (r) => r.cpu.frames > 0 && r.cpu.samples > 0 && r.census.frames > 0 && r.heap.frames > 0 && !r.errors.length;
+
+export const SWIFTSHADER_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...(process.env.JSFLAGS ? [`--js-flags=${process.env.JSFLAGS}`] : [])];
+
+if (isMain(import.meta.url)) {
   const names = process.argv.slice(2);
-  if (!names.length || names.some((n) => !SCENES[n])) throw new Error(`frameProbe: name one or more scenes of ${Object.keys(SCENES).join(', ')}`);
-  for (const name of names) {
-    const t = Date.now();
-    try {
-      const r = await runScene(browser, name);
-      console.log(`== ${name}: boot ${r.bootS}s, cpu ${r.cpu.msPerFrameBySamples.toFixed(2)} ms/frame (${r.cpu.samples} samples, ${r.cpu.frames} frames), gl calls/frame ${Object.entries(r.census.perFrame).filter(([k]) => k.startsWith('gl.')).reduce((s, [, v]) => s + v, 0).toFixed(0)}, draws ${(r.census.perFrame['gl.drawElements'] || 0) + (r.census.perFrame['gl.drawArrays'] || 0) + (r.census.perFrame['gl.drawArraysInstanced'] || 0) + (r.census.perFrame['gl.drawElementsInstanced'] || 0)}, heap ${r.heap.bytesPerFrame} B/frame, dom ${r.domNodes}, errors ${r.errors.length} (${((Date.now() - t) / 1000).toFixed(0)}s)`);
-      // a window with no frames or no samples, or a page that threw, is not a measurement
-      if (!(r.cpu.frames > 0 && r.cpu.samples > 0 && r.census.frames > 0 && r.heap.frames > 0) || r.errors.length) failed.push(`${name} (${r.errors[0] ?? 'an empty window'})`);
-    } catch (e) { failed.push(`${name} (${e.message})`); }
-  }
-} finally { await browser.close(); await server.close(); }
-if (failed.length) throw new Error(`frameProbe: no measurement for ${failed.join('; ')}`);
+  if (!names.length || names.some((n) => !SCENES[n])) throw new Error(`frameProbe: name one or more scenes of ${Object.keys(SCENES).join(', ')}`);   // before vite and Chromium stand (AUDIT PERF-ON4 F11)
+  const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: [probeTransforms()], server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+  await server.listen();
+  const browser = await chromium.launch({ args: SWIFTSHADER_ARGS });
+  const failed = [];
+  try {
+    for (const name of names) {
+      const t = Date.now();
+      try {
+        const r = await runScene(browser, name);
+        console.log(`== ${name}: ${summaryLine(r)} (${((Date.now() - t) / 1000).toFixed(0)}s)`);
+        if (!measured(r)) failed.push(`${name} (${r.errors[0] ?? 'an empty window'})`);
+      } catch (e) { failed.push(`${name} (${e.message})`); }
+    }
+  } finally { await browser.close(); await server.close(); }
+  if (failed.length) throw new Error(`frameProbe: no measurement for ${failed.join('; ')}`);
+}

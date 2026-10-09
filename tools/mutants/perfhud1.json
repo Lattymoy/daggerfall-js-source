@@ -1,0 +1,39 @@
+[
+  {
+    "name": "PERF-HUD1-the-tick-sweeps-beside-the-interval",
+    "file": "src/ui/hudLayout.js",
+    "old": "  if (!timer && now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }",
+    "new": "  if (now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }",
+    "tests": [
+      "test/perfhud1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-HUD1-no-first-sweep",
+    "file": "src/ui/hudLayout.js",
+    "old": "    lastSweep = now; sweepHudLayout(doc);   // PERF-HUD1: the first sweep at once; the interval takes every one after it",
+    "new": "    lastSweep = now;",
+    "tests": [
+      "test/perfhud1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-HUD1-the-tick-never-sweeps",
+    "file": "src/ui/hudLayout.js",
+    "old": "  if (!timer && now - lastSweep >= SWEEP_MS) { lastSweep = now; sweepHudLayout(doc); }",
+    "new": "",
+    "tests": [
+      "test/perfhud1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-HUD1-the-tests-reset-keeping-the-clock",
+    "file": "src/ui/hudLayout.js",
+    "old": "drag = null; lastSweep = -Infinity; }   // PERF-HUD1: the clock too",
+    "new": "drag = null; }   // PERF-HUD1: the clock too",
+    "tests": [
+      "test/perfhud1.test.js"
+    ],
+    "note": "AUDIT PERF-ON4 (record lens 8): it survived every hudLayout suite while the pins counted sweeps and not when"
+  }
+]

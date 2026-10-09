@@ -141,8 +141,8 @@
  {
   "name": "F5-cascade-min-radius-dropped",
   "file": "src/render/shadowPass.js",
-  "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k))",
-  "new": "this.replay(f, this.sunVP[c], null, false, 0, sunTexelWorld(c, k))",
+  "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k),",
+  "new": "this.replay(f, this.sunVP[c], null, false, 0, sunTexelWorld(c, k),",
   "tests": [
    "test/bugs5_field.test.js"
   ]
@@ -150,8 +150,8 @@
  {
   "name": "F5-cascade-min-radius-every-cascade",
   "file": "src/render/shadowPass.js",
-  "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k))",
-  "new": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(2, k), sunTexelWorld(c, k))",
+  "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k),",
+  "new": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(2, k), sunTexelWorld(c, k),",
   "tests": [
    "test/bugs5_field.test.js"
   ]
