@@ -456,4 +456,83 @@ moved scale4c's first knock (B1) and its street stamp (B7), and AUDIT WORLD7/8's
 - **`world_witness`, the act receipts, guests:** not pruned, for the reasons above.
 - **The busy refusal's second mint:** found by SCALE3, above.
 - **The staging pair:** SCALE3's second half, above.
-- **The relay's pose path** (`07-Rendering/Performance-Next.md` 15): a relay deploy, in its own announced window.
+- **The relay's pose path** (`07-Rendering/Performance-Next.md` 15): a relay deploy, in its own announced window -
+  built as PERF-RELAY1, below.
+
+## PERF-RELAY1: built (2026-10-09, its own branch - world184, NOT YET DEPLOYED)
+
+Mac, of `07-Rendering/Performance-Next.md` item 15 ("needs its own pull request in a window you announce. Want me to
+prepare it?"): "Yes and audit everything". Its own branch, `claude/relay-pose-path-ex6ce1`, so the deploy goes when Mac
+says: merged to main, `.github/workflows/relay-deploy.yml` deploys **world184** (world183 on its branch, renumbered past
+main's CHAP4c world183 at the merge), and every player is dropped once.
+
+**What a pose cost.** `Room._message` is one method for every frame the room takes, and V8 will not optimize a function
+past `--max-optimized-bytecode-size` (61,440 bytes of bytecode in node 22): `_message` is 76,752. So the room's hottest
+path - every pose of every player, fanned to everyone in range - ran in the interpreter and the baseline compiler for
+the life of the object. Inside it, every pose also copied the socket index into an array (`[...this._all()]`: two
+hundred pairs at two hundred players) and derived the sender's map pixel again for every listener (`inRange`).
+
+**The change, three parts, no behaviour of its own.**
+- The pose-and-ping arm is a method of its own, `Room._poseFrame` (2,204 bytes of bytecode); `_message` hands it the
+  frame as the arm took it
+  (`server/src/index.js:"if (m.t === 'pose' || m.t === 'ping') return this._poseFrame(ws, a, m);"`). Every line of the
+  arm is the arm's, in its order, but the two below - the fan's walk and its range test.
+- The fan walks the index in place: nothing between the walk and the sends sends, closes or adopts a socket, so the copy
+  guarded nothing.
+- `net/wire.js` `inRangeOf(roomKey, from)` is inRange with its `from` fixed - a predicate over `to`, the sender's pixel
+  derived once a fan (`src/net/wire.js:"export function inRangeOf(roomKey, from) {"`).
+
+And POSE_FAR_SHARE's doc carries AUDIT 637 C2's correction (item 19): the clamp it describes is an arrival interval's;
+a timed one (SCALE2b's `ts`) counts as itself. The file's bytes are the relay's version, so the correction waited for
+a deploy; this is one.
+
+**Measured** (`tools/relayPoseBench.mjs`, `N=50,100,200,256 POSES=4000`: the real Room over the pins' fake object,
+counting sockets that parse nothing, every hello a real token, one moving pose a socket a round; the bench copied into a
+worktree of the base, `e40f6dbb`, and the two run one after the other, three times each, the frames sent identical - at
+the default POSES=3000 the 50's is 36.2, a round fewer):
+
+| in one map pixel | us a moving pose, base (3 runs) | after (3 runs) | median | frames sent a pose (both) |
+|---|---|---|---|---|
+| 50 | 31.5 / 36.6 / 41.0 | 21.6 / 26.8 / 36.0 | 36.6 -> 26.8 | 36.3 |
+| 100 | 56.6 / 52.4 / 59.4 | 32.0 / 33.7 / 37.8 | 56.6 -> 33.7 | 48.7 |
+| 200 | 80.2 / 81.9 / 95.9 | 43.3 / 47.2 / 47.9 | 81.9 -> 47.2 | 73.8 |
+| 256 | 106.3 / 89.9 / 95.7 | 45.6 / 51.2 / 50.3 | 95.7 -> 50.3 | 87.7 |
+
+Node's CPU, relative only: a real object's sends cost what the runtime's sockets cost, which this does not measure. The
+method of its own carries most of the saving, and the walk's two lines add to it once the method is optimized (AUDIT
+PERF-RELAY1, each half alone, three alternating runs' medians, us a moving pose: at 200 the base 76.8, the method alone
+50.8, the walk's lines alone 76.8, both 39.0; at 256 109.5, 65.2, 85.5 and 39.0 - in the interpreter the copy and the
+per-listener pixel cost nothing it could see). PERF-NEXT's prototype measured 108.5 -> 39.3 at 200 with the arm
+tightened further; this changes two of its lines.
+
+**Pins.** `test/perfrelay1.test.js` (3): inRangeOf answers inRange over every key kind and pose shape (absent, empty,
+NaN, infinite, a pixel edge, either side of zero); over a room of 60 past POSE_FAN_MAX, with listeners out of range and
+listeners walking the range's edge and an id-less socket with a pose, every moving pose reaches exactly the listeners
+`poseFan` names over those inRange hears, and a keepalive exactly everyone in range; `_poseFrame`'s bytecode is under
+the ceiling and `_message`'s over it (a fold back leaves no `_poseFrame` to print). `tools/mutants/perfrelay1.json`:
+8 mutants, 8 dead. `test/relayversion.test.js` carries world184's law; PIN MOVED: the files that pin RELAY_VERSION (35, 37 at
+the merge of main),
+`disc7`'s list of versions, `soc1.json`'s S38 record, and CHAT1's pin on the arm's order (`test/chat1.test.js`, read
+off `_poseFrame` now, with the dispatch pinned beside it). Re-aimed by content, the arm one indent shallower, all dead:
+ARENA4-STANDS-POSE-NOBODY, AUDIT1003b-R4-POSES-TO-ALL, AUDIT-SEATS-R2-gate-not-first, AUDIT-SEATS-T2-eye-fanned,
+HOTFIX1003f-STRANGER-POSE-FANNED, PVPREF-relay-step-unjudged, SEAT1b-relay-a-channel-ticks.
+
+### AUDIT PERF-RELAY1 (2026-10-09)
+
+Mac's "audit everything", over this change: a cold adversarial reader of a frozen snapshot (4b6a53dd), told to reproduce
+every finding. No HIGH or MEDIUM. The move is the arm's (a scope analysis: the arm read `ws`, `a` and `m` of `_message`
+alone, wrote none; nothing in `_message` runs after it, no try or finally holds it, and `webSocketMessage` awaits the
+method's promise before `_reap()` as it awaited the arm); the walk in place reads only, every await before it, every send
+after it; `inRangeOf` against `inRange` over 300,000 fuzzed cases (NaN, both infinities, -0, 1e308, strings, arrays, a
+missing axis, odd keys): no difference, the throws included. 27 of 27 existing mutant records inside `_poseFrame` dead,
+perfrelay1's 8, the 7 re-aimed and S38; `--trace-opt` compiles `_poseFrame` by TurboFan and never `_message`. Its bench,
+five alternating runs: 38.6 -> 27.4 us at 50, 57.1 -> 31.7 at 100, 87.4 -> 38.9 at 200, 107.0 -> 43.3 at 256.
+
+| # | Finding | Verdict |
+|---|---|---|
+| L1 | The bytecode pin imported the relay by a path relative to the directory the suite ran from: from `test/` it failed | FIXED: by its URL; passes from anywhere |
+| L2 | The pin measured the first function the filter printed, and failed on a better relay (`_message` under the ceiling) | FIXED: exactly one `_poseFrame` in the graph, under the ceiling and an eighth of it; `_message`'s size said, not pinned |
+| L3 | The 50's frames sent, 36.3, reproduced as 36.2 | The bench's parameters: 36.3 at POSES=4000 (the record's), 36.2 at the default 3,000 - the record names them now |
+| L4 | The record credited the saving to the walk's two lines; the method of its own carries most of it | FIXED: above, with the audit's halves |
+| L5 | PERF-NEXT 15's note and `_poseFrame`'s doc said the arm's every line was its own (two changed); the Testing row's "an eighth" (under one); the bench's crowds and the base's copy unsaid | FIXED: the doc (re-hashed in place, undeployed), the note, the row, the parameters |
+
