@@ -34,6 +34,14 @@ keeps them in the save and fills them back over the hours. Read off the
 assembly (ilspycmd's C# and `vendor/snowfall/il/DynamicSnow.il.txt`) and its
 one shader's DXBC (`vendor/snowfall/shaders/DynamicSnow.glsl`):
 
+SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/Field-Bugs-2026-10-09.md`) - two departures from the mod. Its
+"outside the desert" asks the climate type alone, so under Vanilla Enhanced's Snowless Swamps and Jungles it laid its
+snow over the add-on's green swamp ground, bare only on the roads its own 403 masks leave (DFU's two mods clash the
+same way). A climate whose winter set the add-on decides is the desert's case now: no tier stands while the player is
+in it, and its tiles are bare from a neighbour (`scenes/snowfallHost.js`, through `systems/dfmodTextures.js`
+winterGroundSnowless). And the mod counts ground with no mask as snowed, so standing in a snowy climate it laid snow
+over a desert pixel next door; a desert's tile is bare now.
+
 | type | what it does |
 |---|---|
 | `DynamicSnowMod` | the mod: its settings (eleven sections, ReadSettings' clamps), the session (BeginSession / CompleteSession round a load), the save record (`DynamicSnowSaveData`), the console's `snow_status` |
