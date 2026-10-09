@@ -10,6 +10,9 @@
 //   cold - closed: the same brass, darker and with no light of its own
 //   red  - refused for good (SD-ONELIFE): a dull red crack across the leaves and the blocks, alight in RED
 //
+// and once more as `plate` (SD-LOOK S6): the lit with the Return's hand-plate alight - the plate a draw of its own, its
+// texRemap swapping to it while the activation ray finds the Return, which teaches the press.
+//
 // Records in the realm's pseudo-archive (world/sdRealm.js SD_REALM_ARCHIVE), after the realm's own (31, 32). Pure. Not a
 // DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_RAMP, SD_LIGHT } from './sdLook.js';
@@ -17,6 +20,9 @@ import { image, putTexel, texelAt, blendRgb, scale, ramp, step, bevel, rivet, rn
 import { SD_GLYPHS, SD_HOUR_NUMERALS } from './sdSkyArt.js';
 
 export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 35 });
+/** SD-LOOK S6: the lit atlas with the Return's hand-plate alight - its hand in moon-white (a plate's draw swaps to it by
+ *  its texRemap while the activation ray finds the Return). */
+export const SD_RIFT_PLATE_RECORD = 36;
 /** The atlas's side and its cells: [x, y, w, h] texels, y from the image's first row. */
 export const SD_RIFT_ATLAS = Object.freeze({
   size: 128,
@@ -30,7 +36,28 @@ export const SD_RIFT_ATLAS = Object.freeze({
   silver: Object.freeze([112, 96, 16, 16]),
   dial: Object.freeze([96, 112, 16, 16]),
   stone: Object.freeze([0, 112, 32, 16]),
+  hand: Object.freeze([112, 112, 16, 16]),
 });
+/** SD-LOOK S6: the hand-plate's hand, palm out, fingers up (its cell's rows, '#' the hand). */
+const HAND_MASK = Object.freeze([
+  '................',
+  '................',
+  '.......#........',
+  '.....#.#.#......',
+  '.....#.#.#.#....',
+  '.....#.#.#.#....',
+  '.....#.#.#.#....',
+  '.....#######....',
+  '..##.#######....',
+  '...##########...',
+  '....#########...',
+  '.....#######....',
+  '.....#######....',
+  '......#####.....',
+  '................',
+  '................',
+]);
+const inHand = (x, y) => HAND_MASK[y]?.[x] === '#';
 
 const { brass: Br, verdigris: Vg, pale: Pa, silver: Si } = SD_RAMP;
 const gold = SD_LIGHT.gold.map((v) => Math.round(v * 255));
@@ -94,13 +121,17 @@ function paintLit(seed = 0x5d60) {
     const u = s * 2 - 1, v = t * 2 - 1, rr = Math.hypot(u, v), a = Math.atan2(u, v), h = ((a / (Math.PI * 2)) * 12 + 12) % 1;
     return rr > 0.85 ? step(Si, 1) : rr > 0.6 && (h < 0.12 || h > 0.88) ? step(Si, 0) : step(Si, 4);
   });
+  // SD-LOOK S6: the hand-plate - a bevelled silver plate, the hand engraved in it, its upper-left edges caught
+  fill(albedo, A.hand, (s, t, x, y) => (inHand(x, y) ? (!inHand(x - 1, y) || !inHand(x, y - 1) ? step(Si, 2) : step(Si, 1)) : ramp(Si, 0.55 + 0.25 * grain(A.hand[0] + x, A.hand[1] + y), A.hand[0] + x, A.hand[1] + y)));
+  bevel(albedo, A.hand[0], A.hand[1], 16, 16, step(Si, 4), step(Si, 0));
   // the stone the crater falls back to beside the cobbles (unused by a hall that reads its own)
   fill(albedo, A.stone, (s, t, x, y) => ramp(SD_RAMP.basalt, 0.3 + 0.4 * grain(A.stone[0] + x, A.stone[1] + y), A.stone[0] + x, A.stone[1] + y));
   quantize(albedo, paletteOf(Br, Vg, Pa, Si, SD_RAMP.basalt));
   return { albedo, emission };
 }
 
-/** The three records: lit, cold (darker brass, no light of its own) and red (a crack across, alight in RED). */
+/** The records: lit, cold (darker brass, no light of its own), red (a crack across, alight in RED), and the lit with the
+ *  hand-plate alight (SD-LOOK S6: its hand moon-white, its plate's rim glowing faintly). */
 export function sdRiftArt() {
   const lit = paintLit(), S = SD_RIFT_ATLAS.size, A = SD_RIFT_ATLAS;
   const cold = { albedo: image(S), emission: image(S) };
@@ -123,7 +154,14 @@ export function sdRiftArt() {
       putTexel(redRec.albedo, x, yy + 1, [20, 8, 6]);
     }
   }
+  const plate = { albedo: image(S), emission: image(S) }, H = A.hand, moon = SD_LIGHT.moon.map((v) => Math.round(v * 255));
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { putTexel(plate.albedo, x, y, texelAt(lit.albedo, x, y)); putTexel(plate.emission, x, y, texelAt(lit.emission, x, y)); }
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const rim = x === 0 || y === 0 || x === 15 || y === 15;
+    if (inHand(x, y)) { putTexel(plate.albedo, H[0] + x, H[1] + y, step(Si, 4)); putTexel(plate.emission, H[0] + x, H[1] + y, scale(moon, 0.9)); }
+    else if (rim) putTexel(plate.emission, H[0] + x, H[1] + y, scale(moon, 0.3));
+  }
   /** @type {Array<[number, { albedo: import('./sdPixelKit.js').Img, emission: import('./sdPixelKit.js').Img }]>} */
-  const out = [[SD_RIFT_RECORD.lit, lit], [SD_RIFT_RECORD.cold, cold], [SD_RIFT_RECORD.red, redRec]];
+  const out = [[SD_RIFT_RECORD.lit, lit], [SD_RIFT_RECORD.cold, cold], [SD_RIFT_RECORD.red, redRec], [SD_RIFT_PLATE_RECORD, plate]];
   return out;
 }

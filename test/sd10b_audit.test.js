@@ -299,13 +299,13 @@ test('AUDIT SD NOTHING MADE A FRAME FOR NOTHING: the Rift\'s and the Return\'s b
   end.frame([50, 0, 50]);
   assert.ok(endDraws.length === n && endDraws.every((d, i) => d.object.matrix === matrices[i]), 'the same draws and their one matrix each, frame after frame');
   end.returnOut();
-  assert.equal(endDraws.length, n - 2, 'the Return\'s arch and hand gone out of them');
+  assert.equal(endDraws.length, n - 3, 'the Return\'s arch, hand and hand-plate gone out of them');   // PIN MOVED (SD-LOOK S6): its hand-plate
   end.clear();
   assert.deepEqual(endDraws, [], 'none once cleared');
   assert.equal(r.freed.length, r.made.length, 'every mesh it made, freed');
   const home = createSdEnd({ renderer: r }), alone = [];
   home.standReturn([1, 0, 1], Infinity, { dynamicDraws: alone });
-  assert.equal(alone.length, 2, 'the way home, stood alone');
+  assert.equal(alone.length, 3, 'the way home, stood alone (its arch, hand and hand-plate - SD-LOOK S6, PIN MOVED)');
   // the hall's hands
   const o = orreryOf(1);
   const renderer = { createMesh: (m) => ({ m }), destroyMesh: () => {}, uploadTexture: () => {}, uploadEmissionTexture: () => {} };

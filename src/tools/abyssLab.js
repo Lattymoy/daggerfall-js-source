@@ -16,6 +16,7 @@
 //                    the arena's floor and the sky read it (render/sdArenaGlow.js), from a made fight state
 //   ?veil=in|back|home|cast&vp=closing|shut|opening&vs=<seconds into it>&vshut=<seconds it stood shut>&vx=&vy=  the
 //                    Hour's veil over the frame (render/sdVeil.js), still at that moment; &reduce its reduced motion
+//   ?plate           the Returns' hand-plates alight, as when the activation ray finds them (SD-LOOK S6)
 // `window.__frame` counts drawn frames (the probes frame-sync on it - bible/Home.md's Process); `window.__lab` moves the
 // camera and the clock from a probe.
 import { Renderer, WORLD_FRAME, INTERIOR_CLEAR } from '../render/renderer.js';
@@ -36,7 +37,7 @@ import { faces } from '../world/gateModel.js';
 import { createSdHall } from '../scenes/sdHall.js';
 import { createSdSteps } from '../scenes/sdSteps.js';
 import { createSdRemnant } from '../scenes/sdRemnant.js';
-import { createSdEnd } from '../scenes/sdEnd.js';
+import { createSdEnd, SD_RETURN_KEY } from '../scenes/sdEnd.js';
 import { sdRiftFace, SD_RIFT_OPEN_LOOK, SD_RIFT_NOT_YET, SD_RIFT_CLOSED, SD_RIFT_REFUSED } from '../world/sdDungeon.js';
 import { SdRiftRenderer } from '../render/sdRiftPass.js';
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/sdHalo.js';
@@ -281,6 +282,7 @@ function frame(now) {
     renderer.setLighting(new Float32Array(dungeonAmbient(lane, DUNGEON_AMBIENT)), 0);
     applyFog(renderer, dungeonFog(lane, DUNGEON_FOG));
     // a Hollow has no fires (the Hour is cold): the Rift's light alone - ?torches stands the made room's four
+    if (params.has('plate')) hollowEnd.hoverName(SD_RETURN_KEY);
     hollowEnd.frame(null, cam.pos);
     const lit = [...(params.has('torches') ? TORCHES.map((t) => ({ x: t[0], y: t[1], z: t[2], range: 9, color: [1, 0.72, 0.42] })) : []), ...hollowEnd.lights()];
     const data = new Float32Array(Math.max(1, lit.length) * 4), colors = new Float32Array(Math.max(1, lit.length) * 3);
@@ -309,6 +311,7 @@ function frame(now) {
     hall.frame(dt, null, null);
     steps.ride(clock, dt, null, true);
     remnant.frame(dt, null);
+    if (params.has('plate')) wayBack.hoverName(SD_RETURN_KEY);
     wayBack.frame(null);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);
     renderer.drawMesh(realmMesh, identity(), null);

@@ -83,8 +83,8 @@
   {
     "name": "SD10-the-returns-words-in-the-hour",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };",
-    "new": "      if (key === SD_RETURN_KEY && ret) return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };",
+    "old": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: retTitle, subs: [retTo] }; }",
+    "new": "      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] }; }",
     "tests": [
       "test/sd10_collapse.test.js"
     ]

@@ -775,5 +775,59 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-plate-never-alight",
+    "file": "src/scenes/sdEnd.js",
+    "old": "if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return",
+    "new": "if (key === SD_RETURN_KEY && ret) { return",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-plate-alight-always",
+    "file": "src/scenes/sdEnd.js",
+    "old": "t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null",
+    "new": "PLATE_LIT",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-plate-record-all-alight",
+    "file": "src/world/sdRiftArt.js",
+    "old": "putTexel(plate.emission, x, y, texelAt(lit.emission, x, y)); }",
+    "new": "putTexel(plate.emission, x, y, moon); }",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-plate-cast",
+    "file": "src/scenes/sdEnd.js",
+    "old": "plate: standMesh(buildReturnPlate(), true)",
+    "new": "plate: standMesh(buildReturnPlate(), false)",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-plate-shown-while-it-assembles",
+    "file": "src/scenes/sdEnd.js",
+    "old": "ret.plate.hidden = !!ret.parts && k < 1;",
+    "new": "ret.plate.hidden = false;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+{
+    "name": "SD25-the-rift-cells-mirrored",
+    "file": "src/world/sdRiftModel.js",
+    "old": "(c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
+    "new": "1 - (c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

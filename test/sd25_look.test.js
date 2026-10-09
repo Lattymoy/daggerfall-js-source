@@ -785,3 +785,44 @@ test('SD-LOOK THE WAY HOME\'S BEACON (S6): while the way home assembles, the col
   const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(W, /sdHomeBeacon\(sdHomeAge\(\) - SD_HOME_RISE_MS, _sdBeacon\[0\], SD_RETURN_SIZE\.h \* SD_HOME_SCALE\)/, 'over the way home, from its top');
 });
+
+import { sdRiftArt, SD_RIFT_PLATE_RECORD, SD_RIFT_ATLAS, SD_RIFT_RECORD } from '../src/world/sdRiftArt.js';
+import { buildReturnPlate, SD_RETURN_PLATE } from '../src/world/sdRiftModel.js';
+import { SD_PLATE_HOLD_MS, SD_RETURN_KEY } from '../src/scenes/sdEnd.js';
+test('SD-LOOK THE HAND-PLATE (S6): a silver plate on the Return\'s sill, the hand engraved in it - before the opening, low, tilted back to one standing before it; its own record alight in its hand alone (moon-white), the plate a draw that swaps to it while the activation ray finds the Return (the namer asks each frame) and goes dark a frame\'s gap after; hidden while the way home assembles; nothing that casts; every cell of the Rift\'s and the Return\'s read at its own rows (mutants: never alight; alight always; the whole atlas alight; cast; the cells mirrored)', () => {
+  const art = new Map(sdRiftArt()), A = SD_RIFT_ATLAS, S = A.size, H = A.hand;
+  const litIn = (img, [x0, y0, w, h]) => { let n = 0; for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (img.colors[(y * S + x) * 4 + 2] > 0) n++; return n; };
+  assert.equal(litIn(art.get(SD_RIFT_RECORD.lit).emission, H), 0, 'dark on the lit record');
+  const plate = art.get(SD_RIFT_PLATE_RECORD).emission;
+  assert.ok(litIn(plate, H) > 40, 'its hand alight');
+  assert.equal(litIn(plate, [0, 0, S, S]) - litIn(plate, H), litIn(art.get(SD_RIFT_RECORD.lit).emission, [0, 0, S, S]), 'the rest the lit record\'s');
+  const m = buildReturnPlate(), ys = [], zs = [];
+  for (let i = 0; i < m.positions.length; i += 3) { ys.push(m.positions[i + 1]); zs.push(m.positions[i + 2]); }
+  assert.ok(Math.max(...ys) < 0.35 && Math.min(...ys) >= 0.08 - 1e-6, 'on the sill, low');
+  assert.ok(Math.max(...zs) < 0 && SD_RETURN_PLATE.tilt > 0.3, 'before the opening, tilted');
+  // its face samples the hand's own rows: the renderer uploads a picture's first row at v 0 (it once ran up from the
+  // last, and every cell of the Rift's and the Return's drew its mirror across the atlas)
+  const vs = []; for (let i = 1; i < 12; i += 2) vs.push(m.uvs[i]);
+  assert.ok(vs.every((v) => v >= H[1] / S - 1e-6 && v <= (H[1] + H[3]) / S + 1e-6), `the hand's rows (${vs})`);
+  for (let i = 0; i < 6; i++) assert.equal(m.uvs[i * 2 + 1], (m.positions[i * 3 + 1] > 0.2 ? H[1] : H[1] + H[3]) / S, 'its fingers up the tilt (the cell\'s first rows), its wrist at the lip');
+  let ms = 50_000;
+  const draws = [];
+  const end = createSdEnd({ renderer: { createMesh: (mm) => ({ m: mm }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms });
+  end.stand({ rift: { at: [0, 0, 0], size: 5 }, retAt: [6, 0, 0], dynamicDraws: draws });
+  const pd = draws.findLast((d) => d.gpu.m.positions.length === m.positions.length);   // (stood last - the jambs share its count)
+  assert.ok(pd && pd.noShadow === true, 'stood, casting nothing');
+  end.frame(null);
+  assert.equal(pd.texRemap, null, 'dark');
+  end.hoverName(SD_RETURN_KEY); end.frame(null);
+  assert.equal(pd.texRemap.get(`38151_${SD_RIFT_RECORD.lit}`), `38151_${SD_RIFT_PLATE_RECORD}`, 'alight while the ray finds it');
+  ms += SD_PLATE_HOLD_MS + 1; end.frame(null);
+  assert.equal(pd.texRemap, null, 'dark a frame\'s gap after');
+  // the way home's: hidden while it assembles
+  const d2 = [], e2 = createSdEnd({ renderer: { createMesh: (mm) => ({ m: mm }), destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {} }, now: () => ms });
+  e2.stand({ rift: { at: [0, 0, 0], size: 5 }, retAt: null, dynamicDraws: d2 });
+  e2.standReturn([6, 0, 0], 0, { dynamicDraws: d2 });
+  const p2 = d2.findLast((d) => d.gpu.m.positions.length === m.positions.length);
+  assert.equal(p2.hidden, true, 'hidden while it assembles');
+  ms += SD_HOME_RISE_MS + 1; e2.frame(null);
+  assert.equal(p2.hidden, false);
+});

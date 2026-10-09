@@ -31,8 +31,8 @@
 import { SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT, inSdPortal, SD_RIFT_OPEN_LOOK } from '../world/sdDungeon.js';
 import { startRiftBell, tollRiftBell, RIFT_BELL_SECONDS } from '../systems/sdRiftSound.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
-import { buildRiftStatic, buildRiftGear, buildHourRing, buildRiftStuds, irisModel, irisPositions, buildRiftShard, buildReturnModel, buildReturnHand, buildReturnParts, returnSpringAt, SD_RETURN_PARTS, returnDialAt, riftCentreY, SD_RIFT_PARTS, SD_RIFT_STUDS, SD_RETURN_ARCH } from '../world/sdRiftModel.js';
-import { sdRiftArt, SD_RIFT_RECORD } from '../world/sdRiftArt.js';
+import { buildRiftStatic, buildRiftGear, buildHourRing, buildRiftStuds, irisModel, irisPositions, buildRiftShard, buildReturnModel, buildReturnHand, buildReturnParts, buildReturnPlate, returnSpringAt, SD_RETURN_PARTS, returnDialAt, riftCentreY, SD_RIFT_PARTS, SD_RIFT_STUDS, SD_RETURN_ARCH } from '../world/sdRiftModel.js';
+import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_PLATE_RECORD } from '../world/sdRiftArt.js';
 import { SD_REALM_ARCHIVE, SD_REALM_BRASS_RECORD, SD_REALM_COBBLE_RECORD, SD_REALM_EDGE_RECORD } from '../world/sdRealm.js';
 import { realmArt } from '../world/sdRealmArt.js';
 import { hallGlowArt, SD_GLOW_COLORS, SD_HALL_GLOW_RECORD } from '../world/sdHallArt.js';
@@ -90,6 +90,9 @@ const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const NONE = Object.freeze([]);
 /** Draw records for a state: cold and red swap the lit atlas by a draw's texRemap. */
 const LIT_KEY = `${SD_REALM_ARCHIVE}_${SD_RIFT_RECORD.lit}`;
+/** SD-LOOK S6: the hand-plate alight, and how long after the ray last found the Return it stays so (ms - a frame's gap). */
+const PLATE_LIT = new Map([[LIT_KEY, `${SD_REALM_ARCHIVE}_${SD_RIFT_PLATE_RECORD}`]]);
+export const SD_PLATE_HOLD_MS = 150;
 const REMAP = Object.freeze({
   cold: new Map([[LIT_KEY, `${SD_REALM_ARCHIVE}_${SD_RIFT_RECORD.cold}`]]),
   red: new Map([[LIT_KEY, `${SD_REALM_ARCHIVE}_${SD_RIFT_RECORD.red}`]]),
@@ -201,12 +204,12 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     try { renderer?.destroyMesh?.(d.gpu); } catch { /* gone */ }
   };
 
-  /** The Return's arch and hand stood at `at`, turned by `yaw`. */
+  /** The Return's arch, hand and hand-plate stood at `at`, turned by `yaw`. */
   const standRet = (at, yaw, scale = 1, parts = false) => {
     const w = SD_RETURN_SIZE.w, h = SD_RETURN_SIZE.h;
     // SD-LOOK S6: the way home stands in its parts while it assembles (each turning, so none casts), the whole after
     const pm = parts ? buildReturnParts(w, h) : null;
-    const r = { at: [...at], yaw, scale, parts: pm ? SD_RETURN_PARTS.map((n) => standMesh(pm[n], true)) : null, arch: standMesh(buildReturnModel(w, h), false), hand: standMesh(buildReturnHand(), true), base: new Float32Array(16), window: new Float32Array(16), n: new Float64Array([0, yaw, 0]), outAt: -Infinity };
+    const r = { at: [...at], yaw, scale, parts: pm ? SD_RETURN_PARTS.map((n) => standMesh(pm[n], true)) : null, arch: standMesh(buildReturnModel(w, h), false), hand: standMesh(buildReturnHand(), true), plate: standMesh(buildReturnPlate(), true), hoverAt: -Infinity, base: new Float32Array(16), window: new Float32Array(16), n: new Float64Array([0, yaw, 0]), outAt: -Infinity };
     setT(_t, at[0], at[1], at[2]); multiply(_t, setRy(_r, yaw), r.base);
     return r;
   };
@@ -288,7 +291,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     },
     /** The Return goes out (the boss fell) - for good: it never stands again in this dungeon. Its press target drops at
      *  once (the law is never kept waiting on a picture). */
-    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },
+    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },
     /** SD-LOOK: what the hall sees happen - 'refused' (a press it would not take: the ring jerks back a tooth, the window
      *  clouds to ember) or 'step' (one went through: the window ripples from its heart). */
     pulse(kind) {
@@ -325,7 +328,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     /** The plaque's words for either - a namer is handed every key the ray can win. */
     hoverName(key) {
       if (key === SD_RIFT_KEY && rift) { const n = riftCount(); return { title: SD_END_TEXT.rift, subs: n ? [riftTo, n] : [riftTo] }; }   // AUDIT SD II (L6 F5): and how long its Hour stands
-      if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };   // SD10: the Hour's way home says its own
+      if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return { title: retTitle, subs: [retTo] }; }   // SD10: the Hour's way home says its own; SD-LOOK S6: its hand-plate lights
       return null;
     },
     /** A press on either, handed to the host as a step is. True when it was one of these. */
@@ -481,6 +484,8 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     if (sc !== 1) { ret.base[0] *= sc; ret.base[2] *= sc; ret.base[5] = sc; ret.base[8] *= sc; ret.base[10] *= sc; }
     if (ret.arch) { ret.arch.object.matrix.set(ret.base); ret.arch.hidden = !!ret.parts && k < 1; }
     if (ret.parts) assemble(k);
+    // SD-LOOK S6: the hand-plate on its sill, alight while the activation ray finds it (the namer asks each frame it does)
+    if (ret.plate) { ret.plate.object.matrix.set(ret.base); ret.plate.hidden = !!ret.parts && k < 1; ret.plate.texRemap = t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null; }
     // the keystone's hand: a tick FORWARD each second - here, time runs on
     if (ret.hand) {
       ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1];   // SD-LOOK S6: with its clock, once it lands

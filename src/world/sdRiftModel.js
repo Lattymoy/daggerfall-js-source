@@ -49,9 +49,10 @@ function tri(f, rec, a, b, c, ua, ub, uc, want) {
   else f.tri(rec, c, b, a, uc, ub, ua);
 }
 /** An atlas cell's uv at (s, t) across it (0..1 each way, t down the cell's rows) - the atlas's cells, world/sdRiftArt.js
- *  SD_RIFT_ATLAS. The renderer reads a picture's first row as its top (v 1 - world/sdHall.js's uprights), so v runs up
- *  from its last. */
-const cell = (name, s, t) => { const c = SD_RIFT_ATLAS[name]; return [(c[0] + s * c[2]) / SD_RIFT_ATLAS.size, 1 - (c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };
+ *  SD_RIFT_ATLAS. The renderer uploads a picture's first row at v 0 (no flip - render/renderer.js uploadTexture; the
+ *  realm's own uv, world/sdRealm.js), so v runs down the rows with t. SD-LOOK S6: it ran up from the last, which drew
+ *  every cell's mirror across the atlas - the Return's pale stone and its dial in the numerals' brass. */
+const cell = (name, s, t) => { const c = SD_RIFT_ATLAS[name]; return [(c[0] + s * c[2]) / SD_RIFT_ATLAS.size, (c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };
 /** A point of the ring's plane at radius r, angle a (clockwise from the top as its front sees it), depth z - about the
  *  ring's centre. */
 const ringPt = (r, a, z) => [Math.sin(a) * r, Math.cos(a) * r, z];
@@ -310,6 +311,23 @@ function emitReturn(w, h, into) {
 export function buildReturnHand() {
   const f = faces();
   quad(f, SD_RIFT_RECORD.lit, [-0.012, -0.015, 0], [0.012, -0.015, 0], [0.006, 0.11, 0], [-0.006, 0.11, 0], cell('silver', 0, 0), cell('silver', 1, 0), cell('silver', 1, 1), cell('silver', 0, 1), FRONT);
+  return packRealmFaces(f);
+}
+/** SD-LOOK S6: THE HAND-PLATE - a silver plate on the sill's front, tilted back toward one standing before it, the hand
+ *  engraved in it (SD_RIFT_ATLAS.hand): its size (m), its tilt from the floor (rad), how thick. */
+export const SD_RETURN_PLATE = Object.freeze({ w: 0.3, d: 0.22, tilt: 0.7, thick: 0.025 });
+/** The hand-plate in the Return's frame (on the sill of a Return its front -z). */
+export function buildReturnPlate() {
+  const f = faces(), P = SD_RETURN_PLATE, A = SD_RETURN_ARCH, rec = SD_RIFT_RECORD.lit, hw = P.w / 2;
+  const z0 = -A.depth - 0.05, y0 = 0.08, c = Math.cos(P.tilt), s = Math.sin(P.tilt);
+  const lo = (x, k) => [x, y0 + k, z0], hi = (x, k) => [x, y0 + k + P.d * s, z0 + P.d * c];
+  const up = [0, c, -s];
+  quad(f, rec, lo(-hw, P.thick), lo(hw, P.thick), hi(hw, P.thick), hi(-hw, P.thick), cell('hand', 0, 1), cell('hand', 1, 1), cell('hand', 1, 0), cell('hand', 0, 0), up);
+  // its edges, silver: the front lip and the two sides (its back against the opening, its foot on the sill)
+  const edge = (a, b, n) => quad(f, rec, a(0), b(0), b(P.thick), a(P.thick), cell('silver', 0, 0.9), cell('silver', 1, 0.9), cell('silver', 1, 1), cell('silver', 0, 1), n);
+  edge((k) => lo(-hw, k), (k) => lo(hw, k), FRONT);
+  edge((k) => lo(-hw, k), (k) => hi(-hw, k), [-1, 0, 0]);
+  edge((k) => lo(hw, k), (k) => hi(hw, k), [1, 0, 0]);
   return packRealmFaces(f);
 }
 /** Where the keystone's dial stands on the Return of height h (its own frame). */

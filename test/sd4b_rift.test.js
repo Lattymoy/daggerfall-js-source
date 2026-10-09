@@ -13,7 +13,7 @@ import {
   SD_RIFT_SIZE_M, SD_RIFT_MIN_M, SD_RIFT_AIR_M, SD_RETURN_GAP_M, SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT, SD_RIFT_TOP,
 } from '../src/world/sdDungeon.js';
 import { createSdEnd, ensureSdEndArt, SD_RIFT_KEY, SD_RETURN_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
-import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_ATLAS } from '../src/world/sdRiftArt.js';   // SD-LOOK: the astrolabe's art (its billboard frames retired)
+import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_ATLAS, SD_RIFT_PLATE_RECORD } from '../src/world/sdRiftArt.js';   // SD-LOOK: the astrolabe's art (its billboard frames retired)
 import { riftCentreY } from '../src/world/sdRiftModel.js';
 import { SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
 import { buildRiftBell, startRiftBell, RIFT_BELL_KEY, RIFT_BELL_RATE, RIFT_BELL_SECONDS, RIFT_BELL_RMS, RIFT_BELL_RECORDS, RIFT_BELL_LOWPASS_HZ, RIFT_BELL_RANGE } from '../src/systems/sdRiftSound.js';
@@ -141,7 +141,8 @@ test('SD4b the Rift\'s word: not yet found - "will not take you yet"; found - th
 
 test('SD4b the art - SD-LOOK (PIN MOVED: the billboard frames retired for the astrolabe): one atlas painted three times - lit (its numerals\' bevels and the blocks\' gap lips alight in gold), cold (darker, no light of its own) and red (a crack across, alight) - every numeral face its glyph; uploaded once a renderer, as albedo and as its own emission, with the realm\'s records it wears beside it (a Hollow is no realm) (mutants: the cold record alight)', () => {
   const art = sdRiftArt(), S = SD_RIFT_ATLAS.size;
-  assert.deepEqual(art.map(([r]) => r), [SD_RIFT_RECORD.lit, SD_RIFT_RECORD.cold, SD_RIFT_RECORD.red]);
+  // PIN MOVED (SD-LOOK S6): and once more, the lit with the Return's hand-plate alight
+  assert.deepEqual(art.map(([r]) => r), [SD_RIFT_RECORD.lit, SD_RIFT_RECORD.cold, SD_RIFT_RECORD.red, SD_RIFT_PLATE_RECORD]);
   for (const [, a] of art) assert.ok(a.albedo.width === S && a.emission.width === S && a.albedo.colors.length === S * S * 4);
   const lit = (img, [x0, y0, w, h]) => { let n = 0; for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (img.colors[(y * S + x) * 4] > 0) n++; return n; };
   for (let i = 0; i < 12; i++) assert.ok(lit(art[0][1].emission, SD_RIFT_ATLAS[`n${i}`]) > 20, `numeral ${i}: its glyph alight`);
@@ -152,8 +153,8 @@ test('SD4b the art - SD-LOOK (PIN MOVED: the billboard frames retired for the as
   const up = [], em = [];
   const rr = { uploadTexture: (a, k) => up.push(`${a}/${k}`), uploadEmissionTexture: (a, k, c32, o) => em.push(`${a}/${k}/${o?.white}`) };
   ensureSdEndArt(rr); ensureSdEndArt(rr);
-  assert.equal(up.length, 7, 'its three records and the four of the realm\'s it wears');
-  assert.equal(em.length, 7);
+  assert.equal(up.length, 8, 'its four records and the four of the realm\'s it wears');   // PIN MOVED (SD-LOOK S6): the hand-plate's
+  assert.equal(em.length, 8);
   assert.ok(up.every((u) => u.startsWith(`${SD_REALM_ARCHIVE}/`)) && em.every((e) => e.endsWith('/true')));
 });
 
@@ -259,7 +260,7 @@ test('SD4b the step: walking INTO either hands it to the host once - standing in
   assert.deepEqual(got.slice(-2), ['rift', 'return']);
   // the Return goes out
   end.returnOut();
-  assert.equal(r.freed.length, 2, 'its arch and its hand');
+  assert.equal(r.freed.length, 3, 'its arch, its hand and its hand-plate');   // PIN MOVED (SD-LOOK S6): its hand-plate
   assert.deepEqual(end.targets().map((x) => x.key), [SD_RIFT_KEY]);
   assert.equal(end.hoverName(SD_RETURN_KEY), null);
   assert.equal(end.press(SD_RETURN_KEY), false);

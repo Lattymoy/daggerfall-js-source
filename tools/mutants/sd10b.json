@@ -164,7 +164,7 @@
   {
     "name": "AUDIT-SD-C6-a-gone-one-listed",
     "file": "src/scenes/sdEnd.js",
-    "old": "dropMesh(ret.arch); dropMesh(ret.hand); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null;",
+    "old": "dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null;",
     "new": "ret = null;",
     "tests": [
       "test/sd10b_audit.test.js"
