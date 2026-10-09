@@ -156,4 +156,74 @@ piece's own, one a set socket, in the sockets' order, each exactly its gem's lin
 
 ## 9. What shipped
 
-Written as each slice lands.
+The three slices landed together (2026-10-09), in one pull request.
+
+### GEM1 - the socket list, a weapon's size, law 6
+
+`src/systems/lootRarity.js`: `socketMax` (a short blade 1, a one-handed weapon 2, a two-handed one and the Thunderlock
+3 - `WEAPON_SOCKETS`, off DFU's `WEAPON_HANDS`; armour and a jewel 1; nothing else) and `socketCap` (a Rare's or a
+Legendary's size, a Magic weapon's 1, none else); `socketsOf` (the list, or LOOT20's string as a list of one) and the
+one writer under it, which drops the string; `hasSocket`, `socketGem(item, at)`, `socketGems`, `emptySockets`;
+`socketPass` (LOOT20's, unchanged in its odds, writing the list) and the new `weaponSocketPass`
+(`WEAPON_SOCKET_PER_MILLE` 120 / 250 / 400, `MORE_SOCKET_PER_MILLE` 300 / 450, stopping at the first miss, a chance of
+none costing no draw), run by the host door after the late finds and by a body's kit (`systems/foeLootCap.js`
+rollCorpseKit) after LOOT20's; `setGem(item, gem, at)` and `unsetGem(item, at)` lay the gems' lines after the piece's own
+in the sockets' order; `validSocket` reads the list or the string (never both), never past `socketCap`, the lines one a
+set socket in order; `socketLine` says one or many empty. LAW 6: `gemPieceCap` (a kind's Rare top) and `readLines` - a
+piece's lines with each gem's held to what is left of its kind's cap - read by `affixFold`, `affixWeaponDamage`,
+`lineComparison`, `resistSplit` and `systems/lootPowers.js` linesOf; `gemCapLine` says it on the card. The Exalted's own
+line is the last before the gems' (`reforgeableLines`, which assumed one gem line). `src/systems/itemFields.js` declares
+`sockets`; `src/systems/itemLaw.js` and `src/systems/gilded.js` read it as they read the string.
+
+`src/systems/reforge.js`: setting is FREE (`SET_GEM_PRICE` and its 'gold' refusal retired) and a worn piece is filled
+where it is worn - `socketWork` no longer refuses 'worn', and the press runs the wearer's folds again
+(`notifyEquipChange`); every press takes the socket's index; `EXTRACT_PRICE` (50 / 100 / 200 / 400 / 800),
+`extractGemRefusal` and `extractGemPiece` - the gold paid, the gem minted whole into the pack, the socket empty.
+`src/ui/reforgeWindow.js`'s Sockets page rows each socket - a set one's Extract and Unset, the gems offered into the
+first empty - and `src/scenes/worldModes.js` hands `extractGem` beside the two it handed.
+
+Measured through the real door over 40,000 seeded level-18 bodies (a boss source): a Magic weapon socketed 12.2 times in
+a hundred and never twice; a Rare 36.6 (1.3 with three, over every size); a Legendary 58.5 (5.0 with three).
+
+### GEM2 - the graded gems, the world's find, the bosses' gems
+
+`src/systems/lootRarity.js`: `GEM_GRADES`, `GEM_ROW_GRADES`, `GEM_GRADE_TEMPLATE_BASE` (1900) and
+`GEM_GRADE_TEMPLATES`, `gemId`, `ALL_GEM_IDS` (DFU's eight, then the thirty-two), `gemKind`, `gemGrade`, `GEM_NAMES` for
+every id, `SOCKET_VALUES` over all of them, `GEM_GRADE_LINES` (the one table - LOOT20's `GEM_LINES` is its plain column,
+derived), `gemKindOf` for the graded rows, `gemTemplateOf`; and `registerGemFind`, the door's last draw. The new
+`src/systems/gems.js`: the thirty-two rows (`GEM_GRADE_ROWS` - the kind's weight, wear, points and art, the grade's
+price `GEM_GRADE_PRICE` and rarity, an ingredient), `mintGem`; `GEM_FIND` (30 + 5 a tier to 150, the ladder's
+`SOURCE_MULT` and `luckMult`), `GEM_GRADE_BANDS` and `GEM_BOSS_TIERS` (4), `rollGem` (two draws), `rollGemFind`
+(registered at import); `BOSS_GEMS` (the gate 1, the serpent 1 to a dealer, the Abyss 2) at `BOSS_GEM_SOURCE` (tier 21, a
+boss) through `bossGems`. Imported by `systems/worldTick.js`, `scenes/shared.js` and the headless `systems/itemLaw.js`
+(whose `CUSTOM_TEMPLATE_GROUPS` stands the rows in Gems). The three spoils rollers (`systems/gateSpoils.js`,
+`systems/serpentSpoils.js`, `systems/sdSpoils.js`) run LOOT20's and the weapons' socket passes over their pieces and
+then their gems, after their cards; their floor lists (`scenes/spoilsPool.js` spoilsList, serpentSpoilsList,
+sdSpoilsList) throw the gems after the card, each picture drawn after the card's.
+
+Measured: a tier-3 corpse finds a gem 46.9 times in a thousand over 20,000 (the law's 45); a level-18 boss body 150 (the cap), Flawless 60 and Perfect 40 in a hundred; the Warden's pieces socketed 1,012
+times in 6,000 (an Aetheric or Gilded piece never).
+
+### GEM3 - the wells
+
+The new `src/ui/socketWells.js`: `socketWells` (a round well a socket - an empty one sunk, a set one its gem's picture in
+its grade's ring, `GEM_GRADE_COLOURS` - pressable when handed `onWell`, the asked one marked), `socketChooser` (a press a
+held gem, each with the line it would give this piece) and `markSocketFrame` (a socketed piece's pips in the frame's
+top edge, filled for a set gem; a graded gem's own ring), with its own sheet (`SOCKET_WELLS_CSS`, one style tag, both
+skins). `src/ui/enhancedInventory.js`: the card's wells under the picture (`socketBlock`, live on the pack's own piece's
+detail card: an empty well opens the chooser, a set one asks first and its second press shatters), every frame's pips
+(`markItemFrame`), and a loose gem's "Set in..." (the pieces with an empty socket, a press each). The Test Room lays a
+Rare long bow with its three wells empty and four graded gems.
+
+### What moved
+
+The suites that counted a boss's floor or replayed a door's stream: a gem more on the Warden's, the Old Coil's (a
+dealer's) and the Remnant's floors (`wb5_gate_spoils`, `wb9f_gate_spoils`, `auditwb_spoils`, `set6_aetheric`,
+`serpent1_client`, `sd9e_spoils`, `cards9_sources`, `auditcards6_a` - the card the last draw BEFORE the gem arc's), the
+Test Room's count (`lr1_lootrarity`), the array fields (`auditworld4`, `rf5_itemfields`), and the seed comparisons
+that a socket's or a curse's draw now moves the gem find past (`loot16_curses`, `loot20_sockets`, `loot21_stones` -
+the stones the last draws before the arc's, its draws held off there). LOOT20's own pins moved with the list, the free
+setting, the worn piece and the extraction; its mutants were re-aimed by content (46 - the price and the worn refusal
+retired, the extraction's added in `gem1.json`).
+
+Pinned: `test/gem1_sockets.test.js` (8). `tools/mutants/gem1.json` (65, all dead).

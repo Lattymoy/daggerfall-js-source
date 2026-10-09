@@ -59,6 +59,7 @@ on:
       - "src/net/playClock.js"
       - "src/net/renown.js"
       - "src/net/npcChapterLaw.js"
+      - "src/systems/gems.js"
       - "src/systems/guildFactions.js"
       - "src/net/homeLaw.js"
       - "src/net/decorLaw.js"
