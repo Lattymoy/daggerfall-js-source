@@ -7,7 +7,8 @@
 // takes it on the path it takes a retail armour mesh: rebound onto the wearer's skeleton by its bones' names, drawn by
 // skinBatch. These pins stand it on retail's own skeleton (test/fixtures/mw/retailRig.mjs): the bind read off the Tri
 // Shadow and the scene measured against it; every NIF the shape a retail piece has; through the binder retail's
-// armour takes, the bind pose giving back Mac's scene exactly and retail's idle standing every piece on the bones it
+// armour takes, the bind pose giving back the baked files exactly (Mac's scene, the helms HELM_LIFT higher since
+// MW-STEEL5) and retail's idle standing every piece on the bones it
 // covers - the gauntlets on the hanging hands, where MW-STEEL2 stood them out at the shoulders and MW-STEEL3 over the
 // helm; posed, each piece riding its bones; the first person's gauntlets by the arm's own bone names; and the rig's
 // law, the skin writer and the runtime's having nothing left of MW-STEEL1-3's solve.
@@ -35,7 +36,7 @@ const sourceText = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf
 const STEEL = ARMOR_MATERIAL.Steel;
 const SET = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templateIndex, material: STEEL }));
 const BIND = plateBind(RETAIL_SKELETON_BYTES);
-const trees = { open: readFbx(raw(SOURCE.open)), closed: readFbx(raw(SOURCE.closed)) };
+const trees = { set: readFbx(raw(SOURCE.set)), openHelm: readFbx(raw(SOURCE.openHelm)) };
 const sceneMeshes = (id) => { const p = PIECES.find((q) => q.id === id); return p.shapes.map((s) => bakeObject(trees[p.file], s.object, s.box)); };
 const nifOf = (id) => parseNif(new Uint8Array(raw(meshFile(id))));
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -182,14 +183,15 @@ test('MW-STEEL4: every piece ships skinned, the shape retail\'s armour has - a s
 
 // ── through the binder ──────────────────────────────────────────────────────────────────────────────────────────────
 
-test('MW-STEEL4: through the binder retail\'s armour takes - every piece a skinned part on retail\'s skeleton, no note, and in the bind pose each vertex stands exactly where Mac\'s scene put it', async () => {
+test('MW-STEEL4: through the binder retail\'s armour takes - every piece a skinned part on retail\'s skeleton, no note, and in the bind pose each vertex stands exactly where its file puts it - Mac\'s scene, the helms HELM_LIFT higher (MW-STEEL5)', async () => {
   for (const helmStyle of ['closed', 'open']) {
     const { asm, worn } = await wear({ helmStyle });
     assert.ok(asm.ok, asm.error);
     assert.deepEqual(asm.notes, [], 'nothing skipped, nothing unmatched');
     for (const a of worn.adds) {
       const drawn = zone(asm, a.slot);
-      assert.equal(drawn.length, a.partName === 'hair' && helmStyle === 'closed' ? 2 : 1, `${a.slot} is drawn`);
+      // a shape per painting - the closed helm's shell and visor, the cuirass's breastplate and waist band (MW-STEEL5)
+      assert.equal(drawn.length, PIECES.find((p) => meshFile(p.id).endsWith(`/${a.model}`)).shapes.length, `${a.slot} is drawn`);
       assert.ok(drawn.every((p) => p.kind === 'skinned'), `${a.slot}: a skinned part, drawn by skinBatch`);
     }
     const { tracks, sampleTrack, frame } = bindPoseTracks(retailSkeleton());
