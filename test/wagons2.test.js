@@ -24,7 +24,7 @@ import { caravanRoomEntry, caravanRoomRecords, caravanRoomPictures, paintCaravan
 import { buildInteriorContext } from '../src/scenes/interiorContext.js';
 import { interiorLightProperties } from '../src/world/interiorLights.js';
 import { billboardSize } from '../src/world/rmbFlats.js';
-import { createHorseCartPool } from '../src/scenes/horseCartPool.js';
+import { createHorseCartPool, PUPPET_SEAT_REACH } from '../src/scenes/horseCartPool.js';
 import { hccWireRecord, validHccRecord, HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { validParkData, PARK_WAGON_LOOK_MAX } from '../src/net/wire.js';
 import { stableProviderFor } from '../src/ui/holdingsPages.js';
@@ -391,6 +391,20 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   assert.deepEqual([list[0].shown.deckKey, list[0].shown.n], ['wagon::1', 'Bob'], 'its seat for its pace; the rest of its pose kept');
   assert.equal(theirs.shown.x, 0, 'the online list\'s own entry untouched');
   assert.deepEqual(list[1].shown, { x: 5, y: 0, z: 5 }, 'nobody else moved');
+  // a peer's companion seated in their grown wagon: taken for seated by where it stands, drawn on the grown seat
+  const peerPool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'cart', bakedWagon: async (k) => bakeOf(k), peerAnchor: () => [40, 1, 47.1] });
+  peerPool.partsOf('openWagon'); await flush();
+  peerPool.applyOwner('ann', { w: [HCC_WIRE_KIND.Trailing, 40, 1, 40, 0, 0, 0, 1, 0, 0], wk: 1 }, (q) => q, 0);
+  peerPool.frame(1 / 60, [0, 0, 0]);
+  peerPool.draw(r, null, { selfGrow: 8, grow: () => 8 });
+  const k0 = peerPool.peerSeat('ann', 0);
+  assert.ok(k0, 'their seat here');
+  const sd = peerPool.puppetSeatDrawn('ann', [k0.feet[0] + 0.3, k0.feet[1], k0.feet[2]]);
+  assert.ok(sd && sd.g === 8 && sd.feet.every((v, k) => near(v, peerPool.seatDrawn('ann', 0).feet[k])), 'its seat as drawn');
+  assert.equal(peerPool.puppetSeatDrawn('ann', [k0.feet[0], k0.feet[1], k0.feet[2] - 4]), null, 'standing off every seat (behind the wagon): where it stands');
+  assert.equal(PUPPET_SEAT_REACH, 0.75);
+  peerPool.draw(r, null);
+  assert.equal(peerPool.puppetSeatDrawn('ann', k0.feet), null, 'off the Overworld: where it stands');
   pool.draw(r, null);
   assert.equal(pool.seatDrawn('', 1).g, 1, 'off the Overworld: the true seat');
   // my body, riding in another's grown wagon
@@ -407,7 +421,9 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   assert.equal(drawn, null, 'got down: at its capsule');
   // a companion's sprite (scenes/exteriorFoes.js batches) and the crew layer's hand-off
   const ef = src('scenes/exteriorFoes.js');
-  assert.match(ef, /const _sd = f\.ai\?\.seatDraw\?\.\(\) \?\? null, _sg = _sd\?\.g > 1 \? _sd\.g : 1;/);
+  const w0 = () => src('scenes/world.js');
+  assert.match(ef, /const _sd = f\.ai\?\.seatDraw\?\.\(\) \?\? \(f\.puppet && _puppetSeatDraw \? _puppetSeatDraw\(f\) : null\), _sg = _sd\?\.g > 1 \? _sd\.g : 1;/);
+  assert.match(w0(), /exteriorFoes\.setPuppetSeatDraw\(\(f\) => \(hccOn\(\) \? hcc\.puppetSeatDrawn\(f\.puppet, f\.ai\?\.feet\) : null\)\);/);
   assert.match(ef, /f\.batch\.size = \{ w: \(o\.flip \? -sz\.w : sz\.w\) \* _sg, h: sz\.h \* _sg \};/);
   assert.match(ef, /\} else f\.batch\.origin = _sg > 1 \? _sd\.feet : f\.ai\.feet;/);
   const w = src('scenes/world.js');

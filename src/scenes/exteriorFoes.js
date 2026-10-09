@@ -316,6 +316,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horseCartWire.js)
   let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
   let _onRide = null;           // WAGONS1: (from, word | null) - a peer's word on a seat in a wagon's back (systems/wagonSeats.js `wr`)
+  let _puppetSeatDraw = null;   // WAGONS2: (puppet) -> { feet, g } | null - where a peer's companion seated in their wagon's back is DRAWN
   let _onRaids = null;          // RAID2: (from, word, nowMs) - a peer's word on its raids (systems/raidingParties.js raidPeerWord)
   let _onCsa = null;            // CSA-J: (from, record | null, nowMs) - a peer's boats off the same frame (systems/comeSailAwayWire.js)
   let _onCsaClear = null;       // CSA-J: called wherever the teams' clear runs - the peers' boats go with the puppets
@@ -2026,7 +2027,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const sz = szG === 1 ? sz0 : { w: sz0.w * szG, h: sz0.h * szG };
       // WAGONS2: a companion seated in my wagon's back is DRAWN where the wagon is drawn - grown with it under the
       // Overworld (scenes/crewAshore.js ai.seatDraw, the pool's seatDrawn); its body stays on the seat itself
-      const _sd = f.ai?.seatDraw?.() ?? null, _sg = _sd?.g > 1 ? _sd.g : 1;
+      const _sd = f.ai?.seatDraw?.() ?? (f.puppet && _puppetSeatDraw ? _puppetSeatDraw(f) : null), _sg = _sd?.g > 1 ? _sd.g : 1;   // and a peer's, on their wagon as drawn here
       f.batch.record = rkey;
       f.batch.size = { w: (o.flip ? -sz.w : sz.w) * _sg, h: sz.h * _sg };
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
@@ -2339,6 +2340,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
   function setOnRide(fn) { _onRide = typeof fn === 'function' ? fn : null; }   // WAGONS1
+  function setPuppetSeatDraw(fn) { _puppetSeatDraw = typeof fn === 'function' ? fn : null; }   // WAGONS2
   function setOnBands(fn) { _onBands = typeof fn === 'function' ? fn : null; }   // TV7b
   function setOnSeaRaiders(fn) { _onSeaRaiders = typeof fn === 'function' ? fn : null; }   // OW6
   function setOnRaids(fn) { _onRaids = typeof fn === 'function' ? fn : null; }   // RAID2
@@ -3175,6 +3177,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setOnCsaAboard,   // CSA-K
     setOnNaval,   // NAV-G
     setOnRide,   // WAGONS1: the seats' word
+    setPuppetSeatDraw,   // WAGONS2: a peer's seated companion, drawn in their grown wagon
     setOnPortals,   // PORTAL1
     setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
 }

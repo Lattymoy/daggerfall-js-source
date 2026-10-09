@@ -222,5 +222,19 @@
     "old": "if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });",
     "new": "if (false) hcc.seatGlue(drawable, { toWire: campToWire });",
     "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-a-peers-companion-unseated",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (!at || Math.hypot(at.feet[0] - feet[0], at.feet[2] - feet[2]) > PUPPET_SEAT_REACH) continue;",
+    "new": "      if (!at || Math.hypot(at.feet[0] - feet[0], at.feet[2] - feet[2]) > 0) continue;",
+    "tests": ["test/wagons2.test.js"]
+  },
+  {
+    "name": "WAGONS2-a-peers-companion-grown-off-the-view",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      return drawn && drawn.g > 1 ? drawn : null;",
+    "new": "      return drawn;",
+    "tests": ["test/wagons2.test.js"]
   }
 ]

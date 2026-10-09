@@ -20225,6 +20225,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
+    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
     exteriorFoes.setOnSeaRaiders((from, sr) => seaRaidHear(from, sr));   // OW6: and their raider chases at sea, the same way
     exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());   // CSA-J: a peer's boats, off their foes frame past the room test, through validCsaRecord

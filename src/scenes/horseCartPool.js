@@ -94,6 +94,9 @@ const horseStillFile = (view) => `horse${view + 1}.png`;
 const horseWalkFile = (view, frame) => `Walk.${view}-${frame + 1}.png`;
 const WHEEL_AXIS = Object.freeze([1, 0, 0]);
 const STEER_AXIS = Object.freeze([0, 1, 0]);   // WAGONS2: the kingpin's
+/** WAGONS2: how near a seat a peer's companion stands to be taken for seated in it (m) - its owner's seat and this
+ *  client's copy of it part by the ease alone. */
+export const PUPPET_SEAT_REACH = 0.75;
 const ZERO3 = Object.freeze([0, 0, 0]);
 const HORSE_LOCAL_BOX = Object.freeze([
   HORSE_BOX_CENTER[0] - HORSE_BOX_SIZE[0] / 2, HORSE_BOX_CENTER[1] - HORSE_BOX_SIZE[1] / 2, HORSE_BOX_CENTER[2] - HORSE_BOX_SIZE[2] / 2,
@@ -595,6 +598,21 @@ export function createHorseCartPool({
     const off = quatRotate(f.rotation, local), fwd = quatRotate(f.rotation, [0, 0, 1]);
     return { feet: [f.at[0] + off[0], f.at[1] + off[1], f.at[2] + off[2]], yaw: Math.atan2(fwd[0], fwd[2]) + (seat.yaw * Math.PI) / 180, g: f.g };
   }
+  /** WAGONS2: A PEER'S COMPANION SEATED IN THEIR WAGON'S BACK, AS DRAWN HERE - the owner's stream stands it on a true
+   *  seat of their wagon (their crewAshore's), which is where this client's copy of that wagon has the seat too (its
+   *  ease aside): the seat its feet stand within PUPPET_SEAT_REACH of is its seat, and the seat as drawn (grown under the
+   *  Overworld) is where it is drawn - or null, not seated or not grown (it is drawn where it stands). */
+  function puppetSeatDrawn(owner, feet) {
+    const p = _peers.get(owner);
+    const n = p?.wagon && feet ? partsOf(p.wagon.model)?.seats?.length ?? 0 : 0;
+    for (let k = 0; k < n; k++) {
+      const at = peerSeat(owner, k);
+      if (!at || Math.hypot(at.feet[0] - feet[0], at.feet[2] - feet[2]) > PUPPET_SEAT_REACH) continue;
+      const drawn = seatDrawn(owner, k);
+      return drawn && drawn.g > 1 ? drawn : null;
+    }
+    return null;
+  }
   /** WAGONS2: THE OTHERS SEATED IN A WAGON'S BACK, DRAWN IN IT - comeSailAwayAboard.js glue's law for a wagon: each
    *  entry of `drawable` (online.drawable()'s, a fresh list - its entries replaced, never written) whose player a drawn
    *  wagon's word seats (mine - my own riders' book - or another owner's `ps`) stands on that seat as the wagon is
@@ -993,7 +1011,7 @@ export function createHorseCartPool({
     phys,
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount,
-    seatDrawn, seatGlue, drawnFrameOf,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
+    seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,
   };
 }
