@@ -9121,7 +9121,7 @@ export function createWorldModes(host) {
         gate: hit.gateArena ?? null,   // WB3b: the way home lands at the gate, not at a door
         arena: hit.arenaFloor ?? null,   // ARENA2: the floor's way out lands before the Herald
         arenaFrom: hit.arenaFrom ?? null,   // AUDIT PRE-MERGE 1003b C7: or, with no Herald streamed in, where it was entered from
-        sdHollow: hit.sdHollow ?? null,   // SD5a: out of the Hour - a death, its end - before the Hollow's door
+        sdHollow: hit.sdHollow ?? null,   // SD5a: out of the Hour - its end, the way home - before the Hollow's door (AUDIT SD IV F4: a death wakes by the death's own door, SD2d)
         // SD-LAND (2026-10-08, the Discord, out of an Abyss Dungeon: "suddenly I am flying"): where I stood outside as I
         // went in - the way out lands there when it finds no door to land before (a Hollow taken down at its end, its door
         // gone with it), as the arena's floor does (AUDIT PRE-MERGE 1003b C7) - never the dungeon's own frame read outside

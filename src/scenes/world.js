@@ -27129,7 +27129,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
     sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
     sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
-    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor),   // SD5a: out of the Hour - a death, its end - before the Hollow's door; SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
+    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor),   // SD5a: out of the Hour - its end, the way home - before the Hollow's door (AUDIT SD IV F4: a death wakes by the death's own door, SD2d); SD-SKY: in the scene's frame, as doorTargets hands every door (the list's own is its pixel's: the way out stood the player the streamer's vertical shift over the Hollow, in the sky)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not

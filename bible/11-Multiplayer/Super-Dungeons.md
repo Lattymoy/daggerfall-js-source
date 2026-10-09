@@ -1052,8 +1052,10 @@ dungeon host with a level made in code - never a fifth host.
   walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
   Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
 - **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
-  Hour as inside it), lands before the Hollow's door (the mode machine's landing reads `sdHollow`) - a death in the Hour
-  wakes under its veil with its own words, *"The Shattered Hour casts you out for good. You wake before the Hollow's
+  Hour as inside it), lands before the Hollow's door: the Hour's end by the mode machine's landing (`returnLanding`, which
+  reads `sdHollow`'s doors - `sdHollowDoors` - and `dungeonReturn.from` with none), a death by the death's own door, as
+  every dungeon death wakes (the start markers of the Hollow's pixel, `RandomStartMarker` - SD2d; AUDIT SD IV F4: this
+  line named the mode machine's landing for both) - a death in the Hour wakes under its veil with its own words, *"The Shattered Hour casts you out for good. You wake before the Hollow's
   door."* (SD11c: it woke with a plain dungeon's), and it is final (SD-ONELIFE, below). A room that refuses
   the player for good (the Hour full, or closed) casts them out the same way with the relay's own words, once.
 
