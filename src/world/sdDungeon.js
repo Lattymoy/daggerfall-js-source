@@ -199,8 +199,8 @@ export function sdRiftPlace(foot, probe) {
  * the one whose two rays reach farthest together (each asked to SD_RIFT_FACE_M, a miss counted that) is the hall's long
  * line - the first of a tie - and its face lies along it; unless a ray along the ring's own plane, at half its height, falls short of half
  * its size and its air (a pillar the chest rays did not see), when the next pair is taken. Answers the face's direction
- * [x, 0, z] - the same on every client (the law's rays, the law's order). The walk-in and the press do not move
- * (inSdPortal's cylinder and its box are round and square).
+ * [x, 0, z] - the same on every client (the law's rays, the law's order). The walk-in does not move (inSdPortal's
+ * cylinder is round); the press turns with it (scenes/sdEnd.js riftPress - AUDIT SD IV F33).
  * @param {number[]} at
  * @param {number} size
  * @param {SdProbe} probe

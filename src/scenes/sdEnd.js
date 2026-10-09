@@ -107,6 +107,19 @@ export function ensureSdEndArt(renderer) {
 
 /** A portal's activation box: `half` across either way of its axis, from its foot to `height` above it. */
 const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half], max: [at[0] + half, at[1] + height, at[2] + half] });
+/** AUDIT SD IV (F33): how far either side of its plane the Rift is pressed (m) - its ring and its claws as drawn. */
+export const SD_RIFT_PRESS_M = 0.35;
+/** AUDIT SD IV (F33): THE RIFT'S PRESS IS ITS RING - a box turned with it (`base`, the stand's), its gear's span across,
+ *  foot to top, SD_RIFT_PRESS_M either side of its plane, and the world box about that; no surface in the collider. Its
+ *  whole sweep's cube (half its size every way, its size high) took the presses at the bodies and the floor before it. */
+function riftPress(r) {
+  const R = r.size / 2, top = r.cy + R, D = SD_RIFT_PRESS_M, b = r.base;
+  const hx = Math.abs(b[0]) * R + Math.abs(b[8]) * D, hz = Math.abs(b[2]) * R + Math.abs(b[10]) * D;
+  return {
+    key: SD_RIFT_KEY, aabb: { min: [r.at[0] - hx, r.at[1], r.at[2] - hz], max: [r.at[0] + hx, r.at[1] + top, r.at[2] + hz] },
+    obb: { m: Float64Array.from(b), box: [-R, 0, -D, R, top, D] }, noSurface: true, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE,
+  };
+}
 
 // ── the stand's matrices: the foot, turned to face, up to the centre, turned about z - into scratch, nothing made ──────
 const _t = new Float32Array(16), _r = new Float32Array(16);
@@ -162,7 +175,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   let _targets = NONE;
   const retarget = () => {
     const out = [];
-    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
+    if (rift) out.push(riftPress(rift));
     if (ret) out.push({ key: SD_RETURN_KEY, aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
     _targets = out.length ? Object.freeze(out) : NONE;
   };

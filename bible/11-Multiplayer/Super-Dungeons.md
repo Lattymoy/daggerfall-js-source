@@ -988,7 +988,9 @@ Section 6, in the dungeon host.
   handler). It goes out when the boss falls (`sdReturnStands`, asked once a second) and never stands again in that
   dungeon.
 - **Pressed, or walked into.** Each stands in the activation ray at a door's reach (`sdrift:0`, `sdreturn:0` - the mode
-  machine's press ladder routes them before the action objects) with its words on the plaque (*The Rift - To the
+  machine's press ladder routes them before the action objects) - the Rift at its ring as drawn, a box turned with it
+  (AUDIT SD IV F33: its sweep's cube, 7 m every way, took the presses at the bodies of the end's foes and at the floor
+  before it) - with its words on the plaque (*The Rift - To the
   Shattered Hour*, *The Return - To the way in*). A step into either is asked once - outside, then inside, the Portal
   Stones' latch - and a jump into it (a door, a teleport) or a gap in the frames is no step: a host held for seconds
   (`SD_STEP_GAP_MS`, 2 s), never a slow frame - AUDIT SD IV F3: at 250 ms no walk-in was taken under 4 frames a second,

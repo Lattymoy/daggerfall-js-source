@@ -218,7 +218,7 @@ Only L3 and L4 may bloom. Nothing on L1 or L2 exceeds 0.5.
 - Then cast 4 rays along the ring's own plane at half its height. If one falls short of `size/2 + SD_RIFT_AIR_M`, take the next pair. This guards against pillars, which the chest rays do not see.
 - `sdRiftPlace` answers `{ at, size, face }`.
 - `sdRiftFit` is unchanged: its width is already twice the *nearest* wall, so a ring of that size fits at any facing.
-- `inSdPortal` (the cylinder) and `boxOf` (axis-aligned, half at least size/2) are untouched, so the walk-in and the press law do not move.
+- `inSdPortal` (the cylinder) is untouched, so the walk-in does not move. The press turns with the ring (AUDIT SD IV F33, `scenes/sdEnd.js` `riftPress`): a box in its own frame, its gear's span across, foot to top, `SD_RIFT_PRESS_M` (0.35 m) either side of its plane, with no surface in the collider. The axis-aligned cube of its whole sweep (half its size every way) took the presses at the bodies and the floor before it.
 
 **The Return's place.** `sdReturnPlace(rift, probe)` orders its bearings by `|dot(dir, face)|`, ascending, ties by index. It stands the Return beside the ring in its plane, never in front of the face. Pin it over the templates `test/sd11f_scenes.test.js` already loads.
 

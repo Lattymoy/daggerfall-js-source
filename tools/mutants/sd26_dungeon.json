@@ -16,5 +16,41 @@
     "tests": [
       "test/sd26_dungeon.test.js"
     ]
+  },
+  {
+    "name": "SD26-F33-the-sweeps-cube",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    if (rift) out.push(riftPress(rift));",
+    "new": "    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F33-the-box-unturned",
+    "file": "src/scenes/sdEnd.js",
+    "old": "obb: { m: Float64Array.from(b), box:",
+    "new": "obb: { m: Float64Array.from([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, b[12], b[13], b[14], 1]), box:",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F33-the-world-box-unturned",
+    "file": "src/scenes/sdEnd.js",
+    "old": "const hx = Math.abs(b[0]) * R + Math.abs(b[8]) * D, hz = Math.abs(b[2]) * R + Math.abs(b[10]) * D;",
+    "new": "const hx = R, hz = D;",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "SD26-F33-a-surface-it-has-not",
+    "file": "src/scenes/sdEnd.js",
+    "old": " noSurface: true, distance: RAY_DISTANCE,",
+    "new": " distance: RAY_DISTANCE,",
+    "tests": [
+      "test/sd26_dungeon.test.js"
+    ]
   }
 ]

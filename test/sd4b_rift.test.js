@@ -12,7 +12,7 @@ import {
   sdEndMarks, sdRiftFit, sdRiftPlace, sdReturnPlace, sdRiftWord, sdReturnStands, inSdPortal,
   SD_RIFT_SIZE_M, SD_RIFT_MIN_M, SD_RIFT_AIR_M, SD_RETURN_GAP_M, SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT,
 } from '../src/world/sdDungeon.js';
-import { createSdEnd, ensureSdEndArt, SD_RIFT_KEY, SD_RETURN_KEY } from '../src/scenes/sdEnd.js';
+import { createSdEnd, ensureSdEndArt, SD_RIFT_KEY, SD_RETURN_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
 import { sdRiftArt, SD_RIFT_RECORD, SD_RIFT_ATLAS } from '../src/world/sdRiftArt.js';   // SD-LOOK: the astrolabe's art (its billboard frames retired)
 import { riftCentreY } from '../src/world/sdRiftModel.js';
 import { SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
@@ -191,7 +191,11 @@ test('SD4b the Rift and the Return stood: two batches at their feet, the ring it
   assert.equal(a.loops[0].o.maxDistance, RIFT_BELL_RANGE.maxDistance);
   const t = end.targets();
   assert.deepEqual(t.map((x) => [x.key, x.distance, x.reach]), [[SD_RIFT_KEY, RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE], [SD_RETURN_KEY, RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE]]);
-  assert.deepEqual(t[0].aabb, { min: [7, 0, 2], max: [13, 6, 8] });
+  // PIN MOVED (AUDIT SD IV F33): the Rift is pressed at its ring - a box turned with it, SD_RIFT_PRESS_M either side of
+  // its plane, its gear's span across, foot to top - never its sweep's 6 m cube, which took the presses at the bodies
+  // and the floor before it (test/sd26_dungeon.test.js)
+  assert.deepEqual(t[0].aabb, { min: [7, 0, 5 - SD_RIFT_PRESS_M], max: [13, riftCentreY(6) + 3, 5 + SD_RIFT_PRESS_M] });
+  assert.deepEqual(t[0].obb.box, [-3, 0, -SD_RIFT_PRESS_M, 3, riftCentreY(6) + 3, SD_RIFT_PRESS_M]);
   assert.deepEqual(t[1].aabb, { min: [15 - SD_RETURN_SIZE.w / 2, 0, 5 - SD_RETURN_SIZE.w / 2], max: [15 + SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h, 5 + SD_RETURN_SIZE.w / 2] });
   assert.deepEqual(end.hoverName(SD_RIFT_KEY), { title: 'The Rift', subs: ['To the Shattered Hour'] });
   assert.deepEqual(end.hoverName(SD_RETURN_KEY), { title: 'The Return', subs: ['To the way in'] });

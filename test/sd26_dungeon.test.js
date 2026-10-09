@@ -11,7 +11,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SD_NO_MARK } from '../src/world/sdDungeon.js';
 import { SD_REALM_TEXT } from '../src/world/sdRealm.js';
-import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M } from '../src/scenes/sdEnd.js';
+import { createSdEnd, SD_STEP_GAP_MS, SD_STEP_JUMP_M, SD_RIFT_KEY, SD_RIFT_PRESS_M } from '../src/scenes/sdEnd.js';
+import { riftCentreY } from '../src/world/sdRiftModel.js';
+import { pickActivatableHit, RAY_DISTANCE } from '../src/player/activate.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -74,4 +76,51 @@ test('SD26 A SLOW FRAME\'S WALK-IN IS TAKEN (AUDIT SD IV F3): walking into the R
   assert.equal(walkIn(16, { hitch: SD_STEP_GAP_MS + 500 }), 0, 'a host held for seconds forgets it');
   assert.equal(SD_STEP_GAP_MS, 2000);
   assert.ok(SD_STEP_JUMP_M > 1.4 * 0.1 * 2, 'a slow frame\'s feet are never a jump');
+});
+
+// ── F33: the Rift pressed at its ring ─────────────────────────────────
+
+/** A hall the collider answers (x0..x1, z0..z1, floor y0, ceiling y0 + h): a ray's first surface, Infinity past `max`. */
+function boxCollider({ x0 = 0, x1 = 20, z0 = 0, z1 = 20, y0 = 0, h = 9 } = {}) {
+  const raycast = (o, d, max = Infinity) => {
+    let t = Infinity;
+    for (const [ax, at] of [[0, x0], [0, x1], [2, z0], [2, z1], [1, y0], [1, y0 + h]]) { if (Math.abs(d[ax]) < 1e-12) continue; const k = (at - o[ax]) / d[ax]; if (k > 1e-9) t = Math.min(t, k); }
+    return t <= max ? t : Infinity;
+  };
+  return { raycast, raycastHit: (o, d, max) => ({ dist: raycast(o, d, max), key: null }) };
+}
+const unit = (from, to) => { const d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]], l = Math.hypot(...d); return d.map((v) => v / l); };
+/** A body as the dungeon host lists it (dungeonContext.js lootTargets' `corpse:`). */
+const bodyAt = (p, i = 0) => ({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: 3.75, body: true });
+
+test('SD26 THE RIFT IS PRESSED AT ITS RING (AUDIT SD IV F33): its press is a box turned with it, its gear\'s span across, foot to top, SD_RIFT_PRESS_M either side of its plane - its whole sweep\'s cube (7 m every way) took the press at a body lying before it, at the floor at my feet, and named "The Rift" over them; and from inside that cube a press at the ring itself found nothing. The ring is pressed face on, edge on, and from beside it (mutants: the sweep\'s cube; the box unturned; a surface it has not)', () => {
+  const end = createSdEnd({ renderer: quietRenderer(), audio: null, now: () => 0 });
+  end.stand({ rift: { at: [10, 0, 10], size: 7, face: [0, 0, 1] }, retAt: null });
+  const col = boxCollider();
+  const rift = end.targets()[0];
+  const top = riftCentreY(7) + 3.5;
+  assert.deepEqual(rift.obb.box, [-3.5, 0, -SD_RIFT_PRESS_M, 3.5, top, SD_RIFT_PRESS_M]);
+  const pick = (eye, at, extra = []) => pickActivatableHit(eye, unit(eye, at), [...extra, rift], col)?.key ?? null;
+  // a body lying 1.6 m before it, pressed from outside the old cube: the body, not the Rift
+  const body = bodyAt([10, 0, 8.4]);
+  assert.equal(pick([10, 1.6, 5], [10, 0.3, 8.4], [body]), 'corpse:0', 'the body before the ring');
+  assert.equal(pick([12.5, 1.6, 6], [10.2, 0.3, 8.4], [body]), 'corpse:0', 'and from aside');
+  // the floor at my feet inside the old cube, outside its walk-in: nothing - nor standing under its arc, in its plane
+  assert.equal(pick([12, 1.6, 8], [12, 0, 7]), null, 'the floor is the floor');
+  assert.equal(pick([12.8, 1.6, 10], [12.8, 0, 9.6]), null, 'under its arc: the floor, never the ring\'s air');
+  // the ring itself: face on, from inside the old cube (it picked nothing there), edge on, and from behind
+  assert.equal(pick([10, 1.6, 6], [10, riftCentreY(7), 10]), SD_RIFT_KEY, 'face on');
+  assert.equal(pick([12, 1.6, 8.5], [12, 1.6, 10]), SD_RIFT_KEY, 'from beside it, at its arc');
+  assert.equal(pick([3, 2, 10], [10, 3, 10]), SD_RIFT_KEY, 'edge on');
+  assert.equal(pick([10, 1.6, 13], [10, 3, 10]), SD_RIFT_KEY, 'from behind');
+  // past its rim, beside it: air
+  assert.equal(pick([10, 1.6, 6], [14.5, 1, 10]), null, 'beside its rim');
+  // turned: a ring facing x stands its press across z
+  const e2 = createSdEnd({ renderer: quietRenderer(), audio: null, now: () => 0 });
+  e2.stand({ rift: { at: [10, 0, 10], size: 7, face: [1, 0, 0] }, retAt: null });
+  const t2 = e2.targets()[0];
+  assert.ok(Math.abs(t2.aabb.min[0] - (10 - SD_RIFT_PRESS_M)) < 1e-6 && Math.abs(t2.aabb.min[2] - 6.5) < 1e-6, JSON.stringify(t2.aabb));
+  assert.equal(pickActivatableHit([6, 1.6, 10], unit([6, 1.6, 10], [10, 3, 10]), [t2], col)?.key, SD_RIFT_KEY, 'face on, turned');
+  assert.equal(pickActivatableHit([6, 1.6, 12.5], unit([6, 1.6, 12.5], [10, 2, 12.5]), [t2], col)?.key, SD_RIFT_KEY, 'at its arc, turned');
+  assert.equal(pickActivatableHit([6, 1.6, 6], unit([6, 1.6, 6], [14, 1.6, 6]), [t2], col)?.key ?? null, null, 'past its rim, turned');
 });
