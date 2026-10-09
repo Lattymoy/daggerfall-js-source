@@ -151,8 +151,8 @@
   {
     "name": "BALANCE1-duel-wear-unscaled",
     "file": "src/scenes/world.js",
-    "old": "if (amount > 0) lowerCondition(sent.weapon, dfuBlowWear(amount), playerEntity,",
-    "new": "if (amount > 0) lowerCondition(sent.weapon, amount, playerEntity,",
+    "old": "if (amount > 0) lowerCondition(_duelLastWeapon, dfuBlowWear(amount), playerEntity,",
+    "new": "if (amount > 0) lowerCondition(_duelLastWeapon, amount, playerEntity,",
     "tests": [
       "test/balance1.test.js"
     ]

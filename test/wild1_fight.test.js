@@ -2,79 +2,81 @@
 // and THE ROOM'S REMAINS ON A PLAYER'S SIDE (net/wildRemains.js) - each over a fake wire.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createWildFight, WILD_PICK_WAIT_MS } from '../src/net/wildFight.js';
+import { createWildFight, WILD_BODY_MS } from '../src/net/wildFight.js';
 import { createWildRemains, WILD_NO_STORE } from '../src/net/wildRemains.js';
 import { validWildData } from '../src/net/wire.js';
 
 const PA = 'peer-000a', PB = 'peer-000b';
-/** Two fighters over a wire that projects every frame through the wire's own law, as the relay does. */
+/** Two fighters over a wire that projects every frame through the wire's own law, as the relay does - a directed frame
+ *  reaches the other, a room's frame (INT9: a pick) the room alone. */
 function pair({ fairA = () => true, fairB = () => true } = {}) {
   let t = 0;
   const log = { [PA]: [], [PB]: [] };
-  const mk = (me, other, fair, extra) => {
-    const m = createWildFight({
-      send: (d) => { const v = validWildData(d); if (!v) return false; log[me].push(v); queue.push([other, me, v]); return true; },
-      now: () => t, can: () => true, fair, vitals: () => [40, 100], ...extra,
-    });
-    return m;
-  };
+  const room = [];
   const queue = [];
-  const hits = [];
-  const got = [];
-  const picked = [];
-  const a = mk(PA, PB, fairA, { onResult: (d) => hits.push(['a', d.dmg]), onGot: (from, it) => got.push([from, it]), onNoGift: (from) => got.push([from, null]) });
-  const b = mk(PB, PA, fairB, { onBlow: () => ({ hit: true, dmg: 7 }), onPicked: (peer, i) => picked.push([peer, i]) });
+  const bodies = [];
+  const mk = (me, other, fair, extra) => createWildFight({
+    send: (d, o) => { const v = validWildData(d); if (!v) return false; log[me].push(v); if (v.to) queue.push([other, me, v]); else room.push([me, v, o?.room ?? null]); return true; },
+    now: () => t, can: () => true, fair, ...extra,
+  });
+  const a = mk(PA, PB, fairA, { onBody: (from, b) => bodies.push([from, b.s, b.items.length]) });
+  const b = mk(PB, PA, fairB, {});
   const by = { [PA]: a, [PB]: b };
   const flush = () => { while (queue.length) { const [to, from, d] = queue.shift(); by[to].onFrame(from, d, `acct-${from}`); } };
-  return { a, b, flush, hits, got, picked, step: (ms) => { t += ms; }, log: { a: log[PA], b: log[PB] } };
+  return { a, b, flush, room, bodies, step: (ms) => { t += ms; }, log: { a: log[PA], b: log[PB] } };
 }
-const A = { lv: 5, r: 1, st: [50, 50, 50, 50, 50, 50, 50, 50], sk: [40, 30, 20, 10], cf: [0, 0, 0], h: [80, 100] };
-const blow = { by: 'melee', p: [1000, 2, 1000], a: A };
+const blow = { by: 'melee', p: [1000, 2, 1000], d: 7 };
 
-test('WILD1 fight: a fair blow is resolved by its defender and answered; the last fair attacker is the killer for ten seconds', () => {
+// PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): WILD1's defender resolved every blow on its
+// own machine and answered with a `result`, and the last fair attacker whose blow landed was the killer for ten seconds.
+// Now the relay referees the zone (net/wildRef.js): a blow goes out carrying the striker's rolled number for the referee,
+// nothing at me is resolved, and a fall and its killer are the referee's word (test/int9_wild_ref.test.js).
+test('WILD1 fight: a fair blow goes out numbered with the striker\'s rolled damage, for the referee; nothing at me is resolved or answered (INT9)', () => {
   const w = pair();
   assert.equal(w.a.blow(PB, 'strike', blow), 1);
+  assert.deepEqual(w.log.a[0], { to: PB, k: 'strike', n: 1, by: 'melee', p: [1000, 2, 1000], d: 7 });
   w.flush();
-  assert.deepEqual(w.hits, [['a', 7]], 'the defender\'s answer');
-  assert.deepEqual(w.b.killer(), { id: PA, sub: `acct-${PA}` });
-  w.step(10_001);
-  assert.equal(w.b.killer(), null, 'past the credit window');
-  // a replayed number is not a second blow
-  w.b.onFrame(PA, { k: 'strike', to: PB, n: 1, ...blow });
-  assert.equal(w.log.b.filter((d) => d.k === 'result').length, 1);
+  assert.equal(w.log.b.length, 0, 'no result: the defender resolves nothing');
+  assert.equal(w.a.blow(PB, 'strike', blow), 2, 'numbered');
 });
 
-test('WILD1 fight: no blow out at a player who is not fair (my party, outside the zone), and none taken from one', () => {
+test('WILD1 fight: no blow out at a player who is not fair (my party, outside the zone)', () => {
   const w = pair({ fairA: () => false, fairB: () => false });
   assert.equal(w.a.blow(PB, 'strike', blow), 0);
-  w.b.onFrame(PA, { k: 'strike', to: PB, n: 5, ...blow });
-  assert.equal(w.log.b.length, 0, 'unread');
+  assert.equal(w.log.a.length, 0);
 });
 
-test('WILD1 fight: a body offers its worn pieces to its killer; ONE pick, answered with the piece - once', () => {
+// PIN MOVED (INT9): WILD1's fallen took the picked piece out of its pack and GAVE it (`gave`) - a pick nobody answered was
+// given up. Now the pick goes to the relay, in the room that refereed the fall, under the fall's id: the relay signs the
+// fall with it, the service takes the piece off the fallen's record, and the remains hold it for the killer alone.
+test('WILD1 fight: a body offers its worn pieces to its killer - only under a fall the referee called by its hand; ONE pick, to the room that refereed the fall (INT9), naming what the offer showed there (PIN MOVED, AUDIT INT9: `t`, `m` - the place alone was an index into a list the fallen built)', () => {
   const w = pair();
-  w.b.offerWorn(PA, 'death0001', [{ group: 'Armor', templateIndex: 102 }, { group: 'Weapons', templateIndex: 120 }]);
+  w.b.offerWorn(PA, '0123456789ab', [{ group: 'Armor', templateIndex: 102 }]);
   w.flush();
-  assert.equal(w.a.body(PB).items.length, 2);
+  assert.equal(w.a.body(PB), null, 'no fall of mine called: no body');
+  w.a.fell(PB, '0123456789ab', 'world:400,120');
+  w.b.offerWorn(PA, 'ffffffffffff', [{ group: 'Armor', templateIndex: 102 }]);
+  w.flush();
+  assert.equal(w.a.body(PB), null, 'another fall\'s offer');
+  w.b.offerWorn(PA, '0123456789ab', [{ group: 'Armor', templateIndex: 102 }, { group: 'Weapons', templateIndex: 120 }]);
+  w.flush();
+  assert.deepEqual(w.bodies, [[PB, '0123456789ab', 2]]);
+  assert.equal(w.a.pick(PB, 2), false, 'an offer\'s place');
   assert.equal(w.a.pick(PB, 1), true);
   assert.equal(w.a.pick(PB, 0), false, 'one pick a body');
-  w.flush();
-  assert.deepEqual(w.picked, [[PA, 1]], 'the fallen hears the pick');
-  assert.deepEqual(w.b.claim(), { to: PA, s: 'death0001', i: 1 });
-  w.b.settleOffer({ group: 'Weapons', templateIndex: 120 });
-  w.flush();
-  assert.deepEqual(w.got, [[PB, { group: 'Weapons', templateIndex: 120 }]], 'the gift arrives');
-  assert.equal(w.b.claim(), null);
+  assert.deepEqual(w.room, [[PA, { k: 'pick', r: '0123456789ab', w: 1, t: 120, m: 0 }, 'world:400,120']], 'to the room, never to the fallen');
 });
 
-test('WILD1 fight: a pick the fallen never answers is given up - the killer holds nothing it was not given', () => {
+test('WILD1 fight: a body\'s offer stands the referee\'s pick window, then goes (INT9)', () => {
   const w = pair();
-  w.b.offerWorn(PA, 'death0002', [{ group: 'Armor', templateIndex: 102 }]);
+  w.a.fell(PB, '0123456789ab', null);
+  w.b.offerWorn(PA, '0123456789ab', [{ group: 'Armor', templateIndex: 102 }]);
   w.flush();
-  w.a.pick(PB, 0);
-  w.step(WILD_PICK_WAIT_MS + 1);
+  assert.ok(w.a.body(PB));
+  w.step(WILD_BODY_MS + 1);
   w.a.tick();
-  assert.deepEqual(w.got, [[PB, null]]);
+  assert.equal(w.a.body(PB), null);
+  assert.equal(w.a.pick(PB, 0), false);
 });
 
 /** A pool as droppedLoot's: seeded piles, their items the very array a window moves records out of. */
@@ -141,4 +143,46 @@ test('WILD1 remains: an ask that never left puts the record back on the pile; a 
   assert.deepEqual(pack, []);
   book.setRoom('world:26,7');
   assert.equal(p.piles.length, 0);
+});
+
+test('INT9 remains: the killer\'s piece is no pile of anyone\'s - the killer\'s own game asks for it the moment the room says the remains, once; another sees only the rest', () => {
+  const mk = (me) => {
+    const sent = [], p = pool(), pack = [];
+    const book = createWildRemains({
+      send: (d) => { sent.push(d); return true; }, pool: () => p, toScene: (x) => x, mine: () => false, pack: () => pack,
+      mint: (list) => list.map((it) => ({ ...it })), addItem: (list, it) => list.push(it), stacksWith: sameKind, now: () => 0, me: () => me,
+    });
+    book.setRoom('world:25,7'); book.setPool(p);
+    return { book, sent, p, pack };
+  };
+  const word = { k: 'ri', r: '0123456789ab', p: [0, 0, 0], nm: 'Ria', os: 'acct-ria', oid: 'peer-0001', ttl: 600_000, off: 0, items: [{ group: 'Weapons', templateIndex: 120 }, { group: 'Armor', templateIndex: 101 }], end: 1, wk: 'acct-bo', wi: 0 };
+  const killer = mk('acct-bo'), other = mk('acct-cy');
+  for (const x of [killer, other]) x.book.onWord(word);
+  assert.deepEqual(killer.sent, [{ k: 'take', r: '0123456789ab', i: 0, n: 1 }], 'asked for at once');
+  killer.book.onWord(word);
+  assert.equal(killer.sent.length, 1, 'once');
+  assert.deepEqual(other.sent, []);
+  for (const x of [killer, other]) assert.deepEqual(x.p.piles[0].items.map((i) => i.templateIndex), [101], 'the pile is the rest');
+  killer.book.onWord({ k: 'got', r: '0123456789ab', i: 0, it: { group: 'Weapons', templateIndex: 120 } });
+  assert.deepEqual(killer.pack.map((i) => i.templateIndex), [120], 'the piece picked off the body, arrived');
+  assert.equal(killer.book.has('0123456789ab'), true);
+  killer.book.tick();
+  assert.equal(killer.sent.length, 1, 'arrived: never asked again before the room\'s `rm`');
+});
+
+test('INT9 (AUDIT) remains: the killer\'s ask that never left (the socket, the gate) is asked again on the next frame - it was asked once, at the room\'s word, and lost for good; a remains said here once is known after it empties (a seizure is never asked of one its fallen laid) (mutants: the ask never retried; an emptied remains forgotten)', () => {
+  const sent = [], p = pool(), pack = [];
+  let open = false;
+  const book = createWildRemains({
+    send: (d) => { if (!open) return false; sent.push(d); return true; }, pool: () => p, toScene: (x) => x, mine: () => false, pack: () => pack,
+    mint: (list) => list.map((it) => ({ ...it })), addItem: (list, it) => list.push(it), stacksWith: sameKind, now: () => 0, me: () => 'acct-bo',
+  });
+  book.setRoom('world:25,7'); book.setPool(p);
+  book.onWord({ k: 'ri', r: '0123456789ab', p: [0, 0, 0], nm: 'Ria', os: 'acct-ria', oid: 'peer-0001', ttl: 600_000, off: 0, items: [{ group: 'Weapons', templateIndex: 120 }], end: 1, wk: 'acct-bo', wi: 0 });
+  assert.deepEqual(sent, [], 'the socket refused it');
+  open = true;
+  book.tick();
+  assert.deepEqual(sent, [{ k: 'take', r: '0123456789ab', i: 0, n: 1 }], 'asked again');
+  book.onWord({ k: 'gone', r: '0123456789ab' });
+  assert.equal(book.has('0123456789ab'), true, 'said here once: known');
 });

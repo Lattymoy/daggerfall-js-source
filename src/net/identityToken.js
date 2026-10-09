@@ -120,7 +120,7 @@
 // and node 22 - and in none of the shared globals lists, because this
 // is the first module in src/net/ to need it.
 
-import { sanitizeName, NAME_MAX } from './wire.js';
+import { sanitizeName, NAME_MAX, streamsFoes } from './wire.js';
 import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
 import { worksOf } from './siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
@@ -286,7 +286,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, wa?: [number, 0|1], hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -310,10 +310,19 @@ export function nameIsIssuable(name) {
  *      the rights read; a face drawing the badge leaves these out
  *   ar the account's arena rating this season, absent for a guest (ARENA4)
  *   cl the level of the character the client named at the mint, as the
- *      realm keeps it (server-account/src/realm.js - the summary's
- *      `level`), absent when it named none or from a service before
- *      ARENA4b; the relay's ladder vitality reads it (net/arenaLaw.js
- *      ladderVitality) and never a health the client claims
+ *      realm keeps it (server-account/src/realm.js realmLevelOf - INT7:
+ *      the level its judge TRUSTS, `level_seen`, once a checkpoint was
+ *      judged; the summary's `level` before), absent when it named none
+ *      or from a service before ARENA4b; the relay's ladder vitality
+ *      reads it (net/arenaLaw.js ladderVitality) and never a health the
+ *      client claims
+ *   wa that realm character's ARMS (INT7, net/siegeRef.js armsOf): `[reach,
+ *      bow]` - the most reach (a weapon's top and its material's
+ *      modifier) of any lawful weapon its JUDGED pack holds, 0 for none,
+ *      and 1 where a lawful bow is among them; beside a 1 `rc` alone,
+ *      absent before its first judged checkpoint and from a service
+ *      before INT7. Every referee's clip of a blow between players
+ *      (net/siegeRef.js siegeBlowMax, net/arenaLaw.js arenaBlowCap)
  *   hn hc hb hg  that realm character's HOUSE (LEGACY7, net/houseLaw.js):
  *      the line's surname, the member's given name, 1 for a Bloodline,
  *      the generation's numeral - `hn` or none of them; absent for a
@@ -329,6 +338,11 @@ export const CHARACTER_LEVEL_MIN = 1;
 export const CHARACTER_LEVEL_MAX = 1000;
 /** ARENA4b: a character level a token may carry - a whole number in bounds, never a stand-in. */
 export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;
+/** INT7: the most reach a weapon has (net/siegeRef.js ARMS_TOP_MAX - a Daedric Thunderlock's 26 + 6, pinned equal; its own
+ *  name, ONE MEMBER ONE EXPORT - this leaf imports only the token's). */
+export const TOKEN_ARMS_TOP_MAX = 32;
+/** INT7: an arms claim a token may carry - `[reach, bow]`, the reach a whole number 0..TOKEN_ARMS_TOP_MAX, the bow 0 or 1. */
+export const armsIssuable = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isSafeInteger(wa[0]) && wa[0] >= 0 && wa[0] <= TOKEN_ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
 
 /** The account id's own shape - the same one `net/social.js` already
  *  keeps in `dagger.online.account`, so an id minted by SOC1 is an id
@@ -402,6 +416,8 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // ARENA4b: the named character's level (the relay's ladder vitality reads it): absent from a service before it and from a
   // mint that named no character; present, a whole number from 1 to the realm's 1000
   if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;
+  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
+  if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
   if (!houseClaimOk(c)) return false;   // LEGACY7: the house - absent for none, each field of its shape or refused
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
@@ -415,7 +431,8 @@ export const TOKEN_MAX_CHARS = 1024;
 /** AUDIT LEGACY III O11: THE LONGEST BODY the relay's hello takes (net/wire.js TOKEN_RE, pinned equal) - the minter asks
  *  it beside TOKEN_MAX_CHARS. The wire's 640 was the tighter of the two and the minter never asked it: every optional
  *  claim at once was 639 characters of body, so a house (LEGACY7) carried such a token to 739 - minted, and refused at
- *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778. */
+ *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778; INT7's arms
+ *  (`wa`) at their widest, 794. */
 export const TOKEN_BODY_MAX = 800;
 /** A token's body, the part between its version and its signature. */
 export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').split('.')[1] ?? '';
@@ -424,7 +441,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, hn?:string, hc?:string, hb?:1, hg?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], hn?:string, hc?:string, hb?:1, hg?:number}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -449,6 +466,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.gx !== undefined && who.gx.length) claims.gx = who.gx;   // GLYPH-WEAR: only while a glyph is taken off - a player hiding none mints the bytes they always did
   if (who?.ar !== undefined) claims.ar = who.ar;   // ARENA4: only for a registered account - a guest mints the bytes it always did
   if (who?.cl !== undefined) claims.cl = who.cl;   // ARENA4b: only when a character was named - a mint naming none, the bytes as before
+  if (who?.wa !== undefined) claims.wa = who.wa;   // INT7: only for a realm character judged since - before one, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
   if (who?.hn !== undefined) { claims.hn = who.hn; for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k]; }
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
@@ -553,7 +571,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck']);   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains']);   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -588,6 +606,10 @@ export function orderValid(c) {
   // CARDS10: a deck order carries its digest and no other kind's fields; no other kind carries a digest
   if (c.o !== 'deck' && c.dh !== undefined) return false;
   if (c.o === 'deck' && (typeof c.dh !== 'string' || !DECK_DIGEST_RE.test(c.dh) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege || !noStake)) return false;
+  // INT9: a remains order carries its own fields and no other kind's; no other kind carries a remains'
+  const noRemains = REMAINS_FIELDS.every((f) => c[f] === undefined);
+  if (c.o !== 'remains' && !noRemains) return false;
+  if (c.o === 'remains' && (!remainsOrderValid(c) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -636,6 +658,46 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
   try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
   if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
+}
+
+/* ═══ INT9: THE REMAINS ORDER (bible/06-Systems/Integrity-Arc.md lane 2) ════════════════════════════════════════════
+ *
+ * A death in the open zone drops what the ACCOUNT SERVICE took off the fallen character's judged record
+ * (server-account/src/wild.js), never what the fallen's own game hands over. The relay has no door to the service, so the
+ * service hands the depositor ITS WORD on the drop, an order the room checks with the key it already holds:
+ * `{o:'remains', s, wr, wh, wn, wm, wk?, wi?, wg?, i, e}` - account `s`'s fall left remains `wr` holding `wn` records whose
+ * list (JSON, as the service answered it) digests to `wh` (hex SHA-256), to be laid in room `wm` alone (AUDIT INT9: an
+ * order named no room, so one fall was laid in two); `wk` the killer whose worn piece is the list's record `wi`, theirs
+ * alone to take; `wg` the fallen's guild, whose members take nothing of it (PVPDUNGEONS - whoever lays it). The room keeps
+ * a deposit only whose records digest to `wh` (net/wildLaw.js), and opens it to takes only then.
+ */
+/** A remains order's fields - no other order kind carries one. */
+export const REMAINS_FIELDS = Object.freeze(['wr', 'wh', 'wn', 'wm', 'wk', 'wi', 'wg']);
+/** A remains' id (the relay's twelve hex, or the service's for a death no receipt names), and the most records a
+ *  remains holds (net/wire.js WILD_REMAINS_ITEMS_MAX, pinned equal). */
+export const REMAINS_ID_RE = /^[0-9a-f]{12}$/;
+export const REMAINS_RECORDS_MAX = 96;
+/** Whether a claim set's remains fields are a remains'. */
+export function remainsOrderValid(c) {
+  if (typeof c.wr !== 'string' || !REMAINS_ID_RE.test(c.wr) || typeof c.wh !== 'string' || !DECK_DIGEST_RE.test(c.wh)) return false;
+  if (!Number.isSafeInteger(c.wn) || c.wn < 0 || c.wn > REMAINS_RECORDS_MAX) return false;
+  if (typeof c.wm !== 'string' || c.wm.length > 64 || !streamsFoes(c.wm)) return false;
+  if (c.wg !== undefined && !(typeof c.wg === 'string' && GUILD_ID_RE.test(c.wg))) return false;
+  if (c.wk === undefined && c.wi === undefined) return true;
+  return typeof c.wk === 'string' && ID_RE.test(c.wk) && c.wk !== c.s && Number.isSafeInteger(c.wi) && c.wi >= 0 && c.wi < c.wn;
+}
+/** INT9: MINT A REMAINS ORDER - the service's word that account `s`'s fall left remains `wr` of `wn` records digesting to
+ *  `wh`, for room `wm` (`wk`, `wi`: the killer's worn piece, theirs alone; `wg`: the fallen's guild). */
+export async function mintRemainsOrder({ s, wr, wh, wn, wm, wk = undefined, wi = undefined, wg = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintRemainsOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'remains', s, wr, wh, wn, wm, ...(wk !== undefined ? { wk, wi } : {}), ...(wg !== undefined ? { wg } : {}), i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintRemainsOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+/** INT9: a remains' records' digest - hex SHA-256 of their JSON, as the service answers them and the room keeps them. */
+export async function remainsDigest(/** @type {any[]} */ records, { subtle }) {
+  const d = new Uint8Array(await subtle.digest('SHA-256', enc.encode(JSON.stringify(records))));
+  return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /* ═══ CARDS10: THE DECK ORDER (bible/11-Multiplayer/Tavern-Cards.md section 33) ═════════════════════════════════════

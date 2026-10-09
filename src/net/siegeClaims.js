@@ -18,6 +18,7 @@
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
 import { readSiegeReceipt, readRoyalReceipt } from './siegeReceipt.js';
+import { readDuelReceipt } from './duelReceipt.js';   // INT8: a duel's receipt
 
 /** The device's siege receipts not yet settled with the account service. */
 export const SIEGE_CLAIMS_KEY = 'seat2a.siegeClaims';
@@ -41,10 +42,10 @@ export function siegeClaimSettles(r) {
  * claim - AUDIT-SEATS C7: every settling answer, a refusal for good too (claimed before, a void battle, not the relay's),
  * so the result card it answers never stands on "claim it" for a receipt already let go. CROWN1 part two: the same carrier
  * for a Royal Tourney's bouts (createRoyalClaims) - its store's key, its receipt's reader, its own settling answers and
- * how many it keeps.
+ * how many it keeps; INT8: and a duel's (createDuelClaims), whose receipt is `mine` where the account is either fighter.
  */
 export function createSiegeClaims({ claim, me = () => null, nowMs = () => Date.now(), storage = null, onClaimed = null,
-  storeKey = SIEGE_CLAIMS_KEY, read = readSiegeReceipt, settles = siegeClaimSettles, max = SIEGE_CLAIMS_MAX }) {
+  storeKey = SIEGE_CLAIMS_KEY, read = readSiegeReceipt, settles = siegeClaimSettles, max = SIEGE_CLAIMS_MAX, mine = (c, who) => c?.s === who }) {
   /** @type {string[]} */
   let kept = [];
   try { const v = JSON.parse(storage?.getItem(storeKey) ?? '[]'); if (Array.isArray(v)) kept = v.filter((x) => typeof x === 'string' && read(x)); } catch { kept = []; }
@@ -81,7 +82,7 @@ export function createSiegeClaims({ claim, me = () => null, nowMs = () => Date.n
       try {
         kept = kept.filter((r) => live(r, nowS));
         for (const r of kept.slice()) {
-          if (read(r)?.s !== who) continue;
+          if (!mine(read(r), who)) continue;   // INT8: a duel's receipt is either of its two fighters'
           let a;
           try { a = await claim(r); } catch { a = { ok: false, error: 'offline' }; }
           if (!settles(a)) continue;
@@ -110,3 +111,20 @@ export function royalClaimSettles(r) {
 }
 /** THE BOUTS' CARRIER - createSiegeClaims's, over `t1` receipts (`/v1/seats/royal/claim`). */
 export const createRoyalClaims = (o) => createSiegeClaims({ ...o, storeKey: ROYAL_CLAIMS_KEY, read: readRoyalReceipt, settles: royalClaimSettles, max: ROYAL_CLAIMS_MAX });
+
+// ─── INT8: A DUEL'S BOUTS (bible/06-Systems/Integrity-Arc.md lane 2) ────────────────────────────────────────────────
+/** The device's duel receipts not yet settled with the account service. */
+export const DUEL_CLAIMS_KEY = 'int8.duelClaims';
+/** The most it keeps - an evening of bouts won and lost. */
+export const DUEL_CLAIMS_MAX = 24;
+/** Whether an answer settles a duel's receipt: counted or not (a guest's, a bound's), not this account's, a receipt that
+ *  is not the relay's (but for the refusals the service can mend). */
+export function duelClaimSettles(r) {
+  if (r?.ok) return true;
+  if (r?.error === 'not-yours') return true;
+  if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);
+  return false;
+}
+/** THE BOUTS' CARRIER - createSiegeClaims's, over `d1` receipts (`/v1/duel/claim`): either fighter's to carry. */
+export const createDuelClaims = (o) => createSiegeClaims({ ...o, storeKey: DUEL_CLAIMS_KEY, read: readDuelReceipt, settles: duelClaimSettles, max: DUEL_CLAIMS_MAX,
+  mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who) });

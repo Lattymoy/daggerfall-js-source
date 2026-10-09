@@ -248,5 +248,7 @@ test('SET2 the door and the duel: the running host publishes its door every fram
   assert.match(hm, /castOnPlayer: \(bundle\) => \{ if \(bundle\) applySpellToPlayer\(bundle, effectiveLevel\(playerEntity\) \?\? 1, null, \{ bypassSavingThrows: true, bypassChance: true \}\); \}/);
   assert.match(hm, /foes: \(\) => playerTargets\(\)\.filter/, 'the foes MY harm may reach - the defenders passed by');
   // PIN MOVED (AUDIT 625 P2): and a live bout between players on a relay's sand is a duel too
-  assert.match(strip(read('src/scenes/world.js')), /const duelFrame = \(\) => \{\s*duelMgr\.tick\(\);\s*const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\)\);/);
+  // PIN MOVED (INT8, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the frame offers a bout's unsettled receipt
+  // again before it tells the sets
+  assert.match(strip(read('src/scenes/world.js')), /const duelFrame = \(\) => \{\s*duelMgr\.tick\(\);\s*if \(duelClaims\.due\(\)\) duelClaims\.offer\(\);[^\n]*\n\s*const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\)\);/);
 });

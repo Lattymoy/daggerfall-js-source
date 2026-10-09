@@ -47,7 +47,10 @@ test('PARTY-TRUCE: the host holds a party left out of the fight - wildFair asks 
   const frame = w.slice(w.indexOf('  const wildFrame = () => {'), w.indexOf('    if (playerEntity.health > 0 && !modes?.deathUp?.()) {', w.indexOf('  const wildFrame = () => {')));
   assert.match(frame, /if \(_wildTruce\.frame\(social\?\.partyPeers\?\.\(\) \?\? new Set\(\), Date\.now\(\)\)\.length && here\) townTalk\.say\(WILD_TEXT\.truce\);/);
   assert.match(w, /\n {2}const _wildTruce = createPartyTruce\(\);/);
-  // the defender's own client asks the same fairness of every blow it takes (the attacker's word is never enough)
-  assert.match(src('src/net/wildFight.js'), /if \(!can\(\) \|\| !fair\(peer\)\) return;/);
+  // PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the defender's client resolves no blow now -
+  // the RELAY referees the zone and asks the hub's party and its truce of every blow (the attacker's word is never enough)
+  const relay = src('server/src/index.js');
+  assert.match(relay, /const kin = \(duel && \(duel\.a\.sub === tb\.sub \|\| duel\.b\.sub === tb\.sub\)\) \|\| await this\._wdunKinOf\(a\.sub, tb\.sub, now\);/);
+  assert.match(relay, /const parties = \(r\) => \[r\?\.party, r\?\.partyWas && now - r\.partyWas\.at < WILD_REF\.truceMs \? r\.partyWas\.id : null\]\.filter\(Boolean\);/, 'the hub keeps the party a record left, the truce\'s ten minutes');
   assert.match(w, /\n {4}fair: wildFair,/);
 });

@@ -29,8 +29,8 @@
   {
     "name": "HALOREM-halo-socket-ignored",
     "file": "src/net/online.js",
-    "old": "    const h = this._halo.get(room);\n    return h?.status === 'open' ? h.ws : null;\n  }\n  /** HALO-REMAINS: every room",
-    "new": "    return null;\n  }\n  /** HALO-REMAINS: every room",
+    "old": "halo ? (halo.status === 'open' && halo.wildOk ? halo.ws : null)",
+    "new": "halo ? null",
     "tests": [
       "test/haloremains.test.js"
     ]

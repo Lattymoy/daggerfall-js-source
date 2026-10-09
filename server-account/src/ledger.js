@@ -185,6 +185,10 @@ export async function ledgerStep(db, at, pieces) {
 const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) =>
   chunks(keys, UPSERT_ROWS).map((part) => db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at) VALUES ${part.map((_, i) => `(?${3 + i}, ?1, ?2)`).join(', ')}`).bind(char, nowS, ...part));
 
+/** INT9 (AUDIT): `keys` written down as copies `char` holds - a death's dropped pieces, whose ids the remains carry afresh
+ *  (server-account/src/wild.js): never charged, and moved by no route. */
+export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) => copyRows(db, keys, char, nowS);
+
 /** Keys `char` let go: no row - or, where a copy of the piece is known, a row kept `gone`, so the copy cannot take it up. */
 function letGoSteps(/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) {
   return [
@@ -259,6 +263,21 @@ export async function piecesRefusal(db, char, keys) {
     if (rows.length) return 'piece-claimed';
   }
   return null;
+}
+
+/** INT9: WHICH OF `keys` MAY NOT LEAVE `char`'s record - piecesRefusal's own law, key by key: a copy, another's piece, a
+ *  claim that is not this record's own waiting. A death in the zone drops every other piece (server-account/src/wild.js),
+ *  never refused whole on one. Answers a Set. */
+export async function piecesBarred(db, char, keys) {
+  const out = new Set();
+  for (const part of chunks(keys, UID_CHUNK)) {
+    const m = marks(part.length, 2);
+    const copies = await db.prepare(`SELECT uid FROM item_dupes WHERE char_id = ?1 AND uid IN (${m})`).bind(char, ...part).all();
+    for (const x of copies?.results ?? []) out.add(/** @type {any} */ (x).uid);
+    const r = await db.prepare(`SELECT uid, char_id, state, claim_char FROM item_uids WHERE uid IN (${m}) AND (char_id != ?1 OR state != 'held' OR claim_char IS NOT NULL)`).bind(char, ...part).all();
+    for (const x of /** @type {any[]} */ (r?.results ?? [])) out.add(x.uid);
+  }
+  return out;
 }
 
 /**

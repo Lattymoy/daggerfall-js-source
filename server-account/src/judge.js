@@ -39,6 +39,7 @@
 
 import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_UID_RE, ITEM_LAW_VERSION } from '../../src/systems/itemLaw.js';
 import { valuablePiece } from '../../src/systems/itemIds.js';
+import { armsOf } from '../../src/net/siegeRef.js';   // INT7: the arms the token signs
 import { liquidWorthOf, deedsOf } from '../../src/net/realmGoldLaw.js';
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
@@ -180,9 +181,10 @@ const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); }
 
 /**
  * ONE SAVE JUDGED, with no database: the character law and the item law over every list it holds. Answers `{ findings,
- * count, wealth, items, provenances, pieces }` - `findings` the first FINDINGS_KEPT of them (`{ code, list, at, t }` an
- * item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
- * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces).
+ * count, wealth, items, provenances, pieces, arms }` - `findings` the first FINDINGS_KEPT of them (`{ code, list, at, t }`
+ * an item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
+ * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces); `arms`
+ * INT7's `[reach, bow]` (net/siegeRef.js armsOf - the pack's lawful weapons alone).
  * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number }} [o] the level its wealth's debt is read at
  */
 export function judgeSave(save, summary = null, o = {}) {
@@ -190,7 +192,7 @@ export function judgeSave(save, summary = null, o = {}) {
   const findings = [];
   let count = 0;
   const keep = (/** @type {any} */ f) => { count++; if (findings.length < FINDINGS_KEPT) findings.push(f); };
-  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [] };
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
   /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number }[]} */
@@ -202,7 +204,10 @@ export function judgeSave(save, summary = null, o = {}) {
       if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance)) provenances.push({ provenance: it.provenance, t: it.templateIndex, m: it.material, q: it.quality, w: worthless(it) ? 0 : itemWorth(it) });
     });
   });
-  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save) };
+  // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
+  // (net/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
+  const arms = armsOf(save.items, (it) => findingsOf(it).length === 0);
+  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms };
 }
 
 /** INT4: A PIECE'S KEY IN THE LEDGER - a crafted piece's provenance (the service minted it: no client can mint a fresh

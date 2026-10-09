@@ -60,7 +60,10 @@ test('WILD-KEEP: the room\'s "gone" forgets its own record and no other; a torn 
 
 test('WILD-KEEP by source: world.js keeps the record where it mints it, reads it back once in the zone\'s frame, and forgets it at its end and at the room\'s "gone"', () => {
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /if \(sent\) _wildMine = \{ r, room: online\.room, p, until: Date\.now\(\) \+ WILD_REMAINS_MS,[^\n]*\n\s+if \(sent\) keepMine\(_wildMine, wildWho\(\)\);/);
+  // PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the remains are the account service's records
+  // now, deposited on its order a chunk at a time (wildDeposit) - the record is kept where the first chunk leaves
+  assert.match(w, /_wildMine = \{ r: dep\.r, room: dep\.room, p: dep\.p, until: Date\.now\(\) \+ WILD_REMAINS_MS,[^\n]*\n\s+keepMine\(_wildMine, wildWho\(\)\);/);
+  assert.match(w, /if \(dep\.k === 0 && dep\.mine\) wildMineLies\(dep\);/);
   const frame = w.slice(w.indexOf('const wildFrame = () => {'), w.indexOf('remainsMarkTick(Date.now());'));
   assert.match(frame, /if \(!_wildMineRead\) \{ _wildMineRead = true; _wildMine \?\?= keptMine\(Date\.now\(\), wildWho\(\)\); \}/);
   assert.match(frame, /if \(_wildMine && Date\.now\(\) > _wildMine\.until\) \{ _wildMine = null; keepMine\(null\); \}/);
