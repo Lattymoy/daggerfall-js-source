@@ -490,7 +490,7 @@ row alone, and read off it as the Broker's sale is - so every badge the service 
 **Hour's First** (HOURS-FIRST, 2026-10-08, Mac of the first clear's thirteen: "a unique different version of the aura, a
 title named Hour's First, and each the gilded gun"). The first group to break an Abyss Dungeon - the claims of slot 1,
 read by SD-CLEARS - hold the title **Hour's First** and its aura **The First Hour**, The Turning Hour's wheel in the first
-dawn's colours with its dial turning forward and the Hour's own mark ablaze, granted by name in the account service's
+dawn's colours with its dial turning forward, the Hour's own mark ablaze and the first light's rays, granted by name in the account service's
 config (`HOURS_FIRST_HANDLES`); and each was sent the Hourlock in the server's post, to claim from the mailbox beside the
 hourglass (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` HOURS-FIRST and SERVER-POST).
 

@@ -1,9 +1,12 @@
 -- HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura,
 -- a title named Hour's First, and each the gilded gun"): THE POST'S FIRST SEND - the thirteen accounts of the first
--- clear of an Abyss Dungeon (server-account/wrangler.toml HOURS_FIRST_HANDLES, read off the first clear's claims by
--- .github/workflows/sd-clears.yml), each sent a piece of the server's post (0093) holding the Hourlock, the gilded gun,
--- as its drop mints it (src/systems/gilded.js). Each claims it into the online character they are playing, from the
--- mailbox beside the hourglass in the pause menu. Their title and aura are the config's list (titles.js isHoursFirst).
+-- clear of an Abyss Dungeon (read off the first clear's claims by .github/workflows/sd-clears.yml), each sent a piece of
+-- the server's post (0093) holding the Hourlock, the gilded gun, as its drop minted it (src/systems/gilded.js). Each
+-- claims it into the online character they are playing, from the mailbox beside the hourglass in the pause menu. Their
+-- title and aura are the config's list (server-account/wrangler.toml HOURS_FIRST_HANDLES, titles.js isHoursFirst).
+-- AUDIT SERVER-POST: the names and the record here are FROZEN (tools/sendServerPost.mjs HOURS_FIRST, HOURS_FIRST_RECORD)
+-- - an applied migration never runs again. A name added to the title's list later is sent the gun by
+-- .github/workflows/server-post.yml with this send's name, `hours-first-hourlock`, item `hourlock`: once an account.
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --

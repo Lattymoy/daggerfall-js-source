@@ -19180,17 +19180,35 @@ hourglass is: `ui/enhancedPost.js`.
   pause face draws itself only when opened, closed or Escaped; while anything waits the envelope nudges (none under
   `prefers-reduced-motion`).
 - **The window** (`postWindow`), on the hourglass's own stage (`.px-timersstage`, centred, its own padding): the pieces
-  newest first - a brass dot on the unread and the waiting gifts, an item named in its rarity's own colour (a rule a
-  rung, walked off `RARITIES`) with *Waiting* or *Claimed*; a piece opened, its words, its item with **Claim** (*The
-  Hourlock is in your pack.*), and **Throw away** only once nothing waits in it. The states said: looking, signed out, a
-  guest (the account's own sentence), empty, a failed look; every refusal in the account's words (REFUSALS).
+  waiting gifts first, then the unread, newest first - a brass dot on the unread and the waiting gifts (said too, " -
+  unread", for a reader that cannot see the dot), an item named in its rarity's own colour (`data-rarity`, a literal
+  rule a rung - the stylesheet imports no game code, and `test/serverpost_client.test.js` holds each to `RARITIES`; the
+  Stone theme's lighter three for its dark ground) with *Waiting* or *Claimed*; a piece opened, its words, its item with **Claim** (*The
+  Hourlock is in your pack.*; labelled "Claim" and the item's name; one claim a press, the button down at once), and
+  **Throw away** only once nothing waits in it. The states said: looking, signed out, a guest (the account's own
+  sentence), empty, a failed look or open (each with **Try again**); every refusal in the account's words (REFUSALS).
+- **AUDIT SERVER-POST, its place kept.** The pause face is rebuilt by anything that renders it (a quest's clock lapsing,
+  the cloud's answer), and the window with it: the menu keeps what it showed (`postKeep` - the piece open, the line
+  said), so the rebuilt window reopens there without wiping the line; reset when the window closes and with the visit.
+  The focus never falls out: on Back once a piece opens or a claim lands, on the row Back came from (`data-key`), on
+  the first row after a throw. Under the account window the face is inert (stage, profile mark, envelope), and the pause
+  door's Tab trap skips whatever is inert.
+- **`/mail`** (and `/mailbox`, `net/chatCommands.js` HOST_COMMANDS and `/help`): the mailbox from the chat, on either skin -
+  `ui/pauseDoor.js` opens the enhanced pause face for a `mailbox` door whatever the skin (the classic window has no
+  envelope), and the face opens on the window (`at === 'mailbox'`). The street's chat (`scenes/world.js`) asks
+  `worldModes.js` `openPauseAt` first, so indoors and underground it is that host's own pause; offline it says the
+  mailbox is online.
 - **The face's laws, kept**: its own scrim (a tap outside closes it alone - the fifth `closeOnOutsideTap`), the envelope
   inside the pause face's (a press opens the window, never resumes), the face under the window inert, Escape closing it
   before the face resumes, the focus handed back to the envelope, its ticks stopped on every rebuild and unmount, and a
   visit's window (`postOpen` reset at mount). Every host hands the world's box (`post: postSource`, the street's bag and
   the modes host; a building's and a dungeon's forward it), null offline and never a throw before the boot declared it.
+  The FOUR HOSTS: `scenes/world.js` (the box, the street's bag, `/mail`), `scenes/worldModes.js` (forwarded, and
+  `openPauseAt`), `scenes/dungeonContext.js` (forwarded) wired; `scenes/exterior.js` FLAGGED as not applicable - the
+  offline exterior door has no online lane, no chat and no hourglass, so no box to hand: its pause face draws no
+  envelope.
 - **The notification** beside the count: a line on the world tab when a look finds post (`postNoticeText`), the
   letterbox's own manner.
 - Pins: `test/serverpost_client.test.js`; PIN MOVED: `test/outsideTap.test.js` (five scrims, the envelope inside the
-  pause face's).
+  pause face's; the face under the account window inert; the window's place reset on a tap outside).
 
