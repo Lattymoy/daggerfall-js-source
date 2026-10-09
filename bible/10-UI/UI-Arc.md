@@ -76,10 +76,10 @@ SKIN's names (Enhanced Plus, Enhanced lighting and the rest are the
 port's own departures, not the product); `daggerfall-enhanced/custom-class`,
 the format every exported class file carries - rename it and each of
 those files is refused on import; the Patreon page and the Discord
-invite (`dfenhanced`), accounts outside the tree; and the repository, the
-domain, the appId and the `Daggerfall JavaScript` userData folder as BR1
-left them, so an update installs over the copy that is there and the
-saves stay where they are.
+invite (`dfenhanced` then; `jM2JdwSM8w` since 2026-10-09), accounts
+outside the tree; and the repository, the domain, the appId and the
+`Daggerfall JavaScript` userData folder as BR1 left them, so an update
+installs over the copy that is there and the saves stay where they are.
 
 IN THE ART, for Mac: the tops of "The Elder Scrolls" touch the file's
 top edge and are cut flat there - a re-export with a few pixels of
