@@ -554,15 +554,18 @@ test('SERPENT1 voice: DAGGER.SND\'s own records, never a new clip - the Dreugh\'
 test('SERPENT1 hoard: the seed\'s own - the same seed, level and earning the same hoard; a ship that dealt has a Rare-or-better piece and a Magic-or-better, one that stood the second alone and STOOD_GOLD of the gold; its own spoils keys, never a raid\'s (mutants: the earning ignored; the gold unscaled; the keys shared)', () => {
   const a = rollSerpentSpoils(12345, 20, 'dealt'), b = rollSerpentSpoils(12345, 20, 'dealt');
   assert.deepEqual(a, b);
-  assert.equal(a.pieces.length, 2);
+  // PIN MOVED (CAST-SPEED): the castSpeed line is a Weapons' and Jewellery's proc kind, so this seed's dai-katana draws
+  // it at the last pass and the Coilscale roll after it reads a moved stream - and lands: the set piece third
+  assert.equal(a.pieces.length, 3);
   assert.ok(['rare', 'legendary', 'exalted'].includes(a.pieces[0].tier), a.pieces[0].tier);
+  assert.equal(a.pieces[2].tier, 'aetheric', 'SERPENT-SET\'s Coilscale piece, last');
   assert.ok(a.pieces.every((p) => p.item.isIdentified));
   assert.ok(a.gold >= 0.8 * SERPENT_SPOILS_GOLD_PER_LEVEL * 20 && a.gold <= 1.2 * SERPENT_SPOILS_GOLD_PER_LEVEL * 20);
   const s = rollSerpentSpoils(12345, 20, 'stood');
   assert.equal(s.pieces.length, 1);
   assert.ok(Math.abs(s.gold - a.gold * STOOD_GOLD) <= 1, 'the same seed\'s gold, its share');
   const list = serpentSpoilsList(12345, 20, 'dealt');
-  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'item', 'gold']);   // PIN MOVED (SERPENT-SET): the gate's embers between the pieces and the gold
+  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'item', 'item', 'gold']);   // PIN MOVED (SERPENT-SET): the gate's embers between the pieces and the gold; PIN MOVED (CAST-SPEED): three pieces before them
   assert.equal(serpentSpoilsDay(DAY), `serpent:${DAY}`);
   assert.notEqual(SERPENT_SPOILS_KEYS.store, RAID_SPOILS_KEYS.store);
   assert.notEqual(SERPENT_SPOILS_KEYS.day, RAID_SPOILS_KEYS.day);

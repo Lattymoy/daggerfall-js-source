@@ -642,6 +642,12 @@
   },
   {
    "file": "src/scenes/worldModes.js",
+   "has": "const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);",
+   "clock": "event",
+   "why": "the card table regulars' day - their purses kept till the day turns (AUDIT CARDS-2 H2)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
    "has": "worldNow: () => Math.floor(skyMinutes()),",
    "clock": "sky",
    "why": "the tavern's calendar and kitchen hours"
@@ -1013,6 +1019,54 @@
    "has": "people: livingWorldOn() ? () => peoplePage(livingRelations, Math.floor((skyMinutes() - 240) / 1440), livingTownOfId) : undefined,",
    "clock": "sky",
    "why": "LW7c: the People page reads each regard on the living day - the sky's"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
   }
  ]
 }

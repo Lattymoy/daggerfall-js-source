@@ -65,8 +65,8 @@
   {
     "name": "sway-any-batch-leans",
     "file": "src/render/shadowPass.js",
-    "old": "      const swaying = b.sway > 0 && b.size && swayLean(wl, b.sway, b.size.h) > SHADOW_SWAY_STILL;",
-    "new": "      const swaying = b.size && swayLean(wl, 1, b.size.h) > SHADOW_SWAY_STILL;",
+    "old": "      const swaying = !!b.size && crownLean(r, wl, law, b, b.size.h) > SHADOW_SWAY_STILL;",
+    "new": "      const swaying = !!b.size && swayLean(wl, 1, b.size.h) > SHADOW_SWAY_STILL;",
     "tests": [
       "test/shadowreach.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "sway-floor-dropped",
     "file": "src/render/shadowPass.js",
-    "old": "      const swaying = b.sway > 0 && b.size && swayLean(wl, b.sway, b.size.h) > SHADOW_SWAY_STILL;",
-    "new": "      const swaying = b.sway > 0 && b.size && wl > 0.0;",
+    "old": "      const swaying = !!b.size && crownLean(r, wl, law, b, b.size.h) > SHADOW_SWAY_STILL;",
+    "new": "      const swaying = !!b.size && (b.sway > 0 || b.windfall > 0) && wl > 0.0;",
     "tests": [
       "test/shadowreach.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "sway-x-rate-alone",
     "file": "src/render/shadowPass.js",
-    "old": "    const fw = r.flatWind, wl = Math.hypot(fw[0], fw[1]);",
-    "new": "    const fw = r.flatWind, wl = Math.abs(fw[0]);",
+    "old": "    const fw = r.flatWind, wl = Math.hypot(fw[0], fw[1]), law = windfallLawOn(r.windfall);",
+    "new": "    const fw = r.flatWind, wl = Math.abs(fw[0]), law = windfallLawOn(r.windfall);",
     "tests": [
       "test/shadowreach.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "seam-records-no-wind",
     "file": "src/render/renderer.js",
-    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }",
-    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, null, camRight, camUp); }",
+    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall); }",
+    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, null, camRight, camUp, this._windfall); }",
     "tests": [
       "test/shadowreach.test.js"
     ]

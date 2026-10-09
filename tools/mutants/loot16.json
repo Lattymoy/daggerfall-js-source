@@ -600,8 +600,8 @@
   {
     "name": "LOOT16-popup-key-over-dfu",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);",
-    "new": "    const hit = reforgeKey ? 'Reforge' : liftKey ? 'Lift' : firstHotkey(buttons, code, e);",
+    "old": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);",
+    "new": "    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : liftKey ? 'Lift' : firstHotkey(buttons, code, e);",
     "tests": [
       "test/loot16_curses.test.js"
     ]

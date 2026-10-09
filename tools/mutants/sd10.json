@@ -166,7 +166,7 @@
   {
     "name": "SD10-out-with-no-veil",
     "file": "src/scenes/world.js",
-    "old": "    gateVeil?.flash('hourHome', { centre: sdVeilCentre() });   // SD-LOOK: the way home's veil - its crack mended\n    if (!modes?.unstuck?.()) return false;",
+    "old": "    gateVeil?.flash('hourHome');   // SD-LOOK: the way home's veil - its crack mended\n    if (!modes?.unstuck?.()) return false;",
     "new": "    if (!modes?.unstuck?.()) return false;",
     "tests": [
       "test/sd10_collapse.test.js"

@@ -763,6 +763,7 @@ export const TRAVEL_VIEW_MARK_COLORS = Object.freeze({
   band: '#e0503c',   // TV7: a roaming band - the enemy's red
   camp: '#d9622b',   // OW6: a camp, a pack or a band stood - an ember's red-orange, apart from the roaming bands
   wayfarer: '#c9a96e',   // LW3: the living world's parties on the road - road dust, apart from a player's verdigris
+  stranger: '#ff3b2f',   // WILD3: a stranger in the open PvP zone - an enemy's red at its brightest
   bounty: '#0b0b0b', bountyRim: '#e6dccb',   // BOUNTY-OVERWORLD: a held bounty's hunt - BLACK, the maps' own circle (ui/bountyMapMark.js), with the legend's pale rim so it reads on dark ground
 });
 /** The plates' face - the stylesheet's --display, as the DOM plates had it. */
@@ -819,6 +820,26 @@ export function drawShipMark(g, x, y) {
   g.moveTo(x - 1, y - SHIP_MARK_RISE); g.lineTo(x - 1, y - 1); g.lineTo(x + 6, y - 1); g.closePath();
   g.fill(); g.stroke();
 }
+/** STRANGER-HELM: a knight's great helm about (x, y), in the marks' own art - the colour already set as the fill, a black
+ *  one-pixel edge; a flat-topped pot with a rounded crown, the eye slit across, a nasal bar down and three breaths. */
+export function strangerHelm(g, x, y) {
+  g.beginPath();
+  g.moveTo(x - 5.5, y + 6.5);
+  g.lineTo(x - 5.5, y - 2.5);
+  g.quadraticCurveTo(x - 5.5, y - 7.5, x, y - 7.5);
+  g.quadraticCurveTo(x + 5.5, y - 7.5, x + 5.5, y - 2.5);
+  g.lineTo(x + 5.5, y + 6.5);
+  g.closePath();
+  g.fill(); g.stroke();
+  const fill = g.fillStyle;
+  g.fillStyle = '#000';
+  g.fillRect(x - 4.5, y - 2, 9, 1.6);     // the eye slit
+  g.fillRect(x - 0.6, y - 0.4, 1.2, 4);   // the nasal bar's shadow under the slit
+  for (const dx of [-3, 2]) g.fillRect(x + dx, y + 3.2, 1.2, 1.2);   // the breaths
+  g.fillStyle = 'rgba(255,255,255,0.35)';
+  g.fillRect(x - 4, y - 6, 2.5, 1);       // the crown's light
+  g.fillStyle = fill;
+}
 /** OWS1: a mark at sea, by its kind. */
 export const isShipKind = (m) => /\bship\b/.test(m.kind ?? '');
 /** A mark's look, by its kind's first word. */
@@ -828,6 +849,7 @@ const lookOf = (m) => {
   if (k === 'gather') return k;   // GATHER-OW: a profession's group of nodes
   if (k === 'wayfarer') return k;   // LW3: the living world's parties on the road
   if (k === 'waypoint') return k;   // WAYPOINTS: a flag
+  if (k === 'stranger') return k;   // WILD3: another player in the open zone - an enemy
   return k === 'place' || k === 'far' || k === 'dest' || k === 'target' || k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';
 };
 /** OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the plates' stone - the Enhanced
@@ -872,10 +894,10 @@ function labelSprite(doc, text, look, size, journey, hover, dpr, hub = false) {
     if (plusFace) { x.shadowColor = '#050608'; x.shadowBlur = 0; x.shadowOffsetX = 1; x.shadowOffsetY = 1; }   // OW-PLUS-FACE: the kit's cut shadow
   } else if (plusFace) {
     x.shadowColor = '#050608'; x.shadowBlur = 0; x.shadowOffsetX = 1; x.shadowOffsetY = 1;   // OW-PLUS-FACE
-    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : C.bone;   // OW-KIN
+    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OW-KIN
   } else {
     x.shadowColor = '#000'; x.shadowBlur = 3; x.shadowOffsetY = 1;
-    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : C.bone;   // OWS3: "Pirates" in their colour; OW-KIN: a friend's, a guild-mate's name in theirs
+    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OWS3: "Pirates" in their colour; OW-KIN: a friend's, a guild-mate's name in theirs
   }
   x.fillText(text, padX, padY + 1);
   if (journey) { x.fillStyle = C.brass; x.fillText(' →', padX + tw, padY + 1); }
@@ -1097,7 +1119,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -1117,6 +1139,8 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       g.beginPath(); g.arc(x, y, 2.5, 0, Math.PI * 2); g.lineWidth = 1; g.strokeStyle = C.bountyRim; g.fill(); g.stroke();
     } else if (look === 'gather') {   // GATHER-OW: a profession's group - a gem's diamond in its colour, a ring of dark
       g.beginPath(); g.moveTo(x, y - 7); g.lineTo(x + 5, y); g.lineTo(x, y + 7); g.lineTo(x - 5, y); g.closePath(); g.fill(); g.stroke();
+    } else if (look === 'stranger') {   // STRANGER-HELM (the owner: "a stranger should have a knights helmet in the same art as the dots"): a great helm - its fill the stranger's red, the dots' black edge, the eye slit and the breaths cut dark
+      strangerHelm(g, x, y);
     } else if (look === 'camp') {   // OW6: a camp - a tent's peak, not a band's dot
       g.beginPath(); g.moveTo(x, y - 6); g.lineTo(x + 6, y + 5); g.lineTo(x - 6, y + 5); g.closePath(); g.fill(); g.stroke();
     } else if ((look === 'place' || look === 'far') && m.hub) {   // OW-HUBS: a carriage town - its wheel, brass on a dark edge

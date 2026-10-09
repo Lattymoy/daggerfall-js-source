@@ -115,6 +115,11 @@ const badgeOfRow = (me, tag) => ({ gi: me.guild_id, gt: tag, gm: `m${me.rid}` })
 /** A guild whose guildmaster is gone is given one: its highest rank's longest-standing member. A guild that has one
  *  finds its guildmaster first in that order, and is left unwritten. */
 async function succeed(db, guildId) {
+  // SCALE4b (2026-10-08): ASKED BEFORE IT IS WRITTEN - the update went on every guild read and write, and a guild with
+  // its master changes nothing; the same first member is read, and only one that is not the master is written (the
+  // update's own guard still stands, so a race that crowned someone meanwhile leaves it nothing to change)
+  const first = await db.prepare('SELECT rank FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1').bind(guildId).first();
+  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;
   await db.prepare(`UPDATE guild_members SET rank = ${GUILD_RANK_MASTER}
     WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`).bind(guildId).run();
 }

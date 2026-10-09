@@ -8,6 +8,55 @@
 
 Newest first.
 
+**2026-10-08 - AUDIT LW-STIR.** Mac: *"Lets audit everything and ensure perfection"*, of LW-STIR - the watch's word at
+the gate and on its rounds, the town's quarrels, haggles and pleas, the street hushing and turning, its small voices.
+Taken up again on main after its lenses never reported: four independent adversarial lenses on the frozen merge (the
+dealer's math and laws, the street and every reader, the plans and the hosts, the pins and the record) and this
+session's own; the game's own towns not run (no ARENA2 in the container). Paid: the day's incidents kept by who was in
+town, not by their plans - a reader there before the roads' word staged a day apart from one come after, travellers on
+the road among it (B1 = C1); a gate's word lost past 2^24 minutes, where the online sky is in 2028 (A1); a second party
+halted in a round another's word held, asked nothing (A2); a quarrel unbroken at a watch's handover (A3); a plea taking a
+keeper off their stall (A4 = B3); the day dealt from this reader's lends and household (B2); an incident's beggar and
+keeper drawn as still pictures facing nobody (B4); a halt costing a day visit its walk out (C2); a stranger asked by
+name, both of a pair calling the hour, a pair's second breaking it up, a held walker crying wares, one of an incident
+unable to greet the player the round through (A5, A6, A7, B6, B7). Lens D: 93 of its 118 mutants survived every test
+that imports the living town - the small voices never heard on the street under a pin, every stated number pinned
+against itself, the hush and the turn one way, the dealer's and the voices' laws, the town's wiring, fixtures that never
+made their cases (D1-D9) - each killed now; the measured table re-run by a committed probe (D10), a reason that does not
+reproduce marked (D11), titles made true (D12), a test loop bounded (D13). The record's false claims corrected; B5, B4's
+onlookers and C2's elder half recorded. 110 new mutants, 106 dead and 4 recorded equivalent. Record: `Audit-LW-Stir.md`.
+
+**2026-10-08 - AUDIT LW-ROOMS.** Mac: *"Audit this"*, of LW-ROOMS - the whole room walked, the tables filled apart and in
+sight, a room holding what its floor does, no afternoon sat out in the tavern. Four independent adversarial lenses on the
+frozen head (the room's math, the layer and every reader, the day's plan, the pins and the record), every one on the
+freeware ARENA2's 6,823 interiors and the game's own towns in scratch, and this session's own. Paid: the walk stopped at
+every doorway off its lattice's lines - 81 of 290 taverns under ten places - and slides through them now (E1: none); an
+open door laid the room out anew, its every drinker elsewhere, for the next visit, a load and a peer - the room is
+measured with every door shut as built (A1/B1); one stirring was drawn beside strangers by a farthest place round a
+corner and company chained two tables - their own place is the farthest they can walk to, company apart (A2/D2: taverns
+at five or more astir 49 -> 3); the tavern day was read every quarter hour and hid the noon lunch's wait - read every
+minute, the lunch from the stint's end (D1); the same-place rule emptied the street a quarter at 17:00 - indoors alone
+now (C1); a body on a bench's edge, the step ladder, one reader's quest and the hour, a lodger's stand, faces to the
+wall, comings in plain view, a word and the talk ray through walls, a household's hold (A3, D5, B2, B1b, A4, A5, B3, B4,
+E3). Lens D's survivors pinned or proven equivalent; the record's overstated sentences corrected (D3, D4, D8-D10); the
+room's talk measured back to 79.5 lines in five minutes (B6); C2, B7, C5, C6, A8-A10 recorded; the long stands at the
+square left for Mac (C1's trade-off). 40 new mutants, 37 dead and 3 recorded equivalent. Record: `Audit-LW-Rooms.md`.
+
+**2026-10-08 - AUDIT SCALE.** Mac: *"Do a comprehensive audit on this and ensure perfection"*, of SCALE3 and SCALE4a-c -
+the load harness, the session and its player in one read, the service's own clock, one heartbeat for a tab's three
+clocks. Five lenses: this session's own, live in real workerd (the account probe, both crons fired over a migrated D1,
+the deploy's triggers), and four independent adversarial reviewers on a snapshot of the pushed head (the service, the
+client's heartbeat, the harness and its numbers, the tests and the record). Paid: an auction won under a seat's Tithe,
+its seller within the Tithe of the Marks cap, picked every minute and closed never, twenty of them holding every auction
+behind them - on main already (A1); a firing able to spend thousands of statements on a stuck page and pass D1's
+thousand an invocation (A2); the knock's wait spending the grace that covers a missed knock - a 40 s alt-tab credited
+910 s of a sitting's 1,500 (B1); one hung heartbeat holding the board, the box and the beat for the page (B2); one
+part's throw failing all three (A7); the professions' state polled thirty times the client in the harness, a quarter of
+main's statements (C1); the arena's whole board counted every eight minutes on an empty world (A4); and the mutation
+runner reading "dead" off a test file that did not parse (M1). Lane D's 45 surviving mutants pinned; the measurements
+taken again by the corrected harness. 81 new mutants, 80 dead and 1 recorded equivalent. Record: `Audit-Scale.md` (AUDIT
+SCALE).
+
 **2026-10-07 - FIELD BUGS 2026-10-07.** Eight player reports from the Discord's bug-reports channel, through Mac, read
 one at a time. Six paid, two are recorded and left as they stand:
 - CRASH-BLUR - the crash screen's "NotFoundError: Failed to execute 'replaceChildren' ... moved in a 'blur' event

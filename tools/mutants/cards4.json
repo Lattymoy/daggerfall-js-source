@@ -1,0 +1,157 @@
+[
+  {
+    "name": "CP-bluff-not-first",
+    "file": "src/systems/cardPatrons.js",
+    "old": "  const bluffing = unit(rand32) < temper.bluff;   // the decision's FIRST draw",
+    "new": "  const bluffing = false;   // the decision's FIRST draw",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-chen-suited",
+    "file": "src/systems/cardPatrons.js",
+    "old": "if (suitOf(a) === suitOf(b)) s += 2;",
+    "new": "if (suitOf(a) === suitOf(b)) s += 1;",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-chen-pair-floor",
+    "file": "src/systems/cardPatrons.js",
+    "old": "Math.ceil(Math.max(5, s * 2))",
+    "new": "Math.ceil(s * 2)",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-equity-tie-share",
+    "file": "src/systems/cardPatrons.js",
+    "old": "if (best) won += 1 / ties;",
+    "new": "if (best) won += 1;",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-equity-dead-ignored",
+    "file": "src/systems/cardPatrons.js",
+    "old": "const known = new Set([...hole, ...board, ...dead]);",
+    "new": "const known = new Set([...hole, ...board]);",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-odds-ignored",
+    "file": "src/systems/cardPatrons.js",
+    "old": "    : facing >= odds + temper.edge;",
+    "new": "    : facing >= temper.edge;",
+    "tests": [
+      "test/auditcards2_table.test.js",
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CP-raise-unclamped",
+    "file": "src/systems/cardPatrons.js",
+    "old": "to: Math.min(legal.raise.max, Math.max(legal.raise.min, want))",
+    "new": "to: want",
+    "tests": [
+      "test/cards4_patrons.test.js"
+    ]
+  },
+  {
+    "name": "CT-fold-out-of-turn-acts",
+    "file": "src/net/cardLaw.js",
+    "old": "  next.seats[seat].folded = true;\n  // The seat to act",
+    "new": "  // The seat to act",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CT-stakes-edge",
+    "file": "src/systems/cardTableSession.js",
+    "old": "TABLE_STAKES.find((s) => q <= s.upTo)",
+    "new": "TABLE_STAKES.find((s) => q < s.upTo)",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CT-buyin-over-purse",
+    "file": "src/systems/cardTableSession.js",
+    "old": "max = Math.min(BUY_IN_MAX_BB * bb, Math.floor(Number(gold) || 0));",
+    "new": "max = BUY_IN_MAX_BB * bb;",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CT-broke-patron-stays",
+    "file": "src/systems/cardTableSession.js",
+    "old": "{ s.gone = true; this._say({ t: 'leave', seat: i, name: s.name }, now); }",
+    "new": "{ this._say({ t: 'leave', seat: i, name: s.name }, now); }",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CT-no-hand-gap",
+    "file": "src/systems/cardTableSession.js",
+    "old": "this.nextDealAt = now + HAND_GAP_MS;",
+    "new": "this.nextDealAt = now;",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CT-leave-keeps-seat",
+    "file": "src/systems/cardTableSession.js",
+    "old": "    this.seats[p].gone = true;\n",
+    "new": "\n",
+    "tests": [
+      "test/cards4_session.test.js"
+    ]
+  },
+  {
+    "name": "CH-raise-line",
+    "file": "src/ui/cardTableHud.js",
+    "old": "`${who} raise${s} to ${e.to}.`",
+    "new": "`${who} raise${s} ${e.to}.`",
+    "tests": [
+      "test/cards4_hud.test.js"
+    ]
+  },
+  {
+    "name": "CH-keys-leak",
+    "file": "src/ui/cardTableHud.js",
+    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
+    "new": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) void 0; }",
+    "tests": [
+      "test/auditcards2_host.test.js",
+      "test/cards4_hud.test.js"
+    ]
+  },
+  {
+    "name": "CH-host-purse-online",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!game.friendly) deductGold(playerEntity, amount);",
+    "new": "      deductGold(playerEntity, amount);",
+    "tests": [
+      "test/cards4_hud.test.js"
+    ]
+  },
+  {
+    "name": "CH-host-cashout-online",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (chips > 0 && !g.friendly) { addGold(",
+    "new": "if (chips > 0) { addGold(",
+    "tests": [
+      "test/cards4_hud.test.js"
+    ]
+  }
+]

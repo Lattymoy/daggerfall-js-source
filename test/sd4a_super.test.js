@@ -34,8 +34,8 @@ const fnSrc = (name) => {
 /** The host's applyEliteScaling and eliteLootOpts, run over the real laws. */
 function hostScale() {
   const body = `${fnSrc('eliteLootOpts')}\n${fnSrc('applyEliteScaling')}\nreturn { eliteLootOpts, applyEliteScaling };`;
-  return new Function('promoteEliteFoe', 'scaleSuperFoe', 'applyChampion', 'SUPER_LOOT_OPTS', 'ELITE_LOOT_DROP_MULT', 'ELITE_LOOT_QUALITY_MULT', 'ELITE_HEALTH_SCALE', 'ELITE_DAMAGE_SCALE', body)(
-    promoteEliteFoe, scaleSuperFoe, applyChampion, SUPER_LOOT_OPTS, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE);
+  return new Function('promoteEliteFoe', 'scaleSuperFoe', 'applyChampion', 'SUPER_LOOT_OPTS', 'ELITE_LOOT_DROP_MULT', 'ELITE_LOOT_QUALITY_MULT', 'ELITE_HEALTH_SCALE', 'ELITE_DAMAGE_SCALE', '_wildDungeon', '_wildRing', 'wildLootOpts', body)(
+    promoteEliteFoe, scaleSuperFoe, applyChampion, SUPER_LOOT_OPTS, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, false, 0, (o) => o);   // WILD1: a dungeon out of the open zone
 }
 const foe = (over = {}) => ({ maxHealth: 60, health: 60, level: 10, mobileType: 20, team: 'Monster', ...over });
 

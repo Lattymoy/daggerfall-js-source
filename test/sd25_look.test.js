@@ -491,15 +491,30 @@ test('SD-LOOK THE HOUR\'S VEIL ON THE PAGE (S5): the Hour\'s themes draw its own
   assert.equal(nb.canvas.style.imageRendering, '');
 });
 
-test('SD-LOOK THE VEIL CLOSES ON THE RIFT (S5): the world host keeps where the Rift\'s window (or the Return\'s) stood on the screen the frame it was drawn - into a kept typed array, by hand through the view and the projection (nothing made a frame) - and the step in, the way back and the way home each close on it; forced, on the screen\'s middle (mutants: the aim dropped)', () => {
+test('SD-LOOK THE VEIL CLOSES ON THE RIFT (S5): the world host hands the veil where the Rift\'s window (or the Return\'s) stands on the screen each frame it is drawn - by hand through the view and the projection (nothing made a frame) - and the veil closes the next step on it while that is fresh (the step in, the way back, the way home); stale, or forced, on the screen\'s middle (mutants: the aim dropped; the aim never read; a stale aim kept; the forced shatter aimed)', () => {
   const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  const body = W.slice(W.indexOf('function sdVeilAim(proj, view, m) {'), W.indexOf('/** Where the next Hour\'s veil pivots'));
+  const body = W.slice(W.indexOf('function sdVeilAim(proj, view, m) {'), W.indexOf('/** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT'));
   assert.ok(body.length > 100);
   assert.doesNotMatch(body, /new |[=(,:]\s*\[|=>|\.\.\./, 'nothing made: no array, no closure, no spread');
   assert.match(W, /sdVeilAim\(proj, view, look\?\.window\?\.model \?\? look\?\.bay\?\.model\);/, 'each frame the Rift is drawn');
-  assert.match(W, /\}, 'hourIn', \{ centre: sdVeilCentre\(\) \}\);/);
-  assert.match(W, /\}, 'hourBack', \{ centre: sdVeilCentre\(\) \}\);/);
-  assert.match(W, /gateVeil\?\.flash\('hourHome', \{ centre: sdVeilCentre\(\) \}\);/);
+  assert.match(body, /gateVeil\.aim\?\.\(/, 'handed to the veil');
+  assert.match(W, /\}, 'hourIn'\);/);
+  assert.match(W, /\}, 'hourBack'\);/);
+  assert.match(W, /gateVeil\?\.flash\('hourHome'\);/);
+  // the veil: a fresh aim closes the step on it; a stale one, and a forced shatter, on the middle
+  const p = veilPage(), veil = createGateVeil(p);
+  veil.aim(0.25, -0.1);
+  veil.cover('hourIn'); p.step();
+  assert.deepEqual(p.u('uCentre').at(-1), [0.25, -0.1], 'on the Rift');
+  const q = veilPage(), v2 = createGateVeil(q);
+  v2.aim(0.25, -0.1);
+  for (let i = 0; i < 25; i++) q.step(16);
+  v2.flash('hourHome');
+  assert.deepEqual(q.u('uCentre').at(-1), [0, 0], 'stale: the middle');
+  const c = veilPage(), v3 = createGateVeil(c);
+  v3.aim(0.25, -0.1);
+  v3.flash('hourCast');
+  assert.deepEqual(c.u('uCentre').at(-1), [0, 0], 'forced: the middle');
 });
 
 // ---------------------------------------------------------------------------------------------------------------------

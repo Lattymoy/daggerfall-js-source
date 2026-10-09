@@ -1,0 +1,92 @@
+[
+  {
+    "name": "SDCLEARS-the-first-broken-the-last",
+    "file": "tools/sdClears.mjs",
+    "old": "'(SELECT MIN(slot) FROM sd_kills)'",
+    "new": "'(SELECT MAX(slot) FROM sd_kills)'",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "The run left empty would name the latest Hollow broken, not the first - Mac's ask answered with the wrong group."
+  },
+  {
+    "name": "SDCLEARS-another-slots-names-mixed-in",
+    "file": "tools/sdClears.mjs",
+    "old": " WHERE k.slot = ${slot}",
+    "new": "",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "Every Hollow's breakers would be read as one group's."
+  },
+  {
+    "name": "SDCLEARS-the-claims-by-name-alone",
+    "file": "tools/sdClears.mjs",
+    "old": "ORDER BY k.at, p.handle_lc",
+    "new": "ORDER BY p.handle_lc",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "The names would no longer read in the order they claimed."
+  },
+  {
+    "name": "SDCLEARS-the-tie-by-case",
+    "file": "tools/sdClears.mjs",
+    "old": "ORDER BY k.at, p.handle_lc",
+    "new": "ORDER BY k.at, p.handle",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "Two claims in one second would sort every capital before every lower case letter - 'Vex' before 'ana'."
+  },
+  {
+    "name": "SDCLEARS-the-first-claim-the-last",
+    "file": "tools/sdClears.mjs",
+    "old": "MIN(at) AS first_at",
+    "new": "MAX(at) AS first_at",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "A late claim (a guest that registered a day on) would move when the Hollow reads as broken."
+  },
+  {
+    "name": "SDCLEARS-the-slot-unchecked",
+    "file": "tools/sdClears.mjs",
+    "old": "const slot = /^[1-9][0-9]{0,8}$/.test(s) ? Number(s) : NaN;",
+    "new": "const slot = Number(s);",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "'1e3' would read slot 1000 and '0x10' slot 16 - a slot nobody typed."
+  },
+  {
+    "name": "SDCLEARS-the-input-spliced-into-a-run-line",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "--names \"$SLOT\"",
+    "new": "--names \"${{ inputs.slot }}\"",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "Whatever is typed into the slot would be a shell command on the runner that holds the Cloudflare token."
+  },
+  {
+    "name": "SDCLEARS-no-clears-passing",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "no claim names one\"\n            exit 1",
+    "new": "no claim names one\"",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "A run that found nothing would end green with an empty summary."
+  },
+  {
+    "name": "SDCLEARS-no-names-passing",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "nobody has claimed it yet\"\n            exit 1",
+    "new": "nobody has claimed it yet\"",
+    "tests": [
+      "test/sdclears.test.js"
+    ],
+    "note": "A slot nobody claimed would end green, as if its group had no names."
+  }
+]

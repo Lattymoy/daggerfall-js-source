@@ -48,6 +48,21 @@ export function parseRollSpec(text) {
 export const rollSpecText = ({ n, m, k }) => `${n}d${m}${k > 0 ? `+${k}` : k < 0 ? `${k}` : ''}`;
 
 /**
+ * ONE UNBIASED DRAW in 0..m-1 from a source of uniform 32-bit integers - the dice's and the cards' (CARDS1,
+ * `net/cardLaw.js` shuffleDeck) one home. A draw at or past the largest multiple of `m` below 2^32 is thrown back and
+ * drawn again, so every value is exactly as likely (a bare `x % m` favours the low values whenever m does not divide
+ * 2^32). `m` is an integer 1..2^32.
+ * @param {number} m
+ * @param {() => number} rand32
+ */
+export function drawBelow(m, rand32) {
+  const limit = 2 ** 32 - (2 ** 32 % m);
+  let x;
+  do { x = rand32() >>> 0; } while (x >= limit);
+  return x % m;
+}
+
+/**
  * THE ROLL, from a source of uniform 32-bit integers (`rand32` - the relay's crypto.getRandomValues; a test's own
  * sequence). UNBIASED: a draw at or past the largest multiple of `m` below 2^32 is thrown back and drawn again, so every
  * face is exactly as likely (a bare `x % m` favours the low faces whenever m does not divide 2^32). Answers
@@ -58,13 +73,8 @@ export const rollSpecText = ({ n, m, k }) => `${n}d${m}${k > 0 ? `+${k}` : k < 0
 export function rollDice(spec, rand32) {
   if (!validRollSpec(spec)) return null;
   const { n, m, k } = spec;
-  const limit = 2 ** 32 - (2 ** 32 % m);
   const dice = [];
-  for (let i = 0; i < n; i++) {
-    let x;
-    do { x = rand32() >>> 0; } while (x >= limit);
-    dice.push(1 + (x % m));
-  }
+  for (let i = 0; i < n; i++) dice.push(1 + drawBelow(m, rand32));
   return { n, m, k, dice, total: dice.reduce((a, b) => a + b, 0) + k };
 }
 

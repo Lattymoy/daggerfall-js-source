@@ -5,8 +5,9 @@
 //   thousands, and the collider filed their faces on a 64-unit XZ grid, so a query near a massif took every face whose
 //   footprint covered its column - above and below alike - and tested each exactly. A tree over each bucket's wide faces
 //   (with a box a face) hands a query only the faces it can reach. The road-clearance walk is bounded to the map.
-// OW-WOD-PATH - the Overworld's planner knew only the MAPS climate's peaks; a WOD massif's pixel is refused to an open
-//   step now, as the Mountain climate's is.
+// OW-WOD-PATH - the Overworld's planner knew only the MAPS climate's peaks; a WOD massif's pixel was refused to an open
+//   step, as the Mountain climate's was - until MOUNTAINS WALKABLE (the owner, the Wrothgarian zone's merge) removed the
+//   on-foot restriction everywhere: the host still hands the massifs over, and the planner walks them.
 // OW-TOWN-RING - a route through a town's pixel aimed a leg at the town's heart; it walks the border ring now, the
 //   ring Travel Options' own follow key walks and the roads' painter paves.
 import './modsOff.js';
@@ -185,17 +186,16 @@ function massifWorld() {
   return { W, H, rocks, g };
 }
 
-test('OW-WOD-PATH: a route goes round a massif - never an open step into its pixels - where it walked straight through; a road laid through it is walked; a traveller among its rocks walks out', () => {
+test('OW-WOD-PATH, then MOUNTAINS WALKABLE (the owner, the Wrothgarian zone\'s merge): a massif refuses no step any more - handed to the ground or not, the route walks straight through it (it went round, never an open step into its pixels), and none of its pixels is a peak; a road laid through it is walked; a traveller among its rocks walks out', () => {
   const { W, H, rocks, g } = massifWorld();
   const from = { x: 20, y: 15 }, to = { x: 40, y: 15 };
   const base = { width: W, height: H, ...g };
   const straight = planRoute(from, to, base);
   assert.ok(straight.pixels.some((p) => rocks[p.x + p.y * W]), 'without the massifs the route walks through them');
   g.setRocks(rocks);
-  const round = planRoute(from, to, { width: W, height: H, ...g });
-  assert.ok(round, 'a way round');
-  assert.ok(!round.pixels.some((p) => rocks[p.x + p.y * W]), 'never into a massif\'s pixel');
-  assert.ok(g.peakAt(29, 15) && !g.peakAt(20, 15), 'the ground\'s peaks are the massifs too');
+  const through = planRoute(from, to, { width: W, height: H, ...g });
+  assert.deepEqual(through.pixels, straight.pixels, 'MOUNTAINS WALKABLE: the massifs handed - the same route, straight through them');
+  assert.ok(!g.peakAt(29, 15) && !g.peakAt(20, 15), 'MOUNTAINS WALKABLE: a massif\'s pixel is no peak (the spot there is walked to)');
   // a road laid straight through is walked (the mod stands no site on a path's pixel - the host drops those)
   const roads = new Uint8Array(W * H);
   for (let x = 20; x < 40; x++) { roads[x + 15 * W] |= DIR_DELTA.find(([, dx, dy]) => dx === 1 && dy === 0)[0]; roads[x + 1 + 15 * W] |= DIR_DELTA.find(([, dx, dy]) => dx === -1 && dy === 0)[0]; }
@@ -205,15 +205,16 @@ test('OW-WOD-PATH: a route goes round a massif - never an open step into its pix
   const out = planRoute({ x: 29, y: 15 }, { x: 20, y: 15 }, { width: W, height: H, ...g });
   assert.ok(out, 'the traveller in the massif walks out of it');
   g.setRocks(null);
-  assert.ok(planRoute(from, to, { width: W, height: H, ...g }).pixels.some((p) => rocks[p.x + p.y * W]), 'the table taken away: back to the climate\'s peaks alone');
+  assert.deepEqual(planRoute(from, to, { width: W, height: H, ...g }).pixels, straight.pixels, 'the table taken away: the same route');
 });
 
-test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a road or a track crosses, again when the list or the roads change; a spot inside one is refused as a peak is', () => {
+test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a road or a track crosses, again when the list, the roads or the open zone change (MOUNTAINS WALKABLE: the planner walks them now - above); a spot the ground names a peak is refused', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const src = wod\.mountainPixels\(\);/);
-  assert.match(w, /if \(src === _tvRocksFrom && net === _tvRocksRoads\) return _tvRocks;/, 'kept for the list and the roads it was read with');
-  assert.match(w, /for \(let i = 0; i < src\.length; i\+\+\) if \(src\[i\] && !\(\(net\?\.roads\?\.\[i\] \?\? 0\) \| \(net\?\.tracks\?\.\[i\] \?\? 0\)\)\) out\[i\] = 1;/, 'a path\'s pixel is no massif');
-  assert.match(w, /\.setRocks\(tvWodRocks\(\)\); return _tvRouteGround; \};/);
+  // PIN MOVED (WILD1): no World of Daggerfall, no list - and the open zone's mask kept beside the list and the roads
+  assert.match(w, /const src = wod \? wod\.mountainPixels\(\) : null;/);
+  assert.match(w, /if \(src === _tvRocksFrom && net === _tvRocksRoads && wm === _tvRocksMask && _tvRocks\) return _tvRocks;/, 'kept for the list, the roads and the zone it was read with');
+  assert.match(w, /const onRoad = \(i\) => \(\(net\?\.roads\?\.\[i\] \?\? 0\) \| \(net\?\.tracks\?\.\[i\] \?\? 0\)\);\n\s*if \(src\) for \(let i = 0; i < n; i\+\+\) if \(src\[i\] && !onRoad\(i\)\) out\[i\] = 1;/, 'a path\'s pixel is no massif');
+  assert.match(w, /WATER_BYTE\)\)\.setRocks\(tvWodRocks\(\)\);\n\s*return _tvRouteGround;\n {2}\};/);
   assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/);
 });
 

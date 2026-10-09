@@ -552,8 +552,8 @@
   {
     "name": "AUDIT28-H8-the-board-split-sorted-every-frame",
     "file": "src/scenes/world.js",
-    "old": "  const boardSplitOf = (p) => (p._boardSplit ??= questBoardIndices(p.boards ?? []));",
-    "new": "  const boardSplitOf = (p) => questBoardIndices(p.boards ?? []);",
+    "old": "  const boardSplitOf = (p) => (p._boardSplit ??= (() => {",
+    "new": "  const boardSplitOf = (p) => (p._boardSplit = (() => {",
     "tests": [
       "test/audit28_forage.test.js"
     ]

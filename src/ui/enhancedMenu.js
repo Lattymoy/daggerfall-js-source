@@ -154,6 +154,7 @@ import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPag
 import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
 import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
+import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage, disarmCollectionsPage, setCollectionsPart } from './collectionsPage.js';   // COLLECTIONS: the codex and the cards
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
 import { affiliations } from '../systems/affiliations.js';
@@ -321,7 +322,7 @@ let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear'
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
 let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall
-let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores
+let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores | collections
 let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
 let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
 
@@ -2106,6 +2107,10 @@ function outdoorsTestRow() {
  *  where the device reports touch (TI2). */
 function portRowsControls() {
   const out = [];
+  // PAD-CURSOR: a controller's, on every device and both skins - the touch knobs below stay a finger's device's
+  out.push(prefRow('padCursorAssist', 'Controller cursor assist',
+    'On: the controller\u2019s menu cursor eases in, speeds up on a long push, slows over a button and settles on it '
+    + 'when you let go. Off: Daggerfall\u2019s own cursor, one steady speed.'));
   if (!isTouchDevice()) return out;
   const times = (v) => `${v.toFixed(2)}\u00d7`;
   out.push(stepRow('touchLookSensitivity', 'Look sensitivity',
@@ -3241,7 +3246,9 @@ function overhaulPanel(p) {
   // the look is worn (the PLUS rows' shape); each takes effect when the world next loads, and is kept for the next wear
   const addons = o === cur ? o.addons?.() ?? [] : [];
   for (const m of addons) {
-    const label = String(m.title).replace(/^Vanilla Enhanced - /, '');
+    // ALIKR1/SNOWFALL1: the environment packs ride the look as its add-ons do (built on its Base) - each named with its
+    // own author where the archive names one, so Snowfall does not read as carademono's
+    const label = /^Vanilla Enhanced - /.test(m.title) ? String(m.title).replace(/^Vanilla Enhanced - /, '') : `${m.title}${m.author ? ` by ${m.author}` : ''}`;
     const row = el('div', 'look-colours');
     row.setAttribute('role', 'group');
     row.setAttribute('aria-label', label);
@@ -3646,7 +3653,7 @@ function pauseWindow() {
   for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); pauseTab = id; render(); };
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); disarmCollectionsPage(); pauseTab = id; render(); };   // AUDIT CARDS-5 D5: and the Collections page's
     tabs.append(b);
   }
   win.append(tabs);
@@ -3672,7 +3679,7 @@ function pauseHoldings(body) {
   for (const [id, label] of secs) {
     const b = el('button', `px-qrow${id === holdSec ? ' on' : ''}`);
     b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
-    b.onclick = () => { holdSec = id; render(); };
+    b.onclick = () => { holdSec = id; disarmCollectionsPage(); render(); };   // AUDIT CARDS-5 D5: an armed act never waits for the way back
     rail.append(b);
   }
   wrap.append(rail);
@@ -3694,6 +3701,7 @@ function pauseHoldings(body) {
     companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf }),   // COMPANION-ROSTER
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
+    collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),   // COLLECTIONS: the codex and the cards
   }[holdSec];
   draw?.(detail);
   wrap.append(detail);
@@ -3850,7 +3858,7 @@ const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id 
 const statsSections = () => [...STATS_SECTIONS, ...(profPagesShown() ? PROF_STATS_SECTIONS : []), ...(vendorPageShown() ? VENDOR_PAGE_SECTIONS : [])];   // HOME-VENDOR: the Vendor page, under the Professions
 /** HOLDINGS: the Holdings rail's pages - what the player owns (the Stable, the Fleet while ships sail, the Stores
  *  online) and who follows them (the Companions, the Revenants), each while it has a thing to show. */
-const holdingsSections = () => [...(stablePageShown() ? STABLE_PAGE_SECTIONS : []), ...(fleetPageShown() ? FLEET_PAGE_SECTIONS : []), ...(companionPageShown() ? COMPANION_PAGE_SECTIONS : []), ...(revenantPageShown(playerEntity) ? REVENANT_PAGE_SECTIONS : []), ...(profPagesShown() ? PROF_HOLD_SECTIONS : [])];
+const holdingsSections = () => [...(stablePageShown() ? STABLE_PAGE_SECTIONS : []), ...(fleetPageShown() ? FLEET_PAGE_SECTIONS : []), ...(companionPageShown() ? COMPANION_PAGE_SECTIONS : []), ...(revenantPageShown(playerEntity) ? REVENANT_PAGE_SECTIONS : []), ...(profPagesShown() ? PROF_HOLD_SECTIONS : []), ...(collectionsPageShown(playerEntity) ? COLLECTION_PAGE_SECTIONS : [])];   // COLLECTIONS
 
 function pauseStats(body) {
   const m = sheetModel(playerEntity);
@@ -4965,7 +4973,7 @@ export function mountEnhancedMenu(host, {
   holdSec = 'stable';   // HOLDINGS: the Holdings rail opens on its first page
   famSec = 'tree';   // LEGACY3: the Family rail opens on the tree, centred on the one played
   resetFamilyPages();
-  resetHoldingsPages(); resetFleetPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
+  resetHoldingsPages(); resetFleetPage(); resetCollectionsPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
   statsAllSkills = false;
   sysSec = 'save';
   category = CATEGORIES[0].id;
@@ -4980,6 +4988,7 @@ export function mountEnhancedMenu(host, {
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
+  else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
   _eff = null;
   render();
   keyHandler = onKey;

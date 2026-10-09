@@ -149,8 +149,10 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // GUILD1d: and the guild halls' banners, one more in the world host (the streets online)
     // UNDER-LOOK (FIELD BUGS 2026-10-01): and the water body and the sun's shafts under the sea, one more in the world host
     // WB12d: and the faithful's rite's pillar of smoke, one more in the world host (after the gate's fire)
+    // HAZE1: and the heat haze's grab and ring, one more in both hosts (drawn once the opaque world is whole)
+    // WINDFALL1: and Windfall's leaves and snow flurries, one more in both hosts (before the haze, which bends them)
     // SD2c: and a Super dungeon's omen, one more in the world host (after the rite's smoke - PIN MOVED)
-    const want = host === 'src/scenes/world.js' ? 25 : 5;   // SD-LOOK: the Rift's window, its floor light and its halos, one seam (PIN MOVED)   // SD8d: the Brass Remnant's blows on the arena's floor (PIN MOVED)   // SD5b: the Shattered Hour's sky (PIN MOVED)   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
+    const want = host === 'src/scenes/world.js' ? 27 : 7;   // SD-LOOK: the Rift's window, its floor light and its halos, one seam (PIN MOVED)   // SD8d: the Brass Remnant's blows on the arena's floor (PIN MOVED)   // SD5b: the Shattered Hour's sky (PIN MOVED)   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }

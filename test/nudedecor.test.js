@@ -202,6 +202,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/hitEffects.js': 'hit splashes',
   'src/scenes/horseCartPool.js': 'the cart\'s horse',
   'src/scenes/hostMagic.js': 'spell missiles',
+  'src/scenes/lefayMonumentHost.js': 'flowers thrown at Julian LeFay\'s monument (TEXTURE.254\'s roses)',   // LEFAY1
   'src/scenes/magicCandle.js': 'the Light effect\'s candle',
   'src/scenes/navalCrew.js': 'crews as mobile units',
   'src/scenes/navalFlames.js': 'a ship\'s flames',

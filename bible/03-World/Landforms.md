@@ -833,7 +833,9 @@ Roads network, in scratch, with the slice's own functions:
   the ground (the collider stands a body on the floor at any grade), and lane I
   traced failures on the lifted ground - I3 and the Menevia rim, both fixed
   since (AUDIT LANDFORMS II I5, I3, I1). Whether it should read `reliefByteHeight` with the
-  row on is Mac's call (AUDIT LANDFORMS A2).
+  row on is Mac's call (AUDIT LANDFORMS A2). Moot since 2026-10-08: the owner retired
+  OW-MOUNTAINS in the Wrothgarian zone's merge (MOUNTAINS WALKABLE - openStepBlocked
+  refuses no step, `11-Multiplayer/Wild-Zone.md` section 19).
 - Come Sail Away's `Terrain.SampleHeight` (world/terrainSurface.js
   `unityHeightmapStep`) still caps the ground at DFU's 1,923.75 m, the one
   reader that keeps a ceiling at 1; 0.85% of land samples stand over it, where

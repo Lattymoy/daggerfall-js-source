@@ -78,6 +78,8 @@ const REDUCE_QUERY = '(prefers-reduced-motion: reduce)';
 /** Where an Hour's veil may pivot at the most from the screen's centre (screen radii): a Rift at the screen's edge, or
  *  behind the eye, still closes on the screen. */
 export const VEIL_CENTRE_MAX = 0.6;
+/** How fresh the host's aim must be to close on it (ms): older, the Rift is not on the screen - the screen's middle. */
+export const VEIL_AIM_MS = 300;
 
 /**
  * The veil. `doc` the page (a canvas is made in it once), `raf` the frame clock, `now` milliseconds, `engine` the
@@ -91,6 +93,7 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
   // SD-LOOK: the Hour's veil - its program (built the first time an Hour's theme is drawn), the Rift on the screen, how
   // long it stood shut when it opened (its hand stays where it stopped), the cues struck, reduced motion
   let hourPass = null, hourBroken = false, centre = [0, 0], shutFor = 0, ratchets = 0, quarters = 0, reduce = false;
+  let aimX = 0, aimY = 0, aimAt = -Infinity;   // where the host last saw the Rift on the screen, and when
   const hourMode = () => VEIL_HOUR_MODE[theme];
   /** AUDIT WB D5: the frames the host has said it drew, and whether it says them at all; the count at the reveal */
   let drawnN = 0, hostCounts = false, drawnAt = 0;
@@ -204,10 +207,12 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
   }
   function show(t) { began = t; canvas.style.display = 'block'; }
   /** SD-LOOK: a step's own look - its theme, where the Rift stands on the screen (screen radii, the corners at 1; held
-   *  well inside them), and whether the page asks for reduced motion. */
+   *  well inside them: `opts.centre`, else the host's fresh aim, else the middle - and a forced one always the middle),
+   *  and whether the page asks for reduced motion. */
   function takeLook(look, opts) {
     theme = themeOf(look);
-    const c = opts?.centre, x = Number.isFinite(c?.[0]) ? c[0] : 0, y = Number.isFinite(c?.[1]) ? c[1] : 0, l = Math.hypot(x, y);
+    const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;
+    const c = opts?.centre ?? (fresh ? [aimX, aimY] : null), x = Number.isFinite(c?.[0]) ? c[0] : 0, y = Number.isFinite(c?.[1]) ? c[1] : 0, l = Math.hypot(x, y);
     centre = l > VEIL_CENTRE_MAX ? [(x / l) * VEIL_CENTRE_MAX, (y / l) * VEIL_CENTRE_MAX] : [x, y];
     try { reduce = !!win.matchMedia?.(REDUCE_QUERY)?.matches; } catch { reduce = false; }
     ratchets = 0; quarters = 0; shutFor = 0;
@@ -253,6 +258,9 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
       draw(t);   // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers
       kick();
     },
+    /** SD-LOOK: the host saw the Rift (or the Return) at (x, y) on the screen this frame (screen radii, the corners at
+     *  1) - the next Hour's step closes on it while it is fresh. Nothing made. */
+    aim(x, y) { if (Number.isFinite(x) && Number.isFinite(y)) { aimX = x; aimY = y; aimAt = now(); } },
     /** AUDIT WB D5: the host drew a frame of its place - the hold counts these, not the veil's own ticks. */
     frameDrawn() { hostCounts = true; drawnN++; },
     /** AUDIT WB D5: build the canvas and its program now, ahead of the first step (the host's idle time). */

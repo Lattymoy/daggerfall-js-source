@@ -182,8 +182,19 @@ export class StreamingWorldState {
       && py >= MIN_MAP_PIXEL_Y && py < MAX_MAP_PIXEL_Y;
   }
 
+  /** TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): THE FRAME THE WORLD STREAMS OVER, past the map - the
+   *  continent's box in the map's own coordinates (world/tamrielFrame.js tamrielFrameInBay), set by the world host
+   *  when the land beyond the Bay is on, null for DFU's own edge of the world. `onMap` stays the MAP's law (World of
+   *  Daggerfall's slots and every reader of the data ask it); `streams` is what the load list and the range ask. */
+  static frame = null;
+  static streams(px, py) {
+    if (StreamingWorldState.onMap(px, py)) return true;
+    const f = StreamingWorldState.frame;
+    return !!f && px >= f.x0 && px < f.x0 + f.w && py >= f.y0 && py < f.y0 + f.h;
+  }
+
   inRange(px, py) {
-    return StreamingWorldState.onMap(px, py) &&
+    return StreamingWorldState.streams(px, py) &&
       Math.abs(px - this.current.x) <= this.terrainDistance &&
       Math.abs(py - this.current.y) <= this.terrainDistance;
   }
@@ -194,7 +205,7 @@ export class StreamingWorldState {
     const d = this.terrainDistance;
     for (let py = this.current.y - d; py <= this.current.y + d; py++) {
       for (let px = this.current.x - d; px <= this.current.x + d; px++) {
-        if (!StreamingWorldState.onMap(px, py)) continue;
+        if (!StreamingWorldState.streams(px, py)) continue;   // TAMRIEL2: the frame, where the host set one
         if (this.loaded.has(StreamingWorldState.key(px, py))) continue;
         list.push({ px, py });
       }

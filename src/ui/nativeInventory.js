@@ -65,6 +65,7 @@ import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INF
 import { lockRefuses, lockedText } from '../systems/itemLock.js';   // AUDIT MERGE-PLUS C3: the player's lock holds on this skin too
 import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../systems/itemBound.js';   // SS3: a bound piece stays the player's on this skin too; WALLET1: and a pack-only one in the pack
 import { walletContents, walletLines, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's box
+import { BINDER_CARD_LINES } from '../systems/iliacItems.js';   // CARDS8 (AUDIT CARDS-5 C5): the binder's box
 import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED } from '../systems/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from './yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';   // MEND-AIM: the piece a repair kit mends, chosen
@@ -803,6 +804,7 @@ export class NativeInventoryWindow {
     }
     // WALLET1: the wallet says what it holds - DFU's own click-anywhere box, its lines; this window is DFU's and keeps
     // DFU's four tabs, the currencies where they always were. The account's silver asked afresh for the next look.
+    if (r.kind === 'binder') { this.boxes = [{ rows: BINDER_CARD_LINES.map((text) => ({ text, center: true })) }]; return; }   // CARDS8 (AUDIT CARDS-5 C5): the binder's lines in DFU's box
     if (r.kind === 'wallet') { this.boxes = [{ rows: walletLines(walletContents(this.hooks.items(), this.hooks.entity)).map((text) => ({ text, center: true })) }]; void refreshWalletSilver(); return; }
     // MEND-AIM: a use that asks WHICH (a repair kit, with more than one piece to mend) pushes DFU's list picker over
     // the pack, the choices in the law's order; a row chosen uses the item again, aimed at it, and a click outside

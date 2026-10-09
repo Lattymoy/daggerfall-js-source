@@ -126,14 +126,20 @@ export function wearComparison(entity, item) {
   for (let part = 0; part < NUMBER_BODY_PARTS; part++) {
     if (covered.has(part) || after[part] !== before[part]) parts.push({ part, before: before[part], after: after[part] });
   }
-  let damage = null;
+  let damage = null, hands = null;
   if (itemDamageLine(item) != null) {
     const rival = [table[slot], ...replaces].find((it) => it && itemDamageLine(it) != null);
     if (rival) damage = { against: rival, before: weaponDamageRange(rival), after: weaponDamageRange(item) };
+    // HANDS-COMPARE (2026-10-08, the owner: "Damage comparison should now show left and right hand in the item info when
+    // hovering"): a weapon set against what each hand holds now - the right's and the left's, each its own row
+    hands = [['Right hand', EQUIP_SLOTS.RightHand], ['Left hand', EQUIP_SLOTS.LeftHand]].map(([label, s]) => {
+      const held = table[s];
+      return { label, held, before: held && itemDamageLine(held) != null ? weaponDamageRange(held) : null, after: weaponDamageRange(item) };
+    });
   }
   const tableNow = struckBodyPartTable();
   return {
-    slot, replaces, parts, damage,
+    slot, replaces, parts, damage, hands,
     overall: parts.length ? { before: overallArmour(before, tableNow), after: overallArmour(after, tableNow) } : null,
   };
 }
@@ -232,7 +238,14 @@ export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? '
     g.append(el('dt', null, key), dd);
     dl.append(g);
   };
-  if (cmp.damage) {
+  if (cmp.hands) {
+    // HANDS-COMPARE: against each hand - a weapon there, its range to this one's; a shield or nothing, this one's alone
+    for (const h of cmp.hands) {
+      const [a0, a1] = h.after;
+      if (h.before) { const [b0, b1] = h.before; row(`vs ${h.label}`, `${b0} - ${b1} → ${a0} - ${a1}`, delta(a0 - b0), delta(a1 - b1)); }
+      else row(`vs ${h.label}`, `${h.held ? nameOf(h.held) : 'empty'} → ${a0} - ${a1}`);
+    }
+  } else if (cmp.damage) {
     const [b0, b1] = cmp.damage.before, [a0, a1] = cmp.damage.after;
     row('Damage', `${b0} - ${b1} → ${a0} - ${a1}`, delta(a0 - b0), delta(a1 - b1));
   }

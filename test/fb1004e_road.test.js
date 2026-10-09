@@ -17,6 +17,7 @@ import { SOLITARY_TYPES } from '../src/characters/mobileFactions.js';
 import { amGroupRollOwner } from '../src/systems/campEncounters.js';
 import { partyExtraFoes } from '../src/systems/partyScale.js';
 import { FEATURES } from '../src/systems/features.js';
+import { WILD_GIANT } from '../src/systems/wildZone.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -68,6 +69,7 @@ function stands(over = {}) {
     SOLITARY_TYPES, partyExtraFoes, partySize: () => 1, effectiveLevel: (e) => e?.level ?? 1,
     _standEncounterFoe: (hit) => out.push(hit.mobileType), playerFeet: [0, 0, 0],
     revenantToReturn: () => null, now: 0, sharedClockOn: () => false, worldMinutes: () => 0, spawns: true,
+    wildHere: () => false, WILD_GIANT,   // WILD3/ZONE-GIANTS: not in the open zone here (the slice's own two names - test/auditpscale1.test.js)
     getPref: (k) => (k === 'roadEncounters' ? over.pref : undefined), onTheRoad: () => !!over.road, trivialOnRoad, roadCompany, wandererCount,
     Math: Object.create(Math, { random: { value: () => over.roll ?? 0.99 } }),
     ...over.scope,

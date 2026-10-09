@@ -42,8 +42,8 @@
   {
     "name": "PADBINDS-the-host-door-opens-nothing",
     "file": "src/scenes/world.js",
-    "old": "padAction: (act) => { if (act !== 'TravelView' || townTalk.overlayActive) return false; travelViewKey(); return true; },",
-    "new": "padAction: (act) => { if (act !== 'TravelView' || townTalk.overlayActive) return false; return true; },",
+    "old": "padAction: (act) => { if (MODE_ACTIONS[act]) return townTalk.pickMode(MODE_ACTIONS[act]); if (act !== 'TravelView' || townTalk.overlayActive) return false; travelViewKey(); return true; },",
+    "new": "padAction: (act) => { if (MODE_ACTIONS[act]) return townTalk.pickMode(MODE_ACTIONS[act]); if (act !== 'TravelView' || townTalk.overlayActive) return false; return true; },",
     "tests": [
       "test/fb1004e_padarrange.test.js"
     ],

@@ -166,6 +166,7 @@ import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrde
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
+import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
 import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, withArenaHonours, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
@@ -219,6 +220,8 @@ import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
+import { runCron } from './cron.js';   // SCALE4b: the service's own clock
+import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
@@ -1316,6 +1319,25 @@ const service = {
         return json(r, 200, origin);
       }
 
+      // ═══ CARDS6: A CARD TABLE'S STAKES ══════════════════════════════════
+      //
+      // Tavern-Cards section 23: a realm character's buy-in held here against the service's order, and the relay's cash-out
+      // receipt paid back into the record - each act its own batch, the gold and the row together (cards.js).
+      if (path.startsWith('/v1/cards/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const cctx = { ...ctx, bucket: env.SAVES };
+        const act = {
+          '/v1/cards/stake': async () => stakeCards(cctx, who.player, env, body, await signingKey(env, subtle)),
+          '/v1/cards/cashout': async () => cashoutCards(cctx, who.player, env, body, await gatePublicKey(env, subtle)),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
+        // AUDIT CARDS-4 A4: and why a receipt was refused - the device keeps one refused on its signature or clock
+        if ('error' in r) return r.why ? json({ error: r.error, why: r.why }, 400, origin) : no(r.error, 400, origin);
+        return json(r, 200, origin);
+      }
+
       // ═══ PROF5: THE MARKET ══════════════════════════════════════════
       //
       // A registered account's, and the board's, the professions' and the Marks' switches together (market.js asks
@@ -1404,6 +1426,12 @@ const service = {
         return r.error ? no(r.error, PASS_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
+      // SCALE4c: ONE HEARTBEAT - the beat, the letterbox and a town's board, whichever the body names, each part answered
+      // as its own route answers it (heartbeat.js), under the one session this request resolved
+      if (path === '/v1/heartbeat') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        return json(await heartbeat(ctx, who.player, env, body), 200, origin);
+      }
       if (path === '/v1/account/played' && request.method === 'POST') {
         // ACC4: A BEAT, AND NOTHING IN IT IS READ. Whatever the body
         // says, the credit is the gap by THIS clock (accounts.js
@@ -1653,4 +1681,7 @@ const service = {
 
 export default {
   fetch: (request, env) => measured(request, env, service.fetch),
+  // SCALE4b: THE SERVICE'S OWN CLOCK - wrangler.toml's [triggers] crons, each firing its list (cron.js), the sweeps no
+  // read runs any more and the settlements every read now nearly always finds done
+  scheduled: (controller, env) => runCron(env, { cron: controller?.cron, nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now()) / 1000) }),
 };

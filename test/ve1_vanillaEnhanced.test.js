@@ -80,6 +80,10 @@ const VE = 'dfmod/vanilla enhanced - base.dfmod';
 const MASKED = 'dfmod/vanilla enhanced - masked roads.dfmod';
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
 const WINTER = 'dfmod/vanilla enhanced - winter tracks.dfmod';
+// ALIKR1 / SNOWFALL1 (2026-10-08): the two environment packs ship through the same door, on by default and built on the
+// Base (test/environs_texturePacks.test.js holds their own law); a pin over the whole door names them in their places
+const SANDS = 'dfmod/sands of the alikr.dfmod';
+const SNOWFALL = 'dfmod/snowfall.dfmod';
 
 function fresh() {
   setValue('Enhancements', 'AssetInjection', 'True');
@@ -302,24 +306,24 @@ test('VE3/VE4 the Texture Overhaul card: Classic and Vanilla Enhanced - the pack
   }, { asPlayer: true });
   assert.equal(ve.by, 'carademono, version 3.5.0', 'the copy attached is the one read');
   assert.deepEqual(attachedDfmods().filter(isVeFamily).map((m) => [m.fileName, m.shipped, m.enabled]), [
-    [VE_BASE, false, true], ['vanilla enhanced - masked roads', false, true],
+    [VE_BASE, false, true], ['sands of the alikr', true, true], ['snowfall', true, true], ['vanilla enhanced - masked roads', false, true],
     ['vanilla enhanced - snowless swamps and jungles', true, false], ['vanilla enhanced - winter tracks', false, true],
   ], 'in load order: the attached copies on (an attach is on), the shipped add-on no copy shadows off');
   assert.equal(currentOption(tex), ve, 'an attached Base is on');
   classic.apply();
   assert.deepEqual(attachedDfmods().map((m) => [m.title, m.enabled]), [
-    ['DREAM - Sprites', false], ['Improved Interior Lighting', true], ['Vanilla Enhanced - Base', false], ['Vanilla Enhanced - Masked Roads', false],
+    ['DREAM - Sprites', false], ['Improved Interior Lighting', true], ['Vanilla Enhanced - Base', false], ['Sands of the Alik\'r', false], ['Snowfall', false], ['Vanilla Enhanced - Masked Roads', false],
     ['Vanilla Enhanced - Snowless Swamps and Jungles', false], ['Vanilla Enhanced - Winter Tracks', false],
   ], 'every texture mod off; the lighting mod is not a texture mod');
-  assert.deepEqual(getPref(VE_ADDONS_PREF), [MASKED, WINTER], 'VE4: the add-ons it was worn with, kept for the next wear');
+  assert.deepEqual(getPref(VE_ADDONS_PREF), [SANDS, SNOWFALL, MASKED, WINTER], 'VE4: the add-ons it was worn with, kept for the next wear');
   assert.equal(currentOption(tex), classic);
   assert.ok(classicTexturesWorn() && !veWorn());
   setValue('Enhancements', 'AssetInjection', 'False');
   ve.apply();
   assert.equal(getBool('Enhancements', 'AssetInjection'), true, 'wearing the pack wears Replace Game Artwork with it');
-  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [false, true, true, true, false, true], 'the Base and the add-ons it was worn with; DREAM and Snowless Swamps left as they were');
+  assert.deepEqual(attachedDfmods().map((m) => m.enabled), [false, true, true, true, true, true, false, true], 'the Base and the add-ons it was worn with; DREAM and Snowless Swamps left as they were');
   assert.equal(currentOption(tex), ve);
-  setDfmodEnabled([VE, MASKED, WINTER], false);
+  setDfmodEnabled([VE, MASKED, WINTER, SANDS, SNOWFALL], false);
   setDfmodEnabled('dfmod/dream - sprites.dfmod', true);
   assert.equal(currentOption(tex), null, 'DREAM alone is neither look: Custom');
   assert.match(tex.custom, /^Custom: a mix of texture mods/);

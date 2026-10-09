@@ -69,8 +69,11 @@ test('BOOT2: the entry\'s static reach touches neither hub and stays under the c
   // as the renderer loads) and the law it takes its numbers from (world/ecotone.js). Both are leaves - the chunk imports
   // the law alone and the law imports nothing - so neither can bring a hub, and the assertion below keeps them so. The
   // ceiling moves to 68: the same promise, room for a real need, measured again.
+  // WINDFALL1 (2026-10-08): 69 - Windfall's wind law in the billboard program (render/windfallSway.js: the GLSL chunk BB_VS
+  // is built from as the renderer loads, and the uniforms the renderer, the shadow pass and the air pass feed it). A leaf
+  // that imports nothing, so it can bring no hub, and the assertion below keeps it so. The ceiling moves to 71.
   const importsOf = (p) => [...rd(p).matchAll(STATIC)].map((m) => m[1]);
-  assert.deepEqual([importsOf('src/render/ecotoneGlsl.js'), importsOf('src/world/ecotone.js')], [['../world/ecotone.js'], []],
-    'the border chunk and its law stay leaves on the boot path');
-  assert.ok(reach.size <= 68, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, ECOTONE1 66, and holds the ceiling at 68`);
+  assert.deepEqual([importsOf('src/render/ecotoneGlsl.js'), importsOf('src/world/ecotone.js'), importsOf('src/render/windfallSway.js')], [['../world/ecotone.js'], [], []],
+    'the border chunk and its law, and the wind law, stay leaves on the boot path');
+  assert.ok(reach.size <= 71, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, ECOTONE1 66, WINDFALL1 69, and holds the ceiling at 71`);
 });

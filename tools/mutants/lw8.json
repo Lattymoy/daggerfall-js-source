@@ -69,19 +69,21 @@
   {
     "name": "LW8-fan",
     "file": "src/scenes/livingIndoors.js",
-    "old": "export const INDOOR_FAN = 12;",
-    "new": "export const INDOOR_FAN = 10;",
+    "old": "export const ROOM_STEPS = Object.freeze([[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]].map((s) => Object.freeze(s)));",
+    "new": "export const ROOM_STEPS = Object.freeze([[1, 0], [0, 1], [1, 1]].map((s) => Object.freeze(s)));",
     "tests": [
-      "test/lw8_indoors.test.js"
+      "test/lw8_indoors.test.js",
+      "test/lwrooms_tavern.test.js"
     ]
   },
   {
     "name": "LW8-spread",
     "file": "src/scenes/livingIndoors.js",
-    "old": "export const INDOOR_SPREAD_M = Object.freeze([2.4, 3.8, 5.2, 6.6]);",
-    "new": "export const INDOOR_SPREAD_M = Object.freeze([2.4, 3.8, 5.2]);",
+    "old": "export const INDOOR_REACH_M = 20;",
+    "new": "export const INDOOR_REACH_M = 6.6;",
     "tests": [
-      "test/lw8_indoors.test.js"
+      "test/lw8_indoors.test.js",
+      "test/lwrooms_tavern.test.js"
     ]
   },
   {
@@ -141,8 +143,8 @@
   {
     "name": "LW8-walls",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }\n      const y = floorAt(q[0], q[1] + 0.5, q[2]);\n      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
-    "new": "      q[0] += Math.sin(a) * dist; q[2] += Math.cos(a) * dist;\n      const y = floorAt(q[0], q[1] + 0.5, q[2]);\n      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "old": "      try { collider.move(q, tx - p[0], 0, tz - p[2], 1.8); } catch { continue; }",
+    "new": "      q[0] = tx; q[2] = tz;",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -150,7 +152,7 @@
   {
     "name": "LW8-floor-unread",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
     "new": "      if (false) continue;",
     "tests": [
       "test/lw8_indoors.test.js"
@@ -159,7 +161,7 @@
   {
     "name": "LW8-other-floor",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "old": "      if (y == null || !Number.isFinite(y) || Math.abs(y - p[1]) > INDOOR_LEVEL_M || Math.abs(y - start[1]) > 1.2) continue;",
     "new": "      if (y == null || !Number.isFinite(y)) continue;",
     "tests": [
       "test/lw8_indoors.test.js"
@@ -168,8 +170,8 @@
   {
     "name": "LW8-door-crowded",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (Math.hypot(p[0] - origin[0], p[2] - origin[2]) < INDOOR_DOOR_M) continue;",
-    "new": "      void 0;",
+    "old": "    if (Math.hypot(p[0] - origin[0], p[2] - origin[2]) < INDOOR_DOOR_M) continue;",
+    "new": "    void 0;",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -177,17 +179,18 @@
   {
     "name": "LW8-apart-unchecked",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (!far(p, spots, INDOOR_APART_M) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
-    "new": "      if (!far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "old": "    if (!far(p, spots, INDOOR_APART_M - 0.01) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "new": "    if (!far(p, keepClear, INDOOR_CLEAR_M) ||",
     "tests": [
-      "test/lw8_indoors.test.js"
+      "test/lw8_indoors.test.js",
+      "test/lwrooms_tavern.test.js"
     ]
   },
   {
     "name": "LW8-clear-unchecked",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      if (!far(p, spots, INDOOR_APART_M) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
-    "new": "      if (!far(p, spots, INDOOR_APART_M) ||",
+    "old": "    if (!far(p, spots, INDOOR_APART_M - 0.01) || !far(p, keepClear, INDOOR_CLEAR_M) ||",
+    "new": "    if (!far(p, spots, INDOOR_APART_M - 0.01) ||",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -195,8 +198,8 @@
   {
     "name": "LW8-arrival",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        return arriving || Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
-    "new": "        return Math.hypot(dx, dz) > INDOOR_SEEN_M ||",
+    "old": "        return arriving || dx * Math.sin(viewYaw)",
+    "new": "        return dx * Math.sin(viewYaw)",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -204,8 +207,8 @@
   {
     "name": "LW8-unseen-always",
     "file": "src/scenes/livingIndoors.js",
-    "old": " || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0;",
-    "new": " || true;",
+    "old": "arriving || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0 || (Math.hypot",
+    "new": "arriving || true || (Math.hypot",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -231,10 +234,11 @@
   {
     "name": "LW8-cap",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res)).slice(0, INDOOR_MAX);",
-    "new": "        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res));",
+    "old": "          if (inside.length >= INDOOR_MAX) break;",
+    "new": "          void 0;",
     "tests": [
-      "test/lw8_indoors.test.js"
+      "test/lw8_indoors.test.js",
+      "test/lwrooms_tavern.test.js"
     ]
   },
   {
@@ -330,7 +334,7 @@
   {
     "name": "LW8-host-act",
     "file": "src/scenes/world.js",
-    "old": "    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), nearer),",
+    "old": "    livingPersonsAct: (eye, dir, nearer) => !!livingIndoors?.size && townTalk.tryActivate(eye, dir, livingIndoors.seats(), Math.min(nearer, modes?.interiorCollider?.raycast(eye, dir, 80) ?? Infinity)),",
     "new": "    livingPersonsAct: () => false,",
     "tests": [
       "test/lw8_indoors.test.js"
@@ -366,7 +370,7 @@
   {
     "name": "LW8-host-statics",
     "file": "src/scenes/world.js",
-    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),",
+    "old": "      staticFeet: () => (modes?.interiorCtx?.people ?? []).map((p) => [p.x, p.y, p.z]),",
     "new": "      staticFeet: () => [],",
     "tests": [
       "test/lw8_indoors.test.js"

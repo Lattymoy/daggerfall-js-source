@@ -1,0 +1,112 @@
+[
+  {
+    "name": "SCALE3-fetch-unguarded",
+    "file": "tools/loadHarness.mjs",
+    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(`the load harness reaches its own services only - refused ${u}`);",
+    "new": "",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a bot's call to any address goes out - the production service a fallback names among them"
+  },
+  {
+    "name": "SCALE3-production-through",
+    "file": "tools/loadHarness.mjs",
+    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(",
+    "new": "    if (!u.startsWith(`${LOAD_SERVICE}/`) && !u.includes('workers.dev')) throw new Error(",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "the deployed service's address let through"
+  },
+  {
+    "name": "SCALE3-socket-unguarded",
+    "file": "tools/loadHarness.mjs",
+    "old": "      if (!String(url).startsWith(allowed)) throw new Error(`the load harness reaches its own relay only - refused ${url}`);",
+    "new": "",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a bot's socket to any relay"
+  },
+  {
+    "name": "SCALE3-close-unsaid",
+    "file": "tools/loadHarness.mjs",
+    "old": "          this.onclose?.({ type: 'close', code: 1006, reason: '', wasClean: false });",
+    "new": "",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a refused connect left CONNECTING for ever, as Node leaves it - a fleet never back from a storm"
+  },
+  {
+    "name": "SCALE3-close-for-the-open",
+    "file": "tools/loadHarness.mjs",
+    "old": "        if (opened) return;\n        setTimeout(() => {",
+    "new": "        setTimeout(() => {",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "an error on an open socket closed by the harness rather than its runtime"
+  },
+  {
+    "name": "SCALE3-knob-untyped",
+    "file": "tools/loadHarness.mjs",
+    "old": "    const v = typeof was === 'number' ? Number(raw) : String(raw);",
+    "new": "    const v = raw;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a number knob taken as text"
+  },
+  {
+    "name": "SCALE3-walk-wide",
+    "file": "tools/loadHarness.mjs",
+    "old": "  const r = bot.mover ? bot.radius : 0;",
+    "new": "  const r = bot.mover ? bot.radius * 20 : 0;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a walk past the relay's range of the town"
+  },
+  {
+    "name": "SCALE3-towns-adjacent",
+    "file": "tools/loadHarness.mjs",
+    "old": "  const cx = 13 + 2 * k, cy = 13;",
+    "new": "  const cx = 13 + k, cy = 13;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "two towns a cell apart - one's halo the next one's cell"
+  },
+  {
+    "name": "SCALE3-save-unstamped",
+    "file": "tools/loadHarness.mjs",
+    "old": "  return JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items, place: poseAt(bot, at / 1000), at });",
+    "new": "  return JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items, place: poseAt(bot, at / 1000) });",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a checkpoint's save without its moment"
+  },
+  {
+    "name": "SCALE3-fleet-dropped",
+    "file": "tools/loadHarness.mjs",
+    "old": "  for (const f of finals) {\n    bots += f.bots;",
+    "new": "  for (const f of finals.slice(1)) {\n    bots += f.bots;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "the first fleet's tallies left out of the run's"
+  },
+  {
+    "name": "SCALE3-reservoir-unbounded",
+    "file": "tools/loadHarness.mjs",
+    "old": "  if (list.length < max) { list.push(v); return; }",
+    "new": "  list.push(v); return;",
+    "tests": [
+      "test/scale3.test.js"
+    ],
+    "note": "a crowded run's pose ages kept without bound"
+  }
+]

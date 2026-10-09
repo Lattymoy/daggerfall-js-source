@@ -183,6 +183,62 @@ export function surfaceNormalAt(normals, lx, lz, out = [0, 0, 0]) {
   return out;
 }
 
+/**
+ * SNOWFALL1 (2026-10-08): THE DRAWN GROUND'S NORMAL, FROM ITS SAMPLES ALONE - surfaceNormalAt's interpolation, over the
+ * grid's vertex normals as buildTerrainGrid makes them at the pixel's stride (central differences at the stride's own
+ * span, the pixel's edge one-sided: a pixel keeps no ghost rows), for a pixel that keeps no normals of its own (a
+ * pixel's groundNormals are the grass's, stride 1, and only while the grass is on). The snow's surfaces light by it.
+ * @param {Float32Array} heightmapData sample(x, z) = data[x*hDim+z], normalized
+ * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
+ * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
+ * @param {number} [stride] the ring class this pixel is drawn at
+ * @param {number[]|Float32Array} [out]
+ * @returns {number[]|Float32Array} the unit normal [x, y, z]
+ */
+const _snVn = new Float64Array(12);   // SNOWFALL1: the quad's four vertex normals - one scratch, the snow asks once a sample
+const _snAt = (data, x, z) => data[Math.max(0, Math.min(HEIGHTMAP_DIMENSION - 1, x)) * HEIGHTMAP_DIMENSION + Math.max(0, Math.min(HEIGHTMAP_DIMENSION - 1, z))];
+export function surfaceNormalFromSamples(heightmapData, lx, lz, stride = 1, out = [0, 0, 0]) {
+  const hDim = HEIGHTMAP_DIMENSION, cell = TERRAIN_SIZE / (hDim - 1), lift = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
+  const quad = cell * stride;
+  const last = (hDim - 1) / stride - 1;
+  const qx = Math.max(0, Math.min(last, Math.floor(lx / quad)));
+  const qz = Math.max(0, Math.min(last, Math.floor(lz / quad)));
+  const ax = lx / quad - qx, az = lz / quad - qz;
+  const ny = 2 * cell * stride, vn = _snVn;
+  for (let c = 0; c < 4; c++) {   // buildTerrainGrid's vertex normals at the stride grid's corners (0,0), (1,0), (0,1), (1,1)
+    const x = (qx + (c & 1)) * stride, z = (qz + (c >> 1)) * stride;
+    const nx = _snAt(heightmapData, x - stride, z) * lift - _snAt(heightmapData, x + stride, z) * lift;
+    const nz = _snAt(heightmapData, x, z - stride) * lift - _snAt(heightmapData, x, z + stride) * lift;
+    const l = Math.hypot(nx, ny, nz);
+    vn[c * 3] = nx / l; vn[c * 3 + 1] = ny / l; vn[c * 3 + 2] = nz / l;
+  }
+  let l2 = 0;
+  for (let c = 0; c < 3; c++) {
+    const sw = vn[c], se = vn[3 + c], nw = vn[6 + c], ne = vn[9 + c];   // the quad's corners, surfaceHeightAt's cut
+    const v = az >= ax ? sw + az * (nw - sw) + ax * (ne - nw) : sw + ax * (se - sw) + az * (ne - se);
+    out[c] = v; l2 += v * v;
+  }
+  const l = Math.sqrt(l2) || 1;
+  for (let c = 0; c < 3; c++) out[c] /= l;
+  return out;
+}
+
+/**
+ * SNOWFALL1 (2026-10-08): A GRID'S VALUE ON THE DRAWN TRIANGLE - a per-vertex value of a grid laid in the terrain's
+ * order (x fastest, `gx` vertices a row, `cell` world units apart: buildTerrainIndices' and flatGrid's) read on the
+ * triangle under (lx, lz), cut on surfaceHeightAt's diagonal. WATER-NEXT's bed depths through it are what the carve
+ * took off the drawn ground there - for what is laid ON that ground (the snow).
+ * @param {ArrayLike<number>} values gx * gz, x fastest
+ * @returns {number}
+ */
+export function gridValueAt(values, gx, gz, cell, lx, lz) {
+  const qx = Math.max(0, Math.min(gx - 2, Math.floor(lx / cell))), qz = Math.max(0, Math.min(gz - 2, Math.floor(lz / cell)));
+  const ax = lx / cell - qx, az = lz / cell - qz;
+  const i = qz * gx + qx;
+  const v00 = values[i], v10 = values[i + 1], v01 = values[i + gx], v11 = values[i + gx + 1];
+  return az >= ax ? v00 + az * (v01 - v00) + ax * (v11 - v01) : v00 + ax * (v10 - v00) + az * (v11 - v10);
+}
+
 /** Unity's heightmap: kMaxHeight steps to a terrain's full height (terrainSampleHeightAt, below). */
 export const UNITY_HEIGHTMAP_MAX_HEIGHT = 32766;
 /** A normalized height as Unity's heightmap holds it: its step, 0 to kMaxHeight. */

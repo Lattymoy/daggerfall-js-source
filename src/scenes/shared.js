@@ -7,6 +7,7 @@
 
 import { stepAsideLoading, syncLoading } from '../ui/loadingScreen.js';   // LOAD1: a full-screen film's hold takes the loading screen aside; a claimed loop lets its hold go
 import { DFPalette } from '../formats/dfPalette.js';
+import { NetRandom } from '../formats/netRuntime.js';   // HAZE1: System.Random's one port (the stars' generator)
 import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
@@ -851,6 +852,22 @@ export function landformsOn(search) {
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
 
+/** TAMRIEL2: THE LAND BEYOND THE BAY'S SWITCH - the Features row (`tamrielLand`) on the enhanced skin, and online as
+ *  the player's own (the relay carries no pose past the map, so a room never has to agree on ground nobody shares):
+ *  the streamed world goes on past the Bay's edge over the authored continent (world/tamrielGround.js). `?tamrielland=off`
+ *  the kill door. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the classic
+ *  skin - the edge of the world is DFU's: empty. */
+export function tamrielLandOn(search) {
+  if (pageParam('tamrielland', search) === 'off') return false;
+  return !!getPref('tamrielLand') && (isOnlinePage(search) || isEnhanced(search));
+}
+
+/** TAMRIEL3: THE TRACE'S KILL DOOR - `?tamrieltrace=off` keeps the authored shape (the continent as TAMRIEL1 drew it)
+ *  where the picture's own trace would stand; no row, a door for a day the trace reads a picture wrong. */
+export function tamrielTraceOn(search) {
+  return pageParam('tamrieltrace', search) !== 'off';
+}
+
 /** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
  *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`
  *  the kill door, offline. The world host reads it once, at its mount. */
@@ -1189,65 +1206,9 @@ export const populatesWanderingNpcs = (locationType) => POPULATED_LOCATION_TYPES
 
 // --- The night-sky star pass (DaggerfallSky.cs:565-600) --------------
 
-// .NET System.Random, the seeded Knuth subtractive generator, ported
-// byte-exact. DaggerfallSky holds `new System.Random(0)` (:74) and the
-// star placement is a pure function of that sequence, so substituting
-// a different generator paints different stars - this is a DATA law,
-// not an engine detail, and the Ledger's engine-PRNG row (which covers
-// UnityEngine.Random) does not cover it.
-const MBIG = 2147483647;   // int.MaxValue
-const MSEED = 161803398;
-
-export class NetRandom {
-  constructor(seed = 0) {
-    this._seedArray = new Int32Array(56);
-    const subtraction = seed === -2147483648 ? MBIG : Math.abs(seed);
-    let mj = MSEED - subtraction;
-    this._seedArray[55] = mj;
-    let mk = 1;
-    for (let i = 1; i < 55; i++) {
-      const ii = (21 * i) % 55;
-      this._seedArray[ii] = mk;
-      mk = mj - mk;
-      if (mk < 0) mk += MBIG;
-      mj = this._seedArray[ii];
-    }
-    for (let k = 1; k < 5; k++) {
-      for (let i = 1; i < 56; i++) {
-        this._seedArray[i] -= this._seedArray[1 + ((i + 30) % 55)];
-        if (this._seedArray[i] < 0) this._seedArray[i] += MBIG;
-      }
-    }
-    this._inext = 0;
-    this._inextp = 21;
-  }
-
-  /** Random.InternalSample */
-  _internalSample() {
-    let locINext = this._inext;
-    let locINextp = this._inextp;
-    if (++locINext >= 56) locINext = 1;
-    if (++locINextp >= 56) locINextp = 1;
-    let retVal = this._seedArray[locINext] - this._seedArray[locINextp];
-    if (retVal === MBIG) retVal--;
-    if (retVal < 0) retVal += MBIG;
-    this._seedArray[locINext] = retVal;
-    this._inext = locINext;
-    this._inextp = locINextp;
-    return retVal;
-  }
-
-  /** Random.Sample / Random.NextDouble */
-  nextDouble() {
-    return this._internalSample() * (1.0 / MBIG);
-  }
-
-  /** Random.Next(minValue, maxValue), small-range arm. */
-  next(minValue, maxValue) {
-    const range = maxValue - minValue;
-    return Math.trunc(this.nextDouble() * range) + minValue;
-  }
-}
+// .NET System.Random (DaggerfallSky holds `new System.Random(0)`, :74 - the star placement is a pure function of
+// that sequence): formats/netRuntime.js's one port since HAZE1, re-exported under the name this host gave it.
+export { NetRandom };
 
 /** DaggerfallSky.cs:78-79 */
 export const STAR_CHANCE = 0.004;

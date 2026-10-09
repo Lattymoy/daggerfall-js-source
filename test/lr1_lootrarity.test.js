@@ -166,7 +166,7 @@ test('LR2: the affix kinds - six, each banded per tier, each with a word for the
   // LOOT4 (bible/06-Systems/Loot-Arc.md section 6): the six numbers LR1 shipped, and five that DO something after them
   // LOOT14 (bible/06-Systems/Loot-II-Arc.md section 6): and the wardrobe's own three, after every kind before them
   assert.deepEqual(LR.AFFIX_IDS.filter((id) => !LR.AFFIX_KINDS[id].proc), ['damage', 'armor', 'weight', 'stat', 'resist', 'skill', 'standing', 'warmth', 'dry']);
-  assert.deepEqual(LR.AFFIX_IDS.filter((id) => LR.AFFIX_KINDS[id].proc), ['elemental', 'leech', 'thorns', 'focus', 'slayer']);
+  assert.deepEqual(LR.AFFIX_IDS.filter((id) => LR.AFFIX_KINDS[id].proc), ['elemental', 'leech', 'thorns', 'focus', 'slayer', 'castSpeed']);   // CAST-SPEED: after every kind before it
   for (const id of LR.AFFIX_IDS) {
     const k = LR.AFFIX_KINDS[id];
     assert.ok(['prefix', 'suffix'].includes(k.slot));
@@ -403,7 +403,7 @@ test('LR1: four hosts - every list a host mints rolls at its source, and the pil
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
   assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck: liveStat\(playerEntity, 'luck'\) \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
-  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, \{ rolls \}\)/, 'the exterior foes, off the same stream');
+  assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, (?:wild \? wildLootOpts\(\{ rolls \}, wildRing\(\)\) : )?\{ rolls \}\)/, 'the exterior foes, off the same stream (WILD1: the open zone\'s ring multiplies its odds)');
   assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
   // PIN MOVED (RENOWN-LOOT): a plain foe's ladder read at the roller's Renown (foeLootCap.js plainFoeRarityWeights - LOOT-EASE's own at four quarters)
   assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\), qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');

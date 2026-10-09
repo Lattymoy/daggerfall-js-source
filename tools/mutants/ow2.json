@@ -1,33 +1,33 @@
 [
   {
-    "name": "OW-MOUNTAINS-peaks-walked",
+    "name": "MOUNTAINS-WALKABLE-peaks-refused",
     "file": "src/systems/travelRoute.js",
-    "old": "  if (climateAt(bx, by) === TV_MOUNTAIN_CLIMATE) return true;\n",
-    "new": "",
+    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return climateAt(bx, by) === TV_MOUNTAIN_CLIMATE;",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],
-    "note": "A journey walks straight over the mountains."
+    "note": "MOUNTAINS WALKABLE undone (the owner removed the on-foot restriction in the Wrothgarian zone's merge): an open step into the Mountain climate is refused again."
   },
   {
-    "name": "OW-MOUNTAINS-cliffs-walked",
+    "name": "MOUNTAINS-WALKABLE-cliffs-refused",
     "file": "src/systems/travelRoute.js",
-    "old": "  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;",
-    "new": "  return false;",
+    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],
-    "note": "A journey walks up and down cliffs."
+    "note": "MOUNTAINS WALKABLE undone: a step up or down a steep rise is refused again."
   },
   {
-    "name": "OW-MOUNTAINS-cliffs-down",
+    "name": "MOUNTAINS-WALKABLE-cliffs-down-refused",
     "file": "src/systems/travelRoute.js",
-    "old": "  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;",
-    "new": "  return heightAt(bx, by) - heightAt(ax, ay) > TV_STEEP_RISE;",
+    "old": "  return false;   // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return heightAt(ax, ay) - heightAt(bx, by) > TV_STEEP_RISE;",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],
-    "note": "A journey walks off a cliff edge."
+    "note": "MOUNTAINS WALKABLE half undone: a step down a cliff edge is refused again."
   },
   {
     "name": "OW-MOUNTAINS-never-asked",
@@ -48,16 +48,6 @@
       "test/tv2_click_to_move.test.js"
     ],
     "note": "A road over a mountain pass is refused."
-  },
-  {
-    "name": "OW-MOUNTAINS-trapped-at-the-start",
-    "file": "src/systems/travelRoute.js",
-    "old": "  if (leaving) return false;\n",
-    "new": "",
-    "tests": [
-      "test/tv2_click_to_move.test.js"
-    ],
-    "note": "A traveller standing among the peaks can go nowhere."
   },
   {
     "name": "OW-ROADSIDE-no-clamp",

@@ -92,8 +92,8 @@
   {
     "name": "MERGE-PLUS-C4-a-lock-blind-stack",
     "file": "src/systems/inventory.js",
-    "old": "    (a.locked === true) === (b.locked === true);",
-    "new": "    true;",
+    "old": "    (a.locked === true) === (b.locked === true) &&",
+    "new": "    true &&",
     "tests": [
       "test/auditmergeplus_pack.test.js"
     ]

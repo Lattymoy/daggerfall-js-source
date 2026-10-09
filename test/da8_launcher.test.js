@@ -200,7 +200,7 @@ test('DA8: the shell - a sandboxed window on its own origin, two words of bridge
   assert.match(win, /win\.loadURL\(LAUNCHER_URL\)/);
   assert.match(main, /const LAUNCHER_URL = 'dagger:\/\/launcher\/index\.html';/, 'its own origin - no storage shared with dagger://game');
   const serve = main.slice(main.indexOf('async function serveLauncherFile'), main.indexOf('function handleDagger'));
-  assert.match(serve, /if \(!p\.startsWith\(LAUNCHER_DIR \+ path\.sep\)\) return new Response\('forbidden', \{ status: 403 \}\);/, 'the same traversal law as dist/');
+  assert.match(serve, /if \(p !== MENU_PAD && !p\.startsWith\(LAUNCHER_DIR \+ path\.sep\)\) return new Response\('forbidden', \{ status: 403 \}\);/, 'the same traversal law as dist/ - DA12: the pad module by its one name the only exception');
   assert.match(main, /if \(url\.host === 'launcher'\) return serveLauncherFile\(parts\);/);
   // the IPC hears ONLY the launcher's window, and a link is a NAME
   assert.match(main, /ipcMain\.on\('launcher:act', async \(e, msg\) => \{\s*if \(!fromLauncher\(e\)\) return;/);

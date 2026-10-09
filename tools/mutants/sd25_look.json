@@ -558,5 +558,32 @@
     "tests": [
       "test/sd25_look.test.js"
     ]
+  },
+  {
+    "name": "SD25-the-aim-never-read",
+    "file": "src/ui/gateVeil.js",
+    "old": "const c = opts?.centre ?? (fresh ? [aimX, aimY] : null),",
+    "new": "const c = opts?.centre,",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-a-stale-aim-kept",
+    "file": "src/ui/gateVeil.js",
+    "old": "const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
+    "new": "const fresh = theme !== VEIL_THEMES.hourCast;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
+  },
+  {
+    "name": "SD25-the-forced-shatter-aimed",
+    "file": "src/ui/gateVeil.js",
+    "old": "const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
+    "new": "const fresh = now() - aimAt < VEIL_AIM_MS;",
+    "tests": [
+      "test/sd25_look.test.js"
+    ]
   }
 ]

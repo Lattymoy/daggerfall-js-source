@@ -167,6 +167,13 @@ export const STATUS_GLYPHS = Object.freeze({
     'kkkkbbaaacaakkkk', 'kaaaaaacaaaaaaak', 'kaaakaaaaaakaaak', 'kkakkkaaaakkkakk',
     '.kkkkaakkaakkkk.', '...kaaakkaaak...', '...kkaakkaakk...', '....kkkkkkkk....',
   ] }),
+  // WILD1 (systems/wildZone.js): two blades crossed over the zone's blood - the open zone, on both skins
+  wild: Object.freeze({ pal: { a: '#cfd4dc', b: '#ffffff', g: '#c08a3e', c: '#a8241a' }, rows: [
+    'kkk..........kkk', 'kbkk........kkbk', 'kabkk......kkbak', 'kkabkk....kkbakk',
+    '.kkabkk..kkbakk.', '..kkabkkkkbakk..', '...kkabkkbakk...', '....kkabbakk....',
+    '....kkabbakk....', '...kkabkkbakk...', '.kkkabkkkkbakkk.', '.kgggkk..kkgggk.',
+    '.kkckk....kkckk.', '.kcck......kcck.', '.kkkk......kkkk.', '................',
+  ] }),
 });
 /** The kit's outline black (ui/enhancedFrame.js FRAME_TONES.outline). */
 const OUTLINE = '#050608';
@@ -260,15 +267,18 @@ export function needGlyph(chip) {
 /**
  * The widget's tiles, in the order the foot row read them: the spells (mine, then others'), the set powers, the
  * poisons and diseases, the needs.
- * @param {{ spells?: any[], powers?: any[], afflictions?: any[], needs?: any[], rested?: { minutes: number }|null }} lists - `spells` ui/enhancedHud.js
+ * @param {{ spells?: any[], powers?: any[], afflictions?: any[], needs?: any[], rested?: { minutes: number }|null, zone?: { name: string, foot?: string|null }|null }} lists - `spells` ui/enhancedHud.js
  *   effectRows, `powers` the host's set chips (systems/sigilSetPowers.js setHudChips), `afflictions` afflictionRows,
- *   `needs` survivalHudChips, `rested` REST1's night interval (its real minutes left)
+ *   `needs` survivalHudChips, `rested` REST1's night interval (its real minutes left), `zone` WILD1's open zone (its
+ *   tile first)
  * @returns {StatusTile[]}
  */
-export function statusTiles({ spells = [], powers = [], afflictions = [], needs = [], rested = null } = {}) {
+export function statusTiles({ spells = [], powers = [], afflictions = [], needs = [], rested = null, zone = null } = {}) {
   /** @type {StatusTile[]} */
   const out = [];
   const tile = (t) => out.push({ foot: null, blink: false, item: false, recovering: false, spell: null, glyph: null, set: null, bundle: null, endable: false, ...t });
+  // WILD1: the open zone first - where the player stands is the first thing a glance should say there
+  if (zone) tile({ key: 'wild', kind: 'danger', name: String(zone.name ?? ''), glyph: 'wild', foot: zone.foot ?? null });
   spells.forEach((e, i) => tile({
     // AUDIT UI C3: a party mate's gift is a BUFF - ALLY-CAST lets a mate lay only what helps (systems/allyCast.js)
     key: `spell${i}`, kind: e.self || e.ally ? 'buff' : 'debuff', name: String(e.name ?? ''),

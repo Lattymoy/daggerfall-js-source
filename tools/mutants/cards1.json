@@ -1,0 +1,436 @@
+[
+  {
+    "name": "CD-rank-off",
+    "file": "src/net/cardLaw.js",
+    "old": "export const rankOf = (c) => c % 13;",
+    "new": "export const rankOf = (c) => c % 12;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-parse-suit-case",
+    "file": "src/net/cardLaw.js",
+    "old": "const s = SUITS.indexOf(t[1].toLowerCase());",
+    "new": "const s = SUITS.indexOf(t[1]);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-parse-length-unchecked",
+    "file": "src/net/cardLaw.js",
+    "old": "  if (t.length !== 2) return null;",
+    "new": "  if (t.length < 2) return null;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-sattolo",
+    "file": "src/net/cardLaw.js",
+    "old": "const j = drawBelow(i + 1, rand32);",
+    "new": "const j = drawBelow(i, rand32);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-shuffle-stops-short",
+    "file": "src/net/cardLaw.js",
+    "old": "for (let i = d.length - 1; i > 0; i--) {",
+    "new": "for (let i = d.length - 1; i > 1; i--) {",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-shuffle-in-place",
+    "file": "src/net/cardLaw.js",
+    "old": "  const d = deck.slice();",
+    "new": "  const d = deck;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-groups-by-rank-only",
+    "file": "src/net/cardLaw.js",
+    "old": "groups.sort((a, b) => b[0] - a[0] || b[1] - a[1]);",
+    "new": "groups.sort((a, b) => b[1] - a[1]);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-no-wheel",
+    "file": "src/net/cardLaw.js",
+    "old": "else if (ranks[0] === 12 && ranks[1] === 3) top = 3;",
+    "new": "else if (ranks[0] === 12 && ranks[1] === 3) top = 12;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-straight-gap",
+    "file": "src/net/cardLaw.js",
+    "old": "if (ranks[0] - ranks[4] === 4) top = ranks[0];",
+    "new": "if (ranks[0] - ranks[4] <= 5) top = ranks[0];",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-flush-over-straight-flush",
+    "file": "src/net/cardLaw.js",
+    "old": "return { cat: flush ? HAND_STRAIGHT_FLUSH : HAND_STRAIGHT, ranks: [top] };",
+    "new": "return { cat: HAND_STRAIGHT, ranks: [top] };",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-full-house-a-trips",
+    "file": "src/net/cardLaw.js",
+    "old": "shape === '32' ? HAND_FULL_HOUSE",
+    "new": "shape === '32' ? HAND_TRIPS",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-two-pair-a-pair",
+    "file": "src/net/cardLaw.js",
+    "old": ": shape === '221' ? HAND_TWO_PAIR",
+    "new": ": shape === '221' ? HAND_PAIR",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-kicker-ignored",
+    "file": "src/net/cardLaw.js",
+    "old": "for (let i = 0; i < Math.max(a.ranks.length, b.ranks.length); i++) {",
+    "new": "for (let i = 0; i < 1; i++) {",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-first-five-not-best",
+    "file": "src/net/cardLaw.js",
+    "old": "if (!best || compareHands(h, best) > 0) best = { ...h, cards: five };",
+    "new": "if (!best) best = { ...h, cards: five };",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-pot-ignores-folded-chips",
+    "file": "src/net/cardLaw.js",
+    "old": "for (const t of totals) amount += Math.max(0, Math.min(t, level) - prev);",
+    "new": "totals.forEach((t, i) => { if (!folded[i]) amount += Math.max(0, Math.min(t, level) - prev); });",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-folded-eligible",
+    "file": "src/net/cardLaw.js",
+    "old": "totals.forEach((t, i) => { if (!folded[i] && t >= level) eligible.push(i); });",
+    "new": "totals.forEach((t, i) => { if (t >= level) eligible.push(i); });",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-layers-never-merge",
+    "file": "src/net/cardLaw.js",
+    "old": "if (last && (!eligible.length || eligible.join() === last.eligible.join())) last.amount += amount;",
+    "new": "if (last && !eligible.length) last.amount += amount;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-headsup-button-big",
+    "file": "src/net/cardLaw.js",
+    "old": "const sbSeat = n === 2 ? button : nextSeat(n, button);",
+    "new": "const sbSeat = nextSeat(n, button);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-short-blind-sets-the-bet",
+    "file": "src/net/cardLaw.js",
+    "old": "  st.currentBet = bb;",
+    "new": "  st.currentBet = Math.max(st.seats[sbSeat].bet, st.seats[bbSeat].bet);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-deal-two-at-once",
+    "file": "src/net/cardLaw.js",
+    "old": "    for (let k = 1; k <= n; k++) st.seats[(button + k) % n].hole.push(st.deck.shift());",
+    "new": "    for (let k = 1; k <= n; k++) st.seats[(button + round + k) % n].hole.push(st.deck.shift());",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-bb-no-option",
+    "file": "src/net/cardLaw.js",
+    "old": "if (canAct(s) && (owedBy(st, i) > 0 || (!s.acted && bettors >= 2))) return i;",
+    "new": "if (canAct(s) && owedBy(st, i) > 0) return i;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-lone-seat-checks",
+    "file": "src/net/cardLaw.js",
+    "old": "(!s.acted && bettors >= 2)",
+    "new": "(!s.acted && bettors >= 1)",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-short-allin-reopens",
+    "file": "src/net/cardLaw.js",
+    "old": "  const open = !s.acted || st.currentBet - s.actedAt >= st.minRaise;",
+    "new": "  const open = true;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-cumulative-never-reopens",
+    "file": "src/net/cardLaw.js",
+    "old": "  const open = !s.acted || st.currentBet - s.actedAt >= st.minRaise;",
+    "new": "  const open = !s.acted;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-raise-with-nobody-to-call",
+    "file": "src/net/cardLaw.js",
+    "old": "if (open && others && reach > st.currentBet)",
+    "new": "if (open && reach > st.currentBet)",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-short-allin-refused",
+    "file": "src/net/cardLaw.js",
+    "old": "raise = { min: Math.min(st.currentBet + st.minRaise, reach), max: reach };",
+    "new": "raise = { min: st.currentBet + st.minRaise, max: reach };",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-short-raise-sets-min",
+    "file": "src/net/cardLaw.js",
+    "old": "if (to - next.currentBet >= next.minRaise) next.minRaise = to - next.currentBet;",
+    "new": "next.minRaise = to - next.currentBet;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-check-facing-a-bet",
+    "file": "src/net/cardLaw.js",
+    "old": "case 'check': if (!legal.check) return null; break;",
+    "new": "case 'check': break;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-raise-past-the-stack",
+    "file": "src/net/cardLaw.js",
+    "old": "to < legal.raise.min || to > legal.raise.max",
+    "new": "to < legal.raise.min",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-act-mutates",
+    "file": "src/net/cardLaw.js",
+    "old": "  if (!legal || !action) return null;\n  const next = structuredClone(st);",
+    "new": "  if (!legal || !action) return null;\n  const next = st;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-no-burn",
+    "file": "src/net/cardLaw.js",
+    "old": "    st.burned.push(st.deck.shift());",
+    "new": "",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-min-raise-carried-across-streets",
+    "file": "src/net/cardLaw.js",
+    "old": "    st.minRaise = st.bb;",
+    "new": "",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-preflop-order-postflop",
+    "file": "src/net/cardLaw.js",
+    "old": "    st.toAct = firstToAct(st, nextSeat(st.seats.length, st.button));",
+    "new": "    st.toAct = firstToAct(st, st.button);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-split-to-the-first",
+    "file": "src/net/cardLaw.js",
+    "old": "      winners = winners.filter((i) => compareHands(hands[i], best) === 0);",
+    "new": "      winners = winners.filter((i) => hands[i] === best);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-odd-chip-from-the-button",
+    "file": "src/net/cardLaw.js",
+    "old": "const order = Array.from({ length: n }, (_, k) => (st.button + 1 + k) % n);",
+    "new": "const order = Array.from({ length: n }, (_, k) => (st.button + k) % n);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-odd-chip-lost",
+    "file": "src/net/cardLaw.js",
+    "old": "      payouts[i] += share + (odd > 0 ? 1 : 0);",
+    "new": "      payouts[i] += share;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-folded-hand-shown",
+    "file": "src/net/cardLaw.js",
+    "old": "hole: i === seat || (shown && !s.folded) ? s.hole.slice() : null,",
+    "new": "hole: i === seat || shown ? s.hole.slice() : null,",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-view-every-hand",
+    "file": "src/net/cardLaw.js",
+    "old": "hole: i === seat || (shown && !s.folded) ? s.hole.slice() : null,",
+    "new": "hole: s.hole.slice(),",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-timeout-always-folds",
+    "file": "src/net/cardLaw.js",
+    "old": "return legal ? { type: legal.check ? 'check' : 'fold' } : null;",
+    "new": "return legal ? { type: 'fold' } : null;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-duplicate-deck-taken",
+    "file": "src/net/cardLaw.js",
+    "old": " || new Set(deck).size !== DECK_SIZE",
+    "new": "",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-owed-full-blind-against-nobody",
+    "file": "src/net/cardLaw.js",
+    "old": "return Math.max(0, (others ? st.currentBet : Math.min(st.currentBet, top)) - me.bet);",
+    "new": "return Math.max(0, st.currentBet - me.bet);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-owed-only-the-table",
+    "file": "src/net/cardLaw.js",
+    "old": "return Math.max(0, (others ? st.currentBet : Math.min(st.currentBet, top)) - me.bet);",
+    "new": "return Math.max(0, Math.min(st.currentBet, top) - me.bet);",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-owed-folded-counted",
+    "file": "src/net/cardLaw.js",
+    "old": "if (k === i || o.folded) return; if (canAct(o)) others = true;",
+    "new": "if (k === i) return; if (canAct(o)) others = true;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT CARDS: a folded seat is never one that can act (canAct reads folded), and it can never have bet above the live seats - it folded facing a higher bet, which a live seat made - so skipping it moves neither `others` nor `top`. Kept: the owed amount reads as the law says it (the live seats' bets)."
+  },
+  {
+    "name": "CD-legal-owes-the-blind",
+    "file": "src/net/cardLaw.js",
+    "old": "  const owe = owedBy(st, seat);",
+    "new": "  const owe = st.currentBet - s.bet;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-sparse-seats-thrown",
+    "file": "src/net/cardLaw.js",
+    "old": "    if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id || !chips(s.stack) || s.stack < 1) return null;",
+    "new": "    if (!chips(s.stack) || s.stack < 1) return null;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-twin-names",
+    "file": "src/net/cardLaw.js",
+    "old": "  if (new Set(seats.map((s) => s.id)).size !== n) return null;",
+    "new": "",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-unsafe-chips",
+    "file": "src/net/cardLaw.js",
+    "old": "const chips = (v) => Number.isSafeInteger(v) && v >= 0;",
+    "new": "const chips = (v) => Number.isInteger(v) && v >= 0;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  },
+  {
+    "name": "CD-not-an-array",
+    "file": "src/net/cardLaw.js",
+    "old": "  if (!Array.isArray(seats)) return null;\n  const n = seats.length;",
+    "new": "  const n = seats?.length ?? 0;",
+    "tests": [
+      "test/cards1_cardlaw.test.js"
+    ]
+  }
+]

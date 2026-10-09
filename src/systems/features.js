@@ -218,6 +218,15 @@ export const MOD_CURATED = Object.freeze({
   'immersive-travel': Object.freeze([
     'General.DisableNormalTravel', 'General.DailyCarriageFee', 'General.RegionLockedCarriages', 'ShipTravel.DisableShipTravelOutsideDocks',
   ]),
+  // HAZE1: how strong the shimmer is, and whether the subtropics shimmer too.
+  'heat-haze': Object.freeze(['Heat Haze.Intensity', 'Heat Haze.AllowSubtropical']),
+  // WINDFALL1: what a player reaches for first - the sound and how loud, the leaves and the snow off the boughs, and how
+  // often the wind gets up. The profiles, the frequencies by season, region and weather stay in the mod's own pane.
+  windfall: Object.freeze(['Presentation.AudioEnabled', 'Presentation.AudioVolume', 'Presentation.LeavesEnabled', 'Presentation.SnowFlurriesEnabled', 'General.OverallWindyPeriodFrequency', 'General.GustFrequency']),
+  // SNOWFALL1: how deep the snow lies in the wild and in towns, whether the townsfolk and the foes leave tracks, whether
+  // it reaches the distance, and how fast a track fills back. The mesh, the masks, the feathers and the roads' dials stay
+  // in the mod's own pane.
+  snowfall: Object.freeze(['Snowpack.WildernessMaximumDepth', 'Snowpack.SettlementMaximumDepth', 'NPC Tracks.Enabled', 'Distance Prototype.Enabled', 'Refill.PassiveRefillHours']),
   // PI1: the four a player reaches for first - whether a body's gear lands round it, how hard it is thrown out, and the
   // two sizes most read (a weapon's and an armour piece's). The categories and the per-piece sizes stay in the mod's pane.
   'physical-items': Object.freeze(['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']),
@@ -734,6 +743,34 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),   // the player's own, as the held map's is
   }),
+  // TAMRIEL1 (2026-10-08, Mac: "building the entirety of tamriel that connects accurately to Daggerfall. Not actually
+  // traversalable but used and connected as a gigantic map ... seen by players ingame"): the held map's world sheet
+  // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
+  // world/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/mapSkin.js
+  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door.
+  Object.freeze({
+    id: 'tamriel-map',
+    group: 'interface',
+    title: 'Tamriel on the map',
+    note: 'The enhanced map zooms out past the Iliac Bay to the whole of Tamriel, hand-drawn: the provinces, their '
+      + 'capitals, the mountains and the seas, joined to Daggerfall’s own coast. Nothing beyond the Bay can be travelled to.',
+    effect: 'Takes effect the next time a map is opened.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
+  }),
+  // TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): the streamed world goes on past the Bay's edge over the
+  // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamrielGround.js;
+  // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door.
+  Object.freeze({
+    id: 'tamriel-land',
+    group: 'world',
+    title: 'Land beyond the Bay',
+    note: 'Walk off the edge of the Iliac Bay and the land of Tamriel goes on: hills, mountains and coasts under each '
+      + 'province\u2019s own sky and trees. Empty ground for now - no towns, roads or dungeons stand there yet.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' }),
+  }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
   // day's words as places (systems/weatherField.js), read by the sim
@@ -874,6 +911,9 @@ export const FEATURES = Object.freeze([
   }),
   modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'sight'),   // FT18: was world
   modFeature('low-poly-trees', 'Takes effect when the world next loads.', 'sight'),   // LPT1: read once, as the world loads
+  modFeature('heat-haze', 'Takes effect at once.', 'sight'),   // HAZE1: the exterior hosts read its switch every frame (the enhanced outdoors')
+  modFeature('windfall', 'Takes effect at once.', 'sight'),   // WINDFALL1: the same - and every flora batch carries its mask from its build, so the law turns on and off with it
+  modFeature('snowfall', 'Takes effect at once.', 'sight'),   // SNOWFALL1: the same - its switch read every frame; off hides the snow, and the snowpack keeps its clock
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
   // TO1 (2026-09-17): TRAVEL OPTIONS - `world`, because what it changes
   // is how you cross it. The effect line is the SWITCH's (FT9: when each

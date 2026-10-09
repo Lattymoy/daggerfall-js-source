@@ -89,6 +89,13 @@ test('LW-SPACE aloneStands: those alone at a spot keep SPACE_M from every place 
     if (st.x === own[i].x && st.z === own[i].z) ownKept++; else moved++;
   }
   assert.ok(ownKept > 5 && moved > 5, `their own place where it is free (${ownKept}), another where not (${moved})`);
+  // the arc tried before another distance: one whose own place is taken stands on another bearing about the spot (LW-STIR's
+  // re-judge: LW-SPACE-alone-turns-untried lived - the street's own measure below no longer caught it, its scene moved)
+  const offBearing = ids.filter((id, i) => {
+    const st = /** @type {any} */ (got.get(id)), b = Math.atan2(st.x - spot.x, st.z - spot.z), b0 = Math.atan2(own[i].x - spot.x, own[i].z - spot.z);
+    return Math.abs(Math.atan2(Math.sin(b - b0), Math.cos(b - b0))) > 1e-6;
+  }).length;
+  assert.ok(offBearing > 5, `another bearing where their own place is taken (${offBearing})`);
   // the earliest keep their places as others come: the first twenty placed alone, then forty - the twenty unmoved
   const first = aloneStands(spot, ids.slice(0, 20), circle, street);
   for (const id of ids.slice(0, 20)) assert.deepEqual(got.get(id), first.get(id), `${id} keeps the place they had as others came`);
@@ -135,7 +142,9 @@ test('LW-SPACE the town: at every spot through the day, each one alone stands SP
   for (let m = 16 * 60; m < 19 * 60; m += 0.5) {
     const t = day * DAY_MIN + m;
     a.town._now = t; a.town._tick([a.town.places.square.x, 0, a.town.places.square.z], 0);
-    const rounds = new Map([...a.town._inCircle.values()].map((c) => [c.spot.key, `${c.circle.start}`]));
+    // LW-STIR: PIN MOVED - an incident's two are the round's laying too (stir.js: the round through, the one who comes
+    // before the one who keeps their stand - laid with those alone, `aloneStands`' `beside`)
+    const rounds = new Map([...[...a.town._inCircle.values()].map((c) => [c.spot.key, `${c.circle.start}`]), ...[...a.town._inStir.values()].map((c) => [c.spot.key, `${c.pair.start}`])]);
     /** @type {Map<string, Map<string, { x: number, z: number }>>} */
     const now = new Map();
     for (const [id, st] of a.town._aloneAt) { const l = now.get(st.spot.key) ?? new Map(); l.set(id, st); now.set(st.spot.key, l); }

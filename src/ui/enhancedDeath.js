@@ -33,6 +33,7 @@ import { PIXEL_STACK } from './pixelifyFive.js';
 import { isOnlinePage } from '../systems/onlineLane.js';
 import { deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the line about the loss
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';
+import { wildDeathLines } from '../systems/wildZone.js';   // WILD1: a death in the open zone says what it cost
 
 export const ENHANCED_DEATH_ID = 'enhanced-death';
 const STALE_MS = 350;
@@ -92,7 +93,12 @@ function build(screen) {
   // the screen waits for the player.
   const count = el('p', 'dth-count');
   count.style.display = online ? '' : 'none';
+  // WILD1: a death in the open zone - its own block under the line (the killer's claim, what was left behind, the
+  // wait), filled by the draw (the world host says so the frame after the screen goes up)
+  const wild = el('div', 'dth-wild');
+  wild.hidden = true;
   band.append(title, rule, line, count, keys);
+  line.after(wild);   // hidden everywhere but the zone - the loss still has no second line of its own
   root.append(band);
   document.body.append(root);
   return root;
@@ -108,8 +114,19 @@ export function drawEnhancedDeath(screen, fade = 0) {
   const left = screen.respawnIn;
   if (left != null) {
     const c = node.querySelector('.dth-count');
-    const text = `Rising in ${left}`;
+    const text = left >= 60 ? `Rising in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `Rising in ${left}`;   // WILD1: two minutes read as a clock
     if (c && c.textContent !== text) c.textContent = text;
+  }
+  // WILD1: the zone's block and its key - the lines once they are known, and no "Rise now" while the zone holds
+  const lines = wildDeathLines(screen.wild ?? null);
+  const w = node.querySelector('.dth-wild');
+  const key = lines.join('|');
+  if (w && w.dataset.key !== key) {
+    w.dataset.key = key;
+    w.replaceChildren(...lines.map((l, i) => el('p', i === 0 && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : 'dth-wild-line', l)));
+    w.hidden = !lines.length;
+    const keys = node.querySelector('.dth-keys');
+    if (keys) keys.hidden = lines.length > 0;
   }
   disarmDraw(watch);
   watch = armDrawWatchdog(STALE_MS, removeEnhancedDeath);
@@ -197,7 +214,18 @@ button.dth-key:focus-visible { outline: 1px solid rgba(142,27,20,0.8); outline-o
   font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
 @keyframes dth-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* WILD1: a death in the open zone - a framed block of the band's own brass and blood, the killer's claim in the red */
+.dth-wild { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: min(720px, 92vw);
+  padding: 10px 18px; border-top: 1px solid rgba(142,27,20,0.45); border-bottom: 1px solid rgba(142,27,20,0.45);
+  background: linear-gradient(90deg, transparent, rgba(40,6,4,0.55) 20%, rgba(40,6,4,0.55) 80%, transparent);
+  animation: dth-in 800ms ease-out 1400ms both; }
+.dth-wild[hidden] { display: none; }
+.dth-wild-line { margin: 0; font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-size: clamp(13px, 1.6vw, 16px);
+  line-height: 1.45; letter-spacing: 0.05em; color: #b3a893; text-shadow: 2px 2px 0 #000; }
+.dth-wild-claim { color: #d0563f; }
+.dth-keys[hidden] { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .dth-veil, .dth-band, .dth-title, .dth-rule, .dth-line, .dth-count, .dth-keys, .dth-edge { animation: none; }
+  .dth-veil, .dth-band, .dth-title, .dth-rule, .dth-line, .dth-count, .dth-keys, .dth-edge, .dth-wild { animation: none; }
 }
 `;

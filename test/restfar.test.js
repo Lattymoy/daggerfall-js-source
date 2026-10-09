@@ -55,5 +55,5 @@ test('PARTY-REST-FAR1 by source: the notice reads the SAME `nearAccount` the mir
   assert.match(w, /const PARTY_REST_FAR_TEXT = \(who, loitering = false\) => `\$\{who\} is \$\{loitering \? 'loitering' : 'resting'\} - come within \$\{PARTY_REST_RADIUS\} m of them to \$\{loitering \? 'wait' : 'rest'\} with the party\.`;/, 'the radius is the one law\'s own number, never restated; a loiter is not a rest (AUDIT DROPS D3)');
   assert.match(w, /const partyRestFarNotice = \(rest, near, row\) => \{\s*if \(!rest \|\| near\) \{ _partyRestFarSaid = false; return; \}\s*if \(_partyRestFarSaid\) return;\s*_partyRestFarSaid = true;\s*setMidScreenText\(PARTY_REST_FAR_TEXT\(row\?\.name \|\| 'A party member', rest\.mode === 0\), PARTY_REST_FAR_SECONDS\);\s*\};/);
   assert.match(w, /const PARTY_REST_FAR_SECONDS = 4;/, 'AUDIT DROPS D3: long enough to be read - the label\'s 1.5 s default is a refusal\'s');
-  assert.match(w, /import \{ setMidScreenText \} from '\.\.\/ui\/midScreenText\.js';/, 'the HUD\'s own centred label - the door every refusal takes');
+  assert.match(w, /import \{ setMidScreenText, midScreenText as _wildMidText \} from '\.\.\/ui\/midScreenText\.js';/, 'the HUD\'s own centred label - the door every refusal takes');   // WILD1: the label's own text read beside it (the zone's line)
 });

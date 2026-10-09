@@ -242,5 +242,7 @@ test('HT-WAIST-NET: recorded - the deferral is retired where HT-WAIST wrote it (
   const online = rd('bible/06-Systems/Online-Arc.md');
   assert.match(online, /^## HT-WAIST-NET \(2026-09-24[^\n]*world108$/m, 'the online arc\'s section');
   const w = rd('src/net/wire.js');
-  assert.match(w, /\nexport const RELAY_VERSION = 'world\d+';[^\n]*HT-WAIST-NET \(2026-09-24[^\n]*? - world108 /, 'the relay\'s version chain names it at world108');
+  // PIN MOVED (THE WROTHGARIAN ZONE, world177): the chain no longer rides the RELAY_VERSION line itself - the line names world177's
+  // parts and the chain before it follows as `// worldN:` comment lines directly beneath; the pin reads the line and its block
+  assert.match(w, /\nexport const RELAY_VERSION = 'world\d+';[^\n]*\n(?:\/\/[^\n]*\n)*?\/\/[^\n]*HT-WAIST-NET \(2026-09-24[^\n]*? - world108 /, 'the relay\'s version chain names it at world108');
 });

@@ -170,7 +170,7 @@ test('RF5: a declared field\'s shape is closed on the wire - the wrong kind refu
 
 test('RF5: one declaration - the array list derives from the kinds, the validator carries no hand list, the look\'s fields are declared', () => {
   assert.deepEqual([...LOOT_ARRAY_FIELDS], itemFieldsOfKind('array'));
-  assert.deepEqual(itemFieldsOfKind('array'), ['enchantments', 'customEnchantments', 'affixes']);
+  assert.deepEqual(itemFieldsOfKind('array'), ['enchantments', 'customEnchantments', 'affixes', 'decks']);   // CARDS8 (PIN MOVED): a Card Binder's decks
   assert.equal(LOOT_STR_MAX, ITEM_STR_MAX);
   assert.ok(Object.isFrozen(ITEM_FIELDS) && ITEM_FIELD_NAMES.length >= 40);
   for (const k of ITEM_FIELD_NAMES) assert.ok(['int', 'number', 'bool', 'string', 'enum', 'array', 'object'].includes(ITEM_FIELDS[k].kind), k);

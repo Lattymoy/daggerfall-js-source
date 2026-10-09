@@ -1,0 +1,282 @@
+[
+  {
+    "name": "SCALE4c-mail-part-dropped",
+    "file": "server-account/src/heartbeat.js",
+    "old": "  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box asked for and never answered"
+  },
+  {
+    "name": "SCALE4c-guest-box-opened",
+    "file": "server-account/src/heartbeat.js",
+    "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)",
+    "new": "inboxOf(ctx, player, env)",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a guest's box read past the door /v1/mail/inbox shuts"
+  },
+  {
+    "name": "SCALE4c-board-elsewhere",
+    "file": "server-account/src/heartbeat.js",
+    "old": "() => readBoard(ctx, player, env, body.board)",
+    "new": "() => readBoard(ctx, player, env, Number(body.board) + 1)",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "another town's board answered"
+  },
+  {
+    "name": "SCALE4c-riders-left",
+    "file": "src/net/heartbeat.js",
+    "old": "due.some(([n]) => n === name) || p.soon(t, RIDE_EARLY_MS)",
+    "new": "due.some(([n]) => n === name)",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a part due a moment later never rides - every clock its own request again"
+  },
+  {
+    "name": "SCALE4c-sent-early",
+    "file": "src/net/heartbeat.js",
+    "old": "    const due = [...parts].filter(([, p]) => p.due(t));",
+    "new": "    const due = [...parts].filter(([, p]) => p.soon(t, 30_000));",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a part sent half a minute before its clock says"
+  },
+  {
+    "name": "SCALE4c-answers-crossed",
+    "file": "src/net/heartbeat.js",
+    "old": "p.take(r.ok ? partAnswer(r.data?.[name])",
+    "new": "p.take(r.ok ? partAnswer(r.data?.[sent[0][0]])",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "each part handed the first part's answer"
+  },
+  {
+    "name": "SCALE4c-knock-at-once",
+    "file": "src/net/heartbeat.js",
+    "old": "    const beatDue = beatAt != null && (due.length > 0 || !rideComing(t));",
+    "new": "    const beatDue = beatAt != null;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the knock its own request beside a ride coming"
+  },
+  {
+    "name": "SCALE4c-knock-held-long",
+    "file": "src/net/heartbeat.js",
+    "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
+    "new": "    : Math.min(10 * BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a knock held past what its grace allows"
+  },
+  {
+    "name": "SCALE4c-knock-held-alone",
+    "file": "src/net/heartbeat.js",
+    "old": "    return left > 0 && [...parts.values()].some((p) => p.soon(t, left));",
+    "new": "    return left > 0;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a single-player world's knock held for a ride that never comes"
+  },
+  {
+    "name": "SCALE4c-never-again",
+    "file": "src/net/heartbeat.js",
+    "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
+    "new": "      break;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a lost answer never asked again"
+  },
+  {
+    "name": "SCALE4c-refusal-again",
+    "file": "src/net/heartbeat.js",
+    "old": "      if (r.ok || !RETRY.includes(r.error)) break;",
+    "new": "      if (r.ok) break;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a refusal asked again"
+  },
+  {
+    "name": "SCALE4c-session-unasked",
+    "file": "src/net/heartbeat.js",
+    "old": "    const session = storedSession(storage);",
+    "new": "    const session = storedSession(storage) ?? { secret: 'anyone-at-all-000000' };",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a signed-out tab sends anyway"
+  },
+  {
+    "name": "SCALE4c-sent-hidden",
+    "file": "src/net/heartbeat.js",
+    "old": "    if (!visible()) {\n      // AUDIT SCALE B1",
+    "new": "    if (false) {\n      // AUDIT SCALE B1",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a hidden page beats"
+  },
+  {
+    "name": "SCALE4c-box-never-due",
+    "file": "src/net/mail.js",
+    "old": "      due: (nowMs) => ready(nowMs, 0),",
+    "new": "      due: () => false,",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the letterbox never looked at"
+  },
+  {
+    "name": "SCALE4c-box-untaken",
+    "file": "src/net/mail.js",
+    "old": "        const out = this._take(r, undefined, false);",
+    "new": "        const out = { ok: true };",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box's answer thrown away"
+  },
+  {
+    "name": "SCALE4c-board-no-town",
+    "file": "src/net/noticeBook.js",
+    "old": "      const map = townMap();\n      if (!boardKeyOk(map)) return false;",
+    "new": "      const map = townMap();",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a board read with no town underfoot"
+  },
+  {
+    "name": "SCALE4c-board-asked-twice",
+    "file": "src/net/noticeBook.js",
+    "old": "        e.pending = new Promise((r) => { settle = r; });\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a window's read beside the heartbeat's asks again"
+  },
+  {
+    "name": "SCALE4c-refusal-unkept",
+    "file": "src/net/noticeBook.js",
+    "old": "        e.error = r?.error ?? 'server';\n        e.at = a.at;\n        a.settle(",
+    "new": "        e.error = r?.error ?? 'server';\n        a.settle(",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a refusal asked again the next second"
+  },
+  {
+    "name": "SCALE4c-frame-reads-again",
+    "file": "src/scenes/world.js",
+    "old": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }",
+    "new": "_noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; if (town) noticeBook.read(town.mapId); }",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the street frame asks the board itself beside the heartbeat"
+  },
+  {
+    "name": "SCALE4c-lane-polls-again",
+    "file": "src/scenes/world.js",
+    "old": "    _mailFrameAt = performance.now();   // MAIL1",
+    "new": "    _mailFrameAt = performance.now(); mail?.poll();   // MAIL1",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the online lane looks at the box itself beside the heartbeat"
+  },
+  {
+    "name": "SCALE4c-knock-past",
+    "file": "src/scenes/world.js",
+    "old": "    beat: () => heartbeat.beat(),",
+    "new": "    beat: () => null,",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the play clock's knock carried by nothing"
+  },
+  {
+    "name": "SCALE4c-board-shut-shown",
+    "file": "src/net/noticeBook.js",
+    "old": "        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it",
+    "new": "        if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11's law, as `read` keeps it",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "a board shut by the heartbeat's answer still shown from the cache"
+  },
+  {
+    "name": "SCALE4c-slower-never-early",
+    "file": "src/net/heartbeat.js",
+    "old": "    const riding = Number.isFinite(pace)\n      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))\n      : going;",
+    "new": "    const riding = going;",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "two clocks out of step stay out of step: the box alone every three minutes after a town is entered"
+  },
+  {
+    "name": "SCALE4c-early-bound-loose",
+    "file": "src/net/heartbeat.js",
+    "old": "p.soon(t, pace - RIDE_EARLY_MS)))",
+    "new": "p.soon(t, pace)))",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box riding the board's second minute in step - a look every two minutes, not three"
+  },
+  {
+    "name": "SCALE4c-faster-rides-early",
+    "file": "src/net/heartbeat.js",
+    "old": "|| ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))",
+    "new": "|| (p.soon(t, pace - RIDE_EARLY_MS)))",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the board read early on the box's heartbeat - a read more, and no request fewer"
+  },
+  {
+    "name": "SCALE4c-box-period-unsaid",
+    "file": "src/net/mail.js",
+    "old": "      every: MAIL_POLL_MS,\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the box's part without its period: it never rides early"
+  },
+  {
+    "name": "SCALE4c-board-period-unsaid",
+    "file": "src/net/noticeBook.js",
+    "old": "      every: BOARD_CACHE_MS,\n",
+    "new": "",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the board's part without its period: the heartbeat's pace unknown, nothing rides early"
+  },
+  {
+    "name": "SCALE4c-whileLive-period-lost",
+    "file": "src/net/heartbeat.js",
+    "old": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  ...part,",
+    "new": "export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => boolean} */ live) => ({\n  body: part.body, take: part.take,",
+    "tests": [
+      "test/scale4c.test.js"
+    ],
+    "note": "the world host's box, gated on its lane, loses its period"
+  }
+]

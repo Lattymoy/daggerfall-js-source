@@ -118,10 +118,16 @@ export class QuestTracker {
   /** A load or a switch turned off: forget what was seen and followed; the player's choice stays. */
   forget() { this.views = []; this.follow = null; }
 
-  /** The quest the card shows: the tracked one, else the followed one, else the one written last. */
+  /** The quest the journal follows: the tracked one, else the followed one, else the one written last. */
   tracked() {
     const byId = (id) => (id == null ? null : this.views.find((v) => v.id === id) ?? null);
     return byId(this.pinned) ?? byId(this.follow) ?? latestOf(this.views);
+  }
+  /** TRACK-ONLY (2026-10-08, the owner: "When you dont track a quest it should never appear on the screen! right now when
+   *  i dont track the main quest it still is shown tracked."): the quest ON SCREEN - the card, the compass's mark, the
+   *  map's filled diamond - is the TRACKED one and nothing else. The journal still opens on `tracked()`'s quest. */
+  shown() {
+    return this.pinned == null ? null : (this.views.find((v) => v.id === this.pinned) ?? null);
   }
 
   isPinned(id) { return id != null && this.pinned === String(id); }
@@ -134,7 +140,7 @@ export class QuestTracker {
 
   /** The card's words, or null when there is no quest to follow. */
   frame() {
-    const v = this.tracked();
+    const v = this.shown();   // TRACK-ONLY: nothing on the card that is not tracked
     if (!v) return null;
     return {
       id: v.id,

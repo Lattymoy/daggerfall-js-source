@@ -164,7 +164,7 @@
   {
     "name": "SD11D-a-way-in-left-in-fire",
     "file": "src/scenes/world.js",
-    "old": "    }, 'hourIn', { centre: sdVeilCentre() });   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift",
+    "old": "    }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift",
     "new": "    });",
     "tests": [
       "test/sd11d_words.test.js"

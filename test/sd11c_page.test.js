@@ -621,7 +621,7 @@ test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO T
   const go = w.indexOf('Promise.resolve().then(async () => {', at);
   const out = w.indexOf('if (mode !== \'exterior\') modes?.forceExitToExterior();', go);
   assert.ok(at > 0 && go > at && out > go, 'read before the exit');
-  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\('brass'\); kind = 'hour'; \}\s*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
+  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\('hourCast'\); kind = 'hour'; \}[^\n]*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
   assert.equal(respawnFlavorText('hour', () => 0), SD_REALM_TEXT.died, 'the Hour\'s own kind of waking');
   assert.equal(respawnFlavorText('hour', () => 0.999), SD_REALM_TEXT.died);
   // the Hour's pool's voice, from its own text

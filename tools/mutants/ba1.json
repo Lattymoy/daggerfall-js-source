@@ -181,8 +181,8 @@
   },
   {
     "name": "random-seed-ignored",
-    "file": "src/systems/betterAmbience.js",
-    "old": "    const subtraction = seed === -2147483648 ? 2147483647 : Math.abs(seed | 0);",
+    "file": "src/formats/netRuntime.js",
+    "old": "    const subtraction = seed === -2147483648 ? MBIG : Math.abs(seed);",
     "new": "    const subtraction = 0;",
     "tests": [
       "test/ba1_betterambience.test.js"
