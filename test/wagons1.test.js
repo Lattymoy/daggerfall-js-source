@@ -276,6 +276,8 @@ test('WAGONS1 THE HOSTS\' SEAM: one constructor hands both hosts the driven kind
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /enterCaravan: \(\) => caravanRooms\.enter\(\)/);
   assert.match(world, /riders: \{ passengers: \(\) => wagonRiders\?\.passengers\(\)/);
+  assert.match(world, /if \(cell && frame\.hv !== undefined\) frame\.wr = wagonRiders\?\.word\(\) \?\? null;/, 'my seat\'s word rides my foes frame whenever my team\'s does');
+  assert.match(readFileSync(new URL('../src/scenes/exteriorFoes.js', import.meta.url), 'utf8'), /if \(data\.wr !== undefined\) _onRide\?\.\(from, data\.wr\);/, 'a peer\'s seat word lands past the room test');
   assert.match(world, /peerKey|hcc/);
   void peerKey;
 });
