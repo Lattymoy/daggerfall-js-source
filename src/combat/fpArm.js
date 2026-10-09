@@ -601,7 +601,9 @@ export function armReach(eye, unionBounds) {
  * MW-SMOOTH (2026-10-09, Mac: "Can we also enable smooth shading for the
  * morrowind models?"): A PIECE'S OWN NORMALS, when its mesh authored them.
  * The reference lights every NIF by the per-vertex normals the file
- * carries and never makes any (Morrowind-Rules.md rule [C]); the port
+ * carries and never makes any (Morrowind-Rules.md, "[C] Vertex/normal/
+ * colour arrays are set from array EMPTINESS ... and OpenMW generates
+ * nothing"); the port
  * read them, kept them through flattenNif, and then posed positions
  * alone and lit every triangle by its face - every surface faceted,
  * the smooth normals our own baked armour carries thrown away.
@@ -611,7 +613,7 @@ export function armReach(eye, unionBounds) {
  * an edge he kept hard (the Thunderlock's faces) stays hard.
  *
  * A mesh with NO normals is lit by its faces, as everything was: one
- * cross product per triangle.
+ * cross product per triangle - and so is a corner whose normal is zero.
  *
  * AND RULE 13'S RENDERING CONSEQUENCE, which MW8 also lacked: a mirrored
  * piece has its X negated, which REVERSES its triangle winding, so its
@@ -634,7 +636,8 @@ export function packFpArm(pieces, out = null) {
   // ten thousand a frame for one body, none of which outlived the call.
   // And of the fourteen floats a corner, eight never change between
   // frames: the diffuse, the UV and the emission are the authored
-  // vertex's, and only the position and the face normal follow the pose.
+  // vertex's, and only the position and the normal follow the pose (the
+  // face normal then; since MW-SMOOTH the mesh's own, posed, where it has one).
   // So the static eight are resolved ONCE per piece (through the same
   // diffuseAt/emissiveAt - one home for the colour law) into a lane
   // buffer kept on the piece and keyed on what it was read from, and a
@@ -661,8 +664,11 @@ export function packFpArm(pieces, out = null) {
     let l = 0;
     for (let i = 0; i + 2 < idx.length; i += 3) {
       const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
+      // the face normal: a mesh with no normals is lit by it, and so is a corner whose normal is ZERO - a vertex
+      // weighted only to bones the skeleton lacks collapses to one (rule 40), or a file authors one - which the
+      // shader's normalize() cannot take (MW-SMOOTH)
       let nx = 0; let ny = 1; let nz = 0;
-      if (!nrm) {
+      if (!nrm || zeroAt(nrm, a) || zeroAt(nrm, b) || zeroAt(nrm, c)) {
         const ux = pos[b] - pos[a]; const uy = pos[b + 1] - pos[a + 1]; const uz = pos[b + 2] - pos[a + 2];
         const vx = pos[c] - pos[a]; const vy = pos[c + 1] - pos[a + 1]; const vz = pos[c + 2] - pos[a + 2];
         nx = (uy * vz - uz * vy) * flip;
@@ -675,7 +681,7 @@ export function packFpArm(pieces, out = null) {
         const v = k === 0 ? a : k === 1 ? b : c;
         buf[o++] = pos[v]; buf[o++] = pos[v + 1]; buf[o++] = pos[v + 2];
         buf[o++] = lanes[l]; buf[o++] = lanes[l + 1]; buf[o++] = lanes[l + 2];
-        if (nrm) { buf[o++] = nrm[v]; buf[o++] = nrm[v + 1]; buf[o++] = nrm[v + 2]; } else { buf[o++] = nx; buf[o++] = ny; buf[o++] = nz; }
+        if (nrm && !zeroAt(nrm, v)) { buf[o++] = nrm[v]; buf[o++] = nrm[v + 1]; buf[o++] = nrm[v + 2]; } else { buf[o++] = nx; buf[o++] = ny; buf[o++] = nz; }
         buf[o++] = lanes[l + 3]; buf[o++] = lanes[l + 4];
         buf[o++] = lanes[l + 5]; buf[o++] = lanes[l + 6]; buf[o++] = lanes[l + 7];
         l += LANE_FLOATS;
@@ -687,6 +693,9 @@ export function packFpArm(pieces, out = null) {
   }
   return { packed: buf, ranges };
 }
+
+/** MW-SMOOTH: vertex `v`'s normal (its first float's index) is zero - no direction to light by. */
+const zeroAt = (n, v) => n[v] === 0 && n[v + 1] === 0 && n[v + 2] === 0;
 
 /** PERF-RIG1: the eight static floats a corner - diffuse rgb, uv, emissive
  *  rgb - in corner order, resolved once per piece through the pass's own

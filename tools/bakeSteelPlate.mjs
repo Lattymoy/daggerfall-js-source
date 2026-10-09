@@ -91,8 +91,9 @@
 //   the head is a rigid part at the skeleton's "Head" node, where a retail helmet sits too, so a retail helmet fits it
 //   and the plate's did not. In Mac's screenshot the scalp stands up through the top of the closed helm. The set
 //   worn on retail's skeleton in its idle, with a stand-in for the scene's head on the head bone and drawn from behind
-//   as the screenshot is, shows that scalp only with the head 3.5 to 4.6 units higher up its bone than the scene put
-//   it - so the helms are raised HELM_LIFT up the head bone, the skin's frame and every other piece untouched.
+//   as the screenshot is (tools/helmLiftProbe.mjs), shows that scalp with the head 3.2 to 4.3 units higher up its bone
+//   than the scene put it - so the helms are raised HELM_LIFT up the head bone, the skin's frame and every other piece
+//   untouched. (A head bigger than the scene's Breton, or an offset front to back, the probe cannot rule out.)
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx, childrenNamed, nodeAt, objectName } from './fbxRead.mjs';
@@ -287,9 +288,10 @@ const piece = (id, file, shapes, lift = 0) => Object.freeze({ id, file, shapes: 
  * MW-STEEL5: HOW FAR UP THE HEAD BONE THE GAME'S HEAD STANDS OVER THE SCENE'S (units) - and so how far the helms are
  * raised over where Mac fitted them on the scene's Breton head (MW-STEEL1's export, the shell from 112.88 to 131.82).
  * Read off Mac's screenshot (2026-10-09, the set worn, from behind, the scalp standing up through the closed helm's
- * crown): the set worn on retail's skeleton in its idle, with a stand-in for the scene's head (SCENE_BODY's cranium,
- * an ellipsoid) on the head bone, drawn from behind at three heights of eye, shows the screenshot's scalp - its height
- * 0.39 of the helm's under it - with the head 3.5 to 4.6 higher. Up the head bone is the scene's +Z: the bind stands it
+ * crown) by tools/helmLiftProbe.mjs: the set worn on retail's skeleton in its idle, with a stand-in for the scene's
+ * head (SCENE_BODY's box, an ellipsoid) on the head bone, drawn from behind at three heights of eye, shows the
+ * screenshot's scalp - its height 0.39 of the helm's under it - with the head 3.24, 3.70 and 4.25 higher
+ * (test/mwsteel5.test.js holds HELM_LIFT inside that span). Up the head bone is the scene's +Z: the bind stands it
  * upright.
  */
 export const HELM_LIFT = 4;
@@ -428,16 +430,20 @@ export function importSteelPlate(bytes, { pieces = PIECES, reference = REFERENCE
   for (const x of shapes) bakeObject(tree, x.object, x.box);
   const carried = Object.fromEntries(Object.entries(reference).filter(([, name]) => names.includes(name)));
   const drop = Object.values(carried);
+  const read = new Set([...shapes.map((x) => x.object), ...drop]);
   return {
     set: drop.length ? stripFbx(bytes, { drop }).bytes : Buffer.from(bytes),
     reference: drop.length ? measureReference(tree, carried) : null,
+    // AUDIT MW-STEEL5: an object no piece is read from rides along in the source, unread - said, not dropped
+    unread: names.filter((n) => !read.has(n)),
   };
 }
 
 /** --open-helm (MW-STEEL5): the open helm's object, alone, out of an export that carries it - every other object
- *  stripped (tools/fbxStrip.mjs, every kept record byte for byte). */
-export function openHelmSource(bytes) {
-  const keep = new Set(PIECES.filter((p) => p.file === 'openHelm').flatMap((p) => p.shapes.map((x) => x.object)));
+ *  stripped (tools/fbxStrip.mjs, every kept record byte for byte). `pieces` is the table's own unless a pin aims it
+ *  elsewhere. */
+export function openHelmSource(bytes, { pieces = PIECES } = {}) {
+  const keep = new Set(pieces.filter((p) => p.file === 'openHelm').flatMap((p) => p.shapes.map((x) => x.object)));
   const names = meshModelNames(bytes);
   const absent = [...keep].filter((n) => !names.includes(n));
   if (absent.length) throw new Error(`this export carries no open helm (${absent.map((n) => `"${n}"`).join(', ')})`);
@@ -449,30 +455,34 @@ const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); w
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
+  // AUDIT MW-STEEL5: NOTHING IS WRITTEN UNTIL EVERYTHING HAS BAKED. The sources are taken in memory, the bake runs on
+  // them, and only then are the sources and what they make saved - so a refused open helm or a failed bake leaves the
+  // tree as it was, never a new source beside the old NIFs.
   const imp = opt('import');
-  if (imp) {
-    const r = importSteelPlate(readFileSync(imp));
-    save(SOURCE.set, r.set);
-    console.log(`${SOURCE.set}  ${r.set.length} bytes: ${meshModelNames(r.set).join(', ')}`);
-    if (r.reference) {
-      console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
-      for (const [part, b] of Object.entries(r.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
-    }
-  }
+  const imported = imp ? importSteelPlate(readFileSync(imp)) : null;
   const openFrom = opt('open-helm');
-  if (openFrom) {
-    const bytes = openHelmSource(readFileSync(openFrom));
-    save(SOURCE.openHelm, bytes);
-    console.log(`${SOURCE.openHelm}  ${bytes.length} bytes: ${meshModelNames(bytes).join(', ')}`);
-  }
+  const openHelm = openFrom ? openHelmSource(readFileSync(openFrom)) : null;
   const missing = Object.entries(TEXTURES).filter(([, p]) => !existsSync(p)).map(([t]) => t);
   if (missing.length) { console.error(`no painting yet for: ${missing.join(', ')} (${missing.map((t) => TEXTURES[t]).join(', ')})`); process.exit(1); }
   const wantSheets = args.includes('--sheets');
   const r = bakeSteelPlate({
-    set: readFileSync(SOURCE.set), openHelm: readFileSync(SOURCE.openHelm),
+    set: imported ? imported.set : readFileSync(SOURCE.set), openHelm: openHelm ?? readFileSync(SOURCE.openHelm),
     pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
     skeleton: readFileSync(RETAIL_SKELETON),
   }, { sheets: wantSheets });
+  if (imported) {
+    save(SOURCE.set, imported.set);
+    console.log(`${SOURCE.set}  ${imported.set.length} bytes: ${meshModelNames(imported.set).join(', ')}`);
+    if (imported.unread.length) console.log(`  read by no piece, kept in the source: ${imported.unread.join(', ')}`);
+    if (imported.reference) {
+      console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
+      for (const [part, b] of Object.entries(imported.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
+    }
+  }
+  if (openHelm) {
+    save(SOURCE.openHelm, openHelm);
+    console.log(`${SOURCE.openHelm}  ${openHelm.length} bytes: ${meshModelNames(openHelm).join(', ')}`);
+  }
   for (const p of r.pieces) {
     save(meshFile(p.id), p.nif);
     const tris = p.meshes.reduce((n, m) => n + m.indices.length / 3, 0);

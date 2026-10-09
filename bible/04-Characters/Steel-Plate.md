@@ -25,8 +25,8 @@ armour mesh. Nothing about the plate is solved while the game runs.
 Asked, Mac answered **Steel only**: Daggerfall's seven classic pieces in Steel (Cuirass 102, Gauntlets 103, Greaves 104,
 Left and Right Pauldron 105 and 106, Helm 107, Boots 108) wear the plate in place of retail's `steel_*` records.
 Silver and Elven, which wear Morrowind's steel because Morrowind has no silver armour (mwItemMap.js
-DF_TO_MW_ARMOR_MATERIAL), keep retail's steel; every Roleplay & Realism Items piece keeps what it wore, and its Steel
-Jerkin keeps the brigandine.
+DF_TO_MW_ARMOR_MATERIAL), keep retail's steel; every Roleplay & Realism Items piece keeps what it wore, and its Jerkin
+keeps the brigandine (in every brigandine metal since MW-BRIG4 - `04-Characters/Steel-Brigandine.md`).
 
 ## The two files, read
 
@@ -142,7 +142,8 @@ bones it weights and a NiSkinData of their inverse binds (the bind undone, mesh 
 it), an identity skin transform and its weights; the shape NAMED for the slot it fills, because rule 15's filter picks a
 skinned part's geometry by that name ("Tri Right Hand 0" passes for the right hand, nothing for the left; the helm
 fills the HAIR slot, whose filter is the word "hair"). The bones stand as nodes under the root at their binds, after
-every shape, so the file is its own bind pose and a tool that skins it against its own nodes draws it where Mac put it.
+every shape, so the file is its own bind pose and a tool that skins it against its own nodes draws it where Mac put it
+(the helms `HELM_LIFT` higher since MW-STEEL5).
 
 **Worn, it is a retail part.** composeWornArmor claims each piece's slots at an armour's priority and hands the build
 its mesh alone - no `skinFrom`, no fit - and bindPartsInto binds it on the skinned branch every retail body part and
@@ -279,7 +280,7 @@ from 117.66) and their names traded sides - `Breton_Male.009 Remeshed.003` stand
 stands one unit higher, its shell and visor moved and nothing else. The paintings are unchanged. The export is the
 set's source as it came; the open helm, which it no longer carries, stays MW-STEEL1's (above). The cuirass is ONE part
 of two shapes, as the closed helm is - the breastplate and the band, both `Tri Chest`, both in the breastplate's
-painting, the band weighted on the waist's own bones (the pelvis, the spine).
+painting, the band weighted on the waist's own bones (the pelvis, the spine and - one vertex - spine1).
 
 **The helm sat low on the head.** Retail's helmets fit the head in game and the plate's did not: in Mac's screenshot
 the scalp stands up through the closed helm's crown, a skin-lit dome over the steel with the plume behind it. The
@@ -287,28 +288,40 @@ helms are fitted on the scene's Breton head (SCENE_BODY) and skinned to `Bip01 H
 body's own pieces measure - the forearm through the cuffs, the ankle over the soles - and which nothing in the head
 checks but that the head bone stands inside the scene's head. The head the game draws is a rigid part at the
 skeleton's "Head" node (`02-Formats/Morrowind-Rules.md` rule 5), a retail helmet beside it; its placement on its bone is retail's, not the
-scene's, and no retail head is in the tree to read it from. So it was read off the screenshot: the set worn on retail's
-skeleton in its idle (`test/fixtures/mw/retailRig.mjs`, through the binder the game uses), a stand-in for the scene's
-head (SCENE_BODY's cranium, an ellipsoid) carried on the head bone, drawn from behind at three heights of eye. Only the
-head raised shows the screenshot's scalp - 0.39 of the helm's height under it - and the raise that does is 3.5 to 4.6
-units over the eye heights tried. The helm against the shoulders stands in the screenshot about where the probe puts
-it, so the body's placement holds and the head alone stands higher on its bone in the game than in the scene.
+scene's, and no retail head is in the tree to read it from. So it is read off the screenshot, by a probe anyone can
+run (`tools/helmLiftProbe.mjs`): the set worn on the vendored retail skeleton in its idle, through the binder the game
+uses, the closed helm where the screenshot drew it, and a stand-in for the scene's head (SCENE_BODY's box as an
+ellipsoid) carried on the head bone and raised up it, drawn from behind at three heights of eye (Mac's camera's is not
+known). Down the column through the helm the screenshot shows 54 rows of scalp over 138 of helm, 0.39; the probe shows
+none with the head where the scene put it, and 0.39 with it raised 3.24, 3.70 and 4.25 units at the three eyes (3.5 to
+4.6 with the cranium alone, the nose left out of the stand-in's depth - the first reading, off the tree). The helm
+against the shoulders stands in the screenshot about where the probe puts it, so the body's placement holds and the
+head stands higher on its bone in the game than in the scene. **What the probe does not rule out:** a head bigger than
+the scene's Breton (the screenshot's race is not recorded) shows the same scalp at a smaller raise, and a shot from
+behind sees nothing of an offset front to back - a front view of the closed helm is the check still owed.
 
 **The fix is the helms', at bake time.** `HELM_LIFT` (4) raises both helms up the head bone - the scene's +Z, which the
 bind stands upright - before they are weighted: the open helm 4 over MW-STEEL1's fit, the closed one 3 over Mac's new
 export, which already stands it a unit higher, so both shells stand at one place (112.88-131.82 then, 116.88-135.82
 now) and each crown stands over the lifted head by the 2.62 Mac fitted over the scene's. The rig is untouched - the head
 alone, rigid on the skull - and so is every other piece: each NIF is its objects in the scene's placement, the helms
-lifted and nothing else. The aventail stands four units over the collar it hung on in the scene; what shows between
-is the game's own neck.
+lifted and nothing else. The aventail's rim stands `HELM_LIFT` higher over the collar than in the scene, where it
+hung on it; what shows between is the game's own neck - and if the screenshot's head was bigger than a Breton's, a
+Breton wearer's helm sits that much higher than it needs to, a band of neck under it. The probe holds the fix: with
+the head raised across its whole span and a unit past it, no scalp shows in the shipped helm at any of the three eyes.
 
 **How it was proven.** `test/mwsteel5.test.js`: the set's source is Mac's export byte for byte (the import with no
 body to strip is the file) and the open helm's is that helm alone; the wrong file, or one short a piece, is refused by
 name, a piece past its box before anything is written, and a reference object the export carries is measured and
-stripped, the rest byte for byte; the cuirass two shapes in the breastplate's painting, the band on the waist's bones;
-the pauldrons each on its own side; the lift the helms' alone (4, and 3 for the closed), both shells at one place, the
-crown over the game's head by Mac's clearance, the head inside the shell across and behind; every NIF its
-objects in the scene's placement, the helms lifted. `test/mwsteel1.test.js` re-makes every file byte for byte from the
-two sources; `test/mwsteel4.test.js` draws the cuirass's two shapes. `tools/mutants/mwsteel5.json` (14: 13 dead, 1
-equivalent as recorded - the open helm's strip, whose committed source is already that helm alone). The probe and its
-pictures are not committed: the screenshot is the game's head drawn, a render of the player's own data.
+stripped, the rest byte for byte, and what no piece reads said; the open helm's strip, aimed at the set's closed
+shell, keeps that object alone byte for byte; the cuirass two shapes in the breastplate's painting, the band on the
+waist's bones; the pauldrons each on its own side; the lift the helms' alone (4, and 3 for the closed), both shells at
+one place, the crown at MW-STEEL1's 131.82 raised `HELM_LIFT` (Mac's 2.62 over the scene's crown, kept over the
+game's), the head inside the shell across and behind; every NIF its objects in the scene's placement, the helms
+lifted; and the evidence re-run - the probe reads the screenshot's scalp at each eye between 2.5 and 5.5, `HELM_LIFT`
+inside their span, no scalp with the scene's head in MW-STEEL1's helm nor with the game's in the shipped one.
+`test/mwsteel1.test.js` re-makes every file byte for byte from the two sources; `test/mwsteel4.test.js` draws the
+cuirass's two shapes. `tools/mutants/mwsteel5.json` (19, all dead). The screenshot is not committed: it is the game's
+head drawn, a render of the player's own data; what is kept of it is the ratio the probe reads against. The command
+line writes nothing until the bake has run on what it takes (AUDIT MW-STEEL5: it saved the new source first, and a
+refused open helm or a failed bake left it beside the old meshes).

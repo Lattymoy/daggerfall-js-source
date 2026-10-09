@@ -966,8 +966,10 @@ program's N.L, and until MW-SMOOTH it was fed ONE NORMAL A TRIANGLE, its
 face's, computed at pack time: flattenNif kept each NIF's per-vertex
 normals and poseAssembly posed positions alone, so every surface came
 out faceted, the smooth normals of our own baked armour (the steel
-plate's, the brigandine's) thrown away. Rule [C] says the reference
-lights a NIF by the normals the file authors and makes none. So a piece
+plate's, the brigandine's) thrown away. The reference lights a NIF by
+the normals the file authors and makes none ("[C] Vertex/normal/colour
+arrays are set from array EMPTINESS, never from mNumVertices, and OpenMW
+generates nothing", below). So a piece
 now carries its mesh's normals through the pose (`p.normals`): a skinned
 piece's skinned by skinBatch's normal path, a rigid part's mirrored and
 turned with it (`placeNormalsAtBone`, after the part's pre-transform),
@@ -975,8 +977,10 @@ a brigandine's solved through its transferred skin as its positions are
 (`transferSkin`); and packFpArm writes each corner its vertex's normal.
 A surface the modeller smoothed is lit smooth; an edge kept hard (the
 Thunderlock's faces, split per face in its file) stays hard. A PORT
-DECISION: a mesh that authors NO normals is lit by its faces as before -
-one cross product a triangle, NEGATED on a MIRRORED piece because rule
+DECISION: a mesh that authors NO normals is lit by its faces as before,
+and so is a corner whose normal is ZERO (rule 40's collapse, or a file's
+own) where the reference would hand the shader a normal it cannot
+normalise - one cross product a triangle, NEGATED on a MIRRORED piece because rule
 13's X negation reverses the winding and the left arm would light
 inside-out (rule 13's rendering consequence, which MW8 also lacked); a
 posed vertex normal was mirrored with its vertex and takes no flip. Pins

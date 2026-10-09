@@ -8,7 +8,7 @@
 // word both ways, every metal's files to the bake byte for byte, and each painting to the metal Mac's map gave it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { parseNif } from '../src/formats/mwNifFile.js';
 import { flattenNif } from '../src/formats/mwNifMesh.js';
@@ -41,7 +41,8 @@ test('MW-BRIG4: every metal the Jerkin is a brigandine in wears the brigandine, 
     const m = metal.toLowerCase();
     assert.deepEqual([own.id, own.name, own.material], [`daggerfall_brigandine_${m}`, `${metal} Brigandine`, ARMOR_MATERIAL[metal]]);
     // the one piece, skinned and fitted as the Steel one is (MW-BRIG2, MW-BRIG3)
-    assert.equal(own.skinFrom, steel.skinFrom);
+    assert.deepEqual([...own.skinFrom], [...steel.skinFrom]);
+    assert.deepEqual([...own.skinFrom], ['chest', 'groin', 'upperleg', 'knee']);
     assert.equal(own.fitTo, 'chest');
     const worn = composeWornArmor({ pieces: [jerkin(ARMOR_MATERIAL[metal])], armors: [], bodyPool: [] });
     assert.deepEqual(worn.notes, []);
@@ -72,7 +73,9 @@ test('MW-BRIG4: each metal\'s files are re-made from the committed sources byte 
     const entry = collectArmTextures(batches, [{ has: (p) => files.has(p), get: (p) => files.get(p) }]).get(textureNameFor(x.metal));
     assert.ok(entry?.ok, entry?.error);
     assert.deepEqual(Array.from(decodeTextureImage(out.texture, onDisk(out.texture)).mips[0].rgba), Array.from(readPng(raw(PAINTING[x.metal])).data), `${x.metal}: the DDS is the painting`);
-    assert.ok(existsSync(new URL(`../src/assets/mw/meshes/brigandine_${x.metal.toLowerCase()}.nif`, import.meta.url)));
+    // its material named for its metal (AUDIT MW-BRIG4: every one said Steel)
+    const mat = parseNif(onDisk(out.mesh)).records.find((r) => r?.type === 'NiMaterialProperty');
+    assert.equal(mat.name, `${x.metal} BrigandineMaterial`);
   }
   // Mac's nine, as he sent them, each under the metal the map gave it (in the order attached: 1 Iron, 2 Adamantium,
   // 3 Mithril, 4 Daedric, 5 Orcish, 6 Elven, 7 Silver, 8 Ebony, 9 Dwarven); Steel's is MW-BRIG1's

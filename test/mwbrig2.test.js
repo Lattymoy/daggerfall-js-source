@@ -191,7 +191,7 @@ test('MW-BRIG2: through the binder - a skinned-from-body part is drawn skinned, 
   assert.ok(lone.notes.some((s) => /no body part to skin it from/.test(s)), lone.notes.join('; '));
 });
 
-test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuirass, skinned from chest, groin, thighs and knees', () => {
+test('MW-BRIG2: the item - the Steel Brigandine Jerkin (since MW-BRIG4 every brigandine metal\'s), one piece worn as a cuirass, skinned from chest, groin, thighs and knees', () => {
   assert.equal(RRI_TEMPLATES.find((t) => t.index === RRI_JERKIN_TEMPLATE)?.name, 'Jerkin');
   assert.equal(rriVariantWord(STEEL_JERKIN), 'Brigandine ');
   // MW-BRIG4: every metal the jerkin is a brigandine in wears it (test/mwbrig4.test.js); the leather and fur jerkins

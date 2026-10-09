@@ -7,7 +7,8 @@
 // takes it on the path it takes a retail armour mesh: rebound onto the wearer's skeleton by its bones' names, drawn by
 // skinBatch. These pins stand it on retail's own skeleton (test/fixtures/mw/retailRig.mjs): the bind read off the Tri
 // Shadow and the scene measured against it; every NIF the shape a retail piece has; through the binder retail's
-// armour takes, the bind pose giving back Mac's scene exactly and retail's idle standing every piece on the bones it
+// armour takes, the bind pose giving back the baked files exactly (Mac's scene, the helms HELM_LIFT higher since
+// MW-STEEL5) and retail's idle standing every piece on the bones it
 // covers - the gauntlets on the hanging hands, where MW-STEEL2 stood them out at the shoulders and MW-STEEL3 over the
 // helm; posed, each piece riding its bones; the first person's gauntlets by the arm's own bone names; and the rig's
 // law, the skin writer and the runtime's having nothing left of MW-STEEL1-3's solve.
@@ -182,7 +183,7 @@ test('MW-STEEL4: every piece ships skinned, the shape retail\'s armour has - a s
 
 // ── through the binder ──────────────────────────────────────────────────────────────────────────────────────────────
 
-test('MW-STEEL4: through the binder retail\'s armour takes - every piece a skinned part on retail\'s skeleton, no note, and in the bind pose each vertex stands exactly where Mac\'s scene put it', async () => {
+test('MW-STEEL4: through the binder retail\'s armour takes - every piece a skinned part on retail\'s skeleton, no note, and in the bind pose each vertex stands exactly where its file puts it - Mac\'s scene, the helms HELM_LIFT higher (MW-STEEL5)', async () => {
   for (const helmStyle of ['closed', 'open']) {
     const { asm, worn } = await wear({ helmStyle });
     assert.ok(asm.ok, asm.error);

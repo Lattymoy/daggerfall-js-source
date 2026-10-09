@@ -40,8 +40,8 @@
   {
     "name": "MWBRIG4-every-nif-names-steel",
     "file": "tools/bakeBrigandine.mjs",
-    "old": "nif: meshToNif(mesh, { texture: textureNameFor(metal), node: 'Brigandine' })",
-    "new": "nif: meshToNif(mesh, { texture: TEXTURE_NAME, node: 'Brigandine' })",
+    "old": "nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' })",
+    "new": "nif: meshToNif(named, { texture: TEXTURE_NAME, node: 'Brigandine' })",
     "tests": [
       "test/mwbrig4.test.js"
     ]
@@ -63,5 +63,15 @@
     "tests": [
       "test/mwbrig4.test.js"
     ]
+  },
+  {
+    "name": "MWBRIG4-every-material-named-steel",
+    "file": "tools/bakeBrigandine.mjs",
+    "old": "  const named = mesh.name === `${metal} Brigandine` ? mesh : { ...mesh, name: `${metal} Brigandine` };",
+    "new": "  const named = mesh;",
+    "tests": [
+      "test/mwbrig4.test.js"
+    ],
+    "note": "AUDIT MW-BRIG4: every metal's NIF naming its material Steel."
   }
 ]

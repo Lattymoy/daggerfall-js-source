@@ -18,6 +18,7 @@ import { stripFbx, meshModelNames } from '../tools/fbxStrip.mjs';
 import {
   SOURCE, PIECES, HELM_LIFT, SCENE_BODY, importSteelPlate, openHelmSource, bakeObject, liftMesh, pieceMeshes, meshFile,
 } from '../tools/bakeSteelPlate.mjs';
+import { readLift, wornSet, scalpRatio, EYE_HEIGHTS, SCREENSHOT_SCALP_RATIO } from '../tools/helmLiftProbe.mjs';
 
 const raw = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
 const nifBatches = (id) => flattenNif(parseNif(new Uint8Array(raw(meshFile(id)))));
@@ -54,6 +55,16 @@ test('MW-STEEL5: the set\'s source is Mac\'s export as it came - the closed helm
   assert.deepEqual(withBody.reference, { head: bakeObject(trees.set, 'Sphere').bounds }, 'the part it carries measured, the one it does not left out');
   assert.equal(meshModelNames(withBody.set).includes('Sphere'), false);
   assert.equal(Buffer.compare(withBody.set, stripFbx(set, { drop: ['Sphere'] }).bytes), 0);
+  // what no piece reads rides along, said: the committed export has nothing unread; the closed helm unread when no piece
+  // reads it
+  assert.deepEqual(imported.unread, []);
+  assert.deepEqual(importSteelPlate(set, { pieces: PIECES.filter((p) => p.id !== 'helm_closed') }).unread, ['Sphere', 'Sphere.001 Remeshed Remeshed']);
+  // the open helm's strip keeps that one object and every record of it byte for byte - aimed at the set's closed shell,
+  // since the committed open-helm source is that helm alone already
+  const aimed = [{ id: 'helm_open', file: 'openHelm', shapes: [{ object: 'Sphere' }] }];
+  const shell = openHelmSource(set, { pieces: aimed });
+  assert.deepEqual(meshModelNames(shell), ['Sphere']);
+  assert.equal(Buffer.compare(shell, stripFbx(set, { drop: meshModelNames(set).filter((x) => x !== 'Sphere') }).bytes), 0);
 });
 
 test('MW-STEEL5: the cuirass is the breastplate and its waist band - two shapes in the breastplate\'s painting, both the chest\'s; the pauldrons Mac\'s new pair, each on its own side', () => {
@@ -80,10 +91,13 @@ test('MW-STEEL5: the helms stand HELM_LIFT up the head bone over where Mac fitte
   // MW-STEEL1's fit: both shells from 112.88 to 131.82, the scene's head crowned at 129.20 under them
   assert.deepEqual(piece('helm_open').shapes[0].box.map((c) => c[2]), [112.88, 131.82]);
   assert.deepEqual(piece('helm_closed').shapes[0].box.map((c) => c[2]), [113.88, 132.82]);
+  // the clearance Mac fitted over the scene's head, kept over the game's head by raising the shell with it: so the
+  // crown stands at MW-STEEL1's 131.82 plus the lift - which is what is checked, said as what it is
   const fitted = 131.82 - SCENE_BODY.head.max[2];
+  assert.ok(Math.abs(fitted - 2.62) < 0.01, `Mac's clearance over the scene's crown, ${fitted.toFixed(2)}`);
   const shells = ['helm_open', 'helm_closed'].map((id) => zRange(nifBatches(id)[0].positions));
   for (const [lo, hi] of shells) {
-    assert.ok(Math.abs(hi - (SCENE_BODY.head.max[2] + HELM_LIFT) - fitted) < 0.01, `the crown ${(hi - SCENE_BODY.head.max[2] - HELM_LIFT).toFixed(2)} over the game's head, Mac's ${fitted.toFixed(2)}`);
+    assert.ok(Math.abs(hi - 131.82 - HELM_LIFT) < 0.01, `the crown at ${hi.toFixed(2)}, MW-STEEL1's 131.82 raised ${HELM_LIFT}`);
     assert.ok(Math.abs(lo - 112.88 - HELM_LIFT) < 0.01, `the rim lifted with it (${lo.toFixed(2)})`);
   }
   assert.ok(Math.abs(shells[0][0] - shells[1][0]) < 1e-4 && Math.abs(shells[0][1] - shells[1][1]) < 1e-4, 'the two shells at one place');
@@ -109,3 +123,22 @@ test('MW-STEEL5: the helms stand HELM_LIFT up the head bone over where Mac fitte
   assert.deepEqual(liftMesh(m, 1.5), { positions: [1, 2, 4.5, 4, 5, 7.5], bounds: { min: [1, 2, 4.5], max: [4, 5, 7.5] }, indices: [0] });
   assert.deepEqual(pieceMeshes(trees, piece('helm_open'))[0].bounds.max[2], +(bakeObject(trees.openHelm, 'Sphere.002').bounds.max[2] + HELM_LIFT).toFixed(6));
 });
+
+test('MW-STEEL5: the evidence, re-run (tools/helmLiftProbe.mjs) - the screenshot\'s scalp is the head standing 3.2 to 4.3 up its bone over the scene\'s, HELM_LIFT stands in that span, and the shipped helm shows no scalp across it', async () => {
+  assert.equal(SCREENSHOT_SCALP_RATIO, 0.39);
+  const { rows, lo, hi } = await readLift();
+  assert.deepEqual(rows.map((r) => r.eyeZ), [118, 130, 145]);
+  for (const r of rows) {
+    assert.ok(r.raise != null && r.raise > 2.5 && r.raise < 5.5, `eye ${r.eyeZ}: the screenshot's scalp at a raise of ${r.raise}`);
+    assert.ok(r.ratios.every((x, i) => i === 0 || x >= r.ratios[i - 1]), `eye ${r.eyeZ}: the higher the head, the more scalp`);
+  }
+  assert.ok(lo <= HELM_LIFT && HELM_LIFT <= hi, `HELM_LIFT ${HELM_LIFT} within the probe's ${lo.toFixed(2)} to ${hi.toFixed(2)}`);
+  // the head where the scene put it shows no scalp in MW-STEEL1's helm - and the game's, raised across the whole span
+  // and a unit past it, none in the shipped one
+  const set = await wornSet();
+  for (const eyeZ of EYE_HEIGHTS) {
+    assert.equal(scalpRatio(set, { raise: 0, eyeZ }), 0, `eye ${eyeZ}: the scene's head inside the scene's helm`);
+    assert.equal(scalpRatio(set, { raise: hi + 0.75, eyeZ, helm: 'shipped' }), 0, `eye ${eyeZ}: the game's head inside the shipped helm`);
+  }
+});
+

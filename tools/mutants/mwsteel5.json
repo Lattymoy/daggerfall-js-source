@@ -122,14 +122,59 @@
     "tests": [
       "test/mwsteel5.test.js"
     ],
-    "equivalent": true,
-    "why": "The committed open-helm source is already that helm alone, so taking it out again is the file either way - the pin that would see it needs MW-STEEL1's export, which carries Bethesda's head and is not committed. The strip itself is fbxStrip's, pinned by mwsteel1.test.js."
+    "note": "AUDIT MW-STEEL5: recorded equivalent at first - its pin is openHelmSource aimed (pieces) at the set's closed shell."
   },
   {
     "name": "MWSTEEL5-the-open-helm-from-any-file",
     "file": "tools/bakeSteelPlate.mjs",
     "old": "  if (absent.length) throw new Error(`this export carries no open helm (${absent.map((n) => `\"${n}\"`).join(', ')})`);",
     "new": "",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-unread-left-unsaid",
+    "file": "tools/bakeSteelPlate.mjs",
+    "old": "    unread: names.filter((n) => !read.has(n)),",
+    "new": "    unread: [],",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-probe-reads-the-shipped-helm-as-the-screenshot",
+    "file": "tools/helmLiftProbe.mjs",
+    "old": "  const back = at === 'scene' ? up.map((x) => x * HELM_LIFT) : null;",
+    "new": "  const back = null;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ],
+    "note": "AUDIT MW-STEEL5: the screenshot drew MW-STEEL1's helm; read against the lifted one the scalp needs a head HELM_LIFT higher."
+  },
+  {
+    "name": "MWSTEEL5-the-probe-lowers-the-wrong-way",
+    "file": "tools/helmLiftProbe.mjs",
+    "old": "  const back = at === 'scene' ? up.map((x) => x * HELM_LIFT) : null;",
+    "new": "  const back = at === 'scene' ? up.map((x) => -x * HELM_LIFT) : null;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-probe-counts-the-plume",
+    "file": "tools/helmLiftProbe.mjs",
+    "old": "  for (let y = shellTop - 1; y >= 0 && col(y) === ID.head; y--) headTop = y;",
+    "new": "  for (let y = shellTop - 1; y >= 0 && col(y) !== ID.shell; y--) headTop = y;",
+    "tests": [
+      "test/mwsteel5.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL5-the-screenshot-misread",
+    "file": "tools/helmLiftProbe.mjs",
+    "old": "export const SCREENSHOT_SCALP_RATIO = 0.39;",
+    "new": "export const SCREENSHOT_SCALP_RATIO = 0.6;",
     "tests": [
       "test/mwsteel5.test.js"
     ]
