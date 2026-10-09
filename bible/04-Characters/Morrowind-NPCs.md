@@ -103,7 +103,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC6 THE WATCH | cityGuards' two instances (SHIPPED, section 11: a lane of its own under WATCH_BODY_TIERS) | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) (the WALKERS SHIPPED, section 12: a wardrobe per outfit variant, dyed per spawn - the living residents indoors are MWNPC8's standing people) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured (8a SHIPPED, section 13a: the buildings' people; 8b SHIPPED, section 13b: the dungeons' and the street's; 8c SHIPPED, section 13c: exterior.js's and the quests' stands) | all four |
-| MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses | dungeonContext.js, world.js, worldModes.js, exterior.js |
+| MWNPC9 CREATURES | CREA records, creature skeletons and their own .kf, the match table with its declared misses (9a SHIPPED, section 14a: the body) | dungeonContext.js, world.js, worldModes.js, exterior.js |
 | MWNPC10 THE REST | crews, road parties, siege, gate court, the broker | their hosts |
 
 Click and talk boxes keep the billboard's size (they are the classic
@@ -859,3 +859,61 @@ dungeon pins (drawPeople's `also`, read by prefix), and DQ1's (the
 stand's NPCData still built in one place - `questStandNpcData`, which the
 click and the body call).
 
+
+## 14. MWNPC9 - THE CREATURES
+
+Daggerfall's creature foes (the mobiles below 128: rats, bats, skeletons,
+zombies, ghosts, atronachs, daedra) in Morrowind CREATURE bodies. A
+creature is not dressed: OpenMW stands it from its CREA record's model,
+which is its skeleton and its body at once (CreatureAnimation:
+`setObjectRoot(model, ...)`), and animates it from that model's own .kf -
+and xbase_anim's first when the record is Bipedal
+(creatureanimation.cpp, read at openmw-0.48.0). Two slices: 9a the body,
+9b the rig, the match table and the hosts.
+
+### 14a. The body (SHIPPED 2026-10-09)
+
+- THE RECORD (`formats/mwFirstPerson.js` readCreature, extractArmRecords'
+  `creatures`, `ARM_RECORDS_VERSION` 5 - every master re-extracted once).
+  Its id, its model (lowercased, slashes forward), its name, its FLAG's
+  low byte (`mFlags = flags & 0xFF`; the blood type rides above it) and
+  its XSCL (1 without one) - loadcrea.cpp. `CREA_FLAG` is loadcrea.hpp's
+  enum as the 0.48.0 header numbers it: Bipedal 0x01, Respawn 0x02, Weapon
+  0x04, Base 0x08, Swims 0x10, Flies 0x20, Walks 0x40, Essential 0x80 -
+  READ OFF THE HEADER, because two recollections of it (the planning pass's
+  and this one's) disagreed with it and with each other.
+- THE BODY (`assembleCreature`, `formats/mwCharacter.js`
+  bindCreatureModel). One parse: the skeleton's refs ARE the shapes'
+  parent refs (`flattenNif` now records each shape's and each particle
+  system's `parentRef`). The skinned shapes bind by their bones (rule 12,
+  the same rebind as a worn part's); every RIGID shape - a Morrowind
+  skeleton creature is nothing else - rides the node it hangs under: its
+  flattened (file-root) vertices pre-multiplied by the inverse of that
+  node's rest, so at rest the node times the inverse is the identity and
+  the shape stands as the file draws it, and posed it moves with its node
+  alone. A particle system (an atronach's flame) rides its node the same
+  way, through `effectPlacement`'s `pre`. The "Tri Bip" debug shapes are
+  dropped (`isTriBip`; RemoveTriBipVisitor, run by setObjectRoot for a
+  creature alone - Morrowind-Rules.md's note). The pieces are the arm's own
+  shape (slot `creature`, never mirrored or offset), so the pose, the GPU
+  skin, the upload and the sprite tile take them unchanged.
+- THE SOURCES (`creatureAnimSources`): xbase_anim's .kf first for a
+  bipedal creature, then the model's own - the model being rule 18's
+  corrected actor path, the "x" variant, so `xrat.nif` sources `xrat.kf`.
+
+PROVEN. `test/mwnpc9_creatures.test.js` (5), on a creature written as
+retail's are (`test/fixtures/mw/creatureRig.mjs`: a model with a skinned
+body, a rigid head on a turned node, a rigid tail, a Tri Bip shape, and a
+.kf with Idle, WalkForward, Attack1-2, Hit1, Death1): every shape bound,
+the debug shape dropped, each piece at rest exactly where the flattener
+puts it; posed, a turned Head turns its piece and nothing else and the
+walked Bip01 carries every piece; a rigid shape off the skeleton on the
+root; a flame on its node at rest and posed; and the sources.
+`test/mwload_records.test.js`: the CREA records (the blood type not a
+flag, XSCL or 1, a modelless one dropped, Bipedal bit 0) and the record
+set's shape (v5). `tools/mutants/mwnpc9a.json`: 16 mutants, 16 dead.
+Pins moved: mwload_records' empty set (it carries the creatures).
+
+THE FOUR HOSTS: none wired in 9a - the body is the door; 9b offers the
+creature foes at dungeonContext.js, exteriorFoes.js (the world's and the
+interiors'), and exterior.js's pool.

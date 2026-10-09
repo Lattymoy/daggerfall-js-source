@@ -110,8 +110,8 @@
   {
     "name": "flatten-under-ignored",
     "file": "src/formats/mwNifMesh.js",
-    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps);",
-    "new": "      if (!skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps);",
+    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, parentRef);",
+    "new": "      if (!skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, parentRef);",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]

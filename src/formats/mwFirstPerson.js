@@ -928,6 +928,35 @@ function readWeapon(bytes, rec) {
   return e.id && e.model ? e : null;
 }
 
+/** MWNPC9: a CREA record's FLAG bits (OpenMW components/esm3/loadcrea.hpp `enum Flags`, at openmw-0.48.0; the
+ *  reader keeps the low byte, `mFlags = flags & 0xFF` - loadcrea.cpp). */
+export const CREA_FLAG = Object.freeze({ Bipedal: 0x01, Respawn: 0x02, Weapon: 0x04, Base: 0x08, Swims: 0x10, Flies: 0x20, Walks: 0x40, Essential: 0x80 });
+
+/** MWNPC9: the CREA records - what a creature's body is built from: its id, its model (MODL, the path as the WEAP
+ *  reader keeps one), its name, its flags (FLAG's low byte) and its scale (XSCL, 1 when absent - loadcrea.cpp). */
+function readCreature(bytes, rec) {
+  const e = { id: '', model: '', name: '', flags: 0, scale: 1 };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'FLAG' && sub.len >= 4) e.flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true) & 0xff;
+    else if (sub.name === 'XSCL' && sub.len >= 4) e.scale = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
+  }
+  return e.id && e.model ? e : null;
+}
+
+/** MWNPC9: the CREA records, one walk (extractArmRecords' `creatures`, by the same reader). */
+export function creatureRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'CREA') continue;
+    const e = readCreature(bytes, rec);
+    if (e) out.push(e);
+  }
+  return out;
+}
+
 export function weaponRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
@@ -1284,7 +1313,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 4;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics
+export const ARM_RECORDS_VERSION = 5;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1306,7 +1335,7 @@ export const ARM_RECORDS_VERSION = 4;   // MW-D51: + the LIGH records (a set wit
  */
 export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
   const want = new Set(gmst.map((id) => String(id).toLowerCase()));
-  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], gmst: {} };
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], creatures: [], gmst: {} };
   const races = new Map();
   const statics = new Map();   // MW-SPELLFX1: every STAT, until the file's MGEFs have said which they name
   for (const rec of walkEsm(bytes)) {
@@ -1316,6 +1345,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
       case 'ARMO': { const e = readArmor(bytes, rec); if (e) out.armors.push(e); break; }
       case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
       case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
+      case 'CREA': { const e = readCreature(bytes, rec); if (e) out.creatures.push(e); break; }   // MWNPC9
       case 'LIGH': { const e = readLight(bytes, rec); if (e) out.lights.push(e); break; }   // MW-D51
       case 'MGEF': { const e = readMagicEffect(bytes, rec); if (e) out.magicEffects.push(e); break; }   // MW-SPELLFX1
       case 'STAT': { const e = readStatic(bytes, rec); if (e) statics.set(e.id, e); break; }   // MW-SPELLFX1
@@ -1337,7 +1367,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
  *  a torn one, answers false and is re-extracted. */
 export function isArmRecords(r) {
   return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
-    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics'].every((k) => Array.isArray(r[k]))
+    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics', 'creatures'].every((k) => Array.isArray(r[k]))
     && !!r.gmst && typeof r.gmst === 'object';
 }
 
@@ -2024,20 +2054,28 @@ export function checkRequiredBones(report) {
  * rather than a second copy of the same arithmetic - which is what lets
  * the result be re-posed at all.
  */
-export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [], parseNif = null }) {
+/** The readers an assembly carries (`fns`), resolved once so its per-frame calls are synchronous. MWNPC9: one home,
+ *  the arm's and the creature's. */
+async function assemblyFns(parseNif) {
   const mod = {};
+  ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
+  // MWNPC3: a caller's parse - fpArm.js's parseNifOnce, so a mesh one body parsed is the next body's parse. A parsed
+  // NIF is never written after its read (flattenNif copies every array it transforms, and a skin's bones are fresh
+  // objects over the parse's read-only lists), so one parse serves every assembly that binds it.
+  if (parseNif) mod.parseNif = parseNif;
+  ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
+    skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
+    accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,
+    injectSkeletonNodes: mod.injectSkeletonNodes } = await import('./mwSkin.js'));
+  ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform, bindCreatureModel: mod.bindCreatureModel } = await import('./mwCharacter.js'));
+  ({ PART_BONES: mod.PART_BONES } = await import('./mwNpc.js'));
+  return mod;
+}
+
+export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [], parseNif = null }) {
+  let mod;
   try {
-    ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
-    // MWNPC3: a caller's parse - fpArm.js's parseNifOnce, so a mesh one body parsed is the next body's parse. A parsed
-    // NIF is never written after its read (flattenNif copies every array it transforms, and a skin's bones are fresh
-    // objects over the parse's read-only lists), so one parse serves every assembly that binds it.
-    if (parseNif) mod.parseNif = parseNif;
-    ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
-      skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
-      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,
-      injectSkeletonNodes: mod.injectSkeletonNodes } = await import('./mwSkin.js'));
-    ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform } = await import('./mwCharacter.js'));
-    ({ PART_BONES: mod.PART_BONES } = await import('./mwNpc.js'));
+    mod = await assemblyFns(parseNif);
   } catch (err) {
     return { ok: false, error: `readers unavailable: ${err.message}` };
   }
@@ -2082,6 +2120,57 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
   // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
   // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
   // same arithmetic, called once instead of inlined.
+  return pieces.length ? poseAssembly(assembly) : assembly;
+}
+
+/**
+ * MWNPC9 (bible/04-Characters/Morrowind-NPCs.md section 14): A CREATURE, ASSEMBLED. Its model is its skeleton and its
+ * body at once (one parse: the skeleton's refs ARE the shapes' parent refs), bound by mwCharacter.js
+ * bindCreatureModel - the skinned shapes by their bones, each rigid shape riding its own node through the inverse of
+ * that node's rest. The pieces are the arm's own shape (slot 'creature'), so the pose, the GPU skin, the upload and the
+ * sprite tile take them as they take a body's; no part rule applies - nothing is worn, mirrored or offset.
+ */
+export async function assembleCreature({ modelBytes, parseNif = null }) {
+  let mod;
+  try {
+    mod = await assemblyFns(parseNif);
+  } catch (err) {
+    return { ok: false, error: `readers unavailable: ${err.message}` };
+  }
+  let nif, skeleton;
+  try {
+    nif = mod.parseNif(modelBytes);
+    skeleton = mod.buildSkeleton(nif);
+  } catch (err) {
+    return { ok: false, stage: 'skeleton', error: err.message };
+  }
+  const notes = [];
+  let bound;
+  try {
+    bound = mod.bindCreatureModel(skeleton, nif);
+  } catch (err) {
+    return { ok: false, stage: 'assembly', error: err.message };
+  }
+  if (bound.missingBones.length) notes.push(`creature: its skin names no node ${bound.missingBones.map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`);
+  const pieces = [];
+  for (const batch of bound.skinned) {
+    pieces.push({ slot: 'creature', bone: null, kind: 'skinned', mirrored: false, batch, source: null, attachRef: null,
+      uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
+      positions: new Float32Array(batch.positions.length), indices: batch.indices });
+  }
+  for (const { batch, attachRef, pre } of bound.rigid) {
+    pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: false, tag: null, hang: null,
+      batch: null, source: applyPre(batch.positions, pre), attachRef, boneOffset: null,
+      uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null, shape: batch.name || null,
+      positions: new Float32Array(batch.positions.length), indices: batch.indices });
+  }
+  const effects = bound.effects.map(({ desc, attachRef, pre }) => ({ slot: 'creature', bone: null, mirrored: false, tag: null, hang: null,
+    attachRef, boneOffset: null, pre, desc, material: desc.material }));
+  const assembly = {
+    ok: pieces.length > 0, pieces, effects, notes, skeleton, fns: mod, bounds: null, injected: [],
+    dropped: bound.dropped,   // the Tri Bip shapes left out
+    error: pieces.length ? null : 'the creature model has no shape to draw',
+  };
   return pieces.length ? poseAssembly(assembly) : assembly;
 }
 
@@ -2900,6 +2989,13 @@ export const TP_BASE_MODEL = 'meshes/xbase_anim.nif';
  *  no "x" is inserted (animation.cpp:651-654). */
 export function tpAnimSources(skeletonPath, exists, { werewolf = false } = {}) {
   return animSourcesFor(werewolf ? null : TP_BASE_MODEL, skeletonPath, exists);
+}
+
+/** MWNPC9: A CREATURE'S SOURCES (creatureanimation.cpp, CreatureAnimation's constructor): xbase_anim first for a
+ *  BIPEDAL one (`mFlags & Bipedal`), then the model's own .kf - the model being the actor path rule 18 corrected,
+ *  the "x" variant, so `xrat.nif` sources `xrat.kf`. Same push order and existence filter as the NPC's. */
+export function creatureAnimSources(modelPath, exists, { bipedal = false } = {}) {
+  return animSourcesFor(bipedal ? TP_BASE_MODEL : null, modelPath, exists);
 }
 
 /** WEREWOLF1: A WEREWOLF HAS ONE SOURCE, ITS OWN. updateNpcBase leaves the

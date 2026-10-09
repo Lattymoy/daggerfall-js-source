@@ -2,7 +2,7 @@
   {
     "name": "MACQ-the-flattener-drops-the-particle-geometry-as-it-always-did",
     "file": "src/formats/mwNifMesh.js",
-    "old": "      if (inside && opts.effects && !skipGeometryName(rec.name, hasMarkers)) {\n        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags });\n      }",
+    "old": "      if (inside && opts.effects && !skipGeometryName(rec.name, hasMarkers)) {\n        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags, parentRef });\n      }",
     "new": "",
     "tests": [
       "test/macq_flame.test.js"
@@ -238,7 +238,7 @@
   {
     "name": "MACQ-bindPart-drops-the-sink",
     "file": "src/formats/mwCharacter.js",
-    "old": "  for (const bundle of sink) {\n    const d = particleSystemOf(partNif, bundle);\n    if (d) effects.push(d);\n  }",
+    "old": "  for (const bundle of sink) {\n    const d = particleSystemOf(partNif, bundle);\n    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 }));   // MWNPC9: the node it hangs under\n  }",
     "new": "",
     "tests": [
       "test/macq_flame.test.js"

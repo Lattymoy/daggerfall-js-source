@@ -38,7 +38,7 @@
  {
   "name": "MWNPC3-assembly-parses-its-own",
   "file": "src/formats/mwFirstPerson.js",
-  "old": "    if (parseNif) mod.parseNif = parseNif;\n",
+  "old": "  if (parseNif) mod.parseNif = parseNif;\n",
   "new": "\n",
   "tests": [
    "test/mwnpc3_bodyservice.test.js"

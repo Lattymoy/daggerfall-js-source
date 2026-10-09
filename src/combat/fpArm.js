@@ -1044,6 +1044,7 @@ export function armRecordsOf(records, kind) {
     case 'lights': return records.lights;   // MW-D51
     case 'magicEffects': return records.magicEffects ?? [];   // MW-SPELLFX1
     case 'statics': return records.statics ?? [];   // MW-SPELLFX1
+    case 'creatures': return records.creatures ?? [];   // MWNPC9
     case 'gmst-sneak': return { v: Object.hasOwn(records.gmst, GMST_SNEAK_DELTA) ? records.gmst[GMST_SNEAK_DELTA] : null };
     default: throw new Error(`fpArm: no derived answer for walk kind "${kind}" (MW-LOAD)`);
   }

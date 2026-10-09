@@ -9,8 +9,8 @@
 
 import { deref } from './mwNifFile.js';
 import { flattenNif } from './mwNifMesh.js';
-import { particleSystemOf } from './mwParticles.js';   // MAC-Q: a part's particle systems, off the same walk
-import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
+import { particleSystemOf, affineInverse } from './mwParticles.js';   // MAC-Q: a part's particle systems, off the same walk; MWNPC9: a creature node's rest undone
+import { skeletonSpaceMatrices, poseSkeleton, GRAPH_ROOT } from './mwSkin.js';
 
 /**
  * Rebind one part's batches onto the base skeleton.
@@ -230,7 +230,7 @@ export function bindPart(skeleton, partNif, opts = {}) {
   const effects = [];
   for (const bundle of sink) {
     const d = particleSystemOf(partNif, bundle);
-    if (d) effects.push(d);
+    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 }));   // MWNPC9: the node it hangs under
   }
   const skinned = [];
   const attached = [];
@@ -289,6 +289,43 @@ export function bindPart(skeleton, partNif, opts = {}) {
     boneOffset = boneOffsetOf(partNif);
   }
   return { skinned, attached, attachRef, boneOffset, missingBones: [...missingBones], effects };
+}
+
+/** MWNPC9: the debug shapes a creature's model carries ("Tri Bip01 ..."), which OpenMW strips from a creature's
+ *  object root before it draws (animation.cpp setObjectRoot - RemoveTriBipVisitor, for a creature alone). */
+export const isTriBip = (name) => String(name || '').toLowerCase().startsWith('tri bip');
+
+/**
+ * MWNPC9 (bible/04-Characters/Morrowind-NPCs.md section 14): A CREATURE'S MODEL, BOUND TO ITS OWN SKELETON. A
+ * creature is not dressed: its model IS the object root (setObjectRoot), its skeleton is built from the same file, and
+ * each of its shapes is drawn where the file puts it - the skinned ones by their bones (bindPart's rebind, rule 12),
+ * and every RIGID one riding the node it hangs under, as the reference's scene graph carries it. A Morrowind skeleton
+ * creature is nothing but rigid pieces, one under each bone; bindPart's one attach bone would weld them all to the
+ * root. So each rigid batch - flattened into the file root's space - is given its parent node as its bone and the
+ * INVERSE of that node's rest (skeleton space, the graph root's) as its pre-transform: at rest, bone x pre is the
+ * identity and the shape stands as flattened; posed, it moves with its node and nothing else. Particle systems ride
+ * their node the same way. The "Tri Bip" debug shapes are dropped.
+ * @returns {{ skinned: object[], rigid: {batch: object, attachRef: number, pre: object|null}[],
+ *   effects: {desc: object, attachRef: number, pre: object|null}[], missingBones: string[], dropped: string[] }}
+ */
+export function bindCreatureModel(skeleton, nif) {
+  const bound = bindPart(skeleton, nif);
+  const rest = skeletonSpaceMatrices(skeleton, poseSkeleton(skeleton, null, null, 0, {}), GRAPH_ROOT);
+  const root = firstRoot(skeleton);
+  const onNode = (parentRef) => {
+    const ref = skeleton.nodes.has(parentRef) ? parentRef : root;
+    const at = rest.get(ref);
+    return { attachRef: ref, pre: at ? affineInverse(at) : null };
+  };
+  const dropped = [];
+  const keep = (b) => { if (!isTriBip(b.name)) return true; dropped.push(b.name); return false; };
+  return {
+    skinned: bound.skinned.filter(keep),
+    rigid: bound.attached.filter(keep).map((batch) => ({ batch, ...onNode(batch.parentRef) })),
+    effects: bound.effects.map((desc) => ({ desc, ...onNode(desc.parentRef) })),
+    missingBones: bound.missingBones,
+    dropped,
+  };
 }
 
 function firstRoot(skeleton) {
