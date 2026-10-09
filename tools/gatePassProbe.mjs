@@ -62,7 +62,7 @@ const server = http.createServer((req, res) => {
   if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
   if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : 'application/octet-stream' });
+  res.writeHead(200, { 'content-type': { '.js': 'text/javascript', '.json': 'application/json' }[extname(f)] ?? 'application/octet-stream' });   // GATE-FBX: the stone's bake is a JSON module
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -86,6 +86,10 @@ try {
   const sealed = await page.evaluate(() => window.draw([0, 6.5, 24], [0, 6.5, 0], 0));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'sealed.png') });
   check('sealed, the fire is an ember - dimmer than open', lum(sealed.centre) < lum(open.centre), `${JSON.stringify(sealed.centre)} vs ${JSON.stringify(open.centre)}`);
+  // GATE-FBX: the stone itself, from off its shoulder - its basalt, the rim seared round the opening, the spines' points
+  const shoulder = await page.evaluate(() => window.draw([-9, 1.7, 13], [0, 7, 0], 1));
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'shoulder.png') });
+  check('no GL error from off its shoulder', shoulder.error === 0, `error ${shoulder.error}`);
   const far = await page.evaluate(() => window.draw([0, 40, 900], [0, 200, 0], 1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'far.png') });
   check('nine hundred metres off, the beacon still stands on the sky', far.centre[0] > far.centre[2] + 20 || far.sky[0] > far.sky[2] + 20, `${JSON.stringify(far.centre)} ${JSON.stringify(far.sky)}`);

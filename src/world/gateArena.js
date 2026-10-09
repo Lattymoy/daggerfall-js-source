@@ -13,11 +13,16 @@
 //     but its start marker (the editor flat 199.10) - no model, no door, no foe marker, no water. Every system that
 //     walks the level walks an empty one.
 //   - THE COURT ITSELF (`buildCourtModel`): the floor, the rune ring the boss never crosses, the spires and braziers
-//     round the edge, the broken bridge the players came by and the way home - the port's own geometry and art
-//     (pseudo-archive COURT_ARCHIVE), added to the context the way the runtime pools add theirs, its floor to the
-//     collider (`courtFloorTris`), its braziers to the light list (`courtLights`, `withCourtLights`), the way home to
-//     the exit doors (`courtExitDoor`). WB6a: the sea of fire under it and the sky over it are not its mesh - the
-//     Deadlands' own passes draw both, first in the frame (render/deadlands.js).
+//     round the edge and the broken bridge the players came by - the port's own geometry and art (pseudo-archive
+//     COURT_ARCHIVE), added to the context the way the runtime pools add theirs, its floor to the collider
+//     (`courtFloorTris`), its braziers to the light list (`courtLights`, `withCourtLights`). WB6a: the sea of fire under
+//     it and the sky over it are not its mesh - the Deadlands' own passes draw both, first in the frame
+//     (render/deadlands.js). GATE-FBX (2026-10-09, Mac: "remove the portal that players walk through on the inside and
+//     just use a portal that opens and closes. Like at the end of the fight"): THE BRIDGE'S MEMBRANE IS GONE - its two
+//     posts, its lintel, its sheet of fire and its exit door. The court's portals are the gate's own fire, opening and
+//     closing (scenes/gateCourt.js, render/gatePass.js): THE WAY IN at the bridge's foot (WAY_IN_Z), open as a fighter
+//     steps out of it and closing behind them (`wayInStep`), and THE WAY HOME where he fell (`portalDoor`, WBX2's),
+//     closing as the court comes apart (`portalFade`). Between the two there is no way out but death and the Wrath.
 //
 // THE FRAME. Metres, the dungeon's own: the one block at the grid's origin (RDB_SIDE 51.2 across), the court's centre at
 // its middle (net/gateBrain.js COURT_CENTRE - the relay reads poses in the same place), the floor's top at y 0, the
@@ -25,7 +30,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { COURT_CENTRE, COURT_R, BOSS_REACH_R, COURTS, WALKS, WALK_HALF_W, WALK_LEAD_MS, WALK_FORM_MS, clampToFloor } from '../net/gateBrain.js';
-import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, PLINTH_H, PLINTH_STEP_H } from './gateModel.js';
+import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, ARCH_Y0 } from './gateModel.js';
 import { gateYaw } from '../net/gateLaw.js';
 
 /** The court's own textures (world/gateArt.js courtArt) - the gate's pseudo-archive's neighbour. */
@@ -33,7 +38,6 @@ export const COURT_ARCHIVE = 38111;
 export const COURT_FLOOR_RECORD = 0;
 export const COURT_RUNE_RECORD = 1;
 export const COURT_LAVA_RECORD = 2;
-export const COURT_MEMBRANE_RECORD = 3;
 
 /** The made block's name - no classic block is called this (they are eight characters and `.RDB`). */
 export const GATE_ARENA_BLOCK = 'GATECOURT.RDB';
@@ -48,8 +52,9 @@ const UNITS_PER_M = 40;
 
 /** Where the players arrive, in the court's frame: on the floor by the bridge, facing the boss. */
 export const ARRIVE_Z = COURT_R - 4;
-/** The way home: the small membrane at the floor's edge by the bridge - its centre, half-width and height. */
-export const EXIT_Z = COURT_R - 0.6;
+/** GATE-FBX: THE WAY IN - the gate's fire at the floor's edge by the bridge, where WB3b's membrane stood: its place. */
+export const WAY_IN_Z = COURT_R - 0.6;
+/** The way home's door (portalDoor): its half-width and height - a body tall and the opening wide. */
 export const EXIT_HALF_W = 2.2;
 export const EXIT_H = 4.6;
 /** The floor: a disc of this many sides, its skirt this deep under the rim. */
@@ -235,9 +240,9 @@ function standCourtPiece(f, k, STONE) {
 
 /**
  * THE COURTS, WHOLE: renderer.createMesh's model shape in the DUNGEON's frame - WB9b: the three courts (each standCourtPiece),
- * and the first court's own: the broken bridge the players came by and the way home's arch and membrane. Sub-meshes by
- * (archive, record): the court's own four and the gate's stone. The walkways between the courts are not this mesh - their
- * slabs rise on their own (buildWalkSlabModel, walkSlabs).
+ * and the first court's own: the broken bridge the players came by (GATE-FBX: and no membrane at its foot - the way in is
+ * the gate's fire, scenes/gateCourt.js). Sub-meshes by (archive, record): the court's own three and the gate's stone. The
+ * walkways between the courts are not this mesh - their slabs rise on their own (buildWalkSlabModel, walkSlabs).
  */
 export function buildCourtModel() {
   const f = faces();
@@ -245,7 +250,7 @@ export function buildCourtModel() {
   const C = (x, y, z) => courtToDungeon(x, y, z);
   const STONE = GATE_STONE_RECORD + 1000;   // the gate's basalt, told apart from the court's own records below
   byArchive.set(STONE, [GATE_ARCHIVE, GATE_STONE_RECORD]);
-  for (const rec of [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD]) byArchive.set(rec, [COURT_ARCHIVE, rec]);
+  for (const rec of [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD]) byArchive.set(rec, [COURT_ARCHIVE, rec]);
   for (let k = 0; k < COURTS.length; k++) standCourtPiece(f, k, STONE);
   // the broken bridge: a slab from the first floor's edge out over the fire, its far end snapped off
   {
@@ -259,15 +264,6 @@ export function buildCourtModel() {
     f.quad(STONE, d(tr), tr, fr, d(fr), [0, 0], [0, 0.3], [1, 0.3], [1, 0]);
     f.quad(STONE, d(fr), fr, fl, d(fl), [0, 0], [0, 0.3], [1, 0.3], [1, 0]);
     f.quad(STONE, d(fl), fl, tl, d(tl), [0, 0], [0, 0.3], [1, 0.3], [1, 0]);
-  }
-  // the way home: two posts and a lintel of the gate's stone, and the membrane between them, facing the court
-  {
-    const z = EXIT_Z, hw = EXIT_HALF_W, h = EXIT_H;
-    for (const sd of [-1, 1]) spike(f, C(sd * (hw + 0.4), 0, z), 0.5, C(sd * (hw + 0.1), h + 1.4, z));
-    spike(f, C(-hw - 0.4, h + 0.2, z), 0.35, C(hw + 0.4, h + 0.6, z));
-    const a = C(-hw, 0.05, z), b = C(hw, 0.05, z), c = C(hw, h, z), d = C(-hw, h, z);
-    f.quad(COURT_MEMBRANE_RECORD, a, b, c, d, [0, 0], [1, 0], [1, 1], [0, 1]);   // seen from the court (-z)
-    f.quad(COURT_MEMBRANE_RECORD, b, a, d, c, [0, 0], [1, 0], [1, 1], [0, 1]);   // and from the bridge
   }
   return packFaces(f, byArchive);
 }
@@ -368,31 +364,14 @@ export function courtFloorTris() {
   return new Float32Array(out);
 }
 
-/**
- * THE WAY HOME IS THE COURT'S EXIT DOOR: a door record in the dungeon's own exit doors' shape (scenes/dungeonContext.js
- * `exitDoors`; player/enterExit.js reads a matrix, the centre and size in its frame and the side a player stands), so
- * the exit family's ray, name, ladder and wagon word take it as the level's door - no family of its own. A body tall
- * and the membrane wide, at the membrane, its face into the court.
- */
-export function courtExitDoor() {
-  const [x, y, z] = courtToDungeon(0, 0, EXIT_Z);
-  return {
-    matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1],
-    centre: { x: 0, y: EXIT_H / 2, z: 0 },
-    size: { x: 1, y: EXIT_H, z: EXIT_HALF_W * 2 },
-    normal: { x: 0, y: 0, z: -1 },
-    court: true,   // AUDIT SS: pressed where its fire stands (courtDoorAabb)
-  };
-}
-
 /** AUDIT SS: how far either side of a court exit's fire its press box reaches, metres. */
 export const COURT_DOOR_DEPTH = 0.3;
 /**
- * AUDIT SS (2026-09-27, the audit of SS1-SS5): THE COURT'S TWO WAYS HOME ARE PRESSED WHERE THEIR FIRE STANDS. A dungeon
+ * AUDIT SS (2026-09-27, the audit of SS1-SS5): THE COURT'S WAY HOME IS PRESSED WHERE ITS FIRE STANDS. A dungeon
  * door's press box (player/enterExit.js doorWorldAabb) is a square padded round any facing - 4.9 m across for these -
  * and a press from INSIDE a box counts only where a collider surface meets the ray in it (player/activate.js, CASTLE1),
- * which a sheet of fire has not: from 0.6 to 2.4 m before the portal, looking at it, a press did nothing, and the same
- * before the bridge's membrane. SS3 made the press the portal's only way through, so the box is the fire's own: the
+ * which a sheet of fire has not: from 0.6 to 2.4 m before the portal, looking at it, a press did nothing (and the same
+ * before the bridge's membrane, while it stood). SS3 made the press the portal's only way through, so the box is the fire's own: the
  * opening's width and height, COURT_DOOR_DEPTH either side of its plane (both of the court's face along z - the
  * matrices carry no turn). A press looking at the fire from anywhere within reach takes it; one looking elsewhere does
  * not, and a player walking the spoils about it is never inside a box of it but in the fire itself.
@@ -510,19 +489,44 @@ export function buildWalkSlabModel() {
  * WBX2 (2026-09-26, Mac: "The oblivion portal on the inside should spawn inside at the end of the fight. Currently
  * there's no way to leave after ending"): THE WAY HOME, TORN OPEN WHERE HE FELL. Once his body is gone (world/gateBoss.js
  * FALL_MS and a breath - PORTAL_AFTER_MS after his fall) the gate's own fire (render/gatePass.js, the arch's opening and
- * its beacon, without the stone - no plinth rises over the spoils) stands on the floor where he fell and rises over
- * PORTAL_RISE_MS; pressing it is the way home, the same step through fire as the bridge's membrane (scenes/worldModes.js
- * gateWayHome, through the court's exit doors). SS3 (2026-09-27, "Oblivion gate exit on touch prevents looting"): it is
- * never walked through - it stands where his spoils land, and a player going for them walked out of the court. The
- * bridge's way stands as it always did; this one is where the fighters are when the fight ends, and seen from anywhere
- * on the floor by its beacon.
+ * its beacon, without the stone - no pillar rises over the spoils) stands on the floor where he fell and rises over
+ * PORTAL_RISE_MS; pressing it is the way home (scenes/worldModes.js gateWayHome, through the court's exit doors). SS3
+ * (2026-09-27, "Oblivion gate exit on touch prevents looting"): it is never walked through - it stands where his spoils
+ * land, and a player going for them walked out of the court. It is where the fighters are when the fight ends, and seen
+ * from anywhere on the floor by its beacon. GATE-FBX: it is the court's one way home (the bridge's membrane is gone), and
+ * it closes over PORTAL_CLOSE_MS as the court comes apart (`portalFade`).
  */
 export const PORTAL_AFTER_MS = 2600;
 export const PORTAL_RISE_MS = 1500;
-/** The fire's foot: the arch's opening begins over the stone's plinth (world/gateModel.js ARCH_Y0), so the portal stands
- *  that far down, its fire on the floor. */
-export const PORTAL_DROP = PLINTH_H + PLINTH_STEP_H;
-/** Where the portal stands (the court's frame, where he fell) as its door: an exit door record in courtExitDoor's shape
+/** GATE-FBX: how long the court's fire takes to close - the way in behind a fighter, the way home as the court ends. */
+export const PORTAL_CLOSE_MS = 1500;
+/**
+ * GATE-FBX: HOW FAR THE WAY HOME STANDS at `t` (0 none .. 1 whole) - risen over PORTAL_RISE_MS from PORTAL_AFTER_MS into
+ * his fall (`fellAt`), and closed by `endAt`, the moment the court comes apart (net/gateLaw.js gateTimes' wrathAt and
+ * GATE_COLLAPSE_MS - the host's own collapse, scenes/world.js), over the PORTAL_CLOSE_MS before it. Pure.
+ */
+export function portalFade(t, fellAt, endAt) {
+  const rise = Math.min(1, Math.max(0, (t - fellAt - PORTAL_AFTER_MS) / PORTAL_RISE_MS));
+  const close = Math.min(1, Math.max(0, (endAt - t) / PORTAL_CLOSE_MS));
+  return Math.min(rise, close);
+}
+/** GATE-FBX: THE WAY IN stands open this long after a fighter steps out of it, and opens over this long for one stepping
+ *  in while it stands closed. */
+export const WAY_IN_HOLD_MS = 3000;
+export const WAY_IN_OPEN_MS = 600;
+/**
+ * GATE-FBX: THE WAY IN, ONE STEP OF ITS FIRE: how far it stands (`open`, 0 shut .. 1 whole) after `dtMs` more, opening
+ * over WAY_IN_OPEN_MS while it is `held` (a fighter stepped out of it within WAY_IN_HOLD_MS) and closing over
+ * PORTAL_CLOSE_MS once it is not. Pure.
+ */
+export function wayInStep(open, dtMs, held) {
+  const o = Math.max(0, Math.min(1, Number.isFinite(open) ? open : 0)), dt = Math.max(0, Number.isFinite(dtMs) ? dtMs : 0);
+  return held ? Math.min(1, o + dt / WAY_IN_OPEN_MS) : Math.max(0, o - dt / PORTAL_CLOSE_MS);
+}
+/** The fire's foot: the arch's opening begins where the gate's does (world/gateModel.js ARCH_Y0 - GATE-FBX: the ground,
+ *  between its feet), so the portal stands that far down, its fire on the floor. */
+export const PORTAL_DROP = ARCH_Y0;
+/** Where the portal stands (the court's frame, where he fell) as its door: an exit door record in the dungeon's own shape
  *  (a body tall and the opening wide, its face toward the bridge) - the exit family's ray and name take it. */
 export function portalDoor(at) {
   const [x, y, z] = courtToDungeon(at[0], 0, at[1]);
@@ -535,7 +539,8 @@ export function portalDoor(at) {
   };
 }
 
-/** How far before the gate the way home lands, metres (clear of its plinth - world/gateModel.js PLINTH_R 8.2). */
+/** How far before the gate the way home lands, metres (clear of its stone - world/gateModel.js: its feet and spines
+ *  stand within 1.4 m of the fire's plane). */
 export const GATE_LANDING_M = 10;
 /**
  * WHERE THE WAY HOME LANDS: before the gate outside, on the side its fire faces (the gate's own +z - trs's R_y turns it

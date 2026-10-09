@@ -30,9 +30,10 @@ import { PIXEL_M } from '../net/gateLaw.js';
 import { riteLocalOf } from '../net/gateRite.js';
 import { wodPiecewise, WOD_SITE_OBJECT_RADIUS_M } from './roadClearance.js';
 
-/** The clearing about the gate's foot, metres: its plinth and horns (world/gateModel.js PLINTH_R 8.2, the horns' roots
- *  to 8.8), the way home's landing (world/gateArena.js GATE_LANDING_M 10), and the room to walk round them all: three
- *  plinths' radii (BROKER-CAGE: the Sigil Broker stood here until she was caged at the faithful's circle). */
+/** The clearing about the gate's foot, metres: its stone (world/gateModel.js GATE_HALF_W 7.7 either side, its spines'
+ *  points - GATE-FBX: Mac's gate; WB2's plinth reached 8.2 and its horns' roots 8.8), the way home's landing
+ *  (world/gateArena.js GATE_LANDING_M 10), and the room to walk round them all (BROKER-CAGE: the Sigil Broker stood here
+ *  until she was caged at the faithful's circle). */
 export const GATE_CLEAR_M = 24;
 /** A flat's base is a point; it stands this much further off (a bush, a lamp - ROADS-CLEAR's 2 m). */
 export const WOD_FLAT_GATE_CLEAR_M = 2;

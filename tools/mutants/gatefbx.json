@@ -1,0 +1,209 @@
+[
+  {
+    "name": "GATE-FBX-a-face-turned-over",
+    "file": "src/world/gateModel.js",
+    "old": "    for (const [a, b, c] of trisOf[k]) f.tri(rec, corner(a), corner(b), corner(c),",
+    "new": "    for (const [a, b, c] of trisOf[k]) f.tri(rec, corner(a), corner(c), corner(b),",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-soles-left-on-the-ground",
+    "file": "src/world/gateModel.js",
+    "old": "    if (poly.every((v) => Math.abs(corner(v)[1]) < 1e-3)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-a-sole-wall-wound-inward",
+    "file": "src/world/gateModel.js",
+    "old": "        f.quad(gateRimFace(mid, wall) ? GATE_RIM_RECORD : GATE_STONE_RECORD, a, b, down(b), down(a),",
+    "new": "        f.quad(gateRimFace(mid, wall) ? GATE_RIM_RECORD : GATE_STONE_RECORD, a, down(a), down(b), b,",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-profile-a-point-sample",
+    "file": "src/world/gateModel.js",
+    "old": "    const lo = Math.max(ARCH_Y0 + 1e-3, ARCH_Y0 + (k - 1) * band), hi = Math.min(ARCH_Y1 - 1e-3, ARCH_Y0 + (k + 1) * band);",
+    "new": "    const lo = Math.max(ARCH_Y0 + 1e-3, Math.min(ARCH_Y1 - 1e-3, ARCH_Y0 + k * band)), hi = lo;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-arch-top-the-crown",
+    "file": "src/world/gateModel.js",
+    "old": "    if (y > 0.5 && y < top) top = y;",
+    "new": "    if (y > 0.5 && y > top) top = y;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-spine-laid-point-to-root",
+    "file": "src/world/gateModel.js",
+    "old": "      const uvOf = (v) => (v === tip ? [0.5, 1] : v === roots[0] ? [0, 0] : [1, 0]);",
+    "new": "      const uvOf = (v) => (v === tip ? [0.5, 0] : v === roots[0] ? [0, 1] : [1, 1]);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-a-spine-not-a-cone",
+    "file": "src/world/gateModel.js",
+    "old": "    const tip = part.polygons[ks[0]].find((v) => ks.every((k) => part.polygons[k].includes(v)));",
+    "new": "    const tip = part.polygons[ks[0]].find((v) => ks.some((k) => part.polygons[k].includes(v)));",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-rim-on-the-outside",
+    "file": "src/world/gateModel.js",
+    "old": "  if (n[0] * Math.sign(c[0]) < -0.5) return true;",
+    "new": "  if (n[0] * Math.sign(c[0]) > 0.5) return true;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-veins-across",
+    "file": "src/world/gateModel.js",
+    "old": "  if (ax >= az) return [p[2] / GATE_TILE_M, p[1] / GATE_TILE_M];",
+    "new": "  if (ax >= az) return [p[1] / GATE_TILE_M, p[2] / GATE_TILE_M];",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-rim-cold",
+    "file": "src/world/gateArt.js",
+    "old": "    emission.colors.set(mix([0, 0, 0], RIM_EMBER, RIM_BANK * 0.2), i);",
+    "new": "    emission.colors.set([0, 0, 0], i);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-spine-burning-from-its-root",
+    "file": "src/world/gateArt.js",
+    "old": "    if (v >= SPINE_HEAT_FROM) {",
+    "new": "    if (v >= 0) {",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-trap-a-body-narrower",
+    "file": "src/scenes/gatePool.js",
+    "old": "rx: GATE_ROOT.halfX + 0.6,",
+    "new": "rx: GATE_ROOT.halfX,",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-way-in-never-closing",
+    "file": "src/world/gateArena.js",
+    "old": "  return held ? Math.min(1, o + dt / WAY_IN_OPEN_MS) : Math.max(0, o - dt / PORTAL_CLOSE_MS);",
+    "new": "  return held ? Math.min(1, o + dt / WAY_IN_OPEN_MS) : o;",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-way-home-never-closing",
+    "file": "src/world/gateArena.js",
+    "old": "  return Math.min(rise, close);",
+    "new": "  return rise;",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-open-under-the-veil",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (!wayInMine && !veiled()) {",
+    "new": "    if (!wayInMine) {",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-a-fighter-leaving-opens-it",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (fightersHeard !== null && s.fighters > fightersHeard) wayInHeld = t + WAY_IN_HOLD_MS;",
+    "new": "    if (fightersHeard !== null && s.fighters !== fightersHeard) wayInHeld = t + WAY_IN_HOLD_MS;",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-court-ignores-its-end",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      fade: portalFade(t, s.fell.at, gateTimes(s.day).wrathAt + GATE_COLLAPSE_MS) };",
+    "new": "      fade: portalFade(t, s.fell.at, Infinity) };",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-way-in-a-beacon",
+    "file": "src/render/gatePass.js",
+    "old": "      if (g.fireOnly) continue;   // GATE-FBX: the court's way in - its fire alone\n",
+    "new": "",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-ground-unread",
+    "file": "tools/bakeGate.mjs",
+    "old": "(z - frame.ground) * frame.scale",
+    "new": "z * frame.scale",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-mirror",
+    "file": "tools/bakeGate.mjs",
+    "old": "(frame.y - y) * frame.scale]",
+    "new": "(y - frame.y) * frame.scale]",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-unread-asked-their-sense",
+    "file": "tools/shipBake.mjs",
+    "old": "    if (!read(name)) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-a-piece-in-the-box-let-through",
+    "file": "tools/bakeGate.mjs",
+    "old": "    if ([0, 1, 2].every((k) => b.max[k] >= g.min[k] && b.min[k] <= g.max[k])) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "GATE-FBX-the-court-lays-a-door-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "    // GATE-FBX: and NO door of its own - the bridge's membrane is gone; until he falls the court is left by death or the Wrath\n",
+    "new": "    ctx.exitDoors.push({ court: true });\n",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  }
+]

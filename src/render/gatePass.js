@@ -2,12 +2,12 @@
 // WB2 (2026-09-25, Mac: "A gate model would be spawned with a timer that leads to a completely different area"):
 // THE GATE'S FIRE AND ITS BEACON, DRAWN - the two things the stone (world/gateModel.js) cannot be.
 //
-// THE MEMBRANE. The portal between the horns: a slow vortex of fire, masked to the arch's own opening
+// THE MEMBRANE. The portal between the pillars: a slow vortex of fire, masked to the arch's own opening
 // (world/gateModel.js gateArchProfile - measured off the built mesh, so it fits the stone whatever its numbers
 // become), bright at its rim where it meets the stone. SEALED it is an ember - dim, slow, half seen through; OPEN
 // it blazes and turns fast and hides what stands behind it. Blended PREMULTIPLIED (ONE, ONE_MINUS_SRC_ALPHA): its
 // alpha is how much of the world behind it it hides, and its colour may run past that alpha, so it GLOWS as well as
-// covers. No depth written, depth tested - the horns in front of it hide it, as the stone of a real arch would.
+// covers. No depth written, depth tested - the pillars in front of it hide it, as the stone of a real arch would.
 //
 // THE BEACON. A column of red light straight up from the gate, BEACON_HEIGHT_M tall, from far below the ground
 // (the terrain hides its foot wherever the ground stands) - ADDED onto the frame (ONE, ONE), both faces, bands of
@@ -48,7 +48,8 @@ export const BEACON_SEGMENTS = 24;
 /** How the column widens with distance - radius per metre away: some four pixels across on a 700-pixel view at the
  *  game's field of view, whatever the distance. */
 export const BEACON_WIDEN = 0.006;
-/** The column leaves the gate this far above its foot - over the horns' crown, so it never stands behind the fire. */
+/** The column leaves the gate this far above its foot - inside its lintel, over the opening (world/gateModel.js ARCH_Y1),
+ *  so it never stands behind the fire. */
 export const BEACON_START_M = 15;
 /** The most gates a frame draws (one a day stands; a collapsing yesterday's beside it). */
 export const GATE_PASS_MAX = 2;
@@ -240,7 +241,8 @@ export class GatePassRenderer {
    * Draw the gates: `gates` [{ origin: [x, y, z] the gate's foot in the scene (its rise already in y), yaw, open 0..1,
    * fade 0..1 }] (at most GATE_PASS_MAX, the faded skipped), `eye` the view's own eye, `seconds` any clock (wrapped
    * here), `fog` the frame's fog ({ mode, density, range, camPos }; none draws unfogged). Nothing to draw, nothing
-   * touched.
+   * touched. GATE-SEEN: a gate `beaconOnly` is its beacon alone; GATE-FBX: one `fireOnly` its fire alone (the court's
+   * way in - no column over the bridge each time a fighter steps through).
    */
   draw(gates, proj, view, eye, seconds, fog = null) {
     this.drawn = 0;
@@ -263,6 +265,7 @@ export class GatePassRenderer {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindVertexArray(this.column.vao);
     for (const g of list) {
+      if (g.fireOnly) continue;   // GATE-FBX: the court's way in - its fire alone
       gl.uniform3f(this.bu.uOrigin, g.origin[0], g.origin[1], g.origin[2]);
       gl.uniform1f(this.bu.uFade, Math.min(1, g.fade));
       gl.drawArrays(gl.TRIANGLES, 0, this.column.count);
@@ -285,6 +288,7 @@ export class GatePassRenderer {
       gl.uniform1f(this.mu.uFade, Math.min(1, g.fade));
       gl.uniform1f(this.mu.uSpin, Number.isFinite(g.spin) ? g.spin : gateSpinAt(t, g.open ?? 0));
       gl.drawArrays(gl.TRIANGLES, 0, this.quad.count);
+      if (g.fireOnly) this.drawn++;   // GATE-FBX: a fire alone is drawn by its membrane
     }
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
