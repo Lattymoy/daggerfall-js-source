@@ -304,5 +304,50 @@
     "tests": [
       "test/sd25_orrery.test.js"
     ]
+  },
+  {
+    "name": "SD25-S10-the-hall's-halos-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEndWith(sdEnd.halos(), sdHall?.halos(), _sdEndHalos)",
+    "new": "sdEndWith(sdEnd.halos(), null, _sdEndHalos)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-gem's-light-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEndWith(sdEnd.lights(), sdHall?.lights(), _sdEndLights)",
+    "new": "sdEndWith(sdEnd.lights(), null, _sdEndLights)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-rings-off-the-anchored-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "s: dfLocation.sdRealm, clock: sdEndClock, onTurn:",
+    "new": "s: dfLocation.sdRealm, onTurn:",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-phone's-wind-a-frame-at-a-time",
+    "file": "src/scenes/sdHall.js",
+    "old": "if (!lite || key !== bannerKey)",
+    "new": "if (true || key !== bannerKey)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD25-S10-the-phone's-rings-in-48",
+    "file": "src/scenes/sdHall.js",
+    "old": "buildOrbitRing(k, lite ? SD_RING_LITE_SEGS : SD_ORRERY_RINGS.segs)",
+    "new": "buildOrbitRing(k, SD_ORRERY_RINGS.segs)",
+    "tests": [
+      "test/sd25_orrery.test.js"
+    ]
   }
 ]

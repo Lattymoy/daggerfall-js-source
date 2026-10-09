@@ -43,7 +43,8 @@ import {
   buildBannerModel, buildBandModel, bannerPose, bandMatrix, plateMatrix, gearMatrix, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox,
   dialCentre, beforeStone, stonePoint, SD_PLAQUE, SD_FRAY_RING, SD_BRIDGE_PLATES, SD_BANNER, SD_BANNER_VERTS, SD_DIAL, SD_BEZEL, SD_STONE_SIZE,
 } from '../world/sdHall.js';
-import { buildOrbitRing, buildOrreryHub, ringHang, ringPoseInto, ringMatrix, hubMatrix, ringTicks, gemCentre, SD_RING_SNAP_S } from '../world/sdOrreryModel.js';
+import { buildOrbitRing, buildOrreryHub, ringHang, ringPoseInto, ringMatrix, hubMatrix, ringTicks, gemCentre, SD_RING_SNAP_S, SD_ORRERY_RINGS } from '../world/sdOrreryModel.js';
+import { isTouchDevice } from '../ui/touchDevice.js';
 import { SD_LIGHT } from '../world/sdLook.js';
 import { identity } from '../world/mat4.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
@@ -86,6 +87,10 @@ export const SD_BEZEL_MS = Object.freeze({ gold: 0.65, ember: 1000, mine: 3000 }
 export const SD_DIAL_FLASH_MS = 250;
 export const SD_DIAL_DIM_MS = 600;
 export const SD_FRAY_PULSE_HZ = 2;
+/** SD-LOOK S10: THE PHONES' TIER (Super-Dungeons-Look.md section 7, Phones): the rings round in fewer segments, the
+ *  banners' wind three keyframes and the last, never a frame's upload each frame. */
+export const SD_RING_LITE_SEGS = 32;
+export const SD_BANNER_LITE_KEYS = 3;
 /** SD-LOOK S10: THE GEM'S LIGHT (the Hour's light channel): its reach, and its colour the Mantella's at gemGlow(count). */
 export const SD_GEM_LIGHT = Object.freeze({ range: 14, gain: 1 });
 /** The sounds (DAGGER.SND records): a gear's clunk (metal on metal), the snap's toll (the ship's bell, low), the Concord's
@@ -123,9 +128,10 @@ const way = (from, to) => ((((to - from) % 12) + 18) % 12) - 6;
 /**
  * The Orrery's hall for slot `s`. `onTurn(i, a)` sends a turn (true when it left); `say(text)` puts a line up; `clock()`
  * the realm's anchored seconds (SD-LOOK S10: the rings' decor ticks on it - every screen's together).
- * @param {{ renderer?: any, audio?: any, s: number, now?: () => number, clock?: () => number, onTurn?: (i: number, a: number) => boolean, say?: (t: string) => void }} deps
+ * SD-LOOK S10: `lite` the phones' tier (ui/touchDevice.js): the rings in SD_RING_LITE_SEGS, the banners' wind in SD_BANNER_LITE_KEYS keyframes.
+ * @param {{ renderer?: any, audio?: any, s: number, now?: () => number, clock?: () => number, onTurn?: (i: number, a: number) => boolean, say?: (t: string) => void, lite?: boolean }} deps
  */
-export function createSdHall({ renderer = null, audio = null, s, now = () => performance.now(), clock = null, onTurn = () => false, say = () => {} }) {
+export function createSdHall({ renderer = null, audio = null, s, now = () => performance.now(), clock = null, onTurn = () => false, say = () => {}, lite = isTouchDevice() }) {
   const o = orreryOf(s);
   const clockNow = clock ?? (() => now() / 1000);
   /** @type {any[]} the dungeon's draws, as stood into */
@@ -149,7 +155,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
    *  or before I came), whether its steps are done; the stone I last pressed and when; each bezel's ember; the dial's
    *  flash and dim; the banners' kept arrays for the wind. */
   const tabs = o?.fray ?? SD_FRAY_MAX, hang = ringHang(s), pose = new Float64Array(2), ringState = new Float64Array(4);
-  let frayWarn = false, snapAt = -Infinity, concordAt = -Infinity, concordDone = true, tocked = true, bannerLive = false;
+  let frayWarn = false, snapAt = -Infinity, concordAt = -Infinity, concordDone = true, tocked = true, bannerLive = false, bannerKey = -1;
   let pressedStone = -1, pressedAt = -Infinity, flashUntil = -Infinity, dimUntil = -Infinity;
   const emberUntil = SD_STONES.map(() => -Infinity);
   const bannerPos = new Float32Array(SD_BANNER_VERTS * 3), bannerNrm = new Float32Array(SD_BANNER_VERTS * 3);
@@ -219,13 +225,17 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     if (w.ok && !ok) {
       ok = true;
       if (first) concordWhole();   // AUDIT SD III (V10) - SD-LOOK S10: one that held before I came stands whole
-      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; }
+      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; }
       if (!first) { play(SD_HALL_SOUNDS.chime, dialCentre(0), 1, 1); say(SD_HALL_TEXT.concord); }
     }
   }
   /** SD-LOOK S10: the Concord's steps at `ms` after its word. */
   function concordStep(ms) {
-    if (bannerLive) { bannerPose(ms / 1000, bannerPos, bannerNrm); renderer?.updateMeshVertices?.(bannerMesh, bannerPos, bannerNrm); if (ms >= SD_BANNER.wind * 1000) bannerLive = false; }
+    if (bannerLive) {   // the wind a frame at a time - on a phone in SD_BANNER_LITE_KEYS keyframes, then the last
+      const age = Math.min(ms / 1000, SD_BANNER.wind), key = lite ? Math.min(SD_BANNER_LITE_KEYS, Math.floor((age * SD_BANNER_LITE_KEYS) / SD_BANNER.wind)) : -1;
+      if (!lite || key !== bannerKey) { bannerKey = key; bannerPose(lite && key < SD_BANNER_LITE_KEYS ? ((key + 0.5) * SD_BANNER.wind) / SD_BANNER_LITE_KEYS : age, bannerPos, bannerNrm); renderer?.updateMeshVertices?.(bannerMesh, bannerPos, bannerNrm); }
+      if (ms >= SD_BANNER.wind * 1000) bannerLive = false;
+    }
     if (bandDraw) { const k = (ms - SD_CONCORD_MS.bandFrom) / SD_CONCORD_MS.band; bandDraw.hidden = !(k > 0); if (k > 0) bandMatrix(k, bandDraw.object.matrix); }
     if (!tocked && ms >= SD_CONCORD_MS.rings) { tocked = true; play(SD_HALL_SOUNDS.clunk, GEM_AT, 1, 0.45); }   // the rings lock: one great tock
     const kb = (ms - SD_CONCORD_MS.bridgeFrom) / SD_BRIDGE_LAY_MS, n = SD_BRIDGE_PLATES.n;
@@ -256,7 +266,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
       for (let i = 0; i < SD_STONES.length; i++) { const m = make(buildBezelModel(i)); if (!m) continue; bezelMeshes.push(m); const d = drawOf(m); bezels[i] = d; draws.push(d); }
       bannerMesh = make(buildBannerModel());
       if (bannerMesh) { bannerDraw = drawOf(bannerMesh); draws.push(bannerDraw); }
-      for (let k = 0; k < SD_STONES.length; k++) { const m = make(buildOrbitRing(k)); if (!m) continue; ringMeshes.push(m); const d = drawOf(m, new Float32Array(16)); rings[k] = d; draws.push(d); }
+      for (let k = 0; k < SD_STONES.length; k++) { const m = make(buildOrbitRing(k, lite ? SD_RING_LITE_SEGS : SD_ORRERY_RINGS.segs)); if (!m) continue; ringMeshes.push(m); const d = drawOf(m, new Float32Array(16)); rings[k] = d; draws.push(d); }
       hubMesh = make(buildOrreryHub());
       if (hubMesh) { hubDraw = drawOf(hubMesh, new Float32Array(16)); draws.push(hubDraw); }
       flashMesh = make(buildLitModel(SD_STONES.length, SD_HALL_FLASH_RECORD));

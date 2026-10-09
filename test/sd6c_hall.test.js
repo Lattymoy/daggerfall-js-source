@@ -370,7 +370,7 @@ test('SD6c the world host\'s hall, run from its own text: the realm\'s word kept
 
 test('SD6c the hosts by source: the dungeon host stands the hall in the Hour alone, frames it, offers its handles and plaques, names them, presses them and frees it; the mode machine routes the keys and forwards the turn and the word; the world host hears the realm, lashes, widens the edge with the Concord and sends the turn', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdHall = _sdRealm \? createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: \(t\) => \{ if \(!opts\.sdSay\?\.\(t\)\) setMidScreenText\(t\); \} \}\) : null;/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
+  assert.match(D, /const sdHall = _sdRealm \? createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, clock: sdEndClock, onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: \(t\) => \{ if \(!opts\.sdSay\?\.\(t\)\) setMidScreenText\(t\); \} \}\) : null;/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice; PIN MOVED (SD-LOOK S10): on the realm's anchored clock
   assert.match(D, /if \(playerFeet && !_sdHallStood\) \{ _sdHallStood = true; sdHall\.stand\(\{ dynamicDraws, collider \}\); \}\n\s+sdHall\.frame\(dt, playerFeet \?\? null, opts\.sdHallWord\?\.\(\) \?\? null\);/);
   // AUDIT SD II (L2 F10 - PIN MOVED): framed before the world pass (sdPose, the mode machine's), never in drawFoes after it
   assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);/);

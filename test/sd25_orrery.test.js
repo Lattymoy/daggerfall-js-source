@@ -27,7 +27,7 @@ import {
 } from '../src/world/sdOrreryModel.js';
 import {
   createSdHall, sdStoneKey, SD_HALL_SOUNDS, SD_HALL_REMAP, SD_CONCORD_MS, SD_BRIDGE_LAY_MS, SD_BEZEL_MS, SD_DIAL_FLASH_MS, SD_DIAL_DIM_MS,
-  SD_FRAY_PULSE_HZ, SD_FRAY_FULL_MS, SD_GEM_LIGHT, SD_HAND_RATE,
+  SD_FRAY_PULSE_HZ, SD_FRAY_FULL_MS, SD_GEM_LIGHT, SD_HAND_RATE, SD_RING_LITE_SEGS, SD_BANNER_LITE_KEYS,
 } from '../src/scenes/sdHall.js';
 import { SD_RAMP, SD_LIGHT } from '../src/world/sdLook.js';
 import { offPalette, paletteOf } from '../src/world/sdPixelKit.js';
@@ -361,6 +361,29 @@ test('SD-LOOK S10 THE CONCORD: the banners stream (uploaded each frame of SD_BAN
   assert.ok(bridgePlateSpan(0)[0] < bridgePlateSpan(1)[0] && bridgePlateSpan(SD_BRIDGE_PLATES.n - 1)[1] <= SD_BRIDGE.z1, 'the first at the hall\'s rim');
 });
 
+test('SD-LOOK S10 THE PHONES\' TIER: the rings round in SD_RING_LITE_SEGS, and the banners\' wind three keyframes and the last - four uploads in its three seconds, never one a frame; the desktop\'s rings in their 48 (mutants: the phone\'s wind a frame at a time; the phone\'s rings in 48)', () => {
+  const o = orreryOf(1), made = [], ups = [];
+  const renderer = { createMesh: (m) => { made.push(m); return { m }; }, destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {}, updateMeshVertices: (g, p) => ups.push(Float32Array.from(p)) };
+  let t = 50_000;
+  const hall = createSdHall({ renderer, s: 1, now: () => t, clock: () => 600, lite: true });
+  hall.stand({ dynamicDraws: [], collider: null });
+  const ringTris = (k) => buildOrbitRing(k, SD_RING_LITE_SEGS).indices.length / 3;
+  assert.ok(made.some((m) => m.indices.length / 3 === ringTris(0)), 'ring 0 in the lite segments');
+  assert.ok(!made.some((m) => m.indices.length / 3 === buildOrbitRing(0).indices.length / 3), 'never the desktop\'s');
+  assert.ok(SD_RING_LITE_SEGS < SD_ORRERY_RINGS.segs);
+  hall.frame(0.016, null, word(1, [...o.start]));
+  t += 1000;
+  hall.frame(0.016, null, word(1, [...o.truth], { f: 2, ok: true, i: 0, a: 1, id: 'p', q: 1 }));
+  for (let ms = 0; ms <= SD_BANNER.wind * 1000 + 200; ms += 16) { t += 16; hall.frame(0.016, null, null); }
+  assert.equal(ups.length, SD_BANNER_LITE_KEYS + 1, `${ups.length} uploads`);
+  const pos = new Float32Array(SD_BANNER_VERTS * 3), nrm = new Float32Array(SD_BANNER_VERTS * 3);
+  bannerPose(SD_BANNER.wind, pos, nrm);
+  assert.ok(ups.at(-1).every((v, k) => Math.abs(v - pos[k]) < 1e-6), 'and the last the wind\'s own end');
+  // the desktop: a frame of the wind each frame, the rings round in 48
+  const r = rig({ updates: [] });
+  assert.ok(r.made.some((m) => m.indices.length / 3 === buildOrbitRing(0).indices.length / 3));
+});
+
 test('SD-LOOK S10 THE HALL\'S ATLAS, THROUGH THE PAINT BOX: every texel of it in its ramps (sdLook\'s, and the kingdoms\' cloth - no blue: the Bay\'s sky is the Hour\'s only blue); the heraldry in relief lit from the top-left, brass but the Underking\'s bone; metal\'s light no more than its rubbed edge; the gem\'s light rising with the count, never out; the band two colours dithered; the bridge\'s plates engraved XII at the rim back to I (mutants: the relief lit from below; the atlas left unquantized; the plates\' hours forward)', () => {
   const { albedo, emission } = hallAtlasArt(), S = SD_HALL_ATLAS.size;
   const pal = paletteOf(SD_RAMP.basalt, SD_RAMP.brass, SD_RAMP.bronze, SD_RAMP.verdigris, SD_RAMP.pale, ...SD_BANNER_RAMPS);
@@ -450,4 +473,21 @@ test('SD-LOOK S10 THE LAB: the Orrery\'s knobs stand the hall at any word from i
   assert.match(L, /\.\.\.hall\.halos\(\)/);
   assert.match(L, /\.\.\.hall\.lights\(\)/);
   assert.ok(SD_HAND_RATE > 0 && SD_STONE_SETTLE_MS === 700);
+});
+
+test('SD-LOOK S10 THE HOSTS: the dungeon host hangs the orrery\'s decor on the realm\'s anchored clock (every screen\'s rings tick together) and hands the hall\'s halos and gem light on with the end\'s - drawn and lit where the hosts already draw and light the end\'s (world.js drawSdRift, the mode machine\'s light list), in kept lists, the end\'s alone when the hall has none (mutants: the hall\'s halos dropped; the gem\'s light dropped)', () => {
+  const D = read('src/scenes/dungeonContext.js');
+  assert.match(D, /createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, clock: sdEndClock,/);
+  assert.match(D, /sdEndHalos: sdEnd \? \(\) => sdEndWith\(sdEnd\.halos\(\), sdHall\?\.halos\(\), _sdEndHalos\) : undefined,/);
+  assert.match(D, /sdEndLights: sdEnd \? \(\) => sdEndWith\(sdEnd\.lights\(\), sdHall\?\.lights\(\), _sdEndLights\) : undefined,/);
+  const i = D.indexOf('  const sdEndWith = (a, b, into) => {'), body = D.slice(i, D.indexOf('\n  };\n', i) + 5);
+  const sdEndWith = new Function(`${body}\nreturn sdEndWith;`)();
+  const a = [1, 2], kept = [];
+  assert.equal(sdEndWith(a, [], kept), a, 'the end\'s own when the hall has none');
+  assert.equal(sdEndWith(a, null, kept), a);
+  assert.deepEqual(sdEndWith(a, [3], kept), [1, 2, 3], 'the hall\'s after the end\'s');
+  assert.equal(sdEndWith(a, [3], kept), kept, 'one kept list');
+  // the world host draws the end's halos in its Rift pass, and the mode machine lights the end's lights in the Hour
+  assert.match(read('src/scenes/world.js'), /sdHaloPassOf\(\)\?\.draw\(proj, view, end\.sdEndHalos\?\.\(\) \?\? \[\]/);
+  assert.match(read('src/scenes/worldModes.js'), /\.\.\.\(dungeonCtx\.sdEndLights\?\.\(\) \?\? \[\]\)/);
 });
