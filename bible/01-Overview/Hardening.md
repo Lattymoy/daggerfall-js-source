@@ -686,7 +686,9 @@ Two further mechanics, both learned the expensive way here:
   merge first, then let the tool re-resolve against the new base - the
   same order PR #168's merge established.
 - `src/buildTag.js` conflicts on every merge and is build output; take
-  either side and let `prebuild` stamp it.
+  either side and let `prebuild` stamp it. (BUILDTAG-CLEAN, issue #626:
+  `postbuild` now restores the committed file, so a build no longer
+  leaves a stamp to commit.)
 
 Post-merge the gate is green on 7,654 tests with `citeShift` reporting
 nothing to move.

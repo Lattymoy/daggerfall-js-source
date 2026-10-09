@@ -736,8 +736,8 @@
   {
     "name": "FPS-VSYNC-sub-rail-counts-live-only",
     "file": "src/ui/enhancedMenu.js",
-    "old": "paneKeys(catId).filter(drawsFlat).length;",
-    "new": "paneKeys(catId).filter((k) => tierOf(k) === 'live').length;",
+    "old": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && drawsHere(item, ctx.pause)) n++; }",
+    "new": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && tierOf(item) === 'live') n++; }",
     "tests": [
       "test/disc28e_vsync.test.js"
     ]

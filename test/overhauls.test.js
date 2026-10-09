@@ -250,7 +250,7 @@ test('PLUS1: the enhanced sheet is the base and carries none of the refresh - th
     assert.ok(PLUS_CSS.includes(mark), `Plus carries ${mark}`);
   }
   assert.ok(PLUS_CSS.lastIndexOf('FRAME1: THE STONE-AND-BRASS KIT') > PLUS_CSS.lastIndexOf('VB2: THE VITALS'));
-  assert.ok(PLUS_CSS.includes('.shell .ft-search'), 'the Features search is dressed under Plus');
+  assert.ok(PLUS_CSS.includes('.shell .opt-search'), 'the Settings search is dressed under Plus (ORG2)');
 });
 
 test('PLUS2: Enhanced Plus colours - six stones, Slate the default, a stored choice worn on the page root, a bad value read as Slate; each coloured stone repaints the surfaces under its own root attribute and Stone is textured (mutants: a theme without rules; the choice not worn)', async () => {
