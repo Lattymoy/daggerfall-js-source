@@ -38,8 +38,8 @@
   {
     "name": "ESC-LOCK-relocked-still-delivered",
     "file": "src/player/pointerLock.js",
-    "old": "      if (held || quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
-    "new": "      if (quiet() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "old": "      if (held || quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
+    "new": "      if (quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
     "tests": [
       "test/esclock.test.js"
     ]

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "UNCOUNTED-held-keys-unread",
+    "file": "src/ui/profPages.js",
+    "old": "  for (const k of new Set([...(book.state.carried?.keys?.() ?? []), ...(heldKeys?.() ?? [])])) {",
+    "new": "  for (const k of new Set([...(book.state.carried?.keys?.() ?? [])])) {",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-said-as-carried",
+    "file": "src/ui/profPages.js",
+    "old": "    row.carried = Math.max(0, n);",
+    "new": "    row.carried = Math.max(0, n) + uncounted;",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-the-card-silent",
+    "file": "src/ui/profPages.js",
+    "old": ", r.uncounted ? BAG_PAGE_WORDS.uncountedSplit(r.uncounted) : null].filter(Boolean)",
+    "new": "].filter(Boolean)",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-the-why-unsaid",
+    "file": "src/ui/profPages.js",
+    "old": "    if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));",
+    "new": "    if (pick.uncounted > 0) void 0;",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-the-row-filtered-out",
+    "file": "src/ui/profPages.js",
+    "old": "  }).filter((r) => r.total + r.carried + r.uncounted > 0 &&",
+    "new": "  }).filter((r) => r.total + r.carried > 0 &&",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-the-pack-unread",
+    "file": "src/systems/materialsBag.js",
+    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }",
+    "new": "  for (const list of [entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "UNCOUNTED-the-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "        heldKeys: () => bagHeldKeysOf(playerEntity),",
+    "new": "",
+    "tests": ["test/fb1009c_uncounted.test.js"]
+  }
+]

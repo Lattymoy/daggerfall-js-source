@@ -144,7 +144,7 @@
   {
     "name": "PROF5b-svc-owner-kept",
     "file": "server-account/src/market.js",
-    "old": "      db.prepare(`UPDATE products SET owner = (SELECT b.bidder ${won}), listed = 0",
+    "old": "      db.prepare(`UPDATE products SET owner = (SELECT b.bidder ${won}), credited = 0, listed = 0",
     "new": "      db.prepare(`UPDATE products SET listed = 0",
     "tests": [
       "test/prof5b_service.test.js",

@@ -183,7 +183,7 @@ export async function rentRoom(ctx, player, { mapId, buildingKey, character, roo
     if ((held?.n ?? 0) >= RENT_HELD_MAX) return { error: 'rent-held' };
   }
   const cost = rentCost(price, days);
-  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, cost, row.region) ? null : 'realm-gold'));
+  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, cost, row.region) ? null : 'realm-gold'), { outbound: true });   // INT3: a rent pays the owner
   if (prep.error) return prep;
   try {
     await db.batch([

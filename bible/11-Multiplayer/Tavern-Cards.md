@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table; then (AUDIT CARDS-6's lane E, found live on main) CARDS-TOUCH - section 31, a phone's finger at the table the table's, and (a live report: "Shes clicking deal me in but nothing happens") CARDS-SAID, a refused stake said on the panel. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table; then (AUDIT CARDS-6's lane E, found live on main) CARDS-TOUCH - section 31, a phone's finger at the table the table's, and (a live report: "Shes clicking deal me in but nothing happens") CARDS-SAID, a refused stake said on the panel. Then (Mac: "Lets build every inch of this. Dont forget about a card needing to come from the abyss dungeon also") CARDS9 SHIPPED (section 32, where cards come from - the Abyss Dungeon's Brass Remnant's card among the bosses'), CARDS10 SHIPPED (section 33, Iliac Hand at the table offline and online, the season board and its title) and CARDS2c and CARDS3c (section 34, the sprite lane seated, the squeeze, the click and the push, the frame cost measured) - relay world182 and account acct99 (world179 and acct97 on their branch, renumbered at the merges), NOT YET DEPLOYED. Then (Mac: "Lets do a deep and comprehensive audit. This must be perfection") AUDIT CARDS-6 - section 35. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -86,10 +86,11 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **DECIDED: the player's own hand** is held up in the seat view, fanned, and can be peeked (lifted at the corner) or
   squeezed. Mouse over a card lifts it; a drag slides chips into the pot; a click on the cards checks, a push folds.
   **BUILT at CARDS3b (section 19):** the hand held up and fanned in the seat view, the peek (the cursor over it, or a
-  press held on it), a drag of chips from the stack into the betting ground. **NOT BUILT:** the squeeze, a click on the
-  cards to check and a push to fold - the panel's buttons do both.
+  press held on it), a drag of chips from the stack into the betting ground. **BUILT at CARDS3c (section 32):** the
+  squeeze, a click on the cards to check and a push to fold.
 - **MEASURE (CARDS3):** the frame cost. Fifty-two plates and a few dozen chips is small, but the interior frame is
-  already measured against phones; the slice reports the cost on the probe before it ships.
+  already measured against phones; the slice reports the cost on the probe before it ships. **MEASURED at CARDS3c
+  (section 32)** on the probe, as a phone too: the held hand's fill is the cost, not the plates or the chips.
 
 ## 4. Texas Hold'em, the house game
 
@@ -158,10 +159,14 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
   - **Foes.** A slain creature can drop its own card (a rare draw; MEASURE: the rate). A rat drops a rat.
   - **Tavern keepers** sell packs (five cards, one rare or better).
   - **Quests and bosses.** A guild's quest can pay a card of that guild; the Oblivion Gate's boss and the Sea Serpent
-    can drop their own, at the aetheric tier.
+    can drop their own, at the aetheric tier. **And the Abyss Dungeon's Brass Remnant (Mac, CARDS9: "Dont forget about
+    a card needing to come from the abyss dungeon also").**
   - **Winning.** A tavern regular who loses to you can pay in a card from his deck.
   - **Trading.** The trade (`net/tradeSession.js`) and the market (`net/marketLaw.js`) take cards like any item.
 - **DECIDED: a starter deck** comes with the first binder, so a new player can sit down at once.
+- **BUILT at CARDS9 (section 30):** every source above - a foe's own card, the house's pack (sold at the Enhanced
+  tavern's counter and at its card table), a guild quest's card, the three bosses' own, a regular's forfeit (CARDS10),
+  the trade and the market as any unbound item - with a card's worth and its customs.
 
 ### 6.4 Playing it
 
@@ -170,6 +175,9 @@ Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 play
   exactly as it runs Hold'em - hidden hands, its own shuffle, its own clock.
 - **DECIDED: a ladder.** Online wins rank a player on a season board, the Arena's way (`11-Multiplayer/Arena.md`), with a
   title for the top of it.
+- **BUILT at CARDS10 (section 31):** offline against the tavern's regulars (a deck per temperament, harder with the
+  tavern's town), online through the relay (its shuffle, the hidden hands, its clock), and the season board with the
+  Iliac Champion title. A ranked seat plays a deck the service vouches its realm character holds.
 
 ## 7. What the record refuses
 
@@ -189,16 +197,16 @@ Each ships alone and is verifiable without the next.
 | **CARDS1** SHIPPED | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
 | **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world178), a hit and Escape standing you up. |
-| **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
-| **CARDS3** SHIPPED | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15); CARDS3b the held hand, the peek, the chips dragged, the riffle (section 19). OPEN: the squeeze, the frame cost measured on a phone. |
+| **CARDS2c** SHIPPED | The sprite lane seated: Eye Of The Beholder has no sitting art, so a seated sprite sinks by the seat's own drop, the floor and the table hiding its legs (section 32). |
+| **CARDS3** SHIPPED | The card bodies: the plate, the deal arcs, the flip, the slide and settle, the fold to the muck, the chips and the pot's push - drawn in the room's pass, seen in the lab's probe (section 15); CARDS3b the held hand, the peek, the chips dragged, the riffle (section 19); CARDS3c the squeeze, a click to check, a push to fold, the frame cost measured as a phone on the probe (section 32). |
 | **CARDS-BAY** SHIPPED | The house deck of the Iliac Bay: the four crowns as the suits, their royals as the courts, their seals as the aces, the Bay's medallion on the back - painted in code, ours (section 21). |
 | **CARDS4** SHIPPED | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** SHIPPED | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables (section 17). |
 | **CARDS6** SHIPPED | Online stakes: buy-in and cash-out escrowed by the realm service (section 23). |
 | **CARDS7** | The collectible game's rules engine (Iliac Hand or Mac's design), pure, both ends. SHIPPED 2026-10-08 (section 26). |
 | **CARDS8** | The catalog and the art pipeline: the first set of cards, the Card Binder, the starter deck, the deckbuilder window. SHIPPED 2026-10-08 (section 26): the deck builder is the Holdings rail's Collections page. |
-| **CARDS9** | Collecting: foe drops, tavern packs, quest and boss cards, cards in the trade and the market. |
-| **CARDS10** | Iliac Hand at the table, offline against patrons and online through the relay; the season ladder. |
+| **CARDS9** SHIPPED | Collecting: foe drops, tavern packs, quest and boss cards (the Abyss Dungeon's among them), cards in the trade and the market; their worth and customs (section 30). |
+| **CARDS10** SHIPPED | Iliac Hand at the table, offline against patrons and online through the relay; the season ladder and its title (section 31). |
 
 ## 9. Questions for Mac (four answered 2026-10-07)
 
@@ -321,7 +329,7 @@ Mac: **"Continue"**.
   the law's row appended. The first bump REPLACED `RELAY_VERSION`'s comment - which is the relay's whole version
   chain, 148 KB of it - with CARDS2b's own sentence; HT-WAIST-NET's pin caught it, the chain was restored with
   CARDS2b at its head ("world175 before it: ..."), and the undeployed row re-hashed in place.
-- **CARDS2c, open:** the sprite lane. Eye Of The Beholder has no sitting art, so a sprite body - mine in that lane, a
+- **CARDS2c, open (BUILT at section 32 - the sprite sinks):** the sprite lane. Eye Of The Beholder has no sitting art, so a sprite body - mine in that lane, a
   peer's walker or paperdoll - stands at its seat facing the table.
 - **Not verified in a live tavern** (no ARENA2 here). The pose is verified on the real skeleton, not on screen.
 - **Pins:** `test/cards2b_seated.test.js`, 7 tests. `tools/mutants/cards2b.json`: 32, 32 dead (one survived the
@@ -824,6 +832,18 @@ A new property specifficaly used for the card table"**.
   EVERY CLIENT THE SAME TABLE: the grid stands an eighth and a sixteenth of a unit off Daggerfall's 1/40 m lattice and
   every threshold half a unit off it, so no probe meets a tie a client's own float32 world frame could break either way
   (AUDIT TAVERN-TABLE, section 29: on the lattice, two clients could stand it 6 m apart).
+  AND NEVER ACROSS THE WAY (WALK-WHOLE, FIELD BUGS 2026-10-09c, "Card Table blocking": "it's in 'The Gold Dungeon' in
+  Menakat ... same tavern layout" - the table and its stools across the doorway between a tavern's two rooms). Past an
+  entry room too small for the ring, the nearest cell was the mouth of the doorway the walk left it by. A spot is passed
+  over now when its table and ring and a lane round them (`PLACE_LANE_CELLS`, one cell), taken out of the walk, leave a
+  walked cell outside them unreachable from the entrance - the walk again on its own grid, so every client the same
+  table; the first spot that leaves the walk whole stands it, and a room with no such spot stands it where it stood (no
+  tavern loses its table). The gold table's walk already goes round the first (it is in the collider). Pinned by
+  `test/fb1009c_walkwhole.test.js` (the real prop, a 10 cm flood of the player's capsule round it); the doorway's, the
+  narrow hall's, the corridor's and the lattice room's spots in `test/taverntable.test.js` moved with it;
+  `tools/mutants/fb1009c_walkwhole.json` (5, all dead; `taverntable.json`'s TT-walk-order re-aimed by content). Not
+  verified in Menakat: no ARENA2 here - a table moved in an old layout moves for every client at once, a peer on an
+  older build sees it where it stood.
 - **The table in the room** (`scenes/interiorContext.js`, `opts.placeCardTable`). Stood after the room's own models and
   its closed doors, so the walk sees the whole room. It is one of the room's models - drawn by its own mesh, never the
   static merge (AUDIT TAVERN-TABLE H1, section 29), in the collider and on the automap (its key the next placement
@@ -985,3 +1005,202 @@ him up** - folded out of turn, cashed out.
   (4 dead, 1 equivalent - the clearing at the press, which the asking line always covers). PIN MOVED:
   `auditcards4_pins` - the closed-game guard before the refusal, now the panel's; `tools/mutants/auditcards4.json`'s two
   records on that line re-aimed by content.
+## 32. CARDS9 (2026-10-08): where cards come from
+
+Mac: **"Lets build every inch of this. Dont forget about a card needing to come from the abyss dungeon also"**.
+
+- **A CARD'S WORTH** (`net/cardWorthLaw.js`, one home for the client and the account service): its tier's
+  (`CARD_WORTH`, MEASURE: a common 5 gold, a magic 20, a rare 75, a legendary 300, an aetheric 1,200, an artifact 2,500,
+  a gilded 5,000), the item's `value`, set at the mint, kept by a card split off a stack, and refreshed on a load in
+  every saved list (AUDIT CARDS-6 A6). A sealed pack is worth `CARD_PACK_WORTH` (171, its five cards' mean rounded up -
+  A1). Still no shop buys a card (AUDIT CARDS-5 C2): the worth is never gold at a counter.
+- **FOES.** A slain creature drops its own card (`systems/cardSources.js` `FOE_CARDS`, by its mobile type - a rat a
+  rat, a Lich a Lich): one draw at its card's tier's chance (`FOE_CARD_PER_MILLE`, MEASURE: 16, 11, 7 and 3 per mille,
+  common to legendary), twice as often for a titled foe; none for a revenant or a world boss (their spoils are their
+  own). It goes onto the body through the real death door (`registerEnemyDeathHandler`) - and through the online
+  dungeon's two copy doors, a joiner's copy of a body and an arrival's (`dungeonContext.js`, AUDIT CARDS-6 A3) - and the
+  foe's loot cap keeps it as a Magic piece (`systems/foeLootCap.js` `CARD_CAP_RANK`).
+- **THE HOUSE'S PACK** (template 583, stackable and weightless): five cards, the first four common or magic, the last
+  rare or better (`PACK_SLOT_TIERS`, `PACK_TOP_TIERS`), never a holding or a boss's own; used from the pack it opens one
+  off its stack and says what came out. Sold at the Enhanced tavern's counter and at its card table, at DFU's own trade
+  price of `CARD_PACK_BASE_PRICE` (40) for the house's quality and the buyer's haggle; no shop buys a pack.
+- **GUILD QUESTS.** A guild's quest done pays one of its guild's cards one time in three (`GUILD_CARD_PER_MILLE`), the
+  best its quester's rank reaches (`GUILD_CARDS`): the four guilds, the eight temples (a templar order's hall its
+  divine's, by Temple.GetDivine's walk - AUDIT CARDS-6 A4), the five orders that wear a card. The host pays once a
+  quest a character (`scenes/world.js` `cardQuestEnded`; the dev host `exterior.js` has no quest-end hook at all - A11).
+- **THE BOSSES' OWN** (`systems/bossCards.js`), three aetheric cards new to the set (emblems the gate, the serpent and
+  the gear): the Oblivion Gate's Warden's, Valkynaz Ruhn (one Gate hoard in five), Sethrakul's (one dealer's hoard in
+  four - a stander finds none) and THE ABYSS DUNGEON'S BRASS REMNANT'S (one hoard in four). Each is ONE draw, always,
+  LAST in its seeded hoard (`gateSpoils.js`, `serpentSpoils.js`, `sdSpoils.js`), so every roll before it is what it was
+  for its seed; kept beside the pieces and thrown after them. The set is 85 cards now.
+- **A REGULAR'S FORFEIT** and **TRADING**: a regular who loses a game for keeps pays a card of his deck (CARDS10,
+  section 33); the trade and the market take a card as any unbound item.
+- **THE CUSTOMS.** An offline character coming into the realm brings cards worth the starter deck's (285) and
+  `CUSTOMS_CARD_WORTH_PER_LEVEL` (150, OPEN) a level - a sealed pack counted as a card, and a card or a pack stood as
+  decor (`decorOwn`) with them (AUDIT CARDS-6 A1, A2); customs takes the dearest past it, one at a time, decor first and
+  a copy no binder deck needs before one it does (`systems/realmCustoms.js` `cardCustoms`, A9), and the customs lines say
+  how many stayed and a deck it broke. The service holds a customs character's first save to the same bound
+  (`server-account/src/realm.js` firstSaveRefusal, 'customs-cards') and a character born online to the starter deck's
+  worth and no pack ('realm-birth').
+- **Pins:** `test/cards9_sources.test.js` 7. `tools/mutants/cards9.json`: 26, all dead (one survived the first pass -
+  a draw re-placed that every kind a hoard names made equivalent; re-aimed at the draw's place in its hoard).
+
+## 33. CARDS10 (2026-10-08): Iliac Hand at the table, offline and online, and the season board
+
+The same ask.
+
+- **THE ROADS.** Sitting at a tavern's card table opens Hold'em (CARDS4); its panel offers "Play Iliac Hand" and the
+  house's pack. Iliac Hand's own panel (`ui/iliacTableHud.js`) picks one of the binder's lawful decks and a regular in
+  a free chair, stages a turn a card and a holding at a time (`stagedRefusal` - the rules' own `playsRefusal` said over
+  the view, pinned equal over four hundred seeded positions) and commits it. Every road off the seat closes it, a game
+  under way conceded (`scenes/iliacTableGame.js`; the interior host keeps one slot for it, emptied before it is told).
+- **THE REGULARS** (`systems/iliacPatrons.js`). A regular's temper is his seed's - careful, reckless or sly (`tight`,
+  `loose`, `bluffer`) - and his deck is his temper's and the tavern's grade's (the Hold'em stakes' own bands of the
+  building's quality: a village's, a town's, a city's): the starter deck's curve card for card, his grade's upgrades (a
+  town's two - one for a careful regular, whose second is a legendary a town's tiers refuse (AUDIT CARDS-6 B8) - a
+  city's Prince and the rest), then his kind traded in (`GRADE_SWAPS`); never an artifact or a boss's own;
+  the same every evening. He plays greedily: from no plays, each step tries every single play the rules still take
+  and keeps the best by his temper's score of the board as HIS seat sees it - the player's face-down cards face down to
+  his eye to the last turn (AUDIT CARDS-6 B2) - (`ILIAC_THINK_TRIALS`, 64, at most: B11), a slip by his grade, a sly one
+  holding his hand to one play in his first turns. The two games share the tempers' names, not the draw: Hold'em draws
+  its temper each evening with the purses (B9). MEASURE (AUDIT CARDS-6 B12, the 58/54/39 first said here not
+  reproduced): in 1,200 seeded games a grade, the starter deck at seat 0 played greedily with no slip against each
+  regular's own temper and his grade's deck (lane B's `b05_strength`, not committed), a careful hand won 58.9% against a
+  village's regulars, 51.1% against a town's and 44.7% against a city's; a reckless one 61.2/55.8/46.9, a sly one
+  58.3/49.5/42.6. The old 39% against a city is a hand that slips as a village regular does (37.7%; the village's 50.5%).
+- **THE EVENING** (`systems/iliacTableSession.js`): the regular thinks before he commits (`ILIAC_THINK_MS` and its
+  spread), the turn turns over a beat after both have (`ILIAC_REVEAL_MS`); after the sixth, the result. FOR KEEPS each
+  side stakes a card - the player's drawn at the deal, named, and lifted out of his pack into the table's keeping (AUDIT
+  CARDS-6 B1): a win or a draw hands it back, a loss or standing up leaves it with the regular (a poison's or a need's
+  minute never stands him up - B4: a blow does); a regular pays one card a game day (the forfeits' book in the save,
+  `FORFEITS_BOOK_MAX` taverns, kept on the day the card is paid: B5, B6), and the save waits while a card is staked.
+  A realm character's or an online page's regulars play for fun (section 14's law: a mint the service never sees).
+- **THE CLOTH** (`world/iliacCloth.js`, `render/iliacTableDraw.js`): the three holdings in a row across the table,
+  each side's cards in a column toward its owner's side of the row - side 1 always opposite seat 0, so no column lies
+  over the next holding at any pair of chairs (AUDIT CARDS-6 B3) - every card read from the viewer's chair; a card new to
+  the board thrown from its owner's own edge (`ILIAC_THROW_S`); one atlas of the painted faces, a plate made the first time its card is
+  drawn, all freed with the game.
+- **ONLINE - THE RELAY DEALS** (`net/iliacTable.js`, relay world179): a room keeps its Iliac tables beside its Hold'em
+  ones, one game a table index at a time (each refuses the other's sit). Its own shuffle (`rand32`), each seat told its
+  own view alone (`mine`: its hand, its plays), the room the spectator's (no hand, no deck ever framed); a commit heard,
+  never seen; the turn turned over once both have committed, or by the clock (`ILIAC_TURN_MS`, 45 s - a pass for the
+  seat that has not); the next game `ILIAC_GAP_MS` after one ends while both still sit; a stand or a socket gone
+  concedes - in a ranked game a socket gone is kept `ILIAC_GONE_MS` (15 s) for the same id and account first, both gone
+  no contest (AUDIT CARDS-6 C7); a seat the clock passes `ILIAC_IDLE_TURNS` (3) turns running is stood up, and a game one
+  seat never committed in counts for nobody (C6). A commit names its game and turn (C3). The frame is `iliac` both ways (`validIliacIn`/`validIliacOut`, `ILIAC_FRAME_MAX`; an older relay than
+  `ILIAC_RELAY_MIN` closes a socket on it, so the client never says it there). The panel opens on the room's table - a
+  game under way is watched - and sits the chosen deck; while he holds no seat there and is not sitting down, "Play a
+  regular instead" (AUDIT CARDS-6 E20: "alone in the room" was never its law - he may take a regular with others about).
+- **RANKED.** A ranked seat brings the account service's DECK ORDER (`net/identityToken.js` kind `deck`: the deck's
+  digest - its ids sorted - a minute's life), minted only when the account's realm character holds every card of it
+  (`/v1/cards/deck`, `server-account/src/iliac.js` deckOrderOf, the record checkpointed first); the relay checks the
+  order's account and digest before it seats the deck ranked, and an order vouches for ONE game: the relay asks a ranked
+  pair for fresh orders as it schedules each deal, and a seat with none plays that game friendly (AUDIT CARDS-6 C5/D2). A game between two ranked seats of two accounts is ranked:
+  its end - won, lost, drawn, or conceded - is signed (`net/iliacReceipt.js`, `i1`, the relay's key) and handed to both;
+  either carries it (`net/iliacClaims.js`) to `/v1/iliac/claim`, one row a game (migration `0095_iliac_ladder.sql` - 0093 on its branch, renumbered past main's 0093 and 0094 at the merge).
+- **THE SEASON BOARD AND ITS TITLE** - the arena's way (`11-Multiplayer/Arena.md`): its seasons, its Elo, its pair's
+  day and season caps; the board (`/v1/iliac/board`, shown in the panel online) and the season's #1 over
+  `ILIAC_CHAMPION_MIN_GAMES` games against `ILIAC_CHAMPION_MIN_FOES` foes (10 and 5) wears **ILIAC CHAMPION** (the
+  Bay's sea-blue) at the token's mint, lapsing by itself when another takes the top; counted by the minute clock
+  (`server-account/src/cron.js` 'iliac-champion') and by a rated game that may move the top; a read counts it only once
+  the kept word is `ILIAC_CHAMPION_STORED_S` (600 s) old with the clock stopped - the arena's fallback (AUDIT CARDS-6
+  D13) - and a season nobody played counts nothing.
+  Account acct97.
+- **Not verified in a live tavern** (no ARENA2 here), and the relay and the service are NOT YET DEPLOYED.
+- **Pins:** `test/cards10_table.test.js` 12, `test/cards10_relay.test.js` 7, `test/cards10_service.test.js` 3,
+  `test/cards10_client.test.js` 5, and the host's road in `test/auditcards2_host.test.js`. `tools/mutants/cards10.json`
+  (with section 34's): 75, all dead - five survived the first pass, each a finding now pinned (the sly regular's hold,
+  the forfeit's payer, the book's bound, a full side's room, the draw's place); a Prince's own rule in a regular's deck
+  was the same law said twice (every Prince costs four or more) and is gone.
+- **At the merge of main (2026-10-09)**: the relay is world181 (world179 on the branch; main's HOURS-FIRST took world179
+  and TAVERN-TABLES world180, neither of which deals Iliac Hand - `ILIAC_RELAY_MIN` 181), the service acct99 and the
+  board's migration 0095. A tavern stands two tables now (section 30): Iliac Hand plays at either, one game a cloth; online
+  the red gold table seats only a realm character (`cardGoldBarred`), so a guest plays it at the green one. Section 31's
+  touch layer standing down at the seat is what lets a phone's tap on the held cards check (section 34) without standing
+  the player up - AUDIT CARDS-6 lane E's first HIGH, fixed on main.
+- **At the second merge of main (2026-10-09, #715 and #721-#724)**: main's TV-BEYOND took world181, so CARDS10's relay is
+  world182 (`ILIAC_RELAY_MIN` 182 - world179, world180 and world181 deal no Iliac Hand); the service stays acct99 (main's
+  acct98) and the board's migration 0095 (main's last is 0094).
+
+## 34. CARDS2c and CARDS3c (2026-10-08): the sprite lane seated, the squeeze, the click and the push, the frame cost
+
+The same ask: section 8's last open lines.
+
+- **THE SPRITE LANE SEATED** (`net/remotePlayers.js` seatedSink). Eye Of The Beholder's walkers and the paperdoll have no
+  sitting art. A sprite cannot bend, so a peer seated at a card table (the pose's `st`) SINKS: its feet lowered by the
+  seat's own hip drop (`player/seatPose.js` SEAT_HIP_DROP, 0.48 m - the Morrowind rig's), so its head stands at the
+  seated eye and the floor hides its lowest 0.48 m; its name comes down with it. The table hides more only from a chair
+  with the table between (the far side's, from about 0.70 m over the floor down, or a long side's chair's far end, 0.51
+  m); from its own side, its near end or anyone standing, it shows from the shins up, a standing figure cut off by the
+  floor (AUDIT CARDS-6 E16 - "behind the table, which hide them" was true from the far side alone; no sprite has a better
+  pose). My own needs none: seated, my view is the seat's, first person (section 12).
+- **THE SQUEEZE, THE CLICK AND THE PUSH** (`world/cardHand.js`; section 3, DECIDED). A press on the held hand peeks it,
+  as before; pulled DOWN the screen while held it SQUEEZES - the front card drawn toward its foot off the other, with
+  the finger (AUDIT CARDS-6 E22: it was drawn up the screen against the pull), and turned (`squeezeMatrix`), as far as
+  the pull (`SQUEEZE_PULL`); on an upright phone the hand is held farther off and nearer the middle, inside both edges
+  and above the panel (`HELD_FIT_ASPECT`, `heldFit` - E21); let go, a short still press (`CLICK_SLOP` of the
+  view's height, `CLICK_MS`) checks when the law has a check, and a push UP the screen (`PUSH_FOLD`, more up than
+  across) folds on the player's turn. The act is the panel's own press; the law still judges it. A press is ONE
+  pointer's - a second finger, a cancel or a lost capture lets it go unread (E2) - and a finger the cards took is never
+  the touch layer's stick (`ui/touch.js` `cardHeld`, E1). Seen in the lab
+  (`cards.html?...&squeeze=1`, the probe's `squeeze-seat` shot).
+- **THE FRAME COST, MEASURED** (`tools/cardsPhoneProbe.mjs`, the lab's `bench` and `&split`; re-measured by AUDIT
+  CARDS-6 E15). On the probe's software GL (SwiftShader, every pixel the CPU's - a ceiling, not a phone's own number),
+  seven interleaved runs, medians, each part timed alone from the seat, on a shared four-core machine at load 1.2-5.5:
+
+  | | the room | all the cards | the held hand alone | the cloth's cards and chips |
+  |---|---|---|---|---|
+  | desktop 1100x640, Hold'em from the seat | 147-148 ms | 9.2-12.2 ms | 1.8-4.6 ms | 5.2-8.4 ms |
+  | phone 390x844, CPU /4, from the seat (the hand fitted, E21) | 102-108 ms | 12.8-14.6 ms | 1.5-4.1 ms | 10.0-12.2 ms |
+
+  From above, the cards add 0.7 ms (desktop) and 5.1 ms (phone); an Iliac cloth 0.1 ms and 2.4 ms. The held hand is a
+  third of the cost or less; the cloth's cards are most of it, the phone's most of all (6.4-8.7 ms alone). The first
+  measure's "the cost is the HELD HAND" and "runs differ by a millisecond or two" are withdrawn: its "no chips" row had
+  counted 40 chips outside the draw (it reads 0 now), and three runs moved by more than the cost under load.
+- **Pins:** `test/cards2c_seated_sprite.test.js` 3, `test/cards3c_gestures.test.js` 3; their mutants in
+  `tools/mutants/cards10.json` (`CARDS2c-*`, `CARDS3c-*`), all dead.
+
+## 35. AUDIT CARDS-6 (2026-10-09): where cards come from, Iliac Hand at the table and online, the season board
+
+Mac: **"Lets do a deep and comprehensive audit. This must be perfection"**. Five lanes over a frozen snapshot of
+sections 32-34, every finding reproduced again on the live tree after the merge of main and fixed or recorded - the
+record is `01-Overview/Audit-Cards-6.md`. What it changed here (sections 32-34 say it in place, each line tagged):
+
+- **Where cards come from** (section 32): a sealed pack is worth `CARD_PACK_WORTH` (171) to the law and taken by
+  customs as a card, a realm birth carries none (A1); a card or a pack stood as decor is counted and taken, its piece
+  with it (A2); the online dungeon's copy doors roll the foe's card (A3); a templar order's hall pays its divine's card
+  (A4); the pack's info lines read (A5); a split card keeps its worth, a load refreshes every list (A6); a boss card off
+  the floor says its name (A7); the card's picture drawn after the gold's (A8); customs takes the copies no deck needs
+  first and says a deck it broke (A9); a quest's card once a character (the lane's latent).
+- **Iliac Hand offline** (section 33): the stake for keeps drawn at the deal and held by the table (B1); the regular
+  blind to the player's face-down cards on the last turn (B2); every card clear of the next holding at every pair of
+  chairs (B3); a poison's or a need's minute never stands the player up (B4, both games); the forfeits' book on the day
+  paid (B5, B6); no regular inside a peer (B7); the panel played by keyboard (B10); the think cap 64 (B11); a closed table
+  stakes nothing (B13); the words of B8, B9 and the MEASURE (B12).
+- **The relay** (section 33, relay world182 - re-hashed in place, undeployed, and renumbered past main's TV-BEYOND world181 at the second merge): a ranked result kept owed to both accounts
+  until the device acks it (C1); a refused sit spends no room budget, at both games (C2); a commit names its game and
+  turn (C3); no signing key, no ranked seat (C4); a deck order vouches for one game, asked afresh before each ranked deal
+  (C5, D2); an absent seat stood up after three passes, a game one seat never played counting for nobody (C6); a ranked
+  seat kept 15 s for a blink, both gone no contest (C7); a commit's frame the commit alone (C8), the last board kept (C9),
+  every event checked by kind (C10).
+- **The board** (section 33, account acct99 - its migration 0095 changed in place, never applied): the rating the last
+  row written, the arena's too (D1); each board badges the other's honours (D3); a pair's day on the games' clock (D5);
+  the season's end (D6); a short deck's card named, Iliac Hand's own refusals and statuses (D7, D8); the carrier on the
+  relay's clock (D9); a champion of nobody counted again (D10); an unregistered foe let go (D11); a claim counts the board
+  only when it may move the top (D12).
+- **The client** (sections 33-34): the vouch a read - a lost answer is the realm not answering, never a lost session
+  (E6); a guest offered no Ranked, both carriers told the rating (E14, E18); the setup frozen while the realm vouches,
+  a sit only from the setup, a sit in flight stood on close, a Leave pressed as the next game dealt naming the game shown
+  (E4, E11-E13); a look on each welcome and a lost seat said (E5); a refusal in play, the wait and the next deal said
+  truly (E9, E10, E19); Commit latched once a turn (E3); the Hold'em panel offers Iliac Hand and the pack whenever its
+  player is not in a hand, and a cloth playing Iliac Hand says so instead of re-sending the sit (E7, E8);
+  `HOLDEM_RELAY_MIN` 178 (E20).
+- **The hand** (section 34): a press one pointer's - a cancel, a lost capture or a second finger lets it go unread (E2);
+  a finger the cards took never the touch layer's stick (E1 - section 31 closed the rest); the hand fitted on an upright
+  phone (E21); the squeeze follows the finger (E22); the frame cost measured again (E15) and the sunk sprite said truly
+  (E16).
+- **OPEN for Mac:** the title can be farmed by throwaway accounts losing inside the pair's caps (D4 - the arena's law,
+  kept; a guard on the title alone is passed by the same accounts playing each other once). DEFERRED: a Hold'em `act`
+  naming its decision (C3 - a shipped wire, its window under one round trip). Recorded: A10, A11, B14, D14-D16.
+- **Pins:** `test/auditcards6_a.test.js` 10, `_b` 11, `_c` 17, `_d` 11, `_e` 10, and the pins each fix moved (the
+  record's list). `tools/mutants/auditcards6_a.json` to `_e.json`, every mutant dead.

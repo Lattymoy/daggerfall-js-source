@@ -13,7 +13,7 @@
   {"name": "TT-start-metre", "file": "src/world/placedCardTable.js", "old": "probe.floor(sx, start[1] + 1, sz)", "new": "probe.floor(sx, start[1] + 2, sz)", "tests": ["test/taverntable.test.js"]},
   {"name": "TT-start-ring", "file": "src/world/placedCardTable.js", "old": "for (let r = 0; r <= 2 && first < 0; r++) {", "new": "for (let r = 0; r <= 3 && first < 0; r++) {", "tests": ["test/taverntable.test.js"]},
   {"name": "TT-start-ring-short", "file": "src/world/placedCardTable.js", "old": "for (let r = 0; r <= 2 && first < 0; r++) {", "new": "for (let r = 0; r <= 1 && first < 0; r++) {", "tests": ["test/taverntable.test.js"]},
-  {"name": "TT-walk-order", "file": "src/world/placedCardTable.js", "old": "[[1, 0], [-1, 0], [0, 1], [0, -1]]", "new": "[[-1, 0], [1, 0], [0, 1], [0, -1]]", "tests": ["test/taverntable.test.js"]},
+  {"name": "TT-walk-order", "file": "src/world/placedCardTable.js", "old": "[[1, 0], [-1, 0], [0, 1], [0, -1]]) {\n      const ni = i + di", "new": "[[-1, 0], [1, 0], [0, 1], [0, -1]]) {\n      const ni = i + di", "tests": ["test/taverntable.test.js"]},
   {"name": "TT-from-door-le", "file": "src/world/placedCardTable.js", "old": "if (dist[c] < fromDoor) continue;", "new": "if (dist[c] <= fromDoor) continue;", "tests": ["test/taverntable.test.js"]},
   {"name": "TT-ring-floor", "file": "src/world/placedCardTable.js", "old": "Math.ceil((hx - PLACE_BODY_R) / PLACE_CELL)", "new": "Math.ceil(hx / PLACE_CELL)", "tests": ["test/taverntable.test.js"]},
   {"name": "TT-ring-unwalked", "file": "src/world/placedCardTable.js", "old": "dist[(k + dk) * side + (i + di)] < 0) ok = false;", "new": "dist[(k + dk) * side + (i + di)] < -1) ok = false;", "tests": ["test/taverntable.test.js"]},

@@ -189,7 +189,7 @@ by the host.
 
 A parked team's record (HCC-PARK) now keeps the wagon's kind and whether a
 horse stands in it (`wk`, `wh`; `src/net/wire.js` validParkData). That is a
-relay change, so RELAY_VERSION is `world182`. Until the relay is deployed, a
+relay change, so RELAY_VERSION is `world183`. Until the relay is deployed, a
 parked wagon the relay restores comes back as the Small Cart.
 
 ## THE FOUR HOSTS

@@ -133,7 +133,8 @@ test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no bu
   // AUDIT PRE-MERGE 0928 U3 re-pinned: `stickRuns` joined it - the host's word on whether the stick's 80% throw runs (the boat's helm reads Run + a side key as the strafe)
   // NAV-H re-pinned: `aimHold` joined it - the host's word that the attack is a held aim (a helm with guns), whose drag is a look
   // CARDS-TOUCH re-pinned (PIN MOVED): `cardTable` joined it - the host's word that the player sits at a card table, whose finger is the table's
-  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, enhanced\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\), stickRuns\?\(\), aimHold\?\(\), cardTable\?\(\) \}/,
+  // PIN MOVED (AUDIT CARDS-6 E1): `cardHeld` joined it - the host's word that the card table holds a press, whose finger is never the stick
+  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, enhanced\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\), stickRuns\?\(\), aimHold\?\(\), cardTable\?\(\), cardHeld\?\(\) \}/,
     'the header documents exactly the hooks the layer calls (AUDIT 62 F7 added `paused`, the pause predicate the mouse arms always carried)');
   assert.match(touch, /if \(hooks\.socialInteract\) socialBtn = button\(/, '...and the social button is drawn only where a host hands the hook in');
   // TOUCH-BUTTONS (2026-09-27, Discord: "I would much rather use a button to attack"): the one button that calls the

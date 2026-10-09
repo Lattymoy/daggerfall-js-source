@@ -1,0 +1,38 @@
+[
+  {
+    "name": "CEIL-GHOST-the-lift-while-following",
+    "file": "src/characters/enemyMotor.js",
+    "old": "      if (this.flies && !this._following && this.avoidObstaclesTimer <= 0 && d[1] < 0) {",
+    "new": "      if (this.flies && this.avoidObstaclesTimer <= 0 && d[1] < 0) {",
+    "tests": [
+      "test/fb1009c_ceilghost.test.js"
+    ]
+  },
+  {
+    "name": "CEIL-GHOST-the-bar-over-the-ceiling",
+    "file": "src/ui/navalHud.js",
+    "old": "  return [feet[0], Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want, feet[2]];",
+    "new": "  return [feet[0], want, feet[2]];",
+    "tests": [
+      "test/fb1009c_ceilghost.test.js"
+    ]
+  },
+  {
+    "name": "CEIL-GHOST-the-bar-into-the-floor",
+    "file": "src/ui/navalHud.js",
+    "old": "Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want",
+    "new": "Number.isFinite(up) ? Math.min(want, from + up - CREW_BAR_UNDER_CEILING) : want",
+    "tests": [
+      "test/fb1009c_ceilghost.test.js"
+    ]
+  },
+  {
+    "name": "CEIL-GHOST-the-host-keeps-its-own-head",
+    "file": "src/scenes/world.js",
+    "old": "        const head = crewBarPoint(feet, f.ai.height ?? CAPSULE_HEIGHT, player.collider);   // CEIL-GHOST: under the ceiling",
+    "new": "        const head = [feet[0], feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.3, feet[2]];",
+    "tests": [
+      "test/fb1009c_ceilghost.test.js"
+    ]
+  }
+]

@@ -496,7 +496,8 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(p, /drawCookFire\(detail, rerender, kit\);   \/\/ PROF9\n\s*drawJewellerBench\(detail, rerender, kit\);   \/\/ PROF10/);
   assert.match(src('src/ui/enhancedPlusStyle.js'), /\.prof-heatbar\.prof-facetbar \{/);
   assert.match(src('src/scenes/decorTool.js'), /if \(PROF_STATIONS\.includes\(want\) && !forgeOffered\(\)\) \{ deps\.say\?\.\(stationColdLine\(want\)\); return false; \}/, 'the jeweller\'s bench sold where the bench works, as the forge');
-  assert.match(src('src/systems/enchanting.js'), /const basePower = craftedJewelPoints\(item\) \?\? templateByIndex\(item\.templateIndex\)\?\.enchantmentPoints \?\? 0;/);
+  // INT1 (PIN MOVED): the template read through `lookup` - templateByIndex by default, the item law's own on the service
+  assert.match(src('src/systems/enchanting.js'), /export function itemEnchantmentPower\(item, lookup = templateByIndex\) \{[^]*?const basePower = craftedJewelPoints\(item\) \?\? lookup\(item\.templateIndex\)\?\.enchantmentPoints \?\? 0;/);
 });
 
 // ─── AUDIT PROF10 (2026-10-03): THE ITEM MAKER'S BUDGET ──────────────

@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-REALM-L1F4-the-trade-read-first",
     "file": "server-account/src/realmTrade.js",
-    "old": "  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n",
-    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n",
+    "old": "  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n",
+    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n",
     "tests": [
       "test/auditrealm.test.js"
     ]

@@ -151,8 +151,9 @@ test('CARDS3b the host: the held two drawn from the view, the press on the stack
   const body = (name) => { const a = wm.indexOf(`function ${name}(`); return wm.slice(a, wm.indexOf('\n  }\n', a)); };
   assert.match(wm, /if \(cardGame\?\.scene\) cardDrawGame\(cardGame, proj, view, mwv\.eye\);/);
   assert.match(body('cardDrawGame'), /const held = mine >= 0 \? p\.cards\.filter\(\(c\) => c\.seat === mine && c\.settled && Math\.cos\(c\.roll\) > 0\.5\)/);
-  assert.match(body('cardDrawGame'), /const mats0 = heldMatrices\(view, fan, g\.peek\);/, 'AUDIT CARDS-3 C3: the fan laid for the whole hand');
-  assert.match(body('cardDrawGame'), /const mats = g\.lift > 1e-4 \? heldMatrices\(view, fan, g\.peek, g\.lift\) : mats0;/, 'AUDIT CARDS-3 C1: lifted clear of the panel');
+  // PIN MOVED (AUDIT CARDS-6 E21): both laid at the frame's fit - a narrow screen's hand held farther off
+  assert.match(body('cardDrawGame'), /const mats0 = heldMatrices\(view, fan, g\.peek, 0, fit\);/, 'AUDIT CARDS-3 C3: the fan laid for the whole hand');
+  assert.match(body('cardDrawGame'), /const mats = g\.lift > 1e-4 \? heldMatrices\(view, fan, g\.peek, g\.lift, fit\) : mats0;/, 'AUDIT CARDS-3 C1: lifted clear of the panel');
   assert.match(body('cardDrawGame'), /matrix: h\.k >= 1 \? h\.m : blendMatrix\(cardMatrix\(c\.pos, c\.yaw, c\.roll\), h\.m, ease\(h\.k\)\)/, 'AUDIT CARDS-3 C3: eased from the cloth into the hand and out');
   const listen = body('cardPointerListen');
   // AUDIT CARDS-3 C5: pointer events (a touch is a pointer), the press at the capture phase - before the seat's

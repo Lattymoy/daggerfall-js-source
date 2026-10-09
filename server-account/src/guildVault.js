@@ -50,6 +50,7 @@ import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjec
 import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay, GUILD_MEMBER_RE } from '../../src/net/guildLaw.js';
 import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guildVaultLaw.js';
 import { takeTradeGoods, giveTradeGoods, recordCount, REALM_TRADE_RECORD_MAX } from '../../src/net/realmTradeLaw.js';
+import { lawfulItem } from '../../src/systems/itemLaw.js';   // INT1 (AUDIT INT): a piece put before the law read the vault, read as it is taken
 
 const DAY_S = 86_400;
 const spend = (ctx, player) => overRate(ctx, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S);
@@ -128,7 +129,7 @@ export async function vaultPut(ctx, player, { character, realm = null, pick, ite
     if (!moved || moved.length !== 1) return 'vault-goods';
     piece = moved[0];
     return JSON.stringify(piece).length > REALM_TRADE_RECORD_MAX ? 'vault-goods' : null;
-  });
+  }, { outbound: true, escrow: true });   // INT3: a deposit hands the piece to the guild's members; INT4: and the ledger holds it the vault's
   if ('error' in prep) return prep;
   const who = displayName(player);
   const name = pieceName(piece);
@@ -192,6 +193,7 @@ export async function vaultTake(ctx, player, { character, realm = null, slot, co
   let rec = null;
   try { rec = JSON.parse(row.rec); } catch { rec = null; }
   if (!rec || typeof rec !== 'object') return { error: 'guild-vault-empty' };
+  if (!lawfulItem(rec)) return { error: 'vault-goods' };   // one no honest client mints goes to no member: it waits for staff
   const give = { ...rec };
   if (rec.stackCount !== undefined || n > 1) give.stackCount = n;
   const left = have - n;

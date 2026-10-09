@@ -88,6 +88,19 @@ export const MATE_FX_MAX = 6;
 export const MATE_FX_BOX = 16;
 export const CREW_GREEN = PARTY_GREEN_CSS;
 export const CREW_BAR_RANGE = 45;
+/** CEIL-GHOST (FIELD BUGS 2026-10-09c, "Ghost companion isn't showing health bar - clipping into ceiling"): the bar
+ *  stands CREW_BAR_LIFT over the body's top - and under the ceiling over him, CREW_BAR_UNDER_CEILING short of it, never
+ *  lower than CREW_BAR_FROM over his feet. A point past the ceiling is behind it to the sight test, so a tall body under
+ *  a low roof (a ghost, 2.6 m, in a dungeon's passage) wore no bar at all. */
+export const CREW_BAR_LIFT = 0.3;
+export const CREW_BAR_UNDER_CEILING = 0.25;
+export const CREW_BAR_FROM = 0.2;
+/** Where a crew member's bar stands: `feet` his feet, `height` his body's, `collider` the place's (its `raycast`). */
+export function crewBarPoint(feet, height, collider) {
+  const want = feet[1] + height + CREW_BAR_LIFT, from = feet[1] + CREW_BAR_FROM;
+  const up = collider?.raycast?.([feet[0], from, feet[2]], [0, 1, 0], want - from);
+  return [feet[0], Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want, feet[2]];
+}
 export const CREW_FADE_FROM = 15;
 /** LIVING CREW (2026-09-29, Mac: "talk with each other, blurb, sing chantys"): the lines over the crew's heads
  *  (drawCrewLines) - whole to CREW_SAY_FADE_FROM metres, TAG_FADE_TO of it at CREW_SAY_RANGE, the CREW_SAY_MAX nearest,

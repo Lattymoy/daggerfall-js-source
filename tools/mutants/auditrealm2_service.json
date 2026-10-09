@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-REALM2-S1-customs-on-the-saves-own-level",
     "file": "server-account/src/realm.js",
-    "old": "liquidWealthOf(save) <= customsAllowance(level) ? null : { error: 'customs-allowance' };",
-    "new": "liquidWealthOf(save) <= customsAllowance(save.level) ? null : { error: 'customs-allowance' };",
+    "old": "liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };",
+    "new": "liquidWealthOf(save) <= customsAllowance(save.level))) return { error: 'customs-allowance' };",
     "tests": [
       "test/auditrealm2_service.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "AUDIT-REALM2-S3-a-landed-save-dropped",
     "file": "server-account/src/realm.js",
-    "old": "  if (row && (row.obj === key || row.prev === key)) return true;\n",
+    "old": "  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true;   // INT6: the clean one kept, too\n",
     "new": "",
     "tests": [
       "test/auditrealm2_service.test.js"
