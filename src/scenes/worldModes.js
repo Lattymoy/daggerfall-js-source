@@ -104,7 +104,7 @@ import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/f
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
-import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtExitDoor, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
+import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/sdRealmArt.js';   // SD5a: its art, made in code
 import { SD_HOUR_GRADE } from '../world/sdLook.js';   // SD-LOOK: the Hour's grade on the lane
@@ -8547,8 +8547,8 @@ export function createWorldModes(host) {
     townTalk?.showOverlay?.(new ChoiceWindow({ lines, options }));
   }
   /** WB6c: THE WAY HOME out of the court - through the fire, as the way in was: the dungeon's exit taken at the top of the
-   *  frame after the veil has closed (F-A5's deferral), for a player alive in a court still standing. WBX2: one door for
-   *  the bridge's membrane and the portal that rises where he fell (scenes/gateCourt.js). */
+   *  frame after the veil has closed (F-A5's deferral), for a player alive in a court still standing. WBX2: the door of
+   *  the portal that rises where he fell (scenes/gateCourt.js) - GATE-FBX: the court's only one, the bridge's membrane gone. */
   function gateWayHome() {
     if (mode !== 'dungeon' || !isGateArena(dungeonLoc)) return false;
     stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; });
@@ -8590,13 +8590,14 @@ export function createWorldModes(host) {
   const _hourFog = { mode: '', density: 0, start: 0, end: 0, color: [0, 0, 0] }, _hourFogColor = new Float32Array(3);
   const _hourTri = { sky: [0, 0, 0], equator: [0, 0, 0], ground: [0, 0, 0] };
   /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
-   *  draws, its floor on the collider (the spawn lands on it), the way home its exit door (the exit family's ray,
-   *  ladder and wagon word take it - no family of its own), and the way home's name. */
+   *  draws, its floor on the collider (the spawn lands on it), and the way home's name - GATE-FBX: on the portal that
+   *  rises where he fell, the court's one door (scenes/gateCourt.js lays it into the exit doors; the exit family's ray,
+   *  ladder and wagon word take it - no family of its own). */
   function standCourt(ctx) {
     if (!_courtMesh && renderer?.createMesh) {
       try {
-        for (const [rec, art] of courtArt()) { renderer.uploadTexture?.(COURT_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(COURT_ARCHIVE, rec, art.emission); }
-        for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission); }
+        for (const [rec, art] of courtArt()) { renderer.uploadTexture?.(COURT_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(COURT_ARCHIVE, rec, art.emission, { white: true }); }   // AUDIT GATE-FBX G4: the court's fire its own colour, never the dungeon arm's day tint (AUDIT SD II L2 F3's law)
+        for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); }
         _courtMesh = renderer.createMesh(buildCourtModel());
       } catch (e) { console.warn('[gate] the court would not build', e?.message ?? e); _courtMesh = null; }
     }
@@ -8612,7 +8613,7 @@ export function createWorldModes(host) {
     const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
     for (let i = 0; i < n; i++) idx[i] = i;
     ctx.collider.addMesh(COURT_BUCKET, tris, idx, identity());
-    ctx.exitDoors.push(courtExitDoor());   // the made block has no door: the membrane is the level's one exit
+    // GATE-FBX: and NO door of its own - the bridge's membrane is gone; until he falls the court is left by death or the Wrath
     ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: COURT_TEXT.wayHome } : null));   // before the dungeon exit's own namer, so it answers first
     // WB9f (Mac: "The player should be able to inspect and pick up the ground item, not just walk over it"): HIS SPOILS
     // ON THE FLOOR, PRESSED - each resting piece a target the one ray can win (the outer host's pool - scenes/spoilsPool.js

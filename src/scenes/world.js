@@ -5585,7 +5585,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const borderNature = new Map();   // ECOTONE1: a neighbour climate's nature archive the border stood here -> its summer archive
     for (const f of nature) {
       // GATE-CLEAR (AUDIT FOREST1 F5): the day's Oblivion Gate keeps its clearing of nature as it keeps it of World of
-      // Daggerfall's flats - a tree no longer stands through the plinth or the Sigil Broker (the sweep builds the
+      // Daggerfall's flats - a tree no longer stands through the gate's stone or the Sigil Broker (the sweep builds the
       // pixel again when the gate's day turns). FOREST1 (F1): and a wood's flats keep out of the rock pieces it grows
       // round - DFU's own scatter, with the switch off, is left as DFU lays it
       if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;
@@ -20444,6 +20444,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           // AUDIT SD III (H10): in the Shattered Hour, the Hour's own way out - under its veil, in its words, as every other
           // way out of it is; refused there (the dead's is the death's), nothing more said
           if (modes?.sdRealmSlot?.() != null) { if (sdWayHome()) say('You find your way back outside.'); return true; }
+          // AUDIT GATE-FBX C2: and in a gate's Burning Court, none - its ways out are the portal where he fell, a death and
+          // the Wrath (a court gone silent casts its fighters out itself: gateCourt.silent); /unstuck walked out mid-fight
+          // with no veil, no toll and no cooldown spent on a death
+          if (modes?.gateArenaDay?.() != null) { say(COURT_TEXT.noUnstuck); return true; }
           const inZone = wildHere() && !(TEST_GODMODE && staffPowers().god);   // TESTBUILD: god mode - /unstuck at once, no cooldown
           const _godU = TEST_GODMODE && staffPowers().god;
           if (inZone && (modes?.mode ?? 'exterior') === 'exterior') { say('/unstuck does not work outdoors in the mountains.'); return true; }   // PVPDUNGEONS
@@ -22918,6 +22922,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       ejectFromCourt(COURT_TEXT.collapse);
     }
     else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
+    else if (courtDay != null && gateCourt?.silent()) ejectFromCourt(COURT_TEXT.lost);   // AUDIT GATE-FBX C1: a court gone silent (a stalled relay, a room that never answered, a socket still retrying) - no door stands in it until he falls
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
     courtAloneFrame();   // GATE-ALONE: my companions wait outside - said as I step in
@@ -23155,7 +23160,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     banner: (text) => { _gateBannerWish = text; },   // AUDIT WB C5: never over the step's fire - SD19: shared with a Hollow's door (presenceFrame)
     marks: (card) => { _gateMarksWish = card; },   // WB9a: tonight's marks beside the countdown - never over the step's fire (SD19: presenceFrame)
     ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
-    landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in a rising horn's root, set down before the gate
+    landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in the stone as it stands whole, set down before the gate
     enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
   }) : null;
   /** WB12d: THE FAITHFUL'S RITE (scenes/riteHost.js) - online alone, as the gate is: each breach's circle from the omen to
@@ -26951,6 +26956,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const d of drawable) if (d?.shown) _peerMapPoses.set(d.id, d.shown);
     const visiblePeers = gateCrowd.cut(cabin ? drawable : drawable.filter((d) => !csaPeers.isBelowDeck(d.id)), { on: modes?.gateArenaDay?.() != null, me: player.pos, at: (d) => onlineToScene(d.shown), max: gateCrowdMax(getPref('gateCrowd')), mate: (id) => !!social?.isPartyPeer(id) });   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): in a gate's court, past the count on the Other players card only the nearest are drawn, my party always (net/gateCrowd.js) - the rest stand nowhere on this screen this frame: no body, sprite, name, light, cast or step (their map marks, above, are kept)
     peerCastVisuals(visiblePeers);   // SPELLFX1: a peer's new cast, drawn once
+    if (modes?.gateArenaDay?.() != null) gateCourt?.stepsIn(drawable, (d) => (d?.shown ? onlineToScene(d.shown) : null));   // AUDIT GATE-FBX C3: a player stepping out of the court's way in opens it - every one in the room, the crowd's cut or not (the fire is the court's, not a body this screen draws)
     _veilT += dt > 0 ? dt : 0;
     _veils.clear(); _hiddenPeers.clear();
     for (const d of drawable) if (!cabin && csaPeers.isBelowDeck(d.id)) _hiddenPeers.add(d.id);
@@ -32788,7 +32794,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
-    // the horns in front of the fire hide it
+    // the pillars in front of the fire hide it
     if (gatePool?.stands() && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus })) renderer.markForeignPass();   // AUDIT DEEP R-1: the travel view's focus
     // WB12d: the rite's pillar of smoke, the gate's fire's eye and fog - from the omen, before the gate stands

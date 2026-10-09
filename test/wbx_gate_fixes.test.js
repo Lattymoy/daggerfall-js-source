@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 
 import { Renderer } from '../src/render/renderer.js';
 import { buildGateModel, GATE_HEIGHT, ARCH_Y0 } from '../src/world/gateModel.js';
-import { buildCourtModel, courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, EXIT_H, EXIT_Z, EXIT_HALF_W, courtExitDoor, courtDoorAabb, courtFloorTris, COURT_DOOR_DEPTH } from '../src/world/gateArena.js';
+import { buildCourtModel, courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, EXIT_H, EXIT_HALF_W, courtDoorAabb, courtFloorTris, COURT_DOOR_DEPTH } from '../src/world/gateArena.js';
 import { doorWorldAabb } from '../src/player/enterExit.js';
 import { pickActivatableHit, RAY_DISTANCE, DOOR_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { Collider } from '../src/player/collider.js';
@@ -136,33 +136,34 @@ test('WBX2 the portal home: nothing while he stands or falls; PORTAL_AFTER_MS in
   at(late, 50000 + PORTAL_AFTER_MS + PORTAL_RISE_MS + 5000, fell);
   assert.deepEqual(late.said, [], 'a portal long risen is not announced');
   assert.equal(late.doors.length, 1, 'but its door stands');
-  // the door's record: at the fall in the dungeon's frame, a body tall; the fire stood on the floor (the plinth absent)
+  // the door's record: at the fall in the dungeon's frame, a body tall; the fire stood on the floor (the gate's opening starts on its ground)
   const door = portalDoor([6, -4]);
   assert.deepEqual([door.matrix[12], door.matrix[13], door.matrix[14]], courtToDungeon(6, 0, -4));
   assert.equal(door.size.y, EXIT_H);
   assert.equal(PORTAL_DROP, ARCH_Y0, 'the fire\'s foot on the floor');
 });
 
-test('WBX2 the seams: the court is handed the portal\'s door, and (SS3) no way home of its own - the portal is never walked through; the way home is one door (gateWayHome), the bridge\'s membrane and the portal both, PRESSED through the court\'s exit doors - through the fire and never for the dead; the portal is drawn with the gate\'s own fire pass (mutants: SS3: the court handed a way home again)', () => {
+test('WBX2 the seams: the court is handed the portal\'s door, and (SS3) no way home of its own - the portal is never walked through; the way home is one door (gateWayHome) - GATE-FBX: the portal\'s alone, the bridge\'s membrane gone - PRESSED through the court\'s exit doors - through the fire and never for the dead; the portal is drawn with the gate\'s own fire pass (mutants: SS3: the court handed a way home again)', () => {
   const w = read('src/scenes/world.js');
   assert.doesNotMatch(w, /wayHome:/, 'SS3: the court takes no way home');
   assert.match(w, /portalDoor: \(door\) => \{ modes\?\.dungeonCtx\?\.exitDoors\?\.push\?\.\(door\); \},/);
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) \{ gateWayHome\(\); return true; \}/, 'the exit door\'s press - the bridge\'s membrane and the portal alike');
+  assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) \{ gateWayHome\(\); return true; \}/, 'the exit door\'s press - the portal\'s');
   assert.doesNotMatch(wm, /\n    gateWayHome,/, 'and nobody outside the modes calls it');
   const gc = read('src/scenes/gateCourt.js');
   assert.doesNotMatch(gc, /wayHome/, 'SS3: the court has no way home to take');
-  assert.match(gc, /portalPass\.draw\(\[\{ origin: portal\.origin, yaw: 0, open: 1, fade: portal\.rise, spin \}\], proj, view, eye, seconds, fog\);/);
+  assert.match(gc, /_portalFire\.origin = portal\.origin; _portalFire\.fade = portal\.fade; _portalFire\.spin = spin;\n\s*_fires\.push\(_portalFire\);/);
+  assert.match(gc, /portalPass\.draw\(_fires, proj, view, eye, seconds, fog\);/);
   assert.match(gc, /portalPass = new GatePassRenderer\(gl, profile\);/);
 });
 
-test('AUDIT SS the court\'s two ways home are PRESSED where their fire stands - the ray, the court\'s real floor collider and its exit targets as worldModes builds them: looking at the portal from 0.6 to 3 m before it, or at the bridge\'s membrane from 1.5 m, the press takes it within the door\'s reach; looking away it does not, and past the reach it says too far. The square a dungeon door pads to (4.9 m across) swallowed every press from 0.6 to 2.4 m before the portal - SS3 made the press its only way through (mutants: the court\'s exits in the padded square; the fire\'s box too deep)', () => {
+test('AUDIT SS the court\'s way home is PRESSED where its fire stands - the ray, the court\'s real floor collider and its exit targets as worldModes builds them: looking at the portal from 0.6 to 3 m before it, the press takes it within the door\'s reach (GATE-FBX: the bridge\'s membrane, pressed the same, is gone); looking away it does not, and past the reach it says too far. The square a dungeon door pads to (4.9 m across) swallowed every press from 0.6 to 2.4 m before the portal - SS3 made the press its only way through (mutants: the court\'s exits in the padded square; the fire\'s box too deep)', () => {
   const collider = new Collider();
   const tris = courtFloorTris();
   collider.addMesh('wb:court', tris, Uint32Array.from({ length: tris.length / 3 }, (_, i) => i), identity());
   const fell = [6, -4];
-  const doors = [courtExitDoor(), portalDoor(fell)];
-  assert.ok(doors.every((d) => d.court === true), 'both are the court\'s');
+  const doors = [portalDoor(fell)];
+  assert.ok(doors.every((d) => d.court === true), 'the court\'s');
   // worldModes' own targets (pinned at their one line)
   assert.match(read('src/scenes/worldModes.js'), /key: `exit:\$\{i\}`, aabb: d\.court \? courtDoorAabb\(d\) : doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE/);
   const targetsOf = (aabbOf) => doors.map((d, i) => ({ key: `exit:${i}`, aabb: aabbOf(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));
@@ -174,17 +175,16 @@ test('AUDIT SS the court\'s two ways home are PRESSED where their fire stands - 
   };
   const level = [0, 0, -1], down20 = [0, -Math.sin(Math.PI / 9), -Math.cos(Math.PI / 9)];
   for (const back of [0.6, 1.2, 2.0, 2.4, 3.0]) {
-    assert.equal(press(targets, [fell[0], fell[1] + back], level), 'exit:1', `${back} m before the portal, looking at it`);
-    assert.equal(press(targets, [fell[0], fell[1] + back], down20), 'exit:1', `${back} m, looking a little down`);
+    assert.equal(press(targets, [fell[0], fell[1] + back], level), 'exit:0', `${back} m before the portal, looking at it`);
+    assert.equal(press(targets, [fell[0], fell[1] + back], down20), 'exit:0', `${back} m, looking a little down`);
   }
   assert.equal(press(targets, [fell[0], fell[1] + 1.2], [0, 0, 1]), null, 'looking away: nothing');
-  assert.equal(press(targets, [fell[0], fell[1] + 5], level), 'far:exit:1', 'past the reach: too far, as any door says');
-  assert.equal(press(targets, [0, EXIT_Z - 1.5], [0, 0, 1]), 'exit:0', 'the bridge\'s membrane, 1.5 m before it');
+  assert.equal(press(targets, [fell[0], fell[1] + 5], level), 'far:exit:0', 'past the reach: too far, as any door says');
   // the padded square swallowed the press before the portal (the finding, kept as its measure)
   const padded = targetsOf(doorWorldAabb);
   assert.equal(press(padded, [fell[0], fell[1] + 1.2], level), null, 'in the padded square: nothing');
   // the fire's own box: the opening's width and height, a hand either side of its plane
-  const box = courtDoorAabb(doors[1]);
+  const box = courtDoorAabb(doors[0]);
   const [x, y, z] = courtToDungeon(fell[0], 0, fell[1]);
   assert.equal(COURT_DOOR_DEPTH, 0.3);
   assert.deepEqual(box.min.map((v) => +v.toFixed(3)), [x - EXIT_HALF_W, y, z - COURT_DOOR_DEPTH].map((v) => +v.toFixed(3)));

@@ -2,8 +2,8 @@
 // of oblivion which takes place in a large boss arena"): THE BURNING COURT, DRIVEN. The made level through the port's
 // own dungeon layout (world/gateArena.js - a location and a blocks file answering one made block, laid by the real
 // layoutDungeon and layoutRdbBlock); the court's geometry (a clear floor facing up, the rune ring the boss keeps
-// inside, the lava under it all, the braziers clear of the bridge and after the player's own lights, the way home as
-// the level's exit door, the ring the motor keeps a player in); the way home's landing before the gate; the court's art; the client's link to the fight
+// inside, the lava under it all, the braziers clear of the bridge and after the player's own lights - GATE-FBX: and no
+// door of its own, the bridge's membrane gone - the ring the motor keeps a player in); the way home's landing before the gate; the court's art; the client's link to the fight
 // (net/gateLink.js - the relay's words folded into one state); and the seams in the dungeon host, the context and the
 // world host, by source.
 import { test } from 'node:test';
@@ -12,14 +12,13 @@ import { readFileSync } from 'node:fs';
 
 import {
   gateArenaLocation, gateArenaBlocks, gateArenaBlock, isGateArena, buildCourtModel, courtFloorTris, courtLights, courtBraziers, allCourtBraziers,
-  courtExitDoor, withCourtLights, courtRing, courtToDungeon, gateLandingFor, COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD,
-  COURT_MEMBRANE_RECORD, GATE_ARENA_BLOCK, GATE_ARENA_BLOCK_INDEX, GATE_ARENA_LOCATION_ID, GATE_BLOCK_SIDE, ARRIVE_Z, EXIT_Z,
-  EXIT_HALF_W, EXIT_H, RUNE_HALF_W, LAVA_Y, COURT_FOG, BRAZIER_COLOR, BRAZIER_RANGE, GATE_LANDING_M, COURT_TEXT,
+  withCourtLights, courtRing, courtToDungeon, gateLandingFor, COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD,
+  GATE_ARENA_BLOCK, GATE_ARENA_BLOCK_INDEX, GATE_ARENA_LOCATION_ID, GATE_BLOCK_SIDE, ARRIVE_Z,
+  RUNE_HALF_W, LAVA_Y, COURT_FOG, BRAZIER_COLOR, BRAZIER_RANGE, GATE_LANDING_M, COURT_TEXT,
 } from '../src/world/gateArena.js';
 import { GATE_ARCHIVE } from '../src/world/gateModel.js';
-import { doorWorldAabb, doorWorldNormal, doorWorldPosition } from '../src/player/enterExit.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
-import { courtArt, courtFloorArt, courtLavaArt, courtMembraneArt, courtRuneArt, GATE_ART_SIZE } from '../src/world/gateArt.js';
+import { courtArt, courtFloorArt, courtLavaArt, courtRuneArt, GATE_ART_SIZE } from '../src/world/gateArt.js';
 import { COURT_CENTRE, COURT_R, BOSS_REACH_R, COURTS, WALKS, WALK_HALF_W, nearestCourt } from '../src/net/gateBrain.js';
 import { layoutDungeon } from '../src/world/dungeonLayout.js';
 import { RDB_SIDE } from '../src/world/rdbLayout.js';
@@ -66,7 +65,7 @@ test('WB3b the made level: the court\'s location and its one block, laid by the 
   assert.ok(GATE_ARENA_LOCATION_ID > 0xffffff);
 });
 
-test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge but the way home\'s arch; the rune ring sits on BOSS_REACH_R; the rock it stands on goes down into the fire; the braziers light it, clear of the bridge; the way home is an exit door by the arrival, facing in; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
+test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge (GATE-FBX: the way home\'s arch by the bridge gone with its membrane); the rune ring sits on BOSS_REACH_R; the rock it stands on goes down into the fire; the braziers light it, clear of the bridge; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
   const m = buildCourtModel();
   const n = m.positions.length / 3;
   assert.equal(m.subMeshes.reduce((s, sm) => s + sm.primitiveCount * 3, 0), n, 'every vertex in a sub-mesh');
@@ -84,12 +83,12 @@ test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stand
     const vs = [0, 1, 2].map((k) => local(t + k));
     const onFloor = vs.every((v) => Math.abs(v[1]) < 1e-4 && Math.hypot(v[0], v[2]) <= COURT_R + 1e-3);
     if (sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_FLOOR_RECORD && onFloor) { assert.ok(N[t * 3 + 1] > 0.99, 'a flagstone faces up'); floorUp++; }
-    // the clear floor: above it and inside its edge, only the rune ring's hair and the way home
+    // the clear floor: above it and inside its edge, only the rune ring's hair (GATE-FBX: and no way home's posts by the
+    // bridge - its membrane is gone)
     for (const v of vs) {
       if (v[1] <= 0.05) continue;
       const r = Math.hypot(v[0], v[2]);
-      const wayHome = v[3] === 0 && Math.abs(v[0]) <= EXIT_HALF_W + 1.2 && v[2] >= EXIT_Z - 1;   // the first court's alone
-      if (r < COURT_R - 0.5 && !wayHome) assert.fail(`something stands on the floor at ${v.map((x) => x.toFixed(2))} (${sm.textureArchive}/${sm.textureRecord})`);
+      if (r < COURT_R - 0.5) assert.fail(`something stands on the floor at ${v.map((x) => x.toFixed(2))} (${sm.textureArchive}/${sm.textureRecord})`);
     }
     if (sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_RUNE_RECORD) for (const v of vs) {
       const r = Math.hypot(v[0], v[2]);
@@ -127,12 +126,6 @@ test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stand
     if (k === 0) assert.ok(!(lz > 0 && Math.abs(lx) < 8), 'clear of the bridge');
     for (const w of WALKS) assert.ok(segGap(x, z, w) > WALK_HALF_W + 0.4, 'clear of a walkway');
   }
-  const door = courtExitDoor(), box = doorWorldAabb(door);   // the exit family reads it as it reads any exit door
-  assert.ok(box.min[2] - COURT_CENTRE[2] > ARRIVE_Z && box.max[1] - box.min[1] >= EXIT_H - 1e-9, 'by the arrival, a body tall');
-  assert.ok(box.min[0] - COURT_CENTRE[0] <= -EXIT_HALF_W && box.max[0] - COURT_CENTRE[0] >= EXIT_HALF_W, 'the membrane wide');
-  assert.deepEqual(doorWorldPosition(door), courtToDungeon(0, EXIT_H / 2, EXIT_Z));
-  assert.deepEqual([door.matrix[12], door.matrix[13], door.matrix[14]], courtToDungeon(0, 0, EXIT_Z), 'the wagon word\'s distance is to the membrane');
-  assert.deepEqual(doorWorldNormal(door), [0, 0, -1], 'its face into the court');
   assert.equal(COURT_FOG.mode, 'exp');
   assert.ok(COURT_FOG.color[0] > COURT_FOG.color[1] && COURT_FOG.color[0] > COURT_FOG.color[2], 'the Deadlands\' red');
   // WB6a: no sky shell either - nothing of the court's mesh reaches past its spires (the Deadlands' own passes stand there)
@@ -172,17 +165,16 @@ test('WB3b the way home lands before the gate, on its fire\'s side (the gate\'s 
   assert.equal(gateLandingFor(null, { pixelTranslation: () => t, heightAt: () => 0 }), null);
 });
 
-test('WB3b the court\'s art: 64 square, the same every run, its fire on its emission twin alone - the floor\'s in a few joints, the rune ring\'s in its glyphs, the sea of fire nearly whole, the way home\'s all of it (mutants: every joint burning; the membrane dark)', () => {
+test('WB3b the court\'s art: 64 square, the same every run, its fire on its emission twin alone - the floor\'s in a few joints, the rune ring\'s in its glyphs, the sea of fire nearly whole (GATE-FBX: the way home\'s membrane gone, and its art with it) (mutants: every joint burning)', () => {
   const art = courtArt();
-  assert.deepEqual(art.map(([r]) => r), [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD]);   // WB6a: the sky's shell is gone, and its art with it
+  assert.deepEqual(art.map(([r]) => r), [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD]);   // WB6a: the sky's shell is gone, and its art with it
   assert.deepEqual(courtFloorArt().albedo.colors, courtFloorArt().albedo.colors, 'deterministic');
   const lit = (img) => { let k = 0; for (let i = 0; i < img.colors.length; i += 4) if (img.colors[i] + img.colors[i + 1] + img.colors[i + 2] > 0) k++; return k / (img.width * img.height); };
   for (const [, a] of art) { assert.equal(a.albedo.width, GATE_ART_SIZE); assert.equal(a.emission.width, GATE_ART_SIZE); }
-  const floor = lit(courtFloorArt().emission), rune = lit(courtRuneArt().emission), lava = lit(courtLavaArt().emission), memb = lit(courtMembraneArt().emission);
+  const floor = lit(courtFloorArt().emission), rune = lit(courtRuneArt().emission), lava = lit(courtLavaArt().emission);
   assert.ok(floor > 0 && floor < 0.08, `the floor burns in a few joints: ${floor}`);
   assert.ok(rune > 0.1 && rune < 0.5, `the ring in its glyphs and its edges: ${rune}`);
   assert.ok(lava > 0.6, `a brazier's bed nearly all fire: ${lava}`);
-  assert.equal(memb, 1, 'the way home all of it');
 });
 
 test('WB3b the link: the relay\'s words folded into one state - a whole state starts a fight and nothing else does; a walk, an attack (superseding the one in flight), the health, a phase, the wrath and the kill each move their own; the boss is drawn along his walk between words; a kill is kept by day and said once, a refusal said in words, a receipt kept by the day it names (mutants: a word before the state starting a fight; an attack not superseding; a kill said twice)', async () => {
@@ -225,7 +217,7 @@ test('WB3b the link: the relay\'s words folded into one state - a whole state st
   assert.equal(fellLine({ near: 'X', boss: 'B', top: [] }), 'B has fallen at Dagon\'s Breach near X. The breach collapses.');
 });
 
-test('WB3b the seams, by source: the dungeon host enters the court through its own transition (the made level whole, its blocks file, the court stood before the marker is read, the way home its exit door and landing before the gate), wears the Deadlands\' air and braziers there, and names its room the gate\'s; the context refuses the map, the rest and the save; the world host opens the door at a relay that runs the room, keys the court\'s room, says the level claim once per welcome, holds the ring, casts a death out before the gate, refuses the mark, and ends the court with its day or with online (mutants: each seam removed)', () => {
+test('WB3b the seams, by source: the dungeon host enters the court through its own transition (the made level whole, its blocks file, the court stood before the marker is read, the way home landing before the gate - GATE-FBX: no exit door of its own, the portal\'s named the way home), wears the Deadlands\' air and braziers there, and names its room the gate\'s; the context refuses the map, the rest and the save; the world host opens the door at a relay that runs the room, keys the court\'s room, says the level claim once per welcome, holds the ring, casts a death out before the gate, refuses the mark, and ends the court with its day or with online (mutants: each seam removed)', () => {
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /async function enterGateArena\(g\) \{[\s\S]{0,1500}return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);   // AUDIT WB B3/B5: the door's two checks after the fire widened it
   assert.match(wm, /const sized = dungeonLocationFor\(hit\.dfLocation, /, 'the court\'s one block passes the sizing law whole');
@@ -240,7 +232,9 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, COURT_FOG\)\);/);
   // WB4a: the boss's glow joins them - WB9b: the fight's own lights first, the braziers nearest first after (the cap drops a far court's fire)
   assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) \{ const _court = withCourtLights\(_dgLit, \[\.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\), \.\.\.courtLightsNear\(cam\.pos\)\]\); renderer\.setPointLights\(_court\.data, null, _court\.colors\); \}/);
-  assert.match(wm, /function standCourt\(ctx\) \{[\s\S]{0,2800}ctx\.exitDoors\.push\(courtExitDoor\(\)\);[^\n]*\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('exit:'\) \? \{ title: COURT_TEXT\.wayHome \} : null\)\);/, 'the way home is the exit family\'s own door, and named the way home');
+  // GATE-FBX: the court lays no door of its own (the bridge's membrane is gone) - the portal's, laid at his fall, is named the way home
+  assert.match(wm, /function standCourt\(ctx\) \{[\s\S]{0,2800}\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('exit:'\) \? \{ title: COURT_TEXT\.wayHome \} : null\)\);/, 'the way home named the way home');
+  assert.doesNotMatch(wm.slice(wm.indexOf('function standCourt(ctx) {'), wm.indexOf('function standCourt(ctx) {') + 2800), /exitDoors\.push/, 'and no door of its own');
   assert.match(wm, /isGateArena\(dungeonLoc\) \? \{ kind: 'gate', day: dungeonLoc\.gate \}/);
   assert.match(wm, /ctx\.collider\.addMesh\(COURT_BUCKET, tris, idx, identity\(\)\);/);
   assert.match(wm, /if \(hit\.gateArena\) cam\.yaw = Math\.PI;/, 'arriving by the bridge, facing him');
@@ -263,7 +257,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(w, /if \(courtDay != null && Date\.now\(\) \+ _sharedOffsetMs >= gateTimes\(courtDay\)\.wrathAt \+ GATE_COLLAPSE_MS\) \{[\s\S]{0,400}?try \{ gateCourt\?\.frame\(\); \} catch[^\n]*\n\s*ejectFromCourt\(COURT_TEXT\.collapse\);/);
   assert.match(w, /const courtGate = modes\?\.gateArenaGate\?\.\(\) \?\? null;[\s\S]{0,200}if \(courtGate\) \{\n\s+modes\?\.forceExitToExterior\(\);\n\s+if \(landBeforeGate\(courtGate\)\) \{ gateVeil\?\.flash\(\); townTalk\.showOverlay\(new ActionTextBox\(\[COURT_TEXT\.castOut\]\)\); return; \}/, 'a death in the court is cast out before its gate');
   assert.match(w, /function setRecallAnchor\(\) \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) != null\) \{ setMidScreenText\(COURT_TEXT\.noMark\); return; \}/);
-  assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null,/, 'the omen hears the kill');
+  assert.match(w, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null, {3}\/\/ WB3b: the relay's word of the kill/, 'the omen hears the kill');   // AUDIT GATE-FBX P12: the omen's own line - the rite's (AUDIT WB12d R7) is its twin
   assert.equal(gateRoomKey(200), 'gate:200');
   assert.ok(Object.values(COURT_TEXT).every((t) => typeof t === 'string' && t.length > 8));
 });

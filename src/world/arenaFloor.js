@@ -282,7 +282,7 @@ export function arenaFloorBlocks(real, kind = 'ladder', banners = null) {
   };
 }
 
-/** THE WAYS OUT as exit doors (scenes/dungeonContext.js `exitDoors`' shape - world/gateArena.js courtExitDoor's): a
+/** THE WAYS OUT as exit doors (scenes/dungeonContext.js `exitDoors`' shape - world/gateArena.js portalDoor's): a
  *  body tall and a gate wide, facing into the floor. */
 export function arenaExitDoors(c = floorCentre()) {
   return WAYS_OUT.map((w) => {
