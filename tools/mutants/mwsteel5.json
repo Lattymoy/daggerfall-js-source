@@ -21,14 +21,14 @@
     "note": "The helms where the scene fitted them: the scalp through the crown, Mac's screenshot."
   },
   {
-    "name": "MWSTEEL5-the-closed-helm-lifted-past-the-open",
+    "name": "MWSTEEL5-the-closed-helm-lifted-again",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "  ], HELM_LIFT - 1),",
-    "new": "  ], HELM_LIFT),",
+    "old": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ]),",
+    "new": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ], HELM_LIFT - 1),",
     "tests": [
       "test/mwsteel5.test.js"
     ],
-    "note": "Mac's export already stands the closed helm a unit higher: lifted the whole way it stands a unit over the open one."
+    "note": "MW-FIT1 re-aimed it (it was MWSTEEL5-the-closed-helm-lifted-past-the-open): the closed helm hides the head and stands where Mac's export puts it; lifted onto the game's head as MW-STEEL5 lifted it, it rides off the collar - the player's \"the helmet elevation is too much\"."
   },
   {
     "name": "MWSTEEL5-the-open-helm-left-down",
@@ -145,18 +145,18 @@
   {
     "name": "MWSTEEL5-the-probe-reads-the-shipped-helm-as-the-screenshot",
     "file": "tools/helmLiftProbe.mjs",
-    "old": "  const back = at === 'scene' ? up.map((x) => x * HELM_LIFT) : null;",
+    "old": "  const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;",
     "new": "  const back = null;",
     "tests": [
       "test/mwsteel5.test.js"
     ],
-    "note": "AUDIT MW-STEEL5: the screenshot drew MW-STEEL1's helm; read against the lifted one the scalp needs a head HELM_LIFT higher."
+    "note": "AUDIT MW-STEEL5: the screenshot drew MW-STEEL1's helm; read against the shipped one the scalp needs a head higher by what stands it over that fit (overFit - HELM_LIFT then, Mac's export's unit since MW-FIT1)."
   },
   {
     "name": "MWSTEEL5-the-probe-lowers-the-wrong-way",
     "file": "tools/helmLiftProbe.mjs",
-    "old": "  const back = at === 'scene' ? up.map((x) => x * HELM_LIFT) : null;",
-    "new": "  const back = at === 'scene' ? up.map((x) => -x * HELM_LIFT) : null;",
+    "old": "  const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;",
+    "new": "  const back = at === 'scene' ? up.map((x) => -x * overFit(set.style)) : null;",
     "tests": [
       "test/mwsteel5.test.js"
     ]

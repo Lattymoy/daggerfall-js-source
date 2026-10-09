@@ -9,12 +9,13 @@
 // plate is made since MW-STEEL4 (tools/bakeSteelPlate.mjs, bible/04-Characters/Steel-Plate.md): each piece read out of
 // Mac's scene by its own object and held to the box it was read at, skinned AT BAKE TIME to Morrowind's own Bip01 bones
 // in the pose retail's skins are bound in, and written as a retail piece is - and its machinery is the steel plate's,
-// imported, not copied: the bind (plateBind, the scene stood on it by SCENE_FROM_BIND), the rigs (PLATE_RIG), the lift
-// (HELM_LIFT) and the writer (skinnedMeshesToNif).
+// imported, not copied: the bind (plateBind, the scene stood on it by SCENE_FROM_BIND), the rigs (PLATE_RIG) and the
+// writer (skinnedMeshesToNif).
 //
 //   THE SAME SCENE. The ebony set was fitted on the body the steel plate was - its boots stand in the steel boots' very
-//   box, its gauntlets on the same forearms, its helm on the same head - so SCENE_FROM_BIND stands it on the bind, and
-//   the helm is raised HELM_LIFT onto the game's head as both steel helms are (MW-STEEL5).
+//   box, its gauntlets on the same forearms, its helm on the same head - so SCENE_FROM_BIND stands it on the bind. The
+//   helm is closed - a visor, an eye slit, a mail coif to the collar - so it hides the head and stands where Mac
+//   fitted it (MW-FIT1: it was raised HELM_LIFT as the steel helms were, and rode high, the neck bare under its coif).
 //
 //   ONE EXPORT, NOTHING OF BETHESDA'S IN IT. Mac's file carries the eleven pieces and a light: no Morrowind head or neck
 //   to strip, so it is committed as it came (SOURCE). Three of its objects are named for the meshes they were modelled
@@ -40,7 +41,7 @@ import { skinnedMeshesToNif } from './nifWrite.mjs';
 import { jointWeights } from './skinWeights.mjs';
 import { readPng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
-import { PLATE_RIG, HELM_LIFT, RETAIL_SKELETON, plateBind, rigSegments, bakeObject, liftMesh } from './bakeSteelPlate.mjs';
+import { PLATE_RIG, RETAIL_SKELETON, plateBind, rigSegments, bakeObject, liftMesh } from './bakeSteelPlate.mjs';
 
 /** Mac's export, as committed - the whole set, as it came. */
 export const SOURCE = 'src/assets/mw/source/Ebony_Plate.fbx';
@@ -96,7 +97,7 @@ const piece = (id, shapes, lift = 0) => Object.freeze({ id, shapes: Object.freez
  * 1.95, eight of its eleven corners on the right boot's own, that no other pair has (the pauldrons, gauntlets and
  * greaves mirror each other to the vertex; the left boot is the mirrored right one and this) - skinned to the left calf
  * it floated off the knee in every step (AUDIT MW-EBONY). Its box is the object's as exported; the island is dropped
- * after (`acrossTheMiddle`). The helm is raised HELM_LIFT (MW-STEEL5).
+ * after (`acrossTheMiddle`). The helm stands where Mac fitted it (MW-FIT1: closed, it hides the head and needs no lift).
  */
 export const PIECES = Object.freeze([
   piece('cuirass', [shape('Plane.001', 'cuirass', [[-14.37, -12.69, 62.3], [14.37, 12.59, 117.4]])]),
@@ -109,7 +110,7 @@ export const PIECES = Object.freeze([
   piece('greave_left', [shape('Breton_Male.001', 'greave', [[-11.99, -5.32, 42.68], [-0.53, 8.2, 83.05]])]),
   piece('boot_right', [shape('Cube.027', 'boot', [[0.13, -6.48, -0.21], [11.33, 14.61, 48.13]])]),
   piece('boot_left', [shape('Cube.024', 'boot', [[-11.33, -6.48, -0.21], [1.95, 14.61, 48.13]], { acrossTheMiddle: 'left' })]),
-  piece('helm', [shape('Sphere.007', 'helm', [[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])], HELM_LIFT),
+  piece('helm', [shape('Sphere.007', 'helm', [[-6.31, -6.64, 112.1], [6.31, 10.19, 133.37]])]),
 ]);
 
 /** One piece's shapes as the bake places them: each held to its box, its strays across the middle dropped, then raised
