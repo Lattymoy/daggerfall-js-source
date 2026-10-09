@@ -43,8 +43,10 @@ export const restAt = (key, n) => (n > 0 ? lwSeed(textSeed(key), 0x72657374) % n
  *   feet: () => (number[] | null),
  *   say: (text: string) => void,
  *   townName: (res: any) => string,
+ *   placeOf?: (r: any) => (number[] | null),
  * }} deps - `lay(res, feet, key)` the dungeon's pile for them (null: not laid); `there(feet)` whether a pile still lies
- *   there; AUDIT-C5 `count(pile)` what a pile holds now
+ *   there; AUDIT-C5 `count(pile)` what a pile holds now; LW14 `placeOf(r)` the stop the dice's end fell at (the dive's
+ *   route - deepRoute.js stopOfMinute), else the resting place its key deals
  */
 export function createDeepRemains(deps) {
   const told = new Set();
@@ -63,7 +65,7 @@ export function createDeepRemains(deps) {
       if (!spots.length) return;
       const feet = deps.feet();
       for (const r of remains) {
-        const at = spots[restAt(r.key, spots.length)];
+        const at = deps.placeOf?.(r) ?? spots[restAt(r.key, spots.length)];   // LW14: where it fell, on the dive's route
         const away = !feet || Math.hypot(at[0] - feet[0], at[2] - feet[2]) > DEEP_LAY_M;
         if (!deps.laid(r.key) && !here.has(r.key)) {
           if (!(arriving || away)) continue;

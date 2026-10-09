@@ -368,7 +368,7 @@ test('LW1 lines: a token is filled from where and when it is said and a missing 
 test('LW1 regards: a stranger reads 0; a word counts once a day, a blow and a crime cost, help and a life saved earn; friend at FRIEND_AT, enemy at ENEMY_AT, hostile at HOSTILE_AT; a regard eases toward zero EASE_PER_DAY a day unseen and never across it; the save\'s record round-trips and a bad one reads as nobody known; the vendor is LivingWorld (mutants: talk counted twice, the ease crossing zero, a bad record kept)', () => {
   assert.equal(LIVING_WORLD_VENDOR, 'LivingWorld');
   assert.deepEqual([FRIEND_AT, ENEMY_AT, HOSTILE_AT, EASE_PER_DAY], [40, -40, -70, 0.5]);
-  assert.deepEqual(EVENTS, { talk: 3, polite: 1, gift: 8, helped: 20, saved: 35, struck: -45, crime: -15, slain: -75, insulted: -6 });   // LW7: one of their own slain turns them hostile
+  assert.deepEqual(EVENTS, { talk: 3, polite: 1, gift: 8, helped: 20, saved: 35, struck: -45, crime: -15, slain: -75, insulted: -6, poached: -4 });   // LW7: one of their own slain turns them hostile; PIN MOVED (LW14): a find poached
   const rel = createRelations();
   assert.equal(rel.regard('L1.0', 10), 0);
   assert.equal(rel.known('L1.0'), false);

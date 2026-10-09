@@ -75,10 +75,12 @@ export const EVENTS = Object.freeze({
   crime: -15,     // a crime of the player's seen
   slain: -75,     // one of their own - their household, their party - struck down by the player
   insulted: -6,   // a blunt word in the talk
+  poached: -4,    // LW14: a find of theirs taken before them in the deep (once a day, as a tone)
 });
 
-/** @typedef {{ r: number, met: number, seen: number, talked: number, polite?: number, blunt?: number }} Regard - `met`,
- *  `seen`, `talked` days (the clock's day numbers); LW7 `polite`, `blunt` the days a tone of word last counted */
+/** @typedef {{ r: number, met: number, seen: number, talked: number, polite?: number, blunt?: number, poach?: number }} Regard - `met`,
+ *  `seen`, `talked` days (the clock's day numbers); LW7 `polite`, `blunt` the days a tone of word last counted; LW14
+ *  `poach` the day a find of theirs last counted */
 
 /** The standing a regard reads as. @param {number} r */
 export const regardStanding = (r) => (r >= FRIEND_AT ? 'friend' : r <= HOSTILE_AT ? 'hostile' : r <= ENEMY_AT ? 'enemy' : 'neutral');
@@ -166,7 +168,7 @@ export function createRelations(record = null) {
       if (!Number.isFinite(r)) continue;
       /** @type {Regard} */
       const got = { r: clamp(r), met: Number.isFinite(met) ? met : 0, seen: Number.isFinite(seen) ? seen : 0, talked: Number.isFinite(talked) ? talked : -1 };
-      for (const tone of /** @type {const} */ (['polite', 'blunt'])) { const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) got[tone] = d; }   // LW7
+      for (const tone of /** @type {const} */ (['polite', 'blunt', 'poach'])) { const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) got[tone] = d; }   // LW7
       map.set(id, got);
     }
   }
@@ -193,7 +195,7 @@ export function createRelations(record = null) {
     known: (id) => map.has(id),
     /**
      * Something happened between the player and `id` on `day`: `kind` an EVENTS key (or `amount` given). A `talk` counts
-     * once a day, and (LW7) each tone of word - `polite`, `insulted` - once a day. Answers the new regard.
+     * once a day, and (LW7) each tone of word - `polite`, `insulted` - once a day; LW14 a find `poached`, once a day. Answers the new regard.
      * @param {string} id @param {keyof typeof EVENTS} kind @param {number} day @param {number} [amount]
      */
     note(id, kind, day, amount) {
@@ -203,7 +205,7 @@ export function createRelations(record = null) {
       const now = eased(e, day);
       let delta = Number.isFinite(amount) ? Number(amount) : (EVENTS[kind] ?? 0);
       if (kind === 'talk') { if (e.talked === day) delta = 0; else e.talked = day; }
-      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : null;
+      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;   // LW14: a find taken, once a day
       if (tone) { if (e[tone] === day) delta = 0; else e[tone] = day; }
       e.r = clamp(now + delta);
       e.seen = day;
@@ -302,6 +304,7 @@ export function createRelations(record = null) {
         people[id] = { r: Math.round(e.r * 10) / 10, met: e.met, seen: e.seen, talked: e.talked };
         if (e.polite != null) people[id].polite = e.polite;   // LW7: only once counted
         if (e.blunt != null) people[id].blunt = e.blunt;
+        if (e.poach != null) people[id].poach = e.poach;   // LW14: only once counted
       }
       // LW4: only once there is one; LW7 each hand death's kind only once there is one of it - [key, t, seen, who]
       const handsOut = Object.fromEntries(HAND_KINDS.filter((k) => hands[k].size).map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who])]));

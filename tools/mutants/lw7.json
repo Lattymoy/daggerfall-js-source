@@ -110,8 +110,8 @@
   {
     "name": "LW7-tone-shared",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : null;",
-    "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : null;",
+    "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;",
+    "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : kind === 'poached' ? 'poach' : null;",
     "tests": [
       "test/lw7_deeds.test.js"
     ]

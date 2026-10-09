@@ -304,7 +304,7 @@ test('LW7b the streaming host: the stands on the roads (the pool\'s loose transi
   // PIN MOVED (LEGACY5): a courtship of the fallen's ends first
   assert.match(w, /const livingDied = \(res, t\) => \{ (?:legacyHost\?\.residentDied\(res\.id\); )?livingRelations\.turn\('died', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, who: res\.name \}\); \};/);
   assert.match(w, /spawnFoe: \(type, feet, o\) => d\.spawnLooseFoe\(type, feet, \{ yawRad: o\.yaw, allied: false, gender: o\.gender, level: o\.level \}\),/);
-  assert.match(w, /spawnFoe: [^\n]*\n\s*slay: livingSlay,\n\s*died: livingDied,[^\n]*\n\s*\}\), \{ pool: d \}\);/);
+  assert.match(w, /spawnFoe: [^\n]*\n\s*slay: livingSlay,\n\s*died: livingDied,[^\n]*\n(?:\s*(?:\/\/|route:|floor:|clearLine:|ring:|choose:|stopPile:)[^\n]*\n)*\s*\}\), \{ pool: d \}\);/);   // PIN MOVED (LW14): the deep's own deps after
   const lr = rd('src/scenes/livingRoads.js');
   assert.match(lr, /if \(deps\.stands\?\.stood\(m\.res\.id\)\) continue;/);
   assert.match(lr, /deps\.fights\?\.clear\(\); deps\.stands\?\.clear\(\);/);

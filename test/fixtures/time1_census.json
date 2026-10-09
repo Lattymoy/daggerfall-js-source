@@ -1040,6 +1040,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "const tBuild = skyMinutes();",
+   "clock": "sky",
+   "why": "LW14: a dungeon's build reads the dives of the living world's last day, on its clock - the stops a company left"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
    "clock": "sky",
    "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"

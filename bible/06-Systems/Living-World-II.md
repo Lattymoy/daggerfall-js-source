@@ -9,7 +9,7 @@ up decorations that can be used as shops" - HOME-VENDOR's hired trader. Asked wh
 dungeon, and in what order to build: "Your decision" to both (section 1, decisions 2 and 3). "I want this to be as
 detailed as possible."
 
-**Status: LW9-LW13 BUILT 2026-10-09; LW14-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
+**Status: LW9-LW14 BUILT 2026-10-09; LW15-LW16 designed.** Eight slices, LW9 to LW16, in the order of decision 2.
 As each one ships, its record is written on this page under its name, the way `06-Systems/Living-World.md` records
 LW1-LW8. That first page stays the record of LW0-LW8 and their fixes, and its LW0 decisions bind here except where
 section 1 says otherwise. Every constant below marked "proposed" is a starting number for the slice to measure. None
@@ -550,100 +550,81 @@ Moved pins: `lw4_trouble` (a fated member's place sends its company's first), `l
 
 Pins: `test/lw13_companies.test.js` (9). Mutants: `tools/mutants/lw13.json` (42).
 
-## 7. LW14 - the deep's own
+## 7. LW14 - the deep's own (BUILT 2026-10-09)
 
-Mac: "smarter and more dungeon diving npcs".
+Mac: "smarter and more dungeon diving npcs". The law is `src/systems/livingWorld/deepRoute.js` (pure over the
+dungeon's own markers and the dive); the dungeon's build reads it in `src/scenes/dungeonContext.js`, and the company
+below is `src/scenes/dungeonDivers.js`.
 
-### 7.1 The dive's route (`systems/livingWorld/deepRoute.js`, pure over the dungeon's own data)
+### 7.1 The dive's route (`deepRoute.js`)
 
-- **THE STOPS** are the dungeon's random foe markers (record 15) and its random treasure markers (record 19).
-  - They are read off its blocks as `rdbLayout.js layoutRdbBlock` reads them, from MAPS' `dungeon.blocks` and
-    BLOCKS.BSA: what the dungeon's own build reads, so only while the player is in it. The trips need none of it.
-  - The fixed foes (record 16), the quest markers (11, 18) and the fixed treasure (archive 216) are never stops.
-- **THE ORDER.**
-  - It starts from the start marker (record 10, in the starting block).
-  - The blocks are walked breadth first by their grid adjacency: a dungeon's blocks join their neighbours, and the
-    border blocks close it.
-  - Within each block the stops go nearest first from where the company came in.
-  - So a company works outward from the entrance, block by block.
-  - There is no room graph in the tree (none is needed): the block grid is the plan, as `world/dungeonEnd.js`'s
-    farthest marker and `world/dungeonFires.js`' plan already read it.
-- **THE TIMELINE.**
-  - The dive's hours inside (`trip.dive.t0` to `t1`) are spent at the stops: a foe's stop 25-40 minutes by its seed,
-    a treasure's 10.
-  - Between stops the company walks at its pace over the stops' floor distance times DEEP_DETOUR (1.6).
-  - The stops reached by the dive's middle are its reach. Then comes THE WAY OUT: the same stops back to the start.
-  - `stopAt(trip, route, t)` gives the stop they are at, or the two they are between.
-- **THE DICE'S END, WHERE IT FELL.** A dive's fated trouble (`diveTrouble`) falls at the stop its minute reaches. The
-  fallen lie THERE: LW6b's remains move from a hashed marker to the true stop.
-- **MORE TROUBLE IN THE DEEP.** A dive with no fated death now meets the deep too: DEEP_RISK (0.5) of dives have a
-  fight at a stop chosen by the seed. It is always won (only the fated die, by the lives' law), and its halt is that
-  stop's extra time.
+- **THE STOPS** (`stopsOf`): the dungeon's random foe markers (editor record 15, STOP_FOE) and random treasure markers
+  (19, STOP_TREASURE), off the placed blocks' layouts - never a fixed foe (16), a quest's marker (11, 18) or fixed
+  treasure (archive 216). Keyed `<block>:<marker position>`, a foe's by its marker's LoadID too. Read at the dungeon's
+  build only; the trips need none of it.
+- **THE ORDER**: from the start marker's block, the blocks breadth first by their grid (a block's neighbours east,
+  west, south, north; a block the grid does not join, last), and within each block nearest first from where the
+  company came in. No room graph: the block grid is the plan.
+- **THE TIMELINE** (`routeOf`): from the dive's in (`trip.dive.t0`), each stop its minutes - a foe's DEEP_FOE_MIN
+  (25-40) by its seed, a treasure's DEEP_TREASURE_MIN (10) - and the walk between DEEP_DETOUR (1.6) times the floor
+  distance at DEEP_WALK_M (30 m a minute). The stops left by the dive's middle are its REACH; then THE WAY OUT, the same
+  stops back to the start by the dive's end.
+- **WHERE THEY ARE** (`stopAt`, `pointAt`): at a stop (fighting at a foe's), between two, resting at the last, on the
+  way out, or not inside.
+- **THE DICE'S END, WHERE IT FELL** (`stopOfMinute`): a dive's fated trouble falls at the stop its minute reaches (the
+  nearer of two walked between); LW6b's remains are laid THERE (`deepRemains.js placeOf`), the hashed resting place
+  only where no route is known.
+- **MORE TROUBLE IN THE DEEP** (`deepFightOf`): DEEP_RISK (0.5) of the dives with no fated trouble meet a fight of the
+  deep's at a foe stop of the seed's - DEEP_FIGHT_MIN (20) more there, the rest of the reach after it. Always won (only
+  the fated die, by the lives' law); it is the route's own, so no trip changes for it.
 
 ### 7.2 What they leave behind (decision 3)
 
-- **AT THE DUNGEON'S BUILD**, offline, every dive of the last DIVE_CLEAR_MIN is read. Every stop a dive passed before
-  the build's minute is cleared:
-  - the random foes there are BUILT DEAD, their corpse where they stood and its items emptied;
-  - the random treasure piles there are built EMPTY.
-- **ONLINE** the same set holds for every reader. The room's host applies it as `died` stamps at the minute each stop
-  was passed, and the room's respawn law follows from there.
-- **A COMPANY STILL INSIDE**: the stops behind them are cleared, the stop they are at is being fought (7.3), and the
-  stops ahead are as Daggerfall built them.
+- **AT THE DUNGEON'S BUILD** (`dungeonContext.js`; the modes host's `deepCleared`, the outer host's
+  `livingDeepCleared`): every dive into the dungeon whose hours touch the last DIVE_CLEAR_MIN (a day: `trips.js
+  divesIn`) is routed over the dungeon's stops, and every stop one LEFT before the build's minute is CLEARED
+  (`clearedOf`): its random foe BUILT DEAD - its corpse where it stood, its pack emptied (`setFoeDead`) - and its random
+  treasure pile built EMPTY. A stop a company is at now is being fought, not cleared; after a day the dungeon is as
+  Daggerfall builds it.
+- **ONLINE** every reader builds the same set (it is pure). Built differently from the design: the room's host
+  applies no `died` stamps at the minute each stop was passed - the set is built dead at the build, each foe's stamp
+  the build's, and the room's respawn law (DUNGEON_RESPAWN_MS) follows from there.
 
-### 7.3 Found where they are, and live
+### 7.3 Found where they are, and live (`dungeonDivers.js`)
 
-- **THE SOUND.** A company fighting at a stop within DEEP_HEAR_M (60 m) of the player rings steel: the game's own
-  weapon-hit sounds at the stop, now and then, with "You hear fighting ahead." said once.
-- **STOOD LIVE** where the route has them, not behind the player. They are stood within DEEP_SEE_M (35 m) of their
-  stop with a clear line, or within 15 m.
-  - Each member is the dungeon's loose ally, as today: team PlayerAlly, a `shipmate`.
-  - The stop's foe is alive and theirs to fight.
-- **THEIR OWN WAY.** Once stood, they go on.
-  - With the enhanced motor's navmesh (`ai/navmesh.js findPath`, baked per dungeon; always on online), each member
-    walks to the next stop's floor, fights what is there with the motor's own senses, stands at a treasure stop for
-    its minutes, and walks on.
-  - Without a navmesh (offline, under the classic motor, which has no pathing) they hold their stop, fighting and
-    resting there. They never walk a straight line through a wall.
-- **HURT.**
-  - A member under RETREAT_HP (0.3) falls back behind the others.
-  - When the company's standing strength falls under half of what it came in with, it makes for the way out (the
-    route back), whatever the timeline says.
-  - THE END IS WHAT HAPPENS (LW4b's law), for this character.
-- **TALK AND CHOICE.** Each member is a talk target by name, through the living door. Their leader offers (LW11's
-  ChoiceWindow):
-  - **JOIN US**: today's stand, where they follow the player. The follow motor now gets a TRAIL, as `crewAshore.js`
-    passes one, so a classic follower comes round corners.
-  - **LEAD ON**: the player follows; they keep their route with the player along.
-  - **PART WAYS**: they go on.
+- **MET WHERE THE ROUTE HAS THEM**: a company is stood about its place (`pointAt` on its floor) once the player is
+  within DEEP_NEAR_M (15 m) of it, or DEEP_SEE_M (35 m) with a clear line (the pool's `clearLine`), and HOLDS there
+  (no follow). Where no route is known, met behind the player and following, as LW6 had it.
+- **THE SOUND**: not met yet, a company fighting within DEEP_HEAR_M (60 m) rings the game's own steel at its stop every
+  DEEP_RING_S (2.5 s), with "You hear fighting ahead." said once.
+- **THE DOOR** (`offers`; underground the activation's `openLiving`, `mobileEnemyActivate.js`): pressing one of them in
+  any mode but Steal asks - JOIN US (they follow the player along the player's TRAIL, crewAshore.js's law: a crumb each
+  DIVER_TRAIL_STEP_M, DIVER_TRAIL_MAX kept), LEAD ON (each walks to their next stop's floor by the motor's own walk,
+  then on to the one after), PART WAYS (they keep to their own, asked no more), talk. Stood and not asked, they hold.
+- **HURT**: a member under RETREAT_HP (0.3) of their health falls back RETREAT_BACK_M (4 m); the company under half the
+  strength it was met with makes for the way out (its survivors' regard, the fated spared). THE END IS WHAT HAPPENS.
+- **LET GO** past DEEP_KEEP_M (70 m), not joined - met again further on its way.
+- **RIVALS**: a company not joined whose head is no friend minds its finds: the player taking from the treasure pile at
+  the stop it makes for (within 4 m of it) costs each member `poached` (EVENTS, -4, once a day as a tone, kept in the
+  save), with the head's word "That was ours to find."
+- Not built: the navmesh walk's own pathing for LEAD ON (the motor's follow walks to the stop as it walks to the player)
+  and DEEP_SEE_M's line from every member (the place's own).
 
-  Stood and not asked, they go on.
-- **RIVALS.** A company that does not count the player a friend and has not been joined minds its finds. The player
-  looting a pile at the stop they are making for costs `poached` regard (proposed -4), with a word: "That was ours to
-  find." It is a new EVENTS key, counted once a day as `insulted` is.
-- **MORE OF THEM.** COMPANY_DIVE_CHANCE (6.1) and LW9's adventurers mean more companies below. A dungeon within reach
-  of a city often holds one.
+### 7.4 The four hosts, the measure, the pins
 
-### 7.4 The four hosts, and the pins
+- `scenes/dungeonContext.js`: WIRED (the stops, the cleared set at the build, the pool's `deepStops`, `deepEntry`,
+  `stopPile`, `floorAt`, `clearLine`, `ringAt`).
+- `scenes/worldModes.js`: WIRED (the build's `deepCleared`, the activation's `openLiving`).
+- `scenes/world.js`: WIRED (`livingDeepRoute`, `livingDeepCleared`, the divers' deps, the remains' `placeOf`, the door).
+- `scenes/exterior.js`: none.
 
-- `scenes/dungeonContext.js`: WIRED. The cleared set at the build, the stood company at its stop, the navmesh walk.
-- `scenes/world.js`: WIRED. `livingDiversStep`, the room host's stamps.
-- `scenes/worldModes.js` and `scenes/exterior.js`: none.
+Measure: the build's read of a dungeon's day of dives costs at most about 95 ms on a cold book (the towns within reach
+read back a day), paid once, inside the dungeon's load; a route is kept by trip for the dungeon.
 
-Pins:
-- a dungeon's stops in order, on a synthetic RDB grid and on the game's own under ARENA2_PATH, never a quest marker;
-- the stop at a minute;
-- the remains at the true stop;
-- the cleared set alike for two readers;
-- the dead built emptied, and the piles empty;
-- the clearing gone after DIVE_CLEAR_MIN;
-- online, the host's stamps;
-- met where the route has them;
-- the navmesh walk to the next stop, and the hold without a navmesh;
-- the retreat;
-- the three choices;
-- the trail;
-- the rival's word.
+Moved pins: `lw1_livingWorld` (EVENTS' `poached`), `lw7b_beyond` (the divers' deps), `lw2_livingTown` and
+`lw11_caravan` (the talk's door asks a company below too).
+
+Pins: `test/lw14_deep.test.js` (10). Mutants: `tools/mutants/lw14.json` (46).
 
 ## 8. LW15 - the patrons
 

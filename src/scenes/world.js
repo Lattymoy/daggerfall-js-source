@@ -121,7 +121,7 @@ import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/rel
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
@@ -133,6 +133,7 @@ import { createLivingRoads } from './livingRoads.js';   // LW3: the parties on t
 import { createRoadTeams } from '../world/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost } from './caravanHost.js';   // LW11: the caravan's door
 import { createHideouts, BAND_LIVE_M } from './hideouts.js';   // LW12: a band's hideout, stood
+import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble, takeOf as outlawTakeOf, TAKE_DAYS as OUTLAW_TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
@@ -3036,6 +3037,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     livingDungeonsIndex();
     return row?.mapTableData ? _livingDungeonById.get(row.mapTableData.mapId >>> 0) ?? null : null;
   };
+  // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S ROUTE over this dungeon's stops (the pool's own,
+  // in a company's order - systems/livingWorld/deepRoute.js), kept by trip for the pool; the stops a dive left within
+  // DIVE_CLEAR_MIN, read at the dungeon's build (the modes host's `deepCleared`)
+  let _deepRoutes = new Map(), _deepRoutesPool = null;
+  const livingDeepRoute = (trip) => {
+    const d = _dungeonPool();
+    const stops = d?.deepStops?.() ?? [];
+    if (!stops.length || !trip?.dive) return null;
+    if (_deepRoutesPool !== d) { _deepRoutes = new Map(); _deepRoutesPool = d; }
+    let r = _deepRoutes.get(trip.id);
+    if (r === undefined) { const e = d.deepEntry?.(); r = deepRouteOf(stops, e ? { x: e.x, z: e.z } : { x: stops[0].x, z: stops[0].z }, trip); _deepRoutes.set(trip.id, r); }
+    return r;
+  };
+  const livingDeepCleared = (loc, stops, entry) => {
+    if (!livingWorldOn() || !stops?.length || !loc?.mapTableData) return null;
+    livingDungeonsIndex();
+    const here = _livingDungeonById.get(loc.mapTableData.mapId >>> 0);
+    if (!here) return null;
+    const tBuild = skyMinutes();
+    const from = entry ? { x: entry.x, z: entry.z } : { x: stops[0].x, z: stops[0].z };
+    const dives = divesIn(here, tBuild - DIVE_CLEAR_MIN, tBuild, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo }).dives;
+    return deepClearedOf(dives.map((tr) => deepRouteOf(stops, from, tr)), tBuild);
+  };
   const livingDiversStep = (now) => {
     const d = _dungeonPool();
     if (!d?.spawnLooseFoe || !livingWorldOn()) { if (livingDivers) { livingDivers.clear(); livingDivers = null; } return; }
@@ -3057,6 +3081,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         spawnFoe: (type, feet, o) => d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: false, gender: o.gender, level: o.level }),   // LW7b: one who draws on the player
         slay: livingSlay,
         died: livingDied,   // AUDIT-C3: one cut down beside the player died at their side, at that minute
+        // LW14: met where their route has them, heard at their fight, a choice at their door, a rival to the player's finds
+        route: livingDeepRoute,
+        floor: (x, y, z) => d.floorAt?.(x, y, z) ?? [x, y, z],
+        clearLine: (a, b) => d.clearLine?.(a, b) ?? false,
+        ring: (feet) => d.ringAt?.(feet),
+        choose: (lines, options) => modes?.dungeonCtx?.showOverlay?.(new ChoiceWindow({ lines, options })),
+        stopPile: (key) => d.stopPile?.(key) ?? null,
       }), { pool: d });
       _livingDiversAt = -Infinity;
     }
@@ -3104,6 +3135,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         feet: () => (playerSpawned ? [player.pos[0], player.pos[1], player.pos[2]] : null),
         say: (text) => d.hudSay?.(text),
         townName: (res) => livingTownOfId(res.town)?.name ?? '',
+        // LW14: where the dice's end fell - the stop on the dive's route its minute reaches, on its floor
+        placeOf: (r) => { const s = stopOfMinute(livingDeepRoute(r.trip), r.t); return s ? d.floorAt?.(s.x, s.y, s.z) ?? null : null; },
       }), { pool: d });
       _livingRemainsAt = -Infinity;
     }
@@ -7041,7 +7074,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own town answers both: systems/livingWorld/livingTown.js)
     livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
       kin: (person, talk) => legacyMeetKin(person, talk),   // LEGACY-HOME: one of the player's line, met
-      offers: (person, talk) => (livingWorldOn() ? caravanHostOf().offers(person, talk) : false) },   // LW11: a caravan's merchant, a pedlar, a carter asks first
+      offers: (person, talk) => (livingWorldOn() ? caravanHostOf().offers(person, talk) || !!livingDivers?.offers(person, talk) : false) },   // LW11: a caravan's merchant, a pedlar, a carter asks first; LW14: a company below
     legacyTopics: (person) => legacyTopicRows(person),   // LEGACY5: courting, the proposal, the wedding, the family
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
@@ -27948,6 +27981,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     horseCart: hccRuntimeOn,   // HCC: the runtime's transition handlers and storage-access word, when the mod is on
     onPreTransition: () => { const n = handOverFoes(); if (n) console.info(`[foes] handed ${n} foe(s) at the door`); },   // AUDIT PSCALE1 NET-3: a door out of the open country hands my foes to the players outside
     horseCartSave: () => hccRuntime.getSaveData(),   // AUDIT HCC H3: the record a dungeon save carries (DFU's per-mod slot, whatever the switch says)
+    deepCleared: (loc, stops, entry) => livingDeepCleared(loc, stops, entry),   // LW14: the stops a company left, at a dungeon's build
+    openLivingDiver: (rec) => (livingWorldOn() && rec?.living ? !!livingDivers?.offers(rec, () => modes?.dungeonCtx?.hudSay?.(`${firstNameOf(rec.living.res?.name ?? '')}: "Keep your blade up down here."`)) : false),   // LW14: a company below, pressed
     outerCampsSave: () => camps.snapshot(campToRecord),   // AUDIT REST II H6: my camps standing outside, for a dungeon's own save; AUDIT LANDFORMS C1: DFU's frame
     outerCampsLoad: (extras) => standSavedOuterCamps(extras),   // AUDIT REST III A1: and the save's stood again by the dungeon's own load
     horseCartLoad: (rec) => { hccRuntime.handleStartLoad(); if (rec) hccRuntime.restoreSaveData(rec); },   // AUDIT HCC H3: a same-dungeon load's OnStartLoad and RestoreSaveData

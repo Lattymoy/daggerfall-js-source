@@ -1246,3 +1246,27 @@ export function diversAt(dungeon, t, world, o) {
   }
   return { divers, pending };
 }
+
+/**
+ * LW14: THE DIVES into `dungeon` whose hours inside touch minute `t0` to `t1` - the parties of the towns within reach,
+ * each once (their trip as the trouble left it): what a dungeon's build reads for the stops a company passed
+ * (deepRoute.js clearedOf). The oldest first. `pending` as diversAt's.
+ * @param {LwTown} dungeon @param {number} t0 @param {number} t1 @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
+ * @returns {{ dives: Trip[], pending: boolean }}
+ */
+export function divesIn(dungeon, t0, t1, world, o) {
+  /** @type {Map<string, Trip>} */
+  const found = new Map();
+  let pending = false;
+  for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
+    for (let back = 0; t1 - back * DAY_MIN >= t0 - DAY_MIN; back++) {
+      const trips = townTrips(town, t1 - back * DAY_MIN, world, o);
+      if (trips === undefined) { pending = true; break; }
+      for (const trip of trips) {
+        if (!trip.dive || trip.to?.mapId !== dungeon.mapId || !(trip.dive.t0 < t1 && trip.dive.t1 > t0) || found.has(trip.id)) continue;
+        found.set(trip.id, trip);
+      }
+    }
+  }
+  return { dives: [...found.values()].sort((a, b) => /** @type {any} */ (a.dive).t0 - /** @type {any} */ (b.dive).t0 || (a.id < b.id ? -1 : 1)), pending };
+}
