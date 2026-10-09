@@ -285,6 +285,6 @@ test('CHAP7a the wiring: the route and its door; the migrations grown in place; 
   assert.match(nc, /\.bind\(week, nowS, JSON\.stringify\(\[\.\.\.seasonRows, \.\.\.\(patrons\?\.rows \?\? \[\]\)\]\)\),\n\s+\.\.\.\(patrons \? patronStatements\(db, patrons, nowS\) : \[\]\),/);
   assert.match(nc, /INSERT INTO realm_tx_guard \(moved, expected\) SELECT 1, 0 WHERE EXISTS \(SELECT 1 FROM npc_chapter_patron_bids WHERE season <= \?1 AND state = 'open'\)/);
   assert.match(nc, /doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true/);
-  assert.match(rd('server-account/migrations/0099_npc_chapters.sql'), /\n  patron    TEXT,\n  patron_season INTEGER,\n/);
-  assert.match(rd('server-account/migrations/0100_npc_seats.sql'), /CREATE TABLE IF NOT EXISTS npc_chapter_patron_bids \(/);
+  assert.match(rd('server-account/migrations/0100_npc_chapters.sql'), /\n  patron    TEXT,\n  patron_season INTEGER,\n/);
+  assert.match(rd('server-account/migrations/0101_npc_seats.sql'), /CREATE TABLE IF NOT EXISTS npc_chapter_patron_bids \(/);
 });

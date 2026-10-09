@@ -386,7 +386,7 @@ export const PORT_DEFAULTS = Object.freeze({
  *  drop-the-override arm, the merged view and Reset's publish - because
  *  a second layer honoured in three places out of four is the bug that
  *  layer would be famous for. */
-const defaultOf = (section, key) => PORT_DEFAULTS[section]?.[key] ?? DEFAULTS[section]?.[key];
+export const defaultOf = (section, key) => PORT_DEFAULTS[section]?.[key] ?? DEFAULTS[section]?.[key];   // FEATURES-DEFAULTS: the Features pane's Defaults reads it too
 
 // ---- the store ----
 let _values = null;   // Section -> key -> raw string (overrides only)

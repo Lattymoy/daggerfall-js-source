@@ -79,8 +79,8 @@
   {
     "name": "the-mods-pane-goes-back-to-the-lanes-note",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_MODS_NOTE));",
-    "new": "  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));",
+    "old": "  if (tab.id === 'mods' && isOnlinePage()) body.append(el('p', 'meta opt-note', ONLINE_MODS_NOTE));",
+    "new": "  if (tab.id === 'mods' && isOnlinePage()) body.append(el('p', 'meta opt-note', ONLINE_LOCK_NOTE));",
     "tests": [
       "test/modsonline.test.js",
       "test/onlinelane.test.js"

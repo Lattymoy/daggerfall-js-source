@@ -913,11 +913,17 @@ export const REALM_ACT_TRANSIENT = Object.freeze(['offline', 'server', 'rate']);
  * (`unknown`) with the gold where it is - only a join reads how the act ended.
  * `apply(answer)` gets the service's answer; an act whose client needs it (`needsAnswer` - a sale, whose refund the
  * service's price decides) cannot take a landed act without it, and ends the session instead.
+ * AUDIT CARDS-6 E6: A READ (`read` - an ask that moves nothing on the record, a ranked seat's deck order: the service
+ * reads the record where it stands and answers, server-account/src/iliac.js deckOrderOf) NEVER ENDS THE SESSION on an
+ * answer it did not get. Nothing of the record can be unknown after it - its answer lost every time, or a `seq` (never
+ * this ask, landed: it lands nothing; a move this tab never made is its own checkpoint's to meet), is the realm not
+ * answering: `{ ok: false, error: 'offline', why: 'offline' }`. Asked as an act, `unknown` sent the player to the title.
  * @param {{ session: any, checkpoint: () => any, reserve?: (() => (() => void)) | null, apply?: ((answer: any) => void) | null,
- *   call: (at: { id: string, lease: string, seq: number }) => Promise<any>, wait?: (ms: number) => Promise<void>, needsAnswer?: boolean }} at
+ *   call: (at: { id: string, lease: string, seq: number }) => Promise<any>, wait?: (ms: number) => Promise<void>, needsAnswer?: boolean, read?: boolean }} at
  */
-export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false }) {
+export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false, read = false }) {
   checkpoint();
+  const unanswered = read ? { ok: false, error: 'offline', why: 'offline' } : { ok: false, error: 'offline', unknown: true };   // AUDIT CARDS-6 E6
   const outcome = session.transact(async (/** @type {any} */ at) => {
     const where = { id: at.id, lease: at.lease, seq: at.seq };
     for (let i = 0; i < REALM_ACT_TRIES; i++) {
@@ -926,11 +932,11 @@ export async function realmGoldAct({ session, checkpoint, reserve = null, apply 
       // AUDIT REALM L1-F2: every realm act answers where the record stands before any other word (server-account/src/
       // realm.js realmActFirst) - so a record one on, when this act was asked before and its answer lost, is this act,
       // landed; on its first asking, or any further on, it is a move nothing this tab sent made: only a join reads it
-      if (r?.error === 'seq') return i > 0 && r.seq === at.seq + 1 && !needsAnswer ? { ok: true, landed: true, seq: r.seq } : { ok: false, error: 'offline', unknown: true };
+      if (r?.error === 'seq') return i > 0 && r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq } : unanswered;
       if (!REALM_ACT_TRANSIENT.includes(r?.error)) return r;   // the service's own word, asked where the record stands: nothing moved
       await wait(REALM_ACT_RETRY_MS * (i + 1));
     }
-    return { ok: false, error: 'offline', unknown: true };
+    return unanswered;
   });
   const undo = reserve ? reserve() : null;   // the hold began above: no checkpoint of the purse with it out goes
   const r = await outcome;

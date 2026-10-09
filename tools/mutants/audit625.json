@@ -82,8 +82,8 @@
   {
     "name": "AUDIT625-L5-the-joiner-uncapped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); capFoeLoot(f.entity); }",
-    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1); }",
+    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); }",
     "why": "a joiner's copy of a body past its cap",
     "tests": [
       "test/audit625_loot.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT625-L5-the-arrival-uncapped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); capFoeLoot(f.entity); }",
-    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); }",
+    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); }",
     "why": "an arrival's copy of a body past its cap",
     "tests": [
       "test/audit625_loot.test.js"

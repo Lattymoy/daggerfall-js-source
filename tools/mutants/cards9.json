@@ -1,0 +1,239 @@
+[
+  {
+    "name": "CARDS9-worth-tier",
+    "file": "src/net/cardWorthLaw.js",
+    "old": "export const CARD_WORTH = Object.freeze({ common: 5, magic: 20,",
+    "new": "export const CARD_WORTH = Object.freeze({ common: 5, magic: 5,",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-worth-mint",
+    "file": "src/systems/iliacItems.js",
+    "old": "  it.value = cardWorth(id);   // CARDS9",
+    "new": "  it.value = 1;   // CARDS9",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-worth-load",
+    "file": "src/systems/iliacItems.js",
+    "old": "if (isIliacCard(it)) { const w = cardWorth(it.card); if (w > 0 && it.value !== w) it.value = w; continue; }",
+    "new": "if (isIliacCard(it)) { continue; }",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-pack-size",
+    "file": "src/systems/cardSources.js",
+    "old": "export const CARD_PACK_SIZE = 5;",
+    "new": "export const CARD_PACK_SIZE = 4;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-pack-top",
+    "file": "src/systems/cardSources.js",
+    "old": "const tier = tierOf(k === CARD_PACK_SIZE - 1 ? PACK_TOP_TIERS : PACK_SLOT_TIERS, rolls());",
+    "new": "const tier = tierOf(PACK_SLOT_TIERS, rolls());",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-pack-no-bosses",
+    "file": "src/systems/cardSources.js",
+    "old": "c.tier === t && !BOSS_CARD_IDS.includes(c.id)",
+    "new": "c.tier === t",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-pack-stack",
+    "file": "src/systems/cardSources.js",
+    "old": "if ((item.stackCount ?? 1) > 1) item.stackCount -= 1; else collection.splice(at, 1);",
+    "new": "if ((item.stackCount ?? 1) > 1) item.stackCount -= 0; else collection.splice(at, 1);",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-counter-price",
+    "file": "src/systems/cardSources.js",
+    "old": "Math.max(1, calculateTradePrice(CARD_PACK_BASE_PRICE, quality, skills, false, opts));",
+    "new": "CARD_PACK_BASE_PRICE;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-counter-purse",
+    "file": "src/systems/cardSources.js",
+    "old": "  deductGold(entity, price);\n  if (!Array.isArray(entity.items)) entity.items = [];",
+    "new": "  if (!Array.isArray(entity.items)) entity.items = [];",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-counter-refusal",
+    "file": "src/systems/cardSources.js",
+    "old": "if (!entity || totalGoldAmount(entity) < price) return { ok: false, price, why: 'gold' };",
+    "new": "if (!entity) return { ok: false, price, why: 'gold' };",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-foes-map",
+    "file": "src/systems/cardSources.js",
+    "old": "  const id = FOE_CARDS[entity.mobileType];",
+    "new": "  const id = FOE_CARDS[0];",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-foes-chance",
+    "file": "src/systems/cardSources.js",
+    "old": "export const FOE_CARD_PER_MILLE = Object.freeze({ common: 16,",
+    "new": "export const FOE_CARD_PER_MILLE = Object.freeze({ common: 160,",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-foes-titled",
+    "file": "src/systems/cardSources.js",
+    "old": "(titled(entity) ? TITLED_FOE_CARD_MULT : 1)",
+    "new": "1",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-foes-handler",
+    "file": "src/systems/cardSources.js",
+    "old": "registerEnemyDeathHandler(CARD_DROP_HANDLER, (entity, opts = {}) => { dropFoeCard(entity, opts); });",
+    "new": "registerEnemyDeathHandler(CARD_DROP_HANDLER, () => {});",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-foes-cap",
+    "file": "src/systems/foeLootCap.js",
+    "old": "export const CARD_CAP_RANK = 2;",
+    "new": "export const CARD_CAP_RANK = 9;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-guild-chance",
+    "file": "src/systems/cardSources.js",
+    "old": "if (!(rolls() * 1000 < GUILD_CARD_PER_MILLE)) return null;",
+    "new": "if (!(rolls() * 1000 < 1000)) return null;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-guild-ladder",
+    "file": "src/systems/cardSources.js",
+    "old": "  for (const [at, card] of ladder) if (r >= at) id = card;",
+    "new": "",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-guild-faction",
+    "file": "src/systems/cardSources.js",
+    "old": "const fixed = { 40: 'MagesGuild', 41: 'FightersGuild', 42: 'ThievesGuild', 108: 'DarkBrotherhood' }[factionId];",
+    "new": "const fixed = { 40: 'FightersGuild', 41: 'MagesGuild', 42: 'ThievesGuild', 108: 'DarkBrotherhood' }[factionId];",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-guild-once",
+    "file": "src/scenes/world.js",
+    "old": "    if (!quest || cardQuestPaid.has(key)) return;",
+    "new": "    if (!quest) return;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-boss-chance",
+    "file": "src/systems/bossCards.js",
+    "old": "export const BOSS_CARD_PER_MILLE = Object.freeze({ gate: 200, serpent: 250, abyss: 250 });",
+    "new": "export const BOSS_CARD_PER_MILLE = Object.freeze({ gate: 200, serpent: 250, abyss: 0 });",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-boss-draw-place",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const hourlock = rollHourlock(rolls);",
+    "new": "  bossCardRoll('abyss', rolls);\n  const hourlock = rollHourlock(rolls);",
+    "tests": [
+      "test/cards9_sources.test.js",
+      "test/sd9e_spoils.test.js",
+      "test/gilded1_gilded.test.js"
+    ],
+    "why": "The draw's place: a boss card drawn anywhere but LAST moves every roll after it. The first cut of this record turned `const r = rolls()` into `id && rolls()`, an equivalent for every kind a hoard names."
+  },
+  {
+    "name": "CARDS9-boss-stander",
+    "file": "src/systems/serpentSpoils.js",
+    "old": "  const card = dealt ? bossCardRoll('serpent', rolls) : null;",
+    "new": "  const card = bossCardRoll('serpent', rolls);",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-customs-allowance",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  const allowance = customsCardAllowance(snap?.level);",
+    "new": "  const allowance = customsCardAllowance(1);",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-customs-order",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  held.sort((a, b) => unit(b.rec) - unit(a.rec));",
+    "new": "  held.sort((a, b) => unit(a.rec) - unit(b.rec));",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-service-bound",
+    "file": "server-account/src/realm.js",
+    "old": "  return cardWorthOf(save) <= customsCardAllowance(level) ? null : { error: 'customs-cards' };",
+    "new": "  return null;",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "CARDS9-service-birth",
+    "file": "server-account/src/realm.js",
+    "old": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0 ? null",
+    "new": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardPacksOf(save) === 0 ? null",
+    "tests": [
+      "test/cards9_sources.test.js"
+    ]
+  }
+]

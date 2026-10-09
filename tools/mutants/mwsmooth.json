@@ -1,0 +1,132 @@
+[
+  {
+    "name": "MWSMOOTH-the-pack-lights-by-faces",
+    "file": "src/combat/fpArm.js",
+    "old": "    const nrm = p.normals && p.normals.length === pos.length ? p.normals : null;   // MW-SMOOTH",
+    "new": "    const nrm = null;   // MW-SMOOTH",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ],
+    "note": "Every Morrowind mesh faceted again, its smooth normals posed and then thrown away."
+  },
+  {
+    "name": "MWSMOOTH-skinned-normals-left-unposed",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null);   // MW-SMOOTH: and its normals",
+    "new": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);   // MW-SMOOTH: and its normals",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-rigid-normals-left-unposed",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH",
+    "new": "",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-mirror-forgotten",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    const x = mirror ? -normals[v] : normals[v];",
+    "new": "    const x = normals[v];",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-mirror-flipped-like-a-face",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (nrm && !zeroAt(nrm, v)) { buf[o++] = nrm[v]; buf[o++] = nrm[v + 1]; buf[o++] = nrm[v + 2]; }",
+    "new": "        if (nrm && !zeroAt(nrm, v)) { buf[o++] = nrm[v] * flip; buf[o++] = nrm[v + 1] * flip; buf[o++] = nrm[v + 2] * flip; }",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ],
+    "note": "A posed vertex normal was mirrored with its vertex; negating it again as a face normal is negated lights the left side inside-out."
+  },
+  {
+    "name": "MWSMOOTH-the-scale-left-in",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    const len = Math.hypot(nx, ny, nz) || 1;\n    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;\n  }\n  return out;\n}\n\n/** MW-SMOOTH: the posed-normal buffer",
+    "new": "    const len = 1;\n    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;\n  }\n  return out;\n}\n\n/** MW-SMOOTH: the posed-normal buffer",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-pre-transform-not-turned",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null, normals });",
+    "new": "            sourceNormals: normals ? batch.normals : null, normals });",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-no-normals-carried",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return batch.normals && batch.normals.length === batch.positions.length ? new Float32Array(batch.normals.length) : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-garment-normal-not-solved",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "        const ox = inv ? inv[0] * nx + inv[1] * ny + inv[2] * nz : nx;",
+    "new": "        const ox = nx;",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-garment-drops-its-normals",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "      positions, normals, uvs, colors: null, material: garment.material ?? null,",
+    "new": "      positions, normals: null, uvs, colors: null, material: garment.material ?? null,",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-the-garment-piece-drops-its-normals",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "        normals: posedNormals(batch) });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin",
+    "new": "        normals: null });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ],
+    "note": "AUDIT MW-SMOOTH: the brigandine's door, unpinned by the first three tests - it fell back to its faces with nothing failing."
+  },
+  {
+    "name": "MWSMOOTH-the-hung-part-lit-by-its-bone",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH",
+    "new": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, at, p.mirrored, p.normals);   // MW-SMOOTH",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ],
+    "note": "AUDIT MW-SMOOTH: a lantern hung plumb lit as if it turned with the pelvis."
+  },
+  {
+    "name": "MWSMOOTH-a-zero-corner-written-as-is",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (nrm && !zeroAt(nrm, v)) {",
+    "new": "        if (nrm) {",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  },
+  {
+    "name": "MWSMOOTH-a-zero-corner-finds-no-face",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!nrm || zeroAt(nrm, a) || zeroAt(nrm, b) || zeroAt(nrm, c)) {",
+    "new": "      if (!nrm) {",
+    "tests": [
+      "test/mwsmooth.test.js"
+    ]
+  }
+]

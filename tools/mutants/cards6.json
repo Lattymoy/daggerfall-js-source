@@ -197,8 +197,8 @@
   {
     "name": "C6-cashed-rejoins",
     "file": "src/net/holdemTable.js",
-    "old": "    if (t.seats[mine].cashed) return 'cashed out';",
-    "new": "    void 0;",
+    "old": "return t.seats[mine].cashed ? 'cashed out' : null;",
+    "new": "return null;",
     "tests": [
       "test/auditcards3_pins.test.js",
       "test/auditcards3_relay.test.js",

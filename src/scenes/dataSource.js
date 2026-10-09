@@ -16,6 +16,7 @@
 import { isTouchDevice } from '../ui/touchDevice.js';   // TI3
 import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the asset picker's face follows the skin
 import { PIXEL_FONT_CSS } from '../ui/pixelifyFive.js';   // FONT3
+import { optionPath } from '../ui/settingsMap.js';   // ORG2
 
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
@@ -1178,8 +1179,8 @@ export async function pickLightingModFiles() {
       in its download it is inside the <b>Mods</b> folder (the original by
       ShortBeard, or the fixed version by BlazeBlue32). Nothing is uploaded -
       it is stored in this browser.</p>
-      <p style="color:#999">Then choose how it lights in Features &rarr; Sight
-      &rarr; Modded lighting: On, or With shadows.</p>`,
+      <p style="color:#999">Then choose how it lights in ${optionPath('feat:modded-lighting').replaceAll(' \u203a ', ' &rarr; ')}
+      &rarr; Modded lighting: On, or With shadows.</p>`,   // ORG2: where the map puts it
     store: async (files, progress) => {
       const picked = [...files].filter((f) => dfmodStoreKey(f.name)).slice(0, 1);
       if (!picked.length) throw new Error('that is not a .dfmod file');
@@ -1195,7 +1196,7 @@ export async function pickLightingModFiles() {
     register: registerTextureStore,
     directory: false,
     accept: '.dfmod',
-    doneText: 'Improved Interior Lighting attached - choose On or With shadows in Features \u2192 Sight \u2192 Modded lighting',
+    doneText: `Improved Interior Lighting attached - choose On or With shadows on Modded lighting (${optionPath('feat:modded-lighting')})`,   // ORG2
   });
 }
 

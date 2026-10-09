@@ -8,7 +8,7 @@ reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING):
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, `npcReceipts.js`, `npcMerit.js`,
   `npcChapters.js` (the Turning, the seats, the titles, the Focus, the Chronicle), the Chapters' parts of
-  `professions.js`, the routes, migrations `0095` to `0100`;
+  `professions.js`, the routes, migrations `0096` to `0101`;
 - **the economy and its abuse** (E): a modified client, alts and rings, Merit's cap against the seats, the Focus, a
   seat's gifts;
 - **the client** (C): `src/net/npcRollTracker.js`, `chapterSheet.js`, `npcHallBook.js`, the board's Work tab, the hall's
@@ -23,8 +23,8 @@ Every finding was re-read here before a line moved. Each fix carries an `AUDIT C
 `test/audit_chap4.test.js` (28), and is mutated in `tools/mutants/audit_chap4.json`: **71 records, all dead**. Thirty-seven
 older records the fixes moved were re-aimed by content and run again, all dead; two were retired with the carry they
 mutated (CHAP4a's `CHAP4A-CARRY`, `CHAP4A-SCORE-CARRY` - E1); AUDIT CHAP3's `A3-S2-OFF`, recorded equivalent, dies now
-(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND): none of the arc has shipped, so migrations `0095`, `0099` and
-`0100` grew in place; nothing here changes what the relay reads.
+(S2). The service stays `acct98` and the relay `world180` (`acct99` and `world182` since the merges of main past PERMADEATH-HOUSES, TAVERN-TABLES and TV-BEYOND): none of the arc has shipped, so migrations `0096`, `0100` and
+`0101` grew in place; nothing here changes what the relay reads.
 
 Decided at Mac's standing word ("You make the best decisions"; "You can decide whatever is best"), each his to overrule:
 E1 (a sitting holder's x1.2 made a tie-break), D1 (a dormant membership kept on the Roll, asked by Merit and the seats),
@@ -34,7 +34,7 @@ realm's active count kept as the target's measure).
 ## Fixed
 
 **The service** (`server-account/src/npcChapters.js`, `professions.js`, `npcRoll.js`, `npcMerit.js`, `npcReceipts.js`,
-migrations `0095`, `0099`, `0100`)
+migrations `0096`, `0100`, `0101`)
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
@@ -69,7 +69,7 @@ migrations `0095`, `0099`, `0100`)
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
-| D1 = E7 = R4 | medium | `rollMembersOf` claimed both books, and the seats asked no active membership: a vampire's mortal guilds - dormant in DFU's GuildManager - earned Merit and could hold seats. AUDIT CHAP D6's promise unkept. | DECIDED: a line the active book does not hold is claimed dormant (`d: 1`), kept on the Roll (`npc_roll.dormant`, `0095` grown in place); Merit, the member writ, a receipt's standing and the seats ask `dormant = 0`. |
+| D1 = E7 = R4 | medium | `rollMembersOf` claimed both books, and the seats asked no active membership: a vampire's mortal guilds - dormant in DFU's GuildManager - earned Merit and could hold seats. AUDIT CHAP D6's promise unkept. | DECIDED: a line the active book does not hold is claimed dormant (`d: 1`), kept on the Roll (`npc_roll.dormant`, `0096` grown in place); Merit, the member writ, a receipt's standing and the seats ask `dormant = 0`. |
 | D3 | low | A seat's rank title read three ways: the popup's macros, the counter and the affiliations the book's; training's macros and the guild's quest offer the seat's. | A seat's title is the one its own halls say: the popup and its counter read the seated book; the sheet's affiliations name the book's rank (recorded, 3.5). |
 | D4 | low | CHAP5a dropped DFU's shelf refusal where the roll opened, and every Fighters Guild and knightly-order member - whose shelves DFU opens to no one - read the roll alone. | The refused read the roll and then DFU's refusal line; the record says who is refused. |
 | D2, D5 | low | What DFU gives once at 8 or 9 (texts, maps, locations, gifts) was lost online unrecorded; `hallFamiliesOf`'s reason was wrong (DFU's guilds trade in none of it). | Recorded (3.5, section 4, the ledger); the comment corrected. |

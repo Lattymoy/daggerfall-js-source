@@ -112,8 +112,8 @@ test('AUDIT 63 F11: every host site that builds the formula\'s skills object rea
   const wm = read('../src/scenes/worldModes.js');
   assert.equal(/personality:\s*playerEntity\.stats\?\.personality\s*\?\?\s*50/.test(wm), false,
     'no host site may pass the PERMANENT stat into CalculateTradePrice');
-  assert.equal((wm.match(/liveStat\(playerEntity, 'personality'\)/g) ?? []).length, 6,
-    'all six worldModes sites read LivePersonality');
+  assert.equal((wm.match(/liveStat\(playerEntity, 'personality'\)/g) ?? []).length, 7,
+    'all seven worldModes sites read LivePersonality');   // PIN MOVED (CARDS9): the card table's pack, priced at the counter's own law
   const ga = read('../src/systems/guildServiceActions.js');
   assert.ok(/liveStat\(entity, 'personality'\)/.test(ga), 'and the temple cure with them');
 });

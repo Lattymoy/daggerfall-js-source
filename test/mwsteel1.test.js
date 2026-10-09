@@ -39,7 +39,7 @@ const SET = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templa
 
 test('MW-STEEL1: every shipped mesh and texture is re-made from the committed sources byte for byte, and read back as the port reads it', () => {
   const pngs = Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, raw(p)]));
-  const baked = bakeSteelPlate({ open: raw(SOURCE.open), closed: raw(SOURCE.closed), pngs, skeleton: raw(RETAIL_SKELETON) });   // MW-STEEL4: skinned in retail's bind
+  const baked = bakeSteelPlate({ set: raw(SOURCE.set), openHelm: raw(SOURCE.openHelm), pngs, skeleton: raw(RETAIL_SKELETON) });   // MW-STEEL4: skinned in retail's bind; MW-STEEL5: two sources
   assert.deepEqual(baked.pieces.map((p) => p.id), ['cuirass', 'skirt', 'pauldron_right', 'pauldron_left', 'gauntlet_right', 'gauntlet_left',
     'greave_right', 'greave_left', 'boot_right', 'boot_left', 'helm_open', 'helm_closed']);
   assert.deepEqual(baked.textures.map((t) => t.tex), ['cuirass', 'pauldron', 'gauntlet', 'greave', 'boot', 'helm', 'visor', 'skirt']);
@@ -64,30 +64,30 @@ test('MW-STEEL1: every shipped mesh and texture is re-made from the committed so
 });
 
 test('MW-STEEL1: the sources are Mac\'s exports less the Morrowind body they were fitted on - held to their bytes, and refused when a piece is not where it was read', () => {
-  assert.equal(sha(SOURCE.open), '7a4b20045a22b40f474be66119a1084f1ca1da9eab7dccb7469e9208252fb67d');   // MW-STEEL2: re-imported with the plate skirt kept
-  assert.equal(sha(SOURCE.closed), '4efd294bdb4fba2a7f6a78286a8bd1d53c591a57d1337cdbedfe914b8752121a');
-  for (const [name, bytes] of [['open', raw(SOURCE.open)], ['closed', raw(SOURCE.closed)]]) {
+  assert.equal(sha(SOURCE.set), '4a68e08da934267f7675fb19af441d4ec8dac58274a1e27a77e46650754ea303');   // MW-STEEL5: Mac's steel_armor.fbx as it came
+  assert.equal(sha(SOURCE.openHelm), 'f51a41c3d3a150c4ee46e012ddb6ce52fa3b816b9e4fbb717bc3901acf2d0a58');   // MW-STEEL5: the open helm alone, out of MW-STEEL2's source
+  for (const [name, bytes] of [['set', raw(SOURCE.set)], ['open helm', raw(SOURCE.openHelm)]]) {
     for (const ref of Object.values(REFERENCE_PARTS)) assert.equal(meshModelNames(bytes).includes(ref), false, `the ${name} source carries no ${ref}`);
     assert.equal(bytes.includes(Buffer.from('tx_b_n_breton')), false, `the ${name} source names no Morrowind body texture`);
     assert.equal(readFbx(bytes).version, 7400);
   }
-  assert.deepEqual(meshModelNames(raw(SOURCE.closed)), ['Sphere', 'Sphere.001 Remeshed Remeshed'], 'the second export is committed as its closed helm alone');
+  assert.deepEqual(meshModelNames(raw(SOURCE.openHelm)), ['Sphere.002'], 'the open helm is committed alone');
   // MW-STEEL2: the plate skirt under the breastplate is kept since its painting came, and baked as the set's skirt
-  assert.ok(meshModelNames(raw(SOURCE.open)).includes('Imperial_Silver_Cuirass_67_Male.011'), 'the open source keeps the skirt');
+  assert.ok(meshModelNames(raw(SOURCE.set)).includes('Imperial_Silver_Cuirass_67_Male.011'), 'the set\'s source keeps the skirt');
   assert.deepEqual(PIECES.find((p) => p.id === 'skirt').shapes.map((x) => [x.object, x.texture]), [['Imperial_Silver_Cuirass_67_Male.011', 'skirt']]);
   // a piece moved past the slack is refused by name
-  const tree = readFbx(raw(SOURCE.open));
+  const tree = readFbx(raw(SOURCE.set));
   assert.throws(() => bakeObject(tree, 'Cube.024', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.2]]), /"Cube\.024" stands at .* not where its piece was read/);
   assert.doesNotThrow(() => bakeObject(tree, 'Cube.024', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.13]]));
   assert.throws(() => objectTree(tree, 'Breton_Male.003'), /no Mesh object "Breton_Male\.003"/);
 });
 
 test('MW-STEEL1: the strip copies every record it keeps byte for byte - nothing dropped is nothing changed, and a dropped object takes only what hangs from it alone', () => {
-  const src = raw(SOURCE.open);
+  const src = raw(SOURCE.set);
   assert.equal(Buffer.compare(stripFbx(src, { drop: [] }).bytes, src), 0, 'an empty strip is the file');
-  const { bytes, dropped } = stripFbx(src, { drop: ['Sphere.002'] });
-  assert.deepEqual(dropped.map((d) => [d.kind, d.name]), [['Geometry', 'Sphere.003'], ['Model', 'Sphere.002'], ['Material', 'Material.037'], ['Texture', 'base_color_texture'], ['Video', 'DefaultMaterial_2D_View_<UDIM>.png.003']]);
-  assert.equal(meshModelNames(bytes).includes('Sphere.002'), false);
+  const { bytes, dropped } = stripFbx(src, { drop: ['Sphere'] });
+  assert.deepEqual(dropped.map((d) => [d.kind, d.name]), [['Geometry', 'Sphere.003'], ['Model', 'Sphere'], ['Material', 'Material.037'], ['Texture', 'base_color_texture'], ['Video', 'DefaultMaterial_2D_View_<UDIM>.png.003']]);
+  assert.equal(meshModelNames(bytes).includes('Sphere'), false);
   // the boots share one material between two objects: dropping one keeps it for the other
   const one = stripFbx(src, { drop: ['Cube.019'] });
   assert.deepEqual(one.dropped.map((d) => d.kind), ['Geometry', 'Model'], 'a material a kept object wears stays');

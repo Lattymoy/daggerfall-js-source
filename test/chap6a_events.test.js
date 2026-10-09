@@ -386,7 +386,7 @@ test('CHAP6a a shut hall posts no writs this Season - nor its members their own;
 });
 
 test('CHAP6a the wiring: the chapters\' event columns and their check; the Season\'s rows in the Turning\'s own batch (mutants: none - the record)', () => {
-  const mig = src('server-account/migrations/0099_npc_chapters.sql');
+  const mig = src('server-account/migrations/0100_npc_chapters.sql');
   assert.match(mig, /event     TEXT CHECK \(event IS NULL OR event IN \('calm', 'schism', 'succession', 'crackdown', 'rivalry', 'decline', 'ascendancy'\)\),\n  event_season INTEGER,\n  event_data TEXT NOT NULL DEFAULT '\{\}',\n  shut_season INTEGER,/);
   assert.match(src('server-account/src/npcChapters.js'), /\/\/ CHAP6a: the Season's own lines - each event's ending, and each Master who held the seat the whole of it/);
 });

@@ -189,6 +189,10 @@ export function transferSkin(garment, sources, ctx) {
     const bones = batch.skin.bones.map((b) => ({ ref: b.ref, name: b.name, invBind: b.invBind, indices: [], weights: [] }));
     const positions = new Float32Array(sub.verts.length * 3);
     const uvs = garment.uvs ? new Float32Array(sub.verts.length * 2) : null;
+    // MW-SMOOTH: the garment's own normals, solved as its positions are - skinBatch turns a normal by the blended 3x3
+    // and renormalises, so the inverse of that 3x3 gives back the authored normal in this pose
+    const N = garment.normals && garment.normals.length === G.length ? garment.normals : null;
+    const normals = N ? new Float32Array(sub.verts.length * 3) : null;
     sub.verts.forEach(({ v, j }, k) => {
       const m = aff.get(j);
       const inv = invert33(m.a);
@@ -200,13 +204,21 @@ export function transferSkin(garment, sources, ctx) {
       } else {
         positions.set([G[v * 3], G[v * 3 + 1], G[v * 3 + 2]], k * 3);
       }
+      if (normals) {
+        const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2];
+        const ox = inv ? inv[0] * nx + inv[1] * ny + inv[2] * nz : nx;
+        const oy = inv ? inv[3] * nx + inv[4] * ny + inv[5] * nz : ny;
+        const oz = inv ? inv[6] * nx + inv[7] * ny + inv[8] * nz : nz;
+        const len = Math.hypot(ox, oy, oz) || 1;
+        normals[k * 3] = ox / len; normals[k * 3 + 1] = oy / len; normals[k * 3 + 2] = oz / len;
+      }
       for (const [bi, w] of infl[j]) { bones[bi].indices.push(k); bones[bi].weights.push(w); }
       if (uvs) { uvs[k * 2] = garment.uvs[v * 2]; uvs[k * 2 + 1] = garment.uvs[v * 2 + 1]; }
     });
     out.push({
       name: garment.name || '', skinned: true,
       skin: { ...batch.skin, bones: bones.filter((b) => b.indices.length) },
-      positions, normals: null, uvs, colors: null, material: garment.material ?? null,
+      positions, normals, uvs, colors: null, material: garment.material ?? null,
       indices: Uint16Array.from(sub.indices),
     });
   });

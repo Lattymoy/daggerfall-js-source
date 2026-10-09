@@ -194,7 +194,7 @@ export const FRAME_ROLES = {
     'body .aw-chip'],   // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
   well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
-     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
+     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .opt-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
@@ -207,7 +207,7 @@ export const FRAME_ROLES = {
     // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits
     'body .dfpage-leaf', 'body .dfdecor-list', 'body .dfdecor-preview', 'body .dfdecor-thumb', 'body .dfdecor-search', 'body .dfparty-face',
     'body .dfnaval-holdlist'],   // NAV-F: a taken ship's hold, sunk into her window
-  input: ['.shell .ft-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
+  input: ['.shell .opt-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     'body .dfsocial-field', 'body .dfchat-input', 'body .dfdecor-search',
     '.tview-wp-pick', '#wp-menu input.wpm-name'],   // WAYPOINTS: the follow dropdown and the menu's name
   meterFill: ['.px-fill'],

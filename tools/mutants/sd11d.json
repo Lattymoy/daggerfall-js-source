@@ -2,8 +2,8 @@
   {
     "name": "SD11D-a-line-its-1.5s",
     "file": "src/scenes/sdVoice.js",
-    "old": "const put = (text, rank, t, key) => { show(text, seconds(text)); standing = { rank, until: t + seconds(text) * 1000, key }; };",
-    "new": "const put = (text, rank, t, key) => { show(text, 1.5); standing = { rank, until: t + 1500, key }; };",
+    "old": "const put = (text, rank, t, key) => { show(text, seconds(text)); standing = { text, rank, until: t + seconds(text) * 1000, key }; };",
+    "new": "const put = (text, rank, t, key) => { show(text, 1.5); standing = { text, rank, until: t + 1500, key }; };",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD11D-each-line-replacing-the-last",
     "file": "src/scenes/sdVoice.js",
-    "old": "if (!standing || r < standing.rank || (k !== null && standing.key === k)) {",
-    "new": "if (true) {",
+    "old": "if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "if (coveredAt === null) {",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD11D-the-thread-queued",
     "file": "src/scenes/sdVoice.js",
-    "old": " || (k !== null && standing.key === k)) {",
-    "new": ") {",
+    "old": " || (k !== null && standing.key === k))) {",
+    "new": ")) {",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD11D-a-line-cutting-its-betters",
     "file": "src/scenes/sdVoice.js",
-    "old": "if (!standing || r < standing.rank ||",
-    "new": "if (!standing || r <= standing.rank + 1 ||",
+    "old": "(!standing || r < standing.rank ||",
+    "new": "(!standing || r <= standing.rank + 1 ||",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SD11D-a-way-in-left-in-fire",
     "file": "src/scenes/world.js",
-    "old": "    }, 'brass');   // AUDIT SD II (L6 F8): through the Hour's own veil",
+    "old": "    }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift",
     "new": "    });",
     "tests": [
       "test/sd11d_words.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "SD11D-the-cast-out-in-fire",
     "file": "src/scenes/world.js",
-    "old": "      if (hour) gateVeil?.flash('brass');",
+    "old": "      if (hour) gateVeil?.flash('hourCast');   // SD-LOOK: forced out - the Hour's face shattered",
     "new": "      if (hour) gateVeil?.flash();",
     "tests": [
       "test/sd11d_words.test.js"
@@ -335,7 +335,7 @@
   {
     "name": "SD11D-no-rise",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "      if (t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);\n",
+    "old": "      if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);\n",
     "new": "",
     "tests": [
       "test/sd11d_words.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "SD11D-a-stale-rise",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "if (t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p)",
-    "new": "for (const p of heartsOf.p)",
+    "old": "if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p)",
+    "new": "if (!away) for (const p of heartsOf.p)",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -398,7 +398,7 @@
   {
     "name": "SD11D-the-hearts-after-the-idle-return",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "      hearts(s, t);   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight\n",
+    "old": "      hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS));   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight\n",
     "new": "",
     "tests": [
       "test/sd11d_words.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "SD11D-the-brass-never-drawn",
     "file": "src/ui/gateVeil.js",
-    "old": "try { pass.draw(w, h, (t - began) / 1000, current(t), theme); }",
-    "new": "try { pass.draw(w, h, (t - began) / 1000, current(t)); }",
+    "old": "else pass.draw(w, h, (t - began) / 1000, current(t), m !== undefined ? VEIL_THEMES.brass : theme);",
+    "new": "else pass.draw(w, h, (t - began) / 1000, current(t));",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "SD11D-a-look-changed-mid-step",
     "file": "src/ui/gateVeil.js",
-    "old": "      if (phase === 'idle') theme = themeOf(look);\n",
-    "new": "      theme = themeOf(look);\n",
+    "old": "      if (phase === 'idle') takeLook(look, opts);\n",
+    "new": "      takeLook(look, opts);\n",
     "tests": [
       "test/sd11d_words.test.js"
     ]
@@ -579,7 +579,7 @@
   {
     "name": "SD11D-a-flash-in-fire",
     "file": "src/ui/gateVeil.js",
-    "old": "      theme = themeOf(look);\n      if (phase === 'idle') show(t);",
+    "old": "      takeLook(look, opts);\n      if (phase === 'idle') show(t);",
     "new": "      if (phase === 'idle') show(t);",
     "tests": [
       "test/sd11d_words.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "SD11D-the-step-blind-to-its-look",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (veil) await veil.cover(look);",
-    "new": "      if (veil) await veil.cover();",
+    "old": "      if (veil) await veil.cover(look, opts);",
+    "new": "      if (veil) await veil.cover(undefined, opts);",
     "tests": [
       "test/sd11d_words.test.js"
     ]

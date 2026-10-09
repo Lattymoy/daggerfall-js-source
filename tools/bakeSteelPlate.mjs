@@ -2,9 +2,11 @@
 //
 //     node tools/bakeSteelPlate.mjs [--sheets]
 //         re-make the shipped NIFs and DDSs from the committed sources
-//     node tools/bakeSteelPlate.mjs --import=<New_Ship.fbx>,<New_Ship1.fbx>
-//         take Mac's two exports into the committed sources first (tools/fbxStrip.mjs), and measure his scene's
-//         reference head and neck (SCENE_BODY)
+//     node tools/bakeSteelPlate.mjs --import=<steel_armor.fbx>
+//         take Mac's export of the set (the closed helm its helm) into the committed source first, the Morrowind
+//         head and neck stripped if it carries them (tools/fbxStrip.mjs) and their bounds printed (SCENE_BODY)
+//     node tools/bakeSteelPlate.mjs --open-helm=<an export carrying Sphere.002>
+//         take the open helm, alone, out of an export into its committed source
 //
 // MW-STEEL1 (2026-10-06, Mac: "These 2 files are for the armor replacement of the morrowind steel armor with a varient
 // to toggle the helmet type"). The third of the port's own Morrowind models, and the first SET: a whole suit of steel
@@ -18,8 +20,8 @@
 // kept (`placement: 'scene'`), the textures Mac painted taken as they are and mip-chained, the source committed beside
 // what it makes and the output re-made byte for byte by test/mwsteel1.test.js - and departs where they are not:
 //
-//   A SCENE OF PIECES. Mac's two exports are ONE scene twice - twelve objects the same to the vertex, and the helm
-//   alone different (measured at --import: every shared object bakes byte for byte the same from both). Each piece is
+//   A SCENE OF PIECES. Mac's two exports were ONE scene twice - twelve objects the same to the vertex, and the helm
+//   alone different (measured at MW-STEEL1's import: every shared object baked byte for byte the same from both). Each piece is
 //   read out of it by its own object (PIECES below), and each object must stand where it was read (its scene box,
 //   BOX_SLACK) or the bake refuses it by name, so a re-export that renamed, moved or reshaped one never ships a boot as
 //   a greave. The names are no help - Blender's (Cube.019, Sphere.002) or a source mesh's: the right gauntlet is
@@ -38,11 +40,12 @@
 //   modelled from the same cuirass mesh as the breastplate, `.009`), painted from a "steelpelvis" texture that MW-STEEL1
 //   never had - so it was stripped at --import then, Mac having said "That was never apart of the set". The painting
 //   came, and the skirt is a piece now: `Steel_Plate_Skirt.png` is Mac's steelpelvis picture, and the skirt is baked
-//   from the open helm's export like every shared piece (both of Mac's exports carry it, the same to the vertex).
+//   from the open helm's export like every shared piece (both of Mac's exports carry it, the same to the vertex) - and
+//   since MW-STEEL5 from his one export, as every piece but the open helm is.
 //
 //   THE CLOSED HELM IS TWO PICTURES ON ONE PART. Its shell wears the helm's texture and its visor and plume the
-//   faceplate's, so its NIF carries two shapes. The second export is committed as the closed helm alone - the shared
-//   pieces are the first export's, byte for byte.
+//   faceplate's, so its NIF carries two shapes. (MW-STEEL5: so does the cuirass now - the breastplate and its waist
+//   band, both in the breastplate's painting.)
 //
 // ═══ MW-STEEL4: RIGGED HERE, AS RETAIL'S ARMOUR IS ═══════════════════
 //
@@ -68,6 +71,29 @@
 //   to the bone it covers, blended across a joint's width and nowhere else; the skirt hangs from the pelvis and swings
 //   with the thighs; the helms ride the head alone. Each shape is named for the slot it fills (rule 15's filter picks a
 //   skinned part's geometry by that name - "Tri Right Hand 0").
+//
+// ═══ MW-STEEL5: MAC'S UPDATE, AND THE HELM ON THE GAME'S HEAD ═══════════
+//
+// (2026-10-09, Mac: "Heres an updated fix for the integrated steel armor for the morrowind model. Theres also an issue
+// where the helmet isnt positioned properly on the head but only for the new integrated model", with steel_armor.fbx
+// and a screenshot of the set worn, from behind.)
+//
+//   ONE EXPORT NOW. steel_armor.fbx is the whole set with the closed helm, and no Morrowind head or neck in it: the
+//   greaves, boots, gauntlets and skirt the same to the vertex; the breastplate's shoulders widened (54 of its vertices,
+//   x to 16.61) and its waist band split off as an object of its own (Mac's band, every vertex where it stood -
+//   baked as the cuirass's second shape, in the breastplate's painting, which is what the export gives it); the
+//   pauldrons remade larger, their names traded sides (the `.003` at +X is the right now); and the closed helm one
+//   unit higher. It is committed as it came (SOURCE.set). The open helm is in it no more, so it stays MW-STEEL1's,
+//   taken alone out of that export (SOURCE.openHelm).
+//
+//   THE HEAD STANDS HIGHER IN THE GAME THAN IN THE SCENE. The helms are fitted on the scene's Breton head (SCENE_BODY)
+//   and skinned to the head bone through SCENE_FROM_BIND, which the body's own pieces measure (the cuffs, the ankles);
+//   the head is a rigid part at the skeleton's "Head" node, where a retail helmet sits too, so a retail helmet fits it
+//   and the plate's did not. In Mac's screenshot the scalp stands up through the top of the closed helm. The set
+//   worn on retail's skeleton in its idle, with a stand-in for the scene's head on the head bone and drawn from behind
+//   as the screenshot is (tools/helmLiftProbe.mjs), shows that scalp with the head 3.2 to 4.3 units higher up its bone
+//   than the scene put it - so the helms are raised HELM_LIFT up the head bone, the skin's frame and every other piece
+//   untouched. (A head bigger than the scene's Breton, or an offset front to back, the probe cannot rule out.)
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx, childrenNamed, nodeAt, objectName } from './fbxRead.mjs';
@@ -82,10 +108,11 @@ import { isMain } from './lib/isMain.mjs';
 import { parseNif } from '../src/formats/mwNifFile.js';
 import { affineOfTransform } from '../src/formats/mwAffine.js';
 
-/** Mac's two exports, as committed: the whole set with the open helm, and the closed helm alone. */
+/** Mac's exports, as committed (MW-STEEL5): the whole set with the closed helm, as it came, and the open helm alone,
+ *  out of MW-STEEL1's export. */
 export const SOURCE = Object.freeze({
-  open: 'src/assets/mw/source/Steel_Plate.fbx',
-  closed: 'src/assets/mw/source/Steel_Plate_Closed_Helm.fbx',
+  set: 'src/assets/mw/source/Steel_Plate.fbx',
+  openHelm: 'src/assets/mw/source/Steel_Plate_Open_Helm.fbx',
 });
 
 /** Mac's paintings, as committed - each under the piece's name, beside the folder his FBX names it from. */
@@ -255,27 +282,44 @@ export function rigSegments(rigBones, bind) {
 export const BOX_SLACK = 0.02;
 
 const shape = (object, texture, box) => Object.freeze({ object, texture, box: Object.freeze(box) });
-const piece = (id, file, shapes) => Object.freeze({ id, file, shapes: Object.freeze(shapes) });
+const piece = (id, file, shapes, lift = 0) => Object.freeze({ id, file, shapes: Object.freeze(shapes), ...(lift ? { lift } : {}) });
+
+/**
+ * MW-STEEL5: HOW FAR UP THE HEAD BONE THE GAME'S HEAD STANDS OVER THE SCENE'S (units) - and so how far the helms are
+ * raised over where Mac fitted them on the scene's Breton head (MW-STEEL1's export, the shell from 112.88 to 131.82).
+ * Read off Mac's screenshot (2026-10-09, the set worn, from behind, the scalp standing up through the closed helm's
+ * crown) by tools/helmLiftProbe.mjs: the set worn on retail's skeleton in its idle, with a stand-in for the scene's
+ * head (SCENE_BODY's box, an ellipsoid) on the head bone, drawn from behind at three heights of eye, shows the
+ * screenshot's scalp - its height 0.39 of the helm's under it - with the head 3.24, 3.70 and 4.25 higher
+ * (test/mwsteel5.test.js holds HELM_LIFT inside that span). Up the head bone is the scene's +Z: the bind stands it
+ * upright.
+ */
+export const HELM_LIFT = 4;
+
 /**
  * Each piece, the object(s) it is read from, the texture each wears, and the scene box (min, max) each object was
- * read at - in the scene's own numbers, the placement the bake keeps.
+ * read at - in the scene's own numbers, the placement the bake keeps. MW-STEEL5: a helm's `lift` raises it onto the
+ * game's head (HELM_LIFT) - the closed one a unit less, Mac's export already standing it a unit higher.
  */
 export const PIECES = Object.freeze([
-  piece('cuirass', 'open', [shape('Imperial_Silver_Cuirass_67_Male.009', 'cuirass', [[-14.42, -11.94, 78.8], [14.42, 11.46, 115.42]])]),
-  piece('skirt', 'open', [shape('Imperial_Silver_Cuirass_67_Male.011', 'skirt', [[-14.42, -11.98, 64.55], [14.42, 12.17, 86.93]])]),
-  piece('pauldron_right', 'open', [shape('Breton_Male.009 Remeshed.001', 'pauldron', [[7.44, -7.71, 107.59], [30.56, 6.17, 117.66]])]),
-  piece('pauldron_left', 'open', [shape('Breton_Male.009 Remeshed.003', 'pauldron', [[-30.56, -7.71, 107.59], [-7.44, 6.17, 117.66]])]),
-  piece('gauntlet_right', 'open', [shape('Imperial_Steel_Left_Gauntlet_20_Male', 'gauntlet', [[27.03, -5.81, 106.44], [59.04, 4.56, 115.56]])]),
-  piece('gauntlet_left', 'open', [shape('Imperial_Steel_Left_Gauntlet_20_Male.001', 'gauntlet', [[-59.04, -5.81, 106.44], [-27.03, 4.56, 115.56]])]),
-  piece('greave_right', 'open', [shape('Breton_Male.007', 'greave', [[0.53, -5.13, 39.78], [11.9, 8.05, 79.72]])]),
-  piece('greave_left', 'open', [shape('Breton_Male.001', 'greave', [[-11.9, -5.13, 39.78], [-0.53, 8.05, 79.72]])]),
-  piece('boot_right', 'open', [shape('Cube.024', 'boot', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.13]])]),
-  piece('boot_left', 'open', [shape('Cube.019', 'boot', [[-11.33, -6.48, -0.21], [-0.32, 14.61, 48.13]])]),
-  piece('helm_open', 'open', [shape('Sphere.002', 'helm', [[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])]),
-  piece('helm_closed', 'closed', [
-    shape('Sphere', 'helm', [[-7.5, -7.93, 112.88], [7.5, 8.95, 131.82]]),
-    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 111.58], [6.82, 10.29, 139.61]]),
+  piece('cuirass', 'set', [
+    shape('Imperial_Silver_Cuirass_67_Male.013', 'cuirass', [[-16.61, -11.94, 78.8], [16.61, 11.46, 115.42]]),
+    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [[-10.69, -9.98, 85.82], [10.44, 10.28, 89.57]]),
   ]),
+  piece('skirt', 'set', [shape('Imperial_Silver_Cuirass_67_Male.011', 'skirt', [[-14.42, -11.98, 64.55], [14.42, 12.17, 86.93]])]),
+  piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.003', 'pauldron', [[6.43, -9.1, 106.74], [30.56, 7.55, 118.82]])]),
+  piece('pauldron_left', 'set', [shape('Breton_Male.009 Remeshed.001', 'pauldron', [[-30.56, -9.1, 106.74], [-6.43, 7.55, 118.82]])]),
+  piece('gauntlet_right', 'set', [shape('Imperial_Steel_Left_Gauntlet_20_Male', 'gauntlet', [[27.03, -5.81, 106.44], [59.04, 4.56, 115.56]])]),
+  piece('gauntlet_left', 'set', [shape('Imperial_Steel_Left_Gauntlet_20_Male.001', 'gauntlet', [[-59.04, -5.81, 106.44], [-27.03, 4.56, 115.56]])]),
+  piece('greave_right', 'set', [shape('Breton_Male.007', 'greave', [[0.53, -5.13, 39.78], [11.9, 8.05, 79.72]])]),
+  piece('greave_left', 'set', [shape('Breton_Male.001', 'greave', [[-11.9, -5.13, 39.78], [-0.53, 8.05, 79.72]])]),
+  piece('boot_right', 'set', [shape('Cube.024', 'boot', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.13]])]),
+  piece('boot_left', 'set', [shape('Cube.019', 'boot', [[-11.33, -6.48, -0.21], [-0.32, 14.61, 48.13]])]),
+  piece('helm_open', 'openHelm', [shape('Sphere.002', 'helm', [[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])], HELM_LIFT),
+  piece('helm_closed', 'set', [
+    shape('Sphere', 'helm', [[-7.5, -7.93, 113.88], [7.5, 8.95, 132.82]]),
+    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),
+  ], HELM_LIFT - 1),
 ]);
 
 /** One Mesh Model of a parsed scene, with its Geometry - the tree bakeMesh takes, which wants exactly one mesh. */
@@ -304,6 +348,21 @@ export function bakeObject(tree, name, box = null) {
   return mesh;
 }
 
+/** MW-STEEL5: a baked mesh `lift` units higher - its positions and its bounds, to the bake's six places. */
+export function liftMesh(mesh, lift) {
+  if (!lift) return mesh;
+  const up = (v) => +(v + lift).toFixed(6);
+  return {
+    ...mesh,
+    positions: mesh.positions.map((v, i) => (i % 3 === 2 ? up(v) : v)),
+    bounds: { min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])], max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])] },
+  };
+}
+
+/** One piece's shapes as the bake places them: each object held to the box it was read at, then raised by the piece's
+ *  `lift` (MW-STEEL5, the helms). `trees` - the parsed sources, by SOURCE's keys. */
+export const pieceMeshes = (trees, p) => p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0));
+
 /**
  * MW-STEEL4: one piece's shapes weighted to its rig in `bind` (plateBind) - one `[[bone, weight], ...]` list per vertex
  * per shape (tools/skinWeights.mjs jointWeights), and the rig's bones at their binds, for skinnedMeshesToNif.
@@ -320,12 +379,14 @@ export function pieceRig(id, meshes, bind) {
 }
 
 /**
- * The bake: the two committed exports, the eight paintings and retail's skeleton in, every piece's NIF and every
- * texture's DDS out. Each piece is skinned in the skeleton's bind (MW-STEEL4). Pure - bytes in, bytes out.
+ * The bake: the two committed sources (SOURCE: `set` and `openHelm`), the eight paintings and retail's skeleton in,
+ * every piece's NIF and every texture's DDS out. Each piece is skinned in the skeleton's bind (MW-STEEL4). Pure - bytes
+ * in, bytes out.
  */
-export function bakeSteelPlate({ open, closed, pngs, skeleton }, { sheets = false } = {}) {
+export function bakeSteelPlate({ set, openHelm, pngs, skeleton }, { sheets = false } = {}) {
   if (!skeleton) throw new Error('no skeleton to skin the plate in - the bake reads its bind (RETAIL_SKELETON)');
-  const trees = { open: readFbx(Buffer.from(open)), closed: readFbx(Buffer.from(closed)) };
+  if (!set || !openHelm) throw new Error('the bake reads two sources - the set (SOURCE.set) and the open helm (SOURCE.openHelm)');
+  const trees = { set: readFbx(Buffer.from(set)), openHelm: readFbx(Buffer.from(openHelm)) };
   const bind = plateBind(skeleton);
   const textures = Object.keys(TEXTURES).map((tex) => {
     if (!pngs[tex]) throw new Error(`no painting for the ${tex} texture`);
@@ -334,7 +395,7 @@ export function bakeSteelPlate({ open, closed, pngs, skeleton }, { sheets = fals
   });
   const byTex = new Map(textures.map((t) => [t.tex, t]));
   const pieces = PIECES.map((p) => {
-    const meshes = p.shapes.map((s) => bakeObject(trees[p.file], s.object, s.box));
+    const meshes = pieceMeshes(trees, p);
     const r = pieceRig(p.id, meshes, bind);
     const nif = skinnedMeshesToNif(p.shapes.map((s, i) => ({ mesh: meshes[i], texture: textureName(s.texture), name: `${r.shape} ${i}`, weights: r.weights[i] })),
       { node: `Steel Plate ${p.id}`, bones: r.bones });
@@ -348,34 +409,45 @@ export function bakeSteelPlate({ open, closed, pngs, skeleton }, { sheets = fals
   return { pieces, textures, bind };
 }
 
-/** The bounds of the scene's reference head and neck (SCENE_BODY). */
-export function measureReference(tree) {
-  return Object.fromEntries(Object.entries(REFERENCE_PARTS).map(([part, name]) => [part, bakeObject(tree, name).bounds]));
+/** The bounds of the scene's reference head and neck (SCENE_BODY) - `parts` by name, as REFERENCE_PARTS names them. */
+export function measureReference(tree, parts = REFERENCE_PARTS) {
+  return Object.fromEntries(Object.entries(parts).map(([part, name]) => [part, bakeObject(tree, name).bounds]));
 }
 
 /**
- * --import: Mac's two exports into the two committed sources. Which is which is read from the files (the open helm's
- * object is in one, the closed helm's in the other), every object they share must bake the same from both, and the
- * reference body comes out of each - measured first.
+ * --import (MW-STEEL5): Mac's export of the set into its committed source. It must carry every object the set's pieces
+ * are read from, each standing where its piece was read - refused before anything is written; the Morrowind head and
+ * neck (REFERENCE_PARTS - Bethesda's) are measured and stripped if it carries them, and nothing else is touched: an
+ * export with neither is committed byte for byte, as steel_armor.fbx is. `pieces` and `reference` are the tables'
+ * own unless a pin aims them elsewhere.
  */
-export function importSteelPlate(a, b) {
-  const helmOf = (bytes) => meshModelNames(bytes);
-  const [openBytes, closedBytes] = helmOf(a).includes('Sphere.002') ? [a, b] : [b, a];
-  if (!helmOf(openBytes).includes('Sphere.002') || !helmOf(closedBytes).includes('Sphere')) {
-    throw new Error('these are not the two steel-plate exports: one must carry the open helm (Sphere.002), the other the closed (Sphere)');
-  }
-  const trees = { open: readFbx(Buffer.from(openBytes)), closed: readFbx(Buffer.from(closedBytes)) };
-  const shared = helmOf(openBytes).filter((n) => helmOf(closedBytes).includes(n));
-  for (const name of shared) {
-    const x = JSON.stringify(bakeObject(trees.open, name)); const y = JSON.stringify(bakeObject(trees.closed, name));
-    if (x !== y) throw new Error(`"${name}" differs between the two exports - the bake reads it from the open helm's, so say which is meant`);
-  }
-  const reference = measureReference(trees.open);
-  const refNames = Object.values(REFERENCE_PARTS);
-  const closedKeep = new Set(PIECES.filter((p) => p.file === 'closed').flatMap((p) => p.shapes.map((s) => s.object)));
-  const open = stripFbx(openBytes, { drop: refNames }).bytes;
-  const closed = stripFbx(closedBytes, { drop: helmOf(closedBytes).filter((n) => !closedKeep.has(n)) }).bytes;
-  return { open, closed, reference, shared: shared.filter((n) => !refNames.includes(n)) };
+export function importSteelPlate(bytes, { pieces = PIECES, reference = REFERENCE_PARTS } = {}) {
+  const names = meshModelNames(bytes);
+  const shapes = pieces.filter((p) => p.file === 'set').flatMap((p) => p.shapes);
+  const missing = shapes.filter((x) => !names.includes(x.object)).map((x) => `"${x.object}"`);
+  if (missing.length) throw new Error(`this is not the steel-plate export - it carries no ${missing.join(', ')}`);
+  const tree = readFbx(Buffer.from(bytes));
+  for (const x of shapes) bakeObject(tree, x.object, x.box);
+  const carried = Object.fromEntries(Object.entries(reference).filter(([, name]) => names.includes(name)));
+  const drop = Object.values(carried);
+  const read = new Set([...shapes.map((x) => x.object), ...drop]);
+  return {
+    set: drop.length ? stripFbx(bytes, { drop }).bytes : Buffer.from(bytes),
+    reference: drop.length ? measureReference(tree, carried) : null,
+    // AUDIT MW-STEEL5: an object no piece is read from rides along in the source, unread - said, not dropped
+    unread: names.filter((n) => !read.has(n)),
+  };
+}
+
+/** --open-helm (MW-STEEL5): the open helm's object, alone, out of an export that carries it - every other object
+ *  stripped (tools/fbxStrip.mjs, every kept record byte for byte). `pieces` is the table's own unless a pin aims it
+ *  elsewhere. */
+export function openHelmSource(bytes, { pieces = PIECES } = {}) {
+  const keep = new Set(pieces.filter((p) => p.file === 'openHelm').flatMap((p) => p.shapes.map((x) => x.object)));
+  const names = meshModelNames(bytes);
+  const absent = [...keep].filter((n) => !names.includes(n));
+  if (absent.length) throw new Error(`this export carries no open helm (${absent.map((n) => `"${n}"`).join(', ')})`);
+  return stripFbx(bytes, { drop: names.filter((n) => !keep.has(n)) }).bytes;
 }
 
 const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
@@ -383,27 +455,34 @@ const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); w
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
+  // AUDIT MW-STEEL5: NOTHING IS WRITTEN UNTIL EVERYTHING HAS BAKED. The sources are taken in memory, the bake runs on
+  // them, and only then are the sources and what they make saved - so a refused open helm or a failed bake leaves the
+  // tree as it was, never a new source beside the old NIFs.
   const imp = opt('import');
-  if (imp) {
-    const files = imp.split(',');
-    if (files.length !== 2) { console.error('usage: --import=<New_Ship.fbx>,<New_Ship1.fbx>'); process.exit(2); }
-    const r = importSteelPlate(readFileSync(files[0]), readFileSync(files[1]));
-    save(SOURCE.open, r.open);
-    save(SOURCE.closed, r.closed);
-    console.log(`${SOURCE.open}  ${r.open.length} bytes: ${meshModelNames(r.open).join(', ')}`);
-    console.log(`${SOURCE.closed}  ${r.closed.length} bytes: ${meshModelNames(r.closed).join(', ')}`);
-    console.log(`  ${r.shared.length} pieces the two exports share, the same in both`);
-    console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
-    for (const [part, b] of Object.entries(r.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
-  }
+  const imported = imp ? importSteelPlate(readFileSync(imp)) : null;
+  const openFrom = opt('open-helm');
+  const openHelm = openFrom ? openHelmSource(readFileSync(openFrom)) : null;
   const missing = Object.entries(TEXTURES).filter(([, p]) => !existsSync(p)).map(([t]) => t);
   if (missing.length) { console.error(`no painting yet for: ${missing.join(', ')} (${missing.map((t) => TEXTURES[t]).join(', ')})`); process.exit(1); }
   const wantSheets = args.includes('--sheets');
   const r = bakeSteelPlate({
-    open: readFileSync(SOURCE.open), closed: readFileSync(SOURCE.closed),
+    set: imported ? imported.set : readFileSync(SOURCE.set), openHelm: openHelm ?? readFileSync(SOURCE.openHelm),
     pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
     skeleton: readFileSync(RETAIL_SKELETON),
   }, { sheets: wantSheets });
+  if (imported) {
+    save(SOURCE.set, imported.set);
+    console.log(`${SOURCE.set}  ${imported.set.length} bytes: ${meshModelNames(imported.set).join(', ')}`);
+    if (imported.unread.length) console.log(`  read by no piece, kept in the source: ${imported.unread.join(', ')}`);
+    if (imported.reference) {
+      console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
+      for (const [part, b] of Object.entries(imported.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
+    }
+  }
+  if (openHelm) {
+    save(SOURCE.openHelm, openHelm);
+    console.log(`${SOURCE.openHelm}  ${openHelm.length} bytes: ${meshModelNames(openHelm).join(', ')}`);
+  }
   for (const p of r.pieces) {
     save(meshFile(p.id), p.nif);
     const tris = p.meshes.reduce((n, m) => n + m.indices.length / 3, 0);

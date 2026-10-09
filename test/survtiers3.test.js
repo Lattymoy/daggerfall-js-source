@@ -470,7 +470,8 @@ test('CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): onl
   }
   // ...and the dungeon calls it on the stream's first death and on an arrival's body that came without the room's list
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /if \(r\.d === 1 && !f\.dead\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, f\._fightN \?\? 1\); capFoeLoot\(f\.entity\); \}[^\n]*\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
+  // PIN MOVED (AUDIT CARDS-6 A3): and its card, drawn before the cap
+  assert.match(dc, /if \(r\.d === 1 && !f\.dead\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, f\._fightN \?\? 1\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}[^\n]*\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
   assert.match(dc, /if \(wire && sf\.dead && !f\.dead && sf\.items == null\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'an arrival\'s body without the room\'s list: its own roll, food and all');
 });
 
@@ -490,7 +491,8 @@ test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'
   assert.ok(fn, 'dungeonContext.js has applyFoeRecord');
   const { stampWonWeapons } = await import('../src/systems/lootRarity.js');   // SIGIL1: the stream's death marks the copy's weapons too (offline: nothing)
   const { rollCorpseKit, capFoeLoot } = await import('../src/systems/foeLootCap.js');   // KIT-ROLL: and its kit (a bear wears none: nothing rolled); AUDIT 625 L5: and its cap (a bear has none)
-  const state = { validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
+  const { dropFoeCard } = await import('../src/systems/cardSources.js');   // PIN MOVED (AUDIT CARDS-6 A3): and its card (a bear has none)
+  const state = { validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, dropFoeCard, capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
   const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
   const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };

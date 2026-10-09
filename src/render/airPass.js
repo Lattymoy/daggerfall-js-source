@@ -1673,6 +1673,15 @@ export class AirPass {
    * could not see it (they drive no frame), and only the field probe did.
    */
   setCloudShadow(deck) { this.cloudShadow = deck ?? null; }
+  /** SD-LOOK (2026-10-08, bible/11-Multiplayer/Super-Dungeons-Look.md "The shared kit"): THE SCENE'S GRADE for the resolve
+   *  about to run - `{ adaptKey, adaptMax, bloom, vignette, contrast }`, each optional; null (or a field left out) is the
+   *  lane's default (AIR_ADAPT_KEY, AIR_ADAPT_MAX, AIR_BLOOM_STRENGTH, AIR_VIGNETTE, AIR_CONTRAST). The renderer hands it
+   *  every resolve, so a frame that never asked gets the defaults back. The Shattered Hour holds the eye down (its void
+   *  black, not lifted to grey-brown by an eye opening on the dark). */
+  setGrade(g) {
+    this.grade[0] = g?.bloom ?? AIR_BLOOM_STRENGTH; this.grade[2] = g?.vignette ?? AIR_VIGNETTE; this.grade[3] = g?.contrast ?? AIR_CONTRAST;
+    this.adaptParams[1] = g?.adaptKey ?? AIR_ADAPT_KEY; this.adaptParams[3] = g?.adaptMax ?? AIR_ADAPT_MAX;
+  }
 
   /** LA-POST6 (2026-09-27, Mac: "look for flickering issues"): THE FLOATING ORIGIN MOVED by `offset` - the host's
    *  recentre, every world position p now p + offset (ShadowPass.shiftOrigin's convention: a record's matrix[12] +=

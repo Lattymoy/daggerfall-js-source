@@ -45,8 +45,7 @@ import {
   ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, arenaRatingOk, ARENA_ELO_MIN, ARENA_ELO_MAX,
   ARENA_CHAMPION_MIN_FOES, ARENA_PAIR_SEASON_MAX, ARENA_TICKET_RE, arenaNextOf, ARENA_BOUT_ID_RE, ARENA_ATTEMPT_LIFE_S,   // AUDIT ARENA-LADDER
 } from '../../src/net/arenaLaw.js';
-import { displayName } from './accounts.js';
-import { titleWorn, glyphsOf } from './titles.js';
+import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, Iliac Hand's too
 import { renownQuestXp } from '../../src/net/renown.js';   // ARENA4b: a bout's Renown, sized as quests are
 import { reportRenownXp, renownTrackOf, renownCharacterOk } from './renownTracks.js';   // ARENA4b: credited through the renown law's own door
 
@@ -155,7 +154,7 @@ const SIDES_SQL = `sides AS (
 /** The season's board: each account's rating after its last rated bout, its wins, losses and draws, ranked - the rating
  *  first, then wins, then fewer bouts, then the one who got there first. */
 const BOARD_SQL = `WITH ${SIDES_SQL},
-  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY at DESC, k DESC) AS rn FROM sides),
+  last AS (SELECT p, r, at, ROW_NUMBER() OVER (PARTITION BY p ORDER BY k DESC) AS rn FROM sides),
   tally AS (SELECT p, SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n, COUNT(DISTINCT o) AS foes FROM sides GROUP BY p)
   SELECT last.p AS player, last.r AS rating, last.at AS at, tally.w AS wins, tally.l AS losses, tally.d AS draws, tally.n AS bouts, tally.foes AS foes
     FROM last JOIN tally ON tally.p = last.p WHERE last.rn = 1
@@ -174,7 +173,7 @@ const MY_BOUTS_SQL = (p, s) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHE
 /** An account's rating in a season and its tally - the start for one that has fought nobody. STORM-SHED 2: one read,
  *  off the account's own bouts (MY_BOUTS_SQL). */
 export async function arenaRatingOf({ db }, playerId, season) {
-  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,
+  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,
        SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n FROM (${MY_BOUTS_SQL('?2', '?1')})`).bind(season, playerId).first();
   const n = (v) => Number(v ?? 0) || 0;
   return { rating: t?.last != null ? arenaRatingOk(Number(t.last)) : ARENA_ELO_START, wins: n(t?.w), losses: n(t?.l), draws: n(t?.d), bouts: n(t?.n) };
@@ -458,9 +457,12 @@ export async function arenaAttempt(ctx, player, tier, bout, room) {
 export const ARENA_RATE_TRIES = 4;
 /** AUDIT PRE-MERGE 1003 S6: an account's season rating NOW as one SQL value - arenaRatingOf's read (its last rated row's
  *  rating, arenaRatingOk's bounds, the start for none), `p` the account's parameter, ?2 the season - for a write to ask
- *  in its own WHERE. */
+ *  in its own WHERE. AUDIT CARDS-6 D1 (found on Iliac Hand's twin, iliac.js RATING_NOW_SQL): the last row is the last
+ *  WRITTEN, `k` alone - by (`at`, rowid), `at` the second the claim's request began, a claim begun a second before
+ *  another of the same account and landing after it passed this guard on the other's row, wrote its own under it, and
+ *  its change was lost. The board's `last` and arenaRatingOf read the same order. */
 const RATING_NOW_SQL = (p) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
-    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;   // STORM-SHED 2: arenaRatingOf's own read
+    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;   // STORM-SHED 2: arenaRatingOf's own read
 /** What a players' bout's claim answers its claimant: their side, the result for them, their rating before and after,
  *  whether it counted, and their season now. */
 async function pvpAnswer(ctx, me, row) {
@@ -575,20 +577,6 @@ export async function arenaRecordsOf({ db }, me) {
 }
 
 // ── THE BOARD ────────────────────────────────────────────────────────────────────────────────
-/** Players by id, with the badge each wears now (titles.js, with its arena honours). */
-async function namesOf({ db }, ids, env, nowS, honours) {
-  const want = [...new Set(ids.filter(Boolean))];
-  const out = new Map();
-  for (let i = 0; i < want.length; i += 50) {
-    const part = want.slice(i, i + 50);
-    const rows = (await db.prepare(`SELECT * FROM players WHERE id IN (${part.map((_, k) => `?${k + 1}`).join(', ')})`).bind(...part).all()).results ?? [];
-    for (const row of rows) {
-      const withH = { ...row, arena: { grand: honours.grands.has(row.id), champion: honours.champion === row.id } };
-      out.set(row.id, { name: displayName(row), title: titleWorn(withH, env) ?? null, glyphs: glyphsOf(withH, env, nowS) });
-    }
-  }
-  return out;
-}
 /** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. */
 function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
   rows.forEach((r, i) => { r.rank = i + 1; r.you = r.player === me; });
@@ -638,7 +626,9 @@ export async function arenaBoardOf(ctx, player, env) {
   const records = me ? await arenaRecordsOf(ctx, me) : null;   // ARENA4b: the Records page's bouts and tallies
   const ids = [...pvp.rows, pvp.pinned, ...pve.rows, pve.pinned, ...fastB.rows, fastB.pinned, ...teams.red.rows, teams.red.pinned, ...teams.blue.rows, teams.blue.pinned, ...hall, champion ? { player: champion } : null,
     ...(records?.recent ?? []).map((b) => (b.opponent ? { player: b.opponent } : null))].filter(Boolean).map((r) => r.player);
-  const names = await namesOf(ctx, ids, env, nowS, honours);
+  // AUDIT CARDS-6 D3: the badges every honour's (boardNames.js) - the arena's this board counted, Iliac Hand's #1 as a
+  // letter's is; it laid its own alone, and the Iliac Champion here wore no title
+  const names = await boardNamesOf(ctx, ids, env, nowS, { arena: (row) => ({ grand: honours.grands.has(row.id), champion: honours.champion === row.id }) });
   // an account's id stays the service's: a row says its name, its badge and whether it is the caller's
   const named = (r) => { if (!r) return null; const { player: id, ...rest } = r; return { ...rest, ...(names.get(id) ?? { name: '', title: null, glyphs: [] }) }; };
   const board = (b) => ({ rows: b.rows.map(named), pinned: named(b.pinned), total: b.total });

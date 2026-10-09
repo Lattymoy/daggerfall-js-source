@@ -137,6 +137,11 @@ export const BOSS_BAR_CSS = `
 .wb-boss-bar.brass .wb-boss-fill { background: linear-gradient(180deg, #ffd977 0%, #b8862a 55%, #4a3208 100%); }
 .wb-boss-bar.brass .wb-boss-tag { background: rgba(16,12,4,0.55); border-color: rgba(230,190,90,0.25); }
 .wb-boss-bar.brass .wb-boss-wrath { color: #ffd2a0; border-color: rgba(255,160,80,0.55); }
+/* AUDIT SD IV (T6): the Hour's Reset and its End called on its own brass plate, in the call's own colour (the Mantella's
+   green, the End's red) - they stood on Dagon's pulsing blood in the gate's cream - and its last minute pulsing brass */
+.wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }
+@keyframes wb-brass-plate { from { background: rgba(40,28,6,0.88); } to { background: rgba(96,70,14,0.95); } }
+.wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }
 /* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \`theme\`, ui/serpentBar.js) */
 .wb-boss-bar.sea { color: #d6efe8; }
 .wb-boss-bar.sea .wb-boss-name { color: #8fe3cf; text-shadow: 0 0 3px #000, 0 0 10px rgba(40,200,170,0.5); }
@@ -213,7 +218,7 @@ export function bossBarModel(s, now, boss, aimed = null) {
 let root = null, parts = null;
 /** What the node shows, so each part is written only when it changes - every field unlike any model's, so a fight's
  *  first draw writes the whole bar (WB13c: a fight gone resets it, and the next fight's bar never shows the last's). */
-const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, spent: null, ticks: null, spentAt: null, spentNew: null, marksAt: null,
+const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, marksTheme: null, spent: null, ticks: null, spentAt: null, spentNew: null, marksAt: null,
   frac: -1, ghost: -1, g: null, at: null, warded: null, breakAt: null, rootCls: null,
   callout: null, calloutColor: null, calloutCls: null, calloutT: -1, inAt: null, outAt: null, dagon: false, move: false,
   tags: [null, null, null, null], wrathNear: null, hostNear: null, alpha: -1, introAt: null });
@@ -270,11 +275,11 @@ function build(doc) {
 }
 
 /** WB9a: one chip of the marks' row - a mark's sign and name (the aspect's in its colour) - or hidden (no mark for it). */
-function writeChip(c, m) {
+function writeChip(c, m, theme) {
   if (!m) { c.chip.style.display = 'none'; return; }
   c.chip.style.display = '';
   c.icon.innerHTML = markIconHtml(m, 12);   // SD18b: the Hour's own signs
-  c.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a';
+  c.icon.style.color = m.kind === 'aspect' ? m.color : theme === 'brass' ? '#e8c060' : '#ffb27a';   // AUDIT SD IV (T6): the omens' signs in the Hour's brass, as its card's (gateMarksView.js writeRow)
   c.label.textContent = m.name;
   c.label.style.color = m.kind === 'aspect' ? m.color : '';
 }
@@ -305,12 +310,12 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
   if (sub !== shown.sub) { shown.sub = sub; parts.sub.textContent = sub; }
   const subColor = model.epithet ? model.epithetColor ?? '' : '';
   if (subColor !== shown.subColor) { shown.subColor = subColor; parts.sub.style.color = subColor; }
-  const view = model.marksView ?? null, marksKey = view?.key ?? '';
-  if (marksKey !== shown.marks) {   // WB9a: written when the night's marks change - never a frame
-    shown.marks = marksKey;
+  const view = model.marksView ?? null, marksKey = view?.key ?? '', theme = model.theme ?? '';
+  if (marksKey !== shown.marks || theme !== shown.marksTheme) {   // WB9a: written when the night's marks change - never a frame; AUDIT SD IV (T6): or the bar's look (one node serves the gate and the Hour)
+    shown.marks = marksKey; shown.marksTheme = theme;
     parts.marks.style.display = view ? '' : 'none';
     const all = view ? [view.aspect, ...view.trials] : [];
-    parts.chips.forEach((c, i) => writeChip(c, all[i] ?? null));
+    parts.chips.forEach((c, i) => writeChip(c, all[i] ?? null, theme));
   }
   // SD8c: THE PHASE MARKS WHERE THE MODEL CUTS THEM (the Brass Remnant turns at 70% and 35%, not the gate's thirds) -
   // written when they change, never a frame

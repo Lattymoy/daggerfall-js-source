@@ -191,11 +191,13 @@ test('MW-BRIG2: through the binder - a skinned-from-body part is drawn skinned, 
   assert.ok(lone.notes.some((s) => /no body part to skin it from/.test(s)), lone.notes.join('; '));
 });
 
-test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuirass, skinned from chest, groin, thighs and knees', () => {
+test('MW-BRIG2: the item - the Steel Brigandine Jerkin (since MW-BRIG4 every brigandine metal\'s), one piece worn as a cuirass, skinned from chest, groin, thighs and knees', () => {
   assert.equal(RRI_TEMPLATES.find((t) => t.index === RRI_JERKIN_TEMPLATE)?.name, 'Jerkin');
   assert.equal(rriVariantWord(STEEL_JERKIN), 'Brigandine ');
+  // MW-BRIG4: every metal the jerkin is a brigandine in wears it (test/mwbrig4.test.js); the leather and fur jerkins
+  // keep their retail cuirass
   for (const [name, m] of Object.entries(ARMOR_MATERIAL)) {
-    if (m === ARMOR_MATERIAL.Steel) continue;
+    if (m >= ARMOR_MATERIAL.Iron) { assert.equal(ownArmorModelFor({ templateIndex: RRI_JERKIN_TEMPLATE, material: m })?.id, `daggerfall_brigandine_${name.toLowerCase()}`); continue; }
     assert.equal(ownArmorModelFor({ templateIndex: RRI_JERKIN_TEMPLATE, material: m }), null, `${name} jerkin keeps its retail cuirass`);
   }
   // MW-STEEL1: the classic Steel Cuirass wears Mac's steel plate now (mwsteel1.test.js) - its own model, never the brigandine

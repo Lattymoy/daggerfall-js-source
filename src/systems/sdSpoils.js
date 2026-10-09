@@ -27,6 +27,7 @@ import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
 import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
 import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from './loot.js';
+import { bossCardRoll } from './bossCards.js';   // CARDS9: the Brass Remnant's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - over half again a gate boss's. */
 export const SD_SPOILS_GOLD_PER_LEVEL = 400;
@@ -90,7 +91,10 @@ export function rollSdSpoils(seed, level) {
   // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was
   const hourlock = rollHourlock(rolls);
   if (hourlock) pieces.push({ item: hourlock, tier: hourlock.rarity });
-  return { gold, pieces };
+  // CARDS9 (Tavern-Cards section 32; Mac: "Dont forget about a card needing to come from the abyss dungeon also"): THE
+  // BRASS REMNANT'S OWN CARD - one draw more after the Hourlock's, LAST of all; kept beside the pieces
+  const card = bossCardRoll('abyss', rolls);
+  return { gold, pieces, card };
 }
 
 /** The spoils as the pool throws them (scenes/spoilsPool.js's pieces): each item, then the gold - the gate's own order -
@@ -99,8 +103,13 @@ export function sdSpoilsList(seed, level) {
   const look = seededRng(((seed >>> 0) ^ 0x5eed) >>> 0);
   const flat = () => RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)];
   const s = rollSdSpoils(seed, level);
+  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));
+  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
+  // AUDIT CARDS-6 A8: the card's picture drawn LAST, after the gold's, so the gold pile's is what the seed gave it before
+  const card = s.card ? [{ kind: 'item', item: s.card, tier: 'aetheric', record: flat() }] : [];
   return [
-    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() })),
-    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },
+    ...pieces,
+    ...card,   // CARDS9: the Remnant's card, after the pieces
+    gold,
   ];
 }

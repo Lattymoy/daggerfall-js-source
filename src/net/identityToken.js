@@ -192,7 +192,7 @@ export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
 /** The titles that exist. A title is WORN one at a time, so a token
  *  carries at most one. Grants are the service's business (who HOLDS
  *  one); this list is the vocabulary both ends share. */
-export const TITLES = Object.freeze(['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant', 'shadowfang', 'penitent', 'gatebreaker', 'herald', 'warden', 'protector', 'crowned', 'keeper', 'champion', 'grandchampion', 'arenachampion', 'aegis', 'primarch', 'crystalfist', 'hourbreaker', 'hoursfirst', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);   // CHAP4c (2026-10-08, the Chapters arc, Chapters-Arc.md section 6): a chapter's Master, its officer and its former Master, last (CHAPTER_TITLES, below) - after HOURS-FIRST's, at the merge of main; HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura, a title named Hour's First, and each the gilded gun"): HOUR'S FIRST - the first group to break an Abyss Dungeon, granted by name (server-account/src/titles.js HOURS_FIRST_HANDLES); SD9b (2026-10-07, the Super Dungeons arc): HOURBREAKER, last - one Brass Remnant's kill in four grants it on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist"): Flylighter's own; PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own; AEGIS (2026-10-03, the owner: "For the account named Sureme ... a title, glyph and new custom aura for this user. Title: Aegis of Oblivion. Theme: Purple"): Sureme's own, last;   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes with it's own temporary title/glyph"): the Grand Champion (the ladder's tenth tier's champion beaten, relay-refereed - for good) and the Arena Champion (the season's #1 of the refereed board - while they are #1), both derived at the mint (server-account/src/titles.js, the row's `arena`), last;   // HERALD (2026-10-01, Mac: "Herald doesnt exist ingame yet" - "you'll need to develop the herald title/glyph"): the Patreon tier between Disciple and Hierophant, after the Gatebreaker (the seats' five after it, SEAT1c); TITLE-N (2026-09-24, Mac): the Dungeon Master, and the three Patreon tiers in their order; SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own; PENITENT (2026-09-29, Mac): Diggleborf's own; WB9g (2026-09-30, Mac: "a brand new title to the broker"): the Gatebreaker, bought with Sigil Stones (net/insignia.js)
+export const TITLES = Object.freeze(['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant', 'shadowfang', 'penitent', 'gatebreaker', 'herald', 'warden', 'protector', 'crowned', 'keeper', 'champion', 'grandchampion', 'arenachampion', 'aegis', 'primarch', 'crystalfist', 'hourbreaker', 'hoursfirst', 'iliacchampion', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);   // CHAP4c (2026-10-08, the Chapters arc, Chapters-Arc.md section 6) and CHAP6e (2026-10-09, section 7): a chapter's Master, its officer, its former Master, its High Master and a Season's Master, last (CHAPTER_TITLES, below) - after CARDS10's, at the merge of main (its relay deployed first); CARDS10 (2026-10-08, Tavern-Cards section 6.4, DECIDED: "a ladder ... with a title for the top of it"): ILIAC CHAMPION, last (after HOURS-FIRST's at the merge) - the season's #1 of Iliac Hand's refereed board, while they hold the top, derived at the mint (server-account/src/iliac.js, the row's `iliac`); HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura, a title named Hour's First, and each the gilded gun"): HOUR'S FIRST, last - the first group to break an Abyss Dungeon, granted by name (server-account/src/titles.js HOURS_FIRST_HANDLES);   // SD9b (2026-10-07, the Super Dungeons arc): HOURBREAKER, last - one Brass Remnant's kill in four grants it on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist"): Flylighter's own; PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own; AEGIS (2026-10-03, the owner: "For the account named Sureme ... a title, glyph and new custom aura for this user. Title: Aegis of Oblivion. Theme: Purple"): Sureme's own, last;   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes with it's own temporary title/glyph"): the Grand Champion (the ladder's tenth tier's champion beaten, relay-refereed - for good) and the Arena Champion (the season's #1 of the refereed board - while they are #1), both derived at the mint (server-account/src/titles.js, the row's `arena`), last;   // HERALD (2026-10-01, Mac: "Herald doesnt exist ingame yet" - "you'll need to develop the herald title/glyph"): the Patreon tier between Disciple and Hierophant, after the Gatebreaker (the seats' five after it, SEAT1c); TITLE-N (2026-09-24, Mac): the Dungeon Master, and the three Patreon tiers in their order; SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own; PENITENT (2026-09-29, Mac): Diggleborf's own; WB9g (2026-09-30, Mac: "a brand new title to the broker"): the Gatebreaker, bought with Sigil Stones (net/insignia.js)
 
 /** SEAT1c (2026-09-30, Mac: "Finish the seats"; Seats-Arc 7.4): THE SEATS' TITLES - five GENERIC ids, because a town's
  *  or a Season's name cannot be a closed list's word: "Warden of <Town>" (a palace seat's guildmaster), "Protector of
@@ -553,7 +553,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake']);   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck']);   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -585,6 +585,9 @@ export function orderValid(c) {
   const noStake = STAKE_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'stake' && !noStake) return false;
   if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege)) return false;
+  // CARDS10: a deck order carries its digest and no other kind's fields; no other kind carries a digest
+  if (c.o !== 'deck' && c.dh !== undefined) return false;
+  if (c.o === 'deck' && (typeof c.dh !== 'string' || !DECK_DIGEST_RE.test(c.dh) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege || !noStake)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -633,6 +636,31 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
   try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
   if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
+}
+
+/* ═══ CARDS10: THE DECK ORDER (bible/11-Multiplayer/Tavern-Cards.md section 33) ═════════════════════════════════════
+ *
+ * Section 6.4, DECIDED: online wins rank a player on a season board. A deck the client names is a deck the client
+ * chose - any thirty the law takes, whether its character holds them or not. So a RANKED seat brings the service's word
+ * that it does: `{o:'deck', s, dh, i, e}` - account `s`'s realm character holds every card of the deck whose digest is
+ * `dh` (deckDigest: SHA-256 of its ids sorted, comma-joined, as hex). The room seats that deck ranked when the digest
+ * is the sit's own deck's; any other sit is a friendly seat.
+ */
+/** A deck's digest: 64 hex. */
+export const DECK_DIGEST_RE = /^[0-9a-f]{64}$/;
+/** The bytes a deck's digest is taken over: its ids sorted (a deck is a set of cards, not an order), comma-joined. */
+export const deckDigestText = (/** @type {string[]} */ ids) => [...ids].map(String).sort().join(',');
+/** CARDS10: a deck's digest (hex SHA-256 of deckDigestText). */
+export async function deckDigest(/** @type {string[]} */ ids, { subtle }) {
+  const d = new Uint8Array(await subtle.digest('SHA-256', enc.encode(deckDigestText(ids))));
+  return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+/** CARDS10: MINT A DECK ORDER - the service's word that account `s`'s character holds the deck of digest `dh`. */
+export async function mintDeckOrder({ s, dh }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintDeckOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'deck', s, dh, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintDeckOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
 }
 
 /* ═══ SEAT2a: THE SIEGE PASS (bible/11-Multiplayer/Seats-Arc.md 6.2, 6.4, 6.6) ═══════════════════════════════════

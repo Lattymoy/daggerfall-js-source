@@ -175,8 +175,8 @@
   {
     "name": "REALM6-act-guesses-a-landed-answer",
     "file": "src/systems/realmSaves.js",
-    "old": "r.seq === at.seq + 1 && !needsAnswer ? { ok: true, landed: true, seq: r.seq }",
-    "new": "r.seq === at.seq + 1 ? { ok: true, landed: true, seq: r.seq }",
+    "old": "r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq }",
+    "new": "r.seq === at.seq + 1 && !read ? { ok: true, landed: true, seq: r.seq }",
     "tests": [
       "test/realm6.test.js"
     ]

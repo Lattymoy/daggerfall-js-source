@@ -81,7 +81,7 @@ import { isBattleRoom, isRoyalRoom } from './siegeRef.js';   // SEAT2a part four
 import { privateInteriorOf } from './privateInterior.js';   // NET-SMOOTH: an owned interior's poses are MapsFile's frame
 import { isArenaRoom, validArenaIn } from './arenaLaw.js';   // ARENA4: the arena's hall and its bouts
 import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, arenaGate, relaySupportsArena, readArenaOut, validWildData, validWildOut, wildDirected, wildGate, wildInGate, WILD_IN_HZ_MAX, WILD_FRAME_MAX, relaySupportsWild, relaySupportsWdun, relaySupportsWdunGiants, validWdunIn, validWdunOut } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
-import { relaySupportsHoldem, holdemGate, validHoldemIn, validHoldemOut } from './wire.js';   // CARDS5: the relay's card table, both ways
+import { relaySupportsHoldem, holdemGate, validHoldemIn, validHoldemOut, relaySupportsIliac, validIliacIn, validIliacOut } from './wire.js';   // CARDS5: the relay's card table, both ways
 import { RAID_TOWNS_CHUNK } from './raidLaw.js';   // RAID-ROLL: the towns table's pieces
 import { dungeonRoomTag } from './wire.js';   // SD-ONLINE: a dungeon's room carries the size it was built at
 import { validSdIn, validSdOut, sdGate, sdPzGate, relaySupportsSd, sdFightGate, SD_BRAIN_V } from './wire.js';   // SD3: the Super dungeon's frame - a find out, the hub's record in; SD6b: a turn out, the realm's Orrery in
@@ -527,6 +527,9 @@ export class OnlineSession {
     this.holdemOk = false;        // CARDS5: ...and deals cards (relaySupportsHoldem) - an older one CLOSES the socket on a holdem frame
     this.holdemWelcomes = 0;      // AUDIT CARDS-3 B1: my primary socket's welcomes - the seat a dropped socket held is sat again on the next
     this._holdemBucket = null;    // CARDS5: my words to the card table, holdemGate's law
+    this.onIliac = null;          // CARDS10: (frame) => void - the relay's Iliac table: the room's events and the table, my own view, a ranked game's receipt
+    this.iliacOk = false;         // CARDS10: ...and deals Iliac Hand (relaySupportsIliac) - an older one CLOSES the socket on an iliac frame
+    this._iliacBucket = null;     // CARDS10: my words to the Iliac table, holdemGate's law in a bucket of their own
     this.castOk = false;          // AUDIT ALLY-CAST B1: the relay that welcomed this socket routes cast frames (relaySupportsCast) - an older one CLOSES the socket on one
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
     this.onPeerDeath = null;      // PCORPSE1: (peer {id, look, name}, pose, room) => void - another player's LAST pose: they fell there
@@ -874,7 +877,7 @@ export class OnlineSession {
     const at = this._who.get(id);
     if (at != null && now - at < WHO_RETRY_MS) return false;
     const ws = room === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(room)?.status === 'open' ? this._halo.get(room).ws : null);
-    if (!ws) return false;
+    if (!ws || !this._welcomed.has(ws)) return false;   // AUDIT SD IV (0): never ahead of its welcome (SD-HELLO) - not marked, so the next round asks
     const gate = whoGate(this._wbucket, now);
     this._wbucket = gate.bucket;
     if (!gate.pass) return false;
@@ -1001,6 +1004,8 @@ export class OnlineSession {
     // law, _send). `parkOk` is the LAST welcome's, so the park went one frame behind every new room's hello - and a room
     // whose hello awaits (the Shattered Hour's: the hub's word on the Hollow) closed on it ('park before hello'), and the
     // Rift cast its player out at the Hollow's door
+    // AUDIT SD IV (0): a welcomed socket alone (SD-HELLO). The word is said again in every room joined (world.js
+    // hccParkTick), so it went on the first frame after the realm's hello - a park before hello, refused for good
     const primaryOpen = this.status === 'open' && this._ws && this._welcomed.has(this._ws);
     const halo = cell && cell !== this.room ? this._halo.get(cell) : null;
     let ws = null, inCell = false;
@@ -1033,13 +1038,13 @@ export class OnlineSession {
   _flushLook() {
     if (!this._lookDirty) return;
     const socks = [];
-    // PARK-HELLO: never ahead of a welcome - a socket whose hello is still out is waited for (the tick tries again)
-    let waiting = false;
-    const welcomed = (ws) => (this._welcomed.has(ws) ? true : (waiting = true, false));
-    if (this.lookOk && this.status === 'open' && this._ws && welcomed(this._ws)) socks.push(this._ws);
-    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws && welcomed(h.ws)) socks.push(h.ws);
+    // PARK-HELLO (FIELD BUGS 2026-10-09b): never ahead of a welcome - a socket whose hello is still out is waited for
+    // AUDIT SD IV (0): a socket open and not yet welcomed said its hello with the look before this one, and a look down it
+    // now is a look before hello (SD-HELLO) - held, the tick tries again, until every open socket is welcomed
+    if (this.status === 'open' && this._ws) { if (!this._welcomed.has(this._ws)) return; if (this.lookOk) socks.push(this._ws); }
+    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { if (!this._welcomed.has(h.ws)) return; if (h.lookOk) socks.push(h.ws); }
     // nothing open that knows the frame: whatever opens next says hello with this look, so nothing is owed
-    if (!socks.length) { if (!waiting) this._lookDirty = false; return; }
+    if (!socks.length) { this._lookDirty = false; return; }
     const gate = lookGate(this._lkbucket, this._now());
     if (!gate.pass) return;   // held: the tick tries again
     this._lkbucket = gate.bucket;
@@ -1166,18 +1171,20 @@ export class OnlineSession {
    *  geography decides - and it decides no RANGE: two players a few metres apart astride a cell edge are in each other's halo
    *  (wire.cellHaloFor, `hit`'s own reasoning), so the frame simply goes down whichever socket reports the other. How near
    *  is near enough to trade is a matter of metres (net/tradeSession.js TRADE_RANGE_M), judged by the host from the two bodies. */
-  _socketFor(id) {
+  _socketFor(id, said = false) {
     if (!id) return null;
     for (const r of [this.room, ...this._halo.keys()]) {
       if (!this._rooms.get(r)?.has(id)) continue;
       const ws = r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null);
-      if (ws) return ws;
+      if (ws && (said || this._welcomed.has(ws))) return ws;   // AUDIT SD IV (0): a frame goes down a WELCOMED socket alone (SD-HELLO) - a blink keeps the roster, and its retry's hello is open before its welcome
     }
     return null;
   }
 
-  /** TRADE1: can a frame reach `id` at all - some open socket of mine reports them (see _socketFor). Not a distance. */
-  reachesPeer(id) { return this._socketFor(id) !== null; }
+  /** TRADE1: can a frame reach `id` at all - some open socket of mine reports them (see _socketFor). Not a distance.
+   *  AUDIT SD IV (0): a socket that has said its hello counts, welcomed or not - AURA-LIVE's replacement waits a hello's
+   *  round trip for its welcome, and a peer no socket reaches ends a live trade, a duel's asks and a proposal. */
+  reachesPeer(id) { return this._socketFor(id, true) !== null; }
 
   /** TRADE1: one trade frame out - to a peer through the socket that reports them (`_socketFor`: my own cell or a halo), through
    *  the wire's own projection first (what the relay's parser would refuse never leaves this machine), TRADE_HZ_MAX a second
@@ -1877,6 +1884,18 @@ export class OnlineSession {
     return true;
   }
 
+  /** CARDS10: a word to the room's Iliac table (sit, stand, commit, look - net/iliacTable.js validIliacIn), to a relay
+   *  that deals it; false when it is not one, the word is bad or the gate is shut. */
+  sendIliac(word) {
+    const w = validIliacIn(word);
+    if (!w || !this.iliacOk) return false;
+    const gate = holdemGate(this._iliacBucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'iliac', ...w })) return false;
+    this._iliacBucket = gate.bucket;
+    return true;
+  }
+
   /** DICE1: a roll ASKED of the relay (net/dice.js's spec) on the channel this socket's room is, or a party's (`ch`,
    *  the hub link, CHAT-CHAN's law). The relay rolls and says the result to the channel, this socket included - the
    *  receipt is the roll itself. False when nothing went: a spec the dice refuse, a relay that does not roll, the
@@ -2413,6 +2432,7 @@ export class OnlineSession {
       if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
       if (primary) { this.holdemOk = relaySupportsHoldem(relayV); this.holdemWelcomes++; }   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
+      if (primary) this.iliacOk = relaySupportsIliac(relayV);   // CARDS10: and deals the second game   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
       if (primary) this.dmOk = relaySupportsDm(relayV);   // TITLE-N
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
@@ -2800,6 +2820,11 @@ export class OnlineSession {
       // checked by the table's own law, from the room the player stands in only
       if (!validHoldemOut(m) || (!primary && m.cashout === undefined)) return;   // CARDS6: a cash-out from the room just left too - it is gold
       this._deliver('holdem', () => this.onHoldem?.({ ...m, at: now }));
+    } else if (m.t === 'iliac') {
+      // CARDS10: THE RELAY'S ILIAC TABLE - the room's events and the table, my own view of the game, or a ranked game's
+      // receipt (from the room just left too - it is a result on the board); checked by the table's own law
+      if (!validIliacOut(m) || (!primary && m.receipt === undefined)) return;
+      this._deliver('iliac', () => this.onIliac?.({ ...m, at: now }));
     } else if (m.t === 'roll') {
       // DICE1: A ROLL THE RELAY MADE - checked by the dice's own law (n dice, each 1..m, the total their sum plus k):
       // an honest relay rolled it, and a dishonest one's numbers that do not add up are no roll. Gated in on the

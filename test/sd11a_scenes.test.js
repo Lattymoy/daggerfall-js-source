@@ -18,7 +18,7 @@ import { lookAt, perspective, mirrorProjectionX, multiply, identity, transformPo
 import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_ARENA, SD_STONE_POS, realmToDungeon, dungeonToRealm, inOrreryHall, SD_FRAY_LASH } from '../src/net/sdBrain.js';
 import {
   buildRealmModel, realmColliderTris, realmLights, realmLampFeet, realmLampTris, realmLighting, realmLightsNear, realmLightsWith, SD_LIGHTS_CAP, walkNearZ, walkFarZ,
-  SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_ISLAND_SIDES, SD_RIM_W, SD_RIM_H,
+  SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_DIAL_RECORD, SD_REALM_COBBLE_RECORD, SD_ISLAND_SIDES, SD_RIM_W, SD_RIM_H,
   SD_KERB_W, SD_KERB_H, SD_LAMP_H, SD_LAMP_HEAD, SD_LAMP_POST_W,
 } from '../src/world/sdRealm.js';
 import { withCourtLights } from '../src/world/gateArena.js';
@@ -26,10 +26,10 @@ import {
   stoneFrame, stonePoint, plaqueFrame, handleBox, handMatrix, beforeStone, buildHallModel, buildHandModel, hallSolidTris,
   SD_STONE_SIZE, SD_DIAL, SD_EMBLEM, SD_HAND, SD_PLAQUE,
 } from '../src/world/sdHall.js';
-import { SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD, SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
+import { SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
 import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 import { createSdSteps, ensureSdStepsArt, sdStepKey, SD_CHECKS_KEY } from '../src/scenes/sdSteps.js';
-import { createSdRemnant, ensureSdRemnantArt } from '../src/scenes/sdRemnant.js';
+import { createSdRemnant, ensureSdRemnantArt, SD_GEAR_DRAWS, SD_DECOR_DRAWS } from '../src/scenes/sdRemnant.js';
 import { SD_RIG_PARTS } from '../src/scenes/sdRemnantRig.js';   // SD17 (PIN MOVED): the bodies' parts
 import { SD_HEARTS } from '../src/net/sdRemnant.js';
 import { createSdEnd, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
@@ -37,7 +37,7 @@ import { SD_FIGHT_EMPTY } from '../src/net/sdFightLink.js';
 import { sdAnyInFlight, sdBlowsInFlight } from '../src/scenes/sdRemnantBlows.js';
 import { SD_STEPS_COURSE, SD_CHECKPOINTS, SD_COURSE_END, SD_GUST_EVERY, SD_GUST_WARN, SD_GUST_FOR, gustAt, breathSeen, spanAt } from '../src/world/sdSteps.js';
 import { SD_BREATH, stepTris } from '../src/world/sdStepsModel.js';
-import { SD_SKY_FS, SD_SKY_SHARDS, SD_SHARD_TOP, SD_CLOCK_FACE, SD_CLOCK_RING_W, SD_CLOCK_TOP, SD_SKY_PERIOD, CLOCK_BASIS, sdSkyBasisInto } from '../src/render/sdSky.js';
+import { SD_SKY_PAINT_FS, SD_SKY_SHARDS, SD_SHARD_TOP, SD_CLOCK_FACE, SD_CLOCK_RING_W, SD_CLOCK_TOP, SD_SKY_PERIOD, CLOCK_BASIS, sdSkyBasisInto } from '../src/render/sdSky.js';
 import { skyBasis, DEAD_NOISE_GLSL } from '../src/render/deadlands.js';
 import { AURA_FS } from '../src/render/auraRing.js';
 import { SHADOW_POINT_NEAR } from '../src/render/shadowPass.js';
@@ -71,11 +71,14 @@ function trisOf(model, keep = () => true) {
     for (let k = sm.startIndex; k < sm.startIndex + sm.primitiveCount * 3; k += 3) {
       const P = [0, 1, 2].map((j) => [model.positions[(k + j) * 3], model.positions[(k + j) * 3 + 1], model.positions[(k + j) * 3 + 2]]);
       const U = [0, 1, 2].map((j) => [model.uvs[(k + j) * 2], model.uvs[(k + j) * 2 + 1]]);
-      if (keep(sm.textureRecord, P)) out.push([P, U, sm.textureRecord]);
+      if (keep(sm.textureRecord, P, U)) out.push([P, U, sm.textureRecord]);
     }
   }
   return out;
 }
+/** SD-LOOK S10 (PIN MOVED): a triangle of the hall's atlas whose every uv falls in `cell` - the dials, signs and ledgers
+ *  are its cells, no longer records of their own. */
+const atlasCell = (cell) => (record, P, U) => record === SD_HALL_ATLAS_RECORD && U.every(([u, v]) => u * SD_HALL_ATLAS.size >= cell[0] && u * SD_HALL_ATLAS.size <= cell[0] + cell[2] && v * SD_HALL_ATLAS.size >= cell[1] && v * SD_HALL_ATLAS.size <= cell[1] + cell[3]);
 /** THE GAME'S OWN CAMERA (scenes/worldModes.js, the modal arms' frame): an eye at `eye` looking along `yaw` - its look
  *  (sin yaw, 0, cos yaw), lookAt to eye + look, and world/mat4.js's ONE mirror on its lens. A point to the screen's NDC
  *  (x right, y up), and its right as the game's own camRight (cos yaw, 0, -sin yaw). */
@@ -136,13 +139,15 @@ test('AUDIT SD II L2 F1: THE ORRERY\'S HALL AS THE EYE SEES IT, through the game
     // every face standing before the stone's face, across the eye's look - the dial, the notch, the sign, the cap's and
     // the handles' fronts - looks toward the eye and is drawn
     const foot = realmToDungeon(...stoneFrame(i).at), ahead = (p) => (p[0] - foot[0]) * n[0] + (p[2] - foot[2]) * n[2];
-    const before = trisOf(hall, (record, P) => P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w && ahead(p) > SD_STONE_SIZE.d / 2 + 0.004)).filter(([P]) => { const nn = cross(sub(P[1], P[0]), sub(P[2], P[0])), l = Math.hypot(...nn); return l > 1e-9 && Math.abs(dot(nn, n)) / l > 0.9; });
+    // PIN MOVED (SD-LOOK S10): on the stone, over its plinth - the dial's raised floor before it (the inner ring's bezel)
+    // has its own sides, turned from this eye
+    const before = trisOf(hall, (record, P) => P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w && ahead(p) > SD_STONE_SIZE.d / 2 + 0.004 && p[1] > 0.3)).filter(([P]) => { const nn = cross(sub(P[1], P[0]), sub(P[2], P[0])), l = Math.hypot(...nn); return l > 1e-9 && Math.abs(dot(nn, n)) / l > 0.9; });
     assert.ok(before.length >= 11, `stone ${i}: its faces before it (${before.length})`);
     for (const t of before) assert.ok(dot(cross(sub(t[0][1], t[0][0]), sub(t[0][2], t[0][0])), n) > 0 && onScreen(S, t).area < 0, `stone ${i}: a face of record ${t[2]} toward the eye, drawn`);
     // its dial and its sign: toward the eye, their pictures unmirrored
-    const mine = (rec) => (record, P) => record === rec && P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w);
-    for (const rec of [SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD + i]) {
-      const tris = trisOf(hall, mine(rec));
+    const mine = (cell) => (record, P, U) => atlasCell(cell)(record, P, U) && P.every((p) => Math.hypot(p[0] - dial[0], p[2] - dial[2]) < SD_STONE_SIZE.w);
+    for (const [rec, cell] of [['dial', SD_HALL_ATLAS.dial], ['sign', SD_HALL_ATLAS.emblem[i]]]) {   // PIN MOVED (SD-LOOK S10): the atlas's cells
+      const tris = trisOf(hall, mine(cell));
       assert.ok(tris.length >= 2, `record ${rec} on stone ${i}`);
       for (const t of tris) {
         const o = onScreen(S, t);
@@ -155,8 +160,8 @@ test('AUDIT SD II L2 F1: THE ORRERY\'S HALL AS THE EYE SEES IT, through the game
     const { at, n } = plaqueFrame(k);
     const face = realmToDungeon(at[0] + n[0] * 0.09, SD_PLAQUE.post + SD_PLAQUE.h / 2, at[2] + n[2] * 0.09);
     const { S } = gameCamera([face[0] + n[0] * 2.5, face[1], face[2] + n[2] * 2.5], Math.atan2(-n[0], -n[2]));
-    const tris = trisOf(hall, (record) => record === SD_HALL_PLAQUE_RECORD + k);
-    assert.equal(tris.length, 2);
+    const tris = trisOf(hall, atlasCell(SD_HALL_ATLAS.ledger[k]));   // PIN MOVED (SD-LOOK S10): its lectern's open ledger, two pages
+    assert.equal(tris.length, 4);
     for (const t of tris) { const o = onScreen(S, t); assert.ok(o.area < 0 && o.dudx > 0 && o.dvdy > 0, `plaque ${k}: toward the eye, unmirrored`); }
   }
 });
@@ -186,7 +191,7 @@ test('AUDIT SD II L2 F2: THE STONES AND THE PLAQUES STAND - the hall stands each
     const { at, n } = plaqueFrame(k);
     assert.ok(walk(realmToDungeon(at[0] + n[0] * 2.5, 0, at[2] + n[2] * 2.5), [-n[0], 0, -n[2]], 4) < 2.5, `plaque ${k}: a body stops at it`);
   }
-  assert.equal(hallSolidTris().length / 9, SD_STONE_POS.length * 4 * 5 * 2 + SD_PLAQUE.bearings.length * 6 * 2, 'a stone\'s four boxes (its slab, its cap, its handles) and a plaque\'s post and tablet, two triangles a face');
+  assert.equal(hallSolidTris().length / 9, SD_STONE_POS.length * (4 * 5 + 1) * 2 + SD_PLAQUE.bearings.length * 6 * 2, 'a stone\'s four boxes (its slab, its cap, its handles) and a plaque\'s post and tablet, two triangles a face');   // PIN MOVED (AUDIT SD IV R4): the cap shut underneath, one face more - the draw's and the collider's one geometry
   // the press: before its face, never behind it
   const i = 2, { at, n, R } = stoneFrame(i);
   const behind = [at[0] - n[0] * 1.2 + R[0] * 1.4, 0, at[2] - n[2] * 1.2 + R[2] * 1.4];
@@ -223,7 +228,7 @@ test('AUDIT SD II L2 F3: THE HOUR\'S GLOWS ARE THEIR OWN LIGHT - every emission 
 
 test('AUDIT SD II L2 F4: THE WALK RUNS FROM ISLAND TO ISLAND AND OVER NEITHER - its floor laid from the Threshold\'s edge to the Orrery\'s, each end following the island\'s own edge: every point of the walk\'s band under exactly one floor (it ran z 7-25 over the dial\'s own floor at the hall\'s mouth, in its plane - a 4 x 0.65 m patch that fought); the collider\'s walk unchanged (mutants: the walk to z 25; an end straight across)', () => {
   const m = buildRealmModel();
-  const floors = trisOf(m, (rec, P) => (rec === SD_REALM_FLOOR_RECORD || rec === SD_REALM_DIAL_RECORD) && P.every((p) => Math.abs(p[1]) < 1e-6)).map(([P]) => P.map((p) => dungeonToRealm(...p)));
+  const floors = trisOf(m, (rec, P) => (rec === SD_REALM_FLOOR_RECORD || rec === SD_REALM_DIAL_RECORD || rec === SD_REALM_COBBLE_RECORD) && P.every((p) => Math.abs(p[1]) < 1e-6))   /* SD-LOOK (PIN MOVED): the Threshold wears the Bay's cobbles */.map(([P]) => P.map((p) => dungeonToRealm(...p)));
   const nearBand = floors.filter((P) => P.some((p) => Math.abs(p[0]) < 3 && p[2] > 5 && p[2] < 27) || P.some((p) => p[0] === 0 && (p[2] === 0 || p[2] === SD_ORRERY.z)));
   const s = (p, a, b) => (p[0] - b[0]) * (a[2] - b[2]) - (a[0] - b[0]) * (p[2] - b[2]);
   const inTri = (p, [a, b, c]) => { const d1 = s(p, a, b), d2 = s(p, b, c), d3 = s(p, c, a); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
@@ -256,8 +261,8 @@ test('AUDIT SD II L2 F5: EACH STONE\'S SIGN CLEAR OF ITS DIAL - the two a hair b
   assert.ok(SD_EMBLEM.y - SD_EMBLEM.half > SD_DIAL.y + SD_DIAL.r && SD_EMBLEM.y + SD_EMBLEM.half <= SD_STONE_SIZE.h, 'by the numbers');
   for (let i = 0; i < SD_STONE_POS.length; i++) {
     const at = realmToDungeon(SD_STONE_POS[i].x, 0, SD_STONE_POS[i].z);
-    const ys = (rec) => trisOf(hall, (r, P) => r === rec && P.every((p) => Math.hypot(p[0] - at[0], p[2] - at[2]) < SD_STONE_SIZE.w)).flatMap(([P]) => P.map((p) => p[1]));
-    const dial = ys(SD_HALL_FACE_RECORD), sign = ys(SD_HALL_EMBLEM_RECORD + i);
+    const ys = (cell) => trisOf(hall, (r, P, U) => atlasCell(cell)(r, P, U) && P.every((p) => Math.hypot(p[0] - at[0], p[2] - at[2]) < SD_STONE_SIZE.w)).flatMap(([P]) => P.map((p) => p[1]));
+    const dial = ys(SD_HALL_ATLAS.dial), sign = ys(SD_HALL_ATLAS.emblem[i]);   // PIN MOVED (SD-LOOK S10): the atlas's cells
     assert.ok(Math.max(...dial) < Math.min(...sign), `stone ${i}: the drawn dial (to ${Math.max(...dial).toFixed(3)}) under the drawn sign (from ${Math.min(...sign).toFixed(3)})`);
     assert.ok(Math.max(...sign) <= SD_STONE_SIZE.h + 1e-6, 'under the cap');
   }
@@ -298,12 +303,12 @@ test('AUDIT SD II L2 F6: EVERY FACE TURNED OUT - both kerbs\' tops face up (the 
 
 /** The sky's own functions, run (test/glsl.mjs) - every pow answered NaN for a negative base, as D3D's does (GLSL ES
  *  leaves it undefined). */
-const skyRun = (t = 100) => glslFunctions(SD_SKY_FS.replace(/\bpow\(/g, 'spow(').replace('precision highp float;\n', 'precision highp float;\nfloat spow(float x, float y) { return x < 0.0 ? 0.0 / 0.0 : pow(x, y); }\n'), { uTime: t, uHaze: [0.2, 0.15, 0.07], uGain: 1, vRay: [0, 0.5, 1] });
+const skyRun = (t = 100) => glslFunctions(SD_SKY_PAINT_FS.replace(/\bpow\(/g, 'spow(').replace('precision highp float;\n', 'precision highp float;\nfloat spow(float x, float y) { return x < 0.0 ? 0.0 / 0.0 : pow(x, y); }\n'), { uTime: t, uHaze: [0.2, 0.15, 0.07], uSteps: 10, uEnding: [0, 0, 0], uEndingIdx: -1, vUv: [0.5, 0.5], texelFetch: () => [0, 0, 0, 0] });   // SD-LOOK (PIN MOVED): the sky's laws are its paint's now (render/sdSky.js SD_SKY_PAINT_FS)
 
 test('AUDIT SD II L2 F7: THE AURORAE WHOLE ROUND - their curtain\'s noise read round a circle, as the Deadlands\' ridges are: either side of the azimuth\'s leap from PI to -PI (toward -z) the curtain is one, at every height of the band and every drift - it read the raw azimuth and was cut there by a hard seam (mutants: the raw azimuth)', () => {
   const f = skyRun();
-  assert.match(SD_SKY_FS, /float curtain = auroraCurtain\(az, e, drift\);/, 'the sky\'s curtain is this one');
-  assert.ok(SD_SKY_FS.includes(DEAD_NOISE_GLSL), 'on the Deadlands\' noise');
+  assert.match(SD_SKY_PAINT_FS, /float curtain = auroraCurtain\(az, e, drift\);/, 'the sky\'s curtain is this one');
+  assert.ok(SD_SKY_PAINT_FS.includes(DEAD_NOISE_GLSL), 'on the Deadlands\' noise');
   let worst = 0, lo = Infinity, hi = -Infinity;
   for (const e of [0.35, 0.5, 0.7, 0.9, 1.1]) {
     for (const drift of [0, 1.3, 2.6, 4.4]) {
@@ -316,9 +321,9 @@ test('AUDIT SD II L2 F7: THE AURORAE WHOLE ROUND - their curtain\'s noise read r
 });
 
 test('AUDIT SD II L2 F12: NO POW OF A NEGATIVE in the arc\'s shaders - Wayrest\'s arches squared (pow(2.0 * cell - 1.0, 2.0) was negative over half of every span: undefined in GLSL ES, NaN on D3D), and the Turning Hour\'s gleam on a base kept off the negative (a cos a hair under -1): the sky\'s skylines run with D3D\'s pow are numbers everywhere (mutants: the arch a pow; the gleam unguarded)', () => {
-  assert.doesNotMatch(SD_SKY_FS, /\bpow\(/, 'the sky takes no pow at all');
+  assert.doesNotMatch(SD_SKY_PAINT_FS, /\bpow\(/, 'the sky takes no pow at all');
   const f = skyRun();
-  for (let u = -1; u <= 1; u += 0.01) for (let v = -0.05; v < 1; v += 0.05) for (const k of [0, 1, 2]) assert.ok(Number.isFinite(f[`skyline${k}`](u, v)), `skyline${k}(${u.toFixed(2)}, ${v.toFixed(2)})`);
+  for (let u = -1; u <= 1; u += 0.01) for (let v = -0.05; v < 1; v += 0.05) for (let k = 0; k < SD_SKY_SHARDS.length; k++) assert.ok(Number.isFinite(f[`skyline${k}`](u, v)), `skyline${k}(${u.toFixed(2)}, ${v.toFixed(2)})`);   // SD-LOOK (PIN MOVED): six cities
   const turning = AURA_FS.slice(AURA_FS.indexOf('vec3 turningGround('), AURA_FS.indexOf('vec3 turningWall('));
   const bases = [...turning.matchAll(/\bpow\(/g)].map((m) => turning.slice(m.index + 4, m.index + 8));
   assert.ok(bases.length >= 1 && bases.every((b) => b === 'max('), `every pow of the Turning Hour's ground on a base kept off the negative (${bases})`);
@@ -332,7 +337,7 @@ test('AUDIT SD II L2 F15: THE CLOCK-FACE ROUND ON THE SKY, AND NO SHARD EVER OVE
   const twelve = f.clockFaceAt(along(0, R)), three = f.clockFaceAt(along(Math.PI / 2, R));
   assert.ok(near(twelve, [0, 1], 1e-4) && near(three, [1, 0], 1e-4), 'the twelfth up, the third to the right');
   assert.ok(near(B.right, [Math.cos(SD_CLOCK_FACE.az), 0, -Math.sin(SD_CLOCK_FACE.az)]) && B.up[1] > 0.9, 'its right the growing azimuth (the screen\'s right toward +z), its up toward the zenith');
-  assert.match(SD_SKY_FS, /vec2 p = clockFaceAt\(d\);/, 'the face drawn in it');
+  assert.match(SD_SKY_PAINT_FS, /vec2 p = clockFaceAt\(d\);/, 'the face drawn in it');
   // the shards over the whole period: their every drawn point (the shader's box: |du| < 1, -0.05 < dv < 1) against the
   // face's every drawn point (the ring's outer edge, 1 + SD_CLOCK_RING_W radii) - in the face's own frame, the shader's
   const faceR = (az, e) => { const d = [Math.cos(e) * Math.sin(az), Math.sin(e), Math.cos(e) * Math.cos(az)]; return Math.acos(Math.max(-1, Math.min(1, dot(d, B.centre)))) / R; };
@@ -513,13 +518,14 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   const W = read('src/scenes/worldModes.js');
   const arm = W.slice(W.indexOf("if (mode === 'dungeon') {"), W.indexOf('// Whole-pipeline swap: interior draws'));
   const pose = arm.indexOf('if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);');
-  const draws = arm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);');
+  const draws = arm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);');   // SD-LOOK (PIN MOVED): a draw's own remap, shadow and cull
   assert.ok(pose > 0 && pose < arm.indexOf('renderer.beginFrame(') && pose < draws, 'posed before the frame and its draws');
   assert.ok(draws < arm.indexOf('dungeonCtx.drawFoes('), 'the draws before drawFoes');
   assert.match(read('src/render/renderer.js'), /if \(!wire && !noShadow && this\._casting\) this\._shadows\.recordMesh\(/, 'a drawMesh is what records a shadow');
   const D = read('src/scenes/dungeonContext.js');
   assert.deepEqual([D.match(/\bsdHallFrame\(dt, playerFeet\);/g)?.length, D.match(/\bsdRemnantFrame\(dt, playerFeet\);/g)?.length], [1, 1], 'framed in one place');
-  assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);\n\s+if \(sdRemnant\) sdRemnantFrame\(dt, playerFeet\);\n\s+\},/);
+  // PIN MOVED (SD-LOOK S11): and the hang after them - its chains and gears posed with the Hall and the arena, before the draws
+  assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);\n\s+if \(sdRemnant\) sdRemnantFrame\(dt, playerFeet\);\n\s+if \(sdHang\) \{ sdHang\.stand\(\{ dynamicDraws \}\); sdHang\.frame\(\); \}[^\n]*\n\s+\},/);
   // the sets
   const steps = createSdSteps({ renderer: fakeRenderer() }), list = [];
   steps.stand({ dynamicDraws: list, collider: null });
@@ -536,7 +542,9 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   rem.stand({ dynamicDraws: rl });
   rem.frame(1 / 60, realmToDungeon(0, 0, 42));
   // SD17 (PIN MOVED): the Remnant's own turned parts (after the Hearts) stand with it
-  const H = 3 + SD_HEARTS[1], up = rl.map((d, i) => i === 0 || (i >= H && i < H + SD_RIG_PARTS.length));
+  // PIN MOVED (SD-LOOK S8): and its decor after the gears - its back-dial, its hand and its rib lamps (never its heart torn out)
+  const H = 3 + SD_HEARTS[1], dec = H + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS, up = rl.map((d, i) => i === 0 || (i >= H && i < H + SD_RIG_PARTS.length) || i === dec || i === dec + 1 || i === dec + SD_DECOR_DRAWS.indexOf('lamps'));
+  assert.equal(rl.length, dec + SD_DECOR_DRAWS.length);
   assert.deepEqual(rl.map((d) => !d.hidden), up, 'no fight: the Remnant stands, its Echoes, hearts and gears hidden');
   for (const [i, d] of rl.entries()) if (!up[i]) assert.ok(d.object.matrix.every((v) => v === 0));
   // a body shown, hidden and shown again where it stood: hidden says so, and it is drawn again (a still body keeps its
@@ -571,7 +579,7 @@ test('AUDIT SD II L2 F14: A LAMP UNDER EVERY LIGHT - each of the Hour\'s twenty 
     assert.equal(post.length, 10, `lamp ${i}: its post, four sides and a top`);
     assert.ok(post.some((t) => t.P.some((p) => Math.abs(p[1]) < e)) && post.some((t) => t.P.some((p) => Math.abs(p[1] - (SD_LAMP_H - SD_LAMP_HEAD)) < e)), 'from the floor to its head');
     const head = tris.filter((t) => t.rec === SD_HALL_GLOW_RECORD.brass && about(f, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD)(t));
-    assert.equal(head.length, 10, `lamp ${i}: its head alight round its light`);
+    assert.equal(head.length, 12, `lamp ${i}: its head alight round its light`);   // PIN MOVED (AUDIT SD IV R4): and shut underneath - six faces, not five
     assert.ok(tris.some((t) => t.rec === SD_REALM_BRASS_RECORD && about(f, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.05)(t) && t.P.every((p) => p[1] > SD_LAMP_H + SD_LAMP_HEAD + 1e-3)), 'its cap');
   }
   assert.ok(SD_LAMP_HEAD < SHADOW_POINT_NEAR, 'the head inside its light\'s near plane, every way: a cube face\'s near plane lies SHADOW_POINT_NEAR along its axis');
@@ -608,6 +616,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
     sdBeats: { frame: () => null, leave() {} }, titleCardModel: () => null, drawGateGround() {}, drawSdTitleCard() {},
     sdMarksCardModel: () => null, sdMarksOf: () => null, drawGateMarksCard() {}, performance: { now: () => 0 },   // SD18b (PIN MOVED): the Hour's marks card
     gateVeil: null,   // AUDIT SD III (T18, PIN MOVED): the veil the Hour's readouts wait under - none here
+    sdFx: null,   // AUDIT SD V (L5, PIN MOVED): the fight's frame tells the blows' sparks every frame out of the Hour
   };
   const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false, _sdMarksSince = null, _sdMarksUp = false, _sdPassesWarm = true;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));   // AUDIT SD III (V13, PIN MOVED): the passes already warm
   const word = { k: 'pz', s: 3, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 6, ok: true };

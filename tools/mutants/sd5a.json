@@ -47,8 +47,8 @@
   {
     "name": "SD5A-no-root",
     "file": "src/world/sdRealm.js",
-    "old": "    f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
-    "new": "    if (false) f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip,",
+    "old": "    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
+    "new": "    if (false) f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
     "tests": [
       "test/sd5a_realm.test.js"
     ]
@@ -91,9 +91,9 @@
   },
   {
     "name": "SD5A-the-dial's-twelfth-unlit",
-    "file": "src/world/sdRealmArt.js",
-    "old": "(Math.round(hour) % 12 === 0 ? 0.035 : 0.02)",
-    "new": "(Math.round(hour) % 12 === 0 ? 0.02 : 0.02)",
+    "file": "src/world/sdRealm.js",
+    "old": "twelfth: 0.035, hour: 0.02,",
+    "new": "twelfth: 0.02, hour: 0.02,",
     "tests": [
       "test/sd5a_realm.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD5A-the-way-back-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }",
-    "new": "    if (false) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }",
+    "old": "    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: true, probe: SD_THRESHOLD_RIM }); return; }",
+    "new": "    if (false) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null, dynamicDraws, hollow: true, probe: SD_THRESHOLD_RIM }); return; }",
     "tests": [
       "test/sd5a_realm.test.js"
     ]

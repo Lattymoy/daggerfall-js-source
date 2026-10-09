@@ -90,12 +90,17 @@ function pixelsByTown(scan) {
 /**
  * THE SITE of a record's Hollow, or null when the world offers none: the first city (`cities`, sdCities' order - for
  * the great cities the slot's roll picks where the list begins) with suitable pixels it is the nearest town to, and
- * the slot's roll among them. `scan` is the gate's (systems/gateSite.js scanGatePixels).
+ * the slot's roll among them. `scan` is the gate's (systems/gateSite.js scanGatePixels). AUDIT SD IV (F37): ON DRY
+ * GROUND - `ground(px, py)` the spawns' own test (world/spawnedDungeons.js createSpawnGround, SPAWN-SHORE: the plateau the
+ * build flattens it to above the beach band), the gate's scan having none: from the roll on through the city's pixels
+ * to the first dry one, and a city with none passes to the next (a Hollow stood on a coast's square of sand). The roll's
+ * own pixel, where it is dry, as before.
  * @param {{ s:number, r:number }} rec
  * @param {{ byRegion: Map<number, ArrayLike<number>>, towns: Array<{name:string, px:number, py:number, region:number}>, townAt: ArrayLike<number> }} scan
  * @param {any[]} cities
+ * @param {(px: number, py: number) => boolean} [ground]
  */
-export function findSdSite(rec, scan, cities) {
+export function findSdSite(rec, scan, cities, ground = () => true) {
   if (!rec || !scan || !cities?.length) return null;
   const byTown = pixelsByTown(scan);
   const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;
@@ -105,8 +110,12 @@ export function findSdSite(rec, scan, cities) {
     const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);
     const pixels = ti >= 0 ? byTown.get(ti) : null;
     if (!pixels?.length) continue;
-    const id = pixels[sdRoll(rec.s, 4) % pixels.length];
-    return { s: rec.s, px: id % W, py: Math.floor(id / W), city, cityName: String(city.name ?? ''), cityRegion: city.regionIndex, region: rec.r };
+    const roll = sdRoll(rec.s, 4) % pixels.length;
+    for (let j = 0; j < pixels.length; j++) {
+      const id = pixels[(roll + j) % pixels.length];
+      if (!ground(id % W, Math.floor(id / W))) continue;
+      return { s: rec.s, px: id % W, py: Math.floor(id / W), city, cityName: String(city.name ?? ''), cityRegion: city.regionIndex, region: rec.r };
+    }
   }
   return null;
 }

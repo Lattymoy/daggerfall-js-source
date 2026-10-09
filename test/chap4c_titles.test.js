@@ -35,7 +35,7 @@ test('CHAP4c the vocabulary: three chapter title ids, last in the closed list; e
   assert.deepEqual(row.ts, [4121, 2], 'the relay stamps the claim off the token');
   assert.deepEqual(readBadge({ title: 'chapterofficer', ts: [4121, 2], glyphs: [] }).ts, [4121, 2], 'and reads it back');
   assert.equal(readBadge({ title: 'founder', ts: [4121, 2], glyphs: [] }).ts, undefined, 'never beside a title that rides alone');
-  assert.equal(RELAY_VERSION, 'world182');   // PIN MOVED: world182, CHAP4c (past TV-BEYOND's world181 at the merge of main); PIN MOVED: world181, CHAP4c (past TAVERN-TABLES' world180 at the merge of main); PIN MOVED: world180, CHAP4c (the chapters' seats' titles on the token - past HOURS-FIRST's world179 at the merge of main); PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
+  assert.equal(RELAY_VERSION, 'world183');   // PIN MOVED: world183, CHAP4c (past CARDS10's world182 at the merge of main); PIN MOVED: world182, CHAP4c (past TV-BEYOND's world181 at the merge of main); PIN MOVED: world181, CHAP4c (past TAVERN-TABLES' world180 at the merge of main); PIN MOVED: world180, CHAP4c (the chapters' seats' titles on the token - past HOURS-FIRST's world179 at the merge of main); PIN MOVED: world177 then world178 on the branch, past main's WROTHGARIAN ZONE and TAVERN CARDS at the merges
 });
 
 // ── THE LAW AND THE WORDS ───────────────────────────────────────────
@@ -135,7 +135,7 @@ test('CHAP4c a Former Master: a Master\'s seat lost this Season titles its chara
 
 test('CHAP4c the wiring: the relay\'s version is a new one with its law; the toml ships the switch off; the wardrobe and the mint lay the chapters\' titles (mutants: each seam)', () => {
   assert.match(rd('server-account/wrangler.toml'), /\nCHAPTER_TITLES = "off"\n/);
-  assert.match(rd('test/relayversion.test.js'), /\n  world182: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (AUDIT CHAP4 R12): CHAP4c's own row - world179's is HOURS-FIRST's, world180's TAVERN-TABLES' and world181's TV-BEYOND's since the merges of main
+  assert.match(rd('test/relayversion.test.js'), /\n  world183: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (the merge of main past CARDS10's world182): world183; PIN MOVED (AUDIT CHAP4 R12): CHAP4c's own row - world179's is HOURS-FIRST's, world180's TAVERN-TABLES' and world181's TV-BEYOND's since the merges of main
   const ix = rd('server-account/src/index.js');
   assert.match(ix, /const withSeatTitles = async \(ctx, player, env\) => withChapterTitles\(ctx, /);
   assert.match(ix, /const worn = await withChapterTitles\(ctx, seats \? /);

@@ -340,7 +340,7 @@ test('VE3/VE4 the menu: the card\'s button wears the look at once - nothing to a
   assert.doesNotMatch(menu, /needsFiles|pickDfmodFiles\(o\.attach\)/, 'VE3\'s pick went with the attach');
   assert.match(menu, /const addons = o === cur \? o\.addons\?\.\(\) \?\? \[\] : \[\];/, 'the add-ons only while the look is worn');
   assert.match(menu, /b\.onclick = \(e\) => \{ e\.stopPropagation\(\); setVeAddon\(m\.key, on\); render\(\); \};/);
-  assert.match(menu, /p\.custom \?\? 'Custom: your own mix from Features\./);
+  assert.match(menu, /p\.custom \?\? 'Custom: your own mix from Settings\./);   // ORG2: the Features home is Settings' tabs
   assert.match(menu, /\{ label: m\.enabled \? 'Switch off' : 'Switch on', onClick: \(\) => \{ setDfmodEnabled\(m\.key, !m\.enabled\); render\(\); \} \},/);
   assert.match(menu, /\.\.\.\(m\.shipped \? \[\] : \[remove\('Remove', `Remove \$\{m\.title\}`/, 'a shipped mod is switched, never removed');
   assert.match(menu, /'In load order: where two mods carry the same texture, the later one is drawn\./);

@@ -199,7 +199,7 @@ test('CHAP2b the board\'s asks: each chapter\'s by its guild\'s row, a member\'s
 test('CHAP2b a realm character\'s delete takes what its receipts gave (mutants: the delete)', () => {
   const realm = src('server-account/src/realm.js');
   assert.equal((realm.match(/DELETE FROM npc_receipt_credits WHERE player = \? AND char_id = \?/g) ?? []).length, 2, 'deleteRealm and undoCustoms');
-  assert.match(src('server-account/migrations/0097_npc_receipts.sql'), /PRIMARY KEY \(char_id, faction_id, ref\)/);
+  assert.match(src('server-account/migrations/0098_npc_receipts.sql'), /PRIMARY KEY \(char_id, faction_id, ref\)/);
 });
 
 // ── THE BOARD AND THE WIRING ────────────────────────────────────────

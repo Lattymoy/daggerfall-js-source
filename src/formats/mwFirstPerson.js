@@ -2196,7 +2196,8 @@ export function bindPartsInto(assembly, parts) {
           // entirely for a rigid one (which keeps only its positions), so
           // the texture a Morrowind mesh names never reached the draw.
           uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
-          positions: new Float32Array(batch.positions.length), indices: batch.indices });
+          positions: new Float32Array(batch.positions.length), indices: batch.indices,
+          normals: posedNormals(batch) });   // MW-SMOOTH: the mesh's own normals, skinned with it
         if (nameless) namelessHere = true;
       }
       tookNameless = tookNameless || namelessHere;
@@ -2234,6 +2235,7 @@ export function bindPartsInto(assembly, parts) {
         const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
+          const normals = posedNormals(batch);   // MW-SMOOTH
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
             hang: part.hang ?? null,   // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it
             // MW-D16: a part instanced under a node INSIDE another part's
@@ -2304,7 +2306,10 @@ export function bindPartsInto(assembly, parts) {
                 : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             shape: batch.name || null,   // SHADOW-FANG (AUDIT F2): the shape's own name - a skinned piece keeps its batch, a rigid one only this (an eye names itself)
-            positions: new Float32Array(batch.positions.length), indices: batch.indices });
+            positions: new Float32Array(batch.positions.length), indices: batch.indices,
+            // MW-SMOOTH: the mesh's own normals, turned as its vertices are - the pre-transform once, here, and the
+            // bone and the mirror each frame (placeNormalsAtBone)
+            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null, normals });
         }
         // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
         // rigid shapes do - the bone, the mirror, rule 14's offset and the
@@ -2547,10 +2552,12 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   const mats = fns.skelMats(skeleton, pose, GRAPH_ROOT);
   for (const p of pieces) {
     if (p.kind === 'skinned') {
-      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);
+      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null);   // MW-SMOOTH: and its normals
     } else {
       const at = fns.attachmentTransform(mats, p.attachRef);
-      placeAtBone(p.source, p.hang ? hangAffine(at, p.hang) : at, p.mirrored, p.positions, p.boneOffset);   // HT-WAIST
+      const placed = p.hang ? hangAffine(at, p.hang) : at;   // HT-WAIST
+      placeAtBone(p.source, placed, p.mirrored, p.positions, p.boneOffset);
+      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH
     }
   }
   assembly.pose = pose;
@@ -2737,7 +2744,8 @@ function bindSkinnedFromBody(assembly, part, bones) {
       pieces.push({ slot: part.slot, bone: bones[0] ?? null, kind: 'skinned', mirrored: false,
         batch, source: null, attachRef: null,
         uvs: batch.uvs || null, colors: null, material: batch.material || null,
-        positions: new Float32Array(batch.positions.length), indices: batch.indices });
+        positions: new Float32Array(batch.positions.length), indices: batch.indices,
+        normals: posedNormals(batch) });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin
     }
   }
 }
@@ -2796,6 +2804,48 @@ export function placeAtBone(positions, at, mirror, out = new Float32Array(positi
     out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
     out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
     out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
+  }
+  return out;
+}
+
+/**
+ * MW-SMOOTH (2026-10-09, Mac: "Can we also enable smooth shading for the morrowind models?"): A RIGID PART'S NORMALS,
+ * PLACED AS ITS VERTICES ARE (placeAtBone) - mirrored with them (rule 13's X negated: a reflection takes a normal to
+ * the reflected surface's normal, so no flip follows) and turned by the bone. Rule 14's offset is a translation and
+ * leaves a normal alone. Renormalised, so a bone's uniform scale does not dim the light.
+ */
+export function placeNormalsAtBone(normals, at, mirror, out = new Float32Array(normals.length)) {
+  const a = at.a;
+  for (let v = 0; v < normals.length; v += 3) {
+    const x = mirror ? -normals[v] : normals[v];
+    const y = normals[v + 1];
+    const z = normals[v + 2];
+    const nx = a[0] * x + a[1] * y + a[2] * z;
+    const ny = a[3] * x + a[4] * y + a[5] * z;
+    const nz = a[6] * x + a[7] * y + a[8] * z;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
+  }
+  return out;
+}
+
+/** MW-SMOOTH: the posed-normal buffer a piece of this batch carries - one normal per vertex, or null for a mesh that
+ *  authored none (packFpArm then lights it by its faces, as every mesh was before). */
+function posedNormals(batch) {
+  return batch.normals && batch.normals.length === batch.positions.length ? new Float32Array(batch.normals.length) : null;
+}
+
+/** MW-SMOOTH: a part's pre-transform (MW-D16) applied to its normals - turned, never moved. */
+function applyPreNormals(normals, pre) {
+  if (!pre) return normals;
+  const out = new Float32Array(normals.length);
+  for (let v = 0; v < normals.length; v += 3) {
+    const x = normals[v]; const y = normals[v + 1]; const z = normals[v + 2];
+    const nx = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z;
+    const ny = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z;
+    const nz = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
   }
   return out;
 }

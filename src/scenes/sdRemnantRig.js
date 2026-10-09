@@ -25,7 +25,7 @@
 import { SD_ARENA, SD_REALM_ORIGIN } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_BREAK_MS, atkWindup, blowShape, behindPillar } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
-import { SD_REMNANT_BODY } from '../world/sdRemnantModel.js';
+import { SD_REMNANT_BODY, SD_REMNANT_DIAL } from '../world/sdRemnantModel.js';
 import { SD_STRIDE_M, SD_ECHO_STRIDE_M, SD_SLIP_FRAC, SD_RELEASE_MS } from './sdRemnantVoice.js';
 
 /** The rig's eighteen states, as `remnantRig` names the one that leads. */
@@ -355,6 +355,41 @@ export function sdGearsAt(s, t, out = null) {
   return list;
 }
 
+const newGather = () => ({ x: 0, y: 0, z: 0, spin: 0, who: 0, h: 0, k: 0, yaw: 0 });
+/**
+ * SD-LOOK S8: THE VOLLEY'S GEARS FORMING (Super-Dungeons-Look.md section 10's tell): through each standing body's gather -
+ * its wind-up until its gears leave its hands (gearFlightOf) - a gear grows in each of its hands (`h` 0 its right, 1 its
+ * left - SD_REM_HAND's), spinning, whole as they leave: `{ who, h, k, spin, yaw }` (`k` its size, `yaw` its body's
+ * facing turned a quarter, so its face is to the front), into `out` (an sdKeptList) when one is given - the scene stands
+ * each at its drawn hand (`x, y, z`). Pure.
+ */
+export function sdGatherGearsAt(s, t, out = null) {
+  /** @type {any[]} */ let list = /** @type {any} */ (NONE);
+  if (out) out.length = 0;
+  if (!live(s) || s.fell) return list;
+  for (let who = -1; who < (s.ec?.length ?? 0); who++) {
+    const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
+    if (!a || a.a !== SD_BLOWS.volley.id || (who >= 0 && !(Bd.h > 0)) || (who < 0 && (s.ph === 2 || t < s.su))) continue;
+    const w = atkWindup(a, SD_BLOWS.volley, s.ph, who < 0 ? SD_BODY.remnant : SD_BODY.gold + who), t0 = a.at - w, go = a.at - gearFlightOf(w);
+    if (!(t >= t0 && t < go)) continue;
+    for (let h = 0; h < 2; h++) {
+      if (list === NONE) list = out ?? sdKeptList();
+      const g = keptNext(list, newGather);
+      g.who = who; g.h = h; g.k = (t - t0) / (go - t0); g.spin = (t / 1000) * SD_GEAR_SPIN * (h ? -1 : 1); g.yaw = (Bd.yw ?? 0) + Math.PI / 2;
+    }
+  }
+  return list;
+}
+/** A forming gear (sdGatherGearsAt's record, its `x, y, z` the DUNGEON's frame) - gearMatrix's turn at its size - into
+ *  `out` (the record read whole: AUDIT SD II, L2 F9's law). */
+export function gatherGearMatrix(q, out) {
+  gearMatrix(0, 0, 0, q.spin, out, q.yaw);
+  const k = q.k;
+  for (let i = 0; i < 11; i++) out[i] *= k;
+  out[12] = q.x; out[13] = q.y; out[14] = q.z;
+  return out;
+}
+
 /** The distance along bearing `b` from (x, z) to the first pillar's face, `len` at most. Pure. */
 export function beamReach(x, z, b, len) {
   const sx = Math.sin(b), cz = Math.cos(b);
@@ -412,6 +447,59 @@ export function sdBeamDraws(s, t, out = null) {
     toDungeon(d.a, g.a); toDungeon(d.b, g.b); toDungeon(d.f0, g.f0); toDungeon(d.f1, g.f1); d.w = g.w; d.alpha = Math.max(0, alpha);
   }
   return list;
+}
+
+// ── SD-LOOK S8: the decor's matrices (world/sdRemnantModel.js's back-dial, its hand, the heart torn out) ─────────────
+const DIAL = SD_REMNANT_DIAL;
+/** THE FALL'S DECOR (Super-Dungeons-Look.md section 10): the back-dial breaks free - drops off the back (`pop` metres
+ *  back over its first half-second) under `g`, landing on its rim, and rolls toward the body's right `roll` metres,
+ *  slowing to a stop at `rollS`; it topples onto its back over `toppleS`, the hours face up, and sinks `sink` metres
+ *  under the floor by `sinkS` (s). The heart torn out rises `rise` metres over `riseS`, spinning `spin` turns. */
+export const SD_FALL_DECOR = Object.freeze({ g: 9.8, pop: 0.6, roll: 3, rollS: 2, toppleS: 0.5, sink: 1.2, sinkS: 4, rise: 3, riseS: 1.2, spin: 2.5 });
+/** The hand's turn: `out` = torso x T(0, y, 0) x Rz(-turn) x T(0, -y, 0) - `turn` (`hand[0]`: scenes/sdRemnant.js
+ *  sdDialHandAt's record - AUDIT SD II, L2 F9's law: a number handed to a function is a box made) clockwise from XII as
+ *  the dial's back is seen (+x the screen's right from behind, through the camera's one mirror - world/mat4.js), so a
+ *  turn shrinking runs the hand BACK, anticlockwise to the eye, as the Hour's hands run. */
+export function dialHandMatrix(torso, hand, out) {
+  const turn = hand[0], c = Math.cos(-turn), s = Math.sin(-turn), y = DIAL.y, R = _hm;
+  R.fill(0);
+  R[0] = c; R[1] = s; R[4] = -s; R[5] = c; R[10] = 1; R[15] = 1;
+  R[12] = y * s; R[13] = y - y * c;   // T(0, y) Rz T(0, -y): the axle stays where it is
+  return mul4(out, torso, R);
+}
+const _hm = new Float64Array(16), _fm = new Float64Array(16);
+/** THE BACK-DIAL FREE at `t` of the fall `fell` (the fight's - its `at`), on `base` (the body's own matrix where it fell,
+ *  unsunk), into `out` - or null once it has sunk away. Pure. */
+export function dialFallMatrix(base, fell, t, out) {
+  const F = SD_FALL_DECOR, tau = Math.max(0, t - fell.at) / 1000;
+  if (tau >= F.sinkS) return null;
+  // its centre: off the back, down to its rim, along to the body's right as it rolls (it slows to a stop)
+  const v0 = (2 * F.roll) / F.rollS, tr = Math.min(tau, F.rollS), dx = v0 * tr - (v0 / (2 * F.rollS)) * tr * tr;
+  const cy = Math.max(DIAL.r, DIAL.y - 0.5 * F.g * tau * tau), dz = -F.pop * Math.min(1, tau / 0.5);
+  const phi = -dx / DIAL.r;   // rolling, never sliding: its turn about its axle the distance over its radius
+  const q = Math.min(1, Math.max(0, (tau - F.rollS) / F.toppleS)), psi = (Math.PI / 2) * q * q * (3 - 2 * q);   // eased (inline: AUDIT SD II, L2 F9 - no number handed on a frame)
+  const sink = F.sink * Math.min(1, Math.max(0, (tau - F.rollS - F.toppleS) / (F.sinkS - F.rollS - F.toppleS)));
+  // M = T(centre) Tc Rx(psi) Tc^-1 Rz(phi) T(-dial's own centre): toppled about where its rim meets the floor (Tc, a
+  // radius under its centre), onto its back - the hours up
+  const cp = Math.cos(phi), sp = Math.sin(phi), cs = Math.cos(psi), ss = Math.sin(psi), R = _fm, r = DIAL.r;
+  // Rx(psi) Rz(phi), column-major
+  R[0] = cp; R[1] = cs * sp; R[2] = ss * sp; R[3] = 0;
+  R[4] = -sp; R[5] = cs * cp; R[6] = ss * cp; R[7] = 0;
+  R[8] = 0; R[9] = -ss; R[10] = cs; R[11] = 0;
+  // the pivot (0, -r, 0) from the centre held: centre' = centre + (0, -r, 0) - Rx(psi)(0, -r, 0)
+  const px = dx, py = cy - r - (-r * cs) - sink, pz = DIAL.z + dz - (-r * ss);
+  R[12] = px - (R[0] * 0 + R[4] * DIAL.y + R[8] * DIAL.z); R[13] = py - (R[1] * 0 + R[5] * DIAL.y + R[9] * DIAL.z); R[14] = pz - (R[2] * 0 + R[6] * DIAL.y + R[10] * DIAL.z); R[15] = 1;
+  return mul4(out, base, R);
+}
+/** THE HEART TORN OUT at `t` of the fall `fell`, on `base` (as dialFallMatrix's): risen out of the cage over
+ *  SD_FALL_DECOR's riseS, spinning faster as it goes - or null once it has gone into the way home. Pure. */
+export function heartFallMatrix(base, fell, t, out) {
+  const F = SD_FALL_DECOR, tau = Math.max(0, t - fell.at) / 1000;
+  if (tau >= F.riseS) return null;
+  const k = tau / F.riseS, y = SD_REMNANT_BODY.heartY + F.rise * (1 - (1 - k) * (1 - k)), a = Math.PI * 2 * F.spin * k * k, c = Math.cos(a), s = Math.sin(a), R = _fm;
+  R.fill(0);
+  R[0] = c; R[2] = -s; R[5] = 1; R[8] = s; R[10] = c; R[13] = y; R[15] = 1;
+  return mul4(out, base, R);
 }
 
 /** A gear stood at (x, y, z) of the arena's frame, turned on edge to face its flight and spun by `spin`, in the DUNGEON's

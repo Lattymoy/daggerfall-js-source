@@ -98,6 +98,7 @@ export const TITLE_TEXT = Object.freeze({
   crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
   hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
   hoursfirst: "Hour's First",       // HOURS-FIRST (2026-10-08, Mac: "a title named Hour's First"): the first group to break an Abyss Dungeon, by name
+  iliacchampion: 'Iliac Champion',   // CARDS10 (2026-10-08, Tavern-Cards section 6.4: "a title for the top of it"): Iliac Hand's season #1, while they hold the top
   // CHAP4c (2026-10-08, the Chapters arc): a chapter's seats' - worded off their claim (npcChapterLaw.js chapterTitleText,
   // "Master of the Fighters Guild, Anticlere"); these where the claim names no chapter this client knows
   chaptermaster: 'Chapter Master',
@@ -246,6 +247,9 @@ export const TITLE_RGBA = Object.freeze({
   crystalfist: CRYSTAL_PURPLE,
   hourbreaker: HOUR_GOLD,   // SD9b: the Remnant's bar's gold
   hoursfirst: HOUR_DAWN,    // HOURS-FIRST: the first dawn's rose gold
+  // CARDS10: the ILIAC CHAMPION in the Bay's own sea-blue - the water the game is named for, bluer and brighter than the
+  // Apostle's periwinkle, no gold (the Founder's) and no green (the Arena Champion's laurel)
+  iliacchampion: Object.freeze([0.239, 0.608, 0.820, 1]),   // #3d9bd1
   // CHAP4c: a chapter's seats' - a guild banner's steel blue for its Master, paler for an officer, weathered grey for a
   // Master who lost the seat; lighter and greyer than the Herald's azure, darker than the Champion's silver
   chaptermaster: Object.freeze([0.498, 0.698, 0.898, 1]),   // #7fb2e5

@@ -419,7 +419,7 @@ export function createRiteHost({
     if (!model || !renderer?.createMesh || meshGen === modelGen || meshFailedGen === modelGen) return;
     try {
       if (!artUp) {
-        for (const [rec, art] of [...gateArt(), ...riteArt()]) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission); }
+        for (const [rec, art] of [...gateArt(), ...riteArt()]) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); }   // AUDIT GATE-FBX G4: the fire its own colour
         artUp = true;
       }
       const next = renderer.createMesh(model), nextSigil = renderer.createMesh(sigilModel);
