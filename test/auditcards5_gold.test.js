@@ -32,7 +32,10 @@ const word = (r, ws, o) => { _tick(300); return r.raw(ws, JSON.stringify({ t: 'h
 const receipts = (ws) => holdem(ws).filter((m) => m.cashout).map((m) => readCardReceipt(m.cashout));
 let n = 0;
 const sid = () => (0xe0000000 + ++n).toString(16).padEnd(20, '0');
-async function order(r, nowS, { s, cj = sid(), cr = ROOM, ct = 0, ca = 500, cb = 10 }) {
+// PIN MOVED (TAVERN-TABLES, world179): a room's gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - every
+// staked word below, and the order it carries, names it where they named table 0 (a chips table now: a staked sit there
+// is handed its stake back); the order "for another table" names table 0.
+async function order(r, nowS, { s, cj = sid(), cr = ROOM, ct = 1, ca = 500, cb = 10 }) {
   const kp = await r.signer();
   return { cj, stake: await mintStakeOrder({ s, cj, cr, ct, ca, cb }, kp.privateKey, { subtle, nowS }) };
 }
@@ -61,18 +64,18 @@ test('AUDIT CARDS-5 E1: a winner leaves with what came to the table - every seat
 test('AUDIT CARDS-5 E2: a new stake at the chair its player is leaving cashed out - spent, and handed back whole; the client confirms on no chair it is leaving', () => withRoom(async ({ r, tick, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b'), c = await join(r, 'peer-c');
   const oa = await order(r, nowS(), { s: 'acct-peer-a' }), ob = await order(r, nowS(), { s: 'acct-peer-b' }), oc = await order(r, nowS(), { s: 'acct-peer-c' });
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 3, bb: 10, stake: oa.stake });
-  await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 3, bb: 10, stake: ob.stake });
-  await word(r, c, { op: 'sit', table: 0, chair: 2, chairs: 3, bb: 10, stake: oc.stake });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 3, bb: 10, stake: oa.stake });
+  await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 3, bb: 10, stake: ob.stake });
+  await word(r, c, { op: 'sit', table: 1, chair: 2, chairs: 3, bb: 10, stake: oc.stake });
   tick(HOLDEM_FIRST_MS); await r.fire();
-  const t = r.room._holdem.get(0);
+  const t = r.room._holdem.get(1);
   const who = t.seats[t.handSeats[t.hand.toAct]].id;
   const ws = { 'peer-a': a, 'peer-b': b, 'peer-c': c }[who];
-  await word(r, ws, { op: 'stand', table: 0 });   // up mid-hand: cashed out, his chair leaving till the hand ends
+  await word(r, ws, { op: 'stand', table: 1 });   // up mid-hand: cashed out, his chair leaving till the hand ends
   assert.ok(t.hand && t.seats.find((x) => x?.id === who)?.leaving);
   const again = await order(r, nowS(), { s: `acct-${who}` });
   ws.sent.length = 0;
-  await word(r, ws, { op: 'sit', table: 0, chair: t.seats.findIndex((x) => x?.id === who), chairs: 3, bb: 10, stake: again.stake });
+  await word(r, ws, { op: 'sit', table: 1, chair: t.seats.findIndex((x) => x?.id === who), chairs: 3, bb: 10, stake: again.stake });
   assert.equal(holdem(ws).find((m) => m.error)?.error, 'cashed out');
   assert.notEqual(r.store.get(`cstake:${again.cj}`), undefined, 'the new stake spent');
   assert.deepEqual(receipts(ws).filter((x) => x.j === again.cj).map((x) => [x.r, x.w]), [[500, 'refused']], 'and handed back whole');
@@ -144,16 +147,16 @@ test('AUDIT CARDS-5 lane E\'s survivors: recover on a lost lease keeps; a receip
   // the relay: one ack lets one receipt go; the top-up's doors
   await withRoom(async ({ r, nowS }) => {
     const b = await join(r, 'peer-b');
-    for (let i = 0; i < 2; i++) await word(r, b, { op: 'void', table: 0, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
+    for (let i = 0; i < 2; i++) await word(r, b, { op: 'void', table: 1, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
     const owed = r.store.get('cashout:acct-peer-b');
-    await word(r, b, { op: 'ack', table: 0, j: owed[0].j });
+    await word(r, b, { op: 'ack', table: 1, j: owed[0].j });
     assert.deepEqual(r.store.get('cashout:acct-peer-b').map((x) => x.j), [owed[1].j], 'the other still owed');
     const o = await order(r, nowS(), { s: 'acct-peer-b' });
-    await word(r, b, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: o.stake });
-    for (const [extra, why] of [[{ ct: 1 }, 'stake elsewhere'], [{ cb: 20 }, 'stake elsewhere']]) {
+    await word(r, b, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: o.stake });
+    for (const [extra, why] of [[{ ct: 0 }, 'stake elsewhere'], [{ cb: 20 }, 'stake elsewhere']]) {
       b.sent.length = 0;
       const up = await order(r, nowS(), { s: 'acct-peer-b', ca: 100, ...extra });
-      await word(r, b, { op: 'topup', table: 0, stake: up.stake });
+      await word(r, b, { op: 'topup', table: 1, stake: up.stake });
       assert.equal(holdem(b).find((m) => m.error)?.error, why, JSON.stringify(extra));
       assert.equal(r.store.get(`cstake:${up.cj}`), undefined, 'not spent');
     }
@@ -161,7 +164,7 @@ test('AUDIT CARDS-5 lane E\'s survivors: recover on a lost lease keeps; a receip
   await withRoom(async ({ r, nowS }) => {
     const b = await join(r, 'peer-b');
     const up = await order(r, nowS(), { s: 'acct-peer-b', ca: 100 });
-    await word(r, b, { op: 'topup', table: 0, stake: up.stake });
+    await word(r, b, { op: 'topup', table: 1, stake: up.stake });
     assert.equal(holdem(b).find((m) => m.error)?.error, 'stakes closed', 'no key to sign: no top-up');
   }, { gate: false });
   // the service: one receipt brought twice at once pays once
@@ -184,31 +187,31 @@ test('AUDIT CARDS-5 lane E\'s survivors (second pass), the relay: a top-up from 
   // leaving mid-hand, cashed out: not seated, nothing spent
   await withRoom(async ({ r, tick, nowS }) => {
     const ws = { 'peer-a': await join(r, 'peer-a'), 'peer-b': await join(r, 'peer-b'), 'peer-c': await join(r, 'peer-c') };
-    for (const [i, id] of ['peer-a', 'peer-b', 'peer-c'].entries()) await word(r, ws[id], { op: 'sit', table: 0, chair: i, chairs: 3, bb: 10, stake: (await order(r, nowS(), { s: `acct-${id}` })).stake });
+    for (const [i, id] of ['peer-a', 'peer-b', 'peer-c'].entries()) await word(r, ws[id], { op: 'sit', table: 1, chair: i, chairs: 3, bb: 10, stake: (await order(r, nowS(), { s: `acct-${id}` })).stake });
     tick(HOLDEM_FIRST_MS); await r.fire();
-    const t = r.room._holdem.get(0);
+    const t = r.room._holdem.get(1);
     const who = t.seats[t.handSeats[t.hand.toAct]].id;
-    await word(r, ws[who], { op: 'stand', table: 0 });
+    await word(r, ws[who], { op: 'stand', table: 1 });
     assert.ok(t.hand && t.seats.find((x) => x?.id === who)?.leaving);
     ws[who].sent.length = 0;
     const up = await order(r, nowS(), { s: `acct-${who}`, ca: 100 });
-    await word(r, ws[who], { op: 'topup', table: 0, stake: up.stake });
+    await word(r, ws[who], { op: 'topup', table: 1, stake: up.stake });
     assert.equal(holdem(ws[who]).find((m) => m.error)?.error, 'not seated', 'a chair cashed out is no seat to top up');
     assert.equal(r.store.get(`cstake:${up.cj}`), undefined);
   });
   // the seat's id reconnected under another account: neither account's order tops it up
   await withRoom(async ({ r, nowS }) => {
     const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-    await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
-    await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
+    await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
+    await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
     const a2 = r.connect();
     await r.hello(a2, 'peer-a', null, { name: 'peer-a', tokenSub: 'acct-other' });
-    const t = r.room._holdem.get(0);
+    const t = r.room._holdem.get(1);
     assert.equal(t.seats[0]?.id, 'peer-a', 'the chair kept');
     for (const s of ['acct-other', 'acct-peer-a']) {   // the socket's own account (not the seat's); the seat's (not the socket's)
       a2.sent.length = 0;
       const up = await order(r, nowS(), { s, ca: 100 });
-      await word(r, a2, { op: 'topup', table: 0, stake: up.stake });
+      await word(r, a2, { op: 'topup', table: 1, stake: up.stake });
       assert.equal(holdem(a2).find((m) => m.error)?.error, 'stake refused', s);
       assert.equal(r.store.get(`cstake:${up.cj}`), undefined, `${s}: not spent`);
       assert.equal(t.seats[0].stack, 500, `${s}: the stack unmoved`);
@@ -217,15 +220,15 @@ test('AUDIT CARDS-5 lane E\'s survivors (second pass), the relay: a top-up from 
   // a hand dealt while the top-up's spend was written: spent, refused, the whole of it back
   await withRoom(async ({ r, tick, nowS }) => {
     const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-    await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
-    await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
+    await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-a' })).stake });
+    await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: (await order(r, nowS(), { s: 'acct-peer-b' })).stake });
     const up = await order(r, nowS(), { s: 'acct-peer-a', ca: 100 });
     const st = r.state.storage, get = st.get;
     st.get = async (k) => { if (k === `cstake:${up.cj}`) { st.get = get; tick(HOLDEM_FIRST_MS); await r.fire(); } return get.call(st, k); };
     a.sent.length = 0;
-    await word(r, a, { op: 'topup', table: 0, stake: up.stake });
+    await word(r, a, { op: 'topup', table: 1, stake: up.stake });
     st.get = get;
-    const t = r.room._holdem.get(0);
+    const t = r.room._holdem.get(1);
     assert.ok(t.hand, 'the hand dealt meanwhile');
     assert.equal(holdem(a).find((m) => m.error)?.error, 'in hand');
     assert.notEqual(r.store.get(`cstake:${up.cj}`), undefined, 'spent');

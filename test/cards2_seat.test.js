@@ -115,7 +115,8 @@ test('CARDS2 the nearest free seat; something to sit over; what stands you up; t
 test('CARDS2 the interior context lists its card tables - TAVERN-TABLE: the prop alone, no model of the room\'s', () => {
   const src = read('src/scenes/interiorContext.js');
   assert.equal(src.split('tables.push(').length - 1, 1, 'one push');
-  assert.ok(src.includes('      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix });'), 'the prop\'s: the table\'s own box and its matrix');
+  // PIN MOVED (TAVERN-TABLES, world179): the row carries the gold table's mark beside its box and matrix
+  assert.ok(src.includes('      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix, ...(gold ? { gold: true } : {}) });'), 'the prop\'s: the table\'s own box and its matrix');
   assert.match(src, /^ {4}tables, {4}\/\/ CARDS2: the card tables$/m);
 });
 

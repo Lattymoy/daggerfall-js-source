@@ -19,6 +19,9 @@ import { seatSpots } from './cardTables.js';
 export const CARD_TABLE_ARCHIVE = 'cardtable';
 export const FELT_RECORD = 'felt';
 export const WOOD_RECORD = 'wood';
+/** TAVERN-TABLES (section 30): the gold table's felt - its own record, so the room's two tables are told apart at a
+ *  glance (the chips table green, the gold table red). */
+export const GOLD_FELT_RECORD = 'feltgold';
 /** MEASURE (TAVERN-TABLE): the table, in metres - its length (x), breadth (z), the top's height and thickness, the
  *  wooden rail round the felt, the felt's lift over the wood, a leg's square and its inset from the corner. The top
  *  stands at the seated pose's own table (seatPose.js SEAT_TOP_DEFAULT; AUDIT TAVERN-TABLE L1: at 0.76 a tall race's
@@ -47,6 +50,8 @@ export const CARD_TABLE_TEX = 64;
 /** MEASURE (TAVERN-TABLE): the felt's green and the wood's brown, as RGB. */
 export const FELT_RGB = Object.freeze([31, 90, 55]);
 export const WOOD_RGB = Object.freeze([107, 66, 38]);
+/** MEASURE (TAVERN-TABLES): the gold table's red. */
+export const GOLD_FELT_RGB = Object.freeze([118, 26, 34]);
 
 /** The TABLE's own box, the stools apart - what its seats stand round (cardTables.js seatSpots) and its floor is found
  *  for (placedCardTable.js); its top the felt's. */
@@ -58,9 +63,9 @@ export const CARD_TABLE_BOX = Object.freeze({
 /**
  * The prop's model, its lowest point on y = 0 and the table's footprint's middle on the origin: `{positions, normals,
  * uvs, indices, subMeshes}` (the shape every model the renderer draws has) - the wood's triangles (the table, then its
- * stools), then the felt's.
+ * stools), then the felt's. TAVERN-TABLES: `felt` the felt's record (GOLD_FELT_RECORD for the gold table).
  */
-export function cardTablePropModel() {
+export function cardTablePropModel({ felt: feltRecord = FELT_RECORD } = {}) {
   const positions = [], normals = [], uvs = [];
   const wood = [], felt = [];
   const quad = (out, corners, n, uv) => {
@@ -107,7 +112,7 @@ export function cardTablePropModel() {
     indices: new Uint32Array([...wood, ...felt]),
     subMeshes: [
       { textureArchive: CARD_TABLE_ARCHIVE, textureRecord: WOOD_RECORD, startIndex: 0, primitiveCount: wood.length / 3 },
-      { textureArchive: CARD_TABLE_ARCHIVE, textureRecord: FELT_RECORD, startIndex: wood.length, primitiveCount: felt.length / 3 },
+      { textureArchive: CARD_TABLE_ARCHIVE, textureRecord: feltRecord, startIndex: wood.length, primitiveCount: felt.length / 3 },
     ],
   };
 }
@@ -129,10 +134,11 @@ function painted(rgb) {
   return { width: n, height: n, colors };
 }
 
-/** The felt: its green, each texel a little lighter or darker (the nap). */
-export const paintFelt = () => painted((x, y) => {
+/** The felt: its green (TAVERN-TABLES: or `rgb`, the gold table's red), each texel a little lighter or darker (the
+ *  nap). */
+export const paintFelt = (rgb = FELT_RGB) => painted((x, y) => {
   const k = 0.9 + 0.2 * texelNoise(x, y, 1);
-  return FELT_RGB.map((c) => Math.round(c * k));
+  return rgb.map((c) => Math.round(c * k));
 });
 
 /** The wood: its brown in grain running along u (the texture's x), each row's shade its own and a texel's a little. */

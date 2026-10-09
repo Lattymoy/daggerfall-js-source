@@ -30,6 +30,9 @@ const word = (r, ws, o) => { _tick(300); return r.raw(ws, JSON.stringify({ t: 'h
 const receipts = (ws) => holdem(ws).filter((m) => m.cashout).map((m) => readCardReceipt(m.cashout));
 let n = 0;
 const sid = () => (0xa0000000 + ++n).toString(16).padEnd(20, '0');
+// PIN MOVED (TAVERN-TABLES, world179): a room's gold table is table 1 (net/holdemTable.js HOLDEM_GOLD_TABLE) - the gold
+// tables below that stood at table 0 stand there, their orders naming it (`ct: 1`); table 0 is a chips table, and the
+// doors' pin reads what it always said there ('friendly table', the stake back whole) by the index's law now.
 async function order(r, nowS, { s, cj = sid(), cr = ROOM, ct = 0, ca = 500, cb = 10 }) {
   const kp = await r.signer();
   return { cj, stake: await mintStakeOrder({ s, cj, cr, ct, ca, cb }, kp.privateKey, { subtle, nowS }) };
@@ -38,19 +41,19 @@ const join = async (r, id) => { const w = r.connect(); await r.hello(w, id, null
 
 test('CARDS6 a gold table: staked sits seat their stakes, the hand plays, the seats\' receipts bring back every chip the stakes brought and no more', () => withRoom(async ({ r, tick, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-  const oa = await order(r, nowS(), { s: 'acct-peer-a', ca: 500 }), ob = await order(r, nowS(), { s: 'acct-peer-b', ca: 300 });
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
-  await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: ob.stake });
-  const t = r.room._holdem.get(0);
+  const oa = await order(r, nowS(), { ct: 1, s: 'acct-peer-a', ca: 500 }), ob = await order(r, nowS(), { ct: 1, s: 'acct-peer-b', ca: 300 });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
+  await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: ob.stake });
+  const t = r.room._holdem.get(1);
   assert.equal(t.gold, true, 'the first sitter\'s stake made it a gold table');
   assert.deepEqual(t.seats.map((s) => s.stack), [500, 300], 'each seat its stake');
   assert.equal(holdem(a).find((m) => m.state).state.gold, true, 'the room told it is gold');
   tick(HOLDEM_FIRST_MS); await r.fire();
   // whoever is to act folds; both stand once the hand is over
   const toAct = t.seats[t.handSeats[t.hand.toAct]].id === 'peer-a' ? a : b;
-  await word(r, toAct, { op: 'act', table: 0, action: { type: 'fold' } });
-  await word(r, a, { op: 'stand', table: 0 });
-  await word(r, b, { op: 'stand', table: 0 });
+  await word(r, toAct, { op: 'act', table: 1, action: { type: 'fold' } });
+  await word(r, a, { op: 'stand', table: 1 });
+  await word(r, b, { op: 'stand', table: 1 });
   const ra = receipts(a), rb = receipts(b);
   assert.equal(ra.length, 1); assert.equal(rb.length, 1);
   assert.deepEqual([ra[0].j, ra[0].s, ra[0].w, rb[0].j, rb[0].s, rb[0].w], [oa.cj, 'acct-peer-a', 'stood', ob.cj, 'acct-peer-b', 'stood']);
@@ -58,7 +61,7 @@ test('CARDS6 a gold table: staked sits seat their stakes, the hand plays, the se
   assert.notEqual(ra[0].r, 500, 'and the blinds moved it');
   assert.equal(r.store.get('holdem'), undefined, 'the table forgotten');
   // the stakes are spent: their orders seat nobody again
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
   assert.equal(holdem(a).at(-1).error, 'stake spent');
   assert.ok(HOLDEM_REFUSALS['stake spent'], 'said in words');
 }));
@@ -109,9 +112,9 @@ test('CARDS6 the doors: every seat staked or none; a sit refused after its stake
 
 test('CARDS6 a player gone from the room: his seat stood up at the hand\'s end, the receipt owed - told at his next look in the room, let go on his ack', () => withRoom(async ({ r, tick, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-  const oa = await order(r, nowS(), { s: 'acct-peer-a', ca: 400 }), ob = await order(r, nowS(), { s: 'acct-peer-b', ca: 400 });
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
-  await word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: ob.stake });
+  const oa = await order(r, nowS(), { ct: 1, s: 'acct-peer-a', ca: 400 }), ob = await order(r, nowS(), { ct: 1, s: 'acct-peer-b', ca: 400 });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: oa.stake });
+  await word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: ob.stake });
   tick(HOLDEM_FIRST_MS); await r.fire();
   await r.drop(a);   // gone mid-hand: folded out of turn, stood up at the hand's end
   const owed = r.store.get('cashout:acct-peer-a');
@@ -121,9 +124,9 @@ test('CARDS6 a player gone from the room: his seat stood up at the hand\'s end, 
   r.room._all();
   const fresh = r.connect(); await r.hello(fresh, 'peer-a3', null, { name: 'a3', tokenSub: 'acct-peer-a' });
   fresh.sent.length = 0;
-  await word(r, fresh, { op: 'look', table: 0 });
+  await word(r, fresh, { op: 'look', table: 1 });
   assert.deepEqual(receipts(fresh).map((x) => x.j), [oa.cj], 'told at his look');
-  await word(r, fresh, { op: 'ack', table: 0, j: oa.cj });
+  await word(r, fresh, { op: 'ack', table: 1, j: oa.cj });
   assert.equal(r.store.get('cashout:acct-peer-a'), undefined, 'let go on his ack');
   void back; void b;
 }));
@@ -165,15 +168,15 @@ test('CARDS6 a staked leaver mid-hand: cashed out at once with his stack behind 
 test('CARDS6 a dropped player back at a gold table mid-hand: his own chair, his stake not asked again', () => withRoom(async ({ r, tick: tk, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b'), c = await join(r, 'peer-c');
   for (const [ws, s, chair] of [[a, 'acct-peer-a', 0], [b, 'acct-peer-b', 1], [c, 'acct-peer-c', 2]]) {
-    const o = await order(r, nowS(), { s });
-    await word(r, ws, { op: 'sit', table: 0, chair, chairs: 3, bb: 10, stake: o.stake });
+    const o = await order(r, nowS(), { ct: 1, s });
+    await word(r, ws, { op: 'sit', table: 1, chair, chairs: 3, bb: 10, stake: o.stake });
   }
   tk(HOLDEM_FIRST_MS); await r.fire();
-  const t = r.room._holdem.get(0);
+  const t = r.room._holdem.get(1);
   // a is marked leaving but not stood (a blip the relay has not yet stood him for): his sit back takes his chair
   t.seats[0].leaving = true;
   a.sent.length = 0;
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 3, bb: 10, stake: 'whatever-it-was' });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 3, bb: 10, stake: 'whatever-it-was' });
   assert.equal(t.seats[0].leaving, undefined, 'his own chair, back');
   assert.ok(!holdem(a).some((m) => m.error), 'no stake asked of him');
 }));
@@ -188,12 +191,12 @@ test('AUDIT CARDS-4 B3: a room that cannot sign a cash-out seats no stake - its 
 
 test('AUDIT CARDS-4 B2: two staked first sits at once on one new table - both seated at ONE table, both stakes come home', () => withRoom(async ({ r, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-  const oa = await order(r, nowS(), { s: 'acct-peer-a' }), ob = await order(r, nowS(), { s: 'acct-peer-b' });
-  await Promise.all([word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: oa.stake }), word(r, b, { op: 'sit', table: 0, chair: 1, chairs: 2, bb: 10, stake: ob.stake })]);
-  const kept = r.store.get('holdem')?.[0];
+  const oa = await order(r, nowS(), { ct: 1, s: 'acct-peer-a' }), ob = await order(r, nowS(), { ct: 1, s: 'acct-peer-b' });
+  await Promise.all([word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: oa.stake }), word(r, b, { op: 'sit', table: 1, chair: 1, chairs: 2, bb: 10, stake: ob.stake })]);
+  const kept = r.store.get('holdem')?.[1];
   assert.deepEqual(kept.seats.map((x) => x?.stake ?? null), [oa.cj, ob.cj], 'both stakes seated at the one table');
-  await word(r, a, { op: 'stand', table: 0 });
-  await word(r, b, { op: 'stand', table: 0 });
+  await word(r, a, { op: 'stand', table: 1 });
+  await word(r, b, { op: 'stand', table: 1 });
   const back = [...receipts(a), ...receipts(b)].filter((x, i, all) => all.findIndex((y) => y.j === x.j) === i);
   assert.equal(back.reduce((n, x) => n + x.r, 0), 1000, 'every chip the stakes brought, home');
   assert.deepEqual(back.map((x) => x.j).sort(), [oa.cj, ob.cj].sort());
@@ -201,18 +204,18 @@ test('AUDIT CARDS-4 B2: two staked first sits at once on one new table - both se
 
 test('AUDIT CARDS-4 B4: a cash-out whose write threw stays queued with its table, and is signed and owed at the next save - never dropped', () => withRoom(async ({ r, nowS }) => {
   const a = await join(r, 'peer-a'), b = await join(r, 'peer-b');
-  const o = await order(r, nowS(), { s: 'acct-peer-a' });
-  await word(r, a, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10, stake: o.stake });
+  const o = await order(r, nowS(), { ct: 1, s: 'acct-peer-a' });
+  await word(r, a, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10, stake: o.stake });
   const put = r.state.storage.put.bind(r.state.storage);
   let threw = 0;
   r.state.storage.put = async (k, v) => { if (typeof k === 'string' && k.startsWith('cashout:') && !threw++) throw new Error('storage down'); return put(k, v); };
-  await word(r, a, { op: 'stand', table: 0 });
+  await word(r, a, { op: 'stand', table: 1 });
   assert.equal(threw, 1);
   assert.deepEqual(receipts(a), [], 'not signed and kept yet');
-  assert.equal(r.room._holdem.get(0)?.cashouts?.length, 1, 'still queued, the table kept for it');
-  await word(r, b, { op: 'sit', table: 1, chair: 0, chairs: 2, bb: 10 });   // the next save
+  assert.equal(r.room._holdem.get(1)?.cashouts?.length, 1, 'still queued, the table kept for it');
+  await word(r, b, { op: 'sit', table: 0, chair: 0, chairs: 2, bb: 10 });   // the next save (at the room's chips table)
   assert.deepEqual(receipts(a).map((x) => [x.j, x.r, x.w]), [[o.cj, 500, 'stood']], 'signed and owed');
-  assert.equal(r.room._holdem.get(0), undefined, 'and the table gone with its last cash-out');
+  assert.equal(r.room._holdem.get(1), undefined, 'and the table gone with its last cash-out');
 }));
 
 test('AUDIT CARDS-4 B3/C6: a void too needs a room that can sign; and a void takes an order a receipt\'s life old, not a week', async () => {

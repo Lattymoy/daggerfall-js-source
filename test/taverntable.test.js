@@ -292,21 +292,23 @@ test('TAVERN-TABLE by source: the interior context stands the prop after the roo
   assert.ok(doorsAt > 0 && at > doorsAt, 'after the room\'s own models and its closed doors are in the collider');
   const arm = ic.slice(at, ic.indexOf('// People (C1)', at));
   assert.match(arm, /interior\.markers\.find\(\(m\) => m\.type === INTERIOR_MARKER\.ENTER\) \?\? interior\.markers\.find\(\(m\) => m\.type === INTERIOR_MARKER\.REST\)/, 'the record\'s first enter marker - the same for every client');
-  assert.match(arm, /const key = `int:\$\{interior\.placements\.length\}`;/, 'the next placement index, past the record\'s own');
+  // PIN MOVED (TAVERN-TABLES, world179): the arm stands the room's tables in turn - the chips table, then the gold one
+  // (test/taverntables.test.js) - each the next placement index past the record's own, its felt its own, the wood once
+  assert.match(arm, /const key = `int:\$\{interior\.placements\.length \+ tables\.length\}`;/, 'the next placement index, past the record\'s own');
   for (const step of [
-    'const cpu = cardTablePropModel();',
-    'renderer.uploadTexture(CARD_TABLE_ARCHIVE, FELT_RECORD, paintFelt(), { mips: true, opaque: true });',
-    'renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });',
-    'propMesh = renderer.createMesh(cpu);',
-    'drawList.push({ mesh: propMesh, matrix, key, aabb });', 'automapEntries.push({ key, aabb,',
-    "collider.addMesh('interior', cpu.positions, cpu.indices, matrix);", 'placedTableSpot(CARD_TABLE_BOX, [enter.x, enter.y, enter.z], {',
+    'const cpu = cardTablePropModel({ felt });',
+    'renderer.uploadTexture(CARD_TABLE_ARCHIVE, felt, paintFelt(gold ? GOLD_FELT_RGB : FELT_RGB), { mips: true, opaque: true });',
+    'if (!propMeshes.length) renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });',
+    'const mesh = renderer.createMesh(cpu);',
+    'drawList.push({ mesh, matrix, key, aabb });', 'automapEntries.push({ key, aabb,',
+    "collider.addMesh('interior', cpu.positions, cpu.indices, matrix);", 'placedTableSpot(CARD_TABLE_BOX, [enter.x, enter.y, enter.z], probe, avoid)',
     'const matrix = parent(trs(spot.x, spot.y, spot.z, 0, spot.yawDeg, 0));',
-    'tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix });',
+    'tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix, ...(gold ? { gold: true } : {}) });',
   ]) assert.ok(arm.includes(step), `the prop: ${step}`);
   assert.equal(/staticBuilder|_batched/.test(arm), false, 'AUDIT TAVERN-TABLE H1: never in the merge - its string archive is no number to it');
   for (const avoid of ['interior.doors.map(', 'interior.actionDoors.map(', 'collectInteriorPeople(recordData).map(', 'interior.flats.map(', 'interior.markers.map(']) assert.ok(arm.includes(avoid), `kept clear of ${avoid}`);
   assert.equal(ic.split('tables.push(').length - 1, 1, 'the prop is the room\'s one card table: no model of Daggerfall\'s is one');
-  assert.match(ic, /if \(propMesh\) \{ renderer\.destroyMesh\(propMesh\); propMesh = null; \}/, 'its mesh freed with the room (EVERY ALLOCATION HAS AN OWNER)');
+  assert.ok(ic.includes('for (const mesh of propMeshes.splice(0)) renderer.destroyMesh(mesh);'), 'its mesh freed with the room (EVERY ALLOCATION HAS AN OWNER) - PIN MOVED (TAVERN-TABLES): each of them');
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /\n {10}placeCardTable: isTavern\(building\?\.buildingType \?\? BUILDING_TYPES\.None\),\n/);
   // AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once on entering - the relay hands the gold
@@ -345,14 +347,16 @@ async function buildRoom(opts) {
 
 test('TAVERN-TABLE the build: asked, the room stands the prop on its floor - its textures uploaded, listed, drawn by its own mesh (never the merge), collided, six seats over its stools, freed with the room; not asked, none', async () => {
   const { ctx, made, freed, uploaded } = await buildRoom({ peopleVisible: true, placeCardTable: true });
-  assert.equal(ctx.tables.length, 1);
+  // PIN MOVED (TAVERN-TABLES, world179): the room stands two - this pin reads the first, the chips table, where it
+  // always stood; the second, the gold table, is test/taverntables.test.js's
+  assert.equal(ctx.tables.length, 2);
   const t = ctx.tables[0];
   const [gx, gz] = PLACE_GRID_OFF;
   assert.deepEqual([t.matrix[12] - gx, t.matrix[13], t.matrix[14] - gz].map(r6), [3, 0, 0], 'three metres in, on the floor - its ring\'s edge 1.5 m from the room\'s exit (MAC-BUG1\'s, at the marker), just the 1.5 m that exit keeps');
   assert.equal(r6(t.matrix[0]), 1, 'along x');
   assert.deepEqual({ min: t.box.min.map(r6), max: t.box.max.map(r6) }, { min: [-0.75, 0, -0.5], max: [0.75, 0.802, 0.5] }, 'the table\'s own box, its stools apart, for its seats');
   assert.deepEqual({ min: t.aabb.min.map((v, k) => r6(v - [gx, 0, gz][k])), max: t.aabb.max.map((v, k) => r6(v - [gx, 0, gz][k])) }, { min: [2.25, 0, -0.5], max: [3.75, 0.802, 0.5] }, 'and its world box the table\'s: the press, the frame');
-  assert.deepEqual(uploaded, [['cardtable', 'felt', 64, 64, { mips: true, opaque: true }], ['cardtable', 'wood', 64, 64, { mips: true, opaque: true }]]);
+  assert.deepEqual(uploaded, [['cardtable', 'wood', 64, 64, { mips: true, opaque: true }], ['cardtable', 'felt', 64, 64, { mips: true, opaque: true }], ['cardtable', 'feltgold', 64, 64, { mips: true, opaque: true }]]);
   const prop = made.find((g) => g.m.subMeshes?.[0]?.textureArchive === CARD_TABLE_ARCHIVE);
   assert.ok(prop, 'the prop\'s own mesh');
   const entry = ctx.drawList.find((d) => d.mesh === prop);

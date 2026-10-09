@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world178; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`); CARDS4 SHIPPED (section 14) and CARDS3 SHIPPED (section 15) together (Mac: "Do 3 and 4") - offline Hold'em against the tavern's regulars for gold, the cards and chips on the cloth; AUDIT CARDS-2 over all of it (section 16, `01-Overview/Audit-Cards-2.md`; Mac: "Perfection"); then (Mac: "Do 3 4 and 5") CARDS5 SHIPPED (section 17, the relay deals - online Hold'em between players, friendly), CARDS4b (section 18, the regulars seated in their chairs) and CARDS3b (section 19, the held hand, the peek, the chips dragged, the riffle); then (Mac: "I wanna do a deep comprehensive of everything and give the cards daggerfall especially themes") AUDIT CARDS-3 over all of it (section 20, `01-Overview/Audit-Cards-3.md`) and CARDS-BAY SHIPPED (section 21, the deck of the Iliac Bay); then (Mac: "#2 and cleanup") CARDS-TIDY (section 22) and CARDS6 SHIPPED (section 23, gold tables online - the stakes escrowed by the realm service); then (Mac: "2 and 3") AUDIT CARDS-4 over them (section 25, `01-Overview/Audit-Cards-4.md`) and CARDS6b SHIPPED (section 24, the top-up and gold owed elsewhere); then (Mac: "So what about card collections?") the Holdings rail's COLLECTIONS page, CARDS7 SHIPPED (Iliac Hand's rules) and CARDS8 SHIPPED (the first set, its painted faces, the Card Binder and the starter deck) - section 26. Then (Mac: "one last comprehensive audit") AUDIT CARDS-5 - section 27. Then (the owner: "Lets instead place a specific table in each inn. A new property specifficaly used for the card table") TAVERN-TABLE - section 28, every tavern's own card table, a prop of its own; then (the owner: "Audit this") AUDIT TAVERN-TABLE - section 29; then (Discord, live: "Card tables just aren't working at all right now" - "it doesnt let him use gold tables"; the owner: "Two tables per tavern") TAVERN-TABLES - section 30, the chips table and the gold table. Mac answered
 four of section 9's five questions the same day, and the house deck's art (Q5) on 2026-10-08; the collectible cards' art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -891,3 +891,57 @@ reproduced against the real code before it was fixed.
   its body: GitHub reads the whole message, so that deploy was skipped as well (#703 and #704 met the same). #709's
   message names no marker at all, and runs the deploy (its own verify gates the publish); a dispatch of `deploy.yml`
   from this session is refused (403).
+
+## 30. TAVERN-TABLES (2026-10-09): two tables a tavern - the chips table, and the gold table an index
+
+A report from the live game (Discord, #bug-reports, "Card tables not working"): **"Card tables just aren't working at
+all right now"**, and from another player, **"I exited out of all the tables I checked out so far with the 'Stand Up'
+button, yet this still happened to me"**; then, through the owner, **"It says it doesnt let him use gold tables"**.
+Told the cause, the owner: **"Two tables per tavern"** - one always for gold (realm characters), one always for chips
+(everyone).
+
+- **THE CAUSE, REPRODUCED** (on main's relay, `test/fakeRoom.mjs`, before any fix). CARDS6 (section 23) made a table
+  gold or chips by its FIRST SITTER: a staked first sit opened it gold, every seat staked or none ('gold table',
+  'friendly table'). That was harmless while a tavern held several of Daggerfall's tables; TAVERN-TABLE (section 28)
+  made the prop a tavern's ONLY card table. So one realm character's stake at it - even sitting alone and idle, with no
+  hand to clock him out - shut every guest and every offline character out of the room's one table ("That table plays
+  for gold - a realm character's stake sits at it.", and the refusal stood them up, the regulars with it), for as long
+  as he sat; and one guest sitting down first shut every realm character out ("That table plays for chips."). The
+  message's "a realm character's stake sits at it" read to the players as their OWN stake left behind - hence the
+  "Stand Up" theory. No stake was ever lost: a refused staked sit is handed back whole.
+- **THE GOLD TABLE IS AN INDEX** (`net/holdemTable.js` `HOLDEM_GOLD_TABLE` = 1, `holdemGoldTable`). The room's table at
+  that index plays for gold and every other for chips, whoever sits first. THE RELAY HOLDS EVERY SIT TO IT (relay
+  `world179`, `_holdemWord`): a sit with a stake at a chips table is spent and handed back whole ('friendly table'), one
+  with no stake at the gold table refused ('gold table') - the check after the stake is spent, so its refusal hands it
+  back as every refusal there does, and before the table's chairs. A dropped player back in his own leaving chair at the
+  gold table is asked no stake (the law's own return, CARDS6). So no first sitter decides what a table plays for, and an
+  old client (one table, its stake at table 0) is handed its stake back until it reloads.
+- **TWO TABLES A TAVERN** (`scenes/interiorContext.js`, `world/placedCardTable.js` `TAVERN_CARD_TABLES` = 2). The chips
+  table first, found exactly as section 28 finds it (the same walk, the same table, where every tavern's stood); then
+  the gold table, found by the same walk with the first already stood - in the collider, so the walk goes round its top
+  and stools - and its ring kept off the first's: a spot answers its ring's half-extents (`hx`, `hz`), and an avoid
+  entry may be a box (`[x, y, z, rx, rz]`), the first's ring. The walk alone does not keep the rings apart: in a hall
+  seven metres across it turned the second a quarter and laid its ring a quarter-metre into the first's (the pin's
+  hall; 12 of 1,470 rectangular halls built through the real interior met it, by more than 5 cm). A room with floor for one stands the chips table alone and
+  says so in the console; the gold flag (`tables[i].gold`) is the law's own index (`holdemGoldTable(tables.length)`),
+  so the room and the relay can never name two different gold tables. Each table its own mesh and key (`int:` the next
+  placement index past the record's own, in turn); the wood uploaded once, a felt each.
+- **THE GOLD TABLE'S FELT IS RED** (`world/cardTableProp.js` `GOLD_FELT_RECORD`, `GOLD_FELT_RGB`; `paintFelt(rgb)`,
+  `cardTablePropModel({ felt })`) - the chips table's green beside it, told apart at a glance. `cards.html?gold` lays
+  the lab's table red.
+- **THE HOST** (`scenes/worldModes.js` `cardTableGold`, `cardGoldBarred`). Online, the gold table seats a realm
+  character at a relay that deals and nobody else - anyone else is told before he sits ("This table plays for gold -
+  only a realm character may stake at it. The green table plays for chips."; with the relay not dealing, "... the
+  relay is not dealing right now - the green table plays for chips."), never sat and stood up. A realm character plays
+  for gold at the gold table (`goldOnline` is the gold table's alone) and for chips at the chips table, beside everyone
+  else. Offline both tables are the regulars', for the purse's gold, as a tavern's table always was.
+- **Pins:** `test/taverntables.test.js` 9 (the law, the walk's box, the build in three rooms, the relay's report and
+  its index law, the relay's order by source, the host at both tables online, down and offline);
+  `tools/mutants/taverntables.json` 21 (20 dead, 1 equivalent - the host's own reading of the room's mark, kept so the
+  two never disagree). PIN MOVED: the relay's pins that stood a gold table at table 0 stand it at table 1, their
+  orders naming it, and the ones that stood a second chips table at table 1 stand it at table 2
+  (`auditcards3_relay`, `auditcards4_pins`, `auditcards5_gold`, `cards6_relay`, `cards6b_topup`); TAVERN-TABLE's
+  build reads two tables (`taverntable`, `cards2_seat`); the host's gold line (`cards4_hud`, `cards6_client`); the
+  relay's version (world179, its law row in `test/relayversion.test.js`). `tools/mutants/taverntable.json`'s seven
+  interior records re-aimed by content.
+- **Deploy:** the relay first (world179 - its deploy drops every connected player, as a bump does), then the site.
