@@ -11,6 +11,9 @@ The port's own. Daggerfall's townsfolk are DFU's PopulationManager: a pool of id
 each re-rolled into a stranger at every spawn, wandering the navgrid by tile weights and gone at dusk
 (`systems/townPopulation.js`, verbatim). Nothing in Daggerfall travels, sleeps, works or remembers.
 
+LW9-LW16 (the road's traffic, the wagon train, the caravan's door, the outlaws, the companies, the deep's own, the
+patrons, the word travels) are designed on `06-Systems/Living-World-II.md` (2026-10-09).
+
 ## LW0 - the decisions
 
 Taken at the design, in the request's own order; each is Mac's to overrule.
