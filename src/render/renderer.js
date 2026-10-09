@@ -3741,7 +3741,7 @@ export class Renderer {
         for (let i = at; i < at + n; i++) {
           const it = items[i], q = it.quad;
           this.drawCharacterSpriteQuad(tex, q.at, q.halfW, q.halfH, q.right, it.pw / CHAR_SPRITE_RT_SIZE, it.ph / CHAR_SPRITE_RT_SIZE,
-            q.hitFlash, q.conceal, q.up, [it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE]);
+            q.hitFlash, q.conceal, q.up, [it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx);   // MWNPC5: and its tells
         }
         at += n;
       }
@@ -3852,7 +3852,9 @@ export class Renderer {
    *  phase draws a concealed foe. None, and the quad is the opaque cut-out it always was. */
   /** AUDIT OW4 J6: `up`, optional - the quad's vertical when it leans (the travel view's leaned up, characterSprite.js
    *  drawRigSpriteBox); none, world up - every vertex exactly where it stood. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null, origin = null) {
+  /** MWNPC5: `fx`, optional - a foe's tells on its body ({ glint: [r, g, b, a] | null, elite: pulse (0 none; negative a
+   *  corpse's rim), time: seconds, dissolve: [share, r, g, b] | null }); none, the quad draws as it did. */
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null, origin = null, fx = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
@@ -3875,6 +3877,10 @@ export class Renderer {
     gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);   // INVIS-LOOK: plain unless a concealed body says otherwise
     gl.uniform2f(c.span, u1, v1);   // INVIS-LOOK: the RT's sub-rect, so the ripple is the sprite's own
     gl.uniform2f(c.origin, origin ? origin[0] : 0, origin ? origin[1] : 0);   // MWNPC2: and where it starts
+    const g = fx?.glint, d = fx?.dissolve;   // MWNPC5: the tells - none for every body without them
+    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);
+    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);
+    gl.uniform4f(c.dissolve, d ? d[0] : 0, d ? d[1] : 0, d ? d[2] : 0, d ? d[3] : 0);
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
@@ -3912,9 +3918,66 @@ uniform vec4 uConceal;   // INVIS-LOOK: ECV1's record - the mode, the opacity, t
 uniform vec2 uSpan;      // INVIS-LOOK: the sub-rect of the RT the picture fills
 uniform vec2 uOrigin;    // MWNPC2: where that sub-rect starts - a batched body's tile (0,0 for the corner every lone pass draws in)
 uniform float uHitFlash;   // HITFLASH1: a Morrowind body struck
+// MWNPC5 (bible/04-Characters/Morrowind-NPCs.md section 10): A FOE'S TELLS ON ITS BODY - the three the billboard shader
+// draws on a foe that this quad did not: the wind-up's glint (TELL2), the elite's glow, outline and embers (ELITE FOES),
+// and the burn or the portal's gathering (DISSOLVE). The colour terms are the billboards' own (GLINT_GLSL,
+// ELITE_GLOW_GLSL); the texel reads - the outline, the embers, the grain - are their twins inside the picture's TILE, so
+// a batched body's outline never reads its neighbour's (MWNPC2's tiles stand a texel apart; the box is padded for the
+// room the outline and the embers take - characterSprite.js bodyFxPad)
+uniform vec4 uGlint;      // TELL2: rgb the blow's colour, a its strength (0 off)
+uniform vec2 uElite;      // ELITE FOES: x the glow's pulse (0 off; negative an elite's corpse - the rim alone), y seconds
+uniform vec4 uDissolve;   // DISSOLVE: x the share gone (0 whole, 1 gone), yzw the edge's colour
 out vec4 outColor;
 ${FOG_GLSL}
 ${HIT_FLASH_GLSL}
+${ELITE_GLOW_GLSL}
+${GLINT_GLSL}
+ivec2 tileLo() { return ivec2(floor(uOrigin * vec2(textureSize(uTex, 0)) + 0.5)); }
+ivec2 tileSize() { return ivec2(floor(uSpan * vec2(textureSize(uTex, 0)) + 0.5)); }
+// eliteAlphaAt's twin: the base texel's alpha, 0 outside the TILE (not the target)
+float tileAlpha(ivec2 p) {
+  ivec2 lo = tileLo(), hi = lo + tileSize();
+  if (p.x < lo.x || p.y < lo.y || p.x >= hi.x || p.y >= hi.y) return 0.0;
+  return texelFetch(uTex, p, 0).a;
+}
+// eliteRim's twin: a texel within 2 of the silhouette (dx*dx + dy*dy <= 4)
+float bodyRim(ivec2 p) {
+  for (int dy = -2; dy <= 2; dy++) {
+    for (int dx = -2; dx <= 2; dx++) {
+      if ((dx == 0 && dy == 0) || dx * dx + dy * dy > 4) continue;
+      if (tileAlpha(p + ivec2(dx, dy)) >= 0.5) return 1.0;
+    }
+  }
+  return 0.0;
+}
+// eliteEmber's twin: its column the tile's own (a column of the picture, wherever the tile stands this frame)
+float bodyEmber(ivec2 p, float secs) {
+  int col = p.x - tileLo().x;
+  float c = float(col);
+  float d = -1.0;
+  for (int i = 1; i <= 18; i++) {
+    int y = p.y - i;
+    if (y < tileLo().y) break;
+    if (tileAlpha(ivec2(p.x, y)) >= 0.5) { d = float(i); break; }
+  }
+  if (d < 3.0) return 0.0;
+  float speed = 5.0 + 7.0 * eliteHash(vec2(c, 1.7));
+  float cyc = secs * speed / ELITE_RISE + eliteHash(vec2(c, 9.1));
+  float n = floor(cyc);
+  if (eliteHash(vec2(c, n + 3.0)) > 0.3) return 0.0;
+  float h = 3.0 + floor(fract(cyc) * ELITE_RISE);
+  if (d != h) return 0.0;
+  return 1.0 - fract(cyc);
+}
+// FLAT_DISSOLVE_GLSL's grain, in the tile's own texels (two-texel grains) and its height (v 0 the feet: they go first)
+float bodyGrain(ivec2 p, float v) {
+  vec2 cell = floor(vec2(p - tileLo()) * 0.5);
+  float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  return h * 0.72 + v * 0.28;
+}
+vec4 bodyFogged(vec3 c) { return vec4(dwWaterFog(mix(uFogColor, c, fogFactorAt(vWorld)), vWorld), 1.0); }
+// the target texel under the fragment - asked only by a body with a tell, so a plain body reads exactly what it did
+ivec2 bodyTexel(vec2 uv) { return ivec2(floor((uOrigin + uv) * vec2(textureSize(uTex, 0)))); }
 void main() {
   // INVIS-LOOK: the billboard shader's ripple (BB_FS), measured in the picture's own span of the RT
   vec2 uv = vUV;
@@ -3924,10 +3987,31 @@ void main() {
     if (uv.x < 0.0 || uv.x > uSpan.x) discard;
   }
   vec4 t = texture(uTex, uOrigin + uv);
-  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) discard;
+  if (t.a < (uConceal.x > 0.0 ? 0.1 : 0.5)) {
+    // MWNPC5: the outline and the embers stand where the body does not - never on a concealed body nor one burning away
+    if (uConceal.x == 0.0 && uDissolve.x <= 0.0) {
+      if (uGlint.a > 0.0 && bodyRim(bodyTexel(uv)) > 0.0) { outColor = bodyFogged(glintRimColor(uGlint)); return; }
+      if (uElite.x != 0.0) {
+        ivec2 p = bodyTexel(uv);
+        if (bodyRim(p) > 0.0) { outColor = bodyFogged(eliteRimColor(eliteRimK(uElite.x, uElite.y))); return; }
+        float em = uElite.x > 0.0 ? bodyEmber(p, uElite.y) : 0.0;
+        if (em > 0.0) { outColor = bodyFogged(eliteRimColor(uElite.x) * (0.55 + 0.6 * em)); return; }
+      }
+    }
+    discard;
+  }
+  float edge = 0.0;
+  if (uDissolve.x > 0.0) {   // MWNPC5: burnt away, the feet first - and the edge it burns along (dissolveEdge)
+    float g = bodyGrain(bodyTexel(uv), uv.y / max(uSpan.y, 1e-6)) - (uDissolve.x * 1.1 - 0.05);   // dissolveCutAt
+    if (g < 0.0) discard;
+    edge = (1.0 - smoothstep(0.0, 0.09, g)) * min(1.0, uDissolve.x * 8.0);
+  }
   vec3 rgb = t.rgb;
   if (uConceal.x == 2.0) rgb *= ${SHADE_DARK};   // INVIS-LOOK: a shade, ECV1's dark
+  rgb = eliteGlowLit(rgb, t.rgb, max(uElite.x, 0.0));   // MWNPC5: the elite's warmth (never a corpse)
+  rgb = glintLit(rgb, t.rgb, uGlint);   // MWNPC5: lifted toward the blow's colour as it winds up
   rgb = hitFlashLit(rgb, t.rgb, uHitFlash);   // HITFLASH1: over any concealment, never instead of it (the billboards' law)
+  if (edge > 0.0) rgb = mix(rgb, uDissolve.yzw * 1.6, edge);   // MWNPC5: the edge blazes (dissolveLit)
   outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
@@ -3947,6 +4031,9 @@ void main() {
         span: gl.getUniformLocation(P, 'uSpan'),   // INVIS-LOOK
         origin: gl.getUniformLocation(P, 'uOrigin'),   // MWNPC2: the tile
         hitFlash: gl.getUniformLocation(P, 'uHitFlash'),   // HITFLASH1
+        glint: gl.getUniformLocation(P, 'uGlint'),   // MWNPC5: a foe's tells on its body
+        elite: gl.getUniformLocation(P, 'uElite'),
+        dissolve: gl.getUniformLocation(P, 'uDissolve'),
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);

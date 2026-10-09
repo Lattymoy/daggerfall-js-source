@@ -389,12 +389,12 @@ test('PR-BOW1: the per-range boxes - folded over each piece\'s posed positions i
 test('PR-BOW1: the wiring, by source - the upload folds the per-range boxes, drawThird folds only what it draws and anchors the quad, and every body reaches it: the local one in every host through mwView, the peers through PeerBodies', () => {
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /function uploadThirdMesh\(t\) \{[\s\S]*?foldRangeBoxes\(thirdMesh\.ranges\);[\s\S]*?return thirdMesh;/, 'every upload refolds the boxes');
-  const at = arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null }) {');   // AUDIT OW3 J6: and the travel view's grow; AUDIT OW4 J6: and its up
+  const at = arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null, fx = null }) {');   // PIN MOVED (MWNPC5): and a foe's tells   // AUDIT OW3 J6: and the travel view's grow; AUDIT OW4 J6: and its up
   assert.notEqual(at, -1, 'drawThird found');
   const draw = arm.slice(at, arm.indexOf('    itemIcon(item,'));
   assert.match(draw, /visibleRangeBounds\(thirdMesh\.ranges, thirdDrawBox\)/, 'the box is the drawn ranges');
   assert.match(draw, /visibleRangeBounds\(thirdMesh\.ranges, thirdBodyBox, CARRIED_SLOTS\)/, 'the anchor height is the body\'s');
-  assert.match(draw, /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up \}/, 'and the quad is anchored (AUDIT OW4 J6: and leaned by the view\'s up)');
+  assert.match(draw, /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx \}/, 'and the quad is anchored (AUDIT OW4 J6: and leaned by the view\'s up)');   // PIN MOVED (MWNPC5): and a foe's tells
   assert.match(rd('src/player/mwView.js'), /fpArm\.drawThird\(canvas, \{ proj, view, eye, feet, yaw, grow: face\?\.grow > 1 \? face\.grow : 1, up: face\?\.up \?\? null \}\)/, 'the local body, every host (AUDIT OW3 J6: grown under the travel view; AUDIT OW4 J6: leaned)');
-  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw, hitFlash: flashOf \? flashOf\(b\.id\) : 0, conceal: b\.veil \?\? null(?:, grow: g, up: this\._cam\?\.up \?\? null)? \}\)/, 'every peer\'s body');   // PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown and leaned under the Overworld
+  assert.match(rd('src/net/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{ proj, view, eye, feet: b\.feet, yaw: b\.yaw, hitFlash: flashOf \? flashOf\(b\.id\) : 0, conceal: b\.veil \?\? null(?:, grow: g, up: this\._cam\?\.up \?\? null)?(?:, fx: this\._cam\?\.fxOf \? this\._cam\.fxOf\(b\.id\) : null)? \}\)/, 'every peer\'s body');   // PIN MOVED (MWNPC5): and its tells by id   // PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown and leaned under the Overworld
 });

@@ -99,7 +99,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC2 ONE PASS | every seen body into one bind of the sprite target, quads after | the body pass in world.js / worldModes.js; exterior.js has none |
 | MWNPC3 THE BODY SERVICE | one parse a mesh and one GL texture a picture across every body, no reach sweep for a body never looked out of, an instance's own limits (SHIPPED, section 8); third-only builds and a build gate across lanes moved to MWNPC4 | all |
 | MWNPC4 THE NPC LANE | the lane (`characters/npcBodies.js`: the NPCs as synthetic peers under a tier's caps, `has()` for the host's billboard), the hit recoil and the death on the rig and off the pose, one build queue across every lane (SHIPPED, section 9); an actor's machine read into the pose is each population's adapter, MWNPC5 onward | the rig and the lanes; the four hosts flagged, wired with the first population |
-| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment; shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
+| MWNPC5 FOES | class foes in their rolled equipment, a stable race and face per foe (not one Breton), the effects parity: hit flash, glint, elite glow, dissolve, concealment (5a SHIPPED, section 10: the glint, the elite's glow, outline and embers and the dissolve on the body's quad - the hit flash and the concealment it already drew); shadows kept (the billboard casts) | dungeonContext.js, world.js (exteriorFoes), worldModes.js (interior foes), exterior.js |
 | MWNPC6 THE WATCH | cityGuards' two instances | world.js, worldModes.js, exterior.js; dungeonContext.js stands none (named) |
 | MWNPC7 TOWNSFOLK | walkers and living residents, a wardrobe by FACTION sgroup that actually varies (distinct records and dyes per persona) | world.js, exterior.js, worldModes.js (living residents indoors) |
 | MWNPC8 STANDING PEOPLE | street, interior, dungeon and quest StaticNPCs; children and vampires keep their sprite; `drawnFlat`'s nudity law honoured | all four |
@@ -411,3 +411,64 @@ dungeonContext.js, world.js's exteriorFoes, worldModes.js's interior foes,
 exterior.js). world.js's two existing lanes (the peers', the family's) take
 the gate now. The Features row (`mwNpcBodies`: Off / Near / All, law 6)
 lands with that wiring, when the switch has something to switch.
+
+## 10. MWNPC5 - FOES
+
+### 10a. A foe's tells on its body (SHIPPED 2026-10-09)
+
+The billboard shader draws five things on a foe: the hit flash (HITFLASH1),
+the concealment (ECV1), the wind-up's glint (TELL2 - a gameplay tell: the
+blow is coming), the elite's glow, outline and embers (ELITE FOES), and
+the dissolve (a revenant's fate burning it away, a companion through a
+portal). The body's quad (renderer.js `_ensureCharQuadProgram`) drew the
+first two. A foe stood in a body must lose none, so the quad takes the
+other three - `fx` ({ glint, elite, time, dissolve }), from the lane
+(`PeerBodies.draw`'s `fxOf(id)`) through the rig's `drawThird` and
+`drawRigSpriteBox` to `drawCharacterSpriteQuad`, a batched body's quad
+carrying its own:
+
+- THE COLOUR TERMS ARE THE BILLBOARDS' OWN: `glintLit`, `glintRimColor`
+  (GLINT_GLSL), `eliteGlowLit`, `eliteRimK`, `eliteRimColor`, `eliteHash`
+  and ELITE_RISE (ELITE_GLOW_GLSL), in the billboards' order - the warmth,
+  the glint, the hit flash, the burning edge.
+- THE TEXEL READS ARE THEIR TWINS INSIDE THE TILE. The outline (a texel
+  within two of the silhouette), the embers (a column scanned down for the
+  body) and the dissolve's grain read the picture's own tile of the sprite
+  target (`tileAlpha`, zero past the tile's rect), never the target: a
+  batched body's tiles stand a texel apart (MWNPC2), and an outline read
+  off the target would ring a body with its neighbour's. The ember's
+  column and the grain's cell are the tile's own, so they hold wherever
+  the packer puts the tile this frame; the grain's height is the picture's
+  (v 0 the feet: they go first, as the flats').
+- THE ROOM THEY TAKE. A body with an outline is pictured two texels wider
+  each side, an elite's twenty (ELITE_RISE's climb over the outline) -
+  `bodyFxPad`, symmetric, so the quad stands where it stood and a texel
+  stays the size it was; a body with none (or burning away, which draws no
+  outline) is pictured exactly as it was.
+- No outline and no ember on a concealed body or one burning away - the
+  billboard shader's own gate.
+
+PROVEN. `test/mwnpc5_bodyfx.test.js` (3): the uniforms a quad sends with
+its tells and without (none carried over from the last quad), an elite's
+corpse its negative pulse, a batch's quads each their own; the padding
+(two, twenty, none, none while burning; a texel's size and the centre
+kept, the sides grown by the same texels); and the tells down from the
+lane through the fixture rig's drawThird. `tools/mutants/mwnpc5.json`: 18
+mutants, 18 dead. The shader runs in `tools/mwBodyFxProbe.mjs`, on the
+fixture body in Chromium: no tell draws the plain frame exactly; the glint
+an outline (669 texels) and the whole body lifted; the elite an outline
+and embers that come and go over its clock; the corpse the outline alone;
+a half-burnt body 99 of 215 texels gone and no outline; three bodies with
+the centre one glinting and elite, batched, the lone frame texel for
+texel; and the clamp itself - a tile of nothing ringed by ink draws
+nothing (its control, a tile holding the ring, draws it). Five shader
+mutants, each failing the probe: the clamp read off the target (6160
+texels ringed), no burn, no embers, no glint on the body, an outline while
+burning. A plain body asks no tile texel at all (`bodyTexel` only under a
+tell), so it reads exactly what it did - INVIS-LOOK's executed shader runs
+it with the tells bound off. Pins moved: PR-BOW1's drawThird needle, its
+anchored quad and its peer body; PR-BOW1b's peer body; INVIS-LOOK's quad
+and box calls; the INVISLOOK half-cut,
+three MH1, PR-BOW1's no-anchor, OW4-J6's upright, OW-PEERS' unleaned and
+INVISLOOK's late-pass mutants re-aimed by content.
+

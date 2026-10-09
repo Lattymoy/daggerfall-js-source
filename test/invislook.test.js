@@ -213,6 +213,7 @@ test('INVIS-LOOK executed: the quad\'s own fragment shader - plain it is the old
     const f = glslFunctions(fs, {
       vUV: uv, vWorld: [0, 0, 0], uFogColor: [0, 0, 0], uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 0, 0],
       uDwFog: Array.from({ length: 5 }, () => [0, 0, 0, 0]), uConceal: conceal, uSpan: span, outColor: [0, 0, 0, 0],
+      uGlint: [0, 0, 0, 0], uElite: [0, 0], uDissolve: [0, 0, 0, 0], uHitFlash: 0,   // PIN MOVED (MWNPC5): a foe's tells, off - the quad as this test has always run it
       texture: (_s, at) => { seen.push(at); return texel; },
     });
     try { f.main(); } catch (e) { if (e instanceof GlslDiscard) return { discarded: true, seen }; throw e; }
@@ -261,6 +262,7 @@ test('INVIS-LOOK by source: the host - the look read once a frame and handed to 
   const weapon = d.indexOf('if (playerFeet) weaponRig.draw({ paralyzed: _pParalyzed });');
   assert.ok(foes > 0 && hook > foes && water > hook && weapon > water, 'the dungeon: after the foes\' flats, before the water and the weapon\'s screen quads (WATER-D1)');
   // AUDIT OW4 J6: `up` rides beside `conceal` (the travel view's leaned quad)
-  assert.match(rd('src/combat/fpArm.js'), /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up \}, proj, view, eye, MW_ARM_PIXEL\);/);
-  assert.match(rd('src/render/characterSprite.js'), /renderer\.drawCharacterSpriteQuad\(sTex, at, halfW, halfH, right, pw \/ CHAR_SPRITE_RT_SIZE, ph \/ CHAR_SPRITE_RT_SIZE, hitFlash, conceal, up\);/);
+  // PIN MOVED (MWNPC5): the box and the quad carry a foe's tells (`fx`) beside the look
+  assert.match(rd('src/combat/fpArm.js'), /drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx \}, proj, view, eye, MW_ARM_PIXEL\);/);
+  assert.match(rd('src/render/characterSprite.js'), /renderer\.drawCharacterSpriteQuad\(sTex, at, halfW, halfH, right, pw \/ CHAR_SPRITE_RT_SIZE, ph \/ CHAR_SPRITE_RT_SIZE, hitFlash, conceal, up, null, fx\);/);
 });

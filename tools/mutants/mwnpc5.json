@@ -1,0 +1,164 @@
+[
+ {
+  "name": "MWNPC5-quad-glint-unsent",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);",
+  "new": "    gl.uniform4f(c.glint, 0, 0, 0, 0);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-quad-glint-stale",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform4f(c.glint, g ? g[0] : 0, g ? g[1] : 0, g ? g[2] : 0, g ? g[3] : 0);",
+  "new": "    if (g) gl.uniform4f(c.glint, g[0], g[1], g[2], g[3]);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-quad-elite-unsent",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);",
+  "new": "    gl.uniform2f(c.elite, 0, 0);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-quad-elite-clockless",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform2f(c.elite, fx?.elite || 0, fx?.time || 0);",
+  "new": "    gl.uniform2f(c.elite, fx?.elite || 0, 0);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-quad-dissolve-unsent",
+  "file": "src/render/renderer.js",
+  "old": "    gl.uniform4f(c.dissolve, d ? d[0] : 0, d ? d[1] : 0, d ? d[2] : 0, d ? d[3] : 0);",
+  "new": "    gl.uniform4f(c.dissolve, 0, 0, 0, 0);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-flush-drops-fx",
+  "file": "src/render/renderer.js",
+  "old": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx);",
+  "new": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE]);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-embers-unroomed",
+  "file": "src/render/characterSprite.js",
+  "old": "  if (fx.elite > 0) return 20;",
+  "new": "  if (fx.elite > 0) return 2;",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-glint-none",
+  "file": "src/render/characterSprite.js",
+  "old": "  return fx.elite < 0 || fx.glint?.[3] > 0 ? 2 : 0;",
+  "new": "  return fx.elite < 0 ? 2 : 0;",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-corpse-none",
+  "file": "src/render/characterSprite.js",
+  "old": "  return fx.elite < 0 || fx.glint?.[3] > 0 ? 2 : 0;",
+  "new": "  return fx.glint?.[3] > 0 ? 2 : 0;",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-while-burning",
+  "file": "src/render/characterSprite.js",
+  "old": "  if (!fx || fx.dissolve?.[0] > 0) return 0;",
+  "new": "  if (!fx) return 0;",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-unapplied",
+  "file": "src/render/characterSprite.js",
+  "old": "  if (pad) {\n    const grow",
+  "new": "  if (false) {\n    const grow",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-sides-ungrown",
+  "file": "src/render/characterSprite.js",
+  "old": "    halfW += halfH * grow; halfH *= 1 + grow;",
+  "new": "    halfH *= 1 + grow;",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-pad-texel-shrinks",
+  "file": "src/render/characterSprite.js",
+  "old": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + 2 * pad);",
+  "new": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + pad);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-queue-drops-fx",
+  "file": "src/render/characterSprite.js",
+  "old": "quad: { at, halfW, halfH, right, hitFlash, conceal, up, fx } });",
+  "new": "quad: { at, halfW, halfH, right, hitFlash, conceal, up } });",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-lone-drops-fx",
+  "file": "src/render/characterSprite.js",
+  "old": "hitFlash, conceal, up, null, fx);   // MWNPC5",
+  "new": "hitFlash, conceal, up, null, null);   // MWNPC5",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-drawthird-drops-fx",
+  "file": "src/combat/fpArm.js",
+  "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx }, proj, view, eye, MW_ARM_PIXEL);",
+  "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, up }, proj, view, eye, MW_ARM_PIXEL);",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-lane-drops-fxof",
+  "file": "src/net/peerBodies.js",
+  "old": ", fx: this._cam?.fxOf ? this._cam.fxOf(b.id) : null })",
+  "new": ", fx: null })",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "MWNPC5-lane-fxof-unkept",
+  "file": "src/net/peerBodies.js",
+  "old": "    c.fxOf = fxOf;   // MWNPC5",
+  "new": "    c.fxOf = null;   // MWNPC5",
+  "tests": [
+   "test/mwnpc5_bodyfx.test.js"
+  ]
+ }
+]

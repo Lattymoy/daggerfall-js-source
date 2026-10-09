@@ -92,8 +92,8 @@
   {
     "name": "OW-PEERS-a-body-unleaned",
     "file": "src/net/peerBodies.js",
-    "old": "grow: g, up: this._cam?.up ?? null })",
-    "new": "grow: g, up: null })",
+    "old": "grow: g, up: this._cam?.up ?? null, fx:",
+    "new": "grow: g, up: null, fx:",
     "tests": [
       "test/fb1001_overworld.test.js"
     ]

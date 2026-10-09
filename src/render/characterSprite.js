@@ -67,7 +67,16 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  *  degree tilt the grown Morrowind body stood a half to a quarter of its height, squashed. The sprite lane leans its quad
  *  by the view's up (eotbBody.js, the flats' own lean); the body's quad now leans with it - built on `up`, the anchor
  *  landed on itself along it, and its resolution read along it. */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH: boxH, anchor = null, hitFlash = 0, conceal = null, up = null }, proj, view, eye, pixel = CHAR_PIXEL) {
+/** MWNPC5: the texels a body's picture is padded by on every side for its tells - the outline's two (a glint, an elite,
+ *  an elite's corpse), and the embers' climb over an elite's head (ELITE_RISE 18, the outline's 2 under it). Symmetric,
+ *  so the picture's centre and the quad's stay where they stood; 0 for a body with none - its picture exactly as it was. */
+export function bodyFxPad(fx) {
+  if (!fx || fx.dissolve?.[0] > 0) return 0;   // a body burning away draws no outline (the shader's own gate)
+  if (fx.elite > 0) return 20;
+  return fx.elite < 0 || fx.glint?.[3] > 0 ? 2 : 0;
+}
+
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW: boxW, halfH: boxH, anchor = null, hitFlash = 0, conceal = null, up = null, fx = null }, proj, view, eye, pixel = CHAR_PIXEL) {
   const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
   const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
@@ -85,7 +94,8 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   // The ray's own slope - off the true length, not `dist`: that is floored at 0.5 (an eye on the aim has no ray),
   // which leaves camDir short of unit length for an eye closer than that, and read a close camera's pitch low.
   const tilt = Math.min(1, Math.abs(dy) / (Math.hypot(dx, dy, dz) || 1));
-  const halfH = boxH * Math.sqrt(1 - tilt * tilt) + halfW * tilt;
+  let halfW = boxW;
+  let halfH = boxH * Math.sqrt(1 - tilt * tilt) + halfW * tilt;
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;
   const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
   const qUp = up ?? WORLD_UP;   // AUDIT OW4 J6: the quad's vertical
@@ -99,7 +109,15 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   const span = renderer.retroImageSpan ?? null;
   const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;
   const screenPxH = Math.abs(prjY(at[0] + qUp[0] * halfH, at[1] + qUp[1] * halfH, at[2] + qUp[2] * halfH) - prjY(at[0] - qUp[0] * halfH, at[1] - qUp[1] * halfH, at[2] - qUp[2] * halfH)) * (span ? span[0] : canvas.clientHeight) / 2;
-  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
+  let ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
+  // MWNPC5: the tells' room - `pad` texels a side, the world half-extents grown by the same texels (one texel the
+  // picture's 2 halfH / ph), so a texel stays the size it was
+  const pad = bodyFxPad(fx);
+  if (pad) {
+    const grow = (2 * pad) / ph;
+    halfW += halfH * grow; halfH *= 1 + grow;
+    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + 2 * pad);
+  }
   const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   // AUDIT OW3 J6: the picture's depth holds the WHOLE box - no point of it lies farther along the ray from its centre than
   // halfW + boxH, so the eye stands at least that far back (and the far plane as far past). A body's box is a metre or
@@ -110,11 +128,11 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   // MWNPC2: an open batch (renderer.js beginCharacterSpriteBatch) takes the picture as measured, and the flush draws it
   // in its own tile of the one bind; a lone call takes its own pass, as every call did
   if (renderer.characterSpriteBatchOpen) {
-    renderer.queueCharacterSprite({ mesh, model: rigMat, proj: sProj, view: sView, pw, ph, tx: 0, ty: 0, quad: { at, halfW, halfH, right, hitFlash, conceal, up } });
+    renderer.queueCharacterSprite({ mesh, model: rigMat, proj: sProj, view: sView, pw, ph, tx: 0, ty: 0, quad: { at, halfW, halfH, right, hitFlash, conceal, up, fx } });
     return { center: at, halfW, halfH, pw, ph };
   }
   const sTex = renderer.renderCharacterSprite(mesh, rigMat, sProj, sView, pw, ph);
-  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE, hitFlash, conceal, up);   // HITFLASH1: a struck body's red; INVIS-LOOK: a concealed peer's body blends; AUDIT OW4 J6: leaned by `up`   // sample the sub-rect (fixed RT, audit fix)
+  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE, hitFlash, conceal, up, null, fx);   // MWNPC5: and a foe's tells   // HITFLASH1: a struck body's red; INVIS-LOOK: a concealed peer's body blends; AUDIT OW4 J6: leaned by `up`   // sample the sub-rect (fixed RT, audit fix)
   return { center: at, halfW, halfH, pw, ph };
 }
 
