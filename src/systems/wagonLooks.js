@@ -48,7 +48,7 @@ export const LOOK_TEXT = Object.freeze({
   outside: 'Outside',
   walls: 'Walls', floor: 'Floor', ceiling: 'Ceiling',
   painted: (name) => `Your wagon is painted ${name.toLowerCase()}.`,
-  paintedInside: (part, name) => `The ${part} are now ${name.toLowerCase()}.`,
+  paintedInside: (part, name) => `The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`,   // FINAL AUDIT: "The floor are now" - the walls alone are many
   noWagon: 'You have no wagon to paint.',
   notCaravan: 'Only a caravan has an inside to paint.',
 });

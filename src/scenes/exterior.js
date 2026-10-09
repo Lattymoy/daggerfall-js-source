@@ -1678,6 +1678,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     threats: hccThreats, selfId: () => null, peerName: () => null, onChanged: null, log: console,
     ...wagonPoolDeps(() => playerEntity.items ?? []),   // WAGONS1: Mac's wagons, by the one the player drives
   });
+  // RW1 x WAGONS2 (FINAL AUDIT): the wagons stand in the street a window looks out on, as world.js has them - the fixed
+  // city stands no caravan room, so none is left out
+  renderer.outsideViewDraws?.add(({ renderer: r }) => { if (hccOn()) hcc.drawOutside(r, null); });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode,
     transport: {

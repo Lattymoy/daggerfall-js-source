@@ -51,8 +51,8 @@ import { makeItemPermanent } from './quest/item.js';   // TransferItem's MakePer
 import { getBool } from './settings.js';   // GUI/CanDropQuestItems
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 import { REMAINS_LIST } from './legacy/heirloom.js';   // AUDIT LEGACY II H4: a remains' list, open
-import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';
-import { SMALL_CART_KG } from './wagonKinds.js';   // WAGONS1: DFU's 750, one literal   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
+import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
+import { SMALL_CART_KG } from './wagonKinds.js';   // WAGONS1: DFU's 750, one literal
 
 /** ItemHelper.WagonKgLimit (:56). */
 export const WAGON_KG_LIMIT = SMALL_CART_KG;   // WAGONS1: the Small Cart's - each kind's own is systems/wagonKinds.js wagonKgLimitOf, handed in as `wagonKg`

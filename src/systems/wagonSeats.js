@@ -45,6 +45,8 @@ export const RIDE_TEXT = Object.freeze({
   gotOff: 'You climb down from the wagon.',
   ownerGone: 'The wagon you rode in is gone; you climb down.',
   leftBehind: (owner) => `You could not go with ${owner}; you climb down.`,   // WAGONS2 (AUDIT)
+  tooFar: 'You are too far away...',   // WAGONS2 (FINAL AUDIT): the game's own (player/activate.js TOO_FAR_AWAY_TEXT) - out of reach said "no room"
+  lapsed: (rider) => `${rider} is no longer asking to ride.`,   // WAGONS2 (FINAL AUDIT): an Accept after the ask lapsed said "no seat free"
 });
 
 /** A rider's word (`wr` on their foes frame) through the door, or null. */

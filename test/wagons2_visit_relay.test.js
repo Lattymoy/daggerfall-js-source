@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRoom } from './fakeRoom.mjs';
-import { parseClient, parkKeyOf, validCaravanData, relaySupportsCaravan, CARAVAN_DECOR_KEY, CARAVAN_RELAY_MIN, PARK_TTL_MS, RELAY_VERSION, CARAVAN_DOC_MIN_MS, ACT_SENDER_BYTES_PER_S, PARK_REFRESH_MS } from '../src/net/wire.js';
+import { parseClient, parkKeyOf, validCaravanData, relaySupportsCaravan, CARAVAN_DECOR_KEY, CARAVAN_RELAY_MIN, PARK_TTL_MS, RELAY_VERSION, CARAVAN_DOC_MIN_MS, ACT_SENDER_BYTES_PER_S, ACT_ROOM_BYTES_PER_S, PARK_REFRESH_MS } from '../src/net/wire.js';
 import { caravanRoomOf, privateInteriorPrefix, privateInteriorRoom } from '../src/net/privateInterior.js';
 import { OnlineSession } from '../src/net/online.js';
 
@@ -63,6 +63,7 @@ test('WAGONS2-VISIT THE ROOM KEEPS ITS OWNER\'S WORD: the owner\'s document is s
   assert.deepEqual(framesOf(cid, 'caravan')[0].data, DOC);
   // the owner back, nothing kept: forgotten, said to whoever is in
   const ann2 = await join('ann2', 'acct-ann1');
+  r.room._cvSaidAt -= CARAVAN_DOC_MIN_MS;   // the room's second (FINAL AUDIT)
   await say(ann2, { c: CA, d: null });
   assert.equal(r.store.has(CARAVAN_DECOR_KEY), false);
   assert.equal(framesOf(cid, 'caravan').at(-1).data, null);
@@ -144,12 +145,12 @@ test('WAGONS2-VISIT THE SESSION: my document goes down my primary socket only we
   assert.equal(heard.length, 1);
 });
 
-test('WAGONS2-VISIT (AUDIT) THE DOCUMENT METERED: one a second from a socket at most - a sooner one dropped, neither stored nor told; an unchanged one neither stored again nor fanned until its lease wants renewing; a changed one fanned and its fan charged to the sender\'s own act bytes - a sender deep in debt tells nobody, its document still kept (mutants: no interval, the unchanged fanned, the fan uncharged)', async () => {
+test('WAGONS2-VISIT (AUDIT) THE DOCUMENT METERED: one a second at most - a sooner one dropped, neither stored nor told; an unchanged one neither stored again nor fanned until its lease wants renewing; a changed one fanned and its fan charged to the sender\'s own act bytes - a sender in debt tells nobody yet, its document kept and its fan OWED to the alarm at the repay (mutants: no interval, the unchanged fanned, the fan uncharged, the owed fan dropped)', async () => {
   const { r, join } = await caravanRoom();
   const ann = await join('ann1');
   const bob = await join('bob1');
   const raw = (ws, data) => { r.room._meterOf(ws).abucket = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'caravan', data })); };
-  const later = () => { r.room._meterOf(ann).cvAt -= CARAVAN_DOC_MIN_MS; };
+  const later = () => { r.room._cvSaidAt -= CARAVAN_DOC_MIN_MS; };
   const DOC2 = { v: 1, p: [] }, DOC3 = { v: 1, p: [{ ...DOC.p[0], id: 'p3' }] };
   await raw(ann, { c: CA, d: DOC });
   await raw(ann, { c: CA, d: DOC2 });   // within the second
@@ -171,9 +172,44 @@ test('WAGONS2-VISIT (AUDIT) THE DOCUMENT METERED: one a second from a socket at 
   assert.equal(framesOf(bob, 'caravan').length, 2, 'changed: told');
   assert.ok(r.room._meterOf(ann).abytes?.bytes < ACT_SENDER_BYTES_PER_S, 'its fan charged to the sender');
   later();
-  r.room._meterOf(ann).abytes = { bytes: -1e9, at: Date.now() };   // deep in debt
+  r.room._meterOf(ann).abytes = { bytes: -ACT_SENDER_BYTES_PER_S / 2, at: Date.now() };   // in debt half a second
   await raw(ann, { c: CA, d: DOC3 });
   assert.deepEqual(r.store.get(CARAVAN_DECOR_KEY).d, DOC3, 'kept for its visitors');
-  assert.equal(framesOf(bob, 'caravan').length, 2, 'but fanned to nobody');
+  assert.equal(framesOf(bob, 'caravan').length, 2, 'not fanned while in debt');
+  // FINAL AUDIT: OWED, NOT DROPPED - nothing says an unchanged document again, so the fan waits for the alarm at the
+  // time the bucket has repaid, and goes then (the lease's alarm after it)
+  assert.ok(r.alarm.at <= Date.now() + 600, 'the alarm at the repay, not the lease');
+  await r.fire();
+  assert.equal(framesOf(bob, 'caravan').length, 2, 'still in debt: owed still');
+  r.room._meterOf(ann).abytes.at -= 1000;   // half a second has repaid it, and more
+  await r.fire();
+  assert.deepEqual(framesOf(bob, 'caravan').at(-1), { t: 'caravan', data: DOC3 }, 'repaid: fanned');
+  assert.equal(r.alarm.at, r.store.get(CARAVAN_DECOR_KEY).at + PARK_TTL_MS, 'and the lease re-armed');
+  await r.fire();
+  assert.equal(framesOf(bob, 'caravan').length, 3, 'once');
   assert.equal(CARAVAN_DOC_MIN_MS, 1000);
+});
+
+test('WAGONS2-VISIT (FINAL AUDIT) THE ROOM\'S SECOND AND THE ROOM\'S BYTES: one document a second from the ROOM - the owner\'s second socket within it dropped, so N sockets are not N seconds; the fan charged to the room\'s act bytes after the sender\'s, and a room in debt charges the sender nothing and owes the fan (mutants: a socket\'s second, the room uncharged)', async () => {
+  const { r, join } = await caravanRoom();
+  const ann = await join('ann1');
+  const ann2 = await join('ann2', 'acct-ann1');
+  const bob = await join('bob1');
+  const raw = (ws, data) => { r.room._meterOf(ws).abucket = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'caravan', data })); };
+  const DOC2 = { v: 1, p: [] };
+  await raw(ann, { c: CA, d: DOC });
+  await raw(ann2, { c: CA, d: DOC2 });   // the owner's other socket, within the second
+  assert.deepEqual(r.store.get(CARAVAN_DECOR_KEY).d, DOC, 'the room\'s second: dropped');
+  assert.equal(framesOf(bob, 'caravan').length, 1);
+  assert.ok(r.room._roomActBytes?.bytes < ACT_ROOM_BYTES_PER_S, 'the room charged for the fan');
+  r.room._cvSaidAt -= CARAVAN_DOC_MIN_MS;
+  r.room._roomActBytes = { bytes: -ACT_ROOM_BYTES_PER_S / 4, at: Date.now() };   // the room in debt
+  const before = r.room._meterOf(ann2).abytes?.bytes ?? ACT_SENDER_BYTES_PER_S;
+  await raw(ann2, { c: CA, d: DOC2 });
+  assert.equal(framesOf(bob, 'caravan').length, 1, 'the room in debt: owed');
+  assert.ok((r.room._meterOf(ann2).abytes?.bytes ?? ACT_SENDER_BYTES_PER_S) >= before, 'and the sender not charged');
+  r.room._roomActBytes.at -= 1000;
+  await r.fire();
+  assert.deepEqual(framesOf(bob, 'caravan').at(-1), { t: 'caravan', data: DOC2 }, 'repaid: fanned');
+  assert.equal(framesOf(ann, 'caravan').length, 1, 'to the owner\'s other socket too - it is not the sayer');
 });

@@ -25,6 +25,7 @@ export const DUEL_PROMPT_CSS = `
   background: #3a2226; color: #e9e4d9; font: inherit; font-size: 13px; cursor: pointer; }
 .dfduel-btn:hover { background: #b8483f; color: #0e1013; }
 .dfduel-toast.touch .dfduel-btn { min-height: 44px; padding: 8px 12px; }
+.dfduel-toast.second { top: calc(76px + env(safe-area-inset-top, 0px)); }
 `;
 
 /** The strip's second line: the seconds left to answer, whole and never below one while it stands. */
@@ -44,8 +45,10 @@ export function duelPromptSub(msLeft) {
  * @param {Document} [o.doc]
  * @param {(peer: string, name: string) => string} [o.line]  WAGONS1: what the strip says of an ask (a duel's, by default)
  * @param {number} [o.ttlMs]  WAGONS1: how long an ask stands (the strip's countdown) - a duel's, by default
+ * @param {boolean} [o.second]  WAGONS2 (FINAL AUDIT): a second strip, stood below the duel's - a ride's ask and a
+ *   challenge standing at once covered the challenge, which lapsed unseen
  */
-export function createDuelPrompt({ asks, accept, decline, name, now, touch = false, doc = document, line: lineOf = (_peer, who) => `${who} challenges you to a duel`, ttlMs = DUEL_ASK_TTL_MS }) {
+export function createDuelPrompt({ asks, accept, decline, name, now, touch = false, doc = document, line: lineOf = (_peer, who) => `${who} challenges you to a duel`, ttlMs = DUEL_ASK_TTL_MS, second = false }) {
   if (doc?.getElementById && !doc.getElementById(DUEL_PROMPT_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = DUEL_PROMPT_STYLE_ID;
@@ -53,7 +56,7 @@ export function createDuelPrompt({ asks, accept, decline, name, now, touch = fal
     (doc.head ?? doc.body)?.append(st);
   }
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
-  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}`);
+  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}${second ? ' second' : ''}`);
   root.dataset.up = '0';
   const who = el('div', 'dfduel-who');
   const nm = el('div', 'dfduel-name');

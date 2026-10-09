@@ -440,7 +440,7 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   const ef = src('scenes/exteriorFoes.js');
   const w0 = () => src('scenes/world.js');
   assert.match(ef, /const _sd = f\.ai\?\.seatDraw\?\.\(\) \?\? \(f\.puppet && _puppetSeatDraw \? _puppetSeatDraw\(f\) : null\), _sg = _sd\?\.g > 1 \? _sd\.g : 1;/);
-  assert.match(w0(), /exteriorFoes\.setPuppetSeatDraw\(\(f\) => \(hccOn\(\) && \(f\.companion != null \|\| f\.shipmate\) \? hcc\.puppetSeatDrawn\(f\.puppet, f\.ai\?\.feet\) : null\)\);/, 'WAGONS2 (AUDIT): a companion of theirs alone - never a foe passing through the bed');
+  assert.match(w0(), /exteriorFoes\.setPuppetSeatDraw\(\(f\) => \(hccOn\(\) && \(f\.companion != null \|\| f\.shipmate\) \? hcc\.puppetSeatDrawn\(f\.puppet, f\.ai\?\.feet, f\._pup\?\.wire \?\? null\) : null\)\);/, 'WAGONS2 (AUDIT): a companion of theirs alone - never a foe passing through the bed (FINAL AUDIT: and its own record beside its drawn feet)');
   assert.match(ef, /f\.batch\.size = \{ w: \(o\.flip \? -sz\.w : sz\.w\) \* _sg, h: sz\.h \* _sg \};/);
   assert.match(ef, /if \(_sg > 1\) \{ f\.batch\.noShadow = true; f\._seatShadow = true; \} else if \(f\._seatShadow\) \{ f\._seatShadow = false; if \(!f\.batch\.dissolve\?\.\[4\]\) f\.batch\.noShadow = undefined; \}/, 'WAGONS2 (AUDIT): grown, no shadow - OW-BIG\'s law; let go when it ends, unless the dissolve holds it');
   assert.match(ef, /\} else f\.batch\.origin = _sg > 1 \? _sd\.feet : f\.ai\.feet;/);
@@ -607,4 +607,103 @@ test('RW1 x WAGONS2 THE STREET THROUGH A WINDOW: the view out\'s pass draws the 
   // the caravan's glass: a cutout picture (render/renderer.js's door for a context's glass)
   assert.match(src('scenes/caravanRoom.js'), /isGlassRecord\(rec\) \? \{ cutout: true \} : \{ opaque: true \}/);
   assert.match(src('scenes/horseCartPool.js'), /isGlassRecord\(rec\) \? \{ cutout: true \} : \{ opaque: true \}/);
+});
+
+test('WAGONS2 (FINAL AUDIT) THE SEATS AT THE OVERWORLD\'S PACE: a player whose OWN word says they sit in a seat is drawn on it however far their drawn pose lags (each pose eased over its own send interval at ten to a hundred times the pace - the reach alone refused every seated rider while the wagon moved); an owner\'s word alone still draws nobody; a peer\'s companion is taken for seated by its own record against the wagon\'s own word, both the owner\'s and off one frame (mutants: the consent unread, the record unread)', async () => {
+  const r = fakeRenderer();
+  let consent = true;
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'openWagon', bakedWagon: async (k) => bakeOf(k), riders: { passengers: () => [['bob', 1]], sitsIn: (p, o, k) => consent && p === 'bob' && o === '' && k === 1 } });
+  const pose = { active: true, position: [0, 1, -6], rotation: [0, 0, 0, 1], hitch: [0, 1, 1], axle: [0, 1, -6], steer: 0 };
+  pool.attach(runtimeOf({ deployed: null, moving: { pose, cargoTier: 0, wheel: { angle: 0 } } }));
+  pool.partsOf('openWagon');
+  await flush();
+  pool.draw(r, null, { selfGrow: 8, grow: () => 8 });
+  const s = pool.seatDrawn('', 1);
+  const t1 = pool.mySeat(1).feet;
+  const lagging = () => [{ id: 'bob', shown: { x: t1[0] - 40, y: t1[1], z: t1[2] - 40 } }];   // forty metres behind, the pace's lag
+  const a = lagging();
+  pool.seatGlue(a);
+  assert.deepEqual([a[0].shown.x, a[0].shown.y, a[0].shown.z], s.feet, 'their own word seats them: drawn on the seat');
+  consent = false;
+  const b = lagging();
+  pool.seatGlue(b);
+  assert.deepEqual(b[0].shown, lagging()[0].shown, 'the owner\'s word alone: where they stand');
+  // a peer's companion: its record on the seat the wagon's word stands it on, its drawn feet anywhere
+  const peerPool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => 'cart', bakedWagon: async (k) => bakeOf(k), peerAnchor: () => [40, 1, 47.1] });
+  peerPool.partsOf('openWagon'); await flush();
+  peerPool.applyOwner('ann', { w: [HCC_WIRE_KIND.Trailing, 40, 1, 40, 0, 0, 0, 1, 0, 0], wk: 1 }, (q) => q, 0);
+  peerPool.frame(1 / 60, [0, 0, 0]);
+  peerPool.draw(r, null, { selfGrow: 8, grow: () => 8 });
+  const word = peerPool.wordSeat('ann', 0).feet, far = [word[0] - 30, word[1], word[2] - 30];
+  assert.ok(peerPool.puppetSeatDrawn('ann', far, [word[0] + 0.2, word[1], word[2]])?.g === 8, 'its record on the word\'s seat: seated, drawn on the grown seat');
+  assert.equal(peerPool.puppetSeatDrawn('ann', far, far), null, 'its record off every seat: where it stands');
+  assert.equal(peerPool.puppetSeatDrawn('ann', far), null, 'no record: its drawn feet alone');
+});
+
+test('WAGONS2 (FINAL AUDIT) A RIDER\'S WAYS OUT, AND THE WAIT THAT IS THEIRS: a teleport while seated (a Recall, a quest\'s, a staff\'s within the owner\'s reach) ends the ride where the body landed - each frame\'s pin undid it; the far end\'s wait runs for the journey this ride followed alone, not any travel of the rider\'s own while an old journey\'s number stood (mutants: the pin unwatched, the wait on any journey)', async () => {
+  let t = 0, traveling = false, body = [0, 0, 0], owner = { model: 'openWagon', kind: 1, passengers: [['me', 0]], go: [5, 5, 3], declined: [], wire: [0, 0, 0] };
+  const said = [], pins = [];
+  const deps = {
+    selfId: () => 'me', name: (i) => i, now: () => t, say: (l) => said.push(l), changed() {},
+    pool: { peerRide: () => owner, peerSeat: () => ({ feet: [10, 1, 10], yaw: 0 }), seatDrawn: () => null, mySeatCount: () => 0 },
+    pin: (f) => { pins.push(f); body = [...f]; }, unpin() {}, feet: () => body, world: (p) => p, jumpPressed: () => false,
+    travel: () => Promise.resolve(true), canTravel: () => true, traveling: () => traveling, prompt: { render() {} }, drawAt() {},
+  };
+  const riders = createWagonRiders(deps);
+  riders.press('ann', 'wagon:ride', 1); riders.frame();
+  assert.equal(riders.seated(), true);
+  riders.frame(); riders.frame();
+  assert.deepEqual(body, [10, 1, 10], 'pinned on the seat');
+  body = [10 + GET_DOWN_REACH + 4, 1, 10];   // a Recall landed it a few metres off
+  const n = pins.length;
+  riders.frame();
+  assert.equal(riders.seated(), false, 'out of the ride');
+  assert.equal(pins.length, n, 'never pinned back');
+  assert.deepEqual(body, [10 + GET_DOWN_REACH + 4, 1, 10], 'where it landed');
+  // the wait: a travel of my own with an old journey's number standing (the owner's go [5, 5, 3] heard at the ask)
+  body = [10, 1, 10];
+  riders.press('ann', 'wagon:ride', 1); riders.frame(); riders.frame();
+  assert.equal(riders.seated(), true);
+  traveling = true; t += 100; riders.frame();
+  traveling = false; owner = null; t += 100; riders.frame();
+  t += RIDE_LOST_GRACE_MS + 10; riders.frame();
+  assert.equal(riders.seated(), false, 'no journey of the ride\'s: the owner unheard past the grace stands me down - never held the far end\'s fifteen seconds');
+  assert.equal(said.at(-1), RIDE_TEXT.ownerGone);
+  // the owner's own journey, followed: the wait holds at the far end
+  owner = { model: 'openWagon', kind: 1, passengers: [['me', 0]], go: null, declined: [], wire: [0, 0, 0] };
+  riders.press('ann', 'wagon:ride', 1); riders.frame(); riders.frame();
+  owner = { ...owner, go: [7, 7, 4] }; t += 10; riders.frame();   // the owner sets out: I follow
+  traveling = true; t += 5000; riders.frame();
+  traveling = false; owner = null; t += 100; riders.frame();
+  t += RIDE_LOST_GRACE_MS + 10; riders.frame();
+  assert.equal(riders.seated(), true, 'the followed journey\'s far end: waiting for the owner to be heard');
+});
+
+test('WAGONS2 (FINAL AUDIT) A SEATED RIDER SETS OUT ON NO JOURNEY OF THEIR OWN, AND RIDERS GO ONLY WITH THE WAGON: the classic arm of a journey (First-Person Travel off the roads, the classic skin) and a fast travel of the rider\'s own (a map\'s, a ship\'s passage) refuse a seated rider - the Overworld alone did; an owner whose wagon stays (parked, or a following team left at the departure) gives up the seats before leaving rather than sending riders after it; a seat lost to another tab clears the book (mutants: each gate, the release, the clear)', () => {
+  const w = src('scenes/world.js');
+  assert.match(w, /if \(climbingNow\(\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.climbing\); return true; \}\n(?:\s*\/\/[^\n]*\n)+\s*if \(wagonRiders\?\.seated\(\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.rider\); return true; \}\n\s*if \(coords\) travelOptions\.beginTravelToCoords/);
+  assert.match(w, /if \(typeof pick\.besideAt !== 'function' && wagonRiders\?\.seated\(\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.rider\); hudFade\.clearFade\(\); return false; \}\n\s*const wildTrip = wildTravelGate/);
+  assert.match(w, /if \(!partyArrival && !hccRuntimeOn\(\)\?\.wagonGoesOnJourney\?\.\(\) && wagonRiders\?\.release\(\)\) _hccDirty = true;\n\s*if \(!partyArrival && wagonRiders\?\.announce\(pick\.pixel\)\)/);
+  assert.match(w, /wagonRiders\?\.clear\(\);[^\n]*\n\s*caravanVisitLink\.close\(\);[^\n]*\n\s*seatLock\?\.release\(\);/);
+  const hc = src('systems/horseCart.js');
+  assert.match(hc, /function wagonGoesOnJourney\(\) \{\n\s*if \(wagonState\.Mode === WAGON_MODE\.WithPlayer\) return true;\n\s*return physicalPersistenceEnabled && \(followingTransportFastTravels \|\| forceNextJourney\) && isTeamFollowing\(\);\n\s*\}/);
+  // the release, by execution
+  const riders = createWagonRiders({ selfId: () => 'me', name: (i) => i, now: () => 0, say() {}, pool: { mySeatCount: () => 4, mySeatsKnown: () => true } });
+  assert.equal(riders.release(), false, 'nobody aboard: nothing to give up');
+  riders.hear('bob', { a: 'me' });
+  riders.accept('bob');
+  assert.deepEqual(riders.passengers(), [['bob', 0]]);
+  assert.equal(riders.release(), true);
+  assert.deepEqual(riders.passengers(), [], 'given up');
+  assert.equal(riders.announce({ x: 1, y: 2 }), false, 'and no journey said to nobody');
+  // who sits where, by their own word
+  riders.hear('cid', { s: ['me', 2] });
+  assert.equal(riders.sitsIn('cid', '', 2), true, 'in my wagon, by their word');
+  assert.equal(riders.sitsIn('cid', '', 1), false);
+  riders.hear('dee', { s: ['ann', 0] });
+  assert.equal(riders.sitsIn('dee', 'ann', 0), true, 'in another\'s');
+  riders.hear('cid', null);
+  assert.equal(riders.sitsIn('cid', '', 2), false, 'their word gone, no seat');
+  riders.sweep(new Set());
+  assert.equal(riders.sitsIn('dee', 'ann', 0), false, 'gone from the room, no seat');
 });

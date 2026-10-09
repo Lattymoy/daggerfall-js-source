@@ -870,6 +870,36 @@ export class Room {
   /** AUDIT ATTACH: one socket's meters - its arms' buckets and strike counts, its junk, the funnels onto it - made on
    *  first use and gone with the socket (a WeakMap) or with a wake (the constructor's note says why that is safe). */
   _meterOf(ws) { let m = this._meters.get(ws); if (!m) this._meters.set(ws, m = {}); return m; }
+  /** WAGONS2-VISIT (FINAL AUDIT): A CARAVAN'S DOCUMENT IS OWED TO ITS VISITORS UNTIL IT IS FANNED. The fan is charged as an
+   *  act's is - the sender's own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S) first, then the room's
+   *  (ACT_ROOM_BYTES_PER_S), a refusal by the room charging the sender nothing. A refused fan was dropped whole, and
+   *  nothing said it again (the owner's client says an unchanged document once, and an unchanged one is fanned to
+   *  nobody), so its visitors kept the old layout until they walked in again; it waits for the alarm at the time its
+   *  bucket has repaid now, and goes then - the last document said, `d` null a forgetting. */
+  async _caravanFan(now) {
+    const from = this._cvOwed;
+    if (!from) return;
+    const out = `{"t":"caravan","data":${this._cvDoc ?? 'null'}}`;
+    const listeners = [...this._all()].filter(([other, b]) => other !== from && b.id);
+    const cost = out.length * listeners.length;
+    const meters = this._meterOf(from);
+    const mine = byteGate(meters.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+    let refused = mine.pass ? null : { bytes: mine.bucket.bytes, rate: ACT_SENDER_BYTES_PER_S };
+    if (!refused) {
+      const room = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
+      this._roomActBytes = room.bucket;
+      if (!room.pass) refused = { bytes: room.bucket.bytes, rate: ACT_ROOM_BYTES_PER_S };
+    }
+    if (refused) {
+      if (!mine.pass) meters.abytes = mine.bucket;
+      this._cvOwedAt = now + Math.ceil((-refused.bytes / refused.rate) * 1000) + 1;
+      await this.state.storage.setAlarm(this._cvOwedAt);
+      return;
+    }
+    meters.abytes = mine.bucket;
+    this._cvOwed = null;
+    for (const [other] of listeners) this._send(other, out);
+  }
   /** AUDIT ATTACH: ONE ARM'S METER, SPENT - its bucket (`bucketKey`) through `gate`; over the rate the frame is dropped
    *  and a strike counted (`strikesKey`), a pass forgives them, and past `max` the socket is closed with `why`. True
    *  when the frame is taken. Every meter below is this one with its own gate, fields and words. */
@@ -1180,7 +1210,14 @@ export class Room {
     if (reg) { const due = reg.at + PARK_TTL_MS; if (Date.now() >= due) await this.state.storage.delete('reg'); else await this.state.storage.setAlarm(due); return; }
     // WAGONS2-VISIT: a caravan's room forgets what its owner placed PARK_TTL_MS after they last said it, as the cell forgets the caravan
     const cv = await this.state.storage.get(CARAVAN_DECOR_KEY);
-    if (cv) { const due = (cv.at ?? 0) + PARK_TTL_MS; if (Date.now() >= due) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); } else await this.state.storage.setAlarm(due); return; }
+    if (cv) {
+      const now = Date.now(), due = (cv.at ?? 0) + PARK_TTL_MS;
+      if (now >= due) { this._cvDoc = null; this._cvOwed = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); return; }
+      if (this._cvOwed) await this._caravanFan(now);   // FINAL AUDIT: a fan owed goes when its bucket has repaid
+      await this.state.storage.setAlarm(this._cvOwed ? Math.min(due, this._cvOwedAt) : due);
+      return;
+    }
+    if (this._cvOwed) { await this._caravanFan(Date.now()); return; }   // a forgetting (`d` null) owed - no document kept to arm for
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
@@ -2217,9 +2254,10 @@ export class Room {
       // one at most every 1.5 s); an unchanged one neither fanned nor stored again until its lease wants renewing
       // (PARK_REFRESH_MS); and the fan charged to the sender's own act bytes as an act's is - a hostile owner's
       // documents were stored and fanned at the acts' 5 Hz, uncharged
-      const meters = this._meterOf(ws);
-      if (now - (meters.cvAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;
-      meters.cvAt = now;
+      // FINAL AUDIT: the second is the ROOM's, not a socket's (the owner's account may hello as many sockets into its own
+      // room as SOCKETS_MAX lets it, each passing the owner's check - a socket's own second was theirs times N)
+      if (now - (this._cvSaidAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;
+      this._cvSaidAt = now;
       if (m.data.d === null) { this._cvDoc = null; await this.state.storage.delete(CARAVAN_DECOR_KEY); }
       else {
         const doc = JSON.stringify(m.data.d), changed = doc !== this._cvDoc;
@@ -2228,12 +2266,8 @@ export class Room {
         await this.state.storage.put(CARAVAN_DECOR_KEY, { at: now, d: m.data.d }); await this.state.storage.setAlarm(now + PARK_TTL_MS);
         if (!changed) return;
       }
-      const out = JSON.stringify({ t: 'caravan', data: m.data.d });
-      const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
-      const fan = byteGate(meters.abytes, now, out.length * listeners.length, ACT_SENDER_BYTES_PER_S, true);
-      meters.abytes = fan.bucket;
-      if (!fan.pass) return;
-      for (const [other] of listeners) this._send(other, out);
+      this._cvOwed = ws;
+      await this._caravanFan(now);
       return;
     }
     if (m.t === 'gate') {

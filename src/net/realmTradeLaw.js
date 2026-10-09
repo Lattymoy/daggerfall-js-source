@@ -42,6 +42,7 @@
 import { canon } from './canon.js';
 import { TRADE_ITEMS_MAX, TRADE_GOLD_MAX } from './wire.js';
 import { isBagItem } from './bagLaw.js';   // BAG1
+import { activeWagonItem } from '../systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the loaded wagon stays (already in the account service's graph, by itemLaw.js)
 
 /** A trade's id: the peers' own sid (wire.js validTradeData's TRADE_SID_RE, which the wire keeps to itself). */
 export const REALM_TRADE_SID_RE = /^[A-Za-z0-9]{6,16}$/;
@@ -169,6 +170,12 @@ export function takeTradeGoods(save, side, pick) {
   const purse = Number.isSafeInteger(save.goldPieces) ? save.goldPieces : 0;
   if (side.gold > purse) return null;
   const left = items.map((rec) => (tradeableRecord(rec) ? recordCount(rec) : 0));   // what each record may still give
+  // WAGONS2 (FINAL AUDIT): and the wagon the save drives while its store holds goods gives nothing - the client's
+  // refusal (systems/tradePack.js wagonLoadedHeld) was the only one, so a modified client sold a loaded caravan and kept
+  // its 2000 kg in a 750 kg cart
+  const loaded = (Array.isArray(save.wagonItems) ? save.wagonItems.length : 0) > 0 ? activeWagonItem(items) : null;
+  if (loaded) left[items.indexOf(loaded)] = 0;
+  const had = left.slice();   // what each record could give - a record that gave none of it is untouched, below
   /** @type {{ at: number, n: number }[]} */
   const picks = [];
   for (let k = 0; k < side.items.length; k++) {
@@ -187,7 +194,7 @@ export function takeTradeGoods(save, side, pick) {
   });
   const lit = items[save.lightSourceIndex];
   save.items = items.flatMap((rec, i) => {
-    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec];   // untouched
+    if (left[i] === had[i]) return [rec];   // untouched
     if (left[i] <= 0) return [];
     rec.stackCount = left[i];
     return [rec];

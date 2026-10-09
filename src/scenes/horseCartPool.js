@@ -21,7 +21,8 @@
 //          hosts' fetch; absent, the classic model 41214 stands for every kind, as before WAGONS1),
 //          enterCaravan() (WAGONS1: my parked caravan's "Step inside" row - scenes/caravanRoom.js; absent, no row),
 //          riders (WAGONS1: the seats in the back - scenes/wagonRiders.js: { passengers(), go(), declined() - my word's
-//          `ps`, `go` and `pn`; acts(owner, kind, kept) -> plaque rows over another player's wagon; press(owner, id, distance) }),
+//          `ps`, `go` and `pn`; acts(owner, kind, kept) -> plaque rows over another player's wagon; press(owner, id, distance);
+//          sitsIn(peer, owner, seat) - FINAL AUDIT: whether that peer's own word seats them there }),
 //          wagonEntry() -> { entry, guild } | null (WAGONS2-VISIT: who may enter my caravan - the word's `we` and `wg`),
 //          caravanEntry ({ row() -> label | null, turn() -> line | null } - WAGONS2-VISIT: my parked caravan's "Who may
 //          enter" row, and its press), visit ({ may(target), enter(target) } - WAGONS2-VISIT: another's parked caravan whose
@@ -640,12 +641,15 @@ export function createHorseCartPool({
    *  seat of their wagon (their crewAshore's), which is where this client's copy of that wagon has the seat too (its
    *  ease aside): the seat its feet stand within PUPPET_SEAT_REACH of is its seat, and the seat as drawn (grown under the
    *  Overworld) is where it is drawn - or null, not seated or not grown (it is drawn where it stands). */
-  function puppetSeatDrawn(owner, feet) {
+  function puppetSeatDrawn(owner, feet, wire = null) {
     const p = _peers.get(owner);
     const n = p?.wagon && feet ? partsOf(p.wagon.model)?.seats?.length ?? 0 : 0;
+    // FINAL AUDIT: and the companion's own record against the wagon's own word - both the owner's, off one frame - for
+    // under the Overworld each is eased on its own clock and the drawn pair stood tens of metres apart while it moved
+    const raw = n && wire && p.toScene ? p.toScene(wire) : null;
+    const on = (q, s) => !!q && !!s && Math.hypot(s.feet[0] - q[0], s.feet[2] - q[2]) <= PUPPET_SEAT_REACH && Math.abs(s.feet[1] - q[1]) <= PUPPET_SEAT_RISE;   // WAGONS2 (AUDIT): and at its height - not one passing under the bed
     for (let k = 0; k < n; k++) {
-      const at = peerSeat(owner, k);
-      if (!at || Math.hypot(at.feet[0] - feet[0], at.feet[2] - feet[2]) > PUPPET_SEAT_REACH || Math.abs(at.feet[1] - feet[1]) > PUPPET_SEAT_RISE) continue;   // WAGONS2 (AUDIT): and at its height - not one passing under the bed
+      if (!on(feet, peerSeat(owner, k)) && !on(raw, wordSeat(owner, k))) continue;
       const drawn = seatDrawn(owner, k);
       return drawn && drawn.g > 1 ? drawn : null;
     }
@@ -669,9 +673,13 @@ export function createHorseCartPool({
       const d = drawable[i], at = d?.shown ? seated.get(d.id) : null;
       const seat = at ? seatDrawn(at[0], at[1], grows) : null;
       if (!seat) continue;
-      const truly = at[0] ? peerSeat(at[0], at[1]) : mySeat(at[1]);
-      const tw = truly ? toWire(truly.feet) : null;
-      if (!tw || !(Math.hypot(d.shown.x - tw[0], d.shown.z - tw[2]) <= SEAT_GLUE_REACH)) continue;
+      // FINAL AUDIT: or their own word says that seat (wagonRiders.js sitsIn) - under the Overworld their drawn pose
+      // lags the seat by tens of metres, and the reach alone refused every seated rider while the wagon moved
+      if (!riders?.sitsIn?.(d.id, at[0], at[1])) {
+        const truly = at[0] ? peerSeat(at[0], at[1]) : mySeat(at[1]);
+        const tw = truly ? toWire(truly.feet) : null;
+        if (!tw || !(Math.hypot(d.shown.x - tw[0], d.shown.z - tw[2]) <= SEAT_GLUE_REACH)) continue;
+      }
       const w = toWire(seat.feet);
       drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [0, 0, at[1]], deckKey: `wagon:${at[0]}:${at[1]}` } };
     }
@@ -815,6 +823,12 @@ export function createHorseCartPool({
   function peerSeat(owner, k) {
     const p = _peers.get(owner);
     return p?.wagon && p.shownWagon ? seatWorld(p.wagon.model, p.shownWagon, p.shownRotation ?? p.wagon.rotation, k, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched) : null;
+  }
+  /** WAGONS2 (FINAL AUDIT): seat `k` of another player's wagon where its WORD stands it (the pose the owner's frame
+   *  carries, before this client eases it) - the seat their own companions are pinned to on their client. */
+  function wordSeat(owner, k) {
+    const p = _peers.get(owner);
+    return p?.wagon ? seatWorld(p.wagon.model, p.wagon.position, p.wagon.rotation, k, p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched) : null;
   }
   /** WAGONS1: what another player's live word says of their wagon's back - its kind, who sits where, a journey, who was
    *  turned away - or null when they show no wagon here. */
@@ -1104,7 +1118,7 @@ export function createHorseCartPool({
     phys,
     frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord, parkedDoor, mySeat, peerSeat, peerRide, mySeatCount, mySeatsKnown,
-    seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
+    seatDrawn, seatGlue, drawnFrameOf, puppetSeatDrawn, wordSeat,   // WAGONS2: the seats as drawn - the Overworld's grown wagons
     visitTarget,   // WAGONS2-VISIT
     drawOutside,   // RW1 x WAGONS2: the wagons in the street a window looks out on
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return partsOf(myKind()); }, partsOf, hitchOf,

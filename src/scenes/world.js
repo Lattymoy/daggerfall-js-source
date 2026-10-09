@@ -759,6 +759,7 @@ import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySup
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
 import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
 import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
+import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
 import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
 import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
 import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
@@ -7659,7 +7660,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WAGONS1: the seats in the back (scenes/wagonRiders.js) - made just below the pool, which reads them through this. */
   let wagonRiders = null;
   const hcc = createHorseCartPool({
-    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false },   // WAGONS1
+    riders: { passengers: () => wagonRiders?.passengers() ?? [], go: () => wagonRiders?.go() ?? null, declined: () => wagonRiders?.declined() ?? [], acts: (o, k, kept) => wagonRiders?.acts(o, k, kept) ?? [], press: (o, id, d) => wagonRiders?.press(o, id, d) ?? false, sitsIn: (p, o, k) => wagonRiders?.sitsIn(p, o, k) ?? false },   // WAGONS1; FINAL AUDIT: a rider's own word seats them
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console, ...wagonPoolDeps(() => playerEntity.items ?? []), enterCaravan: () => caravanRooms.enter(),   // WAGONS1: Mac's wagons, by the one the player drives; the caravan's door
@@ -7679,6 +7680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     pin: (feet) => player.pinFeet(feet[0], feet[1], feet[2]),
     unpin: (feet) => { if (feet) player.pinFeet(feet[0], repositionFeetY(player.collider.heightAt(feet[0], feet[2]), feet[1]), feet[2]); },
     feet: () => player.pos,   // WAGONS2 (AUDIT): a body moved off its seat (a load, a respawn, a teleport) is not stood back beside the wagon
+    world: (p) => { const w = state.worldCoords(p); return [w.x / SCENE_MAP_RATIO, p[1], w.z / SCENE_MAP_RATIO]; },   // FINAL AUDIT: and a teleport while seated ends the ride (a rebase moves nothing in this frame)
     changed: () => { _hccDirty = true; },   // my `wr` moved: the next foes frame carries it
     jumpPressed: () => !gamePaused() && !pointerSurfaces.size && pressed(latch.edge, keys, 'Jump'),
     traveling: () => _traveling, canTravel: () => !partyTravelRefusal(),
@@ -8147,6 +8149,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
     enterInterior: (room, visit = null) => modes?.enterCaravanRoom(room, null, visit), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),   // WAGONS2-VISIT: and another's, a visit
   });
+  /** WAGONS2 (FINAL AUDIT): WHERE A SAVE OR AN ANCHOR MADE IN A CARAVAN LANDS WHEN ITS ROOM CANNOT COME BACK (a visit's -
+   *  their room is theirs to stand - the caravan moved, sold, the mod off): the ground behind the rear door it was made by,
+   *  as the room's own door lets out - it fell to the building's no-door arm, the teleport's landing at the pixel's centre
+   *  (a town's roof, or half a kilometre off in the wilds), or a Recall stood inside the wagon's body. Null for any other. */
+  const caravanDoorLanding = (interior) => (interior?.caravanRoom ? caravanRooms.returnToWagon(interior.caravanRoom) : null);
   // ═══ WAGONS2-VISIT (2026-10-09, Mac: "People should be able to use the interior just like houses, like crafting and
   // such"; who comes in, "Like an online home") - A CARAVAN'S DOOR ONLINE (systems/caravanVisit.js) ═══════════════════
   /** Who may enter my caravan, as its word says it (`we`), with my guild's tag when it is my guild's (`wg`) - null
@@ -13745,7 +13752,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RestorePositionHelper's three arms (PlayerEnterExit.cs
       // :622-655), in its own order: dungeon first, then building
       // with doors, then outside.
-      let landed = false;
+      let landed = false, outOfCaravan = null;
       if (plan.arrive === 'dungeon') {
         // The dungeon mount - StartDungeonInterior through the ONE
         // door the quest respawner uses (:626-630 RespawnPlayer with
@@ -13770,15 +13777,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // teleport's landing, never the inside position on the
         // outside collider.
         landed = !!(await modes?.restoreInterior?.(a.interior ? { ...a.interior, layout: a.layout } : a.interior, anchorLanding(a)));   // WD3 (AUDIT WD3 S5): with the layout the anchor was set in
-        if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
+        if (!landed && !(outOfCaravan = caravanDoorLanding(a.interior))) townTalk.say('Building has no exterior doors. Repositioning player.');
+        else if (!landed) townTalk.say(CARAVAN_TEXT.outside);
       }
       if (!landed) _wodInside = false;   // WOD6: it landed outside after all
       if (landed) {
         cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       } else if (plan.arrive !== 'dungeon') {
         // The exterior landing: the anchor's native coordinates back
-        // through the arrival origin, the quickload's own shape.
-        const [lx, ly, lz] = anchorLanding(a);
+        // through the arrival origin, the quickload's own shape - or,
+        // an anchor set in a caravan, the ground behind its rear door
+        // (the native point is inside the wagon's body)
+        const [lx, ly, lz] = outOfCaravan?.position ?? anchorLanding(a);
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
         cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
       }
@@ -14310,6 +14320,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
     if (_goLeadBusy) return;   // WAGONS2 (AUDIT): a journey already telling my riders - `_traveling` rises only past the lead, and a second ask in it set out twice
+    // WAGONS2 (FINAL AUDIT): a rider seated in another's wagon goes where it goes - their own fast travel (a map's, a
+    // ship's passage) teleported the pinned body away, its motor held at the far end until the owner's word lapsed. The
+    // journey that follows the owner is the party's own (`besideAt`)
+    if (typeof pick.besideAt !== 'function' && wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); hudFade.clearFade(); return false; }
     const wildTrip = wildTravelGate(pick.pixel, computed?.piecesCost ?? 0);   // WILD3: never into or out of the open zone; inside it, the fee and the wait
     if (!wildTrip.ok) { hudFade.clearFade(); return false; }
     // HCC (AUDIT HCC H2): DaggerfallTravelPopUp.OnPreFastTravel [IL_a1d8] - the mod's ONE subscription for a
@@ -14326,6 +14340,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyArrivalPending = partyArrival;
     let hccPostDue = false;
     // WAGONS1: riders in my wagon go where I go - told before I leave the room (their clients set out on the word)
+    // FINAL AUDIT: and only when my wagon goes too - a parked one, or a following team left at the departure, keeps
+    // none (its riders were carried off and landed with no wagon, their motor held till the owner's word lapsed)
+    if (!partyArrival && !hccRuntimeOn()?.wagonGoesOnJourney?.() && wagonRiders?.release()) _hccDirty = true;
     if (!partyArrival && wagonRiders?.announce(pick.pixel)) { _hccDirty = true; _goLeadBusy = true; try { await new Promise((r) => setTimeout(r, GO_LEAD_MS)); } finally { _goLeadBusy = false; } }
     try {
       hccRuntimeOn()?.handlePreFastTravel();
@@ -15123,7 +15140,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           playerSpawned = true;
           cam.pos = [lx, ly, lz];
         } else if (extras.interior) {
-          townTalk.say('Building has no exterior doors. Repositioning player.');
+          const out = caravanDoorLanding(extras.interior);
+          if (!out) townTalk.say('Building has no exterior doors. Repositioning player.');
+          else {   // WAGONS2 (FINAL AUDIT): a caravan's room that cannot come back stands its player behind its rear door
+            townTalk.say(CARAVAN_TEXT.outside);
+            const [x, y, z] = out.position;
+            if (walkMode) { player.spawn(x, y, z); playerSpawned = true; }
+            cam.pos = [x, y + (walkMode ? 0 : 40), z];
+          }
         } else {
           if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
           cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
@@ -16031,6 +16055,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b C2: from a wall the pick is answered with the refusal - never DFU's fast travel in its stead (the
     // callers fall through to it on false)
     if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }
+    // WAGONS2 (FINAL AUDIT): nor from a seat in another's wagon - the classic arm (First-Person Travel off the roads, the
+    // classic skin) set out with the motor held, the world's time raised and the body pinned to the seat
+    if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -19915,7 +19942,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _privateSource = null, _privatePrefix = null;
   function privateRoomHere(identity) {
     if (modes?.caravanRoom) {
-      if (online?.caravanOk) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
+      if (caravanRelayOk()) return caravanRoomHere(identity);   // WAGONS2-VISIT: a caravan's own room - mine, or the one I visit
       if (caravanKeyOf(identity?.privateRoom)) return null;   // a visit at an older relay keeps no caravan's room (none is entered there)
     }   // WAGONS2-VISIT (AUDIT): and my own caravan at an older relay - the owned room, as before it (it left me in none)
     // Old relays accept arbitrary room names without this room's owner gate.
@@ -19949,8 +19976,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     return caravanRoomOf(_caravanKey);
   }
+  // WAGONS2-VISIT (FINAL AUDIT): a fresh session (a load inside my caravan, online turned on in it) has had no welcome
+  // to say its relay - and with no room it is never welcomed - so the world channel's word stands for it, as the owned
+  // rooms' staffTeleportOk does; the frame itself still waits for the primary's own (online.js sendCaravan)
+  const caravanRelayOk = () => !!(online?.caravanOk || chatLinks?.get('world')?.caravanOk);
   function caravanRoomHere(identity) {
-    if (!online?.caravanOk) return null;
+    if (!caravanRelayOk()) return null;
     return caravanKeyOf(identity?.privateRoom) ? identity.privateRoom : myCaravanRoom();
   }
   /** STAFF-TP: x/z are native world coordinates outdoors/in buildings;
@@ -19964,8 +19995,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT FB1007b H3: the tutorial dungeon is each character's own (HOLD-SOLO) - staff sent there landed in their own
     // empty copy, told they stood at the player's exact position
     if (identity?.solo) return { error: 'unavailable' };
-    const privateRoom = identity?.private ? privateRoomHere(identity) : null;
-    if (mode === 'interior' && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
+    // WAGONS2 (FINAL AUDIT): a caravan's room is no building a door of the street walks into (staff sent there were told
+    // the instance could not be entered) - staff land behind its rear door, outside, where its owner steps out
+    const caravanOut = mode === 'interior' && modes?.caravanRoom ? caravanDoorLanding({ caravanRoom: modes.caravanRoom }) : null;
+    if (mode === 'interior' && modes?.caravanRoom && !caravanOut) return { error: 'private' };
+    const privateRoom = identity?.private && !caravanOut ? privateRoomHere(identity) : null;
+    if (mode === 'interior' && !caravanOut && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
     const inside = modes?.anchorContext?.();
     const inDungeon = mode === 'dungeon';
     const wc = inDungeon ? null : state.worldCoords(player.pos);
@@ -19975,7 +20010,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],
       yaw: cam.yaw, pitch: cam.pitch,
     };
-    if (mode === 'interior') {
+    if (caravanOut) {
+      const c = state.worldCoords(caravanOut.position);
+      dest = { ...dest, kind: 'exterior', pos: [c.x, caravanOut.position[1] - state.compensation[1], c.z], yaw: caravanOut.yaw };
+    } else if (mode === 'interior') {
       const door = inside?.interior?.door;
       dest.door = door && { ...door, buildingKey: door.buildingKey >>> 0 };
       dest.layout = identity?.layout ?? 'classic';
@@ -20424,7 +20462,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
-    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
+    exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet, f._pup?.wire ?? null) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
     exteriorFoes.setOnSeaRaiders((from, sr) => seaRaidHear(from, sr));   // OW6: and their raider chases at sea, the same way
     exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());   // CSA-J: a peer's boats, off their foes frame past the room test, through validCsaRecord
@@ -21206,7 +21244,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     ridePrompt = createDuelPrompt({
       asks: () => wagonRiders?.asks() ?? [], now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
       accept: (id) => { wagonRiders?.accept(id); _hccDirty = true; }, decline: (id) => { wagonRiders?.decline(id); _hccDirty = true; },
-      line: (_peer, who) => RIDE_TEXT.asked(who), ttlMs: RIDE_ASK_TTL_MS,
+      line: (_peer, who) => RIDE_TEXT.asked(who), ttlMs: RIDE_ASK_TTL_MS, second: true,   // WAGONS2 (FINAL AUDIT): below the duel's strip, never over it
     });
     // JOURNAL1: the page window, beside the profile and under the same gate - the F-menu's 'Read their page' opens it
     // over a page held out to me (pageOffers), and F again puts it away (socialInteract). Keep files the page it shows
@@ -27065,6 +27103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONESEAT H3: offline now - the sigil in hand drinks nothing and a weapon won here is won offline (SIGIL1), and
     // the Renown layer is off, as it is for every offline character (RENOWN1); Play online here puts both back
     setSigilOnline(false); setRenownLayer(playerEntity, null); computeEntityMods(playerEntity);   // SET3 (main's, at the merge): the sets sleep with the sigils - their stat tiers folded out now, as a Renown rise folds them in
+    wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
     caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
     console.info('[online] another tab, window or device has the seat - this one is offline');

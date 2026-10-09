@@ -57,8 +57,8 @@ import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: Factio
 import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './regionConditions.js';   // S42: the store S41's flag was waiting on
 import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
-import { createPellets } from './thunderlock.js';
-import { newWagonItem } from './wagonKinds.js';   // WAGONS1: the Open Wagon and the Caravan, minted beside the cart   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
+import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
+import { newWagonItem } from './wagonKinds.js';   // WAGONS1: the Open Wagon and the Caravan, minted beside the cart
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({

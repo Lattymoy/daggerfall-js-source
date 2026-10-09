@@ -37,6 +37,12 @@ export const CARAVAN_ROOM_MODEL_ID = -38181;
  *  room stands on: a parked caravan does not drift, so two metres is a re-park, never a rounding or its grounding's
  *  lean (WAGONS2 AUDIT: the owner's room restored only onto it; WAGONS2-VISIT: a visitor stood out past it). */
 export const CARAVAN_STANDS_NATIVES = 80;
+/** FINAL AUDIT: and how far (degrees) it may have turned - a caravan re-parked on its own spot facing another way is
+ *  another room (its walls and windows the old turn's, its rear door's step inside the re-parked body). Its live pose
+ *  leans on the ground it stands on; a re-park turned is tens of degrees. */
+export const CARAVAN_STANDS_TURN = 15;
+/** The least angle (degrees) between two headings. */
+export const turnGap = (a, b) => Math.abs(((((a - b) % 360) + 540) % 360) - 180);
 /** The lantern under the roof: Daggerfall's round lantern on its chain (archive 210 record 22 - the light it casts is
  *  world/interiorLights.js's for that record). */
 export const CARAVAN_LANTERN_FLAT = Object.freeze([210, 22]);
@@ -51,6 +57,7 @@ export const CARAVAN_TEXT = Object.freeze({
   where: 'Your caravan',
   unavailable: 'Your caravan is unavailable here.',
   notHere: 'Your caravan is not here.',
+  outside: 'You stand outside the caravan.',   // FINAL AUDIT: a save or an anchor made in one whose room cannot come back
 });
 
 const vec = (v) => Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(n) && Math.abs(n) <= 1e9);

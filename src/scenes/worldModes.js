@@ -66,7 +66,8 @@ import { sailingCabinEntry } from './sailingCabin.js';
 import { cabinSceneName, readSailingCabin } from '../systems/sailingCabin.js';
 import { caravanRoomEntry, serveRoomModels, paintCaravanRoom } from './caravanRoom.js';   // WAGONS1: the caravan's room, on the cabin's door - WAGONS2: its own model
 import { CARAVAN_SCENE_NAME, CARAVAN_TEXT, readCaravanRoom, isCaravanRoom, turnCaravanScene } from '../systems/caravanRoom.js';
-import { activeWagonItem } from '../systems/wagonKinds.js';   // WAGONS2 (AUDIT): the wagon a loaded store hangs on
+import { wagonItemName } from '../systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon's name on the keyed shelf
+import { wagonLoadedHeld } from '../systems/tradePack.js';   // WAGONS2 (AUDIT): the wagon a loaded store hangs on - FINAL AUDIT: the pack's one law
 import { caravanPaintRows } from '../systems/wagonLooks.js';   // WAGONS2: the caravan's inside, painted from the decorator
 import { caravanDecorDoc, readCaravanDecor } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: what a caravan's owner placed, said to its room and stood for its visitor
 import { caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
@@ -2950,7 +2951,7 @@ export function createWorldModes(host) {
   // as its used-message signoff, not as "Parchment" - two letters from
   // two quests are otherwise the same word in every list.
   const _itemLabel = (it) => questLetterName(it, (uid) => questBridge?.machine.getQuest(uid) ?? null)
-    ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;
+    ?? wagonItemName(it) ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;   // WAGONS2 (FINAL AUDIT): the Open Wagon and the Caravan by their own names (their record's is the Small Cart's)
   /**
    * WORLD-HOVER: THE INTERIOR'S ACTIVATION TARGETS, in one place.
    *
@@ -3654,7 +3655,7 @@ export function createWorldModes(host) {
   }
   /** WAGONS2 (AUDIT): the wagon the player drives while it holds anything - the counter's Sell drops its click
    *  (systems/tradeModes.js "Are we trying to sell the non empty wagon?"); the keyed list neither lists nor sells it. */
-  const loadedWagonHeld = (it) => it === activeWagonItem(playerEntity.items ?? []) && (playerEntity.wagonItems?.length ?? 0) > 0;
+  const loadedWagonHeld = (it) => wagonLoadedHeld(it, playerEntity);   // WAGONS2 (FINAL AUDIT): the pack's own law (systems/tradePack.js)
   function doSell(shelf, it) {
     if (isBound(it) || lockRefuses(it, 'sell')) return 0;   // AUDIT SS: the keyed shelf sells no bound piece (systems/itemBound.js) and no locked one (LOCK1), as neither counter stages one
     if (loadedWagonHeld(it)) return 0;   // WAGONS2 (AUDIT): nor the loaded wagon
@@ -6595,8 +6596,8 @@ export function createWorldModes(host) {
     showShelfList(shelf, 0);
   }
   function showSellList(shelf, page) {
-    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it) && !isEquipped(it) && !isBound(it) && !lockRefuses(it, 'sell'));   // AUDIT 17e F4
-    for (let i = sellable.length - 1; i >= 0; i--) if (loadedWagonHeld(sellable[i])) sellable.splice(i, 1);   // WAGONS2 (AUDIT): nor the loaded wagon   // AUDIT SS: nor a bound or a locked piece - the classic counter's own refusals, on the keyed shelf its missing art falls back to
+    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it) && !isEquipped(it) && !isBound(it) && !lockRefuses(it, 'sell'));   // AUDIT 17e F4   // AUDIT SS: nor a bound or a locked piece - the classic counter's own refusals, on the keyed shelf its missing art falls back to
+    for (let i = sellable.length - 1; i >= 0; i--) if (loadedWagonHeld(sellable[i])) sellable.splice(i, 1);   // WAGONS2 (AUDIT): nor the loaded wagon
     const per = 8;
     const slice = sellable.slice(page * per, (page + 1) * per);
     const options = slice.map((it, j) => ({

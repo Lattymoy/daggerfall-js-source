@@ -10,7 +10,10 @@
 // cart itself - classic model 41214, the wagon Horse Cart and Cargo
 // trails behind the player (systems/horseCartLaw.js WAGON_MODEL_ID). So
 // the cart's picture is that model, drawn once: textured, three-quarter
-// on, lit from the upper left, at item-picture size.
+// on, lit from the upper left, at item-picture size. (WAGONS1: Mac's
+// wagons since - the Small Cart's his Wagon Cart, each kind its own model
+// through the port's door below; systems/itemTemplates.js
+// inventoryItemModel.)
 //
 // A CPU RASTERISER, NOT A GPU PASS, for the reason ui/meshStamp.js gives
 // for its own: the list is a CPU composition and this picture is made

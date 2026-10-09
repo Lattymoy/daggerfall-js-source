@@ -69,6 +69,10 @@ import { bannerSvg, shieldSvg } from './heraldryArt.js';   // GUILD1d: the guild
 import { GUILD_HALL_PRICE_MULT, GUILD_HALL_ENTRIES, GUILD_HALL_ENTRY_WORDS, hallMay } from '../net/hallLaw.js';   // GUILD1d: the hall
 import { homeSaleRefund } from '../net/homeLaw.js';   // GUILD1d: what the hall sells back for
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the hall stands
+import { wagonItemName } from '../systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
+/** A piece of the pack as the vault's Put in names it - the Open Wagon and the Caravan by their own names (their record's
+ *  is the Small Cart's), anything else by its record's (the account service names the vault's row so - guildVault.js). */
+const vaultPieceName = (it) => String(wagonItemName(it) ?? it?.name ?? 'an item');
 
 export const SOCIAL_STYLE_ID = 'dagger-social-style';
 
@@ -1327,7 +1331,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const takeOf = () => { const why = !reachNow() ? 'in a town' : g.busy ? 'a moment' : ''; return { enabled: !why, why }; };
     const takeRun = (run) => () => { if (reachNow()) run(); };
     if (!vv.items.length) out.push(el('div', 'dfsocial-empty', GUILD_VAULT_EMPTY_TEXT));
-    for (const it of vv.items) {
+    for (const row of vv.items) {
+      const it = { ...row, name: wagonItemName(row.rec) ?? row.name };   // WAGONS2 (FINAL AUDIT): a marked wagon put in before its row was named by its kind
       const r = personRow({ name: it.count > 1 ? `${it.name} x${it.count}` : it.name, sub: `put in by ${it.by}` });
       if (mayTake) {
         const acts = rowActs(r);
@@ -1350,7 +1355,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
         if (!offers.includes(d.vaultPick)) d.vaultPick = offers[0];
         const byKey = new Map(offers.map((it, i) => [String(i), it]));
         const form = el('div', 'dfsocial-form');
-        form.append(selectOf('A piece of your pack', offers.map((it, i) => [String(i), (it.stackCount ?? 1) > 1 ? `${it.name ?? 'an item'} x${it.stackCount}` : String(it.name ?? 'an item')]), String(offers.indexOf(d.vaultPick)), (k) => { d.vaultPick = byKey.get(k) ?? null; }));
+        form.append(selectOf('A piece of your pack', offers.map((it, i) => [String(i), (it.stackCount ?? 1) > 1 ? `${vaultPieceName(it)} x${it.stackCount}` : vaultPieceName(it)]), String(offers.indexOf(d.vaultPick)), (k) => { d.vaultPick = byKey.get(k) ?? null; }));
         guildField(form, 'How many (all of it when empty)', d.vaultCount ?? '', 4, (x) => { d.vaultCount = x; });
         out.push(form);
         const countOf = (it) => { const t = String(d.vaultCount ?? '').trim(); if (!t) return it.stackCount ?? 1; return /^\d+$/.test(t) ? Number(t) : 0; };
@@ -1360,7 +1365,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
           const n = it ? countOf(it) : 0;
           const why = !reachNow() ? 'in a town' : g.busy ? 'a moment' : !it ? 'a piece' : !(n >= 1 && n <= (it.stackCount ?? 1)) ? `1 to ${it.stackCount ?? 1}` : (vv.items.length >= vv.max ? 'the vault is full' : '');
           return { enabled: !why, why };
-        }, { run: () => { const it = offers.includes(d.vaultPick) ? d.vaultPick : null; if (it && reachNow()) guildDo(g.vaultPut(it, countOf(it)), `${it.name ?? 'The piece'} put in the vault.`, () => { d.vaultCount = ''; }); } }));
+        }, { run: () => { const it = offers.includes(d.vaultPick) ? d.vaultPick : null; if (it && reachNow()) guildDo(g.vaultPut(it, countOf(it)), `${it.name == null ? 'The piece' : vaultPieceName(it)} put in the vault.`, () => { d.vaultCount = ''; }); } }));
         out.push(acts);
       }
     }

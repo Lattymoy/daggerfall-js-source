@@ -50,8 +50,12 @@ export const WAGON_LOADED_MARKET_WORDS = 'your wagon - empty it first';
 export function packTradeRefusal(item, entity) {
   const refusal = tradeRefusal(item);
   if (refusal) return refusal;
-  return item === activeWagonItem(entity?.items ?? []) && (entity?.wagonItems?.length ?? 0) > 0 ? WAGON_LOADED_TRADE_TEXT : null;
+  return wagonLoadedHeld(item, entity) ? WAGON_LOADED_TRADE_TEXT : null;
 }
+/** WAGONS2 (FINAL AUDIT): THE LOADED WAGON HELD - `item` the wagon `entity` drives (the best owned), with goods in its
+ *  store: the one law the pack's refusal above and the keyed shelf's (scenes/worldModes.js loadedWagonHeld) read - the
+ *  shelf restated it, pinned by its text alone. */
+export const wagonLoadedHeld = (item, entity) => !!item && item === activeWagonItem(entity?.items ?? []) && (entity?.wagonItems?.length ?? 0) > 0;
 
 /** The kilograms an offer takes out of the pack: each entry at the count offered, and the gold. */
 function offerWeight(entries, gold) {

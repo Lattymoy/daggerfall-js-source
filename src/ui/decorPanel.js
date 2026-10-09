@@ -56,7 +56,9 @@ import { homeLookSwatch } from '../world/homeLook.js';
 import { decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
 /** The crafts a piece may be made here: every station, the Forge only where it works (AUDIT 29 B2). HOME-VENDOR: and a
  *  trader only where the market trades - online, the trades open (its stock is market listings). */
-export const stationsOffered = () => DECOR_STATIONS.filter((k) => !(PROF_STATIONS.includes(k) || k === VENDOR_STATION) || forgeOffered());   // PROF4: the workbench as the forge
+/** WAGONS2 (FINAL AUDIT): `trader` - whether the room is a home, where a hired trader trades (the view's `trader`); a
+ *  caravan's or a ship's offers none. */
+export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered()));   // PROF4: the workbench as the forge
 
 export const DECOR_STYLE_ID = 'dagger-decor-style';
 export const DECOR_CSS = `
@@ -384,7 +386,7 @@ export function createDecorPanel({
   const removeBtn = act('Remove', () => { const it = placedSelected(); if (it && !removeBtn.disabled) onRemove(it.piece); });
   // HOME-STATIONS: the craft offered (cycled, free) and the act on it (made for its licence, or unmade)
   let stationOffer = DECOR_STATIONS[0], stationFor = null, stationArmed = null;   // the offer follows a newly chosen piece's own craft
-  const stationPick = act('Station', () => { const o = stationsOffered(); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length]; stationArmed = null; paintRoomSide(); });
+  const stationPick = act('Station', () => { const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length]; stationArmed = null; paintRoomSide(); });
   // AUDIT HOME-STATIONS S3: the act is the one the button SAYS (painted with it), never re-read from a newer piece
   const stationBtn = act('Make station', () => {
     const it = placedSelected();

@@ -692,6 +692,7 @@ export function createDecorTool(deps) {
       own: r?.hall ? [] : ownEntries(),
       base: baseRows(),   // BASE-HIDE: the room's own furniture
       where: r?.where ?? '',
+      trader: r?.kind === 'home',   // WAGONS2 (FINAL AUDIT): a hired trader is offered where it trades - a home alone
       hall: !!r?.hall,   // AUDIT GUILD1d A9: a hall's piece gives its half to the guild's treasury (the panel says so)
       entries: decorRoomEntries(s.entries(), r, null, liveMods()),   // HOME-YARD: a door hangs in a doorway, never in a yard; GUILD1e: a hall's board in a hall alone; AUDIT 05b A3: a mod's piece while it stands
       yard: !!r?.yard,
@@ -1318,7 +1319,7 @@ export function createDecorTool(deps) {
     const want = kind === 'none' ? null : kind;
     if (want !== null && !DECOR_STATIONS.includes(want)) return false;
     if (PROF_STATIONS.includes(want) && !forgeOffered()) { deps.say?.(stationColdLine(want)); return false; }   // AUDIT 29 B2: never sold where it cannot work (PROF4: nor a workbench)
-    if (want === VENDOR_STATION && !forgeOffered()) { deps.say?.(VENDOR_COLD_LINE); return false; }   // HOME-VENDOR: nor a trader
+    if (want === VENDOR_STATION && (r?.kind !== 'home' || !forgeOffered())) { deps.say?.(VENDOR_COLD_LINE); return false; }   // HOME-VENDOR: nor a trader - WAGONS2 (FINAL AUDIT): and a trader trades in a home alone (worldModes.js openHomeVendor: a caravan or a ship had it paid for, never working)
     // AUDIT HOME-STATIONS S2: ONE CHANGE AT A TIME, ON THE PIECE AS IT STANDS. A second press while the account service
     // was still answering the first paid the licence twice, or - short of twice the gold - wrote the pre-station piece
     // back over the one just paid for; and the panel's piece is a snapshot of an earlier frame. AUDIT YARD-HEIGHT Y5: the

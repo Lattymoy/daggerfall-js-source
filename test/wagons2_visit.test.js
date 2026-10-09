@@ -343,13 +343,14 @@ test('WAGONS2-VISIT THE LISTENER: inside another\'s caravan a second session on 
 });
 
 // ─── the world host: the caravan's room, the owner's word to it, a visitor's door ───────────────────────────────────
-function worldRoomRig({ caravanOk = true, room = { kind: 'caravan' }, acct = 'acct-ann1', character = 'char-ann-0001', quest = null } = {}) {
+function worldRoomRig({ caravanOk = true, worldCaravanOk = caravanOk, room = { kind: 'caravan' }, acct = 'acct-ann1', character = 'char-ann-0001', quest = null } = {}) {
   const scope = {
     modes: { caravanRoom: room }, online: { caravanOk }, social: { acct }, playerEntity: {}, characterIdOf: () => character, parkKeyOf, caravanRoomOf, caravanKeyOf,
-    chatLinks: new Map([['world', { staffTeleportOk: true }]]), realmSession: { id: 'realm-1' }, privateInteriorPrefix, privateBoatRoom: () => null, privateInteriorRoom,
+    chatLinks: new Map([['world', { staffTeleportOk: true, caravanOk: worldCaravanOk }]]), realmSession: { id: 'realm-1' }, privateInteriorPrefix, privateBoatRoom: () => null, privateInteriorRoom,
     _questLoc: () => quest,
   };
   const make = new Function(...Object.keys(scope), `let _caravanKeyFor = null, _caravanKey = null, _privateSource = null, _privatePrefix = null;
+    const caravanRelayOk = ${lift('src/scenes/world.js', 'caravanRelayOk')};
     const myCaravanRoom = ${lift('src/scenes/world.js', 'myCaravanRoom')};
     const caravanRoomHere = ${lift('src/scenes/world.js', 'caravanRoomHere')};
     return ${lift('src/scenes/world.js', 'privateRoomHere')};`);
@@ -366,6 +367,11 @@ test('WAGONS2-VISIT THE KNOWN BUG: inside my caravan online my room is the carav
   const visitRoom = `caravan:${'b'.repeat(24)}`;
   assert.equal(town.privateRoomHere({ private: true, privateRoom: visitRoom }), visitRoom, 'a visit: the room its record named');
   assert.equal(worldRoomRig({ caravanOk: false }).privateRoomHere({ private: true, privateRoom: visitRoom }), null, 'an older relay keeps no caravan\'s room');
+  // FINAL AUDIT: a fresh session (a load inside my caravan, online turned on in it) has had no welcome - with no room it
+  // would never have one - so the world channel's word for the relay stands for it
+  const fresh = worldRoomRig({ caravanOk: false, worldCaravanOk: true });
+  assert.equal(await settle(() => fresh.privateRoomHere({ private: true, buildingKey: -2000000001 })), `caravan:${k}`, 'a fresh session: my caravan\'s room still');
+  assert.equal(fresh.privateRoomHere({ private: true, privateRoom: visitRoom }), visitRoom, 'and a visit\'s');
   const other = worldRoomRig({ acct: 'acct-ann1', character: 'char-ann-0002' });
   assert.equal(await settle(() => other.privateRoomHere({ private: true })), `caravan:${await parkKeyOf('acct-ann1', 'char-ann-0002')}`, 'another character, another caravan');
   // any other private room keeps its own law
@@ -528,7 +534,7 @@ test('WAGONS2-VISIT THE FOUR HOSTS: world.js wired - the pool\'s three, the cara
   assert.match(w, /caravanEntry: \{ row: \(\) => caravanEntryRow\(\), turn: \(\) => caravanEntryTurn\(\) \},/);
   assert.match(w, /visit: \{ may: \(t\) => caravanVisitMay\(t\), enter: \(t\) => caravanVisitEnter\(t\) \},/);
   assert.match(w, /enterInterior: \(room, visit = null\) => modes\?\.enterCaravanRoom\(room, null, visit\),/);
-  assert.match(w, /if \(modes\?\.caravanRoom\) \{\n\s+if \(online\?\.caravanOk\) return caravanRoomHere\(identity\);[^\n]*\n\s+if \(caravanKeyOf\(identity\?\.privateRoom\)\) return null;/);
+  assert.match(w, /if \(modes\?\.caravanRoom\) \{\n\s+if \(caravanRelayOk\(\)\) return caravanRoomHere\(identity\);[^\n]*\n\s+if \(caravanKeyOf\(identity\?\.privateRoom\)\) return null;/);
   assert.match(w, /online\.onCaravan = \(room, doc\) => modes\?\.applyCaravanDecor\?\.\(room, doc\);/);
   assert.match(w, /overworldLedgerFrame\(now\);[^\n]*\n\s+caravanDecorTick\(now\);[^\n]*\n\s+caravanVisitLink\.tick\(key \? online : null, modes\?\.caravanVisit \?\? null\);/, 'every frame, after my primary\'s own join and tick');
   assert.match(w, /if \(!modes\?\.caravanVisit\) caravanVisitLink\.close\(\);[^\n]*\n\s+if \(!key\) \{ if \(online\.room\) online\.leave\(\); \}/, 'no visit: closed before my primary joins the cell it heard');

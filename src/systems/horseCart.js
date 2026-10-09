@@ -1162,6 +1162,14 @@ export function createHorseCartRuntime(deps) {
     if (!horseTravelsWithFastTravel(wagonState.Mode, wagonState.HorseMode, followingTransportFastTravels || force)) { fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false; return; }
     fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;
   }
+  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES ON THE NEXT FAST TRAVEL - driven (WithPlayer: the cart is the journey's
+   *  own transport), or a hitched team following that handlePreFastTravel takes along (FollowFastTravel on, or the
+   *  journey forced); a parked one, or a following one left at the departure, stays. The seats in its back go only
+   *  with it (scenes/wagonRiders.js announce: riders told to follow a wagon that stayed landed with none). */
+  function wagonGoesOnJourney() {
+    if (wagonState.Mode === WAGON_MODE.WithPlayer) return true;
+    return physicalPersistenceEnabled && (followingTransportFastTravels || forceNextJourney) && isTeamFollowing();
+  }
   function convertFollowingTransportToWaitAtDeparture() {
     const isTeam = isTeamFollowing();
     if (ready()) { if (isTeam) cacheFollowingWagonWorldPose(); else cacheFollowingHorseWorldPose(); }
@@ -1442,7 +1450,7 @@ export function createHorseCartRuntime(deps) {
     lateUpdate, rebase, regroundStanding, handleSettingsChanged,
     handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
-    handlePreFastTravel, handlePostFastTravel, forceNextFastTravel,
+    handlePreFastTravel, handlePostFastTravel, forceNextFastTravel, wagonGoesOnJourney,
     canUseTransport, tryUseTransport, canMountHorseFromTransportWindow, canUseCartFromTransportWindow,
     handleHorseTransportButton: () => { tryUseTransport(TRANSPORT.Horse); }, handleCartTransportButton: () => { tryUseTransport(TRANSPORT.Cart); },
     handleQuickMountOrDismount, handleSummonTransport,

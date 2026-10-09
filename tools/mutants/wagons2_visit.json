@@ -534,7 +534,7 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-no-interval",
     "file": "server/src/index.js",
-    "old": "if (now - (meters.cvAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;",
+    "old": "if (now - (this._cvSaidAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;",
     "new": "if (false) return;",
     "tests": [
       "test/wagons2_visit_relay.test.js"
@@ -561,8 +561,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-fan-uncharged",
     "file": "server/src/index.js",
-    "old": "      if (!fan.pass) return;\n      for (const [other] of listeners) this._send(other, out);",
-    "new": "      void fan;\n      for (const [other] of listeners) this._send(other, out);",
+    "old": "let refused = mine.pass ? null : { bytes: mine.bucket.bytes, rate: ACT_SENDER_BYTES_PER_S };",
+    "new": "let refused = null;",
     "tests": [
       "test/wagons2_visit_relay.test.js"
     ]
@@ -635,6 +635,42 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "const name = kept.name || peerName(p.ownerId ?? owner) || p.ownerName || null;",
     "new": "const name = peerName(p.ownerId ?? owner) || kept.name || p.ownerName || null;",
+    "tests": [
+      "test/wagons2_visit.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-FINAL-the-owed-fan-dropped",
+    "file": "server/src/index.js",
+    "old": "      if (this._cvOwed) await this._caravanFan(now);   // FINAL AUDIT",
+    "new": "      if (false) await this._caravanFan(now);   // FINAL AUDIT",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-FINAL-a-sockets-second",
+    "file": "server/src/index.js",
+    "old": "if (now - (this._cvSaidAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;\n      this._cvSaidAt = now;",
+    "new": "const _m = this._meterOf(ws); if (now - (_m.cvAt ?? -Infinity) < CARAVAN_DOC_MIN_MS) return;\n      _m.cvAt = now;",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-FINAL-the-room-uncharged",
+    "file": "server/src/index.js",
+    "old": "      const room = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);\n      this._roomActBytes = room.bucket;",
+    "new": "      const room = { pass: true, bucket: this._roomActBytes };",
+    "tests": [
+      "test/wagons2_visit_relay.test.js"
+    ]
+  },
+  {
+    "name": "WAGONS2-VISIT-FINAL-a-fresh-session-keyed-no-room",
+    "file": "src/scenes/world.js",
+    "old": "const caravanRelayOk = () => !!(online?.caravanOk || chatLinks?.get('world')?.caravanOk);",
+    "new": "const caravanRelayOk = () => !!(online?.caravanOk);",
     "tests": [
       "test/wagons2_visit.test.js"
     ]

@@ -17,13 +17,17 @@ import { toColor32 } from '../formats/color32Order.js';
 import { quatRotate } from '../world/quat.js';
 import { WAGON_MODE } from '../systems/horseCartLaw.js';
 
-import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands
+import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
 export { CARAVAN_STANDS_NATIVES };
 /** Where a Horse Cart and Cargo record (the runtime's state, or a save's) has its wagon parked - `[WorldX, WorldZ]` in
  *  natives - or null when it stands nowhere. */
-export const parkedCaravanAt = (st) => (st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ) ? [st.WorldX, st.WorldZ] : null);
-/** Whether a room (its descriptor, read) stands on the caravan parked at `at` (parkedCaravanAt's). */
-export const caravanStandsAt = (room, at) => !!room && Array.isArray(at) && Math.hypot(room.origin[0] - at[0], room.origin[2] - at[1]) <= CARAVAN_STANDS_NATIVES;
+/** FINAL AUDIT: and its heading as a room's turn (caravanTurnOf's degrees), or null for a state with none. */
+const parkedTurnOf = (st) => (Number.isFinite(st.HeadingX) && Number.isFinite(st.HeadingZ) && (st.HeadingX || st.HeadingZ) ? (Math.atan2(st.HeadingX, st.HeadingZ) * 180) / Math.PI : null);
+export const parkedCaravanAt = (st) => (st && st.Mode === WAGON_MODE.Deployed && Number.isFinite(st.WorldX) && Number.isFinite(st.WorldZ) ? [st.WorldX, st.WorldZ, parkedTurnOf(st)] : null);
+/** Whether a room (its descriptor, read) stands on the caravan parked at `at` (parkedCaravanAt's): where it stands, and
+ *  (FINAL AUDIT) which way it faces, when the state says. */
+export const caravanStandsAt = (room, at) => !!room && Array.isArray(at) && Math.hypot(room.origin[0] - at[0], room.origin[2] - at[1]) <= CARAVAN_STANDS_NATIVES
+  && (!Number.isFinite(at[2]) || turnGap(room.turn, at[2]) <= CARAVAN_STANDS_TURN);
 
 /** WAGONS2: the room's faces wear its LIVE records - the built room records' as if a ninth choice
  *  (world/wagonArt.js lookRecord(rec, 9)), never a paint's own - and whatever paint the room wears is painted INTO them

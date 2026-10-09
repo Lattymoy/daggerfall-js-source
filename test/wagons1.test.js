@@ -65,11 +65,12 @@ test('WAGONS1 THE CAPACITY: the wagon store takes what the DRIVEN wagon holds - 
   assert.equal(p.ok, true); assert.equal(p.amount, 8, 'the open wagon: 800 kg free, eight of them');
 });
 
-test('WAGONS1 THE PICTURES: fifteen, each 64 x 64, painted from numbers to the same bytes every time under the wagons\' own archive (mutant: a seed from the clock)', () => {
+test('WAGONS1 THE PICTURES: twenty - the wagons\' fifteen and the caravan\'s room\'s five - each 64 x 64, painted from numbers to the same bytes every time under the wagons\' own archive (mutant: a seed from the clock)', () => {
   const hash = () => createHash('sha256').update(Buffer.concat(wagonArt().map(([, p]) => Buffer.from(p.data)))).digest('hex');
   assert.equal(hash(), hash());
   const art = wagonArt();
   assert.deepEqual(art.map(([r]) => r), Object.values(TEX).sort((a, b) => a - b));
+  assert.equal(art.length, 20, 'the title\'s count (FINAL AUDIT: it said fifteen)');
   for (const [, p] of art) { assert.equal(p.width, 64); assert.equal(p.height, 64); assert.equal(p.data.length, 64 * 64 * 4); }
   assert.equal(WAGON_ARCHIVE, 38181);
   assert.deepEqual([SIDE_Y0, SIDE_Y1], [0.94, 3.06]);
