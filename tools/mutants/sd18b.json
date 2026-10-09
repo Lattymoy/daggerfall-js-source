@@ -182,8 +182,8 @@
   {
     "name": "SD18B-the-arc-forty-eight",
     "file": "src/scenes/sdHall.js",
-    "old": "Math.round((f * SD_FRAY_RING.steps) / (o?.fray ?? SD_FRAY_MAX))",
-    "new": "Math.round((f * SD_FRAY_RING.steps) / SD_FRAY_MAX)",
+    "old": "const tabs = o?.fray ?? SD_FRAY_MAX,",
+    "new": "const tabs = SD_FRAY_MAX,",
     "tests": [
       "test/sd18b_seen.test.js"
     ]

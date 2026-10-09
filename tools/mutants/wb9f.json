@@ -164,8 +164,8 @@
   {
     "name": "WB9f-the-sparks-hang-at-his-chest",
     "file": "src/render/gateFx.js",
-    "old": "Math.max(floorRel + 0.05, up * t - 0.5 * FX_GRAVITY * t * t)",
-    "new": "Math.max(0.05, up * t - 0.5 * FX_GRAVITY * t * t)",
+    "old": "const g = 0.5 * FX_GRAVITY, rest = floorRel + 0.05;",
+    "new": "const g = 0.5 * FX_GRAVITY, rest = 0.05;",
     "tests": [
       "test/wb9f_gate_spoils.test.js"
     ]

@@ -111,6 +111,8 @@ export function airWindGain(seconds) {
  *  pause menu starts a new host on the same page, and the old host's loop dies where it stands, never calling stop)
  *  silences the old one's loops as it is made. */
 let _heard = null;
+/** AUDIT SD IV (A5): the name the court's far events are played under (audio.js fadeFar lets them go with it). */
+export const AIR_FAR = 'deadlandsAir';
 
 /**
  * The court's air on the engine: `frame(seconds, ear, braziers)` once a frame while the court stands under the player
@@ -135,7 +137,7 @@ export function createDeadlandsAir(engine = defaultAudio) {
         beds = lit.length;
         on = true;
         if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {
-          for (const e of deadlandsAirEvents(last, seconds)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: true });
+          for (const e of deadlandsAirEvents(last, seconds)) engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume, { refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: AIR_FAR });
         }
       } catch { /* a sound is never the fight */ }
       last = seconds;
@@ -148,6 +150,7 @@ export function createDeadlandsAir(engine = defaultAudio) {
         engine.setBed(AIR_WIND.loop, null);
         engine.setBed(AIR_SEA.loop, null);
         for (let i = 0; i < beds; i++) engine.setBed3d(AIR_BRAZIER.loop + i, null, null);
+        engine.fadeFar?.(AIR_FAR);   // AUDIT SD IV (A5): and its events still sounding, with them
       } catch { /* nothing left to stop */ }
       beds = 0;
     },

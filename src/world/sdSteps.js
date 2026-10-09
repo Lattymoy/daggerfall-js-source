@@ -139,6 +139,11 @@ export function beatBlinks(s, t) {
   const u = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE;
   return u >= SD_BEAT_SOLID - SD_BEAT_BLINK && u < SD_BEAT_SOLID;
 }
+/** SD-FLASH: how long a Beat step has been warning at `t` (s; meaningful while `beatBlinks`) - its falter's own clock. */
+export function beatWarned(s, t) {
+  const u = (((t - s.beat) % SD_BEAT_CYCLE) + SD_BEAT_CYCLE) % SD_BEAT_CYCLE;
+  return u - (SD_BEAT_SOLID - SD_BEAT_BLINK);
+}
 /**
  * A Crumble step `since` seconds after a foot first touched it (null: untouched): `{ drop, whole, shaking }` - how far it
  * has fallen, whether it stands whole (untouched, still shaking, or back), and whether it shakes (its warning). AUDIT SD

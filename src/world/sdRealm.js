@@ -23,6 +23,7 @@
 import { SD_REALM_ORIGIN, SD_THRESHOLD, SD_WALK, SD_ORRERY, SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_PILLAR_H, realmToDungeon } from '../net/sdBrain.js';
 import { faces } from './gateModel.js';
 import { SD_HALL_GLOW_RECORD } from './sdHallArt.js';   // AUDIT SD II (L2 F14): the lamps' heads wear the hands' brass glow
+import { pillarVisual } from './sdPillarModel.js';   // SD-LOOK S7: the pillars dressed, inside their squares
 
 /** The realm's own textures (`realmArt`), a pseudo-archive beside the court's. */
 export const SD_REALM_ARCHIVE = 38151;
@@ -30,7 +31,10 @@ export const SD_REALM_FLOOR_RECORD = 0;   // the Hour's floor: dark stone set in
 export const SD_REALM_BRASS_RECORD = 1;   // brass: the rims, the walk's kerbs, the pillars
 export const SD_REALM_ROOT_RECORD = 2;    // the islands' dark stone, hanging into the void
 export const SD_REALM_DIAL_RECORD = 3;    // the Hour-dial: the Orrery's floor, twelve hours round its rim
-export const SD_REALM_ARENA_RECORD = 4;   // the Last Moment's floor: cracked brass, the Mantella's light in its seams
+export const SD_REALM_ARENA_RECORD = 4;   // the Last Moment's floor: SD-LOOK - dark bronze plates laid in rings
+export const SD_REALM_COBBLE_RECORD = 31; // SD-LOOK: the Threshold - the Bay's own street the Hollow swallowed
+export const SD_REALM_EDGE_RECORD = 32;   // SD-LOOK: the gold line along every edge a body could fall from
+export const SD_REALM_PILLAR_RECORD = 56; // SD-LOOK S7: the arena's pillars' basalt, ashlar in courses (world/sdPillarModel.js)
 /** The made block's name and index, and the made location's id (the court's are 'GATECOURT.RDB', 900000, 0x7ffff000). */
 export const SD_REALM_BLOCK = 'SDHOUR.RDB';
 export const SD_REALM_BLOCK_INDEX = 900200;
@@ -43,13 +47,45 @@ export const SD_ARRIVE_Z = 1;
  *  is the Hollow's own art - scenes/sdEnd.js). */
 export const SD_WAY_BACK_Z = -5;
 export const SD_WAY_BACK_SIZE = 5;
-/** The islands: their discs' sides, how far their roots hang into the void, the rims' brass lip. */
+/** AUDIT SD V (R2): THE THRESHOLD'S RIM as the way back's floor-light probe (scenes/sdEnd.js `stand`'s `probe`) - a level
+ *  ray's distance, from inside the island, to its edge, never past the way back's own default reach (1.6 its size): the
+ *  realm's way back stood with no probe lit eight metres about it, five of them over the void behind the island. */
+export const SD_THRESHOLD_RIM = Object.freeze({
+  ray(o, d) {
+    const c = realmToDungeon(SD_THRESHOLD.x, 0, SD_THRESHOLD.z), ox = o[0] - c[0], oz = o[2] - c[2], b = ox * d[0] + oz * d[2];
+    const q = b * b - (ox * ox + oz * oz - SD_THRESHOLD.r * SD_THRESHOLD.r);
+    return q < 0 ? 0 : Math.min(1.6 * SD_WAY_BACK_SIZE, Math.max(0, -b + Math.sqrt(q)));
+  },
+});
+/** The islands: their discs' sides, how far their roots hang into the void, the rims' brass lip. SD-LOOK S11: the island's
+ *  own lip - its torn edge, SD_LIP down from its floor - the rest of the root the hang's (world/sdIslandModel.js: the
+ *  skirt, the spires, SD_ROOT_DEPTH a main spire at the Threshold's size). */
 export const SD_ISLAND_SIDES = 48;
 export const SD_ROOT_DEPTH = 22;
+export const SD_LIP = 0.5;
 export const SD_RIM_W = 0.35;
 export const SD_RIM_H = 0.12;
-/** The floors' tile, metres. */
-export const SD_FLOOR_TILE_M = 4;
+/** The floors' tile, metres. SD-LOOK: two (64 texels - 32 a metre, the Hollow's own density; it was four, 16 a metre). */
+export const SD_FLOOR_TILE_M = 2;
+/** SD-LOOK: THE RIMS' TEETH - a brass tooth on every rim's outer face each SD_TOOTH_PITCH round it, standing SD_TOOTH_OUT
+ *  out, SD_TOOTH_W across, from SD_TOOTH_FOOT up to SD_TOOTH_TOP: under the rim's top and outside the disc, so the motor
+ *  never meets one (realmClamp and the colliders' discs are the rims'). The Hour reads as broken clockwork from afar. */
+export const SD_TOOTH_PITCH = 1.2;
+export const SD_TOOTH_OUT = 0.22;
+export const SD_TOOTH_W = 0.42;
+export const SD_TOOTH_FOOT = -0.42;
+export const SD_TOOTH_TOP = SD_RIM_H - 0.05;
+/** SD-LOOK: THE EDGE LINE - a strip SD_EDGE_LINE square along the top of every edge a body could fall from, in the edge
+ *  record's gold: geometry, never a row of texels (there are no mips - a texel row aliases), the one always-lit line. */
+export const SD_EDGE_LINE = 0.03;
+/** SD-LOOK: THE INLAY - brass laid in the floor as geometry, SD_INLAY_H proud (crisp at every distance): the Threshold's
+ *  compass rose (its long point at the Orrery, its tail at the way back, SD_COMPASS lengths) and the walk's tie-plates,
+ *  one each SD_TIE_EVERY. */
+export const SD_INLAY_H = 0.012;
+export const SD_COMPASS = Object.freeze({ north: 2.4, cardinal: 1.5, diagonal: 0.95, ring: 0.85 });
+export const SD_TIE_EVERY = 3;
+/** SD-LOOK: the arena's disc laid in this many rings, its bronze plates along each. */
+export const SD_ARENA_BANDS = 8;
 /** The walk's brass kerbs: their width and height. */
 export const SD_KERB_W = 0.25;
 export const SD_KERB_H = 0.15;
@@ -134,27 +170,122 @@ export function sdRealmBlocks(real) {
 
 /** The tile's uv for a point of the realm's floor (its own frame), SD_FLOOR_TILE_M a repeat. */
 const tileUv = (x, z) => [x / SD_FLOOR_TILE_M, z / SD_FLOOR_TILE_M];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+/** SD-LOOK: a quad wound to face `want` (the dungeon's frame) whichever way its corners were listed - the realm's frame is
+ *  mirrored into the dungeon's (realmToDungeon), and a face's side is its winding. */
+function quadFacing(f, rec, a, b, c, d, ua, ub, uc, ud, want) {
+  const u = sub3(b, a), v = sub3(c, a), n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  if (n[0] * want[0] + n[1] * want[1] + n[2] * want[2] >= 0) f.quad(rec, a, b, c, d, ua, ub, uc, ud);
+  else f.quad(rec, d, c, b, a, ud, uc, ub, ua);
+}
+const UP = [0, 1, 0];
 
 /**
  * One island: its floor a disc of `rec` about (cx, cz) radius `r` (`uvOf` its texture's map, the tile by default), its
- * brass lip round the rim, and its root - a cone of dark stone from the rim down SD_ROOT_DEPTH into the void, its point a
- * little off centre so no two hang alike. Its floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
+ * brass lip round the rim, and its torn edge - SD-LOOK S11: SD_LIP of dark stone down from the rim (it was a cone to a
+ * point SD_ROOT_DEPTH down); what hangs under it is the hang's (world/sdIslandModel.js, a noShadow mesh a stage). Its
+ * floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
  */
-export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0, y: y0 = 0 } = {}) {
+export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, y: y0 = 0, bands = 0 } = {}) {
   const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);
-  const tip = C(lean, -SD_ROOT_DEPTH - r * 0.6, lean * 0.5);
+  const E = (rr, a, y) => C(Math.cos(a) * rr, y, Math.sin(a) * rr);
   for (let k = 0; k < SD_ISLAND_SIDES; k++) {
     const a0 = (k / SD_ISLAND_SIDES) * Math.PI * 2, a1 = ((k + 1) / SD_ISLAND_SIDES) * Math.PI * 2;
     const x0 = Math.cos(a0) * r, z0 = Math.sin(a0) * r, x1 = Math.cos(a1) * r, z1 = Math.sin(a1) * r;
     // the floor (wound up - its face toward +y), the rim's lip (its top, its outer side and - AUDIT SD II, L2 F6 - its
     // inner side, toward the floor: it was a lid with nothing under its inner edge), the root
-    f.tri(rec, C(0, 0, 0), C(x1, 0, z1), C(x0, 0, z0), uvOf(cx, cz), uvOf(cx + x1, cz + z1), uvOf(cx + x0, cz + z0));
+    if (bands > 0) {
+      // SD-LOOK: in rings, the plates' uv along each - u the arc at the ring's middle (a plate each SD_FLOOR_TILE_M), v
+      // across it (one plate a ring): the floor lays as a clock's face, its seams radial and round
+      for (let b = 0; b < bands; b++) {
+        const r0 = (r * b) / bands, r1 = (r * (b + 1)) / bands, um = (r0 + r1) / 2 / SD_FLOOR_TILE_M, u0 = a0 * um, u1 = a1 * um;
+        quadFacing(f, rec, E(r0, a0, 0), E(r0, a1, 0), E(r1, a1, 0), E(r1, a0, 0), [u0, 0], [u1, 0], [u1, 1], [u0, 1], UP);
+      }
+    } else f.tri(rec, C(0, 0, 0), C(x1, 0, z1), C(x0, 0, z0), uvOf(cx, cz), uvOf(cx + x1, cz + z1), uvOf(cx + x0, cz + z0));
     const ri = r - SD_RIM_W, xi0 = Math.cos(a0) * ri, zi0 = Math.sin(a0) * ri, xi1 = Math.cos(a1) * ri, zi1 = Math.sin(a1) * ri;
     f.quad(SD_REALM_BRASS_RECORD, C(xi0, SD_RIM_H, zi0), C(xi1, SD_RIM_H, zi1), C(x1, SD_RIM_H, z1), C(x0, SD_RIM_H, z0), [0, 0], [1, 0], [1, 0.2], [0, 0.2]);
     f.quad(SD_REALM_BRASS_RECORD, C(x0, 0, z0), C(x0, SD_RIM_H, z0), C(x1, SD_RIM_H, z1), C(x1, 0, z1), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);
     f.quad(SD_REALM_BRASS_RECORD, C(xi1, 0, zi1), C(xi1, SD_RIM_H, zi1), C(xi0, SD_RIM_H, zi0), C(xi0, 0, zi0), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);
-    f.tri(SD_REALM_ROOT_RECORD, C(x0, 0, z0), C(x1, 0, z1), tip, [k / 8, 0], [(k + 1) / 8, 0], [(k + 0.5) / 8, SD_ROOT_DEPTH / 6]);
+    // SD-LOOK S11: the torn edge, facing out - the top rows of the root's strata (the cake's lip); the hang's skirt from its foot
+    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0), C(x1, 0, z1), C(x1, -SD_LIP, z1), [k / 8, 0.02], [k / 8, 0], [(k + 1) / 8, 0], [(k + 1) / 8, 0.02]);
+    // SD-LOOK: the edge line along the rim's outer top edge - its top and its outer face
+    const re = r - SD_EDGE_LINE, ro = r + 0.004, ye = SD_RIM_H + 0.004, am = (a0 + a1) / 2;
+    quadFacing(f, SD_REALM_EDGE_RECORD, E(re, a0, ye), E(re, a1, ye), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], UP);
+    quadFacing(f, SD_REALM_EDGE_RECORD, E(ro, a0, ye - SD_EDGE_LINE), E(ro, a1, ye - SD_EDGE_LINE), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], sub3(E(r + 1, am, 0), E(r, am, 0)));
   }
+  // SD-LOOK: the teeth, round the rim's outer face
+  const n = Math.round((2 * Math.PI * r) / SD_TOOTH_PITCH);
+  for (let k = 0; k < n; k++) {
+    const a = ((k + 0.5) / n) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+    const at = (out, side, y) => C(ca * out - sa * side, y, sa * out + ca * side);
+    for (const [q, want] of toothQuads(r - 0.02, r + SD_TOOTH_OUT, SD_TOOTH_W / 2, at)) quadFacing(f, SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], [0, 0], [0.2, 0], [0.2, 0.2], [0, 0.2], want);
+  }
+}
+/** SD-LOOK: one tooth's five faces (its top, its face out, its two sides, its foot), each `[corners, the way it faces]` -
+ *  `at(out, side, y)` the dungeon's point that far out from the island's centre, that far along the rim, that high. */
+function toothQuads(i, o, hw, at) {
+  const T = SD_TOOTH_TOP, F = SD_TOOTH_FOOT, mid = at((i + o) / 2, 0, (T + F) / 2);
+  const face = (q) => [q, sub3([(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2, (q[0][2] + q[2][2]) / 2], mid)];
+  return [
+    face([at(i, -hw, T), at(i, hw, T), at(o, hw, T), at(o, -hw, T)]),
+    face([at(o, -hw, F), at(o, hw, F), at(o, hw, T), at(o, -hw, T)]),
+    face([at(i, -hw, F), at(o, -hw, F), at(o, -hw, T), at(i, -hw, T)]),
+    face([at(i, hw, F), at(o, hw, F), at(o, hw, T), at(i, hw, T)]),
+    face([at(i, -hw, F), at(i, hw, F), at(o, hw, F), at(o, -hw, F)]),
+  ];
+}
+/** SD-LOOK: THE HOUR-DIAL'S INLAY - what its art painted at 7 texels a metre (a stair-stepped orange ring) laid in brass
+ *  as geometry SD_DIAL_INLAY.y proud, under the hall's lit segments and fray (world/sdHall.js, a hair higher): the twelve
+ *  hours at the rim (the twelfth the widest, toward the arena, a gold thread down it), the ring within, and each of the
+ *  six segments outlined (SD_LIT_RING's band, two hours wide about an odd hour - the hall lights them). Hour h stands at
+ *  bearing h x 30 degrees from +z toward +x, as the art had it. */
+export const SD_DIAL_INLAY = Object.freeze({ y: 0.006, hour0: 0.86, hour1: 0.97, twelfth: 0.035, hour: 0.02, ring: 0.82, ringW: 0.16, seg0: 0.5, seg1: 0.56, segHalfHours: 0.84, segW: 0.06 });
+function dialInlay(f) {
+  const D = SD_DIAL_INLAY, R = SD_ORRERY.r, y = +D.y;
+  const at = (rr, a, yy = y) => realmToDungeon(SD_ORRERY.x + Math.sin(a) * rr, yy, SD_ORRERY.z + Math.cos(a) * rr);
+  const arcStrip = (rec, r0, r1, a0, a1, n, yy = y) => {
+    for (let k = 0; k < n; k++) {
+      const b0 = a0 + ((a1 - a0) * k) / n, b1 = a0 + ((a1 - a0) * (k + 1)) / n;
+      quadFacing(f, rec, at(r0, b0, yy), at(r0, b1, yy), at(r1, b1, yy), at(r1, b0, yy), [0, 0], [1, 0], [1, 0.1], [0, 0.1], UP);
+    }
+  };
+  for (let h = 0; h < 12; h++) {
+    const a = (h / 12) * Math.PI * 2, half = (h === 0 ? D.twelfth : D.hour) * R, r0 = D.hour0 * R, r1 = D.hour1 * R;
+    const side = [Math.cos(a), -Math.sin(a)];   // across the hour, in (x, z)
+    const P = (rr, s, yy = y) => realmToDungeon(SD_ORRERY.x + Math.sin(a) * rr + side[0] * s, yy, SD_ORRERY.z + Math.cos(a) * rr + side[1] * s);
+    quadFacing(f, SD_REALM_BRASS_RECORD, P(r0, -half), P(r1, -half), P(r1, half), P(r0, half), [0, 0], [1, 0], [1, 0.2], [0, 0.2], UP);
+    if (h === 0) quadFacing(f, SD_REALM_EDGE_RECORD, P(r0 + 0.2, -0.03, y + 0.002), P(r1 - 0.2, -0.03, y + 0.002), P(r1 - 0.2, 0.03, y + 0.002), P(r0 + 0.2, 0.03, y + 0.002), [0, 0], [1, 0], [1, 1], [0, 1], UP);
+  }
+  arcStrip(SD_REALM_BRASS_RECORD, D.ring * R - D.ringW / 2, D.ring * R + D.ringW / 2, 0, Math.PI * 2, 96);
+  for (let k = 0; k < 6; k++) {
+    const mid = ((2 * k + 1) / 12) * Math.PI * 2, half = (D.segHalfHours / 12) * Math.PI * 2, a0 = mid - half, a1 = mid + half;
+    const r0 = D.seg0 * R, r1 = D.seg1 * R, w = D.segW;
+    arcStrip(SD_REALM_BRASS_RECORD, r0, r0 + w, a0, a1, 8);
+    arcStrip(SD_REALM_BRASS_RECORD, r1 - w, r1, a0, a1, 8);
+    for (const a of [a0, a1]) {
+      const dw = w / r0;
+      arcStrip(SD_REALM_BRASS_RECORD, r0, r1, a === a0 ? a : a - dw, a === a0 ? a + dw : a, 1);
+    }
+  }
+}
+/** SD-LOOK: THE COMPASS ROSE, inlaid at the arrival spot: eight brass points SD_INLAY_H proud - the long one at +z, the
+ *  Orrery, its tail at -z, the way back - and a ring; a gold thread (the edge record, the ambient rung) down the long
+ *  point's spine. The first thing a player sees tells them where to go. */
+function compassRose(f, cx, cz) {
+  const H = SD_INLAY_H, C = (x, z, y = H) => realmToDungeon(cx + x, y, cz + z);
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2, len = k === 0 ? SD_COMPASS.north : k % 2 === 0 ? SD_COMPASS.cardinal : SD_COMPASS.diagonal;
+    const w = k % 2 === 0 ? 0.2 : 0.12, sa = Math.sin(a), ca = Math.cos(a);   // k 0 along +z
+    const P = (along, side) => C(sa * along + ca * side, ca * along - sa * side);
+    quadFacing(f, SD_REALM_BRASS_RECORD, P(0, -w), P(len, 0), P(0, w), P(-w * 0.6, 0), [0, 0], [0.5, 1], [1, 0], [0.5, 0], UP);
+  }
+  for (let k = 0; k < 32; k++) {
+    const a0 = (k / 32) * Math.PI * 2, a1 = ((k + 1) / 32) * Math.PI * 2, r0 = SD_COMPASS.ring - 0.04, r1 = SD_COMPASS.ring + 0.04;
+    const P = (rr, a) => C(Math.cos(a) * rr, Math.sin(a) * rr);
+    quadFacing(f, SD_REALM_BRASS_RECORD, P(r0, a0), P(r0, a1), P(r1, a1), P(r1, a0), [0, 0], [1, 0], [1, 0.1], [0, 0.1], UP);
+  }
+  const t = 0.018, y = H + 0.002;
+  quadFacing(f, SD_REALM_EDGE_RECORD, C(-t, 0.25, y), C(t, 0.25, y), C(t, SD_COMPASS.north - 0.35, y), C(-t, SD_COMPASS.north - 0.35, y), [0, 0], [1, 0], [1, 1], [0, 1], UP);
 }
 /** AUDIT SD II (L2 F4): where an island's floor - realmIsland's SD_ISLAND_SIDES-gon about (cx, cz), radius r - meets the
  *  line x, on its far side (`side` 1, z past its centre) or its near (-1); and the gon's corners on that side strictly
@@ -192,7 +323,8 @@ const walkXs = (x0, x1) => [x0, x1, ...islandEdgeXs(SD_THRESHOLD.x, SD_THRESHOLD
  */
 export function buildRealmModel() {
   const f = faces();
-  realmIsland(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_FLOOR_RECORD, { lean: 1.5 });
+  realmIsland(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_COBBLE_RECORD);   // SD-LOOK: the Bay's street
+  compassRose(f, SD_THRESHOLD.x, SD_ARRIVE_Z);
   // the walk: a slab of the floor's stone between brass kerbs, from the Threshold's rim to the Orrery's - AUDIT SD II
   // (L2 F4): laid from one island's edge to the other's and over neither (it ran z 7-25, over the dial's own floor at the
   // hall's mouth, in its plane); its sides down to its underside, which faces down (L2 F6: it faced up)
@@ -221,30 +353,40 @@ export function buildRealmModel() {
       f.quad(SD_REALM_BRASS_RECORD, P(xb, 0, true), P(xb, H, true), P(xb, H, false), P(xb, 0, false), [0, 0], [0, 0.1], [4, 0.1], [4, 0]);   // toward +x
       f.quad(SD_REALM_BRASS_RECORD, P(xa, 0, true), P(xa, H, true), P(xb, H, true), P(xb, 0, true), [0, 0], [0, 0.1], [0.1, 0.1], [0.1, 0]);   // its end on the Threshold
       f.quad(SD_REALM_BRASS_RECORD, P(xb, 0, false), P(xb, H, false), P(xa, H, false), P(xa, 0, false), [0, 0], [0, 0.1], [0.1, 0.1], [0.1, 0]);   // its end in the hall
+      // SD-LOOK: the edge line along the kerb's outer top edge, island to island
+      const xl = Math.min(xo - sd * SD_EDGE_LINE, xo + sd * 0.004), xr = Math.max(xo - sd * SD_EDGE_LINE, xo + sd * 0.004), Y = H + 0.004;
+      quadFacing(f, SD_REALM_EDGE_RECORD, P(xl, Y, true), P(xl, Y, false), P(xr, Y, false), P(xr, Y, true), [0, 0], [0, 1], [1, 1], [1, 0], UP);
+    }
+    // SD-LOOK: the tie-plates - brass across the walk between its kerbs, one each SD_TIE_EVERY
+    const z0 = walkNearZ(x), z1 = walkFarZ(x), hi = h - SD_KERB_W;
+    for (let zz = z0 + SD_TIE_EVERY / 2; zz < z1 - 0.5; zz += SD_TIE_EVERY) {
+      quadFacing(f, SD_REALM_BRASS_RECORD, C(x - hi, SD_INLAY_H, zz - 0.09), C(x + hi, SD_INLAY_H, zz - 0.09), C(x + hi, SD_INLAY_H, zz + 0.09), C(x - hi, SD_INLAY_H, zz + 0.09), [0, 0], [1, 0], [1, 0.1], [0, 0.1], UP);
     }
   }
   // the Orrery's hall: its floor the Hour-dial, one face over the whole disc (the dial's art is the disc's)
   const R = SD_ORRERY.r;
-  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { lean: -3, uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
+  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
+  dialInlay(f);   // SD-LOOK: its hours, its ring and its six segments laid in brass, crisp at every distance
   // the Last Moment: the arena, and its four pillars on the diagonals
-  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { lean: 4 });
-  for (let k = 0; k < 4; k++) pillarQuads(k).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? PILLAR_SIDE_UV : PILLAR_TOP_UV)));
+  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { bands: SD_ARENA_BANDS });   // SD-LOOK: a face, in rings
+  for (let k = 0; k < 4; k++) pillarVisual(f, k, PILLAR_RECORDS);   // SD-LOOK S7: clock-towers of basalt and brass inside the law's squares (pillarQuads - the collider's)
   // AUDIT SD II (L2 F14): THE LAMPS the Hour's lights hang from - a brass post, its head alight round the light (the
   // hands' own brass glow), a brass cap; the lights were pools from nowhere 2.4 m over the rims
   for (const p of realmLampFeet()) {
     lampBoxQuads(p, SD_LAMP_POST_W, 0, SD_LAMP_H - SD_LAMP_HEAD).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? LAMP_SIDE_UV : PILLAR_TOP_UV)));
-    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
+    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
     lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.03).forEach((q) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));
   }
   return packRealmFaces(f);
 }
-const PILLAR_SIDE_UV = [[0, 0], [0, SD_PILLAR_H / 3], [1, SD_PILLAR_H / 3], [1, 0]];
+const PILLAR_RECORDS = Object.freeze({ stone: SD_REALM_PILLAR_RECORD, brass: SD_REALM_BRASS_RECORD });
 const PILLAR_TOP_UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
 const LAMP_SIDE_UV = [[0, 0], [0, SD_LAMP_H / 3], [0.1, SD_LAMP_H / 3], [0.1, 0]];
 /** AUDIT SD II (L2 F14): a lamp's box about its foot `p` (the realm's frame) - `w` either way across, from y0 to y1 - its
  *  four sides and its top as quads (the dungeon's frame, wound to face out), pillarQuads' own shape: one geometry for the
- *  post's draw and its collider. */
-function lampBoxQuads(p, w, y0, y1) {
+ *  post's draw and its collider. AUDIT SD IV (R4): `under` its underside too, facing down - the head hangs over the eye,
+ *  and from under it the sky showed through a ring round every post. */
+function lampBoxQuads(p, w, y0, y1, under = false) {
   const C = (dx, y, dz) => realmToDungeon(p[0] + dx, y, p[2] + dz);
   const corners = [[-w, -w], [w, -w], [w, w], [-w, w]];
   const out = [];
@@ -253,11 +395,12 @@ function lampBoxQuads(p, w, y0, y1) {
     out.push([C(ax, y0, az), C(ax, y1, az), C(bx, y1, bz), C(bx, y0, bz)]);
   }
   out.push([C(-w, y1, -w), C(-w, y1, w), C(w, y1, w), C(w, y1, -w)]);
+  if (under) out.push([C(-w, y0, -w), C(w, y0, -w), C(w, y0, w), C(-w, y0, w)]);
   return out;
 }
 /** THE ARENA'S PILLAR `k` - on the diagonals, SD_PILLAR_R out, a square SD_PILLAR_W across and SD_PILLAR_H tall: its four
- *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out) - one geometry for its draw and
- *  (SD8c) its collider. */
+ *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out) - (SD8c) its collider, and the
+ *  square every face of its dress stands inside (SD-LOOK S7: world/sdPillarModel.js pillarVisual - it was its draw too). */
 function pillarQuads(k) {
   const a = Math.PI / 4 + (k * Math.PI) / 2;
   const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;
@@ -385,16 +528,18 @@ export function realmLampTris() {
 
 /** THE HOUR'S LIGHT (a dungeon trilight, the court's shape - render/deadlands.js courtLighting): brass light from the void
  *  over it, a warm middle, the dark under the islands; and a key light from the great clock-face behind the arena (+z,
- *  high), pale gold. */
+ *  high), pale gold. SD-LOOK: the void over it dimmer (it lifted every floor to the amber soup), and the FURNACE BELOW -
+ *  the works' glow at the nadir, warm up-light on every facet that faces down, rimming the undersides in gold against
+ *  the black; the key paler and a little stronger, so lit stone reads as stone. */
 export const SD_REALM_TRILIGHT = Object.freeze({
-  sky: Object.freeze([0.46, 0.38, 0.22]),
-  equator: Object.freeze([0.3, 0.25, 0.15]),
-  ground: Object.freeze([0.12, 0.1, 0.07]),
+  sky: Object.freeze([0.2, 0.17, 0.13]),
+  equator: Object.freeze([0.16, 0.12, 0.08]),
+  ground: Object.freeze([0.34, 0.2, 0.08]),
 });
 export const SD_REALM_KEY_LIGHT = Object.freeze({
-  scale: 0.5,
+  scale: 0.65,
   dir: Object.freeze((() => { const d = [0, 0.62, 1], l = Math.hypot(d[0], d[1], d[2]); return d.map((v) => v / l); })()),
-  color: Object.freeze([1.0, 0.88, 0.62]),
+  color: Object.freeze([0.95, 0.9, 0.78]),
 });
 /** The realm's light for the frame: `{ tri, key }` - AUDIT SD II (L2 F9): the frame's ONE object, its arrays set again
  *  each call (they were fresh each frame; the renderer copies what it keeps - setAmbientTrilight, setMoonlight - and the
@@ -437,8 +582,14 @@ const _hourLit = { cap: 0, data: new Float32Array(0), colors: new Float32Array(0
  *  stands outside each one's reach - every flash went first, and a busy moment put out the lamps nearest the player. */
 export const SD_LIGHTS_CAP = 16;
 const _litKey = new Float64Array(64), _litIdx = new Int32Array(64);
-export function realmLightsWith(lit, extra, eye) {
-  const n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
+/** SD-LOOK S7: whether a lamp (the light list's shape, the dungeon's frame) is one of the arena's - inside its disc. */
+const ARENA_X = SD_REALM_ORIGIN[0] + SD_ARENA.x, ARENA_Z = SD_REALM_ORIGIN[2] + SD_ARENA.z;
+export const arenaLamp = (l) => (l.x - ARENA_X) * (l.x - ARENA_X) + (l.z - ARENA_Z) * (l.z - ARENA_Z) < SD_ARENA.r * SD_ARENA.r;
+/** SD-LOOK S7: realmLightsWith's `dim` - a kept array whose first is the arena's lamps' share of their light
+ *  (scenes/sdArenaWatch.js sdLampDimInto - the Reset's dimming; none, whole): its lamps alone, never the arm's own lights,
+ *  the Hour's (`extra`) or the other stages' lamps. */
+export function realmLightsWith(lit, extra, eye, dim = null) {
+  const dk = dim ? dim[0] : 1, n = lit.data.length / 4, lamps = realmLightsNear(eye), m = n + extra.length + lamps.length, H = _hourLit;
   if (m > H.cap) {
     H.cap = Math.max(m, H.cap * 2, 32);
     H.data = new Float32Array(H.cap * 4); H.colors = new Float32Array(H.cap * 3); H.carried = new Uint8Array(H.cap);
@@ -462,7 +613,8 @@ export function realmLightsWith(lit, extra, eye) {
     const q = sorted ? _litIdx[i - n] : i - n;
     const l = q < extra.length ? extra[q] : lamps[q - extra.length];
     H.data[i * 4] = l.x; H.data[i * 4 + 1] = l.y; H.data[i * 4 + 2] = l.z; H.data[i * 4 + 3] = l.range;
-    H.colors[i * 3] = l.color[0]; H.colors[i * 3 + 1] = l.color[1]; H.colors[i * 3 + 2] = l.color[2];
+    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1;   // SD-LOOK S7: the Reset's dimming, the arena's lamps alone
+    H.colors[i * 3] = l.color[0] * k; H.colors[i * 3 + 1] = l.color[1] * k; H.colors[i * 3 + 2] = l.color[2] * k;
   }
   let v = H.views.get(m);
   if (!v) {
