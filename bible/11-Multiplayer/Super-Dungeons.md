@@ -603,8 +603,12 @@ a realm that never had one.
 
 SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
 that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
-relay version while it is undeployed - `world176` now (`world171` on the branch, renumbered past main's CRYSTAL-FIST,
-WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). SD6b shipped `pz` each way - the realm's out frame is the hall,
+relay version, re-hashed in place while it was undeployed - `world176` (`world171` on the branch, renumbered past main's
+CRYSTAL-FIST, WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). `world176` IS DEPLOYED (2026-10-08, at #632's
+merge: relay-deploy run 37771760584, "deploying world176 over world175", verified), so it is re-hashed no more: the
+deploy compares the version string alone, and bytes changed under it would merge green and never reach a player. The
+arc's next relay change mints a version of its own, with its own row (AUDIT SD IV (9)).
+SD6b shipped `pz` each way - the realm's out frame is the hall,
 `pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
 back - AUDIT SD II: with `ls`, the peers its lash falls on; and `w` 1, to a turner alone, when the stones refused its
 turn). SD8b shipped the fight: `in`, `hit`, `ehit {e,...}`, `xhit {c,...}` in, under the fight's own bucket (`sdFightGate`,
