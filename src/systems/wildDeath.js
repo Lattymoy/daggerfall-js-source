@@ -105,6 +105,7 @@ export function wildRecord(item) {
   const copy = JSON.parse(JSON.stringify(item));
   delete copy.equipSlot;
   delete copy.questItem;
+  delete copy.acquired;   // ACQUIRE1: the receiver's mark too (loot.js strips it on the way in)
   return copy;
 }
 

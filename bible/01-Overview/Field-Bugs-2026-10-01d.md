@@ -73,6 +73,10 @@ picture: an illustrated forge, cloth and board were built aside and left out at 
 
 ## PICKUP-FEED: what a take put in the pack, at the centre (4)
 
+(LOOT-BANNER, 2026-10-09: a piece new to the player in Rare or better takes no card here now - its banner at the right
+edge announces it, `10-UI/Loot-Banner.md` section 4. The feed's tiers are Common and Magic, and a Rare piece of the
+player's own picked back up.)
+
 On the enhanced skin every quick-loot take - one row or take-all, from a body, a dropped pile or a fish, gold included -
 shows a card per item at the centre of the screen (`ui/pickupFeed.js`): its icon (the pack's own cached lookup, asked once
 a card), "+" and the name in its rarity's colour, "x N" past one, gold as "+N Gold". Taking the same item while its card
