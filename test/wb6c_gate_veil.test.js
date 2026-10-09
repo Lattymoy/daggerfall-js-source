@@ -167,7 +167,8 @@ test('WB6c the seams, by source: the gate\'s door closes the fire before the wor
   // AUDIT SD II (L6 F8, PIN MOVED): the step names its veil - the gate's fire by default, the Hour's brass for the Rift's
   assert.match(wm, /async function stepThroughFire\(go, look = 'fire', opts = undefined\) \{\n\s+const veil = host\.gateVeil\?\.\(\) \?\? null;\n\s+if \(_stepping\) return false;\n\s+_stepping = true;\n\s+try \{\n\s+if \(veil\) await veil\.cover\(look, opts\);[^\n]*\n\s+return await go\(\);\n\s+\} finally \{\n\s+_stepping = false;\n\s+veil\?\.reveal\(\);\n\s+\}\n\s+\}/);
   assert.match(wm, /return stepThroughFire\(async \(\) => \{\n\s+if \(mode !== 'exterior' \|\| !\(playerEntity\.health > 0\)\) return false;/, 'the door: through the fire, the world checked again after it has closed (AUDIT WB B3: and the player alive)');
-  // WBX2: the way home is ONE door - the bridge's membrane and the portal where he fell both take gateWayHome, through the fire
+  // WBX2: the way home is ONE door - the portal where he fell takes gateWayHome, through the fire (GATE-FBX: the bridge's
+  // membrane, which took it too, is gone)
   assert.match(wm, /function gateWayHome\(\) \{\n\s+if \(mode !== 'dungeon' \|\| !isGateArena\(dungeonLoc\)\) return false;\n\s+stepThroughFire\(async \(\) => \{ if \(mode === 'dungeon' && isGateArena\(dungeonLoc\) && aliveUnder\(\)\) pendingDungeonExit = true; return true; \}\);/, 'through the fire, never walked by the dead (AUDIT WB B2)');
   const exit = wm.indexOf("\n    if (isGateArena(dungeonLoc)) { gateWayHome(); return true; }");
   const wagon = wm.indexOf("if (hasCart(playerEntity.items ?? []) && getBool('GUI', 'DungeonExitWagonPrompt')) {");

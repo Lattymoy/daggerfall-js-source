@@ -266,6 +266,30 @@ test('AUDIT 68 X5-verify-deploy-tag-length-bypasses-dirty: the build tag is twel
     'bare --short sizes it by the object count: 7 in this repo and in CI\'s shallow clone, 9 in a full one');
 });
 
+test('BUILDTAG-CLEAN (issue #626): a build leaves the tree as it found it - the stamp is put back once the bundle has read it', (t) => {
+  // prebuild writes HEAD's sha over the committed src/buildTag.js. Left
+  // there, the next `git pull` that brings a new copy of it refuses ("Your
+  // local changes ... would be overwritten"), and a build that is committed
+  // carries the stamp into every merge. Run the real pair, in order, on a
+  // scratch clone of the committed file.
+  const d = scratch(t);
+  const git = (...a) => execFileSync('git', a, { cwd: d, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git('init', '-q');
+  mkdirSync(join(d, 'src'));
+  writeFileSync(join(d, 'src/buildTag.js'), read('src/buildTag.js'));
+  git('add', '-A');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'one');
+  const { scripts: npm } = JSON.parse(read('package.json'));
+  const run = (cmd) => spawnSync(cmd, { cwd: d, shell: true, encoding: 'utf8', env: ENV });
+  const pre = run(npm.prebuild.replace('scripts/buildTag.mjs', JSON.stringify(join(ROOT, 'scripts/buildTag.mjs'))));
+  assert.equal(pre.status, 0, pre.stderr);
+  assert.equal(git('status', '--porcelain'), 'M src/buildTag.js', 'prebuild must still stamp the file the bundle imports');
+  assert.equal(typeof npm.postbuild, 'string', 'package.json has no postbuild - every build leaves src/buildTag.js modified');
+  const post = run(npm.postbuild);
+  assert.equal(post.status, 0, post.stderr);
+  assert.equal(git('status', '--porcelain'), '', 'the build left src/buildTag.js modified');
+});
+
 // ── the Ledger and the open flags ────────────────────────────────────────
 
 test('AUDIT 68 X5-ledgersweep-section-c-runs-to-eof: section C stops at the next heading, and a ledger without it is an error', (t) => {

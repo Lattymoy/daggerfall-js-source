@@ -112,10 +112,10 @@ const spills = (page) => page.evaluate(() => {
   check('...and the card reads Classic in use', cs.find((c) => c.panel === 'sound').state === 'on' && cs.find((c) => c.panel === 'sound').name === 'Classic');
   // a mix of the player's own reads Custom
   await page.evaluate(async () => (await import('/src/systems/uiPrefs.js')).setPref('soundEnhancements', true));
-  await page.locator('#enhanced-menu .railbtn', { hasText: 'Features' }).click(); await page.waitForTimeout(80);
+  await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).click(); await page.waitForTimeout(80);   // ORG2: the rows are Settings' tabs
   await page.locator('#enhanced-menu .railbtn', { hasText: 'Overhauls' }).click(); await page.waitForTimeout(80);
   cs = await cards(page);
-  check('one row turned back on Features: the Sound card reads Custom', cs.find((c) => c.panel === 'sound').state === 'custom' && (await page.locator('.look-panel[data-panel="sound"] .look-note', { hasText: 'Custom' }).count()) === 1);
+  check('one row turned back on in Settings: the Sound card reads Custom', cs.find((c) => c.panel === 'sound').state === 'custom' && (await page.locator('.look-panel[data-panel="sound"] .look-note', { hasText: 'Custom' }).count()) === 1);
   await page.evaluate(async () => { (await import('/src/systems/uiPrefs.js')).setPref('soundEnhancements', true); (await import('/src/systems/modSettings.js')).setModSetting('immersive-footsteps', 'Enabled', true); });
 
   // GrimoireUI's card: the pack's own art, served and decoded

@@ -19,6 +19,7 @@
 
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horseCartLaw.js';
+import { optionPath } from './settingsMap.js';   // ORG2: a switch named in a window says where it lives
 
 export const STABLE_PAGE_SECTIONS = Object.freeze([Object.freeze(['stable', 'Stable'])]);
 export const HOLDINGS_STYLE_ID = 'holdings-pages-css';
@@ -54,7 +55,7 @@ export function stableProviderFor({ runtime, on, hasHorse, hasCart }) {
   return {
     stable: () => ({ hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: on() ? runtime.stableView() : null }),
     stableAct: (verb, arg) => {
-      if (!on()) return { ok: false, text: 'Turn on Horse Cart and Cargo (Features) to call your horse and wagon.' };
+      if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
       if (verb === 'away') return runtime.sendTransportAway();
       // AUDIT HOLDINGS C5: a horse never named answers '' - his own, not none
@@ -251,8 +252,8 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   }
   if (acts.childNodes?.length ?? acts.children?.length) detail.append(acts);
   detail.append(el('p', 'hld-foot', m.hcc
-    ? (v?.persistence ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.' : 'Turn on physical persistence (Features > Horse Cart and Cargo) to have them stand in the world.')
-    : 'Turn on Horse Cart and Cargo (Features) to have your horse and wagon stand in the world.'));
+    ? (v?.persistence ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.' : `Turn on physical persistence (Horse Cart and Cargo\u2019s options, ${optionPath('feat:mod-horse-cart-and-cargo')}) to have them stand in the world.`)
+    : `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to have your horse and wagon stand in the world.`));
 }
 
 /** A visit's words forgotten (an act's answer, an open name field) - the pause menu's every mount. */

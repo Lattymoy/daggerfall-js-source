@@ -16,7 +16,7 @@ import { riteLocalOf, riteFaithfulOf, RITE_REACH_M, RITE_WORD_MS, RITE_SUMMONER_
 import { gateTimes, gateSpotLocal, gateModsOf, gateBossOf, marksLine, GATE_COLLAPSE_MS } from '../src/net/gateLaw.js';
 import { worldRoom, validRiteOut, RITE_COUNT_MAX, RITE_BY_MAX } from '../src/net/wire.js';
 import { riteLayout, buildRiteModel, RITE_BRAZIERS, RITE_BRAZIER_R, RITE_BRAZIER_W, RITE_RING_R, RITE_TENT_R, RITE_SIGIL_LIFT, RITE_SIGIL_REACH, RITE_SIGIL_R, RITE_ALTAR } from '../src/world/riteModel.js';
-import { GATE_PLINTH_RECORD, GATE_STONE_RECORD, RITE_SIGIL_RECORD, GATE_ARCHIVE } from '../src/world/gateModel.js';
+import { GATE_PLINTH_RECORD, GATE_STONE_RECORD, RITE_SIGIL_RECORD, GATE_ARCHIVE, GATE_SPINE_RECORD, GATE_RIM_RECORD } from '../src/world/gateModel.js';
 import { riteSigilArt, RITE_SIGIL_ART_SIZE } from '../src/world/gateArt.js';
 import { glslFunctions } from './glsl.mjs';
 import {
@@ -547,7 +547,7 @@ test('AUDIT WB12d (G1, G4, G18, C10): the stone is made again when its ground mo
   assert.ok(r.meshes[0].m.subMeshes.every((s) => s.textureRecord === GATE_STONE_RECORD), 'the stone');
   assert.ok(r.meshes[1].m.subMeshes.every((s) => s.textureRecord === RITE_SIGIL_RECORD), 'the sigil, apart');
   const up = r.uploads.filter(([ar]) => ar === GATE_ARCHIVE);
-  assert.deepEqual(up.map(([, rec, w]) => [rec, w]), [[GATE_STONE_RECORD, 64], [GATE_PLINTH_RECORD, 64], [RITE_SIGIL_RECORD, RITE_SIGIL_ART_SIZE]], 'its art up once, the sigil\'s own with it');
+  assert.deepEqual(up.map(([, rec, w]) => [rec, w]), [[GATE_STONE_RECORD, 64], [GATE_PLINTH_RECORD, 64], [GATE_SPINE_RECORD, 64], [GATE_RIM_RECORD, 64], [RITE_SIGIL_RECORD, RITE_SIGIL_ART_SIZE]], 'its art up once (GATE-FBX: the gate\'s spines\' and rim\'s with it), the sigil\'s own with it');
   assert.equal(new Set(up.map(([, rec]) => rec)).size, up.length, 'each art its own record - the gate\'s plinth never wears the sigil');
   assert.equal(r.batches.length, RITE_FLAME_PHASES, 'the flames, in their batches');
   const [even, odd, camp] = r.batches, L = riteLayout(FACING);

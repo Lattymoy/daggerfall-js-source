@@ -27,6 +27,7 @@ import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js'; 
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: a player spouse's own house on their card
 import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: a seat's house said once
 import { facePose } from '../systems/legacy/facePose.js';   // AUDIT LEGACY III P17: a person's portrait, asked one way
+import { optionPath } from './settingsMap.js';   // ORG2
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -541,7 +542,7 @@ function liveLine(el, said) {
 /** Why a page has no family to show. LEGACY-CHOICE: a character who answered no lineage, and online one made before the
  *  question was put there (or copied in), play without a house for good - a new character founds one. */
 export const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
-  : !prov.on?.() ? 'Turn on Project Legacy (Features) to found a family and carry your line on.'
+  : !prov.on?.() ? `Turn on Project Legacy (${optionPath('feat:mod-project-legacy')}) to found a family and carry your line on.`   // ORG2
     : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'
       : prov.online?.() ? 'This character has no house - online, a house is founded only when a character is made. Make a new character to found one.'
         : 'Your family is founded when your character is made, or the first time an older character is loaded.');
@@ -624,7 +625,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
     detail.append(list);
     if (_homeSaid) { const n = liveLine(el, _homeSaid); n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-home-said'); detail.append(n); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _homeSaid = null; }
   }
-  if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', 'Your family lives in the Living World\'s towns - turn on the Living World (Features, the enhanced screens) to meet them there.'));
+  if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', `Your family lives in the Living World\u2019s towns - turn on Living world (${optionPath('feat:living-world')}) to meet them there.`));
   else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
   else detail.append(el('p', 'px-note', 'Your family lives in the world while you play another of them. Speak with one to play as them.'));
   // the house's dead - the blood's, and a spouse's beside them (wed in: said so); one gone from the realm is no death

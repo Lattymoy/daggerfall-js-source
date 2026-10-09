@@ -83,12 +83,13 @@ test('AUDIT REST-OPT C2: a party mate\'s night beside mine that is not one with 
   assert.match(W, /const otherPartyCamp = \(peerId\) => restsApart\(social\?\.others\(\)\.find\(\(o\) => o\.peers\?\.includes\(peerId\)\) \?\? null, restTogether\(\)\);/);
 });
 
-test('AUDIT REST-OPT C3 + F4: a night granted as my own stays my own to its end (`nr` while it runs) - a leader who turned the switch back on mid-night pulled the whole party into it; a followed night is the party\'s; and the switch is named where it is (Features, Other players - not Settings) (mutants: the grant\'s word never kept; a mirror left alone)', () => {
+test('AUDIT REST-OPT C3 + F4: a night granted as my own stays my own to its end (`nr` while it runs) - a leader who turned the switch back on mid-night pulled the whole party into it; a followed night is the party\'s; and the switch is named where it is (ORG2: Settings, Gameplay, Other players) (mutants: the grant\'s word never kept; a mirror left alone)', () => {
   assert.match(W, /\.\.\.\(!restsWithParty\(\) \|\| \(_restAloneNight && playerEntity\.isResting\) \? \{ nr: 1 \} : \{\}\),/);
   assert.match(W, /_cancelSeen = snapshotCancels\(social\.others\(\)\);[^\n]*\n\s*_restAloneNight = !restTogether\(\);/, 'the grant says whose night it is');
   assert.match(W, /_partyRestStartWaived = false;   \/\/ PARTY-REST29: a real \(mirrored\) rest cools down again\n\s*_restAloneNight = false;/, 'a mirror is the party\'s');
-  assert.equal(restAloneText(false), 'You rest on your own. Turn on "Rest with my party" (Features, Other players) to rest with them.');
-  assert.match(src('src/ui/enhancedMenu.js'), /function modsFooter\(body\) \{[\s\S]{0,300}body\.append\(peerSpritesCard\(\)\);/, 'the Other players card is the Features pane\'s');
+  // ORG2: the switch is named where the one Settings screen draws it - the Other players card, on the Gameplay tab
+  assert.equal(restAloneText(false), 'You rest on your own. Turn on "Rest with my party" (Settings \u203a Gameplay \u203a Other players) to rest with them.');
+  assert.match(src('src/ui/enhancedMenu.js'), /peerSprites: \(\) => peerSpritesCard\(\)/, 'the Other players card is drawn by the Settings screen');
 });
 
 test('AUDIT COMPASS-PARTY C4 + C6: a concealed mate is no compass mark (the leader\'s own feet followed them); out of a party the room\'s players are not walked each frame for it (mutants: the poses unfiltered; the walk first)', () => {
