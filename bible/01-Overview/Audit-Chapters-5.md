@@ -127,4 +127,5 @@ census's residents away, and "cheaper training" lowers training alone.
 Each with a `PIN MOVED` note: CHAP6a (the Crackdown's flat pay and its effect, the underworld's weights, the scaled
 draw's two goldens), CHAP6b (the Schism's distribution on the Mages, its golden), CHAP6c (the Crackdown's words), CHAP6d
 (the shut gate on the services, the host's `chapterHere`), CHAP7a (the opening's draw), CHAP7b (the banners' guild, the
-book asked again), CHAP3c (`chapterHere` kept).
+book asked again), CHAP3c (`chapterHere` kept), LOOT9's and LOOT16's rows (a shut hall's refused on the popup, D2),
+SEAT1c's `guildKeepsSql` (a patron's bid kept after the battles, E4).
