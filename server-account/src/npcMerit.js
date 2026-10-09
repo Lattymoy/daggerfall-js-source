@@ -34,7 +34,7 @@ export function meritStatement(db, { player, character, faction, region, source,
     SELECT ?5, ?3, ?4, ?1, ?2, ?6, got, ?7, ?8 FROM (SELECT CAST(MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit
         WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)
     WHERE got >= 1 AND ${guard}
-      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND joined_at <= ?8 - ?10)
+      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)
       AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)
       AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`)
     .bind(player, character, faction, region, meritWeekOf(nowS), source, ref, nowS, MERIT_CAP_WEEK, MERIT_TENURE_S, ...binds);

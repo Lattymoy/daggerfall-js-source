@@ -103,7 +103,8 @@ test('CHAP1 the memberships: both books, the higher rank where both hold one, a 
     mortal: { 10: { guild: 'MagesGuild', rank: 5 }, 17: { guild: 'Temple:Arkay', rank: 2 } },
     vampire: { 10: { guild: 'MagesGuild', rank: 3 }, 9: { guild: 'Order:Raven', rank: 1 }, 3: { guild: 'Bards', rank: 4 } },
   };
-  assert.deepEqual(rollMembersOf(store), [{ f: 21, rank: 2 }, { f: 40, rank: 5 }, { f: 414, rank: 1 }]);
+  assert.deepEqual(rollMembersOf(store), [{ f: 21, rank: 2 }, { f: 40, rank: 5 }, { f: 414, rank: 1, d: 1 }], 'PIN MOVED (AUDIT CHAP4 D1): a line the active book does not hold is dormant');
+  assert.deepEqual(rollMembersOf(store, true), [{ f: 21, rank: 2, d: 1 }, { f: 40, rank: 5 }, { f: 414, rank: 1 }], 'the vampire\'s book the active one: the mortal\'s alone dormant');
   assert.deepEqual(rollMembersOf({ 10: { guild: 'MagesGuild', rank: 4 } }), [{ f: 40, rank: 4 }], 'a book from before the two-book store');
   assert.equal(rollMembersOf(null), null, 'PIN MOVED (AUDIT CHAP S8): no book is no word - the Roll\'s stand unchanged');
   assert.deepEqual(rollMembersOf({ mortal: {}, vampire: {} }), []);

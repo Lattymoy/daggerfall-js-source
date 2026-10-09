@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site.
+-- deploy runs (ACC1-CI). Deploy this service (acct98 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site.
 --
 -- Mac: "Continue", on "Keep going with the arc/slices"
 -- (bible/11-Multiplayer/Chapters-Arc.md sections 5.2 and 5.3, CHAP3b). The
@@ -16,12 +16,15 @@
 -- (CHAPTERS_OPEN, 'dev' or 'on') - the first week settled 'on' after weeks
 -- at 'dev' starts every chapter from 50, so the developers' trial weeks
 -- leave no chapter Failing, nor Ascendant, the day the Chapters open.
+-- AUDIT CHAP4 S2 (grown in place): or 'off' - a week that passed while the
+-- Chapters were shut, recorded and nothing moved (no Merit could be earned
+-- in it), so the Turnings after the switch is on again start past it.
 CREATE TABLE IF NOT EXISTS npc_chapter_weeks (
   week      INTEGER PRIMARY KEY,
   active    INTEGER NOT NULL,
   target    INTEGER NOT NULL,
   chapters  INTEGER NOT NULL,
-  open      TEXT NOT NULL DEFAULT 'on' CHECK (open IN ('dev', 'on')),
+  open      TEXT NOT NULL DEFAULT 'on' CHECK (open IN ('dev', 'on', 'off')),
   at        INTEGER NOT NULL
 );
 -- THE CHAPTERS. One row a guild faction and region a Turning has settled:

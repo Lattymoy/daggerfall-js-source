@@ -52,8 +52,8 @@ test('CHAP3b the bands: Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90
   assert.deepEqual([[0, 10], [0, 50], [0, 75], [0, 95], [150, 10], [150, 50], [150, 75], [450, 10], [450, 75]].map(([a, s]) => hallWritCountIn(a, s)),
     [1, 2, 3, 3, 2, 4, 6, 5, 15]);
   assert.equal(hallWritCount(450), 10);
-  assert.equal(chapterLineOf({ faction: 41, strength: 74 }), 'The Fighters Guild here is Thriving (Strength 74)');
-  assert.equal(chapterLineOf({ faction: 368, strength: 12 }), 'The Knights of the Dragon here is Failing (Strength 12)');
+  assert.equal(chapterLineOf({ faction: 41, strength: 74 }), 'The chapter of the Fighters Guild here is Thriving (Strength 74)');   // PIN MOVED (AUDIT CHAP4 C4): the chapter the subject
+  assert.equal(chapterLineOf({ faction: 368, strength: 12 }), 'The chapter of the Knights of the Dragon here is Failing (Strength 12)');   // PIN MOVED (AUDIT CHAP4 C4)
 });
 
 // ── THE TURNING ─────────────────────────────────────────────────────

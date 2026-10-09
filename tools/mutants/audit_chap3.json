@@ -11,13 +11,13 @@
   {
     "name": "A3-S2-OFF",
     "file": "server-account/src/npcChapters.js",
-    "old": "  if (sw === 'off') return 0;\n",
-    "new": "",
+    "old": "  if (sw === 'off') {\n    if (last == null",
+    "new": "  if (false) {\n    if (last == null",
     "tests": [
       "test/audit_chap3.test.js"
     ],
-    "equivalent": true,
-    "why": "A week settled under 'off' is refused by its own row: npc_chapter_weeks.open holds 'dev' or 'on' alone (its CHECK), so the batch rolls back whole and settleChaptersDue stops at that week - nothing is written, as the early return writes nothing; the return spares the reads."
+    "why": "A week settled under 'off' is refused by its own row: npc_chapter_weeks.open holds 'dev' or 'on' alone (its CHECK), so the batch rolls back whole and settleChaptersDue stops at that week - nothing is written, as the early return writes nothing; the return spares the reads.",
+    "note": "AUDIT CHAP4 S2: recorded equivalent while an 'off' week returned before anything was read; since S2 records the shut weeks, the branch is a law of its own, and it dies."
   },
   {
     "name": "A3-S2-POST",
@@ -40,7 +40,7 @@
   {
     "name": "A3-S2-RESET",
     "file": "server-account/src/npcChapters.js",
-    "old": "const opened = open === 'on' && last != null && last.open !== 'on';",
+    "old": "const opened = open === 'on' && last?.open === 'dev';",
     "new": "const opened = false;",
     "tests": [
       "test/audit_chap3.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "A3-S2-SHEET-OPEN",
     "file": "server-account/src/npcChapters.js",
-    "old": "seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);",
-    "new": "seasonZeroOf(env?.SEASON_ZERO_WEEK));",
+    "old": "seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "seasonZeroOf(env?.SEASON_ZERO_WEEK));\n  const chapters = (await allChapters",
     "tests": [
       "test/audit_chap3.test.js"
     ]
@@ -275,13 +275,13 @@
       "test/audit_chap3.test.js"
     ],
     "equivalent": true,
-    "why": "With the move's bound max(20, quality), a step of 0 returns min(max(20, q), q) = q, then max(1, q) = q for any quality above 0 - the same quality the early return gives; the check names the case, it changes no answer."
+    "why": "With the move's bound max(20, quality), a step of 0 returns min(max(20, q), q) = q, then max(1, q) = q for any WHOLE quality of 1 or more (a building's quality is a whole number, DFU's 1 to 20 and a world-data pack's past it; AUDIT CHAP4 T: this said 'above 0', and a 0.5 would differ) - the same quality the early return gives; the check names the case, it changes no answer."
   },
   {
     "name": "A3-T1-SHEET-ZERO",
     "file": "server-account/src/npcChapters.js",
-    "old": "await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);",
-    "new": "await settleChaptersDue(db, nowS, null, env?.CHAPTERS_OPEN);",
+    "old": "await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "await settleChaptersDue(db, nowS, null, env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
     "tests": [
       "test/audit_chap3.test.js"
     ]

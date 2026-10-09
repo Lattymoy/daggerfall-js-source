@@ -15,6 +15,7 @@ import { mintReceipt, importReceiptKey } from '../src/net/gateReceipt.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
 import { r2, seatRealm } from './realmSeat.mjs';   // MERGE 2: a founding is a realm character's (AUDIT REALM2 S2)
 import { GUILD_FOUND_GOLD } from '../src/net/guildLaw.js';
+import { ROLL_FACTIONS } from '../src/net/npcChapterLaw.js';   // AUDIT CHAP4 E3: a scene's chapters confirmed
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -108,3 +109,10 @@ export async function standService(extra = {}) {
 
 /** A device's storage holding `who`'s session (net/accountClient.js SESSION_KEY). */
 export const sessionStorageOf = (sessionKey, who) => ({ getItem: (k) => (k === sessionKey ? JSON.stringify({ secret: who.secret, id: who.id }) : null) });
+
+/** AUDIT CHAP4 E3: A SCENE'S CHAPTERS CONFIRMED - each region's kept row (npcHalls.js npc_hall_regions, AUDIT CHAP3 S3)
+ *  naming `factions` (every guild of the Roll by default), as its witnessed towns' reports would leave it: the seats are
+ *  placed, and the titles minted, only at a chapter confirmed now. */
+export function confirmChapters(raw, regions, factions = ROLL_FACTIONS) {
+  for (const g of regions) raw.prepare('INSERT OR REPLACE INTO npc_hall_regions (region, chapters, ver, done, at) VALUES (?, ?, 1, 1, 0)').run(g, JSON.stringify([...factions]));
+}

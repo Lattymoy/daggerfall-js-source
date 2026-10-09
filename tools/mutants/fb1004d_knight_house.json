@@ -312,7 +312,7 @@
   {
     "name": "KNIGHT-HOUSE-grant-unheld",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (host.holdRealmDeed) holdGrantedHouse(region, membership);\n",
+    "old": "      if (host.holdRealmDeed) holdGrantedHouse(region, kept);\n",
     "new": "",
     "tests": [
       "test/fb1004d_knight_house.test.js"

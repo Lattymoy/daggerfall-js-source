@@ -21,7 +21,9 @@ CHAP4c BUILT (2026-10-08, Mac: "Your call"; the seats' titles on the token, behi
 its chapter's hall writs, the Chronicle read in the Hall of Records - section 6, its record at the foot). CHAP5a BUILT
 (2026-10-09, the same word; the sheet carries the seats' holders, and each hall's shelf names them - sections 5.3 and 9,
 its record at the foot). CHAP5b BUILT (2026-10-09, the same word; the hall's people and the town's talk by the band -
-section 9, its record at the foot); CHAP6 (the Seasons' events) is next. Merged with main
+section 9, its record at the foot). AUDIT CHAP4 (2026-10-09, Mac: "Lets do a deep audit on everything so far") read
+all of it again through six lenses and fixed what they found (`01-Overview/Audit-Chapters-4.md`, its record at the
+foot); CHAP6 (the Seasons' events) is next. Merged with main
 past the Super Dungeons arc, then past SCALE4 and TAVERN CARDS (2026-10-08), then past SERVER-POST and HOURS-FIRST
 (2026-10-09): the arc's migrations are `0095_npc_roll` to `0100_npc_seats`, its service `acct98` and its relay `world180` - the records below name each
 migration by its current number and the service by the version it was built under. AUDIT CHAP3 (2026-10-08, Mac:
@@ -244,7 +246,17 @@ stops at 7 twice over - every adoption of the Roll's word sets a row above 7 to 
 chapters' seats, won by Merit - your rank there is 7."), and DFU's own review (`updateRank`) takes the host's ceiling
 (`ctx.rankCeiling`, the hall popup's push effects): a member DFU would make 8 or 9 is promoted to 7, one at 7 stays
 unmoved and unannounced, and the review never demotes for it - so DFU's demotion record is never shown for a seat's rule.
-Offline the ceiling is none and every review is DFU's whole.
+Offline the ceiling is none and every review is DFU's whole. AUDIT CHAP4 C3: the ceiling holds from the page's first
+frame - before the Roll's first word DFU's review promoted to 8 and 9, then the word took them back.
+
+AUDIT CHAP4 (D2, E2), RECORDED: what DFU GIVES ONCE at rank 8 or 9 and the character keeps is not given online - a seat
+is held, not a rank earned for good. A knightly order's rank-8 and rank-9 armour and its rank-9 house read the BOOK's
+rank (`worldModes.js` openServiceFlow's `kept`; E2: one week as a chapter's Master was a house held for good, and a ring
+passing the seat round housed every one of it); the promotion's own texts and gifts (the Thieves Guild's map at 8, the
+Dark Brotherhood's location at each promotion, the Mages Guild's 8, an order's and a temple's 9) come with DFU's review,
+which online stops at 7. A seat's SERVICES are its while it is held (the teleport, the summoning, the repair's scale,
+the quests). AUDIT CHAP4 D3: a seat's TITLE is the one its chapter's halls say - the popup and its counter read the
+seated book, as the hall's services and quests do; the character sheet's affiliations name the book's rank.
 
 ### 3.6 Customs and a new character
 
@@ -323,8 +335,9 @@ BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narro
   a region can hold a dozen chapters, and six each would bury the Court's. Strength's bands wait on CHAP3.
 - **Their kinds**: the Court's law (`courtWrits`) over the region's witnessed table, narrowed to the guild's own
   families (`hallFamiliesOf`: the Fighters' metals and wood, the Mages' herbs and metals, the temples' and the
-  Brotherhood's herbs, the orders' metals and wood, the Thieves' all four), the whole table where the region yields none
-  of them; each chapter's own dice (`gateHash` under `HALL_WRIT_SALT`, keyed by its faction), never the Court's -
+  Brotherhood's herbs, the orders' metals and wood, the Thieves' all four - the port's own choice, AUDIT CHAP4 D5: no
+  DFU guild trades in materials, and DFU's Mages Guild and two of its temples sell no potions), the whole table where the
+  region yields none of them; each chapter's own dice (`gateHash` under `HALL_WRIT_SALT`, keyed by its faction), never the Court's -
   chapters drawing from one table (the temples' herbs) can still post the same writ on a day (AUDIT CHAP2 R2: this said
   no two chapters could). AUDIT CHAP2 E5: a chapter's writs are the Court's law's slots AFTER its first, which is the
   table's top tier - two a chapter had made every other hall writ that one, a quarter richer than a Court writ. A writ's
@@ -434,8 +447,8 @@ BUILT (CHAP3a, 2026-10-08), and where building it asked, narrowed here:
   another region's, or the day its tenure ends (`meritLineOf`). A delivered writ says its Merit with the guild's memory.
 - **Merit outlives the character.** A realm character's delete and an undone customs leave its lines: the acts were
   witnessed and the chapter's, and the account's week's bounds stand on them - as a seat's influence lines stay.
-- **Still drawn**: `standings`, a chapter's whole Merit, whose reader is CHAP4's seats (the sheet carries no Merit; the
-  Turning sums `npc_chapter_merit` itself - AUDIT CHAP3 R11).
+- **Still drawn**: `standings`, a chapter's whole Merit (the sheet carries no Merit; the Turning sums `npc_chapter_merit`
+  itself - AUDIT CHAP3 R11 - and CHAP4a's seats sum it themselves, AUDIT CHAP4 R7), its reader not yet named.
 - **AUDIT CHAP3 E3**: a member's own writ is one a member a GUILD a UTC day, wherever posted - the first board of the day
   with a chapter of its guild (a member reading every region's board had one a region: the shared writs' race E4 closed,
   opened again a region at a time). The decided "one a member a chapter a day" narrowed so.
@@ -466,7 +479,11 @@ BUILT (CHAP3b, 2026-10-08), and where building it asked, narrowed here:
   (`strengthTarget`, the hall writs' own scale) - the realm's accounts, not the region's: the service keeps no region
   an account plays in. Its active accounts are the registered ones that played in the week before its Turning or
   since (a player's last play is all it keeps). One account at its 600 moves a quiet realm's chapter the whole 10; a
-  realm of a thousand needs ten.
+  realm of a thousand needs ten. AUDIT CHAP4 E4, DECIDED (at Mac's standing word): registered accounts that only play
+  raise the target realm-wide - a ring of them pulls every chapter's step down, its own too; the count stays the
+  realm's own measure of who plays, the one the hall writs and the Court's scale read, rather than a second, witnessed
+  count the Chapters alone would keep. A ring that large costs its accounts' registrations and moves every chapter
+  alike, its own with them.
 - **The step** is whole: `+ min(10, floor(merit / target))` - a week of some Merit under the target holds a chapter at
   or under 50 where it stands, and moves one above 50 `STRENGTH_SHORT` (3) back toward 50, never past it (DECIDED, AUDIT
   CHAP3 E4: a band above Steady is held by meeting the target); a week of none at all is the `- 3` anywhere. A chapter starts at 50 at its first Turning (`STRENGTH_START`).
@@ -507,8 +524,8 @@ the hall the player stands in (its guild's faction, as the hall's service window
   the shop's own law, untouched.
 - **What a band reaches, by DFU's own halls** (AUDIT CHAP3 D3): only what a hall sells. The Mages Guild and the temples
   sell spells and shelves; the Fighters Guild training alone; the ten knightly orders none of these (DFU's
-  `KnightlyOrder.CanAccessService`: quests, armor, a house) - their band is felt in their writs alone, until CHAP5 or
-  CHAP6 gives an order's hall a band of its own. AUDIT CHAP3 D4: RefinedTraining's five-day package moves by less than
+  `KnightlyOrder.CanAccessService`: quests, armor, a house) - their band is felt in their writs alone (and, CHAP5b, in
+  their halls' evenings and their towns' talk), until CHAP6 gives an order's hall a band of its own (AUDIT CHAP4 R7). AUDIT CHAP3 D4: RefinedTraining's five-day package moves by less than
   the factor - its own per-session upkeep (RR's `(cost + level x 8 + 72) x 5`) is RR's, unbanded.
 - **The price shown is the price charged** (AUDIT CHAP3 C1): each window reads the hall's factor once as it opens -
   training's flow, the spellbook and the spellmaker alike - and the hall's chapter is read in the politic map's region
@@ -516,7 +533,8 @@ the hall the player stands in (its guild's faction, as the hall's service window
   own copy, as DFU's service law reads no network module.
 - **Where no Strength is known the hall is DFU's own**: offline (no sheet), and for a chapter the sheet does not name -
   the Thieves Guild's and the Dark Brotherhood's (5.3), and a hall whose town is not yet confirmed. NARROWED: the
-  underworld's halls take no band until a sheet can be read by their members alone (CHAP5 reads the sheet again).
+  underworld's halls take no band until a sheet can be read by their members alone (CHAP5 read the sheet again for its
+  seats and band and left this open - AUDIT CHAP4 R7: still open).
 
 ### 5.3 The chapter sheet
 
@@ -546,8 +564,11 @@ DECIDED (Mac): limited, contested seats; the shape below is the record's.
 - **Who may hold one**: an Eligible member (3.5) with **14 days** in the guild on the Roll, whose account is at least
   7 days old.
 - **How it is held**: at each Turning, the seats go to the Eligible members with the most Merit at that chapter over
-  the **last four weeks**; a sitting holder's Merit counts **x 1.2** (the 1.2 a seat's holder carries after a held siege, Seats-Arc 5.2 step 3).
-  Ties break by the longer tenure, then the lower character id.
+  the **last four weeks**; a sitting holder's Merit counted x 1.2 until **AUDIT CHAP4 E1 (decided at Mac's standing
+  word, his to overrule): a sitting holder keeps an EQUAL standing**, never a larger one. The x1.2 (the 1.2 a seat's holder
+  carries after a held siege, Seats-Arc 5.2 step 3) met the week's cap: no challenger shows more than 4 x 600 Merit, so
+  a holder earning 2000 of 2400 could not be out-earned at all, and a ring at five-sixths of the cap kept every seat.
+  Ties break by the sitting holder, then the longer tenure, then the lower character id.
 - **Limits**: one seat an account a guild (an account's alts cannot hold two seats of one guild); one Master's seat a
   character.
 - **What a seat gives**: the rank and its title, signed on the token as a derived title (`server-account/src/titles.js`'s
@@ -567,9 +588,9 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   Roll, its reputation there at 80, `joined_at` fourteen days before the Turning, its account (`players.registered_at`)
   seven, its character standing (a dead one sits nowhere). The reputation and the membership are the Roll's as the read
   finds them.
-- **The order** (`chapterSeatPlan`, pure): standing in whole tenths of Merit (`seatScoreOf`), a sitting holder's x 1.2
-  (`SEAT_HOLDER_CARRY`, the seats' own `SIEGE_DEFENCE_BONUS`) for a seat at THIS chapter alone; then the longer tenure,
-  then the lower character id. Every chapter's Master's seat first, realm-wide, then its officers: so a character the
+- **The order** (`chapterSeatPlan`, pure): standing in whole tenths of Merit (`seatScoreOf`); at an equal standing the
+  sitting holder at THIS chapter first (AUDIT CHAP4 E1: its x 1.2 carry, `SEAT_HOLDER_CARRY`, gone); then the longer
+  tenure, then the lower character id. Every chapter's Master's seat first, realm-wide, then its officers: so a character the
   Master of one chapter may sit as another guild's officer, never two Masters; an account's characters hold one seat a
   guild between them, in every region (an alt in the Master's chapter sits nowhere).
 - **The seats' table** (`npc_chapter_seats`, migration `0100_npc_seats`) is written whole again each Turning; a seat
@@ -580,6 +601,13 @@ BUILT (CHAP4a, 2026-10-08), and where building it asked, narrowed here:
   (null for none) - a week that moved no seat writes none; kept when the character is deleted. Its reader - the Hall of
   Records - CHAP4d's, BUILT below.
 - **Hidden guilds** are placed as any chapter is; nothing of their seats is public (the sheet and the board name none).
+- **AUDIT CHAP4** (the seats read again): D1 - an ACTIVE membership alone is Eligible (and earns Merit, a member writ,
+  a receipt's standing): a line the character's active book does not hold - a vampire's mortal guilds - is claimed
+  dormant (`rollMembersOf`'s `d`, `npc_roll.dormant`), as AUDIT CHAP D6 promised CHAP4 would ask; E3 - seats only at a
+  chapter confirmed now (a struck chapter's holders sit nowhere, and titles nobody); S2 - the weeks the Chapters are
+  shut ('off') are recorded and move nothing, and the four weeks are the last four the Chapters were open; S5 - a
+  character deleted while its Turning was in flight is never seated again; S4 - the Focus is the Master's whom LAST
+  week's Turning placed, after the Turnings due.
 - **Still to build**: the titles on the token and "Former Master" (CHAP4c - a new title id and claim reach the relay
   first, Seats-Arc 7.4, worded without gender) - BUILT, below; the Focus and the Chronicle's reader (CHAP4d) - BUILT,
   below; the Master's vote in its Season's event (CHAP6).
@@ -623,9 +651,11 @@ BUILT (CHAP4c, 2026-10-08, Mac: "Your call"), the seats' titles:
   one of its standing characters holds that seat, and a Master's seat it lost this Season (the Chronicle's rows from the
   Season's first week - the counted Season, or the eight-week block with none counted) while it does not hold that
   Master's seat again; a token signs it, with its claim, only for a character that holds it.
-- **The order of the deploy** (the SHADOW-FANG order): the relay `world180` first, by hand - a token with a title the
-  live relay does not know is refused at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`,
-  shipped `"off"`; `chapterTitlesOpenFor`).
+- **The order of the deploy** (the SHADOW-FANG order): the relay `world180` first - deployed by
+  `.github/workflows/relay-deploy.yml` on the merge to main, as the live relay's version differs (it drops every
+  connected player; AUDIT CHAP4 R2: this said "by hand") - a token with a title the live relay does not know is refused
+  at the hello - then `CHAPTER_TITLES = "on"` (`server-account/wrangler.toml`, shipped `"off"`; `chapterTitlesOpenFor`),
+  once that relay is live.
 
 BUILT (CHAP4b, 2026-10-08), the seat on the page:
 
@@ -713,8 +743,10 @@ classic skin, the row off, the service unreachable - the living world is exactly
   reading (DFU's `DaggerfallBookshelf`, as the palace's shelf is the Hall of Records), so the roll is the shelf's first
   book - "The Roll of the Fighters Guild, Anticlere": the chapter's state (the board's line), "Master of the chapter:
   Alda.", "Its officers: Bryn, Cael and Dara." (or the seats empty), worded without gender (`npcChapterLaw.js`
-  chapterRollTitle, chapterRollLines; `ui/chapterRoll.js`). The roll is public, so a stranger to the guild, refused DFU's
-  shelf, reads the roll alone. A temple's shelf carries its chapter's roll too. Online only, off the sheet the tab holds
+  chapterRollTitle, chapterRollLines; `ui/chapterRoll.js`). The roll is public, so whoever DFU's shelf refuses - a stranger to the guild, a
+  member below its rank, and every member of the Fighters Guild and the knightly orders, whose shelves DFU opens to no
+  one (`canAccessLibrary`) - reads the roll alone, and after it DFU's own refusal line, as the shelf says it offline
+  (AUDIT CHAP4 D4). A temple's shelf carries its chapter's roll too. Online only, off the sheet the tab holds
   (5.3): offline, for a hidden guild, a chapter the sheet does not name, the shelf is DFU's.
 - **What does not change**: a resident's regard. Being a chapter's Master may warm a member of that hall to you, on your
   own machine, as any `relations.js` event does; it never gates anything the service keeps (law 6).
@@ -745,7 +777,8 @@ DECIDED.
 
 - **Account service (D1)**: BUILT (CHAP1, migration `0095_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
   last_rid, tag, seeded_at, updated_at - every write moves `seq` on under its own `tag`, a claim names `last_rid`);
-  `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at); `npc_rep_events` (seq,
+  `npc_roll` (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at; AUDIT CHAP4 D1, grown in
+  place: dormant); `npc_rep_events` (seq,
   char_id, player, faction_id, asked, credited, rid, at - AUDIT CHAP2 S6: a claim with no reputation line leaves a line
   of faction 0, its id). BUILT (CHAP2a, migration `0096_npc_halls`): `world_witness` kind `npchall`; `writs` rebuilt
   with `kind` ('court', 'hall'; CHAP3a: 'member'), `faction` and (CHAP3a) `owner`, `UNIQUE (day, region, kind,
@@ -760,7 +793,8 @@ DECIDED.
   grown in place): `npc_hall_regions` (region, chapters, ver, done, at) - a region's chapters computed once a change.
   BUILT (CHAP4a, migration `0100_npc_seats`): `npc_chapter_seats` (faction, region, char_id, account, seat, since, week,
   at - the draft's `key` the chapter's own pair) and `npc_chapter_history` (seq, faction, region, week, kind, char_id,
-  data JSON). BUILT (CHAP4d, `0099` grown in place): `npc_chapters`' `focus` and `focus_week`. Still drawn: a
+  data JSON, at). BUILT (CHAP4d, `0099` grown in place): `npc_chapters`' `focus` and `focus_week`; AUDIT CHAP4 S2: a
+  week's `open` is 'dev', 'on' or 'off' (an off week recorded, nothing moved). Still drawn: a
   chapter's event, event_state JSON and doctrine (CHAP6).
 - **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
   names the realm character and the playing tab's lease); `witness` BUILT (CHAP2a); `halls` and `strike` BUILT (AUDIT
@@ -769,8 +803,8 @@ DECIDED.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn. NARROWED (CHAP3b): the Chapters' own Turning on the seats' week,
   keyed on its own row (`npc_chapter_weeks`, migration `0099_npc_chapters`), beside `settleWeek` rather than in it -
-  5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the draft's event, doctrine and
-  focus are CHAP4's and CHAP6's to add) and `npc_chapter_weeks` (week, active, target, chapters, at).
+  5.2. BUILT (CHAP3b): `npc_chapters` (faction, region, strength, week, merit, at - the draft's event and doctrine are
+  CHAP6's to add; focus and focus_week CHAP4d's) and `npc_chapter_weeks` (week, active, target, chapters, open, at).
 - **The relay**: AUDIT CHAP R5 - this said "no change: the gate, raid and serpent receipts already name an account and a
   region". Only the raid's names a region (`w`); a gate's region is taken from its claims, as the Seats take it (Seats-Arc
   4.2: the region three of the day's receipts agree on), and a serpent's has none - so CHAP2b credits a gate in the Seats'
@@ -818,7 +852,7 @@ host online runs in - the interiors and the dungeons are that same page and that
   on its training, spells and shelf, through the host's `chapterStrength` (world.js's sheet; none offline). CHAP4b
   BUILT: the hall's services read the book seated (the host's `chapterSeatRank`), its review the host's ceiling
   (`rollRankCeiling`, 7 while the Roll holds). CHAP5a BUILT: the hall's shelf - its chapter's roll first (the host's
-  `chapterRoll`), and alone for a stranger the shelf refuses.
+  `chapterRoll`), and alone for whoever the shelf refuses - DFU's refusal line after it (AUDIT CHAP4 D4).
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5). CHAP3c BUILT: the sheet the playing tab holds (`net/chapterSheet.js`), asked at a town's entry and handed to
   the interiors. CHAP4b BUILT: the tab holds the book at 7 and says the seats (`onCapped`, `onSeats`), and names a seat's
@@ -846,8 +880,10 @@ is Mac's to overrule.
    member's rank needs - a cap that demoted the member at its next review took the rank this call promised it keeps -
    and only for a crossing made from the epoch (C3).
 4. **One Master and three officers a chapter, on four weeks' Merit; an unearned seat stands vacant.** Four seats keep a
-   chapter's top worth contesting; four weeks let a holder miss a week without losing a seat and keep a single
-   week's surge from taking one. Vacant over filled-from-below, so a seat is never a gift.
+   chapter's top worth contesting; four weeks keep a single week's surge from taking one - and (AUDIT CHAP4 E1, this
+   said "let a holder miss a week without losing a seat": against a challenger at the cap no window does that) a holder
+   who misses a week keeps the seat only against challengers who earned no more over the four. Vacant over
+   filled-from-below, so a seat is never a gift.
 5. **The rivals** are section 8's table: three pairings Daggerfall's own guilds already imply, and every chapter that
    has none draws Calm in a Rivalry's place.
 6. **A patron gains no seat influence** (8): one act - a gate kill, an Orc Raid's camp - would count three times for one
@@ -873,7 +909,7 @@ is Mac's to overrule.
 | The memberships a claim may carry | one a guild faction, at most two temples and two orders (`ROLL_BOOKS` - the mortal's book and the vampire's, AUDIT CHAP2 E3) | 3.2 |
 | Receipt, reputation | +1 a guild (`RECEIPT_REP`); +2 more for the chapter's receipt writ, a member's first of the kind a UTC day in the region (`HALL_WRIT_REP`) | 3.3, 4 |
 | Customs reputation cap | 40 (`ROLL_CUSTOMS_CAP`), for a customs crossing made from `ROLL_EPOCH_S` - 1,791,417,600, 2026-10-08 00:00 UTC - and never under a member's rank's band (`rollRankKeepOf`: its need up to the next rank's line less one, never past 79 - a rank 8 or 9 too, AUDIT CHAP2 E6 - AUDIT CHAP C3, D1; AUDIT CHAP2 D3) | 3.6 |
-| A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5) | 3.2 |
+| A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5), and never past 7 (`ROLL_BOOK_RANK_MAX`, `rollBookRankOf`, CHAP4a) | 3.2 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
 | Receipt writ's own Marks | 0 | 4 |
 | Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving - CHAP2a: `2 x max(1, ceil(active / 100))` a chapter (`hallWritCount`); CHAP3b: by its band, x0.5 Failing (never none), x1.5 Thriving and Ascendant (`hallWritCountIn`) | 4 |
@@ -886,7 +922,7 @@ is Mac's to overrule.
 | Merit cap | 600 an account a chapter a week (`MERIT_CAP_WEEK`); one chapter of a guild an account a seat week (`meritWeekOf`) | 5.1 |
 | Strength | 0-100, start 50 (`STRENGTH_START`); `+ min(10, floor(merit / target))` (`STRENGTH_STEP_MAX`, `strengthAfter`); -3 a week with no Merit (`STRENGTH_IDLE`); above 50, -3 toward 50 a week short of its target (`STRENGTH_SHORT`, AUDIT CHAP3 E4); halfway to 50 at a Season's end (`strengthSeasonEnd`) | 5.2 |
 | Strength's target | 60 Merit a point for each hundred active accounts (`STRENGTH_TARGET`, `strengthTarget`) | 5.2 |
-| The Turnings a read settles | 8 at most (`CHAPTER_WEEKS_MAX`, `server-account/src/npcChapters.js`); every region's chapters kept 60 seconds an isolate (`ALL_CHAPTERS_KEPT_MS`) | 5.2 |
+| The Turnings a read settles | 8 at most (`CHAPTER_WEEKS_MAX`, `server-account/src/npcChapters.js`); every region's chapters read from their computed rows (`npc_hall_regions`, AUDIT CHAP3 S3), one row a region (AUDIT CHAP4 R3: this named `ALL_CHAPTERS_KEPT_MS`, gone with S3); the weeks the Chapters are shut recorded `off`, nothing moved (AUDIT CHAP4 S2) | 5.2 |
 | Bands | Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100 (`CHAPTER_BANDS`, `chapterBandOf`) | 5.2 |
 | Failing price | x1.25 on training, a spell bought, a spell made (`CHAPTER_BANDS`, `chapterPriceFactor`, `chapterPriced`) | 5.2 |
 | Thriving and Ascendant price | x0.9 on the same | 5.2 |
@@ -899,12 +935,17 @@ is Mac's to overrule.
 | Merit window | 4 weeks | 6 |
 | Unearned seat | vacant | 6 |
 | Patron | one a chapter a Season, highest Marks bid, burnt | 8 |
-| Holder's Merit | x1.2 | 6 |
+| Holder's Merit | no carry - a sitting holder keeps an EQUAL standing (`chapterSeatPlan`'s first tie-break; AUDIT CHAP4 E1, decided: the x1.2 it carried made a holder at 2000 of the four weeks' 2400 unbeatable) | 6 |
 | Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10; moved as section 7's table says (AUDIT CHAP R11) | 7 |
 | Decline's weekly fall | 2 Strength, unless the week's Merit meets twice the target | 7 |
 | Ascendancy's prices | a further tenth off | 7 |
 | Rivalry's swing | 10 Strength | 7 |
 | Crackdown's shut line | Strength 30 | 7 |
+| The Chronicle the Hall reads | a region's newest 60 rows, the hidden guilds' left out first (`CHAPTER_CHRONICLE_ROWS`, `server-account/src/npcChapters.js`; AUDIT CHAP4 S3) | 6 |
+| A name on the hall's roll | 32 characters at most, the realm's own cap (`CHAPTER_ROLL_NAME_MAX`) | 9 |
+| The hall's evenings by band | Failing 1, Steady 2, Thriving and Ascendant 3 a week, from the member's own day and three and five after it (`GUILD_DAYS_BY_BAND`, `GUILD_DAY_OFFSETS`, `src/systems/livingWorld/dayPlan.js` - the living world's own law module, as LW0 keeps it) | 9 |
+| The town's talk of a chapter | on 2 days of the week, its own, three apart (`CHAPTER_NEWS_DAYS`, `src/systems/livingWorld/lines.js`); none Steady | 9 |
+| The seats' beat on the tab | 10 minutes with nothing to claim before the Roll is asked again (`ROLL_SEATS_MS`, AUDIT CHAP4 C1) | 6 |
 
 ---
 
@@ -1139,7 +1180,7 @@ book's key and bound).
   week short of its target, above 50, three back toward 50) and `meritOfReceipt` (a receipt's 50 shared among its
   chapters), read by `npcReceipts.js` creditReceipt. CHAP3a's receipt pin moved (25 each, PIN MOVED).
 - **Pins.** `test/audit_chap3.test.js`, 18 tests, one a finding or a group; `tools/mutants/audit_chap3.json`, 45 mutants:
-  40 dead, 5 equivalent as recorded. Thirty older records re-aimed at the code the fixes moved, all dead - two of them
+  40 dead, 5 equivalent as recorded (AUDIT CHAP4: 41 and 4 since - `A3-S2-OFF` dies with S2). Thirty older records re-aimed at the code the fixes moved, all dead - two of them
   (AUDIT CHAP2's `T-LAW-ADOPT-BASE-HAS`, CHAP3c's `CHAP3C-SHEET-BUSY`) no longer equivalent, killed by new pins. The
   pins the fixes moved say PIN MOVED.
 
@@ -1148,7 +1189,7 @@ book's key and bound).
 The fourth slice's service half; sections 3.5 and 6 carry the law and what building it narrowed (BUILT, CHAP4a).
 
 - **The law.** `src/net/npcChapterLaw.js`: the seats' numbers (`CHAPTER_SEAT_KINDS`, `CHAPTER_SEATS`, `SEAT_RANK`,
-  `SEAT_TENURE_S`, `SEAT_ACCOUNT_AGE_S`, `SEAT_MERIT_WEEKS`, `SEAT_HOLDER_CARRY`), the book's cap (`ROLL_BOOK_RANK_MAX`,
+  `SEAT_TENURE_S`, `SEAT_ACCOUNT_AGE_S`, `SEAT_MERIT_WEEKS`, `SEAT_HOLDER_CARRY` - gone, AUDIT CHAP4 E1), the book's cap (`ROLL_BOOK_RANK_MAX`,
   `rollBookRankOf`), Eligible (`seatEligibleAt`), a standing (`seatScoreOf`), the placing (`chapterSeatPlan`) and what it
   changed (`seatChangesOf`).
 - **The service.** `server-account/src/npcChapters.js`: the Turning's seats (`seatsPlaced`, in settleChapterWeek's
@@ -1160,7 +1201,7 @@ The fourth slice's service half; sections 3.5 and 6 carry the law and what build
   migrations (who is placed and who never - under the line, a second short, an account too new, dead, gone; the window;
   the carry against a newcomer; `since` through a move; the Chronicle; a gate's agreement; the developers' weeks;
   Eligible at the Turning); the Roll's rank and seats through its routes; a delete through its route.
-  `tools/mutants/chap4a.json`: 44 mutants, 43 dead, 1 equivalent as recorded. ACC1b's table list moved (PIN MOVED).
+  `tools/mutants/chap4a.json`: 44 mutants, 43 dead, 1 equivalent as recorded (AUDIT CHAP4: 42, 41 and 1 since - the carry's two retired with it, E1). ACC1b's table list moved (PIN MOVED).
 
 ## CHAP4b - the seats on the client, as built (2026-10-08, Mac: "Your decision", on "Whats next")
 
@@ -1262,3 +1303,31 @@ decision 2 narrows by the one input it names (`06-Systems/Living-World.md`).
   they move - the same day asked again too - as a reader that read them first; the town's talk (not Steady, two days
   its own, every reader the same, none offline); the words; the wiring. `tools/mutants/chap5b.json`: 38 mutants, all
   dead. Four LW-ERRANDS mutants re-aimed by content (the days, the trades' and the court's evenings, the members).
+
+## AUDIT CHAP4 - everything so far read again (2026-10-09, Mac: "Lets do a deep audit on everything so far")
+
+Six lenses read CHAP0 to CHAP5b and two merges of main (`01-Overview/Audit-Chapters-4.md` is the record, every finding
+and its fix). What it changed here: 3.5 (the ceiling before the Roll's first word; what DFU gives once at 8 or 9, not
+given online; a seat's title at its halls); section 4 (the families the port's own choice); 5.1 (`standings`' reader);
+5.2 (the active count DECIDED, E4; the orders' band in their evenings and talk; the underworld's halls still open);
+section 6 (no carry - a holder keeps an equal standing, DECIDED E1; an active membership alone, confirmed chapters, the
+shut weeks, last week's Master's Focus, the Chronicle counted after the hidden guilds; the relay's deploy); section 9
+(whoever the shelf refuses reads the roll and DFU's refusal line); section 11 (`open` with 'off', `focus`, the history's
+`at`, `dormant`); Appendix A (the computed regions, the book's 7, no carry, the Chronicle's 60, the roll's name, the
+evenings by band, the talk's days, the seats' beat).
+
+- **The service.** `npcChapters.js`: the shut weeks recorded and moving nothing, the opening week's Strength from 50
+  everywhere, the seats' four weeks the last four open; seats only at confirmed chapters for a standing character, an
+  active membership; titles at confirmed chapters; the Focus after the Turnings due, by last week's Master; the
+  Chronicle's hidden guilds left out in its SQL. `professions.js`: an `off` board read records the shut weeks.
+  `npcRoll.js`: the dormant line kept; `npcMerit.js`, `npcReceipts.js`: an active membership alone. Migrations `0095`
+  (`dormant`), `0099` (`open` takes 'off') and `0100` (two indexes) grown in place (nothing shipped).
+- **The client.** `npcChapterLaw.js`: no carry; the dormant mark (`rollMembersOf`, its check, its key); a chapter's line
+  by the chapter. `npcRollTracker.js`: the seats asked again on a beat (`ROLL_SEATS_MS`). `npcHallBook.js`:
+  `chapterFactionOf`. `world.js`: a town's evenings by its own region; the ceiling before the first word; one Hall of
+  Records read. `worldModes.js`: a seat's title at its halls; a knightly order's gifts by the book; the refused shelf's
+  line. `lines.js`: the talk reworded. `noticeWindow.js`: a late Focus said in the chat.
+- **Pins.** `test/audit_chap4.test.js`, 27 tests, one a finding or a group; `tools/mutants/audit_chap4.json`, 71
+  mutants, all dead. Thirty-seven older records re-aimed at the code the fixes moved, all dead; CHAP4a's two carry
+  records retired with it (42 there now); AUDIT CHAP3's `A3-S2-OFF` no longer equivalent. The pins the fixes moved say
+  PIN MOVED.

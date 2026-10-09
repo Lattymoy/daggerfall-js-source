@@ -66,8 +66,8 @@
   {
     "name": "CHAP1-MEMBERS-BOOKS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "? [store.mortal, store.vampire] : [store];\n  /** @type {Map<number, number>} */",
-    "new": "? [store.mortal] : [store];\n  /** @type {Map<number, number>} */",
+    "old": "const books = both ? [store.mortal, store.vampire] : [store];",
+    "new": "const books = both ? [store.mortal] : [store];",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"

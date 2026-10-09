@@ -276,7 +276,7 @@ test('KNIGHT-HOUSE the hosts, by source: the door never prices the knight\'s own
   assert.match(arm, /if \(host\.homeTownsMissing\?\.\(\)\) return \{ rows: \[\{ text: accountRefusalText\('home-towns'\), center: true \}\] \};/);
   assert.match(arm, /if \(host\.homeLayoutsHeard\?\.\(\) === false\) \{ host\.hearHomeLayouts\?\.\(\); return \{ rows: \[\{ text: accountRefusalText\('home-layout'\), center: true \}\] \}; \}/);
   assert.ok(arm.indexOf('homeLayoutsHeard') < arm.indexOf('allocateHouseToPlayer('), 'the gates before the gift');
-  assert.match(arm, /claimHouse\(membership\);\n\s*surfacePlayer\(\);\n\s*if \(host\.holdRealmDeed\) holdGrantedHouse\(region, membership\);/);
+  assert.match(arm, /claimHouse\(kept\);\n\s*surfacePlayer\(\);\n\s*if \(host\.holdRealmDeed\) holdGrantedHouse\(region, kept\);/);   // PIN MOVED (AUDIT CHAP4 E2): the book's membership, never a seat's
   const give = m.slice(m.indexOf('function holdGrantedHouse(region, membership) {'), m.indexOf('function currentInteriorScene()'));
   assert.match(give, /if \(r\?\.ok \|\| \(r\?\.error !== 'home-taken' && r\?\.error !== 'home-layout'\)\) return;/, 'given back for a taken building or another layout alone');
   assert.match(give, /if \(now\?\.buildingKey !== key \|\| \(Number\(now\.mapId\) >>> 0\) !== mapId\) return;/, 'never a deed that moved on');

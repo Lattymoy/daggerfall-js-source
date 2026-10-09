@@ -65,7 +65,7 @@ import { MARKS_RID_RE } from './marksLaw.js';
 import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
-import { seatWeekOf, SIEGE_DEFENCE_BONUS, chronicleWhen } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4a: a holder's carry
+import { seatWeekOf, chronicleWhen } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
@@ -92,6 +92,9 @@ export const ROLL_DELTA_MAX = MAX_REPUTATION - MIN_REPUTATION;
 export const ROLL_RANK_MAX = RANK_REQ_REPUTATION.length - 1;
 /** A client claims at most once in this long - reputation moves rarely, and the database is shared. */
 export const ROLL_CLAIM_MS = 60_000;
+/** AUDIT CHAP4 C1: how long the tab holds the Roll's word on its seats with nothing to claim before it asks again - a
+ *  Turning that unseats (or seats) the character is heard within it (the sheet's own beat, SHEET_KEPT_MS). */
+export const ROLL_SEATS_MS = 10 * 60_000;
 /** A claim the network lost, or the service could not take, is asked again after this, doubling to the cap. */
 export const ROLL_RETRY_MS = 30_000;
 export const ROLL_RETRY_MAX_MS = 15 * 60_000;
@@ -278,14 +281,20 @@ export function rollFactionOfGuild(/** @type {unknown} */ name) {
  * at rank below 0 is no member (guilds.js isMember).
  * BOTH BOOKS, A RECORDED DEPARTURE (AUDIT CHAP D6): DFU's GuildManager reads the ACTIVE book alone, and a vampire's
  * mortal guilds are dormant there, not lost - a cure swaps them back. The Roll keeps their tenure running through the
- * curse, as the book keeps them; CHAP4's seat asks its own question of an active membership.
- * @param {any} store
+ * curse, as the book keeps them. AUDIT CHAP4 D1: and says which are dormant - `d: 1` on a line the ACTIVE book (the
+ * vampire's where `vampire`, else the mortal's) does not hold - so the service gives a dormant membership no Merit, no
+ * member writ and no seat (the question CHAP4's seat was to ask of an active membership).
+ * @param {any} store @param {boolean} [vampire]
  */
-export function rollMembersOf(store) {
+export function rollMembersOf(store, vampire = false) {
   if (!store || typeof store !== 'object') return null;
-  const books = Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];
+  const both = Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire');
+  const books = both ? [store.mortal, store.vampire] : [store];
+  const active = both ? (vampire ? store.vampire : store.mortal) : store;
   /** @type {Map<number, number>} */
   const ranks = new Map();
+  /** @type {Set<number>} the factions the active book holds */
+  const awake = new Set();
   for (const book of books) {
     if (!book || typeof book !== 'object') continue;
     for (const m of Object.values(book)) {
@@ -293,9 +302,10 @@ export function rollMembersOf(store) {
       const rank = whole(m?.rank);
       if (f == null || !(rank >= 0)) continue;
       ranks.set(f, Math.max(ranks.get(f) ?? 0, Math.min(ROLL_RANK_MAX, rank)));
+      if (book === active) awake.add(f);
     }
   }
-  return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => ({ f, rank }));
+  return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => (awake.has(f) ? { f, rank } : { f, rank, d: 1 }));
 }
 
 /** A memberships list a claim may carry: at most twenty-two lines, each a guild faction once, its rank 0..9. */
@@ -305,9 +315,10 @@ export function rollMembersOk(/** @type {unknown} */ v) {
   let temples = 0, orders = 0;
   for (const m of v) {
     if (!m || typeof m !== 'object' || Array.isArray(m)) return false;
-    const { f, rank } = /** @type {any} */ (m);
+    const { f, rank, d } = /** @type {any} */ (m);
     if (!isRollFaction(f) || seen.has(f)) return false;
     if (typeof rank !== 'number' || !Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;
+    if (d !== undefined && d !== 1) return false;   // AUDIT CHAP4 D1: a dormant line's mark, and only that
     if (DIVINE_SET.has(f)) temples++;
     if (ORDER_SET.has(f)) orders++;
     seen.add(f);
@@ -318,7 +329,7 @@ export function rollMembersOk(/** @type {unknown} */ v) {
 }
 
 /** The memberships as one comparable word - a claim is due when it changes; null (no book) is never a change. */
-export const rollMembersKey = (/** @type {{ f: number, rank: number }[] | null} */ list) => (list ? list.map((m) => `${m.f}:${m.rank}`).join(',') : null);
+export const rollMembersKey = (/** @type {{ f: number, rank: number, d?: number }[] | null} */ list) => (list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null);   // AUDIT CHAP4 D1: a book's swap moves it
 
 /** A faction's name as a sentence carries it: FACTION.TXT's "The Mages Guild" mid-sentence is "the Mages Guild". */
 export const rollFactionName = (/** @type {unknown} */ raw) => (typeof raw === 'string' && raw ? raw.replace(/^The /, 'the ') : 'the guild');
@@ -358,9 +369,10 @@ export const HALL_WRIT_SALT = 0x4a11;
 /** A hall writ's id: the day, the region, the guild faction and the slot. */
 export const hallWritId = (/** @type {number} */ day, /** @type {number} */ region, /** @type {number} */ faction, /** @type {number} */ slot) => `h:${day}:${region}:${faction}:${slot}`;
 
-/** THE KINDS OF MATERIAL A GUILD ASKS FOR (nodeLaw.js material families): the Fighters Guild and the knightly orders
- *  arms and armour - metal and wood; the Mages Guild reagents - herbs and metal; the temples and the Dark Brotherhood
- *  herbs (remedies, and their poisons); the Thieves Guild whatever its fences can move. */
+/** THE KINDS OF MATERIAL A GUILD ASKS FOR (nodeLaw.js material families) - the port's own choice (CHAP2a; AUDIT CHAP4 D5:
+ *  DFU's guilds trade in none of it, and its Mages Guild and two temples sell no potions at all): the Fighters Guild and
+ *  the knightly orders arms and armour - metal and wood; the Mages Guild reagents - herbs and metal; the temples and the
+ *  Dark Brotherhood herbs (remedies, and their poisons); the Thieves Guild whatever its fences can move. */
 export function hallFamiliesOf(/** @type {number} */ faction) {
   if (faction === GUILD_FACTION_IDS.FightersGuild) return ['metals', 'wood'];
   if (faction === GUILD_FACTION_IDS.MagesGuild) return ['herbs', 'metals'];
@@ -374,7 +386,10 @@ export function hallFamiliesOf(/** @type {number} */ faction) {
 /** THE HIDDEN TWO: the Thieves Guild's and the Dark Brotherhood's halls are kept from everyone but their members (DFU's
  *  ThievesGuild.cs/DarkBrotherhood.cs reveal them on joining), so their chapters' writs are posted to their members on
  *  the Roll alone. */
-export const hallHidden = (/** @type {unknown} */ faction) => faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;
+/** The hidden guilds' two factions - the Thieves Guild's and the Dark Brotherhood's (AUDIT CHAP4 S3: a query leaves them
+ *  out before it counts, as `hallHidden` does after). */
+export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);
+export const hallHidden = (/** @type {unknown} */ faction) => /** @type {readonly unknown[]} */ (HIDDEN_HALL_FACTIONS).includes(faction);
 
 // ═══ CHAP2b - THE RECEIPTS' STANDING AND THE RECEIPT WRITS (Chapters-Arc 3.3, 4) ═══
 //
@@ -628,15 +643,17 @@ export function chapterBandOf(/** @type {unknown} */ strength) {
 }
 /** A chapter's hall writs a day by its band: half (never none) Failing, half again Thriving and Ascendant. */
 export const hallWritCountIn = (/** @type {unknown} */ active, /** @type {unknown} */ strength) => Math.max(1, Math.round(hallWritCount(active) * chapterBandOf(strength).writs));
-/** The board's line for a chapter - "The Fighters Guild here is Thriving (Strength 74)". */
+/** The board's line for a chapter - "The chapter of the Fighters Guild here is Thriving (Strength 74)" (AUDIT CHAP4 C4:
+ *  the chapter the subject - "The Knights of the Dragon here is" was no sentence). */
 export function chapterLineOf(/** @type {{ faction: number, strength: number }} */ c) {
-  return `The ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;
+  return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;
 }
 
 // ─── CHAP3c: THE BANDS ON THE HALLS (Chapters-Arc 5.2) ──────────────
 // What a chapter's band does to its hall, online: training, a spell bought and a spell made cost a quarter more Failing
 // and a tenth less Thriving and Ascendant; the guild's shelf is stocked as a hall four qualities poorer Failing, four
-// richer Thriving and Ascendant (DFU's stock law reads a hall's quality - more items, deeper ones). DFU's own price and
+// richer Thriving and Ascendant (DFU's stock law reads a hall's quality for the count alone - more items, never better
+// ones; AUDIT CHAP3 D1, AUDIT CHAP4 R16). DFU's own price and
 // stock laws stay the base: the band is laid over them, never written into them. A hall whose chapter's Strength is not
 // known - offline, or a chapter the sheet does not name - is DFU's own.
 
@@ -659,8 +676,9 @@ export function chapterShelfQuality(/** @type {number} */ quality, /** @type {un
 
 // ─── CHAP4a: THE SEATS (Chapters-Arc 3.5, 6) ────────────────────────
 // Ranks 8 and 9 are seats: each chapter's one Master (rank 9) and three officers (rank 8), placed at its Turning by
-// the Merit its Eligible members earned it over the last four weeks - a sitting holder's x 1.2 (the seats' own carry,
-// townSeatLaw.js SIEGE_DEFENCE_BONUS) - ties to the longer tenure, then the lower character id. Eligible is the half of
+// the Merit its Eligible members earned it over the last four weeks - ties to the sitting holder (AUDIT CHAP4 E1: its
+// x 1.2 carry, the seats' own, made a holder near the week's cap unbeatable), then the longer tenure, then the lower
+// character id. Eligible is the half of
 // the rank law the service holds (AUDIT CHAP R2): a member whose reputation on the Roll meets rank 8's need, fourteen
 // days in the guild on the Roll, on an account seven days old. A seat no Eligible member has Merit for stands vacant -
 // never filled from below. One seat an account a guild (realm-wide: an account's alts never hold two of one guild's);
@@ -680,8 +698,6 @@ export const SEAT_TENURE_S = 14 * 86_400;
 export const SEAT_ACCOUNT_AGE_S = 7 * 86_400;
 /** The weeks of Merit a Turning places the seats by - the week it settles and the three before. */
 export const SEAT_MERIT_WEEKS = 4;
-/** A sitting holder's Merit, carried (Seats-Arc 5.2 step 3's 1.2). */
-export const SEAT_HOLDER_CARRY = SIEGE_DEFENCE_BONUS;
 
 /** ELIGIBLE at `atS`: a member of the guild on the Roll, its reputation there at the seat's line, its tenure fourteen days,
  *  its account seven days old. */
@@ -692,15 +708,18 @@ export function seatEligibleAt(/** @type {{ member?: unknown, rep?: unknown, joi
     && at(row.registeredAt) && /** @type {number} */ (row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S;
 }
 
-/** A candidate's standing for a seat, in tenths of Merit (whole, so a carried 1.2 never ties by a float's error). */
-export const seatScoreOf = (/** @type {number} */ merit, sitting = false) => Math.round(Math.max(0, whole(merit)) * 10 * (sitting ? SEAT_HOLDER_CARRY : 1));
+/** A candidate's standing for a seat, in tenths of Merit. AUDIT CHAP4 E1 (decided): no carry - a sitting holder keeps an
+ *  EQUAL standing (chapterSeatPlan's first tie-break), never a larger one. The ×1.2 it carried (Seats-Arc 5.2 step 3's
+ *  siege bonus) met the week's cap: no challenger shows more than 4 x 600 Merit, so a holder at 2000 of 2400 could not be
+ *  out-earned at all. */
+export const seatScoreOf = (/** @type {number} */ merit) => Math.round(Math.max(0, whole(merit)) * 10);
 
 /**
  * THE SEATS A TURNING PLACES: `candidates` `[{ faction, region, char, account, merit, joinedAt }]` - each Eligible
  * member's four weeks' Merit at one chapter - and `sitting` the seats as they stand (`[{ faction, region, char }]`).
- * Every chapter's Master first, realm-wide, then its officers, each in the order of standing (seatScoreOf, the sitting
- * carried), the longer tenure, the lower character id - the chapter's own key last, so one candidate's chapters are
- * taken in one order. A candidate with no Merit takes none; one seat an account a guild; one Master's seat a character.
+ * Every chapter's Master first, realm-wide, then its officers, each in the order of standing (seatScoreOf), the sitting
+ * holder at that chapter (AUDIT CHAP4 E1: its carry is the tie, never a larger standing), the longer tenure, the lower
+ * character id - the chapter's own key last, so one candidate's chapters are taken in one order. A candidate with no Merit takes none; one seat an account a guild; one Master's seat a character.
  * Answers `[{ faction, region, char, account, seat }]`, by chapter, Master first.
  * @param {Iterable<any>} candidates @param {Iterable<any>} [sitting]
  */
@@ -709,8 +728,8 @@ export function chapterSeatPlan(candidates, sitting = []) {
   const sat = new Set([...sitting].map((s) => `${key(s)}|${s.char}`));
   const order = [...candidates]
     .filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) && typeof c?.char === 'string' && typeof c?.account === 'string' && whole(c?.merit) > 0)
-    .map((c) => ({ ...c, score: seatScoreOf(c.merit, sat.has(`${key(c)}|${c.char}`)) }))
-    .sort((a, b) => b.score - a.score || whole(a.joinedAt) - whole(b.joinedAt) || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)
+    .map((c) => ({ ...c, score: seatScoreOf(c.merit), held: sat.has(`${key(c)}|${c.char}`) ? 1 : 0 }))
+    .sort((a, b) => b.score - a.score || b.held - a.held || whole(a.joinedAt) - whole(b.joinedAt) || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)
       || a.faction - b.faction || a.region - b.region);
   /** @type {Map<string, { master: any[], officer: any[] }>} */
   const seats = new Map();

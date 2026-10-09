@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site.
+-- deploy runs (ACC1-CI). Deploy this service (acct98 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site.
 --
 -- Mac: "Your decision", on "Whats next" (bible/11-Multiplayer/Chapters-Arc.md
 -- sections 3.5 and 6, CHAP4a). The law is src/net/npcChapterLaw.js; the
@@ -42,3 +42,8 @@ CREATE TABLE IF NOT EXISTS npc_chapter_history (
   at        INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_chapter ON npc_chapter_history (faction, region, seq);
+-- AUDIT CHAP4 S1 (grown in place - nothing of it shipped): the two readers' own - a character's lost Masters' seats this
+-- Season (chapterTitlesOfAccount, every token's mint once CHAPTER_TITLES is on) and a region's newest rows (the Hall of
+-- Records' chapterChronicle). Without them each read scanned every row the Chronicle ever kept.
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_char ON npc_chapter_history (char_id, week);
+CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_region ON npc_chapter_history (region, seq);

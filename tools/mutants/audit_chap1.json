@@ -286,8 +286,8 @@
   {
     "name": "ACHAP-T6-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "list.map((m) => `${m.f}:${m.rank}`)",
-    "new": "list.map((m) => `${m.f}`)",
+    "old": "list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`)",
+    "new": "list.map((m) => `${m.f}${m.d === 1 ? 'd' : ''}`)",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"
@@ -366,8 +366,8 @@
   {
     "name": "ACHAP-T5-MEMBERS",
     "file": "src/net/npcRollTracker.js",
-    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships),",
-    "new": "members: () => rollMembersOf(entityOf()?.guildMembership),",
+    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),",
+    "new": "members: () => rollMembersOf(entityOf()?.guildMembership, rollVampireOf(entityOf())),",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"

@@ -3058,7 +3058,7 @@ export function createWorldModes(host) {
     const access = bookshelfAccess({ buildingType: b.buildingType, guild, membership });
     if (!access.allowed) {
       const roll = chapterRollOf(guild);   // CHAP5a: refused the shelf, a stranger to the guild reads its roll alone
-      interiorOverlay = roll ? chapterRollWindow(roll) : new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly)
+      interiorOverlay = roll ? chapterRollWindow({ ...roll, lines: [...roll.lines, access.text] }) : new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly) - AUDIT CHAP4 D4: said under the roll, not dropped
       return;
     }
     const roll = chapterRollOf(guild);   // CHAP5a: the shelf's first book
@@ -3346,7 +3346,8 @@ export function createWorldModes(host) {
       guildTitle: () => {
         const dict = townTalk?.factionDict ?? null;
         const g = guildFactionId != null ? guildOfFaction(guildFactionId, resolveVariantGuild(dict), dict) : null;
-        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;
+        // AUDIT CHAP4 D3: the counter of a chapter's hall names a seat's title, as the hall's popup does
+        return g ? getTitle(membershipOf(seatedBook(activeMemberships(playerEntity), membershipKey(g), host.chapterSeatRank?.(g.factionId) ?? null), g), playerEntity, g) : null;
       },
     });
   }
@@ -5367,7 +5368,7 @@ export function createWorldModes(host) {
     const guildMacros = {
       playerName: playerEntity.name,
       factionName: guild?.divine ?? orderName,
-      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),
+      guildTitle: () => getTitle(membershipOf(seated(), guild), playerEntity, guild),   // AUDIT CHAP4 D3: a seat's title at its chapter's halls, as their services and quests say it (Chapters-Arc 3.5)
       god: guild?.divine ?? null,
       godDesc: guild?.divine ? (DEITY_DESCRIPTIONS[guild.divine] ?? null) : null,
       dungeon: () => revealedDungeon,
@@ -5578,6 +5579,10 @@ export function createWorldModes(host) {
   function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null, summonerFactionId = null }) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
+    // AUDIT CHAP4 E2: what DFU GIVES at a rank and the character KEEPS - a knightly order's armour and its house - is the
+    // book's rank's, never a seat's (`memberships` the seated book, CHAP4b): one week as a chapter's Master was a rank-9
+    // house held for good, and a ring passing the seat round housed every one of it. Offline the two are one book.
+    const kept = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;
     const b = interiorBuilding;
     // CHAP3c (Chapters-Arc 5.2): online, this hall's chapter's Strength from the chapter sheet (the host's - none
     // offline, nor for a chapter the sheet does not name): its band on the training, spells and shelf below
@@ -5710,7 +5715,7 @@ export function createWorldModes(host) {
     // over the reward pile, and taking a piece is what claims the
     // rank (systems/knightlyGifts.js).
     if (destination === 'guildServiceReceiveArmor') {
-      const decision = receiveArmorDecision(membership, {
+      const decision = receiveArmorDecision(kept, {   // AUDIT CHAP4 E2: the book's rank
         makeArmor: (templateIndex, material) => mintCondition(setItemFields({ group: 'Armor', templateIndex, material })),   // MAC-N1: a gifted cuirass had no value either - the corpse's shape at a second site
       });
       if (decision.kind === 'refuse') {
@@ -5720,7 +5725,7 @@ export function createWorldModes(host) {
       const win = interiorInventory({
         chooseOne: {
           items: decision.pieces,
-          onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
+          onChoose: () => { claimArmor(kept, decision.mask); surfacePlayer(); },
         },
       });
       // DISC10-E: the smith's gift opens the PACK, so a transformed beast is
@@ -5899,7 +5904,7 @@ export function createWorldModes(host) {
         void homes.ensure(dir?.mapId ?? 0);
         return { rows: [{ text: accountRefusalText('home-layout'), center: true }] };
       }
-      const decision = receiveHouseDecision(membership, {
+      const decision = receiveHouseDecision(kept, {   // AUDIT CHAP4 E2: the book's rank
         ownsHouse: ownsHouse(playerEntity.houses, region),
         housesForSale: homes ? currentHousesForSale().filter((h) => !homes.homeAt(dir?.mapId ?? 0, h.buildingKey)) : currentHousesForSale(),
         alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
@@ -5924,9 +5929,9 @@ export function createWorldModes(host) {
         playerName: playerEntity.name ?? '',
         regionName: dir?.regionName ?? '',
       });
-      claimHouse(membership);
+      claimHouse(kept);
       surfacePlayer();
-      if (host.holdRealmDeed) holdGrantedHouse(region, membership);
+      if (host.holdRealmDeed) holdGrantedHouse(region, kept);
       return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.', center: true }] };
     }
     if (destination === 'guildServiceTeleport') {

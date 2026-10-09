@@ -120,7 +120,7 @@ async function stand(t) {
   const week = meritWeekOf(NOON);
   raw.prepare('INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, ?, 0)').run(week - 1, 'on');   // nothing due
   raw.prepare('INSERT INTO npc_chapters (faction, region, strength, week, merit, at) VALUES (41, 21, 50, ?, 0, 0), (40, 21, 50, ?, 0, 0)').run(week - 1, week - 1);
-  const seat = (char, f, region, kind) => raw.prepare('INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(f, region, char, who.id, kind, week, week, NOON);
+  const seat = (char, f, region, kind) => raw.prepare('INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(f, region, char, who.id, kind, week - 1, week - 1, NOON);   // PIN MOVED (AUDIT CHAP4 S4): the seats last week's Turning placed
   return { ...s, raw, who, R, week, seat };
 }
 
@@ -221,7 +221,7 @@ test('CHAP4d the board\'s Work tab: a chapter\'s Focus said under its line; its 
 test('CHAP4d the wiring: the host\'s Focus door and the Hall\'s Chronicle read; the routes; the writs\' post reads the Focus (mutants: each seam)', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /setFocus: hallDoor && realmSession \? \(faction, focus\) => hallDoor\.focus\(realmSession\.id, faction, region, focus\) : null,/);
-  assert.match(w, /const ch = hallDoor && rollTracker\?\.held \? await hallDoor\.history\(seat\.region\)\.catch\(\(\) => null\) : null;\n\s+return r\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);
+  assert.match(w, /const \[r, ch\] = await Promise\.all\(\[\n\s+seatBook\.records\(seat\.key\),\n\s+hallDoor && rollTracker\?\.held \? hallDoor\.history\(seat\.region\)\.catch\(\(\) => null\) : null,\n\s+\]\);\n\s+return r\?\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);   // PIN MOVED (AUDIT CHAP4 C5, C6): one read, both together
   const ix = src('server-account/src/index.js');
   assert.match(ix, /: path === '\/v1\/chapters\/focus' \? await setChapterFocus\(ctx, who\.player, env, body\)/);
   assert.match(ix, /: path === '\/v1\/chapters\/history' \? await chapterChronicle\(ctx, who\.player, env, body\)/);

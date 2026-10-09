@@ -101,8 +101,8 @@
   {
     "name": "CHAP2B-MEMBERS-PLAYER",
     "file": "server-account/src/npcReceipts.js",
-    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1\n    AND EXISTS",
-    "new": "WHERE char_id = ?1 AND member = 1\n    AND EXISTS",
+    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0\n    AND EXISTS",
+    "new": "WHERE char_id = ?1 AND member = 1 AND dormant = 0\n    AND EXISTS",
     "tests": [
       "test/chap2b_receipts.test.js"
     ],

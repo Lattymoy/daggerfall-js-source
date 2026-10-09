@@ -1441,6 +1441,9 @@ async function postWrits(db, day, region, nowS, zero = null, open = 'off') {
   // while the region has no witnessed chapter, so a chapter confirmed later in the day posts that day
   const hallDone = chaptersSwitchOf(open) === 'off' || !!(await db.prepare('SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first());
   if (courtDone && hallDone) return;
+  // AUDIT CHAP4 S2: the Chapters shut, the weeks that pass recorded shut - on a region's first read of the day, as the
+  // Court's writs are posted (npcChapters.js settleChaptersDue)
+  if (chaptersSwitchOf(open) === 'off') await settleChaptersDue(db, nowS, zero, open);
   // AUDIT CHAP2 S1: the chapters (the isolate's kept answer) asked BEFORE the ground - a region with no chapter writes
   // no hall_writ_days, and its every board read re-read the region's witnessed ground and the week's active accounts
   const chapters = hallDone ? [] : await regionChapters(db, region, nowS * 1000);
@@ -1509,7 +1512,7 @@ async function chapterLines(db, region, nowS, members, character = null) {
   const strengths = await regionStrengths(db, region, chapters);
   // CHAP4d: and each chapter's Focus this week, and the Focuses its Master may choose where the reader is its Master
   const focuses = await regionFocuses(db, region, meritWeekOf(nowS));
-  const masters = await masterSeatsIn(db, character, region);
+  const masters = await masterSeatsIn(db, character, region, meritWeekOf(nowS));   // AUDIT CHAP4 S4: last week's Turning's seats
   return chapters.map((f) => ({
     faction: f, strength: strengths.get(f), band: chapterBandOf(strengths.get(f)).band, focus: focuses.get(f) ?? null,
     ...(masters.has(f) ? { master: true, focuses: chapterFocusesOf(f) } : {}),

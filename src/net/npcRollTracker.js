@@ -50,9 +50,9 @@
 // A CLAIM THE NETWORK LOST IS SENT AGAIN AS IT WAS - the same id, the same
 // lines - so a claim that landed while its answer was lost is answered as
 // a repeat and never credited twice; what moved since rides the next one.
-// A refusal that names a shape, a lease or a shut Roll ends the tracker for
-// the page (ROLL_STOPS); anything else is asked again, waiting longer each
-// time. Shut, the save keeps the standing exactly as before CHAP1.
+// A refusal that names a shape or a shut Roll ends the tracker for the page
+// (ROLL_STOPS), a lease's for that lease alone (AUDIT CHAP2 C4; AUDIT CHAP4
+// R17); anything else is asked again, waiting longer each time. Shut, the save keeps the standing exactly as before CHAP1.
 //
 // CHAP4b: AND RANKS 8 AND 9 ARE SEATS. Every adoption holds the book's
 // own rank at 7 (`cap`, rollBookCap - said once a hold, `onCapped`), and
@@ -66,7 +66,7 @@
 
 import {
   ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
-  rollBookCap, rollSeatsOf,
+  rollBookCap, rollSeatsOf, ROLL_SEATS_MS,
 } from './npcChapterLaw.js';
 import { setReputation } from '../systems/factionRep.js';
 
@@ -104,13 +104,17 @@ export function rollEntityDoors(/** @type {() => any} */ entityOf) {
       const store = entityOf()?.factionRep;
       if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
     },
-    members: () => rollMembersOf(entityOf()?.guildMemberships),
+    // AUDIT CHAP4 D1: the active book the curse reads (guilds.js activeMemberships' own test) - its lines awake, the other's dormant
+    members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),
     cap: () => rollBookCap(entityOf()?.guildMemberships),   // CHAP4b: the book held at 7
   };
 }
 
-/** A Roll's members as a claim carries them: `[{ f, rank }]`. */
-const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((m) => ({ f: m.f, rank: m.rank })) : []);
+/** A Roll's members as a claim carries them: `[{ f, rank, d? }]` (AUDIT CHAP4 D1: a dormant line's mark). */
+const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((m) => (m.d === 1 ? { f: m.f, rank: m.rank, d: 1 } : { f: m.f, rank: m.rank })) : []);
+/** AUDIT CHAP4 D1: whether the entity's ACTIVE book is the vampire's - guilds.js activeMemberships' own reading of the
+ *  curse (DFU's GuildManager.Memberships: HasVampirism). */
+export const rollVampireOf = (/** @type {any} */ entity) => !!(entity?.racialOverride && !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');
 
 /**
  * The tracker. `io` is accountClient.js accountRoll's door (`read`, `claim`); `character()` and `lease()` the realm
@@ -140,6 +144,8 @@ export function createRollTracker({
   /** @type {string | null} */
   let stopped = null;
   let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity;
+  /** AUDIT CHAP4 C1: when the Roll's word (and its seats) was last heard - every adoption, the first read's too */
+  let heardAt = -Infinity;
   // CHAP2a: a refresh asked (askGen) and answered (doneGen) - AUDIT CHAP2 C3: a claim sent before the refresh and
   // answered after it answers the older Roll, and leaves the refresh asked
   let askGen = 0, doneGen = 0;
@@ -169,6 +175,7 @@ export function createRollTracker({
     if (held.length) onCapped(held);
     const before = seats;
     seats = rollSeatsOf(roll.seats);
+    heardAt = now();
     onSeats(seats, before);
   };
 
@@ -191,7 +198,9 @@ export function createRollTracker({
     const list = members();
     const key = rollMembersKey(list);
     const asked = askGen > doneGen;
-    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey)) return null;
+    // AUDIT CHAP4 C1: nothing moved - asked again all the same once ROLL_SEATS_MS old, so a Turning's seats reach the page
+    // (a seat lost kept its rank at the halls for as long as the page stood; a seat won waited for some claim)
+    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS) return null;
     if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;   // CHAP2a: a refresh is asked at once (a writ's, three a day)
     pending = { rid: rid(), deltas, members: list };
     return pending;

@@ -76,8 +76,8 @@
   {
     "name": "CHAP2-HIDDEN",
     "file": "src/net/npcHallBook.js",
-    "old": "if (isRollFaction(f) && !HIDDEN.has(f)) out.add(f);",
-    "new": "if (isRollFaction(f)) out.add(f);",
+    "old": "return isRollFaction(f) && !HIDDEN.has(/** @type {number} */ (f)) ? /** @type {number} */ (f) : null;",
+    "new": "return isRollFaction(f) ? /** @type {number} */ (f) : null;",
     "tests": [
       "test/chap2_halls.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "CHAP2-HIDDEN-LAW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;",
-    "new": "faction === GUILD_FACTION_IDS.ThievesGuild;",
+    "old": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);",
+    "new": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild]);",
     "tests": [
       "test/chap2_halls.test.js"
     ]

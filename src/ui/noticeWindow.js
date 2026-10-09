@@ -514,9 +514,10 @@ export function mountNoticeBoard(host, deps) {
     if (busy || workBusy || !work.setFocus) return;
     busy = true; render();
     const r = await work.setFocus(faction, focus);
-    if (!alive) return;
+    const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) { work.sayLate?.(said.text); return; }   // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is
     busy = false;
-    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };
+    word = said;
     loadWrits(true);
   }
 

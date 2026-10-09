@@ -105,7 +105,8 @@ and differs only where something is owed).
   above its divine until the owed is paid. No DFU law reads the two together for a decision.
 - **D6 = C7 - both books.** `rollMembersOf` reads the mortal and the vampire book, where DFU's GuildManager reads the
   active one: a vampire's mortal guilds are dormant, not lost (a cure swaps them back), so the Roll keeps their tenure
-  running. CHAP4's seat asks its own question of an active membership.
+  running. CHAP4's seat asks its own question of an active membership. (AUDIT CHAP4 R4: CHAP4a did not - KEPT since by
+  AUDIT CHAP4 D1: the dormant lines claimed `d`, `npc_roll.dormant`, asked by the seats, Merit and the member writ.)
 - **C6.** An underworld initiation from a negative standing - the quest's +5 and RR1's floor of 2 in one line - can
   pass the day's 15; the rest is owed now (D2) and lands the next day, well inside the 28-day review.
 - **S7 - load.** While shipped at `dev`, a non-developer's realm page costs a session's reads to be told

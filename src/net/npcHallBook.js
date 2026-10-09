@@ -40,6 +40,7 @@ export const HALL_STOPS = Object.freeze(['chapters-closed', 'halls-need-account'
 /** A refusal that ends this town for good (a developer struck it). */
 const HALL_DONE_ERRORS = Object.freeze(['hall-struck']);
 
+/** @type {Set<number>} */
 const HIDDEN = new Set([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);
 
 /**
@@ -57,10 +58,21 @@ export function hallFactionsOf(buildings, factionDict) {
     const id = b?.factionId;
     if (HIDDEN.has(id)) { out.add(id); continue; }
     if (!id || (b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple)) continue;
-    const f = createGuildForGroup(guildGroupOfFaction(factionDict, id), id, factionDict)?.factionId;
-    if (isRollFaction(f) && !HIDDEN.has(f)) out.add(f);
+    const f = chapterFactionOf(id, factionDict);
+    if (f != null) out.add(f);
   }
   return [...out].sort((a, b) => a - b);
+}
+
+/** A HALL BUILDING'S FACTION AS ITS CHAPTER'S, through FACTION.TXT (createGuildForGroup over its guild group - a temple
+ *  carrying its templar order's faction reads its divine's): a Roll guild's faction, or null; one of the hidden two as it
+ *  is. AUDIT CHAP4 (D, worth a look): the living town reads its halls by this, as the witness does.
+ *  @param {unknown} id @param {any} factionDict @returns {number | null} */
+export function chapterFactionOf(id, factionDict) {
+  if (HIDDEN.has(/** @type {number} */ (id))) return /** @type {number} */ (id);
+  if (typeof id !== 'number' || !id || !factionDict) return null;
+  const f = createGuildForGroup(guildGroupOfFaction(factionDict, id), id, factionDict)?.factionId;
+  return isRollFaction(f) && !HIDDEN.has(/** @type {number} */ (f)) ? /** @type {number} */ (f) : null;
 }
 
 /**

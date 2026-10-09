@@ -155,8 +155,8 @@
   {
     "name": "CHAP4D-SET-SEAT",
     "file": "server-account/src/npcChapters.js",
-    "old": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5 AND s.seat = 'master')`)",
-    "new": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5)`)",
+    "old": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5 AND s.seat = 'master' AND s.week = ?7)`)",
+    "new": "WHERE s.faction = ?3 AND s.region = ?4 AND s.char_id = ?5 AND s.week = ?7)`)",
     "tests": [
       "test/chap4d_focus.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CHAP4D-MASTERS-SEAT",
     "file": "server-account/src/npcChapters.js",
-    "old": "WHERE char_id = ?1 AND region = ?2 AND seat = 'master'\")",
-    "new": "WHERE char_id = ?1 AND region = ?2\")",
+    "old": "WHERE char_id = ?1 AND region = ?2 AND seat = 'master' AND week = ?3\")",
+    "new": "WHERE char_id = ?1 AND region = ?2 AND week = ?3\")",
     "tests": [
       "test/chap4d_focus.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CHAP4D-CHRONICLE-REGION",
     "file": "server-account/src/npcChapters.js",
-    "old": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 ORDER BY",
-    "new": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region >= ?1 ORDER BY",
+    "old": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 AND",
+    "new": "LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region >= ?1 AND",
     "tests": [
       "test/chap4d_focus.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CHAP4D-CHRONICLE-HIDDEN",
     "file": "server-account/src/npcChapters.js",
-    "old": "const rows = results.filter((/** @type {any} */ r) => !hallHidden(Number(r.faction))).reverse().map(",
-    "new": "const rows = results.reverse().map(",
+    "old": "WHERE h.region = ?1 AND h.faction NOT IN (SELECT value FROM json_each(?3))",
+    "new": "WHERE h.region = ?1",
     "tests": [
       "test/chap4d_focus.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CHAP4D-CHRONICLE-ORDER",
     "file": "server-account/src/npcChapters.js",
-    "old": "!hallHidden(Number(r.faction))).reverse().map(",
-    "new": "!hallHidden(Number(r.faction))).map(",
+    "old": "const rows = results.reverse().map(",
+    "new": "const rows = results.map(",
     "tests": [
       "test/chap4d_focus.test.js"
     ]
@@ -407,11 +407,12 @@
   {
     "name": "CHAP4D-BOARD-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    loadWrits(true);\n",
-    "new": "    word = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    render();\n",
+    "old": "    word = said;\n    loadWrits(true);\n",
+    "new": "    word = said;\n    render();\n",
     "tests": [
       "test/chap4d_focus.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP4 C: re-aimed at the Focus's word computed before the board's closing is asked (a late one said in the chat)."
   },
   {
     "name": "CHAP4D-SEAM-HOST",
@@ -425,8 +426,8 @@
   {
     "name": "CHAP4D-SEAM-HALL",
     "file": "src/scenes/world.js",
-    "old": "const ch = hallDoor && rollTracker?.held ? await hallDoor.history(seat.region).catch(() => null) : null;",
-    "new": "const ch = null;",
+    "old": "      hallDoor && rollTracker?.held ? hallDoor.history(seat.region).catch(() => null) : null,\n",
+    "new": "      null,\n",
     "tests": [
       "test/chap4d_focus.test.js"
     ]

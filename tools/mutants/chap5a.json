@@ -282,7 +282,7 @@
   {
     "name": "CHAP5A-SHELF-REFUSED",
     "file": "src/scenes/worldModes.js",
-    "old": "interiorOverlay = roll ? chapterRollWindow(roll) : new ActionTextBox([access.text]);",
+    "old": "interiorOverlay = roll ? chapterRollWindow({ ...roll, lines: [...roll.lines, access.text] }) : new ActionTextBox([access.text]);",
     "new": "interiorOverlay = new ActionTextBox([access.text]);",
     "tests": [
       "test/chap5a_roll.test.js",

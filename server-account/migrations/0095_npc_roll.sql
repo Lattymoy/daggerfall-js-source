@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct95) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct98 - AUDIT CHAP4 R1: acct95 then, renumbered at the merges of main) BEFORE the site:
 -- the new site asks /v1/chapters/roll as a realm character comes online.
 --
 -- Mac: "completely overhaul the NPC guild system and reputation system",
@@ -27,7 +27,12 @@
 --                   after, never lost), and its membership:
 --                   `member`, the `rank` its client reported, and
 --                   `joined_at` - when the service first saw it a member,
---                   the tenure a seat will ask (CHAP4).
+--                   the tenure a seat will ask (CHAP4). AUDIT CHAP4 D1
+--                   (grown in place - nothing shipped): and `dormant`, 1
+--                   for a membership the character's ACTIVE book does not
+--                   hold (a vampire's mortal guilds, DFU's GuildManager
+--                   Memberships) - kept on the Roll, earning no Merit, no
+--                   member writ and no seat.
 --   npc_rep_events  the record: every line of every claim, what it asked
 --                   and what it was credited - kept ROLL_EVENTS_KEEP_S
 --                   (90 days), and asked by `rid` for a repeat.
@@ -57,6 +62,7 @@ CREATE TABLE IF NOT EXISTS npc_roll (
   member      INTEGER NOT NULL DEFAULT 0,
   rank        INTEGER,
   joined_at   INTEGER,
+  dormant     INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (char_id, faction_id)
 );
 

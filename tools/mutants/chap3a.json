@@ -193,8 +193,8 @@
   {
     "name": "CHAP3A-SQL-TENURE",
     "file": "server-account/src/npcMerit.js",
-    "old": " AND member = 1 AND joined_at <= ?8 - ?10)",
-    "new": " AND member = 1)",
+    "old": " AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": " AND member = 1 AND dormant = 0)",
     "tests": [
       "test/chap3a_merit.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "CHAP3A-SQL-MEMBER",
     "file": "server-account/src/npcMerit.js",
-    "old": "AND faction_id = ?3 AND member = 1 AND joined_at",
-    "new": "AND faction_id = ?3 AND joined_at",
+    "old": "AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at",
+    "new": "AND faction_id = ?3 AND dormant = 0 AND joined_at",
     "tests": [
       "test/chap3a_merit.test.js"
     ]

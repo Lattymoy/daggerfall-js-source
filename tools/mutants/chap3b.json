@@ -396,8 +396,8 @@
   {
     "name": "CHAP3B-SHEET-SETTLE",
     "file": "server-account/src/npcChapters.js",
-    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n",
-    "new": "  void seasonZeroOf;\n",
+    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "new": "  void seasonZeroOf;\n  const chapters = (await allChapters",
     "tests": [
       "test/chap3b_strength.test.js",
       "test/audit_chap3.test.js"

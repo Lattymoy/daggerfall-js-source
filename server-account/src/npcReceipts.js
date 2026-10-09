@@ -54,8 +54,8 @@ function mintTag(/** @type {((b: Uint8Array) => Uint8Array) | undefined} */ rand
  *  account's character, or for one dead. */
 export async function membersOf(/** @type {any} */ db, /** @type {string} */ player, /** @type {unknown} */ character) {
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return [];
-  const { results = [] } = await db.prepare(`SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1
-    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`).bind(character, player).all();   // AUDIT CHAP3 T9: in the guilds' order, never the index's
+  const { results = [] } = await db.prepare(`SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0
+    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`).bind(character, player).all();   // AUDIT CHAP3 T9: in the guilds' order, never the index's; AUDIT CHAP4 D1: an active membership
   return results.map((/** @type {any} */ r) => Number(r.faction_id));
 }
 

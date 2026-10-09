@@ -677,7 +677,7 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
-import { createHallBook, hallFactionsOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
+import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, bookCappedLine, seatLinesOf, seatRankAt, ROLL_BOOK_RANK_MAX, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
@@ -1627,13 +1627,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // CHAP3c (Chapters-Arc 5.2, 5.3): the chapter sheet - every chapter's Strength - held for the halls' prices and shelves
   // (net/chapterSheet.js), asked at a town's entry and again when it grows old. Online only - offline a hall is DFU's.
   const chapterSheet = hallDoor ? createChapterSheet({ door: hallDoor }) : null;
-  /** CHAP5b (Chapters-Arc 9): a guild's chapter where the player stands (the politic region, as the sheet's) as the living
-   *  town reads it - `{ band, name }` - or null (no sheet, a chapter it does not name). */
-  const livingChapterOf = (/** @type {number} */ faction) => {
-    const px = playerTravelPixel();
-    const region = (() => { try { return maps.getRegionIndexAt(px.x, px.y); } catch { return null; } })();
-    const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;
-    return strength == null ? null : { band: chapterBandOf(strength).band, name: `the ${hallPosterName(faction)}` };
+  /** CHAP5b (Chapters-Arc 9): a guild's chapter in the town at pixel (x, y) - AUDIT CHAP4 C2: the TOWN'S politic region,
+   *  as the sheet keys it, never the player's (every built town was planned by the region the player stood in) - as the
+   *  living town reads it: `{ band, name }`, or null (no sheet, a chapter it does not name). The hall building's faction
+   *  is read as its chapter's (npcHallBook.js chapterFactionOf - a temple's templar order its divine's). */
+  const livingChapterOf = (/** @type {number} */ faction, /** @type {number} */ x, /** @type {number} */ y) => {
+    const f = chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction;
+    const region = (() => { try { return maps.getRegionIndexAt(x, y); } catch { return null; } })();
+    const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(f, region) ?? null : null;
+    return strength == null ? null : { band: chapterBandOf(strength).band, name: `the ${hallPosterName(f)}` };
   };
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
@@ -5432,7 +5434,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
           // CHAP5b (Chapters-Arc 9): a guild's chapter here off the sheet the tab holds - its band, its guild named - for
           // its hall's evenings and the town's talk of it; none offline (no sheet: the living world is today's)
-          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction) : undefined,
+          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,   // AUDIT CHAP4 C2: this town's own pixel
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
@@ -25445,11 +25447,22 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  board; false where it cannot be read. */
   const openRecordsFromBoard = async (st) => {
     const board = townTalk.overlay;   // AUDIT SEATS-2 C5: the board that asked - a book read after it closed is shown over nothing else
-    const r = st && seatBook ? await seatBook.records(st.key) : null;
-    if (townTalk.overlay !== board) return false;
-    if (!r?.data) return false;
-    townTalk.showOverlay(hallOfRecordsWindow(st, r.data.rows, r.data.zero, seatArmsOf));   // HERALDRY-SHOWN: its Roll of Arms
+    const w = st && seatBook ? await hallOfRecordsRead(st) : null;   // AUDIT CHAP4 C5: the palace's own read - its chapters too
+    if (townTalk.overlay !== board) { try { w?.dispose?.(); } catch { /* already gone */ } return false; }
+    if (!w) return false;
+    townTalk.showOverlay(w);
     return true;
+  };
+  /** AUDIT CHAP4 C5, C6: A SEAT'S HALL OF RECORDS, READ - the one read both its doors make (the palace's shelf, the seat's
+   *  board): the seat's Chronicle and, where the Chapters are this account's, its region's chapters' (CHAP4d), asked
+   *  TOGETHER (the book waited a second round trip on every press); the book's window, or null where the seat's own
+   *  cannot be read - a refusal of the chapters' leaves the seat's book as it was. */
+  const hallOfRecordsRead = async (seat) => {
+    const [r, ch] = await Promise.all([
+      seatBook.records(seat.key),
+      hallDoor && rollTracker?.held ? hallDoor.history(seat.region).catch(() => null) : null,
+    ]);
+    return r?.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;   // HERALDRY-SHOWN: its Roll of Arms
   };
   /** THE ONE CONSTRUCTION SEAM (PROF0 17.2): every Notice Board window this host opens - a town's, and (GUILD1e) the
    *  board in a guild's hall - is built here, with the book, the character and the shared clock the service keeps. */
@@ -27458,7 +27471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const title = c ? chapterRollTitle(faction, region) : null;
       return title ? { title, lines: chapterRollLines(faction, c) } : null;
     },
-    rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),
+    rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),   // AUDIT CHAP4 C3: from the page's first frame - before the Roll's first word DFU's review promoted to 8 and 9
     // SEASON1 part three (Seats-Arc 9.2): a seat's Hall of Records - whether a town is a seat while the seats are open, and
     // its Chronicle read as a book's window (null where it cannot be read)
     hallOfRecords: {
@@ -27466,10 +27479,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       read: async (mapId) => {
         const seat = seatHere(mapId);
         if (!seat || !seatBook) return null;
-        const r = await seatBook.records(seat.key);
-        // CHAP4d: and the region's chapters' Chronicle, where the Chapters are this account's (a refusal: the seat's alone)
-        const ch = hallDoor && rollTracker?.held ? await hallDoor.history(seat.region).catch(() => null) : null;
-        return r.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;   // HERALDRY-SHOWN: its Roll of Arms
+        return hallOfRecordsRead(seat);   // CHAP4d: and the region's chapters' Chronicle; AUDIT CHAP4 C5, C6: the one read, both together
       },
     },
     // SEAT-HALL (Seats-Arc 7.2: "the palace interior is the holder's guild hall"): a palace seat's palace, as its visitor

@@ -84,7 +84,7 @@ test('BS1: the interior shelf click routes - bookshelf in the three types, loot 
   // the shelf's book list is lazy and PER SHELF, the stock idiom
   assert.match(wm, /shelf\.books \?\?= populateBookshelf\(\);/);
   // the refusal is DFU's box, not a silent return
-  assert.match(wm, /interiorOverlay = roll \? chapterRollWindow\(roll\) : new ActionTextBox\(\[access\.text\]\);/);   // PIN MOVED (CHAP5a): a stranger to the guild reads its roll alone, online
+  assert.match(wm, /interiorOverlay = roll \? chapterRollWindow\(\{ \.\.\.roll, lines: \[\.\.\.roll\.lines, access\.text\] \}\) : new ActionTextBox\(\[access\.text\]\);/);   // PIN MOVED (CHAP5a): a stranger to the guild reads its roll alone, online; (AUDIT CHAP4 D4) DFU's refusal said under it
 });
 
 test('F198: the health box decision, arm by arm - over the entries the PRODUCER mints (MAC-ILL1)', () => {

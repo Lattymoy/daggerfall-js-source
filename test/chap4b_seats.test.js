@@ -173,7 +173,7 @@ test('CHAP4b the hosts\' wiring: the hall\'s services read the book seated, its 
   assert.match(w, /const seatRankHere = \(\/\*\* @type \{number\} \*\/ faction\) => \{\n\s+if \(!rollTracker\?\.held \|\| rollTracker\.stopped\) return null;\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+return seatRankAt\(rollTracker\.seats, faction, region\);/);
   assert.match(w, /chapterSeatRank: \(faction\) => seatRankHere\(faction\),/);
   assert.match(w, /magesGuildRank: \(\) => Math\.max\(joinedGuildOfGroup\(activeMemberships\(playerEntity\), GUILD_GROUPS\.MagesGuild\)\?\.rank \?\? 0, seatRankHere\(GUILD_FACTION_IDS\.MagesGuild\) \?\? 0\),/, 'the paid teleport\'s fee at a seat\'s rank');
-  assert.match(w, /rollRankCeiling: \(\) => \(rollTracker\?\.held && !rollTracker\.stopped \? ROLL_BOOK_RANK_MAX : null\),/);
+  assert.match(w, /rollRankCeiling: \(\) => \(rollTracker && !rollTracker\.stopped \? ROLL_BOOK_RANK_MAX : null\),/);   // PIN MOVED (AUDIT CHAP4 C3): from the page's first frame, the Roll's first word or not
   assert.match(w, /onCapped: \(factions\) => \{ const line = bookCappedLine\(factions\); if \(line\) chatNotice\(line\); \},/);
   assert.match(w, /onSeats: \(seats, before\) => \{ for \(const line of seatLinesOf\(before, seats\)\) chatNotice\(line\); \},/);
   assert.match(w, /\.\.\.rollEntityDoors\(\(\) => playerEntity\),/, 'the doors carry the cap');

@@ -7,8 +7,9 @@ own and each told to prove what it reported (a node probe over the real migratio
 none edited the tree while any of them was reading (Home.md, DO NOT FIX WHILE THE VERIFIER IS READING):
 
 - **the service** (S): `server-account/src/npcRoll.js`, `npcHalls.js`, the hall parts of `professions.js`, the routes,
-  migrations `0090` and `0091` then (`0088` and `0089` before the merge of main that renumbered them past CRAFT2-CRAFT5's;
-  since the merge past SD9b's `0090`, they are `0095_npc_roll` and `0096_npc_halls` - AUDIT CHAP3 R5);
+  migrations `0088` and `0089` then (AUDIT CHAP4 R15: renumbered at each merge of main since - `0090`/`0091` past
+  CRAFT2-CRAFT5, `0091`/`0092` past SD9b, `0092`/`0093` past SCALE4, `0093`/`0094` past TAVERN CARDS, and now
+  `0095_npc_roll` and `0096_npc_halls` past SERVER-POST and HOURS-FIRST; AUDIT CHAP3 R5 said it otherwise);
 - **the client** (C): `src/net/npcRollTracker.js`, `npcHallBook.js`, the door, the board, `scenes/world.js`'s wiring;
 - **Daggerfall's law** (D): the leaf, the join, the halls each town keeps, the reveal - against DFU's C#;
 - **the economy and its abuse** (E): a modified client, colluding accounts, the numbers;

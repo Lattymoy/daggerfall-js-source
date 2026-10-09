@@ -218,11 +218,12 @@
   {
     "name": "CHAP4B-TAB-SEATS",
     "file": "src/net/npcRollTracker.js",
-    "old": "    seats = rollSeatsOf(roll.seats);\n    onSeats(seats, before);",
-    "new": "    onSeats(rollSeatsOf(roll.seats), before);",
+    "old": "    seats = rollSeatsOf(roll.seats);\n    heardAt = now();\n    onSeats(seats, before);",
+    "new": "    heardAt = now();\n    onSeats(rollSeatsOf(roll.seats), before);",
     "tests": [
       "test/chap4b_seats.test.js"
-    ]
+    ],
+    "note": "AUDIT CHAP4 C1: re-aimed past the stamp of when the Roll was last heard."
   },
   {
     "name": "CHAP4B-TAB-BEFORE",
@@ -281,7 +282,7 @@
   {
     "name": "CHAP4B-W-CEILING",
     "file": "src/scenes/world.js",
-    "old": "rollRankCeiling: () => (rollTracker?.held && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
+    "old": "rollRankCeiling: () => (rollTracker && !rollTracker.stopped ? ROLL_BOOK_RANK_MAX : null),",
     "new": "rollRankCeiling: () => ROLL_BOOK_RANK_MAX,",
     "tests": [
       "test/chap4b_seats.test.js"

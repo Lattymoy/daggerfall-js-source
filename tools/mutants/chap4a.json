@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "CHAP4A-CARRY",
-    "file": "src/net/npcChapterLaw.js",
-    "old": "export const SEAT_HOLDER_CARRY = SIEGE_DEFENCE_BONUS;",
-    "new": "export const SEAT_HOLDER_CARRY = 1.1;",
-    "tests": [
-      "test/chap4a_seats.test.js"
-    ]
-  },
-  {
     "name": "CHAP4A-ELIG-MEMBER",
     "file": "src/net/npcChapterLaw.js",
     "old": "return !!row && (row.member === true || row.member === 1) && rollRep(row.rep) >= ROLL_SEAT_LINE",
@@ -126,19 +117,10 @@
     ]
   },
   {
-    "name": "CHAP4A-SCORE-CARRY",
-    "file": "src/net/npcChapterLaw.js",
-    "old": "* 10 * (sitting ? SEAT_HOLDER_CARRY : 1));",
-    "new": "* 10);",
-    "tests": [
-      "test/chap4a_seats.test.js"
-    ]
-  },
-  {
     "name": "CHAP4A-SCORE-TENTHS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(Math.max(0, whole(merit)) * 10 * (sitting",
-    "new": "Math.round(Math.max(0, whole(merit)) * (sitting",
+    "old": "Math.round(Math.max(0, whole(merit)) * 10);",
+    "new": "Math.round(Math.max(0, whole(merit)));",
     "tests": [
       "test/chap4a_seats.test.js"
     ]
@@ -254,8 +236,8 @@
   {
     "name": "CHAP4A-SVC-WINDOW",
     "file": "server-account/src/npcChapters.js",
-    "old": "const from = Math.max(week - SEAT_MERIT_WEEKS + 1,",
-    "new": "const from = Math.max(week - SEAT_MERIT_WEEKS,",
+    "old": "const from = Math.max(Math.min(week - SEAT_MERIT_WEEKS + 1,",
+    "new": "const from = Math.max(Math.min(week - SEAT_MERIT_WEEKS,",
     "tests": [
       "test/chap4a_seats.test.js"
     ]
@@ -290,8 +272,8 @@
   {
     "name": "CHAP4A-SVC-MEMBER",
     "file": "server-account/src/npcChapters.js",
-    "old": "    WHERE r.member = 1 AND r.char_id IN (SELECT value FROM json_each(?1))`)",
-    "new": "    WHERE r.char_id IN (SELECT value FROM json_each(?1))`)",
+    "old": "    WHERE r.member = 1 AND r.dormant = 0 AND r.char_id IN (SELECT value FROM json_each(?1))`)",
+    "new": "    WHERE r.dormant = 0 AND r.char_id IN (SELECT value FROM json_each(?1))`)",
     "tests": [
       "test/chap4a_seats.test.js"
     ],

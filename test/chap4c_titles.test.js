@@ -1,6 +1,6 @@
 // CHAP4c (2026-10-08, Mac: "Your call", the Chapters arc's seats - bible/11-Multiplayer/Chapters-Arc.md section 6): THE
 // CHAPTERS' TITLES ON THE TOKEN - three generic ids (a chapter's Master, an officer, a Master who lost the seat this
-// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world179);
+// Season), each with the seats' bounded claim [the chapter's key, the Season]; the relay carrying the claim (world180; AUDIT CHAP4 R12);
 // the client wording them without gender; the service deriving them from the seats and the Chronicle, behind
 // CHAPTER_TITLES (shipped off: the relay goes first).
 import { test } from 'node:test';
@@ -11,7 +11,7 @@ import { badged, readBadge, RELAY_VERSION } from '../src/net/wire.js';
 import { chapterTitleKey, chapterOfTitleKey, chapterTitleText, chapterTitlesOf, meritWeekOf } from '../src/net/npcChapterLaw.js';
 import { titleBadge, TITLE_TEXT, TITLE_RGBA } from '../src/ui/playerBadge.js';
 import { chapterTitlesOfAccount, chapterTitlesOpenFor } from '../server-account/src/npcChapters.js';
-import { standService, T0 } from './accountDb.mjs';
+import { standService, T0, confirmChapters } from './accountDb.mjs';
 import { seatRealm } from './realmSeat.mjs';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -78,6 +78,7 @@ async function stand(t, titles = 'on') {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const svc = await standService({ CHAPTERS_OPEN: 'on', CHAPTER_TITLES: titles });
   const raw = svc.env.DB._raw;
+  confirmChapters(raw, [17, 21]);   // PIN MOVED (AUDIT CHAP4 E3): the titles only at a chapter confirmed now
   const who = await svc.registered('Alda');
   const R = await seatRealm(svc.env, who.secret, 'Alda');
   const other = await seatRealm(svc.env, who.secret, 'Bryn');
@@ -134,7 +135,7 @@ test('CHAP4c a Former Master: a Master\'s seat lost this Season titles its chara
 
 test('CHAP4c the wiring: the relay\'s version is a new one with its law; the toml ships the switch off; the wardrobe and the mint lay the chapters\' titles (mutants: each seam)', () => {
   assert.match(rd('server-account/wrangler.toml'), /\nCHAPTER_TITLES = "off"\n/);
-  assert.match(rd('test/relayversion.test.js'), /\n  world179: '[0-9a-f]{64}',/);
+  assert.match(rd('test/relayversion.test.js'), /\n  world180: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (AUDIT CHAP4 R12): world180, CHAP4c's own row - world179's is HOURS-FIRST's since the merge of main
   const ix = rd('server-account/src/index.js');
   assert.match(ix, /const withSeatTitles = async \(ctx, player, env\) => withChapterTitles\(ctx, /);
   assert.match(ix, /const worn = await withChapterTitles\(ctx, seats \? /);

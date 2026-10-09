@@ -183,6 +183,6 @@ test('CHAP5b the words: a chapter\'s news by its band - none for Steady - its gu
 
 test('CHAP5b the wiring: the host hands the living town its chapters off the sheet - none offline - in the politic region, banded and named (mutants: each seam)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /chapterOf: chapterSheet \? \(faction\) => livingChapterOf\(faction\) : undefined,/);
-  assert.match(w, /const livingChapterOf = \(\/\*\* @type \{number\} \*\/ faction\) => \{\n\s+const px = playerTravelPixel\(\);\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(px\.x, px\.y\); \} catch \{ return null; \} \}\)\(\);\n\s+const strength = Number\.isInteger\(region\) \? chapterSheet\?\.strengthOf\(faction, region\) \?\? null : null;\n\s+return strength == null \? null : \{ band: chapterBandOf\(strength\)\.band, name: `the \$\{hallPosterName\(faction\)\}` \};/);
+  assert.match(w, /chapterOf: chapterSheet \? \(faction\) => livingChapterOf\(faction, px, py\) : undefined,/);   // PIN MOVED (AUDIT CHAP4 C2): the town's own pixel
+  assert.match(w, /const livingChapterOf = \(\/\*\* @type \{number\} \*\/ faction, \/\*\* @type \{number\} \*\/ x, \/\*\* @type \{number\} \*\/ y\) => \{\n\s+const f = chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction;\n\s+const region = \(\(\) => \{ try \{ return maps\.getRegionIndexAt\(x, y\); \} catch \{ return null; \} \}\)\(\);\n\s+const strength = Number\.isInteger\(region\) \? chapterSheet\?\.strengthOf\(f, region\) \?\? null : null;\n\s+return strength == null \? null : \{ band: chapterBandOf\(strength\)\.band, name: `the \$\{hallPosterName\(f\)\}` \};/);   // PIN MOVED (AUDIT CHAP4 C2): the town's own region, the hall's faction read as its chapter's
 });

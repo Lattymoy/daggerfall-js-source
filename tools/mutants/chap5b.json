@@ -309,8 +309,8 @@
   {
     "name": "CHAP5B-HOST-OFFLINE",
     "file": "src/scenes/world.js",
-    "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction) : undefined,",
-    "new": "chapterOf: (faction) => livingChapterOf(faction),",
+    "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
+    "new": "chapterOf: (faction) => livingChapterOf(faction, px, py),",
     "tests": [
       "test/chap5b_people.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "CHAP5B-HOST-NAME",
     "file": "src/scenes/world.js",
-    "old": "name: `the ${hallPosterName(faction)}` };",
-    "new": "name: hallPosterName(faction) };",
+    "old": "name: `the ${hallPosterName(f)}` };",
+    "new": "name: hallPosterName(f) };",
     "tests": [
       "test/chap5b_people.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "CHAP5B-HOST-REGION",
     "file": "src/scenes/world.js",
-    "old": "const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(faction, region) ?? null : null;\n    return strength == null ? null : { band:",
-    "new": "const strength = chapterSheet?.strengthOf(faction, 0) ?? null;\n    return strength == null ? null : { band:",
+    "old": "const strength = Number.isInteger(region) ? chapterSheet?.strengthOf(f, region) ?? null : null;\n    return strength == null ? null : { band:",
+    "new": "const strength = chapterSheet?.strengthOf(f, 0) ?? null;\n    return strength == null ? null : { band:",
     "tests": [
       "test/chap5b_people.test.js"
     ]

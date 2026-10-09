@@ -450,19 +450,20 @@ export const KIN_NEWS = Object.freeze({
 });
 /** CHAP5b (bible/11-Multiplayer/Chapters-Arc.md 9: "the chapter's lines, keyed by ... its standing"): WHAT THE TOWN SAYS
  *  OF ITS GUILDS' CHAPTERS - by a chapter's band off the chapter sheet, `{guild}` the chapter's guild ("the Fighters
- *  Guild"). A Steady chapter is no news. Its Season's event is CHAP6's. */
+ *  Guild"). A Steady chapter is no news. Its Season's event is CHAP6's. AUDIT CHAP4 C4: `{guild}` never a sentence's
+ *  first word (it is filled lower-case) nor its subject (an order's name is plural) - the chapter is. */
 export const CHAPTER_NEWS = Object.freeze({
   failing: Object.freeze([
     Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),
-    Object.freeze(['They say {guild} here is failing.', 'Someone ought to help them, before it shuts.']),
+    Object.freeze(['They say the chapter of {guild} here is failing.', 'Someone ought to help them, before it shuts.']),
   ]),
   thriving: Object.freeze([
     Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Somebody is paying them well, then.']),
-    Object.freeze(['{guild} here is doing well, they say.', 'Good for {town}.']),
+    Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),
   ]),
   ascendant: Object.freeze([
-    Object.freeze(['They say {guild} here is the strongest in {region}.', 'I believe it. You should see the hall.']),
-    Object.freeze(['{guild} has never stood higher in {town}.', 'Then we are in good hands.']),
+    Object.freeze(['They say the chapter of {guild} here is the strongest in {region}.', 'I believe it. You should see the hall.']),
+    Object.freeze(['The chapter of {guild} has never stood higher in {town}.', 'Then we are in good hands.']),
   ]),
 });
 /** CHAP5b: the days a week a chapter's news is told in its town - drawn on the seed, by the town and its guild. */

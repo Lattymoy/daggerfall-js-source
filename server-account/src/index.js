@@ -110,7 +110,9 @@
 //   POST /v1/chapters/witness { hall: { key, region, factions } } -> { ok, counted, why? }   (CHAP2a: a town's guild halls, witnessed as a seat is)
 //   POST /v1/chapters/halls { region } -> { region, towns: [{ key, state, region, factions, witnesses, audit }], ignored }   (AUDIT CHAP2 E1: a developer's audit list)
 //   POST /v1/chapters/strike { key } -> { ok, key, reports }   (AUDIT CHAP2 E1: a false town struck, a developer's)
-//   POST /v1/chapters/list {} -> { week, chapters: [{ f, region, strength, band }] }   (CHAP3b: the chapter sheet, the Turnings due settled first)
+//   POST /v1/chapters/list {} -> { week, chapters: [{ f, region, strength, band, seats: [{ seat, name }] }] }   (CHAP3b: the chapter sheet, the Turnings due settled first; CHAP5a its seats' holders)
+//   POST /v1/chapters/focus { character, faction, region, focus } -> { ok, focus, week } | { error }   (CHAP4d: a Master's Focus)
+//   POST /v1/chapters/history { region } -> { rows: [{ faction, week, kind, data, name }], zero }   (CHAP4d: a region's Chronicle; AUDIT CHAP4 R10)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)

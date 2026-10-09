@@ -122,8 +122,8 @@
   {
     "name": "T-LAW-KEY-NULL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(list ? list.map((m) => `${m.f}:${m.rank}`).join(',') : null)",
-    "new": "((list ?? []).map((m) => `${m.f}:${m.rank}`).join(','))",
+    "old": "(list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null)",
+    "new": "((list ?? []).map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(','))",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
@@ -772,8 +772,8 @@
   {
     "name": "T-HALL-HIDDEN-THIEVES",
     "file": "src/net/npcChapterLaw.js",
-    "old": "faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;",
-    "new": "faction === GUILD_FACTION_IDS.DarkBrotherhood;",
+    "old": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);",
+    "new": "export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.DarkBrotherhood]);",
     "tests": [
       "test/audit_chap1.test.js",
       "test/audit_chap2.test.js",
