@@ -857,6 +857,7 @@ import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the c
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
 import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
+import { modelFootRects, footRectsAt } from './homeYards.js';   // FB1009 HOME-FOOT: a building's ground, its models' faces seen from above
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
 import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
@@ -3270,6 +3271,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!b) archAabbs.set(id, b = localAabb(positions));
     return b;
   };
+  /** FB1009 HOME-FOOT: each model's ground seen from above (homeYards.js modelFootRects), in its own frame - measured once. */
+  const modelFeet = new Map();
+  const modelFeetOf = (id, cpu) => {
+    let rs = modelFeet.get(id);
+    if (!rs) modelFeet.set(id, rs = modelFootRects(cpu.positions, cpu.indices));
+    return rs;
+  };
   /** AUDIT 64 F14: DaggerfallCityGate.Update over every built pixel's
    *  gates (DaggerfallCityGate.cs:44-51). SetOpen (:26-37) changes the
    *  model through ChangeDaggerfallMeshGameObject
@@ -5022,7 +5030,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let townHomes = null;
     const pixelHomeKeys = new Set();   // HOME-LOOK: the homes drawn out of the merge
     const pixelBuildingKeys = new Set();   // HOME-LOOK: every building of the pixel, by its key
-    /** @type {Map<number, {at: number[], box: number[]}>} HOME-YARD: each building's own place and the box round its models, pixel-local */
+    /** @type {Map<number, {at: number[], box: number[], rects: number[][]}>} HOME-YARD: each building's own place and the box round its models, pixel-local; FB1009 HOME-FOOT: and the ground its models' faces cover */
     const pixelHomeFrames = new Map();
     const pixelDungeonDoors = [];   // CASTLE-GATE: the dungeon-entrance doors the town's blocks stand, each with its model's box and its outward normal
     if (dfLocation) {
@@ -5110,9 +5118,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             pixelBuildingKeys.add(homeKey);
             // its own place (rmbLayout.js recordAt) and the box round its models: its yard's frame and footprint
             const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], locLocal[1] + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
+            const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box] });
-            else if (f) for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); }
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects });
+            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
           const homeLook = homeRow ? lookOfHome(homeTown, homeKey, homeRow) : null;

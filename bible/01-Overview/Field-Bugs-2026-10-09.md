@@ -9,7 +9,7 @@ Seven threads from the Discord's bug-reports, handed over by Mac as screenshots.
 | 3 | the first open of overworld travel freezes, and frames fall the longer one travels (Shabalako) | under investigation | open |
 | 4 | the game freezes opening chat, the wagon (EvoAva) | under investigation | open |
 | 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE) |
-| 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | under investigation | open |
+| 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | the yard measured a house as the box round its models; Hammerfell's houses are L-shaped or stand an outside stair, and their doors open onto open ground inside that box | fixed (HOME-FOOT) |
 | 7 | `TypeError: Cannot read properties of undefined (reading 'velocity')` at `poseAhead`, on a ship's deck (Cruor) | a peer's word dropped a boat between two frames; the peek read the place it no longer names | fixed (PEEK-WORD) |
 
 ## SNOWLESS1: snow off means the snow too (1)
@@ -40,6 +40,28 @@ Snowfall at once; the drawn ground, as the card says, at the world's next load.
 
 `test/fb1009_snowless.test.js` (5); `tools/mutants/fb1009_snowless.json` (10, all dead; `weather3f.json`'s `WEATHER3f-ground-skips-thunder` re-aimed at the widened guard). Recorded on
 `07-Rendering/Weather-Arc.md`, `03-World/Snowfall.md`, `07-Rendering/Vanilla-Enhanced.md` and the Ledger.
+
+## HOME-FOOT: the step before my own door is my yard (6)
+
+Shiki_Eternal's screenshot: a desert street from above, a torch held over the cobbles between two houses - the left
+theirs, the right nobody's. The home yard (HOME-YARD, `06-Systems/Online-Arc.md`) took a building's ground to be the
+box round its models (`scenes/homeYards.js` yardLot). Hammerfell's houses are L-shaped or stand an outside stair, and
+their ground door opens onto open ground INSIDE that box - ARCH3D 709's door at (-5.4, -3.2) faces a forecourt that
+runs to -6.4, and ARCH3D 600's opens into the L's own corner - so a piece on the step before the owner's own door was
+"inside your house". A neighbour whose door is in its box's side had free ground before it, within the owner's lot:
+the asymmetry reported. Read over the real layouts of all 813 desert towns, a 1 m piece 1.5 m before the owner's own
+door was refused as the house at 5,166 of 11,701 houses (51% across every climate).
+
+A building's ground is now what its models' faces cover seen from above - roofs, eaves, a stair's treads, never a wall
+(`modelFootRects`, 0.4 m cells merged into rects, measured once per model at the pixel's build, `scenes/world.js`;
+`footRectsAt` stands them by the placement). The lot's margin is still the box's, and the house and every neighbour are
+asked by their ground; a piece whose middle sits on any rect is on it, so the seams between rects let nothing through.
+Of the desert's 5,166, 3,389 now stand, 847 are the road (its own rule), and 930 are still the house: their door is
+under their own roof or eaves - whether a porch is a yard is a design question, not this bug. No point inside a door is
+let through (11,701 of 11,701). A stranger's door within the owner's lot may still be decorated before: the lot's rule.
+
+`test/fb1009_yardfoot.test.js` (5, one over ARENA2, skipped without it); `tools/mutants/fb1009_yardfoot.json` (14, all
+dead), and FB1001's three YARD-CORNER and HOUSING's two HOME-YARD records re-aimed.
 
 ## STACK: a re-cast stacks its rounds (2)
 
