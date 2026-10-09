@@ -999,20 +999,23 @@ Mac: **"Lets build every inch of this. Dont forget about a card needing to come 
 
 - **A CARD'S WORTH** (`net/cardWorthLaw.js`, one home for the client and the account service): its tier's
   (`CARD_WORTH`, MEASURE: a common 5 gold, a magic 20, a rare 75, a legendary 300, an aetheric 1,200, an artifact 2,500,
-  a gilded 5,000), the item's `value`, set at the mint and refreshed on a load. Still no shop buys a card (AUDIT CARDS-5
-  C2): the worth is never gold at a counter.
+  a gilded 5,000), the item's `value`, set at the mint, kept by a card split off a stack, and refreshed on a load in
+  every saved list (AUDIT CARDS-6 A6). A sealed pack is worth `CARD_PACK_WORTH` (171, its five cards' mean rounded up -
+  A1). Still no shop buys a card (AUDIT CARDS-5 C2): the worth is never gold at a counter.
 - **FOES.** A slain creature drops its own card (`systems/cardSources.js` `FOE_CARDS`, by its mobile type - a rat a
   rat, a Lich a Lich): one draw at its card's tier's chance (`FOE_CARD_PER_MILLE`, MEASURE: 16, 11, 7 and 3 per mille,
   common to legendary), twice as often for a titled foe; none for a revenant or a world boss (their spoils are their
-  own). It goes onto the body through the real death door (`registerEnemyDeathHandler`), and the foe's loot cap keeps it
-  as a Magic piece (`systems/foeLootCap.js` `CARD_CAP_RANK`).
+  own). It goes onto the body through the real death door (`registerEnemyDeathHandler`) - and through the online
+  dungeon's two copy doors, a joiner's copy of a body and an arrival's (`dungeonContext.js`, AUDIT CARDS-6 A3) - and the
+  foe's loot cap keeps it as a Magic piece (`systems/foeLootCap.js` `CARD_CAP_RANK`).
 - **THE HOUSE'S PACK** (template 583, stackable and weightless): five cards, the first four common or magic, the last
   rare or better (`PACK_SLOT_TIERS`, `PACK_TOP_TIERS`), never a holding or a boss's own; used from the pack it opens one
   off its stack and says what came out. Sold at the Enhanced tavern's counter and at its card table, at DFU's own trade
   price of `CARD_PACK_BASE_PRICE` (40) for the house's quality and the buyer's haggle; no shop buys a pack.
 - **GUILD QUESTS.** A guild's quest done pays one of its guild's cards one time in three (`GUILD_CARD_PER_MILLE`), the
-  best its quester's rank reaches (`GUILD_CARDS`): the four guilds, the eight temples, the five orders that wear a card.
-  The host pays once a quest (`scenes/world.js` `cardQuestEnded`).
+  best its quester's rank reaches (`GUILD_CARDS`): the four guilds, the eight temples (a templar order's hall its
+  divine's, by Temple.GetDivine's walk - AUDIT CARDS-6 A4), the five orders that wear a card. The host pays once a
+  quest a character (`scenes/world.js` `cardQuestEnded`; the dev host `exterior.js` has no quest-end hook at all - A11).
 - **THE BOSSES' OWN** (`systems/bossCards.js`), three aetheric cards new to the set (emblems the gate, the serpent and
   the gear): the Oblivion Gate's Warden's, Valkynaz Ruhn (one Gate hoard in five), Sethrakul's (one dealer's hoard in
   four - a stander finds none) and THE ABYSS DUNGEON'S BRASS REMNANT'S (one hoard in four). Each is ONE draw, always,
@@ -1021,10 +1024,12 @@ Mac: **"Lets build every inch of this. Dont forget about a card needing to come 
 - **A REGULAR'S FORFEIT** and **TRADING**: a regular who loses a game for keeps pays a card of his deck (CARDS10,
   section 33); the trade and the market take a card as any unbound item.
 - **THE CUSTOMS.** An offline character coming into the realm brings cards worth the starter deck's (285) and
-  `CUSTOMS_CARD_WORTH_PER_LEVEL` (150, OPEN) a level; customs takes the dearest past it, one card at a time
-  (`systems/realmCustoms.js` `cardCustoms`), and the customs lines say how many stayed. The service holds a customs
-  character's first save to the same bound (`server-account/src/realm.js` firstSaveRefusal, 'customs-cards') and a
-  character born online to the starter deck's worth ('realm-birth').
+  `CUSTOMS_CARD_WORTH_PER_LEVEL` (150, OPEN) a level - a sealed pack counted as a card, and a card or a pack stood as
+  decor (`decorOwn`) with them (AUDIT CARDS-6 A1, A2); customs takes the dearest past it, one at a time, decor first and
+  a copy no binder deck needs before one it does (`systems/realmCustoms.js` `cardCustoms`, A9), and the customs lines say
+  how many stayed and a deck it broke. The service holds a customs character's first save to the same bound
+  (`server-account/src/realm.js` firstSaveRefusal, 'customs-cards') and a character born online to the starter deck's
+  worth and no pack ('realm-birth').
 - **Pins:** `test/cards9_sources.test.js` 7. `tools/mutants/cards9.json`: 26, all dead (one survived the first pass -
   a draw re-placed that every kind a hoard names made equivalent; re-aimed at the draw's place in its hoard).
 
@@ -1040,40 +1045,53 @@ The same ask.
 - **THE REGULARS** (`systems/iliacPatrons.js`). A regular's temper is his seed's - careful, reckless or sly (`tight`,
   `loose`, `bluffer`) - and his deck is his temper's and the tavern's grade's (the Hold'em stakes' own bands of the
   building's quality: a village's, a town's, a city's): the starter deck's curve card for card, his grade's upgrades (a
-  town's two, a city's Prince and the rest), then his kind traded in (`GRADE_SWAPS`); never an artifact or a boss's own;
+  town's two - one for a careful regular, whose second is a legendary a town's tiers refuse (AUDIT CARDS-6 B8) - a
+  city's Prince and the rest), then his kind traded in (`GRADE_SWAPS`); never an artifact or a boss's own;
   the same every evening. He plays greedily: from no plays, each step tries every single play the rules still take
-  and keeps the best by his temper's score of the board as HIS seat sees it (`ILIAC_THINK_TRIALS` at most), a slip by
-  his grade, a sly one holding his hand to one play in his first turns. MEASURE: in the builder's seeded games (not a
-  committed tool) the starter deck, played by the same greedy hand, won 58% against a village's regulars, 54% against a
-  town's and 39% against a city's.
+  and keeps the best by his temper's score of the board as HIS seat sees it - the player's face-down cards face down to
+  his eye to the last turn (AUDIT CARDS-6 B2) - (`ILIAC_THINK_TRIALS`, 64, at most: B11), a slip by his grade, a sly one
+  holding his hand to one play in his first turns. The two games share the tempers' names, not the draw: Hold'em draws
+  its temper each evening with the purses (B9). MEASURE (AUDIT CARDS-6 B12, the 58/54/39 first said here not
+  reproduced): in 1,200 seeded games a grade, the starter deck at seat 0 played greedily with no slip against each
+  regular's own temper and his grade's deck (lane B's `b05_strength`, not committed), a careful hand won 58.9% against a
+  village's regulars, 51.1% against a town's and 44.7% against a city's; a reckless one 61.2/55.8/46.9, a sly one
+  58.3/49.5/42.6. The old 39% against a city is a hand that slips as a village regular does (37.7%; the village's 50.5%).
 - **THE EVENING** (`systems/iliacTableSession.js`): the regular thinks before he commits (`ILIAC_THINK_MS` and its
   spread), the turn turns over a beat after both have (`ILIAC_REVEAL_MS`); after the sixth, the result. FOR KEEPS each
-  side stakes a card - the loser pays one of his own deck, a draw nobody, standing up concedes; a regular pays one card a
-  game day (the forfeits' book in the save, `FORFEITS_BOOK_MAX` taverns), and the save waits while a card is staked.
+  side stakes a card - the player's drawn at the deal, named, and lifted out of his pack into the table's keeping (AUDIT
+  CARDS-6 B1): a win or a draw hands it back, a loss or standing up leaves it with the regular (a poison's or a need's
+  minute never stands him up - B4: a blow does); a regular pays one card a game day (the forfeits' book in the save,
+  `FORFEITS_BOOK_MAX` taverns, kept on the day the card is paid: B5, B6), and the save waits while a card is staked.
   A realm character's or an online page's regulars play for fun (section 14's law: a mint the service never sees).
 - **THE CLOTH** (`world/iliacCloth.js`, `render/iliacTableDraw.js`): the three holdings in a row across the table,
-  each side's cards in a column toward its owner, every card read from the viewer's chair; a card new to the board thrown
-  from its owner's edge (`ILIAC_THROW_S`); one atlas of the painted faces, a plate made the first time its card is
+  each side's cards in a column toward its owner's side of the row - side 1 always opposite seat 0, so no column lies
+  over the next holding at any pair of chairs (AUDIT CARDS-6 B3) - every card read from the viewer's chair; a card new to
+  the board thrown from its owner's own edge (`ILIAC_THROW_S`); one atlas of the painted faces, a plate made the first time its card is
   drawn, all freed with the game.
 - **ONLINE - THE RELAY DEALS** (`net/iliacTable.js`, relay world179): a room keeps its Iliac tables beside its Hold'em
   ones, one game a table index at a time (each refuses the other's sit). Its own shuffle (`rand32`), each seat told its
   own view alone (`mine`: its hand, its plays), the room the spectator's (no hand, no deck ever framed); a commit heard,
   never seen; the turn turned over once both have committed, or by the clock (`ILIAC_TURN_MS`, 45 s - a pass for the
   seat that has not); the next game `ILIAC_GAP_MS` after one ends while both still sit; a stand or a socket gone
-  concedes. The frame is `iliac` both ways (`validIliacIn`/`validIliacOut`, `ILIAC_FRAME_MAX`; an older relay than
+  concedes - in a ranked game a socket gone is kept `ILIAC_GONE_MS` (15 s) for the same id and account first, both gone
+  no contest (AUDIT CARDS-6 C7); a seat the clock passes `ILIAC_IDLE_TURNS` (3) turns running is stood up, and a game one
+  seat never committed in counts for nobody (C6). A commit names its game and turn (C3). The frame is `iliac` both ways (`validIliacIn`/`validIliacOut`, `ILIAC_FRAME_MAX`; an older relay than
   `ILIAC_RELAY_MIN` closes a socket on it, so the client never says it there). The panel opens on the room's table - a
   game under way is watched - and sits the chosen deck; alone in the room, "Play a regular instead".
 - **RANKED.** A ranked seat brings the account service's DECK ORDER (`net/identityToken.js` kind `deck`: the deck's
   digest - its ids sorted - a minute's life), minted only when the account's realm character holds every card of it
   (`/v1/cards/deck`, `server-account/src/iliac.js` deckOrderOf, the record checkpointed first); the relay checks the
-  order's account and digest before it seats the deck ranked. A game between two ranked seats of two accounts is ranked:
+  order's account and digest before it seats the deck ranked, and an order vouches for ONE game: the relay asks a ranked
+  pair for fresh orders as it schedules each deal, and a seat with none plays that game friendly (AUDIT CARDS-6 C5/D2). A game between two ranked seats of two accounts is ranked:
   its end - won, lost, drawn, or conceded - is signed (`net/iliacReceipt.js`, `i1`, the relay's key) and handed to both;
   either carries it (`net/iliacClaims.js`) to `/v1/iliac/claim`, one row a game (migration `0095_iliac_ladder.sql` - 0093 on its branch, renumbered past main's 0093 and 0094 at the merge).
 - **THE SEASON BOARD AND ITS TITLE** - the arena's way (`11-Multiplayer/Arena.md`): its seasons, its Elo, its pair's
   day and season caps; the board (`/v1/iliac/board`, shown in the panel online) and the season's #1 over
   `ILIAC_CHAMPION_MIN_GAMES` games against `ILIAC_CHAMPION_MIN_FOES` foes (10 and 5) wears **ILIAC CHAMPION** (the
   Bay's sea-blue) at the token's mint, lapsing by itself when another takes the top; counted by the minute clock
-  (`server-account/src/cron.js` 'iliac-champion'), never on a read, and a season nobody played counts nothing.
+  (`server-account/src/cron.js` 'iliac-champion') and by a rated game that may move the top; a read counts it only once
+  the kept word is `ILIAC_CHAMPION_STORED_S` (600 s) old with the clock stopped - the arena's fallback (AUDIT CARDS-6
+  D13) - and a season nobody played counts nothing.
   Account acct97.
 - **Not verified in a live tavern** (no ARENA2 here), and the relay and the service are NOT YET DEPLOYED.
 - **Pins:** `test/cards10_table.test.js` 12, `test/cards10_relay.test.js` 7, `test/cards10_service.test.js` 3,

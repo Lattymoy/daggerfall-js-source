@@ -1,0 +1,115 @@
+# AUDIT CARDS-6 (2026-10-09) - where cards come from, Iliac Hand at the table and online, the season board
+
+Mac: **"Lets do a deep and comprehensive audit. This must be perfection"**. The audit of CARDS9 (where cards come from,
+`11-Multiplayer/Tavern-Cards.md` section 32), CARDS10 (Iliac Hand against a tavern's regulars, through the relay, and
+its season board - section 33) and CARDS2c/CARDS3c (the sprite lane seated, the squeeze, the click and the push, the
+frame cost - section 34). What it changed there is Tavern-Cards section 35.
+
+## How it was run
+
+Five lanes, each an adversarial reader of a FROZEN snapshot (a git worktree at a776b87ac - Home.md's DO NOT FIX WHILE
+THE VERIFIER IS READING), each told to reproduce every finding with a script before it reported it:
+
+| Lane | Over | How |
+|---|---|---|
+| A | where cards come from (`systems/cardSources.js`, `bossCards.js`, the pack, `net/cardWorthLaw.js`, `systems/realmCustoms.js`, the service's bounds) | every death door driven (the exterior's kill and execution, the dungeon's, the city guards', a puppet's, a companion's); 200,000 packs opened; 12,000 seeds through four hoards (the Gate, the Serpent dealt and stood, the Abyss) against the parent build ed1a3884c; the pack's Use through `useItem` from every list; shops, the market and the realm trade; the guild quests' ladders and rates; customs over honest, over-allowance, born-online and decorated saves against the service's own `firstSaveRefusal` |
+| B | Iliac Hand offline against the regulars (`systems/iliacPatrons.js`, `iliacTableSession.js`, `scenes/iliacTableGame.js`, `world/iliacCloth.js`, `ui/iliacTableHud.js`) | 112,196 regulars' decks; 3,600 of his decisions against the rules and 7,200 against his own deck's order; 240,000 staged lists against `playsRefusal`; the panel fuzzed through its painted DOM (18,775 clicks, 1,258 during a reveal); every road off the seat through the sliced host; the draw's every mesh freed; 400 games under clock jumps; 1,200 seeded games a grade for his strength; the cloth at every pair of the prop's chairs, both viewers, four turns of the table |
+| C | the relay deals Iliac Hand (`net/iliacTable.js`, `server/src/index.js` `_iliacWord`, `net/iliacReceipt.js`) | the real Room over `test/fakeRoom.mjs` with real hellos and a mocked clock: 520 random games, about 22,000 frames and 150 hibernations scanned for a leaked card; 600,000 fuzzed wire inputs; frames built to carry the most events; 120 alarm firings shared with a Hold'em table; ranked orders forged, replayed and raced; the exclusivity with Hold'em, gold stakes counted; dead sockets at a game's end; an hour of an absent seat |
+| D | the season board, the deck order and the title (`server-account/src/iliac.js`, the migration, the carrier `net/iliacClaims.js`) | the real account Worker over SQLite with held and released databases: claims raced across a second's boundary and eight at once; Elo and draws; the pair's caps with receipts held back; a five-account farm over two days; the board, the title's equip and its lapse; reads on cold Workers for an hour (nothing written); statements counted at 50,000 games; the migration applied twice; the deploy path filter against an independent import walk; the device carrier over throwing, full and missing storage |
+| E | the client online, the panel, the gestures, the seated sprite and the records | the real relay Room joined to the real host half (`openIliacTableGame`) through the client's own receive path, every frame queued so the lane chose the network's order; the worldModes card block sliced and run over fakes; Chromium with touch at 390x844 for the gestures, the hand on screen and the squeeze; every record of sections 32-34 against the code; `cards9.json` and `cards10.json` run (101 of 101 dead) |
+
+Between the audit and its fixes the branch took main (#710-#720 - section 33's merge note): main's two tables a tavern
+(section 30) and its touch layer standing down at the seat (section 31) came in, the relay became world181, the service
+acct99 and the board's migration 0095. Every finding was reproduced again on the LIVE tree before its fix - lane E's
+first was already fixed on main as CARDS-TOUCH, found live and shipped on its own (#720) - and pinned after it.
+
+## Findings
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| A1 | HIGH | A sealed pack (template 583) was no card to the worth law: it passed customs and both of the service's bounds uncounted and opened online - 400 packs bought offline at about 28 gold each became cards worth 60,980 against a level-5 allowance of 1,035 (58.9x); a save born online with 1,000 packs passed 'realm-birth' | FIXED: a pack counts at `CARD_PACK_WORTH` (171 - its five cards' mean, 170.05, rounded up, pinned to the pack's tables; its top worth, 2,580, would be more than a level-15 allowance); customs takes it as a card, dearest first; 'realm-birth' refuses any pack (`src/net/cardWorthLaw.js`, `systems/realmCustoms.js`, `server-account/src/realm.js`) |
+| A2 | HIGH | A card or a pack stood as decor in an offline house or ship (DECOR2a `decorOwn`) was never counted, and came back to the pack online when the piece was taken down: 50 artifact and aetheric cards, 92,785 worth (213x the allowance) | FIXED: the law reads the decor (`decorOwnOf`), client and service alike; customs takes decor first within its worth, the piece with it, as REST III B2 does the supplies'. Cards stay standable as decor - a refusal there would miss the ones already standing |
+| A3 | MED | The online dungeon's two copy doors (a joiner's copy of a body on the stream's death, an arrival's body with no list) rolled the kit, the food and the sigils but never the card; a joiner who opened the body first handed the room a list without the host's card | FIXED: both doors run `dropFoeCard` before the cap (`src/scenes/dungeonContext.js`) |
+| A4 | MED | A temple's hall whose faction is its templar order (the Order of the Hour, 92, under Akatosh) paid no card: `guildNameOfFaction` matched the divines' own ids alone | FIXED: Temple.GetDivine's parent walk, with the faction table world.js hands it |
+| A5 | MED | The pack's item lines (`CARD_PACK_LINES`) were dead code: neither info card's gate named the pack | FIXED: both gates do |
+| A6 | LOW | A card split off a stack took the template's 1 gold, and a load refreshed only the pack's cards | FIXED: a split keeps the card's worth; the load refreshes every saved list |
+| A7 | LOW | A boss card taken off the spoils floor said "You take Card (Aetheric)." | FIXED: its own name ("Card: Valkynaz Ruhn") |
+| A8 | LOW | The card's picture was drawn between the ember's and the gold's, moving the gold pile's picture from the parent build's in a fifth to a quarter of hoards | FIXED: drawn last; 0 differences from ed1a3884c over 12,000 seeds (were 2,316 and 2,834) |
+| A9 | LOW | Over the allowance, customs took the starter deck's cards first among cards of one worth, breaking the binder's Starter Deck | FIXED: within a worth, the copies no binder deck needs go first; a deck still broken is said |
+| A10 | INFO | The "no card for a world boss" guard is dead: nothing writes `worldBoss` | RECORDED: kept, with a comment - the relay's bosses never pass a death door |
+| A11 | INFO | The dev host (`exterior.js`) has no quest-end hook at all - no initiation, no escort, no Renown, no quest card | RECORDED: flagged, not wired; `cardQuestEnded` shared across hosts is its own change |
+| A12 | INFO | Two `cardSources.js` comments were wrong: thirteen foes have no card, not six; the quest's chance is flat, only the card rises with the rank | FIXED: both comments |
+| A- | LOW (latent) | world.js kept the quest card's once on the bare quest uid for the host's life: a second character loaded in place lost the card of any quest uid the first was paid for | FIXED: keyed by the character's id and the quest's |
+| B1 | HIGH | For keeps, the player's card was drawn at the END and taken only if his pack still held it - while the table always said it took it. Drop the cards mid-game (the binder's Drop works seated) and a loss cost nothing | FIXED: the stake is drawn at the deal, named, and lifted out of the pack into the table's keeping; a win or a draw hands it back, a loss or a concession leaves it with the regular; a take is said only when made. Chosen over refusing a drop while staked: every road a card leaves a pack by is covered, the next one too |
+| B2 | MED | On the last turn the regular's trial reveal unveiled the player's face-down cards and judged their real power: 178 of 1,848 positions changed with their identities | FIXED: the other side's face-down cards stay face down to his eye |
+| B3 | MED | At chairs 114 and 132 degrees apart (8 of the prop's 30 ordered pairs) the regular's column ran along the row and lay over the next holding | FIXED: side 1 always opposite seat 0, every card read from the viewer's chair and thrown from its owner's own edge; all 60 pairs and viewers clear |
+| B4 | MED | One point of poison or disease stood the player up and conceded a game for keeps (or cashed out a Hold'em seat) | FIXED: the seat's hurt listener stands him up for a blow alone, never in the minute's pass (`worldTick.js` `tickInFlight`); a lethal tick still stands him up through the dead check. Chosen over "no stand during a DoT" (a DoT begun mid-game) and "a DoT stand no contest" (a self-poisoned loss voided) |
+| B5 | LOW | The forfeits' book kept the day the panel opened, so a win after midnight booked yesterday and the regular paid twice | FIXED: the day a function, read at the check and the write |
+| B6 | LOW (latent) | A full book of one day dropped the tavern just booked | FIXED: a tie on the day keeps the one just written |
+| B7 | LOW | A peer in the Iliac regular's chair had the regular drawn inside him | FIXED: Hold'em's taken-chair check, Iliac's too |
+| B8 | LOW | "A town's two upgrades" was false for a careful regular: his second is King Gothryd, a legendary a town's tiers refuse | FIXED (words): a careful town regular carries the Knight of the Flame alone; no deck moved - filtering the tiers first changes none |
+| B9 | LOW | "One regular, one temper at both games" was false: Hold'em draws its temper each evening with the purses (64 of 200 agree - chance) | FIXED (words): the games share the tempers' names. Hold'em's draw is unchanged - moving it moves every seeded Hold'em evening |
+| B10 | LOW | The panel could not be played by keyboard: only its buttons took focus, and Tab in the interior opened the dial | FIXED: every clickable row in the Tab order with Enter and Space, the panel focused on opening, Tab walking it, focus kept over a repaint (never handed to a button) |
+| B11 | LOW | `ILIAC_THINK_TRIALS` 400 could never bind (greedy play tries 85 at most) | FIXED: 64 - above every real decision measured (52), short of 85. The think stays on the frame (47 us a frame, B14) |
+| B12 | INFO | Section 33's MEASURE (58/54/39) did not reproduce | FIXED (words): re-measured after B2 - careful 58.9/51.1/44.7, reckless 61.2/55.8/46.9, sly 58.3/49.5/42.6; the old 39% a hand that slips as a village regular does |
+| B13 | INFO (latent) | `staked()` still answered true after `close()` mid-game | FIXED: a closed table stakes nothing |
+| B14 | INFO | The panel 604 of 640 px on a 360 px phone (scrolls inside, no sideways overflow); the frame and the draw about 47 us and 1.5 KB a frame; a NaN clock would wedge the session, and `performance.now()` never gives one | RECORDED |
+| C1 | MED | A ranked result was signed and sent ONCE, to whoever was connected, then dropped: a winner whose link was down lost his win, and the only copy could be the loser's to bury | FIXED: kept owed to both accounts (`iowed:<acct>`, `ILIAC_OWED_MAX` 32, for the receipt's life), told again on hello, look and sit, forgotten on the device's ack; it leaves the table's queue only once kept (AUDIT CARDS-4 B4's rule) |
+| C2 | MED | One socket's refused sits spent the room's four-a-second sit budget, keeping every card table "busy" | FIXED: each game's pure refusal (`iliacSitRefusal`, Hold'em's `sitRefusal`) is asked first; only a sit that seats spends the budget |
+| C3 | MED | A commit named no turn: one sent as the clock passed the turn landed on the next | FIXED for Iliac Hand: a commit names its game and turn, a stale one refused. DEFERRED for Hold'em's `act`: a late act is already refused unless the action came round to that seat again within one round trip, and a per-decision count is a change to a shipped wire on both ends |
+| C4 | LOW | A room that could not sign seated ranked games and signed nothing | FIXED: 'ranked closed' |
+| C5 | LOW | A deck order vouched for the deck at the sit alone (with D2) | FIXED with D2 |
+| C6 | LOW | A seat that never committed was never stood up: its games were a signed win every few minutes (13 in an hour) | FIXED: `ILIAC_IDLE_TURNS` (3) clock passes running stand it up; a game one seat never committed in counts for nobody (a seat's own stand still concedes); 0 in the hour |
+| C7 | LOW | A blink conceded a ranked game at once | FIXED: a ranked seat's socket gone is kept `ILIAC_GONE_MS` (15 s) under an id no hello can say, the same id and account taking it back; out of time it concedes; both gone, or a drained room, no contest (`how: 'void'`, nothing signed). Friendly seats concede at once, as before |
+| C8 | LOW | Every room frame carried the whole public view (711-1,346 bytes a commit) | FIXED: a commit that does not turn the turn goes as the event alone (about 97 bytes); a watched game 13.5 KB from 17 |
+| C9 | LOW | A watcher never saw the final board | FIXED: `last.view` keeps it |
+| C10 | LOW | A hostile relay could break the panel's update | FIXED: each event checked by its kind's fields, `state.last` too; refusal words looked up with `Object.hasOwn` |
+| D1 | HIGH | "The rating now" was the account's row with the greatest (`at`, rowid), `at` the second its claim's request began: a claim begun in second T that landed after one begun in T+1 wrote its row under the one it chained from, and its change was lost (A's 17-point loss, gone; 0-6 of 20 bursts). The arena's `claimPlayers` the same | FIXED, the arena too: the last row WRITTEN (rowid alone) in the guard, the rating read and the board |
+| D2 | MED | One deck order (a minute's life) kept a seat ranked for the whole sitting: one set of cards passed through many accounts, four ranked results in 23 minutes on an order for a deck no longer held | FIXED at the relay (lane C's C5): an order vouches for ONE game, unexpired at its deal; the room asks a ranked pair for fresh orders as it schedules each deal (the first ranked deal waits `ILIAC_GAP_MS` for the answer); a seat with none plays that game friendly. The service needed nothing - every ask re-reads the record and mints a fresh order |
+| D3 | MED | Each season board badged its rows with its own honours alone: the Iliac Champion wore nothing on the arena's board, the arena's #1 neither title nor laurel on Iliac Hand's | FIXED: one door, `server-account/src/boardNames.js` `boardNamesOf` - a board's own fresh honours, the other's read as a letter's are |
+| D4 | MED | The title can be farmed: five fresh accounts losing on purpose inside the pair's caps put a farmer at 1171 (50-0) over an honest 1133 (30-10) in two days, and he wore the title. The record's "two friends trading wins climb nothing" was false (about +130 a season) | RECORDED - OPEN for Mac: the arena's law, kept; the claim corrected. A guard on the title alone (foes with games of their own, an account's age) is passed by throwaway accounts playing each other once, and leaves nobody the title over a blocked #1; a real one (provisional ratings) moves the arena's shared law |
+| D5 | LOW | A pair's day was counted on the claims' clock: ten games in an hour, their receipts carried five a day, were all rated | FIXED: each row keeps `played` (the receipt's second); the day counts rated games within a day either side of the game's own (migration 0095 changed in place, never applied). The arena keeps its rule |
+| D6 | LOW | The board's `season.ends` was the year 275760 | FIXED: the season's end |
+| D7 | LOW | A short deck's missing card never reached the player | FIXED: the route answers its `card`, the client carries it, the vouch names it ("... (Lich).") |
+| D8 | LOW | `cards-closed` and `ranked-needs-account` were 400; Iliac Hand's refusals borrowed the gold tables', a backup's and the gate's sentences | FIXED: 503 and 403; `ILIAC_REFUSALS` its own words |
+| D9 | LOW | The device's carrier ran on the device's clock (the shared clock sat inside a comment): a device eight days fast dropped a receipt on add (with E17) | FIXED: the relay's clock, as the gate's and the serpent's carriers have it |
+| D10 | LOW (latent) | The champion's account deleted, the kept word went NULL and the clock only stamped it: nobody held the title until the next rated game | FIXED: a kept word of nobody is counted again, once a clock period. The arena keeps its rule |
+| D11 | LOW (latent) | `why: 'guest'` named a guest claimant and an unregistered foe alike: a registered player was told to register, his receipt kept a week | FIXED: `foe-unregistered`, let go silently |
+| D12 | LOW (scale) | Every rated claim counted the season's whole board (about 270 ms at 50,000 games); the pair's counts walked the season (5.7 ms) | FIXED: a claim counts the board only when it may move the top (2.9 ms below a kept #1); the pair's counts two lookups on `idx_iliac_games_pair` (0.02 ms). Not done: `<=` in the clock's test (it gives up the self-healing of two same-second counts written out of order) and a LIMITed board (the cost is the aggregate) |
+| D13 | LOW | Cites and claims: "section 29" (already section 33 at the merge); `iliacReceipt.js`'s "the account bundle never carries the rules"; section 33's "never on a read" | FIXED: the comment and section 33's words (a read counts the title only once the kept word is `ILIAC_CHAMPION_STORED_S` old with the clock stopped - the arena's fallback) |
+| D14 | INFO | Both seats leaving at once, the sweep stood seat 0 first, so seat 0 conceded | SUPERSEDED by C7: both seats gone together, or a drained room, is no contest |
+| D15 | INFO | A receipt issued in season N and claimed in N+1 counts in N, on a board no longer shown | RECORDED: the season is the receipt's; D5's `played` keeps the game's own second |
+| D16 | INFO | A deck order vouches for the latest checkpoint, and checkpoints after the first are the client's | RECORDED: the realm's general rule for items, not new with Iliac Hand |
+<!-- LANE E -->
+
+## What held
+
+- **Where cards come from:** the foes' rates as recorded (common 16.06, rare 7.07, legendary 3.08 per mille, a titled
+  foe 31.9); no revenant drops; 200,000 packs gave no boss card, holding or unresolved id, their tiers as the tables say;
+  no shop buys a card or a pack, the market and the realm trade take both; a quest tombstones once; over 12,000 seeds no
+  earlier draw of a hoard moved (A8 apart); client and service agree on every honest save.
+- **The regulars:** 112,196 decks lawful and sound, none with an artifact, a boss's card or a holding; his plays never
+  read the opponent's hand or either deck's order; 0 disagreements between the panel's staging and the rules in 240,000
+  lists; 18,775 fuzzed clicks threw nothing and staged nothing unlawful; every road off the seat concedes once, frees
+  every mesh and the atlas; the save waits while a card is staked; 400 games under clock jumps each six reveals.
+- **The relay:** no frame leaked a hidden card in about 22,000; the wire threw on none of 600,000 fuzzed inputs; the
+  alarm, shared with Hold'em through hibernations, never early, late or missed; a forged, foreign, stale or raced order
+  refused; Iliac Hand and Hold'em never both seated for one player, stakes conserved across the switch; `RELAY_GRAPH`
+  what esbuild bundles.
+- **The board:** eight concurrent claims of one account inside a second chain whole; draws' Elo exact; the pair's caps
+  hold when claimed promptly; a deleted account's sides go NULL and the board survives; reads write nothing on cold
+  Workers for an hour; the deploy filter's list is the bundle's.
+<!-- HELD E -->
+
+## Pins
+
+`test/auditcards6_a.test.js` 10, `test/auditcards6_b.test.js` 11, `test/auditcards6_c.test.js` 17,
+`test/auditcards6_d.test.js` 11<!-- PINS E -->. Pins moved with their fixes, each with a PIN MOVED note: the copy doors'
+harnesses (`audit625_loot`, `sigil1`, `survtiers3`, `audit68_dungeonctx`, `corpsegold`, `loot7check`, `seatheal`), the
+quest block's (`cards9_sources`), the hoard's look (`sd9e_spoils`) (A3, A8, A-); the deal's line, a loss's stake, the
+think cap (`cards10_table`) and the poison's minute (`cards2b_seated`) (B1, B4, B11); the commit's game and turn, the
+order's expiry, the ranked first deal (`cards10_relay`), the watcher's last board and setup (`cards10_client`) (C3, C5,
+C9, E10); the foe's registration (`cards10_service`, D11). `tools/mutants/auditcards6_a.json` (21), `_b` (24), `_c`
+(81), `_d` (33, one equivalent recorded)<!-- MUT E -->, every one dead; the records of `cards10`, `cards9`, `cards2b`,
+`cards8`, `cards6`, `auditcards5`, `auditcards4`, `audit625`, `sigil1`, `sd9e`, `stormshed2`, `arena4`, `realm5` and
+`realm6` the fixes moved re-aimed by content and run again.
