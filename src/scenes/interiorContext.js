@@ -31,8 +31,9 @@ import { Collider } from '../player/collider.js';
 import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
-import { placedTableSpot } from '../world/placedCardTable.js';   // TAVERN-TABLE: where a tavern's card table stands
-import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD } from '../world/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop
+import { placedTableSpot, TAVERN_CARD_TABLES } from '../world/placedCardTable.js';   // TAVERN-TABLE: where a tavern's card table stands; TAVERN-TABLES: and how many
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, FELT_RGB, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop; TAVERN-TABLES: the gold table's red felt
+import { holdemGoldTable } from '../net/holdemTable.js';   // TAVERN-TABLES: which of them plays for gold - the relay's own index
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
 import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
@@ -320,7 +321,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Library/Guild/Temple bookshelves route at activation (BS1), and
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
-  const tables = [];   // CARDS2: the room's card tables (world/cardTables.js) - TAVERN-TABLE: the one prop a tavern stands (below); the host seats them
+  const tables = [];   // CARDS2: the room's card tables (world/cardTables.js) - TAVERN-TABLE: the props a tavern stands (below; TAVERN-TABLES: the chips table, then the gold); the host seats them
   const beds = [];   // RR1: models 41000-41002 (RoleplayRealism.cs:126-128), listed always, activated under bedSleeping
   // IF1: the combined mesh's materials, as Immersive Footsteps reads them
   // off `CombinedModels` (Main.cs:237-308) - one name per texture in
@@ -491,34 +492,45 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // came out NaN - the table collided, seated and dealt, and was never drawn; its own mesh draws it, one draw. Its mesh
   // is this context's (freed by destroy); its two painted textures the renderer's, uploaded once. A room with no enter
   // marker or no such floor stands none.
-  let propMesh = null;
+  // TAVERN-TABLES (section 30; the owner, told one table let its first sitter shut the other kind out: "Two tables per
+  // tavern"): AND A SECOND - the GOLD table, at the index the relay holds every staked sit to (net/holdemTable.js
+  // HOLDEM_GOLD_TABLE), its felt red. Found by the same walk with the first already stood (in the collider, so the walk
+  // goes round it) and its ring kept off the first's (an avoid box, the first's ring's own); a room with floor for one
+  // stands the chips table alone, every client the same (the walk is the same walk, the first table the same table).
+  const propMeshes = [];
   if (opts.placeCardTable) {
-    const cpu = cardTablePropModel();
     const enter = interior.markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? interior.markers.find((m) => m.type === INTERIOR_MARKER.REST);
-    const spot = enter ? placedTableSpot(CARD_TABLE_BOX, [enter.x, enter.y, enter.z], {
+    const probe = {
       floor: (x, y, z) => { const d = collider.raycast(parentPt(x, y, z), [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
       open: (x, y, z, r) => !collider.sphereOverlaps(parentPt(x, y, z), r),
-    }, [
+    };
+    const avoid = [
       ...interior.doors.map((d) => [...doorWorldPosition(d), 1.5]),
       ...interior.actionDoors.map((d) => [d.matrix[12], d.matrix[13], d.matrix[14], 1.5]),   // the hinge; the swing is within
       ...collectInteriorPeople(recordData).map((pn) => [pn.x, pn.y, pn.z, 0.6]),
       ...interior.flats.map((f) => [f.x, f.y, f.z, 0.5]),
       ...interior.markers.map((m) => [m.x, m.y, m.z, 0.5]),
-    ]) : null;
-    if (spot) {
-      renderer.uploadTexture(CARD_TABLE_ARCHIVE, FELT_RECORD, paintFelt(), { mips: true, opaque: true });   // a model's material: opaque, with its mip chain, as a TEXTURE archive's
-      renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });
-      propMesh = renderer.createMesh(cpu);
+    ];
+    while (tables.length < TAVERN_CARD_TABLES) {
+      const gold = holdemGoldTable(tables.length), felt = gold ? GOLD_FELT_RECORD : FELT_RECORD;
+      const spot = enter ? placedTableSpot(CARD_TABLE_BOX, [enter.x, enter.y, enter.z], probe, avoid) : null;
+      if (!spot) { console.warn(`[interior] no ${gold ? 'gold ' : ''}card table stood: ` + (!enter ? 'the room has no enter marker' : `no clear floor near the entrance${gold ? ' for a second' : ''}`)); break; }
+      if (!propMeshes.length) renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });   // a model's material: opaque, with its mip chain, as a TEXTURE archive's
+      renderer.uploadTexture(CARD_TABLE_ARCHIVE, felt, paintFelt(gold ? GOLD_FELT_RGB : FELT_RGB), { mips: true, opaque: true });
+      const cpu = cardTablePropModel({ felt });
+      const mesh = renderer.createMesh(cpu);
+      propMeshes.push(mesh);
       const matrix = parent(trs(spot.x, spot.y, spot.z, 0, spot.yawDeg, 0));   // along x, or turned a quarter where only across does it fit
       const aabb = worldAabb(cpu.positions, matrix);   // the whole prop's, its stools in it - the draw's and the map's
-      const key = `int:${interior.placements.length}`;
-      drawList.push({ mesh: propMesh, matrix, key, aabb });
+      const key = `int:${interior.placements.length + tables.length}`;   // the next placement index, past the record's own
+      drawList.push({ mesh, matrix, key, aabb });
       automapEntries.push({ key, aabb, blockIndex: 0, blockName: amapBlockName, elementIndex: 0, elementName: INTERIOR_ELEMENT_NAMES[0], modelIndex: amapModelCount[0]++, waterLevel: null, positions: cpu.positions, indices: cpu.indices, normals: cpu.normals, matrix });
       collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
       const { min, max } = CARD_TABLE_BOX;
       const corners = [min[0], max[0]].flatMap((x) => [min[1], max[1]].flatMap((y) => [min[2], max[2]].flatMap((z) => [x, y, z])));   // all eight: a building turned turns them
-      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix });   // the table's own, its stools apart: its seats, its frame, its press
-    } else console.warn('[interior] no card table stood: ' + (!enter ? 'the room has no enter marker' : 'no clear floor near the entrance'));
+      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix, ...(gold ? { gold: true } : {}) });   // the table's own, its stools apart: its seats, its frame, its press
+      avoid.push([spot.cx, spot.y, spot.cz, spot.hx, spot.hz]);   // the next keeps its ring off this one's
+    }
   }
 
   // People (C1): AddPeople's data layer - base positions batch through
@@ -917,7 +929,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       for (const b of billboardBatches) renderer.destroyBatch(b);
       for (const b of base?.outBatches() ?? []) renderer.destroyBatch(b);   // BASE-HIDE: the flats taken out, out of that list
       if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF6
-      if (propMesh) { renderer.destroyMesh(propMesh); propMesh = null; }   // TAVERN-TABLE: the card table's mesh is this room's
+      for (const mesh of propMeshes.splice(0)) renderer.destroyMesh(mesh);   // TAVERN-TABLE: the card table's mesh is this room's (TAVERN-TABLES: each of them)
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
       // meshes per context - every interior exit leaked them.
       for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);

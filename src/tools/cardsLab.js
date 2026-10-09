@@ -5,6 +5,7 @@
 // clock, and the cards and chips drawn by render/cardTableDraw.js through the game's own renderer, with the table's
 // panel (ui/cardTableHud.js) over it. No game data: the felt and the floor are flat colours, the cards our own paint.
 //     cards.html?t=<seconds>&cam=seat|over&seed=<n>&patrons=<n>&nohud     (tools/cardsProbe.mjs pins them)
+//     &gold - the tavern's gold table (TAVERN-TABLES, section 30: its red felt)
 import { Renderer } from '../render/renderer.js';
 import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
 import { cardTableSeats, tableFrame } from '../world/cardTables.js';
@@ -13,7 +14,7 @@ import { CardTableSession } from '../systems/cardTableSession.js';
 import { createCardTableDraw } from '../render/cardTableDraw.js';
 import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
-import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD } from '../world/cardTableProp.js';   // AUDIT TAVERN-TABLE L6: the game's table
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/cardTableProp.js';   // AUDIT TAVERN-TABLE L6: the game's table
 import { heldMatrices } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them
 
 const params = new URLSearchParams(location.search);
@@ -21,6 +22,7 @@ const T = Number(params.get('t') ?? 14);
 const camKind = params.get('cam') ?? 'seat';
 const seed = Number(params.get('seed') ?? 4) >>> 0;
 const patronCount = Math.max(1, Math.min(5, Number(params.get('patrons') ?? 3)));
+const felt = params.has('gold') ? GOLD_FELT_RECORD : FELT_RECORD;   // TAVERN-TABLES: the gold table's red
 
 const canvas = document.getElementById('c');
 canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -29,7 +31,7 @@ const renderer = new Renderer(canvas);
 
 /** A flat colour as a 4x4 color32. */
 const flat = (r, g, b) => ({ width: 4, height: 4, colors: new Uint8ClampedArray(Array.from({ length: 16 }, () => [r, g, b, 255]).flat()) });
-renderer.uploadTexture(CARD_TABLE_ARCHIVE, FELT_RECORD, paintFelt(), { mips: true, opaque: true });   // the table's own, as the interior uploads them
+renderer.uploadTexture(CARD_TABLE_ARCHIVE, felt, paintFelt(params.has('gold') ? GOLD_FELT_RGB : undefined), { mips: true, opaque: true });   // the table's own, as the interior uploads them
 renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });
 renderer.uploadTexture('cardslab', 'floor', flat(70, 56, 44));
 
@@ -60,7 +62,7 @@ function boxModel(min, max, top, side) {
 
 // The table: the tavern's own, its stools and all, on a floor - its seats round the table's own box.
 const table = { aabb: CARD_TABLE_BOX, box: CARD_TABLE_BOX };
-const tableMesh = renderer.createMesh(cardTablePropModel());
+const tableMesh = renderer.createMesh(cardTablePropModel({ felt }));
 const floorMesh = renderer.createMesh(boxModel([-6, -0.02, -6], [6, 0, 6], 'floor', 'floor'));
 const IDENT = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
