@@ -13,7 +13,7 @@
 // Records in the realm's pseudo-archive (world/sdRealm.js SD_REALM_ARCHIVE), after the realm's own (31, 32). Pure. Not a
 // DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_RAMP, SD_LIGHT } from './sdLook.js';
-import { image, put, get, mix, scale, ramp, step, bevel, rivet, rng, noiseField, paletteOf, quantize } from './sdPixelKit.js';
+import { image, putTexel, texelAt, blendRgb, scale, ramp, step, bevel, rivet, rng, noiseField, paletteOf, quantize } from './sdPixelKit.js';
 import { SD_GLYPHS, SD_HOUR_NUMERALS } from './sdSkyArt.js';
 
 export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 35 });
@@ -41,7 +41,7 @@ const red = SD_LIGHT.red.map((v) => Math.round(v * 255));
  *  @param {import('./sdPixelKit.js').Img} img @param {ReadonlyArray<number>} cell @param {(s: number, t: number, x: number, y: number) => number[]} fn */
 function fill(img, cell, fn) {
   const [x0, y0, w, h] = cell;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) put(img, x0 + x, y0 + y, fn((x + 0.5) / w, (y + 0.5) / h, x, y));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) putTexel(img, x0 + x, y0 + y, fn((x + 0.5) / w, (y + 0.5) / h, x, y));
 }
 
 /** The lit atlas: albedo and emission. */
@@ -56,7 +56,7 @@ function paintLit(seed = 0x5d60) {
     bevel(albedo, c[0], c[1], c[2], c[3], step(Br, 4), step(Br, 0));
     bevel(albedo, c[0] + 1, c[1] + 1, c[2] - 2, c[3] - 2, step(Br, 3), step(Br, 1));
     // the gap lips (the block's two side edges, its first and last columns) faintly alight - where light leaks through
-    for (let y = 2; y < c[3] - 2; y++) { put(emission, c[0], c[1] + y, scale(gold, 0.16)); put(emission, c[0] + c[2] - 1, c[1] + y, scale(gold, 0.16)); }
+    for (let y = 2; y < c[3] - 2; y++) { putTexel(emission, c[0], c[1] + y, scale(gold, 0.16)); putTexel(emission, c[0] + c[2] - 1, c[1] + y, scale(gold, 0.16)); }
     const s = SD_HOUR_NUMERALS[i], cells = [];
     let x = 0;
     for (const ch of s) { const g = SD_GLYPHS[ch]; for (let cx = 0; cx < g.w; cx++) for (let cy = 0; cy < 7; cy++) if ((g.rows[cy] >> (g.w - 1 - cx)) & 1) cells.push([x + cx, cy]); x += g.w + 1; }
@@ -65,15 +65,15 @@ function paintLit(seed = 0x5d60) {
     for (const [cx, cy] of cells) {
       const X = gx + cx * px, Y = gy + (6 - cy) * px;
       for (let dx = 0; dx < px; dx++) for (let dy = 0; dy < px; dy++) {
-        put(albedo, X + dx, Y + dy, step(Br, dx === 0 && dy === px - 1 ? 5 : 4));
-        put(emission, X + dx, Y + dy, scale(gold, dx === 0 || dy === px - 1 ? 0.42 : 0.24));
+        putTexel(albedo, X + dx, Y + dy, step(Br, dx === 0 && dy === px - 1 ? 5 : 4));
+        putTexel(emission, X + dx, Y + dy, scale(gold, dx === 0 || dy === px - 1 ? 0.42 : 0.24));
       }
-      put(albedo, X + px, Y - 1, step(Br, 0));   // its shadow, below and right
+      putTexel(albedo, X + px, Y - 1, step(Br, 0));   // its shadow, below and right
     }
   }
   // RUBBED AND DARK BRASS, THE PLINTH, THE CLAW
   fill(albedo, A.brass, (s, t, x, y) => ramp(Br, 0.35 + 0.45 * grain(A.brass[0] + x * 4, A.brass[1] + y), A.brass[0] + x, A.brass[1] + y));
-  for (let x = 0; x < 16; x++) { put(albedo, A.brass[0] + x, A.brass[1], step(Br, 5)); put(emission, A.brass[0] + x, A.brass[1], scale(step(Br, 5), 0.04)); }
+  for (let x = 0; x < 16; x++) { putTexel(albedo, A.brass[0] + x, A.brass[1], step(Br, 5)); putTexel(emission, A.brass[0] + x, A.brass[1], scale(step(Br, 5), 0.04)); }
   fill(albedo, A.brassDark, (s, t, x, y) => (r() < 0.06 ? step(Vg, 1) : ramp(Br, 0.12 + 0.3 * grain(A.brassDark[0] + x, A.brassDark[1] + y * 3), A.brassDark[0] + x, A.brassDark[1] + y)));
   fill(albedo, A.plinth, (s, t, x, y) => ramp(Br, 0.1 + 0.25 * grain(A.plinth[0] + x, A.plinth[1] + y), A.plinth[0] + x, A.plinth[1] + y));
   bevel(albedo, A.plinth[0], A.plinth[1], 16, 16, step(Br, 3), step(Br, 0));
@@ -85,7 +85,7 @@ function paintLit(seed = 0x5d60) {
     const tick = y >= 28 && x % 3 === 0;
     return tick ? step(Br, 4) : ramp(Br, 0.15 + 0.28 * grain(A.leaf[0] + x, A.leaf[1] + y), A.leaf[0] + x, A.leaf[1] + y);
   });
-  for (let x = 0; x < 32; x++) put(albedo, A.leaf[0] + x, A.leaf[1] + 27, step(Br, 0));
+  for (let x = 0; x < 32; x++) putTexel(albedo, A.leaf[0] + x, A.leaf[1] + 27, step(Br, 0));
   rivet(albedo, A.leaf[0] + 16, A.leaf[1] + 24, step(Br, 3), step(Br, 0), step(Br, 5));
   // THE RETURN: pale stone, tarnished silver bands, the keystone's dial
   fill(albedo, A.pale, (s, t, x, y) => (y % 8 === 0 || (x + (y >> 3) * 8) % 16 === 0 ? step(Pa, 0) : ramp(Pa, 0.35 + 0.4 * grain(A.pale[0] + x, A.pale[1] + y), A.pale[0] + x, A.pale[1] + y)));
@@ -105,12 +105,12 @@ export function sdRiftArt() {
   const lit = paintLit(), S = SD_RIFT_ATLAS.size, A = SD_RIFT_ATLAS;
   const cold = { albedo: image(S), emission: image(S) };
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-    const c = get(lit.albedo, x, y), l = (c[0] + c[1] + c[2]) / 3;
-    put(cold.albedo, x, y, mix(scale(c, 0.62), [l * 0.55, l * 0.55, l * 0.55], 0.35));
-    put(cold.emission, x, y, [0, 0, 0]);
+    const c = texelAt(lit.albedo, x, y), l = (c[0] + c[1] + c[2]) / 3;
+    putTexel(cold.albedo, x, y, blendRgb(scale(c, 0.62), [l * 0.55, l * 0.55, l * 0.55], 0.35));
+    putTexel(cold.emission, x, y, [0, 0, 0]);
   }
   const redRec = { albedo: image(S), emission: image(S) };
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { put(redRec.albedo, x, y, get(cold.albedo, x, y)); put(redRec.emission, x, y, [0, 0, 0]); }
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { putTexel(redRec.albedo, x, y, texelAt(cold.albedo, x, y)); putTexel(redRec.emission, x, y, [0, 0, 0]); }
   // the crack: a jagged line across every numeral face and the leaf cell
   const r = rng(0x5d61);
   for (const name of [...Array.from({ length: 12 }, (_, i) => `n${i}`), 'leaf']) {
@@ -119,8 +119,8 @@ export function sdRiftArt() {
     for (let x = c[0]; x < c[0] + c[2]; x++) {
       y += (r() - 0.5) * 2.2;
       const yy = Math.max(c[1] + 1, Math.min(c[1] + c[3] - 2, Math.round(y)));
-      put(redRec.albedo, x, yy, scale(red, 0.5)); put(redRec.emission, x, yy, scale(red, 0.45));
-      put(redRec.albedo, x, yy + 1, [20, 8, 6]);
+      putTexel(redRec.albedo, x, yy, scale(red, 0.5)); putTexel(redRec.emission, x, yy, scale(red, 0.45));
+      putTexel(redRec.albedo, x, yy + 1, [20, 8, 6]);
     }
   }
   /** @type {Array<[number, { albedo: import('./sdPixelKit.js').Img, emission: import('./sdPixelKit.js').Img }]>} */

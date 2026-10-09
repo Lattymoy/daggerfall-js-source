@@ -36,7 +36,7 @@ test('SD-FLASH: a Beat step\'s warning falters at most three times a second (TEL
 // S1 - THE GRADE, THE LIGHT AND THE FLOORS: the amber soup ended.
 // ---------------------------------------------------------------------------------------------------------------------
 import { SD_RAMP, SD_LIGHT, SD_HOUR_GRADE, SD_TICK_EASE_S, sdTick, handToTwelve } from '../src/world/sdLook.js';
-import { offPalette, paletteOf, ramp, quantize, image, put } from '../src/world/sdPixelKit.js';
+import { offPalette, paletteOf, ramp, quantize, image, putTexel } from '../src/world/sdPixelKit.js';
 import {
   realmFloorArt, realmBrassArt, realmRootArt, realmArenaArt, realmCobbleArt, realmEdgeArt, SD_BRASS_EDGE_GLOW, SD_EDGE_GLOW,
 } from '../src/world/sdRealmArt.js';
@@ -85,7 +85,7 @@ test('SD-LOOK the paint box: a ramp through the ordered dither is always one of 
   for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (ramp([[0, 0, 0], [10, 10, 10]], 0.5, x, y)[0] === 10) hi++;
   assert.equal(hi, 8);
   const img = image(4);
-  for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) put(img, x, y, [x * 40, y * 30, 7]);
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) putTexel(img, x, y, [x * 40, y * 30, 7]);
   assert.ok(offPalette(img, paletteOf(r)) > 0);
   assert.equal(offPalette(quantize(img, paletteOf(r)), paletteOf(r)), 0);
 });

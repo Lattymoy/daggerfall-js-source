@@ -47,8 +47,8 @@
   {
     "name": "SD25-a-joint-lit",
     "file": "src/world/sdRealmArt.js",
-    "old": "    if (fx < J || fy < J) { put(albedo, x, y, step(B, 0)); continue; }",
-    "new": "    if (fx < J || fy < J) { put(albedo, x, y, step(B, 0)); put(emission, x, y, scale(step(Br, 3), 0.18)); continue; }",
+    "old": "    if (fx < J || fy < J) { putTexel(albedo, x, y, step(B, 0)); continue; }",
+    "new": "    if (fx < J || fy < J) { putTexel(albedo, x, y, step(B, 0)); putTexel(emission, x, y, scale(step(Br, 3), 0.18)); continue; }",
     "tests": [
       "test/sd25_look.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD25-brass-glowing-whole",
     "file": "src/world/sdRealmArt.js",
-    "old": "    put(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));",
-    "new": "    put(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y)); put(emission, x, y, scale(ramp(Br, 0.2 + 0.55 * g, x, y), 0.12));",
+    "old": "    putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));",
+    "new": "    putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y)); putTexel(emission, x, y, scale(ramp(Br, 0.2 + 0.55 * g, x, y), 0.12));",
     "tests": [
       "test/sd25_look.test.js"
     ]

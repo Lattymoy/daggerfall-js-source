@@ -42,17 +42,17 @@ export function noiseField(seed, n, W = 64, H = W, m = Math.max(1, Math.round((n
 /** A blank image, W x H (black, opaque once painted). */
 export const image = (W = 64, H = W) => /** @type {Img} */ ({ width: W, height: H, colors: new Uint8Array(W * H * 4) });
 /** Paint texel (x, y), wrapping - a tile's edge is its other edge. */
-export function put(img, x, y, rgb, a = 255) {
+export function putTexel(img, x, y, rgb, a = 255) {
   const W = img.width, H = img.height, i = (((Math.round(y) % H + H) % H) * W + ((Math.round(x) % W + W) % W)) * 4;
   img.colors[i] = rgb[0]; img.colors[i + 1] = rgb[1]; img.colors[i + 2] = rgb[2]; img.colors[i + 3] = a;
 }
 /** Texel (x, y), wrapping: [r, g, b]. */
-export function get(img, x, y) {
+export function texelAt(img, x, y) {
   const W = img.width, H = img.height, i = (((Math.round(y) % H + H) % H) * W + ((Math.round(x) % W + W) % W)) * 4;
   return [img.colors[i], img.colors[i + 1], img.colors[i + 2]];
 }
 const clamp8 = (v) => Math.round(Math.max(0, Math.min(255, v)));
-export const mix = (a, b, t) => [clamp8(a[0] + (b[0] - a[0]) * t), clamp8(a[1] + (b[1] - a[1]) * t), clamp8(a[2] + (b[2] - a[2]) * t)];
+export const blendRgb = (a, b, t) => [clamp8(a[0] + (b[0] - a[0]) * t), clamp8(a[1] + (b[1] - a[1]) * t), clamp8(a[2] + (b[2] - a[2]) * t)];
 export const scale = (c, k) => [clamp8(c[0] * k), clamp8(c[1] * k), clamp8(c[2] * k)];
 
 /** The 4x4 Bayer matrix, 0..15 (render/orderedDither.js BAYER_GLSL's own order). */
@@ -72,13 +72,13 @@ export const step = (r, i) => [...r[Math.max(0, Math.min(r.length - 1, Math.roun
 /** A raised block's 1-px bevel: its top and left edges a step lighter, its bottom and right a step darker (the light from
  *  the top-left - Daggerfall's own). Rectangle [x0, x0 + w) x [y0, y0 + h), wrapping. */
 export function bevel(img, x0, y0, w, h, light, dark) {
-  for (let x = x0; x < x0 + w; x++) { put(img, x, y0, light); put(img, x, y0 + h - 1, dark); }
-  for (let y = y0; y < y0 + h; y++) { put(img, x0, y, light); put(img, x0 + w - 1, y, dark); }
+  for (let x = x0; x < x0 + w; x++) { putTexel(img, x, y0, light); putTexel(img, x, y0 + h - 1, dark); }
+  for (let y = y0; y < y0 + h; y++) { putTexel(img, x0, y, light); putTexel(img, x0 + w - 1, y, dark); }
 }
 /** A 3x3 rivet centred at (x, y): a lit head, its shadow below-right. */
 export function rivet(img, x, y, head, shade, glint) {
-  put(img, x - 1, y - 1, head); put(img, x, y - 1, glint); put(img, x - 1, y, head); put(img, x, y, head);
-  put(img, x + 1, y, shade); put(img, x, y + 1, shade); put(img, x + 1, y + 1, shade);
+  putTexel(img, x - 1, y - 1, head); putTexel(img, x, y - 1, glint); putTexel(img, x - 1, y, head); putTexel(img, x, y, head);
+  putTexel(img, x + 1, y, shade); putTexel(img, x, y + 1, shade); putTexel(img, x + 1, y + 1, shade);
 }
 /** Every colour of `ramps` (each a list of [r, g, b]), flattened - a picture's palette. */
 export const paletteOf = (...ramps) => ramps.flat().map((c) => [c[0], c[1], c[2]]);

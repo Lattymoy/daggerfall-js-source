@@ -23,7 +23,7 @@
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_RAMP } from './sdLook.js';
-import { rng, noiseField, image, put, mix, scale, ramp, step, bevel, rivet, paletteOf, quantize } from './sdPixelKit.js';
+import { rng, noiseField, image, putTexel, blendRgb, scale, ramp, step, bevel, rivet, paletteOf, quantize } from './sdPixelKit.js';
 
 /** The tiles' side, texels (SD-LOOK: a tile is two metres - 32 texels a metre); the dial's (one image over the whole
  *  hall); the root's strip, its height (top to tip). */
@@ -52,9 +52,9 @@ export function realmFloorArt(seed = 0x5d50) {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const row = Math.floor(y / F), xs = x + (row % 2) * (F / 2);
     const fx = ((xs % F) + F) % F, fy = y % F, k = row * 4 + Math.floor(((xs % S) + S) % S / F);
-    if (fx < J || fy < J) { put(albedo, x, y, step(B, 0)); continue; }
+    if (fx < J || fy < J) { putTexel(albedo, x, y, step(B, 0)); continue; }
     const t = shade[k % 8] + 0.18 * (tone(x, y) - 0.5) + 0.08 * (fine(x, y) - 0.5);
-    put(albedo, x, y, ramp(B, t, x, y));
+    putTexel(albedo, x, y, ramp(B, t, x, y));
   }
   // each flag's bevel: lit top-left, shadowed bottom-right (inside its joint)
   for (let row = 0; row < 2; row++) for (let c = 0; c < 3; c++) {
@@ -65,7 +65,7 @@ export function realmFloorArt(seed = 0x5d50) {
   for (let n = 0; n < 5; n++) {
     let x = Math.floor(r() * S), y = Math.floor(r() * S);
     const len = 4 + Math.floor(r() * 6), dx = r() < 0.5 ? 1 : 0;
-    for (let i = 0; i < len; i++) { put(albedo, x, y, step(B, 0)); x += dx || (r() < 0.5 ? 1 : 0); y += 1 - dx || (r() < 0.5 ? 1 : 0); }
+    for (let i = 0; i < len; i++) { putTexel(albedo, x, y, step(B, 0)); x += dx || (r() < 0.5 ? 1 : 0); y += 1 - dx || (r() < 0.5 ? 1 : 0); }
   }
   quantize(albedo, paletteOf(B));
   return { albedo, emission };
@@ -78,16 +78,16 @@ export function realmBrassArt(seed = 0x5d51) {
   const grain = noiseField(seed, 16, S, S, 2), broad = noiseField(seed + 2, 4);
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const g = 0.55 * grain(x, y) + 0.45 * broad(x, y);
-    put(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));
+    putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));
   }
   for (let px = 0; px < S; px += 32) {
-    for (let y = 0; y < S; y++) { put(albedo, px, y, step(Br, 0)); put(albedo, px + 1, y, (y % 8 < 3 ? step(Vg, 0) : step(Br, 1))); }
+    for (let y = 0; y < S; y++) { putTexel(albedo, px, y, step(Br, 0)); putTexel(albedo, px + 1, y, (y % 8 < 3 ? step(Vg, 0) : step(Br, 1))); }
     for (const ry of [4, S - 5]) rivet(albedo, px + 6, ry, step(Br, 3), step(Br, 0), step(Br, 5));
   }
   // the rubbed edges, top and bottom rows of each band of 16: bright, and the only brass that glows
   for (let x = 0; x < S; x++) for (const y of [0, 16, 32, 48]) {
-    put(albedo, x, y, step(Br, 4)); put(emission, x, y, scale(step(Br, 4), SD_BRASS_EDGE_GLOW));
-    put(albedo, x, y + 15, step(Br, 0));
+    putTexel(albedo, x, y, step(Br, 4)); putTexel(emission, x, y, scale(step(Br, 4), SD_BRASS_EDGE_GLOW));
+    putTexel(albedo, x, y + 15, step(Br, 0));
   }
   quantize(albedo, paletteOf(Br, Vg));
   return { albedo, emission };
@@ -111,22 +111,22 @@ export function realmRootArt(seed = 0x5d52) {
       c = bx < 1 || by < 1 ? step(B, 0) : ramp(B, 0.15 + 0.35 * n, x, y);
       if (by === 1 && bx >= 1) c = step(B, 2);
     } else if (yy < WORKS) c = ramp(B, 0.05 + 0.3 * n, x, y);
-    else c = mix(ramp(B, 0.1 + 0.2 * n, x, y), step(Vo, 3), Math.min(1, (y - WORKS) / (H - WORKS)) * 0.5);
-    put(albedo, x, y, c); put(emission, x, y, [0, 0, 0]);
+    else c = blendRgb(ramp(B, 0.1 + 0.2 * n, x, y), step(Vo, 3), Math.min(1, (y - WORKS) / (H - WORKS)) * 0.5);
+    putTexel(albedo, x, y, c); putTexel(emission, x, y, [0, 0, 0]);
   }
   // the roots, wandering down through the earth
   for (let k = 0; k < 7; k++) {
     let x = r() * W;
-    for (let y = LIP; y < EARTH + 6; y++) { put(albedo, x, y, step(Ea, 0)); if (r() < 0.3) put(albedo, x + 1, y, step(Ea, 1)); x += r() < 0.5 ? -0.6 : 0.6; }
+    for (let y = LIP; y < EARTH + 6; y++) { putTexel(albedo, x, y, step(Ea, 0)); if (r() < 0.3) putTexel(albedo, x + 1, y, step(Ea, 1)); x += r() < 0.5 ? -0.6 : 0.6; }
   }
   // the works: a run of gear teeth and a pipe, brass in the rock
   const gx = Math.floor(r() * W);
   for (let i = 0; i < 40; i++) {
     const x = gx + i, toothy = Math.floor(i / 3) % 2 === 0 ? 0 : 3;
-    for (let y = BLOCK + 6 + toothy; y < BLOCK + 13; y++) put(albedo, x, y, step(Br, y === BLOCK + 6 + toothy ? 3 : 1));
+    for (let y = BLOCK + 6 + toothy; y < BLOCK + 13; y++) putTexel(albedo, x, y, step(Br, y === BLOCK + 6 + toothy ? 3 : 1));
   }
   const py = BLOCK + 18;
-  for (let x = 0; x < W; x++) { put(albedo, x, py, step(Br, 3)); put(albedo, x, py + 1, step(Br, 2)); put(albedo, x, py + 2, step(Br, 1)); put(albedo, x, py + 3, step(Br, 0)); }
+  for (let x = 0; x < W; x++) { putTexel(albedo, x, py, step(Br, 3)); putTexel(albedo, x, py + 1, step(Br, 2)); putTexel(albedo, x, py + 2, step(Br, 1)); putTexel(albedo, x, py + 3, step(Br, 0)); }
   quantize(albedo, paletteOf(B, Ea, Br, Vo));
   return { albedo, emission };
 }
@@ -140,7 +140,7 @@ export function realmDialArt(seed = 0x5d53) {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const u = ((x + 0.5) / S) * 2 - 1, v = ((y + 0.5) / S) * 2 - 1, r = Math.hypot(u, v);
     const worn = r > 0.6 && r < 0.78 ? 0.12 : 0;
-    put(albedo, x, y, mix(step(B, 0), step(B, 2), 0.3 + 0.55 * tone(x, y) + worn)); put(emission, x, y, [0, 0, 0]);
+    putTexel(albedo, x, y, blendRgb(step(B, 0), step(B, 2), 0.3 + 0.55 * tone(x, y) + worn)); putTexel(emission, x, y, [0, 0, 0]);
   }
   return { albedo, emission };
 }
@@ -152,11 +152,11 @@ export function realmArenaArt(seed = 0x5d54) {
   const S = SD_ART_SIZE, albedo = image(), emission = black();
   const tone = noiseField(seed + 1, 4), fine = noiseField(seed + 2, 16);
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-    if (x < 2 || y < 2) { put(albedo, x, y, step(Bz, 0)); continue; }
-    put(albedo, x, y, ramp(Bz, 0.3 + 0.35 * tone(x, y) + 0.1 * (fine(x, y) - 0.5), x, y));
+    if (x < 2 || y < 2) { putTexel(albedo, x, y, step(Bz, 0)); continue; }
+    putTexel(albedo, x, y, ramp(Bz, 0.3 + 0.35 * tone(x, y) + 0.1 * (fine(x, y) - 0.5), x, y));
   }
   bevel(albedo, 2, 2, S - 2, S - 2, step(Bz, 3), step(Bz, 0));
-  for (let x = 6; x < S - 4; x++) if (x % 8 !== 0) put(albedo, x, S / 2, step(Bz, 1));
+  for (let x = 6; x < S - 4; x++) if (x % 8 !== 0) putTexel(albedo, x, S / 2, step(Bz, 1));
   for (const [x, y] of [[6, 6], [S - 5, 6], [6, S - 5], [S - 5, S - 5]]) rivet(albedo, x, y, step(Bz, 3), step(Bz, 0), step(Bz, 4));
   quantize(albedo, paletteOf(Bz));
   return { albedo, emission };
@@ -175,16 +175,16 @@ export function realmCobbleArt(seed = 0x5d55) {
       const d = Math.hypot(x + 0.5 - s[0] - ox, y + 0.5 - s[1] - oy);
       if (d < d1) { d2 = d1; d1 = d; best = [s[0] + ox, s[1] + oy, s[2]]; } else if (d < d2) d2 = d;
     }
-    if (d2 - d1 < 1.6) { put(albedo, x, y, step(Co, 0)); continue; }
+    if (d2 - d1 < 1.6) { putTexel(albedo, x, y, step(Co, 0)); continue; }
     const lx = (x + 0.5 - best[0]) / cell, ly = (y + 0.5 - best[1]) / cell;   // the stone's own face, lit from the top-left
     const lit = best[2] - 0.35 * (lx + ly) - (d2 - d1 < 2.6 ? 0.12 : 0);
-    put(albedo, x, y, ramp(Co, lit, x, y));
+    putTexel(albedo, x, y, ramp(Co, lit, x, y));
   }
   // the cracks, welded with brass
   for (let n = 0; n < 2; n++) {
     let x = r() * S, y = r() * S;
     const dx = r() - 0.5, len = 18 + Math.floor(r() * 14);
-    for (let i = 0; i < len; i++) { put(albedo, x, y, step(Br, 1)); put(albedo, x + 1, y, step(Br, 0)); x += dx + (r() - 0.5) * 0.8; y += 1; }
+    for (let i = 0; i < len; i++) { putTexel(albedo, x, y, step(Br, 1)); putTexel(albedo, x + 1, y, step(Br, 0)); x += dx + (r() - 0.5) * 0.8; y += 1; }
   }
   quantize(albedo, paletteOf(Co, Br));
   return { albedo, emission };
@@ -196,7 +196,7 @@ export function realmEdgeArt() {
   const S = 8, albedo = image(S), emission = image(S);
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const c = step(Br, y < 2 ? 5 : 4);
-    put(albedo, x, y, c); put(emission, x, y, scale(c, SD_EDGE_GLOW));
+    putTexel(albedo, x, y, c); putTexel(emission, x, y, scale(c, SD_EDGE_GLOW));
   }
   return { albedo, emission };
 }
